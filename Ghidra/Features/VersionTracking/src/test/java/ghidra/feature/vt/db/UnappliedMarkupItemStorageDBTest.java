@@ -129,7 +129,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 
 		newStorage = newStorage.reset();
 		assertEquals(VTMarkupItemStatus.UNAPPLIED, newStorage.getStatus());
-		assertTrue("We should have impl storage object when reseting the status",
+		assertTrue("We should have impl storage object when resetting the status",
 			(newStorage instanceof MarkupItemStorageImpl));
 
 		//

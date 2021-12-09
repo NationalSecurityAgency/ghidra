@@ -23,7 +23,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolUtilities;
-import ghidra.program.util.SymbolicPropogator;
+import ghidra.program.util.SymbolicPropagator;
 import ghidra.program.util.VarnodeContext;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
@@ -75,7 +75,7 @@ public class RISCVAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 	@Override
 	public AddressSetView flowConstants(final Program program, Address flowStart,
-			AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
+			AddressSetView flowSet, final SymbolicPropagator symEval, final TaskMonitor monitor)
 			throws CancelledException {
 
 		// get the function body

@@ -77,7 +77,7 @@ public class AggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
 		setPrototype();
 		setSupportsOneTimeAnalysis();
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.after());
+		setPriority(AnalysisPriority.DATA_TYPE_PROPAGATION.after());
 		setDefaultEnablement(false);
 	}
 

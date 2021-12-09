@@ -20,7 +20,7 @@
 //For instance a simple return function will be labeled ret_XXXX, where XXXX is the address
 //Also, a function that branches to another label will be renamed to dest_branch_XXXX, where dest is
 //destination label and XXXX is the address
-//Repeatable comments from these functions are propogated up from destination functions.
+//Repeatable comments from these functions are propagated up from destination functions.
 //
 //Symbols are replaced if they are DEFAULT or ANALYSIS only (they are not replaced if the symbol is
 //USER_DEFINED or IMPORTED).
@@ -145,7 +145,7 @@ public class AutoRenameSimpleLabels extends GhidraScript {
 					}
 				}
 
-				// now also propogate the repeatable comment up as well
+				// now also propagate the repeatable comment up as well
 
 				String comment = currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT,
 					operand_addr);

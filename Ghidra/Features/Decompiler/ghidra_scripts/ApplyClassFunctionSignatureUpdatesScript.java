@@ -50,7 +50,7 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 		Namespace classNamespace = classHelper.getClassNamespace(currentAddress);
 		if (classNamespace == null) {
 			println(
-				"Either cannot retrieve class namespace or cursor is not in a member of a class namepace");
+				"Either cannot retrieve class namespace or cursor is not in a member of a class namespace");
 			return;
 		}
 

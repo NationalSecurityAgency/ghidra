@@ -109,7 +109,7 @@ public class VTControllerImpl
 				e.getMessage());
 		}
 		catch (CancelledException e) {
-			Msg.error(this, "Got unexexped cancelled exception", e);
+			Msg.error(this, "Got unexpected cancelled exception", e);
 		}
 		catch (IOException e) {
 			Msg.showError(this, null, "Can't open " + domainFile.getName(), e.getMessage());

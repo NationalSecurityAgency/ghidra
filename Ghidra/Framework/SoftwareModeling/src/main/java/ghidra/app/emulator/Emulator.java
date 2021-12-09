@@ -66,7 +66,7 @@ public class Emulator {
 
 		Language lang = cfg.getLanguage();
 		if (!(lang instanceof SleighLanguage)) {
-			throw new IllegalArgumentException("Invalid configuartion language [" +
+			throw new IllegalArgumentException("Invalid configuration language [" +
 				lang.getLanguageID() + "]: only Sleigh languages are supported by emulator");
 		}
 

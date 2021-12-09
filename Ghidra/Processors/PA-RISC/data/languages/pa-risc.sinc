@@ -1408,7 +1408,7 @@ lse21: off				is im21less0 & bit0 & im21_1_12 & im21_12_14 & im21_14_16 & im21_1
 # Note for the im11 11-bit immediate, the sign is in bit 0, and the rest of the value is in bit 1 to 10.
 # Negative numbers are stored 2s complement, with bit0 set to 1.
 #
-# Need to set temp32 to lse11 since the value of lse11 does not propogate so well to uplevel tables, maybe a compiler bug
+# Need to set temp32 to lse11 since the value of lse11 does not propagate so well to uplevel tables, maybe a compiler bug
 #
 #lse11: immed				is im11 & bit0
 lse11: immed				is im11less0 & bit0

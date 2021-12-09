@@ -400,7 +400,7 @@ public class DialogComponentProvider
 	protected void executeProgressTask(Task task, int delay) {
 		if (taskMonitorComponent == null) {
 			throw new AssertException("Cannot execute tasks in a " +
-				"DialogComponentProvider that has not been created to run taks.");
+				"DialogComponentProvider that has not been created to run takes.");
 		}
 
 		if (task.isModal()) {

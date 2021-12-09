@@ -599,7 +599,7 @@ public class ResultsState {
 		Varnode output = pcodeOp.getOutput();
 		Varnode result;
 		if (!values[0].isConstant()) {
-			throw new AssertException("Expected constatnt address space ID");
+			throw new AssertException("Expected constant address space ID");
 		}
 		int spaceId = (int) values[0].getOffset();
 		AddressSpace addressSpace = addrFactory.getAddressSpace(spaceId);
@@ -698,7 +698,7 @@ public class ResultsState {
 
 			case PcodeOp.STORE:
 				if (!values[0].isConstant()) {
-					throw new AssertException("Expected constatnt address space ID");
+					throw new AssertException("Expected constant address space ID");
 				}
 				int spaceId = (int) values[0].getOffset();
 				AddressSpace addressSpace = addrFactory.getAddressSpace(spaceId);
@@ -1246,7 +1246,7 @@ public class ResultsState {
 				if (values[1].isConstant() && values[0].isConstant()) {
 					if (values[1].getOffset() == 0) {
 						Msg.warn(ResultsState.class,
-							"Divide by zero encounteerd during emulation at " +
+							"Divide by zero encountered during emulation at " +
 								pcodeOp.getSeqnum().getTarget());
 					}
 					else {
@@ -1264,7 +1264,7 @@ public class ResultsState {
 				if (values[1].isConstant() && values[0].isConstant()) {
 					if (values[1].getOffset() == 0) {
 						Msg.warn(ResultsState.class,
-							"Divide by zero encounteerd during emulation at " +
+							"Divide by zero encountered during emulation at " +
 								pcodeOp.getSeqnum().getTarget());
 					}
 					else {
@@ -1279,7 +1279,7 @@ public class ResultsState {
 				if (values[1].isConstant() && values[0].isConstant()) {
 					if (values[1].getOffset() == 0) {
 						Msg.warn(ResultsState.class,
-							"Divide by zero encounteerd during emulation at " +
+							"Divide by zero encountered during emulation at " +
 								pcodeOp.getSeqnum().getTarget());
 					}
 					else {
@@ -1297,7 +1297,7 @@ public class ResultsState {
 				if (values[1].isConstant() && values[0].isConstant()) {
 					if (values[1].getOffset() == 0) {
 						Msg.warn(ResultsState.class,
-							"Divide by zero encounteerd during emulation at " +
+							"Divide by zero encountered during emulation at " +
 								pcodeOp.getSeqnum().getTarget());
 					}
 					else {

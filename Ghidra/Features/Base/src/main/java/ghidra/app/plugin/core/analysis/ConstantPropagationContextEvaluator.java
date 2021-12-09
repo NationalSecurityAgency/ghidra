@@ -23,7 +23,7 @@ import ghidra.program.util.ContextEvaluatorAdapter;
 import ghidra.program.util.VarnodeContext;
 
 /** 
- * The ConstantPropogatorEvaluator is used as the evaluator for the SymbolicPropagator when finding constant
+ * The ConstantPropagatorEvaluator is used as the evaluator for the SymbolicPropagator when finding constant
  * references and laying them down for a generic processor.  Extend this class to add additional checks
  * and behaviors necessary for a unique processor such as the PowerPC.
  * 

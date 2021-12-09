@@ -565,7 +565,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			callingConventionComboBox.setSelectedItem(callingConventionName);
 			if (!callingConventionComboBox.getSelectedItem().equals(callingConventionName)) {
 				setStatusText(
-					"Invalid Callinging Convention '" + callingConventionName + "' ignored!");
+					"Invalid Calling Convention '" + callingConventionName + "' ignored!");
 			}
 		}
 	}

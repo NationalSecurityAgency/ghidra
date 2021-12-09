@@ -247,7 +247,7 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 	private void analyzeCallStub(Program program, Function stubFunction, int stubLength,
 			TaskMonitor monitor) throws CancelledException {
 		
-		SymbolicPropogator symEval = new SymbolicPropogator(program);
+		SymbolicPropagator symEval = new SymbolicPropagator(program);
 		symEval.setParamRefCheck(false);
 		symEval.setReturnRefCheck(false);
 		symEval.setStoredRefCheck(false);

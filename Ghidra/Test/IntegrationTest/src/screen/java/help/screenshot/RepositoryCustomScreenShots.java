@@ -277,7 +277,7 @@ public class RepositoryCustomScreenShots extends GhidraScreenShotGenerator {
 		progressPanel.add(progress);
 		ImageIcon infoIcon = ResourceManager.loadImage("images/information.png");
 		progressPanel.add(
-			new JLabel("Finding conflicting code unit chagnes...", infoIcon, SwingConstants.LEFT));
+			new JLabel("Finding conflicting code unit changes...", infoIcon, SwingConstants.LEFT));
 		progressPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 100, 0));
 
 		mainPanel.add(progressPanel);

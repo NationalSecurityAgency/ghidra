@@ -129,9 +129,9 @@ public class FileHeader implements StructConverter {
 	private final static int LORDPE_NUMBER_OF_SYMBOLS = 0x5D455064;
 
 	public final static String[] CHARACTERISTICS = { "Relocation info stripped from file",
-		"File is executable  (i.e. no unresolved externel references)",
-		"Line nunbers stripped from file", "Local symbols stripped from file",
-		"Agressively trim working set", "App can handle >2gb addresses",
+		"File is executable  (i.e. no unresolved external references)",
+		"Line numbers stripped from file", "Local symbols stripped from file",
+		"Aggressively trim working set", "App can handle >2gb addresses",
 		"Bytes of machine word are reversed", "32 bit word machine",
 		"Debugging info stripped from file in .DBG file",
 		"If Image is on removable media, copy and run from the swap file",

@@ -484,7 +484,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 	private void assertFinishedAndNotShortcut(AbstractTestGraphJob... jobs) {
 
 		StringBuilder buffy =
-			new StringBuilder(jobs.length + " Jobs - should be finsihed and not shortcut\n");
+			new StringBuilder(jobs.length + " Jobs - should be finished and not shortcut\n");
 		for (AbstractTestGraphJob job : jobs) {
 
 			boolean isFinished = job.isFinished();
@@ -511,7 +511,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 			buffy.append("\tdisposed? ").append(wasDisposed).append('\n');
 			buffy.append("\tnot started? ").append(didNotStart).append('\n');
 
-			assertTrue("Job should have been diposed/cancelled\n" + buffy,
+			assertTrue("Job should have been disposed/cancelled\n" + buffy,
 				wasDisposed || didNotStart);
 		}
 	}
@@ -673,7 +673,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 			//
 			// Note: this code is NOT on the Swing thread, as it is a callback from a Thread
 			//
-			logger.trace("\t" + methodName + " calling listiner on Swing thread... (" + this + ")");
+			logger.trace("\t" + methodName + " calling listener on Swing thread... (" + this + ")");
 			runSwing(() -> jobListener.jobFinished(AbstractTestGraphJob.this));
 
 			logger.trace("\t" + methodName + " after listener call (" + this + ")");

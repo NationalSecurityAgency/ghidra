@@ -81,7 +81,7 @@ public class ConstantPoolFactory {
 
 			default:
 				throw new IllegalArgumentException(
-					"Unsupport Constant Pool Entry Type: " + reader.peekNextByte());
+					"Unsupported Constant Pool Entry Type: " + reader.peekNextByte());
 		}
 	}
 

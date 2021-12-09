@@ -1083,7 +1083,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		println("Total fixed incorrect FID functions: " +
 			recoverClassesFromRTTI.getBadFIDFunctions().size());
-		println("Total resolved functions that had multiple FID possiblities: " +
+		println("Total resolved functions that had multiple FID possibilities: " +
 			recoverClassesFromRTTI.getResolvedFIDFunctions().size());
 		println("Total fixed functions that had incorrect data types due to incorrect FID: " +
 			recoverClassesFromRTTI.getFixedFIDFunctions().size());

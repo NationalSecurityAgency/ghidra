@@ -779,7 +779,7 @@ public class DIEAggregate {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("DIEAgregrate of: ");
+		sb.append("DIEAggregate of: ");
 		for (DebugInfoEntry die : fragments) {
 			sb.append("DIE [").append(Long.toHexString(die.getOffset())).append("], ");
 		}

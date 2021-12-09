@@ -222,7 +222,7 @@ public class IntegerRangeConstraintEditor<T extends Number>
 			return Long.MIN_VALUE;
 		}
 		throw new IllegalArgumentException(
-			"IntegerValueConstraintEditor does not suppport values of type " + class1);
+			"IntegerValueConstraintEditor does not support values of type " + class1);
 	}
 
 	private long getMaxAllowedValue() {
@@ -242,7 +242,7 @@ public class IntegerRangeConstraintEditor<T extends Number>
 			return Long.MAX_VALUE;
 		}
 		throw new IllegalArgumentException(
-			"IntegerValueConstraintEditor does not suppport values of type " + class1);
+			"IntegerValueConstraintEditor does not support values of type " + class1);
 	}
 
 	@Override

@@ -257,7 +257,7 @@ public abstract class HTMLDataTypeRepresentation {
 			commentLines = commentLines.subList(0, maxLines - 1);
 			// use the last line to indicate there is more content that could not be displayed
 			commentLines.add(MIDDLE_COMMENT + "<i>" + (origCommentLineCount - maxLines + 1) +
-				" lines ommitted...</i>" + BR);
+				" lines omitted...</i>" + BR);
 		}
 
 		List<TextLine> newList = new ArrayList<>();

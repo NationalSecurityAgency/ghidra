@@ -21,7 +21,7 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.RefType;
 
 /**
- * ContextEvaluator provides a callback mechanism for the SymbolicPropogator as code is evaluated.
+ * ContextEvaluator provides a callback mechanism for the SymbolicPropagator as code is evaluated.
  * 
  */
 public interface ContextEvaluator {

@@ -116,7 +116,7 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 			return;
 		}
 		try {
-			repository.log(null, "Clearning " + transientCheckouts.size() + " transiet checkouts",
+			repository.log(null, "Cleaning " + transientCheckouts.size() + " transient checkouts",
 				currentUser);
 			for (String pathname : transientCheckouts.keySet()) {
 				int index = pathname.lastIndexOf(FileSystem.SEPARATOR_CHAR);

@@ -716,7 +716,7 @@ public class DBTestUtils {
 
 		byte[] bytes = field.getBinaryData();
 		if (bytes == null) {
-			Assert.fail("Bad test data: attempt to deccrement min value ");
+			Assert.fail("Bad test data: attempt to decrement min value ");
 		}
 
 		int len = bytes.length;

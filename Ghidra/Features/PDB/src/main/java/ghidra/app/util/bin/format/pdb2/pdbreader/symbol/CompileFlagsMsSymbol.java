@@ -32,8 +32,8 @@ public class CompileFlagsMsSymbol extends AbstractMsSymbol {
 	protected boolean pcodePresent;
 	protected int floatingPrecision;
 	protected int floatPackage;
-	protected int ambiantDataModel;
-	protected int ambiantCodeModel;
+	protected int ambientDataModel;
+	protected int ambientCodeModel;
 	protected boolean compiled32BitMode;
 	protected String compilerVersionString;
 
@@ -78,8 +78,8 @@ public class CompileFlagsMsSymbol extends AbstractMsSymbol {
 		builder.append(processor.toString());
 		builder.append("\n   Floating-point precision: " + floatingPrecision);
 		builder.append("\n   Floating-point package: " + floatPackage);
-		builder.append("\n   Ambiant data: " + ambiantDataModel);
-		builder.append("\n   Ambiant code: " + ambiantCodeModel);
+		builder.append("\n   Ambient data: " + ambientDataModel);
+		builder.append("\n   Ambient code: " + ambientCodeModel);
 		builder.append("\n   PCode present: " + (compiled32BitMode ? "yes" : "no"));
 		builder.append("\n   Version String:" + compilerVersionString);
 		builder.append("\n");
@@ -106,10 +106,10 @@ public class CompileFlagsMsSymbol extends AbstractMsSymbol {
 		flagsByte >>= 2;
 		floatPackage = (flagsByte & 0x03);
 		flagsByte >>= 2;
-		ambiantDataModel = (flagsByte & 0x07);
+		ambientDataModel = (flagsByte & 0x07);
 
 		flagsByte = flagsIn[2];
-		ambiantCodeModel = (flagsByte & 0x07);
+		ambientCodeModel = (flagsByte & 0x07);
 		flagsByte >>= 3;
 		compiled32BitMode = ((flagsByte & 0x0001) == 0x0001);
 

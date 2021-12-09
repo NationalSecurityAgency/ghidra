@@ -62,7 +62,7 @@ import ghidra.util.task.*;
 public class ExporterDialog extends DialogComponentProvider implements AddressFactoryService {
 
 	private static final String XML_WARNING =
-		"   Warning: XML is lossy and intended only for transfering data to external tools. GZF is the recommended format for saving and sharing program data.";
+		"   Warning: XML is lossy and intended only for transferring data to external tools. GZF is the recommended format for saving and sharing program data.";
 
 	private static String lastUsedExporterName = "Ghidra Zip File";  // default to GZF first time
 

@@ -1361,7 +1361,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		if (userDesktopDir == null) {
 			Msg.warn(this, "NOTE: unable to test 'Desktop' button in GhidraFileChooser " +
-				"in this enviornment because it does not have a detectable Desktop folder.");
+				"in this environment because it does not have a detectable Desktop folder.");
 			return;
 		}
 
@@ -1398,7 +1398,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		try {
 			pressDesktop();
-			fail("Desktop btton should have been disabled");
+			fail("Desktop button should have been disabled");
 		}
 		catch (AssertionError e) {
 			// good

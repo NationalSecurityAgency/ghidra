@@ -95,7 +95,7 @@ public class ToolConnectionTest extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> pm.openProgram(p.getDomainFile()));
 
 		waitForCondition(() -> pm2.getCurrentProgram() != null,
-			"Tool 2 did not open a proagram when one was opened in tool1");
+			"Tool 2 did not open a program when one was opened in tool1");
 
 		assertEquals(p, pm2.getCurrentProgram());
 

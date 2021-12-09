@@ -54,7 +54,7 @@ public class DecisionNode<T> {
 			throws XmlParseException {
 		if (propertyMap.containsKey(propertyName)) {
 			throw new XmlParseException("Attempted to overwrite property value for " +
-				propertyName + " in contraint node: " + this);
+				propertyName + " in constraint node: " + this);
 		}
 		propertyMap.put(propertyName, new PropertyValue(value, source));
 	}

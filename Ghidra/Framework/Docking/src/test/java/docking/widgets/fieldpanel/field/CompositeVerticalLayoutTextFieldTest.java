@@ -551,8 +551,8 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 	@Test
 	public void testLayoutWrapping_MixedRows_TrailingWrappingRow() {
 
-		String row1 = "1: clipped row: This will be clipped horizonally";
-		String row2 = "2: clipped row: This will be clipped horizonally";
+		String row1 = "1: clipped row: This will be clipped horizontally";
+		String row2 = "2: clipped row: This will be clipped horizontally";
 		String row3 = "3: wrapped row: This field will wrap";
 		TextField field1 = clippedField(0, row1);
 		TextField field2 = clippedField(1, row2);

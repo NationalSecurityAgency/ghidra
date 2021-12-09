@@ -744,13 +744,13 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	/**
-	 * Propogate any results that are in the value cache.
+	 * Propagate any results that are in the value cache.
 	 * 
 	 * @param clearContext  true if the cache should be cleared.
 	 *                      The propogation could be for flow purposes, and the
 	 *                      processing of the instruction is finished, so it's effects should be kept.
 	 */
-	public void propogateResults(boolean clearContext) {
+	public void propagateResults(boolean clearContext) {
 		Iterator<Entry<Varnode, Varnode>> iter = tempVals.entrySet().iterator();
 
 		while (iter.hasNext()) {
@@ -772,7 +772,7 @@ public class VarnodeContext implements ProcessorContext {
 				val = null;
 			}
 			if (val != null) {
-				propogateValue(reg, node, val, offsetContext.getAddress());
+				propagateValue(reg, node, val, offsetContext.getAddress());
 			}
 			else {
 				if (debug) {
@@ -790,7 +790,7 @@ public class VarnodeContext implements ProcessorContext {
 		}
 	}
 
-	public void propogateValue(Register reg, Varnode node, Varnode val, Address address) {
+	public void propagateValue(Register reg, Varnode node, Varnode val, Address address) {
 		if (debug) {
 			Msg.info(this, "   " + reg.getName() + "<-" + val.toString() + " at " +
 				offsetContext.getAddress());
@@ -1446,7 +1446,7 @@ public class VarnodeContext implements ProcessorContext {
 	public void setValue(Register register, BigInteger value) {
 		Varnode regVnode = trans.getVarnode(register);
 		putValue(regVnode, createConstantVarnode(value.longValue(), regVnode.getSize()), false);
-		propogateResults(false);
+		propagateResults(false);
 	}
 
 	public boolean isSymbol(Varnode node) {

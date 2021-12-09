@@ -40,7 +40,7 @@ public class CountAndSaveStrings extends GhidraScript {
 			println("File " + saveFile + " was not found");
 			return;
 		}
-		println(stringsFound + " strings were writtin to " + saveFile.getName());
+		println(stringsFound + " strings were written to " + saveFile.getName());
 	}
 
 	private File getSaveFile() throws Exception {

@@ -62,7 +62,7 @@ public class VTMarkupItemSourceAddressToAddressTableRowMapper extends
 
 		@Override
 		public String getColumnDescription() {
-			return super.getColumnName() + " (for a markup items's Source address)";
+			return super.getColumnName() + " (for a markup item's Source address)";
 		}
 
 		@Override
@@ -87,7 +87,7 @@ public class VTMarkupItemSourceAddressToAddressTableRowMapper extends
 
 		@Override
 		public String getColumnDescription() {
-			return super.getColumnName() + " (for a markup items's Source address)";
+			return super.getColumnName() + " (for a markup item's Source address)";
 		}
 
 		@Override

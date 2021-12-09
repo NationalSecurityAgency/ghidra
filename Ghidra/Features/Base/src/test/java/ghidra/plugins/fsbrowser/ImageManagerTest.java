@@ -47,7 +47,7 @@ public class ImageManagerTest extends AbstractGenericTest {
 				}
 			}
 		}
-		Assert.assertTrue("Some icons failed to load or misconfigured: " + failedIcons.toString(),
+		Assert.assertTrue("Some icons failed to load or were misconfigured: " + failedIcons.toString(),
 			failedIcons.isEmpty());
 	}
 }

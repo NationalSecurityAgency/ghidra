@@ -37,7 +37,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.SymbolicPropogator;
+import ghidra.program.util.SymbolicPropagator;
 import ghidra.program.util.VarnodeContext;
 import ghidra.util.exception.*;
 
@@ -136,7 +136,7 @@ public class PropagateX86ConstantReferences extends GhidraScript {
 					}
 				};
 
-			SymbolicPropogator symEval = new SymbolicPropogator(currentProgram);
+			SymbolicPropagator symEval = new SymbolicPropagator(currentProgram);
 			symEval.setParamRefCheck(true);
 			symEval.setReturnRefCheck(true);
 			symEval.setStoredRefCheck(true);

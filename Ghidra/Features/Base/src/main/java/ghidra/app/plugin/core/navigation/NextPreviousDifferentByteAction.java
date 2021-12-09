@@ -108,7 +108,7 @@ public class NextPreviousDifferentByteAction extends AbstractNextPreviousAction 
 			catch (MemoryAccessException e) {
 				// should not happen as we are only iterating over "initialized memory"
 				throw new AssertException(
-					"Got MemoryAccessException when iterating over intialized memeory!");
+					"Got MemoryAccessException when iterating over initialized memory!");
 			}
 		}
 		return null;

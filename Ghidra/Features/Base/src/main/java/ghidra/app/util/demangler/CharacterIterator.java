@@ -220,6 +220,6 @@ public class CharacterIterator {
 
 	@Override
 	public String toString() {
-		return "currnt = " + peek() + "; next = " + peek(1);
+		return "current = " + peek() + "; next = " + peek(1);
 	}
 }

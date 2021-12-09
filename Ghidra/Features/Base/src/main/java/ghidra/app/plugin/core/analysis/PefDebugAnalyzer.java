@@ -40,7 +40,7 @@ public class PefDebugAnalyzer extends AbstractAnalyzer {
 	public PefDebugAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.FUNCTION_ANALYZER);
 		setDefaultEnablement(true);
-		setPriority(new AnalysisPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.priority() * 2));
+		setPriority(new AnalysisPriority(AnalysisPriority.DATA_TYPE_PROPAGATION.priority() * 2));
 	}
 
 	@Override

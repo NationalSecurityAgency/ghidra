@@ -82,7 +82,7 @@ public class HttpUtil {
 			c.disconnect();
 			String encodingStr = c.getHeaderField("Transfer-Encoding");
 			if (encodingStr != null) {
-				throw new IOException("Unsupport HTTP transfer encoding: " + encodingStr);
+				throw new IOException("Unsupported HTTP transfer encoding: " + encodingStr);
 			}
 			throw new IOException("Unsupported HTTP transfer (Content-Length not specified)");
 		}

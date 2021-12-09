@@ -331,7 +331,7 @@ public class MDCVMod extends MDParsableItem {
 	public void checkInvalidSymbol() throws MDException {
 		if (isFunction && (foundManagedProperty || (prefixList.size() != 0))) {
 			throw new MDException(
-				"EFI and Managed Properies not permitted for function pointer/reference");
+				"EFI and Managed Properties not permitted for function pointer/reference");
 		}
 		// if (isFunction &&
 		// !((modType == cvModifierType.functionpointer) || (modType ==

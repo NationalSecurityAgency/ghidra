@@ -211,7 +211,7 @@ public class SampleProgramTreePlugin extends ProgramPlugin {
 			}
 			catch (NotFoundException e) {
 				Msg.error(this,
-					"couln't find addresses for fragment " + fragmentName + " : " + start, e);
+					"couldn't find addresses for fragment " + fragmentName + " : " + start, e);
 			}
 			return frag;
 		}

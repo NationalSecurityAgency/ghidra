@@ -62,6 +62,6 @@ public class DemangleElfWithOptionScript extends GhidraScript {
 			return;
 		}
 
-		println("Succesfully demangled " + mangled + " to " + demangledObject);
+		println("Successfully demangled " + mangled + " to " + demangledObject);
 	}
 }

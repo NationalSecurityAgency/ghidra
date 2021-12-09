@@ -206,7 +206,7 @@ public class DefaultCompositeMember extends CompositeMember {
 				name += parent.getOrdinal(oldMemberName);
 			}
 			catch (NotFoundException e) {
-				Msg.error(this, "Failed to rename anonymous compsite: " + getDataTypeName());
+				Msg.error(this, "Failed to rename anonymous composite: " + getDataTypeName());
 			}
 		}
 		else {

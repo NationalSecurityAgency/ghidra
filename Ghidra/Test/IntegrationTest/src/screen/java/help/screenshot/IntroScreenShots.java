@@ -79,7 +79,7 @@ public class IntroScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testSimple_err_dialog() {
 
-		OkDialog.showError("Some Resonable Error",
+		OkDialog.showError("Some Reasonable Error",
 			"Your operation did not complete because... (i.e File Not Found)");
 		captureDialog();
 	}

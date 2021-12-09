@@ -36,7 +36,7 @@ import ghidra.util.SystemUtilities;
 	category = PluginCategoryNames.BYTE_VIEWER,
 	shortDescription = "Displays bytes in memory",
 	description = "Provides a component for showing the bytes in memory.  " +
-		"Additional plugins provide capabilites for this plugin" +
+		"Additional plugins provide capabilities for this plugin" +
 		" to show the bytes in various formats (e.g., hex, octal, decimal)." +
 		"  The hex format plugin is loaded by default when this plugin is loaded.",
 	servicesRequired = {

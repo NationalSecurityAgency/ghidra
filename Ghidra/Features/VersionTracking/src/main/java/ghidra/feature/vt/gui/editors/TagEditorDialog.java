@@ -278,7 +278,7 @@ public class TagEditorDialog extends DialogComponentProvider {
 		private final Set<TagState> tags;
 
 		public CommitTagEditsTask(VTSession session, Set<TagState> tags) {
-			super("Commiting Tag Edits", true, true, true);
+			super("Committing Tag Edits", true, true, true);
 			this.tags = tags;
 		}
 

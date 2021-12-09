@@ -49,7 +49,7 @@ import docking.action.MenuData;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.TREE,
 	shortDescription = "Program Tree Modularization Plugin",
-	description = "Provides actions for orgainizing a program tree into modules or fragments.  " +
+	description = "Provides actions for organizing a program tree into modules or fragments.  " +
 			"Currently there are two organizations, dominance and complexity depth",
 	servicesRequired = { BlockModelService.class }
 )

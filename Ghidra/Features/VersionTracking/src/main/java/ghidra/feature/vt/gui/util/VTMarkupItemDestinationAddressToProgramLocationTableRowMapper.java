@@ -70,7 +70,7 @@ public class VTMarkupItemDestinationAddressToProgramLocationTableRowMapper exten
 
 		@Override
 		public String getColumnDescription() {
-			return super.getColumnName() + " (for a markup items's destination address)";
+			return super.getColumnName() + " (for a markup item's destination address)";
 		}
 
 		@Override
@@ -96,7 +96,7 @@ public class VTMarkupItemDestinationAddressToProgramLocationTableRowMapper exten
 
 		@Override
 		public String getColumnDescription() {
-			return super.getColumnName() + " (for a markup items's destination address)";
+			return super.getColumnName() + " (for a markup item's destination address)";
 		}
 
 		@Override

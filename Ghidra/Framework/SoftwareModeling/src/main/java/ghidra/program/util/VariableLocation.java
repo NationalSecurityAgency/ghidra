@@ -29,13 +29,13 @@ public class VariableLocation extends FunctionLocation {
 
 	private boolean isParameter;
 
-	private int ordinalOrfirstUseOffset;
+	private int ordinalOrFirstUseOffset;
 	private Address variableAddress; // will be NO_ADDRESS for return and auto-parameters
 
 	@Override
 	public String toString() {
 		return super.toString() + ", isParameter = " + isParameter +
-			", ordinalOrfirstUseOffset = " + ordinalOrfirstUseOffset + ", Variable Address = " +
+			", ordinalOrFirstUseOffset = " + ordinalOrFirstUseOffset + ", Variable Address = " +
 			variableAddress;
 	}
 
@@ -62,10 +62,10 @@ public class VariableLocation extends FunctionLocation {
 		variableAddress = getVariableAddress(var);
 		if (var instanceof Parameter) {
 			isParameter = true;
-			ordinalOrfirstUseOffset = ((Parameter) var).getOrdinal();
+			ordinalOrFirstUseOffset = ((Parameter) var).getOrdinal();
 		}
 		else {
-			ordinalOrfirstUseOffset = var.getFirstUseOffset();
+			ordinalOrFirstUseOffset = var.getFirstUseOffset();
 		}
 	}
 
@@ -91,13 +91,13 @@ public class VariableLocation extends FunctionLocation {
 			return null;
 		}
 		if (isParameter) { // return or parameter
-			return function.getParameter(ordinalOrfirstUseOffset);
+			return function.getParameter(ordinalOrFirstUseOffset);
 		}
 		if (variableAddress == null || !variableAddress.isVariableAddress()) {
 			return null;
 		}
 		for (Variable var : function.getLocalVariables()) {
-			if (var.getFirstUseOffset() == ordinalOrfirstUseOffset &&
+			if (var.getFirstUseOffset() == ordinalOrFirstUseOffset &&
 				var.getSymbol().getAddress().equals(variableAddress)) {
 				return var;
 			}
@@ -132,17 +132,17 @@ public class VariableLocation extends FunctionLocation {
 			return false;
 		}
 		if (var instanceof Parameter) {
-			return isParameter && (ordinalOrfirstUseOffset == ((Parameter) var).getOrdinal());
+			return isParameter && (ordinalOrFirstUseOffset == ((Parameter) var).getOrdinal());
 		}
-		return (ordinalOrfirstUseOffset == var.getFirstUseOffset() && variableAddress.equals(getVariableAddress(var)));
+		return (ordinalOrFirstUseOffset == var.getFirstUseOffset() && variableAddress.equals(getVariableAddress(var)));
 	}
 
 	public boolean isParameter() {
-		return isParameter && ordinalOrfirstUseOffset != Parameter.RETURN_ORIDINAL;
+		return isParameter && ordinalOrFirstUseOffset != Parameter.RETURN_ORIDINAL;
 	}
 
 	public boolean isReturn() {
-		return isParameter && ordinalOrfirstUseOffset == Parameter.RETURN_ORIDINAL;
+		return isParameter && ordinalOrFirstUseOffset == Parameter.RETURN_ORIDINAL;
 	}
 
 	@Override
@@ -150,7 +150,7 @@ public class VariableLocation extends FunctionLocation {
 		if (super.equals(object)) {
 			VariableLocation loc = (VariableLocation) object;
 			if (isParameter != loc.isParameter ||
-				ordinalOrfirstUseOffset != loc.ordinalOrfirstUseOffset) {
+				ordinalOrFirstUseOffset != loc.ordinalOrFirstUseOffset) {
 				return false;
 			}
 			return isParameter || variableAddress.equals(loc.variableAddress);
@@ -169,7 +169,7 @@ public class VariableLocation extends FunctionLocation {
 					if (!otherLoc.isParameter) {
 						return -1;
 					}
-					int retVal = ordinalOrfirstUseOffset - otherLoc.ordinalOrfirstUseOffset;
+					int retVal = ordinalOrFirstUseOffset - otherLoc.ordinalOrFirstUseOffset;
 					if (retVal != 0) {
 						return retVal;
 					}
@@ -203,7 +203,7 @@ public class VariableLocation extends FunctionLocation {
 	public void restoreState(Program p, SaveState obj) {
 		super.restoreState(p, obj);
 		isParameter = obj.getBoolean("_IS_PARAMETER", false);
-		ordinalOrfirstUseOffset = obj.getInt("_ORDINAL_FIRST_USE_OFFSET", 0);
+		ordinalOrFirstUseOffset = obj.getInt("_ORDINAL_FIRST_USE_OFFSET", 0);
 		variableAddress = Address.NO_ADDRESS; // corresponds to return parameter
 		if (obj.hasValue("_VARIABLE_OFFSET")) {
 			long offset = obj.getLong("_VARIABLE_OFFSET", -1L);
@@ -217,7 +217,7 @@ public class VariableLocation extends FunctionLocation {
 	public void saveState(SaveState obj) {
 		super.saveState(obj);
 		obj.putBoolean("_IS_PARAMETER", isParameter);
-		obj.putInt("_ORDINAL_FIRST_USE_OFFSET", ordinalOrfirstUseOffset);
+		obj.putInt("_ORDINAL_FIRST_USE_OFFSET", ordinalOrFirstUseOffset);
 		if (variableAddress.isVariableAddress()) {
 			obj.putLong("_VARIABLE_OFFSET", variableAddress.getOffset());
 		}

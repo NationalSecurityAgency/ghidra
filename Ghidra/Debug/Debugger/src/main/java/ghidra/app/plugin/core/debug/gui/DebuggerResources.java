@@ -295,8 +295,8 @@ public interface DebuggerResources {
 	String MARKER_NAME_BREAKPOINT_DISABLED = "Disabled Breakpoint";
 	String MARKER_NAME_BREAKPOINT_INEFFECTIVE_E = "Ineffective Enabled Breakpoint";
 	String MARKER_NAME_BREAKPOINT_INEFFECTIVE_D = "Ineffective Disabled Breakpoint";
-	String MARKER_NAME_BREAKPOINT_MIXED_ED = "Mixed Enabled-Disabled Breakpont";
-	String MARKER_NAME_BREAKPOINT_MIXED_DE = "Mixed Disabled-Enabled Breakpont";
+	String MARKER_NAME_BREAKPOINT_MIXED_ED = "Mixed Enabled-Disabled Breakpoint";
+	String MARKER_NAME_BREAKPOINT_MIXED_DE = "Mixed Disabled-Enabled Breakpoint";
 	int PRIORITY_BREAKPOINT_ENABLED_MARKER = MarkerService.BREAKPOINT_PRIORITY;
 	int PRIORITY_BREAKPOINT_DISABLED_MARKER = MarkerService.BREAKPOINT_PRIORITY;
 	int PRIORITY_BREAKPOINT_INEFFECTIVE_E_MARKER = MarkerService.BREAKPOINT_PRIORITY;
@@ -1862,7 +1862,7 @@ public interface DebuggerResources {
 
 	interface ForceFullViewAction {
 		String NAME = "Force Full View";
-		String DESCRIPTION = "Ignore regions and fiew full address spaces";
+		String DESCRIPTION = "Ignore regions and view full address spaces";
 		String GROUP = GROUP_GENERAL;
 		String HELP_ANCHOR = "force_full_view";
 

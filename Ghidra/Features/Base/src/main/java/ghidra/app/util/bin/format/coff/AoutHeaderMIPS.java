@@ -37,7 +37,7 @@ public class AoutHeaderMIPS extends AoutHeader {
 		gp_value    = reader.readNextInt();
 	}
 
-	public int getUnitializedDataStart() {
+	public int getUninitializedDataStart() {
 		return bss_start;
 	}
 

@@ -307,7 +307,7 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 	@Test
 	public void testApplyExternalFunctionName_ReplaceAlways_WithNewName() throws Exception {
 		Function addedSourceFunction =
-			addExternalFunction(sourceProgram, "Modify Source Program", "apples", "origina-apples");
+			addExternalFunction(sourceProgram, "Modify Source Program", "apples", "original-apples");
 		Function addedDestinationFunction = addExternalFunction(destinationProgram,
 			"Modify Destination Program", "oranges", "original-oranges");
 

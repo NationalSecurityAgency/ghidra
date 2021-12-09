@@ -53,7 +53,7 @@ public class WindowsResourceReferenceAnalyzer extends AbstractAnalyzer {
 	public WindowsResourceReferenceAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.INSTRUCTION_ANALYZER);
 		setSupportsOneTimeAnalysis();
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION);
+		setPriority(AnalysisPriority.DATA_TYPE_PROPAGATION);
 		setDefaultEnablement(true);
 	}
 

@@ -117,7 +117,7 @@ public class ApplicationProperties extends Properties {
 
 		String workingDir = System.getProperty("user.dir");
 		if (workingDir == null) {
-			throw new FileNotFoundException("Cannot determing the current working directory");
+			throw new FileNotFoundException("Cannot determine the current working directory");
 		}
 
 		File dir = new File(workingDir);

@@ -74,7 +74,7 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 	}
 	
 	@Override
-	public AddressSet flowConstants(final Program program, Address flowStart, AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
+	public AddressSet flowConstants(final Program program, Address flowStart, AddressSetView flowSet, final SymbolicPropagator symEval, final TaskMonitor monitor)
 			throws CancelledException {
 		
 		// follow all flows building up context

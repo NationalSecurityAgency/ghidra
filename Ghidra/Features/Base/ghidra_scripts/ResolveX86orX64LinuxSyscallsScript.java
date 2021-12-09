@@ -38,8 +38,8 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ContextEvaluator;
-import ghidra.program.util.SymbolicPropogator;
-import ghidra.program.util.SymbolicPropogator.Value;
+import ghidra.program.util.SymbolicPropagator;
+import ghidra.program.util.SymbolicPropagator.Value;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -278,7 +278,7 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 		for (Function func : funcsToCalls.keySet()) {
 			Address start = func.getEntryPoint();
 			ContextEvaluator eval = new ConstantPropagationContextEvaluator(true);
-			SymbolicPropogator symEval = new SymbolicPropogator(program);
+			SymbolicPropagator symEval = new SymbolicPropagator(program);
 			symEval.flowConstants(start, func.getBody(), eval, true, tMonitor);
 			for (Address callSite : funcsToCalls.get(func)) {
 				Value val = symEval.getRegisterValue(callSite, syscallReg);

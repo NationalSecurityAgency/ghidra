@@ -510,7 +510,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 
 			if (genericParamCount > 0) {
 				struct.add(getDataTypeForBytes(sizeOfGenericCount), "GenParamCount",
-					"Number of generic paramameters for the method");
+					"Number of generic parameters for the method");
 			}
 			struct.add(getDataTypeForBytes(sizeOfCount), "ParamCount",
 				"Number of parameter types to follow RetType");

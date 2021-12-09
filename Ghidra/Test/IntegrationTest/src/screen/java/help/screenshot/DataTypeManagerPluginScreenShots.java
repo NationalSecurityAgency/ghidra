@@ -239,7 +239,7 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 
 		DataTypeManager dtm = program.getDataTypeManager();
 
-		StandAloneDataTypeManager sourceDTM = new StandAloneDataTypeManager("MyArhcive");
+		StandAloneDataTypeManager sourceDTM = new StandAloneDataTypeManager("MyArchive");
 		StructureDataType sdt1 = new StructureDataType("MyDataType1", 0);
 		sdt1.add(new PointerDataType(new StringDataType()), "name", null);
 		sdt1.add(new IntegerDataType(), "age", null);
@@ -318,7 +318,7 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 			Set<DataTypeSyncInfo> set) {
 		DataTypeManager dtm = program.getDataTypeManager();
 
-		StandAloneDataTypeManager sourceDTM = new StandAloneDataTypeManager("MyArhcive");
+		StandAloneDataTypeManager sourceDTM = new StandAloneDataTypeManager("MyArchive");
 		StructureDataType sdt1 = new StructureDataType("MyDataType1", 0);
 		sdt1.add(new PointerDataType(new StringDataType()), "name", null);
 		sdt1.add(new IntegerDataType(), "age", null);

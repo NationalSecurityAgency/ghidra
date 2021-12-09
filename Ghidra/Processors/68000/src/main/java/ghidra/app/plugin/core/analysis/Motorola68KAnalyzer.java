@@ -60,7 +60,7 @@ public class Motorola68KAnalyzer extends ConstantPropagationAnalyzer {
 
 	@Override
 	public AddressSetView flowConstants(final Program program, Address flowStart,
-			AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
+			AddressSetView flowSet, final SymbolicPropagator symEval, final TaskMonitor monitor)
 			throws CancelledException {
 
 		// follow all flows building up context
@@ -170,7 +170,7 @@ public class Motorola68KAnalyzer extends ConstantPropagationAnalyzer {
 
 	int tableSizeMax;
 
-	private void recoverSwitches(final Program program, SymbolicPropogator symEval,
+	private void recoverSwitches(final Program program, SymbolicPropagator symEval,
 			AddressSet destSet, TaskMonitor monitor) throws CancelledException {
 
 		final ArrayList<CreateDataCmd> dataCmdList = new ArrayList<CreateDataCmd>();
@@ -336,7 +336,7 @@ public class Motorola68KAnalyzer extends ConstantPropagationAnalyzer {
 		SwitchEvaluator switchEvaluator = new SwitchEvaluator();
 
 		// clear past constants.  This example doesn't seem to depend on them
-		symEval = new SymbolicPropogator(program);
+		symEval = new SymbolicPropagator(program);
 		// now flow with the simple block of this branch....
 
 		// for each unknown branch destination,

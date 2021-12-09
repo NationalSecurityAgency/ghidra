@@ -65,7 +65,7 @@ public class DecompilerFunctionAnalyzer extends AbstractAnalyzer {
 
 	public DecompilerFunctionAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.FUNCTION_ANALYZER);
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.after().after());
+		setPriority(AnalysisPriority.DATA_TYPE_PROPAGATION.after().after());
 		setSupportsOneTimeAnalysis();
 	}
 

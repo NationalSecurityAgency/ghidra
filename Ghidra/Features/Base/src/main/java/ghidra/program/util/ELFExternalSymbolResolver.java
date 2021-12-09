@@ -104,7 +104,7 @@ public class ELFExternalSymbolResolver {
 				}
 				catch (VersionException e) {
 					messageLog.appendMsg(
-						"Referenced external program requires updgrade, unable to consider symbols: " +
+						"Referenced external program requires upgrade, unable to consider symbols: " +
 							libPath);
 				}
 				finally {

@@ -115,7 +115,7 @@ public class CustomTOCView extends TOCView {
 				return doCreateItem(tagName, atts, hs, locale);
 			}
 			catch (Exception e) {
-				Msg.error(this, "Unexected error creating a TOC item", e);
+				Msg.error(this, "Unexpected error creating a TOC item", e);
 				throw new RuntimeException("Unexpected error creating a TOC item", e);
 			}
 		}

@@ -432,7 +432,7 @@ public class CliBlobCustomAttrib extends CliBlob {
 
 					default:
 						Msg.info(this,
-							"A CustomAttrib with an unprocessed element type was deteceted: " +
+							"A CustomAttrib with an unprocessed element type was detected: " +
 								param.getRepresentation());
 				}
 			}

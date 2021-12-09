@@ -429,7 +429,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		restoreDefaults();
 
 		KeyStroke currentBinding = getKeyBinding(actionName);
-		assertEquals("Key binding not restored after a call to restore defautls", defaultKeyStroke,
+		assertEquals("Key binding not restored after a call to restore defaults", defaultKeyStroke,
 			currentBinding);
 		assertOptionsKeyStroke(actionName, pluginName, defaultKeyStroke);
 	}
@@ -455,7 +455,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		restoreDefaults();
 
 		KeyStroke currentBinding = getKeyBinding(actionName);
-		assertEquals("Key binding not restored after a call to restore defautls", defaultKeyStroke,
+		assertEquals("Key binding not restored after a call to restore defaults", defaultKeyStroke,
 			currentBinding);
 		assertOptionsKeyStroke(actionName, pluginName, defaultKeyStroke);
 	}

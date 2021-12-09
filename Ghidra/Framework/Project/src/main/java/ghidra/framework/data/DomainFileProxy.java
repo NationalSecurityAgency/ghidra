@@ -95,7 +95,7 @@ public class DomainFileProxy implements DomainFile {
 
 	@Override
 	public void setReadOnly(boolean state) {
-		throw new UnsupportedOperationException("setReadOnly() not suppported on DomainFileProxy");
+		throw new UnsupportedOperationException("setReadOnly() not supported on DomainFileProxy");
 	}
 
 	@Override

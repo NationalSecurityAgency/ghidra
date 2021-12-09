@@ -319,7 +319,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		Color mostRecentColor = controller.getMostRecentColor();
 
 		Assert.assertNotEquals(
-			"Test environment not setup correctly--should have default backgrond " +
+			"Test environment not setup correctly--should have default background " +
 				"colors applied",
 			startBackgroundColor, mostRecentColor);
 

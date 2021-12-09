@@ -342,7 +342,7 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 
 	@Override
 	public Address getFallFrom() {
-		throw new UnsupportedOperationException("Not supported by pseduo instruction");
+		throw new UnsupportedOperationException("Not supported by pseudo instruction");
 //		// check if the instruction before this is in a delay slot
 //		// If it is then back up until hit an instruction that claims
 //		// to be a delay slot instruction that is not in a delay slot

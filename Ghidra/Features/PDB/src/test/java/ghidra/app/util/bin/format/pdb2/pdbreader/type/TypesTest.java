@@ -100,7 +100,7 @@ public class TypesTest extends AbstractGenericTest {
 			substringListMsType1 = dummyPdb700.addItemRecord(item);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}

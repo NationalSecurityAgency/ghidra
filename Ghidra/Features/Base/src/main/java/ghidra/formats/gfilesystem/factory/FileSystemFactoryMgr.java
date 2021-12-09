@@ -81,7 +81,7 @@ public class FileSystemFactoryMgr {
 			Msg.error(this,
 				"GFileSystem type '" + fsir.getType() + "' registered more than one time: " +
 					fsClass.getName() + ", " + prevFSI.getFSClass().getName() +
-					", ommitting second instance.");
+					", omitting second instance.");
 			return;
 		}
 

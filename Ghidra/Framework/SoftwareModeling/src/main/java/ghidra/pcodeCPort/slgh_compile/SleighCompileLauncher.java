@@ -275,7 +275,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 				"Options file not found: " + optionsFile.getAbsolutePath());
 			if (SystemUtilities.isInDevelopmentMode()) {
 				Msg.error(SleighCompile.class,
-					"Eclipse language module must be selected and 'gradle prepdev' prevously run");
+					"Eclipse language module must be selected and 'gradle prepdev' previously run");
 			}
 			return null;
 		}

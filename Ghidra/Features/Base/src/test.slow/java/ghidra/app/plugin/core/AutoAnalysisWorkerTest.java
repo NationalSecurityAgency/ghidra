@@ -103,9 +103,9 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 			// Can't invoke action since we are in background task here
 
 			Options list = p.getOptions("TEST");
-			assertTrue("Higher priorty analysis task failed to run first",
+			assertTrue("Higher priority analysis task failed to run first",
 				list.getBoolean("p0", false));
-			assertTrue("Lower priorty analysis task failed to run last",
+			assertTrue("Lower priority analysis task failed to run last",
 				!list.getBoolean("p1", false));
 
 			cb.goToField(addr("0x1001100"), "Operands", 0, 0);

@@ -174,7 +174,7 @@ public class AARCH64PltThunkAnalyzer extends AbstractAnalyzer {
 	private void analyzePltThunk(Program program, Address entryAddr, int thunkSize, TaskMonitor monitor) 
 			throws CancelledException {
 		
-		SymbolicPropogator symEval = new SymbolicPropogator(program);
+		SymbolicPropagator symEval = new SymbolicPropagator(program);
 		symEval.setParamRefCheck(false);
 		symEval.setReturnRefCheck(false);
 		symEval.setStoredRefCheck(false);

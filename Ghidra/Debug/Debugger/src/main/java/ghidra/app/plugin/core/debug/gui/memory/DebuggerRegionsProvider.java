@@ -427,7 +427,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	protected void promptRegionProposal(Collection<RegionMapEntry> proposal) {
 		if (proposal.isEmpty()) {
 			Msg.showInfo(this, getComponent(), "Map Regions",
-				"Could not formulate a propsal for any selection region." +
+				"Could not formulate a proposal for any selection region." +
 					" You may need to import and/or open the destination images first.");
 			return;
 		}

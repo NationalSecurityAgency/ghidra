@@ -192,7 +192,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	public void testMarkupDestinationAddressChangedEvent() throws Exception {
 		Msg.debug(this, "\tcalling getManualMatchSet()");
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
-		Msg.debug(this, "\tcalling clrearEvents()");
+		Msg.debug(this, "\tcalling clearEvents()");
 		clearEvents();
 		Msg.debug(this, "\tcalling createRandomMatch()");
 		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(null);
@@ -312,7 +312,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 			return events.size() >= n;
 		});
 
-		assertEquals("Incorrect numbrer of domain events", n, events.size());
+		assertEquals("Incorrect number of domain events", n, events.size());
 	}
 
 	private void clearEvents() {

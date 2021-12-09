@@ -612,7 +612,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 		// TODO: we could get corroborating information from other means
 		//          (function right above, starts like a function, etc...)
 		//
-//		mgr.createFunction(functionStarts, false, AnalysisPriority.DATA_TYPE_PROPOGATION.getNext());
+//		mgr.createFunction(functionStarts, false, AnalysisPriority.DATA_TYPE_PROPAGATION.getNext());
 	}
 
 	private boolean shouldBeValidFunction(Program program, Instruction targetInstr) {

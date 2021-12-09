@@ -79,7 +79,7 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 			processAssociationAccepted(impliedMatches);
 		}
 		catch (CancelledException e) {
-			Msg.info(this, "User cancelled finding implied matches when accepting an assocation");
+			Msg.info(this, "User cancelled finding implied matches when accepting an association");
 		}
 	}
 
@@ -127,7 +127,7 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 			processAssociationCleared(impliedMatches);
 		}
 		catch (CancelledException e) {
-			Msg.info(this, "User cancelled finding implied matches when clearing an assocation");
+			Msg.info(this, "User cancelled finding implied matches when clearing an association");
 		}
 	}
 

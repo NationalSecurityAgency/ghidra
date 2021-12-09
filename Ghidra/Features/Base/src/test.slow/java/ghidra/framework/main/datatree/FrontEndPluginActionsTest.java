@@ -793,7 +793,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 
 	private void assertProgramName(GTable table, String programName) {
 		int row = getRow(table, programName);
-		assertTrue("No row exsists for '" + programName + "'", row != -1);
+		assertTrue("No row exists for '" + programName + "'", row != -1);
 	}
 
 	private int getRow(GTable table, String programName) {

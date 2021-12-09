@@ -649,7 +649,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 					System.exit(-1);
 				}
 				else if (defaultPasswordExpiration == 0) {
-					System.out.println("Default password expiration has been disbaled.");
+					System.out.println("Default password expiration has been disabled.");
 				}
 			}
 			else if (s.startsWith("-jaas")) {

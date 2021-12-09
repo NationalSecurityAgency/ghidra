@@ -77,7 +77,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 			screen.setUp();
 		}
 		catch (Exception e) {
-			failWithException("Unepected exception in setup", e);
+			failWithException("Unexpected exception in setup", e);
 		}
 
 		super.setUp();

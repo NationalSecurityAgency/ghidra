@@ -156,7 +156,7 @@ public class PropagateExternalParametersScript extends GhidraScript {
 						if (checkEnoughPushes(cuIt, params.length)) {
 							CodeUnitIterator codeUnitsToRef =
 								getCodeUnitsFromFunctionStartToRef(thunkRefFunc, thunkRefAddr);
-							propogateParams(params, codeUnitsToRef, extFunc.getName());
+							propagateParams(params, codeUnitsToRef, extFunc.getName());
 							println("Processing external function: " + extFuncName + " at " +
 								thunkRefAddr.toString());
 						}
@@ -169,7 +169,7 @@ public class PropagateExternalParametersScript extends GhidraScript {
 				if (checkEnoughPushes(cuIt, params.length)) {
 					CodeUnitIterator codeUnitsToRef =
 						getCodeUnitsFromFunctionStartToRef(calledFromFunc, refAddr);
-					propogateParams(params, codeUnitsToRef, extFunc.getName());
+					propagateParams(params, codeUnitsToRef, extFunc.getName());
 					println("Processing external function: " + extFuncName + " at " +
 						refAddr.toString());
 				}
@@ -264,7 +264,7 @@ public class PropagateExternalParametersScript extends GhidraScript {
 		return false; // not enough params between ref and top of function
 	}
 
-	void propogateParams(Parameter[] params, CodeUnitIterator cuIt, String extFuncName) {
+	void propagateParams(Parameter[] params, CodeUnitIterator cuIt, String extFuncName) {
 
 		int index = 0;
 		int numSkips = 0;

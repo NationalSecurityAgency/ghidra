@@ -35,7 +35,7 @@ public class ReturnDescriptionMsSymbol extends AbstractMsSymbol {
 		UNKNOWN("unknown return", -1),
 		VOID("void return", 0x00),
 		RETURN_DATA_IN_REGISTERS("return data in registers", 0x01),
-		INDIRECT_CALLER_ALLOCATED_NEAR("indirected caller-allocated near", 0x02),
+		INDIRECT_CALLER_ALLOCATED_NEAR("indirect caller-allocated near", 0x02),
 		INDIRECT_CALLER_ALLOCATED_FAR("indirect caller-allocated far", 0x03),
 		INDIRECT_RETURNEE_ALLOCATED_NEAR("indirect returnee allocated near", 0x04),
 		INDIRECT_RETURNEE_ALLOCATED_FAR("indirect returnee allocated far", 0x05),

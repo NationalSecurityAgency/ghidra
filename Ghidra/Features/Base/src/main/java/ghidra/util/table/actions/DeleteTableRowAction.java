@@ -109,7 +109,7 @@ public class DeleteTableRowAction extends DockingAction {
 		TableModel model = table.getModel();
 		if (!(model instanceof RowObjectTableModel)) {
 			throw new AssertException("This action cannot delete rows for the given table model." +
-				"You can override this method to peform the delete action yourself.");
+				"You can override this method to perform the delete action yourself.");
 		}
 
 		if (checkForBusy(model)) {
@@ -138,7 +138,7 @@ public class DeleteTableRowAction extends DockingAction {
 
 		if (!(model instanceof ThreadedTableModel)) {
 			throw new AssertException("This action cannot delete rows for the given table model." +
-				"You can override this method to peform the delete action yourself.");
+				"You can override this method to perform the delete action yourself.");
 		}
 
 		ThreadedTableModel<Object, Object> threadedModel =

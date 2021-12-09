@@ -145,7 +145,7 @@ public class JavaHelpPlugin extends Plugin implements FrontEndable {
 			List<HelpInfoObject> helpInfos = new ArrayList<>(map.size());
 
 			monitor.initialize(map.size());
-			monitor.setMessage("Procesing actions...");
+			monitor.setMessage("Processing actions...");
 			iter = map.keySet().iterator();
 			int i = 1;
 			while (iter.hasNext()) {
@@ -159,7 +159,7 @@ public class JavaHelpPlugin extends Plugin implements FrontEndable {
 				monitor.initialize(1);
 			}
 
-			if (helpInfos.size() == 0) {
+			if (helpInfos.isEmpty()) {
 				Msg.showInfo(this, tool.getToolFrame(), "Help Validation Complete",
 					"No items missing help were found");
 				return;

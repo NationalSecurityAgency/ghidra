@@ -102,7 +102,7 @@ public class SparseImageDecompressor {
 				totalBlocks += chunkSize;
 			}
 			else {
-				throw new IOException("Unkown chunk type: " + chunkType);
+				throw new IOException("Unknown chunk type: " + chunkType);
 			}
 			monitor.incrementProgress(1);
 		}

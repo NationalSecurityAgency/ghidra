@@ -85,7 +85,7 @@ public class SleighDebugLogger {
 
 		if (!(language instanceof SleighLanguage)) {
 			throw new IllegalArgumentException(
-				"unsupport language provider: " + language.getClass().getSimpleName());
+				"unsupported language provider: " + language.getClass().getSimpleName());
 		}
 
 		ContextCache contextCache = new ContextCache();

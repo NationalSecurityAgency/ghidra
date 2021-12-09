@@ -45,7 +45,7 @@ public class CParserPluginScreenShots extends GhidraScreenShotGenerator {
 			"C Parser: Encountered errors during parse.\n" +
 				"        in C:\\tmp\\samp.h near line 12\n " +
 				"       near token: \"This function or variable may be unsafe. Consider using \" \n" +
-				"        Last Valid Dataype: PCUWSTR");
+				"        Last Valid Datatype: PCUWSTR");
 		captureDialog();
 		closeAllWindowsAndFrames();
 	}

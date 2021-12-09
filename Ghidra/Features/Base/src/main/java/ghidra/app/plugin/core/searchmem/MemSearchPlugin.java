@@ -381,7 +381,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			"Initializes memory search byte sequence from " +
 				"the current selection provided the selection is less than 10 bytes.");
 		opt.registerOption(PluginConstants.AUTO_RESTRICT_SELECTION, true, null,
-			"Automactically adjusts memory searches restricted" +
+			"Automatically adjusts memory searches restricted" +
 				" to the current selection, as selections comes and goes");
 		opt.registerOption(GhidraOptions.OPTION_SEARCH_LIMIT, DEFAULT_SEARCH_LIMIT, null,
 			"Number of search hits found before stopping");

@@ -36,7 +36,7 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 
 	public StackVariableAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.FUNCTION_ANALYZER);
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.after().after().after());
+		setPriority(AnalysisPriority.DATA_TYPE_PROPAGATION.after().after().after());
 		setDefaultEnablement(true);
 		setSupportsOneTimeAnalysis();
 	}
@@ -71,7 +71,7 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 	public void registerOptions(Options options, Program program) {
 		options.registerOption(GhidraLanguagePropertyKeys.USE_NEW_FUNCTION_STACK_ANALYSIS,
 			!useOldStackAnalysisByDefault(program), null,
-			"Use General Stack Reference Propogator (This works best on most processors)");
+			"Use General Stack Reference Propagator (This works best on most processors)");
 
 		options.registerOption("Create Local Variables", doLocalAnalysis, null,
 			"Create Function Local stack variables and references");

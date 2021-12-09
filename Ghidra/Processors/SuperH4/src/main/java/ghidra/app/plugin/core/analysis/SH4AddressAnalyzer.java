@@ -71,7 +71,7 @@ public class SH4AddressAnalyzer extends ConstantPropagationAnalyzer {
 
 	@Override
 	public AddressSetView flowConstants(final Program program, Address flowStart,
-			AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
+			AddressSetView flowSet, final SymbolicPropagator symEval, final TaskMonitor monitor)
 			throws CancelledException {
 
 		// follow all flows building up context

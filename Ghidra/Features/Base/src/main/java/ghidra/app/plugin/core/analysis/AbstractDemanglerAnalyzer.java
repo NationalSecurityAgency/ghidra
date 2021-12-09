@@ -48,7 +48,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 	public AbstractDemanglerAnalyzer(String name, String description) {
 		super(name, description, AnalyzerType.BYTE_ANALYZER);
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.before().before().before());
+		setPriority(AnalysisPriority.DATA_TYPE_PROPAGATION.before().before().before());
 		setSupportsOneTimeAnalysis();
 	}
 

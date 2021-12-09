@@ -177,7 +177,7 @@ class CategoryDB extends DatabaseObject implements Category {
 			catch (IOException e) {
 				mgr.dbError(e);
 			}
-			parent.catagoryRenamed(this, oldName);
+			parent.categoryRenamed(this, oldName);
 			mgr.categoryRenamed(oldPath, this);
 		}
 		finally {
@@ -608,7 +608,7 @@ class CategoryDB extends DatabaseObject implements Category {
 		parent = newParent;
 	}
 
-	private void catagoryRenamed(CategoryDB childCategory, String oldName) {
+	private void categoryRenamed(CategoryDB childCategory, String oldName) {
 		subcategoryMap.remove(oldName);
 		subcategoryMap.put(childCategory.getName(), childCategory);
 	}

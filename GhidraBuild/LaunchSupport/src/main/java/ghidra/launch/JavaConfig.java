@@ -307,7 +307,7 @@ public class JavaConfig {
 		}
 		catch (NumberFormatException e) {
 			throw new ParseException(
-				"Failed to parse application's minimum supported Java major verison", 0);
+				"Failed to parse application's minimum supported Java major version", 0);
 		}
 
 		// Optional properties
@@ -318,7 +318,7 @@ public class JavaConfig {
 			}
 			catch (NumberFormatException e) {
 				throw new ParseException(
-					"Failed to parse application's maximum supported Java major verison", 0);
+					"Failed to parse application's maximum supported Java major version", 0);
 			}
 		}
 		else {

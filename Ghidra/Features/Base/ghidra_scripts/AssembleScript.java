@@ -28,7 +28,7 @@ import ghidra.program.model.listing.Instruction;
 public class AssembleScript extends GhidraScript {
 	@Override
 	public void run() throws Exception {
-		monitor.setMessage("Constructing Assember");
+		monitor.setMessage("Constructing Assembler");
 		// First, obtain an assembler bound to the current program.
 		// If a suitable assembler has not yet been build, this will take some time to build it.
 		Assembler asm = Assemblers.getAssembler(currentProgram);

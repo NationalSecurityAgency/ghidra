@@ -52,7 +52,7 @@ public class ChooseGhidraModuleProjectWizardPage extends WizardPage {
 		container.setLayout(new GridLayout(2, false));
 
 		Label projectNameLabel = new Label(container, SWT.NULL);
-		projectNameLabel.setText("Ghida module project:");
+		projectNameLabel.setText("Ghidra module project:");
 		projectCombo = new Combo(container, SWT.DROP_DOWN | SWT.READ_ONLY);
 		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
 		projectCombo.setLayoutData(gd);

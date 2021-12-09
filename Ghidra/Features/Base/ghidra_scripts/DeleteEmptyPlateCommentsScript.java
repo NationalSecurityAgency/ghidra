@@ -50,7 +50,7 @@ public class DeleteEmptyPlateCommentsScript extends GhidraScript {
 		}
 		if (updateCount > 0) {
 			String cmt = updateCount > 1? "comments" : "comment";
-			println("Removed " + updateCount + " emtpy plate " + cmt + ".");
+			println("Removed " + updateCount + " empty plate " + cmt + ".");
 		}
 		else {
 			println("Did not find any empty plate comments.");

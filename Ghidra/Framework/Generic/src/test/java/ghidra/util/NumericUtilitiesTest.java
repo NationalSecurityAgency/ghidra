@@ -316,7 +316,7 @@ public class NumericUtilitiesTest {
 
 	private void asssertBytesEquals(byte[] expected, byte[] actual) {
 
-		String errorMessage = "Byte arrays not equal - exptected: " + Arrays.toString(expected) +
+		String errorMessage = "Byte arrays not equal - expected: " + Arrays.toString(expected) +
 			"; actual: " + Arrays.toString(actual);
 
 		assertEquals(errorMessage, expected.length, actual.length);

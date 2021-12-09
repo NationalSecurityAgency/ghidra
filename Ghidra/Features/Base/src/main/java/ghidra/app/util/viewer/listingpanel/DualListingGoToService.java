@@ -147,14 +147,14 @@ class DualListingGoToService implements GoToService {
 	@Override
 	public boolean goToExternalLocation(ExternalLocation extLoc, boolean checkNavigationOption) {
 		throw new UnsupportedOperationException(
-			"Connot Go To an external address from a dual listing view.");
+			"Cannot Go To an external address from a dual listing view.");
 	}
 
 	@Override
 	public boolean goToExternalLocation(Navigatable navigatable, ExternalLocation extLoc,
 			boolean checkNavigationOption) {
 		throw new UnsupportedOperationException(
-			"Connot Go To an external address from a dual listing view.");
+			"Cannot Go To an external address from a dual listing view.");
 	}
 
 	@Override

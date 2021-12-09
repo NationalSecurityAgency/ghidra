@@ -24,7 +24,7 @@ import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ContextEvaluator;
-import ghidra.program.util.SymbolicPropogator;
+import ghidra.program.util.SymbolicPropagator;
 import ghidra.program.util.VarnodeContext;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -105,7 +105,7 @@ public class HCS12ConstantAnalyzer extends ConstantPropagationAnalyzer {
 
 	@Override
 	public AddressSetView flowConstants(final Program program, Address flowStart, AddressSetView flowSet,
-			final SymbolicPropogator symEval, final TaskMonitor monitor) throws CancelledException {
+			final SymbolicPropagator symEval, final TaskMonitor monitor) throws CancelledException {
 
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions 

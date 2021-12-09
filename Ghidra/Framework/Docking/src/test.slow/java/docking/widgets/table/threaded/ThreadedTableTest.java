@@ -899,7 +899,7 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 				recorder.record("Swing - model load cancelled");
 			}
 			else {
-				recorder.record("Swing - model load finsished; size: " + model.getRowCount());
+				recorder.record("Swing - model load finished; size: " + model.getRowCount());
 			}
 		}
 

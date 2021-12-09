@@ -19,7 +19,7 @@ public class CodeFlowGraphType extends ProgramGraphType {
 
 	public CodeFlowGraphType() {
 		super("Code Flow Graph",
-			"Shows code block flow (similar to Block Flow graph type, but shows the code in each veretx)");
+			"Shows code block flow (similar to Block Flow graph type, but shows the code in each vertex)");
 	}
 
 }

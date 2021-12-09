@@ -48,7 +48,7 @@ public class SparcAnalyzer extends ConstantPropagationAnalyzer {
 	}
 
 	@Override
-	public AddressSetView flowConstants(final Program program, Address flowStart, AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
+	public AddressSetView flowConstants(final Program program, Address flowStart, AddressSetView flowSet, final SymbolicPropagator symEval, final TaskMonitor monitor)
 			throws CancelledException {
 		
 		// get the function body

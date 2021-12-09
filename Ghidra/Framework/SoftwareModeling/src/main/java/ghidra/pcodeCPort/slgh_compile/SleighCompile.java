@@ -746,7 +746,7 @@ public class SleighCompile extends SleighBase {
 	}
 
 	public void setUnnecessaryPcodeWarning(boolean val) {
-		entry("setUnecessaryPcodeWarning", val);
+		entry("setUnnecessaryPcodeWarning", val);
 		warnunnecessarypcode = val;
 	}
 

@@ -203,7 +203,7 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 		if (v.hasBeenEmphasised()) {
 
 			// below, once we are zoomed-out, then the emphasis should happen
-			Msg.debug(this, "No vertice should have been emphasized, since we are zoomed in " +
+			Msg.debug(this, "No vertex should have been emphasized, since we are zoomed in " +
 				" - twinkled vertex: " + v + "; all vertex states: ");
 			vertices.forEach(vertex -> {
 				Msg.debug(this, vertex + " - " + vertex.hasBeenEmphasised());

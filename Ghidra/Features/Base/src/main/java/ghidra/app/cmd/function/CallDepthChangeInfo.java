@@ -27,7 +27,7 @@ import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.util.*;
 import ghidra.program.util.*;
-import ghidra.program.util.SymbolicPropogator.Value;
+import ghidra.program.util.SymbolicPropagator.Value;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -72,7 +72,7 @@ public class CallDepthChangeInfo {
 	private Register stackReg = null;
 	private Register frameReg = null;
 
-	SymbolicPropogator symEval = null;
+	SymbolicPropagator symEval = null;
 
 	private int stackPurge = Function.UNKNOWN_STACK_DEPTH_CHANGE;
 
@@ -159,7 +159,7 @@ public class CallDepthChangeInfo {
 		depthMap = new DefaultIntPropertyMap("depth");
 		trans = new VarnodeTranslator(program);
 
-		symEval = new SymbolicPropogator(program);
+		symEval = new SymbolicPropagator(program);
 		symEval.setParamRefCheck(false);
 		symEval.setReturnRefCheck(false);
 		symEval.setStoredRefCheck(false);
@@ -627,7 +627,7 @@ public class CallDepthChangeInfo {
 		}
 
 		//		if (processTerminal) {
-		//			backPropogateStackDepth(program, func, badStackSet, this,
+		//			backPropagateStackDepth(program, func, badStackSet, this,
 		// procContext, terminalPoints, monitor);
 		//		}
 
@@ -993,7 +993,7 @@ public class CallDepthChangeInfo {
 		}
 
 		//		if (processTerminal) {
-		//			backPropogateStackDepth(program, func, badStackSet, this,
+		//			backPropagateStackDepth(program, func, badStackSet, this,
 		// procContext, terminalPoints, monitor);
 		//		}
 

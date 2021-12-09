@@ -79,7 +79,7 @@ class UninitializedSubMemoryBlock extends SubMemoryBlock {
 		adapter.updateSubBlockRecord(record);
 
 		DBRecord newSubRecord = adapter.createSubBlockRecord(-1, 0, newLength,
-			MemoryMapDBAdapter.SUB_TYPE_UNITIALIZED, 0, 0);
+			MemoryMapDBAdapter.SUB_TYPE_UNINITIALIZED, 0, 0);
 
 		return new UninitializedSubMemoryBlock(adapter, newSubRecord);
 	}

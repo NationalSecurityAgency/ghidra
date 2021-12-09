@@ -27,7 +27,7 @@ public class FunctionStartPostAnalyzer extends FunctionStartAnalyzer {
 	public FunctionStartPostAnalyzer() {
 		super(NAME + " After Code", AnalyzerType.INSTRUCTION_ANALYZER);
 		setSupportsOneTimeAnalysis(false);
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.before().before());
+		setPriority(AnalysisPriority.DATA_TYPE_PROPAGATION.before().before());
 	}
 
 	@Override

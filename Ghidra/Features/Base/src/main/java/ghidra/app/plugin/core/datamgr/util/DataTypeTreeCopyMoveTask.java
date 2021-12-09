@@ -599,7 +599,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 				dtMgr.replaceDataType(existingDt, replacementDt, true);
 			}
 			catch (DataTypeDependencyException e) {
-				errors.add("Replace failed.  Existing type " + existingDt + "; replacment type " +
+				errors.add("Replace failed.  Existing type " + existingDt + "; replacement type " +
 					replacementDt + ". " + e.getMessage());
 			}
 		}

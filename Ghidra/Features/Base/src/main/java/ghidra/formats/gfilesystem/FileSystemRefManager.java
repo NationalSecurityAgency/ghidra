@@ -166,7 +166,7 @@ public class FileSystemRefManager {
 		// where instances are created and thrown away without a close() to probe
 		// filesystem container files.
 		if (fs != null && !(fs instanceof GFileSystemBase)) {
-			Msg.warn(this, "Unclosed FilesytemRefManager for filesystem: " + fs.getClass() + ", " +
+			Msg.warn(this, "Unclosed FileSytemRefManager for filesystem: " + fs.getClass() + ", " +
 				fs.getName());
 		}
 	}

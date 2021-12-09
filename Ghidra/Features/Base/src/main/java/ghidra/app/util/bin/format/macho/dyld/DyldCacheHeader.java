@@ -692,7 +692,7 @@ public class DyldCacheHeader implements StructConverter {
 		if (accelerateInfoAddr == 0) {
 			return;
 		}
-		monitor.setMessage("Parsing DYLD accelerateor info...");
+		monitor.setMessage("Parsing DYLD accelerator info...");
 		monitor.initialize(imagesTextCount);
 		try {
 			Address addr = space.getAddress(accelerateInfoAddr);

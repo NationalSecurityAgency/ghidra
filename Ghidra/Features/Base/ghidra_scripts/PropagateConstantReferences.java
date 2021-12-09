@@ -28,7 +28,7 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionIterator;
 import ghidra.program.util.ContextEvaluator;
-import ghidra.program.util.SymbolicPropogator;
+import ghidra.program.util.SymbolicPropagator;
 
 public class PropagateConstantReferences extends GhidraScript {
 
@@ -72,7 +72,7 @@ public class PropagateConstantReferences extends GhidraScript {
 			// use context to fill out addresses on certain instructions 
 			ContextEvaluator eval = new ConstantPropagationContextEvaluator(true);
 
-			SymbolicPropogator symEval = new SymbolicPropogator(currentProgram);
+			SymbolicPropagator symEval = new SymbolicPropagator(currentProgram);
 
 			symEval.flowConstants(start, func.getBody(), eval, true, monitor);
 		}

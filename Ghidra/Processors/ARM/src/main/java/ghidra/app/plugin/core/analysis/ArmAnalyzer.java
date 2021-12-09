@@ -76,7 +76,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 
 	@Override
 	public AddressSet flowConstants(final Program program, Address flowStart,
-			AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
+			AddressSetView flowSet, final SymbolicPropagator symEval, final TaskMonitor monitor)
 			throws CancelledException {
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions
@@ -223,7 +223,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 	}
 
 	private void recoverSwitches(final Program program, AddressSet destSet,
-			SymbolicPropogator symEval, TaskMonitor monitor) throws CancelledException {
+			SymbolicPropagator symEval, TaskMonitor monitor) throws CancelledException {
 
 		// now handle symbolic execution assuming values!
 		class SwitchEvaluator implements ContextEvaluator {
@@ -492,10 +492,10 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 
 			Instruction targetInstr = program.getListing().getInstructionAt(loc);
 
-			SymbolicPropogator targetEval = symEval;
+			SymbolicPropagator targetEval = symEval;
 			// if this is a tbX instruction, don't assume any old values
 			if (targetInstr != null && targetInstr.getMnemonicString().startsWith("tb")) {
-				targetEval = new SymbolicPropogator(program);
+				targetEval = new SymbolicPropagator(program);
 			}
 
 			Address zeroAddr = targetInstr.getMinAddress().getNewAddress(0);

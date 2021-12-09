@@ -158,7 +158,7 @@ public class FunctionNameMarkupType extends FunctionEntryPointBasedAbstractMarku
 		}
 		catch (CircularDependencyException e) {
 			throw new VersionTrackingApplyException("Unable to restore function name: " +
-				destinationName + " due to circular dependancy on namespaces", e);
+				destinationName + " due to circular dependency on namespaces", e);
 		}
 	}
 
@@ -238,7 +238,7 @@ public class FunctionNameMarkupType extends FunctionEntryPointBasedAbstractMarku
 		}
 		catch (CircularDependencyException e) {
 			throw new VersionTrackingApplyException("Unable to apply function name: " + name +
-				" due to circular dependancy on namespaces", e);
+				" due to circular dependency on namespaces", e);
 		}
 		return true;
 	}

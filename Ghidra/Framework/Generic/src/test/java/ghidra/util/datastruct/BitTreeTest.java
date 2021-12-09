@@ -65,7 +65,7 @@ public class BitTreeTest extends AbstractGenericTest {
         expect(bt, new int[]{});
 
 
-        System.out.println("Test puting all keys in set");
+        System.out.println("Test putting all keys in set");
         for(int i=0;i<1000;i++) {
             bt.put((short)i);
         }
@@ -98,7 +98,7 @@ public class BitTreeTest extends AbstractGenericTest {
             k = bt.getNext(k);
         }
         if (k != -1) {
-            Assert.fail("More values in bitTree than expeced");
+            Assert.fail("More values in bitTree than expected");
         }
     }
     public static void expectBackwards(BitTree bt, int[] values) {
@@ -110,7 +110,7 @@ public class BitTreeTest extends AbstractGenericTest {
             k = bt.getPrevious(k);
         }
         if (k != -1) {
-            Assert.fail("More values in bitTree than expeced");
+            Assert.fail("More values in bitTree than expected");
         }
     }
 

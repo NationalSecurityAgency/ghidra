@@ -276,7 +276,7 @@ public class SearchStringDialog extends DialogComponentProvider {
 		loadedBlocksRB.setToolTipText(HTMLUtilities.toHTML(
 			"Only searches memory blocks that are loaded in a running executable.\n  " +
 				"Ghidra now includes memory blocks for other data such as section headers.\n" +
-				"This option exludes these other (non-loaded) blocks."));
+				"This option excludes these other (non-loaded) blocks."));
 		allBlocksRB.setToolTipText(
 			"Searches all memory blocks including blocks that are not actually loaded in a running executable");
 

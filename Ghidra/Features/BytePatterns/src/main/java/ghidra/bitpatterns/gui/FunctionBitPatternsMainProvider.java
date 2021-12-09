@@ -409,7 +409,7 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 			};
 		evaluateSelectedAction.setPopupMenuData(
 			new MenuData(new String[] { "Evaluate Selected Patterns" }));
-		evaluateSelectedAction.setDescription("Evalute Selected Patterns");
+		evaluateSelectedAction.setDescription("Evaluate Selected Patterns");
 		evaluateSelectedAction.setHelpLocation(
 			new HelpLocation("FunctionBitPatternsExplorerPlugin", "Evaluating_Patterns"));
 		tool.addLocalAction(this, evaluateSelectedAction);

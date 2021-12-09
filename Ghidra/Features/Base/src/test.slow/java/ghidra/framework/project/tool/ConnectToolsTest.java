@@ -98,7 +98,7 @@ public class ConnectToolsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 		if (tc.isConnected(BAD_EVENT_NAME)) {
 			Assert.fail("Connect Tools Failed: " + producer.getName() + " and " +
-				consumer.getName() + " conncted for BAD EVENT");
+				consumer.getName() + " connected for BAD EVENT");
 		}
 
 		//

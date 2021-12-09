@@ -337,7 +337,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 		}
 		catch (CodeUnitInsertionException e) {
 			log.appendMsg(DyldCacheAccelerateInfo.class.getSimpleName(),
-				"Failed to markup dependences.");
+				"Failed to markup dependencies.");
 		}
 	}
 

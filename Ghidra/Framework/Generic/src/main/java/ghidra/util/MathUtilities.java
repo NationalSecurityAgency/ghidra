@@ -30,7 +30,7 @@ public class MathUtilities {
 	 */
 	public static long unsignedDivide(long numerator, long denominator) {
 		if (denominator < 0) {
-			throw new IllegalArgumentException("denomintor too big");
+			throw new IllegalArgumentException("denominator too big");
 		}
 		if (numerator >= 0) {
 			return numerator / denominator;
@@ -56,7 +56,7 @@ public class MathUtilities {
 	 */
 	public static long unsignedModulo(long numerator, long denominator) {
 		if (denominator < 0) {
-			throw new IllegalArgumentException("denomintor too big");
+			throw new IllegalArgumentException("denominator too big");
 		}
 		if (numerator >= 0) {
 			return numerator % denominator;

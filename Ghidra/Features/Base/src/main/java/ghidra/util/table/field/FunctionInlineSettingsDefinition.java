@@ -26,7 +26,7 @@ public class FunctionInlineSettingsDefinition implements BooleanSettingsDefiniti
 	private static final String INLINE = "Show inline";
 	private static final String NAME = INLINE;
 	private static final String DESCRIPTION =
-		"On siganls to show the inline " + "function attribute when present";
+		"On signals to show the inline function attribute when present";
 	private static final boolean DEFAULT = false;
 
 	@Override

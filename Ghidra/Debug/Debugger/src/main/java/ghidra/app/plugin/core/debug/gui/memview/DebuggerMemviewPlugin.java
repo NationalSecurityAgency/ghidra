@@ -28,7 +28,7 @@ import ghidra.program.model.listing.Program;
 
 @PluginInfo( //
 		shortDescription = "Displays memory vs time", //
-		description = "Provides visualiztion/navigation across time/address axes", //
+		description = "Provides visualization/navigation across time/address axes", //
 		category = PluginCategoryNames.DEBUGGER, //
 		packageName = DebuggerPluginPackage.NAME, //
 		status = PluginStatus.RELEASED, //

@@ -1939,7 +1939,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		if (!program.getMemory().contains(startAddr, endAddr)) {
 			long length = endAddr.subtract(startAddr) + 1;
 			throw new CodeUnitInsertionException(
-				"Insufficent memory at address " + startAddr + " (length: " + length + " bytes)");
+				"Insufficient memory at address " + startAddr + " (length: " + length + " bytes)");
 		}
 
 		RecordIterator recIt = instAdapter.getRecords(startAddr, true);

@@ -282,7 +282,7 @@ public class AddressTypeOverviewColorService
 		options.registerOption("Undefined Color", DEFAULT_UNDEFINED_COLOR, help,
 			"Color for undefined bytes");
 		options.registerOption("Uninitialized Color", DEFAULT_UNINITIALIZED_COLOR, help,
-			"Color for uninitialize memory");
+			"Color for uninitialized memory");
 		options.registerOption("External Reference Color", DEFAULT_EXTERNAL_REF_COLOR, help,
 			"Color for external references");
 	}

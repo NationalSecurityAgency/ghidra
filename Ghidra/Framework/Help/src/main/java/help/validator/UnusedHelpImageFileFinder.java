@@ -44,13 +44,13 @@ public class UnusedHelpImageFileFinder {
 		List<HelpModuleLocation> helpCollections = collectHelp();
 
 		Collection<IMG> referencedIMGs = getReferencedIMGs(helpCollections);
-		debug("Found " + referencedIMGs.size() + " image referenes from help files");
+		debug("Found " + referencedIMGs.size() + " image references from help files");
 
 		Collection<Path> allImagesOnDisk = getAllImagesOnDisk(helpCollections);
 		debug("Found " + allImagesOnDisk.size() + " image files in help directories");
 
 		Collection<Path> unusedFiles = getUnusedFiles(referencedIMGs, allImagesOnDisk);
-		if (unusedFiles.size() == 0) {
+		if (unusedFiles.isEmpty()) {
 			System.out.println("No unused image files found!");
 			System.exit(0);
 		}
@@ -70,7 +70,7 @@ public class UnusedHelpImageFileFinder {
 		UnusedHelpImageFileFinder.debugEnabled = debugEnabled;
 
 		Collection<IMG> referencedIMGs = getReferencedIMGs(helpCollections);
-		debug("Found " + referencedIMGs.size() + " image referenes from help files");
+		debug("Found " + referencedIMGs.size() + " image references from help files");
 
 		Collection<Path> allImagesOnDisk = getAllImagesOnDisk(helpCollections);
 		debug("Found " + allImagesOnDisk.size() + " image files in help directories");

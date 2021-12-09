@@ -137,7 +137,7 @@ public class IntegerConstraintEditor<T extends Number> extends AbstractColumnCon
 			return Long.MIN_VALUE;
 		}
 		throw new IllegalArgumentException(
-			"IntegerValueConstraintEditor does not suppport values of type " + class1);
+			"IntegerValueConstraintEditor does not support values of type " + class1);
 	}
 
 	private long getMaxValue() {
@@ -157,7 +157,7 @@ public class IntegerConstraintEditor<T extends Number> extends AbstractColumnCon
 			return Long.MAX_VALUE;
 		}
 		throw new IllegalArgumentException(
-			"IntegerValueConstraintEditor does not suppport values of type " + class1);
+			"IntegerValueConstraintEditor does not support values of type " + class1);
 	}
 
 }

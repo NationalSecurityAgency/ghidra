@@ -60,7 +60,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 	public ArmAggressiveInstructionFinderAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
 		setPrototype();
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.after());
+		setPriority(AnalysisPriority.DATA_TYPE_PROPAGATION.after());
 		setSupportsOneTimeAnalysis();
 	}
 
@@ -468,7 +468,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 			todoSet = todoSet.subtract(cmd.getDisassembledAddressSet());
 			BookmarkEditCmd bcmd =
 				new BookmarkEditCmd(entry, BookmarkType.ANALYSIS,
-					"ARM Aggressive Intruction Finder", "Found code");
+					"ARM Aggressive Instruction Finder", "Found code");
 			bcmd.applyTo(curProgram);
 			return true;
 		}

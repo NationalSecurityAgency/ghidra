@@ -1442,7 +1442,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 				case CUSTOM_TYPE:
 				case FILE_TYPE:
 					changeFailedMessage +=
-						"Not allowed to change settings usings strings for type: " + optionType;
+						"Not allowed to change settings using strings for type: " + optionType;
 
 				case NO_TYPE:
 				default:
@@ -1468,7 +1468,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		Enum enumm = options.getEnum(analysisOption, null);
 		if (enumm == null) {
 			throw new IllegalStateException(
-				"Attempted to set an Enum option without an " + "existing enum value alreday set.");
+				"Attempted to set an Enum option without an existing enum value already set.");
 		}
 
 		@SuppressWarnings({ "rawtypes" })

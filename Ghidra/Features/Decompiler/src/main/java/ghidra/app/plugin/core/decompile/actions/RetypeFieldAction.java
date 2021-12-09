@@ -97,7 +97,7 @@ public class RetypeFieldAction extends AbstractDecompilerAction {
 		DataType originalDataType = comp != null ? comp.getDataType() : DataType.DEFAULT;
 		if (originalDataType instanceof BitFieldDataType) {
 			Msg.showError(this, tool.getToolFrame(), "Retype Failed",
-				"Retype of defind bit-field is not supported.");
+				"Retype of defined bit-field is not supported.");
 			return;
 		}
 

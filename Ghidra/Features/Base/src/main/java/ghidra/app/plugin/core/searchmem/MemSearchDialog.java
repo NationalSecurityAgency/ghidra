@@ -593,7 +593,7 @@ class MemSearchDialog extends DialogComponentProvider {
 		loadedBlocks.setToolTipText(HTMLUtilities.toHTML(
 			"Only searches memory blocks that are loaded in a running executable.\n  " +
 				"Ghidra now includes memory blocks for other data such as section headers.\n" +
-				"This option exludes these OTHER (non loaded) blocks."));
+				"This option excludes these OTHER (non loaded) blocks."));
 		allBlocks.setToolTipText(
 			"Searches all memory blocks including blocks that are not actually loaded in a running executable");
 

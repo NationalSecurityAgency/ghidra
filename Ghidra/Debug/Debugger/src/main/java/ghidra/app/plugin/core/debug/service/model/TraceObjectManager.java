@@ -356,7 +356,7 @@ public class TraceObjectManager {
 			}
 			//listenerForRecord.retroOfferMemMapperDependents();
 		}).exceptionally(ex -> {
-			Msg.error(this, "Could not intialize memory mapper", ex);
+			Msg.error(this, "Could not initialize memory mapper", ex);
 			return null;
 		});
 	}

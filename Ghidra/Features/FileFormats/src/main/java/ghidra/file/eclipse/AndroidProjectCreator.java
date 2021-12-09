@@ -209,7 +209,7 @@ public class AndroidProjectCreator {
 		}
 		catch (IOException ioe) {
 			Msg.info(this,
-				"XML file " + containerFile.getPath() + " is not AndriodXmlFileSystem compatible",
+				"XML file " + containerFile.getPath() + " is not AndroidXmlFileSystem compatible",
 				ioe);
 		}
 	}

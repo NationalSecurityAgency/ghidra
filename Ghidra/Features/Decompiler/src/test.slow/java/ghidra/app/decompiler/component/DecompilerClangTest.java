@@ -2144,7 +2144,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 		TokenHighlights providerHighlights =
 			getHighligtedTokens(theProvider, decompilerHighlighter);
-		assertNotNull("No highligts for highlighter in the given provider", providerHighlights);
+		assertNotNull("No highlights for highlighter in the given provider", providerHighlights);
 		Map<ClangToken, Color> matchingTokens = spyMatcher.getMatchingTokens();
 
 		for (Map.Entry<ClangToken, Color> entry : matchingTokens.entrySet()) {

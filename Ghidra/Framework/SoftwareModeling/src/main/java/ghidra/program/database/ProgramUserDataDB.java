@@ -568,7 +568,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			throw new AssertException("Unexpected Error", e);
 		}
 		catch (VersionException e) {
-			throw new IOException("Incompatable property data for '" +
+			throw new IOException("Incompatible property data for '" +
 				rec.getString(PROPERTY_NAME_COL) + "': " + e.getMessage());
 		}
 	}

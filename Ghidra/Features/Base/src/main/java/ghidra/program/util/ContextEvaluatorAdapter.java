@@ -21,7 +21,7 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.RefType;
 
 /**
- * Default behavior implementation of ContextEvaluator passed to SymbolicPropogator
+ * Default behavior implementation of ContextEvaluator passed to SymbolicPropagator
  * 
  * Override methods to inspect context.
  * 

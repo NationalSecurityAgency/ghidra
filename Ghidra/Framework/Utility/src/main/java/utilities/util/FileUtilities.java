@@ -959,7 +959,7 @@ public final class FileUtilities {
 				return FileSystems.newFileSystem(jarURI, env);
 			}
 			catch (IOException e1) {
-				Msg.debug(FileUtilities.class, "Unexepecedly could not create jar filesystem");
+				Msg.debug(FileUtilities.class, "Unexpectedly could not create jar filesystem");
 				return null;
 			}
 		}

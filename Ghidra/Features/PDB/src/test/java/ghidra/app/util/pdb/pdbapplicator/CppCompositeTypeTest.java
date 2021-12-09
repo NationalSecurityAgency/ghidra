@@ -752,7 +752,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			D_struct.addMember("d1", u4, false, 4);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -781,7 +781,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			D_struct.addMember("d1", u4, false, 4);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -848,7 +848,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			F_struct.addMember("f1", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -883,7 +883,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			F_struct.addMember("f1", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -912,7 +912,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			G_struct.addMember("g1", u4, false, 0);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -934,7 +934,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			G_struct.addMember("g1", u4, false, 4);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -963,7 +963,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			G_struct.addMember("g1", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -992,7 +992,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			H_struct.addMember("h1", u4, false, 0);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1014,7 +1014,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			H_struct.addMember("h1", u4, false, 4);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1043,7 +1043,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			H_struct.addMember("h1", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1076,7 +1076,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			G1_struct.addMember("g11", u4, false, 0);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1104,7 +1104,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			G1_struct.addMember("g11", u4, false, 4);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1139,7 +1139,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			G1_struct.addMember("g11", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1172,7 +1172,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			H1_struct.addMember("h11", u4, false, 0);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1200,7 +1200,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			H1_struct.addMember("h11", u4, false, 4);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1235,7 +1235,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			H1_struct.addMember("h11", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1264,7 +1264,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG1_struct.addMember("gg11", u4, false, 0);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1286,7 +1286,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG1_struct.addMember("gg11", u4, false, 4);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1315,7 +1315,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG1_struct.addMember("gg11", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1344,7 +1344,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG2_struct.addMember("gg21", u4, false, 0);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1366,7 +1366,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG2_struct.addMember("gg21", u4, false, 4);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1395,7 +1395,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG2_struct.addMember("gg21", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1424,7 +1424,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG3_struct.addMember("gg31", u4, false, 0);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1446,7 +1446,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG3_struct.addMember("gg31", u4, false, 4);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1475,7 +1475,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG3_struct.addMember("gg31", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1504,7 +1504,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG4_struct.addMember("gg41", u4, false, 4);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1533,7 +1533,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG4_struct.addMember("gg41", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1570,7 +1570,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I_struct.addMember("i1", u4, false, 0);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1604,7 +1604,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I_struct.addMember("i1", u4, false, 16);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1645,7 +1645,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I_struct.addMember("i1", u4, false, 32);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1690,7 +1690,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I1_struct.addMember("i11", u4, false, 16);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1735,7 +1735,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I1_struct.addMember("i11", u4, false, 32);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1780,7 +1780,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I2_struct.addMember("i21", u4, false, 16);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1825,7 +1825,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I2_struct.addMember("i21", u4, false, 32);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1865,7 +1865,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I3_struct.addMember("i31", u4, false, 0);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1903,7 +1903,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I3_struct.addMember("i31", u4, false, 16);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1948,7 +1948,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I3_struct.addMember("i31", u4, false, 32);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -1988,7 +1988,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I4_struct.addMember("i41", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2028,7 +2028,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I4_struct.addMember("i41", u4, false, 16);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2068,7 +2068,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I5_struct.addMember("i51", u4, false, 8);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2108,7 +2108,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I5_struct.addMember("i51", u4, false, 16);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2161,7 +2161,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J1_struct.addMember("j11", u4, false, 40);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2215,7 +2215,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J1_struct.addMember("j11", u4, false, 80);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2268,7 +2268,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J2_struct.addMember("j21", u4, false, 40);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2321,7 +2321,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J2_struct.addMember("j21", u4, false, 80);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2380,7 +2380,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J3_struct.addMember("j31", u4, false, 48);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2439,7 +2439,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J3_struct.addMember("j31", u4, false, 88);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2525,7 +2525,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J4_struct.addMember("j41", u4, false, 56);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2611,7 +2611,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J4_struct.addMember("j41", u4, false, 104);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2683,7 +2683,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J5_struct.addMember("j51", u4, false, 0); // TODO nned syntactic without index
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2769,7 +2769,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J5_struct.addMember("j51", u4, false, 56);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2855,7 +2855,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J5_struct.addMember("j51", u4, false, 104);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2906,7 +2906,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J6_struct.addMember("j61", u4, false, 12);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}
@@ -2957,7 +2957,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J6_struct.addMember("j61", u4, false, 16);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
+			String msg = "Error in static initialization of test: " + e;
 			Msg.error(null, msg);
 			throw new AssertException(msg);
 		}

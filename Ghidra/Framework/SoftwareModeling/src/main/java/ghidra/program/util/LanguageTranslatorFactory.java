@@ -167,7 +167,7 @@ public class LanguageTranslatorFactory {
 			}
 			catch (Exception e) {
 				Msg.error(this,
-					"Failed to instatiate language translator: " + translatorClass.getName(), e);
+					"Failed to instantiate language translator: " + translatorClass.getName(), e);
 				++badFileCount;
 			}
 		}

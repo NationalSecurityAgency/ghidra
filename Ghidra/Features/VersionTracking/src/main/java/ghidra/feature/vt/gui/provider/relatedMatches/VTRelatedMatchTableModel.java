@@ -36,7 +36,7 @@ import docking.widgets.table.TableColumnDescriptor;
 
 public class VTRelatedMatchTableModel extends AddressBasedTableModel<VTRelatedMatch> {
 
-	private static final String TITLE = "VTMatchMakupItem Table Model";
+	private static final String TITLE = "VTMatchMarkupItem Table Model";
 	private final VTController controller;
 
 	public VTRelatedMatchTableModel(VTController controller) {

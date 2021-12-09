@@ -86,26 +86,26 @@ public class RedBlackKeySetTest extends AbstractGenericTest {
 
     public static void expect(RedBlackKeySet bt, int[] values) {
         short k = bt.getFirst();
-        for(int i=0;i<values.length;i++) {
-            if (k != values[i]) {
-                Assert.fail("Expected "+values[i]+ " and got "+k);
+        for (int value : values) {
+            if (k != value) {
+                Assert.fail("Expected " + value + " and got " + k);
             }
             k = bt.getNext(k);
         }
         if (k != -1) {
-            Assert.fail("More values in RedBlackKeySet than expeced");
+            Assert.fail("More values in RedBlackKeySet than expected");
         }
     }
     public static void expectBackwards(RedBlackKeySet bt, int[] values) {
         short k = bt.getLast();
-        for(int i=0;i<values.length;i++) {
-            if (k != values[i]) {
-                Assert.fail("Expected "+values[i]+ " and got "+k);
+        for (int value : values) {
+            if (k != value) {
+                Assert.fail("Expected " + value + " and got " + k);
             }
             k = bt.getPrevious(k);
         }
         if (k != -1) {
-            Assert.fail("More values in RedBlackKeySet than expeced");
+            Assert.fail("More values in RedBlackKeySet than expected");
         }
     }
 

@@ -733,7 +733,7 @@ public class FileSystemService {
 
 		String fsType = fsFactoryMgr.getFileSystemType(fsClass);
 		if (fsType == null) {
-			Msg.error(this, "Specific file system implemention " + fsClass.getName() +
+			Msg.error(this, "Specific file system implementation " + fsClass.getName() +
 				" not registered correctly in file system factory.");
 			return null;
 		}

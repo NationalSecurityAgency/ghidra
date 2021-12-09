@@ -152,7 +152,7 @@ public class ParsingEnvironment {
 		else if (e instanceof MismatchedTokenException) {
 			MismatchedTokenException mte = (MismatchedTokenException) e;
 			if (mte.token == null) {
-				msg = "expecting '" + ((char) mte.expecting) + "', unexpected characer: '" +
+				msg = "expecting '" + ((char) mte.expecting) + "', unexpected character: '" +
 					((char) mte.c) + "'";
 			}
 			else {

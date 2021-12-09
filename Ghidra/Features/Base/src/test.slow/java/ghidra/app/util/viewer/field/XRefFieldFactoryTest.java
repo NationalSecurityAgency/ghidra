@@ -498,7 +498,7 @@ public class XRefFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 			}
 		}
 
-		fail("Uanble to find text at " + Long.toHexString(addrOffset) + "; text: '" + text + "'");
+		fail("Unable to find text at " + Long.toHexString(addrOffset) + "; text: '" + text + "'");
 	}
 
 	private String getRowText(ListingTextField tf, int row) {

@@ -812,7 +812,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 			"If true, vertices are drawn using pre-rendered images versus compact shapes");
 
 		options.registerOption(LABEL_POSITION, OptionType.ENUM_TYPE, labelPosition, help,
-			"Relative postion of labels to vertex shape (Only applicable if \"Use Icons\" is true");
+			"Relative position of labels to vertex shape (Only applicable if \"Use Icons\" is true");
 
 		options.registerOption(FONT, OptionType.FONT_TYPE, font, help,
 			"Font to use for vertex labels");

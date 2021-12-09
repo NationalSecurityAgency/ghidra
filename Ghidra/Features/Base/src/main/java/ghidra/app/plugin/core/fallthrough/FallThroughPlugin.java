@@ -40,7 +40,7 @@ import ghidra.program.util.AddressFieldLocation;
 	description = "Provides actions for changing an instructions \"fall-through\" address.  " +
 			"Normally an instructions \"fall-through\" address is the address of the " +
 			"instruction that immediately follows it (except for jmp).  This plugin allows " +
-			"a user to overide this behaviour on specific situations.",
+			"a user to override this behaviour on specific situations.",
 	eventsConsumed = { ProgramLocationPluginEvent.class, ProgramActivatedPluginEvent.class, ProgramSelectionPluginEvent.class }
 )
 //@formatter:on

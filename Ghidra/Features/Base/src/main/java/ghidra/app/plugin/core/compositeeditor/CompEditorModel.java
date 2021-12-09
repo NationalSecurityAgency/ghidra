@@ -808,7 +808,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			dtc.setFieldName(oldDtc.getFieldName());
 		}
 		catch (DuplicateNameException e) {
-			Msg.showError(this, null, "Unexcected Exception", "Exception applying field name", e);
+			Msg.showError(this, null, "Unexpected Exception", "Exception applying field name", e);
 		}
 		dtc.setComment(oldDtc.getComment());
 		fixSelection();

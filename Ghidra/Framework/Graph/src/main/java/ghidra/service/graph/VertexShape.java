@@ -318,7 +318,7 @@ public abstract class VertexShape {
 	static class PentagonVertexShape extends EquilateralPolygonVertexShape {
 
 		private PentagonVertexShape(int size) {
-			super("Pentaon", 5, Math.PI + Math.PI / 10, size);
+			super("Pentagon", 5, Math.PI + Math.PI / 10, size);
 		}
 	}
 

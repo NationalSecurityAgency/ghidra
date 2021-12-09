@@ -83,7 +83,7 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 				}
 
 				Assert.fail(
-					"Did not get exptected data types of byte, Typdef and Typedef.  Instead found:\n" +
+					"Did not get expected data types of byte, Typdef and Typedef.  Instead found:\n" +
 						buffy.toString());
 			}
 

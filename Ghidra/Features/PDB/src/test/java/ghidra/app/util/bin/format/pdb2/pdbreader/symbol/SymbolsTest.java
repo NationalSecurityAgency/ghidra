@@ -281,7 +281,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		String result = symbol.toString().trim();
 		assertEquals("COMPILE:\n" + "   Language: C\n" + "   Target Processor: 8080\n" +
 			"   Floating-point precision: 0\n" + "   Floating-point package: 0\n" +
-			"   Ambiant data: 0\n" + "   Ambiant code: 0\n" + "   PCode present: no\n" +
+			"   Ambient data: 0\n" + "   Ambient code: 0\n" + "   PCode present: no\n" +
 			"   Version String:CompilerVersionString", result);
 	}
 

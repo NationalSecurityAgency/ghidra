@@ -107,8 +107,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		String escaped = description.replaceAll("&", "&amp;");
 		assertTrue(
 			"Description is not updated for action '" + action1.getName() + "'; instead the " +
-				"description is '" + actualText + "'\n\tDescrption: " + escaped,
-			actualText.indexOf(escaped) != -1);
+				"description is '" + actualText + "'\n\tDescription: " + escaped,
+				actualText.contains(escaped));
 	}
 
 	@Test
@@ -117,7 +117,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		for (DockingActionIf action : list) {
 			if (!ignoreAction(action)) {
 				boolean inTable = actionInKeyBindingsTable(action);
-				assertTrue("Action should be in the key bindingds table: " + action.getFullName(),
+				assertTrue("Action should be in the key bindings table: " + action.getFullName(),
 					inTable);
 			}
 		}

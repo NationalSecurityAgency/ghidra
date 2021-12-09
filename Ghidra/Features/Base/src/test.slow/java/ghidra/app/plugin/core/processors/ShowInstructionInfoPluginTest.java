@@ -160,7 +160,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		assertNull("The current Instruction is not null as expected.", currentInstruction);
 		assertTrue(
 			"The tables of the component provider have data even " +
-				"though there is not Instruction selected in the proram.",
+				"though there is not Instruction selected in the program.",
 			!componentProviderTablesHaveData());
 
 		// change to a valid instruction        
@@ -233,7 +233,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		// make sure there are no contents in the display
 		assertTrue(
 			"The tables of the component provider have data even " +
-				"though there is not Instruction selected in the proram.",
+				"though there is not Instruction selected in the program.",
 			!componentProviderTablesHaveData());
 
 		// decompile at the location

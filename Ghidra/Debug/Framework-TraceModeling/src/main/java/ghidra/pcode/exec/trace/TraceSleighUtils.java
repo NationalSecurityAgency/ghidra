@@ -77,7 +77,7 @@ public enum TraceSleighUtils {
 		SleighLanguage language = expr.getLanguage();
 		if (trace.getBaseLanguage() != language) {
 			throw new IllegalArgumentException(
-				"This expression can only be evaulated on traces with language " + language);
+				"This expression can only be evaluated on traces with language " + language);
 		}
 		PcodeExecutor<byte[]> executor = buildByteExecutor(trace, snap, thread, frame);
 		return expr.evaluate(executor);
@@ -95,7 +95,7 @@ public enum TraceSleighUtils {
 		SleighLanguage language = expr.getLanguage();
 		if (trace.getBaseLanguage() != language) {
 			throw new IllegalArgumentException(
-				"This expression can only be evaulated on traces with language " +
+				"This expression can only be evaluated on traces with language " +
 					language);
 		}
 		PcodeExecutor<Pair<byte[], TraceMemoryState>> executor =

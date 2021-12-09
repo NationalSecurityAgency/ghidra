@@ -331,7 +331,7 @@ class SimpleLanguageTranslator extends LanguageTranslatorAdapter {
 			}
 			else if ("post_upgrade_handler".equals(elementName)) {
 				if (postUpgradeInstructionHandlerClass != null) {
-					throw new SAXException("Only a single post_upgrade_analzer may be specified");
+					throw new SAXException("Only a single post_upgrade_analyzer may be specified");
 				}
 				postUpgradeInstructionHandlerClass = parsePostUpgradeHandlerEntry(element);
 			}

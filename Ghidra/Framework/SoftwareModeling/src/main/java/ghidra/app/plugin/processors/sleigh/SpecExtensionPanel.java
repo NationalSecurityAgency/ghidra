@@ -272,7 +272,7 @@ public class SpecExtensionPanel extends JPanel {
 			}
 			catch (LockException ex) {
 				Msg.showError(this, null, "Missing Exclusive Access",
-					"Do not have exclusive acces");
+					"Do not have exclusive access");
 			}
 			catch (XmlParseException | SAXException ex) {
 				Msg.showError(this, null, "Failed Committing Extension Changes", ex.getMessage());

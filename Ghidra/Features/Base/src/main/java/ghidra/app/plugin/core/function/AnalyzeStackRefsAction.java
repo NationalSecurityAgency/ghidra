@@ -90,7 +90,7 @@ class AnalyzeStackRefsAction extends ListingContextAction {
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES).getOptions("Stack");
 		options.registerOption(GhidraLanguagePropertyKeys.USE_NEW_FUNCTION_STACK_ANALYSIS,
 			doNewStackAnalysis, null,
-			"Use General Stack Reference Propogator (This works best on most processors)");
+			"Use General Stack Reference Propagator (This works best on most processors)");
 
 		options.registerOption("Create Local Variables", doLocalAnalysis, null,
 			"Create Function Local stack variables and references");

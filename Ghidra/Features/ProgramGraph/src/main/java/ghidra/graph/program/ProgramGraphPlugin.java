@@ -61,7 +61,7 @@ import ghidra.util.task.TaskLauncher;
 	shortDescription = "Program graph generator",
 	description = "This plugin provides actions for creating and managing program graphs"
 			+ " (block graphs and call graphs)."
-			+ "Once a graph is created, it uses the currenly selected graph output to display "
+			+ "Once a graph is created, it uses the currently selected graph output to display "
 			+ "or export the graph.  The plugin "
 			+ "also provides event handling to facilitate interaction between "
 			+ "the graph and the tool.",

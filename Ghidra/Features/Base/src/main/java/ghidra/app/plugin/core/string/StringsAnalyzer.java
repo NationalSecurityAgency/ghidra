@@ -191,7 +191,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
 		setDefaultEnablement(true);
 		setSupportsOneTimeAnalysis();
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.after().after().after().after().after());
+		setPriority(AnalysisPriority.DATA_TYPE_PROPAGATION.after().after().after().after().after());
 	}
 
 	@Override

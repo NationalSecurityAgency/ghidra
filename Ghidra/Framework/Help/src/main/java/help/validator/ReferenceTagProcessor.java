@@ -112,7 +112,7 @@ public class ReferenceTagProcessor extends TagProcessor {
 			}
 			else {
 				errorCount++;
-				errors.append("Bad IMG Tag - unexpected attribtute (line " + lineNum + "): " +
+				errors.append("Bad IMG Tag - unexpected attribute (line " + lineNum + "): " +
 					htmlFile + EOL);
 			}
 		}

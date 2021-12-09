@@ -559,7 +559,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 				}
 				catch (DuplicateNameException e) {
 					throw new AssertException(
-						"Assert problem in CodeUnitImpl.setProperty(Stirng,Object)");
+						"Assert problem in CodeUnitImpl.setProperty(String,Object)");
 				}
 			}
 			pm.add(address, value);
@@ -604,7 +604,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 					pm = upm.createVoidPropertyMap(name);
 				}
 				catch (DuplicateNameException e) {
-					throw new AssertException("Assert problem in CodeUnitImpl.setProperty(Stirng)");
+					throw new AssertException("Assert problem in CodeUnitImpl.setProperty(String)");
 				}
 			}
 			pm.add(address);

@@ -153,7 +153,7 @@ public class FileDropDownSelectionDataModel implements DropDownTextFieldDataMode
 				File file = (File) o1;
 				return file.getName().compareToIgnoreCase(((String) o2));
 			}
-			throw new AssertException("FileCompartor used to compare files against a String key!");
+			throw new AssertException("FileComparator used to compare files against a String key!");
 		}
 	}
 

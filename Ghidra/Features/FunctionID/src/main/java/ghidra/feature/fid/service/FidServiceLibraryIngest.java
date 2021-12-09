@@ -195,7 +195,7 @@ class FidServiceLibraryIngest {
 		this.linkLibraries = linkLibraries;
 		this.monitor = monitor;
 		if (languageId == null) {
-			throw new IllegalArgumentException("LanugageID can't be null"); // null used to be allowed, so add special check
+			throw new IllegalArgumentException("LanguageID can't be null"); // null used to be allowed, so add special check
 		}
 	}
 

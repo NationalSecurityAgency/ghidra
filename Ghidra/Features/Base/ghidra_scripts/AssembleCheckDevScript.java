@@ -24,7 +24,7 @@ import ghidra.program.model.listing.Instruction;
 public class AssembleCheckDevScript extends AssemblyThrasherDevScript {
 	@Override
 	protected void run() throws Exception {
-		monitor.setMessage("Constructing Assember");
+		monitor.setMessage("Constructing Assembler");
 		AllMatchByTextSelector checker = new AllMatchByTextSelector();
 		Assembler asm = Assemblers.getAssembler(currentProgram, checker);
 		Instruction ins = currentProgram.getListing().getInstructionAt(currentAddress);

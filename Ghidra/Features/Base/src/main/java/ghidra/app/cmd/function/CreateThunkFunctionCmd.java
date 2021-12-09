@@ -419,7 +419,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		// NOTE: Assumption, we have found all flows leading to the switch that might split the basic block
 
 		final AtomicInteger foundCount = new AtomicInteger(0);
-		SymbolicPropogator prop = new SymbolicPropogator(program);
+		SymbolicPropagator prop = new SymbolicPropagator(program);
 
 		prop.flowConstants(jumpBlockAt.getFirstStartAddress(), jumpBlockAt,
 			new ContextEvaluatorAdapter() {
@@ -429,7 +429,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 					// go ahead and place the reference, since it is a constant.
 					if (refType.isComputed() && refType.isFlow() &&
 						program.getMemory().contains(address)) {
-						propogateCodeMode(context, address);
+						propagateCodeMode(context, address);
 						foundCount.incrementAndGet();
 						return true;
 					}
@@ -441,7 +441,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 					return true;
 				}
 
-				private void propogateCodeMode(VarnodeContext context, Address addr) {
+				private void propagateCodeMode(VarnodeContext context, Address addr) {
 					// get CodeModeRegister and flow it to destination, if it is set here
 
 					if (isaModeSwitchRegister == null) {

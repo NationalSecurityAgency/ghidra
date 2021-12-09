@@ -817,7 +817,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 					root.removeChild("Strings");
 				}
 				catch (NotEmptyException e) {
-					Assert.fail("Got Not Empty exeception!");
+					Assert.fail("Got Not Empty exception!");
 				}
 				finally {
 					program.endTransaction(transactionID, true);
@@ -873,7 +873,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 						root.removeChild(".text");
 					}
 					catch (NotEmptyException e) {
-						Assert.fail("Got Not Empty exeception!");
+						Assert.fail("Got Not Empty exception!");
 					}
 				}
 				finally {

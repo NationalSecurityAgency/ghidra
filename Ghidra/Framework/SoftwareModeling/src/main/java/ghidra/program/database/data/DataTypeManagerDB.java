@@ -1257,7 +1257,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			// Don't support replacement with Factory or Dynamic datatype
 			if (replacementDt instanceof Dynamic || replacementDt instanceof FactoryDataType) {
 				throw new IllegalArgumentException(
-					"Datatype replacment with dynamic or factory type not permitted.");
+					"Datatype replacement with dynamic or factory type not permitted.");
 			}
 			if (getID(existingDt) < 0) {
 				throw new IllegalArgumentException(
@@ -1305,7 +1305,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 				catch (Exception e) {
 					// not sure what to do here
-					Msg.error(this, "Unable to set the CatagoryPath to " + path +
+					Msg.error(this, "Unable to set the CategoryPath to " + path +
 						"on " + replacementDt + " while replacing the original datatype", e);
 				}
 			}

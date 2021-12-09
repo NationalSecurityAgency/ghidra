@@ -64,7 +64,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ContextEvaluator;
 import ghidra.program.util.ContextEvaluatorAdapter;
 import ghidra.program.util.OperandFieldLocation;
-import ghidra.program.util.SymbolicPropogator;
+import ghidra.program.util.SymbolicPropagator;
 import ghidra.program.util.VarnodeContext;
 import ghidra.util.exception.CancelledException;
 
@@ -359,7 +359,7 @@ public class MultiInstructionMemReference extends GhidraScript {
 					}
 				}
 
-				SymbolicPropogator symEval = new SymbolicPropogator(currentProgram);
+				SymbolicPropagator symEval = new SymbolicPropagator(currentProgram);
 				symEval.setParamRefCheck(false);
 				symEval.setReturnRefCheck(false);
 				symEval.setStoredRefCheck(false);

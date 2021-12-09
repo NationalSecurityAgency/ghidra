@@ -77,7 +77,7 @@ public class FileSystemRef implements Closeable {
 	@Override
 	public void finalize() {
 		if (!refClosed) {
-			Msg.warn(this, "Unclosed FilesytemRef: " + fs.toString());
+			Msg.warn(this, "Unclosed FileSystemRef: " + fs.toString());
 		}
 	}
 }

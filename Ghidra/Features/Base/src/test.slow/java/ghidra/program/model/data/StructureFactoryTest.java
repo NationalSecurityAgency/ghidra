@@ -202,7 +202,7 @@ public class StructureFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 			StructureFactory.createStructureDataType(program, structureAddress, structureLength,
 				null, true);
 
-			Assert.fail("Did not receive an exception when passing a dupicate name.");
+			Assert.fail("Did not receive an exception when passing a duplicate name.");
 		}
 		catch (IllegalArgumentException iae) {
 			// good, expected

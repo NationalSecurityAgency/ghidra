@@ -129,7 +129,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 		// Set the match to rejected.
 		try {
 			matchFromDB.getAssociation().setRejected();
-			Assert.fail("Expeced exception when rejected accepted association");
+			Assert.fail("Expected exception when rejected accepted association");
 		}
 		catch (VTAssociationStatusException e) {
 			// expected exception here

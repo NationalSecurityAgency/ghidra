@@ -43,7 +43,7 @@ public class X86Analyzer extends ConstantPropagationAnalyzer {
 	}
 
 	@Override
-	public AddressSetView flowConstants(final Program program, Address flowStart, AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
+	public AddressSetView flowConstants(final Program program, Address flowStart, AddressSetView flowSet, final SymbolicPropagator symEval, final TaskMonitor monitor)
 			throws CancelledException {
 		
 		// follow all flows building up context

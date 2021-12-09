@@ -137,7 +137,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 	@Override
 	public AddressSet flowConstants(final Program program, Address flowStart,
-			AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
+			AddressSetView flowSet, final SymbolicPropagator symEval, final TaskMonitor monitor)
 			throws CancelledException {
 
 		RegisterValue initR2Value = lookupR2(program, flowStart);
@@ -376,7 +376,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 		return false;
 	}
 
-	private void recoverSwitches(final Program program, SymbolicPropogator symEval,
+	private void recoverSwitches(final Program program, SymbolicPropagator symEval,
 			AddressSet destinationSet, TaskMonitor monitor) throws CancelledException {
 
 		final ArrayList<Address> targetList = new ArrayList<>();

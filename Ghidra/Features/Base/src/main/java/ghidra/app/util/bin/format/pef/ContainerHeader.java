@@ -97,7 +97,7 @@ public class ContainerHeader implements StructConverter {
 			SectionHeader section = new SectionHeader(_reader);
 			if (section.getSectionKind() == SectionKind.Loader) {
 				if (_loader != null) {
-					throw new PefException("Multple loader sections exist!");
+					throw new PefException("Multiple loader sections exist!");
 				}
 				_loader = new LoaderInfoHeader(_reader, section);
 			}

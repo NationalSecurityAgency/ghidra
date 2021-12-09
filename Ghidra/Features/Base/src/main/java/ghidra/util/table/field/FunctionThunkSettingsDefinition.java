@@ -25,7 +25,7 @@ public class FunctionThunkSettingsDefinition implements BooleanSettingsDefinitio
 	private static final String THUNK = "Show thunk";
 	private static final String NAME = THUNK;
 	private static final String DESCRIPTION =
-		"On siganls to show the thunk " + "function attribute when present";
+		"On signals to show the thunk function attribute when present";
 	private static final boolean DEFAULT = true;
 
 	@Override

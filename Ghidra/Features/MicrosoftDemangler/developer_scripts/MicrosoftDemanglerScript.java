@@ -95,6 +95,6 @@ public class MicrosoftDemanglerScript extends GhidraScript {
 
 	private void demangle(String mangled) throws Exception {
 		DemangledObject demangled = demangler.demangle(mangled);
-		printf("magled %s\ndemangled %s", mangled, demangled);
+		printf("mangled %s\ndemangled %s", mangled, demangled);
 	}
 }

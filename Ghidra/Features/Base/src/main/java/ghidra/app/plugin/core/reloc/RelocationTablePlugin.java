@@ -35,7 +35,7 @@ import ghidra.util.table.actions.MakeProgramSelectionAction;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.CODE_VIEWER,
 	shortDescription = "Displays relocation information",
-	description = "This plugin provides a component for displaying the reloction table. "
+	description = "This plugin provides a component for displaying the relocation table. "
 			+ "The table can be used to navigate in the code browser.",
 	servicesRequired = { GoToService.class },
 	eventsProduced = { ProgramLocationPluginEvent.class },

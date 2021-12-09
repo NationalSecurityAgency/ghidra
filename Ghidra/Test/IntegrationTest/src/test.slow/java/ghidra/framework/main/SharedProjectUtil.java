@@ -129,7 +129,7 @@ public class SharedProjectUtil {
 		if (!finishButton.isEnabled()) {
 			String statusMessage = projPanel.getStatusMessage();
 			System.err.println(
-				"Finish button is unexectedly disabled!!\n\t" + "Status message: " + statusMessage);
+				"Finish button is unexpectedly disabled!!\n\t" + "Status message: " + statusMessage);
 			return false;
 		}
 

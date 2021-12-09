@@ -133,7 +133,7 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 							chooserEclipse = new GhidraFileChooser(null);
 						}
 						chooserEclipse.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
-						chooserEclipse.setTitle("Select Eclipe Project Directory");
+						chooserEclipse.setTitle("Select Eclipse Project Directory");
 						chooserEclipse.setApproveButtonText("SELECT");
 						chooserEclipse.setSelectedFile(null);
 						File outputDirectory = chooserEclipse.getSelectedFile();

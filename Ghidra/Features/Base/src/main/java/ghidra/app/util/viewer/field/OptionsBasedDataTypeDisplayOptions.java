@@ -47,7 +47,7 @@ public class OptionsBasedDataTypeDisplayOptions implements DataTypeDisplayOption
 				"operand references (e.g., STR_01234567)");
 		options.registerOption(MAXIMUM_DEFAULT_LABEL_LENGTH,
 			DataTypeDisplayOptions.MAX_LABEL_STRING_LENGTH, null,
-			"Sets the maximumn number of characters from a String to include in dynamic " +
+			"Sets the maximum number of characters from a String to include in dynamic " +
 				"String labels in operand references");
 	}
 

@@ -362,7 +362,7 @@ class FileActionManager {
 				objs[lastIndex] = files.get(lastIndex).getDomainObject(this, false, false, null);
 			}
 			catch (Throwable t) {
-				Msg.error(this, "Failed to aqcuire domain object instance", t);
+				Msg.error(this, "Failed to acquire domain object instance", t);
 				locked = false;
 				break;
 			}

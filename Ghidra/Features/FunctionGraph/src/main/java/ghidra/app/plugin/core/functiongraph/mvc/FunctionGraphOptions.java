@@ -197,14 +197,14 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 		options.registerOption(EDGE_CONDITIONAL_JUMP_HIGHLIGHT_COLOR_KEY,
 			conditionalJumpEdgeHighlightColor, help,
-			"Conditional jump edge color when highlighting the reachablity of a vertex");
+			"Conditional jump edge color when highlighting the reachability of a vertex");
 
 		options.registerOption(EDGE_UNCONDITIONAL_JUMP_HIGHLIGHT_COLOR_KEY,
 			unconditionalJumpEdgeHighlightColor, help,
-			"Unconditional jump edge color when highlighting the reachablity of a vertex");
+			"Unconditional jump edge color when highlighting the reachability of a vertex");
 
 		options.registerOption(EDGE_FALLTHROUGH_HIGHLIGHT_COLOR_KEY, fallthroughEdgeHighlightColor,
-			help, "Fallthrough edge color when highlighting the reachablity of a vertex");
+			help, "Fallthrough edge color when highlighting the reachability of a vertex");
 
 	}
 

@@ -44,7 +44,7 @@ public class ObjectCacheTest extends AbstractGhidraHeadedIntegrationTest {
 		obj1.setInvalid();
 		try {
 			obj1.setValue(10);
-			fail("Should have thrown a concurrent modification excption here.");
+			fail("Should have thrown a concurrent modification exception here.");
 		}
 		catch (ConcurrentModificationException e) {
 			// expected
@@ -57,7 +57,7 @@ public class ObjectCacheTest extends AbstractGhidraHeadedIntegrationTest {
 		cache.delete(1);
 		try {
 			obj1.setValue(10);
-			fail("Should have thrown a concurrent modification excption here.");
+			fail("Should have thrown a concurrent modification exception here.");
 		}
 		catch (ConcurrentModificationException e) {
 			// expected

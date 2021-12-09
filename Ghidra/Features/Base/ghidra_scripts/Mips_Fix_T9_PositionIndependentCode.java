@@ -106,7 +106,7 @@ public class Mips_Fix_T9_PositionIndependentCode extends GhidraScript {
 				this.runScript("PropagateConstantReferences.java", newState);
 			}
 			catch (Exception e) {
-				println("Couldn't Run Propogate script");
+				println("Couldn't Run Propagate script");
 				e.printStackTrace();
 			}
 

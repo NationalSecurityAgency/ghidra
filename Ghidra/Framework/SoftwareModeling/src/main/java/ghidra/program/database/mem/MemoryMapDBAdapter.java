@@ -74,7 +74,7 @@ abstract class MemoryMapDBAdapter {
 	public static final byte SUB_TYPE_BIT_MAPPED = MemoryMapDBAdapterV3.V3_SUB_TYPE_BIT_MAPPED;
 	public static final byte SUB_TYPE_BYTE_MAPPED = MemoryMapDBAdapterV3.V3_SUB_TYPE_BYTE_MAPPED;
 	public static final byte SUB_TYPE_BUFFER = MemoryMapDBAdapterV3.V3_SUB_TYPE_BUFFER;
-	public static final byte SUB_TYPE_UNITIALIZED = MemoryMapDBAdapterV3.V3_SUB_TYPE_UNITIALIZED;
+	public static final byte SUB_TYPE_UNINITIALIZED = MemoryMapDBAdapterV3.V3_SUB_TYPE_UNINITIALIZED;
 	public static final byte SUB_TYPE_FILE_BYTES = MemoryMapDBAdapterV3.V3_SUB_TYPE_FILE_BYTES;
 
 	static MemoryMapDBAdapter getAdapter(DBHandle handle, int openMode, MemoryMapDB memMap,

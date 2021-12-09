@@ -33,7 +33,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class MipsPreAnalyzer extends AbstractAnalyzer {
-	private static final String NAME = "MIPS UnAlligned Instruction Fix";
+	private static final String NAME = "MIPS Unaligned Instruction Fix";
 	private static final String DESCRIPTION =
 		"Analyze MIPS Instructions for unaligned load pairs ldl/ldr sdl/sdr lwl/lwr swl/swr.";
 

@@ -466,7 +466,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	public void openProgram(final Program program, final int state) {
 		if (locked) {
 			throw new IllegalStateException(
-				"Progam manager is locked and cannot accept a new program");
+				"Program manager is locked and cannot accept a new program");
 		}
 
 		Runnable r = () -> {

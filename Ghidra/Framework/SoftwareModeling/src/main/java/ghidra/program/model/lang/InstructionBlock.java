@@ -139,7 +139,7 @@ public class InstructionBlock implements Iterable<Instruction> {
 		}
 		else if (!maxAddress.isSuccessor(instructionMinAddr)) {
 			throw new IllegalArgumentException("Newly added instruction at address " +
-				instructionMinAddr + " is not the immediate succesor to address " + maxAddress);
+				instructionMinAddr + " is not the immediate successor to address " + maxAddress);
 		}
 		instructionMap.put(instructionMinAddr, instruction);
 		if (!instruction.isInDelaySlot()) {

@@ -314,7 +314,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			for (Map.Entry<Integer, String> entry : componentComments.entrySet()) {
 				DataTypeComponent component = structure.getComponentAt(entry.getKey());
 				if (component == null) {
-					pdbLogAndInfoMessage(this, "Could not set comment for 'missing' componenent " +
+					pdbLogAndInfoMessage(this, "Could not set comment for 'missing' component " +
 						entry.getKey() + " for: " + structure.getName());
 					return;
 				}

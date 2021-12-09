@@ -81,14 +81,14 @@ public class MapIteratorSTL<K, V> implements IteratorSTL<Pair<K, V>> {
 
 	public boolean isBegin() {
 		if (erased) {
-			throw new RuntimeException("Iterater in invalid state");
+			throw new RuntimeException("Iterator in invalid state");
 		}
 		return node == tree.getFirst();
 	}
 
 	public boolean isEnd() {
 		if (erased) {
-			throw new RuntimeException("Iterater in invalid state");
+			throw new RuntimeException("Iterator in invalid state");
 		}
 		return node == null;
 	}

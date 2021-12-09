@@ -186,7 +186,7 @@ public class ElfLoaderOptionsFactory {
 			space.getAddress(Long.parseUnsignedLong(value, 16), true);// verify valid address
 		}
 		catch (NumberFormatException e) {
-			return "Invalid " + name + " - expecting hexidecimal address offset";
+			return "Invalid " + name + " - expecting hexadecimal address offset";
 		}
 		catch (AddressOutOfBoundsException e) {
 			return "Invalid " + name + " - " + e.getMessage();

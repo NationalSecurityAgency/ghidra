@@ -126,7 +126,7 @@ public class ChangeMapFile {
 			success = true;
 		}
 		catch (NoSuchElementException e) {
-			throw new IOException("Required modification map paramater (" + e.getMessage() + ") not found: " + file);
+			throw new IOException("Required modification map parameter (" + e.getMessage() + ") not found: " + file);
 		}
 		finally {
 			if (!success) {
@@ -176,7 +176,7 @@ public class ChangeMapFile {
 			success = true;
 		}
 		catch (NoSuchElementException e) {
-			throw new IOException("Required modification map paramater (" + e.getMessage() + ") not found: " + file);
+			throw new IOException("Required modification map parameter (" + e.getMessage() + ") not found: " + file);
 		}
 		finally {
 			if (!success) {

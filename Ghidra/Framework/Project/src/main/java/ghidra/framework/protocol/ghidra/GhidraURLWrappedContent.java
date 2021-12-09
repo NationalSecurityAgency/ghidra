@@ -62,7 +62,7 @@ public class GhidraURLWrappedContent {
 
 	private void addConsumer(Object consumer) {
 		if (containsConsumer(consumer)) {
-			throw new RuntimeException("duplcate consumer");
+			throw new RuntimeException("duplicate consumer");
 		}
 		consumers.add(consumer);
 	}

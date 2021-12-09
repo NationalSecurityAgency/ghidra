@@ -72,13 +72,12 @@ public class PcodeEmitObjects extends PcodeEmit {
 		if (labelref == null) {
 			return;
 		}
-		for (int i = 0; i < labelref.size(); ++i) {
-			int opindex = labelref.get(i);
+		for (int opindex : labelref) {
 			PcodeOp op = oplist.get(opindex);
 			Varnode vn = op.getInput(0);
 			int labelid = (int) vn.getOffset();
 			if ((labelid >= labeldef.size()) || (labeldef.get(labelid) == null)) {
-				throw new SleighException("Reference to non-existant sleigh label");
+				throw new SleighException("Reference to non-existent sleigh label");
 			}
 			long res = (long) labeldef.get(labelid) - (long) opindex;
 			if (vn.getSize() < 8) {

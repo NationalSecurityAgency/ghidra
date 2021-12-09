@@ -135,7 +135,7 @@ class MemoryMapDBAdapterV2 extends MemoryMapDBAdapter {
 				record.setIntValue(SUB_INT_DATA1_COL, bufID);
 				return new BufferSubMemoryBlock(this, record);
 			case MemoryMapDBAdapterV2.UNINITIALIZED:
-				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_UNITIALIZED);
+				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_UNINITIALIZED);
 				return new UninitializedSubMemoryBlock(this, record);
 			default:
 				throw new IOException("Unknown memory block type: " + type);

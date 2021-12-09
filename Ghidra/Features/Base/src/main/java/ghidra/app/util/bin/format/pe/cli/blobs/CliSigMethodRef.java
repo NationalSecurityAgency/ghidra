@@ -95,7 +95,7 @@ public class CliSigMethodRef extends CliAbstractSig {
 		struct.add(BYTE, "Flags", "ORed VARARG/GENERIC/HASTHIS/EXPLICITTHIS");
 		if (genericParamCount > 0) {
 			struct.add(getDataTypeForBytes(sizeOfGenericCount), "GenParamCount",
-				"Number of generic paramameters for the method");
+				"Number of generic parameters for the method");
 		}
 		struct.add(getDataTypeForBytes(sizeOfCount), "ParamCount",
 			"Number of parameter types to follow RetType");

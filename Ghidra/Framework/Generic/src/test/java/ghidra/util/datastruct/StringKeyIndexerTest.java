@@ -154,7 +154,7 @@ public class StringKeyIndexerTest extends AbstractGenericTest {
         }
 
         if (keys.length != 100) {
-        	Assert.fail("Expeced keys to be length 100 and got "+keys.length);
+        	Assert.fail("Expected keys to be length 100 and got "+keys.length);
         }
         for(int i=0;i<100;i++) {
             if (!hashSet.contains(keys[i])) {
@@ -179,7 +179,7 @@ public class StringKeyIndexerTest extends AbstractGenericTest {
             hashSet.remove(key);
         }
         if (hashSet.size() != 0) {
-            Assert.fail("Expeced iterator to contain 100 Keys and got "+(100 - hashSet.size()));
+            Assert.fail("Expected iterator to contain 100 Keys and got "+(100 - hashSet.size()));
         }
 
 

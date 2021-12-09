@@ -79,7 +79,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 
 	private final static String MAPPED = "Mapped";
 	private final static String UNMAPPED = "Unmapped";
-	private static final String UNITIALIZED = "UNITIALIZED";
+	private static final String UNINITIALIZED = "UNINITIALIZED";
 	private static final String INITIALIZED = "INITIALIZED";
 	private static final String FILE_BYTES = "FILE_BYTES";
 	private JPanel inializedTypePanel;
@@ -246,7 +246,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		initializedTypeCardLayout = new CardLayout();
 
 		inializedTypePanel = new JPanel(initializedTypeCardLayout);
-		inializedTypePanel.add(new JPanel(), UNITIALIZED);
+		inializedTypePanel.add(new JPanel(), UNINITIALIZED);
 		inializedTypePanel.add(buildInitalValuePanel(), INITIALIZED);
 		inializedTypePanel.add(buildFileBytesPanel(), FILE_BYTES);
 		return inializedTypePanel;
@@ -312,7 +312,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		commentField.setText("");
 		initialValueField.setValue(Long.valueOf(0));
 		model.setBlockType(MemoryBlockType.DEFAULT);
-		model.setInitializedType(AddBlockModel.InitializedType.UNITIALIZED);
+		model.setInitializedType(AddBlockModel.InitializedType.UNINITIALIZED);
 		model.setInitialValue(0);
 
 		readCB.setSelected(model.isRead());
@@ -353,8 +353,8 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 			initializedTypeCardLayout.show(inializedTypePanel, INITIALIZED);
 		}
 		else if (uninitializedRB.isSelected()) {
-			model.setInitializedType(InitializedType.UNITIALIZED);
-			initializedTypeCardLayout.show(inializedTypePanel, UNITIALIZED);
+			model.setInitializedType(InitializedType.UNINITIALIZED);
+			initializedTypeCardLayout.show(inializedTypePanel, UNINITIALIZED);
 		}
 		else if (initializedFromFileBytesRB.isSelected()) {
 			model.setInitializedType(InitializedType.INITIALIZED_FROM_FILE_BYTES);

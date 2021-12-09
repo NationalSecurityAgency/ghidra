@@ -52,7 +52,7 @@ public class ExactBytesFunctionHasher extends AbstractFunctionHasher {
 				codeUnit.getBytesInCodeUnit(buffer, offset);
 			}
 			catch (MemoryAccessException e) {
-				Msg.warn(this, "Could not get code unit bvtes at " + codeUnit.getAddress());
+				Msg.warn(this, "Could not get code unit bytes at " + codeUnit.getAddress());
 			}
 			offset += codeUnit.getLength();
 		}

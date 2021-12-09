@@ -218,7 +218,7 @@ public class GoToAddressLabelDialog extends DialogComponentProvider implements G
 		inner.add(caseSensitiveBox, gbc);
 
 		includeDynamicBox = new GCheckBox("Dynamic labels", true);
-		includeDynamicBox.setToolTipText("Include dynamic lables in the search (slower)");
+		includeDynamicBox.setToolTipText("Include dynamic labels in the search (slower)");
 		gbc.gridx = 1;
 		inner.add(includeDynamicBox, gbc);
 

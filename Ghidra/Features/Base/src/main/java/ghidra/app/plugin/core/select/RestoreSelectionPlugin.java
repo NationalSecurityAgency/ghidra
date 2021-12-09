@@ -43,7 +43,7 @@ import docking.tool.ToolConstants;
 	category = PluginCategoryNames.SELECTION,
 	shortDescription = "Restore Selection",
 	description = "This plugin provides the ability to restore the previous selection. " +
-	        "This is useful if you accidently lose you selection; for example, by clicking in " +
+	        "This is useful if you accidentally lose you selection; for example, by clicking in " +
 	        " the CodeBrowser.  Clicking thusly will clear any selection, which can be restored by " +
 	        "performing the " + RestoreSelectionPlugin.RESTORE_SELECTION_ACTION_NAME + " action."
 )

@@ -746,7 +746,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		String nsName = functionName;
 		setText(nsName + Namespace.DELIMITER + functionName);
 		pressOk();
-		assertFalse("Rename unsuccesful", dialog.isShowing());
+		assertFalse("Rename unsuccessful", dialog.isShowing());
 
 		Symbol newFunction = getSymbol(functionName);
 		Namespace parentNs = newFunction.getParentNamespace();

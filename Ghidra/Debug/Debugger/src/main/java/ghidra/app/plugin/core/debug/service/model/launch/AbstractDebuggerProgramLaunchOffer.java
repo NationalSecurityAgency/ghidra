@@ -172,7 +172,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 							e);
 					}
 					Msg.error(this,
-						"Saved launcher args are corrup, or launcher parameters changed. Defaulting.",
+						"Saved launcher args are corrupt, or launcher parameters changed. Defaulting.",
 						e);
 				}
 			}

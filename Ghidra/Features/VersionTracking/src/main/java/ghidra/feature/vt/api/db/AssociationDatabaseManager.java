@@ -160,7 +160,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 			setAssociationAccepted(association);
 		}
 		catch (VTAssociationStatusException e) {
-			throw new AssertException("Attempted to add markup item on an non-accepted associaton");
+			throw new AssertException("Attempted to add markup item on an non-accepted association");
 		}
 
 		return createMarkupItemDB(markupItemStorage);

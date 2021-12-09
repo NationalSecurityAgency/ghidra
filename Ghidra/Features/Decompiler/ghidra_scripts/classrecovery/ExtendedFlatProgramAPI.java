@@ -507,7 +507,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 			return false;
 		}
 		catch (CancelledException e) {
-			// FIXME: this should not be caught by this method and should propogate 
+			// FIXME: this should not be caught by this method and should propagate 
 			return false;
 		}
 

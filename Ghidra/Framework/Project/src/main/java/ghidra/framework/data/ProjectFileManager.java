@@ -544,10 +544,10 @@ public class ProjectFileManager implements ProjectData {
 
 		newRepository.connect();
 		if (!newRepository.isConnected()) {
-			throw new IOException("new respository not connected");
+			throw new IOException("new repository not connected");
 		}
 		if (repository != null) {
-			throw new IllegalStateException("Only private project may be converted to shared");
+			throw new IllegalStateException("Only private projects may be converted to shared");
 		}
 
 		// 1) Convert versioned files (including checked-out files) to private files

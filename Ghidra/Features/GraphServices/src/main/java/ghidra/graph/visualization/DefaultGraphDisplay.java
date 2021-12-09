@@ -1361,7 +1361,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	public void addAction(DockingActionIf action) {
 
 		if (containsAction(action)) {
-			Msg.warn(this, "Action with same name and owner already exixts in graph: " +
+			Msg.warn(this, "Action with same name and owner already exists in graph: " +
 				action.getFullName());
 			return;
 		}

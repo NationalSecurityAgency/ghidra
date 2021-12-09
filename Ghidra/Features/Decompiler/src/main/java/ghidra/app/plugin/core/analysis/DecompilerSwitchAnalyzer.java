@@ -346,7 +346,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 			// NOTE: Assumption, we have found all flows leading to the switch that might split the basic block
 
 			final AtomicInteger foundCount = new AtomicInteger(0);
-			SymbolicPropogator prop = new SymbolicPropogator(program);
+			SymbolicPropagator prop = new SymbolicPropagator(program);
 			prop.flowConstants(jumpBlockAt.getFirstStartAddress(), jumpBlockAt,
 				new ContextEvaluatorAdapter() {
 					@Override
@@ -355,14 +355,14 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 						// go ahead and place the reference, since it is a constant.
 						if (refType.isComputed() && refType.isFlow() &&
 							program.getMemory().contains(address)) {
-							propogateCodeMode(context, address);
+							propagateCodeMode(context, address);
 							foundCount.incrementAndGet();
 							return true;
 						}
 						return false;
 					}
 
-					private void propogateCodeMode(VarnodeContext context, Address addr) {
+					private void propagateCodeMode(VarnodeContext context, Address addr) {
 						// get CodeModeRegister and flow it to destination, if it is set here
 
 						if (isaModeSwitchRegister == null) {

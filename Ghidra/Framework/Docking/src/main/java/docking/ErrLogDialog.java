@@ -487,7 +487,7 @@ public class ErrLogDialog extends AbstractErrDialog {
 
 		@Override
 		public String getName() {
-			return "Unexpectd Errors";
+			return "Unexpected Errors";
 		}
 
 		@Override

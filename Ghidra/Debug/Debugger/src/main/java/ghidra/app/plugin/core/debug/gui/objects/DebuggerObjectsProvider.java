@@ -100,7 +100,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private final AutoService.Wiring autoServiceWiring;
 
 	public static final String OPTION_NAME_DEFAULT_FOREGROUND_COLOR = "Object Colors.Default";
-	public static final String OPTION_NAME_MODIFIED_FOREGROUND_COLOR = "Object Colors.Modifed";
+	public static final String OPTION_NAME_MODIFIED_FOREGROUND_COLOR = "Object Colors.Modified";
 	public static final String OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR = "Object Colors.Subscribed";
 	public static final String OPTION_NAME_INVISIBLE_FOREGROUND_COLOR =
 		"Object Colors.Invisible (when toggled on)";
@@ -921,7 +921,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	
 		groupTargetIndex++;
 
-		actionToggleHideIntrinsics = new ToggleActionBuilder("Hide Intrinsic Atributes", plugin.getName())
+		actionToggleHideIntrinsics = new ToggleActionBuilder("Hide Intrinsic Attributes", plugin.getName())
 			.menuPath("Maintenance","&Hide Intrinsic Attributes")
 			.menuGroup(DebuggerResources.GROUP_TARGET, "M" + groupTargetIndex)
 			.helpLocation(new HelpLocation(plugin.getName(), "hide_intrinsic_attributes"))

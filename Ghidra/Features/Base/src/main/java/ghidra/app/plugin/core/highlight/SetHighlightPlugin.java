@@ -41,7 +41,7 @@ import ghidra.program.util.ProgramSelection;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.CODE_VIEWER,
 	shortDescription = "Set Highlight From Selection",
-	description = "Provides actions for setting a highlight from a selection or setting a selection from a hightlight",
+	description = "Provides actions for setting a highlight from a selection or setting a selection from a highlight",
 	eventsConsumed = { ProgramHighlightPluginEvent.class }
 )
 //@formatter:on

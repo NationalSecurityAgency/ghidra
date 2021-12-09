@@ -454,7 +454,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 		if (!dropped.isEmpty()) {
 			String text = StringUtils.join(dropped, ", ");
 			Msg.showInfo(this, tool.getActiveWindow(), "Duplicate Tag Names",
-				"Tags aleady exist.  Ignoring the following tags: " + text);
+				"Tags already exist.  Ignoring the following tags: " + text);
 		}
 
 		Swing.runLater(() -> tagInputField.setText(""));

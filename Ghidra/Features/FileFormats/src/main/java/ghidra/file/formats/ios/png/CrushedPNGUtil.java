@@ -271,7 +271,7 @@ public class CrushedPNGUtil {
 			int y = 0;
 			while (y < (ihdrChunk.getBytesPerLine() * ihdrChunk.getImgHeight() + ihdrChunk.getRowFilterBytes())) {
 				if (decompressedResult[y] > 4) {
-					throw new PNGFormatException("Unkown row filter type " + decompressedResult[y]);
+					throw new PNGFormatException("Unknown row filter type " + decompressedResult[y]);
 				}
 
 				//skip row filter byte

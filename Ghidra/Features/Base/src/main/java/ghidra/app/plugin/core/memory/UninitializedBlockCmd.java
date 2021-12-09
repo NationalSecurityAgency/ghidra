@@ -32,7 +32,7 @@ public class UninitializedBlockCmd extends BackgroundCommand {
 	private Program program;
 
 	public UninitializedBlockCmd(Program program, MemoryBlock block) {
-		super("Unitialize Memory Block", false, true, true);
+		super("Uninitialized Memory Block", false, true, true);
 		this.program = program;
 		this.block = block;
 	}

@@ -381,7 +381,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 					// if function only calls non-returning functions
 					if (targetOnlyCallsNoReturn(cp, target, noReturnSet)) {
 						NoReturnLocations location =
-							new NoReturnLocations(target, null, "Calls only non-returing function");
+							new NoReturnLocations(target, null, "Calls only non-returning functions");
 						reasonList.add(location);
 						noReturnSet.add(target);
 						continue;

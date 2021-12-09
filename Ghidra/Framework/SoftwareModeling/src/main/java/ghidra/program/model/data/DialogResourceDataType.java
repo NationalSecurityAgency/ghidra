@@ -35,7 +35,7 @@ public class DialogResourceDataType extends DynamicDataType {
 		itemTypeMap.put(0x0081, "Edit");
 		itemTypeMap.put(0x0082, "Static");
 		itemTypeMap.put(0x0083, "List Box");
-		itemTypeMap.put(0x0084, "Scoll Bar");
+		itemTypeMap.put(0x0084, "Scroll Bar");
 		itemTypeMap.put(0x0085, "Combo Box");
 	}
 

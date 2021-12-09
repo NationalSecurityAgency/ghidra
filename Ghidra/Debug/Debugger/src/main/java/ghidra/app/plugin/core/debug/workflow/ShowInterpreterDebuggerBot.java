@@ -30,7 +30,7 @@ import ghidra.util.Swing;
 @DebuggerBotInfo( //
 	description = "Show debugger interpreters", //
 	details = "Listens for new debuggers supporting the interpreter interface," +
-		" and when found, displays that interpeter.", //
+		" and when found, displays that interpreter.", //
 	help = @HelpInfo(anchor = "show_interpreter"), //
 	enabledByDefault = true //
 )

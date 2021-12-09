@@ -368,7 +368,7 @@ public class MemoryState {
 	public void setInitialized(boolean initialized, AddressSpace spc, long off, int size) {
 		MemoryBank mspace = getMemoryBank(spc);
 		if (mspace == null)
-			throw new LowlevelError("Setting intialization status of unmapped memory space: " +
+			throw new LowlevelError("Setting initialization status of unmapped memory space: " +
 				spc.getName());
 		mspace.setInitialized(off, size, initialized);
 	}

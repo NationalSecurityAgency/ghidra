@@ -138,7 +138,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 				}
 			}
 		}).exceptionally(ex -> {
-			Msg.error(this, "Could not intialize register mapper", ex);
+			Msg.error(this, "Could not initialize register mapper", ex);
 			return null;
 		});
 	}
@@ -153,7 +153,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		return initRegMapper(descs).thenAccept(__ -> {
 			recorder.getListeners().fire.registerBankMapped(recorder);
 		}).exceptionally(ex -> {
-			Msg.error(this, "Could not intialize register mapper", ex);
+			Msg.error(this, "Could not initialize register mapper", ex);
 			return null;
 		});
 	}

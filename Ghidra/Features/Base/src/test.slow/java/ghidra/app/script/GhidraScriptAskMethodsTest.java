@@ -138,7 +138,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 				container[0] = script.askProgram("Test - Pick Program");
 			}
 			catch (Exception ioe) {
-				failWithException("Caught unexepected during askProgram()", ioe);
+				failWithException("Caught unexpected during askProgram()", ioe);
 			}
 		}, false);
 

@@ -83,14 +83,14 @@ public class SetIterator<T> implements IteratorSTL<T> {
 
 	public boolean isBegin() {
 		if (erased) {
-			throw new RuntimeException("Iterater in invalid state");
+			throw new RuntimeException("Iterator in invalid state");
 		}
 		return node == tree.getFirst();
 	}
 
 	public boolean isEnd() {
 		if (erased) {
-			throw new RuntimeException("Iterater in invalid state");
+			throw new RuntimeException("Iterator in invalid state");
 		}
 		return node == null;
 	}

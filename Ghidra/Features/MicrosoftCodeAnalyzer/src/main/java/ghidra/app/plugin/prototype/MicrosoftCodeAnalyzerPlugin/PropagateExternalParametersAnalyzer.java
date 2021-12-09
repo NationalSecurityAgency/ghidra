@@ -44,7 +44,7 @@ public class PropagateExternalParametersAnalyzer extends AbstractAnalyzer {
 	public PropagateExternalParametersAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
 		setSupportsOneTimeAnalysis();
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.after().after().after().after().after());
+		setPriority(AnalysisPriority.DATA_TYPE_PROPAGATION.after().after().after().after().after());
 		//	setPrototype();
 
 	}
@@ -70,7 +70,7 @@ public class PropagateExternalParametersAnalyzer extends AbstractAnalyzer {
 				if (hasEnoughPushes(it, params.length)) {
 					CodeUnitIterator codeUnitsToRef =
 						getCodeUnitsFromFunctionStartToRef(callingFunction, fromAddr);
-					propogateParams(params, codeUnitsToRef, externalFunctionName);
+					propagateParams(params, codeUnitsToRef, externalFunctionName);
 				}
 			}
 		}
@@ -95,7 +95,7 @@ public class PropagateExternalParametersAnalyzer extends AbstractAnalyzer {
 			if (hasEnoughPushes(cuIt, params.length)) {
 				CodeUnitIterator codeUnitsToRef =
 					getCodeUnitsFromFunctionStartToRef(thunk, thunkAddr);
-				propogateParams(params, codeUnitsToRef, externalFunction.getName());
+				propagateParams(params, codeUnitsToRef, externalFunction.getName());
 			}
 		}
 	}
@@ -179,7 +179,7 @@ public class PropagateExternalParametersAnalyzer extends AbstractAnalyzer {
 		return numPushes >= numParams;
 	}
 
-	private void propogateParams(Parameter[] params, CodeUnitIterator iterator,
+	private void propagateParams(Parameter[] params, CodeUnitIterator iterator,
 			String externalFunctionName) {
 
 		int index = 0;

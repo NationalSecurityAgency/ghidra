@@ -270,7 +270,7 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 
 			caseSensitiveCheckbox = new GCheckBox("Case Sensitive");
 			caseSensitiveCheckbox.setToolTipText(
-				"Toggles whether the case of the filter text matters in the match.  NOTE: does not apply to regular expressons.");
+				"Toggles whether the case of the filter text matters in the match.  NOTE: does not apply to regular expressions.");
 			if (initialFilterOptions.isCaseSensitive()) {
 				caseSensitiveCheckbox.setSelected(true);
 			}

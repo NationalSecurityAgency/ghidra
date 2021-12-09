@@ -95,7 +95,7 @@ public class BytesFieldFactory extends FieldFactory {
 		fieldOptions.registerOption(MAX_DISPLAY_LINES_MSG, 3, hl,
 			"The maximum number of lines used to display bytes.");
 		fieldOptions.registerOption(BYTE_GROUP_SIZE_MSG, 1, hl,
-			"The number of bytes to group together without delimeters in the bytes field.");
+			"The number of bytes to group together without delimiters in the bytes field.");
 		fieldOptions.registerOption(DISPLAY_UCASE_MSG, false, hl,
 			"Displays the hex digits in upper case in the bytes field");
 		fieldOptions.registerOption(REVERSE_INSTRUCTION_BYTE_ORDERING, false, hl,

@@ -50,7 +50,7 @@ public class UngroupAllVertexFunctionGraphJob implements GraphJob {
 
 	@Override
 	public void shortcut() {
-		throw new UnsupportedOperationException("Cannot shortct job: " + this);
+		throw new UnsupportedOperationException("Cannot shortcut job: " + this);
 	}
 
 	@Override

@@ -50,7 +50,7 @@ abstract class CategoryDBAdapter {
 
 	/**
 	 * Returns a list of categoryIDs that have the given parent ID.
-	 * @param categoryID the key into the catagory table
+	 * @param categoryID the key into the category table
 	 * @return an array of categoryIDs that have the specified parent.  Field array 
 	 * returned with LongField key values.
 	 * @throws IOException if IO error occurs
@@ -60,7 +60,7 @@ abstract class CategoryDBAdapter {
 	/**
 	 * Creates a new category with the given name and parent ID.
 	 * @param name the name of the new category.
-	 * @param parentID the parent key into the catagory table
+	 * @param parentID the parent key into the category table
 	 * @return a new record for the new category.
 	 * @throws IOException if IO error occurs
 	 */

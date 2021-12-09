@@ -441,7 +441,7 @@ public class InstructionSearchData extends Observable {
 		}
 		catch (MemoryAccessException e) {
 			throw new InvalidInputException("Error reading bytes at: " +
-				codeUnit.getAddressString(false, false) + " (possibly unititialized data?)");
+				codeUnit.getAddressString(false, false) + " (possibly uninitialized data?)");
 		}
 
 		return createInstructionMetadata(codeUnit, mask, value, false);

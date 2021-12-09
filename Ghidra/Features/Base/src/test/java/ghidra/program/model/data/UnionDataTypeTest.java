@@ -509,7 +509,7 @@ public class UnionDataTypeTest extends AbstractGTest {
 		try {
 			union.add(typeDef);
 			Assert.fail(
-				"Shouldn't be able to add a typedef of a strucutre, which contains this union, to this union.");
+				"Shouldn't be able to add a typedef of a structure, which contains this union, to this union.");
 		}
 		catch (IllegalArgumentException e) {
 			// Should get an exception from adding the structure typedef to the union.

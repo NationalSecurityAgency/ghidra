@@ -535,7 +535,7 @@ public class BitFieldEditorPanel extends JPanel {
 		}
 		if (bitfieldDtc != null) {
 			if (!bitfieldDtc.isBitFieldComponent()) {
-				throw new IllegalArgumentException("unsupport data type component");
+				throw new IllegalArgumentException("unsupported data type component");
 			}
 			initialFieldName = bitfieldDtc.getFieldName();
 			initialComment = bitfieldDtc.getComment();

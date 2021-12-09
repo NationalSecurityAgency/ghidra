@@ -150,7 +150,7 @@ public class ISO9660VolumeDescriptor extends ISO9660BaseVolume {
 		struc.add(DWORD, "Logical block Size", "Size of the logical block");
 		struc.add(QWORD, "Path Table Size", "Size of the path table");
 		struc.add(DWORD, "Location of Type-L Path Dable",
-			"LBA location of the path table containing only litle-endian values");
+			"LBA location of the path table containing only little-endian values");
 		struc.add(DWORD, "Location of Optional Type-L Path Table",
 			"LBA location of the optional path table containing only little-endian values");
 		struc.add(DWORD, "Location of Type-M Path Table",
@@ -174,7 +174,7 @@ public class ISO9660VolumeDescriptor extends ISO9660BaseVolume {
 			"Filename of file that contains abstract information on volume set");
 		struc.add(new ArrayDataType(BYTE, bibliographicFileIdentifier.length, 1),
 			"Bibliographic File Identifier",
-			"Filename of file that contians bibliographic information on volume set");
+			"Filename of file that contains bibliographic information on volume set");
 		struc.add(new ArrayDataType(BYTE, volumeCreationDateTime.length, 1),
 			"Volume Creation Date and Time", "Date and time volume was created");
 		struc.add(new ArrayDataType(BYTE, volumeModifyDateTime.length, 1),
@@ -231,7 +231,7 @@ public class ISO9660VolumeDescriptor extends ISO9660BaseVolume {
 		buff.append("Copyright File Identifier: " + new String(copyrightFileIdentifier).trim() +
 			"\n");
 		buff.append("Abstract File Identifier: " + new String(abstractFileIdentifier).trim() + "\n");
-		buff.append("Biliographic File Identifier: " + new String(bibliographicFileIdentifier) +
+		buff.append("Bibliographic File Identifier: " + new String(bibliographicFileIdentifier) +
 			"\n");
 		buff.append("Volume Creation Date/Time: " + createDateTimeString(volumeCreationDateTime) +
 			"\n");

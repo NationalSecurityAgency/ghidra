@@ -201,7 +201,7 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 		PickedState<V> ps = super.getPickedVertexState();
 		if (!(ps instanceof GPickedState)) {
 			throw new IllegalArgumentException(
-				"GPickedState was not installed or was overrwritten");
+				"GPickedState was not installed or was overwritten");
 		}
 
 		return (GPickedState<V>) ps;

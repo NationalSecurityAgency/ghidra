@@ -118,8 +118,8 @@ public class AnalysisPriority {
 	 * Data type propogation analysis should hapen as late as possible so that all basic code
 	 * recovery, reference analysis, etc... has taken place.
 	 */
-	public final static AnalysisPriority DATA_TYPE_PROPOGATION =
-		FUNCTION_ID_ANALYSIS.getNext("DATA TYPE PROPOGATION");
+	public final static AnalysisPriority DATA_TYPE_PROPAGATION =
+		FUNCTION_ID_ANALYSIS.getNext("DATA TYPE PROPAGATION");
 
 	public static final AnalysisPriority LOW_PRIORITY = new AnalysisPriority("LOW", 10000);
 

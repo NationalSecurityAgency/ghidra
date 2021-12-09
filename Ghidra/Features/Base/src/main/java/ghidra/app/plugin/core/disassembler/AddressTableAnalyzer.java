@@ -38,7 +38,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 	private static final String OPTION_NAME_PTR_ALIGNMENT = "Pointer Alignment";
 	private static final String OPTION_NAME_AUTO_LABEL_TABLE = "Auto Label Table";
 	private static final String OPTION_NAME_MIN_POINTER_ADDR = "Minimum Pointer Address";
-	private static final String OPTION_NAME_MAX_POINTER_DIFF = "Maxmimum Pointer Distance";
+	private static final String OPTION_NAME_MAX_POINTER_DIFF = "Maximum Pointer Distance";
 	private static final String OPTION_NAME_RELOCATION_GUIDE = "Relocation Table Guide";
 	private static final String OPTION_NAME_ALLOW_OFFCUT_REFERENCES = "Allow Offcut References";
 
@@ -92,7 +92,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 
 	public AddressTableAnalyzer() {
 		super("Create Address Tables", DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
-		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.before());
+		setPriority(AnalysisPriority.DATA_TYPE_PROPAGATION.before());
 		setSupportsOneTimeAnalysis();
 
 		// The analyzer should be off by default (as stated in its description)
@@ -216,13 +216,13 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 					// disassemble valid code
 					if (!validCodeSet.isEmpty()) {
 						mgr.disassemble(validCodeSet,
-							AnalysisPriority.DATA_TYPE_PROPOGATION.before());
+							AnalysisPriority.DATA_TYPE_PROPAGATION.before());
 					}
 					// if valid functions, schedule much later, so switch table analysis can pick it up.
 					if (!validFuncSet.isEmpty()) {
 						//  For Now, Never make functions from address tables, Could later be an option
 						//		mgr.createFunction(validFuncSet, true,
-						//		AnalysisPriority.DATA_TYPE_PROPOGATION.getNext());
+						//		AnalysisPriority.DATA_TYPE_PROPAGATION.getNext());
 					}
 				}
 

@@ -251,7 +251,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		Font currentFont = opt.getFont(optionToChange, (Font) optionsMap.get("font"));
 		opt.setFont(optionToChange, currentFont.deriveFont((float) currentFont.getSize() + 1));
 
-		// now make sure that the changes have been propogated
+		// now make sure that the changes have been propagated
 		for (int i = 0; i < fieldNames.length; i++) {
 
 			Object newValue = getInstanceField(fieldNames[i], componentProvider);

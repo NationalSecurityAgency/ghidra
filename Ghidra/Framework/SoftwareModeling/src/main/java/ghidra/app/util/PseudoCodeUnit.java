@@ -139,7 +139,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	public void invalidate() {
 		if (program == null) {
 			throw new UnsupportedOperationException(
-				"Pseduo code unit has null program - refresh not supported");
+				"Pseudo code unit has null program - refresh not supported");
 		}
 		isValid = false;
 	}
@@ -675,7 +675,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 		if (offset < 0 || offset >= bytes.length) {
 			if (program == null) {
 				throw new MemoryAccessException(
-					"Pseduo code unit has null program - memory request out of range");
+					"Pseudo code unit has null program - memory request out of range");
 			}
 			Memory memory = program.getMemory();
 			try {

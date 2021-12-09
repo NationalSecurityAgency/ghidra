@@ -30,7 +30,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ContextEvaluator;
-import ghidra.program.util.SymbolicPropogator;
+import ghidra.program.util.SymbolicPropagator;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -63,7 +63,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 
 	protected static final String MINKNOWNREFADDRESS_OPTION_NAME = "Min absolute reference";
 	protected static final String MINKNOWNREFADDRESS_OPTION_DESCRIPTION =
-		"Minimum address for calcuated constant store/load references";
+		"Minimum address for calculated constant store/load references";
 	protected static final int MINKNOWNREFADDRESS_OPTION_DEFAULT_VALUE = 4;
 
 	protected static final String MINSPECULATIVEREFADDRESS_OPTION_NAME =
@@ -75,7 +75,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	protected static final String MAXSPECULATIVEREFADDRESS_OPTION_NAME =
 		"Speculative reference max";
 	protected static final String MAXSPECULATIVEREFADDRESS_OPTION_DESCRIPTION =
-		"Maxmimum speculative reference address offset from the end of memory for offsets and parameters";
+		"Maximum speculative reference address offset from the end of memory for offsets and parameters";
 	protected static final int MAXSPECULATIVEREFADDRESS_OPTION_DEFAULT_VALUE = 256;
 
 	protected final static int NOTIFICATION_INTERVAL = 100;
@@ -390,7 +390,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 			flowStart = func.getEntryPoint();
 		}
 
-		SymbolicPropogator symEval = new SymbolicPropogator(program);
+		SymbolicPropagator symEval = new SymbolicPropagator(program);
 		symEval.setParamRefCheck(checkParamRefsOption);
 		symEval.setReturnRefCheck(checkParamRefsOption);
 		symEval.setStoredRefCheck(checkStoredRefsOption);
@@ -411,7 +411,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	 * @throws CancelledException
 	 */
 	public AddressSetView flowConstants(final Program program, Address flowStart,
-			AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
+			AddressSetView flowSet, final SymbolicPropagator symEval, final TaskMonitor monitor)
 			throws CancelledException {
 
 		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption,

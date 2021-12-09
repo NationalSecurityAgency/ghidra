@@ -80,10 +80,9 @@ public class PcodeEmitPacked extends PcodeEmit {
 		if (labelref == null) {
 			return;
 		}
-		for (int i = 0; i < labelref.size(); ++i) {
-			LabelRef ref = labelref.get(i);
+		for (LabelRef ref : labelref) {
 			if ((ref.labelIndex >= labeldef.size()) || (labeldef.get(ref.labelIndex) == null)) {
-				throw new SleighException("Reference to non-existant sleigh label");
+				throw new SleighException("Reference to non-existent sleigh label");
 			}
 			long res = (long) labeldef.get(ref.labelIndex) - (long) ref.opIndex;
 			if (ref.labelSize < 8) {
@@ -92,7 +91,7 @@ public class PcodeEmitPacked extends PcodeEmit {
 				res &= mask;
 			}
 			// We need to skip over op_tag, op_code, void_tag, addrsz_tag, and spc bytes
-			insertOffset(ref.streampos + 5, res);		// Insert the final offset into the stream
+			insertOffset(ref.streampos + 5, res);        // Insert the final offset into the stream
 		}
 	}
 

@@ -58,7 +58,7 @@ public class CParserUtilsTest extends AbstractGenericTest {
 		catch (Throwable t) {
 			return t;
 		}
-		Assert.fail("Funcion text did not trigger a parse problem: " + function);
+		Assert.fail("Function text did not trigger a parse problem: " + function);
 		return null;// can't get here
 	}
 }

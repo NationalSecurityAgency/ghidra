@@ -329,7 +329,7 @@ public class DBCachedObjectStoreFactory {
 				return null;
 			}
 			if (enc.length % 8 != 0) {
-				Msg.warn(this, "Database record for long[] has remaning bytes");
+				Msg.warn(this, "Database record for long[] has remaining bytes");
 			}
 			int len = enc.length / 8;
 			ByteBuffer bytes = ByteBuffer.wrap(enc);

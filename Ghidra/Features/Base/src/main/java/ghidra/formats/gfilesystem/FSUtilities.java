@@ -514,7 +514,7 @@ public class FSUtilities {
 
 		Objects.requireNonNull(path);
 		if (extLevel < 1) {
-			throw new IllegalArgumentException("Bad extention level: " + extLevel);
+			throw new IllegalArgumentException("Bad extension level: " + extLevel);
 		}
 
 		for (int i = path.length() - 1; i >= 0; i--) {

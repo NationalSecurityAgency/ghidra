@@ -73,7 +73,7 @@ public class VersionControl_ResetAll extends GhidraScript {
 		}
 		long end_ts = System.currentTimeMillis();
 
-		println("Finished reseting to base rev for folder: " + rootFolder.getPathname());
+		println("Finished resetting to base rev for folder: " + rootFolder.getPathname());
 		println("Total files: " + filesProcessed);
 		println("Total time: " + (end_ts - start_ts));
 	}

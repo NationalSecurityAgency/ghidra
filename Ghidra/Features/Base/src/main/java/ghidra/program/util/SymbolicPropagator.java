@@ -39,7 +39,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class SymbolicPropogator {
+public class SymbolicPropagator {
 	private static int LRU_SIZE = 4096;
 	// QUESTIONS
 	// 1. How are "register-relative" varnodes distinguished based upon target space ?  Not sure how we handle wrapping/truncation concerns.
@@ -91,7 +91,7 @@ public class SymbolicPropogator {
 	// Cache instructions looked up by containing
 	Map<Address, Instruction> instructionContainingCache = new LRUMap<>(LRU_SIZE);
 
-	public SymbolicPropogator(Program program) {
+	public SymbolicPropagator(Program program) {
 		this.program = program;
 
 		Language language = program.getLanguage();
@@ -252,7 +252,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * <code>Value</code> corresponds to a constant value or register relative value.
-	 * @see SymbolicPropogator#getRegisterValue(Address, Register)
+	 * @see SymbolicPropagator#getRegisterValue(Address, Register)
 	 */
 	public class Value {
 		final Register relativeRegister;
@@ -361,7 +361,7 @@ public class SymbolicPropogator {
 		int spaceID = context.getAddressSpace(stackReg.getName());
 		Varnode vnode = context.createVarnode(0, spaceID, stackReg.getBitLength() / 8);
 		context.putValue(context.getRegisterVarnode(stackReg), vnode, false);
-		context.propogateResults(false);
+		context.propagateResults(false);
 		context.flowEnd(addr);
 	}
 
@@ -857,8 +857,8 @@ public class SymbolicPropogator {
 						catch (NotFoundException e) {
 							// constant not found, ignore
 						}
-						// even though we don't know the destination, propogate the flow to attached destinations
-						vContext.propogateResults(false);
+						// even though we don't know the destination, propagate the flow to attached destinations
+						vContext.propagateResults(false);
 						Reference[] flowRefs = instruction.getReferencesFrom();
 						for (Reference flowRef : flowRefs) {
 							RefType referenceType = flowRef.getReferenceType();
@@ -928,7 +928,7 @@ public class SymbolicPropogator {
 
 						if (target != null) {
 							if (target.isMemoryAddress()) {
-								vContext.propogateResults(false);
+								vContext.propagateResults(false);
 								vContext.mergeToFutureFlowState(minInstrAddress, target);
 							}
 							func = prog.getFunctionManager().getFunctionAt(target);
@@ -1005,7 +1005,7 @@ public class SymbolicPropogator {
 							throw new AssertException("Not a valid Address on instruction at " +
 								instruction.getAddress());
 						}
-						vContext.propogateResults(false);
+						vContext.propagateResults(false);
 						vContext.mergeToFutureFlowState(minInstrAddress, in[0].getAddress());
 						pcodeIndex = ops.length; // break out of the processing
 						break;
@@ -1016,14 +1016,14 @@ public class SymbolicPropogator {
 						if (internalBranch) {
 							int sequenceOffset = (int) in[0].getOffset();
 							if ((pcodeIndex + sequenceOffset) >= ops.length) {
-								vContext.propogateResults(false);
+								vContext.propagateResults(false);
 								vContext.mergeToFutureFlowState(minInstrAddress,
 									instruction.getFallThrough());
 							}
 						}
 						else if (in[0].isAddress()) {
 							vt = in[0];
-							vContext.propogateResults(false);
+							vContext.propagateResults(false);
 							vContext.mergeToFutureFlowState(minInstrAddress, in[0].getAddress());
 						}
 
@@ -1063,7 +1063,7 @@ public class SymbolicPropogator {
 								if (i == sequenceOffset) {
 									if (fallThru != null) {
 										// we don't know what will happen from here on, but anything before should in theory propagate
-										vContext.propogateResults(true);
+										vContext.propagateResults(true);
 										vContext.mergeToFutureFlowState(minInstrAddress,
 											instruction.getFallThrough());
 									}
@@ -1432,7 +1432,7 @@ public class SymbolicPropogator {
 			}
 		}
 
-		vContext.propogateResults(true);
+		vContext.propagateResults(true);
 
 		Address fallthru = instruction.getFallThrough();
 		if (ptype == PcodeOp.BRANCH || ptype == PcodeOp.RETURN || ptype == PcodeOp.BRANCHIND) {

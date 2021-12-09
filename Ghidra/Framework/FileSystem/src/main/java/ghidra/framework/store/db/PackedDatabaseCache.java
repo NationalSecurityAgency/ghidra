@@ -346,7 +346,7 @@ public class PackedDatabaseCache {
 				for (CachedDB entry : list) {
 					if (packedFilePath.equals(entry.packedDbFilePath)) {
 						if (!entry.dbDir.canExecute() || !entry.dbDir.canWrite()) {
-							throw new IOException("Permssion denied: " + entry.dbDir);
+							throw new IOException("Permission denied: " + entry.dbDir);
 						}
 						entry.lastAccessTime = now;
 						writeCacheList(list);

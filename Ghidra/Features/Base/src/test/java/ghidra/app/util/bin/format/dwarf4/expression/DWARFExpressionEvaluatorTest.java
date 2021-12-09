@@ -379,7 +379,7 @@ public class DWARFExpressionEvaluatorTest {
 			evaluator.setMaxStepCount(Integer.MAX_VALUE);
 			evaluator.evaluate(expr);
 			fail(
-				"DWARFExpressionEvaluator should have thrown an exception because it recieved an interrupt, " +
+				"DWARFExpressionEvaluator should have thrown an exception because it received an interrupt, " +
 					"but you are probably not reading this message because junit can't get here because of the endless loop in the expr.");
 		}
 		catch (DWARFExpressionException dee) {

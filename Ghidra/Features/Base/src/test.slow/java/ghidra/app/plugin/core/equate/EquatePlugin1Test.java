@@ -782,9 +782,9 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		assertFalse("Couldn't find equate", et.getEquates(addr3, 0).isEmpty());
 
 		// These are not 0x2 values in the selection that should not have been converted.
-		assertTrue("Equate should't have been made", et.getEquates(addr2, 1).isEmpty());
-		assertTrue("Equate should't have been made", et.getEquates(addr4, 0).isEmpty());
-		assertTrue("Equate should't have been made", et.getEquates(addr5, 0).isEmpty());
+		assertTrue("Equate shouldn't have been made", et.getEquates(addr2, 1).isEmpty());
+		assertTrue("Equate shouldn't have been made", et.getEquates(addr4, 0).isEmpty());
+		assertTrue("Equate shouldn't have been made", et.getEquates(addr5, 0).isEmpty());
 	}
 
 	@Test

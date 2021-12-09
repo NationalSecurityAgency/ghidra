@@ -129,7 +129,7 @@ public class CliFlags {
 			add(prefix+"Contravariant", 0x0002);
 			add(prefix+"ReferenceTypeConstraint", 0x0004);
 			add(prefix+"NotNullableValueTypeConstraint", 0x0008);
-			add(prefix+"DefaultConstructorContstraint", 0x0010);
+			add(prefix+"DefaultConstructorConstraint", 0x0010);
 		}
 	}
 	

@@ -120,7 +120,7 @@ public class GhidraServerSerialFilterFailureTest extends AbstractGhidraHeadlessI
 			Throwable cause = e.getCause();
 			assertTrue("expected remote unmarshall exception", cause instanceof UnmarshalException);
 			cause = cause.getCause();
-			assertTrue("expected remote invalid class exceptionn",
+			assertTrue("expected remote invalid class exception",
 				cause instanceof InvalidClassException);
 		}
 		
