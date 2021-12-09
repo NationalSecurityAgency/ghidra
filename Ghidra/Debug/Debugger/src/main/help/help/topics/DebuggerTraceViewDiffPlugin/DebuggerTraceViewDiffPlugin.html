@@ -1,0 +1,158 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Comparing Times</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Comparing Times</H1>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerTraceViewDiffPlugin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P><A name="Toggle_Header"></A>A common strategy in dynamic analysis is to compare machine
+    state between two points in time. To this end, to support comparison of bytes in memory, the
+    "trace diff" plugin extends the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A> to provide
+    side-by-side comparison of two different points in time. When active, listings for both points
+    in time are displayed and the byte value differences between them are highlighted. <B>NOTE:</B>
+    This does not compare annotations. It only compares raw byte values. Additionally, all stale
+    values are ignored, i.e., to show as a difference, the memory must be observed at <EM>both</EM>
+    points in time, and the values must differ.</P>
+
+    <P><B>NOTE:</B> This plugin only facilitates the comparison of memory displayed in listings. To
+    compare registers or SLEIGH expressions, use the respective windows: <A href=
+    "help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A> and <A href=
+    "help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html">Watches</A>. By navigating back
+    and forth between two points in time, using the <A href=
+    "help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html">Time Window</A>, the differences are
+    displayed in <FONT color="red">red</FONT>.</P>
+
+    <H2>Actions</H2>
+
+    <P>The plugin adds actions to the main Dynamic Listing. When active, additional actions are
+    present.</P>
+
+    <H3><A name="compare"></A>Compare</H3>
+
+    <P>This action is available whenever a trace is active in the main listing. It prompts for an
+    alternative point in time:</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" src=
+          "images/DebuggerTimeSelectionDialog.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>The snapshot table is exactly the same as that in the <A href=
+    "help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html">Time Window</A>. In most cases, simply
+    selecting a snapshot suffices.</P>
+
+    <P>Perhaps the most common use of this action is to identify where a given variable is stored
+    in memory. The trace saves a record of observed memory from the debugging session. Comparing
+    snapshots thus identifies changes over time; however, there is no guarantee that the desired
+    variable was ever observed. Assuming the general vicinity of the variable is known, e.g.,
+    "somewhere in the .data section," the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#read_memory">Read Selected
+    Memory</A> action can ensure its value is recorded. Of course, it can also read "all memory,"
+    but that operation and the follow-on comparison could take time. In general, the procedure to
+    locate a variable is to capture a baseline, execute the target until the variable has changed,
+    capture again, then compare:</P>
+
+    <OL>
+      <LI>Execute the target up to a baseline, and take note of the variable's value, as displayed
+      by the target program.</LI>
+
+      <LI>Consider naming the current snapshot for later reference, using the <A href=
+      "help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html#rename_snapshot">Rename Current
+      Snapshot</A> action. Ideally, the name should indicate the variable's value.</LI>
+
+      <LI>Select the range of memory believed to contain the variable. Consider using the <A href=
+      "help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html">Modules</A> or <A href=
+      "help/topics/DebuggerRegionsPlugin/DebuggerRegionsPlugin.html">Regions</A> window to form the
+      selection.</LI>
+
+      <LI>Use the <A href=
+      "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#read_memory">Read Selected
+      Memory</A> action to ensure the variable's value is stored in the trace.</LI>
+
+      <LI>Allow the target to execute until the variable has changed. Ideally, execute as little as
+      necessary, so that few or no other variables change.</LI>
+
+      <LI>Execution will cause the trace to advance some number of snapshots. Once suspended, it's
+      a good idea to rename the current snapshot, again indicating the variable's new value and/or
+      the cause of its change.</LI>
+
+      <LI>Repeat the selection and capture steps to ensure the variable's new value is stored in
+      the trace.</LI>
+
+      <LI>Use this <B>Compare</B> action and select the baseline snapshot. It's easy to locate in
+      the table if named appropriately.</LI>
+    </OL>
+
+    <P>Assuming the variable is actually contained in the captured memory ranges, then it should be
+    among the differences shown. If too many differences appear, repeat the experiment. Consider
+    executing less code, establishing a new baseline, taking the intersection of the results, etc.
+    Remember, the variable's storage should encode its value.</P>
+
+    <P>Optionally, the specified time may also include emulation. See the <A href=
+    "help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html#goto_time">Go To Time</A> action
+    for the syntax of the <B>Time Schedule</B> expression. For simple schedules, the step buttons
+    provide convenient forward and backward changes to the emulation schedule. Perhaps the most
+    common use of this is to see what changes from executing an isolated block of code. Ideally,
+    the baseline is a relatively complete capture or represents the present in a live session, so
+    that the emulator does not depend on un-recorded state:</P>
+
+    <OL>
+      <LI>Execute the target up to a baseline, probably using a breakpoint at the start of the
+      interesting block of code.</LI>
+
+      <LI>Keeping the target alive, use the <A href=
+      "help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html#emu_trace_tick_forward">Emulate
+      Forward</A> and/or <A href=
+      "help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html#goto_time">Go To Time</A>
+      actions to reach the end of the interesting block.</LI>
+
+      <LI>Use this <B>Compare</B> action and select the baseline snapshot.</LI>
+    </OL>
+
+    <P>Alternatively, if the number of steps to reach the end of the block is already known, just
+    use the emulation expression in the <B>Compare</B> action's dialog. <B>NOTE:</B> When used this
+    way, the baseline snapshot will be in the left pane, and the emulated snapshot in the right,
+    which is opposite the result from the steps above.</P>
+
+    <P>In either case, this will highlight any memory that was modified by the emulated code. Of
+    course, this could also be accomplished by setting a second breakpoint and allowing the target
+    to execute; however, emulation does not necessarily require large memory captures. It only
+    observes what it needs, and its internal state contains everything that changed. Furthermore,
+    if establishing the baseline is difficult, emulation allows the target to remain at that
+    baseline. Assuming sufficient state is captured, emulation can also be performed offline,
+    without a live target.</P>
+
+    <H3><A name="next_diff"></A><A name="prev_diff"></A>Previous / Next Difference</H3>
+
+    <P>These actions are only present when the comparison listing is visible. Each is available
+    when there exists a previous or next range from the main listing's cursor. Clicking the action
+    navigates to the nearest address in that range.</P>
+
+    <H2><A name="colors"></A>Tool Options: Colors</H2>
+
+    <P>The difference highlight color is replicated from the <A href=
+    "help/topics/Diff/Diff.htm">Program Differences</A> plugin.</P>
+  </BODY>
+</HTML>

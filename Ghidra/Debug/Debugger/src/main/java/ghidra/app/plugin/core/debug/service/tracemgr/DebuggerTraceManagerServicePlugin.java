@@ -661,44 +661,39 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return current.getFrame();
 	}
 
+	@Override
+	public CompletableFuture<Long> materialize(DebuggerCoordinates coordinates) {
+		if (coordinates.getTime().isSnapOnly()) {
+			return CompletableFuture.completedFuture(coordinates.getSnap());
+		}
+		Collection<? extends TraceSnapshot> suitable = coordinates.getTrace()
+				.getTimeManager()
+				.getSnapshotsWithSchedule(coordinates.getTime());
+		if (!suitable.isEmpty()) {
+			TraceSnapshot found = suitable.iterator().next();
+			return CompletableFuture.completedFuture(found.getKey());
+		}
+		if (emulationService == null) {
+			throw new IllegalStateException(
+				"Cannot navigate to coordinates with execution schedules, " +
+					"because the emulation service is not available.");
+		}
+		return emulationService.backgroundEmulate(coordinates.getTrace(), coordinates.getTime());
+	}
+
 	protected void prepareViewAndFireEvent(DebuggerCoordinates coordinates) {
 		TraceVariableSnapProgramView varView = (TraceVariableSnapProgramView) coordinates.getView();
 		if (varView == null) { // Should only happen with NOWHERE
 			fireLocationEvent(coordinates);
+			return;
 		}
-		else if (coordinates.getTime().isSnapOnly()) {
-			varView.setSnap(coordinates.getSnap());
+		materialize(coordinates).thenAcceptAsync(snap -> {
+			if (!coordinates.equals(current)) {
+				return; // We navigated elsewhere before emulation completed
+			}
+			varView.setSnap(snap);
 			fireLocationEvent(coordinates);
-		}
-		else {
-			Collection<? extends TraceSnapshot> suitable = coordinates.getTrace()
-					.getTimeManager()
-					.getSnapshotsWithSchedule(coordinates.getTime());
-			if (!suitable.isEmpty()) {
-				TraceSnapshot found = suitable.iterator().next();
-				varView.setSnap(found.getKey());
-				fireLocationEvent(coordinates);
-				return;
-			}
-			if (emulationService == null) {
-				throw new IllegalStateException(
-					"Cannot navigate to coordinates with execution schedules, " +
-						"because the emulation service is not available.");
-			}
-			CompletableFuture<Long> bg =
-				emulationService.backgroundEmulate(coordinates.getTrace(), coordinates.getTime());
-			bg.thenAccept(emuSnap -> Swing.runLater(() -> {
-				if (!coordinates.equals(current)) {
-					return; // We navigated elsewhere before emulation completed
-				}
-				varView.setSnap(emuSnap);
-				fireLocationEvent(coordinates);
-			})).exceptionally(ex -> {
-				Msg.showError(this, null, "Emulate", "Could not navigate to emulated coordinates",
-					ex);
-				return null;
-			});
-		}
+		}, AsyncUtils.SWING_EXECUTOR);
 	}
 
 	protected void fireLocationEvent(DebuggerCoordinates coordinates) {
@@ -892,6 +887,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 						future.completeExceptionally(e);
 					}
 				}
+
 			});
 		}
 		return future;

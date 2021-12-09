@@ -38,6 +38,7 @@ import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.options.annotation.AutoOptionDefined;
@@ -160,6 +161,16 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		autoOptionsWiring = AutoOptions.wireOptions(this);
 
 		createActions();
+	}
+
+	@Override
+	public MultiBlendedListingBackgroundColorModel createListingBackgroundColorModel(
+			ListingPanel listingPanel) {
+		MultiBlendedListingBackgroundColorModel colorModel =
+			new MultiBlendedListingBackgroundColorModel();
+		colorModel.addModel(new MemoryStateListingBackgroundColorModel(this, listingPanel));
+		colorModel.addModel(new CursorBackgroundColorModel(this, listingPanel));
+		return colorModel;
 	}
 
 	@Override
@@ -320,6 +331,21 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	@Override
 	public void setTrackingSpec(LocationTrackingSpec spec) {
 		connectedProvider.setTrackingSpec(spec);
+	}
+
+	@Override
+	public LocationTrackingSpec getTrackingSpec() {
+		return connectedProvider.getTrackingSpec();
+	}
+
+	@Override
+	public void addTrackingSpecChangeListener(LocationTrackingSpecChangeListener listener) {
+		connectedProvider.addTrackingSpecChangeListener(listener);
+	}
+
+	@Override
+	public void removeTrackingSpecChangeListener(LocationTrackingSpecChangeListener listener) {
+		connectedProvider.removeTrackingSpecChangeListener(listener);
 	}
 
 	@Override

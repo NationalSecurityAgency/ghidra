@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.debug.gui.listing;
 import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.awt.Color;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -37,14 +36,13 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractFollowsCurrentThreadAction;
-import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToDialog;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.BoundAction;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.LogRow;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
-import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
 import ghidra.framework.model.*;
 import ghidra.plugin.importer.ImporterPlugin;
@@ -68,27 +66,6 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
-	static LocationTrackingSpec getLocationTrackingSpec(String name) {
-		return LocationTrackingSpec.fromConfigName(name);
-	}
-
-	static AutoReadMemorySpec getAutoReadMemorySpec(String name) {
-		return AutoReadMemorySpec.fromConfigName(name);
-	}
-
-	final LocationTrackingSpec trackNone =
-		getLocationTrackingSpec(NoneLocationTrackingSpec.CONFIG_NAME);
-	final LocationTrackingSpec trackPc =
-		getLocationTrackingSpec(PCLocationTrackingSpec.CONFIG_NAME);
-	final LocationTrackingSpec trackSp =
-		getLocationTrackingSpec(SPLocationTrackingSpec.CONFIG_NAME);
-
-	final AutoReadMemorySpec readNone =
-		getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);
-	final AutoReadMemorySpec readVisible =
-		getAutoReadMemorySpec(VisibleAutoReadMemorySpec.CONFIG_NAME);
-	final AutoReadMemorySpec readVisROOnce =
-		getAutoReadMemorySpec(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
 
 	protected DebuggerListingPlugin listingPlugin;
 	protected DebuggerListingProvider listingProvider;
@@ -110,12 +87,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	protected void goToDyn(ProgramLocation location) {
-		waitForPass(() -> {
-			runSwing(() -> listingProvider.goTo(location.getProgram(), location));
-			ProgramLocation confirm = listingProvider.getLocation();
-			assertNotNull(confirm);
-			assertEquals(location.getAddress(), confirm.getAddress());
-		});
+		goTo(listingProvider.getListingPanel(), location);
 	}
 
 	protected static byte[] incBlock() {
@@ -570,32 +542,6 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		ProgramLocation loc = codeViewer.getCurrentLocation();
 		assertEquals(program, loc.getProgram());
 		assertEquals(ss.getAddress(0x00601234), loc.getAddress());
-	}
-
-	protected void assertListingBackgroundAt(Color expected, ListingPanel panel,
-			Address addr, int yAdjust) throws AWTException, InterruptedException {
-		ProgramLocation oneBack = new ProgramLocation(panel.getProgram(), addr.previous());
-		runSwing(() -> panel.goTo(addr));
-		runSwing(() -> panel.goTo(oneBack, false));
-		waitForPass(() -> {
-			Rectangle r = panel.getBounds();
-			// Capture off screen, so that focus/stacking doesn't matter
-			BufferedImage image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
-			Graphics g = image.getGraphics();
-			try {
-				runSwing(() -> panel.paint(g));
-			}
-			finally {
-				g.dispose();
-			}
-			Point locP = panel.getLocationOnScreen();
-			Point locFP = panel.getLocationOnScreen();
-			locFP.translate(-locP.x, -locP.y);
-			Rectangle cursor = panel.getCursorBounds();
-			Color actual = new Color(image.getRGB(locFP.x + cursor.x - 1,
-				locFP.y + cursor.y + cursor.height * 3 / 2 + yAdjust));
-			assertEquals(expected, actual);
-		});
 	}
 
 	@Test

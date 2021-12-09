@@ -884,6 +884,26 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		return false;
 	}
 
+	@Override
+	public Long getSnapOfMostRecentChangeToBlock(long snap, Address address) {
+		assertInSpace(address);
+		try (LockHold hold = LockHold.lock(lock.readLock())) {
+			long offset = address.getOffset();
+			long roundOffset = offset & BLOCK_MASK;
+			OffsetSnap loc = new OffsetSnap(roundOffset, snap);
+			DBTraceMemoryBlockEntry ent = findMostRecentBlockEntry(loc, true);
+			if (ent == null) {
+				return null;
+			}
+			return ent.getSnap();
+		}
+	}
+
+	@Override
+	public int getBlockSize() {
+		return BLOCK_SIZE;
+	}
+
 	public long getFirstChange(Range<Long> span, AddressRange range) {
 		assertInSpace(range);
 		long lower = DBTraceUtils.lowerEndpoint(span);
