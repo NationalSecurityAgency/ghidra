@@ -530,8 +530,12 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 		if (mb != null) {
 			if (mb.testModel != null) {
-				// TODO: Stop recordings, too?
 				modelService.removeModel(mb.testModel);
+
+				runSwing(() -> traceManager.setSaveTracesByDefault(false));
+				for (TraceRecorder recorder : modelService.getTraceRecorders()) {
+					recorder.stopRecording();
+				}
 			}
 		}
 
