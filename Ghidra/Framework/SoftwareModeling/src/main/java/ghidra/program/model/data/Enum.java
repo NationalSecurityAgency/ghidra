@@ -38,6 +38,13 @@ public interface Enum extends DataType {
 	public String getName(long value);
 
 	/**
+	 * Returns all names that map to the given value.
+	 * @param value value for the enum entries.
+	 * @return all names; null if there is not name for the given value.
+	 */
+	public String[] getNames(long value);
+
+	/**
 	 * Get the comment for the given name.
 	 * @param name name of the entry.
 	 * @return the comment or the empty string if the name does not exist in this enum or if no

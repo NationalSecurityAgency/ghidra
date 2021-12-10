@@ -169,7 +169,7 @@ class EnumDB extends DataTypeDB implements Enum {
 			checkIsValid();
 			initializeIfNeeded();
 			List<String> list = valueMap.get(value);
-			if (list == null) {
+			if (list == null || list.isEmpty()) {
 				return new String[0];
 			}
 			return list.toArray(new String[0]);

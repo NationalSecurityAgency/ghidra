@@ -20,6 +20,7 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.*;
 import javax.swing.table.TableColumnModel;
@@ -210,11 +211,16 @@ public class SetEquateDialog extends DialogComponentProvider {
 			.stream()
 			.filter(dt -> dt instanceof Enum)
 			.map(Enum.class::cast)
-			.flatMap(enoom -> Arrays.stream(enoom.getNames(scalar.getValue())).map(name -> new EquateRowObject(name, enoom)))
+			.flatMap(this::enumToRowObjects)
 			.forEach(entries::add);
 		//@formatter:on
 
 		return entries;
+	}
+
+	private Stream<EquateRowObject> enumToRowObjects(Enum enoom) {
+		String[] names = enoom.getNames(scalar.getValue());
+		return Arrays.stream(names).map(name -> new EquateRowObject(name, enoom));
 	}
 
 	/*
@@ -467,7 +473,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 	/**
 	 * Returns true if the user has chosen to overwrite any existing equate rules.
 	 *
-	 * @return true if the user has chosen to overwrite any existing equate rules. 
+	 * @return true if the user has chosen to overwrite any existing equate rules.
 	 */
 	public boolean getOverwriteExisting() {
 		return overwriteExistingEquates.isSelected();
@@ -507,9 +513,6 @@ public class SetEquateDialog extends DialogComponentProvider {
 		this.setStatusText(text);
 	}
 
-	/**
-	 * Called when user selects OK button
-	 */
 	@Override
 	protected void okCallback() {
 		if (isValid(this.getEquateName(), scalar)) {
@@ -529,7 +532,6 @@ public class SetEquateDialog extends DialogComponentProvider {
 
 		// look up the new equate string
 		Equate newEquate = equateTable.getEquate(equateStr);
-
 		if (newEquate != null && getEnumDataType() == null) {
 			// make sure any existing equate with that name has the same value.
 			if (newEquate.getValue() != testScalar.getValue()) {
@@ -545,14 +547,12 @@ public class SetEquateDialog extends DialogComponentProvider {
 		return (Enum) dataTypeManager.findDataTypeForID(id);
 	}
 
-	/**
-	 * Called when user selects Cancel Button.
-	 */
 	@Override
 	protected void cancelCallback() {
 		close();
 	}
 
+	@Override
 	public void dispose() {
 		suggestedEquatesTable.dispose();
 		filterPanel.dispose();
@@ -577,7 +577,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 			}
 
 			this.enoom = enoom;
-			this.entryName = enoom.getName(value);
+			this.entryName = name;
 			this.dataTypeUUID = enoom.getUniversalID();
 			this.path = getFullPath(enoom);
 			String formattedEquateName = EquateManager.formatNameForEquate(dataTypeUUID, value);
@@ -671,6 +671,9 @@ public class SetEquateDialog extends DialogComponentProvider {
 				return false;
 			}
 			if (enoom == null || !enoom.isEquivalent(other.getEnumDataType())) {
+				return false;
+			}
+			if (!Objects.equals(entryName, other.entryName)) {
 				return false;
 			}
 			return true;

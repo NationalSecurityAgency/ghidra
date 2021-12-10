@@ -97,6 +97,15 @@ public class EnumDataType extends GenericDataType implements Enum {
 	}
 
 	@Override
+	public String[] getNames(long value) {
+		List<String> list = valueMap.get(value);
+		if (list == null || list.isEmpty()) {
+			return null;
+		}
+		return list.toArray(new String[0]);
+	}
+
+	@Override
 	public String getComment(String valueName) {
 		String comment = commentMap.get(valueName);
 		if (comment == null) {
