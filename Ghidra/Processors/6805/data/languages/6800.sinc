@@ -116,9 +116,9 @@ macro setHFlag(reg, op)
 # P-code INT_2COMP.
 macro negate(op)
 {
+    op = -op;
     $(V) = (op == 0x80);
     $(C) = (op != 0);
-    op = -op;
     setNZFlags(op);
 }
 
