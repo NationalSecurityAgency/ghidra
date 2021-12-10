@@ -46,6 +46,41 @@
     
     <H2>The not-so-fine print: Please Read!</H2>
     
+	<P><span style="color:#FF0000">WARNING:</span> There has been a published CVE security vulnerability noted in Ghidra dependencies within two log4j jar files.
+    We strongly encourage anyone using previous versions of Ghidra or a build from source, to remediate this issue by either upgrading
+    to the latest Ghidra 10.1 version, or patching your current version.</P>
+    
+    <P>
+	To patch your current Ghidra installation, delete:
+	<BLOCKQUOTE><UL>
+    <li>Ghidra/Framework/Generic/lib/log4j-api-2.12.1.jar</li>
+    <li>Ghidra/Framework/Generic/lib/log4j-core-2.12.1.jar</li>
+    </UL></BLOCKQUOTE>
+    </P>
+    
+    <P>
+	and replace with the newer log4j 2.15.0 version:
+	<BLOCKQUOTE><UL>
+    <li>log4j-api-2.15.0.jar</li>
+    <li>log4j-core-2.15.0.jar</li>
+    </UL></BLOCKQUOTE>
+    </P>
+    
+    <P>
+	You can find these in the latest Ghidra 10.1 release, or from:
+	<BLOCKQUOTE><UL>
+    <li>https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.15.0/log4j-api-2.15.0.jar</li>
+    <li>https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.15.0/log4j-core-2.15.0.jar</li>
+    </UL></BLOCKQUOTE>
+    </P>
+    
+    <P>
+    The details of the vulnerability can be found here:
+	<BLOCKQUOTE><UL>
+    <li>https://nvd.nist.gov/vuln/detail/CVE-2021-44228</li>
+    </UL></BLOCKQUOTE>
+    </P>
+    
 	<P>Ghidra 10.1 is fully backward compatible with project data from previous releases. However, programs and data type archives
 	which are created or modified in 10.1 will not be useable by an earlier Ghidra version.</P>
 

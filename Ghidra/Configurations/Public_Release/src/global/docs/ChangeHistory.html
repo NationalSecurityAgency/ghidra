@@ -32,6 +32,7 @@
     <li><I>API</I>. Updated API methods of the DataTypeChooserDialog. (GP-1349, Issue #3140)</li>
     <li><I>Basic Infrastructure</I>. Symbol performance in Ghidra was significantly improved. Specifically, new database indexes were created to improve finding primary symbols as well as improving lookups by combinations of name, namespace, and address. (GP-1082)</li>
     <li><I>Basic Infrastructure</I>. Added optional columns in the Functions table for several boolean-valued function attributes. (GP-1393)</li>
+    <li><I>Basic Infrastructure</I>. Upgraded log4j dependency from 2.12.1 to 2.15.0 to resolve a security vulnerability. (GP-1588)</li>
     <li><I>Build</I>. Extension builds can now declare jar dependencies from standard Gradle repositories such as Maven Central. (GP-1144, Issue #2219, #2226)</li>
     <li><I>Build</I>. Increased minimum supported Gradle version from 6.0 to 6.4. (GP-1521, Issue #3650)</li>
     <li><I>Data Types</I>. Added support for zero-element arrays and zero-length components within structures and unions.  Eliminated flex-array API methods and added/improved other Structure methods to handle multiple components which share the same offset. (GP-943)</li>
