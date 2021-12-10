@@ -5,7 +5,7 @@
 
   <appender name="console" class="org.apache.log4j.ConsoleAppender">
     <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="%-5p %c{1}: %m%n"/>
+      <param name="ConversionPattern" value="%-5p %c{1}: %m{nolookups}%n"/>
     </layout>
   </appender>
 

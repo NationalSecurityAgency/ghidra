@@ -2,6 +2,6 @@
 	
 <!-- Log4j appender that writes messages to the {@link LogPanelAppender}. -->
 <LogPanelAppender name="logPanel">
-	<PatternLayout pattern="%-5p %m %ex"/>  
+	<PatternLayout pattern="%-5p %m{nolookups} %ex"/>
 </LogPanelAppender>
 

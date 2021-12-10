@@ -4,6 +4,6 @@
 <Console 	
 	name="console" 
 	target="SYSTEM_OUT">
-	<PatternLayout pattern="%-5p %m (%c{1}) %ex %n"/>  
+	<PatternLayout pattern="%-5p %m{nolookups} (%c{1}) %ex %n"/>
 </Console>
 

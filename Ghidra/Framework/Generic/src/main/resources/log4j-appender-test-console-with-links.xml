@@ -11,6 +11,6 @@
 <Console 	
 	name="console" 
 	target="SYSTEM_OUT"> 
-	<PatternLayout pattern="%d{HH:mm:ss} %-5p %m %ex %hl %n"/> 
+	<PatternLayout pattern="%d{HH:mm:ss} %-5p %m{nolookups} %ex %hl %n"/>
 </Console>
 

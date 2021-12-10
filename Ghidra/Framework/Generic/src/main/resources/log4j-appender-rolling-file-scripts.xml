@@ -14,7 +14,7 @@
 	fileName="${sys:scriptLogFilename}"
 	filePattern="${sys:scriptLogFilename}-%d{yyyy-MM-dd}-%i.log">   
 	
-	<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p %m %ex %n"/>	 
+	<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p %m{nolookups} %ex %n"/>
 	
 	<!--
 		Only allow messages from scripts (see the note above).  
