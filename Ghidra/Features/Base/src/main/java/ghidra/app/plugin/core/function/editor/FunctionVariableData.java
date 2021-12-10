@@ -25,7 +25,7 @@ interface FunctionVariableData {
 
 	public void setName(String name);
 
-	public void setFormalDataType(DataType dataType);
+	public boolean setFormalDataType(DataType dataType);
 
 	public VariableStorage getStorage();
 

@@ -43,10 +43,6 @@ if (hasProperty("eclipsePDE")) {
 	}
 }
 
-// We want GhidraDev to run with Eclipses launched with Java 8
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
 dependencies {
 	api project(':Utility')
 	api project(':LaunchSupport')

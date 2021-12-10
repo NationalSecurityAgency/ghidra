@@ -183,7 +183,7 @@ public class DebugClientImpl1 implements DebugClientInternal {
 	}
 
 	@Override
-	public void attachProcess(DebugServerId si, int processId,
+	public void attachProcess(DebugServerId si, long processId,
 			BitmaskSet<DebugAttachFlags> attachFlags) {
 		ULONGLONG ullServer = new ULONGLONG(si.id);
 		ULONG ulPid = new ULONG(processId);

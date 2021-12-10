@@ -31,18 +31,18 @@ public class TypeIDItem implements StructConverter {
 
 	private int descriptorIndex;
 
-	public TypeIDItem( BinaryReader reader ) throws IOException {
-		descriptorIndex = reader.readNextInt( );
+	public TypeIDItem(BinaryReader reader) throws IOException {
+		descriptorIndex = reader.readNextInt();
 	}
 
-	public int getDescriptorIndex( ) {
+	public int getDescriptorIndex() {
 		return descriptorIndex;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = StructConverterUtil.toDataType( TypeIDItem.class );
-		dataType.setCategoryPath( new CategoryPath( "/dex" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = StructConverterUtil.toDataType(TypeIDItem.class);
+		dataType.setCategoryPath(new CategoryPath("/dex"));
 		return dataType;
 	}
 

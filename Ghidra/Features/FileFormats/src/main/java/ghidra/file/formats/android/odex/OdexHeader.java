@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class OdexHeader implements StructConverter {
 
-	private byte [] magic;
+	private byte[] magic;
 	private int dexOffset;
 	private int dexLength;
 	private int depsOffset;
@@ -35,9 +35,9 @@ public class OdexHeader implements StructConverter {
 	private int auxLength;
 	private int flags;
 	private int padding;
-	
-	public OdexHeader( BinaryReader reader ) throws IOException {
-		magic = reader.readNextByteArray( OdexConstants.ODEX_MAGIC_LENGTH );
+
+	public OdexHeader(BinaryReader reader) throws IOException {
+		magic = reader.readNextByteArray(OdexConstants.ODEX_MAGIC_LENGTH);
 		dexOffset = reader.readNextInt();
 		dexLength = reader.readNextInt();
 		depsOffset = reader.readNextInt();
@@ -49,66 +49,74 @@ public class OdexHeader implements StructConverter {
 	}
 
 	public String getMagic() {
-		return new String( magic );
+		return new String(magic);
 	}
+
 	/**
 	 * Returns byte offset to the optimized DEX file.
 	 */
 	public int getDexOffset() {
 		return dexOffset;
 	}
+
 	/**
 	 * Returns byte length of the optimized DEX file.
 	 */
 	public int getDexLength() {
 		return dexLength;
 	}
+
 	/**
 	 * Return byte offset to the framework dependencies.
 	 */
 	public int getDepsOffset() {
 		return depsOffset;
 	}
+
 	/**
 	 * Return byte length of the framework dependencies.
 	 */
 	public int getDepsLength() {
 		return depsLength;
 	}
+
 	/**
 	 * Return byte offset to the auxiliary data.
 	 */
 	public int getAuxOffset() {
 		return auxOffset;
 	}
+
 	/**
 	 * Return byte length to the auxiliary data.
 	 */
 	public int getAuxLength() {
 		return auxLength;
 	}
+
 	/**
 	 * Return the ODEX flags.
 	 */
 	public int getFlags() {
 		return flags;
 	}
+
 	public int getPadding() {
 		return padding;
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "odex_header_item", 0 );
-		structure.add( UTF8, OdexConstants.ODEX_MAGIC_LENGTH, "magic", null );
-		structure.add( DWORD, "dex_offset", null );
-		structure.add( DWORD, "dex_length", null );
-		structure.add( DWORD, "deps_offset", null );
-		structure.add( DWORD, "deps_length", null );
-		structure.add( DWORD, "aux_offset", null );
-		structure.add( DWORD, "aux_length", null );
-		structure.add( DWORD, "flags", null );
-		structure.add( DWORD, "padding", null );
+		Structure structure = new StructureDataType("odex_header_item", 0);
+		structure.add(UTF8, OdexConstants.ODEX_MAGIC_LENGTH, "magic", null);
+		structure.add(DWORD, "dex_offset", null);
+		structure.add(DWORD, "dex_length", null);
+		structure.add(DWORD, "deps_offset", null);
+		structure.add(DWORD, "deps_length", null);
+		structure.add(DWORD, "aux_offset", null);
+		structure.add(DWORD, "aux_length", null);
+		structure.add(DWORD, "flags", null);
+		structure.add(DWORD, "padding", null);
 		return structure;
 	}
 

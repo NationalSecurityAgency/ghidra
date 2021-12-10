@@ -27,8 +27,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.commands.SegmentCommand;
-import ghidra.app.util.bin.format.macho.commands.SegmentNames;
+import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.prelink.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -61,6 +60,33 @@ public class MachoPrelinkUtils {
 		}
 		catch (NoPreLinkSectionException | MachException e) {
 			return Collections.emptyList();
+		}
+	}
+
+	/**
+	 * Check if the Macho has a DYLD_CHAINED_FIXUPS_COMMAND
+	 * 
+	 * @param provider The provider to parse.
+	 * @param monitor A monitor.
+	 * @return A list of discovered {@link PrelinkMap}s.  An empty list indicates that the provider
+	 *   did not represent valid Mach-O PRELINK binary.
+	 * @throws IOException if there was an IO-related issue.
+	 * @throws JDOMException if there was a issue parsing the PRELINK XML.
+	 */
+	public static boolean hasChainedLoadCommand(ByteProvider provider, TaskMonitor monitor)
+			throws IOException, JDOMException {
+
+		try {
+			MachHeader mainHeader =
+				MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider);
+			mainHeader.parse(); // make sure first Mach-O header is valid....
+
+			DyldChainedFixupsCommand cmd =
+				mainHeader.getFirstLoadCommand(DyldChainedFixupsCommand.class);
+			return cmd != null;
+		}
+		catch (MachException e) {
+			return false;
 		}
 	}
 

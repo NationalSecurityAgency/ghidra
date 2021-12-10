@@ -158,7 +158,10 @@ public interface ConfigurableFactory<T> {
 			if (codec == null) {
 				continue;
 			}
-			property.setValue(codec.read(saveState, opt.getKey(), null));
+			Object read = codec.read(saveState, opt.getKey(), null);
+			if (read != null) {
+				property.setValue(read);
+			}
 		}
 	}
 }

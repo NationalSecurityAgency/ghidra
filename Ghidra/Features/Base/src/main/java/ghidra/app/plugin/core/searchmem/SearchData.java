@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,24 +25,23 @@ public class SearchData {
 	private boolean isValidSearchData;
 
 	// valid input and search data with mask
-	protected SearchData( String inputString, byte[] searchBytes, byte[] mask ) {
+	protected SearchData(String inputString, byte[] searchBytes, byte[] mask) {
 		this.isValidInputData = true;
 		this.isValidSearchData = true;
 		this.inputString = inputString;
 		this.bytes = searchBytes == null ? new byte[0] : searchBytes;
 		this.mask = mask;
 	}
-	
+
 	// valid input, bad search data
-	private SearchData( String errorMessage, boolean isValidInputData ) {
+	private SearchData(String errorMessage, boolean isValidInputData) {
 		this.isValidInputData = isValidInputData;
 		this.isValidSearchData = false;
 		bytes = new byte[0];
 		this.errorMessage = errorMessage;
 	}
 
-	public static SearchData createSearchData(String inputString,
-			byte[] searchBytes, byte[] mask) {
+	public static SearchData createSearchData(String inputString, byte[] searchBytes, byte[] mask) {
 		return new SearchData(inputString, searchBytes, mask);
 	}
 
@@ -54,33 +52,39 @@ public class SearchData {
 	public static SearchData createInvalidInputSearchData(String errorMessage) {
 		return new SearchData(errorMessage, false);
 	}
-	
+
 	public byte[] getBytes() {
 		return bytes;
 	}
+
 	public byte[] getMask() {
 		return mask;
 	}
+
 	public boolean isValidInputData() {
 		return isValidInputData;
 	}
+
 	public boolean isValidSearchData() {
 		return isValidSearchData;
 	}
+
 	public String getInputString() {
 		return inputString;
 	}
+
 	public String getStatusMessage() {
 		return errorMessage;
 	}
+
 	public String getHexString() {
-		StringBuffer buf = new StringBuffer();
-		for(int i=0;i<bytes.length;i++) {
-			String hexString = Integer.toHexString(bytes[i] & 0xff);
-			if ( hexString.length() == 1 ) {
-				buf.append( "0" );
+		StringBuilder buf = new StringBuilder();
+		for (byte element : bytes) {
+			String hexString = Integer.toHexString(element & 0xff);
+			if (hexString.length() == 1) {
+				buf.append("0");
 			}
-			buf.append( hexString );
+			buf.append(hexString);
 			buf.append(" ");
 		}
 		return buf.toString();

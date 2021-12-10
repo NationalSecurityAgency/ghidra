@@ -23,7 +23,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolIterator;
-import ghidra.util.*;
+import ghidra.util.DataConverter;
 import ghidra.util.task.TaskMonitor;
 
 abstract public class AbstractDyldInfoState {
@@ -143,6 +143,13 @@ abstract public class AbstractDyldInfoState {
 	protected String getSegmentName() {
 		List<SegmentCommand> segments = header.getLoadCommands(SegmentCommand.class);
 		SegmentCommand segment = segments.get(segmentIndex);
+		List<FileSetEntryCommand> fileSetEntries =
+			header.getLoadCommands(FileSetEntryCommand.class);
+		for (FileSetEntryCommand fileSetEntryCommand : fileSetEntries) {
+			if (fileSetEntryCommand.getFileOffset() == segment.getFileOffset()) {
+				return fileSetEntryCommand.getFileSetEntryName();
+			}
+		}
 		return segment.getSegmentName();
 	}
 

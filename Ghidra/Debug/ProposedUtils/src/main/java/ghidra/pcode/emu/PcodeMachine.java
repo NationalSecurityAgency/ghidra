@@ -15,11 +15,12 @@
  */
 package ghidra.pcode.emu;
 
+import java.util.Collection;
 import java.util.List;
 
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.DefaultPcodeThread.SleighEmulationLibrary;
-import ghidra.pcode.exec.PcodeExecutorState;
-import ghidra.pcode.exec.PcodeProgram;
+import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
 
 /**
@@ -28,6 +29,47 @@ import ghidra.program.model.address.Address;
  * @param <T> the type of objects in the machine's state
  */
 public interface PcodeMachine<T> {
+
+	/**
+	 * Get the machine's SLEIGH language (processor model)
+	 * 
+	 * @return the language
+	 */
+	SleighLanguage getLanguage();
+
+	/**
+	 * Get the arithmetic applied by the machine
+	 * 
+	 * @return the arithmetic
+	 */
+	PcodeArithmetic<T> getArithmetic();
+
+	/**
+	 * Get the userop library common to all threads in the machine.
+	 * 
+	 * <p>
+	 * Note that threads may have larger libraries, but each should contain all the userops in this
+	 * library.
+	 * 
+	 * @return the userop library
+	 */
+	SleighUseropLibrary<T> getUseropLibrary();
+
+	/**
+	 * Get a userop library which at least declares all userops available in thread userop
+	 * libraries.
+	 * 
+	 * <p>
+	 * Thread userop libraries may have more userops than are defined in the machine's userop
+	 * library. However, to compile SLEIGH programs linked to thread libraries, the thread's userops
+	 * must be known to the compiler. The stub library will name all userops common among the
+	 * threads, even if their definitions vary. <b>WARNING:</b> The stub library is not required to
+	 * provide implementations of the userops. Often they will throw exceptions, so do not attempt
+	 * to use the returned library in an executor.
+	 * 
+	 * @return the stub library
+	 */
+	SleighUseropLibrary<T> getStubUseropLibrary();
 
 	/**
 	 * Create a new thread with a default name in this machine
@@ -54,7 +96,14 @@ public interface PcodeMachine<T> {
 	PcodeThread<T> getThread(String name, boolean createIfAbsent);
 
 	/**
-	 * Get the machine's memory state
+	 * Collect all threads present in the machine
+	 * 
+	 * @return the collection of threads
+	 */
+	Collection<? extends PcodeThread<T>> getAllThreads();
+
+	/**
+	 * Get the machine's shared (memory) state
 	 * 
 	 * <p>
 	 * The returned state will may throw {@link IllegalArgumentException} if the client requests
@@ -62,7 +111,7 @@ public interface PcodeMachine<T> {
 	 * 
 	 * @return the memory state
 	 */
-	PcodeExecutorState<T> getMemoryState();
+	PcodeExecutorState<T> getSharedState();
 
 	/**
 	 * Compile the given SLEIGH code for execution by a thread of this machine

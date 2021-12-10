@@ -39,7 +39,7 @@ public class HeadlessGhidraApplicationConfiguration extends ApplicationConfigura
 		monitor.setMessage("Performing class searching...");
 		performClassSearching();
 
-		// Locate cacerts if found (must be done before module initialization)
+		// Locate certs if found (must be done before module initialization)
 		locateCACertsFile();
 
 		monitor.setMessage("Performing module initialization...");
@@ -73,7 +73,7 @@ public class HeadlessGhidraApplicationConfiguration extends ApplicationConfigura
 		// The class searcher searches the classpath, and Ghidra's classpath should be complete
 		// for this configuration at this point.
 		try {
-			ClassSearcher.search(false, monitor);
+			ClassSearcher.search(monitor);
 		}
 		catch (CancelledException e) {
 			Msg.debug(this, "Class searching unexpectedly cancelled.");
@@ -81,7 +81,7 @@ public class HeadlessGhidraApplicationConfiguration extends ApplicationConfigura
 	}
 
 	/**
-	 * Locate cacerts file within the Ghidra root directory.  If found this will be used
+	 * Locate certs file within the Ghidra root directory.  If found this will be used
 	 * for initializing the ApplicationTrustManager used for SSL/PKI.
 	 */
 	private void locateCACertsFile() {

@@ -26,7 +26,8 @@ dependencies {
 	api project(':Framework-AsyncComm')
 	api project(':Framework-Debugging')
 	api project(':Debugger-gadp')
-	api 'org.python:jython-standalone:2.7.1'
+	api project(':Python')
+	api 'com.jcraft:jsch:0.1.55'
 
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
@@ -66,7 +67,7 @@ task nodepJar(type: Jar) {
 	dependsOn(configureNodepJar)
 	dependsOn(jar)
 	
-	appendix = 'nodep'
+	archiveAppendix = 'nodep'
 	manifest {
 		attributes['Main-Class'] = 'agent.gdb.gadp.GdbGadpServer'
 	}
@@ -104,7 +105,7 @@ task executableJar {
 }
 
 test {
-	if ("linux64".equals(getCurrentPlatformName())) {
-		dependsOn(":Framework-Debugging:testSpecimenLinux64")
+	if ("linux_x86_64".equals(getCurrentPlatformName())) {
+		dependsOn(":Framework-Debugging:testSpecimenLinux_x86_64")
 	}
 }

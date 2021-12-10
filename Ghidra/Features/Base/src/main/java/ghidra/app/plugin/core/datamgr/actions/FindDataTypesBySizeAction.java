@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.datamgr.actions;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
-import docking.widgets.dialogs.NumberInputDialog;
+import docking.widgets.dialogs.NumberRangeInputDialog;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.CombinedGTreeFilter;
 import docking.widgets.tree.support.GTreeFilter;
@@ -28,38 +28,48 @@ import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.program.model.data.DataType;
 import ghidra.util.HelpLocation;
+import ghidra.util.datastruct.Range;
+import ghidra.util.datastruct.SortedRangeList;
 
 public class FindDataTypesBySizeAction extends DockingAction {
 
+	public static final String NAME = "Find Data Types by Size";
+
 	private DataTypeManagerPlugin plugin;
 
-	public FindDataTypesBySizeAction(DataTypeManagerPlugin plugin) {
-		super("Find Data Types By Size", plugin.getName());
+	public FindDataTypesBySizeAction(DataTypeManagerPlugin plugin, String menuSubGroup) {
+		this(plugin, NAME, menuSubGroup);
+	}
+
+	FindDataTypesBySizeAction(DataTypeManagerPlugin plugin, String name, String menuSubGroup) {
+		super(name, plugin.getName());
 		this.plugin = plugin;
 
 		setMenuBarData(
-			new MenuData(new String[] { "Find Data Types by Size..." }, null, "VeryLast", -1, "2"));
-
-		setEnabled(true);
+			new MenuData(new String[] { name + "..." }, null, "VeryLast", -1, menuSubGroup));
 		setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Find_Data_Types_By_Size"));
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		NumberInputDialog numberInputDialog = new NumberInputDialog("bytes", 1, 1);
 
-		if (!numberInputDialog.show()) {
+		NumberRangeInputDialog inputDialog =
+			new NumberRangeInputDialog(getName(), "Size(s)");
+		if (!inputDialog.show()) {
 			return;
 		}
 
-		int value = numberInputDialog.getValue();
-
-		String title = "Find Data Types With Size";
-		final DataTypesProvider newProvider = plugin.createProvider();
-		newProvider.setTitle(title);
+		SortedRangeList values = inputDialog.getValue();
+		DataTypesProvider newProvider = plugin.createProvider();
+		newProvider.setTitle(getName());
 		DataTypeArchiveGTree tree = newProvider.getGTree();
-		tree.setFilterProvider(new MyTreeFilterProvider(tree, new SizeGTreeFilter(value)));
+		GTreeFilter filter = createFilter(values);
+		tree.setFilterProvider(new MyTreeFilterProvider(tree, filter));
 		newProvider.setVisible(true);
+	}
+
+	protected GTreeFilter createFilter(SortedRangeList values) {
+		return new SizeGTreeFilter(values);
 	}
 
 	private class MyTreeFilterProvider extends DefaultGTreeFilterProvider {
@@ -82,10 +92,10 @@ public class FindDataTypesBySizeAction extends DockingAction {
 
 	private class SizeGTreeFilter implements GTreeFilter {
 
-		private final int size;
+		private final SortedRangeList sizes;
 
-		SizeGTreeFilter(int size) {
-			this.size = size;
+		SizeGTreeFilter(SortedRangeList sizes) {
+			this.sizes = sizes;
 		}
 
 		@Override
@@ -99,9 +109,15 @@ public class FindDataTypesBySizeAction extends DockingAction {
 				return false;
 			}
 			DataTypeNode dataTypeNode = (DataTypeNode) node;
-			DataType dataType = dataTypeNode.getDataType();
-			int length = dataType.getLength();
-			return length == size;
+			DataType dt = dataTypeNode.getDataType();
+			int length = dt.getLength();
+			for (Range range : sizes) {
+				if (range.contains(length)) {
+					return true;
+				}
+			}
+
+			return false;
 		}
 	}
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +80,8 @@ public interface PanelManager {
 	public void cancel();
 
 	/**
-	 * Set up the panel process.
+	 * Set up the panel process.   This may also be called to clear the state of an existing panel, 
+	 * such as when the overall wizard is finished.
 	 */
 	public void initialize();
 

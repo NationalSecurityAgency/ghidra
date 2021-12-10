@@ -17,13 +17,16 @@ package ghidra.app.plugin.core.debug.platform.gdb;
 
 import java.util.Set;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOffer;
-import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOpinion;
+import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.TargetProcess;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 
+/**
+ * TODO: Without architecture-specific extensions, this opinion is supplanted by the .ldefs-based
+ * one. Remove me?
+ */
 public class GdbMipsDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final LanguageID LANG_ID_MIPS32_BE = new LanguageID("MIPS:BE:32:default");
 	protected static final LanguageID LANG_ID_MIPS64_BE = new LanguageID("MIPS:BE:64:default");
@@ -33,42 +36,42 @@ public class GdbMipsDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final LanguageID LANG_ID_MIPS32_BE_MICRO = new LanguageID("MIPS:BE:32:micro");
 	protected static final CompilerSpecID COMP_ID_DEFAULT = new CompilerSpecID("default");
 
-	protected static class GdbMipsBELinux32DefOffer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbMipsBELinux32DefOffer extends DefaultDebuggerMappingOffer {
 		public GdbMipsBELinux32DefOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux mips - 32-bit", LANG_ID_MIPS32_BE, COMP_ID_DEFAULT,
 				Set.of());
 		}
 	}
 
-	protected static class GdbMipsBELinux64DefOffer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbMipsBELinux64DefOffer extends DefaultDebuggerMappingOffer {
 		public GdbMipsBELinux64DefOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux mips - 64-bit", LANG_ID_MIPS64_BE, COMP_ID_DEFAULT,
 				Set.of());
 		}
 	}
 
-	protected static class GdbMipsBELinux64_32Offer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbMipsBELinux64_32Offer extends DefaultDebuggerMappingOffer {
 		public GdbMipsBELinux64_32Offer(TargetProcess process) {
 			super(process, 100, "GDB on Linux mips - 64/32-bit", LANG_ID_MIPS64_32BE,
 				COMP_ID_DEFAULT, Set.of());
 		}
 	}
 
-	protected static class GdbMipsBELinux32_R6Offer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbMipsBELinux32_R6Offer extends DefaultDebuggerMappingOffer {
 		public GdbMipsBELinux32_R6Offer(TargetProcess process) {
 			super(process, 100, "GDB on Linux mips - 32-bit R6", LANG_ID_MIPS32_BE_R6,
 				COMP_ID_DEFAULT, Set.of());
 		}
 	}
 
-	protected static class GdbMipsBELinux64_R6Offer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbMipsBELinux64_R6Offer extends DefaultDebuggerMappingOffer {
 		public GdbMipsBELinux64_R6Offer(TargetProcess process) {
 			super(process, 100, "GDB on Linux mips - 64-bit R6", LANG_ID_MIPS64_BE_R6,
 				COMP_ID_DEFAULT, Set.of());
 		}
 	}
 
-	protected static class GdbMipsBELinux32MicroOffer extends AbstractGdbDebuggerMappingOffer {
+	protected static class GdbMipsBELinux32MicroOffer extends DefaultDebuggerMappingOffer {
 		public GdbMipsBELinux32MicroOffer(TargetProcess process) {
 			super(process, 100, "GDB on Linux mips - 32-bit micro", LANG_ID_MIPS32_BE_MICRO,
 				COMP_ID_DEFAULT, Set.of());
@@ -76,7 +79,8 @@ public class GdbMipsDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process) {
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+			boolean includeOverrides) {
 		if (!env.getDebugger().toLowerCase().contains("gdb")) {
 			return Set.of();
 		}

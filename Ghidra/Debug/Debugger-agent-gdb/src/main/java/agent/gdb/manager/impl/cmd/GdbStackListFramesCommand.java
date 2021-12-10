@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import agent.gdb.manager.GdbStackFrame;
-import agent.gdb.manager.evt.AbstractGdbCompletedCommandEvent;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
 import agent.gdb.manager.impl.*;
 import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
@@ -35,15 +34,6 @@ public class GdbStackListFramesCommand extends AbstractGdbCommandWithThreadId<Li
 	@Override
 	protected String encode(String threadPart) {
 		return "-stack-list-frames" + threadPart;
-	}
-
-	@Override
-	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
-			return true;
-		}
-		return false;
 	}
 
 	@Override

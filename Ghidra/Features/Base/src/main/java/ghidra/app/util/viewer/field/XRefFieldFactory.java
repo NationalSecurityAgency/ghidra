@@ -16,18 +16,19 @@
 package ghidra.app.util.viewer.field;
 
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.beans.PropertyEditor;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Predicate;
 
 import javax.swing.event.ChangeListener;
 
 import docking.widgets.fieldpanel.field.*;
-import docking.widgets.fieldpanel.support.FieldLocation;
-import docking.widgets.fieldpanel.support.RowColLocation;
+import docking.widgets.fieldpanel.support.*;
 import ghidra.app.util.HighlightProvider;
-import ghidra.app.util.XReferenceUtil;
+import ghidra.app.util.XReferenceUtils;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -41,6 +42,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.XRefFieldLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.AssertException;
+import util.CollectionUtils;
 
 /**
  * Cross-reference Field Factory
@@ -58,17 +60,19 @@ public class XRefFieldFactory extends FieldFactory {
 	protected SORT_CHOICE sortChoice = SORT_CHOICE.Address;
 
 	private static final String GROUP_TITLE = "XREFs Field";
-	private static final String DELIMITER_MSG = GROUP_TITLE + Options.DELIMITER + "Delimiter";
-	private static final String MAX_XREFS_MSG =
+	private static final String DELIMITER_KEY = GROUP_TITLE + Options.DELIMITER + "Delimiter";
+	static final String MAX_XREFS_KEY =
 		GROUP_TITLE + Options.DELIMITER + "Maximum Number of XREFs to Display";
-	private static final String DISPLAY_BLOCK_NAME_MSG =
+	private static final String DISPLAY_BLOCK_NAME_KEY =
 		GROUP_TITLE + Options.DELIMITER + "Display Local Block";
-	private static final String SORT_OPTION =
-		GROUP_TITLE + Options.DELIMITER + "Sort References By";
-	private static final String DISPLAY_REFERENCE_TYPE_MSG =
+	private static final String SORT_OPTION_KEY =
+		GROUP_TITLE + Options.DELIMITER + "Sort References by";
+	private static final String DISPLAY_REFERENCE_TYPE_KEY =
 		GROUP_TITLE + Options.DELIMITER + "Display Reference Type";
-	private final static String NAMESPACE_OPTIONS =
+	private final static String NAMESPACE_OPTIONS_KEY =
 		GROUP_TITLE + Options.DELIMITER + "Display Namespace";
+	static final String GROUP_BY_FUNCTION_KEY =
+		GROUP_TITLE + Options.DELIMITER + "Group by Function";
 
 	private PropertyEditor namespaceOptionsEditor = new NamespacePropertyEditor();
 
@@ -78,7 +82,7 @@ public class XRefFieldFactory extends FieldFactory {
 	protected Color otherColor;
 	protected String delim = DELIMITER;
 	protected boolean displayBlockName;
-
+	protected boolean groupByFunction;
 	protected int maxXRefs = MAX_XREFS;
 	protected boolean displayRefType = true;
 	protected Comparator<Reference> typeComparator;
@@ -90,9 +94,6 @@ public class XRefFieldFactory extends FieldFactory {
 	private BrowserCodeUnitFormat codeUnitFormat;
 	private ChangeListener codeUnitFormatListener = e -> XRefFieldFactory.this.model.update();
 
-	/**
-	 * Constructor
-	 */
 	public XRefFieldFactory() {
 		this(FIELD_NAME);
 	}
@@ -128,15 +129,18 @@ public class XRefFieldFactory extends FieldFactory {
 		super(name, model, hlProvider, displayOptions, fieldOptions);
 
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "XREFs_Field");
-		fieldOptions.registerOption(DELIMITER_MSG, DELIMITER, hl,
+		fieldOptions.registerOption(DELIMITER_KEY, DELIMITER, hl,
 			"Delimiter string used for separating multiple xrefs.");
-		fieldOptions.registerOption(DISPLAY_BLOCK_NAME_MSG, false, hl,
+		fieldOptions.registerOption(DISPLAY_BLOCK_NAME_KEY, false, hl,
 			"Prepends xref addresses with the " +
 				"name of the memory block containing the xref address.");
-		fieldOptions.registerOption(MAX_XREFS_MSG, MAX_XREFS, hl,
+		fieldOptions.registerOption(MAX_XREFS_KEY, MAX_XREFS, hl,
 			"Sets the maximum number of xrefs to display.");
-		fieldOptions.registerOption(DISPLAY_REFERENCE_TYPE_MSG, true, hl, "Appends xref type.");
-		fieldOptions.registerOption(SORT_OPTION, SORT_CHOICE.Address, hl, "How to sort the xrefs");
+		fieldOptions.registerOption(DISPLAY_REFERENCE_TYPE_KEY, true, hl, "Appends xref type.");
+		fieldOptions.registerOption(SORT_OPTION_KEY, SORT_CHOICE.Address, hl,
+			"How to sort the xrefs");
+		fieldOptions.registerOption(GROUP_BY_FUNCTION_KEY, false, hl,
+			"True signals to group all xrefs by the containing calling function.");
 
 		offcutColor = displayOptions.getColor(OptionsGui.XREF_OFFCUT.getColorOptionName(),
 			OptionsGui.XREF_OFFCUT.getDefaultColor());
@@ -154,12 +158,13 @@ public class XRefFieldFactory extends FieldFactory {
 			return r1.getReferenceType().toString().compareTo(r2.getReferenceType().toString());
 		};
 
-		delim = fieldOptions.getString(DELIMITER_MSG, DELIMITER);
-		displayBlockName = fieldOptions.getBoolean(DISPLAY_BLOCK_NAME_MSG, false);
+		delim = fieldOptions.getString(DELIMITER_KEY, DELIMITER);
+		displayBlockName = fieldOptions.getBoolean(DISPLAY_BLOCK_NAME_KEY, false);
 
-		maxXRefs = fieldOptions.getInt(MAX_XREFS_MSG, MAX_XREFS);
-		sortChoice = fieldOptions.getEnum(SORT_OPTION, SORT_CHOICE.Address);
-		displayRefType = fieldOptions.getBoolean(DISPLAY_REFERENCE_TYPE_MSG, true);
+		maxXRefs = fieldOptions.getInt(MAX_XREFS_KEY, MAX_XREFS);
+		sortChoice = fieldOptions.getEnum(SORT_OPTION_KEY, SORT_CHOICE.Address);
+		displayRefType = fieldOptions.getBoolean(DISPLAY_REFERENCE_TYPE_KEY, true);
+		groupByFunction = fieldOptions.getBoolean(GROUP_BY_FUNCTION_KEY, false);
 
 		fieldOptions.getOptions(GROUP_TITLE).setOptionsHelpLocation(hl);
 
@@ -172,15 +177,17 @@ public class XRefFieldFactory extends FieldFactory {
 
 	private void setupNamespaceOptions(Options fieldOptions) {
 		// we need to install a custom editor that allows us to edit a group of related options
-		fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
+		fieldOptions.registerOption(NAMESPACE_OPTIONS_KEY, OptionType.CUSTOM_TYPE,
 			new NamespaceWrappedOption(), null, "Adjusts the XREFs Field namespace display",
 			namespaceOptionsEditor);
-		CustomOption customOption = fieldOptions.getCustomOption(NAMESPACE_OPTIONS, null);
-		fieldOptions.getOptions(NAMESPACE_OPTIONS).setOptionsHelpLocation(
-			new HelpLocation("CodeBrowserPlugin", "XREFs_Field"));
+		CustomOption customOption = fieldOptions.getCustomOption(NAMESPACE_OPTIONS_KEY, null);
+		fieldOptions.getOptions(NAMESPACE_OPTIONS_KEY)
+				.setOptionsHelpLocation(
+					new HelpLocation("CodeBrowserPlugin", "XREFs_Field"));
 		if (!(customOption instanceof NamespaceWrappedOption)) {
 			throw new AssertException(
-				"Someone set an option for " + NAMESPACE_OPTIONS + " that is not the expected " +
+				"Someone set an option for " + NAMESPACE_OPTIONS_KEY +
+					" that is not the expected " +
 					"ghidra.app.util.viewer.field.NamespaceWrappedOption type.");
 		}
 
@@ -222,25 +229,32 @@ public class XRefFieldFactory extends FieldFactory {
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 		super.fieldOptionsChanged(options, optionName, oldValue, newValue);
-		if (optionName.equals(DELIMITER_MSG)) {
+		if (optionName.equals(DELIMITER_KEY)) {
 			delim = (String) newValue;
 			model.update();
 		}
-		else if (optionName.equals(DISPLAY_BLOCK_NAME_MSG)) {
-			displayBlockName = ((Boolean) newValue).booleanValue();
+		else if (optionName.equals(DISPLAY_BLOCK_NAME_KEY)) {
+			displayBlockName = (Boolean) newValue;
+			model.update();
 		}
-		else if (optionName.equals(DISPLAY_REFERENCE_TYPE_MSG)) {
-			displayRefType = ((Boolean) newValue).booleanValue();
+		else if (optionName.equals(DISPLAY_REFERENCE_TYPE_KEY)) {
+			displayRefType = (Boolean) newValue;
+			model.update();
 		}
-		else if (optionName.equals(MAX_XREFS_MSG)) {
+		else if (optionName.equals(MAX_XREFS_KEY)) {
 			setMaxSize(((Integer) newValue).intValue(), options);
+			model.update();
 		}
-		else if (optionName.equals(SORT_OPTION)) {
+		else if (optionName.equals(SORT_OPTION_KEY)) {
 			sortChoice = (SORT_CHOICE) newValue;
 			model.update();
 		}
-		else if (optionName.equals(NAMESPACE_OPTIONS)) {
+		else if (optionName.equals(NAMESPACE_OPTIONS_KEY)) {
 			setupNamespaceOptions(options);
+			model.update();
+		}
+		else if (optionName.equals(GROUP_BY_FUNCTION_KEY)) {
+			groupByFunction = (Boolean) newValue;
 			model.update();
 		}
 	}
@@ -248,7 +262,7 @@ public class XRefFieldFactory extends FieldFactory {
 	private void setMaxSize(int n, Options options) {
 		if (n < 1) {
 			n = 1;
-			options.setInt(MAX_XREFS_MSG, 1);
+			options.setInt(MAX_XREFS_KEY, 1);
 		}
 		maxXRefs = n;
 	}
@@ -265,87 +279,362 @@ public class XRefFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		if (obj == null || !(obj instanceof CodeUnit)) {
+		if (!(obj instanceof CodeUnit)) {
 			return null;
 		}
+
 		CodeUnit cu = (CodeUnit) obj;
-		Program pgm = cu.getProgram();
-
-		Reference[] xrefs = XReferenceUtil.getXReferences(cu, maxXRefs + 1);
-
-		int maxOffcuts = Math.max(0, maxXRefs - xrefs.length);
-		Reference[] offcuts = XReferenceUtil.getOffcutXReferences(cu, maxOffcuts);
+		List<Reference> xrefs = XReferenceUtils.getXReferences(cu, maxXRefs + 1);
+		int maxOffcuts = Math.max(0, maxXRefs - xrefs.size());
+		List<Reference> offcuts = XReferenceUtils.getOffcutXReferences(cu, maxOffcuts);
 		if (sortChoice == SORT_CHOICE.Address) {
-			Arrays.sort(xrefs);
-			Arrays.sort(offcuts);
+			xrefs.sort(null);
+			offcuts.sort(null);
 		}
 		else {
-			Arrays.sort(xrefs, typeComparator);
-			Arrays.sort(offcuts, typeComparator);
+			xrefs.sort(typeComparator);
+			offcuts.sort(typeComparator);
 		}
-		int totalXrefs = xrefs.length + offcuts.length;
+
+		if (groupByFunction) {
+			return getFieldByFunction(proxy, varWidth, xrefs, offcuts);
+		}
+		return getFieldByAddress(proxy, varWidth, xrefs, offcuts);
+	}
+
+	/*
+		Create a series of fields: 1 row per function and the xrefs it contains and 1 wrapping
+		field for all xrefs not in any function.  The wrapping field will go below the function
+		based xrefs.  It will look something like this:
+			
+			foo1: 123, 223
+			foo2: 323, 333
+			423, 433, 567,
+			899, [more]
+		
+		The fields and elements created by this method have this structure:
+		
+			XrefListingField
+			
+				CompositeVerticalLayoutTextField
+					
+					0+ ClippingTextField
+							CompositeFieldElement
+								XrefFieldEleent
+									XrefAttributedString
+									
+					0+ FlowLayoutTextField
+							XrefFieldEleent
+									XrefAttributedString
+									
+									
+	*/
+	private ListingField getFieldByFunction(ProxyObj<?> proxy, int varWidth,
+			List<Reference> xrefs, List<Reference> offcuts) {
+
+		int totalXrefs = xrefs.size() + offcuts.size();
 		if (totalXrefs == 0) {
 			return null;
 		}
 
 		boolean tooMany = totalXrefs > maxXRefs;
 
-		AttributedString delimiter = new AttributedString(delim, Color.BLACK, getMetrics());
-		FieldElement[] elements = new FieldElement[tooMany ? maxXRefs + 1 : totalXrefs];
-		Function currentFunction =
-			pgm.getFunctionManager().getFunctionContaining(cu.getMinAddress());
-		int count = 0;
-		for (; count < xrefs.length && count < elements.length; count++) {
-			String prefix = getPrefix(pgm, xrefs[count], currentFunction);
-			String addressString = xrefs[count].getFromAddress().toString(prefix);
-			AttributedString as = new AttributedString(addressString, color, getMetrics());
-			if (displayRefType) {
-				as = createRefTypeAttributedString(xrefs[count], as);
-			}
-			if (count < totalXrefs - 1) {
-				as = new CompositeAttributedString(new AttributedString[] { as, delimiter });
+		Object obj = proxy.getObject();
+		CodeUnit cu = (CodeUnit) obj;
+		Program program = cu.getProgram();
+		FontMetrics metrics = getMetrics();
+		FunctionManager functionManager = program.getFunctionManager();
+
+		//
+		// Bin all xrefs by containing function, which may be null
+		//
+		List<Reference> noFunction = new ArrayList<>();
+		TreeMap<Function, List<Reference>> xrefsByFunction = new TreeMap<>((f1, f2) -> {
+			return f1.getEntryPoint().compareTo(f2.getEntryPoint());
+		});
+		for (Reference ref : CollectionUtils.asIterable(xrefs, offcuts)) {
+
+			Function function = functionManager.getFunctionContaining(ref.getFromAddress());
+			if (function == null) {
+				noFunction.add(ref);
 			}
 			else {
-				// This added to prevent a situation where resizing field to a particular size,
-				// resulted in layout of references to be strange
-				char[] charSpaces = new char[delimiter.length()];
-				Arrays.fill(charSpaces, ' ');
-				AttributedString spaces =
-					new AttributedString(new String(charSpaces), color, getMetrics());
-				as = new CompositeAttributedString(new AttributedString[] { as, spaces });
+				xrefsByFunction.computeIfAbsent(function, r -> new ArrayList<>()).add(ref);
 			}
-			elements[count] = new TextFieldElement(as, count, 0);
 		}
 
-		for (int i = 0; i < offcuts.length && count < elements.length; i++, count++) {
-			String prefix = getPrefix(pgm, offcuts[i], currentFunction);
-			String addressString = offcuts[i].getFromAddress().toString(prefix);
-			AttributedString as = new AttributedString(addressString, offcutColor, getMetrics());
-			if (displayRefType) {
-				as = createRefTypeAttributedString(offcuts[i], as);
-			}
-			if (count < totalXrefs - 1) {
-				as = new CompositeAttributedString(new AttributedString[] { as, delimiter });
-			}
-			else {
-				// This added to prevent a situation where resizing field to a particular size,
-				// resulted in layout of references to be strange
-				char[] charSpaces = new char[delimiter.length()];
-				Arrays.fill(charSpaces, ' ');
-				AttributedString spaces =
-					new AttributedString(new String(charSpaces), offcutColor, getMetrics());
-				as = new CompositeAttributedString(new AttributedString[] { as, spaces });
-			}
-			elements[count] = new TextFieldElement(as, count, 0);
-		}
+		//
+		// Create the function rows
+		//
+		Set<Reference> offcutSet = new HashSet<>(offcuts);
+		Predicate<Reference> isOffcut = r -> offcutSet.contains(r);
+		HighlightFactory hlFactory =
+			new FieldHighlightFactory(hlProvider, getClass(), proxy.getObject());
+		Function currentFunction = functionManager.getFunctionContaining(cu.getMinAddress());
+		List<TextField> functionRows =
+			createXrefRowsByFunction(program, currentFunction, xrefsByFunction, isOffcut, varWidth,
+				hlFactory);
 
+		//
+		// TODO maxXRefs makes sense when simply displaying xrefs.  What does max mean when
+		//      binning xrefs by function.  Currently, we use the max as the max row count, but
+		//      this may need to be changed and it may require a new tool option.
+		//
+
+		int maxLines = maxXRefs;
+		int availableLines = maxLines - functionRows.size();
 		if (tooMany) {
-			AttributedString as = new AttributedString(MORE_XREFS_STRING, color, getMetrics());
-			elements[elements.length - 1] = new TextFieldElement(as, count - 1, 0);
+			// save room for the "more" field at the end
+			availableLines -= 1;
 		}
 
-		return ListingTextField.createPackedTextField(this, proxy, elements, startX + varWidth,
-			width, maxXRefs, hlProvider);
+		//
+		// Create the row for xrefs not in a function
+		//
+
+		//
+		// Note: the objects we build here want the 'data' row as a parameter, not the screen row.
+		//       Out screen rows are what we are building to display; a data row we are here
+		//       defining to be a single xref.   This is a somewhat arbitrary decision.
+		int dataRow = totalXrefs - noFunction.size();
+		TextField noFunctionXrefsField =
+			createWrappingXrefRow(program, dataRow, noFunction, currentFunction, isOffcut,
+				availableLines, hlFactory);
+
+		List<TextField> allFields = new ArrayList<>();
+		allFields.addAll(functionRows);
+		if (noFunctionXrefsField != null) {
+			allFields.add(noFunctionXrefsField);
+		}
+
+		int newStartX = startX + varWidth;
+		if (tooMany) {
+			// add the [more] element
+			int lastRow = allFields.size() - 1;
+			AttributedString as = new AttributedString(MORE_XREFS_STRING, color, metrics);
+			TextFieldElement moreElement = new TextFieldElement(as, lastRow, 0);
+			ClippingTextField ctf = new ClippingTextField(newStartX, width, moreElement, hlFactory);
+			allFields.add(ctf);
+		}
+
+		CompositeVerticalLayoutTextField compositefield =
+			new CompositeVerticalLayoutTextField(allFields, newStartX, width, maxXRefs, hlFactory);
+		return new XrefListingField(this, proxy, compositefield);
+	}
+
+	private List<TextField> createXrefRowsByFunction(Program program, Function currentFunction,
+			TreeMap<Function, List<Reference>> xrefsByFunction, Predicate<Reference> isOffcut,
+			int varWidth,
+			HighlightFactory hlFactory) {
+
+		FontMetrics metrics = getMetrics();
+		AttributedString delimiter = new AttributedString(delim, Color.BLACK, metrics);
+
+		int row = 0;
+		List<FieldElement> elements = new ArrayList<>();
+		Set<Entry<Function, List<Reference>>> entries = xrefsByFunction.entrySet();
+		for (Entry<Function, List<Reference>> entry : entries) {
+
+			//
+			// Example row: functionName: 1234(c), 1238(c)
+			//
+
+			List<Reference> refs = entry.getValue();
+			Function fromFunction = entry.getKey();
+			String functionName = fromFunction.getName();
+			int refCount = refs.size();
+			String sizeText = ": ";
+			if (refCount > 1) {
+				sizeText = "[" + refs.size() + "]: ";
+			}
+			String text = functionName + sizeText;
+			AttributedString nameString =
+				new AttributedString(text, color, metrics);
+			List<XrefFieldElement> rowElements = new ArrayList<>();
+			Reference firstRef = refs.get(0);
+			XrefAttributedString xrefString =
+				new XrefAttributedString(firstRef, nameString);
+			rowElements.add(new XrefFieldElement(xrefString, row, 0));
+
+			//
+			// TODO how many xrefs to display per function?
+			//
+			int n = Math.min(10, refs.size());
+			for (int i = 0; i < n; i++) {
+
+				boolean isLast = i == n - 1;
+				Reference ref = refs.get(i);
+				String prefix = getMergedPrefix(program, ref, currentFunction, fromFunction);
+				XrefFieldElement element =
+					createFunctionElement(program, prefix, ref, row, isLast ? null : delimiter,
+						isOffcut.test(ref));
+				rowElements.add(element);
+			}
+
+			elements.add(new CompositeFieldElement(rowElements));
+
+			row++;
+		}
+
+		int newStartX = startX + varWidth;
+		List<TextField> textFields = new ArrayList<>();
+		for (FieldElement element : elements) {
+			textFields.add(new ClippingTextField(newStartX, width, element, hlFactory));
+		}
+
+		return textFields;
+	}
+
+	private TextField createWrappingXrefRow(Program program, int startRow, List<Reference> xrefs,
+			Function currentFunction, Predicate<Reference> isOffcut, int availableLines,
+			HighlightFactory hlFactory) {
+
+		FontMetrics metrics = getMetrics();
+		AttributedString delimiter = new AttributedString(delim, Color.BLACK, metrics);
+		int row = startRow;
+		List<XrefFieldElement> elements = new ArrayList<>();
+		for (Reference ref : xrefs) {
+
+			String prefix = getPrefix(program, ref, currentFunction, null);
+			XrefFieldElement element =
+				createReferenceElement(program, prefix, ref, row, delimiter, isOffcut.test(ref));
+			elements.add(element);
+			row++;
+		}
+
+		// add all elements to a field that will wrap as needed
+		if (!elements.isEmpty()) {
+			List<FieldElement> fieldElements = toFieldElements(elements, false);
+			return new FlowLayoutTextField(fieldElements, startX, width, availableLines, hlFactory);
+		}
+
+		return null;
+	}
+
+	/*
+		Create a series of fields: 1 row per function and the xrefs it contains and 1 wrapping
+		field for all xrefs not in any function.  The wrapping field will go below the function
+		based xrefs.  It will look something like this:
+						
+			foo1:423,
+			foo1:433,
+			foo2:567,
+			899, [more]
+		
+		The fields and elements created by this method have this structure:
+		
+			XrefListingField
+				1+ FlowLayoutTextField
+						XrefFieldEleent
+							XrefAttributedString
+								
+								
+	*/
+	private ListingField getFieldByAddress(ProxyObj<?> proxy, int varWidth, List<Reference> xrefs,
+			List<Reference> offcuts) {
+
+		int totalXrefs = xrefs.size() + offcuts.size();
+		if (totalXrefs == 0) {
+			return null;
+		}
+
+		Object obj = proxy.getObject();
+		CodeUnit cu = (CodeUnit) obj;
+		Program program = cu.getProgram();
+		FontMetrics metrics = getMetrics();
+		AttributedString delimiter = new AttributedString(delim, Color.BLACK, metrics);
+
+		Set<Reference> offcutSet = new HashSet<>(offcuts);
+		Predicate<Reference> isOffcut = r -> offcutSet.contains(r);
+
+		boolean tooMany = totalXrefs > maxXRefs;
+		List<XrefFieldElement> elements = new ArrayList<>();
+		FunctionManager functionManager = program.getFunctionManager();
+		Function currentFunction = functionManager.getFunctionContaining(cu.getMinAddress());
+		int n = tooMany ? maxXRefs : totalXrefs;
+		int count = 0;
+		for (; count < xrefs.size() && count < n; count++) {
+			Reference ref = xrefs.get(count);
+			String prefix = getPrefix(program, ref, currentFunction);
+			elements.add(
+				createReferenceElement(program, prefix, ref, count, delimiter, isOffcut.test(ref)));
+		}
+
+		for (int i = 0; i < offcuts.size() && count < n; i++, count++) {
+			Reference ref = offcuts.get(i);
+			String prefix = getPrefix(program, ref, currentFunction);
+			elements.add(
+				createReferenceElement(program, prefix, ref, count, delimiter, isOffcut.test(ref)));
+		}
+
+		if (!tooMany) {
+			XrefFieldElement lastElement = elements.get(elements.size() - 1);
+			lastElement.hideDelimiter();
+		}
+
+		List<FieldElement> fieldElements = toFieldElements(elements, tooMany);
+		return createPackedTextField(proxy, varWidth, fieldElements);
+	}
+
+	// note: this method was inspired by ListingTextField.createPackedTextField()
+	private XrefListingField createPackedTextField(ProxyObj<?> proxy, int varWidth,
+			List<FieldElement> list) {
+
+		// assumption: the given array has been limited to the maxXref size already
+		int n = list.size();
+		HighlightFactory hlFactory =
+			new FieldHighlightFactory(hlProvider, getClass(), proxy.getObject());
+		TextField field =
+			new FlowLayoutTextField(list, startX + varWidth, width, n, hlFactory);
+		return new XrefListingField(this, proxy, field);
+	}
+
+	private List<FieldElement> toFieldElements(List<XrefFieldElement> list, boolean showEllipses) {
+
+		List<FieldElement> fieldElements = new ArrayList<>(list);
+		if (showEllipses) {
+			// add the 'more' string
+			int lastRow = list.size() - 1;
+			AttributedString as = new AttributedString(MORE_XREFS_STRING, color, getMetrics());
+			fieldElements.add(new TextFieldElement(as, lastRow, 0));
+		}
+		return fieldElements;
+	}
+
+	private XrefFieldElement createFunctionElement(Program program, String prefix, Reference ref,
+			int row, AttributedString delimiter, boolean isOffcut) {
+
+		FontMetrics metrics = getMetrics();
+		String addressString = ref.getFromAddress().toString(prefix);
+		Color refColor = isOffcut ? offcutColor : color;
+		AttributedString addressPart = new AttributedString(addressString, refColor, metrics);
+		if (displayRefType) {
+			addressPart = createRefTypeAttributedString(ref, addressPart);
+		}
+
+		XrefAttributedString xrefString =
+			new XrefAttributedString(ref, addressPart, delimiter);
+		if (delimiter == null) {
+			xrefString.hideDelimiter();
+		}
+
+		return new XrefFieldElement(xrefString, row, 0);
+	}
+
+	private XrefFieldElement createReferenceElement(Program program, String prefix, Reference ref,
+			int row, AttributedString delimiter, boolean isOffcut) {
+
+		FontMetrics metrics = getMetrics();
+		String addressString = ref.getFromAddress().toString(prefix);
+		Color refColor = isOffcut ? offcutColor : color;
+		AttributedString as = new AttributedString(addressString, refColor, metrics);
+		if (displayRefType) {
+			as = createRefTypeAttributedString(ref, as);
+		}
+
+		XrefAttributedString xrefString =
+			new XrefAttributedString(ref, as, delimiter);
+		return new XrefFieldElement(xrefString, row, 0);
 	}
 
 	protected AttributedString createRefTypeAttributedString(Reference reference,
@@ -378,8 +667,16 @@ public class XRefFieldFactory extends FieldFactory {
 	}
 
 	protected String getPrefix(Program program, Reference reference, Function currentFunction) {
-		String prefix = "";
 
+		Address fromAddress = reference.getFromAddress();
+		Function fromFunction = program.getListing().getFunctionContaining(fromAddress);
+		return getPrefix(program, reference, currentFunction, fromFunction);
+	}
+
+	private String getMergedPrefix(Program program, Reference reference, Function currentFunction,
+			Function fromFunction) {
+
+		String prefix = "";
 		Address fromAddress = reference.getFromAddress();
 		if (displayBlockName) {
 			prefix = getBlockName(program, fromAddress) + ":";
@@ -389,15 +686,34 @@ public class XRefFieldFactory extends FieldFactory {
 			return prefix; // no namespaces being shown
 		}
 
-		Function refFunction = program.getListing().getFunctionContaining(fromAddress);
-		if (refFunction == null) {
+		boolean isLocal = Objects.equals(currentFunction, fromFunction);
+		if (isLocal && useLocalPrefixOverride) {
+			return prefix + localPrefixText;
+		}
+		return prefix;
+	}
+
+	private String getPrefix(Program program, Reference reference, Function currentFunction,
+			Function fromFunction) {
+
+		String prefix = "";
+		Address fromAddress = reference.getFromAddress();
+		if (displayBlockName) {
+			prefix = getBlockName(program, fromAddress) + ":";
+		}
+
+		if (!displayLocalNamespace && !displayNonLocalNamespace) {
+			return prefix; // no namespaces being shown
+		}
+
+		if (fromFunction == null) {
 			return prefix;
 		}
 
-		boolean isLocal = refFunction.equals(currentFunction);
+		boolean isLocal = fromFunction.equals(currentFunction);
 		if (!isLocal) {
 			if (displayNonLocalNamespace) {
-				return prefix + refFunction.getName() + ":";
+				return prefix + fromFunction.getName() + ":";
 			}
 			return prefix; // this means different function, but not displaying other namespaces
 		}
@@ -412,7 +728,6 @@ public class XRefFieldFactory extends FieldFactory {
 			return prefix + localPrefixText;
 		}
 		return prefix + currentFunction.getName() + ":";
-
 	}
 
 	private String getRefTypeDisplayString(Reference reference) {
@@ -460,60 +775,45 @@ public class XRefFieldFactory extends FieldFactory {
 
 	protected FieldLocation createFieldLocation(int xrefPos, int xrefIndex, ListingTextField field,
 			BigInteger index, int fieldNum) {
-
 		RowColLocation loc = field.dataToScreenLocation(xrefIndex, xrefPos);
-
 		return new FieldLocation(index, fieldNum, loc.row(), loc.col());
 	}
 
 	@Override
-	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
-		Object obj = bf.getProxy().getObject();
+	public ProgramLocation getProgramLocation(int row, int col, ListingField listingField) {
+		Object obj = listingField.getProxy().getObject();
 		if (obj == null || !(obj instanceof CodeUnit)) {
 			return null;
 		}
 
-		CodeUnit cu = (CodeUnit) obj;
-		ListingTextField field = (ListingTextField) getField(bf.getProxy(), 0);
-		if (field == null) {
+		if (!(listingField instanceof XrefListingField)) {
 			return null;
 		}
 
+		CodeUnit cu = (CodeUnit) obj;
+
+		int[] cpath = null;
+		if (cu instanceof Data) {
+			cpath = ((Data) cu).getComponentPath();
+		}
+
+		XrefListingField field = (XrefListingField) listingField;
+		FieldElement element = field.getFieldElement(row, col);
 		RowColLocation loc = field.screenToDataLocation(row, col);
-		int index = loc.row();
-		Reference[] xrefs = XReferenceUtil.getXReferences(cu, maxXRefs + 1);
-		if (sortChoice == SORT_CHOICE.Address) {
-			Arrays.sort(xrefs);
-		}
-		else {
-			Arrays.sort(xrefs, typeComparator);
-		}
-
-		Address refAddr = null;
-		if (index < xrefs.length) {
-			refAddr = xrefs[index].getFromAddress();
-		}
-		else {
-			Reference[] offcuts = XReferenceUtil.getOffcutXReferences(cu, maxXRefs);
-			if (sortChoice == SORT_CHOICE.Address) {
-				Arrays.sort(offcuts);
-			}
-			else {
-				Arrays.sort(offcuts, typeComparator);
-			}
-			if (index < xrefs.length + offcuts.length) {
-				refAddr = offcuts[index - xrefs.length].getFromAddress();
-			}
-		}
-
-		if (refAddr != null) {
-			int[] cpath = null;
-			if (cu instanceof Data) {
-				cpath = ((Data) cu).getComponentPath();
-			}
-			return new XRefFieldLocation(cu.getProgram(), cu.getMinAddress(), cpath, refAddr, index,
+		if (element instanceof XrefFieldElement) {
+			XrefFieldElement xrefElement = (XrefFieldElement) element;
+			Reference xref = xrefElement.getXref();
+			Address refAddr = xref.getFromAddress();
+			return new XRefFieldLocation(cu.getProgram(), cu.getMinAddress(), cpath, refAddr, row,
 				loc.col());
 		}
+
+		String text = element.getText();
+		if (MORE_XREFS_STRING.equals(text)) {
+			return new XRefFieldLocation(cu.getProgram(), cu.getMinAddress(), cpath, null, row,
+				loc.col());
+		}
+
 		return null;
 	}
 
@@ -560,5 +860,78 @@ public class XRefFieldFactory extends FieldFactory {
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
 			ToolOptions toolOptions, ToolOptions fieldOptions) {
 		return new XRefFieldFactory(formatModel, provider, toolOptions, fieldOptions);
+	}
+
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
+
+	private class XrefAttributedString extends CompositeAttributedString {
+
+		private AttributedString content;
+		private AttributedString delimiter;
+		private Reference xref;
+
+		public XrefAttributedString(Reference xref, AttributedString content) {
+			super(content);
+			this.content = content;
+			this.xref = xref;
+		}
+
+		public XrefAttributedString(Reference xref, AttributedString content,
+				AttributedString delimiter) {
+			super(content, delimiter);
+			this.content = content;
+			this.delimiter = delimiter;
+			this.xref = xref;
+		}
+
+		void hideDelimiter() {
+			AttributedString source = delimiter;
+			if (source == null) {
+				source = content;
+			}
+
+			int length = delimiter == null ? 1 : delimiter.length();
+
+			// Use spaces instead of an empty string; this added to prevent a situation where
+			// resizing field to a particular size, resulted in layout of references to be strange
+			char[] charSpaces = new char[length];
+			Arrays.fill(charSpaces, ' ');
+			AttributedString spaces =
+				new AttributedString(new String(charSpaces), source.getColor(0),
+					source.getFontMetrics(0));
+			attributedStrings[attributedStrings.length - 1] = spaces;
+		}
+
+		Reference getXref() {
+			return xref;
+		}
+	}
+
+	private class XrefFieldElement extends TextFieldElement {
+
+		private XrefAttributedString xrefString;
+
+		public XrefFieldElement(XrefAttributedString xrefString, int row, int column) {
+			super(xrefString, row, column);
+			this.xrefString = xrefString;
+		}
+
+		void hideDelimiter() {
+			xrefString.hideDelimiter();
+		}
+
+		Reference getXref() {
+			return xrefString.getXref();
+		}
+	}
+
+	private class XrefListingField extends ListingTextField {
+
+		XrefListingField(XRefFieldFactory factory, ProxyObj<?> proxy, TextField field) {
+			super(factory, proxy, field);
+		}
+
 	}
 }

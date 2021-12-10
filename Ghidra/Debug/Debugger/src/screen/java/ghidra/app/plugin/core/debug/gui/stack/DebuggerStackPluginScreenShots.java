@@ -20,6 +20,7 @@ import org.junit.*;
 import com.google.common.collect.Range;
 
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
@@ -114,7 +115,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator {
 		root.createFile("trace", tb.trace, TaskMonitor.DUMMY);
 		root.createFile("echo", program, TaskMonitor.DUMMY);
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			mappingService.addMapping(
+			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(tb.trace, null, Range.atLeast(snap), tb.addr(0x00400000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x10000, false);
 		}

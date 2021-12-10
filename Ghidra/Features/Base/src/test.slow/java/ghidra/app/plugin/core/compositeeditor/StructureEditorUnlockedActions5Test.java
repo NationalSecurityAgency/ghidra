@@ -230,7 +230,10 @@ public class StructureEditorUnlockedActions5Test
 		triggerEnter(textField);
 
 		assertEquals(originalLength, model.getLength());
+		assertFalse(applyAction.isEnabled());
+		setErrorsExpected(true);
 		invoke(applyAction);
+		setErrorsExpected(false);
 		assertTrue(complexStructure.isEquivalent(model.viewComposite));
 		assertEquals(originalLength, complexStructure.getLength());
 	}
@@ -590,7 +593,10 @@ public class StructureEditorUnlockedActions5Test
 		triggerActionKey(component, 0, KeyEvent.VK_ENTER);
 
 		assertEquals(newLength, model.getLength());
+		assertFalse(applyAction.isEnabled());
+		setErrorsExpected(true);
 		invoke(applyAction);
+		setErrorsExpected(false);
 		assertTrue(complexStructure.isEquivalent(model.viewComposite));
 		assertEquals(newLength, complexStructure.getLength());
 	}

@@ -274,7 +274,7 @@ class BlockGraph : public FlowBlock {
   void forceOutputNum(int4 i);		///< Force number of outputs
   void selfIdentify(void);		///< Inherit our edges from the edges of our components
   void identifyInternal(BlockGraph *ident,const vector<FlowBlock *> &nodes);
-  void clearEdgeFlags(uint4 flags);	///< Clear a set of properties from all edges in the graph
+  void clearEdgeFlags(uint4 fl);	///< Clear a set of properties from all edges in the graph
   static FlowBlock *createVirtualRoot(const vector<FlowBlock *> &rootlist);
   void findSpanningTree(vector<FlowBlock *> &preorder,vector<FlowBlock *> &rootlist);
   bool findIrreducible(const vector<FlowBlock *> &preorder,int4 &irreduciblecount);

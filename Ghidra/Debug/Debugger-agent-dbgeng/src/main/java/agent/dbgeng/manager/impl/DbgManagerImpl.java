@@ -594,6 +594,8 @@ public class DbgManagerImpl implements DbgManager {
 		handlerMap.put(DbgStateChangedEvent.class, this::processStateChanged);
 		handlerMap.put(DbgSessionSelectedEvent.class, this::processSessionSelected);
 		handlerMap.put(DbgSystemsEvent.class, this::processSystemsEvent);
+		handlerMap.putVoid(DbgDebuggeeStateChangeEvent.class, this::processDebuggeeStateChanged);
+		handlerMap.putVoid(DbgSystemErrorEvent.class, this::processSystemErrorEvent);
 		handlerMap.putVoid(DbgCommandDoneEvent.class, this::processDefault);
 		handlerMap.putVoid(DbgStoppedEvent.class, this::processDefault);
 		handlerMap.putVoid(DbgRunningEvent.class, this::processDefault);
@@ -604,7 +606,7 @@ public class DbgManagerImpl implements DbgManager {
 		handlerMap.putVoid(DbgBreakpointDeletedEvent.class, this::processBreakpointDeleted);
 
 		statusMap.put(DbgBreakpointEvent.class, DebugStatus.BREAK);
-		statusMap.put(DbgExceptionEvent.class, DebugStatus.BREAK);
+		statusMap.put(DbgExceptionEvent.class, DebugStatus.NO_CHANGE);
 		statusMap.put(DbgProcessCreatedEvent.class, DebugStatus.BREAK);
 		statusMap.put(DbgStateChangedEvent.class, DebugStatus.NO_CHANGE);
 		statusMap.put(DbgStoppedEvent.class, DebugStatus.BREAK);
@@ -685,6 +687,7 @@ public class DbgManagerImpl implements DbgManager {
 	 */
 	protected DebugStatus processException(DbgExceptionEvent evt, Void v) {
 		DebugThreadId eventId = updateState();
+		getEventListeners().fire.eventSelected(evt, evt.getCause());
 		getEventListeners().fire.threadSelected(eventThread, null, evt.getCause());
 
 		DebugExceptionRecord64 info = evt.getInfo();
@@ -710,6 +713,7 @@ public class DbgManagerImpl implements DbgManager {
 		DbgProcessImpl process = getCurrentProcess();
 		int tid = so.getCurrentThreadSystemId();
 		DbgThreadImpl thread = getThreadComputeIfAbsent(eventId, process, tid);
+		getEventListeners().fire.eventSelected(evt, evt.getCause());
 		getEventListeners().fire.threadCreated(thread, DbgCause.Causes.UNCLAIMED);
 		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
 
@@ -735,6 +739,7 @@ public class DbgManagerImpl implements DbgManager {
 			thread.remove();
 		}
 		process.threadExited(eventId);
+		getEventListeners().fire.eventSelected(evt, evt.getCause());
 		getEventListeners().fire.threadExited(eventId, process, evt.getCause());
 
 		String key = Integer.toHexString(eventId.id);
@@ -783,6 +788,7 @@ public class DbgManagerImpl implements DbgManager {
 		//so.setCurrentProcessId(id);
 		int pid = so.getCurrentProcessSystemId();
 		DbgProcessImpl proc = getProcessComputeIfAbsent(id, pid);
+		getEventListeners().fire.eventSelected(evt, evt.getCause());
 		getEventListeners().fire.processAdded(proc, evt.getCause());
 		getEventListeners().fire.processSelected(proc, evt.getCause());
 
@@ -815,8 +821,9 @@ public class DbgManagerImpl implements DbgManager {
 		DbgThreadImpl thread = getCurrentThread();
 		DbgProcessImpl process = getCurrentProcess();
 		process.setExitCode(Long.valueOf(evt.getInfo()));
-		getEventListeners().fire.threadExited(eventId, process, evt.getCause());
 
+		getEventListeners().fire.eventSelected(evt, evt.getCause());
+		getEventListeners().fire.threadExited(eventId, process, evt.getCause());
 		getEventListeners().fire.processExited(process, evt.getCause());
 
 		for (DebugBreakpoint bpt : getBreakpoints()) {
@@ -867,6 +874,7 @@ public class DbgManagerImpl implements DbgManager {
 		DbgProcessImpl process = getCurrentProcess();
 		DebugModuleInfo info = evt.getInfo();
 		process.moduleLoaded(info);
+		getEventListeners().fire.eventSelected(evt, evt.getCause());
 		getEventListeners().fire.moduleLoaded(process, info, evt.getCause());
 
 		String key = info.getModuleName();
@@ -888,6 +896,7 @@ public class DbgManagerImpl implements DbgManager {
 		DbgProcessImpl process = getCurrentProcess();
 		DebugModuleInfo info = evt.getInfo();
 		process.moduleUnloaded(info);
+		getEventListeners().fire.eventSelected(evt, evt.getCause());
 		getEventListeners().fire.moduleUnloaded(process, info, evt.getCause());
 
 		String key = info.getModuleName();
@@ -1034,7 +1043,20 @@ public class DbgManagerImpl implements DbgManager {
 		return statusMap.get(evt.getClass());
 	}
 
+	protected void processDebuggeeStateChanged(DbgDebuggeeStateChangeEvent evt, Void v) {
+		if (evt.getFlags().contains(ChangeDebuggeeState.DATA)) {
+			getEventListeners().fire.memoryChanged(currentProcess, 0L, 0, evt.getCause());
+		}
+	}
+
+	protected void processSystemErrorEvent(DbgSystemErrorEvent evt, Void v) {
+		getEventListeners().fire.eventSelected(evt, evt.getCause());
+		String error = "SystemError " + evt.getError() + ":" + evt.getLevel();
+		getEventListeners().fire.consoleOutput(error, 0);
+	}
+
 	protected void processConsoleOutput(DbgConsoleOutputEvent evt, Void v) {
+		getEventListeners().fire.eventSelected(evt, evt.getCause());
 		getEventListeners().fire.consoleOutput(evt.getInfo(), evt.getMask());
 	}
 
@@ -1584,5 +1606,4 @@ public class DbgManagerImpl implements DbgManager {
 	public long getProcessCount() {
 		return processCount;
 	}
-
 }

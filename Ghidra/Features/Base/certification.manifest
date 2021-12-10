@@ -181,6 +181,7 @@ src/main/help/help/topics/ConsolePlugin/console.html||GHIDRA||||END|
 src/main/help/help/topics/ConsolePlugin/images/Console.png||GHIDRA||||END|
 src/main/help/help/topics/ConsolePlugin/images/erase16.png||GHIDRA||||END|
 src/main/help/help/topics/ConsolePlugin/images/lock.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/help/help/topics/DWARFExternalDebugFilesPlugin/DWARFExternalDebugFilesPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/Data.htm||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/CreateStructureDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataPlugin/images/CreateStructureDialogWithTableSelection.png||GHIDRA||||END|
@@ -228,6 +229,7 @@ src/main/help/help/topics/DataTypeManagerPlugin/images/DisassociateDialog.png||G
 src/main/help/help/topics/DataTypeManagerPlugin/images/EditPaths.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/FavoriteDts.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/FindDataTypes.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeManagerPlugin/images/FindDataTypesBySize.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/PreviewWindow.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/RevertDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/SearchResults.png||GHIDRA||||END|

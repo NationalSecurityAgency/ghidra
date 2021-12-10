@@ -15,70 +15,95 @@
  */
 package ghidra.file.formats.ios.img2;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.List;
 
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
 
-@FileSystemInfo(type = "img2", description = "iOS " +
-	Img2Constants.IMG2_SIGNATURE, factory = GFileSystemBaseFactory.class)
-public class Img2FileSystem extends GFileSystemBase {
+//@formatter:off
+@FileSystemInfo(
+	type = "img2",
+	description = "iOS " + Img2Constants.IMG2_SIGNATURE, 
+	factory = Img2FileSystemFactory.class)
+//@formatter:on
+public class Img2FileSystem implements GFileSystem {
 
+	private FSRLRoot fsFSRL;
+	private SingleFileSystemIndexHelper fsIndexHelper;
+	private FileSystemRefManager refManager = new FileSystemRefManager(this);
+	private ByteProvider provider;
 	private Img2 img2;
-	private GFileImpl imageTypeFile;
 
-	public Img2FileSystem(String fileSystemName, ByteProvider provider) {
-		super(fileSystemName, provider);
+	public Img2FileSystem(FSRLRoot fsFSRL, ByteProvider provider, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		this.fsFSRL = fsFSRL;
+		this.provider = provider;
+		this.img2 = new Img2(provider);
+		if (!img2.isValid()) {
+			throw new IOException("Unable to decrypt file: invalid IMG2 file!");
+		}
+
+		try (ByteProvider tmpBP =
+			new ByteProviderWrapper(provider, Img2Constants.IMG2_LENGTH, img2.getDataLen(), null)) {
+			String payloadMD5 = FSUtilities.getMD5(tmpBP, monitor);
+
+			this.fsIndexHelper = new SingleFileSystemIndexHelper(this, fsFSRL, img2.getImageType(),
+				img2.getDataLen(), payloadMD5);
+		}
+	}
+
+	@Override
+	public FSRLRoot getFSRL() {
+		return fsFSRL;
 	}
 
 	@Override
 	public void close() throws IOException {
-		super.close();
-		imageTypeFile = null;
+		refManager.onClose();
+		fsIndexHelper.clear();
+		if (provider != null) {
+			provider.close();
+			provider = null;
+		}
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
-		if (file != null && file.equals(imageTypeFile)) {
-
-			byte[] data = provider.readBytes(Img2Constants.IMG2_LENGTH, img2.getDataLen());
-
-			return new ByteArrayInputStream(data);
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) {
+		if (fsIndexHelper.isPayloadFile(file)) {
+			return new ByteProviderWrapper(provider, Img2Constants.IMG2_LENGTH, img2.getDataLen(),
+				fsIndexHelper.getPayloadFile().getFSRL());
 		}
 		return null;
 	}
 
 	@Override
 	public List<GFile> getListing(GFile directory) throws IOException {
-		return (directory == null || directory.equals(root)) ? Arrays.asList(imageTypeFile)
-				: Collections.emptyList();
+		return fsIndexHelper.getListing(directory);
 	}
 
 	@Override
-	public boolean isValid(TaskMonitor monitor) throws IOException {
-		byte[] bytes = provider.readBytes(0, Img2Constants.IMG2_SIGNATURE_BYTES.length);
-		return Arrays.equals(bytes, Img2Constants.IMG2_SIGNATURE_BYTES);
+	public String getName() {
+		return fsFSRL.getContainer().getName();
 	}
 
 	@Override
-	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
-		monitor.setMessage("Opening IMG2...");
+	public boolean isClosed() {
+		return fsIndexHelper.isClosed();
+	}
 
-		this.img2 = new Img2(provider);
+	@Override
+	public FileSystemRefManager getRefManager() {
+		return refManager;
+	}
 
-		if (!img2.getSignature().equals(Img2Constants.IMG2_SIGNATURE)) {
-			throw new IOException("Unable to decrypt file: invalid IMG2 file!");
-		}
-
-		imageTypeFile =
-			GFileImpl.fromFilename(this, root, img2.getImageType(), false, img2.getDataLen(), null);
+	@Override
+	public GFile lookup(String path) throws IOException {
+		return fsIndexHelper.lookup(path);
 	}
 
 }

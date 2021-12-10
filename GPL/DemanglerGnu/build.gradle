@@ -1,13 +1,14 @@
 /* ###
  * IP: Public Domain
  */
-apply from: file("../gpl.gradle").getCanonicalPath()
 
 if (findProject(':Generic') != null) {
 	apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 	apply from: "$rootProject.projectDir/gradle/distributableGPLModule.gradle"
 }
 else {
+	apply from: "../utils.gradle"
+	apply from: "../nativePlatforms.gradle"
 	apply from: "../nativeBuildProperties.gradle"
 }
 
@@ -20,30 +21,6 @@ def v33_1 = "demangler_gnu_v2_33_1"
 def v24 = "demangler_gnu_v2_24"
 def srcVersion33_1 = "src/demangler_gnu_v2_33_1"
 def srcVersion24 = "src/demangler_gnu_v2_24"
-
-/****************************************************************************
- * Defines the platforms we have to support in Ghidra.  This model is used 
- * for all native builds and should be extended by each module as-needed.
- ****************************************************************************/
-model {
-
-	// define the platforms that we support in ghidra
-	platforms {
-		win64 {
-			architecture 'x86_64'
-			operatingSystem 'windows'
-		}
-		linux64 {
-			architecture 'x86_64'
-			operatingSystem 'linux'
-		}
-		osx64 {
-			architecture 'x86_64'
-			operatingSystem 'osx'
-		}
-	}	
-}
-
 
 /**
  * This project has some native 'c' code we need to include in the zip for licensing 
@@ -100,9 +77,11 @@ model {
 	//
 	components {
 		demangler_gnu_v2_33_1(NativeExecutableSpec) {
-			targetPlatform "win64"
-			targetPlatform "linux64"
-			targetPlatform "osx64"
+			targetPlatform "win_x86_64"
+			targetPlatform "linux_x86_64"
+			targetPlatform "linux_arm_64"
+			targetPlatform "mac_x86_64"
+			targetPlatform "mac_arm_64"
 			sources {
 				c {
 					source {
@@ -119,9 +98,11 @@ model {
 		// Version 2.24
 		//
 		demangler_gnu_v2_24(NativeExecutableSpec) {
-			targetPlatform "win64"
-			targetPlatform "linux64"
-			targetPlatform "osx64"
+			targetPlatform "win_x86_64"
+			targetPlatform "linux_x86_64"
+			targetPlatform "linux_arm_64"
+			targetPlatform "mac_x86_64"
+			targetPlatform "mac_arm_64"
 			sources {
 				c {
 					source {

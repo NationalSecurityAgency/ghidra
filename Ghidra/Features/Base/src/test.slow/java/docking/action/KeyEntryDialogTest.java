@@ -27,7 +27,6 @@ import org.junit.*;
 
 import docking.*;
 import docking.actions.*;
-import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -210,8 +209,7 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 //==================================================================================================    
 
 	private DockingAction getUnboundAction() {
-		CodeBrowserPlugin codeBrowserPlugin = env.getPlugin(CodeBrowserPlugin.class);
-		return (DockingAction) getInstanceField("tableFromSelectionAction", codeBrowserPlugin);
+		return (DockingAction) getAction(tool, "Create Table From Selection");
 	}
 
 	private DockingAction getBoundAction() {

@@ -27,7 +27,7 @@
 
 import java.util.List;
 
-import classrecovery.RecoveredClassUtils;
+import classrecovery.RecoveredClassHelper;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.data.FunctionDefinition;
 import ghidra.program.model.data.Structure;
@@ -44,17 +44,17 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 			return;
 		}
 
-		RecoveredClassUtils classUtils = new RecoveredClassUtils(currentProgram, currentLocation,
-			state.getTool(), this, false, false, false, monitor);
+		RecoveredClassHelper classHelper = new RecoveredClassHelper(currentProgram, currentLocation,
+			state.getTool(), this, false, false, false, false, monitor);
 
-		Namespace classNamespace = classUtils.getClassNamespace(currentAddress);
+		Namespace classNamespace = classHelper.getClassNamespace(currentAddress);
 		if (classNamespace == null) {
 			println(
 				"Either cannot retrieve class namespace or cursor is not in a member of a class namepace");
 			return;
 		}
 
-		List<Symbol> classVftableSymbols = classUtils.getClassVftableSymbols(classNamespace);
+		List<Symbol> classVftableSymbols = classHelper.getClassVftableSymbols(classNamespace);
 		if (classVftableSymbols.isEmpty()) {
 			println("There are no vftables in this class");
 			return;
@@ -64,7 +64,7 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 			classNamespace.getName(true));
 
 		List<Object> changedItems =
-			classUtils.applyNewFunctionSignatures(classNamespace, classVftableSymbols);
+			classHelper.applyNewFunctionSignatures(classNamespace, classVftableSymbols);
 
 		if (changedItems.isEmpty()) {
 			println("No differences found for class " + classNamespace.getName(true) +
@@ -72,10 +72,10 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 			return;
 		}
 
-		List<Structure> structuresOnList = classUtils.getStructuresOnList(changedItems);
+		List<Structure> structuresOnList = classHelper.getStructuresOnList(changedItems);
 		List<FunctionDefinition> functionDefinitionsOnList =
-			classUtils.getFunctionDefinitionsOnList(changedItems);
-		List<Function> functionsOnList = classUtils.getFunctionsOnList(changedItems);
+			classHelper.getFunctionDefinitionsOnList(changedItems);
+		List<Function> functionsOnList = classHelper.getFunctionsOnList(changedItems);
 
 		println();
 		println("Updated structures:");

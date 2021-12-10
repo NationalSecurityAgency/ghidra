@@ -102,9 +102,7 @@ public class DataTypeHelper {
 		if (newDt == null) {
 			throw new InvalidDataTypeException("valid data-type not specified");
 		}
-		DataTypeComponent element = editModel.getComponent(index);
-		editModel.checkIsAllowableDataType(newDt,
-			element == null || !element.isFlexibleArrayComponent());
+		editModel.checkIsAllowableDataType(newDt);
 		int mrl = editModel.getMaxReplaceLength(index);
 		if ((mrl != -1) && (newDt.getLength() > mrl)) {
 			throw new InvalidDataTypeException(newDt.getDisplayName() + " doesn't fit within " +

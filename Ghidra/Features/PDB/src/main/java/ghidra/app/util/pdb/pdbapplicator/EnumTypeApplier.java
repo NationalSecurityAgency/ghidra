@@ -109,6 +109,12 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 		return getMsType().getName();
 	}
 
+	@Override
+	DataType getDataType() {
+		getOrCreateEnum();
+		return dataType;
+	}
+
 	private MsTypeApplier getUnderlyingTypeApplier() {
 		MsTypeApplier under = null;
 		MsTypeApplier applier = (definitionApplier != null) ? definitionApplier : this;

@@ -21,12 +21,13 @@ import java.util.TreeMap;
 
 import ghidra.app.plugin.core.analysis.AnalysisState;
 import ghidra.app.plugin.core.analysis.AnalysisStateInfo;
-import ghidra.app.util.bin.*;
+import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
+import ghidra.util.SystemUtilities;
 
 /**
  * This class is used to cache the {@link DexHeader} which holds constant pool and method information.
@@ -52,8 +53,8 @@ final public class DexAnalysisState implements AnalysisState {
 	private void installMethodList(AddressSpace defaultAddressSpace,
 			List<EncodedMethod> methodList) {
 		for (EncodedMethod encodedMethod : methodList) {
-			Address methodAddress = defaultAddressSpace.getAddress(
-				DexUtil.METHOD_ADDRESS + encodedMethod.getCodeOffset());
+			Address methodAddress = defaultAddressSpace
+					.getAddress(DexUtil.METHOD_ADDRESS + encodedMethod.getCodeOffset());
 			methodMap.put(methodAddress, encodedMethod);
 		}
 	}
@@ -108,10 +109,21 @@ final public class DexAnalysisState implements AnalysisState {
 		DexAnalysisState analysisState =
 			AnalysisStateInfo.getAnalysisState(program, DexAnalysisState.class);
 		if (analysisState == null) {
-			ByteProvider provider =
-				new MemoryByteProvider(program.getMemory(), program.getMinAddress());
-			BinaryReader reader = new BinaryReader(provider, true);
-			DexHeader dexHeader = new DexHeader(reader);
+			DexHeader dexHeader = DexHeaderFactory.getDexHeader(program);
+			analysisState = new DexAnalysisState(program, dexHeader);
+			AnalysisStateInfo.putAnalysisState(program, analysisState);
+		}
+		return analysisState;
+	}
+
+	public static DexAnalysisState getState(Program program, Address address) throws IOException {
+		DexAnalysisState analysisState =
+			AnalysisStateInfo.getAnalysisState(program, DexAnalysisState.class);
+		if (SystemUtilities.isInDevelopmentMode()) {
+			analysisState = null; //always generate when in debug mode
+		}
+		if (analysisState == null) {
+			DexHeader dexHeader = DexHeaderFactory.getDexHeader(program, address);
 			analysisState = new DexAnalysisState(program, dexHeader);
 			AnalysisStateInfo.putAnalysisState(program, analysisState);
 		}

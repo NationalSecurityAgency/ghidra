@@ -24,6 +24,12 @@ XmlArchitectureCapability::XmlArchitectureCapability(void)
   name = "xml";
 }
 
+XmlArchitectureCapability::~XmlArchitectureCapability(void)
+
+{
+  SleighArchitecture::shutdown();
+}
+
 Architecture *XmlArchitectureCapability::buildArchitecture(const string &filename,const string &target,ostream *estream)
 
 {

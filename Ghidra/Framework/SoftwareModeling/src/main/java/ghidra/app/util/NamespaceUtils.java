@@ -36,7 +36,7 @@ import ghidra.util.exception.*;
  * <b>Assumptions for creating namespaces from a path string: </b>
  * <ul>
  *     <li>All elements of a namespace path should be namespace symbols and not other
- *         symbol types.         
+ *         symbol types.
  *     <li>Absolute paths can optionally start with the global namespace.
  *     <li>You can provide a relative path that will start at the given
  *         parent namespace (or global if there is no parent provided).
@@ -94,20 +94,6 @@ public class NamespaceUtils {
 		}
 		str += symbolName;
 		return str;
-	}
-
-	/**
-	 * Provide a standard method for splitting a symbol path into its
-	 * various namespace and symbol name elements.  While the current implementation
-	 * uses a very simplistic approach, this may be improved upon in the future
-	 * to handle various grouping concepts.
-	 * @param path symbol namespace path (path will be trimmed before parse)
-	 * @return order list of namespace names
-	 * @deprecated use SymbolPath instead
-	 */
-	@Deprecated
-	public static List<String> splitNamespacePath(String path) {
-		return Arrays.asList(path.trim().split(Namespace.DELIMITER));
 	}
 
 	/**
@@ -333,8 +319,8 @@ public class NamespaceUtils {
 	 * 
 	 * <p>The root namespace can be a function.
 	 * 
-	 * <p>If an address is passed, then the path can contain a function name provided the 
-	 * address is in the body of the function; otherwise the names must all be namespaces other 
+	 * <p>If an address is passed, then the path can contain a function name provided the
+	 * address is in the body of the function; otherwise the names must all be namespaces other
 	 * than functions.
 	 *
 	 * @param  namespacePath The namespace name or path string to be parsed
@@ -387,11 +373,11 @@ public class NamespaceUtils {
 
 	/**
 	 * Returns the existing Function at the given address if its {@link SymbolPath} matches the
-	 * given path  
+	 * given path
 	 *
 	 * @param program the program
 	 * @param symbolPath the path of namespace
-	 * @param address the address 
+	 * @param address the address
 	 * @return the namespace represented by the given path, or null if no such namespace exists
 	 */
 	public static Namespace getFunctionNamespaceAt(Program program, SymbolPath symbolPath,
@@ -401,7 +387,7 @@ public class NamespaceUtils {
 			return null;
 		}
 
-		Symbol[] symbols = program.getSymbolTable().getSymbols(address);
+		SymbolIterator symbols = program.getSymbolTable().getSymbolsAsIterator(address);
 		for (Symbol symbol : symbols) {
 			if (symbol.getSymbolType() == SymbolType.FUNCTION &&
 				symbolPath.matchesPathOf(symbol)) {
@@ -412,12 +398,12 @@ public class NamespaceUtils {
 	}
 
 	/**
-	 * Returns the existing Function containing the given address if its 
-	 * {@link SymbolPath} matches the given path  
+	 * Returns the existing Function containing the given address if its
+	 * {@link SymbolPath} matches the given path
 	 *
 	 * @param program the program
 	 * @param symbolPath the path of namespace
-	 * @param address the address 
+	 * @param address the address
 	 * @return the namespace represented by the given path, or null if no such namespace exists
 	 */
 	public static Namespace getFunctionNamespaceContaining(Program program, SymbolPath symbolPath,
@@ -536,5 +522,23 @@ public class NamespaceUtils {
 		Symbol namespaceSymbol = namespace.getSymbol();
 		SymbolTable symbolTable = namespaceSymbol.getProgram().getSymbolTable();
 		return symbolTable.convertNamespaceToClass(namespace);
+	}
+
+	/**
+	 * Returns a list of namespaces, where each element is a component of the original specified
+	 * namespace, excluding the global root namespace.
+	 * <p>
+	 * Namespace "ns1::ns2::ns3" returns [ "ns1", "ns1::ns2", "ns1::ns2::ns3" ]
+	 * 
+	 * @param namespace namespace to process
+	 * @return list of namespaces
+	 */
+	public static List<Namespace> getNamespaceParts(Namespace namespace) {
+		List<Namespace> result = new ArrayList<>();
+		while (!namespace.isGlobal()) {
+			result.add(0, namespace);
+			namespace = namespace.getParentNamespace();
+		}
+		return result;
 	}
 }

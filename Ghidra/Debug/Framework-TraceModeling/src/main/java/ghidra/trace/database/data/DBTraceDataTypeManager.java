@@ -220,9 +220,7 @@ public class DBTraceDataTypeManager extends DataTypeManagerDB
 	@Override
 	public DataOrganization getDataOrganization() {
 		if (dataOrganization == null) {
-			// TODO: Do I need to have a base compiler spec?
-			dataOrganization =
-				trace.getBaseLanguage().getDefaultCompilerSpec().getDataOrganization();
+			dataOrganization = trace.getBaseCompilerSpec().getDataOrganization();
 		}
 		return dataOrganization;
 	}

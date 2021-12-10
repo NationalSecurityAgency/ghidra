@@ -27,7 +27,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a dyld_cache_mapping_info structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
  */
 @SuppressWarnings("unused")
 public class DyldCacheMappingInfo implements StructConverter {
@@ -104,6 +104,17 @@ public class DyldCacheMappingInfo implements StructConverter {
 	 */
 	public boolean isExecute() {
 		return (initProt & SegmentConstants.PROTECTION_X) != 0;
+	}
+
+	/**
+	 * Returns true if the mapping contains the given address
+	 * 
+	 * @param addr The address to check
+	 * @return True if the mapping contains the given address; otherwise, false
+	 */
+	public boolean contains(long addr) {
+		return Long.compareUnsigned(addr, address) >= 0 &&
+			Long.compareUnsigned(addr, address + size) < 0;
 	}
 
 	@Override

@@ -279,8 +279,10 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	void clearCache() {
 		Map<ROW_OBJECT, Map<Integer, Object>> cachedColumnValues = threadLocalColumnCache.get();
-		cachedColumnValues.clear();
-		threadLocalColumnCache.set(null);
+		if (cachedColumnValues != null) {
+			cachedColumnValues.clear();
+			threadLocalColumnCache.set(null);
+		}
 	}
 
 	@Override
@@ -652,6 +654,8 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		}
 		doClearData();
 		disposeDynamicColumnData();
+		listeners.clear();
+		clearCache();
 	}
 
 	/**
@@ -668,6 +672,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		cancelAllUpdates();
 		getLastSelectedObjects().clear(); // when our data is cleared, so is our saved selection!
 		allData.clear();
+		filteredData.clear();
 		filteredData = allData;
 	}
 

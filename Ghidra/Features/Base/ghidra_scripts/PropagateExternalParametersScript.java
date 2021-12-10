@@ -56,7 +56,7 @@ public class PropagateExternalParametersScript extends GhidraScript {
 			}
 		}
 
-		// use the 'results' to propagate param info to the local variables, data, and params of 	
+		// use the 'results' to propagate param info to the local variables, data, and params of
 		// the calling function
 		//println("Processing propagation results - count: " + results.size());
 		for (int i = 0; i < results.size(); i++) {
@@ -68,7 +68,7 @@ public class PropagateExternalParametersScript extends GhidraScript {
 				continue;
 			}
 
-			//If operand of pushed parameter points to data make a symbol and comment at that location 
+			//If operand of pushed parameter points to data make a symbol and comment at that location
 			if (((opType & OperandType.ADDRESS) != 0) && (((opType & OperandType.DATA) != 0)) ||
 				((opType & OperandType.SCALAR) != 0) || ((opType & OperandType.DYNAMIC) != 0)) {
 				Reference[] refs = listing.getCodeUnitAt(ppi.getAddress()).getOperandReferences(0);
@@ -88,7 +88,9 @@ public class PropagateExternalParametersScript extends GhidraScript {
 					String newComment = new String(
 						ppi.getName() + " parameter of " + ppi.getCalledFunctionName() + "\n");
 
-					if ((getSymbol(symbolName, null) == null) && (isString == false)) {
+					List<Symbol> symbols = getSymbols(symbolName, null);
+
+					if (symbols.isEmpty() && !isString) {
 						createLabel(dataAddress, symbolName, true, SourceType.USER_DEFINED);
 					}
 
@@ -101,8 +103,10 @@ public class PropagateExternalParametersScript extends GhidraScript {
 					}
 
 					if ((data != null) &&
-						(listing.getCodeUnitAt(dataAddress).getMnemonicString().startsWith(
-							"undefined"))) {
+						(listing.getCodeUnitAt(dataAddress)
+								.getMnemonicString()
+								.startsWith(
+									"undefined"))) {
 						clearListing(dataAddress);
 					}
 					if (listing.isUndefined(dataAddress, dataAddress.add(dt.getLength() - 1))) {
@@ -182,7 +186,7 @@ public class PropagateExternalParametersScript extends GhidraScript {
 	 * PUSH arg 2 to call func2    |
 	 * PUSH arg 1 to call func2	   | -- want to bypass these
 	 * CALL func2               ___|
-	 * PUSH arg 2 to call func1           ; put arg2 of func1 here 
+	 * PUSH arg 2 to call func1           ; put arg2 of func1 here
 	 * PUSH arg 1 to call func1           ; put arg1 of func1 here
 	 * CALL func1
 	 */
@@ -272,7 +276,7 @@ public class PropagateExternalParametersScript extends GhidraScript {
 			// need to take into account calls between the pushes and skip the pushes for those calls
 			// skip pushes that are used for another call
 
-			// if label, then probably a branch, allow current push to be commented and 
+			// if label, then probably a branch, allow current push to be commented and
 			// next time through stop
 			// can also be a branch if not label there but this case should still have parameters set
 			// before it as long as not an unconditional jump - this wouldn't make sense so it shouldn't happen
@@ -292,7 +296,7 @@ public class PropagateExternalParametersScript extends GhidraScript {
 				else {
 					setEOLComment(cu.getMinAddress(), params[index].getDataType().getDisplayName() +
 						" " + params[index].getName() + " for " + extFuncName);
-					// add the following to the EOL comment to see the value of the optype	
+					// add the following to the EOL comment to see the value of the optype
 					//	+" " + toHexString(currentProgram.getListing().getInstructionAt(cu.getMinAddress()).getOperandType(0), false, true)
 					addResult(params[index].getName(), params[index].getDataType(),
 						cu.getMinAddress(), extFuncName);

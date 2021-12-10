@@ -333,7 +333,13 @@ abstract class AbstractDwarfEHDecoder implements DwarfEHDecoder {
 
 		switch (appMode) {
 			case DW_EH_PE_absptr:
-				// just pass this through
+				// if the program has been re-based, need to add in the image base difference.
+				//  but only if there are no relocations at this location
+				if (prog.getRelocationTable().getRelocation(addr) == null) {
+					long programBaseAddressFixup = context.getOriginalImageBaseOffset();
+
+					val = val + programBaseAddressFixup;
+				}
 				break;
 
 			case DW_EH_PE_aligned:

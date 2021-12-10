@@ -1555,51 +1555,79 @@ macro getCrBit(crReg, bitIndex, result)
 macro setCrBit(crReg, bitIndex, bit)
 {
 	shift:1 = 3-bitIndex;
-	mask:1 = ~(1<<shift);	
+	mask:1 = ~(1<<shift);
 	tmp:1 = bit<<shift;
 	crReg = crReg & mask;
 	crReg = crReg | tmp;
 }
 macro cr0flags(result ) {
-	setCrBit(cr0, 0, (result s< 0));
-	setCrBit(cr0, 1, (result s> 0));
-	setCrBit(cr0, 2, (result == 0));
+	# the first three bits of CR are set by signed comparison of the
+	# result to zero, and the fourth bit of CR is copied from the SO field
+	# of the XER
+	setCrBit(cr0, 0, (result s< 0)); # 0b100
+	setCrBit(cr0, 1, (result s> 0)); # 0b010
+	setCrBit(cr0, 2, (result == 0)); # 0b001
 	setCrBit(cr0, 3, (xer_so & 1));
 }
 
 macro addOverflow(a,b) {
-  xer_ov = scarry(a,b);
-  xer_so = xer_so || xer_ov;
-}
-macro addOverflowAgain(a,b) {
-  xer_ov = scarry(a,b) || xer_ov;
-  xer_so = xer_so || xer_ov;
+	xer_ov = scarry(a,b);
+	xer_so = xer_so || xer_ov;
 }
 
 macro subOverflow(a,b) {
-  xer_ov = sborrow(a,b);
-  xer_so = xer_so || xer_ov;
+	xer_ov = sborrow(a,b);
+	xer_so = xer_so || xer_ov;
+}
+
+macro addExtendedCarry(op1,op2){
+	local carryIn:$(REGISTER_SIZE) = zext(xer_ca);
+	tmp:$(REGISTER_SIZE) = op2 + carryIn;
+	xer_ca = carry(op2, carryIn) || carry(op1, tmp);
+}
+
+macro addExtendedOverflow(op1, op2) {
+	local carryIn:$(REGISTER_SIZE) = zext(xer_ca);
+	tmp:$(REGISTER_SIZE) = op1 + op2;
+	xer_ov = scarry(op1,op2) ^^ scarry(tmp, carryIn);
+	xer_so = xer_so || xer_ov;
+}
+
+macro subExtendedCarry(op1,op2){
+	local carryIn = zext(!xer_ca);
+	local CYa = op1 < op2;
+	local result = op1 - op2;
+	xer_ca = !(CYa || (result < carryIn) );
+}
+
+macro subExtendedOverflow(op1, op2) {
+	local carryIn = zext(!xer_ca);
+	local result = op1 - op2;
+	xer_ov = sborrow( op1, op2 ) ^^ sborrow( result, carryIn );
+	xer_so = xer_so || xer_ov;
 }
 
 # check b=0 or (a=0x80000000 and b=-1)
 macro divOverflow(a,b) {
 	xer_ov = (b==0) || ((b==-1) && (a==0x80000000));
-  	xer_so = xer_so || xer_ov;
+	xer_so = xer_so || xer_ov;
 }
-macro divZero(a,b) {
+macro divZero(b) {
 	xer_ov = (b==0);
-  	xer_so = xer_so || xer_ov;
+	xer_so = xer_so || xer_ov;
 }
 
 macro mulOverflow64(result) {
-	local tmp:4 = result(4);
-	xer_ov = tmp != 0 && tmp != 0xffff;
+	local tmp:4 = result(0);
+	local sext_tmp:8 = sext(tmp);
+	xer_ov = (sext_tmp != result);
 	xer_so = xer_so || xer_ov;
 }
 
 macro mulOverflow128(result) {
-	local tmp:8 = result(8);
-	xer_ov = tmp != 0 && tmp != 0xffff;
+	local tmp:8 = result(0);
+	local sext_tmp:16 = sext(tmp);
+	xer_ov = (sext_tmp != result);
 	xer_so = xer_so || xer_ov;
 }
 
@@ -1688,13 +1716,13 @@ macro loadReg(reg) {
 }
 
 macro loadRegisterPartial(reg, ea, sa) {
-        mask:$(REGISTER_SIZE) = 0xffffffff;
-        sa = ((4-sa) & 3) * 8;
-        mask = mask << sa;
+	mask:$(REGISTER_SIZE) = 0xffffffff;
+	sa = ((4-sa) & 3) * 8;
+	mask = mask << sa;
 @ifdef BIT_64
-  	reg = zext(*:4(ea));
+	reg = zext(*:4(ea));
 @else
-        reg = *:4(ea);
+	reg = *:4(ea);
 @endif
         reg = reg & mask;
         ea = ea + 4;
@@ -1769,6 +1797,7 @@ macro unpackFPSCR(tmp) {
 		    fp_xe, fp_ni, fp_rn0, fp_rn1); 
 }
 
+
 ################################################################
 # Sub-Constructors
 ################################################################
@@ -1780,7 +1809,7 @@ addressLI: reloc 	is LI & AA=1		[ reloc = LI*4; ]				{ export *[ram]:4 reloc; }
 addressBD: reloc		is BD & AA=0		[ reloc = inst_start + BD*4; ]	{ export *[ram]:4 reloc; }
 addressBD: reloc		is BD & AA=1		[ reloc = BD*4; ]				{ export *[ram]:4 reloc; }
 
-OFF16SH: val		is D0 & D1 & D2 [ val = (D0 << 6) | (D1 << 1) | D2; ] { export *[const]:4 val;}
+OFF16SH: val		is D0 & D1 & D2 [ val = ((D0 << 6) | (D1 << 1) | D2) << 16; ] { export *[const]:4 val;}
 
 # X 00-------------------------------06 07-07 08-----------10 11-----------13 14------15 16----------------------------------------------------------------------------31 
 # X -----------------?-----------------|BO_1=1|-------?-------|-----BI_CR-----|--BI_CC---|---------------------------------------?----------------------------------------|
@@ -1876,7 +1905,30 @@ RB_OR_ZERO: 0   is B=0		{ export 0:$(REGISTER_SIZE); }
 RS_OR_ZERO:	S 	is S			{ export S; }
 RS_OR_ZERO: 0   is S=0		{ export 0:$(REGISTER_SIZE); }
 
-rotmask: mask   is MBL & ME [ mask = ((((ME-MBL)>>8) $and 1)*0xffffffff) $xor (0x7fffffff>>ME) $xor (0xffffffff>>MBL); ]   { export *[const]:4 mask; }
+@ifdef BIT_64
+MB: mbValue  is MBH & MBL 	[ mbValue=(MBH<<5)|MBL; ]	{ export *[const]:4 mbValue; }
+SH: shValue  is SHH & SHL 	[ shValue=(SHH<<5)|SHL; ]	{ export *[const]:4 shValue; }
+
+rotmask: mask is MBL & ME [mask =  ((((ME-MBL)>>8) $and 1)*0xffffffffffffffff) $xor (0x7fffffff>>ME) $xor (0xffffffff>>MBL); ]   { export *[const]:8 mask; }
+
+rotmask_SH: masksh, mbValue, shValue is MBL & MBH & SHL & SHH
+	[ mbValue= (MBH<<5)|MBL;
+	  shValue= (SHH<<5)|SHL;
+	  masksh = ((((shValue-mbValue)>>8) $and 1)*0xffffffffffffffff) $xor ((0x7fffffffffffffff >> shValue) $xor (0xffffffffffffffff >> mbValue));
+	]
+{
+	local start:4 = mbValue;
+	local stop:4 = 63-shValue;
+	mask_tmp:8 = (zext(start > stop) * 0xffffffffffffffff) ^ (0x7fffffffffffffff>>stop) ^ (0xffffffffffffffff>>start);
+	export *[const]:8 mask_tmp;
+}
+
+rotmask_Z: mask, mbValue is MBL & MBH [mbValue= (MBH<<5)|MBL; mask = ~(0xffffffffffffffff >> (mbValue+1)); ]
+{ mask_tmp:8 = ~(0xffffffffffffffff >> (mbValue+1)); export *[const]:8 mask_tmp; }
+
+@else
+rotmask: mask   is MBL & ME [ mask = ((((ME-MBL)>>8) $and 1)*0xffffffff) $xor (0x7fffffff>>ME) $xor (0xffffffff>>MBL); ] { export *[const]:4 mask; }
+@endif
 
 DSIZE: "w"		is L    {}      # L is a don't care bit in 32-bit languages although it should always be 0
 @ifdef BIT_64					# L can only be 1 when in 64 bit language
@@ -1932,11 +1984,6 @@ CRM_CR:	cr2		is CRM=32 & cr2	{tmp:4 = zext(cr2) << 20;export tmp;}
 CRM_CR:	cr1		is CRM=64 & cr1	{tmp:4 = zext(cr1) << 24;export tmp;}
 CRM_CR:	cr0		is CRM=128 & cr0	{tmp:4 = zext(cr0) << 28;export tmp;}
 
-@ifdef BIT_64
-MB: mbValue  is MBH & MBL 	[ mbValue=(MBH<<5)|MBL; ]	{ export *[const]:4 mbValue; }
-SH: shValue  is SHH & SHL 	[ shValue=(SHH<<5)|SHL; ]	{ export *[const]:4 shValue; }
-
-@endif
 
 ################################################################
 # Instructions

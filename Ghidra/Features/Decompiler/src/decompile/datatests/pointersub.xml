@@ -1,0 +1,36 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      Test that relative pointers can access
+      1) a pointer to the parent structure
+      2) a field of the parent using the ADJ macro
+      3) a field in an inner structure, without going thru parent
+  -->
+<bytechunk space="ram" offset="0x1005fa" readonly="true">
+                    554889e54889
+7de8488b45e84883e810488945f8488b
+45e8f20f1005ce000000f20f11400848
+8b45f848c740080a000000488b45f85d
+c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1006e8" readonly="true">
+                0000000000002340
+</bytechunk>
+<symbol name="getOuter" space="ram" offset="0x1005fa"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line struct InnerStruct { int8 a; float8 b; char c; };</com>
+  <com>parse line struct OuterStruct { int8 outA; int8 outB; InnerStruct inner; };</com>
+  <com>pointer setting outer_rel OuterStruct offset 16</com>
+  <com>parse line extern OuterStruct *getOuter(outer_rel ptr);</com>
+  <com>lo fu getOuter</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Relative base #1" min="1" max="1">ptr-&gt;b = 9\.5;</stringmatch>
+<stringmatch name="Relative base #2" min="1" max="1">ADJ\(ptr\)-&gt;outB = 10;</stringmatch>
+<stringmatch name="Relative base #3" min="1" max="1">return ADJ\(ptr\);</stringmatch>
+<stringmatch name="Relative base #4" min="1" max="1">OuterStruct \* getOuter\(outer_rel ptr\)</stringmatch>
+</decompilertest>

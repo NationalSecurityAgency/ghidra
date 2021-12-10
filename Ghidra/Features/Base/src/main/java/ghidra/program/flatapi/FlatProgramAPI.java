@@ -56,15 +56,13 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * NOTE:
  * <ol>
- * 	<li>NO METHODS SHOULD EVER BE REMOVED FROM THIS CLASS.
- * 	<li>NO METHOD SIGNATURES SHOULD EVER BE CHANGED IN THIS CLASS.
+ * 	<li>NO METHODS *SHOULD* EVER BE REMOVED FROM THIS CLASS.
+ * 	<li>NO METHOD SIGNATURES *SHOULD* EVER BE CHANGED IN THIS CLASS.
  * </ol>
  * <p>
  * This class is used by GhidraScript.
  * <p>
  * Changing this class will break user scripts.
- * <p>
- * That is bad. Don't do that.
  * <p>
  */
 public class FlatProgramAPI {
@@ -239,7 +237,7 @@ public class FlatProgramAPI {
 	/**
 	 * Clears the code unit (instruction or data) defined at the address.
 	 * @param address the address to clear the code unit
-	 * @throws CancelledException
+	 * @throws CancelledException if cancelled
 	 */
 	public final void clearListing(Address address) throws CancelledException {
 		clearListing(address, address);
@@ -249,7 +247,7 @@ public class FlatProgramAPI {
 	 * Clears the code units (instructions or data) in the specified range.
 	 * @param start the start address
 	 * @param end   the end address
-	 * @throws CancelledException
+	 * @throws CancelledException if cancelled
 	 */
 	public final void clearListing(Address start, Address end) throws CancelledException {
 		currentProgram.getListing().clearCodeUnits(start, end, false, monitor);
@@ -258,7 +256,7 @@ public class FlatProgramAPI {
 	/**
 	 * Clears the code units (instructions or data) in the specified set
 	 * @param set the set to clear
-	 * @throws CancelledException
+	 * @throws CancelledException if cancelled
 	 */
 	public final void clearListing(AddressSetView set) throws CancelledException {
 		AddressRangeIterator iter = set.getAddressRanges();
@@ -320,6 +318,7 @@ public class FlatProgramAPI {
 	 * @param length  the size of the block
 	 * @param overlay true will create an overlay, false will not
 	 * @return the newly created memory block
+	 * @throws Exception if there is any exception
 	 */
 	public final MemoryBlock createMemoryBlock(String name, Address start, InputStream input,
 			long length, boolean overlay) throws Exception {
@@ -340,6 +339,7 @@ public class FlatProgramAPI {
 	 * @param bytes   the bytes of the memory block
 	 * @param overlay true will create an overlay, false will not
 	 * @return the newly created memory block
+	 * @throws Exception if there is any exception
 	 */
 	public final MemoryBlock createMemoryBlock(String name, Address start, byte[] bytes,
 			boolean overlay) throws Exception {
@@ -384,6 +384,7 @@ public class FlatProgramAPI {
 	 * NOTE: ALL ANNOTATION (disassembly, comments, etc) defined in this
 	 * memory block will also be removed!
 	 * @param block the block to be removed
+	 * @throws Exception if there is any exception
 	 */
 	public final void removeMemoryBlock(MemoryBlock block) throws Exception {
 		currentProgram.getMemory().removeBlock(block, monitor);
@@ -396,6 +397,7 @@ public class FlatProgramAPI {
 	 * @param name the name of the symbol
 	 * @param makePrimary true if the symbol should be made primary
 	 * @return the newly created code or function symbol
+	 * @throws Exception if there is any exception
 	 */
 	public final Symbol createLabel(Address address, String name, boolean makePrimary)
 			throws Exception {
@@ -422,6 +424,7 @@ public class FlatProgramAPI {
 	 * @param makePrimary true if the symbol should be made primary
 	 * @param sourceType the source type.
 	 * @return the newly created code or function symbol
+	 * @throws Exception if there is any exception
 	 */
 	public final Symbol createLabel(Address address, String name, boolean makePrimary,
 			SourceType sourceType) throws Exception {
@@ -439,6 +442,7 @@ public class FlatProgramAPI {
 	 * @param makePrimary true if the symbol should be made primary
 	 * @param sourceType the source type.
 	 * @return the newly created code or function symbol
+	 * @throws Exception if there is any exception
 	 */
 	public final Symbol createLabel(Address address, String name, Namespace namespace,
 			boolean makePrimary, SourceType sourceType) throws Exception {
@@ -936,13 +940,16 @@ public class FlatProgramAPI {
 	 * Search for sequences of Ascii strings in program memory.  See {@link AsciiCharSetRecognizer}
 	 * to see exactly what chars are considered ASCII for purposes of this search.
 	 * @param addressSet The address set to search. Use null to search all memory;
-	 * @param minimumStringLength The smallest number of chars in a sequence to be considered a "string".
-	 * @param alignment specifies any alignment requirements for the start of the string.  An alignment
-	 * of 1, means the string can start at any address.  An alignment of 2 means the string must
-	 * start on an even address and so on.  Only allowed values are 1,2, and 4.
+	 * @param minimumStringLength The smallest number of chars in a sequence to be considered a
+	 * "string".
+	 * @param alignment specifies any alignment requirements for the start of the string.  An
+	 * alignment of 1, means the string can start at any address.  An alignment of 2 means the
+	 * string must start on an even address and so on.  Only allowed values are 1,2, and 4.
 	 * @param requireNullTermination If true, only strings that end in a null will be returned.
-	 * @param includeAllCharWidths if true, UTF16 and UTF32 size strings will be included in addition to UTF8.
-	 * @return a list of "FoundString" objects which contain the addresses, length, and type of possible strings.
+	 * @param includeAllCharWidths if true, UTF16 and UTF32 size strings will be included in
+	 * addition to UTF8.
+	 * @return a list of "FoundString" objects which contain the addresses, length, and type of
+	 * possible strings.
 	 */
 	public List<FoundString> findStrings(AddressSetView addressSet, int minimumStringLength,
 			int alignment, boolean requireNullTermination, boolean includeAllCharWidths) {
@@ -959,15 +966,18 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Search for sequences of Pascal Ascii strings in program memory.  See {@link AsciiCharSetRecognizer}
-	 * to see exactly what chars are considered ASCII for purposes of this search.
+	 * Search for sequences of Pascal Ascii strings in program memory.  See
+	 * {@link AsciiCharSetRecognizer} to see exactly what chars are considered ASCII for purposes
+	 * of this search.
 	 * @param addressSet The address set to search. Use null to search all memory;
-	 * @param minimumStringLength The smallest number of chars in a sequence to be considered a "string".
-	 * @param alignment specifies any alignment requirements for the start of the string.  An alignment
-	 * of 1, means the string can start at any address.  An alignment of 2 means the string must
-	 * start on an even address and so on.  Only allowed values are 1,2, and 4.
+	 * @param minimumStringLength The smallest number of chars in a sequence to be considered a
+	 * "string".
+	 * @param alignment specifies any alignment requirements for the start of the string.  An
+	 * alignment of 1, means the string can start at any address.  An alignment of 2 means the
+	 * string must start on an even address and so on.  Only allowed values are 1,2, and 4.
 	 * @param includePascalUnicode if true, UTF16 size strings will be included in addition to UTF8.
-	 * @return a list of "FoundString" objects which contain the addresses, length, and type of possible strings.
+	 * @return a list of "FoundString" objects which contain the addresses, length, and type of
+	 * possible strings.
 	 */
 	public List<FoundString> findPascalStrings(AddressSetView addressSet, int minimumStringLength,
 			int alignment, boolean includePascalUnicode) {
@@ -1061,7 +1071,7 @@ public class FlatProgramAPI {
 			return null;
 		}
 		Function func = iterator.next();
-		// if the function found starts at the start addres, go to the next one.
+		// if the function found starts at the start address, go to the next one.
 		if (address.equals(func.getEntryPoint())) {
 			func = null;
 			if (iterator.hasNext()) {
@@ -1101,7 +1111,7 @@ public class FlatProgramAPI {
 			return null;
 		}
 		Function func = iterator.next();
-		// if the function found starts at the start addres, go to the next one.
+		// if the function found starts at the start address, go to the next one.
 		if (address.equals(func.getEntryPoint())) {
 			func = null;
 			if (iterator.hasNext()) {
@@ -1176,6 +1186,7 @@ public class FlatProgramAPI {
 
 	/**
 	 * Returns the first instruction in the function.
+	 * @param function the function
 	 * @return the first instruction in the function
 	 */
 	public final Instruction getFirstInstruction(Function function) {
@@ -1377,7 +1388,7 @@ public class FlatProgramAPI {
 	 */
 	@Deprecated
 	public final Symbol getSymbolAt(Address address, String name) {
-		Symbol[] symbols = currentProgram.getSymbolTable().getSymbols(address);
+		SymbolIterator symbols = currentProgram.getSymbolTable().getSymbolsAsIterator(address);
 		for (Symbol symbol : symbols) {
 			if (symbol.getName().equals(name)) {
 				return symbol;
@@ -1633,6 +1644,7 @@ public class FlatProgramAPI {
 	 * @param address the address at which to create a new Data object.
 	 * @param datatype the Data Type that describes the type of Data object to create.
 	 * @return the newly created Data object
+	 * @throws Exception if there is any exception
 	 */
 	public final Data createData(Address address, DataType datatype) throws Exception {
 		Listing listing = currentProgram.getListing();
@@ -1650,6 +1662,7 @@ public class FlatProgramAPI {
 	 * Creates a byte datatype at the given address.
 	 * @param address the address to create the byte
 	 * @return the newly created Data object
+	 * @throws Exception if there is any exception
 	 */
 	public final Data createByte(Address address) throws Exception {
 		return createData(address, new ByteDataType());
@@ -1659,6 +1672,7 @@ public class FlatProgramAPI {
 	 * Creates a word datatype at the given address.
 	 * @param address the address to create the word
 	 * @return the newly created Data object
+	 * @throws Exception if there is any exception
 	 */
 	public final Data createWord(Address address) throws Exception {
 		return createData(address, new WordDataType());
@@ -1668,6 +1682,7 @@ public class FlatProgramAPI {
 	 * Creates a dword datatype at the given address.
 	 * @param address the address to create the dword
 	 * @return the newly created Data object
+	 * @throws Exception if there is any exception
 	 */
 	public final Data createDWord(Address address) throws Exception {
 		return createData(address, new DWordDataType());
@@ -1677,6 +1692,7 @@ public class FlatProgramAPI {
 	 * Creates a list of dword datatypes starting at the given address.
 	 * @param start the start address to create the dwords
 	 * @param count the number of dwords to create
+	 * @throws Exception if there is any exception
 	 */
 	public final void createDwords(Address start, int count) throws Exception {
 		for (int i = 0; i < count; ++i) {
@@ -1689,6 +1705,7 @@ public class FlatProgramAPI {
 	 * Creates a qword datatype at the given address.
 	 * @param address the address to create the qword
 	 * @return the newly created Data object
+	 * @throws Exception if there is any exception
 	 */
 	public final Data createQWord(Address address) throws Exception {
 		return createData(address, new QWordDataType());
@@ -1698,6 +1715,7 @@ public class FlatProgramAPI {
 	 * Creates a float datatype at the given address.
 	 * @param address the address to create the float
 	 * @return the newly created Data object
+	 * @throws Exception if there is any exception
 	 */
 	public final Data createFloat(Address address) throws Exception {
 		return createData(address, new FloatDataType());
@@ -1707,6 +1725,7 @@ public class FlatProgramAPI {
 	 * Creates a double datatype at the given address.
 	 * @param address the address to create the double
 	 * @return the newly created Data object
+	 * @throws Exception if there is any exception
 	 */
 	public final Data createDouble(Address address) throws Exception {
 		return createData(address, new DoubleDataType());
@@ -1716,6 +1735,7 @@ public class FlatProgramAPI {
 	 * Creates a char datatype at the given address.
 	 * @param address the address to create the char
 	 * @return the newly created Data object
+	 * @throws Exception if there is any exception
 	 */
 	public final Data createChar(Address address) throws Exception {
 		return createData(address, new CharDataType());
@@ -1726,6 +1746,7 @@ public class FlatProgramAPI {
 	 * at the specified address.
 	 * @param address the address to create the string
 	 * @return the newly created Data object
+	 * @throws Exception if there is any exception
 	 */
 	public final Data createAsciiString(Address address) throws Exception {
 		return createData(address, new TerminatedStringDataType());
@@ -1733,12 +1754,11 @@ public class FlatProgramAPI {
 
 	/**
 	 * Create an ASCII string at the specified address.
-	 * @param address
+	 * @param address the address
 	 * @param length length of string (a value of 0 or negative will force use
 	 * of dynamic null terminated string)
 	 * @return string data created
-	 * @throws CodeUnitInsertionException
-	 * @throws DataTypeConflictException
+	 * @throws CodeUnitInsertionException if there is a data conflict
 	 */
 	public final Data createAsciiString(Address address, int length)
 			throws CodeUnitInsertionException {
@@ -1761,11 +1781,10 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Creates a null terminated unicode string starting
-	 * at the specified address.
+	 * Creates a null terminated unicode string starting at the specified address.
 	 * @param address the address to create the string
 	 * @return the newly created Data object
-	 * @throws Exception
+	 * @throws Exception if there is any exception
 	 */
 	public final Data createUnicodeString(Address address) throws Exception {
 		return createData(address, new TerminatedUnicodeDataType());
@@ -1774,6 +1793,7 @@ public class FlatProgramAPI {
 	/**
 	 * Removes the given data from the current program.
 	 * @param data the data to remove
+	 * @throws Exception if there is any exception
 	 */
 	public final void removeData(Data data) throws Exception {
 		clearListing(data.getMinAddress(), data.getMaxAddress());
@@ -1782,6 +1802,7 @@ public class FlatProgramAPI {
 	/**
 	 * Removes the data containing the given address from the current program.
 	 * @param address the address to remove data
+	 * @throws Exception if there is any exception
 	 */
 	public final void removeDataAt(Address address) throws Exception {
 		Data data = getDataContaining(address);
@@ -1793,6 +1814,7 @@ public class FlatProgramAPI {
 	/**
 	 * Removes the given instruction from the current program.
 	 * @param instruction the instruction to remove
+	 * @throws Exception if there is any exception
 	 */
 	public final void removeInstruction(Instruction instruction) throws Exception {
 		clearListing(instruction.getMinAddress(), instruction.getMaxAddress());
@@ -1801,6 +1823,7 @@ public class FlatProgramAPI {
 	/**
 	 * Removes the instruction containing the given address from the current program.
 	 * @param address the address to remove instruction
+	 * @throws Exception if there is any exception
 	 */
 	public final void removeInstructionAt(Address address) throws Exception {
 		Instruction instruction = getInstructionContaining(address);
@@ -2259,6 +2282,7 @@ public class FlatProgramAPI {
 	 * @param equateName the name of the equate
 	 * @return the newly created equate
 	 * @throws InvalidInputException if a scalar does not exist on the data
+	 * @throws Exception if there is any exception
 	 */
 	public final Equate createEquate(Data data, String equateName) throws Exception {
 		Object value = data.getValue();
@@ -2271,18 +2295,6 @@ public class FlatProgramAPI {
 		}
 		throw new InvalidInputException(
 			"Unable to create equate on non-scalar value at " + data.getMinAddress());
-	}
-
-	/**
-	 * Returns the equate defined at the operand index of the instruction.
-	 * @param instruction the instruction
-	 * @param operandIndex the operand index
-	 * @return the equate defined at the operand index of the instruction
-	 * @deprecated this form of getEquate is not supported and will throw a UnsupportedOperationException
-	 */
-	@Deprecated
-	public final Equate getEquate(Instruction instruction, int operandIndex) {
-		throw new UnsupportedOperationException("this form of getEquate is unsupported");
 	}
 
 	/**
@@ -2323,17 +2335,6 @@ public class FlatProgramAPI {
 						((Scalar) obj).getValue());
 		}
 		return null;
-	}
-
-	/**
-	 * Removes the equate defined at the operand index of the instruction.
-	 * @param instruction the instruction
-	 * @param operandIndex the operand index
-	 * @deprecated this form of getEquate is not supported and will throw a UnsupportedOperationException
-	 */
-	@Deprecated
-	public final void removeEquate(Instruction instruction, int operandIndex) {
-		throw new UnsupportedOperationException("this form of removeEquate is unsupported");
 	}
 
 	/**
@@ -2431,6 +2432,8 @@ public class FlatProgramAPI {
 	 * Opens a Data Type Archive
 	 * @param archiveFile the archive file to open
 	 * @param readOnly should file be opened read only
+	 * @return the data type manager
+	 * @throws Exception if there is any exception
 	 */
 	public final FileDataTypeManager openDataTypeArchive(File archiveFile, boolean readOnly)
 			throws Exception {
@@ -2445,7 +2448,7 @@ public class FlatProgramAPI {
 	 * If a program already exists with the specified
 	 * name, then a time stamp will be appended to the name to make it unique.
 	 * @param program the program to save
-	 * @throws Exception
+	 * @throws Exception if there is any exception
 	 */
 	public void saveProgram(Program program) throws Exception {
 		saveProgram(program, null);
@@ -2460,13 +2463,14 @@ public class FlatProgramAPI {
 	 * If path is NULL, the program will be saved into the root folder.  If parts of the path are
 	 * missing, they will be created if possible.
 	 * <p>
-	 * If a program already exists with the specified name, then a time stamp will be appended 
+	 * If a program already exists with the specified name, then a time stamp will be appended
 	 * to the name to make it unique.
 	 * <p>
 	 * @param program the program to save
-	 * @param path list of string path elements (starting at the root of the project) that specify 
-	 * the project folder to save the program info.  Example: { "folder1", "subfolder2", "finalfolder" }
-	 * @throws Exception
+	 * @param path list of string path elements (starting at the root of the project) that specify
+	 * the project folder to save the program info.  Example: { "folder1", "subfolder2",
+	 * "final_folder" }
+	 * @throws Exception if there is any exception
 	 */
 	public void saveProgram(Program program, List<String> path) throws Exception {
 		if (program == null) {
@@ -2533,12 +2537,6 @@ public class FlatProgramAPI {
 		return folder;
 	}
 
-	/**
-	 *
-	 * @param type
-	 * @param text
-	 * @return
-	 */
 	private Address findComment(int type, String text) {
 		Listing listing = currentProgram.getListing();
 		Memory memory = currentProgram.getMemory();

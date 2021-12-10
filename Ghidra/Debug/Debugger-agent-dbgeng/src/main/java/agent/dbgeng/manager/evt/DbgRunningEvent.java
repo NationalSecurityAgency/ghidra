@@ -18,16 +18,11 @@ package agent.dbgeng.manager.evt;
 import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.DbgState;
 
-/**
- * The event corresponding with "{@code *running}"
- */
 public class DbgRunningEvent extends AbstractDbgEvent<DebugThreadId> {
 	private final DebugThreadId id;
 
 	/**
-	 * Construct a new event, parsing the tail for information
-	 * 
-	 * A thread ID must be specified by dbgeng.
+	 * Construct a new event with the given thread ID
 	 * 
 	 * @param id the event info
 	 */

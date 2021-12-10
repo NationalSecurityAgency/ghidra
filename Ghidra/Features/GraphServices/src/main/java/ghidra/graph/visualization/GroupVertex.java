@@ -46,8 +46,7 @@ public class GroupVertex extends AttributedVertex {
 		super(id);
 		this.first = first;
 		this.children = children;
-		setAttribute("VertexType", "Collapsed");
-		setAttribute("Icon", "Star");
+		setVertexType("Collapsed Group");
 	}
 
 	/**

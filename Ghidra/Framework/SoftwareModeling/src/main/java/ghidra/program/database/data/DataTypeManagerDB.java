@@ -165,11 +165,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
-	 * Construct a temporary data-type manager. Note that this manager does not
+	 * Construct a new temporary data-type manager. Note that this manager does not
 	 * support the save or saveAs operation.
+	 * @param dataOrganization applicable data organization
 	 */
-	protected DataTypeManagerDB() {
+	protected DataTypeManagerDB(DataOrganization dataOrganization) {
 		this.lock = new Lock("DataTypeManagerDB");
+		this.dataOrganization = dataOrganization;
 
 		try {
 			dbHandle = new DBHandle();
@@ -193,6 +195,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	/**
 	 * Constructor for a data-type manager backed by a packed database file. When
 	 * opening for UPDATE an automatic upgrade will be performed if required.
+	 * NOTE: default DataOrganization will be used.
 	 * 
 	 * @param packedDBfile packed datatype archive file (i.e., *.gdt resource).
 	 * @param openMode     open mode CREATE, READ_ONLY or UPDATE (see
@@ -241,6 +244,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		// Initialize datatype manager and save new archive on CREATE
 		boolean initSuccess = false;
 		try {
+
+			// TODO: In the future it may be neccessary to store additional properties
+			// within the archive to failitate use of a language specified data organization.
+			// It will likely be neccessary to have a different CREATE constructor which accepts 
+			// a DataOrganization
+
+			dataOrganization = DataOrganizationImpl.getDefaultOrganization();
+
 			initPackedDatabase(packedDBfile, openMode);
 
 			if (openMode == DBConstants.CREATE) {
@@ -271,15 +282,18 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		catch (VersionException e) {
 			if (openMode == DBConstants.UPDATE && e.isUpgradable()) {
 				try {
-					Msg.info(this,
-						"Performing datatype archive schema upgrade: " + packedDBfile.getName());
 					init(DBConstants.UPGRADE, TaskMonitor.DUMMY);
+					migrateOldFlexArrayComponentsIfRequired(TaskMonitor.DUMMY);
+
+					Msg.showInfo(this, null, "Archive Upgraded",
+						"Data type archive schema has been upgraded: " + packedDBfile.getName());
 				}
 				catch (VersionException ve) {
 					throw new IOException(e); // unexpected
 				}
 			}
 			else {
+				// TODO: Unable to handle required upgrade for read-only without API change
 				throw new IOException(e);
 			}
 		}
@@ -317,7 +331,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		updateID();
 		initializeAdapters(openMode, monitor);
 		if (checkForSourceArchiveUpdatesNeeded(openMode, monitor)) {
-			doSourceArchiveUpdates(null, TaskMonitor.DUMMY);
+			doSourceArchiveUpdates(null, monitor);
 		}
 		dtCache = new DBObjectCache<>(10);
 		sourceArchiveDBCache = new DBObjectCache<>(10);
@@ -469,12 +483,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				for (DataTypeComponent comp : comps) {
 					comp.getDataType().addParent(dt);
 				}
-				if (dt instanceof Structure) {
-					Structure struct = (Structure) dt;
-					if (struct.hasFlexibleArrayComponent()) {
-						struct.getFlexibleArrayComponent().getDataType().addParent(dt);
-					}
-				}
 			}
 			else if (dt instanceof FunctionDefinition) {
 				FunctionDefinition funDef = (FunctionDefinition) dt;
@@ -528,7 +536,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return;
 		}
 		String name = dataTypePath.getDataTypeName();
-		DataType compareDataType = new TypedefDataType(name, DefaultDataType.dataType);
+		DataType compareDataType = new TypedefDataType(name, DataType.DEFAULT);
 		try {
 			compareDataType.setCategoryPath(dataTypePath.getCategoryPath());
 		}
@@ -1246,9 +1254,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		// Dynamic or FactoryDataType
 		lock.acquire();
 		try {
+			// Don't support replacement with Factory or Dynamic datatype
+			if (replacementDt instanceof Dynamic || replacementDt instanceof FactoryDataType) {
+				throw new IllegalArgumentException(
+					"Datatype replacment with dynamic or factory type not permitted.");
+			}
 			if (getID(existingDt) < 0) {
 				throw new IllegalArgumentException(
-					"datatype to replace is not contained in this datatype manager.");
+					"Datatype to replace is not contained in this datatype manager.");
 			}
 			boolean fixupName = false;
 			if (!contains(replacementDt)) {
@@ -1308,6 +1321,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (existingDt == replacementDt) {
 			return;
 		}
+
 		DataTypePath replacedDtPath = existingDt.getDataTypePath();
 		long replacedId = getID(existingDt);
 
@@ -1411,14 +1425,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (name == null || name.length() == 0) {
 			return;
 		}
-		if (name.equals(DefaultDataType.dataType.getName())) {
-			list.add(DefaultDataType.dataType);
+		if (name.equals(DataType.DEFAULT.getName())) {
+			list.add(DataType.DEFAULT);
 			return;
 		}
 		lock.acquire();
 		try {
 			buildSortedDataTypeList();
-			DataType compareDataType = new TypedefDataType(name, DefaultDataType.dataType);
+			DataType compareDataType = new TypedefDataType(name, DataType.DEFAULT);
 			int index = Collections.binarySearch(sortedDataTypes, compareDataType, nameComparator);
 			if (index < 0) {
 				index = -index - 1;
@@ -1443,8 +1457,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (name == null || name.length() == 0) {
 			return;
 		}
-		if (name.equals(DefaultDataType.dataType.getName())) {
-			list.add(DefaultDataType.dataType);
+		if (name.equals(DataType.DEFAULT.getName())) {
+			list.add(DataType.DEFAULT);
 			return;
 		}
 		if (monitor == null) {
@@ -2121,6 +2135,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				dt.setDefaultSettings(new SettingsDBManager(this, dt, dataTypeID));
 			}
 			catch (Exception e) {
+				Msg.error(this, e);
 				dt = new MissingBuiltInDataType(catPath, name, classPath, this);
 			}
 			builtInMap.put(key, dt);
@@ -2491,7 +2506,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		long enumID = record.getKey();
 		String[] enumNames = enumm.getNames();
 		for (String enumName : enumNames) {
-			enumValueAdapter.createRecord(enumID, enumName, enumm.getValue(enumName));
+			enumValueAdapter.createRecord(enumID, enumName, enumm.getValue(enumName), enumm.getComment(enumName));
 		}
 		EnumDB enumDB = new EnumDB(this, dtCache, enumAdapter, enumValueAdapter, record);
 		return enumDB;
@@ -2515,26 +2530,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private Array createArray(DataType dt, int numElements, int elementLength, Category cat,
 			DataTypeConflictHandler handler) throws IOException {
-		if (dt instanceof FactoryDataType) {
-			throw new IllegalArgumentException(
-				"Array data-type may not be a Factory data-type: " + dt.getName());
-		}
-		if (dt instanceof Dynamic && !((Dynamic) dt).canSpecifyLength()) {
-			throw new IllegalArgumentException(
-				"Array data-type may not be a non-sizable Dynamic data-type: " + dt.getName());
-		}
-		if (elementLength <= 0) {
-			throw new IllegalArgumentException("Array data-type must be Fixed length");
-		}
-		if (numElements <= 0) {
-			throw new IllegalArgumentException(
-				"number of array elements must be positive, not " + numElements);
-		}
 		dt = resolve(dt, handler);
 		long dataTypeID = getResolvedID(dt);
 		if (!(dt instanceof Dynamic)) {
 			elementLength = -1;
 		}
+
+		// defer to ArrayDataType for checks
+		new ArrayDataType(dt, numElements, elementLength, this);
 
 		DBRecord record =
 			arrayAdapter.createRecord(dataTypeID, numElements, elementLength, cat.getID());
@@ -3777,12 +3780,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	private boolean checkForSourceArchiveUpdatesNeeded(int openMode, TaskMonitor monitor)
-			throws IOException {
+			throws IOException, CancelledException {
 		if (openMode == DBConstants.CREATE || openMode == DBConstants.READ_ONLY) {
 			return false;
 		}
 		List<DBRecord> records = sourceArchiveAdapter.getRecords();
 		for (DBRecord record : records) {
+			monitor.checkCanceled();
 			if (SourceArchiveUpgradeMap.isReplacedSourceArchive(record.getKey())) {
 				return true;
 			}
@@ -3791,11 +3795,40 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
+	 * During any UPGRADE instantiation this method should be invoked with an open transaction 
+	 * once the associated DomainObject is ready.  This late stage upgrade is required since
+	 * it may entail resolving new array datatypes which requires this manager to be in a
+	 * fully functional state.
+	 * @param monitor task monitor
+	 * @throws IOException if an IO error occurs on database
+	 * @throws CancelledException if monitor is cancelled
+	 */
+	protected void migrateOldFlexArrayComponentsIfRequired(TaskMonitor monitor)
+			throws IOException, CancelledException {
+
+		if (!compositeAdapter.isFlexArrayMigrationRequired()) {
+			return;
+		}
+
+		RecordIterator records = compositeAdapter.getRecords();
+		while (records.hasNext()) {
+			monitor.checkCanceled();
+			DBRecord rec = records.next();
+			if (!rec.getBooleanValue(CompositeDBAdapter.COMPOSITE_IS_UNION_COL)) {
+				// StructureDB instantiation will perform an automatic flex-array
+				// record migration if needed.
+				new StructureDB(this, dtCache, compositeAdapter, componentAdapter, rec);
+			}
+		}
+
+	}
+
+	/**
 	 * This method is only invoked during an upgrade.
 	 * 
 	 * @param compilerSpec compiler spec
 	 * @param monitor      task monitor
-	 * @throws CancelledException if task cacn
+	 * @throws CancelledException if task cancelled
 	 */
 	protected void doSourceArchiveUpdates(CompilerSpec compilerSpec, TaskMonitor monitor)
 			throws CancelledException {

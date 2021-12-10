@@ -22,7 +22,7 @@ import ghidra.service.graph.*;
  * Script to generate graph to test BrandesKopf algorithm
  */
 public class GenerateBrandesKopfGraphScript extends GhidraScript {
-	private AttributedGraph graph = new AttributedGraph();
+	private AttributedGraph graph = new AttributedGraph("test", new EmptyGraphType());
 	private int nextEdgeID = 1;
 
 	@Override

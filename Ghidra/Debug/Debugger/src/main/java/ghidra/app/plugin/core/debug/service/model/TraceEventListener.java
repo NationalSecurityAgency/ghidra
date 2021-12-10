@@ -18,9 +18,11 @@ package ghidra.app.plugin.core.debug.service.model;
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedStackRecorder;
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedThreadRecorder;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.*;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
@@ -28,8 +30,7 @@ import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.util.DebuggerCallbackReorderer;
 import ghidra.dbg.util.PathUtils;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -50,6 +51,8 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 	protected final DebuggerCallbackReorderer reorderer = new DebuggerCallbackReorderer(this);
 	protected final PrivatelyQueuedListener<DebuggerModelListener> queue;
 
+	private boolean ignoreInvalidation = false;
+
 	public TraceEventListener(TraceObjectManager collection) {
 		super(MethodHandles.lookup());
 		this.recorder = collection.getRecorder();
@@ -62,9 +65,10 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		this.memoryManager = trace.getMemoryManager();
 	}
 
-	public void init() {
+	public CompletableFuture<Void> init() {
 		DebuggerObjectModel model = target.getModel();
 		model.addModelListener(queue.in, true);
+		return AsyncUtils.NIL;
 	}
 
 	private boolean successor(TargetObject ref) {
@@ -97,13 +101,6 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 
 	private boolean eventApplies(TargetObject eventThread, TargetEventType type,
 			List<Object> parameters) {
-		if (type == TargetEventType.RUNNING) {
-			return false;
-			/**
-			 * TODO: Perhaps some configuration for this later. It's kind of interesting to record
-			 * the RUNNING event time, but it gets pedantic when these exist between steps.
-			 */
-		}
 		if (eventThread != null) {
 			return successor(eventThread);
 		}
@@ -131,8 +128,21 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		if (!eventApplies(eventThread, type, parameters)) {
 			return;
 		}
+		if (type == TargetEventType.RUNNING) {
+			/**
+			 * Do not permit the current snapshot to be invalidated on account of the target
+			 * running. When the STOP occurs, a new (completely UNKNOWN) snapshot is generated.
+			 */
+			ignoreInvalidation = true;
+			return;
+			/**
+			 * TODO: Perhaps some configuration for this later. It's kind of interesting to record
+			 * the RUNNING event time, but it gets pedantic when these exist between steps.
+			 */
+		}
 		ManagedThreadRecorder rec = recorder.getThreadRecorder(eventThread);
 		recorder.createSnapshot(description, rec == null ? null : rec.getTraceThread(), null);
+		ignoreInvalidation = false;
 
 		if (type == TargetEventType.MODULE_LOADED) {
 			long snap = recorder.getSnap();
@@ -177,6 +187,30 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 				rec.stateChanged(state);
 			}
 			// Else we'll discover it and sync state later
+		}
+	}
+
+	@Override
+	public void invalidateCacheRequested(TargetObject object) {
+		if (!valid) {
+			return;
+		}
+		if (ignoreInvalidation) {
+			return;
+		}
+		if (object instanceof TargetRegisterBank) {
+			ManagedThreadRecorder rec = recorder.getThreadRecorderForSuccessor(object);
+			if (rec != null) {
+				rec.invalidateRegisterValues((TargetRegisterBank) object);
+			}
+		}
+		if (object instanceof TargetMemory) {
+			long snap = recorder.getSnap();
+			String path = object.getJoinedPath(".");
+			recorder.parTx.execute("Memory invalidated: " + path, () -> {
+				AddressSet set = trace.getBaseLanguage().getAddressFactory().getAddressSet();
+				memoryManager.setState(snap, set, TraceMemoryState.UNKNOWN);
+			}, path);
 		}
 	}
 

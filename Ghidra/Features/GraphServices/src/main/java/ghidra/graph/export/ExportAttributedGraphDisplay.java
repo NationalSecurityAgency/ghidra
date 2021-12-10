@@ -24,6 +24,7 @@ import docking.widgets.EventTrigger;
 import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -78,28 +79,17 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void defineVertexAttribute(String attributeName) {
-		// no effect
-	}
-
-	@Override
-	public void defineEdgeAttribute(String attributeName) {
-		// no effect
-	}
-
-	@Override
-	public void setVertexLabelAttribute(String attributeName, int alignment, int size,
-			boolean monospace,
-			int maxLines) {
-		// no effect
-	}
-
-	@Override
 	public void setGraph(AttributedGraph graph, String title, boolean append,
 			TaskMonitor monitor) {
 		this.title = title;
 		this.graph = graph;
 		doSetGraphData(graph);
+	}
+
+	@Override
+	public void setGraph(AttributedGraph graph, GraphDisplayOptions options, String title,
+			boolean append, TaskMonitor monitor) throws CancelledException {
+		this.setGraph(graph, title, append, monitor);
 	}
 
 	/**
@@ -149,5 +139,4 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	public void selectVertices(Set<AttributedVertex> vertexList, EventTrigger eventTrigger) {
 		// not interactive, so N/A
 	}
-
 }

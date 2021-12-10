@@ -21,8 +21,7 @@ import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.platform.win32.COM.IUnknown;
 import com.sun.jna.ptr.PointerByReference;
 
-import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_STACK_FRAME;
-import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_VALUE;
+import agent.dbgeng.jna.dbgeng.DbgEngNative.*;
 import agent.dbgeng.jna.dbgeng.UnknownWithUtils.VTableIndex;
 import agent.dbgeng.jna.dbgeng.breakpoint.IDebugBreakpoint;
 
@@ -184,4 +183,38 @@ public interface IDebugControl extends IUnknown {
 	HRESULT GetExecutingProcessorType(ULONGByReference Type);
 
 	HRESULT GetDebuggeeType(ULONGByReference Class, ULONGByReference Qualifier);
+
+	HRESULT GetNumberEventFilters(ULONGByReference SpecificEvents,
+			ULONGByReference SpecificExceptions, ULONGByReference ArbitraryExceptions);
+
+	HRESULT GetEventFilterText(ULONG Index, byte[] Buffer, ULONG BufferSize,
+			ULONGByReference TextSize);
+
+	HRESULT GetEventFilterCommand(ULONG Index, byte[] Buffer, ULONG BufferSize,
+			ULONGByReference CommandSize);
+
+	HRESULT SetEventFilterCommand(ULONG Index, String Command);
+
+	HRESULT GetSpecificFilterParameters(ULONG Start, ULONG Count,
+			DEBUG_SPECIFIC_FILTER_PARAMETERS[] Params);
+
+	HRESULT SetSpecificFilterParameters(ULONG Start, ULONG Count,
+			DEBUG_SPECIFIC_FILTER_PARAMETERS[] Params);
+
+	HRESULT GetSpecificFilterArgument(ULONG Index, byte[] Buffer, ULONG BufferSize,
+			ULONGByReference ArgumentSize);
+
+	HRESULT SetSpecificFilterArgument(ULONG Index, String Argument);
+
+	HRESULT GetExceptionFilterParameters(ULONG Count, ULONG[] Codes, ULONG Start,
+			DEBUG_EXCEPTION_FILTER_PARAMETERS[] Params);
+
+	HRESULT SetExceptionFilterParameters(ULONG Count,
+			DEBUG_EXCEPTION_FILTER_PARAMETERS[] Params);
+
+	HRESULT GetExceptionFilterSecondCommand(ULONG Index, byte[] Buffer, ULONG BufferSize,
+			ULONGByReference CommandSize);
+
+	HRESULT SetExceptionFilterSecondCommand(ULONG Index, String Command);
+
 }

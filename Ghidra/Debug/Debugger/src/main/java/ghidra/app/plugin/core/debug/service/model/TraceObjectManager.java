@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.service.model;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 import java.util.stream.Collectors;
 
@@ -52,7 +53,7 @@ public class TraceObjectManager {
 
 	private DefaultTraceRecorder recorder;
 
-	private AbstractDebuggerTargetTraceMapper mapper;
+	private DefaultDebuggerTargetTraceMapper mapper;
 	protected DebuggerMemoryMapper memMapper;
 	protected AsyncLazyMap<TargetRegisterContainer, DebuggerRegisterMapper> regMappers;
 	//private AbstractRecorderRegisterSet threadRegisters;
@@ -74,7 +75,7 @@ public class TraceObjectManager {
 	private LinkedHashMap<Class<?>, BiFunction<TargetObject, Map<String, ?>, Void>> handlerMapAttributes =
 		new LinkedHashMap<>();
 
-	public TraceObjectManager(TargetObject target, AbstractDebuggerTargetTraceMapper mapper,
+	public TraceObjectManager(TargetObject target, DefaultDebuggerTargetTraceMapper mapper,
 			DefaultTraceRecorder recorder) {
 		this.target = target;
 		this.mapper = mapper;
@@ -87,9 +88,8 @@ public class TraceObjectManager {
 		//objectListener.addListenerAndConsiderSuccessors(target);
 	}
 
-	public void init() {
-		objectListener.init();
-		eventListener.init();
+	public CompletableFuture<Void> init() {
+		return objectListener.init().thenCombine(eventListener.init(), (v1, v2) -> null);
 	}
 
 	private void defaultHandlers() {
@@ -457,7 +457,7 @@ public class TraceObjectManager {
 		return object;
 	}
 
-	public AbstractDebuggerTargetTraceMapper getMapper() {
+	public DefaultDebuggerTargetTraceMapper getMapper() {
 		return mapper;
 	}
 

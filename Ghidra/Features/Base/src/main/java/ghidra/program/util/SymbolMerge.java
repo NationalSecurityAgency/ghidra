@@ -391,8 +391,8 @@ class SymbolMerge {
 			if (replace && toSymbol.isPinned() != pinned) {
 				toSymbol.setPinned(pinned);
 			}
-//			String fromComment = fromSymbol.getSymbolData3();
-//			String toComment = toSymbol.getSymbolData3();
+//			String fromComment = fromSymbol.getSymbolStringData();
+//			String toComment = toSymbol.getSymbolStringData();
 //			if (!SystemUtilities.isEqual(fromComment, toComment)) {
 //				String newComment;
 //				if (replace) {
@@ -401,7 +401,7 @@ class SymbolMerge {
 //				else {
 //					newComment = StringUtilities.mergeStrings(fromComment, toComment);
 //				}
-//				toSymbol.setSymbolData3(newComment);
+//				toSymbol.setSymbolStringData(newComment);
 //			}
 		}
 	}
@@ -462,7 +462,7 @@ class SymbolMerge {
 		boolean isFromDefaultThunk = FunctionMerge.isDefaultThunk(fromFunc);
 		String fromName = fromSymbol.getName();
 		Namespace fromNamespace = // default thunks will lie about their namespace
-				isFromDefaultThunk ? fromProgram.getGlobalNamespace() : fromSymbol.getParentNamespace();
+			isFromDefaultThunk ? fromProgram.getGlobalNamespace() : fromSymbol.getParentNamespace();
 
 		Symbol toSymbol;
 		if (toFunc == null) {
@@ -551,7 +551,8 @@ class SymbolMerge {
 			boolean fromDefault = fromSymbol.getSource() == SourceType.DEFAULT;
 			boolean isFromDefaultThunk = FunctionMerge.isDefaultThunk(fromFunc);
 			Namespace fromNamespace = // default thunks will lie about their namespace
-					isFromDefaultThunk ? fromProgram.getGlobalNamespace() : fromSymbol.getParentNamespace();
+				isFromDefaultThunk ? fromProgram.getGlobalNamespace()
+						: fromSymbol.getParentNamespace();
 
 			Namespace resolveNamespace = resolveNamespace(fromNamespace, conflictSymbolIDMap);
 			if ((toFunc != null) && replacePrimary && !fromDefault) {
@@ -573,7 +574,7 @@ class SymbolMerge {
 				if (isFromDefaultThunk && FunctionMerge.isDefaultThunk(toFunc)) {
 					return;
 				}
-				
+
 				if (toFunc.getSymbol().getSource() == SourceType.DEFAULT) {
 					// Default "to" function so replace
 					replaceFunctionSymbol(fromEntryPoint, toEntryPoint, conflictSymbolIDMap,

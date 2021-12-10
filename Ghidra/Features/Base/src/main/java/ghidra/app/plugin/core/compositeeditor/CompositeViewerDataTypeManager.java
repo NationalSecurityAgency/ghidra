@@ -32,7 +32,7 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager {
 	 * @param composite the composite data type that is being edited. (cannot be null).
 	 */
 	public CompositeViewerDataTypeManager(String rootName, Composite composite) {
-		super(rootName);
+		super(rootName, composite.getDataTypeManager().getDataOrganization());
 		transactionID = startTransaction(""); 
 		originalDTM = composite.getDataTypeManager();
 		universalID = originalDTM.getUniversalID(); // mimic original DTM
@@ -48,12 +48,6 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager {
 	@Override
     public ArchiveType getType() {
 		return originalDTM.getType();
-	}
-
-	@Override
-	public DataOrganization getDataOrganization() {
-		// get the alignment from the original data type manager.
-		return originalDTM.getDataOrganization();
 	}
 
 }

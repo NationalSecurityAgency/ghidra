@@ -516,10 +516,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * Returns the number of component rows in the viewer. There may be a
 	 * blank row at the end for selecting. Therefore this number can be
 	 * different than the actual number of components currently in the
-	 * structure being viewed.  In addition, if a flexible array component
-	 * exists which is not included in {@link #getNumComponents()} it
-	 * will be included in this count and would appear after the blank row
-	 * (e.g., getComponent(getNumComponents()+1) ).
+	 * structure being viewed.
 	 *
 	 * @return the number of rows in the model
 	 */
@@ -530,23 +527,17 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	/**
 	 * Returns the number of components in this structure or union.
-	 * NOTE: This number does not include the flexible array component which may exist
-	 * within a structure.
 	 * @return the number of components in the model
 	 */
 	public int getNumComponents() {
-		if (viewComposite == null) {
-			return 0;
-		}
-		return viewComposite.getNumComponents();
+		return (viewComposite != null) ? viewComposite.getNumComponents() : 0;
 	}
 
 	/**
 	 * Return the nth component for the structure being viewed. Since the number of rows
 	 * can exceed the number of components defined within the composite 
 	 * ({@link Composite#getNumComponents()}) this method will return null for a blank 
-	 * row or a flexible array component which may appear as an additional rows for
-	 * structures.
+	 * row.
 	 * @param rowIndex the index of the component to return. First component is index of 0.
 	 * @return the component
 	 */
@@ -588,37 +579,34 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 			return "";
 		}
 		String value;
-		DataType dt;
-		int dtLen;
+		DataTypeComponent dtc = viewComposite.getComponent(rowIndex);
 		if (columnIndex == getOffsetColumn()) {
-			int offset = viewComposite.getComponent(rowIndex).getOffset();
+			int offset = dtc.getOffset();
 			value = showHexNumbers ? getHexString(offset, true) : Integer.toString(offset);
 		}
 		else if (columnIndex == getLengthColumn()) {
-			int length = viewComposite.getComponent(rowIndex).getLength();
-			value = showHexNumbers ? getHexString(length, true) : Integer.toString(length);
+			int compLen = dtc.getLength();
+			value = showHexNumbers ? getHexString(compLen, true) : Integer.toString(compLen);
 		}
 		else if (columnIndex == getMnemonicColumn()) {
-			DataTypeComponent comp = viewComposite.getComponent(rowIndex);
-			dt = comp.getDataType();
+			DataType dt = dtc.getDataType();
 			value = dt.getMnemonic(new SettingsImpl());
-			int compLen = comp.getLength();
-			dtLen = comp.getDataType().getLength();
+			int compLen = dtc.getLength();
+			int dtLen = dt.isZeroLength() ? 0 : dt.getLength();
 			if (dtLen > compLen) {
 				value = "TooBig: " + value + " needs " + dtLen + " has " + compLen;
 			}
 		}
 		else if (columnIndex == getDataTypeColumn()) {
-			DataTypeComponent dtc = viewComposite.getComponent(rowIndex);
-			dt = dtc.getDataType();
-			dtLen = dt.getLength();
+			DataType dt = dtc.getDataType();
+			int dtLen = dt.getLength();
 			return DataTypeInstance.getDataTypeInstance(dt, (dtLen > 0) ? dtLen : dtc.getLength());
 		}
 		else if (columnIndex == getNameColumn()) {
-			value = viewComposite.getComponent(rowIndex).getFieldName();
+			value = dtc.getFieldName();
 		}
 		else if (columnIndex == getCommentColumn()) {
-			value = viewComposite.getComponent(rowIndex).getComment();
+			value = dtc.getComment();
 		}
 		else {
 			value = "UNKNOWN";
@@ -1171,20 +1159,6 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 */
 	public boolean isContiguousSelection() {
 		return (selection.getNumRanges() == 1);
-	}
-
-	/**
-	 * Returns true if the current single row selection corresponds to a flexible array component
-	 * @return true if the current single row selection corresponds to a flexible array component
-	 */
-	public boolean isFlexibleArraySelection() {
-		if (!isSingleRowSelection()) {
-			return false;
-		}
-		FieldRange range = selection.getFieldRange(0);
-		int rowIndex = range.getStart().getIndex().intValue();
-		DataTypeComponent component = getComponent(rowIndex);
-		return component != null && component.isFlexibleArrayComponent();
 	}
 
 	/**

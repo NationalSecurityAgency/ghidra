@@ -126,6 +126,7 @@ def Map<String, List<String>> getIpForModule(Project p) {
 		exclude ".classpath"
 		exclude "Module.manifest"
 		exclude "build.gradle"
+		exclude "buildNatives.gradle"		
 		exclude "**/Misc/Tips.htm"
 		exclude "**/*.sla"
 		exclude "**/.gradle/**"

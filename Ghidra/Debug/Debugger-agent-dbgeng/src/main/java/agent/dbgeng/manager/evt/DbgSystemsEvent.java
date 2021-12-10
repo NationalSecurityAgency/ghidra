@@ -15,9 +15,6 @@
  */
 package agent.dbgeng.manager.evt;
 
-/**
- * The event corresponding with "{@code =thread-selected}"
- */
 public class DbgSystemsEvent extends AbstractDbgEvent<Long> {
 	private final long id;
 

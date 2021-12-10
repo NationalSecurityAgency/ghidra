@@ -26,10 +26,11 @@ import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.ByteDataType;
-import ghidra.program.model.data.WordDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
@@ -52,6 +53,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	private NamespaceManager scopeMgr;
 	private int transactionID;
 	private Namespace globalScope;
+	private Listing listing;
 
 	public SymbolManagerTest() {
 		super();
@@ -69,6 +71,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		st = program.getSymbolTable();
 		refMgr = program.getReferenceManager();
 		scopeMgr = program.getNamespaceManager();
+		listing = program.getListing();
 	}
 
 	@After
@@ -81,24 +84,24 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testCreateSymbol() throws Exception {
-		Symbol s = createSymbol(addr(100), "bob");
+		Symbol s = createLabel(addr(100), "bob");
 		assertNotNull(s);
 	}
 
 	@Test
 	public void testCreateLocal() throws Exception {
 		Namespace scope = st.createNameSpace(null, "MyNamespace", SourceType.USER_DEFINED);
-		Symbol s = createSymbol(addr(0x200), "printf", scope);
+		Symbol s = createLabel(addr(0x200), "printf", scope);
 		assertNotNull(s);
 	}
 
 	@Test
 	public void testGetLocal() throws Exception {
-		createSymbol(addr(100), "primary");
-		createSymbol(addr(100), "fred");
-		createSymbol(addr(100), "joe");
+		createLabel(addr(100), "primary");
+		createLabel(addr(100), "fred");
+		createLabel(addr(100), "joe");
 		Namespace scope = st.createNameSpace(null, "MyNamespace", SourceType.USER_DEFINED);
-		createSymbol(addr(200), "fred", scope);
+		createLabel(addr(200), "fred", scope);
 		Symbol s = st.getSymbol("fred", addr(200), scope);
 		assertNotNull(s);
 		assertTrue(!s.isGlobal());
@@ -107,17 +110,17 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetLocalSymbols() throws Exception {
-		createSymbol(addr(100), "primary");
-		createSymbol(addr(100), "fred");
-		createSymbol(addr(100), "joe");
+		createLabel(addr(100), "primary");
+		createLabel(addr(100), "fred");
+		createLabel(addr(100), "joe");
 		Namespace scope = st.createNameSpace(null, "MyNamespace", SourceType.USER_DEFINED);
-		createSymbol(addr(100), "exit", scope);
+		createLabel(addr(100), "exit", scope);
 
 		Namespace scope2 = st.createNameSpace(null, "MyNamespace2", SourceType.USER_DEFINED);
-		createSymbol(addr(200), "exit", scope2);
-		createSymbol(addr(200), "printf");
+		createLabel(addr(200), "exit", scope2);
+		createLabel(addr(200), "printf");
 
-		createSymbol(addr(256), "exit");
+		createLabel(addr(256), "exit");
 
 		SymbolIterator it = st.getSymbols("exit");
 		int cnt = 0;
@@ -131,23 +134,23 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetNumSymbols() throws Exception {
-		createSymbol(addr(100), "primary");
-		createSymbol(addr(100), "fred");
-		createSymbol(addr(100), "joe");
+		createLabel(addr(100), "primary");
+		createLabel(addr(100), "fred");
+		createLabel(addr(100), "joe");
 		Namespace scope = st.createNameSpace(null, "MyNamespace", SourceType.USER_DEFINED);
 		Namespace scope2 = st.createNameSpace(null, "MyNamespace2", SourceType.USER_DEFINED);
-		createSymbol(addr(100), "exit", scope);
-		createSymbol(addr(200), "exit", scope2);
-		createSymbol(addr(200), "printf");
-		createSymbol(addr(256), "exit");
+		createLabel(addr(100), "exit", scope);
+		createLabel(addr(200), "exit", scope2);
+		createLabel(addr(200), "printf");
+		createLabel(addr(256), "exit");
 		assertEquals(9, st.getNumSymbols());
 	}
 
 	@Test
 	public void testGetPrimarySymbol() throws Exception {
-		createSymbol(addr(100), "primary");
-		createSymbol(addr(100), "fred");
-		createSymbol(addr(100), "joe");
+		createLabel(addr(100), "primary");
+		createLabel(addr(100), "fred");
+		createLabel(addr(100), "joe");
 		Symbol s = st.getPrimarySymbol(addr(100));
 		assertNotNull(s);
 		assertEquals("primary", s.getName());
@@ -155,20 +158,20 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetAllSymbols() throws Exception {
-		createSymbol(addr(100), "primary");
-		createSymbol(addr(100), "fred");
-		createSymbol(addr(100), "joe");
+		createLabel(addr(100), "primary");
+		createLabel(addr(100), "fred");
+		createLabel(addr(100), "joe");
 		Symbol[] syms = st.getSymbols(addr(100));
 		assertEquals(3, syms.length);
 	}
 
 	@Test
 	public void testGetByName() throws Exception {
-		createSymbol(addr(100), "primary");
-		createSymbol(addr(100), "fred");
-		createSymbol(addr(100), "joe");
+		createLabel(addr(100), "primary");
+		createLabel(addr(100), "fred");
+		createLabel(addr(100), "joe");
 		Namespace scope = st.createNameSpace(null, "MyNamespace", SourceType.USER_DEFINED);
-		createSymbol(addr(200), "fred", scope);
+		createLabel(addr(200), "fred", scope);
 		Symbol s = getUniqueSymbol(program, "fred");
 		assertNotNull(s);
 		assertEquals("fred", s.getName());
@@ -185,11 +188,11 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetSymbolByAddress() throws Exception {
-		createSymbol(addr(100), "A");
-		createSymbol(addr(100), "fred");
-		createSymbol(addr(100), "joe");
+		createLabel(addr(100), "A");
+		createLabel(addr(100), "fred");
+		createLabel(addr(100), "joe");
 		Namespace scope = st.createNameSpace(null, "MyNamespace", SourceType.USER_DEFINED);
-		createSymbol(addr(200), "fred", scope);
+		createLabel(addr(200), "fred", scope);
 
 		Symbol s = st.getSymbol("fred", addr(200), scope);
 		assertNotNull(s);
@@ -197,12 +200,33 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(!s.isGlobal());
 		assertTrue(s.getSource() == SourceType.USER_DEFINED);
 		assertTrue(s.isPrimary());
+	}
 
+	@Test
+	public void testGetSymbolIteratorByAddress() throws Exception {
+		createLabel(addr(100), "A");
+		createLabel(addr(100), "fred");
+		createLabel(addr(100), "joe");
+		Namespace scope = st.createNameSpace(null, "MyNamespace", SourceType.USER_DEFINED);
+		createLabel(addr(200), "fred", scope);
+
+		SymbolIterator it = st.getSymbolsAsIterator(addr(100));
+
+		assertTrue(it.hasNext());
+		assertEquals("A", it.next().getName());
+
+		assertTrue(it.hasNext());
+		assertEquals("fred", it.next().getName());
+
+		assertTrue(it.hasNext());
+		assertEquals("joe", it.next().getName());
+
+		assertFalse(it.hasNext());
 	}
 
 	@Test
 	public void testGetSymbolByReference() throws Exception {
-		createSymbol(addr(256), "A");
+		createLabel(addr(256), "A");
 		refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED, -1);
 		Reference ref = refMgr.getReference(addr(512), addr(256), -1);
 		Symbol s = st.getSymbol(ref);
@@ -224,26 +248,26 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Symbol[] s = st.getSymbols(addr(256));
 		assertEquals(1, s.length);
 		assertEquals("LAB_00000100", s[0].getName());
-		program.getListing().createData(addr(256), new ByteDataType());
+		listing.createData(addr(256), new ByteDataType());
 		assertEquals("BYTE_00000100", s[0].getName());
 	}
 
 	@Test
 	public void testDynamicNameChangesWhenDataCleared() throws Exception {
 		refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED, -1);
-		program.getListing().createData(addr(256), new ByteDataType());
+		listing.createData(addr(256), new ByteDataType());
 		Symbol[] s = st.getSymbols(addr(256));
 		assertEquals(1, s.length);
 		assertEquals("BYTE_00000100", s[0].getName());
 
-		program.getListing().clearCodeUnits(addr(256), addr(256), false);
+		listing.clearCodeUnits(addr(256), addr(256), false);
 		assertEquals("LAB_00000100", s[0].getName());
 	}
 
 	@Test
 	public void testDynamicOffcutNameChangesWhenSymbolCreated() throws Exception {
 		refMgr.addMemoryReference(addr(512), addr(257), RefType.FLOW, SourceType.USER_DEFINED, -1);
-		program.getListing().createData(addr(256), new WordDataType());
+		listing.createData(addr(256), new WordDataType());
 
 		Symbol[] s = st.getSymbols(addr(257));
 		assertEquals(1, s.length);
@@ -255,7 +279,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testDynamicOffcutNameChangesWhenSymbolRenamed() throws Exception {
 		refMgr.addMemoryReference(addr(512), addr(257), RefType.FLOW, SourceType.USER_DEFINED, -1);
-		program.getListing().createData(addr(256), new WordDataType());
+		listing.createData(addr(256), new WordDataType());
 		Symbol label = st.createLabel(addr(256), "bob", SourceType.USER_DEFINED);
 
 		Symbol[] s = st.getSymbols(addr(257));
@@ -268,7 +292,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testDynamicOffcutNameChangesWhenSymbolRemoved() throws Exception {
 		refMgr.addMemoryReference(addr(512), addr(257), RefType.FLOW, SourceType.USER_DEFINED, -1);
-		program.getListing().createData(addr(256), new WordDataType());
+		listing.createData(addr(256), new WordDataType());
 		Symbol label = st.createLabel(addr(256), "bob", SourceType.USER_DEFINED);
 
 		Symbol[] s = st.getSymbols(addr(257));
@@ -277,6 +301,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		label.delete();
 		assertEquals("WORD_00000100+1", s[0].getName());
 	}
+
 	@Test
 	public void testDynamicNameChangesWhenOffcutByInstruction() throws Exception {
 		refMgr.addMemoryReference(addr(512), addr(257), RefType.FLOW, SourceType.USER_DEFINED, -1);
@@ -285,7 +310,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, s.length);
 		assertEquals("LAB_00000101", s[0].getName());
 		createInstruction(addr(256));
-		CodeUnit codeUnitAt = program.getListing().getCodeUnitAt(addr(256));
+		CodeUnit codeUnitAt = listing.getCodeUnitAt(addr(256));
 		assertTrue(codeUnitAt instanceof Instruction);
 		assertEquals(2, codeUnitAt.getLength());
 
@@ -320,7 +345,6 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("LAB_00000100", s[0].getName());
 	}
 
-
 	private void createInstruction(Address addr) throws Exception {
 		int tx = program.startTransaction("test");
 		try {
@@ -338,13 +362,12 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetDefaultFunctionSymbolByName() throws Exception {
-		Listing listing = program.getListing();
 
 		AddressSet set = new AddressSet();
 		set.addRange(addr(100), addr(150));
 		set.addRange(addr(300), addr(310));
 		set.addRange(addr(320), addr(330));
-		Function f = listing.createFunction("fredFunc", addr(102), set, SourceType.DEFAULT);
+		Function f = listing.createFunction("fredFunc", addr(102), set, SourceType.DEFAULT); // name ignored
 		assertNotNull(f);
 
 		String defaultName = "FUN_00000066";
@@ -398,8 +421,6 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Address ovAddress = block.getStart();
 		assertEquals("ov_12::00000000", ovAddress.toString());
 
-		Listing listing = program.getListing();
-
 		AddressSet set = new AddressSet(ovAddress, ovAddress);
 		Function f = listing.createFunction("fredFunc", ovAddress, set, SourceType.DEFAULT);
 		assertNotNull(f);
@@ -426,7 +447,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Address ovAddress = block.getStart();
 		assertEquals("ov12::00000000", ovAddress.toString());
 		ovAddress = ovAddress.add(2);
-		Listing listing = p.getListing();
+		listing = p.getListing();
 		st = p.getSymbolTable();
 
 		AddressSet set = new AddressSet(ovAddress, ovAddress);
@@ -445,11 +466,11 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRemoveSymbol() throws Exception {
-		createSymbol(addr(100), "primary");
-		createSymbol(addr(100), "fred");
-		createSymbol(addr(100), "joe");
-		createSymbol(addr(100), "bob");
-		createSymbol(addr(0x200), "A");
+		createLabel(addr(100), "primary");
+		createLabel(addr(100), "fred");
+		createLabel(addr(100), "joe");
+		createLabel(addr(100), "bob");
+		createLabel(addr(0x200), "A");
 		Symbol s = st.getPrimarySymbol(addr(100));
 		assertTrue(st.removeSymbolSpecial(s));
 
@@ -466,7 +487,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(sym.isPrimary());
 		assertTrue(sym.getSource() == SourceType.DEFAULT);
 
-		Symbol s2 = createSymbol(addr(256), "TEST");
+		Symbol s2 = createLabel(addr(256), "TEST");
 		sym = st.getPrimarySymbol(addr(256));
 		assertTrue(sym.isPrimary());
 		assertTrue(sym.getSource() != SourceType.DEFAULT);
@@ -479,7 +500,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testRemoveSymbol3() throws Exception {
 		// remove non-dynamic, primary symbol without refs
-		Symbol sym = createSymbol(addr(256), "TEST");
+		Symbol sym = createLabel(addr(256), "TEST");
 		assertTrue(sym.isPrimary());
 		assertTrue(sym.getSource() != SourceType.DEFAULT);
 		assertTrue(st.removeSymbolSpecial(sym));
@@ -487,9 +508,9 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRemoveSymbol5() throws Exception {
-		createSymbol(addr(256), "TEST1");
-		Symbol sym2 = createSymbol(addr(256), "TEST2");
-		createSymbol(addr(256), "TEST3");
+		createLabel(addr(256), "TEST1");
+		Symbol sym2 = createLabel(addr(256), "TEST2");
+		createLabel(addr(256), "TEST3");
 		assertTrue(st.removeSymbolSpecial(sym2));
 		Symbol[] symbols = st.getSymbols(addr(256));
 		assertEquals(2, symbols.length);
@@ -501,9 +522,9 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRemoveSymbol7() throws Exception {
-		Symbol sym1 = createSymbol(addr(256), "TEST1");
+		Symbol sym1 = createLabel(addr(256), "TEST1");
 
-		Symbol sym2 = createSymbol(addr(256), "TEST2");
+		Symbol sym2 = createLabel(addr(256), "TEST2");
 		Reference ref = refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW,
 			SourceType.USER_DEFINED, -1);
 		refMgr.setAssociation(sym2, ref);
@@ -681,9 +702,8 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRemoveFunctionSymbolAfterFunction() throws Exception {
-		CreateFunctionCmd cmd = new CreateFunctionCmd("MyFunction", addr(0x0200),
+		createFunction("MyFunction", addr(0x0200),
 			new AddressSet(addr(0x0200), addr(0x0280)), SourceType.USER_DEFINED);
-		assertTrue(cmd.applyTo(program));
 		program.getFunctionManager().removeFunction(addr(0x0200));
 		Symbol s = st.getPrimarySymbol(addr(0x0200));
 		assertNotNull(s);
@@ -695,9 +715,8 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRemoveFunctionBecomesCodeSymbol() throws Exception {
-		CreateFunctionCmd cmd = new CreateFunctionCmd("MyFunction", addr(0x0200),
+		createFunction("MyFunction", addr(0x0200),
 			new AddressSet(addr(0x0200), addr(0x0280)), SourceType.USER_DEFINED);
-		assertTrue(cmd.applyTo(program));
 
 		Symbol s = st.getPrimarySymbol(addr(0x0200));
 		assertEquals(SymbolType.FUNCTION, s.getSymbolType());
@@ -719,9 +738,8 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testRemoveFunctionSymbolBecomesExistingCodeSymbol() throws Exception {
 		Address entryPt = addr(0x0200);
-		CreateFunctionCmd cmd = new CreateFunctionCmd("MyFunction", entryPt,
+		createFunction("MyFunction", entryPt,
 			new AddressSet(addr(0x0200), addr(0x0280)), SourceType.USER_DEFINED);
-		assertTrue(cmd.applyTo(program));
 
 		st.createLabel(entryPt, "Bob", SourceType.USER_DEFINED);
 
@@ -754,9 +772,8 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Namespace oldNamespace = st.createNameSpace(null, "OldNameSpace", SourceType.USER_DEFINED);
 		Namespace newNamespace = st.createNameSpace(null, "NewNameSpace", SourceType.USER_DEFINED);
 		Address entryPt = addr(0x0200);
-		CreateFunctionCmd cmd = new CreateFunctionCmd("MyFunction", entryPt,
-			new AddressSet(addr(0x0200), addr(0x0280)), SourceType.USER_DEFINED);
-		assertTrue(cmd.applyTo(program));
+		createFunction("MyFunction", entryPt, new AddressSet(addr(0x0200), addr(0x0280)),
+			SourceType.USER_DEFINED);
 		Symbol functionSym = program.getFunctionManager().getFunctionAt(entryPt).getSymbol();
 		Symbol conflictSym = st.createLabel(addr(0x0230), "Bob", SourceType.USER_DEFINED);// put a conflict symbol in.
 		conflictSym.setNamespace(oldNamespace);
@@ -794,9 +811,8 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRemoveFunctionSymbolBecomesDefault() throws Exception {
-		CreateFunctionCmd cmd = new CreateFunctionCmd("MyFunction", addr(0x0200),
+		createFunction("MyFunction", addr(0x0200),
 			new AddressSet(addr(0x0200), addr(0x0280)), SourceType.USER_DEFINED);
-		assertTrue(cmd.applyTo(program));
 
 		Symbol s = st.getPrimarySymbol(addr(0x0200));
 		assertEquals(SymbolType.FUNCTION, s.getSymbolType());
@@ -814,11 +830,117 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(false, removed);// Should not be able to remove default function symbol.
 	}
 
+	private Function createFunction(String name, Address entry, AddressSetView body,
+			SourceType type) {
+		CreateFunctionCmd cmd = new CreateFunctionCmd(name, entry, body, type);
+		assertTrue(cmd.applyTo(program));
+		return cmd.getFunction();
+	}
+
+	private Function createFunction(String name, Address entry) {
+		AddressSet set = new AddressSet(entry, entry);
+		return createFunction(name, entry, set, SourceType.USER_DEFINED);
+	}
+
+	@Test
+	public void testPrimarySymbolBecomesNonPrimaryAfterFunctionCreated() throws Exception {
+		Address addr = addr(256);
+		Symbol sym1 = createLabel(addr, "TEST1");
+		Symbol sym2 = createLabel(addr, "TEST2");
+		Symbol sym3 = createLabel(addr, "TEST3");
+
+		assertEquals(sym1, st.getPrimarySymbol(addr));
+
+		createFunction("TEST_FUN", addr, new AddressSet(addr, addr), SourceType.USER_DEFINED);
+		Symbol primary = st.getPrimarySymbol(addr);
+		assertEquals("TEST_FUN", primary.getName());
+		assertEquals(SymbolType.FUNCTION, primary.getSymbolType());
+
+		Symbol[] symbols = st.getSymbols(addr);
+		assertEquals(4, symbols.length);
+
+		List<Symbol> list = Arrays.asList(symbols);
+		assertTrue(list.contains(primary));
+		assertTrue(list.contains(sym1));
+		assertTrue(list.contains(sym2));
+		assertTrue(list.contains(sym3));
+
+		assertTrue(primary.isPrimary());
+		assertFalse(sym1.isPrimary());
+		assertFalse(sym2.isPrimary());
+		assertFalse(sym3.isPrimary());
+	}
+
+	@Test
+	public void testPrimarySymbolGetsPromotedToFunction() throws Exception {
+		Address addr = addr(256);
+		Symbol sym1 = createLabel(addr, "TEST1");
+		Symbol sym2 = createLabel(addr, "TEST2");
+		Symbol sym3 = createLabel(addr, "TEST3");
+
+		assertEquals(sym1, st.getPrimarySymbol(addr));
+
+		createFunction(null, addr, new AddressSet(addr, addr), SourceType.DEFAULT);
+		Symbol primary = st.getPrimarySymbol(addr);
+		assertEquals("TEST1", primary.getName());
+		assertEquals(SymbolType.FUNCTION, primary.getSymbolType());
+
+		Symbol[] symbols = st.getSymbols(addr);
+		assertEquals(3, symbols.length);
+
+		List<Symbol> list = Arrays.asList(symbols);
+		assertFalse(list.contains(sym1)); // sym1 was deleted and recreated as a function symbol
+		assertTrue(list.contains(primary));
+		assertTrue(list.contains(sym2));
+		assertTrue(list.contains(sym3));
+
+		assertTrue(primary.isPrimary());
+		assertFalse(sym2.isPrimary());
+		assertFalse(sym3.isPrimary());
+
+	}
+
+	@Test
+	public void testCreateDefaultFunctionWhereDefaultLableExists() {
+		Address addr = addr(256);
+		refMgr.addMemoryReference(addr(784), addr, RefType.FLOW, SourceType.USER_DEFINED, 2);
+		Symbol primary = st.getPrimarySymbol(addr);
+		assertNotNull(primary);
+		assertEquals(SymbolType.LABEL, primary.getSymbolType());
+		assertTrue(primary.getName().startsWith("LAB"));
+
+		createFunction(null, addr, new AddressSet(addr, addr), SourceType.DEFAULT);
+		Symbol newPrimary = st.getPrimarySymbol(addr);
+		assertTrue(primary != newPrimary);
+		assertEquals(SymbolType.FUNCTION, newPrimary.getSymbolType());
+		assertTrue(newPrimary.getName().startsWith("FUN"));
+		assertTrue(primary.isDeleted());
+		assertEquals(1, st.getSymbols(addr).length);
+	}
+
+	@Test
+	public void testCreateNonDefaultFunctionWhereDefaultLableExists() {
+		Address addr = addr(256);
+		refMgr.addMemoryReference(addr(784), addr, RefType.FLOW, SourceType.USER_DEFINED, 2);
+		Symbol primary = st.getPrimarySymbol(addr);
+		assertNotNull(primary);
+		assertEquals(SymbolType.LABEL, primary.getSymbolType());
+		assertTrue(primary.getName().startsWith("LAB"));
+
+		createFunction("AAA", addr, new AddressSet(addr, addr), SourceType.USER_DEFINED);
+		Symbol newPrimary = st.getPrimarySymbol(addr);
+		assertTrue(primary != newPrimary);
+		assertEquals(SymbolType.FUNCTION, newPrimary.getSymbolType());
+		assertEquals("AAA", newPrimary.getName());
+		assertTrue(primary.isDeleted());
+		assertEquals(1, st.getSymbols(addr).length);
+	}
+
 	@Test
 	public void testRenameSymbol() throws Exception {
-		Symbol s = createSymbol(addr(100), "primary");
-		createSymbol(addr(100), "fred");
-		createSymbol(addr(100), "joe");
+		Symbol s = createLabel(addr(100), "primary");
+		createLabel(addr(100), "fred");
+		createLabel(addr(100), "joe");
 
 		s.setName("printf", SourceType.USER_DEFINED);
 		assertEquals("printf", s.getName());
@@ -836,7 +958,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testRenameSymbol2() throws Exception {
 		// long names (>60) was a problem
-		Symbol s = createSymbol(addr(100),
+		Symbol s = createLabel(addr(100),
 			"aabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzABCDEFGH");
 
 		s.setName("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzABCDEFGH1",
@@ -846,9 +968,9 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSetPrimary() throws Exception {
-		Symbol s1 = createSymbol(addr(100), "primary");
-		Symbol s2 = createSymbol(addr(100), "fred");
-		createSymbol(addr(100), "joe");
+		Symbol s1 = createLabel(addr(100), "primary");
+		Symbol s2 = createLabel(addr(100), "fred");
+		createLabel(addr(100), "joe");
 
 		assertTrue(s1.isPrimary());
 		s2.setPrimary();
@@ -859,9 +981,9 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSetScope() throws Exception {
-		Symbol s1 = createSymbol(addr(100), "primary");
-		Symbol s2 = createSymbol(addr(100), "fred");
-		Symbol s3 = createSymbol(addr(100), "joe");
+		Symbol s1 = createLabel(addr(100), "primary");
+		Symbol s2 = createLabel(addr(100), "fred");
+		Symbol s3 = createLabel(addr(100), "joe");
 
 		Namespace scope = st.createNameSpace(null, "MyNamespace", SourceType.USER_DEFINED);
 		s2.setNamespace(scope);
@@ -873,7 +995,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testExternalEntry() throws Exception {
-		createSymbol(addr(100), "A");
+		createLabel(addr(100), "A");
 		st.addExternalEntryPoint(addr(100));
 		Symbol s = st.getPrimarySymbol(addr(100));
 		assertTrue(s.isExternalEntryPoint());
@@ -904,14 +1026,14 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testIsExternalEntry() throws Exception {
-		createSymbol(addr(100), "A");
+		createLabel(addr(100), "A");
 		st.addExternalEntryPoint(addr(100));
 		assertTrue(st.isExternalEntryPoint(addr(100)));
 	}
 
 	@Test
 	public void testAssociation() throws Exception {
-		Symbol sym2 = createSymbol(addr(256), "TEST2");
+		Symbol sym2 = createLabel(addr(256), "TEST2");
 
 		refMgr.addMemoryReference(addr(784), addr(256), RefType.FLOW, SourceType.USER_DEFINED, 2);
 		Reference ref = refMgr.getReference(addr(784), addr(256), 2);
@@ -928,7 +1050,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRemoveAssociation() throws Exception {
-		Symbol sym2 = createSymbol(addr(256), "TEST2");
+		Symbol sym2 = createLabel(addr(256), "TEST2");
 		refMgr.addMemoryReference(addr(784), addr(256), RefType.FLOW, SourceType.USER_DEFINED, 2);
 		Reference ref = refMgr.getReference(addr(784), addr(256), 2);
 		refMgr.setAssociation(sym2, ref);
@@ -942,13 +1064,13 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetSymbolReferences() throws Exception {
-		Symbol sym1 = createSymbol(addr(256), "TEST1");
+		Symbol sym1 = createLabel(addr(256), "TEST1");
 		refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED, 2);
 		refMgr.addMemoryReference(addr(1024), addr(256), RefType.FLOW, SourceType.USER_DEFINED, 0);
 		refMgr.addMemoryReference(addr(1024), addr(256), RefType.FLOW, SourceType.USER_DEFINED, 1);
 		refMgr.addMemoryReference(addr(784), addr(256), RefType.FLOW, SourceType.USER_DEFINED, -1);
 
-		Symbol sym2 = createSymbol(addr(256), "TEST2");
+		Symbol sym2 = createLabel(addr(256), "TEST2");
 		refMgr.addMemoryReference(addr(784), addr(256), RefType.FLOW, SourceType.USER_DEFINED, 2);
 		Reference ref = refMgr.getReference(addr(784), addr(256), 2);
 		refMgr.setAssociation(sym2, ref);
@@ -993,21 +1115,21 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSymbolSearcherIterator() throws Exception {
-		createSymbol(addr(100), "Four");
-		createSymbol(addr(100), "Five");
-		createSymbol(addr(100), "Six");
-		createSymbol(addr(100), "Seven");
-		createSymbol(addr(100), "Eight");
-		createSymbol(addr(100), "Nine");
-		createSymbol(addr(100), "Thirteen");
-		createSymbol(addr(200), "Fourteen");
-		createSymbol(addr(200), "Fifteen");
-		createSymbol(addr(200), "Sixteen");
-		createSymbol(addr(200), "Seventeen");
-		createSymbol(addr(300), "Eighteen");
-		createSymbol(addr(300), "Nineteen");
-		createSymbol(addr(300), "Sixty");
-		createSymbol(addr(300), "Sixty-five");
+		createLabel(addr(100), "Four");
+		createLabel(addr(100), "Five");
+		createLabel(addr(100), "Six");
+		createLabel(addr(100), "Seven");
+		createLabel(addr(100), "Eight");
+		createLabel(addr(100), "Nine");
+		createLabel(addr(100), "Thirteen");
+		createLabel(addr(200), "Fourteen");
+		createLabel(addr(200), "Fifteen");
+		createLabel(addr(200), "Sixteen");
+		createLabel(addr(200), "Seventeen");
+		createLabel(addr(300), "Eighteen");
+		createLabel(addr(300), "Nineteen");
+		createLabel(addr(300), "Sixty");
+		createLabel(addr(300), "Sixty-five");
 
 		List<String> list = search("Six*", true);
 		assertContains(list, "Six", "Sixteen", "Sixty", "Sixty-five");
@@ -1025,18 +1147,18 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testSymbolSearcherIterator_WithSymbolNamesContainingWildcards() throws Exception {
 
-		createSymbols(addr(100), "Alpha", "alpha", "Albha", "Alzza", "Alibaba", "Alibabas");
-		createSymbol(addr(100), "Bravo");
-		createSymbol(addr(100), "Charlie");
-		createSymbol(addr(200), "Delta");
-		createSymbols(addr(200), "echo", "echo!bang", "ECHO!bang", "!bangecho", "!bangECHO");
-		createSymbols(addr(300), "^FOXTROT-hyphen", "^foxtrot-hyphen");
-		createSymbol(addr(400), "golf,comma");
-		createSymbol(addr(500), "hotel_underscore");
-		createSymbol(addr(600), "india.dot.dollar$");
-		createSymbols(addr(700), "*juliet*", "*JULIET*");
-		createSymbols(addr(700), "kilo*star", "KILO*star");
-		createSymbols(addr(800), "lima?questionmark", "LIMA?questionmark");
+		createLabels(addr(100), "Alpha", "alpha", "Albha", "Alzza", "Alibaba", "Alibabas");
+		createLabel(addr(100), "Bravo");
+		createLabel(addr(100), "Charlie");
+		createLabel(addr(200), "Delta");
+		createLabels(addr(200), "echo", "echo!bang", "ECHO!bang", "!bangecho", "!bangECHO");
+		createLabels(addr(300), "^FOXTROT-hyphen", "^foxtrot-hyphen");
+		createLabel(addr(400), "golf,comma");
+		createLabel(addr(500), "hotel_underscore");
+		createLabel(addr(600), "india.dot.dollar$");
+		createLabels(addr(700), "*juliet*", "*JULIET*");
+		createLabels(addr(700), "kilo*star", "KILO*star");
+		createLabels(addr(800), "lima?questionmark", "LIMA?questionmark");
 
 		boolean caseSensitive = true;
 
@@ -1126,51 +1248,75 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testPrimarySymbolIteratorSet() throws Exception {
-		createSymbol(addr(100), "1");
-		createSymbol(addr(200), "2");
-		createSymbol(addr(200), "2a");
-		createSymbol(addr(200), "2b");
-		createSymbol(addr(200), "2c");
-		createSymbol(addr(300), "3");
-		createSymbol(addr(300), "3a");
-		createSymbol(addr(300), "3b");
-		createSymbol(addr(300), "3c");
-		createSymbol(addr(400), "4");
-		createSymbol(addr(500), "5");
-		createSymbol(addr(500), "5a");
+		createLabel(addr(100), "1");
+		createLabel(addr(200), "2");
+		createLabel(addr(200), "2a");
+		createLabel(addr(200), "2b");
+		createLabel(addr(200), "2c");
+		createLabel(addr(300), "3");
+		createLabel(addr(300), "3a");
+		createLabel(addr(300), "3b");
+		createLabel(addr(300), "3c");
+		createLabel(addr(400), "4");
+		createLabel(addr(500), "5");
+		createLabel(addr(500), "5a");
+		createFunction(addr(2000), "6");
+		createLabel(addr(2000), "6a");
+		createExternalFunction("7");
+		createExternalLabel("8");
 
 		AddressSet set = new AddressSet(addr(0), addr(50));
 		set.addRange(addr(300), addr(350));
 		set.addRange(addr(500), addr(1000));
+		set.addRange(AddressSpace.EXTERNAL_SPACE.getMinAddress(),
+			AddressSpace.EXTERNAL_SPACE.getMaxAddress());
 		SymbolIterator it = st.getPrimarySymbolIterator(set, true);
+
+		// External space before memory space
 		Symbol s = it.next();
+		assertNotNull(s);
+		assertEquals("7", s.getName());
+		assertEquals(extAddr(1), s.getAddress());
+		s = it.next();
+		assertNotNull(s);
+		assertEquals("8", s.getName());
+		assertEquals(extAddr(2), s.getAddress());
+
+		s = it.next();
 		assertNotNull(s);
 		assertEquals(addr(300), s.getAddress());
 		s = it.next();
 		assertNotNull(s);
 		assertEquals(addr(500), s.getAddress());
+
 		assertTrue(!it.hasNext());
 		assertNull(it.next());
 	}
 
 	@Test
 	public void testPrimarySymbolIteratorSetBackwards() throws Exception {
-		createSymbol(addr(100), "1");
-		createSymbol(addr(200), "2");
-		createSymbol(addr(200), "2a");
-		createSymbol(addr(200), "2b");
-		createSymbol(addr(200), "2c");
-		createSymbol(addr(300), "3");
-		createSymbol(addr(300), "3a");
-		createSymbol(addr(300), "3b");
-		createSymbol(addr(300), "3c");
-		createSymbol(addr(400), "4");
-		createSymbol(addr(500), "5");
-		createSymbol(addr(500), "5a");
+		createLabel(addr(100), "1");
+		createLabel(addr(200), "2");
+		createLabel(addr(200), "2a");
+		createLabel(addr(200), "2b");
+		createLabel(addr(200), "2c");
+		createLabel(addr(300), "3");
+		createLabel(addr(300), "3a");
+		createLabel(addr(300), "3b");
+		createLabel(addr(300), "3c");
+		createLabel(addr(400), "4");
+		createLabel(addr(500), "5");
+		createLabel(addr(500), "5a");
+		createFunction(addr(2000), "6");
+		createLabel(addr(2000), "6a");
+		createExternalFunction("7");
+		createExternalLabel("8");
 
 		AddressSet set = new AddressSet(addr(0), addr(50));
 		set.addRange(addr(300), addr(350));
 		set.addRange(addr(500), addr(1000));
+		set.addRange(AddressSpace.EXTERNAL_SPACE.getMinAddress(),
+			AddressSpace.EXTERNAL_SPACE.getMaxAddress());
 		SymbolIterator it = st.getPrimarySymbolIterator(set, false);
 
 		Symbol s = it.next();
@@ -1181,23 +1327,34 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(s);
 		assertEquals(addr(300), s.getAddress());
 		assertEquals("3", s.getName());
+
+		// External space after memory space
+		s = it.next();
+		assertNotNull(s);
+		assertEquals("8", s.getName());
+		assertEquals(extAddr(2), s.getAddress());
+		s = it.next();
+		assertNotNull(s);
+		assertEquals("7", s.getName());
+		assertEquals(extAddr(1), s.getAddress());
+
 		assertTrue(!it.hasNext());
 		assertNull(it.next());
 	}
 
 	@Test
 	public void testSymbolIteratorBackwards() throws Exception {
-		createSymbol(addr(100), "1");
-		createSymbol(addr(200), "2");
-		createSymbol(addr(200), "2b");
-		createSymbol(addr(200), "2c");
-		createSymbol(addr(300), "3");
-		createSymbol(addr(300), "3a");
-		createSymbol(addr(300), "3b");
-		createSymbol(addr(300), "3c");
-		createSymbol(addr(400), "4");
-		createSymbol(addr(500), "5");
-		createSymbol(addr(600), "6");
+		createLabel(addr(100), "1");
+		createLabel(addr(200), "2");
+		createLabel(addr(200), "2b");
+		createLabel(addr(200), "2c");
+		createLabel(addr(300), "3");
+		createLabel(addr(300), "3a");
+		createLabel(addr(300), "3b");
+		createLabel(addr(300), "3c");
+		createLabel(addr(400), "4");
+		createLabel(addr(500), "5");
+		createLabel(addr(600), "6");
 
 		SymbolIterator it = st.getSymbolIterator(false);
 		assertTrue(it.hasNext());
@@ -1215,18 +1372,18 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testPrimarySymbolIterator() throws Exception {
-		createSymbol(addr(100), "1");
-		createSymbol(addr(200), "2");
-		createSymbol(addr(200), "2a");
-		createSymbol(addr(200), "2b");
-		createSymbol(addr(200), "2c");
-		createSymbol(addr(300), "3");
-		createSymbol(addr(300), "3a");
-		createSymbol(addr(300), "3b");
-		createSymbol(addr(300), "3c");
-		createSymbol(addr(400), "4");
-		createSymbol(addr(500), "5");
-		createSymbol(addr(500), "5a");
+		createLabel(addr(100), "1");
+		createLabel(addr(200), "2");
+		createLabel(addr(200), "2a");
+		createLabel(addr(200), "2b");
+		createLabel(addr(200), "2c");
+		createLabel(addr(300), "3");
+		createLabel(addr(300), "3a");
+		createLabel(addr(300), "3b");
+		createLabel(addr(300), "3c");
+		createLabel(addr(400), "4");
+		createLabel(addr(500), "5");
+		createLabel(addr(500), "5a");
 
 		SymbolIterator it = st.getPrimarySymbolIterator(true);
 		int count = 1;
@@ -1240,18 +1397,18 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testPrimarySymbolIteratorBackwards() throws Exception {
-		createSymbol(addr(100), "1");
-		createSymbol(addr(200), "2");
-		createSymbol(addr(200), "2a");
-		createSymbol(addr(200), "2b");
-		createSymbol(addr(200), "2c");
-		createSymbol(addr(300), "3");
-		createSymbol(addr(300), "3a");
-		createSymbol(addr(300), "3b");
-		createSymbol(addr(300), "3c");
-		createSymbol(addr(400), "4");
-		createSymbol(addr(500), "5");
-		createSymbol(addr(500), "5a");
+		createLabel(addr(100), "1");
+		createLabel(addr(200), "2");
+		createLabel(addr(200), "2a");
+		createLabel(addr(200), "2b");
+		createLabel(addr(200), "2c");
+		createLabel(addr(300), "3");
+		createLabel(addr(300), "3a");
+		createLabel(addr(300), "3b");
+		createLabel(addr(300), "3c");
+		createLabel(addr(400), "4");
+		createLabel(addr(500), "5");
+		createLabel(addr(500), "5a");
 		SymbolIterator it = st.getPrimarySymbolIterator(false);
 
 		assertTrue(it.hasNext());
@@ -1272,6 +1429,48 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testSymbolIteratorByType() throws Exception {
+		createLabel(addr(100), "1");
+		createLabel(addr(200), "2");
+		createLabel(addr(300), "3");
+
+		Function f1 = createFunction("A", addr(150));
+		Function f2 = createFunction("B", addr(250));
+
+		SymbolIterator it =
+			st.getSymbols(new AddressSet(addr(0), addr(5000)), SymbolType.FUNCTION, true);
+
+		assertTrue(it.hasNext());
+		assertEquals(f1.getSymbol(), it.next());
+
+		assertTrue(it.hasNext());
+		assertEquals(f2.getSymbol(), it.next());
+
+		assertFalse(it.hasNext());
+	}
+
+	@Test
+	public void testSymbolIteratorByTypeBackward() throws Exception {
+		createLabel(addr(100), "1");
+		createLabel(addr(200), "2");
+		createLabel(addr(300), "3");
+
+		Function f1 = createFunction("A", addr(150));
+		Function f2 = createFunction("B", addr(250));
+
+		SymbolIterator it =
+			st.getSymbols(new AddressSet(addr(0), addr(5000)), SymbolType.FUNCTION, false);
+
+		assertTrue(it.hasNext());
+		assertEquals(f2.getSymbol(), it.next());
+
+		assertTrue(it.hasNext());
+		assertEquals(f1.getSymbol(), it.next());
+
+		assertFalse(it.hasNext());
+	}
+
+	@Test
 	public void testAddReference() throws Exception {
 		refMgr.addMemoryReference(addr(512), addr(256), RefType.CONDITIONAL_CALL,
 			SourceType.USER_DEFINED, 2);
@@ -1283,7 +1482,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		refMgr.addMemoryReference(addr(200), addr(356), RefType.CONDITIONAL_JUMP,
 			SourceType.USER_DEFINED, 2);
 		Reference ref = refMgr.getReference(addr(200), addr(356), 2);
-		createSymbol(addr(356), "printf");
+		createLabel(addr(356), "printf");
 		s = st.getSymbol(ref);
 		assertNotNull(s);
 		assertEquals("printf", s.getName());
@@ -1306,7 +1505,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ref = refMgr.addMemoryReference(addr(200), addr(356), RefType.CONDITIONAL_JUMP,
 			SourceType.USER_DEFINED, 2);
-		createSymbol(addr(356), "printf");
+		createLabel(addr(356), "printf");
 		s = st.getSymbol(ref);
 		assertNotNull(s);
 		assertEquals("printf", s.getName());
@@ -1321,16 +1520,15 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testCreateFunction() throws Exception {
-		Listing listing = program.getListing();
 
-		Symbol s = createSymbol(addr(100), "fred");
+		Symbol s = createLabel(addr(100), "fred");
 		assertTrue(s.isPrimary());
 
 		AddressSet set = new AddressSet();
 		set.addRange(addr(100), addr(150));
 		set.addRange(addr(300), addr(310));
 		set.addRange(addr(320), addr(330));
-		Function f = listing.createFunction("fredFunc", addr(100), set, SourceType.USER_DEFINED);
+		Function f = createFunction("fredFunc", addr(100), set, SourceType.USER_DEFINED);
 
 		Symbol s1 = st.getPrimarySymbol(addr(100));
 		assertNotNull(s1);
@@ -1349,11 +1547,10 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testPromoteLabelToFunctionWithMultipleLabels() throws Exception {
-		Listing listing = program.getListing();
 
-		Symbol s = createSymbol(addr(100), "fred");
+		Symbol s = createLabel(addr(100), "fred");
 		assertTrue(s.isPrimary());
-		Symbol s2 = createSymbol(addr(100), "joe");
+		Symbol s2 = createLabel(addr(100), "joe");
 		assertTrue(!s2.isPrimary());
 		s2.setPrimary();
 
@@ -1367,7 +1564,6 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRenameFunctionToExistingName() throws Exception {
-		Listing listing = program.getListing();
 
 		AddressSet set1 = new AddressSet();
 		set1.addRange(addr(100), addr(150));
@@ -1386,9 +1582,8 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRemoveFunction() throws Exception {
-		Listing listing = program.getListing();
 
-		Symbol s = createSymbol(addr(100), "fred");
+		Symbol s = createLabel(addr(100), "fred");
 		assertFalse(s.isDeleted());
 
 		AddressSet set = new AddressSet();
@@ -1437,7 +1632,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testAddExtEntryPoint() throws Exception {
-		Symbol s = createSymbol(addr(100), "extEntryPoint");
+		Symbol s = createLabel(addr(100), "extEntryPoint");
 		st.addExternalEntryPoint(addr(100));
 		assertEquals("extEntryPoint", s.getName());
 		assertTrue(s.isExternalEntryPoint());
@@ -1446,7 +1641,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testRemoveExtEntryPoint() throws Exception {
 
-		Symbol s = createSymbol(addr(100), "extEntryPoint");
+		Symbol s = createLabel(addr(100), "extEntryPoint");
 		st.addExternalEntryPoint(addr(100));
 		assertEquals("extEntryPoint", s.getName());
 		assertTrue(s.isExternalEntryPoint());
@@ -1458,9 +1653,9 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetAllSymbolsIncludingDynamic() throws Exception {
-		createSymbol(addr(0x100), "aaaa");
-		createSymbol(addr(0x200), "bbbb");
-		createSymbol(addr(0x300), "cccc");
+		createLabel(addr(0x100), "aaaa");
+		createLabel(addr(0x200), "bbbb");
+		createLabel(addr(0x300), "cccc");
 		refMgr.addMemoryReference(addr(0x40), addr(0x050), RefType.FLOW, SourceType.USER_DEFINED,
 			-1);
 		refMgr.addMemoryReference(addr(0x30), addr(0x150), RefType.FLOW, SourceType.USER_DEFINED,
@@ -1489,9 +1684,9 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		String[] names = { "primary", "fred", "joe" };
 
 		Address address = addr(100);
-		createSymbol(address, "primary");
-		createSymbol(address, "fred");
-		createSymbol(address, "joe");
+		createLabel(address, "primary");
+		createLabel(address, "fred");
+		createLabel(address, "joe");
 
 		LabelHistory[] h = st.getLabelHistory(address);
 		assertEquals(3, h.length);
@@ -1513,9 +1708,9 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Address address = addr(100);
 
-		Symbol s1 = createSymbol(address, "primary");
-		Symbol s2 = createSymbol(address, "fred");
-		createSymbol(address, "joe");
+		Symbol s1 = createLabel(address, "primary");
+		Symbol s2 = createLabel(address, "fred");
+		createLabel(address, "joe");
 
 		// rename s1 to
 		s1.setName("MyPrimary", SourceType.USER_DEFINED);
@@ -1524,7 +1719,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		st.removeSymbolSpecial(s2);
 
 		// create new symbol
-		createSymbol(addr(100), "bob");
+		createLabel(addr(100), "bob");
 
 		LabelHistory[] h = st.getLabelHistory(address);
 		assertEquals(6, h.length);
@@ -1552,9 +1747,9 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Address[] addrs =
 			{ address, address, address, address, address, address, addr(200), addr(200) };
 
-		Symbol s1 = createSymbol(address, "primary");
-		Symbol s2 = createSymbol(address, "fred");
-		createSymbol(address, "joe");
+		Symbol s1 = createLabel(address, "primary");
+		Symbol s2 = createLabel(address, "fred");
+		createLabel(address, "joe");
 
 		// rename s1 to
 		s1.setName("MyPrimary", SourceType.USER_DEFINED);
@@ -1563,10 +1758,10 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		st.removeSymbolSpecial(s2);
 
 		// create new symbol
-		createSymbol(addr(100), "bob");
+		createLabel(addr(100), "bob");
 
-		createSymbol(addr(200), "printf");
-		createSymbol(addr(200), "fprintf");
+		createLabel(addr(200), "printf");
+		createLabel(addr(200), "fprintf");
 
 		ArrayList<LabelHistory> list = new ArrayList<LabelHistory>();
 		Iterator<LabelHistory> iter = st.getLabelHistory();
@@ -1673,13 +1868,13 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testSetSymbolName() throws Exception {
 
-		Symbol s = createSymbol(addr(0x100), "mysymbol");
+		Symbol s = createLabel(addr(0x100), "mysymbol");
 		Namespace s1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
 		st.createNameSpace(s1, "subspace1", SourceType.USER_DEFINED);
 		st.createNameSpace(s1, "fred", SourceType.USER_DEFINED);
 
 		s.setName("fred", SourceType.USER_DEFINED);
-		createSymbol(addr(0x100), "fred", s1);
+		createLabel(addr(0x100), "fred", s1);
 		Symbol[] symbols = st.getSymbols(addr(0x100));
 		assertEquals(2, symbols.length);
 		assertEquals("fred", symbols[0].getName());
@@ -1691,10 +1886,278 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testGetSymbolByNameAndNamespace() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		Symbol s1 = st.createLabel(addr(0x100), "Symbol", namespace1, SourceType.USER_DEFINED);
+
+		List<Symbol> symbols = st.getSymbols("Symbol", namespace1);
+		assertEquals(1, symbols.size());
+		assertEquals(s1, symbols.get(0));
+	}
+
+	@Test
+	public void testGetSymbolByNameAndNamespaceWithDupNameInOtherNamespace() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		Symbol s1 = st.createLabel(addr(0x100), "Symbol", namespace1, SourceType.USER_DEFINED);
+
+		Namespace namespace2 = st.createNameSpace(null, "MySpace2", SourceType.USER_DEFINED);
+		st.createLabel(addr(0x400), "Symbol", namespace2, SourceType.USER_DEFINED);
+
+		List<Symbol> symbols = st.getSymbols("Symbol", namespace1);
+		assertEquals(1, symbols.size());
+		assertEquals(s1, symbols.get(0));
+	}
+
+	@Test
+	public void testGetSymbolByNameAndNamespaceWithDuplicates() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		st.createLabel(addr(0x100), "Symbol", namespace1, SourceType.USER_DEFINED);
+		Symbol s2 = st.createLabel(addr(0x200), "SymbolDup", namespace1, SourceType.USER_DEFINED);
+		Symbol s3 = st.createLabel(addr(0x300), "SymbolDup", namespace1, SourceType.USER_DEFINED);
+
+		List<Symbol> symbols = st.getSymbols("SymbolDup", namespace1);
+		assertEquals(2, symbols.size());
+		assertTrue(symbols.contains(s2));
+		assertTrue(symbols.contains(s3));
+	}
+
+	@Test
+	public void testGetSymbolByNameAndNamespaceWithDuplicatesWithOtherDupsInOtherNamesapce()
+			throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		st.createLabel(addr(0x100), "Symbol", namespace1, SourceType.USER_DEFINED);
+		Symbol s2 = st.createLabel(addr(0x200), "SymbolDup", namespace1, SourceType.USER_DEFINED);
+		Symbol s3 = st.createLabel(addr(0x300), "SymbolDup", namespace1, SourceType.USER_DEFINED);
+
+		Namespace namespace2 = st.createNameSpace(null, "MySpace2", SourceType.USER_DEFINED);
+		st.createLabel(addr(0x400), "Symbol", namespace2, SourceType.USER_DEFINED);
+		st.createLabel(addr(0x500), "SymbolDup", namespace2, SourceType.USER_DEFINED);
+		st.createLabel(addr(0x600), "SymbolDup", namespace2, SourceType.USER_DEFINED);
+
+		List<Symbol> symbols = st.getSymbols("SymbolDup", namespace1);
+		assertEquals(2, symbols.size());
+		assertTrue(symbols.contains(s2));
+		assertTrue(symbols.contains(s3));
+	}
+
+	@Test
+	public void testGetSymbolByNameAndNamespaceWithDefaultFunctionNames() throws Exception {
+		Namespace namespace = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		AddressSet body = new AddressSet(addr(0x100), addr(0x150));
+		Function f1 =
+			listing.createFunction(null, namespace, addr(0x100), body, SourceType.USER_DEFINED);
+
+		List<Symbol> symbols = st.getSymbols("FUN_00000100", namespace);
+		assertEquals(1, symbols.size());
+		assertEquals(f1.getSymbol(), symbols.get(0));
+	}
+
+	@Test
+	public void testGetSymbolByNameAndNamespaceWithDefaultLableNames() {
+		refMgr.addMemoryReference(addr(0x200), addr(0x100), RefType.FLOW, SourceType.USER_DEFINED,
+			-1);
+		Symbol[] symbolArray = st.getSymbols(addr(0x100));
+		assertEquals(1, symbolArray.length);
+		assertEquals("LAB_00000100", symbolArray[0].getName());
+
+		List<Symbol> symbols = st.getSymbols("LAB_00000100", null);
+		assertEquals(1, symbols.size());
+		assertEquals(symbolArray[0], symbols.get(0));
+	}
+
+	@Test
+	public void testGetSymbolNameAndNamespaceInOverlaySpace() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		Memory memory = program.getMemory();
+		MemoryBlock block = memory.createInitializedBlock("ov_12", addr(0), 5000, (byte) 0,
+			TaskMonitorAdapter.DUMMY_MONITOR, true);
+		Address ovAddress = block.getStart();
+		assertEquals("ov_12::00000000", ovAddress.toString());
+
+		AddressSet set = new AddressSet(ovAddress, ovAddress);
+		Function f = listing.createFunction(null, namespace1, ovAddress, set, SourceType.DEFAULT);
+		assertNotNull(f);
+
+		String defaultName = "FUN_ov_12__00000000";
+
+		List<Symbol> symbols = st.getSymbols(defaultName, namespace1);
+		assertEquals(1, symbols.size());
+		assertEquals(f.getSymbol(), symbols.get(0));
+
+	}
+
+	@Test
+	public void testGetSymbolsByNameNamespaceForLocalVars() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		AddressSet set = new AddressSet();
+		set.addRange(addr(0x100), addr(0x150));
+		Function f =
+			listing.createFunction(null, namespace1, addr(0x100), set, SourceType.DEFAULT);
+		assertNotNull(f);
+
+		Variable var1 =
+			f.addLocalVariable(new LocalVariableImpl("Bob", new IntegerDataType(), 0x8, program),
+				SourceType.USER_DEFINED);
+
+		List<Symbol> symbols = st.getSymbols("Bob", f);
+		assertEquals(1, symbols.size());
+		assertEquals(var1.getSymbol(), symbols.get(0));
+	}
+
+	@Test
+	public void testGetSymbolsByNameNamespaceForDefaultLocalVars() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		AddressSet set = new AddressSet();
+		set.addRange(addr(0x100), addr(0x150));
+		Function f =
+			listing.createFunction(null, namespace1, addr(0x100), set, SourceType.DEFAULT);
+		assertNotNull(f);
+
+		Variable var =
+			f.addLocalVariable(new LocalVariableImpl(null, new IntegerDataType(), -0x18, program),
+				SourceType.DEFAULT);
+
+		List<Symbol> symbols = st.getSymbols("local_18", f);
+		assertEquals(1, symbols.size());
+		assertEquals(var.getSymbol(), symbols.get(0));
+	}
+
+	@Test
+	public void testGetSymbolsByNameNamespaceForParams() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		AddressSet set = new AddressSet();
+		DataType dt = new IntegerDataType();
+		Variable param = new ParameterImpl("Bob", dt, program);
+		set.addRange(addr(0x100), addr(0x150));
+		Function f =
+			listing.createFunction(null, namespace1, addr(0x100), set, SourceType.DEFAULT);
+		assertNotNull(f);
+		f.updateFunction(f.getCallingConventionName(), null,
+			FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.USER_DEFINED, param);
+		Parameter parameter = f.getParameter(0);
+
+		List<Symbol> symbols = st.getSymbols("Bob", f);
+		assertEquals(1, symbols.size());
+		assertEquals(parameter.getSymbol(), symbols.get(0));
+	}
+
+	@Test
+	public void testGetSymbolsByNameNamespaceForDefaultParams() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		AddressSet set = new AddressSet();
+		DataType dt = new IntegerDataType();
+		Variable param = new ParameterImpl(null, dt, program);
+		set.addRange(addr(0x100), addr(0x150));
+		Function f =
+			listing.createFunction(null, namespace1, addr(0x100), set, SourceType.DEFAULT);
+		assertNotNull(f);
+		f.updateFunction(f.getCallingConventionName(), null,
+			FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.DEFAULT, param);
+
+		Parameter parameter = f.getParameter(0);
+		List<Symbol> symbols = st.getSymbols("param_1", f);
+		assertEquals(1, symbols.size());
+		assertEquals(parameter.getSymbol(), symbols.get(0));
+	}
+
+	@Test
+	public void testGetSymbolByNameNamespaceAddress() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		Symbol s1 = st.createLabel(addr(0x100), "Symbol", namespace1, SourceType.USER_DEFINED);
+
+		Symbol symbol = st.getSymbol("Symbol", addr(0x100), namespace1);
+		assertEquals(s1, symbol);
+	}
+
+	@Test
+	public void testGetSymbolByNameNamespaceAddressForDefaultFunction() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		AddressSet set = new AddressSet();
+		set.addRange(addr(0x100), addr(0x150));
+		Function f =
+			listing.createFunction(null, namespace1, addr(0x100), set, SourceType.DEFAULT);
+		assertNotNull(f);
+
+		Symbol symbol = st.getSymbol("FUN_00000100", addr(0x100), namespace1);
+		assertEquals(f.getSymbol(), symbol);
+	}
+
+	@Test
+	public void testGetSymbolByNameNamespaceAddressForLocalVar() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		AddressSet set = new AddressSet();
+		set.addRange(addr(0x100), addr(0x150));
+		Function f =
+			listing.createFunction(null, namespace1, addr(0x100), set, SourceType.DEFAULT);
+		assertNotNull(f);
+
+		Variable var =
+			f.addLocalVariable(new LocalVariableImpl("Bob", new IntegerDataType(), 0x8, program),
+				SourceType.USER_DEFINED);
+		Address address = var.getSymbol().getAddress();
+
+		Symbol symbol = st.getSymbol("Bob", address, f);
+		assertEquals(var.getSymbol(), symbol);
+	}
+
+	@Test
+	public void testGetSymbolByNameNamespaceAddressForDefaultLocalVar() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		AddressSet set = new AddressSet();
+		set.addRange(addr(0x100), addr(0x150));
+		Function f =
+			listing.createFunction(null, namespace1, addr(0x100), set, SourceType.DEFAULT);
+		assertNotNull(f);
+
+		Variable var =
+			f.addLocalVariable(new LocalVariableImpl(null, new IntegerDataType(), 0x8, program),
+				SourceType.DEFAULT);
+		Address address = var.getSymbol().getAddress();
+		Symbol symbol = st.getSymbol(var.getName(), address, f);
+		assertEquals(var.getSymbol(), symbol);
+	}
+
+	@Test
+	public void testGetSymbolByNameNamespaceAddressForParam() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		AddressSet set = new AddressSet();
+		DataType dt = new IntegerDataType();
+		Variable param = new ParameterImpl("Bob", dt, program);
+		set.addRange(addr(0x100), addr(0x150));
+		Function f =
+			listing.createFunction(null, namespace1, addr(0x100), set, SourceType.DEFAULT);
+		assertNotNull(f);
+		f.updateFunction(f.getCallingConventionName(), null,
+			FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.USER_DEFINED, param);
+
+		Parameter parameter = f.getParameter(0);
+		Address address = parameter.getSymbol().getAddress();
+		Symbol symbol = st.getSymbol("Bob", address, f);
+		assertEquals(parameter.getSymbol(), symbol);
+	}
+
+	@Test
+	public void testGetSymbolByNameNamespaceAddressForDefaultParam() throws Exception {
+		Namespace namespace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
+		AddressSet set = new AddressSet();
+		DataType dt = new IntegerDataType();
+		Variable param = new ParameterImpl(null, dt, program);
+		set.addRange(addr(0x100), addr(0x150));
+		Function f =
+			listing.createFunction(null, namespace1, addr(0x100), set, SourceType.DEFAULT);
+		assertNotNull(f);
+		f.updateFunction(f.getCallingConventionName(), null,
+			FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.DEFAULT, param);
+
+		Parameter parameter = f.getParameter(0);
+		Address address = parameter.getSymbol().getAddress();
+		Symbol symbol = st.getSymbol("param_1", address, f);
+		assertEquals(parameter.getSymbol(), symbol);
+	}
+
+	@Test
 	public void testDuplicateSymbol() throws Exception {
-
 		st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
-
 		st.createNameSpace(null, "MySpace2", SourceType.USER_DEFINED);
 
 		try {
@@ -1704,12 +2167,10 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		catch (DuplicateNameException e) {
 			// good
 		}
-
 	}
 
 	@Test
 	public void testDuplicateFunctionNames() throws Exception {
-		Listing listing = program.getListing();
 
 		AddressSet set1 = new AddressSet();
 		set1.addRange(addr(100), addr(150));
@@ -1722,7 +2183,6 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(f2);
 		List<Symbol> symbols = st.getGlobalSymbols("fredFunc");
 		assertEquals(2, symbols.size());
-
 	}
 
 	@Test
@@ -1768,13 +2228,14 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testIsValidParentForCodeSymbol() throws Exception {
 		Namespace namespace = st.createNameSpace(null, "TestNameSpace", SourceType.USER_DEFINED);
-		Symbol s = createSymbol(addr(0x125), "printf", namespace);
+		Symbol s = createLabel(addr(0x125), "printf", namespace);
 		Namespace subspace1 = st.createNameSpace(namespace, "MySpace1", SourceType.USER_DEFINED);
 		assertTrue(s.isValidParent(subspace1));
 
 		AddressSet set = new AddressSet(addr(0x100), addr(0x150));
-		Function f = program.getFunctionManager().createFunction("function_1", addr(0x100), set,
-			SourceType.USER_DEFINED);
+		Function f = program.getFunctionManager()
+				.createFunction("function_1", addr(0x100), set,
+					SourceType.USER_DEFINED);
 		assertTrue(s.isValidParent(f));
 
 		Namespace scope = st.createClass(null, "TestScope", SourceType.USER_DEFINED);
@@ -1787,15 +2248,17 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testIsValidParentForFunction() throws Exception {
 		Namespace namespace = st.createNameSpace(null, "TestNameSpace", SourceType.USER_DEFINED);
-		createSymbol(addr(0x125), "printf", namespace);
+		createLabel(addr(0x125), "printf", namespace);
 		Namespace subspace1 = st.createNameSpace(namespace, "MySpace1", SourceType.USER_DEFINED);
 
 		AddressSet set = new AddressSet(addr(0x100), addr(0x150));
-		Function f1 = program.getFunctionManager().createFunction("function_1", addr(0x100), set,
-			SourceType.USER_DEFINED);
+		Function f1 = program.getFunctionManager()
+				.createFunction("function_1", addr(0x100), set,
+					SourceType.USER_DEFINED);
 		set = new AddressSet(addr(0x200), addr(0x250));
-		Function f2 = program.getFunctionManager().createFunction("function_2", addr(0x200), set,
-			SourceType.USER_DEFINED);
+		Function f2 = program.getFunctionManager()
+				.createFunction("function_2", addr(0x200), set,
+					SourceType.USER_DEFINED);
 
 		assertTrue(f1.getSymbol().isValidParent(subspace1));// TestNameSpace::MySpace1::function_1 is OK
 
@@ -1823,8 +2286,9 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testIsValidParentForNamespace() throws Exception {
 
 		AddressSet set = new AddressSet(addr(0x100), addr(0x150));
-		Function f1 = program.getFunctionManager().createFunction("function_1", addr(0x100), set,
-			SourceType.USER_DEFINED);
+		Function f1 = program.getFunctionManager()
+				.createFunction("function_1", addr(0x100), set,
+					SourceType.USER_DEFINED);
 
 		Namespace namespace = st.createNameSpace(null, "TestNameSpace", SourceType.USER_DEFINED);
 		Namespace subspace1 = st.createNameSpace(null, "MySpace1", SourceType.USER_DEFINED);
@@ -1849,7 +2313,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testClassParentScope() throws Exception {
 
 		Namespace scope = st.createClass(null, "TestClass", SourceType.USER_DEFINED);
-		createSymbol(addr(0x200), "printf", scope);
+		createLabel(addr(0x200), "printf", scope);
 
 	}
 
@@ -1857,14 +2321,15 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testInvalidExternalScope() throws Exception {
 
 		Library lib = st.createExternalLibrary("extLib", SourceType.USER_DEFINED);
-		ExternalLocation extLoc = program.getExternalManager().addExtFunction("extLib", "printf",
-			null, SourceType.USER_DEFINED);
+		ExternalLocation extLoc = program.getExternalManager()
+				.addExtFunction("extLib", "printf",
+					null, SourceType.USER_DEFINED);
 		Symbol extSym = extLoc.getSymbol();
 		assertEquals(SymbolType.FUNCTION, extSym.getSymbolType());
 		Function extFunc = (Function) extSym.getObject();
 
 		try {
-			createSymbol(addr(0x200), "printf", extFunc);
+			createLabel(addr(0x200), "printf", extFunc);
 			Assert.fail("should have gotten invalid input exception!");
 		}
 		catch (InvalidInputException e) {
@@ -1885,15 +2350,15 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetUniqueSymbol_OneSymbol() throws InvalidInputException {
-		Symbol newBob = createSymbol(addr(1), "bob");
+		Symbol newBob = createLabel(addr(1), "bob");
 		Symbol s = getUniqueSymbol(program, "bob");
 		assertEquals(newBob, s);
 	}
 
 	@Test
 	public void testGetUniqueSymbol_MultipleSymbols() throws InvalidInputException {
-		createSymbol(addr(1), "bob");
-		createSymbol(addr(2), "bob");
+		createLabel(addr(1), "bob");
+		createLabel(addr(2), "bob");
 		Symbol s = getUniqueSymbol(program, "bob");
 		assertNull(s);
 	}
@@ -1924,20 +2389,45 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		return space.getAddress(l);
 	}
 
-	private Symbol createSymbol(Address addr, String name) throws InvalidInputException {
+	private Address extAddr(long l) {
+		return AddressSpace.EXTERNAL_SPACE.getAddress(l);
+	}
+
+	private Symbol createLabel(Address addr, String name) throws InvalidInputException {
 		return st.createLabel(addr, name, SourceType.USER_DEFINED);
 	}
 
-	private void createSymbols(Address addr, String... names) throws InvalidInputException {
+	private void createLabels(Address addr, String... names) throws InvalidInputException {
 
 		for (String name : names) {
 			st.createLabel(addr, name, SourceType.USER_DEFINED);
 		}
 	}
 
-	private Symbol createSymbol(Address addr, String name, Namespace namespace)
+	private Symbol createLabel(Address addr, String name, Namespace namespace)
 			throws InvalidInputException {
 		return st.createLabel(addr, name, namespace, SourceType.USER_DEFINED);
+	}
+
+	private Symbol createFunction(Address addr, String name)
+			throws InvalidInputException, OverlappingFunctionException {
+		return program.getFunctionManager()
+				.createFunction(name, addr, new AddressSet(addr, addr), SourceType.USER_DEFINED)
+				.getSymbol();
+	}
+
+	private Symbol createExternalLabel(String name)
+			throws InvalidInputException, DuplicateNameException {
+		ExternalManager externalManager = program.getExternalManager();
+		return externalManager.addExtLocation("Test", name, null, SourceType.USER_DEFINED)
+				.getSymbol();
+	}
+
+	private Symbol createExternalFunction(String name)
+			throws InvalidInputException, DuplicateNameException {
+		ExternalManager externalManager = program.getExternalManager();
+		return externalManager.addExtFunction("Test", name, null, SourceType.USER_DEFINED)
+				.getSymbol();
 	}
 
 }

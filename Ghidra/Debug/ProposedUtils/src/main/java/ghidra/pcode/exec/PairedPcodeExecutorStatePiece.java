@@ -65,4 +65,12 @@ public class PairedPcodeExecutorStatePiece<A, L, R>
 	public MemBuffer getConcreteBuffer(Address address) {
 		return left.getConcreteBuffer(address);
 	}
+
+	public PcodeExecutorStatePiece<A, L> getLeft() {
+		return left;
+	}
+
+	public PcodeExecutorStatePiece<A, R> getRight() {
+		return right;
+	}
 }

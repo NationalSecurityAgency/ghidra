@@ -29,39 +29,40 @@ public class FilledArrayDataPayload implements StructConverter {
 	private short ident;
 	private short elementWidth;
 	private int size;
-	private byte [] data;
+	private byte[] data;
 
-	public FilledArrayDataPayload( BinaryReader reader ) throws IOException {
-		ident = reader.readNextShort( );
-		elementWidth = reader.readNextShort( );
-		size = reader.readNextInt( );
-		data = reader.readNextByteArray( size * elementWidth );
+	public FilledArrayDataPayload(BinaryReader reader) throws IOException {
+		ident = reader.readNextShort();
+		elementWidth = reader.readNextShort();
+		size = reader.readNextInt();
+		data = reader.readNextByteArray(size * elementWidth);
 	}
 
-	public short getIdent( ) {
+	public short getIdent() {
 		return ident;
 	}
 
-	public short getElementWidth( ) {
+	public short getElementWidth() {
 		return elementWidth;
 	}
 
-	public int getSize( ) {
+	public int getSize() {
 		return size;
 	}
 
-	public byte [] getData( ) {
+	public byte[] getData() {
 		return data;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "filled_array_data_payload_" + elementWidth + "_" + size, 0 );
-		structure.add( WORD, "ident", null );
-		structure.add( WORD, "element_width", null );
-		structure.add( DWORD, "size", null );
-		structure.add( new ArrayDataType( BYTE, size * elementWidth, BYTE.getLength( ) ), "data", null );
-		structure.setCategoryPath( new CategoryPath( "/dex/filled_array_data_payload" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure =
+			new StructureDataType("filled_array_data_payload_" + elementWidth + "_" + size, 0);
+		structure.add(WORD, "ident", null);
+		structure.add(WORD, "element_width", null);
+		structure.add(DWORD, "size", null);
+		structure.add(new ArrayDataType(BYTE, size * elementWidth, BYTE.getLength()), "data", null);
+		structure.setCategoryPath(new CategoryPath("/dex/filled_array_data_payload"));
 		return structure;
 	}
 

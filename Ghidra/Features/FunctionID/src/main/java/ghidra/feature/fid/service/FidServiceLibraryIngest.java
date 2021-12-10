@@ -460,14 +460,9 @@ class FidServiceLibraryIngest {
 	}
 
 	private static String grabSymbol(SymbolTable symbolTable, Address address) {
-		Symbol[] symbols = symbolTable.getSymbols(address);
-		if (symbols == null || symbols.length == 0) {
-			return null;
-		}
-		for (Symbol symbol : symbols) {
-			if (symbol.isPrimary()) {
-				return symbol.getName();
-			}
+		Symbol primary = symbolTable.getPrimarySymbol(address);
+		if (primary != null) {
+			return primary.getName();
 		}
 		return null;
 	}

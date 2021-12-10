@@ -134,13 +134,27 @@ IfaceStatus::IfaceStatus(const string &prmpt,ostream &os,int4 mxhist)
   curhistory = 0;
 }
 
-/// \brief Provide a new script file to execute, with an associated command prompt
+/// \brief Push a new file on the script stack
 ///
-/// The script provides a subsidiary input stream to the current stream.
-/// Once commands from the script are complete, processing will resume on this stream.
-/// \param filename is the name of the file containing the script
-/// \param newprompt is the command line prompt
+/// Attempt to open the file, and if we succeed put the open stream onto the script stack.
+/// \param filename is the name of the script file
+/// \param newprompt is the command line prompt to associate with the file
 void IfaceStatus::pushScript(const string &filename,const string &newprompt)
+
+{
+  ifstream *s = new ifstream(filename.c_str());
+  if (!*s)
+    throw IfaceParseError("Unable to open script file");
+  pushScript(s,newprompt);
+}
+
+/// \brief Provide a new input stream to execute, with an associated command prompt
+///
+/// The new stream is added to a stack and becomes the primary source for parsing new commands.
+/// Once commands from the stream are exhausted, parsing will resume in the previous stream.
+/// \param iptr is the new input stream
+/// \param newprompt is the command line prompt to associate with the new stream
+void IfaceStatus::pushScript(istream *iptr,const string &newprompt)
 
 {
   promptstack.push_back(prompt);

@@ -52,6 +52,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		DataType dt = pgmRootCat.getDataType(emptyUnion.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertIsPackingEnabled(false);
@@ -116,10 +117,12 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		invoke(applyAction);
 
 		assertTrue(simpleUnion.isEquivalent(model.viewComposite));
+		assertTrue(simpleUnion.isNotYetDefined());
 		assertTrue(simpleUnion.isZeroLength());
 
 		dt = pgmBbCat.getDataType(simpleUnion.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertTrue(simpleUnion.isEquivalent(model.viewComposite));
@@ -214,6 +217,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertIsPackingEnabled(false);
@@ -307,9 +311,11 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertTrue(innerUnion.isEquivalent(model.viewComposite));
+		assertTrue(innerUnion.isNotYetDefined());
 		assertTrue(innerUnion.isZeroLength());
 
 		assertIsPackingEnabled(false);
@@ -397,9 +403,11 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertTrue(innerUnion.isEquivalent(model.viewComposite));
+		assertTrue(innerUnion.isNotYetDefined());
 		assertTrue(innerUnion.isZeroLength());
 
 		assertIsPackingEnabled(false);
@@ -487,9 +495,11 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 
 		dt = pgmTestCat.getDataType(innerUnion.getName());
 		assertNotNull(dt);
+		assertTrue(dt.isNotYetDefined());
 		assertTrue(dt.isZeroLength());
 
 		assertTrue(innerUnion.isEquivalent(model.viewComposite));
+		assertTrue(innerUnion.isNotYetDefined());
 		assertTrue(innerUnion.isZeroLength());
 
 		assertIsPackingEnabled(false);

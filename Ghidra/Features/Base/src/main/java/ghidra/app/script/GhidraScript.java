@@ -1016,15 +1016,14 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	public void print(String message) {
 		// clients using print may add their own newline, which interferes with our logging,
 		// so, strip it off
+		String strippedMessage = message;
 		if (message.endsWith("\r\n")) {
-			Msg.info(GhidraScript.class, message.substring(0, message.length() - 2));
+			strippedMessage = message.substring(0, message.length() - 2);
 		}
 		else if (message.endsWith("\n")) {
-			Msg.info(GhidraScript.class, message.substring(0, message.length() - 1));
+			strippedMessage = message.substring(0, message.length() - 1);
 		}
-		else {
-			Msg.info(GhidraScript.class, message);
-		}
+		Msg.info(GhidraScript.class, new ScriptMessage(strippedMessage));
 
 		if (isRunningHeadless()) {
 			return;
@@ -1055,7 +1054,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 */
 	public void printerr(String message) {
 		String msgMessage = getScriptName() + "> " + message;
-		Msg.error(GhidraScript.class, msgMessage);
+		Msg.error(GhidraScript.class, new ScriptMessage(msgMessage));
 
 		if (isRunningHeadless()) {
 			return;

@@ -73,4 +73,8 @@ public class JgtGraphMouse extends DefaultGraphMouse<AttributedVertex, Attribute
 		setPluginsLoaded();
 	}
 
+	public boolean allowsEdgeSelection() {
+		return allowEdgeSelection;
+	}
+
 }

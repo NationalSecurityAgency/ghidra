@@ -87,8 +87,7 @@ public:
 /// Generally a \e language \e id (i.e. x86:LE:64:default) is provided, then this
 /// object is able to automatically load in configuration and construct the Translate object.
 class SleighArchitecture : public Architecture {
-  static Sleigh *last_sleigh;				///< Last Translate object used by a SleighArchitecture
-  static int4 last_languageindex;			///< Index of the LanguageDescription associated with the last Translate object
+  static map<int4,Sleigh *> translators;		///< Map from language index to instantiated translators
   static vector<LanguageDescription> description;	///< List of languages we know about
   int4 languageindex;					///< Index (within LanguageDescription array) of the active language
   string filename;					///< Name of active load-image file

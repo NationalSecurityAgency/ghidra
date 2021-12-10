@@ -39,15 +39,15 @@
   <p>
     The Decompiler is a full Plug-in within Ghidra and can be configured to be enabled or
     disabled within any particular tool. Default configurations will have the
-    plug-in enabled, but if its disabled for some reason, it can be enabled from within
-    a Code Browser by selecting the menu option
+    plug-in enabled, but if it is disabled for some reason, it can be enabled from within
+    a Code Browser by selecting the
     </p>
 <div class="informalexample">
-      <span class="bold"><strong>File -&gt; Configure</strong></span>
+      <span class="bold"><strong>File -&gt; Configure...</strong></span>
     </div>
 <p>
-    Then click on the <span class="emphasis"><em>Configure</em></span> link under the
-    <span class="bold"><strong>Ghidra Core</strong></span> section and check the box next to
+    menu option, then clicking on the <span class="emphasis"><em>Configure</em></span> link under the
+    <span class="bold"><strong>Ghidra Core</strong></span> section and checking the box next to
     <span class="bold"><strong>DecompilePlugin</strong></span>.
   </p>
 </div>
@@ -77,8 +77,8 @@
   </p>
   <p>
     The window automatically decompiles and displays the function at the
-    <span class="emphasis"><em>current address</em></span>. The address is set typically by left-clicking in the Listing window,
-    or invoking the <span class="emphasis"><em>Goto</em></span> command (pressing the 'g' key) and manually entering
+    <span class="emphasis"><em>current address</em></span>. The address is set typically by left-clicking in the Listing,
+    or invoking the <span class="emphasis"><em>Go To...</em></span> command (pressing the 'G' key) and manually entering
     the address or some other label, but the Decompiler window
     follows any type of navigation in the Code Browser, triggering decompilation of the new function
     being displayed.
@@ -108,7 +108,7 @@
 <a name="Capabilities"></a>Capabilities</h3></div></div></div>
   
   <p>
-    Some of the primary capabilities of the decompiler include:
+    Some of the primary capabilities of the Decompiler include:
 
   </p>
 <div class="informalexample">
@@ -116,7 +116,7 @@
 <dt><span class="term"><span class="bold"><strong>Recovering Expressions</strong></span></span></dt>
 <dd>
 	<p>
-	  The decompiler does full data-flow analysis which allows it to
+	  The Decompiler does full data-flow analysis which allows it to
 	  perform slicing on functions: complicated expressions, which have been split into
 	  distinct operations/instructions and then mixed together with
 	  other instructions by the compiling/optimizing process, are
@@ -126,7 +126,7 @@
 <dt><span class="term"><span class="bold"><strong>Recovering High-Level Scoped Variables</strong></span></span></dt>
 <dd>
 	<p>
-	  The decompiler understands how compilers
+	  The Decompiler understands how compilers
 	  use processor stacks and registers to implement variables with
 	  different scopes within a function. Data-flow analysis allows it to
 	  follow what was originally a single variable as it moves from
@@ -139,7 +139,7 @@
 <dt><span class="term"><span class="bold"><strong>Recovering Function Parameters</strong></span></span></dt>
 <dd>
 	<p>
-	  The decompiler understands the parameter passing conventions of
+	  The Decompiler understands the parameter-passing conventions of
 	  the compiler and can reconstruct the original form of
 	  function calls.
 	</p>
@@ -147,7 +147,7 @@
 <dt><span class="term"><span class="bold"><strong>Using Data-type, Name, and Signature Annotations</strong></span></span></dt>
 <dd>
 	<p>
-	  The decompiler automatically pulls in
+	  The Decompiler automatically pulls in
 	  all the different data types and variable names that the user
 	  has applied to functions, and the C output is altered to reflect
 	  this. High-level variables are appropriately named, structure
@@ -159,14 +159,14 @@
 <dt><span class="term"><span class="bold"><strong>Propagating Local Data-types</strong></span></span></dt>
 <dd>
 	<p>
-	  The decompiler infers the data-type of unlabeled variables
+	  The Decompiler infers the data-type of unlabeled variables
 	  by propagating information from other sources throughout a function.
 	</p>
       </dd>
 <dt><span class="term"><span class="bold"><strong>Recovering Structure Definitions</strong></span></span></dt>
 <dd>
 	<p>
-	  The decompiler can be used to create structures that match the usage
+	  The Decompiler can be used to create structures that match the usage
 	  pattern of particular functions and variables, automatically discovering
 	  component offsets and data-types.
 	</p>

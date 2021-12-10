@@ -23,9 +23,9 @@ import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A queue for easily scheduling tasks to be run in parallel (or sequentially) 
- * via a thread pool.  This class provides a clean separation of items that need to 
- * be processed from the algorithm that does the processing, making it easy to parallelize 
+ * A queue for easily scheduling tasks to be run in parallel (or sequentially)
+ * via a thread pool.  This class provides a clean separation of items that need to
+ * be processed from the algorithm that does the processing, making it easy to parallelize
  * the processing of multiple items.   Further, you can control the maximum number of items that
  * can be processed concurrently.  This is useful to throttle operations that may starve the
  * other threads in the system.  You may also control how many items get placed into the queue
@@ -135,7 +135,7 @@ import ghidra.util.task.TaskMonitor;
  * 
  * @param <I> The type of the items to be processed.
  * @param <R> The type of objects resulting from processing an item; if you don't care about the
- *            return value, then make this value whatever you want, like <code>Object</code> or the 
+ *            return value, then make this value whatever you want, like <code>Object</code> or the
  *            same value as {@code I} and return null from {@link QCallback#process(Object, TaskMonitor)}.
  */
 public class ConcurrentQ<I, R> {
@@ -178,19 +178,19 @@ public class ConcurrentQ<I, R> {
 	 * @param callback the QWorker object that will be used to process items concurrently.
 	 * @param queue the internal storage queue to use in this concurrent queue.
 	 * @param threadPool the GThreadPool to used for providing the threads for concurrent processing.
-	 * @param listener An optional QItemListener that will be called back with results when the 
+	 * @param listener An optional QItemListener that will be called back with results when the
 	 *                item has been processed.
 	 * @param collectResults specifies if this queue should collect the results as items are processed
-	 *                 so they can be returned in a waitForResults() call. 
-	 * @param maxInProgress specifies the maximum number of items that can be process at a time.  
-	 *                 If this is set to 0, then this queue will attempt to execute as many 
-	 *                 items at a time as there are threads in the given threadPool.  Setting 
+	 *                 so they can be returned in a waitForResults() call.
+	 * @param maxInProgress specifies the maximum number of items that can be process at a time.
+	 *                 If this is set to 0, then this queue will attempt to execute as many
+	 *                 items at a time as there are threads in the given threadPool.  Setting
 	 *                 this parameter to 1 will have the effect of guaranteeing that
 	 *                 all times are processed one at a time in the order they were submitted.
-	 *                 Any other positive value will run that many items concurrently, 
+	 *                 Any other positive value will run that many items concurrently,
 	 *                 up to the number of available threads.
 	 * @param jobsReportProgress  true signals that jobs wish to report progress via their task
-	 *                 monitor.  The default is false, which triggers this queue to report an 
+	 *                 monitor.  The default is false, which triggers this queue to report an
 	 *                 overall progress for each job that is processed.  False is a good default
 	 *                 for clients that have a finite number of jobs to be done.
 	 */
@@ -242,8 +242,8 @@ public class ConcurrentQ<I, R> {
 	 * 
 	 * @param monitor the monitor to attache to this queue
 	 * @param cancelClearsAllItems if true, cancelling the monitor will cancel all items currently
-	 * 								being processed by a thread and clear the scheduled 
-	 * 								items that haven't yet run. 
+	 * 								being processed by a thread and clear the scheduled
+	 * 								items that haven't yet run.
 	 * 								If false, only the items currently being processed will be cancelled.
 	 */
 	public void setMonitor(TaskMonitor monitor, boolean cancelClearsAllItems) {
@@ -293,8 +293,8 @@ public class ConcurrentQ<I, R> {
 	/**
 	 * Allows clients to use a bounded queue (such as a {@link LinkedBlockingQueue} to control
 	 * how many items get placed into this queue at one time.  Calling the <code>add</code> methods
-	 * will place all items into the queue, which for a large number of items, can consume a 
-	 * large amount of memory.  This method will block once the queue at maximum capacity, 
+	 * will place all items into the queue, which for a large number of items, can consume a
+	 * large amount of memory.  This method will block once the queue at maximum capacity,
 	 * continuing to add new items as existing items on the queue are processed.
 	 * <p>
 	 * To enable blocking on the queue when it is full, construct this <code>ConcurrentQ</code>
@@ -350,15 +350,15 @@ public class ConcurrentQ<I, R> {
 	}
 
 	/**
-	 * Waits until all scheduled items have been completed or cancelled and returns a list of 
+	 * Waits until all scheduled items have been completed or cancelled and returns a list of
 	 * QResults if this queue has been told to collect results.
 	 * <P>
 	 * You can still call this method to wait for items to be processed, even if you did not
 	 * specify to collect results.  In that case, the list returned will be empty.
 	 * 
 	 * @return the list of QResult objects that have all the results of the completed jobs.
-	 * @throws InterruptedException if this call was interrupted--Note:  this interruption only 
-	 *             happens if the calling thread cannot acquire the lock.  If the thread is 
+	 * @throws InterruptedException if this call was interrupted--Note:  this interruption only
+	 *             happens if the calling thread cannot acquire the lock.  If the thread is
 	 *             interrupted while waiting for results, then it will try again.
 	 */
 	public Collection<QResult<I, R>> waitForResults() throws InterruptedException {
@@ -379,7 +379,7 @@ public class ConcurrentQ<I, R> {
 	 * 
 	 * @return the first available result
 	 * @throws InterruptedException if interrupted while waiting for a result
-	 * @throws IllegalStateException if this queue has been set to not collect results 
+	 * @throws IllegalStateException if this queue has been set to not collect results
 	 *         (see the constructor).
 	 */
 	public QResult<I, R> waitForNextResult() throws InterruptedException {
@@ -405,15 +405,15 @@ public class ConcurrentQ<I, R> {
 
 	/**
 	 * Waits until all items have been processed <b>OR</b> an Exception happens during the
-	 * processing of <b>ANY item</b>.  
+	 * processing of <b>ANY item</b>.
 	 * <p>
 	 * <b><u>Note:</u></b>
 	 * If an exception does occur then the remaining items in the
-	 * queue will be cleared and all current items will be cancelled. 
+	 * queue will be cleared and all current items will be cancelled.
 	 * <p>
-	 * If you wish for processing to continue for remaining items when any item encounters an 
+	 * If you wish for processing to continue for remaining items when any item encounters an
 	 * exception, then you should instead use {@link #waitForResults()}.  That method will return
-	 * all results, both with and without exceptions, which you can then process, including 
+	 * all results, both with and without exceptions, which you can then process, including
 	 * checking for exceptions.  Note that to use {@link #waitForResults()} to examine exceptions,
 	 * you must have created this queue with <code>collectResults</code> as true.
 	 * 
@@ -445,14 +445,14 @@ public class ConcurrentQ<I, R> {
 	/**
 	 * Waits up to the specified time for scheduled jobs to complete.  The results of all completed
 	 * jobs will be returned if this queue has been told to collect results.  At the time that this
-	 * returns, there may still be work to process.  The returned list will contain as much work 
+	 * returns, there may still be work to process.  The returned list will contain as much work
 	 * as has been processed when the wait has finished.  Repeated calls to this method will not
 	 * return results from previous waits.
 	 * <P>
 	 * You can still call this method to wait for items to be processed, even if you did not
 	 * specify to collect results.  In that case, the list returned will be empty.
 	 * 
-	 * @param timeout the timeout  
+	 * @param timeout the timeout
 	 * @param unit the timeout unit
 	 * @return the list of QResult objects that have all the results of the completed jobs.
 	 * @throws InterruptedException if this call was interrupted.
@@ -477,12 +477,12 @@ public class ConcurrentQ<I, R> {
 	 * yet been scheduled on the threadPool are returned immediately from this call.  Items that
 	 * are currently being processed will be cancelled and those results will be available on the
 	 * next waitForResults() call and also if there is a QItemListener, it will be called with
-	 * the QResult.  There is no guarantee that scheduled tasks will terminate any time soon.  If 
-	 * they check the isCancelled() state of their QMonitor, it will be true.  Setting the 
+	 * the QResult.  There is no guarantee that scheduled tasks will terminate any time soon.  If
+	 * they check the isCancelled() state of their QMonitor, it will be true.  Setting the
 	 * interruptRunningTasks to true, will result in a thread interrupt to any currently running
 	 * task which might be useful if the task perform waiting operations like I/O.
 	 * 
-	 * @param interruptRunningTasks if true, an attempt will be made to interrupt any currently 
+	 * @param interruptRunningTasks if true, an attempt will be made to interrupt any currently
 	 * processing thread.
 	 * @return a list of all items that have not yet been queued to the threadPool.
 	 */
@@ -533,7 +533,7 @@ public class ConcurrentQ<I, R> {
 	}
 
 	/**
-	 * Cancels all running tasks and disposes of the internal thread pool if it is a private 
+	 * Cancels all running tasks and disposes of the internal thread pool if it is a private
 	 * pool.
 	 */
 	public void dispose() {
@@ -791,14 +791,14 @@ public class ConcurrentQ<I, R> {
 		@Override
 		public void taskEnded(long id, I Item, long total, long progress) {
 			if (!jobsReportProgress) {
-				// 
-				// This code works in 2 ways.  The default case is that clients place items on 
-				// the queue.  As the amount of work grows, so too does the max progress value. 
-				// This obviates the need for clients to manager progress.  (The downside to this
-				// is that the progress may keep getting pushed back as it approaches the 
-				// current maximum value.)  The second case is where the client has specified a 
-				// true maximum value.  In that case, this code will not change the maxmimum
-				// (assuming that the client does not put more items into the queue than they 
+				//
+				// This code works in 2 ways.  The default case is that clients place items on
+				// the queue.  As the amount of work grows, so too does the max progress value.
+				// This obviates the need for clients to manage progress.  (The downside to this
+				// is that the progress may keep getting pushed back as it approaches the
+				// current maximum value.)  The second case is where the client has specified a
+				// true maximum value.  In that case, this code will not change the maximum
+				// (assuming that the client does not put more items into the queue than they
 				// specified).
 				//
 				if (total > monitor.getMaximum()) {

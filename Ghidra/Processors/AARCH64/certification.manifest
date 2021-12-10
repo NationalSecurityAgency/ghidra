@@ -8,6 +8,8 @@ data/languages/AARCH64.opinion||GHIDRA||||END|
 data/languages/AARCH64.pspec||GHIDRA||||END|
 data/languages/AARCH64.slaspec||GHIDRA||||END|
 data/languages/AARCH64BE.slaspec||GHIDRA||||END|
+data/languages/AARCH64_AMXext.sinc||GHIDRA||||END|
+data/languages/AARCH64_AppleSilicon.slaspec||GHIDRA||||END|
 data/languages/AARCH64_base_PACoptions.sinc||GHIDRA||||END|
 data/languages/AARCH64_win.cspec||GHIDRA||||END|
 data/languages/AARCH64base.sinc||GHIDRA||||END|
@@ -15,6 +17,7 @@ data/languages/AARCH64instructions.sinc||GHIDRA||||END|
 data/languages/AARCH64ldst.sinc||GHIDRA||||END|
 data/languages/AARCH64neon.sinc||GHIDRA||||END|
 data/languages/AARCH64sve.sinc||GHIDRA||||END|
+data/languages/AppleSilicon.ldefs||GHIDRA||||END|
 data/manuals/AARCH64.idx||GHIDRA||||END|
 data/patterns/AARCH64_LE_patterns.xml||GHIDRA||||END|
 data/patterns/patternconstraints.xml||GHIDRA||||END|

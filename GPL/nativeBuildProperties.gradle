@@ -24,25 +24,35 @@ apply plugin: 'c'
  ****************************************************************************/
 model {
 
-	// define the platforms that we support in ghidra
+	// Use the PLATFORMS list to create the platforms that Ghidra supports.
 	platforms {
-		win32 {
-			architecture 'x86'
-			operatingSystem 'windows'
-		}
-		win64 {
-			architecture 'x86_64'
-			operatingSystem 'windows'
-		}
-		linux64 {
-			architecture 'x86_64'
-			operatingSystem 'linux'
-		}
-		osx64 {
-			architecture 'x86_64'
-			operatingSystem 'osx'
+		project.PLATFORMS.each { platform ->
+			"${platform.name}" {
+				architecture platform.arch
+				operatingSystem platform.os
+			}
 		}
 	}	
+
+	// The toolChains block is needed because Gradle doesn't find gcc/clang on ARM-based Linux
+	// and macOS platforms without explicitly declaring their targets.  Might be a bug in the 
+	// native Gradle plugin. 
+	toolChains {
+		if (isCurrentLinux()) {
+			gcc(Gcc) {
+				if (isCurrentArm_64()) {
+					target("linux_arm_64")
+				}
+			}
+		}
+		if (isCurrentMac()) {
+			clang(Clang) {
+				if (isCurrentArm_64()) {
+					target("mac_arm_64")
+				}
+			}
+		}
+	}
 }
 
 /*******************************************************************************************
@@ -51,7 +61,7 @@ model {
 task CheckToolChain {
 	// Native C/Cpp plugins will trigger failure if no tool chain found
 	doFirst {
-		if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+		if (isCurrentWindows()) {
 			// ensure that required MS Visual Studio is installed
 			if (!VISUAL_STUDIO_INSTALL_DIR) {
 				throw new GradleException("Visual Studio not found!");
@@ -98,17 +108,27 @@ def shouldSkipNative(task) {
 }
 
 /*******************************************************************************************
- * Task Rule : builds all the natives in this module for a given platform.
+ * Task Rule : buildNatives[_PlatformName]
  *
- * Example : gradle buildNatives_win64 will build all win64 native executables and shared libraries.
+ * Summary: Builds all the natives in this module for a given platform.
+ *
+ * Args: PlatformName - The name of the platform.  If not specified, the current platform is used.
+ *
+ * Example: gradle buildNatives_win_x86_64 will build all win_x86_64 native executables and shared libraries.
  *	
- *		NOTE: you must be on the appropriate platform for this to work.
- *
+ * NOTE: you must be on the appropriate platform for this to work.
  ******************************************************************************************/
-tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for given platform") { String taskName ->
+tasks.addRule("Pattern: buildNatives[_PlatformName]: build all natives for given platform") { String taskName ->
 
-	if (taskName.startsWith("buildNatives_")) {
-		String platform = taskName - "buildNatives_"
+	if (taskName.startsWith("buildNatives")) {
+		String currentPlatform = getCurrentPlatformName()
+		String platform = taskName - "buildNatives"
+		if (platform.length() == 0) {
+			platform = currentPlatform
+		}
+		if (platform.startsWith("_")) {
+			platform = platform - "_"
+		}
 		
 		task(taskName)  { myTask ->
 		
@@ -147,36 +167,6 @@ tasks.addRule("Pattern: buildNatives_<platform name>]: build all natives for giv
 	}
 }
 
-/*******************************************************************************************
- * Task Rule : builds all the natives in this module for a given platform and copies the 
- *             results to the bin repo.
- *
- * Example : gradle prebuildNatives_win64 will build all win64 native executables and shared 
- *           libraries and copy the results to the appropriate project/os directory in the bin
- *           repo.
- *			
- *		NOTE: you must be on the appropriate platform for this to work.
- *
- ******************************************************************************************/
-tasks.addRule("Pattern: prebuildNatives_<platform name>]: build all natives for given platform") { String taskName ->
-	if (taskName.startsWith("prebuildNatives_")) {
-		String platform = taskName - "prebuildNatives_"
-		
-		task(taskName)  { myTask ->		
-			dependsOn "buildNatives_$platform"
-
-			doLast {
-				copy  {
-					from "${projectDir}/build/os/${platform}"
-					into "${getProjectLocationInBinRepo(project)}/os/${platform}"
-					exclude "*.exp"
-					exclude "*.lib"
-				}
-			}	
-		}
-	}
-}
-
 /*****************************************************************************************
  * The following block of code changes the output directory for native builds
  * to <projectDir>/build/os/<platform>/<executable>  ?? is there a better way to do this?
@@ -204,8 +194,7 @@ gradle.taskGraph.whenReady {
 }
 
 /*****************************************************************************************
- * The following block of code ensures that the buildNatives_<platform> task is used
- * during assembly to ensure that missing toolchain generates an appropriate error
+ * The following block of code ensures that the buildNatives (for current plaform) task is 
+ * used during assembly to ensure that missing toolchain generates an appropriate error
  ****************************************************************************************/
-def currentPlatform = getCurrentPlatformName()
-assemble.dependsOn "buildNatives_$currentPlatform" 
+assemble.dependsOn "buildNatives" 

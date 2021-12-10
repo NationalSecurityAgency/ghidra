@@ -1,0 +1,133 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      Each function has multiple pointer calculations with shared intermediate results.
+      In all cases, the base pointer must be pushed past the intermediate result in
+      order to recover a natural expression.
+  -->
+<bytechunk space="ram" offset="0x10063a" readonly="true">
+                    554889e54889
+7de88975e48b45e44898488d14c50000
+0000488b45e84801d0488945f8488b45
+f8488d5008488d057803000048890248
+8b45f8488d5010488d056c0300004889
+02905dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x1006ba" readonly="true">
+                    554889e54881
+eca800000089bd5cffffff488d8560ff
+ffff4889c7e8aaffffff488d8560ffff
+ff8b955cffffff4863d248c1e2024801
+d0488945f8488b45f84883c008488945
+f0488b45f08b00c1f80383e00f89c248
+8b45f0891090c9c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100718" readonly="true">
+                554889e54883ec20
+48897de88975e4488b45e84889c7e851
+ffffff8b45e44898488d148500000000
+488b45e84801d0488945f8488b45f848
+83c008488945f0488b45f08b00c1f803
+83e00f89c2488b45f0891090c9c3
+</bytechunk>
+<bytechunk space="ram" offset="0x10076e" readonly="true">
+                            5548
+89e54881ec7805000089bd8cfaffff48
+8d8590faffff4889c7e8f6feffff488d
+8590faffff4883c024488945f88b858c
+faffff4898488945f0488b55f04889d0
+48c1e0044801d048c1e0034889c2488b
+45f84801d0488945e8488b45f04883c0
+014889c24889d048c1e0044801d048c1
+e0034889c2488b45f84801d0488945e0
+488b45e88b008d5025488b45e0891090
+c9c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100802" readonly="true">
+    554889e548897dd88975d48b45d4
+4898488d148500000000488b45d84801
+d0488945f8488b45f84883c008488945
+f0488b45f84883c048488945e8488b45
+f0c70007000000488b45e8c7006f0000
+00905dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x100854" readonly="true">
+        554889e548897dd88975d48b
+45d44863d04889d04801c04801d048c1
+e0024889c2488b45d84801d04883c004
+488945f8488b45f84883e880488945f0
+488b45f84883c008488945e8488b45f0
+c70014000000488b45e8c7001e000000
+905dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x1008b3" readonly="true">
+      554889e548897dd88975d4488b
+45d84883c01c488945f8488b45f8488d
+50088b45d4489848c1e00a4801d04889
+45f0488b45f8488d50088b45d483c001
+489848c1e00a4801d0488945e8488b45
+e88b008d50fd488b45f08910905dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x1009e4" readonly="true">
+  48656c6c6f00476f6f6462796500
+</bytechunk>
+<symbol space="ram" offset="0x10063a" name="argv_test"/>
+<symbol space="ram" offset="0x100684" name="initstruct"/>
+<symbol space="ram" offset="0x1006a4" name="inithierarchy"/>
+<symbol space="ram" offset="0x1006af" name="initarrayarray"/>
+<symbol space="ram" offset="0x1006ba" name="loadstore_fieldarray"/>
+<symbol space="ram" offset="0x100718" name="loadstore_ptrfieldarray"/>
+<symbol space="ram" offset="0x10076e" name="doublearray_stack"/>
+<symbol space="ram" offset="0x100802" name="sameindex"/>
+<symbol space="ram" offset="0x100854" name="sameindex_samefield"/>
+<symbol space="ram" offset="0x1008b3" name="twodim_array"/>
+</binaryimage>
+<script>
+  <com>parse line struct arraystruct { int4 a; int4 b; int4 arr1[16]; int4 arr2[16]; };</com>
+  <com>parse line struct substruct { int4 c; int4 d; int4 e; };</com>
+  <com>parse line struct hierarchy { int4 a; int4 b; substruct arr1[10]; substruct arr2[10]; };</com>
+  <com>parse line struct arrayarray { int4 a; int4 b; int4 arr[8][256]; };</com>
+  <com>parse line extern void initstruct(arraystruct *ptr);</com>
+  <com>parse line extern void inithierarchy(hierarchy *ptr);</com>
+  <com>parse line extern void initarrayarray(arrayarray *ptr);</com>
+  <com>parse line extern void argv_test(char **argv,int4 a);</com>
+  <com>parse line extern void loadstore_fieldarray(int4 a);</com>
+  <com>parse line extern void loadstore_ptrfieldarray(arraystruct *ptr,int4 a);</com>
+  <com>parse line extern void doublearray_stack(int4 a);</com>
+  <com>parse line extern void sameindex(arraystruct *ptr,int4 a);</com>
+  <com>parse line extern void sameindex_samefield(hierarchy *ptr,int4 a);</com>
+  <com>parse line extern void twodim_array(arrayarray *ptr,int4 a);</com>
+  <com>lo fu argv_test</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu loadstore_fieldarray</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu loadstore_ptrfieldarray</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu doublearray_stack</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu sameindex</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu sameindex_samefield</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu twodim_array</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Intermediate pointers #1" min="1" max="1">argv\[\(int8\)a \+ 1\] = "Hello";</stringmatch>
+<stringmatch name="Intermediate pointers #2" min="1" max="1">argv\[\(int8\)a \+ 2\] = "Goodbye";</stringmatch>
+<stringmatch name="Intermediate pointers #3" min="1" max="1">aStack168\.arr1\[a\] = aStack168\.arr1\[a\] &gt;&gt; 3 &amp; 0xf;</stringmatch>
+<stringmatch name="Intermediate pointers #4" min="1" max="1">ptr-&gt;arr1\[a\] = ptr-&gt;arr1\[a\] &gt;&gt; 3 &amp; 0xf;</stringmatch>
+<stringmatch name="Intermediate pointers #5" min="1" max="1">aaStack1400\[\(int8\)a \+ 1\]\.arr1\[7\] = aaStack1400\[a\]\.arr1\[7\] \+ 0x25;</stringmatch>
+<stringmatch name="Intermediate pointers #6" min="1" max="1">ptr-&gt;arr1\[a\] = 7;</stringmatch>
+<stringmatch name="Intermediate pointers #7" min="1" max="1">ptr-&gt;arr2\[a\] = 0x6f;</stringmatch>
+<stringmatch name="Intermediate pointers #8" min="1" max="1">ptr-&gt;arr1\[a\]\.d = 0x1e;</stringmatch>
+<stringmatch name="Intermediate pointers #9" min="1" max="1">ptr-&gt;arr2\[a\]\.d = 0x14;</stringmatch>
+<stringmatch name="Intermediate pointers #10" min="1" max="1">ptr-&gt;arr\[a\]\[7\] = ptr-&gt;arr\[a \+ 1\]\[7\] \+ -3;</stringmatch>
+</decompilertest>

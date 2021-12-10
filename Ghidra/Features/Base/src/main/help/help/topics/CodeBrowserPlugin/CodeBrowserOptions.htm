@@ -927,22 +927,43 @@
         <P><B>Display Local Block -</B> Prepends the name of the memory block containing the XREF
         source address to each XREF.</P>
 
+        <P><B>Namespace Options: </B>
+
+			<BLOCKQUOTE>
+	        <P><B>Display Non-local Namespace -</B> Select this option to prepend the namespace to all
+	        XREFs that are not from an instruction within the current Function's body.&nbsp; Currently,
+	        this would only affect XREFs that originate in some other function.<BR>
+	        </P>
+	
+			<P><B>Display Library in Namespace -</B> Include the library name in the namespace.<BR>
+			</P>
+	
+	        <P><B>Display Local Namespace -</B> Select this option to prepend the namespace to all
+	        XREFs that are from the current Function.<BR>
+	        </P>
+				<BLOCKQUOTE>
+		        <P><B>Use Local Namespace Override</B> - Select this
+		        option to show a fixed prefix for local XREFs instead of the function's name.&nbsp; This
+		        option is only available if the "Display Local Namespace" option is on.&nbsp; The text box
+		        contains the prefix to use for local XREFs.</P>
+		        </BLOCKQUOTE>
+	        </BLOCKQUOTE>
+        
+        <P><B>Display Reference Type -</B> Shows a single letter to represent the type of reference.
+        Some of the possible types are: 
+        <CODE>Read (R), Write (W), Data (*), Call (c), Jump (j) and Thunk (T)</CODE>.        
+        
+        <P><B>Group by Function -</B> Groups all references by the containing source function.  
+        With this option off, all references within a function are displayed on their on row.  
+        With this feature on, each function will get a single row, with all references displayed on
+        that row. 
+        
         <P><B>Maximum Number of XREFs To Display -</B> The maximum number of lines used to display
         XREFs. Additional XREFs will not be displayed.</P>
-
-        <P><B>Display Non-local Namespace -</B> Select this option to prepend the namespace to all
-        XREFs that are not from an instruction within the current Function's body.&nbsp; Currently,
-        this would only affect XREFs that originate in some other function.<BR>
-        </P>
-
-        <P><B>Display Local Namespace -</B> Select this option to prepend the namespace to all
-        XREFs that are from the current Function.<BR>
-        </P>
-
-        <P><SPAN style="font-weight: bold;">Use Local Namespace Override</SPAN> - Select this
-        option to show a fixed prefix for local XREFs instead of the function's name.&nbsp; This
-        option is only available if the "Display Local Namespace" option is on.&nbsp; The text box
-        contains the prefix to use for local XREFs.</P>
+        
+        <P><B>Sort References by -</B> Allows the references to be sorted by Address or by type.
+        This is most useful when <B>Group by Function</B> is off.
+        
       </BLOCKQUOTE>
     </BLOCKQUOTE>
 

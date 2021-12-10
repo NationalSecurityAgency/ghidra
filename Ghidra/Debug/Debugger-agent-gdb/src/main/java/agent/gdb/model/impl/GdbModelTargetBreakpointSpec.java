@@ -19,8 +19,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
-import agent.gdb.manager.breakpoint.GdbBreakpointLocation;
+import agent.gdb.manager.breakpoint.*;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetBreakpointSpec;
@@ -172,9 +171,11 @@ public class GdbModelTargetBreakpointSpec extends
 	protected void updateAttributesFromInfo(String reason) {
 		changeAttributes(List.of(), Map.of(
 			ENABLED_ATTRIBUTE_NAME, enabled = info.isEnabled(),
-			EXPRESSION_ATTRIBUTE_NAME, expression = info.getOriginalLocation(),
+			EXPRESSION_ATTRIBUTE_NAME,
+			expression = info.getType() == GdbBreakpointType.CATCHPOINT ? info.getCatchType()
+					: info.getOriginalLocation(),
 			KINDS_ATTRIBUTE_NAME, kinds = computeKinds(info),
-			DISPLAY_ATTRIBUTE_NAME, updateDisplay()),
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay()),
 			reason);
 	}
 
@@ -186,6 +187,7 @@ public class GdbModelTargetBreakpointSpec extends
 		this.info = newInfo;
 		List<GdbModelTargetBreakpointLocation> effectives = newInfo.getLocations()
 				.stream()
+				.filter(l -> !"<PENDING>".equals(l.getAddr()))
 				.map(this::getTargetBreakpointLocation)
 				.collect(Collectors.toList());
 		breaksBySub.keySet()
@@ -237,11 +239,46 @@ public class GdbModelTargetBreakpointSpec extends
 			i -> new GdbModelTargetBreakpointLocation(this, loc));
 	}
 
-	protected String updateDisplay() {
-		display = String.format("%d breakpoint %s %s %s %s",
-			info.getNumber(), info.getDisp(), info.isEnabled() ? "y" : "n", info.getAddress(),
-			info.getWhat());
-		return display;
+	protected String addressFromInfo() {
+		if (info.getAddress() != null) {
+			return info.getAddress();
+		}
+		List<GdbBreakpointLocation> locs = info.getLocations();
+		if (locs.isEmpty()) {
+			return "<PENDING>";
+		}
+		if (locs.size() == 1) {
+			String addr = locs.get(0).getAddr();
+			if (addr == null) {
+				return "<PENDING>";
+			}
+			return addr;
+		}
+		return "<MULTIPLE>";
+	}
+
+	protected String computeDisplay() {
+		Object enb = info.isEnabled() ? "y" : "n";
+		String addr = addressFromInfo();
+		String what = info.getWhat() == null ? "" : info.getWhat();
+		switch (info.getType()) {
+			case ACCESS_WATCHPOINT:
+			case HW_WATCHPOINT:
+			case READ_WATCHPOINT:
+			case BREAKPOINT:
+			case HW_BREAKPOINT:
+			case OTHER:
+				return String.format("%d %s %s %s %s %s", info.getNumber(), info.getTypeName(),
+					info.getDisp(), enb, addr, what).trim();
+			case CATCHPOINT:
+				return String.format("%d %s %s %s %s", info.getNumber(), info.getTypeName(),
+					info.getDisp(), enb, what).trim();
+			case DPRINTF:
+				// TODO: script?
+				return String.format("%d %s %s %s %s %s", info.getNumber(), info.getTypeName(),
+					info.getDisp(), enb, addr, what).trim();
+		}
+		throw new AssertionError();
 	}
 
 	@Override

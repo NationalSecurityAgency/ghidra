@@ -45,9 +45,10 @@
 
       <LI>Value - the value of the register as recorded in the trace. When the value refers to a
       valid memory offset, right-clicking the row allows the user to navigate to that offset in a
-      selected memory space. This field is user modifiable when the target is alive, the trace is
-      "at the present," and the <B>Enable Edits</B> toggle is on. Changes to the register's value
-      are sent to the target. Values changed by the last event are displayed in <FONT color=
+      selected memory space. This field is user modifiable when the <B>Enable Edits</B> toggle is
+      on, and the register is not part of <CODE>contextreg</CODE>. Changes are sent to the target
+      if the trace is live and "at the present." Otherwise, the change is materialized via
+      emulation. Values changed by the last event are displayed in <FONT color=
       "red">red</FONT>.</LI>
 
       <LI>Type - the type of the register as marked up in the trace. There is generally no default
@@ -91,10 +92,15 @@
 
     <H3><A name="enable_edits"></A>Enable Edits</H3>
 
-    <P>This toggle is a write protector for live registers. To modify live register values, this
-    toggle must be enabled, and the trace must be live and "at the present." Note that editing
-    recorded historical values is not permitted, regardless of this toggle, but can be accomplished
-    via watches or scripts.</P>
+    <P>This toggle is a write protector for target machine state. To modify register values, this
+    toggle must be enabled. Editing a value when the trace is live and "at the present" will cause
+    the value to be modified on the target. Editing emulated values is permitted, but ity has no
+    effect on the target. Editing historical values is not permitted. All edits to non-live trace
+    values are performed in emulation. Specifically, it appends a patch command to the current
+    emulation schedule. This keeps trace history in tact, and it allows patched emulated states to
+    be annotated and recalled later, since they are stored in the trace's scratch space. Note that
+    only the raw "Value" column can be edited directory. The "Repr" column cannot be edited,
+    yet.</P>
 
     <H3><A name="snapshot_window"></A>Snapshot Window</H3>
 

@@ -18,15 +18,14 @@ package ghidra.formats.gfilesystem;
 import java.io.*;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
-
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.RandomAccessByteProvider;
+import ghidra.app.util.bin.*;
+import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
+import ghidra.formats.gfilesystem.FileCache.FileCacheEntryBuilder;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
+import ghidra.formats.gfilesystem.crypto.*;
 import ghidra.formats.gfilesystem.factory.FileSystemFactoryMgr;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.FixedSizeHashMap;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.timer.GTimer;
@@ -48,40 +47,14 @@ import ghidra.util.timer.GTimer;
  * If you are working with {@link GFile} instances, you should have a
  * {@link FileSystemRef fs ref} that you are using to pin the filesystem.
  * <p>
+ * Files written to the {@code fscache} directory are obfuscated to prevent interference from
+ * virus scanners.  See {@link ObfuscatedInputStream} or {@link ObfuscatedOutputStream} or 
+ * {@link ObfuscatedFileByteProvider}.
+ * <p> 
  * Thread-safe.
  * <p>
- *
- * <pre>{@literal
- * TODO list:
- *
- * Refactor fileInfo -> needs dialog to show properties
- * Refactor GFile.getInfo() to return Map<> instead of String.
- * Persistent filesystem - when reopen tool, filesystems should auto-reopen.
- * Unify GhidraFileChooser with GFileSystem.
- * Add "Mounted Filesystems" button to show currently opened GFilesystems?
- * Dockable filesystem browser in FrontEnd.
- * Reorg filesystem browser right-click popup menu to be more Eclipse action-like
- * 	Show In -> Project tree
- *             Tool [CodeBrowser name]
- *  Import
- *  Open With -> Text Viewer
- *               Image Viewer
- *  Export -> To Project dir
- *            To Home dir
- *            To Dir
- *            To Eclipse Project
- *            Decompiled source
- * ProgramMappingService - more robust, precache when open project.
- * Make BatchImportDialog modeless, drag-and-drop to src list
- *
- * Testing:
- *
- * More format tests
- * Large test binary support
- * }</pre>
  */
 public class FileSystemService {
-	private static int FSRL_INTERN_SIZE = 1000;
 
 	private static FileSystemService instance;
 
@@ -100,20 +73,82 @@ public class FileSystemService {
 		return instance != null;
 	}
 
-	private final LocalFileSystem localFS = LocalFileSystem.makeGlobalRootFS();
-	private final FSRLRoot localFSRL = localFS.getFSRL();
-	private final FileSystemFactoryMgr fsFactoryMgr = FileSystemFactoryMgr.getInstance();
-	private FileCache fileCache;
-	private FileSystemCache filesystemCache = new FileSystemCache(localFS);
-	private FileCacheNameIndex fileCacheNameIndex = new FileCacheNameIndex();
-	private FileFingerprintCache fileFingerprintCache = new FileFingerprintCache();
-	private long fsCacheMaintIntervalMS = 10 * 1000;
+	/**
+	 * Used by {@link FileSystemService#getDerivedByteProvider(FSRL, FSRL, String, long, DerivedStreamProducer, TaskMonitor) getDerivedByteProvider()}
+	 * to produce a derivative stream from a source file.
+	 * <p>
+	 * The {@link InputStream} returned from the method needs to supply the bytes of the derived file
+	 * and will be closed by the caller.
+	 * <p>
+	 * Example:
+	 * <p>
+	 * <pre>fsService.getDerivedByteProvider(
+	 *     containerFSRL, 
+	 *     null,
+	 *     "the_derived_file",
+	 *     -1,
+	 *     () -> new MySpecialtyInputstream(),
+	 *     monitor);</pre>
+	 * <p>
+	 * See {@link #produceDerivedStream()}.   
+	 */
+	public interface DerivedStreamProducer {
+
+		/**
+		 * Callback method intended to be implemented by the caller to
+		 * {@link FileSystemService#getDerivedByteProvider(FSRL, FSRL, String, long, DerivedStreamProducer, TaskMonitor)}
+		 * <p>
+		 * The implementation needs to return an {@link InputStream} that contains the bytes
+		 * of the derived file.
+		 * <p>
+		 * @return a new {@link InputStream} that will produce all the bytes of the derived file
+		 * @throws IOException if there is a problem while producing the InputStream
+		 * @throws CancelledException if the user canceled
+		 */
+		InputStream produceDerivedStream() throws IOException, CancelledException;
+	}
 
 	/**
-	 * LRU hashmap, limited in size to FSRL_INTERN_SIZE.
+	 * Used by {@link FileSystemService#getDerivedByteProviderPush(FSRL, FSRL, String, long, DerivedStreamPushProducer, TaskMonitor) getDerivedByteProviderPush()}
+	 * to produce a derivative stream from a source file.
+	 * <p>
+	 * The implementation needs to write bytes to the supplied {@link OutputStream}.
+	 * <p>
+	 * Example:
+	 * <p>
+	 * <pre>fsService.getDerivedByteProviderPush(
+	 *     containerFSRL, 
+	 *     null,
+	 *     "the_derived_file",
+	 *     -1,
+	 *     os -> FileUtilities.copyStream(my_input_stream, os),
+	 *     monitor);</pre>
+	 * <p>
+	 * See {@link #push(OutputStream)}.   
+	 * 
 	 */
-	private FixedSizeHashMap<FSRLRoot, FSRLRoot> fsrlInternMap =
-		new FixedSizeHashMap<>(FSRL_INTERN_SIZE, FSRL_INTERN_SIZE);
+	public interface DerivedStreamPushProducer {
+		/**
+		 * Callback method intended to be implemented by the caller to
+		 * {@link FileSystemService#getDerivedByteProviderPush(FSRL, FSRL, String, long, DerivedStreamPushProducer, TaskMonitor) getDerivedByteProviderPush()}
+		 * <p>
+		 * @param os {@link OutputStream} that the implementor should write the bytes to.  Do
+		 * not close the stream when done
+		 * @throws IOException if there is a problem while writing to the OutputStream
+		 * @throws CancelledException if the user canceled
+		 */
+		void push(OutputStream os) throws IOException, CancelledException;
+	}
+
+	private final LocalFileSystem localFS = LocalFileSystem.makeGlobalRootFS();
+	private final FileSystemFactoryMgr fsFactoryMgr = FileSystemFactoryMgr.getInstance();
+	private final FSRLRoot cacheFSRL = FSRLRoot.makeRoot("cache");
+	private final FileCache fileCache;
+	private final FileSystemInstanceManager fsInstanceManager =
+		new FileSystemInstanceManager(localFS);
+	private final FileCacheNameIndex fileCacheNameIndex = new FileCacheNameIndex();
+	private long fsCacheMaintIntervalMS = 10 * 1000;
+	private CryptoSession currentCryptoSession;
 
 	/**
 	 * Creates a FilesystemService instance, using the {@link Application}'s default value
@@ -121,7 +156,11 @@ public class FileSystemService {
 	 * cache directory.
 	 */
 	public FileSystemService() {
-		this(new File(Application.getUserCacheDirectory(), "fscache"));
+		this(new File(Application.getUserCacheDirectory(), "fscache2"));
+
+		// age off files in old cache dir.  Remove this after a few versions
+		FileCache.performCacheMaintOnOldDirIfNeeded(
+			new File(Application.getUserCacheDirectory(), "fscache"));
 	}
 
 	/**
@@ -134,7 +173,7 @@ public class FileSystemService {
 		try {
 			fileCache = new FileCache(fscacheDir);
 			GTimer.scheduleRepeatingRunnable(fsCacheMaintIntervalMS, fsCacheMaintIntervalMS,
-				() -> filesystemCache.cacheMaint());
+				() -> fsInstanceManager.cacheMaint());
 		}
 		catch (IOException e) {
 			throw new RuntimeException("Failed to init global cache " + fscacheDir, e);
@@ -145,9 +184,8 @@ public class FileSystemService {
 	 * Forcefully closes all open filesystems and clears caches.
 	 */
 	public void clear() {
-		synchronized (filesystemCache) {
-			filesystemCache.clear();
-			fsrlInternMap.clear();
+		synchronized (fsInstanceManager) {
+			fsInstanceManager.clear();
 			fileCacheNameIndex.clear();
 		}
 	}
@@ -156,7 +194,19 @@ public class FileSystemService {
 	 * Close unused filesystems.
 	 */
 	public void closeUnusedFileSystems() {
-		filesystemCache.closeAllUnused();
+		fsInstanceManager.closeAllUnused();
+	}
+
+	/**
+	 * Releases the specified {@link FileSystemRef}, and if no other references remain, removes 
+	 * it from the shared cache of file system instances.
+	 * 
+	 * @param fsRef the ref to release
+	 */
+	public void releaseFileSystemImmediate(FileSystemRef fsRef) {
+		if (fsRef != null && !fsRef.isClosed()) {
+			fsInstanceManager.releaseImmediate(fsRef);
+		}
 	}
 
 	/**
@@ -169,6 +219,27 @@ public class FileSystemService {
 	}
 
 	/**
+	 * Returns true if the specified location is a path on the local computer's
+	 * filesystem.
+	 *
+	 * @param fsrl {@link FSRL} path to query
+	 * @return true if local, false if the path points to an embedded file in a container.
+	 */
+	public boolean isLocal(FSRL fsrl) {
+		return localFS.isSameFS(fsrl);
+	}
+
+	/**
+	 * Builds a {@link FSRL} of a {@link File file} located on the local filesystem.
+	 *
+	 * @param f {@link File} on the local filesystem
+	 * @return {@link FSRL} pointing to the same file, never null
+	 */
+	public FSRL getLocalFSRL(File f) {
+		return localFS.getLocalFSRL(f);
+	}
+
+	/**
 	 * Returns true of there is a {@link GFileSystem filesystem} mounted at the requested
 	 * {@link FSRL} location.
 	 *
@@ -176,7 +247,7 @@ public class FileSystemService {
 	 * @return boolean true if filesystem mounted at location.
 	 */
 	public boolean isFilesystemMountedAt(FSRL fsrl) {
-		return filesystemCache.isFilesystemMountedAt(fsrl);
+		return fsInstanceManager.isFilesystemMountedAt(fsrl);
 	}
 
 	/**
@@ -195,8 +266,7 @@ public class FileSystemService {
 	 */
 	public RefdFile getRefdFile(FSRL fsrl, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		FSRLRoot fsRoot = fsrl.getFS();
-		FileSystemRef ref = getFilesystem(fsRoot, monitor);
+		FileSystemRef ref = getFilesystem(fsrl.getFS(), monitor);
 		try {
 			GFile gfile = ref.getFilesystem().lookup(fsrl.getPath());
 			if (gfile == null) {
@@ -214,83 +284,6 @@ public class FileSystemService {
 		}
 	}
 
-	/**
-	 * Return a {@link FileCacheEntry} with information about the requested file specified
-	 * by the FSRL, forcing a read/cache add of the file is it is missing from the cache.
-	 * <p>
-	 * Never returns NULL, instead throws IOException.
-	 *
-	 * @param fsrl {@link FSRL} of the desired file.
-	 * @param monitor {@link TaskMonitor} to watch and update with progress.
-	 * @return new {@link FileCacheEntry} with info about the cached file.
-	 * @throws IOException if IO error when getting file.
-	 * @throws CancelledException if user canceled.
-	 */
-	private FileCacheEntry getCacheFile(FSRL fsrl, TaskMonitor monitor)
-			throws IOException, CancelledException {
-
-		if (fsrl.getPath() == null) {
-			throw new IOException("Invalid FSRL specified: " + fsrl);
-		}
-		String md5 = fsrl.getMD5();
-		if (md5 == null && fsrl.getNestingDepth() == 1) {
-			// if this is a real file on the local file system, and the FSRL doesn't specify
-			// its MD5, try to fetch the MD5 from the fingerprint cache based on its
-			// size and lastmod time, which will help us locate the file in the cache
-			File f = localFS.getLocalFile(fsrl);
-			if (f.isFile()) {
-				md5 = fileFingerprintCache.getMD5(f.getPath(), f.lastModified(), f.length());
-			}
-		}
-		FSRLRoot fsRoot = fsrl.getFS();
-
-		FileCacheEntry result = (md5 != null) ? fileCache.getFile(md5) : null;
-		if (result == null) {
-			try (FileSystemRef ref = getFilesystem(fsRoot, monitor)) {
-				GFileSystem fs = ref.getFilesystem();
-				GFile gfile = fs.lookup(fsrl.getPath());
-				if (gfile == null) {
-					throw new IOException(
-						"File [" + fsrl + "] not found in filesystem [" + fs.getFSRL() + "]");
-				}
-
-				// Its possible the filesystem added the file to the cache when it was mounted,
-				// or that we now have a better FSRL with a MD5 value that we can use to
-				// search the file cache.
-				if (gfile.getFSRL().getMD5() != null) {
-					result = fileCache.getFile(gfile.getFSRL().getMD5());
-					if (result != null) {
-						return result;
-					}
-				}
-
-				try (InputStream dataStream = fs.getInputStream(gfile, monitor)) {
-					if (dataStream == null) {
-						throw new IOException("Unable to get datastream for " + fsrl);
-					}
-					monitor.setMessage("Caching " + gfile.getName());
-					monitor.initialize(gfile.getLength());
-					result = fileCache.addStream(dataStream, monitor);
-					if (md5 != null && !md5.equals(result.md5)) {
-						throw new IOException("Error reading file, MD5 has changed: " + fsrl +
-							", md5 now " + result.md5);
-					}
-				}
-				if (fsrl.getNestingDepth() == 1) {
-					// if this is a real file on the local filesystem, now that we have its
-					// MD5, save it in the fingerprint cache so it can be found later
-					File f = localFS.getLocalFile(fsrl);
-					if (f.isFile()) {
-						fileFingerprintCache.add(f.getPath(), result.md5, f.lastModified(),
-							f.length());
-					}
-				}
-
-			}
-		}
-
-		return result;
-	}
 
 	/**
 	 * Returns a filesystem instance for the requested {@link FSRLRoot}, either from an already
@@ -311,148 +304,25 @@ public class FileSystemService {
 	 */
 	public FileSystemRef getFilesystem(FSRLRoot fsFSRL, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		synchronized (filesystemCache) {
-			FileSystemRef ref = filesystemCache.getRef(fsFSRL);
+		synchronized (fsInstanceManager) {
+			FileSystemRef ref = fsInstanceManager.getRef(fsFSRL);
 			if (ref == null) {
 				if (!fsFSRL.hasContainer()) {
 					throw new IOException("Bad FSRL " + fsFSRL);
 				}
 
-				fsFSRL = intern(fsFSRL);
-				FSRL containerFSRL = fsFSRL.getContainer();
-				FileCacheEntry cfi = getCacheFile(containerFSRL, monitor);
-				if (containerFSRL.getMD5() == null) {
-					containerFSRL = containerFSRL.withMD5(cfi.md5);
-				}
-				GFileSystem fs = FileSystemFactoryMgr.getInstance()
-						.mountFileSystem(
-							fsFSRL.getProtocol(), containerFSRL, cfi.file, this, monitor);
+				ByteProvider containerByteProvider = getByteProvider(fsFSRL.getContainer(), true, monitor);
+				GFileSystem fs =
+					fsFactoryMgr.mountFileSystem(fsFSRL.getProtocol(), containerByteProvider, this, monitor);
 				ref = fs.getRefManager().create();
-				filesystemCache.add(fs);
+				fsInstanceManager.add(fs);
 			}
 			return ref;
 		}
 	}
 
 	/**
-	 * Adds a {@link GFile file}'s stream's contents to the file cache, returning its MD5 hash.
-	 *
-	 * @param file {@link GFile} not really used currently
-	 * @param is {@link InputStream} to add to the cache.
-	 * @param monitor {@link TaskMonitor} to monitor and update.
-	 * @return string with new file's md5.
-	 * @throws IOException if IO error
-	 * @throws CancelledException if user canceled.
-	 */
-	public FileCacheEntry addFileToCache(GFile file, InputStream is, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		FileCacheEntry fce = fileCache.addStream(is, monitor);
-		return fce;
-	}
-
-	/**
-	 * Stores a stream in the file cache.
-	 * <p>
-	 * @param is {@link InputStream} to store in the cache.
-	 * @param monitor {@link TaskMonitor} to watch and update.
-	 * @return {@link File} location of the new file.
-	 * @throws IOException if IO error
-	 * @throws CancelledException if the user cancels.
-	 */
-	public FileCacheEntry addStreamToCache(InputStream is, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		FileCacheEntry fce = fileCache.addStream(is, monitor);
-		return fce;
-	}
-
-	/**
-	 * Returns a {@link File java.io.file} with the data from the requested FSRL.
-	 * Simple local files will be returned directly, and files nested in containers
-	 * will be located in the file cache directory and have a 'random' name.
-	 * <p>
-	 * Never returns nulls, throws IOException if not found or error.
-	 *
-	 * @param fsrl {@link FSRL} of the desired file.
-	 * @param monitor {@link TaskMonitor} to watch and update.
-	 * @return {@link File} of the desired file in the cache, never null.
-	 * @throws CancelledException if user cancels.
-	 * @throws IOException if IO problem.
-	 */
-	public File getFile(FSRL fsrl, TaskMonitor monitor) throws CancelledException, IOException {
-		if (fsrl.getNestingDepth() == 1) {
-			// If this is a real files on the local filesystem, verify any
-			// MD5 embedded in the FSRL before returning the live local file
-			// as the result.
-			File f = localFS.getLocalFile(fsrl);
-			if (f.isFile() && fsrl.getMD5() != null) {
-				if (!fileFingerprintCache.contains(f.getPath(), fsrl.getMD5(), f.lastModified(),
-					f.length())) {
-					String fileMD5 = FSUtilities.getFileMD5(f, monitor);
-					if (!fsrl.getMD5().equals(fileMD5)) {
-						throw new IOException("Exact file no longer exists: " + f.getPath() +
-							" contents have changed, old md5: " + fsrl.getMD5() + ", new md5: " +
-							fileMD5);
-					}
-					fileFingerprintCache.add(f.getPath(), fileMD5, f.lastModified(), f.length());
-				}
-			}
-			return f;
-		}
-		FileCacheEntry fce = getCacheFile(fsrl, monitor);
-		return fce.file;
-	}
-
-	private String getMD5(FSRL fsrl, TaskMonitor monitor) throws CancelledException, IOException {
-		if (fsrl.getNestingDepth() == 1) {
-			File f = localFS.getLocalFile(fsrl);
-			if (!f.isFile()) {
-				return null;
-			}
-			String md5 = fileFingerprintCache.getMD5(f.getPath(), f.lastModified(), f.length());
-			if (md5 == null) {
-				md5 = FSUtilities.getFileMD5(f, monitor);
-				fileFingerprintCache.add(f.getPath(), md5, f.lastModified(), f.length());
-			}
-			return md5;
-		}
-		FileCacheEntry fce = getCacheFile(fsrl, monitor);
-		return fce.md5;
-	}
-
-	/**
-	 * Builds a {@link FSRL} of a {@link File file} located on the local filesystem.
-	 *
-	 * @param f {@link File} on the local filesystem
-	 * @return {@link FSRL} pointing to the same file, never null
-	 */
-	public FSRL getLocalFSRL(File f) {
-		return localFS.getFSRL()
-				.withPath(
-					FSUtilities.appendPath("/", FilenameUtils.separatorsToUnix(f.getPath())));
-	}
-
-	/**
-	 * Converts a java {@link File} instance into a GFilesystem {@link GFile} hosted on the
-	 * {@link #getLocalFS() local filesystem}.
-	 * <p>
-	 * @param f {@link File} on the local filesystem
-	 * @return {@link GFile} representing the same file or {@code null} if there was a problem
-	 * with the file path.
-	 */
-	public GFile getLocalGFile(File f) {
-		try {
-			return localFS.lookup(f.getPath());
-		}
-		catch (IOException e) {
-			// the LocalFileSystem impl doesn't check the validity of the path so this
-			// exception should never happen.  If it does, fall thru and return null.
-		}
-		return null;
-	}
-
-	/**
-	 * Returns a {@link ByteProvider} with the contents of the requested {@link GFile file}
-	 * (in the Global file cache directory).
+	 * Returns a {@link ByteProvider} with the contents of the requested {@link GFile file}.
 	 * <p>
 	 * Never returns null, throws IOException if there was a problem.
 	 * <p>
@@ -460,81 +330,142 @@ public class FileSystemService {
 	 * when finished.
 	 *
 	 * @param fsrl {@link FSRL} file to wrap
-	 * @param monitor {@link TaskMonitor} to watch and update.
+	 * @param fullyQualifiedFSRL if true, the returned ByteProvider's FSRL will always have a MD5
+	 * hash
+	 * @param monitor {@link TaskMonitor} to watch and update
 	 * @return new {@link ByteProvider}
 	 * @throws CancelledException if user cancels
-	 * @throws IOException if IO problem.
+	 * @throws IOException if IO problem
 	 */
-	public ByteProvider getByteProvider(FSRL fsrl, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		File file = getFile(fsrl, monitor);
-		RandomAccessByteProvider rabp = new RandomAccessByteProvider(file, fsrl);
-		return rabp;
-	}
-
-	/**
-	 * Returns a reference to a file in the FileCache that contains the
-	 * derived (ie. decompressed or decrypted) contents of a source file, as well as
-	 * its md5.
-	 * <p>
-	 * If the file was not present in the cache, the {@link DerivedFileProducer producer}
-	 * lambda will be called and it will be responsible for returning an {@link InputStream}
-	 * which has the derived contents, which will be added to the file cache for next time.
-	 * <p>
-	 * @param fsrl {@link FSRL} of the source (or container) file that this derived file is based on
-	 * @param derivedName a unique string identifying the derived file inside the source (or container) file
-	 * @param producer a {@link DerivedFileProducer callback or lambda} that returns an
-	 * {@link InputStream} that will be streamed into a file and placed into the file cache.
-	 * Example:{@code (file) -> { return new XYZDecryptorInputStream(file); }}
-	 * @param monitor {@link TaskMonitor} that will be monitor for cancel requests and updated
-	 * with file io progress
-	 * @return {@link FileCacheEntry} with file and md5 fields
-	 * @throws CancelledException if the user cancels
-	 * @throws IOException if there was an io error
-	 */
-	public FileCacheEntry getDerivedFile(FSRL fsrl, String derivedName,
-			DerivedFileProducer producer, TaskMonitor monitor)
+	public ByteProvider getByteProvider(FSRL fsrl, boolean fullyQualifiedFSRL, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		// fileCacheNameIndex is queried and updated in separate steps,
-		// which could be a race issue with another thread, but in this
-		// case should be okay as the only bad result will be extra
-		// work being performed recreating the contents of the same derived file a second
-		// time.
-		FileCacheEntry cacheEntry = getCacheFile(fsrl, monitor);
-		String derivedMD5 = fileCacheNameIndex.get(cacheEntry.md5, derivedName);
-		FileCacheEntry derivedFile = (derivedMD5 != null) ? fileCache.getFile(derivedMD5) : null;
-		if (derivedFile == null) {
-			monitor.setMessage(derivedName + " " + fsrl.getName());
-			try (InputStream is = producer.produceDerivedStream(cacheEntry.file)) {
-				derivedFile = fileCache.addStream(is, monitor);
-				fileCacheNameIndex.add(cacheEntry.md5, derivedName, derivedFile.md5);
+		if ( fsrl.getMD5() != null ) {
+			FileCacheEntry fce = fileCache.getFileCacheEntry(fsrl.getMD5());
+			if ( fce != null ) {
+				return fce.asByteProvider(fsrl);
 			}
 		}
-		return derivedFile;
+
+		try ( FileSystemRef fsRef = getFilesystem(fsrl.getFS(), monitor) ) {
+			GFileSystem fs = fsRef.getFilesystem();
+			GFile file = fs.lookup(fsrl.getPath());
+			if (file == null) {
+				throw new IOException("File not found: " + fsrl);
+			}
+			if (file.getFSRL().getMD5() != null) {
+				fsrl = file.getFSRL();
+				// try again to fetch cached file if we now have a md5
+				FileCacheEntry fce = fileCache.getFileCacheEntry(fsrl.getMD5());
+				if (fce != null) {
+					return fce.asByteProvider(fsrl);
+				}
+			}
+			ByteProvider provider = fs.getByteProvider(file, monitor);
+			if (provider == null) {
+				throw new IOException("Unable to get ByteProvider for " + fsrl);
+			}
+
+			// use the returned provider's FSRL as it may have more info
+			FSRL resultFSRL = provider.getFSRL();
+			if (resultFSRL.getMD5() == null && (fsrl.getMD5() != null || fullyQualifiedFSRL)) {
+				String md5 = (fs instanceof GFileHashProvider)
+						? ((GFileHashProvider) fs).getMD5Hash(file, true, monitor)
+						: FSUtilities.getMD5(provider, monitor);
+				resultFSRL = resultFSRL.withMD5(md5);
+			}
+			if (fsrl.getMD5() != null) {
+				if (!fsrl.isMD5Equal(resultFSRL.getMD5())) {
+					throw new IOException("Unable to retrieve requested file, hash has changed: " +
+						fsrl + ", new hash: " + resultFSRL.getMD5());
+				}
+			}
+			return new RefdByteProvider(fsRef.dup(), provider, resultFSRL);
+		}
 	}
 
 	/**
-	 * Returns a reference to a file in the FileCache that contains the
-	 * derived (ie. decompressed or decrypted) contents of a source file, as well as
-	 * its md5.
+	 * Returns a {@link ByteProvider} that contains the
+	 * derived (ie. decompressed or decrypted) contents of the requested file.
 	 * <p>
-	 * If the file was not present in the cache, the {@link DerivedFilePushProducer push producer}
-	 * lambda will be called and it will be responsible for producing and writing the derived
-	 * file's bytes to a {@link OutputStream}, which will be added to the file cache for next time.
+	 * The resulting ByteProvider will be a cached file, either written to a 
+	 * temporary file, or a in-memory buffer if small enough (see {@link FileCache#MAX_INMEM_FILESIZE}).
+	 * <p> 
+	 * If the file was not present in the cache, the {@link DerivedStreamProducer producer}
+	 * will be called and it will be responsible for returning an {@link InputStream}
+	 * which has the derived contents, which will be added to the file cache for next time.
 	 * <p>
-	 * @param fsrl {@link FSRL} of the source (or container) file that this derived file is based on
+	 * @param containerFSRL {@link FSRL} w/hash of the source (or container) file that this 
+	 * derived file is based on
+	 * @param derivedFSRL (optional) {@link FSRL} to assign to the resulting ByteProvider
 	 * @param derivedName a unique string identifying the derived file inside the source (or container) file
-	 * @param pusher a {@link DerivedFilePushProducer callback or lambda} that recieves a {@link OutputStream}.
-	 * Example:{@code (os) -> { ...write to outputstream os here...; }}
+	 * @param sizeHint the expected size of the resulting ByteProvider, or -1 if unknown
+	 * @param producer supplies an InputStream if needed.  See {@link DerivedStreamProducer}
 	 * @param monitor {@link TaskMonitor} that will be monitor for cancel requests and updated
 	 * with file io progress
-	 * @return {@link FileCacheEntry} with file and md5 fields
+	 * @return a {@link ByteProvider} containing the bytes of the requested file, that has the 
+	 * specified derivedFSRL, or a pseudo FSRL if not specified.  Never null
 	 * @throws CancelledException if the user cancels
 	 * @throws IOException if there was an io error
 	 */
-	public FileCacheEntry getDerivedFilePush(FSRL fsrl, String derivedName,
-			DerivedFilePushProducer pusher, TaskMonitor monitor)
+	public ByteProvider getDerivedByteProvider(FSRL containerFSRL, FSRL derivedFSRL,
+			String derivedName, long sizeHint, DerivedStreamProducer producer,
+			TaskMonitor monitor) throws CancelledException, IOException {
+
+		// fileCacheNameIndex is queried and updated in separate steps,
+		// which could be a race issue with another thread, but in this
+		// case should be okay as the only bad result will be extra
+		// work being performed recreating the contents of the same derived file a second
+		// time.
+		assertFullyQualifiedFSRL(containerFSRL);
+		String containerMD5 = containerFSRL.getMD5();
+		String derivedMD5 = fileCacheNameIndex.get(containerMD5, derivedName);
+		FileCacheEntry derivedFile = fileCache.getFileCacheEntry(derivedMD5);
+		if (derivedFile == null) {
+			monitor.setMessage("Caching " + containerFSRL.getName() + " " + derivedName);
+			if (sizeHint > 0) {
+				monitor.initialize(sizeHint);
+			}
+			try (InputStream is = producer.produceDerivedStream();
+					FileCacheEntryBuilder fceBuilder =
+						fileCache.createCacheEntryBuilder(sizeHint)) {
+				FSUtilities.streamCopy(is, fceBuilder, monitor);
+				derivedFile = fceBuilder.finish();
+				fileCacheNameIndex.add(containerMD5, derivedName, derivedFile.getMD5());
+			}
+		}
+		derivedFSRL = (derivedFSRL != null)
+				? derivedFSRL.withMD5(derivedFile.getMD5())
+				: createCachedFileFSRL(derivedFile.getMD5());
+		return derivedFile.asByteProvider(derivedFSRL);
+	}
+
+	/**
+	 * Returns a {@link ByteProvider} that contains the
+	 * derived (ie. decompressed or decrypted) contents of the requested file.
+	 * <p>
+	 * The resulting ByteProvider will be a cached file, either written to a 
+	 * temporary file, or a in-memory buffer if small enough (see {@link FileCache#MAX_INMEM_FILESIZE}).
+	 * <p> 
+	 * If the file was not present in the cache, the {@link DerivedStreamPushProducer pusher}
+	 * will be called and it will be responsible for producing and writing the derived
+	 * file's bytes to a {@link OutputStream}, which will be added to the file cache for next time.
+	 * <p>
+	 * @param containerFSRL {@link FSRL} w/hash of the source (or container) file that this 
+	 * derived file is based on
+	 * @param derivedFSRL (optional) {@link FSRL} to assign to the resulting ByteProvider
+	 * @param derivedName a unique string identifying the derived file inside the source (or container) file
+	 * @param sizeHint the expected size of the resulting ByteProvider, or -1 if unknown
+	 * @param pusher writes bytes to the supplied OutputStream.  See {@link DerivedStreamPushProducer}
+	 * @param monitor {@link TaskMonitor} that will be monitor for cancel requests and updated
+	 * with file io progress
+	 * @return a {@link ByteProvider} containing the bytes of the requested file, that has the 
+	 * specified derivedFSRL, or a pseudo FSRL if not specified.  Never null
+	 * @throws CancelledException if the user cancels
+	 * @throws IOException if there was an io error
+	 */
+	public ByteProvider getDerivedByteProviderPush(FSRL containerFSRL, FSRL derivedFSRL,
+			String derivedName, long sizeHint, DerivedStreamPushProducer pusher, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
 		// fileCacheNameIndex is queried and updated in separate steps,
@@ -542,32 +473,119 @@ public class FileSystemService {
 		// case should be okay as the only bad result will be extra
 		// work being performed recreating the contents of the same derived file a second
 		// time.
-		FileCacheEntry cacheEntry = getCacheFile(fsrl, monitor);
-		String derivedMD5 = fileCacheNameIndex.get(cacheEntry.md5, derivedName);
-		FileCacheEntry derivedFile = (derivedMD5 != null) ? fileCache.getFile(derivedMD5) : null;
+		assertFullyQualifiedFSRL(containerFSRL);
+		String containerMD5 = containerFSRL.getMD5();
+		String derivedMD5 = fileCacheNameIndex.get(containerMD5, derivedName);
+		FileCacheEntry derivedFile = fileCache.getFileCacheEntry(derivedMD5);
 		if (derivedFile == null) {
-			monitor.setMessage("Caching " + fsrl.getName() + " " + derivedName);
-			derivedFile = fileCache.pushStream(pusher, monitor);
-			fileCacheNameIndex.add(cacheEntry.md5, derivedName, derivedFile.md5);
+			monitor.setMessage("Caching " + containerFSRL.getName() + " " + derivedName);
+			if (sizeHint > 0) {
+				monitor.initialize(sizeHint);
+			}
+			try (FileCacheEntryBuilder fceBuilder = fileCache.createCacheEntryBuilder(sizeHint)) {
+				pusher.push(fceBuilder);
+				derivedFile = fceBuilder.finish();
+			}
+			fileCacheNameIndex.add(containerMD5, derivedName, derivedFile.getMD5());
 		}
-		return derivedFile;
+		derivedFSRL = (derivedFSRL != null)
+				? derivedFSRL.withMD5(derivedFile.getMD5())
+				: createCachedFileFSRL(derivedFile.getMD5());
+		return derivedFile.asByteProvider(derivedFSRL);
+	}
+
+	private FSRL createCachedFileFSRL(String md5) {
+		return cacheFSRL.withPathMD5("/" + md5, md5);
+	}
+
+	/**
+	 * Returns a {@link FileCacheEntryBuilder} that will allow the caller to
+	 * write bytes to it.
+	 * <p>
+	 * After calling {@link FileCacheEntryBuilder#finish() finish()},
+	 * the caller will have a {@link FileCacheEntry} that can provide access to a
+	 * {@link ByteProvider}.
+	 * <p>
+	 * Temporary files that are written to disk are obfuscated to avoid interference from
+	 * overzealous virus scanners.  See {@link ObfuscatedInputStream} / 
+	 * {@link ObfuscatedOutputStream}.
+	 * <p>
+	 * @param sizeHint the expected size of the file, or -1 if unknown
+	 * @return {@link FileCacheEntryBuilder} that must be finalized by calling 
+	 * {@link FileCacheEntryBuilder#finish() finish()} 
+	 * @throws IOException if error
+	 */
+	public FileCacheEntryBuilder createTempFile(long sizeHint) throws IOException {
+		return fileCache.createCacheEntryBuilder(sizeHint);
+	}
+
+	/**
+	 * Returns a {@link ByteProvider} for the specified {@link FileCacheEntry}, using the
+	 * specified filename.
+	 * <p>
+	 * The returned ByteProvider's FSRL will be decorative and does not allow returning to
+	 * the same ByteProvider at a later time.
+	 *  
+	 * @param tempFileCacheEntry {@link FileCacheEntry} (returned by {@link #createTempFile(long)})
+	 * @param name desired name
+	 * @return new {@link ByteProvider} with decorative {@link FSRL}
+	 * @throws IOException if io error
+	 */
+	public ByteProvider getNamedTempFile(FileCacheEntry tempFileCacheEntry, String name)
+			throws IOException {
+		FSRL resultFSRL = FSRLRoot.makeRoot("tmp")
+				.withPathMD5(FSUtilities.appendPath("/", name), tempFileCacheEntry.getMD5());
+		return tempFileCacheEntry.asByteProvider(resultFSRL);
+	}
+
+	/**
+	 * Allows the resources used by caching the specified file to be released.
+	 * 
+	 * @param fsrl {@link FSRL} file to release cache resources for 
+	 */
+	public void releaseFileCache(FSRL fsrl) {
+		if (fsrl.getMD5() != null) {
+			fileCache.releaseFileCacheEntry(fsrl.getMD5());
+		}
+	}
+
+	/**
+	 * Adds a plaintext (non-obfuscated) file to the cache, consuming it in the process, and returns
+	 * a {@link ByteProvider} that contains the contents of the file.
+	 * <p>
+	 * NOTE: only use this if you have no other choice and are forced to deal with already
+	 * existing files in the local filesystem.
+	 * 
+	 * @param file {@link File} to add
+	 * @param fsrl {@link FSRL} of the file that is being added
+	 * @param monitor {@link TaskMonitor}
+	 * @return {@link ByteProvider} (hosted in the FileCache) that contains the bytes of the
+	 * specified file
+	 * @throws CancelledException if cancelled
+	 * @throws IOException if error
+	 */
+	public ByteProvider pushFileToCache(File file, FSRL fsrl, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		FileCacheEntry fce = fileCache.giveFile(file, monitor);
+		return fce.asByteProvider(fsrl);
 	}
 
 	/**
 	 * Returns true if the specified derived file exists in the file cache.
 	 * 
-	 * @param fsrl {@link FSRL} of the container
+	 * @param containerFSRL {@link FSRL} w/hash of the container
 	 * @param derivedName name of the derived file inside of the container
 	 * @param monitor {@link TaskMonitor}
 	 * @return boolean true if file exists at time of query, false if file is not in cache
 	 * @throws CancelledException if user cancels
 	 * @throws IOException if other IO error
 	 */
-	public boolean hasDerivedFile(FSRL fsrl, String derivedName, TaskMonitor monitor)
+	public boolean hasDerivedFile(FSRL containerFSRL, String derivedName, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		FileCacheEntry cacheEntry = getCacheFile(fsrl, monitor);
-		String derivedMD5 = fileCacheNameIndex.get(cacheEntry.md5, derivedName);
-		return derivedMD5 != null;
+		assertFullyQualifiedFSRL(containerFSRL);
+		String containerMD5 = containerFSRL.getMD5();
+		String derivedMD5 = fileCacheNameIndex.get(containerMD5, derivedName);
+		return derivedMD5 != null && fileCache.hasEntry(derivedMD5);
 	}
 
 	/**
@@ -582,8 +600,9 @@ public class FileSystemService {
 	 */
 	public boolean isFileFilesystemContainer(FSRL containerFSRL, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		File containerFile = getFile(containerFSRL, monitor);
-		return fsFactoryMgr.test(containerFSRL, containerFile, this, monitor);
+		try (ByteProvider byteProvider = getByteProvider(containerFSRL, false, monitor)) {
+			return fsFactoryMgr.test(byteProvider, this, monitor);
+		}
 	}
 
 	/**
@@ -637,43 +656,30 @@ public class FileSystemService {
 			FileSystemProbeConflictResolver conflictResolver, int priorityFilter)
 			throws CancelledException, IOException {
 
-		// Fix up FSRL first before querying
-		containerFSRL = getFullyQualifiedFSRL(containerFSRL, monitor);
-
-		synchronized (filesystemCache) {
-			containerFSRL = intern(containerFSRL);
-			FileSystemRef ref = filesystemCache.getFilesystemRefMountedAt(containerFSRL);
+		synchronized (fsInstanceManager) {
+			FileSystemRef ref = fsInstanceManager.getFilesystemRefMountedAt(containerFSRL);
 			if (ref != null) {
 				return ref;
 			}
 
-			// Special case when the container is really a local filesystem directory.
-			// Return a LocalFilesystem subfs instance.
-			if (localFS.isLocalSubdir(containerFSRL)) {
-				try {
-					File localDir = new File(containerFSRL.getPath());
-					GFileSystem fs = new LocalFileSystemSub(localDir, getLocalFS());
-					ref = fs.getRefManager().create();
-					filesystemCache.add(fs);
-					return ref;
-				}
-				catch (IOException e) {
-					Msg.error(this, "Problem when probing for local directory: ", e);
-				}
-				return null;
+			GFileSystem subdirFS = probeForLocalSubDirFilesystem(containerFSRL);
+			if (subdirFS != null) {
+				ref = subdirFS.getRefManager().create();
+				fsInstanceManager.add(subdirFS);
+				return ref;
 			}
 		}
 
 		// Normal case, probe the container file and create a filesystem instance.
 		// Do this outside of the sync lock so if any swing stuff happens in the conflictResolver
 		// it doesn't deadlock us.
-		File containerFile = getFile(containerFSRL, monitor);
 		try {
-			GFileSystem fs = fsFactoryMgr.probe(containerFSRL, containerFile, this,
-				conflictResolver, priorityFilter, monitor);
+			ByteProvider byteProvider = getByteProvider(containerFSRL, true, monitor);
+			GFileSystem fs =
+				fsFactoryMgr.probe(byteProvider, this, conflictResolver, priorityFilter, monitor);
 			if (fs != null) {
-				synchronized (filesystemCache) {
-					FileSystemRef fsRef = filesystemCache.getFilesystemRefMountedAt(fs.getFSRL());
+				synchronized (fsInstanceManager) {
+					FileSystemRef fsRef = fsInstanceManager.getFilesystemRefMountedAt(fs.getFSRL());
 					if (fsRef != null) {
 						// race condition between sync block at top of this func and here.
 						// Throw away our new FS instance and use instance already in
@@ -682,7 +688,7 @@ public class FileSystemService {
 						return fsRef;
 					}
 
-					filesystemCache.add(fs);
+					fsInstanceManager.add(fs);
 					return fs.getRefManager().create();
 				}
 			}
@@ -690,6 +696,18 @@ public class FileSystemService {
 		catch (IOException ioe) {
 			Msg.trace(this, "Probe exception", ioe);
 			throw ioe;
+		}
+		return null;
+	}
+
+	private GFileSystem probeForLocalSubDirFilesystem(FSRL containerFSRL) {
+		if (localFS.isLocalSubdir(containerFSRL)) {
+			try {
+				return localFS.getSubFileSystem(containerFSRL);
+			}
+			catch (IOException e) {
+				Msg.error(this, "Problem when probing for local directory: ", e);
+			}
 		}
 		return null;
 	}
@@ -713,16 +731,15 @@ public class FileSystemService {
 	public <FSTYPE extends GFileSystem> FSTYPE mountSpecificFileSystem(FSRL containerFSRL,
 			Class<FSTYPE> fsClass, TaskMonitor monitor) throws CancelledException, IOException {
 
-		containerFSRL = getFullyQualifiedFSRL(containerFSRL, monitor);
-		File containerFile = getFile(containerFSRL, monitor);
 		String fsType = fsFactoryMgr.getFileSystemType(fsClass);
 		if (fsType == null) {
 			Msg.error(this, "Specific file system implemention " + fsClass.getName() +
 				" not registered correctly in file system factory.");
 			return null;
 		}
+		ByteProvider byteProvider = getByteProvider(containerFSRL, true, monitor);
 		GFileSystem fs =
-			fsFactoryMgr.mountFileSystem(fsType, containerFSRL, containerFile, this, monitor);
+			fsFactoryMgr.mountFileSystem(fsType, byteProvider, this, monitor);
 		Class<?> producedClass = fs.getClass();
 		if (!fsClass.isAssignableFrom(fs.getClass())) {
 			fs.close();
@@ -750,23 +767,19 @@ public class FileSystemService {
 	public GFileSystem openFileSystemContainer(FSRL containerFSRL, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		if (localFS.isLocalSubdir(containerFSRL)) {
-			File localDir = localFS.getLocalFile(containerFSRL);
-			return new LocalFileSystemSub(localDir, localFS);
+		GFileSystem subdirFS = probeForLocalSubDirFilesystem(containerFSRL);
+		if (subdirFS != null) {
+			return subdirFS;
 		}
 
-		File containerFile = getFile(containerFSRL, monitor);
-		return fsFactoryMgr.probe(containerFSRL, containerFile, this, null,
-			FileSystemInfo.PRIORITY_LOWEST, monitor);
+		ByteProvider byteProvider = getByteProvider(containerFSRL, true, monitor);
+		return fsFactoryMgr.probe(byteProvider, this, null, FileSystemInfo.PRIORITY_LOWEST,
+			monitor);
 	}
 
 	/**
 	 * Returns a cloned copy of the {@code FSRL} that should have MD5 values specified.
 	 * (excluding GFile objects that don't have data streams)
-	 * <p>
-	 * Also implements a best-effort caching of non-root filesystem FSRL's MD5 values.
-	 * (ie. the md5 values of files inside of containers are cached.  The md5 value of
-	 * files on the real OS filesystem are not cached)
 	 * <p>
 	 * @param fsrl {@link FSRL} of the file that should be forced to have a MD5
 	 * @param monitor {@link TaskMonitor} to watch and update with progress.
@@ -776,83 +789,63 @@ public class FileSystemService {
 	 */
 	public FSRL getFullyQualifiedFSRL(FSRL fsrl, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		if (fsrl == null) {
-			return null;
+		if (fsrl == null || fsrl.getMD5() != null) {
+			return fsrl;
 		}
-
-		FSRL fqParentContainer = getFullyQualifiedFSRL(fsrl.getFS().getContainer(), monitor);
-
-		FSRL resultFSRL = (fqParentContainer != fsrl.getFS().getContainer())
-				? FSRLRoot.nestedFS(fqParentContainer, fsrl.getFS()).withPath(fsrl)
-				: fsrl;
-
-		if (resultFSRL.getMD5() == null) {
-			String md5 = null;
-			if (fqParentContainer != null) {
-				md5 = fileCacheNameIndex.get(fqParentContainer.getMD5(), resultFSRL.getPath());
-			}
-			if (md5 == null) {
-				try {
-					md5 = getMD5(resultFSRL, monitor);
-					if (fqParentContainer != null) {
-						fileCacheNameIndex.add(fqParentContainer.getMD5(), resultFSRL.getPath(),
-							md5);
-					}
-				}
-				catch (IOException ioe) {
-					// ignore, default to no MD5 value
-				}
-			}
-			if (md5 != null) {
-				resultFSRL = resultFSRL.withMD5(md5);
-			}
+		try (FileSystemRef fsRef = getFilesystem(fsrl.getFS(), monitor)) {
+			return getFullyQualifiedFSRL(fsRef.getFilesystem(), fsrl, monitor);
 		}
-
-		return resultFSRL;
 	}
 
-	/**
-	 * Returns true if the specified file is on the local computer's
-	 * filesystem.
-	 *
-	 * @param gfile file to query
-	 * @return true if local, false if the path points to an embedded file in a container.
-	 */
-	public boolean isLocal(GFile gfile) {
-		return gfile.getFSRL().getFS().hasContainer() == false;
+	private void assertFullyQualifiedFSRL(FSRL fsrl) throws IOException {
+		if (fsrl.getMD5() == null) {
+			throw new IOException("Bad FSRL, expected fully qualified: " + fsrl);
+		}
 	}
 
-	/**
-	 * Returns true if the specified location is a path on the local computer's
-	 * filesystem.
-	 *
-	 * @param fsrl {@link FSRL} path to query
-	 * @return true if local, false if the path points to an embedded file in a container.
-	 */
-	public boolean isLocal(FSRL fsrl) {
-		return fsrl.getFS().hasContainer() == false;
-	}
-
-	public String getFileHash(GFile gfile, TaskMonitor monitor)
+	private FSRL getFullyQualifiedFSRL(GFileSystem fs, FSRL fsrl, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		if (isLocal(gfile)) {
-			File f = localFS.getLocalFile(gfile.getFSRL());
-			if (f.isFile()) {
-				return FSUtilities.getFileMD5(f, monitor);
-			}
+		if (fsrl.getMD5() != null) {
+			return fsrl;
 		}
-		else {
-			try (InputStream dataStream = gfile.getFilesystem().getInputStream(gfile, monitor)) {
-				if (dataStream == null) {
-					throw new IOException("Unable to get datastream for " + gfile.getFSRL());
+		GFile file = fs.lookup(fsrl.getPath());
+		if (file == null) {
+			throw new IOException("File not found: " + fsrl);
+		}
+		if (file.getFSRL().getMD5() != null || file.isDirectory()) {
+			return file.getFSRL();
+		}
+
+		FSRL containerFSRL = fsrl.getFS().getContainer();
+		if (containerFSRL != null && containerFSRL.getMD5() == null) {
+			// re-home the fsrl to the parent container's fsrl since
+			// filesystems will always have fully qualified fsrl
+			containerFSRL = fs.getFSRL().getContainer();
+			fsrl = FSRLRoot.nestedFS(containerFSRL, fsrl.getFS()).withPath(fsrl);
+		}
+
+		if (fs instanceof GFileHashProvider) {
+			GFileHashProvider hashProvider = (GFileHashProvider) fs;
+			return fsrl.withMD5(hashProvider.getMD5Hash(file, true, monitor));
+		}
+
+		String md5 = (containerFSRL != null)
+				? fileCacheNameIndex.get(containerFSRL.getMD5(), fsrl.getPath())
+				: null;
+		if (md5 == null) {
+			try (ByteProvider bp = fs.getByteProvider(file, monitor)) {
+				if (bp == null) {
+					throw new IOException("Unable to get bytes for " + fsrl);
 				}
-				monitor.setMessage("Caching " + gfile.getName());
-				monitor.initialize(gfile.getLength());
-				FileCacheEntry cfi = fileCache.addStream(dataStream, monitor);
-				return cfi.md5;
+				md5 = (bp.getFSRL().getMD5() != null)
+						? bp.getFSRL().getMD5()
+						: FSUtilities.getMD5(bp, monitor);
 			}
 		}
-		return null;
+		if (containerFSRL != null && fs.isStatic()) {
+			fileCacheNameIndex.add(containerFSRL.getMD5(), fsrl.getPath(), md5);
+		}
+		return fsrl.withMD5(md5);
 	}
 
 	/**
@@ -875,8 +868,8 @@ public class FileSystemService {
 	 * @return {@link List} of {@link FSRLRoot} of currently mounted filesystems.
 	 */
 	public List<FSRLRoot> getMountedFilesystems() {
-		synchronized (filesystemCache) {
-			return filesystemCache.getMountedFilesystems();
+		synchronized (fsInstanceManager) {
+			return fsInstanceManager.getMountedFilesystems();
 		}
 	}
 
@@ -891,58 +884,30 @@ public class FileSystemService {
 	 * @return new {@link FileSystemRef} or null if requested file system not mounted.
 	 */
 	public FileSystemRef getMountedFilesystem(FSRLRoot fsFSRL) {
-		synchronized (filesystemCache) {
-			return filesystemCache.getRef(fsFSRL);
+		synchronized (fsInstanceManager) {
+			return fsInstanceManager.getRef(fsFSRL);
 		}
-
 	}
 
 	/**
-	 * Interns the FSRLRoot so that its parent parts are shared with already interned instances.
+	 * Returns a new {@link CryptoSession} that the caller can use to query for
+	 * passwords and such.  Caller is responsible for closing the instance when done.
 	 * <p>
-	 * Caller needs to hold sync mutex
-	 *
-	 * @param fsrl {@link FSRLRoot} to intern-alize.
-	 * @return possibly different {@link FSRLRoot} instance that has shared parent references
-	 * instead of unique bespoke instances.
+	 * Later callers to this method will receive a nested CryptoSession that shares it's
+	 * state with the initial CryptoSession, until the initial CryptoSession is closed(). 
+	 * 
+	 * @return new {@link CryptoSession} instance, never null
 	 */
-	private FSRLRoot intern(FSRLRoot fsrl) {
-		if (localFSRL.equals(fsrl)) {
-			return localFSRL;
+	public synchronized CryptoSession newCryptoSession() {
+		if (currentCryptoSession == null || currentCryptoSession.isClosed()) {
+			// If no this no current open cryptosession, return a new full/independent 
+			// cryptosession, and use it as the parent for any subsequent sessions
+			currentCryptoSession = CryptoProviders.getInstance().newSession();
+			return currentCryptoSession;
 		}
 
-		FSRL container = fsrl.getContainer();
-		if (container != null) {
-			FSRLRoot parentFSRL = intern(container.getFS());
-			if (parentFSRL != container.getFS()) {
-				FSRL internedContainer = parentFSRL.withPath(container);
-				fsrl = FSRLRoot.nestedFS(internedContainer, fsrl);
-			}
-		}
-		FSRLRoot existing = fsrlInternMap.get(fsrl);
-		if (existing == null) {
-			fsrlInternMap.put(fsrl, fsrl);
-			existing = fsrl;
-		}
-
-		return existing;
-	}
-
-	/**
-	 * Interns the FSRL so that its parent parts are shared with already interned instances.
-	 * <p>
-	 * Caller needs to hold sync mutex.
-	 * <p>
-	 * Only {@link FSRLRoot} instances are cached in the intern map, {@link FSRL} instances
-	 * are not.
-	 *
-	 * @param fsrl {@link FSRL} to intern-alize.
-	 * @return possibly different {@link FSRL} instance that has shared parent references
-	 * instead of unique bespoke instances.
-	 */
-	private FSRL intern(FSRL fsrl) {
-		FSRLRoot internedRoot = intern(fsrl.getFS());
-		return internedRoot == fsrl.getFS() ? fsrl : internedRoot.withPath(fsrl);
+		// return a nested / dependent cryptosession
+		return new CryptoProviderSessionChildImpl(currentCryptoSession);
 	}
 
 }

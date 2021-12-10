@@ -15,44 +15,42 @@
  */
 package ghidra.graph.visualization;
 
-import ghidra.service.graph.AttributedEdge;
-
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import ghidra.service.graph.AttributedEdge;
+import ghidra.service.graph.GraphType;
 
 /**
- * {@code Comparator} to order {@code AttributedEdge}s based on their position in a
- * supplied {@code List}.
- *
+ * Edge comparator that compares edges based on their edge type. The default renderer will use
+ * the order in which the edge types were defined in the {@link GraphType}.
  */
 public class EdgeComparator implements Comparator<AttributedEdge> {
 
-	/**
-	 * {@code Map} of EdgeType attribute value to integer priority
-	 */
-	private Map<String, Integer> edgePriorityMap = new HashMap();
+	private GraphRenderer renderer;
 
-	/**
-	 * Create an instance and place the list values into the {@code edgePriorityMap}
-	 * with a one-up counter expressing their relative priority
-	 * @param edgePriorityList
-	 */
-	public EdgeComparator(List<String> edgePriorityList) {
-		edgePriorityList.forEach(s -> edgePriorityMap.put(s, edgePriorityList.indexOf(s)));
+	public EdgeComparator(GraphRenderer renderer) {
+		this.renderer = renderer;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 * Compares the {@code AttributedEdge}s using their priority in the supplied {@code edgePriorityMap}
-	 */
 	@Override
-	public int compare(AttributedEdge edgeOne, AttributedEdge edgeTwo) {
-		return priority(edgeOne).compareTo(priority(edgeTwo));
+	public int compare(AttributedEdge edge1, AttributedEdge edge2) {
+		String edgeType1 = edge1.getEdgeType();
+		String edgeType2 = edge2.getEdgeType();
+
+		if (edgeType1 == null && edgeType2 == null) {
+			return 0;
+		}
+		if (edgeType1 == null) {
+			return 1;
+		}
+		if (edgeType2 == null) {
+			return -1;
+		}
+
+		Integer priority1 = renderer.getEdgePriority(edgeType1);
+		Integer priority2 = renderer.getEdgePriority(edgeType2);
+
+		return priority1.compareTo(priority2);
 	}
 
-	private Integer priority(AttributedEdge e) {
-		return edgePriorityMap.getOrDefault(e.getAttribute("EdgeType"), 0);
-	}
 }

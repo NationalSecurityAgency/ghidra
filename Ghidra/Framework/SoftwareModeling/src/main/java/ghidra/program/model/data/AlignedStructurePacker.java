@@ -101,16 +101,6 @@ public class AlignedStructurePacker {
 		int length = packer.getLength();
 		componentsChanged |= packer.componentsChanged();
 
-		DataTypeComponent flexibleArrayComponent = structure.getFlexibleArrayComponent();
-		if (flexibleArrayComponent != null) {
-			// account for flexible array type and any end of structure padding required
-			int componentAlignment = CompositeAlignmentHelper.getPackedAlignment(dataOrganization,
-				structure.getStoredPackingValue(), flexibleArrayComponent);
-			length = DataOrganizationImpl.getAlignedOffset(componentAlignment, length);
-			defaultAlignment =
-				DataOrganizationImpl.getLeastCommonMultiple(defaultAlignment, componentAlignment);
-		}
-
 		int alignment = defaultAlignment;
 		AlignmentType alignmentType = structure.getAlignmentType();
 		if (alignmentType != AlignmentType.DEFAULT) {
@@ -136,7 +126,7 @@ public class AlignedStructurePacker {
 	 * returned result.  Component count is should only change if component
 	 * list includes DEFAULT members which will be ignored.
 	 * @param structure structure whose members are to be aligned/packed.
-	 * @param components structure components (excludes any trailing flexible array).
+	 * @param components structure components.
 	 * @return aligned packing result
 	 */
 	public static StructurePackResult packComponents(StructureInternal structure,

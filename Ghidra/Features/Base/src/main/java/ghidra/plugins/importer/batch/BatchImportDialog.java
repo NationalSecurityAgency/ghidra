@@ -39,7 +39,8 @@ import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.table.*;
 import ghidra.app.services.ProgramManager;
-import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.plugin.importer.ImporterUtilities;
@@ -411,18 +412,9 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 	private boolean addSources(List<FSRL> filesToAdd) {
 
-		//@formatter:off
-		List<FSRL> updatedFiles = filesToAdd
-			.stream()
-			.map(fsrl -> {
-				if (fsrl instanceof FSRLRoot && fsrl.getFS().hasContainer()) {
-					fsrl = fsrl.getFS().getContainer();
-				}
-				return fsrl; 
-			})
-			.collect(Collectors.toList())
-			;
-		//@formatter:on
+		List<FSRL> updatedFiles = filesToAdd.stream()
+				.map(FSRL::convertRootToContainer)
+				.collect(Collectors.toList());
 
 		List<FSRL> badFiles = batchInfo.addFiles(updatedFiles);
 		if (!badFiles.isEmpty()) {

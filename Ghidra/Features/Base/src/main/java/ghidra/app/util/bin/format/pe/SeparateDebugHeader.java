@@ -15,16 +15,16 @@
  */
 package ghidra.app.util.bin.format.pe;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import generic.continues.GenericFactory;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
 import ghidra.util.Conv;
 import ghidra.util.Msg;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * <pre>
@@ -114,12 +114,12 @@ public class SeparateDebugHeader implements OffsetValidator {
 
 		sections = new SectionHeader[numberOfSections];
 		for (int i = 0; i < numberOfSections; ++i) {
-			sections[i] = SectionHeader.createSectionHeader(reader, ptr);
+			sections[i] = SectionHeader.readSectionHeader(reader, ptr, -1);
 			ptr += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
 		}
 
 		long tmp = ptr;
-		List<String> exportedNameslist = new ArrayList<String>();
+		List<String> exportedNameslist = new ArrayList<>();
 		while (true) {
 			String str = reader.readAsciiString(tmp);
 			if (str == null || str.length() == 0) {
@@ -257,6 +257,7 @@ public class SeparateDebugHeader implements OffsetValidator {
 		return parser;
 	}
 
+	@Override
 	public boolean checkPointer(long ptr) {
 		for (int i = 0; i < sections.length; ++i) {
 			long rawSize = sections[i].getSizeOfRawData() & Conv.INT_MASK;
@@ -269,6 +270,7 @@ public class SeparateDebugHeader implements OffsetValidator {
 		return false;
 	}
 
+	@Override
 	public boolean checkRVA(long rva) {
 		return (0 <= rva) && (rva <= sizeOfImage);
 	}

@@ -65,7 +65,7 @@ public class RttiUtil {
 	 */
 	static boolean createSymbolFromDemangledType(Program program, Address rttiAddress,
 			TypeDescriptorModel typeDescriptorModel, String rttiSuffix) {
-		
+
 		rttiSuffix = SymbolUtilities.replaceInvalidChars(rttiSuffix, true);
 
 		// Get or create the namespace for this RTTI's type descriptor.
@@ -97,7 +97,7 @@ public class RttiUtil {
 			return false;
 		}
 		// Don't create it if a similar symbol already exists at the address of the data.
-		Symbol[] symbols = symbolTable.getSymbols(rttiAddress);
+		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(rttiAddress);
 		for (Symbol symbol : symbols) {
 			String name = symbol.getName();
 			if (name.contains(rttiSuffix)) {
@@ -159,7 +159,7 @@ public class RttiUtil {
 			}
 
 			// check in .text and .nep if either exists
-			if ( textBlock != null || nepBlock != null) {
+			if (textBlock != null || nepBlock != null) {
 				MemoryBlock refedBlock = memory.getBlock(referencedAddress);
 				boolean inTextBlock = ((textBlock != null) && textBlock.equals(refedBlock));
 				boolean inNepBlock = ((nepBlock != null) && nepBlock.equals(refedBlock));
@@ -168,12 +168,12 @@ public class RttiUtil {
 					break; // Not pointing to good section.
 				}
 			}
-			
+
 			// any references after the first one ends the table
 			if (tableSize > 0 && referenceManager.hasReferencesTo(currentVfPointerAddress)) {
 				break;
 			}
-			
+
 			Function function = functionManager.getFunctionAt(referencedAddress);
 
 			if (function == null &&
@@ -212,12 +212,12 @@ public class RttiUtil {
 		boolean terminationRequest = false;
 		Address commonVftableAddress = null;
 		Program program;
-		
+
 		public CommonRTTIMatchCounter(Program program) {
 			this.program = program;
 			defaultPointerSize = program.getDefaultPointerSize();
 		}
-		
+
 		public Address getinfoVfTable() {
 			return commonVftableAddress;
 		}
@@ -249,10 +249,10 @@ public class RttiUtil {
 				}
 				matchingAddrCount = 0;
 			}
-			
+
 			commonVftableAddress = possibleVftableAddress;
 			matchingAddrCount++;
-			
+
 			if (matchingAddrCount > MIN_MATCHING_VFTABLE_PTRS) {
 				// done finding good addresses have at Minimum matching number
 				terminationRequest = true;
@@ -261,7 +261,7 @@ public class RttiUtil {
 			return;
 		}
 	}
-	
+
 	/**
 	 * Method to figure out the type_info vftable address using pointed to value by all RTTI classes
 	 * @param program the current program
@@ -293,7 +293,7 @@ public class RttiUtil {
 				dataBlocks, set, monitor);
 			infoVftableAddress = vfTableAddrChecker.getinfoVfTable();
 		}
-		
+
 		// cache result of search
 		vftableMap.put(program, infoVftableAddress);
 
@@ -308,18 +308,18 @@ public class RttiUtil {
 	private static Address findTypeInfoVftableLabel(Program program) {
 		SymbolTable symbolTable = program.getSymbolTable();
 		Namespace typeinfoNamespace =
-				symbolTable.getNamespace(TYPE_INFO_NAMESPACE, program.getGlobalNamespace());
+			symbolTable.getNamespace(TYPE_INFO_NAMESPACE, program.getGlobalNamespace());
 		Symbol vftableSymbol =
-				symbolTable.getLocalVariableSymbol("vftable", typeinfoNamespace);
+			symbolTable.getLocalVariableSymbol("vftable", typeinfoNamespace);
 		if (vftableSymbol != null) {
 			return vftableSymbol.getAddress();
 		}
-		
+
 		vftableSymbol = symbolTable.getLocalVariableSymbol("`vftable'", typeinfoNamespace);
 		if (vftableSymbol != null) {
 			return vftableSymbol.getAddress();
 		}
-		
+
 		vftableSymbol = symbolTable.getLocalVariableSymbol("type_info", typeinfoNamespace);
 		if (vftableSymbol != null) {
 			return vftableSymbol.getAddress();
@@ -358,7 +358,8 @@ public class RttiUtil {
 		}
 
 		// check to see if symbol already exists both non-pdb and pdb versions
-		Symbol vftableSymbol = symbolTable.getSymbol(TYPE_INFO_NAMESPACE, address, typeinfoNamespace);
+		Symbol vftableSymbol =
+			symbolTable.getSymbol(TYPE_INFO_NAMESPACE, address, typeinfoNamespace);
 		if (vftableSymbol != null) {
 			return;
 		}

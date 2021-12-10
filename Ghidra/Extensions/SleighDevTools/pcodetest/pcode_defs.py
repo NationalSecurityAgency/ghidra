@@ -24,6 +24,7 @@ PCodeTest({
     'toolchain': 'ARM/arm-eabi',
     'language_id': 'ARM:LE:32:v7',
     'ccflags': '-L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
+    'proc_test': 'arm',
 })
 
 PCodeTest({
@@ -34,6 +35,7 @@ PCodeTest({
     'toolchain': 'ARM/armbe-eabi',
     'language_id': 'ARM:BE:32:v7',
     'ccflags': '-mbig-endian -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
+    'proc_test': 'arm',
     'has_float': 0,
     'has_double': 0,
     'has_longlong': 0,
@@ -45,6 +47,17 @@ PCodeTest({
     'toolchain': 'ARM/arm-eabi',
     'ccflags': '-mcpu=arm2 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
     'language_id': 'ARM:LE:32:v7',
+    'proc_test': 'arm',
+})
+
+PCodeTest({
+    'name': 'ARMv5',
+    'build_all': 1,
+    'build_exe': 1,
+    'qemu_command': 'qemu-arm',
+    'toolchain': 'ARM/arm-eabi',
+    'language_id': 'ARM:LE:32:v5',
+    'ccflags': '-march=armv5 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
 })
 
 PCodeTest({
@@ -52,6 +65,7 @@ PCodeTest({
     'toolchain': 'ARM/arm-eabi',
     'ccflags': '-mcpu=arm7 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
     'language_id': 'ARM:LE:32:v7',
+    'proc_test': 'arm',
 })
 
 PCodeTest({
@@ -59,6 +73,7 @@ PCodeTest({
     'toolchain': 'ARM/arm-eabi',
     'ccflags': '-mcpu=arm8 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
     'language_id': 'ARM:LE:32:v7',
+    'proc_test': 'arm',
 })
 
 PCodeTest({
@@ -66,6 +81,7 @@ PCodeTest({
     'toolchain': 'ARM/arm-eabi',
     'ccflags': '-mcpu=arm9 -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
     'language_id': 'ARM:LE:32:v7',
+    'proc_test': 'arm',
 })
 
 PCodeTest({
@@ -76,6 +92,7 @@ PCodeTest({
     'toolchain': 'ARM/arm-eabi',
     'ccflags': '-mcpu=arm10e -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s -lgcc',
     'language_id': 'ARM:LE:32:v7',
+    'proc_test': 'arm',
 })
 
 PCodeTest({
@@ -86,6 +103,7 @@ PCodeTest({
     'toolchain': 'ARM/arm-eabi',
     'ccflags': '-mthumb -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s/thumb -lgcc',
     'language_id': 'ARM:LE:32:v7',
+    'proc_test': 'arm',
 })
 
 PCodeTest({
@@ -94,6 +112,7 @@ PCodeTest({
     'toolchain': 'ARM/armbe-eabi',
     'ccflags': '-mthumb -mbig-endian -L %(toolchain_dir)s/lib/gcc/armbe-eabi/%(gcc_version)s/thumb -lgcc',
     'language_id': 'ARM:BE:32:v7',
+    'proc_test': 'arm',
     'has_float': 0,
     'has_double': 0,
     'has_longlong': 0,
@@ -107,6 +126,7 @@ PCodeTest({
     'toolchain': 'ARM/arm-eabi',
     'ccflags': '-mthumb -mcpu=cortex-a8 -mfloat-abi=softfp -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s/thumb -lgcc',
     'language_id': 'ARM:LE:32:v7',
+    'proc_test': 'arm',
 })
 
 PCodeTest({

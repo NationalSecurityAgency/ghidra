@@ -24,7 +24,7 @@ import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
  * Implementation of {@link GdbThread#stepInstruction()}
  */
 public class GdbStepCommand extends AbstractGdbCommandWithThreadId<Void>
-		implements MixinResumeInCliGdbCommand {
+		implements MixinResumeInCliGdbCommand<Void> {
 	protected final StepCmd cmd;
 
 	public GdbStepCommand(GdbManagerImpl manager, Integer threadId, StepCmd cmd) {
@@ -53,6 +53,7 @@ public class GdbStepCommand extends AbstractGdbCommandWithThreadId<Void>
 
 	@Override
 	public Void complete(GdbPendingCommand<?> pending) {
-		return completeOnRunning(pending);
+		completeOnRunning(pending);
+		return null;
 	}
 }

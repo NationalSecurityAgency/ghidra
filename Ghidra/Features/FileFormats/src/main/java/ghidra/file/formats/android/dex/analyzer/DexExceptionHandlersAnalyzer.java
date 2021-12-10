@@ -24,6 +24,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
+import ghidra.file.formats.android.cdex.CDexConstants;
 import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.program.model.address.*;
@@ -50,7 +51,7 @@ public class DexExceptionHandlersAnalyzer extends FileFormatAnalyzer {
 	public boolean canAnalyze(Program program) {
 		ByteProvider provider =
 			new MemoryByteProvider(program.getMemory(), program.getMinAddress());
-		return DexConstants.isDexFile(provider);
+		return DexConstants.isDexFile(provider) || CDexConstants.isCDEX(program);
 	}
 
 	@Override
@@ -65,12 +66,12 @@ public class DexExceptionHandlersAnalyzer extends FileFormatAnalyzer {
 
 	@Override
 	public String getDescription() {
-		return "Disassembles the exception handlers in a DEX file";
+		return "Disassembles the exception handlers in a DEX/CDEX file";
 	}
 
 	@Override
 	public String getName() {
-		return "Android DEX Exception Handlers";
+		return "Android DEX/CDEX Exception Handlers";
 	}
 
 	@Override
@@ -176,8 +177,8 @@ public class DexExceptionHandlersAnalyzer extends FileFormatAnalyzer {
 	private void createCatchSymbol(Program program, String catchName, Address catchAddress) {
 		Namespace catchNameSpace = DexUtil.getOrCreateNameSpace(program, "CatchHandlers");
 		try {
-			program.getSymbolTable().createLabel(catchAddress, catchName, catchNameSpace,
-				SourceType.ANALYSIS);
+			program.getSymbolTable()
+					.createLabel(catchAddress, catchName, catchNameSpace, SourceType.ANALYSIS);
 		}
 		catch (Exception e) {
 			Msg.error(this, "Error creating label", e);

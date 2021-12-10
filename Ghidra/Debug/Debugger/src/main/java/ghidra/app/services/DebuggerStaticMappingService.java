@@ -487,27 +487,38 @@ public interface DebuggerStaticMappingService {
 	}
 
 	/**
-	 * A {@code (shift,view)} pair for describing sets of mapped addresses
+	 * A pair for describing sets of mapped addresses
+	 * 
+	 * <p>
+	 * Note, the natural order is by the <em>destination</em> address.
 	 */
-	public class ShiftAndAddressSetView {
-		private final long shift;
-		private final AddressSetView view;
+	public class MappedAddressRange implements Comparable<MappedAddressRange> {
 
-		public ShiftAndAddressSetView(long shift, AddressSetView view) {
-			this.shift = shift;
-			this.view = view;
+		private final AddressRange srcRange;
+		private final AddressRange dstRange;
+		private final int hashCode;
+		private final long shift;
+
+		public MappedAddressRange(AddressRange srcRange, AddressRange dstRange) {
+			this.srcRange = srcRange;
+			this.dstRange = dstRange;
+			this.hashCode = Objects.hash(dstRange, srcRange);
+			this.shift = dstRange.getMinAddress().getOffset() -
+				srcRange.getMinAddress().getOffset();
+		}
+
+		@Override
+		public String toString() {
+			return "<MappedRange " + srcRange + "::" + dstRange + ">";
 		}
 
 		/**
-		 * Get the shift from the source address set to this address set
+		 * Get the shift from the source address range to this address range
 		 * 
 		 * <p>
-		 * The meaning depends on what returned this view. If this view is the "static" set, then
+		 * The meaning depends on what returned this view. If this view is the "static" range, then
 		 * this shift describes what was added to the offset of the "dynamic" address to get a
-		 * particular address in this set. Note that since not all addresses from the requested
-		 * source set may have been mapped, you cannot simply compare min addresses to obtain this
-		 * shift. To "map back" to the source address from a destination address in this set,
-		 * <em>subtract</em> this shift.
+		 * particular address in the "static" range.
 		 * 
 		 * @return the shift
 		 */
@@ -516,12 +527,107 @@ public interface DebuggerStaticMappingService {
 		}
 
 		/**
-		 * Get the destination address set view as mapped from the source address set
+		 * Map an address in the source range to the corresponding address in the destination range
 		 * 
-		 * @return the address set
+		 * @param saddr the source address (not validated)
+		 * @return the destination address
 		 */
-		public AddressSetView getAddressSetView() {
-			return view;
+		public Address mapSourceToDestination(Address saddr) {
+			return dstRange.getAddressSpace().getAddress(saddr.getOffset() + shift);
+		}
+
+		/**
+		 * Map an address in the destination range to the corresponding address in the source range
+		 * 
+		 * @param daddr the destination address (not validated)
+		 * @return the source address
+		 */
+		public Address mapDestinationToSource(Address daddr) {
+			return srcRange.getAddressSpace().getAddress(daddr.getOffset() - shift);
+		}
+
+		/**
+		 * Map a sub-range of the source to the corresponding sub-range of the destination
+		 * 
+		 * @param srng the source sub-range
+		 * @return the destination sub-range
+		 */
+		public AddressRange mapSourceToDestination(AddressRange srng) {
+			try {
+				return new AddressRangeImpl(mapSourceToDestination(srng.getMinAddress()),
+					srng.getLength());
+			}
+			catch (AddressOverflowException e) {
+				throw new IllegalArgumentException(e);
+			}
+		}
+
+		/**
+		 * Map a sub-range of the destination to the corresponding sub-range of the source
+		 * 
+		 * @param drng the destination sub-range
+		 * @return the source sub-range
+		 */
+		public AddressRange mapDestinationToSource(AddressRange drng) {
+			try {
+				return new AddressRangeImpl(mapDestinationToSource(drng.getMinAddress()),
+					drng.getLength());
+			}
+			catch (AddressOverflowException e) {
+				throw new IllegalArgumentException(e);
+			}
+		}
+
+		/**
+		 * Get the source address range
+		 * 
+		 * @return the address range
+		 */
+		public AddressRange getSourceAddressRange() {
+			return srcRange;
+		}
+
+		/**
+		 * Get the destination address range
+		 * 
+		 * @return the address range
+		 */
+		public AddressRange getDestinationAddressRange() {
+			return dstRange;
+		}
+
+		@Override
+		public int compareTo(MappedAddressRange that) {
+			int c;
+			c = this.dstRange.compareTo(that.dstRange);
+			if (c != 0) {
+				return c;
+			}
+			c = this.srcRange.compareTo(that.srcRange);
+			if (c != 0) {
+				return c;
+			}
+			return 0;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (!(obj instanceof MappedAddressRange)) {
+				return false;
+			}
+			MappedAddressRange that = (MappedAddressRange) obj;
+			if (!this.dstRange.equals(that.dstRange)) {
+				return false;
+			}
+			if (!this.srcRange.equals(that.srcRange)) {
+				return false;
+			}
+			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			return hashCode;
 		}
 	}
 
@@ -584,23 +690,6 @@ public interface DebuggerStaticMappingService {
 	 */
 	void addModuleMappings(Collection<ModuleMapEntry> entries, TaskMonitor monitor,
 			boolean truncateExisting) throws CancelledException;
-
-	/**
-	 * Add a static mapping (relocation) from the given section to the given program memory block
-	 * 
-	 * <p>
-	 * This is simply a shortcut and does not mean to imply that all mappings must represent section
-	 * relocations. In most cases the lengths of the from and to objects match exactly, but this may
-	 * not be the case. Whatever the case, the minimum length is computed, and the start addresses
-	 * are used as the location. The lifespan is that of the section's containing module.
-	 * 
-	 * @param from the source section
-	 * @param toProgram the destination program
-	 * @param to the destination memory block
-	 * @see #addMapping(TraceLocation, ProgramLocation, long, boolean)
-	 */
-	void addSectionMapping(TraceSection from, Program toProgram, MemoryBlock to,
-			boolean truncateExisting) throws TraceConflictedMappingException;
 
 	/**
 	 * Add several static mappings (relocations)
@@ -685,9 +774,9 @@ public interface DebuggerStaticMappingService {
 	 * @param trace the source trace
 	 * @param set the source address set
 	 * @param snap the source snap
-	 * @return a map of destination programs to corresponding computed destination address sets
+	 * @return a map of destination programs to corresponding computed destination address ranges
 	 */
-	Map<Program, ShiftAndAddressSetView> getOpenMappedViews(Trace trace,
+	Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(Trace trace,
 			AddressSetView set, long snap);
 
 	/**
@@ -695,9 +784,9 @@ public interface DebuggerStaticMappingService {
 	 * 
 	 * @param program the destination program, from which we are mapping back
 	 * @param set the destination address set, from which we are mapping back
-	 * @return a map of source traces to corresponding computed source address sets
+	 * @return a map of source traces to corresponding computed source address ranges
 	 */
-	Map<TraceSnap, ShiftAndAddressSetView> getOpenMappedViews(Program program,
+	Map<TraceSnap, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
 			AddressSetView set);
 
 	/**

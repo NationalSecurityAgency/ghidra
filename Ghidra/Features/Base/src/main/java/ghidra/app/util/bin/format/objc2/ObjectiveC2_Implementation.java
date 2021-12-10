@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.objc2;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.DataType;
@@ -23,24 +24,35 @@ import ghidra.program.model.data.TypedefDataType;
 import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
 
-import java.io.IOException;
-
 public class ObjectiveC2_Implementation implements StructConverter {
 	private boolean _is32bit;
 	private long _index;
+	private boolean _isSmall = false;
 
 	private long imp;
 
-	public ObjectiveC2_Implementation(ObjectiveC2_State state, BinaryReader reader) throws IOException {
+	public ObjectiveC2_Implementation(ObjectiveC2_State state, BinaryReader reader, boolean isSmall)
+			throws IOException {
 		this._is32bit = state.is32bit;
 		this._index = reader.getPointerIndex();
+		this._isSmall = isSmall;
 
-		if (state.is32bit) {
-			imp = reader.readNextInt() & Conv.INT_MASK;
+		if (isSmall) {
+			imp = _index + reader.readNextInt();
 		}
 		else {
-			imp = reader.readNextLong();
+			if (state.is32bit) {
+				imp = reader.readNextInt() & Conv.INT_MASK;
+			}
+			else {
+				imp = reader.readNextLong();
+			}
 		}
+	}
+
+	public ObjectiveC2_Implementation(ObjectiveC2_State state, BinaryReader reader)
+			throws IOException {
+		this(state, reader, false);
 	}
 
 	public long getImplementation() {
@@ -52,7 +64,10 @@ public class ObjectiveC2_Implementation implements StructConverter {
 	}
 
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		if (_is32bit) {
+		if (_isSmall) {
+			return new TypedefDataType("ImplementationOffset", DWORD);
+		}
+		else if (_is32bit) {
 			return new TypedefDataType("Implementation", DWORD);
 		}
 		return new TypedefDataType("Implementation", QWORD);

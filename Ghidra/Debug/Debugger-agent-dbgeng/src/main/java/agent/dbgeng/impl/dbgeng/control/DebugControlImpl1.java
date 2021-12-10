@@ -31,8 +31,7 @@ import agent.dbgeng.dbgeng.DebugClient.DebugStatus;
 import agent.dbgeng.dbgeng.DebugValue.DebugValueType;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil;
 import agent.dbgeng.impl.dbgeng.breakpoint.DebugBreakpointInternal;
-import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_STACK_FRAME;
-import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_VALUE;
+import agent.dbgeng.jna.dbgeng.DbgEngNative.*;
 import agent.dbgeng.jna.dbgeng.breakpoint.IDebugBreakpoint;
 import agent.dbgeng.jna.dbgeng.breakpoint.WrapIDebugBreakpoint;
 import agent.dbgeng.jna.dbgeng.control.IDebugControl;
@@ -301,4 +300,146 @@ public class DebugControlImpl1 implements DebugControlInternal {
 		COMUtils.checkRC(jnaControl.GetDebuggeeType(ulClass, ulQualifier));
 		return ulClass.getValue().intValue();
 	}
+
+	@Override
+	public DebugFilterInformation getNumberEventFilters() {
+		ULONGByReference ulSpecificEvents = new ULONGByReference();
+		ULONGByReference ulSpecificExceptions = new ULONGByReference();
+		ULONGByReference ulArbitraryExceptions = new ULONGByReference();
+		COMUtils.checkRC(jnaControl.GetNumberEventFilters(ulSpecificEvents, ulSpecificExceptions,
+			ulArbitraryExceptions));
+		return new DebugFilterInformation(
+			ulSpecificEvents.getValue().intValue(),
+			ulSpecificExceptions.getValue().intValue(),
+			ulArbitraryExceptions.getValue().intValue());
+	}
+
+	@Override
+	public String getEventFilterText(int index, int size) {
+		ULONG ulIndex = new ULONG(index);
+		ULONG ulBufferSize = new ULONG(size);
+		ULONGByReference ulTextSize = new ULONGByReference();
+		if (size == 0) {
+			COMUtils.checkRC(
+				jnaControl.GetEventFilterText(ulIndex, null, new ULONG(0), ulTextSize));
+			ulBufferSize = ulTextSize.getValue();
+		}
+		byte[] buffer = new byte[ulBufferSize.intValue()];
+		COMUtils.checkRC(jnaControl.GetEventFilterText(ulIndex, buffer, ulBufferSize, null));
+		return Native.toString(buffer);
+	}
+
+	@Override
+	public String getEventFilterCommand(int index, int size) {
+		ULONG ulIndex = new ULONG(index);
+		ULONG ulBufferSize = new ULONG(size);
+		ULONGByReference ulCommandSize = new ULONGByReference();
+		if (size == 0) {
+			COMUtils.checkRC(
+				jnaControl.GetEventFilterCommand(ulIndex, null, new ULONG(0), ulCommandSize));
+			ulBufferSize = ulCommandSize.getValue();
+		}
+		byte[] buffer = new byte[ulBufferSize.intValue()];
+		COMUtils.checkRC(jnaControl.GetEventFilterCommand(ulIndex, buffer, ulBufferSize, null));
+		return Native.toString(buffer);
+	}
+
+	@Override
+	public void setEventFilterCommand(int index, String text) {
+		ULONG ulIndex = new ULONG(index);
+		COMUtils.checkRC(jnaControl.SetEventFilterCommand(ulIndex, text));
+	}
+
+	@Override
+	public DebugSpecificFilterInformation getSpecificFilterParameters(int start, int count) {
+		ULONG ulStart = new ULONG(start);
+		ULONG ulCount = new ULONG(count);
+		DEBUG_SPECIFIC_FILTER_PARAMETERS[] pParams = new DEBUG_SPECIFIC_FILTER_PARAMETERS[count];
+		COMUtils.checkRC(jnaControl.GetSpecificFilterParameters(ulStart, ulCount, pParams));
+		return new DebugSpecificFilterInformation(count, pParams);
+	}
+
+	@Override
+	public void setSpecificFilterParameters(int start, int count,
+			DebugSpecificFilterInformation info) {
+		ULONG ulStart = new ULONG(start);
+		ULONG ulCount = new ULONG(count);
+		COMUtils.checkRC(
+			jnaControl.SetSpecificFilterParameters(ulStart, ulCount, info.getParameters()));
+	}
+
+	@Override
+	public String getSpecificFilterArgument(int index, int size) {
+		ULONG ulIndex = new ULONG(index);
+		ULONG ulBufferSize = new ULONG(size);
+		ULONGByReference ulArgumentSize = new ULONGByReference();
+		if (size == 0) {
+			HRESULT hr =
+				jnaControl.GetSpecificFilterArgument(ulIndex, null, ulBufferSize, ulArgumentSize);
+			if (hr.equals(COMUtilsExtra.E_INVALID_PARAM)) {
+				return null;
+			}
+			COMUtils.checkRC(hr);
+			ulBufferSize = ulArgumentSize.getValue();
+		}
+		byte[] buffer = new byte[ulBufferSize.intValue()];
+		COMUtils.checkRC(
+			jnaControl.GetSpecificFilterArgument(ulIndex, buffer, ulBufferSize, null));
+		return Native.toString(buffer);
+	}
+
+	@Override
+	public void setSpecificFilterArgument(int index, String arg) {
+		if (arg != null) {
+			ULONG ulIndex = new ULONG(index);
+			COMUtils.checkRC(jnaControl.SetSpecificFilterArgument(ulIndex, arg));
+		}
+	}
+
+	@Override
+	public DebugExceptionFilterInformation getExceptionFilterParameters(int start, int[] codes,
+			int count) {
+		ULONG ulStart = new ULONG(start);
+		//ULONG[] ulCodes = new ULONG[codes.length];
+		//for (int i = 0; i < codes.length; i++) {
+		//	ulCodes[i] = new ULONG(codes[i]);
+		//}
+		ULONG ulCount = new ULONG(count);
+		DEBUG_EXCEPTION_FILTER_PARAMETERS[] pParams = new DEBUG_EXCEPTION_FILTER_PARAMETERS[count];
+		COMUtils.checkRC(
+			jnaControl.GetExceptionFilterParameters(ulCount, null, ulStart, pParams));
+		return new DebugExceptionFilterInformation(count, pParams);
+	}
+
+	@Override
+	public void setExceptionFilterParameters(int count,
+			DebugExceptionFilterInformation info) {
+		ULONG ulCount = new ULONG(count);
+		COMUtils.checkRC(
+			jnaControl.SetExceptionFilterParameters(ulCount, info.getParameters()));
+	}
+
+	@Override
+	public String getExceptionFilterSecondCommand(int index, int size) {
+		ULONG ulIndex = new ULONG(index);
+		ULONG ulBufferSize = new ULONG(size);
+		ULONGByReference ulCommandSize = new ULONGByReference();
+		if (size == 0) {
+			COMUtils.checkRC(
+				jnaControl.GetExceptionFilterSecondCommand(ulIndex, null, ulBufferSize,
+					ulCommandSize));
+			ulBufferSize = ulCommandSize.getValue();
+		}
+		byte[] buffer = new byte[ulBufferSize.intValue()];
+		COMUtils.checkRC(
+			jnaControl.GetExceptionFilterSecondCommand(ulIndex, buffer, ulBufferSize, null));
+		return Native.toString(buffer);
+	}
+
+	@Override
+	public void setExceptionFilterSecondCommand(int index, String cmd) {
+		ULONG ulIndex = new ULONG(index);
+		COMUtils.checkRC(jnaControl.SetExceptionFilterSecondCommand(ulIndex, cmd));
+	}
+
 }

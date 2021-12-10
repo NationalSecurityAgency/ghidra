@@ -36,26 +36,26 @@ import java.util.List;
 public class AnnotationSetReferenceList implements StructConverter {
 
 	private int size;
-	private List< AnnotationSetReferenceItem > items = new ArrayList< AnnotationSetReferenceItem >( );
+	private List<AnnotationSetReferenceItem> items = new ArrayList<AnnotationSetReferenceItem>();
 
-	public AnnotationSetReferenceList( BinaryReader reader ) throws IOException {
-		size = reader.readNextInt( );
+	public AnnotationSetReferenceList(BinaryReader reader) throws IOException {
+		size = reader.readNextInt();
 
-		for ( int i = 0 ; i < size ; ++i ) {
-			items.add( new AnnotationSetReferenceItem( reader ) );
+		for (int i = 0; i < size; ++i) {
+			items.add(new AnnotationSetReferenceItem(reader));
 		}
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "annotation_set_ref_list_" + size, 0 );
-		structure.add( DWORD, "size", null );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure = new StructureDataType("annotation_set_ref_list_" + size, 0);
+		structure.add(DWORD, "size", null);
 		int index = 0;
-		for ( AnnotationSetReferenceItem item : items ) {
-			structure.add( item.toDataType( ), "item" + index, null );
+		for (AnnotationSetReferenceItem item : items) {
+			structure.add(item.toDataType(), "item" + index, null);
 			++index;
 		}
-		structure.setCategoryPath( new CategoryPath( "/dex/annotation_set_ref_list" ) );
+		structure.setCategoryPath(new CategoryPath("/dex/annotation_set_ref_list"));
 		return structure;
 	}
 

@@ -15,10 +15,10 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import java.util.*;
 import java.util.function.Consumer;
 
 import ghidra.app.util.NamespaceUtils;
-import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
@@ -55,16 +55,8 @@ public class NamespacePath implements Comparable<NamespacePath> {
 	 * @return new {@link NamespacePath}
 	 */
 	public static NamespacePath create(NamespacePath parent, String name, SymbolType type) {
-		return new NamespacePath(parent == null ? ROOT : parent, preMangleName(name), type);
-	}
-
-	private static final String FWDSLASH_MANGLE = "-fwdslash-";
-	private static final String COLON_MANGLE = "-";
-
-	private static String preMangleName(String name) {
-		return name == null ? null
-				: name.replaceAll(":", COLON_MANGLE).replaceAll(" ", "").replaceAll("/",
-					FWDSLASH_MANGLE);
+		return new NamespacePath(Objects.requireNonNullElse(parent, ROOT),
+			SymbolUtilities.replaceInvalidChars(name, true), type);
 	}
 
 	private final NamespacePath parent;
@@ -175,17 +167,6 @@ public class NamespacePath implements Comparable<NamespacePath> {
 	}
 
 	/**
-	 * Converts this namespace path into a {@link CategoryPath} style string.
-	 * @return string path "/namespace1/namespace2"
-	 */
-	public String asCategoryPathString() {
-		StringBuilder sb = new StringBuilder();
-		doInOrderTraversal(
-			nsp -> sb.append(sb.length() != 1 ? "/" : "").append(nsp.isRoot() ? "" : nsp.name));
-		return sb.toString();
-	}
-
-	/**
 	 * Converts this namespace path into a {@link Namespace} style string.
 	 * @return string path "ROOT::namespace1::namespace2"
 	 */
@@ -213,6 +194,21 @@ public class NamespacePath implements Comparable<NamespacePath> {
 		});
 
 		return sb.toString();
+	}
+
+	/**
+	 * Returns the individual parts of the path as elements in a list.
+	 * 
+	 * @return list of strings containing individual parts of the path
+	 */
+	public List<String> getParts() {
+		List<String> partList = new ArrayList<>();
+		doInOrderTraversal(nsp -> {
+			if (!nsp.isRoot()) {
+				partList.add(nsp.name);
+			}
+		});
+		return partList;
 	}
 
 	@Override

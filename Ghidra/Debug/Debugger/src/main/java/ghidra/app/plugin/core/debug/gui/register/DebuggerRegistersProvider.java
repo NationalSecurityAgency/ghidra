@@ -72,6 +72,7 @@ import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.*;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -369,8 +370,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	final DebuggerRegistersPlugin plugin;
-	private final Map<CompilerSpec, LinkedHashSet<Register>> selectionByCSpec;
-	private final Map<CompilerSpec, LinkedHashSet<Register>> favoritesByCSpec;
+	private final Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> selectionByCSpec;
+	private final Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> favoritesByCSpec;
 	private final boolean isClone;
 
 	DebuggerCoordinates previous = DebuggerCoordinates.NOWHERE;
@@ -434,10 +435,12 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	DebuggerRegisterActionContext myActionContext;
 	AddressSetView viewKnown;
+	AddressSetView catalog;
 
 	protected DebuggerRegistersProvider(final DebuggerRegistersPlugin plugin,
-			Map<CompilerSpec, LinkedHashSet<Register>> selectionByCSpec,
-			Map<CompilerSpec, LinkedHashSet<Register>> favoritesByCSpec, boolean isClone) {
+			Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> selectionByCSpec,
+			Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> favoritesByCSpec,
+			boolean isClone) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_REGISTERS, plugin.getName());
 		this.plugin = plugin;
 		this.selectionByCSpec = selectionByCSpec;
@@ -549,7 +552,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			}
 			Address address;
 			try {
-				address = space.getAddress(lv);
+				address = space.getAddress(lv, true);
 			}
 			catch (AddressOutOfBoundsException e) {
 				continue;
@@ -687,6 +690,20 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		removeOldTraceListener();
 		this.currentTrace = trace;
 		addNewTraceListener();
+
+		catalogRegisterAddresses();
+	}
+
+	private void catalogRegisterAddresses() {
+		this.catalog = null;
+		if (currentTrace == null) {
+			return;
+		}
+		AddressSet catalog = new AddressSet();
+		for (Register reg : currentTrace.getBaseLanguage().getRegisters()) {
+			catalog.add(TraceRegisterUtils.rangeForRegister(reg));
+		}
+		this.catalog = catalog;
 	}
 
 	private void removeOldRecorderListener() {
@@ -754,8 +771,21 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return true;
 	}
 
+	boolean canWriteRegister(Register register) {
+		if (!isEditsEnabled()) {
+			return false;
+		}
+		if (register.isProcessorContext()) {
+			return false; // TODO: Limitation from using Sleigh for patching
+		}
+		return true;
+	}
+
 	boolean canWriteTargetRegister(Register register) {
-		if (!computeEditsEnabled()) {
+		if (!isEditsEnabled()) {
+			return false;
+		}
+		if (!canWriteTarget()) {
 			return false;
 		}
 		return current.getRecorder().isRegisterOnTarget(current.getThread(), register);
@@ -774,23 +804,32 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	void writeRegisterValue(RegisterValue rv) {
-		rv = combineWithTraceBaseRegisterValue(rv);
-		CompletableFuture<Void> future = current.getRecorder()
-				.writeThreadRegisters(current.getThread(), current.getFrame(),
-					Map.of(rv.getRegister(), rv));
-		future.exceptionally(ex -> {
-			ex = AsyncUtils.unwrapThrowable(ex);
-			if (ex instanceof DebuggerModelAccessException) {
-				Msg.error(this, "Could not write target register", ex);
-				plugin.getTool()
-						.setStatusInfo("Could not write target register: " + ex.getMessage());
-			}
-			else {
-				Msg.showError(this, getComponent(), "Edit Register",
-					"Could not write target register", ex);
-			}
-			return null;
-		});
+		if (canWriteTargetRegister(rv.getRegister())) {
+			rv = combineWithTraceBaseRegisterValue(rv);
+			CompletableFuture<Void> future = current.getRecorder()
+					.writeThreadRegisters(current.getThread(), current.getFrame(),
+						Map.of(rv.getRegister(), rv));
+			future.exceptionally(ex -> {
+				ex = AsyncUtils.unwrapThrowable(ex);
+				if (ex instanceof DebuggerModelAccessException) {
+					Msg.error(this, "Could not write target register", ex);
+					plugin.getTool()
+							.setStatusInfo("Could not write target register: " + ex.getMessage());
+				}
+				else {
+					Msg.showError(this, getComponent(), "Edit Register",
+						"Could not write target register", ex);
+				}
+				return null;
+			});
+			return;
+		}
+		TraceSchedule time = current.getTime().patched(current.getThread(), generateSleigh(rv));
+		traceManager.activateTime(time);
+	}
+
+	protected String generateSleigh(RegisterValue rv) {
+		return String.format("%s=0x%s", rv.getRegister(), rv.getUnsignedValue().toString(16));
 	}
 
 	private RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv) {
@@ -846,6 +885,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	void recomputeViewKnown() {
+		if (catalog == null) {
+			viewKnown = null;
+			return;
+		}
 		TraceMemoryRegisterSpace regs = getRegisterMemorySpace(false);
 		TraceProgramView view = current.getView();
 		if (regs == null || view == null) {
@@ -853,7 +896,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return;
 		}
 		viewKnown = new AddressSet(view.getViewport()
-				.unionedAddresses(snap -> regs.getAddressesWithState(snap,
+				.unionedAddresses(snap -> regs.getAddressesWithState(snap, catalog,
 					state -> state == TraceMemoryState.KNOWN)));
 	}
 
@@ -885,11 +928,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return !Objects.equals(curRegVal, prevRegVal);
 	}
 
-	private boolean computeEditsEnabled() {
-		if (!actionEnableEdits.isSelected()) {
-			return false;
-		}
-		return canWriteTarget();
+	private boolean isEditsEnabled() {
+		return actionEnableEdits.isSelected();
 	}
 
 	/**
@@ -1021,18 +1061,27 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return result;
 	}
 
+	protected LanguageCompilerSpecPair getLangCSpecPair(Trace trace) {
+		return new LanguageCompilerSpecPair(trace.getBaseLanguage().getLanguageID(),
+			trace.getBaseCompilerSpec().getCompilerSpecID());
+	}
+
+	protected LanguageCompilerSpecPair getLangCSpecPair(TraceThread thread) {
+		return getLangCSpecPair(thread.getTrace());
+	}
+
 	protected Set<Register> getSelectionFor(TraceThread thread) {
 		synchronized (selectionByCSpec) {
-			CompilerSpec cSpec = thread.getTrace().getBaseCompilerSpec();
-			return selectionByCSpec.computeIfAbsent(cSpec,
+			LanguageCompilerSpecPair lcsp = getLangCSpecPair(thread);
+			return selectionByCSpec.computeIfAbsent(lcsp,
 				__ -> computeDefaultRegisterSelection(thread));
 		}
 	}
 
 	protected Set<Register> getFavoritesFor(TraceThread thread) {
 		synchronized (favoritesByCSpec) {
-			CompilerSpec cSpec = thread.getTrace().getBaseCompilerSpec();
-			return favoritesByCSpec.computeIfAbsent(cSpec,
+			LanguageCompilerSpecPair lcsp = getLangCSpecPair(thread);
+			return favoritesByCSpec.computeIfAbsent(lcsp,
 				__ -> computeDefaultRegisterFavorites(thread));
 		}
 	}

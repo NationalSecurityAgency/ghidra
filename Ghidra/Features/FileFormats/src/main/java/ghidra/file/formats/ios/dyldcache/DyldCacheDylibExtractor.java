@@ -15,15 +15,18 @@
  */
 package ghidra.file.formats.ios.dyldcache;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import generic.continues.RethrowContinuesFactory;
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheMappingInfo;
+import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
@@ -34,30 +37,33 @@ import ghidra.util.task.TaskMonitor;
 public class DyldCacheDylibExtractor {
 
 	/**
-	 * Gets an {@link InputStream} that reads a DYLIB from a {@link DyldCacheFileSystem}.  The
+	 * Gets an {@link ByteProvider} that reads a DYLIB from a {@link DyldCacheFileSystem}.  The
 	 * DYLIB's header will be altered to account for its segment bytes being packed down.   
 	 * 
 	 * @param dylibOffset The offset of the DYLIB in the given provider
-	 * @param provider The DYLD
-	 * @param monitor A cancellable {@link TaskMonitor}
-	 * @return An {@link InputStream} that reads the specified DYLIB from the given DYLD 
-	 *   {@link ByteProvider}
+	 * @param splitDyldCache The {@link SplitDyldCache}
+	 * @param index The DYLIB's {@link SplitDyldCache} index
+	 * @param fsrl {@link FSRL} to assign to the resulting {@link ByteProvider}
+	 * @param monitor {@link TaskMonitor}
+	 * @return {@link ByteProvider} containing the bytes of the DYLIB
 	 * @throws IOException If there was an IO-related issue with extracting the DYLIB
 	 * @throws MachException If there was an error parsing the DYLIB headers
 	 */
-	public static InputStream extractDylib(long dylibOffset, ByteProvider provider,
-			TaskMonitor monitor) throws IOException, MachException {
+	public static ByteProvider extractDylib(long dylibOffset, SplitDyldCache splitDyldCache,
+			int index, FSRL fsrl, TaskMonitor monitor) throws IOException, MachException {
 
 		// Make sure Mach-O header is valid
-		MachHeader header = MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider,
-			dylibOffset, false);
-		header.parse();
+		MachHeader dylibHeader = MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE,
+			splitDyldCache.getProvider(index), dylibOffset, false);
+		dylibHeader.parse();
 
 		// Pack the DYLIB
-		PackedDylib packedDylib = new PackedDylib(header, dylibOffset, provider);
+		PackedDylib packedDylib = new PackedDylib(dylibHeader, dylibOffset, splitDyldCache, index);
+
+		// TODO: Fixup pointer chains
 
 		// Fixup indices, offsets, etc in the packed DYLIB's header
-		for (LoadCommand cmd : header.getLoadCommands()) {
+		for (LoadCommand cmd : dylibHeader.getLoadCommands()) {
 			if (monitor.isCancelled()) {
 				break;
 			}
@@ -81,7 +87,7 @@ public class DyldCacheDylibExtractor {
 			}
 		}
 
-		return packedDylib.getInputStream();
+		return packedDylib.getByteProvider(fsrl);
 	}
 
 	/**
@@ -203,17 +209,18 @@ public class DyldCacheDylibExtractor {
 		/**
 		 * Creates a new {@link PackedDylib} object
 		 * 
-		 * @param header The DYLD's DYLIB's Mach-O header
+		 * @param dylibHeader The DYLD's DYLIB's Mach-O header
 		 * @param dylibOffset The offset of the DYLIB in the given provider
-		 * @param provider The DYLD's bytes
+		 * @param splitDyldCache The {@link SplitDyldCache}
+		 * @param index The DYLIB's {@link SplitDyldCache} index
 		 * @throws IOException If there was an IO-related error
 		 */
-		public PackedDylib(MachHeader header, long dylibOffset, ByteProvider provider)
-				throws IOException {
-			reader = new BinaryReader(provider, true);
+		public PackedDylib(MachHeader dylibHeader, long dylibOffset, SplitDyldCache splitDyldCache,
+				int index) throws IOException {
+			reader = new BinaryReader(splitDyldCache.getProvider(index), true);
 			packedStarts = new HashMap<>();
 			int size = 0;
-			for (SegmentCommand segment : header.getAllSegments()) {
+			for (SegmentCommand segment : dylibHeader.getAllSegments()) {
 				packedStarts.put(segment, size);
 				size += segment.getFileSize();
 
@@ -224,25 +231,21 @@ public class DyldCacheDylibExtractor {
 				}
 			}
 			packed = new byte[size];
-			for (SegmentCommand segment : header.getAllSegments()) {
+			for (SegmentCommand segment : dylibHeader.getAllSegments()) {
 				long segmentSize = segment.getFileSize();
-				if (segment.getFileOffset() + segmentSize > provider.length()) {
-					segmentSize = provider.length() - segment.getFileOffset();
+				ByteProvider segmentProvider = getSegmentProvider(segment, splitDyldCache);
+				if (segment.getFileOffset() + segmentSize > segmentProvider.length()) {
+					segmentSize = segmentProvider.length() - segment.getFileOffset();
 					Msg.warn(this, segment.getSegmentName() +
 						" segment extends beyond end of file.  Truncating...");
 				}
-				byte[] bytes = provider.readBytes(segment.getFileOffset(), segmentSize);
+				byte[] bytes = segmentProvider.readBytes(segment.getFileOffset(), segmentSize);
 				System.arraycopy(bytes, 0, packed, packedStarts.get(segment), bytes.length);
 			}
 		}
 
-		/**
-		 * Gets an {@link InputStream} that reads the packed DYLIB
-		 * 
-		 * @return An {@link InputStream} that reads the packed DYLIB
-		 */
-		public InputStream getInputStream() {
-			return new ByteArrayInputStream(packed);
+		ByteProvider getByteProvider(FSRL fsrl) {
+			return new ByteArrayProvider(packed, fsrl);
 		}
 
 		/**
@@ -286,6 +289,28 @@ public class DyldCacheDylibExtractor {
 			throw new NotFoundException(
 				"Failed to convert DYLD file offset to packed DYLIB offset: " +
 					Long.toHexString(fileOffset));
+		}
+
+		/**
+		 * Gets the {@link ByteProvider} that contains the given {@link SegmentCommand segment}
+		 * 
+		 * @param segment The {@link SegmentCommand segment}
+		 * @param splitDyldCache The {@link SplitDyldCache}
+		 * @return The {@link ByteProvider} that contains the given {@link SegmentCommand segment}
+		 * @throws IOException If a {@link ByteProvider} could not be found
+		 */
+		private ByteProvider getSegmentProvider(SegmentCommand segment,
+				SplitDyldCache splitDyldCache) throws IOException {
+			for (int i = 0; i < splitDyldCache.size(); i++) {
+				DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
+				for (DyldCacheMappingInfo mappingInfo : header.getMappingInfos()) {
+					if (mappingInfo.contains(segment.getVMaddress())) {
+						return splitDyldCache.getProvider(i);
+					}
+				}
+			}
+			throw new IOException(
+				"Failed to find provider for segment: " + segment.getSegmentName());
 		}
 
 		/**

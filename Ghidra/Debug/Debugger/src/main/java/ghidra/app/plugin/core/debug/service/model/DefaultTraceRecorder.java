@@ -80,7 +80,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	private boolean valid = true;
 
 	public DefaultTraceRecorder(DebuggerModelServicePlugin plugin, Trace trace, TargetObject target,
-			AbstractDebuggerTargetTraceMapper mapper) {
+			DefaultDebuggerTargetTraceMapper mapper) {
 		this.plugin = plugin;
 		this.tool = plugin.getTool();
 		this.trace = trace;
@@ -333,9 +333,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		timeRecorder.createSnapshot(
 			"Started recording" + PathUtils.toString(target.getPath()) + " in " + target.getModel(),
 			null, null);
-		objectManager.init();
-		return AsyncUtils.NIL;
-
+		return objectManager.init();
 	}
 
 	@Override

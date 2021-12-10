@@ -116,7 +116,7 @@ public class DecompileProcess {
 			nativeProcess.destroy(); // Make sure previous bad process is killed           			
 			nativeProcess = null;
 		}
-		if (exepath == null) {
+		if (exepath == null || exepath.length == 0 || exepath[0] == null) {
 			throw new IOException("Could not find decompiler executable");
 		}
 		try {

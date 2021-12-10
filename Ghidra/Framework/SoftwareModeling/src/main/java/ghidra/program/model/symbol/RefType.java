@@ -68,68 +68,126 @@ public abstract class RefType {
 	static final byte __WRITE_IND = 105;
 	static final byte __READ_WRITE_IND = 106;
 	static final byte __UNKNOWNPARAM = 107;
-	@Deprecated
-	static final byte __STACK_READ = 110; // Use __READ instead
-	@Deprecated
-	static final byte __STACK_WRITE = 111; // Use __WRITE instead
 	static final byte __EXTERNAL_REF = 113;
 	static final byte __UNKNOWNDATA_IND = 114;
 
 	static final byte __DYNAMICDATA = 127;
 
 	public static final FlowType INVALID =
-		new FlowType.Builder(__INVALID, "INVALID").setHasFall().build();
+		new FlowType.Builder(__INVALID, "INVALID")
+				.setHasFall()
+				.build();
 	public static final FlowType FLOW =
-		new FlowType.Builder(__UNKNOWNFLOW, "FLOW").setHasFall().build();
+		new FlowType.Builder(__UNKNOWNFLOW, "FLOW")
+				.setHasFall()
+				.build();
 	public static final FlowType FALL_THROUGH =
-		new FlowType.Builder(__FALL_THROUGH, "FALL_THROUGH").setHasFall().build();
+		new FlowType.Builder(__FALL_THROUGH, "FALL_THROUGH")
+				.setHasFall()
+				.build();
 	public static final FlowType UNCONDITIONAL_JUMP =
-		new FlowType.Builder(__UNCONDITIONAL_JUMP, "UNCONDITIONAL_JUMP").setIsJump().build();
-	public static final FlowType CONDITIONAL_JUMP = new FlowType.Builder(__CONDITIONAL_JUMP,
-		"CONDITIONAL_JUMP").setHasFall().setIsJump().setIsConditional().build();
-	public static final FlowType UNCONDITIONAL_CALL = new FlowType.Builder(__UNCONDITIONAL_CALL,
-		"UNCONDITIONAL_CALL").setHasFall().setIsCall().build();
-	public static final FlowType CONDITIONAL_CALL = new FlowType.Builder(__CONDITIONAL_CALL,
-		"CONDITIONAL CALL").setHasFall().setIsCall().setIsConditional().build();
+		new FlowType.Builder(__UNCONDITIONAL_JUMP, "UNCONDITIONAL_JUMP")
+				.setIsJump()
+				.build();
+	public static final FlowType CONDITIONAL_JUMP =
+		new FlowType.Builder(__CONDITIONAL_JUMP, "CONDITIONAL_JUMP")
+				.setHasFall()
+				.setIsJump()
+				.setIsConditional()
+				.build();
+	public static final FlowType UNCONDITIONAL_CALL =
+		new FlowType.Builder(__UNCONDITIONAL_CALL, "UNCONDITIONAL_CALL")
+				.setHasFall()
+				.setIsCall()
+				.build();
+	public static final FlowType CONDITIONAL_CALL =
+		new FlowType.Builder(__CONDITIONAL_CALL, "CONDITIONAL_CALL")
+				.setHasFall()
+				.setIsCall()
+				.setIsConditional()
+				.build();
 	public static final FlowType TERMINATOR =
-		new FlowType.Builder(__TERMINATOR, "TERMINATOR").setIsTerminal().build();
+		new FlowType.Builder(__TERMINATOR, "TERMINATOR")
+				.setIsTerminal()
+				.build();
 	public static final FlowType COMPUTED_JUMP =
-		new FlowType.Builder(__COMPUTED_JUMP, "COMPUTED_JUMP").setIsJump().setIsComputed().build();
+		new FlowType.Builder(__COMPUTED_JUMP, "COMPUTED_JUMP")
+				.setIsJump()
+				.setIsComputed()
+				.build();
 	public static final FlowType CONDITIONAL_TERMINATOR =
-		new FlowType.Builder(__CONDITIONAL_TERMINATOR,
-			"CONDITIONAL_TERMINATOR").setHasFall().setIsTerminal().setIsConditional().build();
-	public static final FlowType COMPUTED_CALL = new FlowType.Builder(__COMPUTED_CALL,
-		"COMPUTED_CALL").setHasFall().setIsCall().setIsComputed().build();
-	public static final FlowType CALL_TERMINATOR = new FlowType.Builder(__CALL_TERMINATOR,
-		"CALL_TERMINATOR").setIsCall().setIsTerminal().build();
+		new FlowType.Builder(__CONDITIONAL_TERMINATOR, "CONDITIONAL_TERMINATOR")
+				.setHasFall()
+				.setIsTerminal()
+				.setIsConditional()
+				.build();
+	public static final FlowType COMPUTED_CALL =
+		new FlowType.Builder(__COMPUTED_CALL, "COMPUTED_CALL")
+				.setHasFall()
+				.setIsCall()
+				.setIsComputed()
+				.build();
+	public static final FlowType CALL_TERMINATOR =
+		new FlowType.Builder(__CALL_TERMINATOR, "CALL_TERMINATOR")
+				.setIsCall()
+				.setIsTerminal()
+				.build();
 	public static final FlowType COMPUTED_CALL_TERMINATOR =
-		new FlowType.Builder(__COMPUTED_CALL_TERMINATOR,
-			"COMPUTED_CALL_TERMINATOR").setIsCall().setIsTerminal().setIsComputed().build();
+		new FlowType.Builder(__COMPUTED_CALL_TERMINATOR, "COMPUTED_CALL_TERMINATOR")
+				.setIsCall()
+				.setIsTerminal()
+				.setIsComputed()
+				.build();
 	public static final FlowType CONDITIONAL_CALL_TERMINATOR =
-		new FlowType.Builder(__CONDITIONAL_CALL_TERMINATOR,
-			"CONDITIONAL_CALL_TERMINATOR").setIsCall().setIsTerminal().setIsConditional().build();
+		new FlowType.Builder(__CONDITIONAL_CALL_TERMINATOR, "CONDITIONAL_CALL_TERMINATOR")
+				.setIsCall()
+				.setIsTerminal()
+				.setIsConditional()
+				.build();
 	public static final FlowType CONDITIONAL_COMPUTED_CALL = new FlowType.Builder(
-		__CONDITIONAL_COMPUTED_CALL,
-		"CONDITIONAL_COMPUTED_CALL").setHasFall().setIsCall().setIsComputed().setIsConditional().build();
-	public static final FlowType CONDITIONAL_COMPUTED_JUMP = new FlowType.Builder(
-		__CONDITIONAL_COMPUTED_JUMP,
-		"CONDITIONAL_COMPUTED_JUMP").setHasFall().setIsJump().setIsComputed().setIsConditional().build();
-	public static final FlowType JUMP_TERMINATOR = new FlowType.Builder(__JUMP_TERMINATOR,
-		"JUMP_TERMINATOR").setIsJump().setIsTerminal().build();
+		__CONDITIONAL_COMPUTED_CALL, "CONDITIONAL_COMPUTED_CALL")
+				.setHasFall()
+				.setIsCall()
+				.setIsComputed()
+				.setIsConditional()
+				.build();
+	public static final FlowType CONDITIONAL_COMPUTED_JUMP =
+		new FlowType.Builder(__CONDITIONAL_COMPUTED_JUMP, "CONDITIONAL_COMPUTED_JUMP")
+				.setHasFall()
+				.setIsJump()
+				.setIsComputed()
+				.setIsConditional()
+				.build();
+	public static final FlowType JUMP_TERMINATOR =
+		new FlowType.Builder(__JUMP_TERMINATOR, "JUMP_TERMINATOR")
+				.setIsJump()
+				.setIsTerminal()
+				.build();
 	public static final FlowType INDIRECTION =
-		new FlowType.Builder(__INDIRECTION, "INDIRECTION").build();
+		new FlowType.Builder(__INDIRECTION, "INDIRECTION")
+				.build();
 	public static final FlowType CALL_OVERRIDE_UNCONDITIONAL =
-		new FlowType.Builder(__CALL_OVERRIDE_UNCONDITIONAL,
-			"CALL_OVERRIDE_UNCONDITIONAL").setHasFall().setIsCall().setIsOverride().build();
+		new FlowType.Builder(__CALL_OVERRIDE_UNCONDITIONAL, "CALL_OVERRIDE_UNCONDITIONAL")
+				.setHasFall()
+				.setIsCall()
+				.setIsOverride()
+				.build();
 	public static final FlowType JUMP_OVERRIDE_UNCONDITIONAL =
-		new FlowType.Builder(__JUMP_OVERRIDE_UNCONDITIONAL,
-			"JUMP_OVERRIDE_UNCONDITIONAL").setIsJump().setIsOverride().build();
+		new FlowType.Builder(__JUMP_OVERRIDE_UNCONDITIONAL, "JUMP_OVERRIDE_UNCONDITIONAL")
+				.setIsJump()
+				.setIsOverride()
+				.build();
 	public static final FlowType CALLOTHER_OVERRIDE_CALL =
-		new FlowType.Builder(__CALLOTHER_OVERRIDE_CALL,
-			"CALLOTHER_OVERRIDE_CALL").setHasFall().setIsCall().setIsOverride().build();
+		new FlowType.Builder(__CALLOTHER_OVERRIDE_CALL, "CALLOTHER_OVERRIDE_CALL")
+				.setHasFall()
+				.setIsCall()
+				.setIsOverride()
+				.build();
 	public static final FlowType CALLOTHER_OVERRIDE_JUMP =
-		new FlowType.Builder(__CALLOTHER_OVERRIDE_JUMP,
-			"CALLOTHER_OVERRIDE_JUMP").setIsJump().setIsOverride().build();
+		new FlowType.Builder(__CALLOTHER_OVERRIDE_JUMP, "CALLOTHER_OVERRIDE_JUMP")
+				.setIsJump()
+				.setIsOverride()
+				.build();
 
 	/**
 	 * Reference type is unknown.
@@ -154,47 +212,39 @@ public abstract class RefType {
 	 * Reference type assigned when data is being read.
 	 */
 	public static final RefType READ = new DataRefType(__READ, "READ", DataRefType.READX);
+
 	/**
 	 * Reference type assigned when data is being written.
 	 */
 	public static final RefType WRITE = new DataRefType(__WRITE, "WRITE", DataRefType.WRITEX);
+
 	/**
 	 * Reference type assigned when data is read and written.
 	 */
 	public static final RefType READ_WRITE =
 		new DataRefType(__READ_WRITE, "READ_WRITE", DataRefType.READX | DataRefType.WRITEX);
+
 	/**
 	 * Reference type assigned when data is being read.
 	 */
 	public static final RefType READ_IND =
 		new DataRefType(__READ_IND, "READ_IND", DataRefType.READX | DataRefType.INDX);
+
 	/**
 	 * Reference type assigned when data is being written.
 	 */
 	public static final RefType WRITE_IND =
 		new DataRefType(__WRITE_IND, "WRITE_IND", DataRefType.WRITEX | DataRefType.INDX);
+
 	/**
 	 * Reference type assigned when data is read and written.
 	 */
 	public static final RefType READ_WRITE_IND = new DataRefType(__READ_WRITE_IND, "READ_WRITE_IND",
 		DataRefType.READX | DataRefType.WRITEX | DataRefType.INDX);
+
 	/**
-	 * Reference type assigned for stack variable being read.
-	 * @deprecated use {@link RefType#READ} instead
-	 */
-	@Deprecated
-	public static final RefType STACK_READ =
-		new DataRefType(__STACK_READ, "STACK_READ", DataRefType.READX);
-	/**
-	 * Reference type assigned for stack variable being written.
-	 * @deprecated use {@link RefType#WRITE} instead
-	 */
-	@Deprecated
-	public static final RefType STACK_WRITE =
-		new DataRefType(__STACK_WRITE, "STACK_WRITE", DataRefType.WRITEX);
-	/**
-	 * Reference type used internally to identify external entry points.  
-	 * The use of this RefType for references to external library data or functions 
+	 * Reference type used internally to identify external entry points.
+	 * The use of this RefType for references to external library data or functions
 	 * is deprecated and should not be used for that purpose.
 	 */
 	public static final RefType EXTERNAL_REF = new DataRefType(__EXTERNAL_REF, "EXTERNAL", 0);
@@ -202,16 +252,14 @@ public abstract class RefType {
 	private byte type;
 	private String name;
 
-	/**
-	 * Constructor
-	 */
 	protected RefType(byte type, String name) {
 		this.type = type;
 		this.name = name;
 	}
 
 	/**
-	 * Get the int value for this RefType object.
+	 * Get the int value for this RefType object
+	 * @return the value
 	 */
 	public byte getValue() {
 		return type;
@@ -219,20 +267,23 @@ public abstract class RefType {
 
 	/**
 	 * Returns true if the reference is to data
+	 * @return true if the reference is to data
 	 */
 	public boolean isData() {
 		return false;
 	}
 
 	/**
-	 * Returns true if the reference is a read.
+	 * Returns true if the reference is a read
+	 * @return true if the reference is a read
 	 */
 	public boolean isRead() {
 		return false;
 	}
 
 	/**
-	 * Returns true if the reference is a write.
+	 * Returns true if the reference is a write
+	 * @return true if the reference is a write
 	 */
 	public boolean isWrite() {
 		return false;
@@ -240,6 +291,7 @@ public abstract class RefType {
 
 	/**
 	 * Returns true if the reference is indirect
+	 * @return true if the reference is indirect
 	 */
 	public boolean isIndirect() {
 		if (this == INDIRECTION) {
@@ -249,22 +301,24 @@ public abstract class RefType {
 	}
 
 	/**
-	 * Returns true if the reference is an instruction flow reference.
+	 * Returns true if the reference is an instruction flow reference
+	 * @return true if the reference is an instruction flow reference
 	 */
 	public boolean isFlow() {
 		return false;
 	}
 
 	/**
-	 * Return true if this flow type is one that does not cause
-	 * a break in control flow.
+	 * Return true if this flow type is one that does not cause a break in control flow
+	 * @return if this flow type is one that does not cause a break in control flow
 	 */
 	public final boolean isFallthrough() {
 		return this == FALL_THROUGH;
 	}
 
 	/**
-	 * Returns true if this flow type can fall through.
+	 * Returns true if this flow type can fall through
+	 * @return true if can fall through
 	 */
 	public boolean hasFallthrough() {
 		return false;
@@ -272,6 +326,7 @@ public abstract class RefType {
 
 	/**
 	 * Returns true if the flow is call
+	 * @return true if is a call
 	 */
 	public boolean isCall() {
 		return false;
@@ -279,50 +334,60 @@ public abstract class RefType {
 
 	/**
 	 * Returns true if the flow is jump
+	 * @return true if is a jump
 	 */
 	public boolean isJump() {
 		return false;
 	}
 
 	/**
-	 * Returns true if the flow is an unconditional call or jump.
+	 * Returns true if the flow is an unconditional call or jump
+	 * @return true if unconditional
 	 */
 	public boolean isUnConditional() {
 		return !isConditional();
 	}
 
 	/**
-	 * Returns true if the flow is a conditional call or jump.
+	 * Returns true if the flow is a conditional call or jump
+	 * @return true if is conditional
 	 */
 	public boolean isConditional() {
 		return false;
 	}
 
 	/**
-	 * Returns true if the flow is a computed call or compute jump.
+	 * Returns true if the flow is a computed call or compute jump
+	 * @return true if is computed
 	 */
 	public boolean isComputed() {
 		return false;
 	}
 
 	/**
-	 * returns true if this instruction terminates.
+	 * Returns true if this instruction terminates
+	 * @return true if terminal
 	 */
 	public boolean isTerminal() {
 		return false;
 	}
 
 	/**
-	 * 
-	 * @return true precisely when the reference is an overriding reference
+	 * True if this is an override reference
+	 * @return true if this is an override reference
 	 */
 	public boolean isOverride() {
 		return false;
 	}
 
 	/**
-	 * @see java.lang.Object#equals(java.lang.Object)
+	 * Returns name of ref-type
+	 * @return the name
 	 */
+	public String getName() {
+		return name;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null || !getClass().equals(obj.getClass())) {
@@ -332,28 +397,13 @@ public abstract class RefType {
 		return type == other.type;
 	}
 
-	/**
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return type;
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return name;
 	}
-
-	/**
-	 * Returns name of ref-type
-	 */
-	public String getName() {
-		return name;
-	}
-
 }

@@ -37,7 +37,7 @@
 # 0111 11ss ssst tttt mmmm mLLL LL00 0111
 :dins RT, RSsrc, lsb, InsSize       is $(AMODE) & prime=0x1F & fct=0x07 & RT & RTsrc & RSsrc & lsb & msbd & InsSize {
 	tmpa:$(REGSIZE) = -1;
-	tmpa = tmpa >> ($(REGSIZE) - InsSize);
+	tmpa = tmpa >> ($(REGSIZE)*8 - InsSize);
 	tmpb:$(REGSIZE) = RSsrc & tmpa;
 	tmpa = tmpa << lsb;
 	tmpa = ~tmpa;
@@ -48,7 +48,7 @@
 # 0111 11ss ssst tttt mmmm mLLL LL00 0101
 :dinsm RT, RSsrc, lsb, DinsXSize    is $(AMODE) & prime=0x1F & fct=0x05 & RT & RTsrc & RSsrc & lsb & msbd & DinsXSize {
 	tmpa:$(REGSIZE) = -1;
-	tmpa = tmpa >> ($(REGSIZE) - DinsXSize);
+	tmpa = tmpa >> ($(REGSIZE)*8 - DinsXSize);
 	tmpb:$(REGSIZE) = RSsrc & tmpa;
 	tmpa = tmpa << lsb;
 	tmpa = ~tmpa;
@@ -57,9 +57,9 @@
 }
 
 # 0111 11ss ssst tttt mmmm mLLL LL00 0110
-:dinsu RT, RSsrc, DXuPos, DinsXSize is $(AMODE) & prime=0x1F & fct=0x06 & RT & RTsrc & RSsrc & lsb & msbd & DXuPos & DinsXSize {
+:dinsu RT, RSsrc, DXuPos, InsSize is $(AMODE) & prime=0x1F & fct=0x06 & RT & RTsrc & RSsrc & lsb & msbd & DXuPos & InsSize {
 	tmpa:$(REGSIZE) = -1;
-	tmpa = tmpa >> ($(REGSIZE) - DinsXSize);
+	tmpa = tmpa >> ($(REGSIZE)*8 - InsSize);
 	tmpb:$(REGSIZE) = RSsrc & tmpa;
 	tmpa = tmpa << DXuPos;
 	tmpa = ~tmpa;

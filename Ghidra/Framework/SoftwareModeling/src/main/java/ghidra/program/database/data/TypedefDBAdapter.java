@@ -43,7 +43,7 @@ abstract class TypedefDBAdapter {
 		TypedefDBAdapterV1.V1_TYPEDEF_LAST_CHANGE_TIME_COL;
 
 	/**
-	 * Gets an adapter for working with the Typedef data type database table. The adapter is based 
+	 * Gets an adapter for working with the Typedef data type database table. The adapter is based
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
@@ -156,7 +156,7 @@ abstract class TypedefDBAdapter {
 	/**
 	 * Updates the type definition data type table with the provided record.
 	 * @param record the new record
-	 * @param setLastChangedTime true means change the last change time in the record to the 
+	 * @param setLastChangeTime true means change the last change time in the record to the
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */
@@ -187,7 +187,7 @@ abstract class TypedefDBAdapter {
 	abstract Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
 
 	/**
-	 * Get typedef record whoose sourceID and datatypeID match the specified Universal IDs.
+	 * Get typedef record whose sourceID and datatypeID match the specified Universal IDs.
 	 * @param sourceID universal source archive ID
 	 * @param datatypeID universal datatype ID
 	 * @return typedef record found or null

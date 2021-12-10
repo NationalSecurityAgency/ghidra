@@ -149,7 +149,8 @@ public:
     falsebranch = 0x800,	///< Print the false branch (for flat)
     nofallthru = 0x1000,       	///< Fall-thru no longer exists
     negatetoken = 0x2000,	///< Print the token representing the negation of current token
-    hide_thisparam = 0x4000	///< Do not print the 'this' parameter in argument lists
+    hide_thisparam = 0x4000,	///< Do not print the 'this' parameter in argument lists
+    pending_brace = 0x8000	///< The current block may need to surround itself with additional braces
   };
   /// \brief Possible types of Atom
   enum tagtype {
@@ -282,7 +283,6 @@ protected:
   int4 getPending(void) const { return pending; }			///< Get the number of pending nodes yet to be put on the RPN stack
   void resetDefaultsInternal(void);					///< Reset options to default for PrintLanguage
 
-
   /// \brief Print a single unicode character as a \e character \e constant for the high-level language
   ///
   /// For most languages, this prints the character surrounded by single quotes.
@@ -382,9 +382,9 @@ protected:
   ///
   /// A subset of all variables can be declared by specifying a category,
   /// 0 for parameters, -1 for everything.
-  /// \param scope is the given Scope
+  /// \param symScope is the given Scope
   /// \param cat is the category of variable to declare
-  virtual bool emitScopeVarDecls(const Scope *scope,int4 cat)=0;
+  virtual bool emitScopeVarDecls(const Scope *symScope,int4 cat)=0;
 
   /// \brief Emit a full expression
   ///

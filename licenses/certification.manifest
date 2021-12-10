@@ -1,5 +1,6 @@
 ##VERSION: 2.0
 Apache_License_2.0.txt||LICENSE||||END|
+Apache_License_2.0_with_LLVM_Exceptions.txt||LICENSE||||END|
 BSD.txt||LICENSE||||END|
 Bouncy_Castle_License.txt||LICENSE||||END|
 Christian_Plattner.txt||LICENSE||||END|
@@ -10,6 +11,7 @@ FAMFAMFAM_Mini_Icons_-_Public_Domain.txt||LICENSE||||END|
 GPL_2_With_Classpath_Exception.txt||LICENSE||||END|
 INRIA_License.txt||LICENSE||||END|
 JDOM_License.txt||LICENSE||||END|
+JSch_License.txt||LICENSE||||END|
 Jython_License.txt||LICENSE||||END|
 LGPL_2.1.txt||LICENSE||||END|
 LGPL_3.0.html||LICENSE||||END|

@@ -1,15 +1,151 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <language_definitions>
-  <language processor="Dalvik"
+
+ <!-- legacy/deprecated Dalvik language needed for existing Programs which use its ID -->
+ <language processor="Dalvik"
             endian="little"
             size="32"
             variant="default"
             version="1.0"
-            slafile="Dalvik.sla"
-            processorspec="Dalvik.pspec"
+            deprecated="true"
+            slafile="Dalvik_Base.sla"
+            processorspec="Dalvik_Base.pspec"
             id="Dalvik:LE:32:default">
-    <description>Dalvik</description>
-    <compiler name="default" spec="Dalvik.cspec" id="default"/>
+    <description>Dalvik Base</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
   </language>
+
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX-Base"
+            version="1.0"
+            slafile="Dalvik_Base.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:DEX_Base">
+    <description>Dalvik Base</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX KitKat"
+            version="1.0"
+            slafile="Dalvik_DEX_KitKat.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:DEX_KitKat">
+    <description>Dalvik DEX KitKat</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="ODEX KitKat"
+            version="1.0"
+            slafile="Dalvik_ODEX_KitKat.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:ODEX_KitKat">
+    <description>Dalvik ODEX KitKat</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX Lollipop"
+            version="1.0"
+            slafile="Dalvik_DEX_Lollipop.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:DEX_Lollipop">
+    <description>Dalvik DEX Lollipop</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+ 
+   <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX Marshmallow"
+            version="1.0"
+            slafile="Dalvik_DEX_Marshmallow.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:Marshmallow">
+    <description>Dalvik DEX Marshmallow</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX Nougat"
+            version="1.0"
+            slafile="Dalvik_DEX_Nougat.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:DEX_Nougat">
+    <description>Dalvik DEX Nougat</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX Oreo"
+            version="1.0"
+            slafile="Dalvik_DEX_Oreo.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:DEX_Oreo">
+    <description>Dalvik DEX Oreo</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+
+<language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX Pie"
+            version="1.0"
+            slafile="Dalvik_DEX_Pie.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:DEX_Pie">
+    <description>Dalvik DEX Pie</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX Android10"
+            version="1.0"
+            slafile="Dalvik_DEX_Android10.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:DEX_Android10">
+    <description>Dalvik DEX Android10</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX Android11"
+            version="1.0"
+            slafile="Dalvik_DEX_Android11.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:DEX_Android11">
+    <description>Dalvik DEX Android11</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX Android12"
+            version="1.0"
+            slafile="Dalvik_DEX_Android12.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:DEX_Android12">
+    <description>Dalvik DEX Android12</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+ 
 </language_definitions>

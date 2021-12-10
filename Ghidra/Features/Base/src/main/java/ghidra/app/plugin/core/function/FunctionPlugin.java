@@ -23,6 +23,7 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.cmd.function.SetReturnDataTypeCmd;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.*;
 import ghidra.app.util.AddEditDialog;
@@ -53,7 +54,8 @@ import ghidra.util.task.SwingUpdateManager;
 			"and the variables in them.  Users can change the signature, return type," +
 			"variable names, variable datatypes and comments.",
 	servicesRequired = { ProgramManager.class, DataTypeManagerService.class },
-	servicesProvided = { DataService.class }
+	servicesProvided = { DataService.class },
+	eventsConsumed = { ProgramActivatedPluginEvent.class }
 )
 //@formatter:on
 public class FunctionPlugin extends Plugin implements DataService {
@@ -157,6 +159,13 @@ public class FunctionPlugin extends Plugin implements DataService {
 		if (variableCommentDialog != null) {
 			variableCommentDialog.close();
 			variableCommentDialog = null;
+		}
+	}
+
+	@Override
+	public void processEvent(PluginEvent event) {
+		if (event instanceof ProgramActivatedPluginEvent) {
+			favoritesUpdateManager.updateLater();
 		}
 	}
 

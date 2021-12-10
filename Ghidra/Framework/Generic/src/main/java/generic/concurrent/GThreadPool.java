@@ -31,17 +31,17 @@ import ghidra.util.SystemUtilities;
  * <p>
  * The simple behavior for when new tasks are submitted:<br>
  *  1) If there any idle threads, use that thread.<br>
- *  2) If all existing threads are busy and the number of threads is less than max threads, add a 
+ *  2) If all existing threads are busy and the number of threads is less than max threads, add a
  *     new thread and use it.<br>
  *  3) if all threads are busy and there are max number of threads, queue the item until a thread
  *     becomes free.<br>
  * <p>
  * The simple behavior for when tasks are completed by a thread:<br>
  *  1) If there are tasks in the queue, start processing a new item in the newly freed thread.<br>
- *  2) if there are more threads that min threads, allow this thread to die if no new 
+ *  2) if there are more threads that min threads, allow this thread to die if no new
  *     jobs arrive before
  *     the "KEEP ALIVE" time expires which is currently 15 seconds.<br>
- *  3) if there are min threads or less, allow this thread to wait forever for a new job 
+ *  3) if there are min threads or less, allow this thread to wait forever for a new job
  *     to arrive.<br>
  */
 public class GThreadPool {
@@ -74,6 +74,18 @@ public class GThreadPool {
 			threadPool = new GThreadPool(name);
 		}
 		return threadPool;
+	}
+
+	/**
+	 * Runs the given runnable in a background thread using a shared thread pool of the given name.
+	 * @param poolName the thread pool name
+	 * @param r the runnable
+	 * @return the future
+	 */
+	public static CompletableFuture<Void> runAsync(String poolName, Runnable r) {
+		GThreadPool pool = getSharedThreadPool(poolName);
+		Executor ex = pool.getExecutor();
+		return CompletableFuture.runAsync(r, ex);
 	}
 
 	private GThreadPool(String name) {
@@ -157,7 +169,7 @@ public class GThreadPool {
 
 	/**
 	 * Returns true if this is not a shared thread pool.
-	 * 
+	 *
 	 * @return true if this is not a shared thread pool.
 	 */
 	public boolean isPrivate() {
@@ -166,12 +178,12 @@ public class GThreadPool {
 
 	/**
 	 * Returns the {@link Executor} used by this thread pool.
-	 * 
-	 * <P>Note: normal usage of this thread pool contraindicates accessing the executor of 
+	 *
+	 * <P>Note: normal usage of this thread pool contraindicates accessing the executor of
 	 * this pool.  For managing your own jobs, you should use the method on this class directly.
-	 * The intent of this method is to provide access to the executor so that it may be 
+	 * The intent of this method is to provide access to the executor so that it may be
 	 * passed to other asynchronous APIs, such as the {@link CompletableFuture}.
-	 * 
+	 *
 	 * @return the executor
 	 */
 	public Executor getExecutor() {
@@ -180,7 +192,7 @@ public class GThreadPool {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class GThreadPoolExecutor extends ThreadPoolExecutor {
 		private volatile int maxThreadCount = SystemUtilities.getDefaultThreadPoolSize();

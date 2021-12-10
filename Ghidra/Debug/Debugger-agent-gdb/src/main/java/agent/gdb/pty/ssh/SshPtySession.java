@@ -15,43 +15,30 @@
  */
 package agent.gdb.pty.ssh;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
+import com.jcraft.jsch.Channel;
 
 import agent.gdb.pty.PtySession;
-import ch.ethz.ssh2.ChannelCondition;
-import ch.ethz.ssh2.Session;
 
 public class SshPtySession implements PtySession {
 
-	private final Session session;
+	private final Channel channel;
 
-	public SshPtySession(Session session) {
-		this.session = session;
+	public SshPtySession(Channel channel) {
+		this.channel = channel;
 	}
 
 	@Override
-	public Integer waitExited() throws InterruptedException {
-		try {
-			session.waitForCondition(ChannelCondition.EOF, 0);
-			// NB. May not be available
-			return session.getExitStatus();
+	public int waitExited() throws InterruptedException {
+		// Doesn't look like there's a clever way to wait. So do the spin sleep :(
+		while (!channel.isEOF()) {
+			Thread.sleep(1000);
 		}
-		catch (InterruptedIOException e) {
-			throw new InterruptedException();
-		}
-		catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		// NB. May not be available
+		return channel.getExitStatus();
 	}
 
 	@Override
 	public void destroyForcibly() {
-		/**
-		 * TODO: This is imperfect, since it terminates the whole SSH session, not just the pty
-		 * session. I don't think that's terribly critical for our use case, but we should adjust
-		 * the spec to account for this, or devise a better implementation.
-		 */
-		session.close();
+		channel.disconnect();
 	}
 }

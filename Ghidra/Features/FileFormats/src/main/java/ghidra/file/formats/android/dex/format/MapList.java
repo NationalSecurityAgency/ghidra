@@ -26,32 +26,32 @@ import java.util.*;
 public class MapList implements StructConverter {
 
 	private int size;
-	private List< MapItem > items = new ArrayList< MapItem >( );
+	private List<MapItem> items = new ArrayList<MapItem>();
 
-	public MapList( BinaryReader reader ) throws IOException {
-		size = reader.readNextInt( );
-		for ( int i = 0 ; i < size ; ++i ) {
-			items.add( new MapItem( reader ) );
+	public MapList(BinaryReader reader) throws IOException {
+		size = reader.readNextInt();
+		for (int i = 0; i < size; ++i) {
+			items.add(new MapItem(reader));
 		}
 	}
 
-	public int getSize( ) {
+	public int getSize() {
 		return size;
 	}
 
-	public List< MapItem > getItems( ) {
-		return Collections.unmodifiableList( items );
+	public List<MapItem> getItems() {
+		return Collections.unmodifiableList(items);
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "MapList_" + size, 0 );
-		structure.add( DWORD, "size", null );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure = new StructureDataType("MapList_" + size, 0);
+		structure.add(DWORD, "size", null);
 		int index = 0;
-		for ( MapItem item : items ) {
-			structure.add( item.toDataType( ), "item_" + ( index++ ), null );
+		for (MapItem item : items) {
+			structure.add(item.toDataType(), "item_" + (index++), null);
 		}
-		structure.setCategoryPath( new CategoryPath( "/dex" ) );
+		structure.setCategoryPath(new CategoryPath("/dex"));
 		return structure;
 	}
 

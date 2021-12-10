@@ -37,13 +37,15 @@ public class EncryptedInformationCommand extends LoadCommand {
 	private int cryptoff;
 	private int cryptsize;
 	private int cryptid;
+	
+	private boolean is32bit;
 
 	static EncryptedInformationCommand createEncryptedInformationCommand(
-			FactoryBundledWithBinaryReader reader) throws IOException {
+			FactoryBundledWithBinaryReader reader, boolean is32bit) throws IOException {
 		EncryptedInformationCommand command =
 			(EncryptedInformationCommand) reader.getFactory().create(
 				EncryptedInformationCommand.class);
-		command.initEncryptedInformationCommand(reader);
+		command.initEncryptedInformationCommand(reader, is32bit);
 		return command;
 	}
 
@@ -53,9 +55,11 @@ public class EncryptedInformationCommand extends LoadCommand {
 	public EncryptedInformationCommand() {
 	}
 
-	private void initEncryptedInformationCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	private void initEncryptedInformationCommand(FactoryBundledWithBinaryReader reader,
+			boolean is32bit) throws IOException {
 		initLoadCommand(reader);
+		this.is32bit = is32bit;
+		
 		cryptoff = reader.readNextInt();
 		cryptsize = reader.readNextInt();
 		cryptid = reader.readNextInt();
@@ -102,6 +106,9 @@ public class EncryptedInformationCommand extends LoadCommand {
 		struct.add(DWORD, "cryptoff", null);
 		struct.add(DWORD, "cryptsize", null);
 		struct.add(DWORD, "cryptid", null);
+		if (!is32bit) {
+			struct.add(DWORD, "pad", null);
+		}
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
 		return struct;
 	}

@@ -13,6 +13,7 @@
     <description>RISC-V 64 little base</description>
     <compiler name="gcc" spec="riscv64.cspec" id="gcc"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv64"/>
   </language>
   <language processor="RISCV"
             endian="little"
@@ -25,6 +26,7 @@
     <description>RISC-V 64 little base compressed</description>
     <compiler name="gcc" spec="riscv64.cspec" id="gcc"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv64"/>
   </language>
   <language processor="RISCV"
             endian="little"
@@ -37,6 +39,7 @@
     <description>RISC-V 64 little general purpose</description>
     <compiler name="gcc" spec="riscv64-fp.cspec" id="gcc"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv64"/>
   </language>
   <language processor="RISCV"
             endian="little"
@@ -48,6 +51,7 @@
             id="RISCV:LE:64:RV64GC">
     <description>RISC-V 64 little general purpose compressed</description>
     <compiler name="gcc" spec="riscv64-fp.cspec" id="gcc"/>
+    <external_name tool="gnu" name="riscv:rv64"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
   </language>
   <language processor="RISCV"
@@ -61,6 +65,7 @@
     <description>RISC-V 32 little default</description>
     <compiler name="gcc" spec="riscv64-fp.cspec" id="gcc"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv64.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv64"/>
   </language>
   <language processor="RISCV"
             endian="little"
@@ -73,6 +78,7 @@
     <description>RISC-V 32 little base</description>
     <compiler name="gcc" spec="riscv32.cspec" id="gcc"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
   </language>
   <language processor="RISCV"
             endian="little"
@@ -85,6 +91,7 @@
     <description>RISC-V 32 little base compressed</description>
     <compiler name="gcc" spec="riscv32.cspec" id="gcc"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
   </language>
     <language processor="RISCV"
             endian="little"
@@ -97,6 +104,7 @@
     <description>RISC-V 32 little base compressed</description>
     <compiler name="gcc" spec="riscv32.cspec" id="gcc"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
   </language>
   <language processor="RISCV"
             endian="little"
@@ -108,6 +116,7 @@
             id="RISCV:LE:32:RV32G">
     <description>RISC-V 32 little general purpose</description>
     <compiler name="gcc" spec="riscv32-fp.cspec" id="gcc"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
   </language>
   <language processor="RISCV"
@@ -120,6 +129,7 @@
             id="RISCV:LE:32:RV32GC">
     <description>RISC-V 32 little general purpose compressed</description>
     <compiler name="gcc" spec="riscv32-fp.cspec" id="gcc"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
   </language>
   <language processor="RISCV"
@@ -132,6 +142,7 @@
             id="RISCV:LE:32:default">
     <description>RISC-V 32 little default</description>
     <compiler name="gcc" spec="riscv32-fp.cspec" id="gcc"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
   </language>
   

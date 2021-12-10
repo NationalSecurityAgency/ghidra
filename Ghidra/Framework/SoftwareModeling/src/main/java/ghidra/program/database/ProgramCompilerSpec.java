@@ -25,26 +25,35 @@ import ghidra.framework.options.Options;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * A Program specific version of the CompilerSpec.
+ * A Program-specific version of the {@link CompilerSpec}.
  * 
- * Every Program owns a specific ProgramCompilerSpec.  It is based on a CompilerSpec
- * returned by the Language assigned to the Program, but it may include extensions.
- * Extensions are currently either a new form of:
- *    - PrototypeModel or
- *    - InjectPayload
+ * Every {@link Program} owns a specific {@code ProgramCompilerSpec}. It is based on a
+ * {@link CompilerSpec} returned by the {@link Language} assigned to the {@link Program}, but it may
+ * include extensions. Extensions are currently either a new form of:
  * 
- * Extensions can be installed or removed from a ProgramDB via the Options mechanism (See SpecExtension)
- * using SpecExtension.addReplaceCompilerSpecExtension() or SpecExtension.removeCompilerSpecExtension().
+ * <ul>
+ * <li>{@link PrototypeModel} or</li>
+ * <li>{@link InjectPayload}</li>
+ * </ul>
  * 
- * ProgramCompilerSpec allows the static evaluation models, described by the underlying BasicCompilerSpec
- * and returned by getPrototypeEvaluationModel(), to be overridden by Program specific options.
+ * Extensions can be installed or removed from a {@link ProgramDB} via the {@link Options} mechanism
+ * (See {@link SpecExtension}) using
+ * {@link SpecExtension#addReplaceCompilerSpecExtension(String, TaskMonitor)} or
+ * {@link SpecExtension#removeCompilerSpecExtension(String, TaskMonitor)}.
  * 
- * getDecompilerOutputLanguage() queries the Program specific language the decompiler should use as output.
+ * {@code ProgramCompilerSpec} allows the static evaluation models, described by the underlying
+ * {@link BasicCompilerSpec} and returned by
+ * {@link #getPrototypeEvaluationModel(EvaluationModelType)}, to be overridden by Program-specific
+ * options.
  * 
- * installExtensions() is the main entry point for integrating the Program Options
- * with the Language's base CompilerSpec and producing a complete in-memory CompilerSpec for the Program.
+ * {@link #getDecompilerOutputLanguage()} queries the Program-specific language the decompiler
+ * should use as output.
+ * 
+ * {@link #installExtensions()} is the main entry point for integrating the Program Options with the
+ * Language's base CompilerSpec and producing a complete in-memory CompilerSpec for the Program.
  * 
  */
 public class ProgramCompilerSpec extends BasicCompilerSpec {
@@ -63,6 +72,7 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 
 	/**
 	 * Construct the CompilerSpec for a Program based on a Language CompilerSpec
+	 * 
 	 * @param program is the Program
 	 * @param langSpec is the CompilerSpec from Language to base this on
 	 */
@@ -73,6 +83,7 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 
 	/**
 	 * Adds and enables an option to have the decompiler display java.
+	 * 
 	 * @param program to be enabled
 	 */
 	public static void enableJavaLanguageDecompilation(Program program) {
@@ -93,9 +104,9 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 	}
 
 	/**
-	 * Install a new set of user-defined (extension) prototype models.
-	 * All the models from the compiler spec are preserved. Any old user-defined
-	 * models are removed or replaced.
+	 * Install a new set of user-defined (extension) prototype models. All the models from the
+	 * compiler spec are preserved. Any old user-defined models are removed or replaced.
+	 * 
 	 * @param extensions is the list of new user-defined models
 	 */
 	private void installPrototypeExtensions(List<PrototypeModel> extensions) {
@@ -147,6 +158,7 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 
 	/**
 	 * Add a new PrototypeModel to the list of extensions with errors
+	 * 
 	 * @param errList is the list of errors
 	 * @param model is the PrototypeModel with errors
 	 * @return the updated list
@@ -169,6 +181,7 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 
 	/**
 	 * Add a new InjectPayload to the list of extensions with errors
+	 * 
 	 * @param errList is the list of errors
 	 * @param payload is the InjectPayload with errors
 	 * @return the updated list
@@ -215,6 +228,7 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 
 	/**
 	 * Report any extensions that have parse errors
+	 * 
 	 * @param errorList is the list of extensions (or null)
 	 */
 	private void reportExtensionErrors(ArrayList<String> errorList) {
@@ -358,6 +372,12 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof ProgramCompilerSpec)) {
+			return false;
+		}
 		if (!super.equals(obj)) {
 			return false;
 		}
@@ -369,9 +389,10 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 	}
 
 	/**
-	 * Transition specified compiler specification langSpec into a program-specific 
-	 * one which supports extensions.  If the specified langSpec is not a {@link BasicCompilerSpec}
-	 * instance, the langSpec argument will be returned unmodified.
+	 * Transition specified compiler specification langSpec into a program-specific one which
+	 * supports extensions. If the specified langSpec is not a {@link BasicCompilerSpec} instance,
+	 * the langSpec argument will be returned unmodified.
+	 * 
 	 * @param program program to which langSpec applies
 	 * @param langSpec initial compiler specification which does not support extensions.
 	 * @return compiler specification to be used with program

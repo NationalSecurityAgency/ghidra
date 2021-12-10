@@ -15,13 +15,15 @@
  */
 package ghidra.file.formats.android.bootimg;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
+import ghidra.formats.gfilesystem.fileinfo.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
@@ -29,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
 @FileSystemInfo(type = "androidbootimg", description = "Android Boot and Recovery Images", factory = GFileSystemBaseFactory.class)
 public class BootImageFileSystem extends GFileSystemBase {
 
-	private BootImage header;
+	private BootImageHeader header;
 	private GFileImpl kernelFile;
 	private GFileImpl ramdiskFile;
 	private GFileImpl secondStageFile;
@@ -41,15 +43,16 @@ public class BootImageFileSystem extends GFileSystemBase {
 
 	@Override
 	public boolean isValid(TaskMonitor monitor) throws IOException {
-		byte[] bytes = provider.readBytes(0, BootImageConstants.BOOT_IMAGE_MAGIC_SIZE);
-		return Arrays.equals(bytes, BootImageConstants.BOOT_IMAGE_MAGIC_BYTES);
+		byte[] bytes = provider.readBytes(0, BootImageConstants.BOOT_MAGIC_SIZE);
+		return Arrays.equals(bytes, BootImageConstants.BOOT_MAGIC.getBytes());
 	}
 
 	@Override
 	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
-		this.header = new BootImage(provider);
 
-		if (!header.getMagic().equals(BootImageConstants.BOOT_IMAGE_MAGIC)) {
+		this.header = BootImageHeaderFactory.getBootImageHeader(provider, true);
+
+		if (!header.getMagic().equals(BootImageConstants.BOOT_MAGIC)) {
 			throw new IOException("Invalid Android boot image file!");
 		}
 
@@ -58,14 +61,15 @@ public class BootImageFileSystem extends GFileSystemBase {
 				header.getKernelSize(), null);
 			fileList.add(kernelFile);
 		}
-		if (header.getRamDiskSize() > 0) {
+
+		if (header.getRamdiskSize() > 0) {
 			ramdiskFile = GFileImpl.fromFilename(this, root, BootImageConstants.RAMDISK, false,
-				header.getKernelSize(), null);
+				header.getRamdiskSize(), null);
 			fileList.add(ramdiskFile);
 		}
-		if (header.getSecondStageSize() > 0) {
+		if (header.getSecondSize() > 0) {
 			secondStageFile = GFileImpl.fromFilename(this, root, BootImageConstants.SECOND_STAGE,
-				false, header.getKernelSize(), null);
+				false, header.getSecondSize(), null);
 			fileList.add(secondStageFile);
 		}
 	}
@@ -86,38 +90,46 @@ public class BootImageFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		if (file == kernelFile) {
-			return "This is the actual KERNEL for the android device. You can analyze this file.";
+			return FileAttributes.of(
+				FileAttribute.create(FileAttributeType.COMMENT_ATTR,
+					"This is the actual KERNEL for the android device. You can analyze this file."));
 		}
-		else if (file == ramdiskFile) {
-			return "This is a ramdisk, it is a GZIP file containing a CPIO archive.";
+		if (file == ramdiskFile) {
+			return FileAttributes.of(
+				FileAttribute.create(FileAttributeType.COMMENT_ATTR,
+					"This is a ramdisk, it is a GZIP file containing a CPIO archive."));
 		}
 		else if (file == secondStageFile) {
-			return "This is a second stage loader file. It appears unused at this time.";
+			return FileAttributes.of(
+				FileAttribute.create(FileAttributeType.COMMENT_ATTR,
+					"This is a second stage loader file. It appears unused at this time."));
 		}
 		return null;
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		long offset;
+		long size;
 		if (file == kernelFile) {
-			byte[] kernelBytes =
-				provider.readBytes(header.getKernelOffset(), header.getKernelSize());
-			return new ByteArrayInputStream(kernelBytes);
+			offset = header.getKernelOffset();
+			size = header.getKernelSize();
 		}
 		else if (file == ramdiskFile) {
-			byte[] ramDiskBytes =
-				provider.readBytes(header.getRamDiskOffset(), header.getRamDiskSize());
-			return new ByteArrayInputStream(ramDiskBytes);
+			offset = header.getRamdiskOffset();
+			size = header.getRamdiskSize();
 		}
 		else if (file == secondStageFile) {
-			byte[] secondStageBytes =
-				provider.readBytes(header.getSecondStageOffset(), header.getSecondStageSize());
-			return new ByteArrayInputStream(secondStageBytes);
+			offset = header.getSecondOffset();
+			size = header.getSecondSize();
 		}
-		return null;
+		else {
+			return null;
+		}
+		return new ByteProviderWrapper(provider, offset, size, file.getFSRL());
 	}
 
 }

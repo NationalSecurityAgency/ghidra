@@ -98,7 +98,7 @@ public class ExternalLocationDB implements ExternalLocation {
 
 	@Override
 	public String getOriginalImportedName() {
-		return getExternalData3(symbol).getOriginalImportedName();
+		return getExternalData(symbol).getOriginalImportedName();
 	}
 
 	@Override
@@ -111,7 +111,7 @@ public class ExternalLocationDB implements ExternalLocation {
 	 */
 	@Override
 	public Address getAddress() {
-		return getExternalData3(symbol).getAddress(extMgr.getAddressMap().getAddressFactory());
+		return getExternalData(symbol).getAddress(extMgr.getAddressMap().getAddressFactory());
 	}
 
 	/**
@@ -141,7 +141,7 @@ public class ExternalLocationDB implements ExternalLocation {
 	 */
 	@Override
 	public DataType getDataType() {
-		long dataTypeID = symbol.getSymbolData1();
+		long dataTypeID = symbol.getDataTypeId();
 		if (dataTypeID < 0) {
 			return null;
 		}
@@ -154,7 +154,7 @@ public class ExternalLocationDB implements ExternalLocation {
 	@Override
 	public void setDataType(DataType dt) {
 		long dataTypeID = extMgr.getProgram().getDataTypeManager().getResolvedID(dt);
-		symbol.setSymbolData1(dataTypeID);
+		symbol.setDataTypeId(dataTypeID);
 
 // TODO: change notification may be required
 	}
@@ -227,7 +227,7 @@ public class ExternalLocationDB implements ExternalLocation {
 		if (addressString == null && getSource() == SourceType.DEFAULT) {
 			throw new InvalidInputException("Either an external label or address is required");
 		}
-		updateSymbolData3(symbol, getExternalData3(symbol).getOriginalImportedName(),
+		updateSymbolData(symbol, getExternalData(symbol).getOriginalImportedName(),
 			addressString);
 	}
 
@@ -365,18 +365,18 @@ public class ExternalLocationDB implements ExternalLocation {
 
 	}
 
-	static ExternalData3 getExternalData3(SymbolDB extSymbol) {
-		return new ExternalData3(extSymbol.getSymbolData3());
+	static ExternalData getExternalData(SymbolDB extSymbol) {
+		return new ExternalData(extSymbol.getSymbolStringData());
 	}
 
 	static void setOriginalImportedName(SymbolDB extSymbol, String name) {
-		updateSymbolData3(extSymbol, name, getExternalData3(extSymbol).getAddressString());
+		updateSymbolData(extSymbol, name, getExternalData(extSymbol).getAddressString());
 	}
 
-	static void updateSymbolData3(SymbolDB extSymbol, String originalImportedName,
+	static void updateSymbolData(SymbolDB extSymbol, String originalImportedName,
 			String addressString) {
 		if (addressString == null && originalImportedName == null) {
-			extSymbol.setSymbolData3(null);
+			extSymbol.setSymbolStringData(null);
 		}
 		StringBuilder buf = new StringBuilder();
 		if (addressString != null) {
@@ -386,18 +386,18 @@ public class ExternalLocationDB implements ExternalLocation {
 			buf.append(ORIGINAL_IMPORTED_DELIMITER);
 			buf.append(originalImportedName);
 		}
-		extSymbol.setSymbolData3(buf.toString());
+		extSymbol.setSymbolStringData(buf.toString());
 	}
 
-	static class ExternalData3 {
+	static class ExternalData {
 		private String originalImportedName;
 		private String addressString;
 
-		ExternalData3(String data3) {
-			if (data3 != null) {
-				int indexOf = data3.indexOf(ORIGINAL_IMPORTED_DELIMITER);
-				originalImportedName = indexOf >= 0 ? data3.substring(indexOf + 1) : null;
-				addressString = indexOf >= 0 ? data3.substring(0, indexOf) : data3;
+		ExternalData(String stringData) {
+			if (stringData != null) {
+				int indexOf = stringData.indexOf(ORIGINAL_IMPORTED_DELIMITER);
+				originalImportedName = indexOf >= 0 ? stringData.substring(indexOf + 1) : null;
+				addressString = indexOf >= 0 ? stringData.substring(0, indexOf) : stringData;
 			}
 		}
 

@@ -55,7 +55,7 @@ class ConditionMarker {
 public:
   ConditionMarker(void);				///< Constructor
   ~ConditionMarker(void);				///< Destructor
-  bool verifyCondition(PcodeOp *op, PcodeOp *initop);	///< Perform the correlation test on two CBRANCH operations
+  bool verifyCondition(PcodeOp *op, PcodeOp *iop);	///< Perform the correlation test on two CBRANCH operations
   int4 getMultiSlot(void) const { return multislot; }	///< Get the MULTIEQUAL slot in the critical path
   bool getFlip(void) const { return matchflip; }	///< Return \b true is the expressions are anti-correlated
   static bool varnodeSame(Varnode *a,Varnode *b);

@@ -43,16 +43,16 @@ public final class ValueFormats {
 	public final static byte VALUE_NULL = 0x1e;// (none; must be 0) (none) null reference value
 	public final static byte VALUE_BOOLEAN = 0x1f;// boolean (0...1) (none) one-bit value; 0 for false and 1 for true. The bit is represented in the value_arg.
 
-	public final static String toString( byte value ) {
+	public final static String toString(byte value) {
 		try {
-			Field [ ] fields = ValueFormats.class.getDeclaredFields( );
-			for ( Field field : fields ) {
-				if ( field.getByte( null ) == value ) {
-					return field.getName( );
+			Field[] fields = ValueFormats.class.getDeclaredFields();
+			for (Field field : fields) {
+				if (field.getByte(null) == value) {
+					return field.getName();
 				}
 			}
 		}
-		catch ( Exception e ) {
+		catch (Exception e) {
 			// ignore
 		}
 		return "Value:" + value;

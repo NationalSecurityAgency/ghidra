@@ -326,11 +326,12 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 			condenseVertices(rows, vertexLayoutLocations, transformer, centerX, centerY);
 		}
 
-		Map<E, List<Point2D>> edgeLayoutArticulations = positionEdgeArticulationsInLayoutSpace(
-			transformer, vertexLayoutLocations, edges, layoutLocations);
+		Map<E, List<Point2D>> edgeLayoutArticulations =
+			positionEdgeArticulationsInLayoutSpace(transformer, vertexLayoutLocations, edges,
+				layoutLocations);
 
 		if (isCondensed) {
-			// note: some layouts will not condense the edges, as they perform custom routing
+			// note: some layouts will not condense the edges, as they perform custom routing		
 			List<Row<V>> rows = gridLocations.rows();
 			condenseEdges(rows, edgeLayoutArticulations, centerX, centerY);
 		}

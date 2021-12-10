@@ -55,14 +55,15 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		addDataType(ByteDataType.dataType);
 		addDataType(FloatDataType.dataType);
-		addFlexDataType(DWordDataType.dataType, null, null);
+		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null,
+			null);
 
-		assertEquals(2, structureModel.getNumComponents());
+		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
 		checkRow(0, 0, 1, "db", ByteDataType.dataType, "", "");
 		checkRow(1, 1, 4, "float", FloatDataType.dataType, "", "");
-		checkBlankRow(2);
-		checkRow(3, 5, 0, "ddw[0]", DWordDataType.dataType, "", "");
+		checkFlexArrayRow(2, 5, "ddw", DWordDataType.dataType, "", "");
+		checkBlankRow(3);
 		assertLength(5);
 		assertActualAlignment(1);
 	}
@@ -73,16 +74,17 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		addDataType(ByteDataType.dataType);
 		addDataType(CharDataType.dataType);
-		addFlexDataType(DWordDataType.dataType, null, null);
+		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null,
+			null);
 
 		waitForSwing();
 
-		assertEquals(2, structureModel.getNumComponents());
+		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
 		checkRow(0, 0, 1, "db", ByteDataType.dataType, "", "");
 		checkRow(1, 1, 1, "char", CharDataType.dataType, "", "");
-		checkBlankRow(2);
-		checkRow(3, 2, 0, "ddw[0]", DWordDataType.dataType, "", "");
+		checkFlexArrayRow(2, 2, "ddw", DWordDataType.dataType, "", "");
+		checkBlankRow(3);
 		assertLength(2);
 		assertActualAlignment(1);
 
@@ -90,12 +92,12 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		assertIsPackingEnabled(true);
 		assertDefaultPacked();
 
-		assertEquals(2, structureModel.getNumComponents());
+		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
 		checkRow(0, 0, 1, "db", ByteDataType.dataType, "", "");
 		checkRow(1, 1, 1, "char", CharDataType.dataType, "", "");
-		checkBlankRow(2);
-		checkRow(3, 4, 0, "ddw[0]", DWordDataType.dataType, "", "");
+		checkFlexArrayRow(2, 4, "ddw", DWordDataType.dataType, "", "");
+		checkBlankRow(3);
 		assertLength(4);
 		assertActualAlignment(4);
 	}
@@ -106,7 +108,8 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		addDataType(ByteDataType.dataType);
 		addDataType(CharDataType.dataType);
-		addFlexDataType(DWordDataType.dataType, null, null);
+		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null,
+			null);
 
 		waitForSwing();
 
@@ -117,12 +120,14 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		pressButtonByName(getPanel(), "Machine Alignment");
 		assertIsMachineAligned();
 
-		assertEquals(2, structureModel.getNumComponents());
+		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
 		checkRow(0, 0, 1, "db", ByteDataType.dataType, "", "");
 		checkRow(1, 1, 1, "char", CharDataType.dataType, "", "");
-		checkBlankRow(2);
-		checkRow(3, 8, 0, "ddw[0]", DWordDataType.dataType, "", "");
+		// It is important to note that a trailing flex array will align the same as any other component and
+		// is not guarenteed to fall at the end of the structure.
+		checkFlexArrayRow(2, 4, "ddw", DWordDataType.dataType, "", "");
+		checkBlankRow(3);
 		assertLength(8);
 		assertActualAlignment(8);
 	}
@@ -135,7 +140,8 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		addDataType(ByteDataType.dataType);
 		addDataType(CharDataType.dataType);
-		addFlexDataType(DWordDataType.dataType, null, null);
+		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null,
+			null);
 
 		waitForSwing();
 
@@ -156,51 +162,49 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		assertEquals(false, structureModel.viewComposite.isMachineAligned());
 		assertEquals(8, structureModel.getExplicitMinimumAlignment());
 
-		assertEquals(2, structureModel.getNumComponents());
-		assertEquals(4, structureModel.getRowCount());
-		assertEquals(2, structureModel.getNumComponents());
+		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
 		checkRow(0, 0, 1, "db", ByteDataType.dataType, "", "");
 		checkRow(1, 1, 1, "char", CharDataType.dataType, "", "");
-		checkBlankRow(2);
-		checkRow(3, 8, 0, "ddw[0]", DWordDataType.dataType, "", "");
+		checkFlexArrayRow(2, 4, "ddw", DWordDataType.dataType, "", "");
+		checkBlankRow(3);
 		assertLength(8);
 		assertActualAlignment(8);
 	}
 
 	@Test
 	public void testByValue1AlignedStructure() throws Exception {
-		checkByValueAlignedStructure(1, 4, 4);
+		checkByValueAlignedStructure(1, 4, 4, 4);
 	}
 
 	@Test
 	public void testByValue2AlignedStructure() throws Exception {
-		checkByValueAlignedStructure(2, 4, 4);
+		checkByValueAlignedStructure(2, 4, 4, 4);
 	}
 
 	@Test
 	public void testByValue4AlignedStructure() throws Exception {
-		checkByValueAlignedStructure(4, 4, 4);
+		checkByValueAlignedStructure(4, 4, 4, 4);
 	}
 
 	@Test
 	public void testByValue8AlignedStructure() throws Exception {
-		checkByValueAlignedStructure(8, 8, 8);
+		checkByValueAlignedStructure(8, 8, 8, 4);
 	}
 
 	@Test
 	public void testByValue16AlignedStructure() throws Exception {
-		checkByValueAlignedStructure(16, 16, 16);
+		checkByValueAlignedStructure(16, 16, 16, 4);
 	}
 
-	public void checkByValueAlignedStructure(int value, int alignment, int length)
+	public void checkByValueAlignedStructure(int value, int alignment, int length, int flexOffset)
 			throws Exception {
 		emptyStructure.setPackingEnabled(true);
 		emptyStructure.setExplicitMinimumAlignment(value);
 
 		emptyStructure.add(ByteDataType.dataType);
 		emptyStructure.add(CharDataType.dataType);
-		emptyStructure.setFlexibleArrayComponent(DWordDataType.dataType, null, null);
+		addFlexDataType(emptyStructure, DWordDataType.dataType, null, null);
 
 		init(emptyStructure, pgmRootCat, false);
 		CompEditorPanel editorPanel = (CompEditorPanel) getPanel();
@@ -219,12 +223,13 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		assertEquals(false, structureModel.viewComposite.isMachineAligned());
 		assertEquals(value, structureModel.getExplicitMinimumAlignment());
 
-		assertEquals(2, structureModel.getNumComponents());
+		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
 		checkRow(0, 0, 1, "db", ByteDataType.dataType, "", "");
 		checkRow(1, 1, 1, "char", CharDataType.dataType, "", "");
-		checkBlankRow(2);
-		checkRow(3, length, 0, "ddw[0]", DWordDataType.dataType, "", "");
+
+		checkFlexArrayRow(2, flexOffset, "ddw", DWordDataType.dataType, "", "");
+		checkBlankRow(3);
 		assertLength(length);
 		assertActualAlignment(alignment);
 	}
@@ -240,7 +245,7 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 
 		addDataType(ByteDataType.dataType);
 		addDataType(CharDataType.dataType);
-		addFlexDataType(DWordDataType.dataType, null, null);
+		addFlexDataType((Structure) structureModel.viewComposite, DWordDataType.dataType, null, null);
 
 		JRadioButton byValuePackingButton =
 			(JRadioButton) findComponentByName(editorPanel, "Explicit Packing");
@@ -255,17 +260,23 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		assertEquals(false, structureModel.viewComposite.isMachineAligned());
 		assertEquals(false, structureModel.viewComposite.hasExplicitMinimumAlignment());
 
-		assertEquals(2, structureModel.getNumComponents());
+		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
 		checkRow(0, 0, 1, "db", ByteDataType.dataType, "", "");
 		checkRow(1, 1, 1, "char", CharDataType.dataType, "", "");
-		checkBlankRow(2);
-		checkRow(3, 2, 0, "ddw[0]", DWordDataType.dataType, "", "");
+		checkFlexArrayRow(2, 2, "ddw", DWordDataType.dataType, "", "");
+		checkBlankRow(3);
 		assertLength(2);
 		assertActualAlignment(1);
 	}
 
 	////////////////////////////
+
+	private void checkFlexArrayRow(int rowIndex, int offset, String mnemonic, DataType dataType,
+			String name, String comment) {
+		ArrayDataType a = new ArrayDataType(dataType, 0, -1);
+		checkRow(rowIndex, offset, 0, mnemonic + "[0]", a, name, comment);
+	}
 
 	private void checkRow(int rowIndex, int offset, int length, String mnemonic, DataType dataType,
 			String name, String comment) {
@@ -294,9 +305,9 @@ public class StructureEditorFlexAlignmentTest extends AbstractStructureEditorTes
 		return structureModel.viewComposite.add(dataType);
 	}
 
-	private DataTypeComponent addFlexDataType(DataType dataType, String name, String comment) {
-		return ((Structure) structureModel.viewComposite).setFlexibleArrayComponent(dataType, name,
-			comment);
+	private DataTypeComponent addFlexDataType(Structure struct, DataType dataType, String name, String comment) {
+		ArrayDataType a = new ArrayDataType(dataType, 0, 1);
+		return struct.add(a, name, comment);
 	}
 
 }

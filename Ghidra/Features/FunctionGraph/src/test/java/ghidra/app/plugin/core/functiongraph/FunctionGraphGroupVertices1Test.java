@@ -65,12 +65,12 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 
 	@Test
 	public void testGroupingPersistence() throws Exception {
-		// 
-		// Round-trip test to ensure that a grouped graph will be restored after re-opening a 
+		//
+		// Round-trip test to ensure that a grouped graph will be restored after re-opening a
 		// program.
 		//
 
-		// 
+		//
 		// Pick a function and group some nodes.
 		//
 		FGData graphData = graphFunction("01002cf5");
@@ -95,7 +95,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// Record the edges for later validation.  Note: we have to keep the string form, as the
 		// toString() on the edges will call back to its vertices, which will later have been
 		// disposed.
-		Collection<FGEdge> oringalGroupedEdges = new HashSet<>(graph.getEdges());// copy so they don't get cleared		
+		Collection<FGEdge> oringalGroupedEdges = new HashSet<>(graph.getEdges());// copy so they don't get cleared
 		List<String> originalEdgeStrings = new ArrayList<>(oringalGroupedEdges.size());
 		for (FGEdge edge : oringalGroupedEdges) {
 			originalEdgeStrings.add(edge.toString());
@@ -136,7 +136,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 	/**
 	 * Tests that the app will recognize the case where the entry point to a function is invalid,
 	 * and generate the appropriate error message when trying to create a function graph.
-	 * 
+	 *
 	 * Step 1: Make sure the function graph window is closed.
 	 * Step 2: Clear the entry point bytes
 	 * Step 3: Open the function graph window to generate the graph again.
@@ -144,8 +144,8 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 	 */
 	public void testInvalidFunctionEntryPoint() {
 
-		// First thing we need to do is close the function graph window.  It's opened on 
-		// startup by default in this test suite but we want it closed until we clear the 
+		// First thing we need to do is close the function graph window.  It's opened on
+		// startup by default in this test suite but we want it closed until we clear the
 		// function code bytes.
 		this.getFunctionGraphController().getProvider().closeComponent();
 
@@ -170,7 +170,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		runSwing(() -> clearAction.actionPerformed(context));
 		waitForBusyTool(tool);
 
-		// Open the window; the tool will try to generate a new graph but should fail and generate 
+		// Open the window; the tool will try to generate a new graph but should fail and generate
 		// an error message.
 		DockingActionIf openGraphAction;
 		openGraphAction = getAction(fgp, "Display Function Graph");
@@ -186,8 +186,8 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 
 	@Test
 	public void testGroupAndUngroup_WhenOneOfTheGroupIsAGroup() {
-		// 
-		// This test seeks to ensure that you can group a selection of vertices when one of 
+		//
+		// This test seeks to ensure that you can group a selection of vertices when one of
 		// those vertices is itself a group.
 		//
 
@@ -217,7 +217,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 
 		group(secondUngroupedVertices);
 
-		// 5 edges expected: 
+		// 5 edges expected:
 		// -ungrouped vertex: 1 in, 1 out
 		// -grouped vertex  : 1 in, 2 out
 		expectedGroupedEdgeCount = 5;
@@ -248,7 +248,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 
 	@Test
 	public void testGroupingPersistence_WhenOneOfTheGroupIsAGroup() throws Exception {
-		// 
+		//
 		// This test seeks to ensure that groups within groups are persisted and restored.
 		//
 
@@ -284,7 +284,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//printEdges(outerUngroupedEdges);
 		group(outerUngroupedVertices);
 
-		// 5 edges expected: 
+		// 5 edges expected:
 		// -ungrouped vertex: 1 in, 1 out
 		// -grouped vertex  : 1 in, 2 out
 		expectedGroupedEdgeCount = 5;
@@ -353,8 +353,8 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 
 	@Test
 	public void testUngroupAll() {
-		// 
-		// Group some vertices and then group that vertex with some vertices to create a 
+		//
+		// Group some vertices and then group that vertex with some vertices to create a
 		// recursively/nested grouping.  Also create a second top-level group.  Make sure the
 		// ungroup all action will restore the original graph.
 		//
@@ -434,8 +434,8 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		// The coloring algorithm:
 		// 1) If the grouped vertices are not colored, then use the default group color
-		// 2) If the grouped vertices are colored, but not all the same color, 
-		//    then use the default group color=		
+		// 2) If the grouped vertices are colored, but not all the same color,
+		//    then use the default group color=
 		// 3) If all grouped vertices share the same color, then make the group that color
 		//
 		// This test is for 1)
@@ -459,7 +459,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		ungroup(group);
 
-		// 
+		//
 		// Test the grouped vertices colors
 		//
 		verifyDefaultColor(v1, v2);
@@ -470,8 +470,8 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		// The coloring algorithm:
 		// 1) If the grouped vertices are not colored, then use the default group color
-		// 2) If the grouped vertices are colored, but not all the same color, 
-		//    then use the default group color=		
+		// 2) If the grouped vertices are colored, but not all the same color,
+		//    then use the default group color=
 		// 3) If all grouped vertices share the same color, then make the group that color
 		//
 		// This test is for 2)
@@ -500,7 +500,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		ungroup(group);
 
-		// 
+		//
 		// Test the grouped vertices colors
 		//
 		verifyColor(v1, newColor);
@@ -512,8 +512,8 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		// The coloring algorithm:
 		// 1) If the grouped vertices are not colored, then use the default group color
-		// 2) If the grouped vertices are colored, but not all the same color, 
-		//    then use the default group color=		
+		// 2) If the grouped vertices are colored, but not all the same color,
+		//    then use the default group color=
 		// 3) If all grouped vertices share the same color, then make the group that color
 		//
 		// This test is for 3)
@@ -543,7 +543,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		ungroup(group);
 
-		// 
+		//
 		// Test the grouped vertices colors
 		//
 		verifyColor(v1, newColor);
@@ -572,7 +572,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		ungroup(group);
 
-		// 
+		//
 		// Test the grouped vertices colors
 		//
 		verifyColor(v1, newGroupColor);
@@ -607,7 +607,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		ungroup(group);
 
-		// 
+		//
 		// Test the grouped vertices colors
 		//
 		verifyColor(v1, newGroupColor);
@@ -642,7 +642,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		ungroup(group);
 
-		// 
+		//
 		// Test the grouped vertices colors
 		//
 		verifyColor(v1, newGroupColor);
@@ -666,7 +666,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		Color newGroupColor = Color.CYAN;
 		color(group, newGroupColor);
 
-		// 
+		//
 		// Trigger persistence
 		//
 		Address groupAddress = group.getVertexAddress();
@@ -683,7 +683,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		ungroup(group);
 
-		// 
+		//
 		// Test the grouped vertices colors
 		//
 		v1 = vertex("01002d06");
@@ -703,7 +703,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		FGVertex v2 = vertex("01002d0f");
 		GroupedFunctionGraphVertex group = group("A", v1, v2);
 
-		// 
+		//
 		// Trigger persistence
 		//
 		Address groupAddress = group.getVertexAddress();
@@ -720,7 +720,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		ungroup(group);
 
-		// 
+		//
 		// Test the grouped vertices colors
 		//
 		v1 = vertex("01002d06");
@@ -737,16 +737,16 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 
 		//
 		// Color just one of the vertices
-		// 
+		//
 		Color newColor = Color.RED;
 		color(v1, newColor);
 
 		//
 		// Group a node
-		//		
+		//
 		GroupedFunctionGraphVertex group = group("A", v1, v2);
 
-		// 
+		//
 		// Trigger persistence
 		//
 		Address groupAddress = group.getVertexAddress();
@@ -763,7 +763,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		ungroup(group);
 
-		// 
+		//
 		// Test the grouped vertices colors
 		//
 		v1 = vertex("01002d06");
@@ -781,16 +781,16 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 
 		//
 		// Color just one of the vertices
-		// 
+		//
 		Color newColor = Color.RED;
 		color(v1, newColor);
 
 		//
 		// Group a node
-		//		
+		//
 		GroupedFunctionGraphVertex group = group("A", v1, v2);
 
-		// 
+		//
 		// Trigger reset
 		//
 		Address groupAddress = group.getVertexAddress();
@@ -800,9 +800,9 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// Make sure the group is gone
 		//
 		FGVertex vertex = graphData.getFunctionGraph().getVertexForAddress(groupAddress);
-		assertFalse(vertex instanceof GroupedFunctionGraphVertex);// the group has been removed 
+		assertFalse(vertex instanceof GroupedFunctionGraphVertex);// the group has been removed
 
-		// 
+		//
 		// Test the grouped vertices colors
 		//
 		v1 = vertex("01002d06");
@@ -838,11 +838,6 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		assertEquals(alpha, alphAfterGroup);
 	}
 
-	@Test
-	public void testSymbolAddedWhenGrouped_SymbolOutsideOfGroupNode() {
-		// TODO
-	}
-
 //==================================================================================================
 // Private Methods
 //==================================================================================================
@@ -853,85 +848,85 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		FGData graphData = graphFunction("01002cf5");
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
 		Graph<FGVertex, FGEdge> graph = functionGraph;
-	
-		Set<FGVertex> ungroupedVertices = selectVertices( functionGraph, 
-																	"01002d2b" /* Another Local*/, 
+
+		Set<FGVertex> ungroupedVertices = selectVertices( functionGraph,
+																	"01002d2b" /* Another Local*/,
 																	"01002d1f" /* MyLocal */);
 		Set<FGEdge> ungroupedEdges = getEdges(graph, ungroupedVertices);
 		assertEquals("Did not grab all known edges for vertices", 4, ungroupedEdges.size());
-	
+
 		group(ungroupedVertices);
-	
+
 		assertVerticesRemoved(graph, ungroupedVertices);
 		assertEdgesRemoved(graph, ungroupedEdges);
-		
+
 		// -1 because one one of the edges was between two of the vertices being grouped
 		int expectedGroupedEdgeCount = ungroupedEdges.size() - 1;
 		GroupedFunctionGraphVertex groupedVertex =
-			validateNewGroupedVertexFromVertices(functionGraph, ungroupedVertices, 
+			validateNewGroupedVertexFromVertices(functionGraph, ungroupedVertices,
 				expectedGroupedEdgeCount);
-	
+
 		ungroup(groupedVertex);
-	
+
 		assertVertexRemoved(graph, groupedVertex);
 		assertVerticesAdded(graph, ungroupedVertices);
 		assertEdgesAdded(functionGraph, ungroupedEdges);
 		assertSelected(ungroupedVertices);
-		
+
 	}
 
 	@Override
 	protected void doTestRestoringWhenCodeBlocksHaveChanged_WillRegroup() {
-		// 
-		// Tests the behavior of how group vertices are restored when one or more of the vertices 
+		//
+		// Tests the behavior of how group vertices are restored when one or more of the vertices
 		// inside of the grouped vertex is no longer available when the graph attempts to restore
 		// the group vertex user settings (i.e., when restarting Ghidra, the previously grouped
 		// vertices should reappear).
 		//
 		// In this test, we will be mutating a group of 3 nodes such
-		// that one of the nodes has been split into two.  This leaves 2 vertices to 
+		// that one of the nodes has been split into two.  This leaves 2 vertices to
 		// be found by the regrouping algorithm.  Furthermore, the regrouping *will* still
 		// take place, as at least two vertices cannot be found.
 		//
-	
-		// 
+
+		//
 		// Pick a function and group some nodes.
 		//
 		FGData graphData = graphFunction("01002cf5");
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
-	
+
 		Set<FGVertex> ungroupedVertices = selectVertices(functionGraph,
 			"01002d11" /* LAB_01002d11 */, "01002cf5" /* ghidra */, "01002d1f" /* MyLocal */);
-	
+
 		group(ungroupedVertices);
-	
-		// 5 edges expected: 
-		// -01002cf5: 2 out 
+
+		// 5 edges expected:
+		// -01002cf5: 2 out
 		// -01002d11: 2 in, (1 out that was removed)
 		// -01002d1f: 2 out (1 in that was removed)
 		int expectedGroupedEdgeCount = 6;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
 			functionGraph, ungroupedVertices, expectedGroupedEdgeCount);
-	
+
 		AddressSetView addresses = groupedVertex.getAddresses();
 		Address minAddress = addresses.getMinAddress();
 		Address maxAddress = addresses.getMaxAddress();
-	
+
 		//
-		// Ideally, we would like to save, close and re-open the program so that we can get 
-		// a round-trip saving and reloading.  However, in the test environment, we cannot save 
+		// Ideally, we would like to save, close and re-open the program so that we can get
+		// a round-trip saving and reloading.  However, in the test environment, we cannot save
 		// our programs.  So, we will instead just navigate away from the current function, clear
-		// the cache (to make sure that we read the settings again), and then verify that the 
+		// the cache (to make sure that we read the settings again), and then verify that the
 		// data saved in the program has been used to re-group.
 		//
 		graphFunction("0100415a");
 		clearCache();
-	
+
 		//
 		// Add a label to trigger a code block change
 		//
 		Address labelAddress = createLabel("01002d18");// in the middle of the LAB_01002d11 code block
-	
+
 		//
 		// Relaunch the graph, which will use the above persisted group settings...
 		//
@@ -941,22 +936,22 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		FGVertex expectedGroupVertex = functionGraph.getVertexForAddress(minAddress);
 		assertTrue(expectedGroupVertex instanceof GroupedFunctionGraphVertex);
 		assertEquals(maxAddress, expectedGroupVertex.getAddresses().getMaxAddress());
-	
+
 		// ...we expect that the two original grouped vertices have again been grouped...
 		FGVertex splitVertex =
 			functionGraph.getVertexForAddress(getAddress("01002d11") /* LAB_01002d11 */);
 		assertTrue("The split vertex should not have been regrouped",
 			!(splitVertex instanceof GroupedFunctionGraphVertex));
-	
+
 		FGVertex unchangedVertex =
 			functionGraph.getVertexForAddress(getAddress("01002cf5") /* ghidra */);
 		assertTrue("An unchanged vertex should have been regrouped: " + unchangedVertex,
 			(unchangedVertex instanceof GroupedFunctionGraphVertex));
-	
+
 		unchangedVertex = functionGraph.getVertexForAddress(getAddress("01002d1f") /* MyLocal */);
 		assertTrue("An unchanged vertex should have been regrouped: " + unchangedVertex,
 			(unchangedVertex instanceof GroupedFunctionGraphVertex));
-	
+
 		// ...but the newly created code block has not
 		FGVertex newlyCreatedVertex = functionGraph.getVertexForAddress(labelAddress);
 		assertNotNull(newlyCreatedVertex);
@@ -966,34 +961,34 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 	protected void doTestSymbolAddedWhenGrouped_SymbolInsideOfGroupNode() {
 		//
 		// By default, if the FunctionGraph detects a symbol addition to one of the code blocks
-		// in the graph, then it will split the affected vertex (tested elsewhere).  
+		// in the graph, then it will split the affected vertex (tested elsewhere).
 		// However, if the affected vertex is grouped, then the FG will not split the node, but
 		// should still show the 'stale' indicator.
 		//
-	
-		// 
+
+		//
 		// Pick a function and group some nodes.
 		//
 		FGData graphData = graphFunction("01002cf5");
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
-	
+
 		Set<FGVertex> ungroupedVertices =
 			selectVertices(functionGraph, "01002d11" /* LAB_01002d11 */, "01002cf5" /* ghidra */);
-	
+
 		group(ungroupedVertices);
-	
-		// 5 edges expected: 
-		// -01002cf5: 2 out 
+
+		// 5 edges expected:
+		// -01002cf5: 2 out
 		// -01002cf5: 2 in, 1 out
 		int expectedGroupedEdgeCount = 5;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
 			functionGraph, ungroupedVertices, expectedGroupedEdgeCount);
-	
+
 		//
 		// Add a label to trigger a code block change
 		//
 		Address labelAddress = createLabel("01002d18");// in the middle of the LAB_01002d11 code block
-	
+
 		//
 		// Make sure the newly created code block does not have a corresponding vertex
 		//

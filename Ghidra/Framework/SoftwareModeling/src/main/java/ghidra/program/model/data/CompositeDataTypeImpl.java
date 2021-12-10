@@ -96,6 +96,12 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	 * @return preferred component length
 	 */
 	protected int getPreferredComponentLength(DataType dataType, int length) {
+		if (DataTypeComponent.usesZeroLengthComponent(dataType)) {
+			return 0;
+		}
+		if ((isPackingEnabled() || (this instanceof Union)) && !(dataType instanceof Dynamic)) {
+			length = -1; // force use of datatype size
+		}
 		int dtLength = dataType.getLength();
 		if (length <= 0) {
 			length = dtLength;
@@ -112,6 +118,22 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	@Override
 	public abstract boolean hasLanguageDependantLength();
+
+	/**
+	 * Determine if this composite should be treated as undefined.
+	 * <p>
+	 * A composite is considered undefined with a zero-length when it has 
+	 * no components and packing is disabled.  A {@link DataTypeComponent} defined by an
+	 * an datatype which is not-yet-defined (i.e., {@link DataType#isNotYetDefined()} is true) 
+	 * will always have a size of 1.  If an empty composite should be treated as 
+	 * fully specified, packing on the composite should be enabled to ensure that 
+	 * a zero-length component is used should the occassion arise (e.g., empty structure 
+	 * placed within union as a component).
+	 */
+	@Override
+	public final boolean isNotYetDefined() {
+		return getNumComponents() == 0 && !isPackingEnabled();
+	}
 
 	@Override
 	public boolean isPartOf(DataType dataTypeOfInterest) {
@@ -407,123 +429,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	@Override
 	public String toString() {
-		return toString(this);
-	}
-
-	public static String toString(Composite composite) {
-
-		StringBuilder stringBuffer = new StringBuilder();
-		stringBuffer.append(composite.getPathName() + "\n");
-		stringBuffer.append(getAlignmentAndPackingString(composite) + "\n");
-		stringBuffer.append(getTypeName(composite) + " " + composite.getDisplayName() + " {\n");
-		dumpComponents(composite, stringBuffer, "   ");
-		stringBuffer.append("}\n");
-		stringBuffer.append("Size = " + composite.getLength() + "   Actual Alignment = " +
-			composite.getAlignment() + "\n");
-		return stringBuffer.toString();
-
-	}
-
-	/**
-	 * Dump all components for use in {@link #toString()} representation.
-	 * 
-	 * @param buffer string buffer
-	 * @param pad    padding to be used with each component output line
-	 */
-	private static void dumpComponents(Composite composite, StringBuilder buffer, String pad) {
-		// limit output of filler components for non-packed structures
-		DataTypeComponent[] components = composite.getDefinedComponents();
-		for (DataTypeComponent dtc : components) {
-			DataType dataType = dtc.getDataType();
-//			buffer.append(pad + dtc.getOrdinal());
-//			buffer.append(") ");
-			buffer.append(pad + dtc.getOffset());
-			buffer.append(pad + dataType.getName());
-			if (dataType instanceof BitFieldDataType) {
-				BitFieldDataType bfDt = (BitFieldDataType) dataType;
-				buffer.append("(");
-				buffer.append(Integer.toString(bfDt.getBitOffset()));
-				buffer.append(")");
-			}
-			buffer.append(pad + dtc.getLength());
-			buffer.append(pad + dtc.getFieldName());
-			String comment = dtc.getComment();
-			if (comment == null) {
-				comment = "";
-			}
-			buffer.append(pad + "\"" + comment + "\"");
-			buffer.append("\n");
-		}
-		if (composite instanceof Structure) {
-			DataTypeComponent dtc = ((Structure) composite).getFlexibleArrayComponent();
-			if (dtc != null) {
-				DataType dataType = dtc.getDataType();
-				buffer.append(pad + dataType.getDisplayName() + "[0]");
-				buffer.append(pad + dtc.getLength());
-				buffer.append(pad + dtc.getFieldName());
-				String comment = dtc.getComment();
-				if (comment == null) {
-					comment = "";
-				}
-				buffer.append(pad + "\"" + comment + "\"");
-				buffer.append("\n");
-			}
-		}
-	}
-
-	private static String getTypeName(Composite composite) {
-		if (composite instanceof Structure) {
-			return "Structure";
-		}
-		else if (composite instanceof Union) {
-			return "Union";
-		}
-		return "";
-	}
-
-	public static String getAlignmentAndPackingString(Composite composite) {
-		StringBuilder buf =
-			new StringBuilder(getMinAlignmentString(composite));
-		if (buf.length() != 0) {
-			buf.append(" ");
-		}
-		buf.append(getPackingString(composite));
-		return buf.toString();
-	}
-
-	public static String getMinAlignmentString(Composite composite) {
-		if (composite.isDefaultAligned()) {
-			return "";
-		}
-		StringBuilder buf = new StringBuilder(ALIGN_NAME);
-		buf.append("(");
-		if (composite.isMachineAligned()) {
-			buf.append("machine:");
-			buf.append(composite.getDataOrganization().getMachineAlignment());
-		}
-		else {
-			buf.append(composite.getExplicitMinimumAlignment());
-		}
-		buf.append(")");
-		return buf.toString();
-	}
-
-	public static String getPackingString(Composite composite) {
-		StringBuilder buf = new StringBuilder(PACKING_NAME);
-		buf.append("(");
-		if (composite.isPackingEnabled()) {
-			if (composite.hasExplicitPackingValue()) {
-				buf.append(composite.getExplicitPackingValue());
-			}
-			else {
-				buf.append(DEFAULT_PACKING_NAME);
-			}
-		}
-		else {
-			buf.append(DISABLED_PACKING_NAME); // NO_PACKING
-		}
-		buf.append(")");
-		return buf.toString();
+		return CompositeInternal.toString(this);
 	}
 
 }

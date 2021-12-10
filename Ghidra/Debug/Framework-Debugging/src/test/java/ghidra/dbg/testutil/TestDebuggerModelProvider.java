@@ -17,9 +17,11 @@ package ghidra.dbg.testutil;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.util.PathPredicates;
 
 public interface TestDebuggerModelProvider {
 	interface ModelHost extends AutoCloseable {
@@ -82,6 +84,10 @@ public interface TestDebuggerModelProvider {
 
 		<T extends TargetObject> Map<List<String>, T> findAll(Class<T> cls, List<String> seedPath,
 				boolean atLeastOne) throws Throwable;
+
+		<T extends TargetObject> Map<List<String>, T> findAll(Class<T> cls, List<String> seedPath,
+				Function<PathPredicates, PathPredicates> adjustPredicates, boolean atLeastOne)
+				throws Throwable;
 
 		TargetObject findContainer(Class<? extends TargetObject> cls, List<String> seedPath)
 				throws Throwable;

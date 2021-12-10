@@ -16,8 +16,9 @@
 package ghidra.net;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.security.*;
-import java.security.KeyStore.PrivateKeyEntry;
+import java.security.KeyStore.*;
 import java.security.cert.*;
 import java.security.cert.Certificate;
 import java.util.*;
@@ -26,10 +27,19 @@ import javax.net.ssl.*;
 import javax.security.auth.DestroyFailedException;
 import javax.security.auth.x500.X500Principal;
 
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.RFC4519Style;
+import org.bouncycastle.asn1.x509.*;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.OperatorException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+
 import generic.random.SecureRandomFactory;
 import ghidra.util.Msg;
-import sun.security.provider.X509Factory;
-import sun.security.x509.*;
+import ghidra.util.exception.AssertException;
 
 /**
  * <code>ApplicationKeyManagerUtils</code> provides public methods for utilizing
@@ -37,19 +47,33 @@ import sun.security.x509.*;
  * (i.e., CA certificates), token signing and validation, and the ability to
  * generate keystores for testing or when a self-signed certificate will
  * suffice.
- * <p>
- * <b>NOTE:</b> This class makes direct use of classes within the
- * <code>sun.security.x509</code> package thus breaking portability. While this is
- * not preferred, the ability to generate X.509 certificates and keystores
- * appears to be absent from the standard java/javax packages.
  */
 public class ApplicationKeyManagerUtils {
 
-	public static final String DEFAULT_SIGNING_ALGORITHM = "SHA1withRSA";
+	public static final String RSA_TYPE = "RSA";
 
-	public static final String DEFAULT_AUTH_TYPE = "RSA";
+	private static final int KEY_SIZE = 4096;
+
+	private static final String SIGNING_ALGORITHM = "SHA512withRSA";
 
 	private static final int MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
+	public static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
+	public static final String END_CERT = "-----END CERTIFICATE-----";
+
+	static {
+		/**
+		 * Bouncy Castle uses its BCStyle for X500Names which reverses Distingushed Name ordering.
+		 * This is resolved by setting the default to RFC4519 style to ensure compatibility with 
+		 * Java's internal implementation of X500Name.
+		 * <p>
+		 * Note that this could become an issue if this static default is adjusted elsewhere.
+		 * It may be neccessary to set this at the start of all methods which rely on any of the
+		 * BC code for X500 certificate processing.
+		 * 
+		 */
+		X500Name.setDefaultStyle(RFC4519Style.INSTANCE);
+	}
 
 	private ApplicationKeyManagerUtils() {
 		// no instantiation - static methods only
@@ -61,9 +85,9 @@ public class ApplicationKeyManagerUtils {
 	 * @param authorities trusted certificate authorities
 	 * @param token token byte array
 	 * @return signed token object
-	 * @throws NoSuchAlgorithmException
-	 * @throws SignatureException
-	 * @throws CertificateException
+	 * @throws NoSuchAlgorithmException algorithym associated within signing certificate not found
+	 * @throws SignatureException failed to generate SignedToken
+	 * @throws CertificateException error associated with signing certificate
 	 */
 	public static SignedToken getSignedToken(Principal[] authorities, byte[] token)
 			throws NoSuchAlgorithmException, SignatureException, CertificateException {
@@ -78,7 +102,7 @@ public class ApplicationKeyManagerUtils {
 					continue;
 				}
 				X509KeyManager x509KeyManager = (X509KeyManager) keyManager;
-				String alias = x509KeyManager.chooseClientAlias(new String[] { DEFAULT_AUTH_TYPE },
+				String alias = x509KeyManager.chooseClientAlias(new String[] { RSA_TYPE },
 					authorities, null);
 				if (alias != null) {
 					privateKey = x509KeyManager.getPrivateKey(alias);
@@ -131,9 +155,9 @@ public class ApplicationKeyManagerUtils {
 	 * @param token byte array token
 	 * @param signature token signature
 	 * @return true if signature is my signature
-	 * @throws NoSuchAlgorithmException
-	 * @throws SignatureException
-	 * @throws CertificateException
+	 * @throws NoSuchAlgorithmException algorithym associated within signing certificate not found
+	 * @throws SignatureException failed to generate SignedToken
+	 * @throws CertificateException error associated with signing certificate
 	 */
 	public static boolean isMySignature(Principal[] authorities, byte[] token, byte[] signature)
 			throws NoSuchAlgorithmException, SignatureException, CertificateException {
@@ -144,7 +168,9 @@ public class ApplicationKeyManagerUtils {
 	/**
 	 * Returns a list of trusted issuers (i.e., CA certificates) as established
 	 * by the {@link ApplicationTrustManagerFactory}.
-	 * @throws CertificateException
+	 * @return array of trusted Certificate Authorities
+	 * @throws CertificateException if failed to properly initialize trust manager
+	 * due to CA certificate error(s).
 	 */
 	public static X500Principal[] getTrustedIssuers() throws CertificateException {
 
@@ -188,7 +214,7 @@ public class ApplicationKeyManagerUtils {
 	 * trusted based upon the active trust managers.
 	 * @param certChain X509 certificate chain
 	 * @param authType authentication type (i.e., "RSA")
-	 * @throws CertificateException
+	 * @throws CertificateException if certificate validation fails
 	 */
 	public static void validateClient(X509Certificate[] certChain, String authType)
 			throws CertificateException {
@@ -222,52 +248,144 @@ public class ApplicationKeyManagerUtils {
 	}
 
 	/**
-	 * Pack order list of certs to create a certificate chain array
-	 * @param certs certificates which makeup the ordered certificate chain. Null
-	 *            certificate elements will be skipped.
-	 * @return array of certificates
+	 * Pack ordered list of certs to create a certificate chain array
+	 * @param cert primary certificate
+	 * @param caCerts CA certificate chain.
+	 * @return ordered certificate chain
 	 */
-	private static Certificate[] getCertificateChain(Certificate... certs) {
-		List<Certificate> list = new ArrayList<>();
-		for (Certificate cert : certs) {
-			if (cert != null) {
-				list.add(cert);
-			}
-		}
-		Certificate[] chain = new Certificate[list.size()];
-		return list.toArray(chain);
+	private static Certificate[] makeCertificateChain(Certificate cert, Certificate... caCerts) {
+		Certificate[] chain = new Certificate[caCerts.length + 1];
+		chain[0] = cert;
+		System.arraycopy(caCerts, 0, chain, 1, caCerts.length);
+		return chain;
 	}
 
 	/**
-	 * Generate self-signed PKI X509 keystore containing both a signing key/cert
-	 * and an encrypting key/cert.  Default certificte extension specifies key usage of 
-	 * Signing which is appropriate for SSL DHE or ECDHE cipher suites.
-	 * @param keyFile keystore file or null if not to be stored
-	 * @param keystoreType keystore type (e.g., "JKS", "PKCS12")
-	 * @param protectedPassphrase passphrase for protecting key and keystore
-	 * @param alias for key/cert 
-	 * @param certExtensions specifies certificate extensions to be set or null for default
-	 *            key usage extension. Only a single alias may be specified when
-	 *            this argument is not null.
-	 * @param dn distinguished name for principal key holder
-	 * @param caSignerKeyEntry certificate issuer/authority (CA) private key entry or null
-	 *            for self-signed
-	 * @param durationDays number of days from now when certificate shall expire
-	 * @return newly generated keystore
-	 * @throws KeyStoreException error occurred generating keystore
+	 * Export X.509 certificates to the specified outFile.
+	 * @param certificates certificates to be stored 
+	 * @param outFile output file
+	 * @throws IOException if error occurs writing to outFile
+	 * @throws CertificateEncodingException if error occurs while encoding certificate data
 	 */
-	public static KeyStore createKeyStore(File keyFile, String keystoreType,
-			char[] protectedPassphrase, String alias, CertificateExtensions certExtensions,
-			String dn, PrivateKeyEntry caSignerKeyEntry, int durationDays)
+	public static void exportX509Certificates(Certificate[] certificates, File outFile)
+			throws IOException, CertificateEncodingException {
+
+		try (FileOutputStream fout = new FileOutputStream(outFile);
+				PrintWriter writer = new PrintWriter(fout)) {
+			for (Certificate certificate : certificates) {
+				if (!(certificate instanceof X509Certificate)) {
+					continue;
+				}
+				writer.println(BEGIN_CERT);
+				String base64 = Base64.getEncoder().encodeToString(certificate.getEncoded());
+				while (base64.length() != 0) {
+					int endIndex = Math.min(44, base64.length());
+					String line = base64.substring(0, endIndex);
+					writer.println(line);
+					base64 = base64.substring(endIndex);
+				}
+				writer.println(END_CERT);
+				writer.println();
+			}
+		}
+	}
+
+	/**
+	 * Generate a new {@link X509Certificate} with RSA {@link KeyPair} and create/update a {@link KeyStore}
+	 * optionally backed by a keyFile.  
+	 * @param alias entry alias with keystore
+	 * @param dn distinguished name (e.g., "CN=Ghidra Test, O=Ghidra, OU=Test, C=US" )
+	 * @param durationDays number of days which generated certificate should remain valid
+	 * @param caEntry optional CA private key entry.  If null, a self-signed CA certificate will be generated.
+	 * @param keyFile optional file to load/store resulting {@link KeyStore} (may be null)
+	 * @param keystoreType support keystore type (e.g., "JKS", "PKCS12")
+	 * @param protectedPassphrase key and keystore protection password
+	 * @return keystore containing newly generated certification with key pair
+	 * @throws KeyStoreException if error occurs while updating keystore
+	 */
+	public static final KeyStore createKeyStore(String alias, String dn, int durationDays,
+			PrivateKeyEntry caEntry, File keyFile, String keystoreType, char[] protectedPassphrase)
 			throws KeyStoreException {
 
-		KeyStore keyStore;
-		try {
-			keyStore = KeyStore.getInstance(keystoreType);
-			keyStore.load(null);
+		PasswordProtection pp = new PasswordProtection(protectedPassphrase);
 
-			addNewKeyPair(keyStore, alias, dn, certExtensions, protectedPassphrase,
-				caSignerKeyEntry, durationDays);
+		LoadStoreParameter loadStoreParameter = null;
+		if (keyFile != null && keyFile.exists()) {
+			loadStoreParameter = new LoadStoreParameter() {
+				@Override
+				public ProtectionParameter getProtectionParameter() {
+					return pp;
+				}
+			};
+		}
+
+		try {
+			KeyStore keyStore = KeyStore.getInstance(keystoreType);
+			keyStore.load(loadStoreParameter);
+
+			SecureRandom random = SecureRandomFactory.getSecureRandom();
+
+			KeyPairGenerator rsa = KeyPairGenerator.getInstance(RSA_TYPE);
+			rsa.initialize(KEY_SIZE);
+
+			KeyPair keyPair = rsa.generateKeyPair();
+			PrivateKey issuerKey = keyPair.getPrivate();
+
+			byte[] encodedPublicKey = keyPair.getPublic().getEncoded();
+			SubjectPublicKeyInfo bcPk = SubjectPublicKeyInfo.getInstance(encodedPublicKey);
+
+			X500Name x500Name = new X500Name(dn);
+			X500Name caX500Name = x500Name; // self-signed CA if caEntry is null
+			KeyUsage keyUsage = new KeyUsage(
+				KeyUsage.digitalSignature | KeyUsage.keyEncipherment | KeyUsage.keyCertSign);
+			if (caEntry != null) {
+				// derive CA X500Name from caEntry
+				Certificate caCert = caEntry.getCertificate();
+				if (!(caCert instanceof X509Certificate)) {
+					throw new CertificateException(
+						"Unsupported certificate type: " + caCert.getType());
+				}
+				X509Certificate caX509Cert = (X509Certificate) caCert;
+				caX500Name =
+					new X500Name(caX509Cert.getSubjectDN().getName());
+				keyUsage = new KeyUsage(
+					KeyUsage.digitalSignature | KeyUsage.keyEncipherment);
+				issuerKey = caEntry.getPrivateKey();
+			}
+			Date notBefore = new Date();
+			long durationMs = (long) durationDays * MILLISECONDS_PER_DAY;
+			Date notAfter = new Date(notBefore.getTime() + durationMs);
+			BigInteger serialNumber = new BigInteger(128, random);
+			
+//			JcaX509ExtensionUtils x509Utils = new JcaX509ExtensionUtils();
+			
+			X509v3CertificateBuilder certificateBuilder = new X509v3CertificateBuilder(caX500Name,
+				serialNumber, notBefore, notAfter, x500Name, bcPk);
+			certificateBuilder
+//					.addExtension(Extension.subjectKeyIdentifier, true, x509Utils.createSubjectKeyIdentifier(bcPk))
+					.addExtension(Extension.keyUsage, true, keyUsage);
+			
+			if (caEntry == null) {
+				certificateBuilder
+						.addExtension(Extension.basicConstraints, true, new BasicConstraints(1));
+//						.addExtension(Extension.authorityKeyIdentifier, true, x509Utils.createAuthorityKeyIdentifier(bcPk));
+			}
+			
+			ContentSigner contentSigner =
+				new JcaContentSignerBuilder(SIGNING_ALGORITHM).build(issuerKey);
+
+			X509Certificate certificate = new JcaX509CertificateConverter()
+					.getCertificate(certificateBuilder.build(contentSigner));
+
+			Certificate[] chain;
+			if (caEntry == null) {
+				chain = new Certificate[] { certificate };
+			}
+			else {
+				chain = makeCertificateChain(certificate, caEntry.getCertificateChain());
+			}
+
+			keyStore.setKeyEntry(alias, keyPair.getPrivate(), protectedPassphrase, chain);
 
 			if (keyFile != null) {
 				FileOutputStream out = new FileOutputStream(keyFile);
@@ -288,155 +406,57 @@ public class ApplicationKeyManagerUtils {
 				keyFile.setWritable(false);
 			}
 
+			Msg.debug(ApplicationKeyManagerUtils.class,
+				"Certificate Generated (" + alias + "): " + dn);
+
+			return keyStore;
 		}
-		catch (GeneralSecurityException | IOException e) {
-			throw new KeyStoreException("failed to generate/store certificate (" + dn + ")", e);
-		}
-
-		return keyStore;
-	}
-
-	/**
-	 * Generate a new keypair/certificate and add it to the specified keyStore.
-	 * Default certificate extension specifies key usage of digital-signature which is appropriate
-	 * for SSL (i.e., DHE or ECDHE cipher suites) and other authentication uses.
-	 * @param keyStore key store
-	 * @param generator key pair generator
-	 * @param alias keypair/certificate alias
-	 * @param dn principal distinguished name
-	 * @param certExtensions certificate extensions with key usage
-	 * @param protectedPassphrase key protection passphrase
-	 * @param caSignerKeyEntry certificate issuer/authority (CA) private key
-	 *            entry or null for self-signed
-	 * @param durationDays number of days from now when certificate shall expire
-	 * @throws KeyStoreException error occurred generating keystore
-	 */
-	private static void addNewKeyPair(KeyStore keyStore, String alias, String dn,
-			CertificateExtensions certExtensions, char[] protectedPassphrase,
-			PrivateKeyEntry caSignerKeyEntry, int durationDays)
-			throws GeneralSecurityException, IOException {
-
-		X509Certificate signerCert = null;
-		if (caSignerKeyEntry != null) {
-			Certificate cert = caSignerKeyEntry.getCertificate();
-			if (!(cert instanceof X509Certificate)) {
-				throw new IllegalArgumentException(
-					"Unsupported caSignerKeyEntry - X509 certificate required");
-			}
-			signerCert = (X509Certificate) cert;
-		}
-
-		KeyPairGenerator generator = KeyPairGenerator.getInstance(DEFAULT_AUTH_TYPE);
-		SecureRandom random = SecureRandomFactory.getSecureRandom();
-		generator.initialize(2048, random);
-
-		X509CertInfo certInfo = new X509CertInfo();
-		certInfo.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
-
-		certInfo.set(X509CertInfo.ALGORITHM_ID,
-			new CertificateAlgorithmId(AlgorithmId.get(DEFAULT_SIGNING_ALGORITHM)));
-
-		certInfo.set(X509CertInfo.SUBJECT + "." + X509CertInfo.DN_NAME, new X500Name(dn)); // requires Java 1.8
-		// certInfo.set(X509CertInfo.SUBJECT, new CertificateSubjectName(new X500Name(dn))); // requires Java 1.7
-
-		Date now = new Date(System.currentTimeMillis());
-		long durationMs = (long) durationDays * (long) MILLISECONDS_PER_DAY;
-		Date end = new Date(now.getTime() + durationMs);
-		certInfo.set(X509CertInfo.VALIDITY, new CertificateValidity(now, end));
-		String issuer = signerCert != null ? signerCert.getSubjectDN().getName() : dn;
-
-		certInfo.set(X509CertInfo.ISSUER + "." + X509CertInfo.DN_NAME, new X500Name(issuer)); // requires Java 1.8 
-		// certInfo.set(X509CertInfo.ISSUER, new CertificateIssuerName(new X500Name(issuer))); // requires Java 1.7
-
-		certInfo.set(X509CertInfo.SERIAL_NUMBER,
-			new CertificateSerialNumber(random.nextInt() & 0x7fffffff));
-		KeyPair keyPair = generator.generateKeyPair();
-		certInfo.set(X509CertInfo.KEY, new CertificateX509Key(keyPair.getPublic()));
-
-		if (certExtensions == null) {
-			// If no extensions specified, set default key usage to digital-signature
-			// which is appropriate for SSL and other authentication uses
-			certExtensions = new CertificateExtensions();
-			KeyUsageExtension keyUsage = new KeyUsageExtension();
-			keyUsage.set(KeyUsageExtension.DIGITAL_SIGNATURE, true);
-			certExtensions.set(PKIXExtensions.KeyUsage_Id.toString(), keyUsage);
-		}
-		certInfo.set(X509CertInfo.EXTENSIONS, certExtensions);
-
-		X509CertImpl cert = new X509CertImpl(certInfo);
-		PrivateKey caSignerKey =
-			caSignerKeyEntry != null ? caSignerKeyEntry.getPrivateKey() : keyPair.getPrivate();
-		cert.sign(caSignerKey, DEFAULT_SIGNING_ALGORITHM);
-		keyStore.setKeyEntry(alias, keyPair.getPrivate(), protectedPassphrase,
-			getCertificateChain(cert, signerCert));
-		Msg.debug(ApplicationKeyManagerUtils.class,
-			"Certificate Generated (" + alias + "): " + cert.getSubjectDN());
-	}
-
-	/**
-	 * Export all X.509 certificates contained within keystore to the specified outFile.
-	 * @param keystore 
-	 * @param outFile output file
-	 * @throws IOException
-	 * @throws KeyStoreException
-	 * @throws CertificateEncodingException
-	 */
-	public static void exportX509Certificates(KeyStore keystore, File outFile)
-			throws IOException, KeyStoreException, CertificateEncodingException {
-		FileOutputStream fout = new FileOutputStream(outFile);
-		PrintWriter writer = new PrintWriter(fout);
-		Enumeration<String> aliases = keystore.aliases();
-		while (aliases.hasMoreElements()) {
-			Certificate certificate = keystore.getCertificate(aliases.nextElement());
-			if (!(certificate instanceof X509Certificate)) {
-				continue;
-			}
-			writer.println(X509Factory.BEGIN_CERT);
-			String base64 = Base64.getEncoder().encodeToString(certificate.getEncoded());
-			while (base64.length() != 0) {
-				int endIndex = Math.min(44, base64.length());
-				String line = base64.substring(0, endIndex);
-				writer.println(line);
-				base64 = base64.substring(endIndex);
-			}
-			writer.println(X509Factory.END_CERT);
-			writer.println();
-		}
-		writer.flush();
-		try {
-			fout.getFD().sync();
-		}
-		catch (SyncFailedException e) {
-			// ignore
-		}
-		writer.close();
-	}
-
-	/**
-	 * Export all X.509 certificates contained within keystore to the specified outFile.
-	 * @param keystore 
-	 * @param outFile output file
-	 * @param password keystore password
-	 * @throws CertificateException 
-	 * @throws NoSuchAlgorithmException 
-	 * @throws FileNotFoundException
-	 * @throws KeyStoreException
-	 * @throws CertificateEncodingException
-	 */
-	public static void exportKeystore(KeyStore keystore, File outFile, char[] password)
-			throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
-
-		FileOutputStream out = new FileOutputStream(outFile);
-		try {
-			keystore.store(out, password);
-			out.flush();
-			out.getFD().sync();
-		}
-		catch (SyncFailedException e) {
-			// ignore
+		catch (GeneralSecurityException | OperatorException | IOException e) {
+			throw new KeyStoreException("Failed to generate/store certificate (" + dn + ")", e);
 		}
 		finally {
-			out.close();
+			try {
+				pp.destroy();
+			}
+			catch (DestroyFailedException e) {
+				throw new AssertException(e); // unexpected for simple password clearing
+			}
+		}
+	}
+
+	/**
+	 * Generate a new {@link X509Certificate} with RSA {@link KeyPair} and create/update a {@link KeyStore}
+	 * optionally backed by a keyFile.  
+	 * @param alias entry alias with keystore
+	 * @param dn distinguished name (e.g., "CN=Ghidra Test, O=Ghidra, OU=Test, C=US" )
+	 * @param durationDays number of days which generated certificate should remain valid
+	 * @param caEntry optional CA private key entry.  If null, a self-signed CA certificate will be generated.
+	 * @param keyFile optional file to load/store resulting {@link KeyStore} (may be null)
+	 * @param keystoreType support keystore type (e.g., "JKS", "PKCS12")
+	 * @param protectedPassphrase key and keystore protection password
+	 * @return newly generated keystore entry with key pair
+	 * @throws KeyStoreException if error occurs while updating keystore
+	 */
+	public static final PrivateKeyEntry createKeyEntry(String alias, String dn, int durationDays,
+			PrivateKeyEntry caEntry, File keyFile, String keystoreType, char[] protectedPassphrase)
+			throws KeyStoreException {
+
+		PasswordProtection pp = new PasswordProtection(protectedPassphrase);
+		try {
+			KeyStore keyStore = createKeyStore(alias, dn, durationDays, caEntry, keyFile,
+				keystoreType, protectedPassphrase);
+			return (PrivateKeyEntry) keyStore.getEntry(alias, pp);
+		}
+		catch (NoSuchAlgorithmException | UnrecoverableEntryException e) {
+			throw new KeyStoreException("Failed to generate/store certificate (" + dn + ")", e);
+		}
+		finally {
+			try {
+				pp.destroy();
+			}
+			catch (DestroyFailedException e) {
+				throw new AssertException(e); // unexpected for simple password clearing
+			}
 		}
 	}
 

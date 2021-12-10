@@ -15,8 +15,7 @@
  */
 package ghidra.util.table;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -209,7 +208,7 @@ public class CodeUnitTableCellDataTest extends AbstractProgramBasedTest {
 		String preview = data.getDisplayString();
 
 		// this is the mnemonic and operand inside of the structure at field [2]
-		assertEquals("ds \"\" (TestStruct.field_0x5)", preview);
+		assertEquals("ds \"\" (TestStruct.field2_0x5)", preview);
 	}
 
 	@Test

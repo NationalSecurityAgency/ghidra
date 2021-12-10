@@ -16,23 +16,85 @@
 package ghidra.app.util.bin.format.macho.dyld;
 
 import java.io.IOException;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.macho.MachConstants;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Class for representing the common components of the various dyld_cache_slide_info structures.
  * The intent is for the the full dyld_cache_slide_info structures to extend this and add their
  * specific parts.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
  */
-public class DyldCacheSlideInfoCommon implements StructConverter {
+public abstract class DyldCacheSlideInfoCommon implements StructConverter {
+
+	public static final int DATA_PAGE_MAP_ENTRY = 1;
+	public static final int BYTES_PER_CHAIN_OFFSET = 4;
+	public static final int CHAIN_OFFSET_MASK = 0x3fff;
+
+	/**
+	 * Parses the slide info
+	 * 
+	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info
+	 * @param slideInfoOffset The offset of the slide info to parse
+	 * @param log The log
+	 * @param monitor A cancelable task monitor
+	 * @return The slide info object
+	 */
+	public static DyldCacheSlideInfoCommon parseSlideInfo(BinaryReader reader, long slideInfoOffset,
+			MessageLog log, TaskMonitor monitor) {
+		if (slideInfoOffset == 0) {
+			return null;
+		}
+		DyldCacheSlideInfoCommon returnedSlideInfo = null;
+
+		monitor.setMessage("Parsing DYLD slide info...");
+		monitor.initialize(1);
+		try {
+			reader.setPointerIndex(slideInfoOffset);
+			int version = reader.readNextInt();
+			reader.setPointerIndex(slideInfoOffset);
+			switch (version) {
+				case 1:
+					returnedSlideInfo = new DyldCacheSlideInfo1(reader);
+					break;
+				case 2:
+					returnedSlideInfo = new DyldCacheSlideInfo2(reader);
+					break;
+				case 3:
+					returnedSlideInfo = new DyldCacheSlideInfo3(reader);
+					break;
+				case 4:
+					returnedSlideInfo = new DyldCacheSlideInfo4(reader);
+					break;
+				default:
+					throw new IOException();
+			}
+			monitor.incrementProgress(1);
+		}
+		catch (IOException e) {
+			log.appendMsg(DyldCacheHeader.class.getSimpleName(),
+				"Failed to parse dyld_cache_slide_info.");
+			return null;
+		}
+		returnedSlideInfo.slideInfoOffset = slideInfoOffset;
+		return returnedSlideInfo;
+	}
 
 	protected int version;
+	protected long slideInfoOffset;
 
 	/**
 	 * Create a new {@link DyldCacheSlideInfoCommon}.
@@ -51,6 +113,54 @@ public class DyldCacheSlideInfoCommon implements StructConverter {
 	 */
 	public int getVersion() {
 		return version;
+	}
+
+	/**
+	 * Return the original slide info offset
+	 * 
+	 * @return the original slide info offset
+	 */
+	public long getSlideInfoOffset() {
+		return slideInfoOffset;
+	}
+
+	public abstract void fixPageChains(Program program, DyldCacheHeader dyldCacheHeader,
+			boolean addRelocations, MessageLog log, TaskMonitor monitor)
+			throws MemoryAccessException, CancelledException;
+
+	protected void addRelocationTableEntry(Program program, Address chainLoc, int type,
+			long chainValue, byte[] origBytes, String name) throws MemoryAccessException {
+		// Add entry to relocation table for the pointer fixup
+		program.getMemory().getBytes(chainLoc, origBytes);
+		program.getRelocationTable()
+				.add(chainLoc, type, new long[] { chainValue }, origBytes, name);
+	}
+
+	/**
+	 * Create pointers at each fixed chain location.
+	 * 
+	 * @param program The program
+	 * @param unchainedLocList Address list of fixed pointer locations
+	 * @param monitor A cancelable task monitor 
+	 * 
+	 * @throws CancelledException if the user cancels
+	 */
+	protected void createChainPointers(Program program, List<Address> unchainedLocList,
+			TaskMonitor monitor) throws CancelledException {
+		int numFixedLocations = unchainedLocList.size();
+
+		monitor.setMessage("Fixed " + numFixedLocations + " chained pointers.  Creating Pointers");
+
+		// Create pointers at any fixed-up addresses
+		for (Address addr : unchainedLocList) {
+			monitor.checkCanceled();
+			try {
+				program.getListing().createData(addr, Pointer64DataType.dataType);
+			}
+			catch (CodeUnitInsertionException e) {
+				// No worries, something presumably more important was there already
+			}
+		}
 	}
 
 	@Override

@@ -32,6 +32,7 @@ import org.jdom.Element;
 import docking.action.DockingActionIf;
 import docking.actions.*;
 import docking.help.HelpService;
+import docking.widgets.PasswordDialog;
 import generic.util.WindowUtilities;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
@@ -629,7 +630,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		placeholder.update();
 		scheduleUpdate();
 
-		DetachedWindowNode wNode = placeholder.getWindowNode();
+		DetachedWindowNode wNode = placeholder.getDetachedWindowNode();
 		if (wNode != null) {
 			wNode.updateTitle();
 		}
@@ -1384,7 +1385,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			focusedPlaceholder.setSelected(false);
 		}
 
-		// Activating placeholders is done to help users find widgets hiding in plain sight. 
+		// Activating placeholders is done to help users find widgets hiding in plain sight.
 		// Assume that the user is no longer seeking a provider if they are clicking around.
 		activatedInfo.clear();
 
@@ -1708,8 +1709,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * positioning.
 	 * 
 	 * <p>Warning: this method allows user to explicitly pass a parent window and component over
-	 * which to be centered.   There is no reason to use this method in the standard workflow. 
-	 * This method exists strictly to handle future unforeseen use cases.   Use at your own 
+	 * which to be centered.   There is no reason to use this method in the standard workflow.
+	 * This method exists strictly to handle future unforeseen use cases.   Use at your own
 	 * risk of incorrectly parenting dialogs.
 	 *
 	 * @param parent the component whose window over which the given dialog will be shown; cannot
@@ -1740,7 +1741,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			//
 			// Note: prefer the active window; allow user's choice of center component when it is
 			//       in the active window
-			// 
+			//
 			if (centeredOnComponent != null &&
 				SwingUtilities.isDescendingFrom(centeredOnComponent, bestParent)) {
 				bestCenter = centeredOnComponent;
@@ -1765,7 +1766,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		}
 
 		if (bestParent == null) {
-			bestParent = getJavaActiveWindow();
+			// Special case: allow transient password dialogs to parent to the active window.  This
+			// allows the password dialog to stay open over the application splash screen.  (This
+			// is described in getParentWindow(), which is called above.)
+			if (provider instanceof PasswordDialog) {
+				bestParent = getJavaActiveWindow();
+			}
 		}
 
 		if (bestParent != null && !bestParent.isShowing()) {
@@ -1803,7 +1809,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		int activeId = activeProvider.getId();
 		int providerId = providerToShow.getId();
 		if (providerId < activeId) {
-			// The provider being shown is older than the active window--do not parent the provider 
+			// The provider being shown is older than the active window--do not parent the provider
 			// to that window.  The older age suggests that the new provider was shown on a delay
 			// and should really be considered to live behind the active modal dialog.
 			return bestParent;
@@ -1811,14 +1817,14 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		if (activeProvider.isTransient()) {
 			// This prevents transient modal dialogs from being parents to non-modal dialogs.  This
-			// can cause the non-modal dialog to be closed when the transient modal dialog goes 
+			// can cause the non-modal dialog to be closed when the transient modal dialog goes
 			// away.  There is the possibility of the non-modal dialog being blocked if not parented
 			// the this modal dialog.   If we find a use case that exposes this pattern, then we
 			// will have to revisit how this method chooses to parent.
 			return bestParent;
 		}
 
-		// 
+		//
 		// The active window is modal.  We must make it the non-modal dialog's parent to
 		// prevent blocking the non-modal.
 		//
@@ -2194,7 +2200,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * Shows a popup menu over the given component.  If this given component is not part of the
 	 * docking windows hierarchy, then no action is taken.
 	 * 
-	 * @param component the component 
+	 * @param component the component
 	 */
 	public static void showContextMenu(Component component) {
 
@@ -2219,19 +2225,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	public void contextChanged(ComponentProvider provider) {
-
-		if (provider == null) {
-			actionToGuiMapper.contextChangedAll(); // this updates the actions for all windows
-			return;
+		// if provider is specified, update its local menu and tool bar actions
+		if (provider != null) {
+			ComponentPlaceholder placeholder = getActivePlaceholder(provider);
+			if (placeholder != null) {
+				placeholder.contextChanged();
+			}
 		}
 
-		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
-		if (placeholder == null) {
-			return;
-		}
-
-		placeholder.contextChanged();
-		actionToGuiMapper.contextChanged(placeholder);
+		// always update the global tool menu and tool bar actions
+		actionToGuiMapper.contextChanged();
 	}
 
 	/**
@@ -2320,12 +2323,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	}
 
-	void notifyContextListeners(ComponentPlaceholder placeHolder, ActionContext actionContext) {
-
-		if (placeHolder == focusedPlaceholder) {
-			for (DockingContextListener listener : contextListeners) {
-				listener.contextChanged(actionContext);
-			}
+	/**
+	 * This call will notify any context listeners that the context has changed.
+	 * 
+	 * <p>Our {@link #contextChanged(ComponentProvider)} method will eventually call back into this
+	 * method after any buffering has taken place.
+	 * @param context the context
+	 */
+	void doContextChanged(ActionContext context) {
+		for (DockingContextListener listener : contextListeners) {
+			listener.contextChanged(context);
 		}
 	}
 

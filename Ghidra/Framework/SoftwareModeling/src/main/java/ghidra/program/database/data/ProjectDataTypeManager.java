@@ -34,17 +34,12 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Class for managing data types in a project archive
+ * NOTE: default data organization is used.
  */
 public class ProjectDataTypeManager extends DataTypeManagerDB
 		implements ProjectArchiveBasedDataTypeManager {
 
-//	private static final String DT_ARCHIVE_FILENAMES = "DataTypeArchiveFilenames";
-//	private static final String FILENAME_SEPARATOR = ";";
-//	private static final String ARCHIVE_DIR = "typeinfo";
-//	private static final String RELATIVE_PATH_PREFIX = ".";
 	private DataTypeArchiveDB dataTypeArchive;
-
-//	private ArrayList<String> filenameList = new ArrayList<String>(); // Archives used to get data types for this program.
 
 	/**
 	 * Constructor
@@ -63,15 +58,13 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 	}
 
 	/**
-	 * @see ghidra.program.database.ManagerDB#setProgram(ghidra.program.database.ProgramDB)
+	 * Set the associated Archive
+	 * @param dtArchive associated archive
 	 */
 	public void setDataTypeArchive(DataTypeArchiveDB dtArchive) {
 		this.dataTypeArchive = dtArchive;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManager#getName()
-	 */
 	@Override
 	public String getName() {
 		return dataTypeArchive.getDomainFile().getName();
@@ -82,9 +75,6 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 		return PointerDataType.getPointer(dt, dataTypeArchive.getDefaultPointerSize());
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManager#setName(java.lang.String)
-	 */
 	@Override
 	public void setName(String name) throws InvalidNameException {
 		if (name == null || name.length() == 0) {
@@ -234,9 +224,11 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 		return ArchiveType.PROJECT;
 	}
 
-	public void archiveReady(int openMode, TaskMonitor monitor) throws CancelledException {
+	public void archiveReady(int openMode, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		if (openMode == DBConstants.UPGRADE) {
 			doSourceArchiveUpdates(null, monitor);
+			migrateOldFlexArrayComponentsIfRequired(monitor);
 		}
 	}
 

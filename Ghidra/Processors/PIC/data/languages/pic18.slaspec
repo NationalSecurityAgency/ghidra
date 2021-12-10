@@ -4,7 +4,7 @@
 
 #
 # NOTES	-
-#   1. If a specific PIC-18 has a different register set, this file and the pic18.specl file may be copied/renamed and
+#   1. If a specific PIC-18 has a different register set, this file and the pic18.pspec file may be copied/renamed and
 #      slightly modified to specify a the correct Register File Map.  The following register definitions must be preserved: 
 #	   STATUS, STKPTR, PCLAT (PCL, PCLATH, PCLATU), TOS (TOSL, TOSH, TOSU), FSR0 (FSR0L, FSR0H), FSR1 (FSR1L, FSR1H), FSR2 (FSR2L, FSR2H),
 #      PROD (PRODL, PRODH)

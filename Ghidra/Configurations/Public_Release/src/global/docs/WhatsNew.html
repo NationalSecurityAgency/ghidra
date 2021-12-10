@@ -42,387 +42,140 @@
     vulnerabilities in networks and systems.
     </P>
     
-
-    <H1> What's new in Ghidra 10.0</H1>
+    <H1>What's new in Ghidra 10.1</H1>
     
-    <H2> <a id="finePrint10"/>The not-so-fine print: Please Read!</H2>
+    <H2>The not-so-fine print: Please Read!</H2>
     
-	<P>Ghidra 10.0 is fully backward compatible with project data from previous releases. However, programs and data type archives
-	which are created or modified in 10.0 will not be useable by an earlier Ghidra version.</P>
+	<P><span style="color:#FF0000">WARNING:</span> There has been a published CVE security vulnerability noted in Ghidra dependencies within two log4j jar files.
+    We strongly encourage anyone using previous versions of Ghidra or a build from source, to remediate this issue by either upgrading
+    to the latest Ghidra 10.1 version, or patching your current version.</P>
+    
+    <P>
+	To patch your current Ghidra installation, delete:
+	<BLOCKQUOTE><UL>
+    <li>Ghidra/Framework/Generic/lib/log4j-api-2.12.1.jar</li>
+    <li>Ghidra/Framework/Generic/lib/log4j-core-2.12.1.jar</li>
+    </UL></BLOCKQUOTE>
+    </P>
+    
+    <P>
+	and replace with the newer log4j 2.15.0 version:
+	<BLOCKQUOTE><UL>
+    <li>log4j-api-2.15.0.jar</li>
+    <li>log4j-core-2.15.0.jar</li>
+    </UL></BLOCKQUOTE>
+    </P>
+    
+    <P>
+	You can find these in the latest Ghidra 10.1 release, or from:
+	<BLOCKQUOTE><UL>
+    <li>https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.15.0/log4j-api-2.15.0.jar</li>
+    <li>https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.15.0/log4j-core-2.15.0.jar</li>
+    </UL></BLOCKQUOTE>
+    </P>
+    
+    <P>
+    The details of the vulnerability can be found here:
+	<BLOCKQUOTE><UL>
+    <li>https://nvd.nist.gov/vuln/detail/CVE-2021-44228</li>
+    </UL></BLOCKQUOTE>
+    </P>
+    
+	<P>Ghidra 10.1 is fully backward compatible with project data from previous releases. However, programs and data type archives
+	which are created or modified in 10.1 will not be useable by an earlier Ghidra version.</P>
 
 	<P>This release includes many new features and capabilities, performance improvements, quite a few bug fixes, and many pull-request
 	contributions.  Thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community
 	thanks you too!</P>
+	
+	<P>NOTE: Please note that any programs imported with a Ghidra beta versions or code built directly from source outside of a release tag may not be compatible
+	and may have flaws that have been corrected.  Any programs analyzed with a beta should be considered experimental and re-imported and analyzed with
+	a release version.  As an example, Ghidra 10.1 beta had an import flaw affecting symbol de-mangling that was not correctable.
+	Programs imported with previous release versions should upgrade correctly through various automatic upgrade mechanisms.  Any program
+	you will continue to reverse engineer should be imported fresh with a release version or a build you trust with the latest code fixes.</P>
 
-	<P>NOTE: Ghidra Server: The Ghidra 10.0 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 10.0 
+	<P>NOTE: Ghidra Server: The Ghidra 10.1 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 10.1 
 	clients are compatible with all 9.x servers.</P>
+	
+	<H2>Distribution</H2>
+	
+	<P> The Ghidra distribution has been enhanced to allow building of native executables directly from a release distribution.
+	The distribution currently provides Linux 64-bit, Windows 64-bit, and MacOS x86 binaries.  If you have another platform,
+	for example a MacOS M1 based system or a Linux variant, the support/buildNatives script can build the decompiler,
+	demangler, and legacy PDB executables for your plaform.  You will need gradle that supports building for your platform
+	and a working compiler for your environment.  Not every platform can be supported, as a pre-requisite is
+	support by gradle.  Ghidra has been tested to build additional native executables for Linux ARM 64-bit,
+	Linux x86 variants, and macOS ARM 64-bit.  </P>
+	
+	<P>Please see the "Building Ghidra Native Components" section of the Installation Guide for additional information.</P>
+	
+	<H2>Debugger</H2>
+	
+	<H3>Pure Emulation</H3>
+    <P>There's a new action <B>Emulate Program</B> (next to the <B>Debug Program</B> button) to launch the current program in Ghidra's p-code emulator.
+    This is not a new "connector." Rather, it starts a blank trace with the current program mapped in. The user can then step using the usual
+    "Emulate Step" actions in the "Threads" window. In general, this is sufficient to run simple experiments or step through local regions of code.
+    To modify emulated machine state, use the "Watches" window. At the moment, no other provider can modify emulated machine state.</P>
 
-    <H2>Debugger</H2>
-    
-    <P>With the release of Ghidra 10.0, we are excited to officially introduce our new Debugger. It is still geared primarily for user-mode application debugging on Linux and Windows;
-    however, you may find its components usable in other scenarios. To get started, please Ghidra Functionality / Debugger / Getting Started in the Help. For most, it is as easy as importing
-    your program, opening it with the Debugger tool, and clicking the "bug" icon in the main toolbar. The Debugger's features include:</P>
-    <BLOCKQUOTE><UL>
-    
-    <li>Debugging user-mode Windows applications on x64 hosts via dbgeng.dll/WinDbg (including 32-bit x86 applications via WoW64)</li>
-    <li>Debugging user-mode Linux applications on amd64/x86_64 hosts via GDB (including 32-bit i686/x86 applications)</li>
-    <li>Quick launch to locally debug the current program</li>
-    <li>Recording of observations from a live debug session into a Ghidra Trace database</li>
-       <BLOCKQUOTE><UL>
-       <li>NOTE: We do <em>not</em> currently plan to support Trace database upgrades in future releases</li>
-       </UL></BLOCKQUOTE>
+    <P>This is also very useful in combination with the "P-code Stepper" window (this plugin must be added manually via File->Configure).
+    A language developer can, for example, assemble an instruction that needs testing, start emulating with the cursor at that instruction,
+    and then step individual p-code ops in the "P-code Stepper" window.</P>
 
-    <li>Sharing of Trace databases via a Ghidra Server</li>
-    <li>Time-travel(-like) exploration and annotation of Trace databases.</li>
-       <BLOCKQUOTE><UL>
-       <li>Includes capture of memory and register values over time</li>
-       <li>Utilizes p-code emulation to interpolate and extrapolate ahead of the target</li>
-       </UL></BLOCKQUOTE>
-    <li>Export a Trace's memory / listing (at a given time) to ASCII, Binary, HTML, Intel Hex, and XML</li>
-    </UL></BLOCKQUOTE>
-    <H3>New Views:</H3>
-        <BLOCKQUOTE><UL>
-        <li>Targets list for managing platform debugger connections</li>
-        <li>Interpreter Panel for accessing the platform debugger's command-line interface</li>
-        <li>Console Panel for viewing log messages and resolving problems</li>
-        <li>Objects Tree for accessing and commanding the platform debugger via a graphical user interface
-        <BLOCKQUOTE>
-            Includes Resume, Interrupt, Step, Launch, etc.
-        </BLOCKQUOTE>
-        <li>Dynamic Listing for viewing and annotating memory in a Trace</li>
-        <li>Breakpoint management:</li>
-            <BLOCKQUOTE>
-                <li>Breakpoints viewer showing breakpoints from all live sessions, as well as breakpoints bookmarked in Program databases</li>
-                <li>Dynamic Listing actions permitting placement, toggling, and removal of breakpoints at the current address</li>
-                <li>(Static) Listing actions permitting the bookmarking, placement, toggling, and removal of breakpoints</li>
-            </BLOCKQUOTE>
-        <li>Registers Table for viewing and annotating values in a Trace and/or modifying values of the target</li>
-        <li>Watches Table for evaluating SLEIGH expressions on the Trace or target machine state</li>
-            <BLOCKQUOTE>
-            NOTE: Dependent registers and memory are captured to the Trace, if recording from a live target
-            </BLOCKQUOTE>
-        <li>Stack / Frame Table for navigating frame contexts</li>
-        <li>Threads Timeline for listing threads and for navigating thread and time contexts</li>
-        <li>Modules Table for viewing modules and sections, and for mapping live Trace addresses to static Program database addresses</li>
-        <li>P-code Stepper/Emulator for debugging SLEIGH language specifications in-situ</li>
-        <li>Memory/Time plotter for viewing trace events</li>
-        </UL></BLOCKQUOTE>
-    <H3>New APIs:</H3>
-        <BLOCKQUOTE><UL>
-        <li>Trace database (backs our time-travel features and populates our machine-state UIs)</li>
-        <li>Platform debugger model (our abstraction of platform debuggers into a reflexive API)</li>
-        <li>Abstract SLEIGH / p-code execution (backs our emulation, trace interpolation, and SLEIGH watches)</li>
-        </UL></BLOCKQUOTE>
-    <H3>Nascent support for the following:</H3>
-        <BLOCKQUOTE><UL>
-        <li>Other modes, including kernel-mode, and remote debugging, as supported by the platform debugger.</li>
-            <BLOCKQUOTE>
-            WARNING: Ghidra's Trace recorder may not know how to cope with the environment and objects presented, causing it to behave poorly, e.g., it may greedily record things,
-             exhaust resources, crash Ghidra, crash your debugger, crash your target, etc.
-            </BLOCKQUOTE>
-        <li>Connection to WinDbg Preview (via dbgmodel.dll) on Windows</li>
-        <li>Connection to a JVM or DalvikVM via JDI (JDWP)</li>
-        <li>Support for tracing the following architectures via GDB: arm, m68k, mips, powerpc (depending on versions and variants)</li>
-        <li>Support for tracing the following architectures via JDI: Java, Dalvik (depending on versions and variants)</li>
-        </UL></BLOCKQUOTE>
-    <H3>Support in progress for the following:</H3>
-        <BLOCKQUOTE><UL>
-        <li>Pure program emulation, i.e., simulating a trace from a program, without an actual target</li>
-        <li>Connection to LLDB for macOS and iOS targets. This will likely support other targets and platforms, too.</li>
-        </UL></BLOCKQUOTE>
-    <H3>Known Issues:</H3>
-        <BLOCKQUOTE>
-        <P>
-        While the debugger is quite usable, as this is its initial release, it is not as mature as the other features of Ghidra.
-        The following are areas where we've seen the most recurring problem tickets, for which we've not been able to produce quick fixes.
-        We don't necessarily have answers for these problems, so we're listing them here so people are aware, and to open up some discussion.
-        </P>
-        
-        <H4>1. The breakpoints interface is complicated</H4>
-        <P>
-        We attempt to present an abstract view of breakpoints and save them to the program databases, but we also didn't want to hide the raw breakpoint locations listed for each target.
-        This is the basis of our "logical breakpoint" concept, but it has introduced some complexity and confusion, which is obviously not what we intended.
-        One common misconception is that placing a breakpoint in the program image then launching the program should cause an initial break at that spot.
-        This is a totally reasonable expectation, but one which cannot necessarily be implemented, depending on the capabilities of the connected debugger.
-        Typically, the user must launch the target, take the initial break provided by the debugger, then place the desired breakpoints.
-        While we've made some changes recently to try to communicate actual breakpoint state, it has not alleviated this confusion.
-        We're also not sure if this is just a learning curve thing, or a real problem regarding UI intuition.
-        </P>
-        
-        <H4>2. Loading the correct dbgeng DLL for Windows debugging is a kludge</H4>
-        <P>
-        It turns out the OpenJDK 11 JVM is already linked to <code>dbgeng.dll</code> in order to implement its service agent.
-        This created two potential issues:
-        </P>
-        <BLOCKQUOTE><OL>
-          <li>It's difficult/impossible to link an alternative DLL. It always gets <code>C:\windows\system32\dbgeng.dll</code>.</li>
-          <li>The JVM's debugging session and Ghidra's debugging session could potentially conflict.</li>
-        </OL></BLOCKQUOTE>
-        <P>
-        While we figured that out some time ago, we worked around it by copying the desired DLL(s) into the JRE running Ghidra.
-        This moved things along nicely, allowing us to postpone a better solution, while coding up the connector.
-        Furthermore, issue (2) did not seem to be a problem, presumably because we never tried triggering the issue.
-        Regarding issue (1), we could (or so we thought) ignore it, since the system copy had the required features.
-        It was almost the same as WinDbg's, but with some disabled bits, e.g., the <code>.server</code> command.
-        However, it seems there are more nuances than that.
-        Ideally, we'd find an environment variable to override the JVM's link to <code>dbgeng.dll</code>, so that we can link to a configured WinDbg installation.
-        Furthermore, we have some configuration management to do in cataloging and deciding which versions of WinDbg to prescribe.
-        </P>
-        
-        <H4>3. Errors due to configuration / installation issues are not clear</H4>
-        <P>
-        While we've done our best to document version requirements, when those requirements are not met, we don't fail fast.
-        This typically leads to cryptic error messages.
-        We neglected such checks in part, because we weren't sure what the requirements were until we had tested, and partly because we didn't want to limit the user.
-        We now find ourselves in the pickle of needing to go back and code in some reasonable checks, while perhaps allowing for optional bypasses.
-        That would allow for issues from configuration to be more quickly diagnosed.
-        </P>
-        <P>
-        However, there's also the case of unexpected user configurations even within the prescribed versions.
-        For example, connecting GDB to a remote or system stub may prevent <code>proc info mappings</code> or <code>maint info sections</code> from returning anything useful, and we rely on them for the memory and module maps.
-        Granted, some of these situations are outside the prescribed use cases, not all are.
-        While this can be addressed in support forums or FAQs, we really ought to put in some better diagnostics.
-        </P>
-        
-        <H4>4. A trace database is required to accomplish even basic operations, and it's becoming a burden.</H4>
-        <P>
-        The trace database was a bit serendipitous.
-        We originally connected machine-state UI components directly to the debugging interfaces, but this created some problems:
-        </P>
-        <BLOCKQUOTE><OL>
-        <li>If a request was never answered on a blocking call, we risked hanging the UI.</li>
-        <li>Our caches (used to reduce queries  to the debugger connection) grew in size.</li>
-        </OL></BLOCKQUOTE>
-        <P>
-        While converting the debugging API to asynchronous queries helped us avoid a good portion of UI hangs, we still needed something to mediate between the UI's synchronous calls and the debugging API's asynchronous calls.
-        This was accomplished by introducing a database.
-        This allowed us to answer synchronous callbacks from the UI immediately, and later emit update once aysnchronous debugger API requests were completed.
-        Additionally, because the database is stored on disk, using in place of some in-memory caches alleviated memory requirements.
-        Our first attempt used an extension of a standard ProgramDB, but that proved insufficient.
-        Thus, we needed a new kind of database for storing target machine state.
-        We thought this an opportunity to build something new, and aware of other research efforts in "time-travel" or "timeless" debugging, we introduced a "trace database."
-        </P>
-        <P>
-        Currently, a trace database (even if just an ephemeral one) is required for the UI to interact with a target's machine state.
-        While we anticipated some risk, we were perhaps a little too excited about traces to give it proper credence.
-        There are a good bit of dependencies and resource needs to get a trace going.
-        Notably, the system must know the target architecture, and usually also its ABI.
-        Additionally, all combined &mdash; the debugging API, the GADP server and client, the trace database, and the UI &mdash; there's still plenty of unchecked in-memory caching going on, risking resource exhaustion.
-        Regarding target architecture recognition: if it's not on the (currently small) list, the target cannot be traced, and so its state cannot be viewed.
-        This precludes the user from viewing the target's memory in the UI, even if disassembly is not desired.
-        Furthermore, a table of register names and values could easily be presented without first recognizing the architecture.
-        The latter is mitigated somewhat by the "Objects" viewer's table mode, using the Registers container as the root, but this is not an intuitive solution until the user is familiar with that viewer.
-        We need either/both to support simpler forms of tracing that have fewer dependencies and/or to implement some state viewers outside of tracing &mdash; but without taking us back to our original problems.
-        </P>
-        
-        <H4>5. The threads timeline view has not been receiving enough TLC</H4>
-        <P>
-        This particular view was meant to expose the time axis of the trace database in a sort of "cool" fashion by plotting the lifetimes of every observed thread.
-        Some work was put in to get that plot working, but it has been the source of some pernicious bugs that are simply no fun to work on.
-        One of the more annoying ones deals with caret placement, which is essentially the "scroll bar" for time.
-        It seems the range of that widget does not always match the range of the timeline plot, causing confusion surrounding a critical parameter in navigating the trace: time.
-        It would seem an easy issue to fix, except that we're no longer sure a single caret is really the best way to navigate time.
-        We're honestly looking at dropping that timeline pane altogether and just accomplishing the same plot using a custom cell editor on the threads table.
-        However, the only other means we have of navigating time is the "Time" table, which generally just lists events.
-        We'd like to devise something more cogent, perhaps allowing queries or establishing visual cues to identify interesting points in time.
-        </P>
-        </BLOCKQUOTE>
-        
-    <H2>User-defined Compiler Specification Extensions</H2>
-    
-        <P>Ghidra 10.0 adds support for user-defined extensions to the <b>compiler specification</b> assigned to a specific Program.  In particular,
-            users can now define their own:</P>
-        <BLOCKQUOTE><UL>
-            <LI><B>Calling Conventions</B> - which inform analysis and decompilation how parameters are passed between functions,</LI>
-            <LI><B>Call-Fixups</B> - which substitute behavior for specific CALLs when analyzing a function that makes them, and</LI>
-            <LI><B>Callother-Fixups</B> - which substitute behavior for certain Instructions when analyzing a function that contains them.</LI>
-        </UL></BLOCKQUOTE>
+    <H3>Raw Hex for Live Memory</H3>
+    <P>We've added a variant of the "Bytes" window within dynamic trace, allowing viewing live memory as hex, ascii, etc. The window
+    includes the same background coloring, navigation, and tracking actions as the "Dynamic Listing". To open this window, select Window -> Bytes -> Memory.</P>
+	
+	<H3>LLDB Support</H3>
+	<P>Working toward debugging macOS targets, we've added support for LLDB. Currently, some effort is required on the user's end to clone, patch,
+	and build LLDB with language bindings for Java. Once done, the new connectors for LLDB can be used in the normal fashion. While intended for macOS,
+	these connectors also work on Linux, and may work on Windows, too. This offers an alternative for those who prefer lldb to gdb.</P>
+	
+	<H2>Decompiler</H2>
+	<P>Many improvements have been made to the decompiler output to improve readability. These include the production of <i>else-if</i> syntax in control flow,
+	and the reduction of casting when typedefs are involved.  In addition, pointer calculation during sub-expression elimination has been improved, and
+	a new API for iterating and accessing the decompiler output syntax tokens has been added.</P>
+	
+	<H2>Data Types</H2>
+	
+	<P>Support for zero-length data types and components has been improved, although such types will continue to
+	report a non-zero length using the <i>DataType.getLength()</i> method.  For code/features that can support zero-length data types the <i>DataType.isZeroLength()</i> 
+	method must be used to identify this case.  The <i>DataType.isZeroLength()</i> is no longer synonymous with <i>DataType.isNotYetDefined()</i> which is 
+	intended to identify data types (i.e., structures and unions) whose components have not yet be specified.  Along these same lines, Ghidra
+	now allows zero-element arrays to be defined.  The API methods supporting a trailing flex-array on structures have been removed in favor
+	of using zero-element array components.  Existing flex-array instances will be upgraded accordinagly within Programs and Data Type Archives.
+	The static method <i>DataTypeComponent.usesZeroLengthComponent(DataType)</i> may be used to determine if a zero-length component
+	will be used for a specific data type.  Due to the overlapping behavior of zero-length components, a data type which returns <i>true</i>
+	 for <i>isNotYetDefined()</i> will not produce a zero-length component.</P>
+	 
+	 <P>Improved parsing of C header files to correctly extract data type definitions, including corrected sizeof() handling, expression
+	 simplification to a constant for many types such as array size and enumeration value, and handling of type declarations within function
+	 and structure declarations.  We have re-parsed most of the included data type archives to take advantage of the changes, and plan to
+	 update the archives to more recent versions of the header files in the near future.</P>
+	
+	<H2>Mach-O Binary Import</H2>
+	<P>Mach-O binary import has been greatly improved, including handling of relocation pointer chains, support for newer Objective-C
+	class structures with RelativePointers, additional load commands, and support for more recent versions of dyld and kernel caches
+	including split-file dyld_shared_cache variants.</P>
+	
+	<H2>Android</H2>
+	<P>Import and analysis of the entire existing set (almost) of Android binaries up to version 12.x is now supported.  The type of binaries supported
+	include: Android Run-Time (ART), Ahead-of-Time (OAT)/ELF, Dalvik Executables (DEX), Compact DEX (CDEX), Verified DEX (VEX), Boot Image,
+	and Boot Loader formats.  Also included are Sleigh modules for DEX files covering each major release of Android; the optimized instructions
+	vary across versions.  Now when importing DEX files, you can select the Dalvik language appropriate to the Android release, which will result
+	in better analysis.</P>
 
-    <P>Prior releases only provided compiler specifications statically via <B>.cspec</B> files in the distribution.  The new extensions
-      are stored as part of the Program and can be added or adjusted dynamically as users build up their understanding.
-      Extensions can be added from the <B>Specification Extensions</B> tab under the <I>Options</I> dialog for the Program.</P>
-    
-    <H2>Prototype Class Recovery From RTTI</H2>
-    <P>A new prototype script <B>RecoverClassesFromRTTIScript</B> which recovers class information using RTTI structures has been added. 
-    The script recovers class hierarchy, inheritance types, constructors and destructors, class data types, and more. If available, PDB information 
-    is used to help fill in class structures with known names and types for class member data. If PDB is unavailable, the decompiler structure 
-    recovery is utilized to populate class data structure members.</P>
-    <P>Things to consider when using this script:</P>
-    <BLOCKQUOTE><UL>
-        <LI>As this is a prototype script, the location, names, layout of data types, and default virtual function names created by this script are
-        likely to change in the future once an official design for Object Oriented representation is determined.</LI>
-        <LI>Windows class recovery is fairly complete and tested, however GCC class recovery is still in early development.</LI>
-        <LI>For best results, run this script on freshly imported and analyzed programs. No testing has been done on programs previously imported with pre-existing user mark-up.</LI>
-    </UL></BLOCKQUOTE>
-    <P>Two related scripts have been added, <B>ApplyClassFunctionSignatureUpdatesScript</B> and <B>ApplyClassFunctionDefinitionUpdatesScript</B>, which are fix-up scripts that can be applied if a user 
-    makes changes to a virtual function recovered by the <B>RecoverClassesFromRTTIScript</B>. Both scripts identify differences between Function Signatures in the 
-    Listing and Function Definitions in the Data Type Manager, but the first script fixes all changes to match the signature and the second to match the definition. NOTE: These
-    scripts are a temporary measure until an underlying connection between function signatures and their associated function definition can be implemented in the Ghidra API.</P>
-
-    <H2>PDB Symbol Server</H2>
-    <P>Managing and applying PDB files has a much improved GUI, including support for multiple symbol server locations.</P>
-    
-    <H2>Saved Analysis Options Configuration</H2>
-    
-    <P>Analysis options configurations can be saved by name and quickly changed using a new feature in the Analysis configuration menu. The
-    last used named configuration will be used as the default option the next time a program is analyzed even after exiting Ghidra.  This can be useful
-    to disable one or more options, such as Stack Analysis, if the analyzer is providing poor results or the analysis is not desired for a type of binary
-    you will be working with.  For example some analysis options should be turned off by default for all suspect malware binaries on the first pass to avoid
-    issues with some types of obfuscation.<P>
-    
-    <H2>Graphs</H2>
-    
-    <P>Data types can get complicated and might have many references to other data structures, either by declaring them as a field or as a pointer at another data type.
-    A general graph of data type relationships from the Data Type manager has been added. In addition defined data structures in memory can be graphed by following all references
-    to other defined data or code using the Graph->Data menu.<P>
-    
-    <P>A new favored edge and associated layout has been added for hierarchical graphs.  This edge can help closely align graph nodes that should
-    be arranged more closely to a neighboring node, for example the node from a fall-thru edge should be arranged closer than from a branching edge.<P>   
-    
-    <H2>Structure/Union Changes</H2>
-    
-    <P>A significant refactor of the Composite datatype interfaces and internals has been completed which affects
-    Structures and Unions.  The changes are intended to provide a more understandable API and allow an alignment 
-    to be specified for non-packed composites (aka, composites with internal alignment disabled).</P>
-    
-    <H3>Editor Changes</H3>
-    
-    <P>Previously, the editor contained an <B>Align</B> checkbox which determined if packing should be performed or not.
-    This checkbox has been replaced by a checkbox adjacent to the <B>pack</B> choices (i.e., enable/disable packing).  
-    Generally, this setting would be "not-checked" (i.e., disabled) when reverse-engineering the content of a 
-    structure so that components may be placed at specific offsets.  Only when there is a complete understanding 
-    of all components, as conveyed by a source header file, should
-    this be enabled with the appropriate <B>pack</B> and <B>align</B> settings specified.  In addition, when <B>pack</B>
-    is enabled it is important that the component datatypes emit the correct alignment to ensure proper 
-    placement during packing.</P> 
-    
-    <P>The <B>align</B> setting may now be used when packing is disabled with the composite adopting 
-    the specified alignment.  The default alignment for a non-packed composite is <B>1</B> which is consistent 
-    with the current behavior in Ghidra 9.x.</P>
-     
-    <H3>Composite API Changes</H3>
-    
-    <P>The various pack and align methods of the <I>Composite</I> (i.e., <I>Structure</I> and <I>Union</I>) 
-    API have been changed extensively. Since these changes were primarily intended to "cleanup" the
-    interface we decided to eliminate (i.e., not deprecate) the old methods.  It was felt leaving them in
-    place would only confuse matters when attempting to understand the new interface.  It is also believed that 
-    most uses of the API generally do not utilize the pack and align settings which should minimize the 
-    impact to existing user code.<P>
-    
-    <P>The tables below convey the <I>Composite</I> API changes as they relate to the pack and align settings.</P>
-    <BLOCKQUOTE>
-    <P>
-    <TABLE WIDTH="100%">
-       <TR>
-           <TD COLSPAN="3" padding-top:14px; padding-bottom:14px;><CENTER><B>Composite Pack API Changes</B></CENTER></TD>
-       </TR><TR style="background-color:#DFDFDF;">
-           <TH>Old Method 9.x</TH><TH>New Method 10.0</TH><TH>Comments</TH>
-       </TR><TR>
-           <TD><CODE>setInternallyAligned(<font color="blue">boolean</font>)</CODE></TD>
-           <TD><CODE>setPackingEnabled(<font color="blue">boolean</font>)</CODE></TD>
-           <TD> </TD>
-       </TR><TR>
-           <TD><CODE>isInternallyAligned()</CODE></TD>
-           <TD><CODE>isPackingEnabled()</CODE></TD>
-           <TD>Equivalent to: <CODE>getPackingType() != DISABLED</CODE></TD>
-       </TR><TR>
-           <TD><CODE>setPackingValue(NOT_PACKING)<BR>setPackingValue(1..n)</CODE></TD>
-           <TD><CODE>setToDefaultPacking()<BR>setExplicitPackingValue(1..n)<BR>pack(1..n)</CODE></TD>
-           <TD>Packing will be enabled if not previously enabled.  Old constant <CODE>NOT_PACKING</CODE> has been elliminated.</TD>
-       </TR><TR>
-           <TD><CODE>getPackingValue()</CODE></TD>
-           <TD><CODE>getExplicitPackingValue()</CODE></TD>
-           <TD>New method use does not directly map (see Javadocs).  Old constant <CODE>NOT_PACKING</CODE> has been elliminated.</TD>
-       </TR><TR>
-           <TD> </TD>
-           <TD><CODE>hasDefaultPacking()</CODE></TD>
-           <TD>Equivalent to: <CODE>getPackingType() == DEFAULT</CODE></TD>
-       </TR><TR>
-           <TD> </TD>
-           <TD><CODE>hasExplicitPackingValue()</TD>
-           <TD>Equivalent to: <CODE>getPackingType() == EXPLICIT</CODE></TD>
-       </TR><TR>
-           <TD> </TD>
-           <TD><CODE>getPackingType()</TD>
-           <TD>Possible values: <CODE>DISABLED</CODE>, <CODE>DEFAULT</CODE> or <CODE>EXPLICIT</CODE></TD>
-       </TR><TR>
-           <TD><CODE>realign()</CODE></TD>
-           <TD><CODE>repack()</CODE></TD>
-           <TD>Update component sizing and placement if composite has packing enabled. 
-             Changes to data organization (e.g., type sizes and alignments) are problematic and difficult to fully 
-             recover from.  Any attempted repair to component sizes and alignments need to be performed in 
-             dependency order (ignoring pointer components).</TD>
-       </TR>
-    </TABLE>
-    <P>
-    <TABLE WIDTH="100%">
-       <TR>
-           <TD COLSPAN="3"><CENTER><B>Composite Align API Changes</B></CENTER><BR>
-           <B>NOTE!</B> The old alignment <I>set</I> methods previously forced packing to be enabled.  
-             This is no longer the case since the alignment setting is now supported for composites 
-             where packing is not enabled.  If packing should be enabled a separate 
-             call to a packing enablement method (see above) is required.  When packing is <U>disabled</U>
-             the composite's computed alignment will match the specified align setting (default is 
-             1 which is consistent with old behavior).
-           </TD>
-       </TR><TR style="background-color:#DFDFDF;">
-           <TH>Old Method 9.x</TH><TH>New Method 10.0</TH><TH>Comments</TH>    
-       </TR><TR>
-           <TD><CODE>setToDefaultAlignment()</CODE></TD>
-           <TD><CODE>setToDefaultAligned()</CODE></TD>
-           <TD>Default alignment for a non-packed composite is 1.  When packing is enabled the 
-           default alignment is a function of the component packing.</TD>
-       </TR><TR>
-           <TD><CODE>isDefaultAligned()</CODE></TD>
-           <TD><CODE>isDefaultAligned()</CODE></TD>
-           <TD>Equivalent to: <CODE>getAlignmentType() == DEFAULT</CODE></TD>
-       </TR><TR>
-           <TD><CODE>setToMachineAlignment()</CODE></TD>
-           <TD><CODE>setToMachineAligned()</CODE></TD>
-           <TD>Non-packed composites will have an alignment which equals the machine alignment
-           specified by the compiler specification (data organization).  Packed structures 
-           will have an alignment which is a multiple of the machine alignment.</TD>
-       </TR><TR>
-           <TD><CODE>isMachineAligned()</CODE></TD>
-           <TD><CODE>isMachineAligned()</CODE></TD>
-           <TD>Equivalent to: <CODE>getAlignmentType() == MACHINE</CODE></TD>
-       </TR><TR>
-           <TD><CODE>setMinimumAlignment(DEFAULT_ALIGNMENT_VALUE)<BR>setMinimumAlignment(1..n)</CODE></TD>
-           <TD><CODE>setToDefaultAligned()<BR>setExplicitMinimumAlignment(1..n)<BR>align(1..n)</CODE></TD>
-           <TD> 
-             If an explicit minimum alignment is set (1..n), non-packed composites will have an alignment 
-             which equals this value, while packed structures 
-             will have an alignment which is a multiple of this value.
-             Old constant <CODE>DEFAULT_ALIGNMENT_VALUE</CODE> has been eliminated.
-           </TD>
-       </TR><TR>
-           <TD><CODE>getMinimumAlignment()</CODE></TD>
-           <TD><CODE>getExplicitMinimumAlignment()</CODE></TD>
-           <TD>New method use does not directly map (see Javadocs).  Old constant <CODE>DEFAULT_ALIGNMENT_VALUE</CODE> has been elliminated.</TD>
-       </TR><TR>
-           <TD></TD>
-           <TD><CODE>hasExplicitMinimumAlignment()</CODE></TD>
-           <TD>Equivalent to: <CODE>getAlignmentType() == EXPLICIT</CODE></TD>
-       </TR><TR>
-           <TD></TD>
-           <TD><CODE>getAlignmentType()</CODE></TD>
-           <TD>Possible values: <CODE>DEFAULT, MACHINE or EXPLICIT</CODE></TD>
-       </TR>
-    </TABLE>
-    </BLOCKQUOTE>
-    </P>
-    
-    <H2>Gradle</H2>
-    <P>The build infrastructure has been upgraded to support both Gradle 6 and 7. Gradle 5 is no longer supported.<P>
-
-    <H2>New Processors</H2>
-    <P>We are working on .NET/CIL that may make it into the final 10.0 release, but most likely into 10.1</P>
-
-    <H2>Binary Exporter</H2>    
-    <P>New exporters that write programs imported with the PE and ELF loaders back to their original file layout have been added.
-    Any file-backed bytes that were modified by the user in the program database will be reflected in the written file.
-    Bytes that are part of the import process such as relocations or modified Memory Maps are not currently handled.</P>
-    
+	<H2>Performance Improvements</H2>
+	<P>There have been many performance improvements to import, analysis, program data base access, many API calls, and the user interface.</P>
+	<P>Symbol performance in Ghidra was significantly improved. Specifically, new database indexes were created to improve finding primary
+	symbols as well as improving lookups by combinations of name, namespace, and address.</P>
+	
+	<H2>Processors</H2>
+	<P>Improvements and bug fixes to many processors to include: X86, ARM, AARCH64, SPARC, PPC, SH4, RISC-V, and 6502.</P>
+	
+	<H2>DWARF</H2>
+	<P>Support for loading DWARF debug information from a separate file during import has been added.  In addition data type information contained in the
+	separate debug file can be loaded without application to a program, enabling the use of debug information from a related version of the binary.</P>
+	
     <H2>Bug Fixes and Enhancements</H2>
     <P> Numerous other bug fixes and improvements are fully listed in the <a href="ChangeHistory.html">ChangeHistory</a> file.</P>
     		   
@@ -433,4 +186,3 @@
 
   </BODY>
 </HTML>
-

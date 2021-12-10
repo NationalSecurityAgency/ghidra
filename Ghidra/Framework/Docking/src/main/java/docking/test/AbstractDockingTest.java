@@ -754,6 +754,26 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		return provider;
 	}
 
+	/**
+	 * Allows you to find a component provider <b>with the given title</b>.  Most plugins will
+	 * only ever have a single provider.   In those cases, use 
+	 * {@link #waitForComponentProvider(Class)}.  This version of that method is to allow you to
+	 * differentiate between multiple instances of a given provider that have different titles.
+	 *
+	 * @param clazz The class of the ComponentProvider to locate
+	 * @param title the title of the component provider
+	 * @return The component provider, or null if one cannot be found
+	 */
+	public static <T extends ComponentProvider> T waitForComponentProvider(Class<T> clazz,
+			String title) {
+
+		DockingWindowManager dwm = findActiveDockingWindowManager();
+		assertNotNull("Unable to find a DockingWindowManager - is there a tool showing?", dwm);
+
+		T provider = doWaitForComponentProvider(dwm, clazz, title);
+		return provider;
+	}
+
 	@SuppressWarnings("unchecked")
 	private static DockingWindowManager findActiveDockingWindowManager() {
 		DockingWindowManager activeInstance = DockingWindowManager.getActiveInstance();
@@ -764,8 +784,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 		// just in case there is a tool, but it is not visible, grab the tool's manager
 		List<DockingWindowManager> managers =
-			(List<DockingWindowManager>) getInstanceField("instanceList",
-				DockingWindowManager.class);
+			(List<DockingWindowManager>) getInstanceField("instances", DockingWindowManager.class);
 		for (int i = managers.size() - 1; i >= 0; i--) {
 			DockingWindowManager m = managers.get(i);
 			String title = m.getRootFrame().getTitle();
@@ -787,6 +806,25 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 			T t = getComponentProvider(windowManager, clazz);
 			if (t != null) {
+				return t;
+			}
+			totalTime += sleep(DEFAULT_WAIT_DELAY);
+		}
+
+		throw new AssertionFailedError(
+			"Timed-out waiting for ComponentProvider of class: " + clazz);
+	}
+
+	private static <T extends ComponentProvider> T doWaitForComponentProvider(
+			DockingWindowManager windowManager, Class<T> clazz, String title) {
+
+		Objects.requireNonNull(windowManager, "DockingWindowManager cannot be null");
+
+		int totalTime = 0;
+		while (totalTime <= DEFAULT_WAIT_TIMEOUT) {
+
+			T t = getComponentProvider(windowManager, clazz);
+			if (Objects.deepEquals(title, t.getTitle())) {
 				return t;
 			}
 			totalTime += sleep(DEFAULT_WAIT_DELAY);
@@ -1096,8 +1134,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		Set<DockingActionIf> ownerActions = tool.getDockingActionsByOwnerName(owner);
 		return ownerActions.stream()
 				.filter(action -> action.getName().equals(name))
-				.collect(
-					Collectors.toSet());
+				.collect(Collectors.toSet());
 	}
 
 	/**

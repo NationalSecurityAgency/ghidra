@@ -34,6 +34,7 @@ import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
+import ghidra.formats.gfilesystem.fileinfo.*;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.macosx.MacosxLanguageHelper;
 import ghidra.program.database.ProgramDB;
@@ -120,9 +121,11 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		PrelinkMap info = fileToPrelinkInfoMap.get(file);
-		return (info != null) ? info.toString() : null;
+		return FileAttributes.of(info != null
+				? FileAttribute.create(FileAttributeType.COMMENT_ATTR, info.toString())
+				: null);
 	}
 
 	@Override
@@ -215,7 +218,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException, CryptoException {
 
 		if (isChildOf(systemKextFile, file)) {
@@ -227,7 +230,8 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 		if (offset == null) {
 			return null;
 		}
-		return new ByteProviderInputStream(provider, offset, provider.length() - offset);
+		return new ByteProviderWrapper(provider, offset, provider.length() - offset,
+			file.getFSRL());
 	}
 
 	/**

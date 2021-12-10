@@ -30,8 +30,6 @@ import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.clear.ClearCmd;
 import ghidra.app.plugin.core.clear.ClearPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
-import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.disassemble.Disassembler;
@@ -56,19 +54,14 @@ public class DisassemblerPluginTest extends AbstractGhidraHeadedIntegrationTest 
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();
-		tool = env.getTool();
+		tool = env.launchDefaultTool();
 		setupTool(tool);
 
-		cb = env.getPlugin(CodeBrowserPlugin.class);
 	}
 
 	private void setupTool(PluginTool tool) throws Exception {
-		tool.addPlugin(CodeBrowserPlugin.class.getName());
-		tool.addPlugin(NextPrevAddressPlugin.class.getName());
-		tool.addPlugin(DisassemblerPlugin.class.getName());
-		tool.addPlugin(ClearPlugin.class.getName());
-		tool.addPlugin(GoToAddressLabelPlugin.class.getName());
 
+		cb = env.getPlugin(CodeBrowserPlugin.class);
 		DisassemblerPlugin dp = getPlugin(tool, DisassemblerPlugin.class);
 		disassemblyAction = getAction(dp, "Disassemble");
 		staticDisassemblyAction = getAction(dp, "Disassemble Static");
@@ -419,7 +412,7 @@ public class DisassemblerPluginTest extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	private void clearAll() throws Exception {
-		DockingActionIf action = getAction(cb, "Select All");
+		DockingActionIf action = getAction(tool, "Select All");
 		performAction(action, cb.getProvider(), true);
 		ClearPlugin dp = getPlugin(tool, ClearPlugin.class);
 		DockingActionIf clearAction = getAction(dp, "Clear Code Bytes");

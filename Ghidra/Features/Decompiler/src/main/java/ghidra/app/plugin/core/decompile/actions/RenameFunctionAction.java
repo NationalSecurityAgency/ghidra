@@ -41,7 +41,7 @@ public class RenameFunctionAction extends AbstractDecompilerAction {
 		setPopupMenuData(new MenuData(new String[] { "Rename Function" }, "Decompile"));
 	}
 
-	private Function getFunction(DecompilerActionContext context) {
+	protected Function getFunction(DecompilerActionContext context) {
 		Program program = context.getProgram();
 		ClangToken tokenAtCursor = context.getTokenAtCursor();
 

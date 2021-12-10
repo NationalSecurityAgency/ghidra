@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import agent.gdb.manager.GdbRegister;
 import agent.gdb.manager.GdbStackFrame;
 import agent.gdb.manager.impl.cmd.*;
+import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
 import agent.gdb.manager.parsing.GdbParsingUtils;
 
@@ -129,14 +130,14 @@ public class GdbStackFrameImpl implements GdbStackFrame {
 	}
 
 	@Override
-	public CompletableFuture<Void> console(String command) {
+	public CompletableFuture<Void> console(String command, CompletesWithRunning cwr) {
 		return manager.execute(new GdbConsoleExecCommand(manager, thread.getId(), level, command,
-			GdbConsoleExecCommand.Output.CONSOLE)).thenApply(e -> null);
+			GdbConsoleExecCommand.Output.CONSOLE, cwr)).thenApply(e -> null);
 	}
 
 	@Override
-	public CompletableFuture<String> consoleCapture(String command) {
+	public CompletableFuture<String> consoleCapture(String command, CompletesWithRunning cwr) {
 		return manager.execute(new GdbConsoleExecCommand(manager, thread.getId(), level, command,
-			GdbConsoleExecCommand.Output.CAPTURE));
+			GdbConsoleExecCommand.Output.CAPTURE, cwr));
 	}
 }

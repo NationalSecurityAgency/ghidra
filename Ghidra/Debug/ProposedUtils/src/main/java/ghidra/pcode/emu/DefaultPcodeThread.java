@@ -19,10 +19,10 @@ import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.pcode.emu.AbstractPcodeMachine.ThreadPcodeExecutorState;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.util.ProgramContextImpl;
@@ -70,7 +70,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	protected class PcodeThreadExecutor extends PcodeExecutor<T> {
 		volatile boolean suspended = false;
 
-		public PcodeThreadExecutor(Language language, PcodeArithmetic<T> arithmetic,
+		public PcodeThreadExecutor(SleighLanguage language, PcodeArithmetic<T> arithmetic,
 				PcodeExecutorStatePiece<T, T> state) {
 			super(language, arithmetic, state);
 		}
@@ -110,17 +110,16 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	protected final ProgramContextImpl defaultContext;
 	protected final Map<Address, PcodeProgram> injects = new HashMap<>();
 
-	public DefaultPcodeThread(String name, AbstractPcodeMachine<T> machine,
-			SleighUseropLibrary<T> library) {
+	public DefaultPcodeThread(String name, AbstractPcodeMachine<T> machine) {
 		this.name = name;
 		this.machine = machine;
 		this.language = machine.language;
 		this.arithmetic = machine.arithmetic;
-		PcodeExecutorState<T> memoryState = machine.getMemoryState();
-		PcodeExecutorState<T> registerState = machine.createRegisterState(this);
-		this.state = new ThreadPcodeExecutorState<>(memoryState, registerState);
-		this.decoder = new SleighInstructionDecoder(language, memoryState);
-		this.library = new SleighEmulationLibrary<>(this).compose(library);
+		PcodeExecutorState<T> sharedState = machine.getSharedState();
+		PcodeExecutorState<T> localState = machine.createLocalState(this);
+		this.state = new ThreadPcodeExecutorState<>(sharedState, localState);
+		this.decoder = createInstructionDecoder(sharedState);
+		this.library = createUseropLibrary();
 
 		this.executor = createExecutor();
 		this.pc = language.getProgramCounter();
@@ -135,6 +134,14 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 			defaultContext = null;
 		}
 		this.reInitialize();
+	}
+
+	protected SleighInstructionDecoder createInstructionDecoder(PcodeExecutorState<T> sharedState) {
+		return new SleighInstructionDecoder(language, sharedState);
+	}
+
+	protected SleighUseropLibrary<T> createUseropLibrary() {
+		return new SleighEmulationLibrary<>(this).compose(machine.library);
 	}
 
 	protected PcodeThreadExecutor createExecutor() {
@@ -164,7 +171,8 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void overrideCounter(Address counter) {
 		setCounter(counter);
-		state.setVar(pc, arithmetic.fromConst(counter.getOffset(), pc.getMinimumByteSize()));
+		state.setVar(pc,
+			arithmetic.fromConst(counter.getAddressableWordOffset(), pc.getMinimumByteSize()));
 	}
 
 	@Override
@@ -185,7 +193,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		assignContext(context);
 		state.setVar(contextreg, arithmetic.fromConst(
 			this.context.getUnsignedValueIgnoreMask(),
-			contextreg.getMinimumByteSize()));
+			contextreg.getMinimumByteSize(), true));
 	}
 
 	@Override
@@ -204,11 +212,11 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void reInitialize() {
 		long offset = arithmetic.toConcrete(state.getVar(pc)).longValue();
-		setCounter(language.getDefaultSpace().getAddress(offset));
+		setCounter(language.getDefaultSpace().getAddress(offset, true));
 
 		if (contextreg != Register.NO_CONTEXT) {
 			try {
-				BigInteger ctx = arithmetic.toConcrete(state.getVar(contextreg));
+				BigInteger ctx = arithmetic.toConcrete(state.getVar(contextreg), true);
 				assignContext(new RegisterValue(contextreg, ctx));
 			}
 			catch (AccessPcodeExecutionException e) {

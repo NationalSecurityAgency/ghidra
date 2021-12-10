@@ -23,7 +23,6 @@ import ghidra.app.cmd.function.DeleteFunctionCmd;
 import ghidra.app.cmd.label.DeleteLabelCmd;
 import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -207,17 +206,19 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 			return;
 		}
 
-		if (columnIndex == LABEL_COL) {
-			String newName = aValue.toString();
-			if (!symbol.getName().equals(newName)) {
-				Command renameCmd = new RenameLabelCmd(symbol.getAddress(), symbol.getName(),
-					newName, symbol.getParentNamespace(), SourceType.USER_DEFINED);
+		if (columnIndex != LABEL_COL) {
+			return;
+		}
 
-				if (!tool.execute(renameCmd, getProgram())) {
-					Msg.showError(getClass(), provider.getComponent(), "Error Renaming Symbol",
-						renameCmd.getStatusMsg());
-				}
-			}
+		String newName = aValue.toString();
+		if (symbol.getName().equals(newName)) {
+			return;
+		}
+
+		RenameLabelCmd renameCmd = new RenameLabelCmd(symbol, newName, SourceType.USER_DEFINED);
+		if (!tool.execute(renameCmd, getProgram())) {
+			Msg.showError(getClass(), provider.getComponent(), "Error Renaming Symbol",
+				renameCmd.getStatusMsg());
 		}
 	}
 
@@ -287,11 +288,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		CompoundCmd cmd = new CompoundCmd("Delete symbol(s)");
 		for (Symbol symbol : rowObjects) {
 			if (symbol.isDynamic()) {
-				Symbol[] symbols = symbolTable.getSymbols(symbol.getAddress());
-				if (symbols.length == 1) {
-					tool.setStatusInfo("Unable to delete symbol: " + symbol.getName());
-					continue;//can't delete dynamic symbols...
-				}
+				continue;//can't delete dynamic symbols...
 			}
 
 			deleteList.add(symbol);

@@ -39,7 +39,7 @@ public class RecentlyUsedAction extends DataAction {
 
 	@Override
 	protected KeyStroke getDefaultKeyStroke() {
-		return DEFAULT_KEY_STROKE; // we have no default, but our subclasses may
+		return DEFAULT_KEY_STROKE;
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public class RecentlyUsedAction extends DataAction {
 		}
 
 		this.dataType = recentDataType;
-		
+
 		boolean enabled = super.isEnabledForContext(context);
 		return enabled;
 	}

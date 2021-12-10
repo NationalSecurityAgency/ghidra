@@ -15,14 +15,14 @@
  */
 // VxWorksSymTab_5_4 is a copy of VxWorksSymTab_6_1 with a different value for SYM_ENTRY_SIZE
 // It was replaced at the request of a customer who tested that it worked with the slight modification
-// VxWorksSymTab_6_1 is an adaptation of the vxWorksSymTab script.  It was modified by a customer 
+// VxWorksSymTab_6_1 is an adaptation of the vxWorksSymTab script.  It was modified by a customer
 // to use a single loop, instead of two.  It also added demangling of C++ symbol names - at least
 // those that Ghidra knows how to demangle.
 //
 // Extracts all symbols in a VxWorks symbol table and disassembles
 // the global functions.  Any existing symbols in the Ghidra symbol table
 // that collide with symbols defined in the VxWorks symbol table are deleted.
-// 
+//
 // The VxWorks symbol table is an array of symbol table entries [0..n-1]
 // followed by a 32-bit value that is equal to n (number of sym tbl entries).
 //  Each entry in the array has the following structure:
@@ -48,6 +48,7 @@
 
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.util.List;
 
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.script.GhidraScript;
@@ -189,8 +190,11 @@ public class VxWorksSymTab_5_4 extends GhidraScript {
 						createLabel(symLocAddr, symName, true);
 						if (symDemangledName != null) {
 							new DemanglerCmd(symLocAddr, symName).applyTo(currentProgram, monitor);
-							ghidraSymTbl.removeSymbolSpecial(getSymbol(symName,
-								currentProgram.getGlobalNamespace()));
+							List<Symbol> symbols =
+								getSymbols(symName, currentProgram.getGlobalNamespace());
+							if (!symbols.isEmpty()) {
+								ghidraSymTbl.removeSymbolSpecial(symbols.get(0));
+							}
 						}
 						break;
 					case 4: // Local .text
@@ -205,8 +209,11 @@ public class VxWorksSymTab_5_4 extends GhidraScript {
 							if (symDemangledName != null) {
 								new DemanglerCmd(symLocAddr, symName).applyTo(currentProgram,
 									monitor);
-								ghidraSymTbl.removeSymbolSpecial(getSymbol(symName,
-									currentProgram.getGlobalNamespace()));
+								List<Symbol> symbols =
+									getSymbols(symName, currentProgram.getGlobalNamespace());
+								if (!symbols.isEmpty()) {
+									ghidraSymTbl.removeSymbolSpecial(symbols.get(0));
+								}
 							}
 						}
 						else {
@@ -216,8 +223,11 @@ public class VxWorksSymTab_5_4 extends GhidraScript {
 							if (symDemangledName != null) {
 								new DemanglerCmd(symLocAddr, symName).applyTo(currentProgram,
 									monitor);
-								ghidraSymTbl.removeSymbolSpecial(getSymbol(symName,
-									currentProgram.getGlobalNamespace()));
+								List<Symbol> symbols =
+									getSymbols(symName, currentProgram.getGlobalNamespace());
+								if (!symbols.isEmpty()) {
+									ghidraSymTbl.removeSymbolSpecial(symbols.get(0));
+								}
 							}
 						}
 						break;

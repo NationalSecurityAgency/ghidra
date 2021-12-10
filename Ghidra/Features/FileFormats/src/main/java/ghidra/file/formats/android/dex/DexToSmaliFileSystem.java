@@ -15,7 +15,9 @@
  */
 package ghidra.file.formats.android.dex;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.AccessMode;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
@@ -24,6 +26,7 @@ import org.jf.baksmali.baksmali;
 import org.jf.dexlib.DexFile;
 
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.FileByteProvider;
 import ghidra.file.formats.android.dex.format.DexConstants;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
@@ -42,10 +45,10 @@ public class DexToSmaliFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException, CryptoException {
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		File entry = map.get(file);
-		return new FileInputStream(entry);
+		return new FileByteProvider(entry, file.getFSRL(), AccessMode.READ);
 	}
 
 	@Override

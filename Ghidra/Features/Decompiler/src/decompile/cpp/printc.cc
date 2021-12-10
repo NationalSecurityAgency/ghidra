@@ -74,6 +74,8 @@ OpToken PrintC::ptr_expr = { "*", 1, 62, false, OpToken::unary_prefix, 0, 0, (Op
 OpToken PrintC::array_expr = { "[]", 2, 66, false, OpToken::postsurround, 1, 0, (OpToken *)0 };
 OpToken PrintC::enum_cat = { "|", 2, 26, true, OpToken::binary, 0, 0, (OpToken *)0 };
 
+const string PrintC::typePointerRelToken = "ADJ";
+
 // Constructing this registers the capability
 PrintCCapability PrintCCapability::printCCapability;
 
@@ -251,9 +253,9 @@ void PrintC::pushTypeStart(const Datatype *ct,bool noident)
 
   if (ct->getName().size()==0) {	// Check for anonymous type
     // We could support a struct or enum declaration here
-    string name = genericTypeName(ct);
+    string nm = genericTypeName(ct);
     pushOp(tok,(const PcodeOp *)0);
-    pushAtom(Atom(name,typetoken,EmitXml::type_color,ct));
+    pushAtom(Atom(nm,typetoken,EmitXml::type_color,ct));
   }
   else {
     pushOp(tok,(const PcodeOp *)0);
@@ -514,8 +516,8 @@ void PrintC::opCall(const PcodeOp *op)
   if (callpoint->getSpace()->getType()==IPTR_FSPEC) {
     fc = FuncCallSpecs::getFspecFromConst(callpoint->getAddr());
     if (fc->getName().size()==0) {
-      string name = genericFunctionName(fc->getEntryAddress());
-      pushAtom(Atom(name,functoken,EmitXml::funcname_color,op,(const Funcdata *)0));
+      string nm = genericFunctionName(fc->getEntryAddress());
+      pushAtom(Atom(nm,functoken,EmitXml::funcname_color,op,(const Funcdata *)0));
     }
     else {
       Funcdata *fd = fc->getFuncdata();
@@ -621,9 +623,9 @@ void PrintC::opConstructor(const PcodeOp *op,bool withNew)
   if (dt->getMetatype() == TYPE_PTR) {
     dt = ((TypePointer *)dt)->getPtrTo();
   }
-  string name = dt->getName();
+  string nm = dt->getName();
   pushOp(&function_call,op);
-  pushAtom(Atom(name,optoken,EmitXml::funcname_color,op));
+  pushAtom(Atom(nm,optoken,EmitXml::funcname_color,op));
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
   if (op->numInput()>3) {	// Multiple (non-this) parameters
@@ -780,24 +782,47 @@ void PrintC::opPtrsub(const PcodeOp *op)
 
 {
   TypePointer *ptype;
+  TypePointerRel *ptrel;
   Datatype *ct;
   const Varnode *in0;
+  uintb in1const;
   bool valueon,flex,arrayvalue;
   uint4 m;
 
   in0 = op->getIn(0);
+  in1const = op->getIn(1)->getOffset();
   ptype = (TypePointer *)in0->getHigh()->getType();
   if (ptype->getMetatype() != TYPE_PTR) {
     clear();
     throw LowlevelError("PTRSUB off of non-pointer type");
   }
-  ct = ptype->getPtrTo();
+  if (ptype->isFormalPointerRel() && ((TypePointerRel *)ptype)->evaluateThruParent(in1const)) {
+    ptrel = (TypePointerRel *)ptype;
+    ct = ptrel->getParent();
+  }
+  else {
+    ptrel = (TypePointerRel *)0;
+    ct = ptype->getPtrTo();
+  }
   m = mods & ~(print_load_value|print_store_value); // Current state of mods
   valueon = (mods & (print_load_value|print_store_value)) != 0;
   flex = isValueFlexible(in0);
 
   if (ct->getMetatype() == TYPE_STRUCT) {
-    uintb suboff = op->getIn(1)->getOffset();	// How far into container
+    uintb suboff = in1const;	// How far into container
+    if (ptrel != (TypePointerRel *)0) {
+      suboff += ptrel->getPointerOffset();
+      suboff &= calc_mask(ptype->getSize());
+      if (suboff == 0) {
+	// Special case where we do not print a field
+	pushTypePointerRel(op);
+	if (flex)
+	  pushVnImplied(in0,op,m | print_load_value);
+	else
+	  pushVnImplied(in0,op,m);
+	return;
+      }
+    }
     suboff = AddrSpace::addressToByte(suboff,ptype->getWordSize());
     string fieldname;
     Datatype *fieldtype;
@@ -832,12 +857,16 @@ void PrintC::opPtrsub(const PcodeOp *op)
       if (flex) {		// EMIT  &( ).name
 	pushOp(&addressof,op);
 	pushOp(&object_member,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m | print_load_value);
 	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
       }
       else {			// EMIT  &( )->name
 	pushOp(&addressof,op);
 	pushOp(&pointer_member,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
 	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
       }
@@ -847,11 +876,15 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	pushOp(&subscript,op);
       if (flex) {		// EMIT  ( ).name
 	pushOp(&object_member,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m | print_load_value);
 	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
       }
       else {			// EMIT  ( )->name
 	pushOp(&pointer_member,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
 	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
       }
@@ -882,7 +915,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
     }
     if (symbol == (Symbol *)0) {
       TypeSpacebase *sb = (TypeSpacebase *)ct;
-      Address addr = sb->getAddress(op->getIn(1)->getOffset(),in0->getSize(),op->getAddr());
+      Address addr = sb->getAddress(in1const,in0->getSize(),op->getAddr());
       pushUnnamedLocation(addr,(Varnode *)0,op);
     }
     else {
@@ -901,7 +934,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
       push_integer(0,4,false,(Varnode *)0,op);
   }
   else if (ct->getMetatype() == TYPE_ARRAY) {
-    if (op->getIn(1)->getOffset() != 0) {
+    if (in1const != 0) {
       clear();
       throw LowlevelError("PTRSUB with non-zero offset into array type");
     }
@@ -912,22 +945,30 @@ void PrintC::opPtrsub(const PcodeOp *op)
       if (flex) {		// EMIT  ( )
 				// (*&struct->arrayfield)[i]
 				// becomes struct->arrayfield[i]
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
       }
       else {			// EMIT  *( )
 	pushOp(&dereference,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
       }
     }
     else {
       if (flex) {		// EMIT  ( )[0]
 	pushOp(&subscript,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
 	push_integer(0,4,false,(Varnode *)0,op);
       }
       else {			// EMIT  (* )[0]
 	pushOp(&subscript,op);
 	pushOp(&dereference,op);
+	if (ptrel != (TypePointerRel *)0)
+	  pushTypePointerRel(op);
 	pushVnImplied(in0,op,m);
 	push_integer(0,4,false,(Varnode *)0,op);
       }
@@ -1035,19 +1076,19 @@ void PrintC::opNewOp(const PcodeOp *op)
       // Array allocation form
       pushOp(&new_op,op);
       pushAtom(Atom("new",optoken,EmitXml::keyword_color,op,outvn));
-      string name;
+      string nm;
       if (outvn == (const Varnode *)0) {	// Its technically possible, for new result to be unused
-	name = "<unused>";
+	nm = "<unused>";
       }
       else {
 	Datatype *dt = outvn->getType();
 	while (dt->getMetatype() == TYPE_PTR) {
 	  dt = ((TypePointer *)dt)->getPtrTo();
 	}
-	name = dt->getName();
+	nm = dt->getName();
       }
       pushOp(&subscript,op);
-      pushAtom(Atom(name,optoken,EmitXml::type_color,op));
+      pushAtom(Atom(nm,optoken,EmitXml::type_color,op));
       pushVnImplied(vn1,op,mods);
       return;
     }
@@ -1561,6 +1602,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
     clear();
     throw LowlevelError("Cannot have a constant of type void");
   case TYPE_PTR:
+  case TYPE_PTRREL:
     if (option_NULL&&(val==0)) { // A null pointer
       pushAtom(Atom(nullToken,vartoken,EmitXml::var_color,op,vn));
       return;
@@ -1582,6 +1624,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
   case TYPE_CODE:
   case TYPE_ARRAY:
   case TYPE_STRUCT:
+  case TYPE_PARTIALSTRUCT:
     break;
   }
   // Default printing
@@ -1642,7 +1685,7 @@ bool PrintC::pushEquate(uintb val,int4 sz,const EquateSymbol *sym,const Varnode 
 void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
 
 {
-  const Scope *scope = op->getParent()->getFuncdata()->getScopeLocal();
+  const Scope *symScope = op->getParent()->getFuncdata()->getScopeLocal();
   int4 size = 0;
   if (op->code() == CPUI_CALLOTHER) {
   // This construction is for volatile CALLOTHERs where the input annotation is the original address
@@ -1663,9 +1706,9 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
   }
   SymbolEntry *entry;
   if (size != 0)
-    entry = scope->queryContainer(vn->getAddr(),size,op->getAddr());
+    entry = symScope->queryContainer(vn->getAddr(),size,op->getAddr());
   else {
-    entry = scope->queryContainer(vn->getAddr(),1,op->getAddr());
+    entry = symScope->queryContainer(vn->getAddr(),1,op->getAddr());
     if (entry != (SymbolEntry *)0)
       size = entry->getSize();
     else
@@ -1829,8 +1872,8 @@ void PrintC::pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 
   // We prepend an underscore to indicate a close
   // but not quite match
-    string name = '_'+sym->getName();
-    pushAtom(Atom(name,vartoken,EmitXml::var_color,op,vn));
+    string nm = '_'+sym->getName();
+    pushAtom(Atom(nm,vartoken,EmitXml::var_color,op,vn));
   }
   else
     pushUnnamedLocation(vn->getAddr(),vn,op);
@@ -2235,15 +2278,15 @@ void PrintC::emitVarDeclStatement(const Symbol *sym)
   emit->print(";");
 }
 
-bool PrintC::emitScopeVarDecls(const Scope *scope,int4 cat)
+bool PrintC::emitScopeVarDecls(const Scope *symScope,int4 cat)
 
 {
   bool notempty = false;
   
   if (cat >= 0) {		// If a category is specified
-    int4 sz = scope->getCategorySize(cat);
+    int4 sz = symScope->getCategorySize(cat);
     for(int4 i=0;i<sz;++i) {
-      Symbol *sym = scope->getCategorySymbol(cat,i);
+      Symbol *sym = symScope->getCategorySymbol(cat,i);
       // Slightly different handling for categorized symbols (cat=1 is dynamic symbols)
       if (sym->getName().size() == 0) continue;
       if (sym->isNameUndefined()) continue;
@@ -2252,8 +2295,8 @@ bool PrintC::emitScopeVarDecls(const Scope *scope,int4 cat)
     }
     return notempty;
   }
-  MapIterator iter = scope->begin();
-  MapIterator enditer = scope->end();
+  MapIterator iter = symScope->begin();
+  MapIterator enditer = symScope->end();
   for(;iter!=enditer;++iter) {
     const SymbolEntry *entry = *iter;
     if (entry->isPiece()) continue; // Don't do a partial entry
@@ -2271,8 +2314,8 @@ bool PrintC::emitScopeVarDecls(const Scope *scope,int4 cat)
     notempty = true;
     emitVarDeclStatement(sym);
   }
-  list<SymbolEntry>::const_iterator iter_d = scope->beginDynamic();
-  list<SymbolEntry>::const_iterator enditer_d = scope->endDynamic();
+  list<SymbolEntry>::const_iterator iter_d = symScope->beginDynamic();
+  list<SymbolEntry>::const_iterator enditer_d = symScope->endDynamic();
   for(;iter_d!=enditer_d;++iter_d) {
     const SymbolEntry *entry = &(*iter_d);
     if (entry->isPiece()) continue; // Don't do a partial entry
@@ -2326,15 +2369,15 @@ void PrintC::emitFunctionDeclaration(const Funcdata *fd)
 
 /// For the given scope and all of its children that are not \e function scopes,
 /// emit a variable declaration for each symbol.
-/// \param scope is the given scope
-void PrintC::emitGlobalVarDeclsRecursive(Scope *scope)
+/// \param symScope is the given scope
+void PrintC::emitGlobalVarDeclsRecursive(Scope *symScope)
 
 {
-  if (!scope->isGlobal()) return;
-  emitScopeVarDecls(scope,-1);
+  if (!symScope->isGlobal()) return;
+  emitScopeVarDecls(symScope,-1);
   ScopeMap::const_iterator iter,enditer;
-  iter = scope->childrenBegin();
-  enditer = scope->childrenEnd();
+  iter = symScope->childrenBegin();
+  enditer = symScope->childrenEnd();
   for(;iter!=enditer;++iter) {
     emitGlobalVarDeclsRecursive((*iter).second);
   }
@@ -2596,17 +2639,28 @@ void PrintC::emitBlockCondition(const BlockCondition *bl)
   }
 }
 
+void PendingBrace::callback(EmitXml *emit)
+
+{
+  emit->print("{");
+  indentId = emit->startIndent();
+}
+
 void PrintC::emitBlockIf(const BlockIf *bl)
 
 {
   const PcodeOp *op;
+  PendingBrace pendingBrace;
+
+  if (isSet(pending_brace))
+    emit->setPendingPrint(&pendingBrace);
 
 				// if block never prints final branch
 				// so no_branch and only_branch don't matter
 				// and shouldn't be passed automatically to
 				// the subblocks
   pushMod();
-  unsetMod(no_branch|only_branch);
+  unsetMod(no_branch|only_branch|pending_brace);
 
   pushMod();
   setMod(no_branch);
@@ -2614,7 +2668,11 @@ void PrintC::emitBlockIf(const BlockIf *bl)
   condBlock->emit(this);
   popMod();
   emitCommentBlockTree(condBlock);
-  emit->tagLine();
+  if (emit->hasPendingPrint(&pendingBrace))	// If we issued a brace but it did not emit
+    emit->cancelPendingPrint();			// Cancel the brace in order to have "else if" syntax
+  else
+    emit->tagLine();				// Otherwise start the "if" on a new line
+
   op = condBlock->lastOp();
   emit->tagOp("if",EmitXml::keyword_color,op);
   emit->spaces(1);
@@ -2625,34 +2683,48 @@ void PrintC::emitBlockIf(const BlockIf *bl)
   if (bl->getGotoTarget() != (FlowBlock *)0) {
     emit->spaces(1);
     emitGotoStatement(condBlock,bl->getGotoTarget(),bl->getGotoType());
-    popMod();
-    return;
   }
-  
-  setMod(no_branch);
-  emit->spaces(1);
-  int4 id = emit->startIndent();
-  emit->print("{");
-  int4 id1 = emit->beginBlock(bl->getBlock(1));
-  bl->getBlock(1)->emit(this);
-  emit->endBlock(id1);
-  emit->stopIndent(id);
-  emit->tagLine();
-  emit->print("}");
-  if (bl->getSize()==3) {
-    emit->tagLine();
-    emit->print("else",EmitXml::keyword_color);
+  else {
+    setMod(no_branch);
     emit->spaces(1);
     int4 id = emit->startIndent();
     emit->print("{");
-    int4 id2 = emit->beginBlock(bl->getBlock(2));
-    bl->getBlock(2)->emit(this);
-    emit->endBlock(id2);
+    int4 id1 = emit->beginBlock(bl->getBlock(1));
+    bl->getBlock(1)->emit(this);
+    emit->endBlock(id1);
     emit->stopIndent(id);
     emit->tagLine();
     emit->print("}");
+    if (bl->getSize() == 3) {
+      emit->tagLine();
+      emit->print("else",EmitXml::keyword_color);
+      emit->spaces(1);
+      FlowBlock *elseBlock = bl->getBlock(2);
+      if (elseBlock->getType() == FlowBlock::t_if) {
+	// Attempt to merge the "else" and "if" syntax
+	setMod(pending_brace);
+	int4 id2 = emit->beginBlock(elseBlock);
+	elseBlock->emit(this);
+	emit->endBlock(id2);
+      }
+      else {
+	int4 id2 = emit->startIndent();
+	emit->print("{");
+	int4 id3 = emit->beginBlock(elseBlock);
+	elseBlock->emit(this);
+	emit->endBlock(id3);
+	emit->stopIndent(id2);
+	emit->tagLine();
+	emit->print("}");
+      }
+    }
   }
   popMod();
+  if (pendingBrace.getIndentId() >= 0) {
+    emit->stopIndent(pendingBrace.getIndentId());
+    emit->tagLine();
+    emit->print("}");
+  }
 }
 
 /// Print the loop using the keyword \e for, followed by a semicolon separated
@@ -2894,8 +2966,8 @@ void PrintC::emitLabel(const FlowBlock *bl)
   uintb off = addr.getOffset();
   if (!bb->hasSpecialLabel()) {
     if (bb->getType() == FlowBlock::t_basic) {
-      const Scope *scope = ((const BlockBasic *)bb)->getFuncdata()->getScopeLocal();
-      Symbol *sym = scope->queryCodeLabel(addr);
+      const Scope *symScope = ((const BlockBasic *)bb)->getFuncdata()->getScopeLocal();
+      Symbol *sym = symScope->queryCodeLabel(addr);
       if (sym != (Symbol *)0) {
 	emit->tagLabel(sym->getName().c_str(),EmitXml::no_color,spc,off);
 	return;

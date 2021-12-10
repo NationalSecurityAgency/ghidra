@@ -30,6 +30,8 @@ import ghidra.graph.viewer.GraphViewerUtils;
  * 
  * <p>This class maintains a collection of vertices on this row, organized by column index.  You
  * can get the column of a vertex from {@link #getColumn(Object) getColumn(V)}.
+ * 
+ * @param <V> the vertex type
  */
 public class Row<V> {
 
@@ -170,9 +172,16 @@ public class Row<V> {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "[row=" + index + ", y=" + y + ", height=" + height +
-			", padded height=" + getPaddedHeight(false) + ", column count=" + getColumnCount() +
-			"]";
+
+		//@formatter:off
+		return getClass().getSimpleName() + "{\n" +
+			"\trow: " + index + ",\n" +
+			"\ty: " + y + ",\n" +
+			"\theight: " + height + ",\n" +
+			"\tpadded height: " + getPaddedHeight(false) + ",\n" +
+			"\tcolumn count: " + getColumnCount() + "\n" +
+		"}";
+		//@formatter:on
 	}
 
 	void dispose() {

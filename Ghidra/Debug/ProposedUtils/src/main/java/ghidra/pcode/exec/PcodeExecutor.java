@@ -24,19 +24,18 @@ import ghidra.pcode.exec.SleighUseropLibrary.SleighUseropDefinition;
 import ghidra.pcode.opbehavior.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 public class PcodeExecutor<T> {
-	protected final Language language;
+	protected final SleighLanguage language;
 	protected final PcodeArithmetic<T> arithmetic;
 	protected final PcodeExecutorStatePiece<T, T> state;
 	protected final Register pc;
 	protected final int pointerSize;
 
-	public PcodeExecutor(Language language, PcodeArithmetic<T> arithmetic,
+	public PcodeExecutor(SleighLanguage language, PcodeArithmetic<T> arithmetic,
 			PcodeExecutorStatePiece<T, T> state) {
 		this.language = language;
 		this.arithmetic = arithmetic;
@@ -46,8 +45,35 @@ public class PcodeExecutor<T> {
 		this.pointerSize = language.getDefaultSpace().getPointerSize();
 	}
 
+	/**
+	 * Get the executor's SLEIGH language (processor model)
+	 * 
+	 * @return the language
+	 */
+	public SleighLanguage getLanguage() {
+		return language;
+	}
+
+	/**
+	 * Get the arithmetic applied by the executor
+	 * 
+	 * @return the arithmetic
+	 */
+	public PcodeArithmetic<T> getArithmetic() {
+		return arithmetic;
+	}
+
+	/**
+	 * Get the state bound to this executor
+	 * 
+	 * @return the state
+	 */
+	public PcodeExecutorStatePiece<T, T> getState() {
+		return state;
+	}
+
 	public void executeLine(String line) {
-		PcodeProgram program = SleighProgramCompiler.compileProgram((SleighLanguage) language,
+		PcodeProgram program = SleighProgramCompiler.compileProgram(language,
 			"line", List.of(line + ";"), SleighUseropLibrary.NIL);
 		execute(program, SleighUseropLibrary.nil());
 	}
@@ -96,29 +122,29 @@ public class PcodeExecutor<T> {
 		}
 	}
 
+	protected void badOp(PcodeOp op) {
+		switch (op.getOpcode()) {
+			case PcodeOp.UNIMPLEMENTED:
+				throw new LowlevelError(
+					"Encountered an unimplemented instruction at " + op.getSeqnum().getTarget());
+			default:
+				throw new LowlevelError(
+					"Unsupported p-code op at " + op.getSeqnum().getTarget() + ": " + op);
+		}
+	}
+
 	public void stepOp(PcodeOp op, PcodeFrame frame, SleighUseropLibrary<T> library) {
 		OpBehavior b = OpBehaviorFactory.getOpBehavior(op.getOpcode());
 		if (b == null) {
-			throw new LowlevelError("Unsupported pcode op" + op);
+			badOp(op);
+			return;
 		}
 		if (b instanceof UnaryOpBehavior) {
-			Varnode in1Var = op.getInput(0);
-			Varnode outVar = op.getOutput();
-			T in1 = state.getVar(in1Var);
-			T out = arithmetic.unaryOp((UnaryOpBehavior) b, outVar.getSize(),
-				in1Var.getSize(), in1);
-			state.setVar(outVar, out);
+			executeUnaryOp(op, (UnaryOpBehavior) b);
 			return;
 		}
 		if (b instanceof BinaryOpBehavior) {
-			Varnode in1Var = op.getInput(0);
-			Varnode in2Var = op.getInput(1);
-			Varnode outVar = op.getOutput();
-			T in1 = state.getVar(in1Var);
-			T in2 = state.getVar(in2Var);
-			T out = arithmetic.binaryOp((BinaryOpBehavior) b, outVar.getSize(),
-				in1Var.getSize(), in1, in2Var.getSize(), in2);
-			state.setVar(outVar, out);
+			executeBinaryOp(op, (BinaryOpBehavior) b);
 			return;
 		}
 		switch (op.getOpcode()) {
@@ -150,7 +176,8 @@ public class PcodeExecutor<T> {
 				executeReturn(op, frame);
 				return;
 			default:
-				throw new LowlevelError("Unsupported op " + op);
+				badOp(op);
+				return;
 		}
 	}
 
@@ -170,6 +197,26 @@ public class PcodeExecutor<T> {
 	protected int getIntConst(Varnode vn) {
 		assert vn.getAddress().getAddressSpace().isConstantSpace();
 		return (int) vn.getAddress().getOffset();
+	}
+
+	public void executeUnaryOp(PcodeOp op, UnaryOpBehavior b) {
+		Varnode in1Var = op.getInput(0);
+		Varnode outVar = op.getOutput();
+		T in1 = state.getVar(in1Var);
+		T out = arithmetic.unaryOp(b, outVar.getSize(),
+			in1Var.getSize(), in1);
+		state.setVar(outVar, out);
+	}
+
+	public void executeBinaryOp(PcodeOp op, BinaryOpBehavior b) {
+		Varnode in1Var = op.getInput(0);
+		Varnode in2Var = op.getInput(1);
+		Varnode outVar = op.getOutput();
+		T in1 = state.getVar(in1Var);
+		T in2 = state.getVar(in2Var);
+		T out = arithmetic.binaryOp(b, outVar.getSize(),
+			in1Var.getSize(), in1, in2Var.getSize(), in2);
+		state.setVar(outVar, out);
 	}
 
 	public void executeLoad(PcodeOp op) {
@@ -232,7 +279,7 @@ public class PcodeExecutor<T> {
 		branchToOffset(offset, frame);
 
 		long concrete = arithmetic.toConcrete(offset).longValue();
-		Address target = op.getSeqnum().getTarget().getNewAddress(concrete);
+		Address target = op.getSeqnum().getTarget().getNewAddress(concrete, true);
 		branchToAddress(target);
 	}
 

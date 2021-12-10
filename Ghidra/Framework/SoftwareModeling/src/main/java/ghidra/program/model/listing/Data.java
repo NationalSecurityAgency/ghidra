@@ -32,16 +32,17 @@ public interface Data extends CodeUnit, Settings {
 	/**
 	 * Returns the value of the data item.  The value may be an address, a scalar,
 	 * register or null if no value.
+	 * @return the value
 	 */
 	public Object getValue();
 
 	/**
 	 * Get the class used to express the value of this data.
-	 * NOTE: This determination is made based upon data type
-	 * and settings only and does not examine memory bytes
-	 * which are used to construct the data value object.
-	 * @return value class or null if a consistent class is not
-	 * utilized.
+	 * 
+	 * <p>NOTE: This determination is made based upon data type and settings only and does not
+	 * examine memory bytes which are used to construct the data value object.
+	 * 
+	 * @return value class or null if a consistent class is not utilized.
 	 */
 	public Class<?> getValueClass();
 
@@ -65,24 +66,28 @@ public interface Data extends CodeUnit, Settings {
 	public boolean isVolatile();
 
 	/**
-	 * Returns true if the data type is defined.  Any address that has not been
-	 * defined to be code or data is treated as undefined data.
+	 * Returns true if the data type is defined.  Any address that has not been defined to be code
+	 * or data is treated as undefined data.
+	 * @return true if is defined
 	 */
 	public boolean isDefined();
 
 	/**
 	 * Get the Data type for the data.
+	 * @return the data type
 	 */
 	public DataType getDataType();
 
 	/**
-	 * If the dataType is a typeDef, then the typeDef's base type is returned,
-	 * otherwise, the datatType is returned.
+	 * If the dataType is a typeDef, then the typeDef's base type is returned, otherwise, the
+	 * datatType is returned.
+	 * @return the data type
 	 */
 	public DataType getBaseDataType();
 
 	/**
 	 * Get the references for the value.
+	 * @return the references
 	 */
 	public Reference[] getValueReferences();
 
@@ -100,149 +105,184 @@ public interface Data extends CodeUnit, Settings {
 	public void removeValueReference(Address refAddr);
 
 	/**
-	 * Get the field name of this data item if it is "inside" another data item,
-	 * otherwise return null.
+	 * Get the field name of this data item if it is "inside" another data item, otherwise return
+	 * null.
 	 * @return the name of this data as known from some parent data item or
 	 *         null if this data item is not a component of another data item.
 	 */
 	public String getFieldName();
 
 	/**
-	 * Returns the full path name (dot notation) for this field.  This includes
-	 *         the symbol name at this address.
+	 * Returns the full path name (dot notation) for this field.  This includes the symbol name at
+	 * this address.
+	 * @return the path name
 	 */
 	public String getPathName();
 
 	/**
 	 * Returns the component path name (dot notation) for this field
+	 * @return the component path name
 	 */
 	public String getComponentPathName();
 
 	/**
-	 * Returns true if this is a pointer, implies getValue() will
-	 *    will return an Object that is an Address.
+	 * Returns true if this is a pointer, implies getValue() will will return an Object that is an
+	 * Address.
+	 * @return true if a pointer
 	 */
 	public boolean isPointer();
 
 	/**
 	 * Returns true if this data item is a Union.
+	 * @return true if a union
 	 */
 	public boolean isUnion();
 
 	/**
 	 * Returns true if this data item is a Structure.
+	 * @return true if a structure
 	 */
 	public boolean isStructure();
 
 	/**
 	 * Returns true if this data item is an Array of DataTypes
+	 * @return true if an array
 	 */
 	public boolean isArray();
 
 	/**
 	 * Returns true if this data item is a dynamic DataType.
+	 * @return true if is dynamic
 	 */
 	public boolean isDynamic();
 
 	/**
-	 * Get the immediate parent data item of this data item or null if this data
-	 * item is not contained in another data item.
+	 * Get the immediate parent data item of this data item or null if this data item is not
+	 * contained in another data item.
+	 * @return the data
 	 */
 	public Data getParent();
 
 	/**
-	 * Get the highest level Data item in a hierarchy of structures
-	 * containing this component.
+	 * Get the highest level Data item in a hierarchy of structures containing this component.
+	 * @return the data
 	 */
 	public Data getRoot();
 
 	/**
-	 * Get the offset of this Data item from the start of the root data item of
-	 *  some hierarchy of structures.
+	 * Get the offset of this Data item from the start of the root data item of some hierarchy of
+	 * structures.
+	 * @return the offset
 	 */
-	int getRootOffset();
+	public int getRootOffset();
 
 	/**
-	 * Get the offset of this Data item from the start of its immediate
-	 * parent.
+	 * Get the offset of this Data item from the start of its immediate parent.
+	 * @return the offset
 	 */
-	int getParentOffset();
+	public int getParentOffset();
 
 	/**
 	 * Returns the immediate n'th component or null if none exists.
 	 * @param index the index of the component to get.
+	 * @return the component
 	 */
 	public Data getComponent(int index);
 
 	/**
-	 * Get a data item given the index path. Each integer in the array represents
-	 * an index into the data item at that level.
+	 * Get a data item given  the index path. Each integer in the array represents an index into
+	 * the data item at that level.
 	 * @param componentPath the array of indexes to use to find the requested data item.
+	 * @return the component
 	 */
 	public Data getComponent(int[] componentPath);
 
 	/**
-	 * Get the component path if this is a component. The component path is an
-	 * array of integers that represent each index in the tree of data items. Top
-	 * level data items have an empty array for thier component path.
+	 * Get the component path if this is a component. The component path is an array of integers
+	 * that represent each index in the tree of data items. Top level data items have an empty
+	 * array for their component path.
+	 * @return the path
 	 */
 	public int[] getComponentPath();
 
 	/**
 	 * Return the number of components that make up this data item.
 	 * if this is an Array, return the number of elements in the array.
+	 * @return the number of components
 	 */
 	public int getNumComponents();
 
 	/**
-	 * Return the immediate child component that contains the byte
-	 *         at the given offset.
-	 * @param offset the amount to add to this data items address to get the
-	 * address of the requested data item.
+	 * Return the first immediate child component that contains the byte at the given offset.  It
+	 * is important to note that with certain datatypes there may be more than one component
+	 * containing the specified offset (see {@link #getComponentsContaining(int)}).
+	 * 
+	 * @param offset the amount to add to this data items address to get the address of the
+	 * requested data item.
+	 * @return first data component containing offset or null
+	 * @deprecated method name has been changed to better reflect behavior.  The method
+	 * {@link #getComponentContaining(int)} should be used instead.
 	 */
-	Data getComponentAt(int offset);
+	@Deprecated(forRemoval = true, since = "10.1")
+	public Data getComponentAt(int offset);
+
+	/**
+	 * RReturn the first immediate child component that contains the byte at the given offset.  It
+	 * is important to note that with certain datatypes there may be more than one component
+	 * containing the specified offset (see {@link #getComponentsContaining(int)}).
+	 * 
+	 * @param offset the amount to add to this data items address to get the
+	 * @return first data component containing offset or null address of the requested data item.
+	 */
+	public Data getComponentContaining(int offset);
 
 	/**
 	 * Returns a list of all the immediate child components that contain the byte at the
 	 * given offset.
 	 * <P>
-	 * For a union, this will return all the components (if the offset is 0).  For a structure,
-	 * this will be either a single non bit field element or a list of bit field elements.
+	 * For a union, this will return all the components (if the offset is 0).  The presence of bit-fields
+	 * or zero-length components may cause multiple components to be returned.
 	 * @param offset the amount to add to this data items address to get the
 	 * address of the requested data item.
 	 * @return a list of all the immediate child components that contain the byte at the
-	 * given offset.
+	 * given offset or null if offset is out of bounds.
 	 */
-	List<Data> getComponentsContaining(int offset);
+	public List<Data> getComponentsContaining(int offset);
 
 	/**
-	 * Returns the primitive component that is at this offset.  This is useful
-	 * for data items are made up of multiple layers of other data items. This
-	 * method immediately goes to the lowest level data item.
+	 * Returns the primitive component containing this offset (i.e., one that does not
+	 * have sub-components).  This is useful for data items which are made up of multiple
+	 * layers of other data items. This method immediately goes to the lowest level data item.
+	 * If the minimum offset of a component is specified, the only first component containing
+	 * the offset will be considered (e.g., 0-element array).
+	 * @param offset the offset
+	 * @return primitive component containing this offset
 	 */
-	Data getPrimitiveAt(int offset);
+	public Data getPrimitiveAt(int offset);
 
 	/**
 	 * Get the index of this component in its parent
 	 * @return -1 if this data item is not a component of another data item.
 	 */
-	int getComponentIndex();
+	public int getComponentIndex();
 
 	/**
 	 * Get this data's component level in its hierarchy of components.
 	 * @return the level of this data item with 0 being the level of top data items.
 	 */
-	int getComponentLevel();
+	public int getComponentLevel();
 
 	/**
 	 * Returns a string that represents the data value without markup.
+	 * @return the string
 	 */
 	public String getDefaultValueRepresentation();
 
 	/**
 	 * Returns the appropriate string to use as the default label prefix or null if it has no
-	 * prefered default label prefix;
-	 * @param options
+	 * preferred default label prefix;
+	 * @param options the options
+	 * @return the prefix
 	 */
 	public String getDefaultLabelPrefix(DataTypeDisplayOptions options);
 }

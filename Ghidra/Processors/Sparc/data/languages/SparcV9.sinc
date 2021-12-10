@@ -34,13 +34,18 @@ define register offset=0x3000 size=1 [ x_nf x_zf x_vf x_cf i_nf i_zf i_vf i_cf ]
 define register offset=0x4000 size=1 [ ASI ];
 define register offset=0x4008 size=1 [ FPRS ];
 
-define register offset=0x5000 size=2 [ fsr ];
-define register offset=0x5002 size=1 [ fcc0 fcc1 fcc2 fcc3 ];
+define register offset=0x5000 size=$(SIZE) [ fsr ];
+#fcc0 is bits 10 and 11 of fsr
+#fcc1 is bits 32 and 33 of fsr (64 bit only)
+#fcc2 is bits 34 and 35 of fsr (64 bit only)
+#fcc3 is bits 36 and 37 of fsr (64 bit only)
+#model these as separate 1-byte varnodes
+define register offset=0x5008 size=1 [ fcc0 fcc1 fcc2 fcc3 ];
 define register offset=0x5010 size=1 [ didrestore ];
 define register offset=0x5020 size=1 [ DECOMPILE_MODE ]; # Fake register
 
 
-define register offset=0x5000 size=$(SIZE) [
+define register offset=0x6000 size=$(SIZE) [
 	TPC1       TPC2       TPC3       TPC4
 	TNPC1      TNPC2      TNPC3      TNPC4
 	TSTATE1    TSTATE2    TSTATE3    TSTATE4
@@ -50,7 +55,7 @@ define register offset=0x5000 size=$(SIZE) [
 	OTHERWIN   WSTATE     FQ         VER        GL
 ];
 
-define register offset=0x6000 size=$(SIZE) [
+define register offset=0x7000 size=$(SIZE) [
 	HPSTATE1     HPSTATE2     HPSTATE3     HPSTATE4
 	HTSTATE1     HTSTATE2     HTSTATE3     HTSTATE4
 	RESV2_1      RESV2_2      RESV2_3      RESV2_4
@@ -87,7 +92,7 @@ define register offset=0x6000 size=$(SIZE) [
 # i7 w017 w037 w127 w217 w237 w327 w417 
 # o7      w037 w127 w217 w237 w327 w417 
 
-define register offset=0x7000 size=$(SIZE) [
+define register offset=0x8000 size=$(SIZE) [
 	w010 w011 w012 w013 w014 w015 w016 w017
 	w020 w021 w022 w023 w024 w025 w026 w027
 	w030 w031 w032 w033 w034 w035 w036 w037
@@ -137,7 +142,6 @@ define register offset=0x2000 size=16 [
 
 
 define pcodeop segment;
-define pcodeop popc;
 define pcodeop sw_trap;
 define pcodeop reset;
 
@@ -203,6 +207,7 @@ define token instr(32)
 	opf6     = ( 5,10)
 	opf_cc   = (11,13)
 	opf_low  = ( 5,10)
+	opf_low_5_9 = ( 5,9)
 	fcn      = (25,29)
 	swtrap   = ( 0, 6)
 	bit28    = (28,28)
@@ -333,14 +338,21 @@ if (DECOMPILE_MODE) goto <skip_rotate>;
 <skip_rotate>
 }
 
+#Register g0 in Sparc is always 0
+
+#There are special cases for source operands RS1 and RS2 which just return the constant 0 when the
+#specified register is g0
 RS1: rs1  is rs1 & rs1_zero=0 { export 0:$(SIZE); }
 RS1: rs1  is rs1              { export rs1; }
 
 RS2: rs2  is rs2 & rs2_zero=0 { export 0:$(SIZE); }
 RS2: rs2  is rs2              { export rs2; }
 
-RD: rd  is rd & rd_zero=0 { export 0:$(SIZE); }
-RD: rd  is rd & rd_zero   { export rd; }
+#For the destination operand RD, we export a temporary varnode with value 0.
+#This is because writes to g0 are allowed, but they have no visible effect (see the Sparc manual).
+#This way the value of g0 won't appear to change when using the pcode emulator.
+RD: rd  is rd & rd_zero=0 { local tmp:$(SIZE) = 0; export tmp; }
+RD: rd  is rd             { export rd; }
 
 regorimm: RS2       is i=0 & RS2    { export RS2; }
 regorimm: simm13    is i=1 & simm13 { export *[const]:$(SIZE) simm13; }
@@ -392,6 +404,32 @@ macro addflags32(op1,op2) {
 	i_vf = scarry(op1,op2);
 }
 
+macro addCarryFlags ( op1, op2 ) {
+	local op1_low_32:4 = op1:4;
+	local op2_low_32:4 = op2:4;
+    local CFcopy_4:4 = zext(i_cf);
+	local CFcopy:$(SIZE) = zext(i_cf);
+	local result:$(SIZE) = op1 + op2;
+	local result_low_32:4 = op1_low_32 + op2_low_32;
+	i_cf = carry( op1_low_32, op2_low_32) || carry( result_low_32, CFcopy_4 );
+	x_cf = carry(op1,op2) || carry(result,CFcopy);
+	i_vf = scarry( op1_low_32, op2_low_32) ^^ scarry( result_low_32, CFcopy_4 );
+	x_vf = scarry(op1, op2) ^^ scarry(result,CFcopy);
+}
+
+macro subCarryFlags ( op1, op2 ) {
+	local op1_low_32:4 = op1:4;
+	local op2_low_32:4 = op2:4;
+    local CFcopy_4:4 = zext(i_cf);
+	local CFcopy:$(SIZE) = zext(i_cf);
+	local result:$(SIZE) = op1 - op2;
+	local result_low_32:4 = op1_low_32 - op2_low_32;
+	i_cf = (op1_low_32 < op2_low_32) || (result_low_32 < CFcopy_4);
+	x_cf = (op1 < op2) || (result < CFcopy);
+	i_vf = sborrow( op1_low_32, op2_low_32) ^^ sborrow( result_low_32, CFcopy_4);
+	x_vf = sborrow(op1, op2) ^^ sborrow(result,CFcopy);	
+}
+
 macro logicflags() {
 	x_cf =  0;
 	x_vf = 0;
@@ -409,6 +447,11 @@ macro subflags(op1,op2) {
 
 	i_cf = tmp1 < tmp2;
 	i_vf = sborrow(tmp1,tmp2);
+}
+
+macro tsubflags(op1,op2){
+	subflags(op1,op2);
+	i_vf = i_vf || ((op1 & 0x3) != 0) || ((op2 & 0x3) != 0);
 }
 
 macro zeroflags(op1) {
@@ -437,84 +480,101 @@ macro unpackflags(ccr) {
 }
 
 # ---------------
-:add RS1,regorimm,rd                 is op=2 & rd & op3=0x0 & RS1 & regorimm {rd = RS1 + regorimm;}
+:add RS1,regorimm,RD                 is op=2 & RD & op3=0x0 & RS1 & regorimm {RD = RS1 + regorimm;}
 
-:addcc RS1,regorimm,rd               is op=2 & rd & op3=0x10 & RS1 & regorimm {addflags(RS1,regorimm);
-	rd = RS1 + regorimm;
-	zeroflags(rd);
+:addcc RS1,regorimm,RD               is op=2 & RD & op3=0x10 & RS1 & regorimm 
+{
+	addflags(RS1,regorimm);
+	RD = RS1 + regorimm;
+	zeroflags(RD);
 }
 
-:addc RS1,regorimm,rd                is op=2 & rd & op3=0x8 & RS1 & regorimm {rd = RS1 + regorimm + zext(i_cf);}
+:addc RS1,regorimm,RD                is op=2 & RD & op3=0x8 & RS1 & regorimm {RD = RS1 + regorimm + zext(i_cf);}
 
-
-:addccc RS1,regorimm,rd              is op=2 & rd & op3=0x18 & RS1 & regorimm {addflags(RS1,regorimm);
-	rd = RS1 + regorimm + zext(i_cf);
-	zeroflags(rd);
+:addccc RS1,regorimm,RD              is op=2 & RD & op3=0x18 & RS1 & regorimm 
+{
+	local original_i_cf:$(SIZE) = zext(i_cf);
+	addCarryFlags(RS1,regorimm);
+	RD = RS1 + regorimm + original_i_cf;
+	zeroflags(RD);
 }
 #-----------------------
-:and RS1,regorimm,rd                 is op=2 & rd & op3=0x1 & RS1 & regorimm {rd = RS1 & regorimm;}
+:and RS1,regorimm,RD                 is op=2 & RD & op3=0x1 & RS1 & regorimm {RD = RS1 & regorimm;}
 
-:andcc RS1,regorimm,rd               is op=2 & rd & op3=0x11 & RS1 & regorimm {logicflags();
-	rd = RS1 & regorimm;
-	zeroflags(rd);
+:andcc RS1,regorimm,RD               is op=2 & RD & op3=0x11 & RS1 & regorimm 
+{   
+	logicflags();
+	RD = RS1 & regorimm;
+	zeroflags(RD);
 }
-:andn RS1,regorimm,rd                is op=2 & rd & op3=0x5 & RS1 & regorimm {rd = RS1 & ~regorimm;}
+:andn RS1,regorimm,RD                is op=2 & RD & op3=0x5 & RS1 & regorimm {RD = RS1 & ~regorimm;}
 
-:andncc RS1,regorimm,rd              is op=2 & rd & op3=0x15 & RS1 & regorimm {logicflags();
-	rd = RS1 & ~regorimm;
-	zeroflags(rd);
+:andncc RS1,regorimm,RD              is op=2 & RD & op3=0x15 & RS1 & regorimm 
+{   
+	logicflags();
+	RD = RS1 & ~regorimm;
+	zeroflags(RD);
 }
 
-:or RS1,regorimm,rd                  is op=2 & rd & op3=0x2 & RS1 & regorimm {rd = RS1 | regorimm;}
+:or RS1,regorimm,RD                  is op=2 & RD & op3=0x2 & RS1 & regorimm {RD = RS1 | regorimm;}
 
-:orcc RS1,regorimm,rd                is op=2 & rd & op3=0x12 & RS1 & regorimm {logicflags();
-	rd = RS1 | regorimm;
-	zeroflags(rd);
+:orcc RS1,regorimm,RD                is op=2 & RD & op3=0x12 & RS1 & regorimm 
+{
+	logicflags();
+	RD = RS1 | regorimm;
+	zeroflags(RD);
 }
-:orn RS1,regorimm,rd                 is op=2 & rd & op3=0x6 & RS1 & regorimm {rd = RS1 | ~regorimm;}
+:orn RS1,regorimm,RD                 is op=2 & RD & op3=0x6 & RS1 & regorimm {RD = RS1 | ~regorimm;}
 
-:orncc RS1,regorimm,rd               is op=2 & rd & op3=0x16 & RS1 & regorimm {logicflags();
-	rd = RS1 | ~regorimm;
-	zeroflags(rd);
+:orncc RS1,regorimm,RD               is op=2 & RD & op3=0x16 & RS1 & regorimm 
+{
+	logicflags();
+	RD = RS1 | ~regorimm;
+	zeroflags(RD);
 }
-:xor RS1,regorimm,rd                 is op=2 & rd & op3=0x3 & RS1 & regorimm {rd = RS1 ^ regorimm;}
+:xor RS1,regorimm,RD                 is op=2 & RD & op3=0x3 & RS1 & regorimm {RD = RS1 ^ regorimm;}
 
-:xorcc RS1,regorimm,rd               is op=2 & rd & op3=0x13 & RS1 & regorimm {logicflags();
-	rd = RS1 ^ regorimm;
-	zeroflags(rd);
+:xorcc RS1,regorimm,RD               is op=2 & RD & op3=0x13 & RS1 & regorimm 
+{
+	logicflags();
+	RD = RS1 ^ regorimm;
+	zeroflags(RD);
 }
-:xnor RS1,regorimm,rd                is op=2 & rd & op3=0x7 & RS1 & regorimm {rd = RS1 ^ ~regorimm;}
 
-:xnorcc RS1,regorimm,rd              is op=2 & rd & op3=0x17 & RS1 & regorimm {logicflags();
-	rd = RS1 ^ ~regorimm;
-	zeroflags(rd);
+:xnor RS1,regorimm,RD                is op=2 & RD & op3=0x7 & RS1 & regorimm {RD = RS1 ^ ~regorimm;}
+
+:xnorcc RS1,regorimm,RD              is op=2 & RD & op3=0x17 & RS1 & regorimm 
+{
+	logicflags();
+	RD = RS1 ^ ~regorimm;
+	zeroflags(RD);
 }
 
 # ---------------
-:ldsb ea,rd                          is op=3 & rd & op3=0x09 & ea { rd = sext(*:1 ea); }
-:ldsh ea,rd                          is op=3 & rd & op3=0x0A & ea { rd = sext(*:2 ea); }
-:ldsw ea,rd                          is op=3 & rd & op3=0x08 & ea { rd = sext(*:4 ea); }
-:ldub ea,rd                          is op=3 & rd & op3=0x01 & ea { rd = zext(*:1 ea); }
-:lduh ea,rd                          is op=3 & rd & op3=0x02 & ea { rd = zext(*:2 ea); }
-:lduw ea,rd                          is op=3 & rd & op3=0x00 & ea { rd = zext(*:4 ea); }
-:ldx ea,rd                           is op=3 & rd & op3=0x0b & ea { rd = *:$(SIZE) ea; }
+:ldsb ea,RD                          is op=3 & RD & op3=0x09 & ea { RD = sext(*:1 ea); }
+:ldsh ea,RD                          is op=3 & RD & op3=0x0A & ea { RD = sext(*:2 ea); }
+:ldsw ea,RD                          is op=3 & RD & op3=0x08 & ea { RD = sext(*:4 ea); }
+:ldub ea,RD                          is op=3 & RD & op3=0x01 & ea { RD = zext(*:1 ea); }
+:lduh ea,RD                          is op=3 & RD & op3=0x02 & ea { RD = zext(*:2 ea); }
+:lduw ea,RD                          is op=3 & RD & op3=0x00 & ea { RD = zext(*:4 ea); }
+:ldx ea,RD                           is op=3 & RD & op3=0x0b & ea { RD = *:$(SIZE) ea; }
 
 @if SIZE=="8"
-:ldd ea,rd                           is op=3 & rd & op3=0x03 & ea { rd = *:$(SIZE) ea; }
+:ldd ea,RD                           is op=3 & RD & op3=0x03 & ea { RD = *:$(SIZE) ea; }
 @else
-:ldd ea,rd                           is op=3 & rd & rd_d & op3=0x03 & ea { rd_d = *:8 ea; }
+:ldd ea,RD                           is op=3 & RD & rd_d & op3=0x03 & ea { rd_d = *:8 ea; }
 
 @endif
 
-:ldsba ea_alt,rd                     is op=3 & rd & op3=0x19 & ea_alt  { rd = sext(*:1 ea_alt); }
-:ldsha ea_alt,rd                     is op=3 & rd & op3=0x1a & ea_alt  { rd = sext(*:2 ea_alt); }
-:ldswa ea_alt,rd                     is op=3 & rd & op3=0x18 & ea_alt  { rd = sext(*:4 ea_alt); }
-:lduba ea_alt,rd                     is op=3 & rd & op3=0x11 & ea_alt  { rd = zext(*:1 ea_alt); }
-:lduha ea_alt,rd                     is op=3 & rd & op3=0x12 & ea_alt  { rd = zext(*:2 ea_alt); }
-:lduwa ea_alt,rd                     is op=3 & rd & op3=0x10 & ea_alt  { rd = zext(*:4 ea_alt); }
+:ldsba ea_alt,RD                     is op=3 & RD & op3=0x19 & ea_alt  { RD = sext(*:1 ea_alt); }
+:ldsha ea_alt,RD                     is op=3 & RD & op3=0x1a & ea_alt  { RD = sext(*:2 ea_alt); }
+:ldswa ea_alt,RD                     is op=3 & RD & op3=0x18 & ea_alt  { RD = sext(*:4 ea_alt); }
+:lduba ea_alt,RD                     is op=3 & RD & op3=0x11 & ea_alt  { RD = zext(*:1 ea_alt); }
+:lduha ea_alt,RD                     is op=3 & RD & op3=0x12 & ea_alt  { RD = zext(*:2 ea_alt); }
+:lduwa ea_alt,RD                     is op=3 & RD & op3=0x10 & ea_alt  { RD = zext(*:4 ea_alt); }
 
-:ldxa ea_alt,rd                      is op=3 & rd & op3=0x1b & ea_alt  { rd = *:$(SIZE) ea_alt; }
-:ldda ea_alt,rd                      is op=3 & rd & op3=0x13 & ea_alt  { rd = *:$(SIZE) ea_alt; }
+:ldxa ea_alt,RD                      is op=3 & RD & op3=0x1b & ea_alt  { RD = *:$(SIZE) ea_alt; }
+:ldda ea_alt,RD                      is op=3 & RD & op3=0x13 & ea_alt  { RD = *:$(SIZE) ea_alt; }
 
 #-----------------
 :stb RD,ea                           is op=3 & RD & op3=0x05 & ea { *ea = RD:1; } 
@@ -540,18 +600,29 @@ macro unpackflags(ccr) {
 :stda RD,ea_alt                      is op=3 & RD & op3=0x17 & ea_alt { *ea_alt = RD; } 
 # ---------------
 
-:sub RS1,regorimm,rd                 is op=2 & rd & op3=0x4 & RS1 & regorimm {rd = RS1 - regorimm;}
-
-:subcc RS1,regorimm,rd               is op=2 & rd & op3=0x14 & RS1 & regorimm {subflags(RS1,regorimm);
-	rd = RS1 - regorimm;
-	zeroflags(rd);
+:sub RS1,regorimm,RD                 is op=2 & RD & op3=0x4 & RS1 & regorimm 
+{
+	RD = RS1 - regorimm;
 }
 
-:subc RS1,regorimm,rd                is op=2 & rd & op3=0xc & RS1 & regorimm {rd = RS1 - regorimm - zext(i_cf);}
+:subcc RS1,regorimm,RD               is op=2 & RD & op3=0x14 & RS1 & regorimm 
+{
+	subflags(RS1,regorimm);
+	RD = RS1 - regorimm;
+	zeroflags(RD);
+}
 
-:subccc RS1,regorimm,rd              is op=2 & rd & op3=0x1c & RS1 & regorimm {subflags(RS1,regorimm);
-	rd = RS1 - regorimm - zext(i_cf);
-	zeroflags(rd);
+:subc RS1,regorimm,RD                is op=2 & RD & op3=0xc & RS1 & regorimm 
+{
+	RD = RS1 - regorimm - zext(i_cf);
+}
+
+:subccc RS1,regorimm,RD              is op=2 & RD & op3=0x1c & RS1 & regorimm 
+{
+	local original_cf:$(SIZE) = zext(i_cf);
+	subCarryFlags(RS1,regorimm);
+	RD = RS1 - regorimm - original_cf;
+	zeroflags(RD);
 }
 
 # ---------------
@@ -560,7 +631,9 @@ macro unpackflags(ccr) {
 
 # ---------------COMPARES
 
-:cmp RS1,regorimm                    is op=0x2 & rd=0x0 & op3=0x14 & RS1 & regorimm {subflags(RS1,regorimm);
+:cmp RS1,regorimm                    is op=0x2 & rd=0x0 & op3=0x14 & RS1 & regorimm 
+{
+	subflags(RS1,regorimm);
 	local tmp = RS1 - regorimm;
 	zeroflags(tmp);
 }
@@ -568,7 +641,7 @@ macro unpackflags(ccr) {
 
 # ---------------MOVES
 
-:mov regorimm,rd                     is op=2 & rd & op3=0x2 & rs1=0 & regorimm {rd = regorimm;}
+:mov regorimm,RD                     is op=2 & RD & op3=0x2 & rs1=0 & regorimm {RD = regorimm;}
 
 # This will not work until the rs1 field in a token can be used without being
 #    part of the display portion below
@@ -579,9 +652,10 @@ RCOND: "nz"   is rcond3=5 & RS1 { tmp:1 = (RS1 != 0); export tmp; }
 RCOND: "gz"   is rcond3=6 & RS1 { tmp:1 = (RS1 s> 0); export tmp; }
 RCOND: "gez"  is rcond3=7 & RS1 { tmp:1 = (RS1 s>= 0); export tmp; }
 
-:movr^RCOND RS1,regorimm10,rd        is   op=0x2 & rd & op3=0x2f & RCOND & regorimm10 & RS1 {
+:movr^RCOND RS1,regorimm10,RD        is   op=0x2 & RD & op3=0x2f & RCOND & regorimm10 & RS1 
+{
 	if !RCOND goto <movrend>;
-	rd = regorimm10;
+	RD = regorimm10;
 	<movrend>
 }
 
@@ -631,9 +705,11 @@ m_cc:m_xcc  is cc2_4=1 & cc1_4=1 & cc0_4=0 & m_xcc { export m_xcc; }
 MICC:  "%icc"  is cc2_4=1 &cc1_4=0 { }
 MICC:  "%xcc"  is cc2_4=1 &cc1_4=1 { }
 
-:mov^m_cc    MICC,regorimm11,rd      is op=0x2 & rd & op3=0x2c & m_cc & MICC & regorimm11 {
+#conditional integer moves with floating-point conditions defined in constructor :mov^fmfcc
+:mov^m_cc    MICC,regorimm11,RD      is op=0x2 & RD & op3=0x2c & bit18=1 & m_cc & MICC & regorimm11 
+{
 	if (!m_cc) goto <movend>;
-	rd = regorimm11;
+	RD = regorimm11;
 	<movend>
 }
 
@@ -736,81 +812,112 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 
 #----------------MULTIPLY AND DIVIDE 64 bit
 
-:mulx   RS1,regorimm,rd              is op=2 & rd & op3=0x09 & RS1 & regorimm {rd = RS1  * regorimm;}
-:sdivx  RS1,regorimm,rd              is op=2 & rd & op3=0x2d & RS1 & regorimm {rd = RS1 s/ regorimm;}
-:udivx  RS1,regorimm,rd              is op=2 & rd & op3=0x0d & RS1 & regorimm {rd = RS1  / regorimm;}
+:mulx   RS1,regorimm,RD              is op=2 & RD & op3=0x09 & RS1 & regorimm {RD = RS1  * regorimm;}
+:sdivx  RS1,regorimm,RD              is op=2 & RD & op3=0x2d & RS1 & regorimm {RD = RS1 s/ regorimm;}
+:udivx  RS1,regorimm,RD              is op=2 & RD & op3=0x0d & RS1 & regorimm {RD = RS1  / regorimm;}
 
 #----------------MULTIPLY 32 bit
 @if SIZE=="8"
-:umul    RS1,regorimm,rd             is op=2 & rd & op3=0x0a & RS1 & regorimm {rd = zext(RS1:4) * zext(regorimm:4); Y=rd>>32;}
-:smul    RS1,regorimm,rd             is op=2 & rd & op3=0x0b & RS1 & regorimm {rd = zext(RS1:4) * zext(regorimm:4); Y=rd>>32;}
-:umulcc  RS1,regorimm,rd             is op=2 & rd & op3=0x1a & RS1 & regorimm {rd = zext(RS1:4) * zext(regorimm:4); Y=rd>>32; zeroflags(rd); logicflags();}
-:smulcc  RS1,regorimm,rd             is op=2 & rd & op3=0x1b & RS1 & regorimm {rd = zext(RS1:4) * zext(regorimm:4); Y=rd>>32; zeroflags(rd); logicflags();}
+:umul    RS1,regorimm,RD             is op=2 & RD & op3=0x0a & RS1 & regorimm {RD = zext(RS1:4) * zext(regorimm:4); Y=RD>>32;}
+:smul    RS1,regorimm,RD             is op=2 & RD & op3=0x0b & RS1 & regorimm {RD = sext(RS1:4) * sext(regorimm:4); Y=RD>>32;}
+:umulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1a & RS1 & regorimm {RD = zext(RS1:4) * zext(regorimm:4); Y=RD>>32; zeroflags(RD); logicflags();}
+:smulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1b & RS1 & regorimm {RD = sext(RS1:4) * sext(regorimm:4); Y=RD>>32; zeroflags(RD); logicflags();}
 
 @else
 # size = 4
-:umul    RS1,regorimm,rd             is op=2 & rd & op3=0x0a & RS1 & regorimm {
-	tmp_RS1:8 = zext(RS1); tmp_regorimm:8 = zext(regorimm);
-	tmp:8 = tmp_RS1 * tmp_regorimm; rd = tmp:4; tmp2:8 = tmp >> 32; Y = tmp2:4;
+:umul    RS1,regorimm,RD             is op=2 & RD & op3=0x0a & RS1 & regorimm 
+{
+	tmp_RS1:8 = zext(RS1); 
+	tmp_regorimm:8 = zext(regorimm);
+	tmp:8 = tmp_RS1 * tmp_regorimm; 
+	RD = tmp:4; tmp2:8 = tmp >> 32; 
+	Y = tmp2:4;
 }
 
-:smul    RS1,regorimm,rd             is op=2 & rd & op3=0x0b & RS1 & regorimm {
-	tmp_RS1:8 = sext(RS1); tmp_regorimm:8 = sext(regorimm);
-	tmp:8 = tmp_RS1 * tmp_regorimm; rd = tmp:4; tmp2:8 = tmp >> 32; Y = tmp2:4;
+:smul    RS1,regorimm,RD             is op=2 & RD & op3=0x0b & RS1 & regorimm 
+{
+	tmp_RS1:8 = sext(RS1); 
+	tmp_regorimm:8 = sext(regorimm);
+	tmp:8 = tmp_RS1 * tmp_regorimm; 
+	RD = tmp:4; tmp2:8 = tmp >> 32; 
+	Y = tmp2:4;
 }
 
-:umulcc  RS1,regorimm,rd             is op=2 & rd & op3=0x1a & RS1 & regorimm {rd = zext(RS1:4) * zext(regorimm:4); Y=rd>>32; zeroflags(rd); logicflags();}
-:smulcc  RS1,regorimm,rd             is op=2 & rd & op3=0x1b & RS1 & regorimm {rd = zext(RS1:4) * zext(regorimm:4); Y=rd>>32; zeroflags(rd); logicflags();}
+:umulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1a & RS1 & regorimm 
+{
+	RD = zext(RS1:4) * zext(regorimm:4); 
+	Y=RD>>32; 
+	zeroflags(RD); 
+	logicflags();
+}
+:smulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1b & RS1 & regorimm 
+{
+	RD = zext(RS1:4) * zext(regorimm:4); 
+	Y=RD>>32; 
+	zeroflags(RD); 
+	logicflags();
+}
 
 @endif
 
 #----------------MULTIPLY Step
 
-:mulscc  RS1,regorimm,rd             is op=2 & rd & op3=0x24 & RS1 & regorimm { tmp:4 = RS1:4 >> 1;
-	ccr:4 = zext(i_nf ^^ i_vf);
+:mulscc  RS1,regorimm,RD             is op=2 & RD & op3=0x24 & RS1 & regorimm 
+{
+	local ccr:4 = zext(i_nf ^^ i_vf);
 	ccr = ccr << 31;
-	tmp = tmp | ccr;
-	multiplicand:4 = (Y:4 & 0x1) * regorimm:4;
-	addflags32(tmp, multiplicand);
-	tmp = tmp + multiplicand;
-	rd = zext(tmp);
-	zeroflags(rd);
-	local tbit = (RS1 & 0x1) << 31;
-	Y = (Y >> 1) | tbit;
-}        
-
+	local shifted:4 = RS1:4 >> 1;
+	shifted = shifted | ccr;
+	local addend:4 = 0:4;
+	if ((Y & 0x1) == 0) goto <skip_add>;
+	addend = regorimm:4;
+<skip_add>
+	local sum:4 = addend + shifted;
+	addflags32(addend,shifted);
+	#upper 32 bits of RD are undefined according to the manual
+	local tbit:4 = (RS1:4 & 0x1:4) << 31;
+	RD = zext(sum);
+	zeroflags(RD);
+	#Y is 64 bits in Sparc 9 but the high 32 are fixed to 0
+	Y = zext((Y:4 >> 1:4) | tbit);
+}
+    
 #----------------DIVIDE (64-bit / 32-bit)
 
-# NB- Beware, the plus + operator has higher precdence than shift <<
+# NB- Beware, the plus + operator has higher precedence than shift <<
 # (These are Java rules. C rules have shift and + at the same level, so left to right)
 
-:udiv    RS1,regorimm,rd             is op=2 & rd & op3=0x0e & RS1 & regorimm {
+:udiv    RS1,regorimm,RD             is op=2 & RD & op3=0x0e & RS1 & regorimm 
+{
 	numerator:$(SIZE)= (Y << 32) + (RS1 & 0xffffffff);
 	denom:$(SIZE) = regorimm & 0xffffffff;
-	rd = numerator / denom;
+	RD = numerator / denom;
 }
-:sdiv    RS1,regorimm,rd             is op=2 & rd & op3=0x0f & RS1 & regorimm {
+:sdiv    RS1,regorimm,RD             is op=2 & RD & op3=0x0f & RS1 & regorimm 
+{
 	numerator:$(SIZE)= (Y << 32) + (RS1 & 0xffffffff);
 	denom:$(SIZE) = regorimm & 0xffffffff;
-	rd = numerator s/ denom;
+	RD = numerator s/ denom;
 }                                         					 
 
-:udivcc    RS1,regorimm,rd           is op=2 & rd & op3=0x1e & RS1 & regorimm {
+:udivcc    RS1,regorimm,RD           is op=2 & RD & op3=0x1e & RS1 & regorimm 
+{
 	numerator:$(SIZE)= ( Y << 32) + (RS1 & 0xffffffff);
 	denom:$(SIZE) = regorimm & 0xffffffff;
-	rd = numerator / denom;
-	zeroflags(rd);
-	i_vf = rd > 0xffffffff;
+	RD = numerator / denom;
+	zeroflags(RD);
+	i_vf = RD > 0xffffffff;
 	i_cf = 0;
 	x_vf = 0;
 	x_cf = 0;
 }
-:sdivcc    RS1,regorimm,rd           is op=2 & rd & op3=0x1f & RS1 & regorimm {
+:sdivcc    RS1,regorimm,RD           is op=2 & RD & op3=0x1f & RS1 & regorimm 
+{
 	numerator:$(SIZE)= (Y << 32) + (RS1 & 0xffffffff);
 	denom:$(SIZE) = regorimm & 0xffffffff;
-	rd = numerator s/ denom;
-	zeroflags(rd);
-	i_vf = (rd s>= 0x80000000) || (rd s<= -0x7ffffffff);
+	RD = numerator s/ denom;
+	zeroflags(RD);
+	i_vf = (RD s>= 0x80000000) || (RD s<= -0x7ffffffff);
 	i_cf = 0;
 	x_vf = 0;
 	x_cf = 0;
@@ -818,14 +925,14 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 
 #---------------SHIFT
 
-:sll     RS1,reg_or_shcnt,rd         is op=0x2 & rd & op3=0x25 & x=0 & RS1 & reg_or_shcnt { rd=RS1<<reg_or_shcnt; }
-:srl     RS1,reg_or_shcnt,rd         is op=0x2 & rd & op3=0x26 & x=0 & RS1 & reg_or_shcnt { tmp:$(SIZE)=zext(RS1:4); rd=tmp>>reg_or_shcnt; }
+:sll     RS1,reg_or_shcnt,RD         is op=0x2 & RD & op3=0x25 & x=0 & RS1 & reg_or_shcnt { RD=RS1<<reg_or_shcnt; }
+:srl     RS1,reg_or_shcnt,RD         is op=0x2 & RD & op3=0x26 & x=0 & RS1 & reg_or_shcnt { tmp:$(SIZE)=zext(RS1:4); RD=tmp>>reg_or_shcnt; }
 
-:sllx    RS1,reg_or_shcnt,rd         is op=0x2 & rd & op3=0x25 & x=1 & RS1 & reg_or_shcnt { rd=RS1<<reg_or_shcnt; }
-:srlx    RS1,reg_or_shcnt,rd         is op=0x2 & rd & op3=0x26 & x=1 & RS1 & reg_or_shcnt { rd=RS1>>reg_or_shcnt; }
+:sllx    RS1,reg_or_shcnt,RD         is op=0x2 & RD & op3=0x25 & x=1 & RS1 & reg_or_shcnt { RD=RS1<<reg_or_shcnt; }
+:srlx    RS1,reg_or_shcnt,RD         is op=0x2 & RD & op3=0x26 & x=1 & RS1 & reg_or_shcnt { RD=RS1>>reg_or_shcnt; }
 
-:sra     RS1,reg_or_shcnt,rd         is op=0x2 & rd & op3=0x27 & x=0 & RS1 & reg_or_shcnt { tmp:4=RS1:4; rd=sext(tmp s>> reg_or_shcnt); }
-:srax    RS1,reg_or_shcnt,rd         is op=0x2 & rd & op3=0x27 & x=1 & RS1 & reg_or_shcnt { rd=RS1 s>> reg_or_shcnt; }
+:sra     RS1,reg_or_shcnt,RD         is op=0x2 & RD & op3=0x27 & x=0 & RS1 & reg_or_shcnt { tmp:4=RS1:4; RD=sext(tmp s>> reg_or_shcnt); }
+:srax    RS1,reg_or_shcnt,RD         is op=0x2 & RD & op3=0x27 & x=1 & RS1 & reg_or_shcnt { RD=RS1 s>> reg_or_shcnt; }
 
 # ASR read registers (some ASR #s not permitted for rd: 1, 7..15, other #s handled by rd: 3, 5, 6)                        
 attach variables [ rs_asr ] [ Y     _          CCR   _     TICK        _           _       _
@@ -840,8 +947,8 @@ rsASR: "%"^FPRS  	is  rs_asr=6 & FPRS	{ tmp:$(SIZE) = zext(FPRS); export tmp; }
 rsASR: "%"^rs_asr	is  rs_asr        	{ export rs_asr; }
 
 #---------------RD ASR special register (STBAR instruction must be defined after this instruction)
-:rd rsASR,rd        is op=0x2 & rd & op3=0x28 & rsASR & i=0 { rd = rsASR; }
-:rd rsASR,rd        is op=0x2 & rd & op3=0x28 & rs_asr=2 & rsASR & i=0 { packflags(rd); } # packed CCR register displayed
+:rd rsASR,RD        is op=0x2 & RD & op3=0x28 & rsASR & i=0 { RD = rsASR; }
+:rd rsASR,RD        is op=0x2 & RD & op3=0x28 & rs_asr=2 & rsASR & i=0 { packflags(RD); } # packed CCR register displayed
 
 # ASR write registers (some ASR #s not permitted for wr: 1, 4, 5, 7..15, other #s handled by wr: 2, 3, 6)                          
 attach variables [ rd_asr ] [ Y     _          _     _     _           _           _       _
@@ -850,38 +957,40 @@ attach variables [ rd_asr ] [ Y     _          _     _     _           _        
                               STICK STICK_CMPR asr26 asr27 asr28       asr29       asr30   asr31 ];
                              
 # ASR write registers
-wrCCR: "%"^CCR		is rd_asr=2 & CCR { export CCR; } # packed CCR register displayed
-wrASI: "%"^ASI		is rd_asr=3 & ASI { export ASI; }
+wrY:    "%"^Y       is rd_asr=0 & Y    {export Y;}
+wrCCR:  "%"^CCR		is rd_asr=2 & CCR { export CCR; } # packed CCR register displayed
+wrASI:  "%"^ASI		is rd_asr=3 & ASI { export ASI; }
 wrFPRS: "%"^FPRS	is rd_asr=6 & FPRS { export FPRS; }
-wrASR: "%"^rd_asr	is rd_asr { export rd_asr; }
+wrASR:  "%"^rd_asr	is rd_asr { export rd_asr; }
 
 #---------------WR ASR special register (SIR instruction must be defined after this instruction)
 # NOTE: the following ASR register numbers are not allowed: 1, 4, 5, 7..14
 :wr RS1,regorimm,wrCCR                   is op=0x2 & RS1 & regorimm & op3=0x30 & rd_asr=2 & wrCCR { local tmp = RS1 ^ regorimm; unpackflags(tmp); }
 :wr RS1,regorimm,wrASI                   is op=0x2 & RS1 & regorimm & op3=0x30 & rd_asr=3 & wrASI { local tmp = RS1 ^ regorimm; wrASI = tmp:1; }
 :wr RS1,regorimm,wrFPRS                  is op=0x2 & RS1 & regorimm & op3=0x30 & rd_asr=6 & wrFPRS { local tmp = RS1 ^ regorimm; FPRS = tmp:1; }
-:wr RS1,regorimm,wrASR                  is op=0x2 & RS1 & regorimm & op3=0x30 & wrASR { wrASR = RS1 ^ regorimm; }
+:wr RS1,regorimm,wrY                     is op=0x2 & RS1 & regorimm & op3=0x30 & rd_asr=0 & wrY { Y = zext(RS1:4 ^ regorimm:4); }
+:wr RS1,regorimm,wrASR                   is op=0x2 & RS1 & regorimm & op3=0x30 & wrASR { wrASR = RS1 ^ regorimm; }
 
 #---------------MISC
 sethidisp: "%hi("^hi^")"  is udisp22 [hi=udisp22<<10;] { export *[const]:$(SIZE) hi; }
 
-:sethi sethidisp,rd                  is rd & op=0x0 & op2=0x4 & sethidisp { rd=sethidisp; }
+:sethi sethidisp,RD                  is RD & op=0x0 & op2=0x4 & sethidisp { RD=sethidisp; }
 
-:popc   regorimm, rd                 is op=0x2 & rd & op3=0x2e & rs1=0 & regorimm { rd = popc(regorimm); }
+:popc   regorimm, RD                 is op=0x2 & RD & op3=0x2e & rs1=0 & regorimm { RD = popcount(regorimm); }
 
-:save     RS1,regorimm,rd            is op=0x2 & rd & op3=0x3c & RS1 & regorimm { local tmp = RS1 + regorimm; save(); rd = tmp; }
+:save     RS1,regorimm,RD            is op=0x2 & RD & op3=0x3c & RS1 & regorimm { local tmp = RS1 + regorimm; save(); RD = tmp; }
 
-:restore  RS1,regorimm,rd            is op=0x2 & rd & op3=0x3d & RS1 & regorimm { local tmp = RS1 + regorimm; restore(); didrestore=1; rd = tmp; }
+:restore  RS1,regorimm,RD            is op=0x2 & RD & op3=0x3d & RS1 & regorimm { local tmp = RS1 + regorimm; restore(); didrestore=1; RD = tmp; }
 :restore                             is op=0x2 & rd=0 & op3=0x3d                {                             restore(); didrestore=1; }
 
 :return  retea                       is op=0x2 & op3=0x39 & retea { restore(); delayslot(1); didrestore=1; return [retea]; }
 
 jmplreloff: reloc  is rd [reloc=inst_start+8;] { export reloc; }
 
-:jmpl    retea,rd                    is op=0x2 & rd & op3=0x38 & retea & jmplreloff { rd = inst_start; delayslot(1);  goto [retea]; }
+:jmpl    retea,RD                    is op=0x2 & RD & op3=0x38 & retea & jmplreloff { RD = inst_start; delayslot(1);  goto [retea]; }
 
 # special case where link register is loaded with return address
-:jmpl    retea,rd                    is op=0x2 & rd & prd=15 & op3=0x38 & retea & jmplreloff { rd = inst_start; delayslot(1); call [retea]; }
+:jmpl    retea,RD                    is op=0x2 & RD & prd=15 & op3=0x38 & retea & jmplreloff { RD = inst_start; delayslot(1); call [retea]; }
 
 :jmpl    retea                       is op=0x2 & rd=0 & op3=0x38 & retea { o7=inst_start; delayslot(1);  goto [retea]; }
 :ret                                 is op=0x2 & rd=0 & rs1=31 & op3=0x38 & i=1 & simm13=8 & retea   { delayslot(1); return [retea]; }
@@ -890,33 +999,55 @@ jmplreloff: reloc  is rd [reloc=inst_start+8;] { export reloc; }
 casa_ea: [RS1]imm_asi  is i=0 & RS1 & imm_asi { local tmp1:1 = imm_asi; local tmp = RS1+segment(tmp1); export tmp; }
 casa_ea: [RS1]%ASI     is i=1 & RS1 & ASI     { local tmp = RS1+segment(ASI); export tmp; }
 
-:casa   casa_ea,RS2,rd               is op=0x3 & rd & op3=0x3c & casa_ea & RS2 { local tmp:4=rd:4; rd=zext(*:4 casa_ea); if ((RS2 & 0xFFFFFFFF)!=rd) goto <end>; *:4 casa_ea=tmp; <end> }
-:casxa  casa_ea,RS2,rd               is op=0x3 & rd & op3=0x3e & casa_ea & RS2 { local tmp=rd; rd=*:$(SIZE) casa_ea; if (RS2!=rd) goto <end>; *:$(SIZE) casa_ea=tmp; <end> }
+:casa   casa_ea,RS2,RD               is op=0x3 & RD & op3=0x3c & casa_ea & RS2 
+{ 
+	local tmp:4=RD:4; 
+	RD=zext(*:4 casa_ea); 
+	if ((RS2 & 0xFFFFFFFF)!=RD) goto <end>; 
+	*:4 casa_ea=tmp; 
+<end>
+}
+:casxa  casa_ea,RS2,RD               is op=0x3 & RD & op3=0x3e & casa_ea & RS2 
+{ 
+	local tmp=RD; 
+	RD=*:$(SIZE) casa_ea; 
+	if (RS2!=RD) goto <end>; 
+	*:$(SIZE) casa_ea=tmp; 
+<end>
+}
 
 :impdef1                             is op=0x2 & op3=0x36 unimpl
 :impdef2                             is op=0x2 & op3=0x37 unimpl
 
-:ldstub    ea,rd                     is op=0x3 & rd & op3=0xd & ea { rd = zext(*:1 ea); *:1 ea = 0xFF; }
-:ldstuba   ea_alt,rd                 is op=0x3 & rd & op3=0x1d & ea_alt { rd = zext(*:1 ea_alt); *:1 ea_alt = 0xFF; }
+:ldstub    ea,RD                     is op=0x3 & RD & op3=0xd & ea { RD = zext(*:1 ea); *:1 ea = 0xFF; }
+:ldstuba   ea_alt,RD                 is op=0x3 & RD & op3=0x1d & ea_alt { RD = zext(*:1 ea_alt); *:1 ea_alt = 0xFF; }
 
-:swap  ea,rd                         is op=0x3 & rd & op3=0xF & ea { tmp:4=rd:4; rd = zext(*:4 ea); *:4 ea = tmp; }
-:swapa ea_alt,rd                     is op=0x3 & rd & op3=0x1F & ea_alt { tmp:4=rd:4; rd = zext(*:4 ea_alt); *:4 ea_alt = tmp; }
+:swap  ea,RD                         is op=0x3 & RD & op3=0xF & ea { tmp:4=RD:4; RD = zext(*:4 ea); *:4 ea = tmp; }
+:swapa ea_alt,RD                     is op=0x3 & RD & op3=0x1F & ea_alt { tmp:4=RD:4; RD = zext(*:4 ea_alt); *:4 ea_alt = tmp; }
 
-:taddcc   RS1,regorimm,rd            is op=2 & rd & op3=0x20 & RS1 & regorimm {taddflags(RS1,regorimm);
-	rd = RS1 + regorimm;
-	zeroflags(rd);
+:taddcc   RS1,regorimm,RD            is op=2 & RD & op3=0x20 & RS1 & regorimm 
+{
+	taddflags(RS1,regorimm);
+	RD = RS1 + regorimm;
+	zeroflags(RD);
 }
-:taddcctv RS1,regorimm,rd            is op=2 & rd & op3=0x22 & RS1 & regorimm {taddflags(RS1,regorimm);
-	rd = RS1 + regorimm;
-	zeroflags(rd);
+:taddcctv RS1,regorimm,RD            is op=2 & RD & op3=0x22 & RS1 & regorimm 
+{
+	taddflags(RS1,regorimm);
+	RD = RS1 + regorimm;
+	zeroflags(RD);
 }
-:tsubcc   RS1,regorimm,rd            is op=2 & rd & op3=0x21 & RS1 & regorimm {taddflags(RS1,regorimm);
-	rd = RS1 - regorimm;
-	zeroflags(rd);
+:tsubcc   RS1,regorimm,RD            is op=2 & RD & op3=0x21 & RS1 & regorimm 
+{
+	tsubflags(RS1,regorimm);
+	RD = RS1 - regorimm;
+	zeroflags(RD);
 }
-:tsubcctv RS1,regorimm,rd            is op=2 & rd & op3=0x23 & RS1 & regorimm {taddflags(RS1,regorimm);
-	rd = RS1 - regorimm;
-	zeroflags(rd);
+:tsubcctv RS1,regorimm,RD            is op=2 & RD & op3=0x23 & RS1 & regorimm 
+{
+	tsubflags(RS1,regorimm);
+	RD = RS1 - regorimm;
+	zeroflags(RD);
 }
 
 tcc: icc  is cc1_4=0 & cc0_4=0 & icc { export icc; }
@@ -952,11 +1083,11 @@ tstate: "%tstate"  is fcn { local tmp = zext(TL == 1)* &TSTATE1 + zext(TL == 2)*
 
 # prs1 is same bits as rs1
 # prd is same bits as rd
-:rdpr  prs1,rd                       is op=0x2 & rd & op3=0x2A & prs1 {rd = prs1; }
-:rdpr  tpc,rd                        is op=0x2 & prs1 = 0 & rd & op3=0x2A & tpc { rd = *[register]:$(SIZE) tpc; }
-:rdpr  tnpc,rd                       is op=0x2 & prs1 = 1 & rd & op3=0x2A & tnpc {rd = *[register]:$(SIZE) tnpc; }
-:rdpr  tt,rd                         is op=0x2 & prs1 = 2 & rd & op3=0x2A & tt { rd = *[register]:$(SIZE) tt; }
-:rdpr  tstate,rd                     is op=0x2 & prs1 = 3 & rd & op3=0x2A & tstate {rd = *[register]:$(SIZE) tstate;}
+:rdpr  prs1,RD                       is op=0x2 & RD & op3=0x2A & prs1 {RD = prs1; }
+:rdpr  tpc,RD                        is op=0x2 & prs1 = 0 & RD & op3=0x2A & tpc { RD = *[register]:$(SIZE) tpc; }
+:rdpr  tnpc,RD                       is op=0x2 & prs1 = 1 & RD & op3=0x2A & tnpc {RD = *[register]:$(SIZE) tnpc; }
+:rdpr  tt,RD                         is op=0x2 & prs1 = 2 & RD & op3=0x2A & tt { RD = *[register]:$(SIZE) tt; }
+:rdpr  tstate,RD                     is op=0x2 & prs1 = 3 & RD & op3=0x2A & tstate {RD = *[register]:$(SIZE) tstate;}
 
 :wrpr  RS1,regorimm,prd              is op=0x2 & prd & op3=0x32 & RS1 & regorimm {prd = RS1^regorimm; }
 :wrpr  RS1,regorimm,tpc              is op=0x2 & prd = 0 & op3=0x32 & RS1 & regorimm & tpc { *[register]:$(SIZE) tpc = RS1^regorimm; }
@@ -978,13 +1109,13 @@ hsys_tick_cmpr: "%hstick_cmpr"  is  fcn { local reloc = zext(TL == 1)*&HSTICK_CM
 
 resv30: "%resv30"  is  fcn { local reloc = zext(TL == 1)*&RESV30_1 + zext(TL == 2)*&RESV30_2 + zext(TL == 3)*&RESV30_3 + zext(TL ==4)*&RESV30_4; export reloc; }
 
-:rdhpr  hpstate,rd                   is op=0x2 & prs1 = 0 & rd & op3=0x29 & hpstate { rd = *[register]:$(SIZE) hpstate; }
-:rdhpr  htstate,rd                   is op=0x2 & prs1 = 1 & rd & op3=0x29 & htstate { rd = *[register]:$(SIZE) htstate; }
-:rdhpr  hintp,rd                     is op=0x2 & prs1 = 3 & rd & op3=0x29 & hintp { rd = *[register]:$(SIZE) hintp; }
-:rdhpr  htba,rd                      is op=0x2 & prs1 = 5 & rd & op3=0x29 & htba { rd = *[register]:$(SIZE) htba; }
-:rdhpr  hver,rd                      is op=0x2 & prs1 = 6 & rd & op3=0x29 & hver { rd = *[register]:$(SIZE) hver; }
-:rdhpr  hsys_tick_cmpr,rd            is op=0x2 & prs1 = 31 & rd & op3=0x29 & hsys_tick_cmpr { rd = *[register]:$(SIZE) hsys_tick_cmpr; }
-:rdhpr  resv30,rd                    is op=0x2 & prs1 = 30 & rd & op3=0x29 & resv30 { rd = *[register]:$(SIZE) resv30; }
+:rdhpr  hpstate,RD                   is op=0x2 & prs1 = 0 & RD & op3=0x29 & hpstate { RD = *[register]:$(SIZE) hpstate; }
+:rdhpr  htstate,RD                   is op=0x2 & prs1 = 1 & RD & op3=0x29 & htstate { RD = *[register]:$(SIZE) htstate; }
+:rdhpr  hintp,RD                     is op=0x2 & prs1 = 3 & RD & op3=0x29 & hintp { RD = *[register]:$(SIZE) hintp; }
+:rdhpr  htba,RD                      is op=0x2 & prs1 = 5 & RD & op3=0x29 & htba { RD = *[register]:$(SIZE) htba; }
+:rdhpr  hver,RD                      is op=0x2 & prs1 = 6 & RD & op3=0x29 & hver { RD = *[register]:$(SIZE) hver; }
+:rdhpr  hsys_tick_cmpr,RD            is op=0x2 & prs1 = 31 & RD & op3=0x29 & hsys_tick_cmpr { RD = *[register]:$(SIZE) hsys_tick_cmpr; }
+:rdhpr  resv30,RD                    is op=0x2 & prs1 = 30 & RD & op3=0x29 & resv30 { RD = *[register]:$(SIZE) resv30; }
 
 :wrhpr  RS1,regorimm,hpstate         is op=0x2 & prd = 0 & op3=0x33 & RS1 & regorimm & hpstate { *[register]:$(SIZE) hpstate = RS1^regorimm; }
 :wrhpr  RS1,regorimm,htstate         is op=0x2 & prd = 1 & op3=0x33 & RS1 & regorimm & htstate { *[register]:$(SIZE) htstate = RS1^regorimm; }
@@ -1003,7 +1134,7 @@ resv30: "%resv30"  is  fcn { local reloc = zext(TL == 1)*&RESV30_1 + zext(TL == 
 
 define pcodeop IllegalInstructionTrap;
 
-:illtrap const22                     is op = 0 & op3 = 0 & const22 {
+:illtrap const22                     is op = 0 & op2 = 0 & const22 {
 	IllegalInstructionTrap(const22:4);
 	tmp:$(SIZE) = 0; # trap - don't fall-thru
 	return [ tmp ];
@@ -1214,9 +1345,9 @@ fmicc: "vc"   is cond4=0xf & V         { tmp:1=!V; export tmp; }
 fmicc: "vs"   is cond4=0x7 & V         { tmp:1=V; export tmp; }
 
 # floating-point move with floating-point condition codes
-fmfcc: "a"    is cond4=0x8 & fccn_4 { tmp:1=(fccn_4 == 0); export tmp; }
-fmfcc: "n"    is cond4=0x0 & fccn_4 { tmp:1=(fccn_4 == 0); export tmp; }
-fmfcc: "u"    is cond4=0x7 & fccn_4 { tmp:1=(fccn_4 == 0); export tmp; }
+fmfcc: "a"    is cond4=0x8 & fccn_4 { tmp:1=1:1; export tmp; }
+fmfcc: "n"    is cond4=0x0 & fccn_4 { tmp:1=0:1; export tmp; }
+fmfcc: "u"    is cond4=0x7 & fccn_4 { tmp:1=(fccn_4 == 3); export tmp; }
 fmfcc: "g"    is cond4=0x6 & fccn_4 { tmp:1=(fccn_4 == 2); export tmp; }
 fmfcc: "ug"   is cond4=0x5 & fccn_4 { tmp:1=(fccn_4 == 2 || fccn_4 == 3); export tmp; }
 fmfcc: "l"    is cond4=0x4 & fccn_4 { tmp:1=(fccn_4 == 1); export tmp; }
@@ -1231,12 +1362,12 @@ fmfcc: "le"   is cond4=0xd & fccn_4 { tmp:1=(fccn_4 == 0 || fccn_4 == 1); export
 fmfcc: "ule"  is cond4=0xe & fccn_4 { tmp:1=(fccn_4 == 0 || fccn_4 == 1 || fccn_4 ==3); export tmp; }
 fmfcc: "o"    is cond4=0xf & fccn_4 { tmp:1=(fccn_4 == 0 || fccn_4 == 1 || fccn_4 ==2); export tmp; }
 
-fmfcc_or_fmicc: fmfcc  is bit18=0 & fmfcc { export fmfcc; }
-fmfcc_or_fmicc: fmicc  is bit18=1 & fmicc { export fmicc; }
+fmfcc_or_fmicc: fmfcc  is bit13=0 & fmfcc { export fmfcc; }
+fmfcc_or_fmicc: fmicc  is bit13=1 & fmicc { export fmicc; }
 
-fcc_icc_xcc: "%"^fccn_4  is bit18=0 & fccn_4   { }
-fcc_icc_xcc: "%icc"      is bit18=1 & opf_cc=4 { }
-fcc_icc_xcc: "%xcc"      is bit18=1 & opf_cc=6 { }
+fcc_icc_xcc: "%"^fccn_4  is bit13=0 & fccn_4   { }
+fcc_icc_xcc: "%icc"      is bit13=1 & opf_cc=4 { }
+fcc_icc_xcc: "%xcc"      is bit13=1 & opf_cc=6 { }
 
 :fmovs^fmfcc_or_fmicc  fcc_icc_xcc,fsrs2,fsrd  is op=2 & op3=0x35 & bit18=0 & fmfcc_or_fmicc & fcc_icc_xcc & opf_low=1 & fsrs2 & fsrd
                                                         { if !(fmfcc_or_fmicc) goto <end>; fsrd = fsrs2; <end>}
@@ -1245,21 +1376,26 @@ fcc_icc_xcc: "%xcc"      is bit18=1 & opf_cc=6 { }
 :fmovq^fmfcc_or_fmicc  fcc_icc_xcc,fqrs2,fqrd  is op=2 & op3=0x35 & bit18=0 & fmfcc_or_fmicc & fcc_icc_xcc & opf_low=3 & fqrs2 & fqrd
                                                         { if !(fmfcc_or_fmicc) goto <end>; fqrd = fqrs2; <end> }
 
-:movf^fmfcc_or_fmicc  fcc_icc_xcc,regorimm11,rd  is op=2 & rd & op3=0x2c & bit18=0 & fmfcc_or_fmicc & fcc_icc_xcc & regorimm11
-                                                        { if !(fmfcc_or_fmicc) goto <end>; rd = regorimm11; <end> }
+#conditional integer moves with integer conditions defined in constructor :mov^m_cc 
+:mov^fmfcc  " %"^fccn_4,regorimm11,RD  is op=2 & RD & op3=0x2c & bit18=0 & fmfcc & fccn_4 & regorimm11
+{   
+	if !(fmfcc) goto <end>; 
+	RD = regorimm11; 
+<end>
+}
 
-fmovrcc: "z"    is rcond3=0x1 & RS1 { tmp:1 = (RS1 f== 0); export tmp; }
-fmovrcc: "lez"  is rcond3=0x2 & RS1 { tmp:1 = (RS1 f<= 0); export tmp; }
-fmovrcc: "lz"   is rcond3=0x3 & RS1 { tmp:1 = (RS1 f<  0); export tmp; }
-fmovrcc: "nz"   is rcond3=0x5 & RS1 { tmp:1 = (RS1 f!= 0); export tmp; }
-fmovrcc: "gz"   is rcond3=0x6 & RS1 { tmp:1 = (RS1 f>  0); export tmp; }
-fmovrcc: "gez"  is rcond3=0x7 & RS1 { tmp:1 = (RS1 f>= 0); export tmp; }
+fmovrcc: "z"    is rcond3=0x1 & RS1 { tmp:1 = (RS1 == 0); export tmp; }
+fmovrcc: "lez"  is rcond3=0x2 & RS1 { tmp:1 = (RS1 s<= 0); export tmp; }
+fmovrcc: "lz"   is rcond3=0x3 & RS1 { tmp:1 = (RS1 s<  0); export tmp; }
+fmovrcc: "nz"   is rcond3=0x5 & RS1 { tmp:1 = (RS1 != 0); export tmp; }
+fmovrcc: "gz"   is rcond3=0x6 & RS1 { tmp:1 = (RS1 s>  0); export tmp; }
+fmovrcc: "gez"  is rcond3=0x7 & RS1 { tmp:1 = (RS1 s>= 0); export tmp; }
 
-:fmovrs^fmovrcc RS1,fsrs2,fsrd       is op=2 & fsrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low=0x5 & fsrs2
+:fmovrs^fmovrcc RS1,fsrs2,fsrd       is op=2 & fsrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low_5_9=0x5 & fsrs2
                                                         { if !(fmovrcc) goto <end>; fsrd = fsrs2; <end> }
-:fmovrd^fmovrcc RS1,fdrs2,fdrd       is op=2 & fdrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low=0x6 & fdrs2
+:fmovrd^fmovrcc RS1,fdrs2,fdrd       is op=2 & fdrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low_5_9=0x6 & fdrs2
                                                         { if !(fmovrcc) goto <end>; fdrd = fdrs2; <end> }
-:fmovrq^fmovrcc RS1,fqrs2,fqrd       is op=2 & fqrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low=0x7 & fqrs2
+:fmovrq^fmovrcc RS1,fqrs2,fqrd       is op=2 & fqrd & op3=0x35 & bit13=0 & RS1 & fmovrcc & opf_low_5_9=0x7 & fqrs2
                                                         { if !(fmovrcc) goto <end>; fqrd = fqrs2; <end> }
 
 # Include support for the VIS1 vector instructions

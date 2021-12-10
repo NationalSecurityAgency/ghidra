@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,14 @@
  */
 package ghidra.feature.vt.api.main;
 
-import ghidra.program.model.address.Address;
-
 import java.util.Collection;
 import java.util.List;
 
+import ghidra.program.model.address.Address;
+
 /**
  * The interface for the association manager which manages the associations which are shared
- * with similar matches within a session. 
+ * with similar matches within a session.
  *
  */
 public interface VTAssociationManager {
@@ -60,7 +59,7 @@ public interface VTAssociationManager {
 
 	/**
 	 * Returns a collection of all defined associations that have the given destination address.
-	 * @param destinaitionAddress the source address to use to search for associations.
+	 * @param destinationAddress the source address to use to search for associations.
 	 * @return a collection of all defined associations that have the given destination address.
 	 */
 	public Collection<VTAssociation> getRelatedAssociationsByDestinationAddress(
@@ -70,11 +69,10 @@ public interface VTAssociationManager {
 	 * Returns a collection of all defined associations that have the either the given source
 	 * address or the given destination address
 	 * @param sourceAddress the source address to use to search for associations.
-	 * @param destinaitionAddress the source address to use to search for associations.
+	 * @param destinationAddress the source address to use to search for associations.
 	 * @return a collection of all defined associations that have either the given source
 	 * address or the given destination address.
 	 */
 	public Collection<VTAssociation> getRelatedAssociationsBySourceAndDestinationAddress(
 			Address sourceAddress, Address destinationAddress);
-
 }

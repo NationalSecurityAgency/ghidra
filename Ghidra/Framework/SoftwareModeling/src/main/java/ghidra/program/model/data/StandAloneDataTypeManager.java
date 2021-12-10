@@ -34,11 +34,23 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB {
 	private Long transaction;
 
 	/**
-	 * Default constructor for temporary data-type manager.
+	 * Constructor for new temporary data-type manager using the default DataOrganization.
+	 * Note that this manager does not support the save or saveAs operation.
 	 * @param rootName Name of the root category.
 	 */
 	public StandAloneDataTypeManager(String rootName) {
-		super();
+		super(DataOrganizationImpl.getDefaultOrganization());
+		this.name = rootName;
+	}
+
+	/**
+	 * Constructor for new temporary data-type manager using a specified DataOrganization.
+	 * Note that this manager does not support the save or saveAs operation.
+	 * @param rootName Name of the root category.
+	 * @param dataOrganzation applicable data organization
+	 */
+	public StandAloneDataTypeManager(String rootName, DataOrganization dataOrganzation) {
+		super(dataOrganzation);
 		this.name = rootName;
 	}
 
@@ -71,9 +83,14 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB {
 	}
 
 	@Override
+	public final DataOrganization getDataOrganization() {
+		return super.getDataOrganization();
+	}
+
+	@Override
 	public synchronized int startTransaction(String description) {
 		if (transaction == null) {
-			transaction = new Long(dbHandle.startTransaction());
+			transaction = dbHandle.startTransaction();
 		}
 		transactionCount++;
 		return transaction.intValue();
@@ -116,9 +133,8 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB {
 
 	@Override
 	public void close() {
-		if (dbHandle != null) {
+		if (!dbHandle.isClosed()) {
 			dbHandle.close();
-			dbHandle = null;
 		}
 		super.close();
 	}

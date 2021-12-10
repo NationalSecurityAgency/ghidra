@@ -15,14 +15,18 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.io.File;
+import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf4.DWARFUtil.LengthResult;
+import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
+import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 
 public class DWARFLine {
 	private long unit_length;
@@ -39,63 +43,84 @@ public class DWARFLine {
 	private List<String> include_directories;
 	private List<DWARFFile> file_names;
 
-	// TODO: convert this to a static factory method and a simple setter ctor
-	public DWARFLine(BinaryReader reader) throws IOException, DWARFException {
-		this.unit_length = reader.readNextUnsignedInt();
-		// Length of 0xffffffff implies 64-bit DWARF format
-		if (this.unit_length == 0xffffffffL) {
-			this.unit_length = reader.readNextLong();
-			this.format = DWARFCompilationUnit.DWARF_64;
+	/**
+	 * Read a DWARFLine from the compile unit's DW_AT_stmt_list location in the 
+	 * DebugLine stream (if present).
+	 * 
+	 * @param diea {@link DIEAggregate} compile unit DIE(a) 
+	 * @return a new DWARFLine instance if DW_AT_stmt_list & stream are present, otherwise null
+	 * @throws IOException if error reading data
+	 * @throws DWARFException if bad DWARF values
+	 */
+	public static DWARFLine read(DIEAggregate diea) throws IOException, DWARFException {
+		DWARFProgram dProg = diea.getProgram();
+		BinaryReader reader = dProg.getDebugLine();
+
+		// DW_AT_stmt_list can be const or ptr form types.
+		long stmtListOffset = diea.getUnsignedLong(DWARFAttribute.DW_AT_stmt_list, -1);
+
+		if (reader == null || stmtListOffset < 0) {
+			return null;
 		}
-		// Length of 0xfffffff0 or greater is reserved for DWARF
-		else if (this.unit_length >= 0xfffffff0L) {
-			throw new DWARFException("Reserved DWARF length value: " +
-				Long.toHexString(this.unit_length) + ". Unknown extension.");
-		}
-		else {
-			this.format = DWARFCompilationUnit.DWARF_32;
+
+		reader.setPointerIndex(stmtListOffset);
+
+		DWARFLine result = new DWARFLine();
+
+		LengthResult lengthInfo = DWARFUtil.readLength(reader, dProg.getGhidraProgram());
+		result.unit_length = lengthInfo.length;
+		result.format = lengthInfo.format;
+		if (result.unit_length == 0) {
+			throw new DWARFException(
+				"Invalid DWARFLine length 0 at 0x" + Long.toHexString(stmtListOffset));
 		}
 
 		// A version number for this line number information section
-		this.version = reader.readNextUnsignedShort();
+		result.version = reader.readNextUnsignedShort();
 
 		// Get the header length based on the current format
-		this.header_length = DWARFUtil.readOffsetByDWARFformat(reader, this.format);
+		result.header_length = DWARFUtil.readOffsetByDWARFformat(reader, result.format);
 
-		this.minimum_instruction_length = reader.readNextUnsignedByte();
+		result.minimum_instruction_length = reader.readNextUnsignedByte();
 
 		// Maximum operations per instruction only exists in DWARF version 4 or higher
-		if (this.version >= 4) {
-			this.maximum_operations_per_instruction = reader.readNextUnsignedByte();
+		if (result.version >= 4) {
+			result.maximum_operations_per_instruction = reader.readNextUnsignedByte();
 		}
 		else {
-			this.maximum_operations_per_instruction = 1;
+			result.maximum_operations_per_instruction = 1;
 		}
-		this.default_is_stmt = reader.readNextUnsignedByte();
-		this.line_base = reader.readNextByte();
-		this.line_range = reader.readNextUnsignedByte();
-		this.opcode_base = reader.readNextUnsignedByte();
-		this.standard_opcode_length = new int[this.opcode_base];
-		this.standard_opcode_length[0] = 1; /* Should never be used */
-		for (int i = 1; i < this.opcode_base; i++) {
-			this.standard_opcode_length[i] = reader.readNextUnsignedByte();
+		result.default_is_stmt = reader.readNextUnsignedByte();
+		result.line_base = reader.readNextByte();
+		result.line_range = reader.readNextUnsignedByte();
+		result.opcode_base = reader.readNextUnsignedByte();
+		result.standard_opcode_length = new int[result.opcode_base];
+		result.standard_opcode_length[0] = 1; /* Should never be used */
+		for (int i = 1; i < result.opcode_base; i++) {
+			result.standard_opcode_length[i] = reader.readNextUnsignedByte();
 		}
 
 		// Read all include directories
-		this.include_directories = new ArrayList<>();
+		result.include_directories = new ArrayList<>();
 		String include = reader.readNextAsciiString();
 		while (include.length() != 0) {
-			this.include_directories.add(include);
+			result.include_directories.add(include);
 			include = reader.readNextAsciiString();
 		}
 
 		// Read all files
-		this.file_names = new ArrayList<>();
+		result.file_names = new ArrayList<>();
 		DWARFFile file = new DWARFFile(reader);
 		while (file.getName().length() != 0) {
-			this.file_names.add(file);
+			result.file_names.add(file);
 			file = new DWARFFile(reader);
 		}
+
+		return result;
+	}
+
+	private DWARFLine() {
+		// empty, use #read()
 	}
 
 	/**

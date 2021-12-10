@@ -63,7 +63,7 @@ public class DisplayAsGraphAction extends DisplayAsAction {
 
 	public void addGraph(ObjectContainer container) {
 		GraphDisplayProvider graphProvider = graphBroker.getDefaultGraphDisplayProvider();
-		AttributedGraph graph = new AttributedGraph();
+		AttributedGraph graph = new AttributedGraph(container.getName(), new EmptyGraphType());
 		AttributedVertex start = graph.addVertex(container.toString(), container.getName());
 		graphContainer(container, graph, start);
 		try {

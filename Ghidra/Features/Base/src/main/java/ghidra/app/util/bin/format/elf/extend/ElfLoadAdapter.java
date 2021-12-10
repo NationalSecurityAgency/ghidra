@@ -127,6 +127,8 @@ public class ElfLoadAdapter {
 	/**
 	 * Get the preferred load address space for an allocated program segment.
 	 * The OTHER space is reserved and should not be returned by this method.
+	 * This method may only return a physical address space and not an overlay 
+	 * address space.
 	 * @param elfLoadHelper load helper object
 	 * @param elfProgramHeader elf program segment header
 	 * @return preferred load address space
@@ -143,7 +145,9 @@ public class ElfLoadAdapter {
 	}
 
 	/**
-	 * Get the preferred load address for a program segment
+	 * Get the preferred load address for a program segment.
+	 * This method may only return a physical address and not an overlay 
+	 * address.
 	 * @param elfLoadHelper load helper object
 	 * @param elfProgramHeader elf program segment header
 	 * @return preferred load address
@@ -182,6 +186,8 @@ public class ElfLoadAdapter {
 	/**
 	 * Get the preferred load address space for an allocated section.   The OTHER space
 	 * is reserved and should not be returned by this method.
+	 * This method may only return a physical address space and not an overlay 
+	 * address space.
 	 * @param elfLoadHelper load helper object
 	 * @param elfSectionHeader elf section header
 	 * @return preferred load address space
@@ -198,6 +204,8 @@ public class ElfLoadAdapter {
 
 	/**
 	 * Get the preferred load address for an allocated program section.  
+	 * This method may only return a physical address and not an overlay 
+	 * address.
 	 * @param elfLoadHelper load helper object
 	 * @param elfSectionHeader elf program section header
 	 * @return preferred load address

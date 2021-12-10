@@ -55,6 +55,7 @@ public class StructureEditorUnlockedActions4Test
 		invoke(applyAction);
 		assertTrue(complexStructure.isEquivalent(model.viewComposite));
 		assertEquals(1, complexStructure.getLength());
+		assertTrue(complexStructure.isNotYetDefined());
 		assertTrue(complexStructure.isZeroLength());
 	}
 

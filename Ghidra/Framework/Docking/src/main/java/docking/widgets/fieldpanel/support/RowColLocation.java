@@ -19,8 +19,9 @@ package docking.widgets.fieldpanel.support;
  * Simple class to return a row, column location.
  */
 public class RowColLocation {
-	private int row;
-	private int col;
+	protected int row;
+	protected int col;
+
 	/**
 	 * Constructs a new RowColLocation with the given row and column.
 	 * @param row the row location
@@ -30,36 +31,48 @@ public class RowColLocation {
 		this.row = row;
 		this.col = col;
 	}
-	/**
-	 * Returns the row.
-	 */
+
 	public int row() {
 		return row;
 	}
-	/**
-	 * Returns the column.
-	 */
+
 	public int col() {
 		return col;
 	}
-	/**
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
-    @Override
-    public String toString() {
-        return "RowColLocation("+row+","+col+")";
-    }
-    
+
+	public RowColLocation withCol(int newColumn) {
+		return new RowColLocation(row, newColumn);
+	}
+
+	public RowColLocation withRow(int newRow) {
+		return new RowColLocation(newRow, col);
+	}
+
 	@Override
-    public boolean equals( Object object ) {
+	public String toString() {
+		return row + "," + col;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + col;
+		result = prime * result + row;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object object) {
 		if (object == null) {
 			return false;
 		}
-		if ( object.getClass() == RowColLocation.class ) {
-			RowColLocation loc = (RowColLocation) object;
-			return (row ==  loc.row) && (col == loc.col);
+
+		if (!getClass().equals(object.getClass())) {
+			return false;
 		}
-		return false;
+
+		RowColLocation loc = (RowColLocation) object;
+		return (row == loc.row) && (col == loc.col);
 	}
 }

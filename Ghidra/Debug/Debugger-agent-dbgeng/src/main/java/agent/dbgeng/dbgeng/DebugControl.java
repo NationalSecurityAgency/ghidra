@@ -114,6 +114,69 @@ public interface DebugControl extends DebugControlReentrant {
 		;
 	}
 
+	public static enum DebugFilterOrdinals {
+		DEBUG_FILTER_CREATE_THREAD, //
+		DEBUG_FILTER_EXIT_THREAD, //
+		DEBUG_FILTER_CREATE_PROCESS, //
+		DEBUG_FILTER_EXIT_PROCESS, //
+		DEBUG_FILTER_LOAD_MODULE, //
+		DEBUG_FILTER_UNLOAD_MODULE, //
+		DEBUG_FILTER_SYSTEM_ERROR, //
+		DEBUG_FILTER_INITIAL_BREAKPOINT, //
+		DEBUG_FILTER_INITIAL_MODULE_LOAD, //
+		DEBUG_FILTER_DEBUGGEE_OUTPUT, //
+		;
+	}
+
+	public static enum DebugFilterExecutionOption {
+		DEBUG_FILTER_BREAK(0, "Break"), //
+		DEBUG_FILTER_SECOND_CHANCE_BREAK(1, "Second-chance Break"), //
+		DEBUG_FILTER_OUTPUT(2, "Output-only"), //
+		DEBUG_FILTER_IGNORE(3, "Ignore"), //
+		DEBUG_FILTER_REMOVE(4, "Remove"), //
+		;
+
+		public static DebugFilterExecutionOption getByNumber(int val) {
+			for (DebugFilterExecutionOption m : DebugFilterExecutionOption.values()) {
+				if (m.val == val) {
+					return m;
+				}
+			}
+			return null;
+		}
+
+		DebugFilterExecutionOption(int val, String description) {
+			this.val = val;
+			this.description = description;
+		}
+
+		public final int val;
+		public final String description;
+	}
+
+	public static enum DebugFilterContinuationOption {
+		DEBUG_FILTER_GO_HANDLED(0, "Handled"), //
+		DEBUG_FILTER_GO_NOT_HANDLED(1, "Not Handled"), //
+		;
+
+		public static DebugFilterContinuationOption getByNumber(int val) {
+			for (DebugFilterContinuationOption m : DebugFilterContinuationOption.values()) {
+				if (m.val == val) {
+					return m;
+				}
+			}
+			return null;
+		}
+
+		DebugFilterContinuationOption(int val, String description) {
+			this.val = val;
+			this.description = description;
+		}
+
+		public final int val;
+		public final String description;
+	}
+
 	boolean getInterrupt();
 
 	int getInterruptTimeout();
@@ -356,4 +419,29 @@ public interface DebugControl extends DebugControlReentrant {
 	int getExecutingProcessorType();
 
 	int getDebuggeeType();
+
+	DebugFilterInformation getNumberEventFilters();
+
+	String getEventFilterText(int index, int size);
+
+	String getEventFilterCommand(int index, int size);
+
+	void setEventFilterCommand(int index, String text);
+
+	DebugSpecificFilterInformation getSpecificFilterParameters(int start, int count);
+
+	void setSpecificFilterParameters(int start, int count, DebugSpecificFilterInformation info);
+
+	String getSpecificFilterArgument(int index, int size);
+
+	void setSpecificFilterArgument(int index, String arg);
+
+	DebugExceptionFilterInformation getExceptionFilterParameters(int start, int[] codes, int count);
+
+	void setExceptionFilterParameters(int count, DebugExceptionFilterInformation info);
+
+	String getExceptionFilterSecondCommand(int index, int size);
+
+	void setExceptionFilterSecondCommand(int index, String cmd);
+
 }

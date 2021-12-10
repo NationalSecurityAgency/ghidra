@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.checksums;
 
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.util.List;
 
 import ghidra.program.model.address.Address;
@@ -57,6 +58,11 @@ class MyTestMemoryBlock implements MemoryBlock {
 
 	@Override
 	public long getSize() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public BigInteger getSizeAsBigInteger() {
 		throw new UnsupportedOperationException();
 	}
 

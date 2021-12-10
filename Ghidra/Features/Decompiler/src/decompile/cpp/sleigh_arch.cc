@@ -16,8 +16,7 @@
 #include "sleigh_arch.hh"
 #include "inject_sleigh.hh"
 
-Sleigh *SleighArchitecture::last_sleigh = (Sleigh *)0;
-int4 SleighArchitecture::last_languageindex;
+map<int4,Sleigh *> SleighArchitecture::translators;
 vector<LanguageDescription> SleighArchitecture::description;
 
 FileManage SleighArchitecture::specpaths; // Global specfile manager
@@ -138,25 +137,23 @@ string SleighArchitecture::getDescription(void) const
 bool SleighArchitecture::isTranslateReused(void)
 
 {
-  if (last_sleigh == (Sleigh *)0) return false;
-  if (last_languageindex == languageindex) return true;
-  delete last_sleigh;		// It doesn't match so free old Translate
-  last_sleigh = (Sleigh *)0;
-  return false;
+  return (translators.find(languageindex) != translators.end());
 }
 
 Translate *SleighArchitecture::buildTranslator(DocumentStorage &store)
 
 {				// Build a sleigh translator
-  if (isTranslateReused()) {
-    last_sleigh->reset(loader,context);
-    return last_sleigh;
+  map<int4,Sleigh *>::const_iterator iter;
+  Sleigh *sleigh;
+  iter = translators.find(languageindex);
+  if (iter != translators.end()) {
+    sleigh = (*iter).second;
+    sleigh->reset(loader,context);
+    return sleigh;
   }
-  else {
-    last_sleigh = new Sleigh(loader,context);
-    last_languageindex = languageindex;
-    return last_sleigh;
-  }
+  sleigh = new Sleigh(loader,context);
+  translators[languageindex] = sleigh;
+  return sleigh;
 }
 
 PcodeInjectLibrary *SleighArchitecture::buildPcodeInjectLibrary(void)
@@ -463,9 +460,9 @@ void SleighArchitecture::scanForSleighDirectories(const string &rootpath)
 void SleighArchitecture::shutdown(void)
 
 {
-  if (last_sleigh != (Sleigh *)0) {
-    delete last_sleigh;
-    last_sleigh = (Sleigh *)0;
-  }
+  if (translators.empty()) return;	// Already cleared
+  for(map<int4,Sleigh *>::const_iterator iter=translators.begin();iter!=translators.end();++iter)
+    delete (*iter).second;
+  translators.clear();
   // description.clear();  // static vector is destroyed by the normal exit handler
 }

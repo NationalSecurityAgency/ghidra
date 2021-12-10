@@ -21,44 +21,49 @@ import ghidra.util.exception.DuplicateNameException;
 
 import java.io.IOException;
 
+/**
+ * 
+ * https://android.googlesource.com/platform/art/+/master/libdexfile/dex/dex_file_structs.h
+ *
+ */
 public class AnnotationItem implements StructConverter {
 
 	private byte visibility;
 	private EncodedAnnotation annotation;
 
-	public AnnotationItem( BinaryReader reader ) throws IOException {
-		visibility = reader.readNextByte( );
-		annotation = new EncodedAnnotation( reader );
+	public AnnotationItem(BinaryReader reader) throws IOException {
+		visibility = reader.readNextByte();
+		annotation = new EncodedAnnotation(reader);
 	}
 
-	public byte getVisibility( ) {
+	public byte getVisibility() {
 		return visibility;
 	}
 
-	public EncodedAnnotation getAnnotation( ) {
+	public EncodedAnnotation getAnnotation() {
 		return annotation;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType annotationDataType = annotation.toDataType( );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType annotationDataType = annotation.toDataType();
 
-		StringBuilder builder = new StringBuilder( );
-		builder.append( "annotation_item" + "_" );
-		builder.append( visibility + "_" );
-		builder.append( annotationDataType.getName( ) );
+		StringBuilder builder = new StringBuilder();
+		builder.append("annotation_item" + "_");
+		builder.append(visibility + "_");
+		builder.append(annotationDataType.getName());
 
-		Structure structure = new StructureDataType( builder.toString( ), 0 );
-		structure.add( BYTE, "visibility", null );
-		structure.add( annotationDataType, "annotation", null );
+		Structure structure = new StructureDataType(builder.toString(), 0);
+		structure.add(BYTE, "visibility", null);
+		structure.add(annotationDataType, "annotation", null);
 
-		builder.append( structure.getLength( ) + "_" );
+		builder.append(structure.getLength() + "_");
 
-		structure.setCategoryPath( new CategoryPath( "/dex/annotation_item" ) );
+		structure.setCategoryPath(new CategoryPath("/dex/annotation_item"));
 		try {
-			structure.setName( builder.toString( ) );
+			structure.setName(builder.toString());
 		}
-		catch ( Exception e ) {
+		catch (Exception e) {
 			// ignore
 		}
 		return structure;

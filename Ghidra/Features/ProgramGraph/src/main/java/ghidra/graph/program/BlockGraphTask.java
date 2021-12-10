@@ -15,7 +15,8 @@
  */
 package ghidra.graph.program;
 
-import java.awt.Color;
+import static ghidra.graph.ProgramGraphType.*;
+
 import java.util.*;
 
 import docking.action.builder.ActionBuilder;
@@ -23,6 +24,7 @@ import docking.widgets.EventTrigger;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.util.AddEditDialog;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.graph.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
 import ghidra.program.model.listing.*;
@@ -30,7 +32,8 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.service.graph.*;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.GraphException;
 import ghidra.util.task.Task;
@@ -53,56 +56,8 @@ public class BlockGraphTask extends Task {
 
 	private ColorizingService colorizingService;
 
-	/**
-	 * Edge flow tags
-	 */
-	protected final static int FALLTHROUGH = 0;
-	protected final static int CONDITIONAL_RETURN = 1;
-	protected final static int UNCONDITIONAL_JUMP = 2;
-	protected final static int CONDITIONAL_JUMP = 3;
-	protected final static int UNCONDITIONAL_CALL = 4;
-	protected final static int CONDITIONAL_CALL = 5;
-	protected final static int TERMINATOR = 6;
-	protected final static int COMPUTED = 7;
-	protected final static int INDIRECTION = 8;
-	protected final static int ENTRY = 9; // from Entry Nexus
-
-	protected final static String[] edgeNames =
-		{ "1", "2", "3", "4", "5", "6", "7", "13", "14", "15" };
-
-	// @formatter:off
-	protected final static String[] edgeTypes = {
-			"Fall-Through",
-			"Conditional-Return",
-			"Unconditional-Jump",
-			"Conditional-Jump",
-			"Unconditional-Call",
-			"Conditional-Call",
-			"Terminator",
-			"Computed",
-			"Indirection",
-			"Entry" 
-	};
-	// @formatter:on
-
-	private final static String ENTRY_NODE = "Entry";
-	// "1";       // beginning of a block, someone calls it
-	private final static String BODY_NODE = "Body";
-	// "2";       // Body block, no flow
-	private final static String EXIT_NODE = "Exit";
-	// "3";       // Terminator
-	private final static String SWITCH_NODE = "Switch";
-	// "4";       // Switch/computed jump
-	private final static String BAD_NODE = "Bad";
-	// "5";       // Bad destination
-	private final static String DATA_NODE = "Data";
-	// "6";       // Data Node, used for indirection
-	private final static String ENTRY_NEXUS = "Entry-Nexus";
-	// "7";       //
-	private final static String EXTERNAL_NODE = "External";
-	// "8";       // node is external to program
-
 	private final static String ENTRY_NEXUS_NAME = "Entry Points";
+	private static final int MAX_SYMBOLS = 10;
 	private CodeBlockModel blockModel;
 	private AddressSetView selection;
 	private ProgramLocation location;
@@ -113,15 +68,17 @@ public class BlockGraphTask extends Task {
 	private Program program;
 	private AddressSetView graphScope;
 	private String graphTitle;
+	private ProgramGraphType graphType;
 
-	public BlockGraphTask(String actionName, boolean graphEntryPointNexus, boolean showCode,
-			boolean reuseGraph, boolean appendGraph, PluginTool tool, ProgramSelection selection,
-			ProgramLocation location, CodeBlockModel blockModel,
-			GraphDisplayProvider graphProvider) {
+	public BlockGraphTask(ProgramGraphType graphType,
+			boolean graphEntryPointNexus, boolean reuseGraph, boolean appendGraph,
+			PluginTool tool, ProgramSelection selection, ProgramLocation location,
+			CodeBlockModel blockModel, GraphDisplayProvider graphProvider) {
 
 		super("Graph Program", true, false, true);
+		this.graphType = graphType;
 		this.graphEntryPointNexus = graphEntryPointNexus;
-		this.showCode = showCode;
+		this.showCode = graphType instanceof CodeFlowGraphType;
 		this.reuseGraph = reuseGraph;
 		this.appendGraph = appendGraph;
 		this.tool = tool;
@@ -131,7 +88,7 @@ public class BlockGraphTask extends Task {
 		this.selection = selection;
 		this.location = location;
 		this.program = blockModel.getProgram();
-		this.graphTitle = actionName + ": ";
+		this.graphTitle = graphType.getName() + ": ";
 	}
 
 	/**
@@ -140,22 +97,25 @@ public class BlockGraphTask extends Task {
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
 		this.graphScope = getGraphScopeAndGenerateGraphTitle();
-		AttributedGraph graph = createGraph();
+		AttributedGraph graph = createGraph(graphTitle);
 		monitor.setMessage("Generating Graph...");
 		try {
-			GraphDisplay display = graphProvider.getGraphDisplay(reuseGraph, monitor);
+			GraphDisplay display =
+				graphProvider.getGraphDisplay(reuseGraph, monitor);
+			GraphDisplayOptions graphOptions = new ProgramGraphDisplayOptions(graphType, tool);
+			if (showCode) { // arrows need to be bigger as this generates larger vertices
+				graphOptions.setArrowLength(30);
+			}
+
 			BlockModelGraphDisplayListener listener =
 				new BlockModelGraphDisplayListener(tool, blockModel, display);
 			addActions(display, v -> listener.getAddress(v));
 			display.setGraphDisplayListener(listener);
 
 			if (showCode) {
-				display.defineVertexAttribute(CODE_ATTRIBUTE);
-				display.defineVertexAttribute(SYMBOLS_ATTRIBUTE);
-				display.setVertexLabelAttribute(CODE_ATTRIBUTE, GraphDisplay.ALIGN_LEFT, 12, true,
-					codeLimitPerBlock + 1);
+				graphOptions.setVertexLabelOverrideAttributeKey(CODE_ATTRIBUTE);
 			}
-			display.setGraph(graph, graphTitle, appendGraph, monitor);
+			display.setGraph(graph, graphOptions, graphTitle, appendGraph, monitor);
 
 			if (location != null) {
 				// initialize the graph location, but don't have the graph send an event
@@ -217,9 +177,9 @@ public class BlockGraphTask extends Task {
 		codeLimitPerBlock = maxLines;
 	}
 
-	protected AttributedGraph createGraph() throws CancelledException {
+	protected AttributedGraph createGraph(String name) throws CancelledException {
 		int blockCount = 0;
-		AttributedGraph graph = new AttributedGraph();
+		AttributedGraph graph = new AttributedGraph(name, graphType);
 
 		CodeBlockIterator it = getBlockIterator();
 		List<AttributedVertex> entryPoints = new ArrayList<>();
@@ -334,8 +294,7 @@ public class BlockGraphTask extends Task {
 		AttributedVertex entryNexusVertex = getEntryNexusVertex(graph);
 		for (AttributedVertex vertex : entries) {
 			AttributedEdge edge = graph.addEdge(entryNexusVertex, vertex);
-			edge.setAttribute("Name", edgeNames[ENTRY]);
-			edge.setAttribute("EdgeType", edgeTypes[ENTRY]);
+			edge.setAttribute("EdgeType", ENTRY_NEXUS);
 		}
 	}
 
@@ -459,14 +418,20 @@ public class BlockGraphTask extends Task {
 	}
 
 	private void addSymbolAttribute(AttributedVertex vertex, CodeBlock bb) {
-		Symbol[] symbols = program.getSymbolTable().getSymbols(bb.getMinAddress());
-		if (symbols.length != 0) {
+		SymbolIterator it = program.getSymbolTable().getSymbolsAsIterator(bb.getMinAddress());
+		int count = 0;
+		if (it.hasNext()) {
 			StringBuffer buf = new StringBuffer();
-			for (int i = 0; i < symbols.length; i++) {
-				if (i != 0) {
+			for (Symbol symbol : it) {
+				if (count != 0) {
 					buf.append('\n');
 				}
-				buf.append(symbols[i].getName());
+				// limit the number of symbols to include (there can be a ridiculous # of symbols) 
+				if (count++ > MAX_SYMBOLS) {
+					buf.append("...");
+					break;
+				}
+				buf.append(symbol.getName());
 			}
 			vertex.setAttribute(SYMBOLS_ATTRIBUTE, buf.toString());
 		}
@@ -517,99 +482,36 @@ public class BlockGraphTask extends Task {
 	}
 
 	protected void setEdgeAttributes(AttributedEdge edge, CodeBlockReference ref) {
-
-		int edgeType;
-		FlowType flowType = ref.getFlowType();
-		if (flowType == RefType.FALL_THROUGH) {
-			edgeType = FALLTHROUGH;
-		}
-		else if (flowType == RefType.UNCONDITIONAL_JUMP) {
-			edgeType = UNCONDITIONAL_JUMP;
-		}
-		else if (flowType == RefType.CONDITIONAL_JUMP) {
-			edgeType = CONDITIONAL_JUMP;
-		}
-		else if (flowType == RefType.UNCONDITIONAL_CALL) {
-			edgeType = UNCONDITIONAL_CALL;
-		}
-		else if (flowType == RefType.CONDITIONAL_CALL) {
-			edgeType = CONDITIONAL_CALL;
-		}
-		else if (flowType.isComputed()) {
-			edgeType = COMPUTED;
-		}
-		else if (flowType.isIndirect()) {
-			edgeType = INDIRECTION;
-		}
-		else if (flowType == RefType.TERMINATOR) {
-			edgeType = TERMINATOR;
-		}
-		else { // only FlowType.CONDITIONAL_TERMINATOR remains unchecked
-			edgeType = CONDITIONAL_RETURN;
-		}
-		// set attributes on this edge
-		edge.setAttribute("Name", edgeNames[edgeType]);
-		edge.setAttribute("EdgeType", edgeTypes[edgeType]);
+		edge.setEdgeType(ProgramGraphType.getEdgeType(ref.getFlowType()));
 	}
 
 	protected void setVertexAttributes(AttributedVertex vertex, CodeBlock bb, boolean isEntry) {
 
-		String vertexType = BODY_NODE;
+		String vertexType = BODY;
 
 		Address firstStartAddress = bb.getFirstStartAddress();
 		if (firstStartAddress.isExternalAddress()) {
-			vertexType = EXTERNAL_NODE;
+			vertexType = EXTERNAL;
 		}
 		else if (isEntry) {
-			vertexType = ENTRY_NODE;
+			vertexType = ENTRY;
 		}
 		else {
 			FlowType flowType = bb.getFlowType();
 			if (flowType.isTerminal()) {
-				vertexType = EXIT_NODE;
+				vertexType = EXIT;
 			}
 			else if (flowType.isComputed()) {
-				vertexType = SWITCH_NODE;
+				vertexType = SWITCH;
 			}
 			else if (flowType == RefType.INDIRECTION) {
-				vertexType = DATA_NODE;
+				vertexType = DATA;
 			}
 			else if (flowType == RefType.INVALID) {
-				vertexType = BAD_NODE;
+				vertexType = BAD;
 			}
 		}
-
-		vertex.setAttribute("VertexType", vertexType);
-
-		setVertexColor(vertex, vertexType, firstStartAddress);
-	}
-
-	private void setVertexColor(AttributedVertex vertex, String vertexType, Address address) {
-
-		if (colorizingService == null) {
-			return;
-		}
-
-		Color color = colorizingService.getBackgroundColor(address);
-		if (color == null) {
-			return;
-		}
-
-		// color format: RGBrrrgggbbb
-		// -where rrr/ggg/bbb is a three digit int value for each respective color range
-		String rgb = "RGB" + HTMLUtilities.toRGBString(color);
-		vertex.setAttribute("Color", rgb);  // sets the vertex color
-
-		// This value triggers the vertex to be painted with its color and not a 
-		// while background.
-		if (showCode) {
-			// our own custom override of Labels/Icons
-			vertex.setAttribute("VertexType", "ColorFilled");
-		}
-		else {
-			// the default preferences for VertexType
-			vertex.setAttribute("VertexType", vertexType + ".Filled");
-		}
+		vertex.setVertexType(vertexType);
 	}
 
 	private AttributedVertex getEntryNexusVertex(AttributedGraph graph) {

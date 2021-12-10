@@ -40,7 +40,7 @@ import ghidra.util.task.TaskMonitor;
 	shortDescription = "Manages the active Graph Display Service",
 	description = "This plugin searches for available graph display providers and if it finds more" +
 		"than one, it provides menu options for the user to choose the active provider.",
-	servicesProvided = { GraphDisplayBroker.class }	
+	servicesProvided = { GraphDisplayBroker.class }
 )
 //@formatter:on
 public class GraphDisplayBrokerPlugin extends Plugin
@@ -91,7 +91,7 @@ public class GraphDisplayBrokerPlugin extends Plugin
 
 	private void initializeServices() {
 		for (GraphDisplayProvider service : graphDisplayProviders) {
-			ToolOptions options = tool.getOptions("Graph");
+			ToolOptions options = tool.getOptions(ToolConstants.GRAPH_OPTIONS);
 			options.addOptionsChangeListener(this);
 			service.initialize(tool, options);
 		}
@@ -148,10 +148,10 @@ public class GraphDisplayBrokerPlugin extends Plugin
 	}
 
 	@Override
-	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, Map<String, String> properties,
-			TaskMonitor monitor) throws GraphException {
+	public GraphDisplay getDefaultGraphDisplay(boolean reuseGraph, TaskMonitor monitor)
+			throws GraphException {
 		if (defaultGraphDisplayProvider != null) {
-			return defaultGraphDisplayProvider.getGraphDisplay(reuseGraph, properties, monitor);
+			return defaultGraphDisplayProvider.getGraphDisplay(reuseGraph, monitor);
 		}
 		return null;
 	}

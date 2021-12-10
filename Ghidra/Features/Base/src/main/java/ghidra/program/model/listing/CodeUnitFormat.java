@@ -1032,7 +1032,7 @@ public class CodeUnitFormat {
 		DataType dataType = data.getDataType();
 		int length = data.getLength();
 
-		if (length < dataType.getLength()) {
+		if ((length != 0 || !dataType.isZeroLength()) && dataType.getLength() > length) {
 			representationList.add("Data type \"" + dataType.getDisplayName() +
 				"\" is too big for available space. Size = " + dataType.getLength() +
 				" bytes, available = " + length + " bytes");

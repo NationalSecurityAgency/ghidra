@@ -15,6 +15,8 @@
  */
 package ghidra.graph.program;
 
+import ghidra.graph.DataFlowGraphType;
+import ghidra.graph.ProgramGraphType;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Reference;
@@ -53,6 +55,7 @@ public class DataReferenceGraph extends AttributedGraph {
 	 * @param depth the number of hops to graph per call (0 for recursion until no more hops)
 	 */
 	public DataReferenceGraph(Program program, int depth) {
+		super("Data Reference", new DataFlowGraphType());
 		this.program = program;
 		this.depthPerStep = depth;
 	}
@@ -106,12 +109,13 @@ public class DataReferenceGraph extends AttributedGraph {
 
 	private void setupEdge(AttributedEdge edge, Reference ref) {
 		edge.setAttribute(REF_SOURCE_ATTRIBUTE, ref.getSource().getDisplayString());
-		edge.setAttribute(REF_TYPE_ATTRIBUTE, ref.getReferenceType().toString());
+		edge.setEdgeType(ProgramGraphType.getEdgeType(ref.getReferenceType()));
 		if (ref.getSymbolID() != -1) {
 			edge.setAttribute(REF_SYMBOL_ATTRIBUTE,
 				program.getSymbolTable().getSymbol(ref.getSymbolID()).getName());
 		}
 	}
+
 
 	private void setupVertex(AttributedVertex vertex) {
 		Address address =
@@ -122,9 +126,13 @@ public class DataReferenceGraph extends AttributedGraph {
 		CodeUnit unit = program.getListing().getCodeUnitContaining(address);
 		if (unit instanceof Data) {
 			vertex.setAttribute(DATA_ATTRIBUTE, ((Data) unit).getBaseDataType().getName());
+			vertex.setVertexType(ProgramGraphType.DATA);
 		}
 		else if (unit instanceof Instruction) {
-			vertex.setAttribute("Icon", "TriangleDown");
+			vertex.setVertexType(ProgramGraphType.INSTRUCTION);
+		}
+		else {
+			vertex.setVertexType(ProgramGraphType.STACK);
 		}
 	}
 

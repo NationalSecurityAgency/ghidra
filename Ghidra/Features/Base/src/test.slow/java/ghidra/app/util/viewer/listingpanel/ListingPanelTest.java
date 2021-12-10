@@ -307,7 +307,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 
 		AtomicReference<AddressSetView> addresses = new AtomicReference<>();
 		CodeViewerService cvs = tool.getService(CodeViewerService.class);
-		cvs.addListingDisplayListener(new ListingDisplayListener() {
+		cvs.addListingDisplayListener(new AddressSetDisplayListener() {
 			@Override
 			public void visibleAddressesChanged(AddressSetView visibleAddresses) {
 				addresses.set(visibleAddresses);

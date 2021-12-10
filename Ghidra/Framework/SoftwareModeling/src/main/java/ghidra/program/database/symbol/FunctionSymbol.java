@@ -20,7 +20,6 @@ import java.util.List;
 
 import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
@@ -39,10 +38,7 @@ import ghidra.util.task.TaskMonitor;
  * 
  * Symbol Data Usage:
  *   EXTERNAL:
- *   	long data1 - external data type
- *   	String data3 - external memory address
- *   NON-EXTERNAL:
- *      - not used -
+ *   	String stringData - external memory address/label
  */
 public class FunctionSymbol extends SymbolDB {
 
@@ -94,18 +90,15 @@ public class FunctionSymbol extends SymbolDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#delete()
-	 */
 	@Override
 	public boolean delete() {
 		lock.acquire();
 		try {
 			boolean restoreLabel = isExternal() || (getSource() != SourceType.DEFAULT);
 			String symName = getName();
-			String extData3 = null;
+			String extData = null;
 			if (isExternal()) {
-				extData3 = getSymbolData3(); // preserve external data
+				extData = getSymbolStringData(); // preserve external data
 			}
 			Namespace namespace = getParentNamespace();
 			SourceType source = getSource();
@@ -120,10 +113,11 @@ public class FunctionSymbol extends SymbolDB {
 
 			if (super.delete()) {
 				if (restoreLabel) {
-					boolean restored = createLabelForDeletedFunctionName(address, symName, extData3,
+					boolean restored = createLabelForDeletedFunctionName(address, symName, extData,
 						namespace, source, pinned);
 					if (!restored && isExternal()) {
-						removeAllReferencesTo();
+						// remove all associated external references if label not restored
+						symbolMgr.getReferenceManager().removeAllReferencesTo(getAddress());
 					}
 				}
 				return true;
@@ -140,34 +134,22 @@ public class FunctionSymbol extends SymbolDB {
 	 * does not mean that we want to lose the function name (that is our policy).
 	 */
 	private boolean createLabelForDeletedFunctionName(Address entryPoint, String symName,
-			String data3, Namespace namespace, SourceType source, boolean pinned) {
-		if (isExternal()) {
-			SymbolDB parent = (SymbolDB) namespace.getSymbol();
-			if (parent.isDeleting()) {
-				return false; // don't recreate external
-			}
+			String stringData, Namespace namespace, SourceType source, boolean pinned) {
+
+		Symbol parentSymbol = namespace.getSymbol();
+		if ((parentSymbol instanceof SymbolDB) && ((SymbolDB) parentSymbol).isDeleting()) {
+			// do not replace function with label if parent namespace is getting removed
+			return false;
 		}
+
 		try {
-			SymbolDB newSym;
-			try {
-				newSym = symbolMgr.createSpecialSymbol(entryPoint, symName, namespace,
-					SymbolType.LABEL, -1, -1, data3, source);
-				if (pinned) {
-					newSym.setPinned(true);
-				}
-			}
-			catch (InvalidInputException e) {
-				ProgramDB program = symbolMgr.getProgram();
-				newSym = (SymbolDB) symbolMgr.createLabel(entryPoint, symName,
-					program.getGlobalNamespace(), source);
-			}
-			newSym.setSymbolData3(data3); // reserved for external location use
+			Symbol newSym =
+				symbolMgr.createCodeSymbol(entryPoint, symName, namespace, source, stringData);
 			newSym.setPrimary();
+			if (pinned) {
+				newSym.setPinned(true);
+			}
 			return true;
-		}
-		catch (DuplicateNameException e) {
-			// This should't happen.
-			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 		}
 		catch (InvalidInputException e) {
 			// This shouldn't happen.
@@ -176,17 +158,11 @@ public class FunctionSymbol extends SymbolDB {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getObject()
-	 */
 	@Override
 	public Object getObject() {
 		return functionMgr.getFunction(key);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return true;
@@ -207,9 +183,6 @@ public class FunctionSymbol extends SymbolDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getProgramLocation()
-	 */
 	@Override
 	public ProgramLocation getProgramLocation() {
 		lock.acquire();
@@ -227,9 +200,6 @@ public class FunctionSymbol extends SymbolDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isValidParent(ghidra.program.model.symbol.Namespace)
-	 */
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		return SymbolType.FUNCTION.isValidParent(symbolMgr.getProgram(), parent, address,
@@ -275,55 +245,10 @@ public class FunctionSymbol extends SymbolDB {
 		return super.doGetParentNamespace();
 	}
 
-//	@Override
-//	public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source)
-//			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
-//
-//		if (!isExternal()) {
-//
-//			// Check thunk function name - if name matches thunked function
-//			// name switch to using DEFAULT name
-//			
-//			// NOTE: Removed this since this prevents having a second symbol
-//			
-//			Symbol thunkedSymbol = getThunkedSymbol();
-//			if (thunkedSymbol != null) {
-//				String thunkedName = thunkedSymbol.getName();
-//				if (thunkedName.equals(newName)) {
-//					newName = "";
-//					source = SourceType.DEFAULT;
-//				}
-//			}
-//		}
-//
-//		super.setNameAndNamespace(newName, newNamespace, source);
-//	}
-
 	private Symbol getThunkedSymbol() {
 		long thunkedFunctionId = functionMgr.getThunkedFunctionId(key);
 		return (thunkedFunctionId >= 0) ? symbolMgr.getSymbol(thunkedFunctionId) : null;
 	}
-
-//	@Override
-//	public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source)
-//			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
-//
-//		long thunkedFunctionId = functionMgr.getThunkedFunctionId(key);
-//		if (thunkedFunctionId >= 0) {
-//			if (!newName.startsWith(Function.THUNK_PREFIX)) {
-//				// ignore
-//				return;
-//			}
-//			// rename thunked function based on thunk name specified
-//			Symbol s = symbolMgr.getSymbol(thunkedFunctionId);
-//			if (s != null) {
-//				s.setName(newName.substring(Function.THUNK_PREFIX.length()), source);
-//			}
-//			return;
-//		}
-//
-//		super.setNameAndNamespace(newName, newNamespace, source);
-//	}
 
 	@Override
 	protected SourceType validateNameSource(String newName, SourceType source) {

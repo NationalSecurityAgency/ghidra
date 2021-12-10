@@ -20,6 +20,13 @@ import javax.swing.KeyStroke;
 import docking.KeyBindingPrecedence;
 import docking.actions.KeyBindingUtils;
 
+/**
+ * An object that contains a key stroke and the precedence for when that key stroke should be used.
+ * 
+ * <p>Note: this class creates key strokes that work on key {@code pressed}.  This effectively
+ * normalizes all client key bindings to work on the same type of key stroke (pressed, typed or
+ * released).
+ */
 public class KeyBindingData {
 	private KeyStroke keyStroke;
 	private KeyBindingPrecedence keyBindingPrecedence;
@@ -36,6 +43,13 @@ public class KeyBindingData {
 		this(KeyStroke.getKeyStroke(keyCode, modifiers));
 	}
 
+	/**
+	 * Creates a key stroke from the given text.  See
+	 * {@link KeyBindingUtils#parseKeyStroke(KeyStroke)}.   The key stroke created for this class
+	 * will always be a key {@code pressed} key stroke.
+	 * 
+	 * @param keyStrokeString the key stroke string to parse
+	 */
 	public KeyBindingData(String keyStrokeString) {
 		this(parseKeyStrokeString(keyStrokeString));
 	}
@@ -86,7 +100,7 @@ public class KeyBindingData {
 	}
 
 	/**
-	 * Updates the given data with system-independent versions of key modifiers.  For example, 
+	 * Updates the given data with system-independent versions of key modifiers.  For example,
 	 * the <code>control</code> key will be converted to the <code>command</code> key on the Mac.
 	 * @param newKeyBindingData the data to validate
 	 * @return the potentially changed data

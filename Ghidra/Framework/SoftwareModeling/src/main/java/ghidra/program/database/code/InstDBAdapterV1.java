@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- *
- */
 package ghidra.program.database.code;
-
-import ghidra.program.database.map.*;
-import ghidra.program.database.util.DatabaseTableUtils;
-import ghidra.program.model.address.*;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.database.map.*;
+import ghidra.program.database.util.DatabaseTableUtils;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Version 0 adapter for the instruction table.

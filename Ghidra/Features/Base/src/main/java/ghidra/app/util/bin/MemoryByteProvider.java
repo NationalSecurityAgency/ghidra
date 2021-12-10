@@ -26,6 +26,19 @@ import ghidra.program.model.mem.MemoryBlock;
  */
 public class MemoryByteProvider implements ByteProvider {
 
+	/**
+	 * Create a {@link ByteProvider} that is limited to the specified {@link MemoryBlock}.
+	 * 
+	 * @param memory {@link Memory} of the program
+	 * @param block {@link MemoryBlock} to read from
+	 * @return new {@link ByteProvider} that contains the bytes of the specified MemoryBlock
+	 */
+	public static ByteProvider createMemoryBlockByteProvider(Memory memory, MemoryBlock block) {
+		long blockLen = block.getEnd().subtract(block.getStart()) + 1;
+		ByteProvider bp = new MemoryByteProvider(memory, block.getStart());
+		return new ByteProviderWrapper(bp, 0, blockLen);
+	}
+
 	protected Memory memory;
 	protected Address baseAddress;
 
@@ -124,6 +137,9 @@ public class MemoryByteProvider implements ByteProvider {
 				throw new IOException("Unable to read " + length + " bytes at index " + index);
 			}
 			return bytes;
+		}
+		catch (IOException e) {
+			throw e;
 		}
 		catch (Exception e) {
 			throw new IOException(e.getMessage());

@@ -16,21 +16,20 @@
 package ghidra.file.formats.ubi;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import generic.continues.RethrowContinuesFactory;
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.CpuTypes;
 import ghidra.app.util.bin.format.ubi.FatArch;
 import ghidra.app.util.bin.format.ubi.FatHeader;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributeType;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.program.model.lang.Processor;
-import ghidra.util.BoundedInputStream;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -45,9 +44,14 @@ public class UniversalBinaryFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		int index = list.indexOf(file);
-		return (index != -1) ? header.getArchitectures().get(index).toString() : null;
+		FileAttributes result = new FileAttributes();
+		if (index != -1) {
+			result.add(FileAttributeType.COMMENT_ATTR,
+				header.getArchitectures().get(index).toString());
+		}
+		return result;
 	}
 
 	@Override
@@ -89,7 +93,7 @@ public class UniversalBinaryFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		int index = list.indexOf(file);
@@ -98,8 +102,8 @@ public class UniversalBinaryFileSystem extends GFileSystemBase {
 
 		FatArch architecture = architectures.get(index);
 
-		return new BoundedInputStream(provider.getInputStream(architecture.getOffset()),
-			architecture.getSize());
+		return new ByteProviderWrapper(provider, architecture.getOffset(), architecture.getSize(),
+			file.getFSRL());
 	}
 
 	@Override

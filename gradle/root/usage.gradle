@@ -34,18 +34,18 @@ Primary gradle tasks for Ghidra
 
     usage                           Displays this text                                      [root/usage.gradle]
     prepDev                         Prepares development environment                        [root/prepDev.gradle]
+    eclipse                         Create eclipse projects                                 [root/eclipse.gradle]
     buildHelp                       Builds help                                             [root/buildHelp.gradle] 
-    buildGhidra 					Builds Ghidra for the current platform                  [root/distribution.gradle]
-    buildGhidra -PallPlatforms		Builds Ghidra for all platforms (assumes natives	 	[root/distribution.gradle]
-    									for other platforms are already built into
-    									appropriate os dirs)
+    buildGhidra                     Builds Ghidra for the current platform                  [root/distribution.gradle]
+    buildGhidra -PallPlatforms      Builds Ghidra for all platforms (assumes natives        [root/distribution.gradle]
+                                      for other platforms are already built into
+                                      appropriate os dirs)
 
 Task rules:
-    buildNatives_[platform]          builds the native executables and libraries for the
-                                     specified platform (win64, linux64, osx64, etc.)       [nativeProject.gradle] 
-    prebuildNatives_[platform]       builds the native executables and libraries for the
-                                     specified platform and copies results to bin repo.     [nativeProject.gradle]
-    	 
+    buildNatives[_platform]         Builds the native executables and libraries for the     [GPL/nativeBuildProperties.gradle]  
+                                      current or specified platform (win_x86_64,
+                                      linux_arm_64, mac_x86_64, etc.)
+
 """
 	}
 }

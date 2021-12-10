@@ -66,7 +66,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		dataTypeWindows.add(dataTypeDialog);
 
 		captureComponents(dataTypeWindows);
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
 	private DropDownSelectionTextField<?> showTypeChooserDialog() throws Exception {
@@ -189,7 +189,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		waitForSwing();
 
 		captureDialog();
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
 	@Test
@@ -306,7 +306,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		struct.add(new ByteDataType(), "myByteElement2", "another non-packed byte");
 		struct.add(new DWordDataType(), "myDWordElement", "non-packed dword");
 		if (includeFlexArray) {
-			struct.setFlexibleArrayComponent(CharDataType.dataType, "flex",
+			struct.add(new ArrayDataType(CharDataType.dataType, 0, -1), "flex",
 				"unsized flexible array");
 		}
 		struct.clearComponent(1);
@@ -341,7 +341,7 @@ public class DataTypeEditorsScreenShots extends GhidraScreenShotGenerator {
 		struct.add(new ByteDataType(), "myByteElement2", "alignment 1");
 		struct.add(new DWordDataType(), "myDWordElement", "alignment 4");
 		if (includeBitFieldsAndFlexArray) {
-			struct.setFlexibleArrayComponent(CharDataType.dataType, "flex",
+			struct.add(new ArrayDataType(CharDataType.dataType, 0, -1), "flex",
 				"unsized flexible array");
 		}
 		struct.clearComponent(1);

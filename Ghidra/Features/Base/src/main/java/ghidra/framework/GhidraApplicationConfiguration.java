@@ -25,6 +25,8 @@ import docking.framework.ApplicationInformationDisplayFactory;
 import docking.framework.SplashScreen;
 import docking.widgets.PopupKeyStorePasswordProvider;
 import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
+import ghidra.formats.gfilesystem.crypto.CryptoProviders;
+import ghidra.formats.gfilesystem.crypto.PopupGUIPasswordProvider;
 import ghidra.framework.main.GhidraApplicationInformationDisplayFactory;
 import ghidra.framework.main.UserAgreementDialog;
 import ghidra.framework.preferences.Preferences;
@@ -58,6 +60,7 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 
 		ApplicationKeyManagerFactory.setKeyStorePasswordProvider(
 			new PopupKeyStorePasswordProvider());
+		CryptoProviders.getInstance().registerCryptoProvider(new PopupGUIPasswordProvider());
 	}
 
 	private static void platformSpecificFixups() {
@@ -67,20 +70,6 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 			Taskbar taskbar = Taskbar.getTaskbar();
 			if (taskbar.isSupported(Taskbar.Feature.ICON_IMAGE)) {
 				taskbar.setIconImage(ApplicationInformationDisplayFactory.getLargestWindowIcon());
-			}
-		}
-
-		// Set the application title for Linux.
-		// This should not be necessary...hopefully in a future version of Java it will just work.
-		Class<?> toolkitClass = Toolkit.getDefaultToolkit().getClass();
-		if (toolkitClass.getName().equals("sun.awt.X11.XToolkit")) {
-			try {
-				final Field awtAppClassName = toolkitClass.getDeclaredField("awtAppClassName");
-				awtAppClassName.setAccessible(true);
-				awtAppClassName.set(null, "Ghidra");
-			}
-			catch (Exception e) {
-				// Not sure what went wrong.  Oh well, we tried.
 			}
 		}
 	}

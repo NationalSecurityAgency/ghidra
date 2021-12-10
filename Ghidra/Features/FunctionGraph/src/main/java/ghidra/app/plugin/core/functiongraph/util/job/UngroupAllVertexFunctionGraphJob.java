@@ -34,9 +34,13 @@ public class UngroupAllVertexFunctionGraphJob implements GraphJob {
 
 	@Override
 	public void execute(GraphJobListener listener) {
-		controller.ungroupAllVertices();
-		isFinished = true;
-		listener.jobFinished(this);
+		try {
+			controller.ungroupAllVertices();
+		}
+		finally {
+			isFinished = true;
+			listener.jobFinished(this);
+		}
 	}
 
 	@Override

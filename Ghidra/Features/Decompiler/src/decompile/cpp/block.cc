@@ -890,18 +890,18 @@ void BlockGraph::identifyInternal(BlockGraph *ident,const vector<FlowBlock *> &n
   ident->selfIdentify();
 }
 
-/// \param flags is the set of boolean properties
-void BlockGraph::clearEdgeFlags(uint4 flags)
+/// \param fl is the set of boolean properties
+void BlockGraph::clearEdgeFlags(uint4 fl)
 
 {
-  flags = ~flags;
+  fl = ~fl;
   int4 size = list.size();
-  for(int4 i=0;i<size;++i) {
-    FlowBlock *bl = list[i];
+  for(int4 j=0;j<size;++j) {
+    FlowBlock *bl = list[j];
     for(int4 i=0;i<bl->intothis.size();++i)
-      bl->intothis[i].label &= flags;
+      bl->intothis[i].label &= fl;
     for(int4 i=0;i<bl->outofthis.size();++i)
-      bl->outofthis[i].label &= flags;
+      bl->outofthis[i].label &= fl;
   }
 }
 
@@ -3350,8 +3350,8 @@ void BlockSwitch::finalizePrinting(Funcdata &data) const
     CaseOrder &curcase( caseblocks[i] );
     if (jump->numIndicesByBlock(curcase.basicblock) > 0) {
       if (curcase.depth == 0) {	// Only set label on chain roots
-	int4 index = jump->getIndexByBlock(curcase.basicblock,0);
-	curcase.label = jump->getLabelByIndex(index);
+	int4 ind = jump->getIndexByBlock(curcase.basicblock,0);
+	curcase.label = jump->getLabelByIndex(ind);
 	int4 j = curcase.chain;
 	int4 depthcount = 1;
 	while(j != -1) {

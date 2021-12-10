@@ -231,6 +231,10 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
     care_uint_int = true;
     isptr = true;
   }
+  while(reqbase->getTypedef() != (Datatype *)0)
+    reqbase = reqbase->getTypedef();
+  while(curbase->getTypedef() != (Datatype *)0)
+    curbase = curbase->getTypedef();
   if (curbase == reqbase) return (Datatype *)0;	// Different typedefs could point to the same type
   if ((reqbase->getMetatype()==TYPE_VOID)||(curtype->getMetatype()==TYPE_VOID))
     return (Datatype *)0;	// Don't cast from or to VOID
@@ -348,9 +352,13 @@ bool CastStrategyC::isSubpieceCastEndian(Datatype *outtype,Datatype *intype,uint
 bool CastStrategyC::isSextCast(Datatype *outtype,Datatype *intype) const
 
 {
-  if (outtype->getMetatype()!=TYPE_INT) return false;
+  type_metatype metaout = outtype->getMetatype();
+  if (metaout != TYPE_UINT && metaout != TYPE_INT)
+    return false;
   type_metatype metain = intype->getMetatype();
-  if ((metain!=TYPE_INT)&&(metain!=TYPE_UINT)&&(metain!=TYPE_BOOL))
+  // Casting to larger storage always extends based on signedness of the input data-type
+  // So the input must be SIGNED in order to treat SEXT as a cast
+  if ((metain!=TYPE_INT)&&(metain!=TYPE_BOOL))
     return false;
   return true;
 }
@@ -358,9 +366,13 @@ bool CastStrategyC::isSextCast(Datatype *outtype,Datatype *intype) const
 bool CastStrategyC::isZextCast(Datatype *outtype,Datatype *intype) const
 
 {
-  if (outtype->getMetatype()!=TYPE_UINT) return false;
+  type_metatype metaout = outtype->getMetatype();
+  if (metaout != TYPE_UINT && metaout != TYPE_INT)
+    return false;
   type_metatype metain = intype->getMetatype();
-  if ((metain!=TYPE_INT)&&(metain!=TYPE_UINT)&&(metain!=TYPE_BOOL))
+  // Casting to larger storage always extends based on signedness of the input data-type
+  // So the input must be UNSIGNED in order to treat ZEXT as a cast
+  if ((metain!=TYPE_UINT)&&(metain!=TYPE_BOOL))
     return false;
   return true;
 }

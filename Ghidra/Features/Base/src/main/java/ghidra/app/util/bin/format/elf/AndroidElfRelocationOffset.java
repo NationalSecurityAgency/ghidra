@@ -15,14 +15,19 @@
  */
 package ghidra.app.util.bin.format.elf;
 
+import javax.help.UnsupportedOperationException;
+
 import ghidra.app.plugin.exceptionhandlers.gcc.datatype.AbstractLeb128DataType;
+import ghidra.app.util.opinion.ElfLoader;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.model.scalar.Scalar;
 
 /**
@@ -46,18 +51,21 @@ class AndroidElfRelocationOffset extends AbstractLeb128DataType {
 	 * value adjusted by baseOffset.
 	 * @param dtm the data type manager to associate with this data type.
 	 * @param baseOffset base offset to which LEB128 offset data should be added
+	 * @param relocationOffset the actual relocation offset value assciated with this
+	 * instance (used by {@link #getValue(MemBuffer, Settings, int)} and 
+	 * returned by {@link #getRelocationOffset()}.  This value should equals 
+	 * <code>baseOffset</code> plus decoded value of sleb128 data.
 	 */
-	AndroidElfRelocationOffset(DataTypeManager dtm, long baseOffset) {
+	AndroidElfRelocationOffset(DataTypeManager dtm, long baseOffset, long relocationOffset) {
 		super("sleb128_offset", true, dtm);
 		this.baseOffset = baseOffset;
+		this.relocationOffset = relocationOffset;
 	}
 
 	@Override
 	public DataType clone(DataTypeManager dtm) {
-		if (dtm == getDataTypeManager()) {
-			return this;
-		}
-		return new AndroidElfRelocationOffset(dtm, baseOffset);
+		// specific instances are used by AndroidElfRelocationGroup
+		throw new UnsupportedOperationException("may not be cloned");
 	}
 
 	@Override
@@ -85,15 +93,29 @@ class AndroidElfRelocationOffset extends AbstractLeb128DataType {
 		return Address.class;
 	}
 
+	private long getImageBaseAdjustment(Program program) {
+		Long originalimageBase = ElfLoader.getElfOriginalImageBase(program);
+		if (originalimageBase != null) {
+			return program.getImageBase().getOffset() - originalimageBase;
+		}
+		return 0;
+	}
+
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		Scalar s = (Scalar) super.getValue(buf, settings, length);
 		if (s == null) {
 			return null;
 		}
+		long imageBaseAdj = 0;
+		Memory mem = buf.getMemory();
+		if (mem != null) {
+			imageBaseAdj = getImageBaseAdjustment(mem.getProgram());
+		}
+
 		// assume pointer into physical space associated with buf
 		AddressSpace space = buf.getAddress().getAddressSpace().getPhysicalSpace();
-		return space.getAddress(s.getUnsignedValue() + baseOffset);
+		return space.getAddress(s.getSignedValue() + baseOffset + imageBaseAdj);
 	}
 
 	@Override
@@ -110,7 +132,7 @@ class AndroidElfRelocationOffset extends AbstractLeb128DataType {
 			b.append(" + ");
 		}
 		b.append("0x");
-		b.append(Long.toHexString(s.getUnsignedValue()));
+		b.append(Long.toHexString(s.getSignedValue()));
 		return b.toString();
 	}
 
@@ -122,12 +144,4 @@ class AndroidElfRelocationOffset extends AbstractLeb128DataType {
 		return relocationOffset;
 	}
 
-	/**
-	 * Set the computed relocation offset location associated with this
-	 * component.
-	 * @param relocationOffset stashed relocation offset
-	 */
-	void setRelocationOffset(long relocationOffset) {
-		this.relocationOffset = relocationOffset;
-	}
 }

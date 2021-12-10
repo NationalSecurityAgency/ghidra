@@ -15,10 +15,15 @@
  */
 package ghidra.dbg.test;
 
-import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Test;
@@ -27,9 +32,15 @@ import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.dbg.DebugModelConventions.AsyncState;
 import ghidra.dbg.DebuggerModelListener;
-import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
+import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.TargetMemory;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.TargetRegisterBank;
+import ghidra.dbg.target.TargetSteppable;
+import ghidra.dbg.target.TargetThread;
+import ghidra.util.Msg;
 
 /**
  * Tests the functionality of a single-stepping a target
@@ -116,7 +127,8 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 		EVENT_RUNNING,
 		EVENT_STOPPED,
 		REGS_UPDATED,
-		CACHE_INVALIDATED;
+		REGS_CACHE_INVALIDATED,
+		MEM_CACHE_INVALIDATED;
 	}
 
 	/**
@@ -172,8 +184,14 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 			@Override
 			public void invalidateCacheRequested(TargetObject object) {
 				synchronized (callbacks) {
-					callbacks.add(CallbackType.CACHE_INVALIDATED);
-					log.add("invalidateCacheRequested()");
+					if (object instanceof TargetRegisterBank) {
+						callbacks.add(CallbackType.REGS_CACHE_INVALIDATED);
+						log.add("invalidateCacheRequested(TargetRegisterBank)");
+					}
+					else if (object instanceof TargetMemory) {
+						callbacks.add(CallbackType.MEM_CACHE_INVALIDATED);
+						log.add("invalidateCacheRequested(TargetMemory)");
+					}
 				}
 				debouncer.contact(null);
 			}
@@ -215,17 +233,99 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 			callbacks = List.copyOf(listener.callbacks);
 		}
 
-		int stoppedIdx = callbacks.indexOf(CallbackType.EVENT_STOPPED);
-		assertNotEquals(-1, stoppedIdx);
-		List<CallbackType> follows = callbacks.subList(stoppedIdx + 1, callbacks.size());
-		assertFalse("Observed multiple event(STOPPED/OTHER) callbacks for one step",
-			follows.contains(CallbackType.EVENT_STOPPED));
-		int regsUpdatedIdx = callbacks.indexOf(CallbackType.REGS_UPDATED);
-		assertNotEquals("Did not observe a registersUpdated() callback", -1, regsUpdatedIdx);
-		assertTrue("registersUpdated() must follow event(STOPPED/OTHER)",
-			regsUpdatedIdx > stoppedIdx);
-		int invalidatedIdx = follows.indexOf(CallbackType.CACHE_INVALIDATED);
-		assertTrue("Observed an invalidateCacheRequest() after registersUpdated()",
-			invalidatedIdx < regsUpdatedIdx); // absent or precedes
+		Msg.info(this, "Observations: " + callbacks);
+		
+		boolean observedRunning = false;
+		boolean observedStopped = false;
+		boolean observedRegsUpdated = false;
+		boolean observedInvalidateRegs = false;
+		boolean observedInvalidateMem = false;
+		for (CallbackType cb : callbacks) {
+			switch (cb) {
+				case EVENT_RUNNING:
+					if (observedRunning) {
+						fail("Observed a second event(RUNNING).");
+					}
+					observedRunning = true;
+					break;
+				case EVENT_STOPPED:
+					if (observedStopped) {
+						fail("Observed a second event(STOPPED).");
+					}
+					observedStopped = true;
+					break;
+				case REGS_UPDATED:
+					if (!observedStopped) {
+						fail("Observed registersUpdated() before event(STOPPED).");
+					}
+					observedRegsUpdated = true;
+					break;
+				case REGS_CACHE_INVALIDATED:
+					if (!observedStopped) {
+						if (observedRunning) {
+							// Recorder will ignore, but it still counts for flushing model
+							break;
+						}
+						/**
+						 * Spurious cache invalidations are not permitted before the recorder would
+						 * create a new snap. It knows to ignore invalidations that occur between
+						 * event(RUNNING) and event(STOPPED).
+						 */
+						fail("Observed a spurious invalidateCacheRequested(Regs).");
+					}
+					else if (observedInvalidateRegs) {
+						Msg.warn(this, 
+							"Observed an extra invalidateCacheRequested(Regs) after event(STOPPED).");
+					}
+					else if (observedRegsUpdated) {
+						// The invalidate would effectively undo the update
+						fail("Observed invalidateCacheRequested(Regs) after registersUpdated().");
+					}
+					else {
+						observedInvalidateRegs = true;
+					}
+					break;
+				case MEM_CACHE_INVALIDATED:
+					if (!observedStopped) {
+						if (observedRunning) {
+							// Recorder will ignore, but it still counts for flushing model
+							observedInvalidateMem = true;
+							break;
+						}
+						/**
+						 * Spurious cache invalidations are not permitted before the recorder would
+						 * create a new snap. It knows to ignore invalidations that occur between
+						 * event(RUNNING) and event(STOPPED).
+						 */
+						fail("Observed a spurious invalidateCacheRequested(Mem).");
+					}
+					else if (observedInvalidateMem) {
+						Msg.warn(this, 
+							"Observed an extra invalidateCacheRequested(Mem) after event(STOPPED).");
+					}
+					else {
+						observedInvalidateMem = true;
+					}
+					break;
+				default:
+					throw new AssertionError();
+			}
+		}
+
+		if (!observedStopped) {
+			fail("Never observed event(STOPPED).");
+		}
+		if (!observedRegsUpdated && !observedInvalidateRegs) {
+			fail("Observed neither invalidateCacheRequested(Regs) nor registersUpdated().");
+		}
+		if (!observedInvalidateMem) {
+			/**
+			 * NOTE: even though STOPPED advances the snapshot, we still require
+			 * invalidateCacheRequested(Mem) to ensure the model's memory cache is not stale.
+			 * Whether or not your model employs an internal cache, this is required, because your
+			 * model may be accessed via a proxy model (e.g., GADP) that uses a cache.
+			 */
+			fail("Never observed invalidateCacheRequested(Mem).");
+		}
 	}
 }

@@ -16,12 +16,14 @@
 package ghidra.formats.gfilesystem;
 
 import java.io.*;
+import java.nio.file.*;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
-import ghidra.formats.gfilesystem.FSUtilities.StreamCopyResult;
+import org.apache.commons.collections4.map.ReferenceMap;
+
+import ghidra.app.util.bin.*;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -31,44 +33,58 @@ import utilities.util.FileUtilities;
  * File caching implementation.
  * <p>
  * Caches files based on a hash of the contents of the file.<br>
- * Files are retrieved using the hash string.<p>
- * Cached files are stored in a file with a name that is the hex encoded value of the hash.
+ * Files are retrieved using the hash string.<br>
+ * Cached files are stored in a file with a name that is the hex encoded value of the hash.<br>
+ * Cached files are obfuscated/de-obfuscated when written/read to/from disk.  See 
+ * {@link ObfuscatedFileByteProvider}, {@link ObfuscatedInputStream}, 
+ * {@link ObfuscatedOutputStream}.<br>
  * Cached files are organized into a nested directory structure to prevent
  * overwhelming a single directory with thousands of files.
  * <p>
- * Nested directory structure is based on the file's name:
- *   File: AABBCCDDEEFF...
- *   Directory (2 level nesting): AA/BB/AABBCCDDEEFF...
+ * Nested directory structure is based on the file's name:<br>
+ * <pre>   File: AABBCCDDEEFF... &rarr; AA/AABBCCDDEEFF...</pre>
  * <p>
  * Cache size is not bounded.
  * <p>
- * Cache maint is done during startup if interval since last maint has been exceeded
+ * Cache maintenance is done during startup if interval since last maintenance has been exceeded.
  * <p>
- * No file data is maintained in memory.
- * <p>
- * No file is moved or removed from the cache after being added (except during startup)
- * as there is no use count or reference tracking of the files.
+ * Files are not removed from the cache after being added, except during startup maintenance.
  *
  */
 public class FileCache {
-
+	/**
+	 * Max size of a file that will be kept in {@link #memCache} (2Mb)  
+	 */
+	public static final int MAX_INMEM_FILESIZE = 2 * 1024 * 1024; // 2mb
+	private static final long FREESPACE_RESERVE_BYTES = 50 * 1024 * 1024; // 50mb
 	private static final Pattern NESTING_DIR_NAME_REGEX = Pattern.compile("[0-9a-fA-F][0-9a-fA-F]");
+	private static final Pattern FILENAME_REGEX = Pattern.compile("[0-9a-fA-F]{32}");
 
 	private static final int MD5_BYTE_LEN = 16;
 	public static final int MD5_HEXSTR_LEN = MD5_BYTE_LEN * 2;
-	private static final int NESTING_LEVEL = 2;
 	private static final long MAX_FILE_AGE_MS = DateUtils.MS_PER_DAY;
 	private static final long MAINT_INTERVAL_MS = DateUtils.MS_PER_DAY * 2;
 
 	private final File cacheDir;
+	private final FileStore cacheDirFileStore;
 	private final File newDir;
-	private final File lastMaintFile;
 	private FileCacheMaintenanceDaemon cleanDaemon;
+	private ReferenceMap<String, FileCacheEntry> memCache = new ReferenceMap<>();
 
-	private int fileAddCount;
-	private int fileReUseCount;
-	private long storageEstimateBytes;
-	private long lastMaintTS;
+	/**
+	 * Backwards compatible with previous cache directories to age off the files located
+	 * therein.
+	 * 
+	 * @param oldCacheDir the old 2-level cache directory
+	 * @deprecated Marked as deprecated to ensure this is removed in a few versions after most
+	 * user's old-style cache dirs have been cleaned up.
+	 */
+	@Deprecated(forRemoval = true, since = "10.1")
+	public static void performCacheMaintOnOldDirIfNeeded(File oldCacheDir) {
+		if (oldCacheDir.isDirectory()) {
+			performCacheMaintIfNeeded(oldCacheDir, 2 /* old nesting level */);
+		}
+	}
 
 	/**
 	 * Creates a new {@link FileCache} instance where files are stored under the specified
@@ -81,12 +97,13 @@ public class FileCache {
 	public FileCache(File cacheDir) throws IOException {
 		this.cacheDir = cacheDir;
 		this.newDir = new File(cacheDir, "new");
-		this.lastMaintFile = new File(cacheDir, ".lastmaint");
 
 		if ((!cacheDir.exists() && !cacheDir.mkdirs()) || (!newDir.exists() && !newDir.mkdirs())) {
 			throw new IOException("Unable to initialize cache dir " + cacheDir);
 		}
-		performCacheMaintIfNeeded();
+
+		cacheDirFileStore = Files.getFileStore(cacheDir.toPath());
+		cleanDaemon = performCacheMaintIfNeeded(cacheDir, 1 /* current nesting level */);
 	}
 
 	/**
@@ -102,22 +119,26 @@ public class FileCache {
 				FileUtilities.deleteDir(f);
 			}
 		}
+		memCache.clear();
 	}
 
-	/**
-	 * Adds a {@link File} to the cache, returning a {@link FileCacheEntry}.
-	 *
-	 * @param f {@link File} to add to cache.
-	 * @param monitor {@link TaskMonitor} to monitor for cancel and to update progress.
-	 * @return {@link FileCacheEntry} with new File and md5.
-	 * @throws IOException if error
-	 * @throws CancelledException if canceled
-	 */
-	public FileCacheEntry addFile(File f, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		try (FileInputStream fis = new FileInputStream(f)) {
-			return addStream(fis, monitor);
+	synchronized boolean hasEntry(String md5) {
+		FileCacheEntry fce = memCache.get(md5);
+		if (fce == null) {
+			fce = getFileByMD5(md5);
 		}
+		return fce != null;
+	}
+
+	private void ensureAvailableSpace(long sizeHint) throws IOException {
+		if ( sizeHint > MAX_INMEM_FILESIZE ) {
+			long usableSpace = cacheDirFileStore.getUsableSpace();
+			if (usableSpace >= 0 && usableSpace < sizeHint + FREESPACE_RESERVE_BYTES) {
+				throw new IOException("Not enough storage available in " + cacheDir +
+					" to store file sized: " + sizeHint);
+			}
+		}
+		
 	}
 
 	/**
@@ -130,12 +151,26 @@ public class FileCache {
 	 * @return {@link FileCacheEntry} with a File and it's md5 string or {@code null} if no
 	 * matching file exists in cache.
 	 */
-	public FileCacheEntry getFile(String md5) {
-		FileCacheEntry cfi = getFileByMD5(md5);
-		if (cfi != null) {
-			cfi.file.setLastModified(System.currentTimeMillis());
+	synchronized FileCacheEntry getFileCacheEntry(String md5) {
+		if (md5 == null) {
+			return null;
 		}
-		return cfi;
+		FileCacheEntry fce = memCache.get(md5);
+		if (fce == null) {
+			fce = getFileByMD5(md5);
+			if (fce != null) {
+				fce.file.setLastModified(System.currentTimeMillis());
+			}
+		}
+		return fce;
+	}
+
+	synchronized void releaseFileCacheEntry(String md5) {
+		FileCacheEntry fce = memCache.get(md5);
+		if (fce != null) {
+			memCache.remove(md5);
+			Msg.debug(this, "Releasing memCache entry: " + fce.md5 + ", " + fce.bytes.length);
+		}
 	}
 
 	/**
@@ -150,165 +185,53 @@ public class FileCache {
 	}
 
 	/**
-	 * Prunes cache if interval since last maintenance exceeds {@link #MAINT_INTERVAL_MS}
-	 * <p>
-	 * Only called during construction, and the only known multi-process conflict that can occur
-	 * is when re-writing the "lastMaint" timestamp file, which isn't a problem as its the
-	 * approximate timestamp of that file that is important, not the contents.
-	 *
-	 * @throws IOException if error when writing metadata file.
+	 * Creates a randomly generated file name in the temp directory.
+	 * 
+	 * @return randomly generated file name in the cache's temp directory
 	 */
-	private void performCacheMaintIfNeeded() throws IOException {
-		lastMaintTS = (lastMaintTS == 0) ? lastMaintFile.lastModified() : lastMaintTS;
-		if (lastMaintTS + MAINT_INTERVAL_MS > System.currentTimeMillis()) {
-			return;
-		}
-
-		cleanDaemon = new FileCacheMaintenanceDaemon();
-		cleanDaemon.start();
+	private File createTempFile() {
+		return new File(newDir, UUID.randomUUID().toString());
 	}
 
 	/**
-	 * Prunes files in cache if they are old, calculates space used by cache.
-	 */
-	private void performCacheMaint() {
-		storageEstimateBytes = 0;
-		Msg.info(this, "Starting cache cleanup: " + cacheDir);
-		// TODO: add check for orphan files in ./new
-		cacheMaintForDir(cacheDir, 0);
-		Msg.info(this, "Finished cache cleanup, estimated storage used: " + storageEstimateBytes);
-	}
-
-	private void cacheMaintForDir(File dir, int nestingLevel) {
-		if (nestingLevel < NESTING_LEVEL) {
-			for (File f : dir.listFiles()) {
-				String name = f.getName();
-				if (f.isDirectory() && NESTING_DIR_NAME_REGEX.matcher(name).matches()) {
-					cacheMaintForDir(f, nestingLevel + 1);
-				}
-			}
-		}
-		else if (nestingLevel == NESTING_LEVEL) {
-			cacheMaintForLeafDir(dir);
-		}
-	}
-
-	private void cacheMaintForLeafDir(File dir) {
-		long cutoffMS = System.currentTimeMillis() - MAX_FILE_AGE_MS;
-
-		for (File f : dir.listFiles()) {
-			if (f.isFile() && isCacheFileName(f.getName())) {
-				if (f.lastModified() < cutoffMS) {
-					if (!f.delete()) {
-						Msg.error(this, "Failed to delete cache file " + f);
-					}
-					else {
-						Msg.info(this, "Expired cache file " + f);
-						continue;
-					}
-				}
-				storageEstimateBytes += f.length();
-			}
-		}
-	}
-
-	private boolean isCacheFileName(String s) {
-		try {
-			byte[] bytes = NumericUtilities.convertStringToBytes(s);
-			return (bytes != null) && bytes.length == MD5_BYTE_LEN;
-		}
-		catch (IllegalArgumentException e) {
-			return false;
-		}
-	}
-
-	/**
-	 * Adds a contents of a stream to the cache, returning the md5 identifier of the stream.
-	 * <p>
-	 * The stream is copied into a temp file in the cacheDir/new directory while its md5
-	 * is calculated.  The temp file is then moved into its final location
-	 * based on the md5 of the stream: AA/BB/AABBCCDDEEFF....
-	 * <p>
-	 * The monitor progress is updated with the number of bytes that are being copied.  No
-	 * message or maximum is set.
-	 * <p>
-	 * @param is {@link InputStream} to add to the cache.  Not closed when done.
-	 * @param monitor {@link TaskMonitor} that will be checked for canceling and updating progress.
-	 * @return {@link FileCacheEntry} with file info and md5, never null.
+	 * Creates a new {@link FileCacheEntryBuilder} that will accept bytes written to it
+	 * (via its {@link OutputStream} methods).  When finished writing, the {@link FileCacheEntryBuilder}
+	 * will give the caller a {@link FileCacheEntry}.
+	 * 
+	 * @param sizeHint a hint about the size of the file being added.  Use -1 if unsure or unknown
+	 * @return new {@link FileCacheEntryBuilder}
 	 * @throws IOException if error
-	 * @throws CancelledException if canceled
 	 */
-	public FileCacheEntry addStream(InputStream is, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		File tmpFile = new File(newDir, UUID.randomUUID().toString());
-		try (FileOutputStream fos = new FileOutputStream(tmpFile)) {
-			StreamCopyResult copyResults = FSUtilities.streamCopy(is, fos, monitor);
-
-			// Close the fos so the tmpFile can be moved even though
-			// the try(){} will attempt to close it as well.
-			fos.close();
-
-			String md5 = NumericUtilities.convertBytesToString(copyResults.md5);
-
-			return addTmpFileToCache(tmpFile, md5, copyResults.bytesCopied);
-		}
-		finally {
-			if (tmpFile.exists()) {
-				Msg.debug(this, "Removing left-over temp file " + tmpFile);
-				tmpFile.delete();
-			}
-		}
+	FileCacheEntryBuilder createCacheEntryBuilder(long sizeHint) throws IOException {
+		ensureAvailableSpace(sizeHint);
+		return new FileCacheEntryBuilder(sizeHint);
 	}
 
+
 	/**
-	 * Adds a file to the cache, using a 'pusher' strategy where the producer is given a
-	 * {@link OutputStream} to write to.
+	 * Adds a plaintext file to this cache, consuming it.
 	 * <p>
-	 * Unbeknownst to the producer, but knownst to us, the outputstream is really a
-	 * {@link HashingOutputStream} that will allow us to get the MD5 hash when the producer
-	 * is finished pushing.
-	 *
-	 * @param pusher functional callback that will accept an {@link OutputStream} and write
-	 * to it.
-	 * <pre> (os) -&gt; { os.write(.....); }</pre>
-	 * @param monitor {@link TaskMonitor} that will be checked for cancel and updated with
-	 * file io progress.
-	 * @return a new {@link FileCacheEntry} with the newly added cache file's File and MD5,
-	 * never null.
-	 * @throws IOException if an IO error
-	 * @throws CancelledException if the user cancels
+	 * @param file plaintext file
+	 * @param monitor {@link TaskMonitor}
+	 * @return a {@link FileCacheEntry} that controls the contents of the newly added file
+	 * @throws IOException if error
+	 * @throws CancelledException if cancelled
 	 */
-	public FileCacheEntry pushStream(DerivedFilePushProducer pusher, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		File tmpFile = new File(newDir, UUID.randomUUID().toString());
-		try (HashingOutputStream hos =
-			new HashingOutputStream(new FileOutputStream(tmpFile), "MD5")) {
-			pusher.push(hos);
-			// early hos.close() so it can be renamed/moved on the filesystem
-			hos.close();
-
-			String md5 = NumericUtilities.convertBytesToString(hos.getDigest());
-			long fileSize = tmpFile.length();
-
-			return addTmpFileToCache(tmpFile, md5, fileSize);
-		}
-		catch (NoSuchAlgorithmException e) {
-			throw new IOException("Error getting MD5 algo", e);
-		}
-		catch (Throwable th) {
-			throw new IOException("Error while pushing stream into cache", th);
+	FileCacheEntry giveFile(File file, TaskMonitor monitor) throws IOException, CancelledException {
+		try (InputStream fis = new FileInputStream(file);
+				FileCacheEntryBuilder fceBuilder = createCacheEntryBuilder(file.length())) {
+			FSUtilities.streamCopy(fis, fceBuilder, monitor);
+			return fceBuilder.finish();
 		}
 		finally {
-			if (tmpFile.exists()) {
-				Msg.debug(this, "Removing left-over temp file " + tmpFile);
-				tmpFile.delete();
+			if (!file.delete()) {
+				Msg.warn(this, "Failed to delete temporary file: " + file);
 			}
 		}
-
 	}
 
 	/**
-	 * Adds a File to this cache, consuming the file.
+	 * Adds an already obfuscated File to this cache, consuming the file.
 	 * <p>
 	 * This method makes some assumptions:
 	 * <p>
@@ -318,16 +241,14 @@ public class FileCache {
 	 * existence and the attempt to place the file into the directory.  Solution: no
 	 * process may remove a nested directory after it has been created.
 	 * 2) The source file is co-located with the cache directory to ensure its on the
-	 * same physical filesystem volume.
+	 * same physical filesystem volume, and is already obfuscated.
 	 * <p>
 	 * @param tmpFile the File to add to the cache
 	 * @param md5 hex string md5 of the file
-	 * @param fileLen the length in bytes of the file being added
 	 * @return a new {@link FileCacheEntry} with the File's location and its md5
 	 * @throws IOException if an file error occurs
 	 */
-	private FileCacheEntry addTmpFileToCache(File tmpFile, String md5, long fileLen)
-			throws IOException {
+	private FileCacheEntry addTmpFileToCache(File tmpFile, String md5) throws IOException {
 		String relPath = getCacheRelPath(md5);
 
 		File destCacheFile = new File(cacheDir, relPath);
@@ -337,91 +258,28 @@ public class FileCache {
 			throw new IOException("Failed to create cache dir " + destCacheFileDir);
 		}
 
-		boolean moved = false;
-		boolean reused = false;
-		if (destCacheFile.exists()) {
-			reused = true;
+		try {
+			tmpFile.renameTo(destCacheFile);
 		}
-		else {
-			moved = tmpFile.renameTo(destCacheFile);
-
-			// test again to see if another process was racing us if the rename failed
-			reused = !moved && destCacheFile.exists();
-		}
-		if (!moved && reused) {
-			//Msg.info(this, "File already exists in cache, reusing: " + destCacheFile);
+		finally {
 			tmpFile.delete();
-		}
-		else if (!moved) {
-			throw new IOException("Failed to move " + tmpFile + " to " + destCacheFile);
-		}
-
-		synchronized (this) {
-			fileAddCount++;
-			if (reused) {
-				fileReUseCount++;
-				destCacheFile.setLastModified(System.currentTimeMillis());
-			}
-			else {
-				storageEstimateBytes += fileLen;
+			if (!destCacheFile.exists()) {
+				throw new IOException("Failed to move " + tmpFile + " to " + destCacheFile);
 			}
 		}
-
+		destCacheFile.setLastModified(System.currentTimeMillis());
 		return new FileCacheEntry(destCacheFile, md5);
 	}
 
 	private String getCacheRelPath(String md5) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < NESTING_LEVEL; i++) {
-			sb.append(md5.substring(i * 2, (i + 1) * 2));
-			sb.append('/');
-		}
-		sb.append(md5);
-		return sb.toString();
+		return String.format("%s/%s",
+			md5.substring(0, 2),
+			md5);
 	}
 
 	@Override
 	public String toString() {
-		return "FileCache [cacheDir=" + cacheDir + ", fileAddCount=" + fileAddCount +
-			", storageEstimateBytes=" + storageEstimateBytes + ", lastMaintTS=" + lastMaintTS + "]";
-	}
-
-	/**
-	 * Number of files added to this cache.
-	 *
-	 * @return Number of files added to this cache
-	 */
-	public int getFileAddCount() {
-		return fileAddCount;
-	}
-
-	/**
-	 * Number of times a file-add was a no-op and the contents were already present
-	 * in the cache.
-	 *
-	 * @return Number of times a file-add was a no-op and the contents were already present
-	 * in the cache.
-	 */
-	public int getFileReUseCount() {
-		return fileReUseCount;
-	}
-
-	/**
-	 * Estimate of the number of bytes in the cache.
-	 *
-	 * @return estimate of the number of bytes in the cache - could be very wrong
-	 */
-	public long getStorageEstimateBytes() {
-		return storageEstimateBytes;
-	}
-
-	/**
-	 * How old (in milliseconds) files must be before being aged-off during cache maintenance.
-	 *
-	 * @return Max cache file age in milliseconds.
-	 */
-	public long getMaxFileAgeMS() {
-		return MAX_FILE_AGE_MS;
+		return "FileCache [cacheDir=" + cacheDir + "]";
 	}
 
 	/**
@@ -433,19 +291,53 @@ public class FileCache {
 		return cleanDaemon != null && cleanDaemon.isAlive();
 	}
 
-	private class FileCacheMaintenanceDaemon extends Thread {
+	/**
+	 * Prunes cache if interval since last maintenance exceeds {@link #MAINT_INTERVAL_MS}
+	 * <p>
+	 * Only called during construction, and the only known multi-process conflict that can occur
+	 * is when re-writing the "lastMaint" timestamp file, which isn't a problem as its the
+	 * approximate timestamp of that file that is important, not the contents.
+	 * 
+	 * @param cacheDir cache directory location 
+	 * @param nestingLevel the depth of directory nesting, 2 for old style, 1 for newer style
+	 * @return {@link FileCacheMaintenanceDaemon} instance if started, null otherwise
+	 */
+	private static FileCacheMaintenanceDaemon performCacheMaintIfNeeded(File cacheDir,
+			int nestingLevel) {
+		File lastMaintFile = new File(cacheDir, ".lastmaint");
+		long lastMaintTS = lastMaintFile.isFile() ? lastMaintFile.lastModified() : 0;
+		if (lastMaintTS + MAINT_INTERVAL_MS > System.currentTimeMillis()) {
+			return null;
+		}
 
-		FileCacheMaintenanceDaemon() {
+		FileCacheMaintenanceDaemon cleanDaemon =
+			new FileCacheMaintenanceDaemon(cacheDir, lastMaintFile, nestingLevel);
+		cleanDaemon.start();
+		return cleanDaemon;
+	}
+
+	private static class FileCacheMaintenanceDaemon extends Thread {
+		private File lastMaintFile;
+		private File cacheDir;
+		private long storageEstimateBytes;
+		private int nestingLevel;
+
+		FileCacheMaintenanceDaemon(File cacheDir, File lastMaintFile, int nestingLevel) {
 			setDaemon(true);
+			setName("FileCacheMaintenanceDaemon for " + cacheDir.getName());
+			this.cacheDir = cacheDir;
+			this.lastMaintFile = lastMaintFile;
+			this.nestingLevel = nestingLevel;
 		}
 
 		@Override
 		public void run() {
-
-			performCacheMaint();
+			Msg.info(this, "Starting cache cleanup: " + cacheDir);
+			cacheMaintForDir(cacheDir, 0);
+			Msg.info(this,
+				"Finished cache cleanup, estimated storage used: " + storageEstimateBytes);
 
 			// stamp the file after we finish, in case the VM stopped this daemon thread
-			lastMaintTS = System.currentTimeMillis();
 			try {
 				FileUtilities.writeStringToFile(lastMaintFile, "Last maint run at " + (new Date()));
 			}
@@ -453,5 +345,255 @@ public class FileCache {
 				Msg.error(this, "Unable to write file cache maintenance file: " + lastMaintFile, e);
 			}
 		}
+
+		private void cacheMaintForDir(File dir, int dirLevel) {
+			if (dirLevel < nestingLevel) {
+				for (File f : dir.listFiles()) {
+					String name = f.getName();
+					if (f.isDirectory() && NESTING_DIR_NAME_REGEX.matcher(name).matches()) {
+						cacheMaintForDir(f, dirLevel + 1);
+					}
+				}
+			}
+			else if (dirLevel == nestingLevel) {
+				cacheMaintForLeafDir(dir);
+			}
+		}
+
+		private void cacheMaintForLeafDir(File dir) {
+			long cutoffMS = System.currentTimeMillis() - MAX_FILE_AGE_MS;
+
+			for (File f : dir.listFiles()) {
+				if (f.isFile() && isCacheFileName(f.getName())) {
+					if (f.lastModified() < cutoffMS) {
+						if (f.delete()) {
+							Msg.debug(this, "Expired cache file " + f);
+							continue;
+						}
+						Msg.error(this, "Failed to delete cache file " + f);
+					}
+					storageEstimateBytes += f.length();
+				}
+			}
+		}
+
+		private boolean isCacheFileName(String s) {
+			return FILENAME_REGEX.matcher(s).matches();
+		}
+
+	}
+
+	/**
+	 * Helper class, keeps a FileCacheEntry pinned while the ByteProvider is alive.  When
+	 * the ByteProvider is closed, the FileCacheEntry is allowed to be garbage collected
+	 * if there is enough memory pressure to also remove its entry from the {@link FileCache#memCache}
+	 * map.
+	 */
+	private static class RefPinningByteArrayProvider extends ByteArrayProvider {
+		@SuppressWarnings("unused")
+		private FileCacheEntry fce;	// its just here to be pinned in memory
+
+		public RefPinningByteArrayProvider(FileCacheEntry fce, FSRL fsrl) {
+			super(fce.bytes, fsrl);
+
+			this.fce = fce;
+		}
+
+		@Override
+		public void close() {
+			fce = null;
+			super.hardClose();
+		}
+	}
+
+	/**
+	 * Allows creating {@link FileCacheEntry file cache entries} at the caller's convenience.
+	 * <p>
+	 */
+	public class FileCacheEntryBuilder extends OutputStream {
+
+		private OutputStream delegate;
+		private HashingOutputStream hos;
+		private FileCacheEntry fce;
+		private long delegateLength;
+		private File tmpFile;
+
+		private FileCacheEntryBuilder(long sizeHint) throws IOException {
+			sizeHint = sizeHint <= 0 ? 512 : sizeHint;
+			if (sizeHint < MAX_INMEM_FILESIZE) {
+				delegate = new ByteArrayOutputStream((int) sizeHint);
+			}
+			else {
+				tmpFile = createTempFile();
+				delegate = new ObfuscatedOutputStream(new FileOutputStream(tmpFile));
+			}
+			initHashingOutputStream();
+		}
+
+		@Override
+		protected void finalize() throws Throwable {
+			if (hos != null) {
+				Msg.warn(this, "FAIL TO CLOSE FileCacheEntryBuilder, currentSize=" +
+					delegateLength + ", file=" + (tmpFile != null ? tmpFile : "not set"));
+			}
+		}
+
+		@Override
+		public void write(int b) throws IOException {
+			switchToTempFileIfNecessary(1);
+			hos.write(b);
+		}
+
+		@Override
+		public void write(byte[] b) throws IOException {
+			switchToTempFileIfNecessary(b.length);
+			hos.write(b);
+		}
+
+		@Override
+		public void write(byte[] b, int off, int len) throws IOException {
+			switchToTempFileIfNecessary(len);
+			hos.write(b, off, len);
+		}
+
+		@Override
+		public void flush() throws IOException {
+			hos.flush();
+		}
+
+		@Override
+		public void close() throws IOException {
+			finish();
+		}
+
+		private void initHashingOutputStream() throws IOException {
+			try {
+				hos = new HashingOutputStream(delegate, HashUtilities.MD5_ALGORITHM);
+			}
+			catch (NoSuchAlgorithmException e) {
+				throw new IOException("Error getting MD5 algo", e);
+			}
+		}
+
+		private void switchToTempFileIfNecessary(int bytesToAdd) throws IOException {
+			delegateLength += bytesToAdd;
+			if (tmpFile == null && delegateLength > MAX_INMEM_FILESIZE) {
+				tmpFile = createTempFile();
+				byte[] bytes = ((ByteArrayOutputStream) delegate).toByteArray();
+				delegate = new ObfuscatedOutputStream(new FileOutputStream(tmpFile));
+				initHashingOutputStream();
+				// send the old bytes through the new hasher and to the tmp file
+				hos.write(bytes);
+			}
+		}
+
+		/**
+		 * Finalizes this builder, pushing the bytes that have been written to it into
+		 * the FileCache.
+		 * <p>
+		 * @return new {@link FileCacheEntry}
+		 * @throws IOException if error
+		 */
+		public FileCacheEntry finish() throws IOException {
+			if (hos != null) {
+				hos.close();
+				String md5 = NumericUtilities.convertBytesToString(hos.getDigest());
+				if (tmpFile != null) {
+					fce = addTmpFileToCache(tmpFile, md5);
+				}
+				else {
+					ByteArrayOutputStream baos = (ByteArrayOutputStream) delegate;
+					byte[] bytes = baos.toByteArray();
+					fce = new FileCacheEntry(bytes, md5);
+					synchronized (FileCache.this) {
+						memCache.put(md5, fce);
+					}
+				}
+				hos = null;
+				delegate = null;
+			}
+			return fce;
+		}
+
+	}
+
+	/**
+	 * Represents a cached file.  It may be an actual file if {@link FileCacheEntry#file file}
+	 * is set, or if smaller than {@link FileCache#MAX_INMEM_FILESIZE 2Mb'ish} just an 
+	 * in-memory byte array that is weakly pinned in the {@link FileCache#memCache} map.
+	 */
+	public static class FileCacheEntry {
+
+		final String md5;
+		final File file;
+		final byte[] bytes;
+
+		private FileCacheEntry(File file, String md5) {
+			this.file = file;
+			this.bytes = null;
+			this.md5 = md5;
+		}
+
+		private FileCacheEntry(byte[] bytes, String md5) {
+			this.file = null;
+			this.bytes = bytes;
+			this.md5 = md5;
+		}
+
+		/**
+		 * Returns the contents of this cache entry as a {@link ByteProvider}, using the specified
+		 * {@link FSRL}.
+		 * <p>
+		 * @param fsrl {@link FSRL} that the returned {@link ByteProvider} should have as its
+		 * identity
+		 * @return new {@link ByteProvider} containing the contents of this cache entry, caller is
+		 * responsible for {@link ByteProvider#close() closing}
+		 * @throws IOException if error
+		 */
+		public ByteProvider asByteProvider(FSRL fsrl) throws IOException {
+			if (fsrl.getMD5() == null) {
+				fsrl = fsrl.withMD5(md5);
+			}
+			if (file != null) {
+				file.setLastModified(System.currentTimeMillis());
+			}
+			return (bytes != null)
+					? new RefPinningByteArrayProvider(this, fsrl)
+					: new ObfuscatedFileByteProvider(file, fsrl, AccessMode.READ);
+		}
+
+		/**
+		 * Returns the MD5 of this cache entry.
+		 * 
+		 * @return the MD5 (as a string) of this cache entry
+		 */
+		public String getMD5() {
+			return md5;
+		}
+
+		public long length() {
+			return bytes != null ? bytes.length : file.length();
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(md5);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			FileCacheEntry other = (FileCacheEntry) obj;
+			return Objects.equals(md5, other.md5);
+		}
+
 	}
 }

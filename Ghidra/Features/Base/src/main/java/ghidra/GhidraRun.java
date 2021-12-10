@@ -44,21 +44,21 @@ import ghidra.util.task.TaskMonitorAdapter;
  * Main Ghidra application class. Creates
  * the .ghidra folder that contains the user preferences and tools if it does
  * not exist. Initializes JavaHelp and attempts to restore the last opened
- * project. 
+ * project.
  * <p> A list of classes for plugins, data types, and language providers is
- * maintained so that a search of the classpath is not done every time 
- * Ghidra is run. The list is maintained in the GhidraClasses.xml file 
- * in the user's .ghidra folder. A search of the classpath is done if the 
+ * maintained so that a search of the classpath is not done every time
+ * Ghidra is run. The list is maintained in the GhidraClasses.xml file
+ * in the user's .ghidra folder. A search of the classpath is done if the
  * (1) GhidraClasses.xml file is not found, (2) the classpath is different
- * from when the last time Ghidra was run, (3) a class in the file was 
- * not found,  or (4) a modification date specified in the classes file for 
+ * from when the last time Ghidra was run, (3) a class in the file was
+ * not found,  or (4) a modification date specified in the classes file for
  * a jar file is older than the actual jar file's modification date.
  * 
- * <p><strong>Note</strong>: The Plugin path is a user preference that 
- * indicates locations for where classes for plugins and data types should 
- * be searched; the Plugin path can include jar files just like a classpath. 
- * The Plugin path can be changed by using the <i>Edit Plugin Path</i> dialog, 
- * displayed from the <i>Edit-&gt;Edit Plugin Path...</i> menu option on the main 
+ * <p><strong>Note</strong>: The Plugin path is a user preference that
+ * indicates locations for where classes for plugins and data types should
+ * be searched; the Plugin path can include jar files just like a classpath.
+ * The Plugin path can be changed by using the <i>Edit Plugin Path</i> dialog,
+ * displayed from the <i>Edit-&gt;Edit Plugin Path...</i> menu option on the main
  * Ghidra project window.
  * 
  * @see ghidra.GhidraLauncher
@@ -105,7 +105,7 @@ public class GhidraRun implements GhidraLaunchable {
 	}
 
 	private String processArguments(String[] args) {
-		//TODO remove this special handling when possible 
+		//TODO remove this special handling when possible
 		if (args.length == 1 && (args[0].startsWith("-D") || args[0].indexOf(" -D") >= 0)) {
 			args = args[0].split(" ");
 		}
@@ -143,6 +143,16 @@ public class GhidraRun implements GhidraLaunchable {
 		updateSplashScreenStatusMessage("Creating project manager...");
 		ProjectManager pm = new GhidraProjectManager();
 		updateSplashScreenStatusMessage("Creating front end tool...");
+
+		// Show this warning before creating the tool.   If we create the tool first, then we may
+		// see odd dialog behavior caused tool plugins creating dialogs during initialization.
+		if (Application.isTestBuild()) {
+			Msg.showWarn(GhidraRun.class, null, "Unsupported Ghidra Distribution",
+				"WARNING! Please be aware that this is an unsupported and uncertified\n" +
+					"build of Ghidra!  This software may be unstable and data created\n" +
+					"may be incompatible with future releases.");
+		}
+
 		FrontEndTool tool = new FrontEndTool(pm);
 
 		boolean reopen = true;
@@ -162,13 +172,6 @@ public class GhidraRun implements GhidraLaunchable {
 		if (projectLocator == null) {
 			updateSplashScreenStatusMessage("Checking for last opened project...");
 			projectLocator = pm.getLastOpenedProject();
-		}
-
-		if (Application.isTestBuild()) {
-			Msg.showWarn(GhidraRun.class, tool.getToolFrame(), "Unsupported Ghidra Distribution",
-				"WARNING! Please be aware that this is an unsupported and uncertified\n" +
-					"build of Ghidra!  This software may be unstable and data created\n" +
-					"may be incompatible with future releases.");
 		}
 
 		tool.setVisible(true);

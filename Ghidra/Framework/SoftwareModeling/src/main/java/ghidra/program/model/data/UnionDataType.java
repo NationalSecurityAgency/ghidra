@@ -98,11 +98,6 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	}
 
 	@Override
-	public boolean isNotYetDefined() {
-		return unionLength == 0 && isDefaultAligned() && !isPackingEnabled();
-	}
-
-	@Override
 	public DataTypeComponent getComponent(int ordinal) {
 		return components.get(ordinal);
 	}
@@ -243,7 +238,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	@Override
 	public int getLength() {
 		if (unionLength == 0) {
-			return 1; // 0-length datatype not supported
+			return 1; // positive length required
 		}
 		return unionLength;
 	}
@@ -491,12 +486,11 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 		boolean changed = false;
 		for (DataTypeComponentImpl dtc : components) {
 			if (dtc.getDataType() == dt) {
-				int length = dt.getLength();
-				if (length <= 0) {
-					length = dtc.getLength();
+				int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
+				if (length >= 0 && length != dtc.getLength()) {
+					dtc.setLength(length);
+					changed = true;
 				}
-				dtc.setLength(length);
-				changed = true;
 			}
 		}
 		if (changed && !repack(true) && isPackingEnabled()) {
@@ -547,13 +541,15 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 					remove = true;
 				}
 				else {
-					oldDt.removeParent(this);
-					dtc.setDataType(replacementDt);
-					replacementDt.addParent(this);
-					int len = replacementDt.getLength();
-					if (len > 0) {
-						dtc.setLength(len);
+					int len =
+						DataTypeComponent.usesZeroLengthComponent(newDt) ? 0 : newDt.getLength();
+					if (len < 0) {
+						len = dtc.getLength();
 					}
+					oldDt.removeParent(this);
+					dtc.setLength(len);
+					dtc.setDataType(replacementDt); 
+					replacementDt.addParent(this);
 					changed = true;
 				}
 			}
@@ -567,7 +563,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 		}
 		if (changed) {
 			repack(false);
-			notifySizeChanged();
+			notifySizeChanged(); // also handles alignment change
 		}
 	}
 

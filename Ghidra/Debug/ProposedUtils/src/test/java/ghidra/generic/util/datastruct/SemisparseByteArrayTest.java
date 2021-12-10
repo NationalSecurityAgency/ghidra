@@ -32,8 +32,12 @@ public class SemisparseByteArrayTest {
 	private static final String HELLO_WORLD = "Hello, World!";
 	protected static final byte[] HW = HELLO_WORLD.getBytes();
 
-	protected static Range<UnsignedLong> makeRange(long lower, long upper) {
+	protected static Range<UnsignedLong> rngClosedOpen(long lower, long upper) {
 		return Range.closedOpen(UnsignedLong.fromLongBits(lower), UnsignedLong.fromLongBits(upper));
+	}
+
+	protected static Range<UnsignedLong> rngClosed(long lower, long upper) {
+		return Range.closed(UnsignedLong.fromLongBits(lower), UnsignedLong.fromLongBits(upper));
 	}
 
 	@Test
@@ -43,17 +47,17 @@ public class SemisparseByteArrayTest {
 
 		cache.putData(0, HW, 0, 1);
 		exp.clear();
-		exp.add(makeRange(0, 1));
-		assertEquals(exp, cache.getInitialized(0, HW.length + 8));
+		exp.add(rngClosedOpen(0, 1));
+		assertEquals(exp, cache.getInitialized(0, HW.length + 7));
 		exp.clear();
-		exp.add(makeRange(1, HW.length));
-		assertEquals(exp, cache.getUninitialized(0, HW.length));
+		exp.add(rngClosed(1, HW.length - 1));
+		assertEquals(exp, cache.getUninitialized(0, HW.length - 1));
 
 		cache.putData(2, HW, 2, 1);
 		exp.clear();
-		exp.add(makeRange(1, 2));
-		exp.add(makeRange(3, HW.length));
-		assertEquals(exp, cache.getUninitialized(0, HW.length));
+		exp.add(rngClosedOpen(1, 2));
+		exp.add(rngClosed(3, HW.length - 1));
+		assertEquals(exp, cache.getUninitialized(0, HW.length - 1));
 
 		cache.putData(11, HW, 11, 2);
 		byte[] read = new byte[HW.length + 5]; // 5 extra
@@ -80,6 +84,16 @@ public class SemisparseByteArrayTest {
 		cache.putData(0x7ffffffffffffff8L, HW);
 		byte[] data = new byte[HW.length];
 		cache.getData(0x7ffffffffffffff8L, data);
+		assertEquals(HELLO_WORLD, new String(data));
+	}
+
+	@Test
+	public void testBoundaryAtUnsignedMax() {
+		SemisparseByteArray cache = new SemisparseByteArray();
+
+		cache.putData(-HW.length, HW);
+		byte[] data = new byte[HW.length];
+		cache.getData(-HW.length, data);
 		assertEquals(HELLO_WORLD, new String(data));
 	}
 

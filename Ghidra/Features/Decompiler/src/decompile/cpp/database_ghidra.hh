@@ -65,7 +65,7 @@ public:
   void lockDefaultProperties(void) { flagbaseDefault = ghidra->symboltab->getProperties(); cacheDirty = false; }
   virtual ~ScopeGhidra(void);
   virtual void clear(void);
-  virtual SymbolEntry *addSymbol(const string &name,Datatype *ct,
+  virtual SymbolEntry *addSymbol(const string &nm,Datatype *ct,
 				 const Address &addr,const Address &usepoint);
   virtual string buildVariableName(const Address &addr,
 				   const Address &pc,
@@ -89,7 +89,7 @@ public:
   virtual Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const;
 
   virtual SymbolEntry *findOverlap(const Address &addr,int4 size) const { throw LowlevelError("findOverlap unimplemented"); }
-  virtual void findByName(const string &name,vector<Symbol *> &res) const { throw LowlevelError("findByName unimplemented"); }
+  virtual void findByName(const string &nm,vector<Symbol *> &res) const { throw LowlevelError("findByName unimplemented"); }
   virtual bool isNameUsed(const string &nm,const Scope *op2) const { throw LowlevelError("isNameUsed unimplemented"); }
 
   virtual MapIterator begin(void) const { throw LowlevelError("begin unimplemented"); }

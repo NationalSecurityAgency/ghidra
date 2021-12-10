@@ -26,7 +26,7 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 	final static SettingsDefinition[] DEFAULT_WIDE_CHAR_SETTINGS = new SettingsDefinition[] {
 		EndianSettingsDefinition.DEF, RenderUnicodeSettingsDefinition.RENDER };
 
-	/** A statically defined WideCharDataType instance.*/
+	/** A statically defined WideCharDataType instance. */
 	public final static WideCharDataType dataType = new WideCharDataType();
 
 	public WideCharDataType() {
@@ -90,6 +90,23 @@ public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTy
 			// ignore
 		}
 		return null;
+	}
+
+	@Override
+	public boolean isEncodable() {
+		return true;
+	}
+
+	@Override
+	public byte[] encodeValue(Object value, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		return encodeCharacterValue(value, buf, settings);
+	}
+
+	@Override
+	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		return encodeCharacterRepresentation(repr, buf, settings);
 	}
 
 	@Override

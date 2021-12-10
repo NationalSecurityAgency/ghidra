@@ -81,7 +81,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 		cb = env.getPlugin(CodeBrowserPlugin.class);
 		fp = cb.getFieldPanel();
 
-		adjustFieldPanelSize(15);
+		adjustFieldPanelSize(20);
 		env.showTool();
 		cb.updateNow();
 
@@ -132,6 +132,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 	private void setUpCodeBrowserTool(PluginTool tool) throws Exception {
 		tool.addPlugin(CodeBrowserPlugin.class.getName());
 		tool.addPlugin(NextPrevAddressPlugin.class.getName());
+		tool.addPlugin(CodeBrowserSelectionPlugin.class.getName());
 		addPlugin(tool, SymbolTablePlugin.class);
 	}
 
@@ -157,7 +158,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testTableFromSelection() {
 		ProgramSelection ps = dragToMakeSelection();
 
-		DockingActionIf createTableAction = getAction(cb, "Create Table From Selection");
+		DockingActionIf createTableAction = getAction(tool, "Create Table From Selection");
 		performAction(createTableAction, true);
 
 		TableComponentProvider<?> tableProvider =
@@ -472,7 +473,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSelectAll() {
-		DockingActionIf action = getAction(cb, "Select All");
+		DockingActionIf action = getAction(tool, "Select All");
 		performAction(action, cb.getProvider(), true);
 		ProgramSelection ps = getCurrentSelection();
 		AddressSet set1 = new AddressSet(program.getMemory());
@@ -482,7 +483,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSelectComplementOnAllProgram() {
-		DockingActionIf action = getAction(cb, "Select Complement");
+		DockingActionIf action = getAction(tool, "Select Complement");
 		ProgramSelection allSelection = new ProgramSelection(program.getMemory());
 		ProgramSelection noneSelection = new ProgramSelection();
 		assertEquals(noneSelection, cb.getCurrentSelection());
@@ -499,7 +500,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSelectComplementOnAllView() {
-		DockingActionIf action = getAction(cb, "Select Complement");
+		DockingActionIf action = getAction(tool, "Select Complement");
 		AddressSet viewSet = new AddressSet(addr("0x1001000"), addr("0x10012ff"));
 		setView(viewSet);
 		ProgramSelection allSelection = new ProgramSelection(viewSet);
@@ -515,7 +516,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSelectComplementOnSomeOfProgram() {
-		DockingActionIf action = getAction(cb, "Select Complement");
+		DockingActionIf action = getAction(tool, "Select Complement");
 		AddressSetView programSet = program.getMemory();
 		AddressSet initialSelectSet = new AddressSet();
 		initialSelectSet.addRange(addr("0x10011e8"), addr("0x10011ef"));
@@ -537,7 +538,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSelectComplementOnSomeOfView() {
-		DockingActionIf action = getAction(cb, "Select Complement");
+		DockingActionIf action = getAction(tool, "Select Complement");
 		AddressSet viewSet = new AddressSet(addr("0x1001000"), addr("0x10012ff"));
 		setView(viewSet);
 		AddressSet initialSelectSet = new AddressSet();

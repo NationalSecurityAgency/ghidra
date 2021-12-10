@@ -214,9 +214,11 @@ public interface EditorModel {
 	/**
 	 * Sets the data type for the component at the indicated row index.
 	 * @param rowIndex the row index of the component 
-	 * @param dataTypeInstance
+	 * @param dt component datatype
+	 * @param length component length
+	 * @throws UsrException if invalid datatype or length specified
 	 */
-	public void setComponentDataTypeInstance(int rowIndex, DataTypeInstance dataTypeInstance)
+	public void setComponentDataTypeInstance(int rowIndex, DataType dt, int length)
 			throws UsrException;
 
 	/**

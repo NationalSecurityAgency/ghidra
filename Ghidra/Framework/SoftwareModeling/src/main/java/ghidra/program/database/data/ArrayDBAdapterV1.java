@@ -32,7 +32,7 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 	static final String ARRAY_TABLE_NAME = "Arrays";
 	static final int V1_ARRAY_DT_ID_COL = 0;
 	static final int V1_ARRAY_DIM_COL = 1;
-	static final int V1_ARRAY_LENGTH_COL = 2;
+	static final int V1_ARRAY_ELEMENT_LENGTH_COL = 2; // applies to sizable dynamic types only
 	static final int V1_ARRAY_CAT_COL = 3;
 
 	private Table table;
@@ -76,7 +76,7 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 		DBRecord record = V1_SCHEMA.createRecord(key);
 		record.setLongValue(V1_ARRAY_DT_ID_COL, dataTypeID);
 		record.setIntValue(V1_ARRAY_DIM_COL, numberOfElements);
-		record.setIntValue(V1_ARRAY_LENGTH_COL, length);
+		record.setIntValue(V1_ARRAY_ELEMENT_LENGTH_COL, length);
 		record.setLongValue(V1_ARRAY_CAT_COL, catID);
 		table.putRecord(record);
 		return record;

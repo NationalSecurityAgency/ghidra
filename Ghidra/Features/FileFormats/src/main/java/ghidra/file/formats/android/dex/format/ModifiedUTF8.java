@@ -17,36 +17,44 @@ package ghidra.file.formats.android.dex.format;
 
 import java.io.*;
 
+/**
+ * https://source.android.com/devices/tech/dalvik/dex-format#mutf-8
+ * <br>
+ * Modified version of:
+ * <br>
+ * https://android.googlesource.com/platform/libcore/+/7047230/dex/src/main/java/com/android/dex/Mutf8.java
+ */
 public final class ModifiedUTF8 {
 
-	public final static String decode( InputStream in, char [] out ) throws UTFDataFormatException, IOException {
+	public final static String decode(InputStream in, char[] out)
+			throws UTFDataFormatException, IOException {
 		int s = 0;
-		while ( true ) {
-			char a = ( char ) ( in.read( ) & 0xff );
-			if ( a == 0 ) {
-				return new String( out, 0, s );
+		while (true) {
+			char a = (char) (in.read() & 0xff);
+			if (a == 0) {
+				return new String(out, 0, s);
 			}
-			out[ s ] = a;
-			if ( a < '\u0080' ) {
+			out[s] = a;
+			if (a < '\u0080') {
 				s++;
 			}
-			else if ( ( a & 0xe0 ) == 0xc0 ) {
-				int b = in.read( ) & 0xff;
-				if ( ( b & 0xC0 ) != 0x80 ) {
-					throw new UTFDataFormatException( "bad second byte" );
+			else if ((a & 0xe0) == 0xc0) {
+				int b = in.read() & 0xff;
+				if ((b & 0xC0) != 0x80) {
+					throw new UTFDataFormatException("bad second byte");
 				}
-				out[ s++ ] = ( char ) ( ( ( a & 0x1F ) << 6 ) | ( b & 0x3F ) );
+				out[s++] = (char) (((a & 0x1F) << 6) | (b & 0x3F));
 			}
-			else if ( ( a & 0xf0 ) == 0xe0 ) {
-				int b = in.read( ) & 0xff;
-				int c = in.read( ) & 0xff;
-				if ( ( ( b & 0xC0 ) != 0x80 ) || ( ( c & 0xC0 ) != 0x80 ) ) {
-					throw new UTFDataFormatException( "bad second or third byte" );
+			else if ((a & 0xf0) == 0xe0) {
+				int b = in.read() & 0xff;
+				int c = in.read() & 0xff;
+				if (((b & 0xC0) != 0x80) || ((c & 0xC0) != 0x80)) {
+					throw new UTFDataFormatException("bad second or third byte");
 				}
-				out[ s++ ] = ( char ) ( ( ( a & 0x0F ) << 12 ) | ( ( b & 0x3F ) << 6 ) | ( c & 0x3F ) );
+				out[s++] = (char) (((a & 0x0F) << 12) | ((b & 0x3F) << 6) | (c & 0x3F));
 			}
 			else {
-				throw new UTFDataFormatException( "bad byte" );
+				throw new UTFDataFormatException("bad byte");
 			}
 		}
 	}

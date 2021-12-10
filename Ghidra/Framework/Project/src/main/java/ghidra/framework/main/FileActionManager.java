@@ -384,7 +384,7 @@ class FileActionManager {
 				buf.append(
 					"You may exit Ghidra, but the above action(s) will be aborted and all\n");
 				buf.append("changes made by those actions (and all changes made since those\n");
-				buf.append("actions started),will be lost!  You will still have the option of \n");
+				buf.append("actions started) will be lost!  You will still have the option of \n");
 				buf.append("saving any changes made before those actions began.\n \n");
 				buf.append("Do you want to abort the action(s) and exit Ghidra?");
 

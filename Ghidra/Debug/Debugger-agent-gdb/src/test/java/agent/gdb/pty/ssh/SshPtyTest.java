@@ -18,7 +18,7 @@ package agent.gdb.pty.ssh;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 
-import java.io.IOException;
+import java.io.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -36,9 +36,7 @@ public class SshPtyTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setupSshPtyTest() throws CancelledException {
 		assumeFalse(SystemUtilities.isInTestingBatchMode());
 		factory = new GhidraSshPtyFactory();
-		factory.setHostname("localhost");
 		factory.setUsername(promptUser());
-		factory.setKeyFile("");
 	}
 
 	public static String promptUser() throws CancelledException {
@@ -49,12 +47,42 @@ public class SshPtyTest extends AbstractGhidraHeadedIntegrationTest {
 		return dialog.getValueAsString();
 	}
 
+	public static class StreamPumper extends Thread {
+		private final InputStream in;
+		private final OutputStream out;
+
+		public StreamPumper(InputStream in, OutputStream out) {
+			setDaemon(true);
+			this.in = in;
+			this.out = out;
+		}
+
+		@Override
+		public void run() {
+			byte[] buf = new byte[1024];
+			try {
+				while (true) {
+					int len = in.read(buf);
+					if (len <= 0) {
+						break;
+					}
+					out.write(buf, 0, len);
+				}
+			}
+			catch (IOException e) {
+			}
+		}
+	}
+
 	@Test
 	public void testSessionBash() throws IOException, InterruptedException {
 		try (SshPty pty = factory.openpty()) {
 			PtySession bash = pty.getChild().session(new String[] { "bash" }, null);
-			pty.getParent().getOutputStream().write("exit\n".getBytes());
-			assertEquals(0, bash.waitExited().intValue());
+			OutputStream out = pty.getParent().getOutputStream();
+			out.write("exit\n".getBytes("UTF-8"));
+			out.flush();
+			new StreamPumper(pty.getParent().getInputStream(), System.out).start();
+			assertEquals(0, bash.waitExited());
 		}
 	}
 }

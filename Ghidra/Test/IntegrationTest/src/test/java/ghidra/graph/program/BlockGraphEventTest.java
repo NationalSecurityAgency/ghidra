@@ -23,8 +23,7 @@ import java.util.Set;
 import org.junit.Test;
 
 import ghidra.app.events.ProgramSelectionPluginEvent;
-import ghidra.graph.TestGraphDisplay;
-import ghidra.graph.TestGraphService;
+import ghidra.graph.*;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.block.CodeBlockModel;
 import ghidra.program.util.ProgramLocation;
@@ -46,7 +45,7 @@ public class BlockGraphEventTest extends AbstractBlockGraphTest {
 			blockModelService.getNewModelByName(modelName, program, true);
 		TestGraphService graphService = new TestGraphService();
 		BlockGraphTask task =
-			new BlockGraphTask("test", false, false, false, false,
+			new BlockGraphTask(new BlockFlowGraphType(), false, false, false,
 				tool, null, null, model, graphService);
 
 		task.monitoredRun(TaskMonitor.DUMMY);

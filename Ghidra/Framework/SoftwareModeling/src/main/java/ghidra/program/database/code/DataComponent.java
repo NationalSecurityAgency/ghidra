@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- *
- */
 package ghidra.program.database.code;
 
 import db.DBRecord;
@@ -152,14 +149,6 @@ class DataComponent extends DataDB {
 			}
 		}
 		return path;
-	}
-
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getLength()
-	 */
-	@Override
-	public int getLength() {
-		return length;
 	}
 
 	/**

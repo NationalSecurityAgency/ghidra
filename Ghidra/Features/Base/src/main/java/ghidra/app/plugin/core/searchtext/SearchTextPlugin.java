@@ -30,8 +30,7 @@ import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.table.threaded.*;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.context.ListingActionContext;
-import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.*;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -380,6 +379,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				.description(DESCRIPTION)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
 				.withContext(NavigatableActionContext.class)
+				.validContextWhen(c -> !(c instanceof RestrictedAddressSetContext))
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.supportsDefaultToolContext(true)
 				.onAction(c -> {

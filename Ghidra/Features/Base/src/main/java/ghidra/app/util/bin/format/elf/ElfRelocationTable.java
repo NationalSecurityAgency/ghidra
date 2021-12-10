@@ -205,12 +205,15 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 
 		try {
 			int relocationIndex = 0;
-			long remainingRelocations = LEB128.readAsLong(reader, true);
-			long offset = LEB128.readAsLong(reader, true);
-			long addend = 0;
+			long remainingRelocations = LEB128.readAsLong(reader, true); // reloc_count
+			long offset = LEB128.readAsLong(reader, true); // reloc_baseOffset
 
 			while (remainingRelocations > 0) {
 
+				// start new group
+				long addend = 0;
+
+				// group_size
 				long groupSize = LEB128.readAsLong(reader, true);
 				if (groupSize > remainingRelocations) {
 					Msg.warn(this, "Group relocation count " + groupSize +
@@ -218,6 +221,7 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 					break;
 				}
 
+				// group_flags
 				long groupFlags = LEB128.readAsLong(reader, true);
 				boolean groupedByInfo =
 					(groupFlags & AndroidElfRelocationGroup.RELOCATION_GROUPED_BY_INFO_FLAG) != 0;
@@ -228,32 +232,34 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 				boolean groupHasAddend =
 					(groupFlags & AndroidElfRelocationGroup.RELOCATION_GROUP_HAS_ADDEND_FLAG) != 0;
 
+				// group_offsetDelta (optional)
 				long groupOffsetDelta = groupedByDelta ? LEB128.readAsLong(reader, true) : 0;
+
+				// group_info (optional)
 				long groupRInfo = groupedByInfo ? LEB128.readAsLong(reader, true) : 0;
 
 				if (groupedByAddend && groupHasAddend) {
+					// group_addend (optional)
 					addend += LEB128.readAsLong(reader, true);
 				}
 
 				for (int i = 0; i < groupSize; i++) {
+					// reloc_offset (optional)
 					offset += groupedByDelta ? groupOffsetDelta : LEB128.readAsLong(reader, true);
 
+					// reloc_info (optional)
 					long info = groupedByInfo ? groupRInfo : LEB128.readAsLong(reader, true);
 
 					long rAddend = 0;
 					if (groupHasAddend) {
 						if (!groupedByAddend) {
+							// reloc_addend (optional)
 							addend += LEB128.readAsLong(reader, true);
 						}
 						rAddend = addend;
 					}
-
 					relocations.add(ElfRelocation.createElfRelocation(reader.getFactory(),
 						elfHeader, relocationIndex++, addendTypeReloc, offset, info, rAddend));
-				}
-
-				if (!groupHasAddend) {
-					addend = 0;
 				}
 
 				remainingRelocations -= groupSize;

@@ -31,6 +31,7 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.remote.User;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import resources.ResourceManager;
@@ -64,12 +65,12 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 		checkOut(context.getSelectedFiles());
 	}
 
-	/**
-	 * Returns true if at least one of the provided domain files can can be 
-	 * checked out of the repository.
-	 */
 	@Override
 	public boolean isEnabledForContext(DomainFileContext context) {
+		if (isFileSystemBusy()) {
+			return false; // don't block; we should get called again later
+		}
+
 		List<DomainFile> providedList = context.getSelectedFiles();
 		for (DomainFile domainFile : providedList) {
 			if (domainFile.canCheckout()) {
@@ -107,6 +108,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 	private class CheckOutTask extends Task {
 		private Collection<DomainFile> files;
 		private boolean exclusive = true;
+		private CheckoutDialog checkout;
 
 		CheckOutTask(Collection<DomainFile> files) {
 			super("Check Out", true, true, true);
@@ -144,7 +146,9 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 			// note: a 'null' user means that we are using a local repository
 			User user = getUser();
 			if (user != null && user.hasWritePermission()) {
-				CheckoutDialog checkout = new CheckoutDialog();
+
+				checkout = Swing.runNow(() -> new CheckoutDialog());
+
 				if (checkout.showDialog(tool) != CheckoutDialog.OK) {
 					return false;
 				}

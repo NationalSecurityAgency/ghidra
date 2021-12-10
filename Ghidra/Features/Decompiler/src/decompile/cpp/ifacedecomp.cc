@@ -127,9 +127,13 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcCallOtherFixup(),"fixup","callother");
   status->registerCom(new IfcVolatile(),"volatile");
   status->registerCom(new IfcReadonly(),"readonly");
+  status->registerCom(new IfcPointerSetting(),"pointer","setting");
   status->registerCom(new IfcPreferSplit(),"prefersplit");
   status->registerCom(new IfcStructureBlocks(),"structure","blocks");
   status->registerCom(new IfcAnalyzeRange(), "analyze","range");
+  status->registerCom(new IfcLoadTestFile(), "load","test","file");
+  status->registerCom(new IfcListTestCommands(), "list","test","commands");
+  status->registerCom(new IfcExecuteTestCommand(), "execute","test","command");
 #ifdef CPUI_RULECOMPILE
   status->registerCom(new IfcParseRule(),"parse","rule");
   status->registerCom(new IfcExperimentalRules(),"experimental","rules");
@@ -218,6 +222,7 @@ IfaceDecompData::IfaceDecompData(void)
   conf = (Architecture *)0;
   fd = (Funcdata *)0;
   cgraph = (CallGraph *)0;
+  testCollection = (FunctionTestCollection *)0;
 #ifdef OPACTION_DEBUG
   jumptabledebug = false;
 #endif
@@ -230,6 +235,8 @@ IfaceDecompData::~IfaceDecompData(void)
     delete cgraph;
   if (conf != (Architecture *)0)
     delete conf;
+  if (testCollection != (FunctionTestCollection *)0)
+    delete testCollection;
 // fd will get deleted with Database
 }
 
@@ -2883,6 +2890,48 @@ void IfcReadonly::execute(istream &s)
   *status->optr << "Successfully marked range as readonly" << endl;
 }
 
+/// \class IfcPointerSetting
+/// \brief Create a pointer with additional settings: `pointer setting <name> <basetype> offset <val>`
+///
+/// The new data-type is named and must be pointer.  It must have a setting
+///   - \b offset which creates a shifted pointer
+void IfcPointerSetting::execute(istream &s)
+
+{
+  if (dcp->conf == (Architecture *)0)
+    throw IfaceExecutionError("No load image present");
+  string typeName;
+  string baseType;
+  string setting;
+
+  s >> ws;
+  if (s.eof())
+    throw IfaceParseError("Missing name");
+  s >> typeName >> ws;
+  if (s.eof())
+    throw IfaceParseError("Missing base-type");
+  s >> baseType >> ws;
+  if (s.eof())
+    throw IfaceParseError("Missing setting");
+  s >> setting >> ws;
+  if (setting == "offset") {
+    int4 off = -1;
+    s.unsetf(ios::dec | ios::hex | ios::oct); // Let user specify base
+    s >> off;
+    if (off <= 0)
+      throw IfaceParseError("Missing offset");
+    Datatype *bt = dcp->conf->types->findByName(baseType);
+    if (bt == (Datatype *)0 || bt->getMetatype() != TYPE_STRUCT)
+      throw IfaceParseError("Base-type must be a structure");
+    Datatype *ptrto = TypePointerRel::getPtrToFromParent(bt, off, *dcp->conf->types);
+    AddrSpace *spc = dcp->conf->getDefaultDataSpace();
+    dcp->conf->types->getTypePointerRel(spc->getAddrSize(), bt, ptrto, spc->getWordSize(), off,typeName);
+  }
+  else
+    throw IfaceParseError("Unknown pointer setting: "+setting);
+  *status->optr << "Successfully created pointer: " << typeName << endl;
+}
+
 /// \class IfcPreferSplit
 /// \brief Mark a storage location to be split: `prefersplit <address+size> <splitsize>`
 ///
@@ -3141,6 +3190,74 @@ void IfcAnalyzeRange::execute(istream &s)
     (*riter).second.printRaw(*status->optr);
     *status->optr << endl;
   }
+}
+
+/// \class IfcLoadTestFile
+/// \brief Load a datatest environment file: `load test <filename>`
+///
+/// The program and associated script from a decompiler test file is loaded
+void IfcLoadTestFile::execute(istream &s)
+
+{
+  string filename;
+
+  if (dcp->conf != (Architecture *)0)
+    throw IfaceExecutionError("Load image already present");
+  s >> filename;
+  dcp->testCollection = new FunctionTestCollection(status);
+  dcp->testCollection->loadTest(filename);
+#ifdef OPACTION_DEBUG
+  dcp->conf->setDebugStream(status->fileoptr);
+#endif
+  *status->optr << filename << " test successfully loaded: " << dcp->conf->getDescription() << endl;
+}
+
+/// \class IfcListTestCommands
+/// \brief List all the script commands in the current test: `list test commands`
+void IfcListTestCommands::execute(istream &s)
+
+{
+  if (dcp->testCollection == (FunctionTestCollection *)0)
+    throw IfaceExecutionError("No test file is loaded");
+  for(int4 i=0;i<dcp->testCollection->numCommands();++i) {
+    *status->optr << ' ' << dec << i+1 << ": " << dcp->testCollection->getCommand(i) << endl;
+  }
+}
+
+/// \class IfcExecuteTestCommand
+/// \brief Execute a specified range of the test script: `execute test command <#>-<#>
+void IfcExecuteTestCommand::execute(istream &s)
+
+{
+  if (dcp->testCollection == (FunctionTestCollection *)0)
+    throw IfaceExecutionError("No test file is loaded");
+  int4 first = -1;
+  int4 last = -1;
+  char hyphen;
+
+  s >> ws >> dec >> first;
+  first -= 1;
+  if (first < 0 || first > dcp->testCollection->numCommands())
+    throw IfaceExecutionError("Command index out of bounds");
+  s >> ws;
+  if (!s.eof()) {
+    s >> ws >> hyphen;
+    if (hyphen != '-')
+      throw IfaceExecutionError("Missing hyphenated command range");
+    s >> ws >> last;
+    last -= 1;
+    if (last < 0 || last < first || last > dcp->testCollection->numCommands())
+      throw IfaceExecutionError("Command index out of bounds");
+  }
+  else {
+    last = first;
+  }
+  ostringstream s1;
+  for(int4 i=first;i<=last;++i) {
+    s1 << dcp->testCollection->getCommand(i) << endl;
+  }
+  istringstream *s2 = new istringstream(s1.str());
+  status->pushScript(s2, "test> ");
 }
 
 #ifdef OPACTION_DEBUG

@@ -26,9 +26,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
+import docking.widgets.OptionDialog;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import ghidra.app.cmd.label.*;
+import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.symbol.FunctionSymbol;
@@ -36,6 +38,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
 
@@ -145,6 +148,7 @@ public class AddEditDialog extends DialogComponentProvider {
 		Namespace namespace = getSelectedNamespace();
 		SymbolPath symbolPath = getSymbolPath(labelText);
 		if (symbolPath == null) {
+			Swing.runLater(() -> checkForRemoveLabel());
 			return;
 		}
 
@@ -164,10 +168,14 @@ public class AddEditDialog extends DialogComponentProvider {
 			cmd.add(new AddLabelCmd(addr, symbolName, parent, SourceType.USER_DEFINED));
 		}
 		else {
-			cmd.add(new RenameLabelCmd(addr, symbol.getName(), symbolName,
-				symbol.getParentNamespace(), parent, SourceType.USER_DEFINED));
+			cmd.add(new RenameLabelCmd(symbol, labelText, namespace, SourceType.USER_DEFINED));
 			isCurrentlyEntryPoint = symbol.isExternalEntryPoint();
 			isCurrentlyPinned = symbol.isPinned();
+		}
+
+		if (!tool.execute(cmd, program)) {
+			setStatusText(cmd.getStatusMsg());
+			return;
 		}
 
 		if (primaryCheckBox.isEnabled() && primaryCheckBox.isSelected()) {
@@ -181,16 +189,54 @@ public class AddEditDialog extends DialogComponentProvider {
 			cmd.add(new PinSymbolCmd(addr, symbolName, !isCurrentlyPinned));
 		}
 
-		if (cmd.size() > 0) {
-
-			if (!tool.execute(cmd, program)) {
-				setStatusText(cmd.getStatusMsg());
-				return;
-			}
-			updateRecentLabels(symbolName);
+		if (!tool.execute(cmd, program)) {
+			setStatusText(cmd.getStatusMsg());
+			return;
 		}
+		updateRecentLabels(symbolName);
+
 		program = null;
 		close();
+	}
+
+	private void checkForRemoveLabel() {
+
+		if (!isEditing()) {
+			return; // adding a label; cannot delete existing label
+		}
+
+		if (isDefaultLabel()) {
+			return; // label is already default; cannot be removed
+		}
+
+		if (isExternalLabel()) {
+			return; // cannot remove external labels
+		}
+
+		int choice = OptionDialog.showYesNoDialog(getParent(), "Remove Label?",
+			"You have removed the label text--would you like to remove the existing label?");
+		if (choice == OptionDialog.YES_OPTION) {
+
+			Command cmd = new DeleteLabelCmd(addr, symbol.getName(), symbol.getParentNamespace());
+			if (!tool.execute(cmd, program)) {
+				setStatusText(cmd.getStatusMsg());
+			}
+			else {
+				close();
+			}
+		}
+	}
+
+	private boolean isExternalLabel() {
+		return symbol != null && symbol.isExternal();
+	}
+
+	private boolean isDefaultLabel() {
+		return symbol != null && symbol.getSource() == SourceType.DEFAULT;
+	}
+
+	private boolean isEditing() {
+		return symbol != null; // always have a symbol when editing
 	}
 
 	private SymbolPath getSymbolPath(String symbolName) {
@@ -229,7 +275,7 @@ public class AddEditDialog extends DialogComponentProvider {
 
 		//
 		// At this point we can either reuse an existing function namespace or we have to create
-		// a new non-function namespaces, depending upon the names being used.  Only use an 
+		// a new non-function namespaces, depending upon the names being used.  Only use an
 		// existing function as a namespace if none of namespace path entries match the function
 		// name.
 		//
@@ -370,11 +416,9 @@ public class AddEditDialog extends DialogComponentProvider {
 
 	private FunctionSymbol getFunctionSymbol(Address address) {
 		SymbolTable symbolTable = program.getSymbolTable();
-		Symbol[] symbols = symbolTable.getSymbols(address);
-		for (Symbol localSymbol : symbols) {
-			if (localSymbol instanceof FunctionSymbol) {
-				return (FunctionSymbol) localSymbol;
-			}
+		Symbol primary = symbolTable.getPrimarySymbol(address);
+		if (primary instanceof FunctionSymbol) {
+			return (FunctionSymbol) primary;
 		}
 		return null;
 	}
@@ -384,6 +428,7 @@ public class AddEditDialog extends DialogComponentProvider {
 			throw new IllegalArgumentException(
 				"AddEditDialog.addLabel only valid for memory address");
 		}
+
 		this.addr = address;
 		this.program = p;
 		SymbolTable symbolTable = p.getSymbolTable();
@@ -395,10 +440,8 @@ public class AddEditDialog extends DialogComponentProvider {
 		pinnedCheckBox.setEnabled(true);
 		pinnedCheckBox.setSelected(false);
 
-		Symbol[] symbols = symbolTable.getSymbols(address);
-
-		FunctionSymbol functionSymbol = getFunctionSymbol(address);
-		if (functionSymbol == null && symbols.length == 0) {
+		Symbol primarySymbol = symbolTable.getPrimarySymbol(address);
+		if (primarySymbol == null) {
 			primaryCheckBox.setSelected(true);
 			primaryCheckBox.setEnabled(false);
 		}
@@ -463,9 +506,8 @@ public class AddEditDialog extends DialogComponentProvider {
 			nameBorder.setTitle("Enter Label:");
 			entryPointCheckBox.setEnabled(true);
 			entryPointCheckBox.setSelected(symbolTable.isExternalEntryPoint(addr));
-			Symbol[] symbols = symbolTable.getSymbols(addr);
 			primaryCheckBox.setSelected(s.isPrimary());
-			primaryCheckBox.setEnabled(!s.isPrimary() && symbols.length > 1);
+			primaryCheckBox.setEnabled(!s.isPrimary());
 			pinnedCheckBox.setEnabled(true);
 			pinnedCheckBox.setSelected(s.isPinned());
 			namespaceChoices.setEnabled(true);

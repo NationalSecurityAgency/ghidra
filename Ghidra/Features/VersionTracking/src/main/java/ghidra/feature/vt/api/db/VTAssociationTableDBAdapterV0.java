@@ -16,16 +16,16 @@
 package ghidra.feature.vt.api.db;
 
 import static ghidra.feature.vt.api.db.VTAssociationTableDBAdapter.AssociationTableDescriptor.*;
-import ghidra.feature.vt.api.main.VTAssociationStatus;
-import ghidra.feature.vt.api.main.VTAssociationType;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import db.*;
+import ghidra.feature.vt.api.main.VTAssociationStatus;
+import ghidra.feature.vt.api.main.VTAssociationType;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 public class VTAssociationTableDBAdapterV0 extends VTAssociationTableDBAdapter {
 
@@ -81,14 +81,14 @@ public class VTAssociationTableDBAdapterV0 extends VTAssociationTableDBAdapter {
 	}
 
 	@Override
-	RecordIterator getRecordsForDestinationAddress(long addressID) throws IOException {
-		LongField longField = new LongField(addressID);
+	RecordIterator getRecordsForDestinationAddress(long addressId) throws IOException {
+		LongField longField = new LongField(addressId);
 		return table.indexIterator(DESTINATION_ADDRESS_COL.column(), longField, longField, true);
 	}
 
 	@Override
-	RecordIterator getRecordsForSourceAddress(long addressID) throws IOException {
-		LongField longField = new LongField(addressID);
+	RecordIterator getRecordsForSourceAddress(long addressId) throws IOException {
+		LongField longField = new LongField(addressId);
 		return table.indexIterator(SOURCE_ADDRESS_COL.column(), longField, longField, true);
 	}
 

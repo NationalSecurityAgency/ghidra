@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,31 +23,15 @@ import ghidra.program.model.symbol.SymbolTable;
 
 public class LabelMarkupUtils {
 
-    public static void removeDefaultLabels( Program destinationProgram, Address address ) {
-        SymbolTable symbolTable = destinationProgram.getSymbolTable();
-        Symbol[] symbols = symbolTable.getSymbols( address );
-        for ( Symbol symbol : symbols ) {
-            if ( symbol instanceof FunctionSymbol ) {
-                continue;
-            }
-            
-            if ( !symbol.isDynamic() ) {
-                continue;
-            }
-            
-            symbolTable.removeSymbolSpecial( symbol );
-        }
-    }
-
-    public static void removeAllLabels( Program destinationProgram, Address address ) {
-        SymbolTable symbolTable = destinationProgram.getSymbolTable();
-        Symbol[] symbols = symbolTable.getSymbols( address );
-        for ( Symbol symbol : symbols ) {
-            if ( symbol instanceof FunctionSymbol ) {
-                continue;
-            }
-            symbolTable.removeSymbolSpecial( symbol );
-        }
-    }
+	public static void removeAllLabels(Program destinationProgram, Address address) {
+		SymbolTable symbolTable = destinationProgram.getSymbolTable();
+		Symbol[] symbols = symbolTable.getSymbols(address);
+		for (Symbol symbol : symbols) {
+			if (symbol instanceof FunctionSymbol) {
+				continue;
+			}
+			symbolTable.removeSymbolSpecial(symbol);
+		}
+	}
 
 }

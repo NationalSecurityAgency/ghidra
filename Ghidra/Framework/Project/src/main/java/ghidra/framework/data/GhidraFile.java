@@ -512,7 +512,7 @@ public class GhidraFile implements DomainFile {
 	public ArrayList<?> getConsumers() {
 		DomainObjectAdapter dobj = fileManager.getOpenedDomainObject(getPathname());
 		if (dobj == null) {
-			return new ArrayList<Object>();
+			return new ArrayList<>();
 		}
 		return dobj.getConsumerList();
 	}
@@ -554,7 +554,7 @@ public class GhidraFile implements DomainFile {
 		catch (IOException e) {
 			fileError(e);
 		}
-		return new HashMap<String, String>();
+		return new HashMap<>();
 	}
 
 	void fileChanged() {

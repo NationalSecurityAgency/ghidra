@@ -30,9 +30,9 @@ public class EncodedAnnotation implements StructConverter {
 	private int typeIndexLength;// in bytes
 	private int size;
 	private int sizeLength;// in bytes
-	private List< AnnotationElement > elements = new ArrayList< >( );
+	private List<AnnotationElement> elements = new ArrayList<>();
 
-	public EncodedAnnotation( BinaryReader reader ) throws IOException {
+	public EncodedAnnotation(BinaryReader reader) throws IOException {
 		LEB128 leb128 = LEB128.readUnsignedValue(reader);
 		typeIndex = leb128.asUInt32();
 		typeIndexLength = leb128.getLength();
@@ -41,49 +41,50 @@ public class EncodedAnnotation implements StructConverter {
 		size = leb128.asUInt32();
 		sizeLength = leb128.getLength();
 
-		for ( int i = 0 ; i < size ; ++i ) {
-			elements.add( new AnnotationElement( reader ) );
+		for (int i = 0; i < size; ++i) {
+			elements.add(new AnnotationElement(reader));
 		}
 	}
 
-	public int getTypeIndex( ) {
+	public int getTypeIndex() {
 		return typeIndex;
 	}
 
-	public int getSize( ) {
+	public int getSize() {
 		return size;
 	}
 
 	public List<AnnotationElement> getElements() {
-		return Collections.unmodifiableList( elements );
+		return Collections.unmodifiableList(elements);
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		StringBuilder builder = new StringBuilder( );
-		builder.append( "encoded_annotation" + "_" );
-		builder.append( typeIndexLength + "_" );
-		builder.append( sizeLength + "_" );
-		builder.append( elements.size( ) + "_" );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		StringBuilder builder = new StringBuilder();
+		builder.append("encoded_annotation" + "_");
+		builder.append(typeIndexLength + "_");
+		builder.append(sizeLength + "_");
+		builder.append(elements.size() + "_");
 
-		Structure structure = new StructureDataType( builder.toString( ), 0 );
+		Structure structure = new StructureDataType(builder.toString(), 0);
 
-		structure.add( new ArrayDataType( BYTE, typeIndexLength, BYTE.getLength( ) ), "typeIndex", null );
-		structure.add( new ArrayDataType( BYTE, sizeLength, BYTE.getLength( ) ), "size", null );
+		structure.add(new ArrayDataType(BYTE, typeIndexLength, BYTE.getLength()), "typeIndex",
+			null);
+		structure.add(new ArrayDataType(BYTE, sizeLength, BYTE.getLength()), "size", null);
 
 		int index = 0;
-		for ( AnnotationElement element : elements ) {
-			DataType dataType = element.toDataType( );
-			structure.add( dataType, "element" + index, null );
+		for (AnnotationElement element : elements) {
+			DataType dataType = element.toDataType();
+			structure.add(dataType, "element" + index, null);
 			++index;
-			builder.append( "" + dataType.getName( ) );
+			builder.append("" + dataType.getName());
 		}
 
-		structure.setCategoryPath( new CategoryPath( "/dex/encoded_annotation" ) );
+		structure.setCategoryPath(new CategoryPath("/dex/encoded_annotation"));
 		try {
-			structure.setName( builder.toString( ) );
+			structure.setName(builder.toString());
 		}
-		catch ( Exception e ) {
+		catch (Exception e) {
 			// ignore
 		}
 		return structure;

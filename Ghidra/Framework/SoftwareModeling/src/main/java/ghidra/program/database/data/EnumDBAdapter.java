@@ -41,7 +41,7 @@ abstract class EnumDBAdapter {
 	static final int ENUM_LAST_CHANGE_TIME_COL = EnumDBAdapterV1.V1_ENUM_LAST_CHANGE_TIME_COL;
 
 	/**
-	 * Gets an adapter for working with the enumeration data type database table. The adapter is based 
+	 * Gets an adapter for working with the enumeration data type database table. The adapter is based
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
@@ -159,16 +159,17 @@ abstract class EnumDBAdapter {
 	/**
 	 * Updates the enumeration data type table with the provided record.
 	 * @param record the new record
-	 * @param setLastChangedTime true means change the last change time in the record to the 
+	 * @param setLastChangeTime true means change the last change time in the record to the
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */
 	abstract void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException;
 
 	/**
-	 * Remove the record for the given enumeration ID, and remove all of its 
-	 * associated value records.
+	 * Remove the record for the given enumeration ID, and remove all of its associated value
+	 * records.
 	 * @param enumID ID of enumerated data type to delete
+	 * @return true if successful
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract boolean removeRecord(long enumID) throws IOException;
@@ -198,7 +199,7 @@ abstract class EnumDBAdapter {
 	abstract Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
 
 	/**
-	 * Get enum record whoose sourceID and datatypeID match the specified Universal IDs.
+	 * Get enum record whose sourceID and datatypeID match the specified Universal IDs.
 	 * @param sourceID universal source archive ID
 	 * @param datatypeID universal datatype ID
 	 * @return enum record found or null

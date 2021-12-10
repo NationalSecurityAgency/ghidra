@@ -103,6 +103,18 @@ public class SparseRecord extends DBRecord {
 	}
 
 	@Override
+	public void setField(int colIndex, Field value) {
+		if (value == null) {
+			if (!schema.isSparseColumn(colIndex)) {
+				throw new IllegalArgumentException("null value supported for sparse column only");
+			}
+			value = getField(colIndex).newField();
+			value.setNull();
+		}
+		super.setField(colIndex, value);
+	}
+
+	@Override
 	public void setLongValue(int colIndex, long value) {
 		if (changeInSparseStorage(colIndex, value)) {
 			invalidateLength();

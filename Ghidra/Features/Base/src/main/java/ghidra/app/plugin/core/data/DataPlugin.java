@@ -24,6 +24,7 @@ import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.data.*;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.DataService;
 import ghidra.app.services.DataTypeManagerService;
@@ -60,7 +61,8 @@ import ghidra.util.task.SwingUpdateManager;
 	shortDescription = "Create Data in listing",
 	description = "Provides many actions for setting, changing and deleting data in the listing display.",
 	servicesRequired = { DataTypeManagerService.class },
-	servicesProvided = { DataService.class }
+	servicesProvided = { DataService.class },
+	eventsConsumed = { ProgramActivatedPluginEvent.class }
 )
 //@formatter:on
 public class DataPlugin extends Plugin implements DataService {
@@ -111,6 +113,13 @@ public class DataPlugin extends Plugin implements DataService {
 		initializeServices();
 		addCycleGroupActions();
 		updateFavoriteActions();
+	}
+
+	@Override
+	public void processEvent(PluginEvent event) {
+		if (event instanceof ProgramActivatedPluginEvent) {
+			favoritesUpdateManager.updateLater();
+		}
 	}
 
 	/**

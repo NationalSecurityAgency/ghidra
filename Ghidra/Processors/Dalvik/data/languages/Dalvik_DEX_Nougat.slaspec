@@ -1,0 +1,129 @@
+#------------------------------------------------------------------------------------
+#	Sleigh specification file for DALVIK VM
+#------------------------------------------------------------------------------------
+
+# Source:
+# https://android.googlesource.com/platform/art/+/refs/heads/nougat-release/runtime/dex_instruction_list.h
+
+@include "Dalvik_Base.sinc"
+
+@include "Dalvik_OpCode_3E_43_unused.sinc"
+
+@include "Dalvik_OpCode_73_return_void_no_barrier.sinc"
+
+@include "Dalvik_OpCode_79_unused.sinc"
+@include "Dalvik_OpCode_7A_unused.sinc"
+
+@include "Dalvik_OpCode_E3_EA_dex.sinc"
+
+@include "Dalvik_OpCode_EB_F2_iput_iget.sinc"
+
+@include "Dalvik_OpCode_F4_unused.sinc"
+
+@include "Dalvik_OpCode_FA_unused.sinc"
+@include "Dalvik_OpCode_FB_unused.sinc"
+@include "Dalvik_OpCode_FC_unused.sinc"
+@include "Dalvik_OpCode_FD_unused.sinc"
+@include "Dalvik_OpCode_FE_unused.sinc"
+@include "Dalvik_OpCode_FF_unused.sinc"
+
+define pcodeop invokeLamda;
+
+define token invokeLamda_operands ( 24 )
+	LAMBDA_vB       = (  4 ,  7 )
+	LAMBDA_vG       = (  0 ,  3 )
+	LAMBDA_vD       = ( 12 , 15 )
+	LAMBDA_vC       = (  8 , 11 )
+	LAMBDA_vF       = ( 20 , 23 )
+	LAMBDA_vE       = ( 16 , 19 )
+;
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xF3, INVOKE_LAMBDA, "invoke-lambda", k25x, false, kIndexNone, kContinue | kThrow | kInvoke | kExperimental, kVerifyRegC /*TODO: | kVerifyVarArg*/) \
+#    k25x,  // op vC, {vD, vE, vF, vG} (B: count)
+#
+# See https://android.googlesource.com/platform/art/+/nougat-release/runtime/dex_instruction-inl.h
+#
+#   *       uint16  |||   uint16
+#   *   7-0     15-8    7-0   15-8
+#   *  |------|-----|||-----|-----|
+#   *  |opcode|vB|vG|||vD|vC|vF|vE|
+#   *  |------|-----|||-----|-----|
+#
+#		e.g. invoke-lambda vClosure, {vD, vE, vF, vG} -- up to 4 parameters + the closure.
+
+:invoke_lambda LAMBDA_vC,{}                                        is inst0=0xf3 ; LAMBDA_vB=0 ;LAMBDA_vG ; LAMBDA_vD ; LAMBDA_vC ; LAMBDA_vF; LAMBDA_vE
+{
+	#TODO pCode
+}
+:invoke_lambda LAMBDA_vC,{LAMBDA_vD}                               is inst0=0xf3 ; LAMBDA_vB=1 ;LAMBDA_vG ; LAMBDA_vD ; LAMBDA_vC ; LAMBDA_vF; LAMBDA_vE
+{
+	#TODO pCode
+}
+:invoke_lambda LAMBDA_vC,{LAMBDA_vD,LAMBDA_vE}                     is inst0=0xf3 ; LAMBDA_vB=2 ;LAMBDA_vG ; LAMBDA_vD ; LAMBDA_vC ; LAMBDA_vF; LAMBDA_vE
+{
+	#TODO pCode
+}
+:invoke_lambda LAMBDA_vC,{LAMBDA_vD,LAMBDA_vE,LAMBDA_vF}           is inst0=0xf3 ; LAMBDA_vB=3 ;LAMBDA_vG ; LAMBDA_vD ; LAMBDA_vC ; LAMBDA_vF; LAMBDA_vE
+{
+	#TODO pCode
+}
+:invoke_lambda LAMBDA_vC,{LAMBDA_vD,LAMBDA_vE,LAMBDA_vF,LAMBDA_vG} is inst0=0xf3 ; LAMBDA_vB=4 ;LAMBDA_vG ; LAMBDA_vD ; LAMBDA_vC ; LAMBDA_vF; LAMBDA_vE
+{
+	#TODO pCode
+}
+
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xF5, CAPTURE_VARIABLE, "capture-variable", k21c, false, kIndexStringRef, kExperimental, kVerifyRegA | kVerifyRegBString) \
+#
+#		e.g. capture-variable v1, "foobar"
+
+:capture_variable registerA8,B_BITS_0_15 is inst0=0xf5 ; registerA8 ; B_BITS_0_15
+{
+	#TODO pCode
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xF6, CREATE_LAMBDA, "create-lambda", k21c, false_UNUSED, kIndexMethodRef, kContinue | kThrow | kExperimental, kVerifyRegA | kVerifyRegBMethod) \
+#
+#		e.g. create-lambda v1, "java/io/PrintStream/print(Ljava/lang/Stream;)V"
+
+:create_lambda registerA8,B_BITS_0_15 is inst0=0xf6 ; registerA8 ; B_BITS_0_15
+{
+	#TODO pCode
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xF7, LIBERATE_VARIABLE, "liberate-variable", k22c, false, kIndexStringRef, kExperimental, kVerifyRegA | kVerifyRegB | kVerifyRegCString) \
+#
+#		e.g. liberate-variable v0, v1, "baz"
+
+:liberate_variable registerA4,registerB4,C_BITS_0_15 is inst0=0xf7 ; registerA4 & registerB4 ; C_BITS_0_15
+{
+	#TODO pCode
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xF8, BOX_LAMBDA, "box-lambda", k22x, true, kIndexNone, kContinue | kExperimental, kVerifyRegA | kVerifyRegB) \
+
+:box_lambda registerA8,registerB16  is inst0=0xf8 ; registerA8 ; registerB16
+{
+	#TODO pCode
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xF9, UNBOX_LAMBDA, "unbox-lambda", k22c, true, kIndexTypeRef, kContinue | kThrow | kExperimental, kVerifyRegA | kVerifyRegB | kVerifyRegCType) \
+
+:unbox_lambda registerA4,registerB4,C_BITS_0_15 is inst0=0xf9 ; registerA4 & registerB4 ; C_BITS_0_15
+{
+	#TODO pCode
+}
+
+

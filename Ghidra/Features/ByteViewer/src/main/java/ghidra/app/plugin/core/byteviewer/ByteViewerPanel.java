@@ -28,25 +28,27 @@ import docking.help.HelpService;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.EmptyTextField;
 import docking.widgets.fieldpanel.field.Field;
-import docking.widgets.fieldpanel.listener.IndexMapper;
-import docking.widgets.fieldpanel.listener.LayoutModelListener;
-import docking.widgets.fieldpanel.support.SingleRowLayout;
-import docking.widgets.fieldpanel.support.ViewerPosition;
+import docking.widgets.fieldpanel.listener.*;
+import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.*;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.format.*;
+import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.layout.PairLayout;
 
 /**
- * Top level component that contains has a scrolled pane for the panel of
- * components that show the view for each format.
+ * Top level component that contains has a scrolled pane for the panel of components that show the
+ * view for each format.
  */
-public class ByteViewerPanel extends JPanel implements TableColumnModelListener, LayoutModel {
-
+public class ByteViewerPanel extends JPanel
+		implements TableColumnModelListener, LayoutModel, LayoutListener {
 //    private ByteViewerPlugin plugin;
 	private List<ByteViewerComponent> viewList; // list of field viewers
 	private FieldPanel indexPanel; // panel for showing indexes
@@ -79,10 +81,12 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	// changes while this flag is true
 	private final ByteViewerComponentProvider provider;
 
+	private List<AddressSetDisplayListener> displayListeners = new ArrayList<>();
+
 	/**
 	 * Constructor
 	 */
-	ByteViewerPanel(ByteViewerComponentProvider provider) {
+	protected ByteViewerPanel(ByteViewerComponentProvider provider) {
 		super();
 		this.provider = provider;
 		bytesPerLine = ByteViewerComponentProvider.DEFAULT_BYTES_PER_LINE;
@@ -203,7 +207,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	void setMouseButtonHighlightColor(Color color) {
-	    this.highlightColor = color;
+		this.highlightColor = color;
 		for (int i = 0; i < viewList.size(); i++) {
 			ByteViewerComponent comp = viewList.get(i);
 			comp.setMouseButtonHighlightColor(color);
@@ -240,8 +244,8 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	/**
-	 * Set the byte blocks and create an new IndexMap object that will be
-	 * passed to the index panel and to each component that shows a format.
+	 * Set the byte blocks and create an new IndexMap object that will be passed to the index panel
+	 * and to each component that shows a format.
 	 */
 	void setByteBlocks(ByteBlockSet blockSet) {
 		this.blockSet = blockSet;
@@ -324,6 +328,15 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	/**
+	 * Set the background color model for all the views.
+	 */
+	public void setViewerBackgroundColorModel(BackgroundColorModel colorModel) {
+		for (ByteViewerComponent c : viewList) {
+			c.setBackgroundColorModel(colorModel);
+		}
+	}
+
+	/**
 	 * Get the current highlight.
 	 *
 	 * @return ByteBlockSelection highlight, or null if there is no highlight
@@ -363,8 +376,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	/**
 	 * Get the data format model of the view that is in focus.
 	 *
-	 * @return DataFormatModel model of the view in focus; return null
-	 * if no views are shown
+	 * @return DataFormatModel model of the view in focus; return null if no views are shown
 	 */
 	DataFormatModel getCurrentModel() {
 		if (currentView == null) {
@@ -376,17 +388,21 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	/**
 	 * Returns the currently focused view.
 	 */
-	ByteViewerComponent getCurrentComponent() {
+	public ByteViewerComponent getCurrentComponent() {
 		return currentView;
+	}
+
+	protected ByteViewerComponent newByteViewerComponent(DataFormatModel model) {
+		return new ByteViewerComponent(this, new ByteViewerLayoutModel(), model, bytesPerLine, fm);
 	}
 
 	/**
 	 * Add a view to the panel.
+	 * 
 	 * @param viewName name of the format, e.g., Hex, Ascii, etc.
 	 * @param model model that understands the format
 	 * @param editMode true if edit mode is on
-	 * @param updateViewPosition true if the view position should be
-	 * set
+	 * @param updateViewPosition true if the view position should be set
 	 */
 	ByteViewerComponent addView(String viewName, DataFormatModel model, boolean editMode,
 			boolean updateViewPosition) {
@@ -398,8 +414,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 
 		// create new ByteViewerComponent
 
-		ByteViewerComponent c =
-			new ByteViewerComponent(this, new ByteViewerLayoutModel(), model, bytesPerLine, fm);
+		ByteViewerComponent c = newByteViewerComponent(model);
 		c.setEditColor(editColor);
 		c.setNonFocusCursorColor(cursorColor);
 		c.setCurrentCursorColor(currentCursorColor);
@@ -471,9 +486,8 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	/**
-	 * Set the given component to be the current view; called by the
-	 * mouse listener in the ByteViewerComponent when the user clicks in the
-	 * panel.
+	 * Set the given component to be the current view; called by the mouse listener in the
+	 * ByteViewerComponent when the user clicks in the panel.
 	 */
 	void setCurrentView(ByteViewerComponent c) {
 		if (currentView != null && currentView != c) {
@@ -483,8 +497,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	/**
-	 * Set the cursor color on the current view to show that it is in
-	 * edit mode.
+	 * Set the cursor color on the current view to show that it is in edit mode.
 	 */
 	void setEditMode(boolean editMode) {
 		for (int i = 0; i < viewList.size(); i++) {
@@ -537,8 +550,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	/**
-	 * Set the bytes per line. Bytes per line dictates the number of fields
-	 * displayed in a row.
+	 * Set the bytes per line. Bytes per line dictates the number of fields displayed in a row.
 	 */
 	void setBytesPerLine(int bytesPerLine) {
 
@@ -555,10 +567,9 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	/**
-	 * Check that each model for the views can support the given
-	 * bytes per line value.
-	 * @throws InvalidInputException if a model cannot support the
-	 * bytesPerLine value
+	 * Check that each model for the views can support the given bytes per line value.
+	 * 
+	 * @throws InvalidInputException if a model cannot support the bytesPerLine value
 	 */
 	void checkBytesPerLine(int numBytesPerLine) throws InvalidInputException {
 		for (int i = 0; i < viewList.size(); i++) {
@@ -576,6 +587,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 
 	/**
 	 * Set the group size on the current view.
+	 * 
 	 * @param groupSize new group size
 	 */
 	void setCurrentGroupSize(int groupSize) {
@@ -596,9 +608,9 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	/**
-	 * Set the insertion field and tell other views to change location;
-	 * called when the ByteViewerComponent receives a notification that
-	 * the cursor location has changed.
+	 * Set the insertion field and tell other views to change location; called when the
+	 * ByteViewerComponent receives a notification that the cursor location has changed.
+	 * 
 	 * @param source source of the change
 	 * @param block block for the new location
 	 * @param offset offset into the block
@@ -632,8 +644,9 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	/**
-	 * Called from the ByteViewerComponent when it received a notification
-	 * that the selection has changed.
+	 * Called from the ByteViewerComponent when it received a notification that the selection has
+	 * changed.
+	 * 
 	 * @param source source of the change
 	 * @param selection selection
 	 */
@@ -657,8 +670,8 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	/**
-	 * Return array of names of views in the order that they appear in the
-	 * panel. The name array includes an entry for the index panel.
+	 * Return array of names of views in the order that they appear in the panel. The name array
+	 * includes an entry for the index panel.
 	 */
 	DataModelInfo getDataModelInfo() {
 
@@ -689,11 +702,11 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	 *
 	 * @return ViewerPosition top viewer position
 	 */
-	ViewerPosition getViewerPosition() {
+	public ViewerPosition getViewerPosition() {
 		return indexPanel.getViewerPosition();
 	}
 
-	void setViewerPosition(ViewerPosition pos) {
+	public void setViewerPosition(ViewerPosition pos) {
 		indexPanel.setViewerPosition(pos.getIndex(), pos.getXOffset(), pos.getYOffset());
 	}
 
@@ -718,6 +731,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 
 	/**
 	 * Restore the configuration of the plugin.
+	 * 
 	 * @param fontMetrics font metrics
 	 * @param newEditColor color for showing edits
 	 */
@@ -781,8 +795,12 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	/**
 	 * Get the font metrics that the panel is using.
 	 */
-	FontMetrics getFontMetrics() {
+	protected FontMetrics getFontMetrics() {
 		return fm;
+	}
+
+	protected int getBytesPerLine() {
+		return bytesPerLine;
 	}
 
 	/**
@@ -804,6 +822,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 		indexPanel.enableSelection(false);
 		indexPanel.setCursorOn(false);
 		indexPanel.setFocusable(false);
+		indexPanel.addLayoutListener(this);
 
 		compPanel = new CompositePanel(indexPanel);
 
@@ -885,8 +904,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	/**
-	 * Create a new index map and update the map in the index field adapter
-	 * and all the views.
+	 * Create a new index map and update the map in the index field adapter and all the views.
 	 */
 	private void updateIndexMap() {
 		if (blockSet == null) {
@@ -1027,6 +1045,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 
 	/***
 	 * Getter for the list of ByteViewer Components
+	 * 
 	 * @return viewList the list of ByteViewerComponents
 	 */
 	public List<ByteViewerComponent> getViewList() {
@@ -1045,6 +1064,43 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	@Override
 	public void flushChanges() {
 		// nothing to do
+	}
+
+	protected AddressSetView computeVisibleAddresses(List<AnchoredLayout> layouts) {
+		// Kind of gross, but current component will do
+		ByteViewerComponent component = getCurrentComponent();
+		if (component == null || blockSet == null) {
+			return new AddressSet();
+		}
+
+		BigInteger startIndex = layouts.get(0).getIndex();
+		BigInteger endIndex = layouts.get(layouts.size() - 1).getIndex();
+		FieldSelection fieldSel = new FieldSelection();
+		fieldSel.addRange(startIndex, endIndex.add(BigInteger.ONE));
+		ByteBlockSelection blockSel = component.processFieldSelection(fieldSel);
+		return blockSet.getAddressSet(blockSel);
+	}
+
+	@Override
+	public void layoutsChanged(List<AnchoredLayout> layouts) {
+		AddressSetView visible = computeVisibleAddresses(layouts);
+		for (AddressSetDisplayListener listener : displayListeners) {
+			try {
+				listener.visibleAddressesChanged(visible);
+			}
+			catch (Throwable t) {
+				Msg.showError(this, indexPanel, "Error in Display Listener",
+					"Exception encountered when notifying listeners of change in display", t);
+			}
+		}
+	}
+
+	public void addDisplayListener(AddressSetDisplayListener listener) {
+		displayListeners.add(listener);
+	}
+
+	public void removeDisplayListener(AddressSetDisplayListener listener) {
+		displayListeners.add(listener);
 	}
 }
 
@@ -1211,4 +1267,5 @@ class CompositePanel extends JPanel implements IndexedScrollable, IndexScrollLis
 			processingIndexRangeChanged = false;
 		}
 	}
+
 }

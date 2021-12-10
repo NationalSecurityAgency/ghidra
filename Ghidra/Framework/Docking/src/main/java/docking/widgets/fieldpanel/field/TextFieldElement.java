@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +15,22 @@
  */
 package docking.widgets.fieldpanel.field;
 
-
-public final class TextFieldElement extends AbstractTextFieldElement {
+public class TextFieldElement extends AbstractTextFieldElement {
 
 	public TextFieldElement(AttributedString attributedString, int row, int column) {
 		super(attributedString, row, column);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#substring(int, int)
-	 */
+	@Override
 	public FieldElement substring(int start, int end) {
 		AttributedString as = attributedString.substring(start, end);
-		if ( as == attributedString ) {
+		if (as == attributedString) {
 			return this;
 		}
-		return new TextFieldElement(as, row, column+start);
+		return new TextFieldElement(as, row, column + start);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.FieldElement#replaceAll(char[], char)
-	 */
+	@Override
 	public FieldElement replaceAll(char[] targets, char replacement) {
 		return new TextFieldElement(attributedString.replaceAll(targets, replacement), row, column);
 	}

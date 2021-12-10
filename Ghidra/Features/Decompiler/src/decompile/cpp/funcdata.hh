@@ -93,7 +93,7 @@ class Funcdata {
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
   HighVariable *assignHigh(Varnode *vn);	///< Assign a new HighVariable to a Varnode
   Symbol *handleSymbolConflict(SymbolEntry *entry,Varnode *vn);	///< Handle two variables with matching storage
-  bool syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 flags,Datatype *ct);
+  bool syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 fl,Datatype *ct);
   bool descend2Undef(Varnode *vn);		///< Transform all reads of the given Varnode to a special \b undefined constant
 
   void splitUses(Varnode *vn);			///< Make all reads of the given Varnode unique
@@ -270,7 +270,7 @@ public:
   Varnode *newUnique(int4 s,Datatype *ct=(Datatype *)0);	///< Create a new \e temporary Varnode
   Varnode *newCodeRef(const Address &m);			///< Create a code address \e annotation Varnode
   Varnode *setInputVarnode(Varnode *vn);			///< Mark a Varnode as an input to the function
-  void adjustInputVarnodes(const Address &addr,int4 size);
+  void adjustInputVarnodes(const Address &addr,int4 sz);
   void deleteVarnode(Varnode *vn) { vbank.destroy(vn); }	///< Delete the given varnode
 
   Address findDisjointCover(Varnode *vn,int4 &sz);	///< Find range covering given Varnode and any intersecting Varnodes
@@ -362,14 +362,14 @@ public:
   /// \brief End of (input or free) Varnodes at a given storage address
   VarnodeDefSet::const_iterator endDef(uint4 fl,const Address &addr) const { return vbank.endDef(fl,addr); }
 
-  void checkForLanedRegister(int4 size,const Address &addr);	///< Check for a potential laned register
+  void checkForLanedRegister(int4 sz,const Address &addr);	///< Check for a potential laned register
   map<VarnodeData,const LanedRegister *>::const_iterator beginLaneAccess(void) const { return lanedMap.begin(); }	///< Beginning iterator over laned accesses
   map<VarnodeData,const LanedRegister *>::const_iterator endLaneAccess(void) const { return lanedMap.end(); }	///< Ending iterator over laned accesses
   void clearLanedAccessMap(void) { lanedMap.clear(); }	///< Clear records from the laned access list
 
-  HighVariable *findHigh(const string &name) const;	///< Find a high-level variable by name
+  HighVariable *findHigh(const string &nm) const;	///< Find a high-level variable by name
   void mapGlobals(void);			///< Make sure there is a Symbol entry for all global Varnodes
-  bool checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const Varnode *vn,uint4 flags,const ParamTrial &trial) const;
+  bool checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const Varnode *vn,uint4 fl,const ParamTrial &trial) const;
   bool onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamTrial &trial,uint4 mainFlags) const;
   bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial,uint4 mainFlags) const;
   bool syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes);
@@ -412,8 +412,8 @@ public:
   PcodeOp *newOpBefore(PcodeOp *follow,OpCode opc,Varnode *in1,Varnode *in2,Varnode *in3=(Varnode *)0);
   PcodeOp *cloneOp(const PcodeOp *op,const SeqNum &seq);	/// Clone a PcodeOp into \b this function
   PcodeOp *getFirstReturnOp(void) const;			/// Find a representative CPUI_RETURN op for \b this function
-  PcodeOp *newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 size,uint4 extraFlags);
-  PcodeOp *newIndirectCreation(PcodeOp *indeffect,const Address &addr,int4 size,bool possibleout);
+  PcodeOp *newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 sz,uint4 extraFlags);
+  PcodeOp *newIndirectCreation(PcodeOp *indeffect,const Address &addr,int4 sz,bool possibleout);
   void markIndirectCreation(PcodeOp *indop,bool possibleOutput);	///< Convert CPUI_INDIRECT into an \e indirect \e creation
   PcodeOp *findOp(const SeqNum &sq) { return obank.findOp(sq); }	///< Find PcodeOp with given sequence number
   void opInsertBefore(PcodeOp *op,PcodeOp *follow);		///< Insert given PcodeOp before a specific op
@@ -604,7 +604,7 @@ class AncestorRealistic {
       flags = 0;
     }
     int4 getSolidSlot(void) const { return ((flags & seen_solid0)!=0) ? 0 : 1; }	///< Get slot associated with \e solid movement
-    void markSolid(int4 slot) { flags |= (slot==0) ? seen_solid0 : seen_solid1; }	///< Mark slot as having \e solid movement
+    void markSolid(int4 s) { flags |= (s==0) ? seen_solid0 : seen_solid1; }		///< Mark given slot as having \e solid movement
     void markKill(void) { flags |= seen_kill; }						///< Mark \e killedbycall seen
     bool seenSolid(void) const { return ((flags & (seen_solid0|seen_solid1))!=0); }	///< Has \e solid movement been seen
     bool seenKill(void) const { return ((flags & seen_kill)!=0); }			///< Has \e killedbycall been seen

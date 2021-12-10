@@ -44,7 +44,7 @@ class IfaceTerm : public IfaceStatus {
 public:
   IfaceTerm(const string &prmpt,istream &is,ostream &os);	///< Constructor
   virtual ~IfaceTerm(void);
-  virtual void pushScript(const string &filename,const string &newprompt);
+  virtual void pushScript(istream *iptr,const string &newprompt);
   virtual void popScript(void);
   virtual bool isStreamFinished(void) const;
 };

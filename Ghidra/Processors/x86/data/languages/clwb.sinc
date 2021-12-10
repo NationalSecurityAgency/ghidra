@@ -5,7 +5,7 @@ define pcodeop clwb;
 
 @ifdef IA64
 define pcodeop clflushopt;
-:CLFLUSHOPT m8      is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xAE; m8 & reg_opcode=7 ... {
+:CLFLUSHOPT m8      is $(LONGMODE_ON) & vexMode=0 & $(PRE_66) & byte=0x0F; byte=0xAE; m8 & reg_opcode=7 ... {
 	clflushopt(m8);
 }
 @endif

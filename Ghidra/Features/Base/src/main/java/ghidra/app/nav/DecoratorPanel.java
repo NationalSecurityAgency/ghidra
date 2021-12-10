@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +25,10 @@ public class DecoratorPanel extends JPanel {
 	public DecoratorPanel(JComponent component, boolean isConnected) {
 		setLayout(new BorderLayout());
 		add(component);
-		setConnnected( isConnected );
+		setConnected( isConnected );
 	}
 	
-	public void setConnnected( boolean isConnected ) {
+	public void setConnected( boolean isConnected ) {
 		if ( !isConnected ) {
 			setBorder( BorderFactory.createLineBorder( Color.ORANGE, 2 ) );
 		}

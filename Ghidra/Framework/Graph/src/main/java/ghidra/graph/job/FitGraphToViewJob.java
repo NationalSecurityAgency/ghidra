@@ -73,8 +73,12 @@ public class FitGraphToViewJob<V extends VisualVertex, E extends VisualEdge<V>>
 
 	@Override
 	public void execute(GraphJobListener listener) {
-		doExecute();
-		listener.jobFinished(this);
+		try {
+			doExecute();
+		}
+		finally {
+			listener.jobFinished(this);
+		}
 	}
 
 	private void doExecute() {

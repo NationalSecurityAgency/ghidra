@@ -72,14 +72,13 @@ public class StringUtilities {
 	public static final int UNICODE_REPLACEMENT = 0xFFFD;
 
 	/**
-	 * Unicode Byte Order Marks (BOM) characters are special characters in the Unicode 
-	 * character space that signal endian-ness of the text.
+	 * Unicode Byte Order Marks (BOM) characters are special characters in the Unicode character
+	 * space that signal endian-ness of the text.
 	 * <p>
-	 * The value for the BigEndian version (0xFEFF) works for both 16 and 32 bit
-	 * character values.
+	 * The value for the BigEndian version (0xFEFF) works for both 16 and 32 bit character values.
 	 * <p>
-	 * There are separate values for Little Endian Byte Order Marks for 16 and 32 bit
-	 * characters because the 32 bit value is shifted left by 16 bits. 
+	 * There are separate values for Little Endian Byte Order Marks for 16 and 32 bit characters
+	 * because the 32 bit value is shifted left by 16 bits.
 	 */
 	public static final int UNICODE_BE_BYTE_ORDER_MARK = 0xFEFF;
 	public static final int UNICODE_LE16_BYTE_ORDER_MARK = 0x0____FFFE;
@@ -93,9 +92,9 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if the given character is a special character.
-	 * For example a '\n' or '\\'.  A value of 0 is not considered special for this purpose
-	 * as it is handled separately because it has more varied use cases.
+	 * Returns true if the given character is a special character. For example a '\n' or '\\'. A
+	 * value of 0 is not considered special for this purpose as it is handled separately because it
+	 * has more varied use cases.
 	 *
 	 * @param c the character
 	 * @return true if the given character is a special character
@@ -105,9 +104,9 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if the given codePoint (ie. full unicode 32bit character) is a special character.
-	 * For example a '\n' or '\\'.  A value of 0 is not considered special for this purpose
-	 * as it is handled separately because it has more varied use cases.
+	 * Returns true if the given codePoint (ie. full unicode 32bit character) is a special
+	 * character. For example a '\n' or '\\'. A value of 0 is not considered special for this
+	 * purpose as it is handled separately because it has more varied use cases.
 	 *
 	 * @param codePoint the codePoint (ie. character), see {@link String#codePointAt(int)}
 	 * @return true if the given character is a special character
@@ -119,9 +118,9 @@ public class StringUtilities {
 
 	/**
 	 * Determines if a string is enclosed in double quotes (ASCII 34 (0x22))
+	 * 
 	 * @param str String to test for double-quote enclosure
-	 * @return True if the first and last characters are the double-quote character,
-	 * false otherwise
+	 * @return True if the first and last characters are the double-quote character, false otherwise
 	 */
 	public static boolean isDoubleQuoted(String str) {
 		Matcher m = DOUBLE_QUOTED_STRING_PATTERN.matcher(str);
@@ -129,11 +128,12 @@ public class StringUtilities {
 	}
 
 	/**
-	 * If the given string is enclosed in double quotes, extract the inner text.
-	 * Otherwise, return the given string unmodified.
+	 * If the given string is enclosed in double quotes, extract the inner text. Otherwise, return
+	 * the given string unmodified.
+	 * 
 	 * @param str String to match and extract from
 	 * @return The inner text of a doubly-quoted string, or the original string if not
-	 * double-quoted.
+	 *         double-quoted.
 	 */
 	public static String extractFromDoubleQuotes(String str) {
 		Matcher m = DOUBLE_QUOTED_STRING_PATTERN.matcher(str);
@@ -145,6 +145,7 @@ public class StringUtilities {
 
 	/**
 	 * Returns true if the character is in displayable character range
+	 * 
 	 * @param c the character
 	 * @return true if the character is in displayable character range
 	 */
@@ -176,9 +177,9 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Converts the character into a string.
-	 * If the character is special, it will actually render the character.
-	 * For example, given '\n' the output would be "\\n".
+	 * Converts the character into a string. If the character is special, it will actually render
+	 * the character. For example, given '\n' the output would be "\\n".
+	 * 
 	 * @param c the character to convert into a string
 	 * @return the converted character
 	 */
@@ -192,8 +193,9 @@ public class StringUtilities {
 
 	/**
 	 * Returns a count of how many times the 'occur' char appears in the strings.
+	 * 
 	 * @param string the string to look inside
-	 * @param occur  the character to look for/
+	 * @param occur the character to look for/
 	 * @return a count of how many times the 'occur' char appears in the strings
 	 */
 	public static int countOccurrences(String string, char occur) {
@@ -225,11 +227,11 @@ public class StringUtilities {
 	 * Generate a quoted string from US-ASCII character bytes assuming 1-byte chars.
 	 * <p>
 	 * Special characters and non-printable characters will be escaped using C character escape
-	 * conventions (e.g., \t, \n, \\uHHHH, etc.).  If a character size other than 1-byte is
-	 * required the alternate form of this method should be used.
+	 * conventions (e.g., \t, \n, \\uHHHH, etc.). If a character size other than 1-byte is required
+	 * the alternate form of this method should be used.
 	 * <p>
-	 * The result string will be single quoted (ie. "'") if the input byte array is
-	 * 1 byte long, otherwise the result will be double-quoted ('"').
+	 * The result string will be single quoted (ie. "'") if the input byte array is 1 byte long,
+	 * otherwise the result will be double-quoted ('"').
 	 *
 	 * @param bytes character string bytes
 	 * @return escaped string for display use
@@ -254,8 +256,8 @@ public class StringUtilities {
 	 * Special characters and non-printable characters will be escaped using C character escape
 	 * conventions (e.g., \t, \n, \\uHHHH, etc.).
 	 * <p>
-	 * The result string will be single quoted (ie. "'") if the input byte array is
-	 * 1 character long (ie. charSize), otherwise the result will be double-quoted ('"').
+	 * The result string will be single quoted (ie. "'") if the input byte array is 1 character long
+	 * (ie. charSize), otherwise the result will be double-quoted ('"').
 	 *
 	 * @param bytes array of bytes
 	 * @param charSize number of bytes per character (1, 2, 4).
@@ -317,8 +319,9 @@ public class StringUtilities {
 	 * Returns true if the given string starts with <code>prefix</code> ignoring case.
 	 * <p>
 	 * Note: This method is equivalent to calling:
+	 * 
 	 * <pre>
-	 * 	string.regionMatches( true, 0, prefix, 0, prefix.length() );
+	 * string.regionMatches(true, 0, prefix, 0, prefix.length());
 	 * </pre>
 	 *
 	 * @param string the string which may contain the prefix
@@ -336,9 +339,10 @@ public class StringUtilities {
 	 * Returns true if the given string ends with <code>postfix</code>, ignoring case.
 	 * <p>
 	 * Note: This method is equivalent to calling:
+	 * 
 	 * <pre>
-	 *  int startIndex = string.length() - postfix.length();
-	 * 	string.regionMatches( true, startOffset, postfix, 0, postfix.length() );
+	 * int startIndex = string.length() - postfix.length();
+	 * string.regionMatches(true, startOffset, postfix, 0, postfix.length());
 	 * </pre>
 	 *
 	 * @param string the string which may end with <code>postfix</code>
@@ -416,13 +420,14 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns the index of the first whole word occurrence of the search word within
-	 * the given text.  A whole word is defined as the character before and after the occurrence
-	 * must not be a JavaIdentifierPart.
+	 * Returns the index of the first whole word occurrence of the search word within the given
+	 * text. A whole word is defined as the character before and after the occurrence must not be a
+	 * JavaIdentifierPart.
+	 * 
 	 * @param text the text to be searched.
 	 * @param searchWord the word to search for.
-	 * @return the index of the first whole word occurrence of the search word within
-	 * the given text, or -1 if not found.
+	 * @return the index of the first whole word occurrence of the search word within the given
+	 *         text, or -1 if not found.
 	 */
 	public static int indexOfWord(String text, String searchWord) {
 		int index = 0;
@@ -440,14 +445,15 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if the substring within the text string starting at startIndex and having
-	 * the given length is a whole word. A whole word is defined as the character before and after
-	 * the occurrence must not be a JavaIdentifierPart.
+	 * Returns true if the substring within the text string starting at startIndex and having the
+	 * given length is a whole word. A whole word is defined as the character before and after the
+	 * occurrence must not be a JavaIdentifierPart.
+	 * 
 	 * @param text the text containing the potential word.
 	 * @param startIndex the start index of the potential word within the text.
 	 * @param length the length of the potential word
-	 * @return true if the substring within the text string starting at startIndex and having
-	 * the given length is a whole word.
+	 * @return true if the substring within the text string starting at startIndex and having the
+	 *         given length is a whole word.
 	 */
 	public static boolean isWholeWord(String text, int startIndex, int length) {
 		if (startIndex > 0) {
@@ -466,11 +472,9 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Convert tabs in the given string to spaces using
-	 * a default tab width of 8 spaces.
+	 * Convert tabs in the given string to spaces using a default tab width of 8 spaces.
 	 *
-	 * @param str
-	 *            string containing tabs
+	 * @param str string containing tabs
 	 * @return string that has spaces for tabs
 	 */
 	public static String convertTabsToSpaces(String str) {
@@ -480,10 +484,8 @@ public class StringUtilities {
 	/**
 	 * Convert tabs in the given string to spaces.
 	 *
-	 * @param str
-	 *            string containing tabs
-	 * @param tabSize
-	 *            length of the tab
+	 * @param str string containing tabs
+	 * @param tabSize length of the tab
 	 * @return string that has spaces for tabs
 	 */
 	public static String convertTabsToSpaces(String str, int tabSize) {
@@ -516,9 +518,8 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Parses a string containing multiple lines into an array where each
-	 * element in the array contains only a single line. The "\n" character is
-	 * used as the delimiter for lines.
+	 * Parses a string containing multiple lines into an array where each element in the array
+	 * contains only a single line. The "\n" character is used as the delimiter for lines.
 	 * <p>
 	 * This methods creates an empty string entry in the result array for initial and trailing
 	 * separator chars, as well as for consecutive separators.
@@ -532,13 +533,12 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Parses a string containing multiple lines into an array where each
-	 * element in the array contains only a single line. The "\n" character is
-	 * used as the delimiter for lines.
+	 * Parses a string containing multiple lines into an array where each element in the array
+	 * contains only a single line. The "\n" character is used as the delimiter for lines.
 	 *
 	 * @param s the string to parse
 	 * @param preserveTokens true signals to treat consecutive newlines as multiple lines; false
-	 *        signals to treat consecutive newlines as a single line break
+	 *            signals to treat consecutive newlines as a single line break
 	 * @return an array of lines; an empty array if the given value is null or empty
 	 */
 	public static String[] toLines(String s, boolean preserveTokens) {
@@ -557,8 +557,7 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Enforces the given length upon the given string by trimming and then padding as
-	 * necessary.
+	 * Enforces the given length upon the given string by trimming and then padding as necessary.
 	 *
 	 * @param s the String to fix
 	 * @param pad the pad character to use if padding is required
@@ -572,9 +571,9 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Pads the source string to the specified length, using the filler string
-	 * as the pad. If length is negative, left justifies the string, appending
-	 * the filler; if length is positive, right justifies the source string.
+	 * Pads the source string to the specified length, using the filler string as the pad. If length
+	 * is negative, left justifies the string, appending the filler; if length is positive, right
+	 * justifies the source string.
 	 *
 	 * @param source the original string to pad.
 	 * @param filler the type of characters with which to pad
@@ -610,8 +609,8 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Splits the given string into lines using <code>\n</code> and then pads each string
-	 * with the given pad string.  Finally, the updated lines are formed into a single string.
+	 * Splits the given string into lines using <code>\n</code> and then pads each string with the
+	 * given pad string. Finally, the updated lines are formed into a single string.
 	 * <p>
 	 * This is useful for constructing complicated <code>toString()</code> representations.
 	 *
@@ -636,13 +635,11 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Finds the word at the given index in the given string. For example, the
-	 * string "The tree is green" and the index of 5, the result would be
-	 * "tree".
+	 * Finds the word at the given index in the given string. For example, the string "The tree is
+	 * green" and the index of 5, the result would be "tree".
 	 *
 	 * @param s the string to search
-	 * @param index
-	 *            the index into the string to "seed" the word.
+	 * @param index the index into the string to "seed" the word.
 	 * @return String the word contained at the given index.
 	 */
 	public static String findWord(String s, int index) {
@@ -650,17 +647,16 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Finds the word at the given index in the given string; if the word
-	 * contains the given charToAllow, then allow it in the string. For example,
-	 * the string "The tree* is green" and the index of 5, charToAllow is '*',
-	 * then the result would be "tree*".
+	 * Finds the word at the given index in the given string; if the word contains the given
+	 * charToAllow, then allow it in the string. For example, the string "The tree* is green" and
+	 * the index of 5, charToAllow is '*', then the result would be "tree*".
 	 * <p>
 	 * If the search yields only whitespace, then the empty string will be returned.
 	 *
 	 * @param s the string to search
 	 * @param index the index into the string to "seed" the word.
-	 * @param charsToAllow chars that normally would be considered invalid, e.g., '*' so
-	 *        that the word can be returned with the charToAllow
+	 * @param charsToAllow chars that normally would be considered invalid, e.g., '*' so that the
+	 *            word can be returned with the charToAllow
 	 * @return String the word contained at the given index.
 	 */
 	public static String findWord(String s, int index, char[] charsToAllow) {
@@ -706,8 +702,8 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Loosely defined as a character that we would expected to be an normal ascii content meant
-	 * for consumption by a human.  Also, provided allows chars will pass the test.
+	 * Loosely defined as a character that we would expected to be an normal ascii content meant for
+	 * consumption by a human. Also, provided allows chars will pass the test.
 	 *
 	 * @param c the char to check
 	 * @param charsToAllow characters that will cause this method to return true
@@ -730,8 +726,7 @@ public class StringUtilities {
 	/**
 	 * Finds the starting position of the last word in the given string.
 	 *
-	 * @param s
-	 *            the string to search
+	 * @param s the string to search
 	 * @return int the starting position of the last word, -1 if not found
 	 */
 	public static int findLastWordPosition(String s) {
@@ -752,13 +747,14 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Takes a path-like string and retrieves the last non-empty item.  Examples:
+	 * Takes a path-like string and retrieves the last non-empty item. Examples:
 	 * <ul>
-	 * 		<li>StringUtilities.getLastWord("/This/is/my/last/word/", "/") returns word</li>
-	 * 		<li>StringUtilities.getLastWord("/This/is/my/last/word/", "/") returns word</li>
-	 * 		<li>StringUtilities.getLastWord("This.is.my.last.word", ".") returns word</li>
-	 * 		<li>StringUtilities.getLastWord("/This/is/my/last/word/MyFile.java", ".") returns java</li>
-	 * 		<li>StringUtilities.getLastWord("/This/is/my/last/word/MyFile.java", "/") returns MyFile.java</li>
+	 * <li>StringUtilities.getLastWord("/This/is/my/last/word/", "/") returns word</li>
+	 * <li>StringUtilities.getLastWord("/This/is/my/last/word/", "/") returns word</li>
+	 * <li>StringUtilities.getLastWord("This.is.my.last.word", ".") returns word</li>
+	 * <li>StringUtilities.getLastWord("/This/is/my/last/word/MyFile.java", ".") returns java</li>
+	 * <li>StringUtilities.getLastWord("/This/is/my/last/word/MyFile.java", "/") returns
+	 * MyFile.java</li>
 	 * </ul>
 	 *
 	 * @param s the string from which to get the last word
@@ -778,9 +774,9 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Converts an integer into a string.
-	 * For example, given an integer 0x41424344,
-	 * the returned string would be "ABCD".
+	 * Converts an integer into a string. For example, given an integer 0x41424344, the returned
+	 * string would be "ABCD".
+	 * 
 	 * @param value the integer value
 	 * @return the converted string
 	 */
@@ -796,10 +792,12 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Creates a JSON string for the given object using all of its fields.  To control the
-	 * fields that are in the result string, see {@link Json}.
+	 * Creates a JSON string for the given object using all of its fields. To control the fields
+	 * that are in the result string, see {@link Json}.
 	 * 
-	 * <P>This is here as a marker to point users to the real {@link Json} String utility.  
+	 * <P>
+	 * This is here as a marker to point users to the real {@link Json} String utility.
+	 * 
 	 * @param o the object for which to create a string
 	 * @return the string
 	 */
@@ -818,12 +816,11 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Merge two strings into one.
-	 * If one string contains the other, then the largest is returned.
-	 * If both strings are null then null is returned.
-	 * If both strings are empty, the empty string is returned.
-	 * If the original two strings differ, this adds the second string
-	 * to the first separated by a newline.
+	 * Merge two strings into one. If one string contains the other, then the largest is returned.
+	 * If both strings are null then null is returned. If both strings are empty, the empty string
+	 * is returned. If the original two strings differ, this adds the second string to the first
+	 * separated by a newline.
+	 * 
 	 * @param string1 the first string
 	 * @param string2 the second string
 	 * @return the merged string
@@ -859,12 +856,13 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Limits the given string to the given <code>max</code> number of characters.  If the string is
+	 * Limits the given string to the given <code>max</code> number of characters. If the string is
 	 * larger than the given length, then it will be trimmed to fit that length <b>after adding
 	 * ellipses</b>
 	 *
-	 * <p>The given <code>max</code> value must be at least 4.  This is to ensure that, at a
-	 * minimum, we can display the {@value #ELLIPSES} plus one character.
+	 * <p>
+	 * The given <code>max</code> value must be at least 4. This is to ensure that, at a minimum, we
+	 * can display the {@value #ELLIPSES} plus one character.
 	 *
 	 * @param original The string to be limited
 	 * @param max The maximum number of characters to display (including ellipses, if trimmed).
@@ -892,15 +890,16 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Trims the given string the <code>max</code> number of characters.  Ellipses will be
-	 * added to signal that content was removed.  Thus, the actual number of removed characters
-	 * will be <code>(s.length() - max) + {@value StringUtilities#ELLIPSES}</code> length.
+	 * Trims the given string the <code>max</code> number of characters. Ellipses will be added to
+	 * signal that content was removed. Thus, the actual number of removed characters will be
+	 * <code>(s.length() - max) + {@value StringUtilities#ELLIPSES}</code> length.
 	 *
-	 * <p>If the string fits within the max, then the string will be returned.
+	 * <p>
+	 * If the string fits within the max, then the string will be returned.
 	 *
-	 * <p>The given <code>max</code> value must be at least 5.  This is to ensure that, at a
-	 * minimum, we can display the {@value #ELLIPSES} plus one character from the front and
-	 * back of the string.
+	 * <p>
+	 * The given <code>max</code> value must be at least 5. This is to ensure that, at a minimum, we
+	 * can display the {@value #ELLIPSES} plus one character from the front and back of the string.
 	 *
 	 * @param s the string to trim
 	 * @param max the max number of characters to allow.
@@ -936,15 +935,13 @@ public class StringUtilities {
 	}
 
 	/**
-	 * This method looks for all occurrences of successive asterisks (i.e.,
-	 * "**") and replace with a single asterisk, which is an equivalent usage in
-	 * Ghidra. This is necessary due to some symbol names which cause the
-	 * pattern matching process to become unusable. An example string that
+	 * This method looks for all occurrences of successive asterisks (i.e., "**") and replace with a
+	 * single asterisk, which is an equivalent usage in Ghidra. This is necessary due to some symbol
+	 * names which cause the pattern matching process to become unusable. An example string that
 	 * causes this problem is
 	 * "s_CLSID\{ADB880A6-D8FF-11CF-9377-00AA003B7A11}\InprocServer3_01001400".
 	 *
-	 * @param value
-	 *            The string to be checked.
+	 * @param value The string to be checked.
 	 * @return The updated string.
 	 */
 	public static String fixMultipleAsterisks(String value) {
@@ -959,8 +956,8 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if the character is OK to be contained inside C language string. That
-	 * is, the string should not be tokenized on this char.
+	 * Returns true if the character is OK to be contained inside C language string. That is, the
+	 * string should not be tokenized on this char.
 	 *
 	 * @param c the char
 	 * @return boolean true if it is allows in a C string
@@ -990,13 +987,13 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Replaces escaped characters in a string to corresponding control characters.  For example
-	 * a string containing a backslash character followed by a 'n' character would be replaced
-	 * with a single line feed (0x0a) character.  One use for this is to to allow users to
-	 * type strings in a text field and include control characters such as line feeds and tabs.
+	 * Replaces escaped characters in a string to corresponding control characters. For example a
+	 * string containing a backslash character followed by a 'n' character would be replaced with a
+	 * single line feed (0x0a) character. One use for this is to to allow users to type strings in a
+	 * text field and include control characters such as line feeds and tabs.
 	 *
-	 * The string that contains 'a','b','c', '\', 'n', 'd', '\', 'u', '0', '0', '0', '1', 'e'  would become
-	 *   'a','b','c',0x0a,'d', 0x01, e"
+	 * The string that contains 'a','b','c', '\', 'n', 'd', '\', 'u', '0', '0', '0', '1', 'e' would
+	 * become 'a','b','c',0x0a,'d', 0x01, e"
 	 *
 	 * @param str The string to convert escape sequences to control characters.
 	 * @return a new string with escape sequences converted to control characters.
@@ -1033,8 +1030,8 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Attempt to handle character escape sequence.  Note that only a single Java character
-	 * will be produced which limits the range of valid character value.
+	 * Attempt to handle character escape sequence. Note that only a single Java character will be
+	 * produced which limits the range of valid character value.
 	 *
 	 * @param string string containing escape sequences
 	 * @param escapeSequence escape sequence (e.g., "\\u")
@@ -1042,8 +1039,7 @@ public class StringUtilities {
 	 * @param index current position within string
 	 * @param builder the builder into which the results will be added
 	 *
-	 * @return true if escape sequence processed and added a single character
-	 * to the builder.
+	 * @return true if escape sequence processed and added a single character to the builder.
 	 */
 	private static boolean handleEscapeSequence(String string, String escapeSequence, int hexLength,
 			int index, StringBuilder builder) {
@@ -1068,13 +1064,13 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Replaces known control characters in a string to corresponding escape sequences.  For example
-	 * a string containing a line feed character would be converted to backslash character
-	 * followed by an 'n' character.  One use for this is to display strings in a manner to
-	 * easily see the embedded control characters.
+	 * Replaces known control characters in a string to corresponding escape sequences. For example
+	 * a string containing a line feed character would be converted to backslash character followed
+	 * by an 'n' character. One use for this is to display strings in a manner to easily see the
+	 * embedded control characters.
 	 *
-	 * The string that contains 'a','b','c',0x0a,'d', 0x01, 'e'  would become
-	 * 'a','b','c', '\', 'n', 'd', 0x01, 'e'
+	 * The string that contains 'a','b','c',0x0a,'d', 0x01, 'e' would become 'a','b','c', '\', 'n',
+	 * 'd', 0x01, 'e'
 	 *
 	 * @param str The string to convert control characters to escape sequences
 	 * @return a new string with all the control characters converted to escape sequences.
@@ -1097,14 +1093,13 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Maps known control characters to corresponding escape sequences.  For example
-	 * a line feed character would be converted to backslash '\\' character
-	 * followed by an 'n' character.  One use for this is to display strings in a manner to
-	 * easily see the embedded control characters.
+	 * Maps known control characters to corresponding escape sequences. For example a line feed
+	 * character would be converted to backslash '\\' character followed by an 'n' character. One
+	 * use for this is to display strings in a manner to easily see the embedded control characters.
 	 *
 	 * @param codePoint The character to convert to escape sequence string
-	 * @return a new string with equivalent to escape sequence, or original character (as
-	 * a string) if not in the control character mapping.
+	 * @return a new string with equivalent to escape sequence, or original character (as a string)
+	 *         if not in the control character mapping.
 	 */
 	public static String convertCodePointToEscapeSequence(int codePoint) {
 		int charCount = Character.charCount(codePoint);
@@ -1113,5 +1108,103 @@ public class StringUtilities {
 			return escaped;
 		}
 		return new String(new int[] { codePoint }, 0, 1);
+	}
+
+	/**
+	 * About the worst way to wrap lines ever
+	 */
+	public static class LineWrapper {
+		enum Mode {
+			INIT, WORD, SPACE;
+		}
+
+		private final int width;
+		private StringBuffer result = new StringBuffer();
+		private int len = 0;
+
+		public LineWrapper(int width) {
+			this.width = width;
+		}
+
+		public LineWrapper append(CharSequence cs) {
+			Mode mode = Mode.INIT;
+			int b = 0;
+			for (int f = 0; f < cs.length(); f++) {
+				char c = cs.charAt(f);
+				if (c == '\n') {
+					if (mode == Mode.SPACE) {
+						appendSpace(cs.subSequence(b, f));
+					}
+					else if (mode == Mode.WORD) {
+						appendWord(cs.subSequence(b, f));
+					}
+					mode = Mode.INIT;
+					appendLinesep();
+					b = f + 1;
+				}
+				else if (Character.isWhitespace(c)) {
+					if (mode == Mode.WORD) {
+						appendWord(cs.subSequence(b, f));
+						b = f;
+					}
+					mode = Mode.SPACE;
+				}
+				else {
+					if (mode == Mode.SPACE) {
+						appendSpace(cs.subSequence(b, f));
+						b = f;
+					}
+					mode = Mode.WORD;
+				}
+			}
+			if (mode == Mode.WORD) {
+				appendWord(cs.subSequence(b, cs.length()));
+			}
+			else if (mode == Mode.SPACE) {
+				appendSpace(cs.subSequence(b, cs.length()));
+			}
+			return this;
+		}
+
+		private void appendWord(CharSequence word) {
+			len += word.length();
+			result.append(word);
+		}
+
+		private void appendSpace(CharSequence space) {
+			if (len > width) {
+				appendLinesep();
+				len += space.length() - 1;
+				result.append(space.subSequence(1, space.length()));
+			}
+			else {
+				len += space.length();
+				result.append(space);
+			}
+		}
+
+		private void appendLinesep() {
+			result.append("\n");
+			len = 0;
+		}
+
+		public String finish() {
+			return result.toString();
+		}
+	}
+
+	/**
+	 * Wrap the given string at whitespace to best fit within the given line width
+	 * 
+	 * <p>
+	 * If it is not possible to fit a word in the given width, it will be put on a line by itself,
+	 * and that line will be allowed to exceed the given width.
+	 * 
+	 * @param str the string to wrap
+	 * @param width the max width of each line, unless a single word exceeds it
+	 * @return
+	 */
+	public static String wrapToWidth(String str, int width) {
+		return new LineWrapper(width).append(str).finish();
 	}
 }

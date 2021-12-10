@@ -15,16 +15,18 @@
  */
 package ghidra.file.formats.omf;
 
+import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.omf.OmfFileHeader;
 import ghidra.app.util.bin.format.omf.OmfLibraryRecord;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
-import ghidra.util.exception.CancelledException;
+import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.task.TaskMonitor;
 
 @FileSystemInfo(type = "omf", description = "OMF Archive", factory = OmfArchiveFileSystemFactory.class)
@@ -95,13 +97,6 @@ public class OmfArchiveFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public InputStream getInputStream(GFile file, TaskMonitor monitor)
-			throws IOException, CancelledException {
-
-		ByteProvider bp = getByteProvider(file, monitor);
-		return bp != null ? bp.getInputStream(0) : null;
-	}
-
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) {
 		OmfLibraryRecord.MemberHeader member = fsih.getMetadata(file);
 		return (member != null)
@@ -116,16 +111,15 @@ public class OmfArchiveFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		OmfLibraryRecord.MemberHeader entry = fsih.getMetadata(file);
-		return (entry == null) ? null : FSUtilities.infoMapToString(getInfoMap(entry));
-	}
+	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
+		FileAttributes result = new FileAttributes();
 
-	public Map<String, String> getInfoMap(OmfLibraryRecord.MemberHeader member) {
-		Map<String, String> info = new LinkedHashMap<>();
-		info.put("Name", member.name);
-		info.put("Size", "" + Long.toString(member.size) + ", 0x" + Long.toHexString(member.size));
-		return info;
+		OmfLibraryRecord.MemberHeader entry = fsih.getMetadata(file);
+		if (entry != null) {
+			result.add(NAME_ATTR, entry.name);
+			result.add(SIZE_ATTR, entry.size);
+		}
+		return result;
 	}
 
 }

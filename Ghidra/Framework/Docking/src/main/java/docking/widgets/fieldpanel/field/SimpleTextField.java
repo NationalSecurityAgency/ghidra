@@ -110,10 +110,15 @@ public class SimpleTextField implements Field {
 		return startX;
 	}
 
+	@Override
+	public int getNumDataRows() {
+		return 1;
+	}
+
 	/**
-	 * 
-	 * @see docking.widgets.fieldpanel.field.Field#getNumRows()
-	 */
+	* 
+	* @see docking.widgets.fieldpanel.field.Field#getNumRows()
+	*/
 	@Override
 	public int getNumRows() {
 		return 1;
@@ -199,7 +204,8 @@ public class SimpleTextField implements Field {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc,
+			int rowHeight) {
 		paintSelection(g, colorManager, 0);
 		paintHighlights(g, hlFactory.getHighlights(this, text, -1));
 		g.setFont(metrics.getFont());

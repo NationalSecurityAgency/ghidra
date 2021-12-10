@@ -15,19 +15,19 @@
  */
 package ghidra.file.formats.sevenzip;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.recognizer.*;
 import ghidra.formats.gfilesystem.*;
-import ghidra.formats.gfilesystem.factory.GFileSystemFactoryWithFile;
+import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class SevenZipFileSystemFactory
-		implements GFileSystemFactoryWithFile<SevenZipFileSystem>, GFileSystemProbeBytesOnly {
+		implements GFileSystemFactoryByteProvider<SevenZipFileSystem>, GFileSystemProbeBytesOnly {
 
 	private List<Recognizer> recognizers = List.of(new SevenZipRecognizer(), new XZRecognizer(),
 		new Bzip2Recognizer(), new MSWIMRecognizer(), new ArjRecognizer(), new CabarcRecognizer(),
@@ -62,13 +62,13 @@ public class SevenZipFileSystemFactory
 	}
 
 	@Override
-	public SevenZipFileSystem create(FSRL containerFSRL, FSRLRoot targetFSRL, File containerFile,
+	public SevenZipFileSystem create(FSRLRoot targetFSRL, ByteProvider byteProvider,
 			FileSystemService fsService, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		SevenZipFileSystem fs = new SevenZipFileSystem(targetFSRL);
+		SevenZipFileSystem fs = new SevenZipFileSystem(targetFSRL, fsService);
 		try {
-			fs.mount(containerFile, monitor);
+			fs.mount(byteProvider, monitor);
 			return fs;
 		}
 		catch (IOException ioe) {

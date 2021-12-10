@@ -296,6 +296,14 @@
     <ref name="addr_tags_type"/>
   </define>
 
+  <define name="pentry_group_type">
+    <oneOrMore>
+      <element name="pentry">
+      	<ref name="pentry_type"/>
+      </element>
+    </oneOrMore>
+  </define>
+
   <define name="rangelist_type">
     <oneOrMore>
       <ref name="range_type"/>
@@ -359,11 +367,19 @@
         <optional> <attribute name="pointermax"/> </optional>
         <optional> <attribute name="thisbeforeretpointer"/> </optional>
         <optional> <attribute name="killedbycall"/> </optional>
-        <zeroOrMore>
-          <element name="pentry">
-            <ref name="pentry_type"/>
-          </element>
-        </zeroOrMore>
+        <optional> <attribute name="separatefloat"/> </optional>
+        <interleave>
+          <zeroOrMore>
+            <element name="pentry">
+              <ref name="pentry_type"/>
+            </element>
+          </zeroOrMore>
+          <zeroOrMore>
+            <element name="group">
+              <ref name="pentry_group_type"/>
+            </element>
+          </zeroOrMore>
+        </interleave>
       </element>
 
       <element name="output">

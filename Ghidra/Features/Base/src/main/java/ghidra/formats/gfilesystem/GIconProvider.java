@@ -15,17 +15,17 @@
  */
 package ghidra.formats.gfilesystem;
 
-import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-
 import java.awt.Image;
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * {@link GFileSystem} add-on interface to allow filesystems to override how image files
@@ -61,9 +61,8 @@ public interface GIconProvider {
 				return ((GIconProvider) fs).getIcon(file, monitor);
 			}
 
-			File data = FileSystemService.getInstance().getFile(file.getFSRL(), monitor);
-			try {
-				Image image = ImageIO.read(data);
+			try (InputStream is = file.getFilesystem().getInputStream(file, monitor)) {
+				Image image = ImageIO.read(is);
 				if (image == null) {
 					return null;
 				}

@@ -191,7 +191,7 @@ public class PdbPlugin extends Plugin {
 	public static File findPdb(Program program, Set<FindOption> findOptions, TaskMonitor monitor) {
 
 		try {
-			SymbolFileInfo symbolFileInfo = SymbolFileInfo.fromMetadata(program.getMetadata());
+			SymbolFileInfo symbolFileInfo = SymbolFileInfo.fromProgramInfo(program);
 			if (symbolFileInfo == null) {
 				return null;
 			}

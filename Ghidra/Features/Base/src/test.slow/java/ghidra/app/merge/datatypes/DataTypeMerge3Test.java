@@ -1097,7 +1097,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 					Structure s1 =
 						(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 							"Structure_1");
-					s1.setFlexibleArrayComponent(td, null, null);
+					s1.add(new ArrayDataType(td, 0, -1), 0, null, null);
 				}
 				finally {
 					program.endTransaction(transactionID, true);
@@ -1112,7 +1112,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 					Structure s1 =
 						(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 							"Structure_1");
-					s1.setFlexibleArrayComponent(IntegerDataType.dataType, "flex1", "cmt1");
+					s1.add(new ArrayDataType(IntegerDataType.dataType, 0, -1), "flex1", "cmt1");
 				}
 				finally {
 					program.endTransaction(transactionID, true);
@@ -1134,11 +1134,15 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
 		assertNotNull(s1);
 		DataTypeComponent[] dtcs = s1.getComponents();
-		assertEquals(4, dtcs.length);
+		assertEquals(5, dtcs.length);
 
-		DataTypeComponent flexDtc = s1.getFlexibleArrayComponent();
-		assertNotNull(flexDtc);
-		assertTrue(IntegerDataType.class == flexDtc.getDataType().getClass());
+		DataTypeComponent flexDtc = s1.getComponent(4);
+		assertEquals(0, flexDtc.getLength());
+		DataType dt = flexDtc.getDataType();
+		assertTrue(dt instanceof Array);
+		Array a = (Array) dt;
+		assertEquals(0, a.getNumElements());
+		assertTrue(a.getDataType() instanceof IntegerDataType);
 		assertEquals("flex1", flexDtc.getFieldName());
 		assertEquals("cmt1", flexDtc.getComment());
 	}
@@ -1159,7 +1163,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 					Structure s1 =
 						(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 							"Structure_1");
-					s1.setFlexibleArrayComponent(IntegerDataType.dataType, null, null);
+					s1.add(new ArrayDataType(IntegerDataType.dataType, 0, -1), 0, null, null);
 				}
 				finally {
 					program.endTransaction(transactionID, true);
@@ -1174,7 +1178,9 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 					Structure s1 =
 						(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 							"Structure_1");
-					s1.setFlexibleArrayComponent(td, "flex1", "cmt1");
+					// last component is flex array to be replaced
+					s1.replace(s1.getNumComponents() - 1, new ArrayDataType(td, 0, -1), 0, "flex1",
+						"cmt1");
 				}
 				finally {
 					program.endTransaction(transactionID, true);
@@ -1189,9 +1195,9 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 					Structure s1 =
 						(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
 							"Structure_1");
+					s1.deleteAtOffset(s1.getLength());
 					s1.insertBitFieldAt(3, 2, 6, td, 2, "bf1", "my bf1");
 					s1.insertBitFieldAt(3, 2, 4, td, 2, "bf2", "my bf2");
-					s1.clearFlexibleArrayComponent();
 				}
 				catch (InvalidDataTypeException e) {
 					e.printStackTrace();
@@ -1217,8 +1223,9 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
 		assertNotNull(s1);
 
-		DataTypeComponent flexDtc = s1.getFlexibleArrayComponent();
-		assertNull(flexDtc);
+		for (DataTypeComponent dtc : s1.getComponents()) {
+			assertNotEquals(0, dtc.getLength());
+		}
 
 		DataTypeComponent[] dtcs = s1.getComponents();
 		assertEquals(7, dtcs.length);
@@ -1260,8 +1267,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				int transactionID = program.startTransaction("test");
 				try {
 					Structure s = (Structure) dtm.getDataType("/Category5/Test");
-					DataType dt = dtm.getDataType("/MISC/FooTypedef");
-					s.setFlexibleArrayComponent(dt, "foo", "");
+					DataType td = dtm.getDataType("/MISC/FooTypedef");
+					s.replaceAtOffset(s.getLength(), new ArrayDataType(td, 0, -1), 0, "foo", null);
 					commit = true;
 				}
 				finally {
@@ -1310,8 +1317,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 					struct.insertBitFieldAt(3, 2, 4, td, 2, "bf2", null);
 					struct.add(new WordDataType());
 					struct.add(new QWordDataType());
-
-					struct.setFlexibleArrayComponent(td, "flex", "my flex");
+					struct.add(new ArrayDataType(td, 0, -1), 0, "flex", "my flex");
 
 					dtm.addDataType(struct, null);
 					commit = true;

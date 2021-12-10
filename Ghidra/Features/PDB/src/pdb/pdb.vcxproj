@@ -44,7 +44,7 @@
     <ReferencePath>$(VCInstallDir)lib\amd64;</ReferencePath>
     <SourcePath />
     <ExcludePath>$(VCInstallDir)include;$(VCInstallDir)lib\amd64</ExcludePath>
-    <OutDir>$(SolutionDir)..\..\build\os\win64\</OutDir>
+    <OutDir>$(SolutionDir)..\..\build\os\win_x86_64\</OutDir>
     <IntDir>$(SolutionDir)..\..\build\tmp\pdb\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -53,7 +53,7 @@
     <ReferencePath>$(VCInstallDir)lib\amd64</ReferencePath>
     <SourcePath />
     <ExcludePath>$(VCInstallDir)include;$(WindowsSDK_IncludePath);$(MSBuildToolsPath);$(MSBuildToolsPath32);$(VCInstallDir)lib\amd64;</ExcludePath>
-    <OutDir>$(SolutionDir)..\..\build\os\win64\</OutDir>
+    <OutDir>$(SolutionDir)..\..\build\os\win_x86_64\</OutDir>
     <IntDir>$(SolutionDir)..\..\build\tmp\pdb\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -73,12 +73,6 @@
     <PostBuildEvent>
       <Command>
 rem copy /y /v /b "$(VSInstallDir)DIA SDK\bin\amd64\msdia*.dll" "$(OutDir)"
-set OS_DIR=$(SolutionDir)..\..\os
-if exist "%OS_DIR%\win64" (
-   mkdir "%OS_DIR%"
-   mkdir "%OS_DIR%\win64"
-   xcopy /Y /S "$(OutDir)" "%OS_DIR%"
-)
   </Command>
     </PostBuildEvent>
     <PreLinkEvent>
@@ -106,12 +100,6 @@ if exist "%OS_DIR%\win64" (
     <PostBuildEvent>
       <Command>
 rem copy /y /v /b "$(VSInstallDir)DIA SDK\bin\amd64\msdia*.dll" "$(OutDir)"
-set OS_DIR=$(SolutionDir)..\..\os
-if exist "%OS_DIR%\win64" (
-   mkdir "%OS_DIR%"
-   mkdir "%OS_DIR%\win64"
-   xcopy /Y /S "$(OutDir)" "%OS_DIR%"
-)
   </Command>
     </PostBuildEvent>
     <PreLinkEvent>

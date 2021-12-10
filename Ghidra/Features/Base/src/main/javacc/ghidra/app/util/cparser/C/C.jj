@@ -587,6 +587,16 @@ public class CParser {
 		return null;
     }
 
+    Object computeTernaryValue(Object objTest, Object objTrue, Object objFalse) {
+		if (!(objTest instanceof Long)) {
+			return null;
+		}
+
+		Long testValue = (Long) objTest;
+		return (testValue != 0 ? objTrue : objFalse);
+    }
+    
+
     /**
      * Get the data type manager
      * 
@@ -984,9 +994,9 @@ TOKEN :
 	|
 	<GOTO : "goto"> 
 	|
-	<NEAR : "near"> 
+	<NEAR : "__near"> 
 	|
-	<FAR : "far"> 
+	<FAR : "__far"> 
 	|
 	<FOR : "for"> 
 	|
@@ -2002,7 +2012,7 @@ Declaration DirectDeclarator(Declaration dt, DataType container) : {
 {
 	(
 		(
-			t= <IDENTIFIER>		{ dec= new Declaration(dt, t.image); }
+		  t= <IDENTIFIER>		{ dec= new Declaration(dt, t.image); }
 			//****** working here Looks like should define a function here.
 			//       if the data type in dec is a pointer, it should be a pointer.
 			//       The function should be set locally so the param list can be applied.
@@ -2036,14 +2046,7 @@ Declaration DirectDeclarator(Declaration dt, DataType container) : {
                 for (Iterator iterator = list.iterator(); iterator.hasNext();) {
                     Integer iSize = (Integer) iterator.next();
                     DataType decDt = dec.getDataType();
-                    if (iSize == 0 && container != null) {
-                    	    dec.setFlexArray(true);
-                    	    break;
-                    } else if (iSize == 0) {
-                        dec.setDataType(dtMgr.getPointer(decDt));
-                    } else {
-                        dec.setDataType(new ArrayDataType(decDt, iSize, decDt.getLength()));
-                    }
+                    dec.setDataType(new ArrayDataType(decDt, iSize, decDt.getLength()));
                 }
                 //System.out.println("Array expr: for " + dec.getName() + " make an array " + dt.getName() + "["+size+"]");
 			}
@@ -2364,7 +2367,8 @@ void CompoundStatement() : {}
 
 void StatementList() : {}
 {
-	( Statement() )+
+	( LineDef() |
+	  Statement() )+
 }
 
 
@@ -2376,10 +2380,6 @@ void AsmStatement() :
   (
     <ASM> [TypeQualifier(dec)]
     (
-//      ("(" AsmLine() ")" )
-//    |
-//      ("{" AsmLine() "}" )
-//    |
       ( AsmLine() )
     )
   )
@@ -2390,29 +2390,8 @@ void AsmLine() :
 	Declaration dec = new Declaration();
 }
 {
-  (<IDENTIFIER> | <STRING_LITERAL> | <INTEGER_LITERAL> | <ATTRIBUTE> | BuiltInTypeSpecifier(dec) | "#" | "+" | "-" | "," | ":" | ("[" AsmLine() "]") | ( "(" AsmLine() ")" ) | ( "{" AsmLine() "}" ) )+
+  (<IDENTIFIER> | <STRING_LITERAL> | <INTEGER_LITERAL> | <ATTRIBUTE> | BuiltInTypeSpecifier(dec) | "#" | "+" | "-" | "," | ":" | "*" | ("[" AsmLine() "]") | ( "(" AsmLine() ")" ) | ( "{" AsmLine() "}" ) )+
 }
-
-
-//void AsmStatement() : {}
-//{
-//	( <ASM> (
-//	    ( "{" SubAsm() "}" )
-//	    |
-//	    ( "(" SubAsm() ")" )
-//	    |
-//	    ( <IDENTIFIER> | "," | "[" | "]" | "(" | ")" | "%" | <INTEGER_LITERAL> | <CHARACTER_LITERAL> )+ ("\r" | "\n)+
-//	  )
-//	)
-//}
-
-//void SubAsm() : {}
-//{
-//    ( "(" SubAsm() ")" ) |
-//    ( <IDENTIFIER> | "," | "[" | "]" | "%" | <INTEGER_LITERAL> | <CHARACTER_LITERAL> )+
-//         ( [ "(" SubAsm() ")" ] [ SubAsm() ] ) 
-//    )
-//}
 
 
 void SelectionStatement() : {}
@@ -2476,9 +2455,10 @@ void AssignmentOperator() : {}
 
 Object ConditionalExpression() : {
     Object obj = null;
+    Object objTrue = null, objFalse = null;
 }
 {
-	obj = LogicalORExpression() [ "?" Expression() ":" ConditionalExpression() { obj=null; } ]
+	obj = LogicalORExpression() [ "?" objTrue=Expression() ":" objFalse=ConditionalExpression() { obj = computeTernaryValue(obj, objTrue, objFalse); } ]
 	{
 		return obj;
     }
@@ -2616,7 +2596,7 @@ Object CastExpression() : {
 	(
 		LOOKAHEAD("(" TypeName() ")")
 		(
-		   "(" TypeName() ")" ( CastExpression() |
+		   "(" TypeName() ")" ( obj = CastExpression() |
 		   		( "{" InitializerList() [ "," ] "}" ) )
 		)
 		|
@@ -2653,13 +2633,12 @@ Object UnaryExpression() : {
 		| 
 		<SIZEOF> 
 		(
-			LOOKAHEAD(UnaryExpression() )
-			UnaryExpression() 
-			|
-			"(" dt = TypeName() ")"
+			"(" (dt = TypeName() | <IDENTIFIER> | obj = ConstantExpression() ) ")"
 			{
 			    if (dt != null) {
-			        obj = new Integer(dt.getLength());
+			        obj = Long.valueOf(dt.getLength());
+			    } else if (obj != null && obj instanceof String) {
+			        obj = Long.valueOf(((String) obj).length() - 1); // will include "" plus \0
 			    }
 			}
 		)
@@ -2710,7 +2689,7 @@ Object PrimaryExpression() : {
     Object obj = null;
 }
 {
-	( <IDENTIFIER> |
+	( obj = <IDENTIFIER> |
 	  obj = Constant() |
 	  "(" obj = Expression() ")" )
 	{
@@ -2749,11 +2728,11 @@ Object Constant() : {
             }
             if (sval.startsWith("0x") || sval.startsWith("0X")) {
             	BigInteger bigConst = new BigInteger(sval.substring(2), 16);       	
-                obj = new Long(bigConst.longValue());
+                obj = Long.valueOf(bigConst.longValue());
             }
             else {
             	BigInteger bigConst = new BigInteger(sval);       	
-                obj = new Long(bigConst.longValue());
+                obj = Long.valueOf(bigConst.longValue());
             }
 		}
 		|
@@ -2768,7 +2747,7 @@ Object Constant() : {
               obj = new Character(t.image.charAt(0));
             } else if (t.image.length() == 4) {
               long cval = ((long)t.image.charAt(0) << 24) + ((long)t.image.charAt(1) << 16) + ((long)t.image.charAt(2) << 8) + ((long) t.image.charAt(3));
-              obj = new Long(cval);
+              obj = Long.valueOf(cval);
             }
 	    }
 		|

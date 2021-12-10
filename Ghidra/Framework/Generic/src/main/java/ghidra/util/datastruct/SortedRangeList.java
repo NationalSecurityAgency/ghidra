@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +29,7 @@ public class SortedRangeList implements Iterable<Range> {
 	 * Creates a new empty sorted range list.
 	 */
 	public SortedRangeList() {
-		set = new TreeSet<Range>();
+		set = new TreeSet<>();
 	}
 
 	/**
@@ -39,7 +38,7 @@ public class SortedRangeList implements Iterable<Range> {
 	 * @param list the sorted range list to make an equivalent copy of.
 	 */
 	public SortedRangeList(SortedRangeList list) {
-		set = new TreeSet<Range>();
+		set = new TreeSet<>();
 		Iterator<Range> it = list.set.iterator();
 		while (it.hasNext()) {
 			Range r = it.next();
@@ -98,7 +97,7 @@ public class SortedRangeList implements Iterable<Range> {
 			return set.iterator();
 		}
 		Iterator<Range> it = set.iterator();
-		LinkedList<Range> ll = new LinkedList<Range>();
+		LinkedList<Range> ll = new LinkedList<>();
 		while (it.hasNext()) {
 			ll.addFirst(it.next());
 		}
@@ -361,5 +360,9 @@ public class SortedRangeList implements Iterable<Range> {
 	@Override
 	public Iterator<Range> iterator() {
 		return getRanges(true);
+	}
+
+	public void clear() {
+		set.clear();
 	}
 }

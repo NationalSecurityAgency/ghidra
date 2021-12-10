@@ -22,7 +22,7 @@ import db.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.database.external.ExternalLocationDB.ExternalData3;
+import ghidra.program.database.external.ExternalLocationDB.ExternalData;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.symbol.*;
@@ -87,9 +87,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#setProgram(ghidra.program.database.ProgramDB)
-	 */
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.program = program;
@@ -98,9 +95,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		scopeMgr = program.getNamespaceManager();
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#programReady(int, int, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -185,26 +179,17 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#invalidateCache(boolean)
-	 */
 	@Override
 	public void invalidateCache(boolean all) throws IOException {
 		// nothing to do here
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#deleteAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
 		// Has no affect on externals
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#moveAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, long, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {
@@ -230,8 +215,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	@Override
 	public ExternalLocation addExtLocation(Namespace extParentNamespace, String extLabel,
-			Address extAddr, SourceType sourceType)
-			throws InvalidInputException, DuplicateNameException {
+			Address extAddr, SourceType sourceType) throws InvalidInputException {
 		lock.acquire();
 		try {
 			return addExtLocation(extParentNamespace, extLabel, extAddr, false, sourceType, true);
@@ -243,8 +227,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	@Override
 	public ExternalLocation addExtLocation(Namespace extParentNamespace, String extLabel,
-			Address extAddr, SourceType sourceType, boolean reuseExisting)
-			throws InvalidInputException, DuplicateNameException {
+			Address extAddr, SourceType sourceType, boolean reuseExisting) throws InvalidInputException {
 		lock.acquire();
 		try {
 			return addExtLocation(extParentNamespace, extLabel, extAddr, false, sourceType,
@@ -275,8 +258,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	@Override
 	public ExternalLocation addExtFunction(Namespace extParentNamespace, String extLabel,
-			Address extAddr, SourceType sourceType)
-			throws InvalidInputException, DuplicateNameException {
+			Address extAddr, SourceType sourceType) throws InvalidInputException {
 		lock.acquire();
 		try {
 			return addExtLocation(extParentNamespace, extLabel, extAddr, true, sourceType, true);
@@ -288,9 +270,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	@Override
 	public ExternalLocation addExtFunction(Namespace extNamespace, String extLabel, Address extAddr,
-			SourceType sourceType, boolean reuseExisting)
-			throws InvalidInputException, DuplicateNameException {
-
+			SourceType sourceType, boolean reuseExisting) throws InvalidInputException {
 		lock.acquire();
 		try {
 			return addExtLocation(extNamespace, extLabel, extAddr, true, sourceType, reuseExisting);
@@ -314,11 +294,18 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	private ExternalLocation addExtLocation(Namespace extNamespace, String extLabel,
 			Address extAddr, boolean isFunction, SourceType sourceType, boolean reuseExisting)
-			throws InvalidInputException, DuplicateNameException {
+			throws InvalidInputException {
 		if (extNamespace == null) {
 			extNamespace = getLibraryScope(Library.UNKNOWN);
 			if (extNamespace == null) {
-				extNamespace = addExternalLibraryName(Library.UNKNOWN, SourceType.ANALYSIS);
+				try {
+					extNamespace = addExternalLibraryName(Library.UNKNOWN, SourceType.ANALYSIS);
+				}
+				catch (DuplicateNameException e) {
+					// TODO: really need to reserve the unknown namespace name
+					throw new InvalidInputException(
+						"Failed to establish " + Library.UNKNOWN + " library");
+				}
 			}
 		}
 		else if (!extNamespace.isExternal()) {
@@ -556,15 +543,15 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		if ((type != SymbolType.LABEL && type != SymbolType.FUNCTION) || !sym.isExternal()) {
 			throw new AssertException();
 		}
-		ExternalData3 externalData3 = ExternalLocationDB.getExternalData3(sym);
-		Address addr = externalData3.getAddress(sym.getProgram().getAddressFactory());
+		ExternalData externalData = ExternalLocationDB.getExternalData(sym);
+		Address addr = externalData.getAddress(sym.getProgram().getAddressFactory());
 		if (addr == null) {
 			throw new AssertException("External should not be default without memory address");
 		}
 		if (type == SymbolType.FUNCTION) {
 			return SymbolUtilities.getDefaultExternalFunctionName(addr);
 		}
-		long dataTypeID = sym.getSymbolData1();
+		long dataTypeID = sym.getDataTypeId();
 		DataType dt =
 			(dataTypeID < 0) ? null : sym.getProgram().getDataTypeManager().getDataType(dataTypeID);
 		return SymbolUtilities.getDefaultExternalName(addr, dt);
@@ -637,9 +624,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		return symbolMgr;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalManager#removeExternalLibrary(java.lang.String)
-	 */
 	@Override
 	public boolean removeExternalLibrary(String name) {
 		lock.acquire();
@@ -694,8 +678,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	private Library addExternalName(String name, String pathname, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
-		SymbolDB s = symbolMgr.createSpecialSymbol(Address.NO_ADDRESS, name,
-			scopeMgr.getGlobalNamespace(), SymbolType.LIBRARY, -1, 0, pathname, source); // 0 set first id for external names
+		SymbolDB s = symbolMgr.createLibrarySymbol(name, pathname, source);
 		return (Library) s.getObject();
 	}
 
@@ -704,17 +687,11 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		return s == null ? null : (Namespace) s.getObject();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalManager#contains(java.lang.String)
-	 */
 	@Override
 	public boolean contains(String libraryName) {
 		return symbolMgr.getLibrarySymbol(libraryName) != null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalManager#getExternalLibraryNames()
-	 */
 	@Override
 	public String[] getExternalLibraryNames() {
 		ArrayList<String> list = new ArrayList<>();
@@ -735,14 +712,11 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		return s != null ? (Library) s.getObject() : null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalManager#getExternalLibraryPath(java.lang.String)
-	 */
 	@Override
 	public String getExternalLibraryPath(String externalName) {
 		SymbolDB s = (SymbolDB) symbolMgr.getLibrarySymbol(externalName);
 		if (s instanceof LibrarySymbol) {
-			return s.getSymbolData3();
+			return s.getSymbolStringData();
 		}
 		return null;
 	}
@@ -771,7 +745,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 				}
 			}
 			else if (s instanceof LibrarySymbol) {
-				s.setSymbolData3(externalPath);
+				s.setSymbolStringData(externalPath);
 			}
 		}
 		finally {
@@ -799,10 +773,10 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		try {
 			SymbolDB symbol = (SymbolDB) extLoc.getSymbol();
 			if (!(symbol instanceof CodeSymbol)) {
-				return null;
+				throw new IllegalStateException("Expected external code symbol");
 			}
 			//long dtId = symbol.getSymbolData1();
-			String extData3 = symbol.getSymbolData3();
+			String extData = symbol.getSymbolStringData();
 			String name = symbol.getName();
 			Namespace namespace = symbol.getParentNamespace();
 			Address extAddr = symbol.getAddress();
@@ -810,21 +784,16 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 			((CodeSymbol) symbol).delete(true);
 
-			return functionMgr.createExternalFunction(extAddr, name, namespace, extData3, source);
+			return functionMgr.createExternalFunction(extAddr, name, namespace, extData, source);
 		}
 		catch (Exception e) {
-			e.printStackTrace();
 			throw new RuntimeException("Unexpected exception", e);
 		}
 		finally {
 			lock.release();
 		}
-
 	}
 
-	/**
-	 * @return
-	 */
 	AddressMap getAddressMap() {
 		return addrMap;
 	}
@@ -834,9 +803,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		return new ExternalLocationDBIterator(symbolMgr.getExternalSymbols(), memoryAddress);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.ExternalManager#getExternalLocations(java.lang.String)
-	 */
 	@Override
 	public ExternalLocationIterator getExternalLocations(String externalName) {
 		Namespace scope = getLibraryScope(externalName);
@@ -864,9 +830,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 			this.symIter = symIter;
 		}
 
-		/**
-		 * @see java.util.Iterator#remove()
-		 */
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
@@ -888,9 +851,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 			return null;
 		}
 
-		/**
-		 * @see ghidra.program.model.symbol.ExternalLocationIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() {
 			if (symIter != null) {
@@ -902,9 +862,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 			return nextExtLoc != null;
 		}
 
-		/**
-		 * @see ghidra.program.model.symbol.ExternalLocationIterator#next()
-		 */
 		@Override
 		public ExternalLocation next() {
 			if (hasNext()) {
@@ -927,8 +884,8 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		while (externalSymbols.hasNext()) {
 			monitor.checkCanceled();
 			SymbolDB s = (SymbolDB) externalSymbols.next();
-			ExternalData3 externalData3 = ExternalLocationDB.getExternalData3(s);
-			String addrStr = externalData3.getAddressString();
+			ExternalData externalData = ExternalLocationDB.getExternalData(s);
+			String addrStr = externalData.getAddressString();
 			if (addrStr == null) {
 				continue;
 			}
@@ -947,7 +904,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 			addr = newAddressSpace.getAddress(addr.getOffset());
 			String newAddrStr = addr.toString();
 			if (!newAddrStr.equals(addrStr)) {
-				ExternalLocationDB.updateSymbolData3(s, externalData3.getOriginalImportedName(),
+				ExternalLocationDB.updateSymbolData(s, externalData.getOriginalImportedName(),
 					newAddrStr); // store translated external location address
 			}
 		}

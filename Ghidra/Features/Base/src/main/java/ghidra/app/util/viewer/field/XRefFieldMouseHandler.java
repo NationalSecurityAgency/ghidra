@@ -22,7 +22,7 @@ import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.field.TextField;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
-import ghidra.app.util.XReferenceUtil;
+import ghidra.app.util.XReferenceUtils;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -51,7 +51,7 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 			return false;
 		}
 
-		// If I double-click on the XRef Header, show references to this place, also works on 
+		// If I double-click on the XRef Header, show references to this place, also works on
 		// 'more' field. This is much nicer if you have multiple references to navigate.
 		if (isXREFHeaderLocation(location)) {
 			showXRefDialog(sourceNavigatable, location, serviceProvider);
@@ -105,8 +105,8 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 			return;
 		}
 
-		Set<Reference> refs = XReferenceUtil.getAllXrefs(location);
-		XReferenceUtil.showAllXrefs(navigatable, serviceProvider, service, location, refs);
+		Set<Reference> refs = XReferenceUtils.getAllXrefs(location);
+		XReferenceUtils.showXrefs(navigatable, serviceProvider, service, location, refs);
 	}
 
 	protected ProgramLocation getReferredToLocation(Navigatable sourceNavigatable,

@@ -142,7 +142,7 @@ public class DataTypeDependencyOrderer {
 
 	/**
 	 * This method returns two lists:
-	 * 1) is the set of structs and typedefs to structs. Intended for outputting zero-sized definitions.
+	 * 1) is the set of structs. Intended for outputting zero-sized definitions.
 	 * 2) is the acyclic dependency list (broken at structs and pointers to structs)
 	 * This works (and the dependency graph is able to be broken of cycles) because
 	 *  structures can be given zero size to start with and then later updated with full size.
@@ -156,10 +156,10 @@ public class DataTypeDependencyOrderer {
 	}
 
 	/**
-	 * This method returns the ArrayList of structs and typedefs
+	 * This method returns the ArrayList of structs
 	 *  to structs found in the input list, intended
 	 *  to be used initially as zero-sized structures.
-	 * @return  An arrayList of structs and typedefs of structs
+	 * @return  An arrayList of structs
 	 */
 	public ArrayList<DataType> getStructList() {
 		if (processed == false) {
@@ -265,9 +265,6 @@ public class DataTypeDependencyOrderer {
 				for (DataTypeComponent dtcomp : dtcomps) {
 					addDependent(entry, dtcomp.getDataType());
 				}
-				if (struct.hasFlexibleArrayComponent()) {
-					addDependent(entry, struct.getFlexibleArrayComponent().getDataType());
-				}
 			}
 			else if (dataType instanceof Composite) {
 				DataTypeComponent dtcomps[] = ((Composite) dataType).getComponents();
@@ -316,9 +313,8 @@ public class DataTypeDependencyOrderer {
 			//Msg.debug(this, "ORDERED_LIST_SIZE: " + orderedDependentsList.size() + " -- TYPE: " +
 			//	dataType.getName());
 			orderedDependentsList.add(entry.dataType);
-			//dependency stack of struct or typedef to struct types for which zero-sized structs should first be used.  See _____TODO:method
-			if ((entry.dataType instanceof Structure) || ((entry.dataType instanceof TypeDef) &&
-				(((TypeDef) entry.dataType).getBaseDataType() instanceof Structure))) {
+			//dependency stack of struct for which zero-sized structs should first be used.
+			if (entry.dataType instanceof Structure) {
 				structList.add(entry.dataType);
 			}
 			removeMyDependentsEdgesToMe(entry);
@@ -343,8 +339,7 @@ public class DataTypeDependencyOrderer {
 			procSet.add(subEntry);
 		}
 		if (entry.dataType instanceof Pointer) { //avoid cycles with structures/composites
-			if ((subType instanceof Structure) || (subType instanceof TypeDef) &&
-				(((TypeDef) subType).getBaseDataType() instanceof Structure)) {
+			if (subType instanceof Structure) {
 				return;
 			}
 		}

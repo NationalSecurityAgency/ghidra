@@ -1,4 +1,5 @@
 @define ENDIAN "little"
 @define SIZE "4"
+@define DATA_SPACE "ram"
 
 @include "toy_builder.sinc"

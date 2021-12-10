@@ -32,6 +32,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.database.DBTrace;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
@@ -50,14 +51,30 @@ import ghidra.util.task.TaskMonitor;
 public class DBTraceMemoryManager
 		extends AbstractDBTraceSpaceBasedManager<DBTraceMemorySpace, DBTraceMemoryRegisterSpace>
 		implements TraceMemoryManager, DBTraceDelegatingManager<DBTraceMemorySpace> {
+
 	protected static final String NAME = "Memory";
+
+	protected final DBTraceOverlaySpaceAdapter overlayAdapter;
 
 	public DBTraceMemoryManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
-			DBTraceThreadManager threadManager) throws IOException, VersionException {
+			DBTraceThreadManager threadManager, DBTraceOverlaySpaceAdapter overlayAdapter)
+			throws IOException, VersionException {
 		super(NAME, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager);
+		this.overlayAdapter = overlayAdapter;
 
 		loadSpaces();
+	}
+
+	@Override
+	public AddressSpace createOverlayAddressSpace(String name, AddressSpace base)
+			throws DuplicateNameException {
+		return overlayAdapter.createOverlayAddressSpace(name, base);
+	}
+
+	@Override
+	public void deleteOverlayAddressSpace(String name) {
+		overlayAdapter.deleteOverlayAddressSpace(name);
 	}
 
 	@Override
@@ -308,6 +325,17 @@ public class DBTraceMemoryManager
 	public MemBuffer getBufferAt(long snap, Address start, ByteOrder byteOrder) {
 		// TODO: if null, return buffer of limitless 0s?
 		return delegateRead(start.getAddressSpace(), m -> m.getBufferAt(snap, start, byteOrder));
+	}
+
+	@Override
+	public Long getSnapOfMostRecentChangeToBlock(long snap, Address address) {
+		return delegateRead(address.getAddressSpace(),
+			m -> m.getSnapOfMostRecentChangeToBlock(snap, address));
+	}
+
+	@Override
+	public int getBlockSize() {
+		return DBTraceMemorySpace.BLOCK_SIZE;
 	}
 
 	@Override

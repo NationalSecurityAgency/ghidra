@@ -86,9 +86,11 @@ public class CreateStructureDialog extends DialogComponentProvider {
 		setDefaultButton(okButton);
 	}
 
-	void dispose() {
+	@Override
+	public void dispose() {
+		currentProgram = null;
 		filterPanel.dispose();
-		matchingStructuresTable.dispose();
+		super.dispose();
 	}
 
 	private JPanel buildMainPanel() {

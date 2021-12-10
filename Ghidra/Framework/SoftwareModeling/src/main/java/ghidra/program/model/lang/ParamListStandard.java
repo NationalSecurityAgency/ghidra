@@ -38,6 +38,7 @@ public class ParamListStandard implements ParamList {
 //	protected int maxdelay;
 	protected int pointermax;		// If non-zero, maximum size of a datatype before converting to a pointer
 	protected boolean thisbeforeret;	// Do hidden return pointers usurp the storage of the this pointer
+	protected int resourceTwoStart;		// Group id starting the section resource section (or 0 if only one section)
 	protected ParamEntry[] entry;
 	protected AddressSpace spacebase;	// Space containing relative offset parameters
 
@@ -142,37 +143,30 @@ public class ParamListStandard implements ParamList {
 	}
 
 	@Override
-	public void assignMap(Program prog, DataType[] proto, boolean isinput,
-			ArrayList<VariableStorage> res, boolean addAutoParams) {
+	public void assignMap(Program prog, DataType[] proto, ArrayList<VariableStorage> res,
+			boolean addAutoParams) {
 		int[] status = new int[numgroup];
 		for (int i = 0; i < numgroup; ++i) {
 			status[i] = 0;
 		}
 
-		if (isinput) {
-			if (addAutoParams && res.size() == 2) {	// Check for hidden parameters defined by the output list
-				DataTypeManager dtm = prog.getDataTypeManager();
-				Pointer pointer = dtm.getPointer(proto[0]);
-				VariableStorage store = assignAddress(prog, pointer, status, true, false);
-				res.set(1, store);
-			}
-			for (int i = 1; i < proto.length; ++i) {
-				VariableStorage store;
-				if ((pointermax != 0) && (proto[i] != null) &&
-					(proto[i].getLength() > pointermax)) {	// DataType is too big
-					// Assume datatype is stored elsewhere and only the pointer is passed
-					DataTypeManager dtm = prog.getDataTypeManager();
-					Pointer pointer = dtm.getPointer(proto[i]);
-					store = assignAddress(prog, pointer, status, false, true);
-				}
-				else {
-					store = assignAddress(prog, proto[i], status, false, false);
-				}
-				res.add(store);
-			}
+		if (addAutoParams && res.size() == 2) {	// Check for hidden parameters defined by the output list
+			DataTypeManager dtm = prog.getDataTypeManager();
+			Pointer pointer = dtm.getPointer(proto[0]);
+			VariableStorage store = assignAddress(prog, pointer, status, true, false);
+			res.set(1, store);
 		}
-		else {
-			VariableStorage store = assignAddress(prog, proto[0], status, false, false);
+		for (int i = 1; i < proto.length; ++i) {
+			VariableStorage store;
+			if ((pointermax != 0) && (proto[i] != null) && (proto[i].getLength() > pointermax)) {	// DataType is too big
+				// Assume datatype is stored elsewhere and only the pointer is passed
+				DataTypeManager dtm = prog.getDataTypeManager();
+				Pointer pointer = dtm.getPointer(proto[i]);
+				store = assignAddress(prog, pointer, status, false, true);
+			}
+			else {
+				store = assignAddress(prog, proto[i], status, false, false);
+			}
 			res.add(store);
 		}
 	}
@@ -213,22 +207,90 @@ public class ParamListStandard implements ParamList {
 		if (thisbeforeret) {
 			SpecXmlUtils.encodeStringAttribute(buffer, "thisbeforeretpointer", "yes");
 		}
+		if (isInput && resourceTwoStart == 0) {
+			SpecXmlUtils.encodeBooleanAttribute(buffer, "separatefloat", false);
+		}
 		buffer.append(">\n");
+		int curgroup = -1;
 		for (ParamEntry el : entry) {
+			if (curgroup >= 0) {
+				if (!el.isGrouped() || el.getGroup() != curgroup) {
+					buffer.append("</group>\n");
+					curgroup = -1;
+				}
+			}
+			if (el.isGrouped()) {
+				if (curgroup < 0) {
+					buffer.append("<group>\n");
+					curgroup = el.getGroup();
+				}
+			}
 			el.saveXml(buffer);
 			buffer.append('\n');
 		}
+		if (curgroup >= 0) {
+			buffer.append("</group>\n");
+		}
 		buffer.append(isInput ? "</input>" : "</output>");
+	}
+
+	private void parsePentry(XmlPullParser parser, CompilerSpec cspec, ArrayList<ParamEntry> pe,
+			int groupid, boolean splitFloat, boolean grouped) throws XmlParseException {
+		ParamEntry pentry = new ParamEntry(groupid);
+		pe.add(pentry);
+		pentry.restoreXml(parser, cspec, pe, grouped);
+		if (splitFloat) {
+			if (pentry.getType() == ParamEntry.TYPE_FLOAT) {
+				if (resourceTwoStart >= 0) {
+					throw new XmlParseException(
+						"parameter list floating-point entries must come first");
+				}
+			}
+			else if (resourceTwoStart < 0) {
+				resourceTwoStart = groupid;	// First time we have seen an integer slot
+			}
+		}
+		if (pentry.getSpace().isStackSpace()) {
+			spacebase = pentry.getSpace();
+		}
+		int maxgroup = pentry.getGroup() + pentry.getGroupSize();
+		if (maxgroup > numgroup) {
+			numgroup = maxgroup;
+		}
+	}
+
+	private void parseGroup(XmlPullParser parser, CompilerSpec cspec, ArrayList<ParamEntry> pe,
+			int groupid, boolean splitFloat) throws XmlParseException {
+		XmlElement el = parser.start("group");
+		int basegroup = numgroup;
+		int count = 0;
+		while (parser.peek().isStart()) {
+			parsePentry(parser, cspec, pe, basegroup, splitFloat, true);
+			count += 1;
+			ParamEntry lastEntry = pe.get(pe.size() - 1);
+			if (lastEntry.getSpace().getType() == AddressSpace.TYPE_JOIN) {
+				throw new XmlParseException(
+					"<pentry> in the join space not allowed in <group> tag");
+			}
+		}
+		// Check that all entries in the group are distinguishable
+		for (int i = 1; i < count; ++i) {
+			ParamEntry curEntry = pe.get(pe.size() - 1 - i);
+			for (int j = 0; j < i; ++i) {
+				ParamEntry.orderWithinGroup(pe.get(pe.size() - 1 - j), curEntry);
+			}
+		}
+		parser.end(el);
 	}
 
 	@Override
 	public void restoreXml(XmlPullParser parser, CompilerSpec cspec) throws XmlParseException {
 		ArrayList<ParamEntry> pe = new ArrayList<>();
-		int lastgroup = -1;
 		numgroup = 0;
 		spacebase = null;
 		pointermax = 0;
 		thisbeforeret = false;
+		boolean splitFloat = true;
 		XmlElement mainel = parser.start();
 		String attribute = mainel.getAttribute("pointermax");
 		if (attribute != null) {
@@ -238,35 +300,30 @@ public class ParamListStandard implements ParamList {
 		if (attribute != null) {
 			thisbeforeret = SpecXmlUtils.decodeBoolean(attribute);
 		}
-		boolean seennonfloat = false;			// Have we seen any integer slots yet
+		attribute = mainel.getAttribute("separatefloat");
+		if (attribute != null) {
+			splitFloat = SpecXmlUtils.decodeBoolean(attribute);
+		}
+		resourceTwoStart = splitFloat ? -1 : 0;
 		for (;;) {
 			XmlElement el = parser.peek();
 			if (!el.isStart()) {
 				break;
 			}
-			ParamEntry pentry = new ParamEntry(numgroup);
-			pentry.restoreXml(parser, cspec);
-			pe.add(pentry);
-			if (pentry.getType() == ParamEntry.TYPE_FLOAT) {
-				if (seennonfloat) {
-					throw new XmlParseException(
-						"parameter list floating-point entries must come first");
+			if (el.getName().equals("pentry")) {
+				parsePentry(parser, cspec, pe, numgroup, splitFloat, false);
+			}
+			else if (el.getName().equals("group")) {
+				parseGroup(parser, cspec, pe, numgroup, splitFloat);
+			}
+		}
+		// Check that any pentry tags with join storage don't overlap following tags
+		for (ParamEntry curEntry : pe) {
+			if (curEntry.isNonOverlappingJoin()) {
+				if (curEntry.countJoinOverlap(pe) != 1) {
+					throw new XmlParseException("pentry tag must be listed after all its overlaps");
 				}
 			}
-			else {
-				seennonfloat = true;
-			}
-			if (pentry.getSpace().isStackSpace()) {
-				spacebase = pentry.getSpace();
-			}
-			int maxgroup = pentry.getGroup() + pentry.getGroupSize();
-			if (maxgroup > numgroup) {
-				numgroup = maxgroup;
-			}
-			if (pentry.getGroup() < lastgroup) {
-				throw new XmlParseException("pentrys must come in group order");
-			}
-			lastgroup = pentry.getGroup();
 		}
 		parser.end(mainel);
 		entry = new ParamEntry[pe.size()];

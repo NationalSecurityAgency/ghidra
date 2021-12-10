@@ -27,9 +27,9 @@ import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeFactory;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
+import ghidra.app.util.bin.format.dwarf4.external.ExternalDebugInfo;
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.*;
-import ghidra.app.util.opinion.ElfLoader;
-import ghidra.app.util.opinion.MachoLoader;
+import ghidra.app.util.opinion.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.CategoryPath;
@@ -67,15 +67,15 @@ public class DWARFProgram implements Closeable {
 	 * @return boolean true if program has DWARF info, false if not
 	 */
 	public static boolean isDWARF(Program program) {
-		String format = program.getExecutableFormat();
+		String format = Objects.requireNonNullElse(program.getExecutableFormat(), "");
 
-		if (ElfLoader.ELF_NAME.equals(format) &&
-			DWARFSectionProviderFactory.createSectionProviderFor(program) != null) {
-			return true;
-		}
-		if (MachoLoader.MACH_O_NAME.equals(format) &&
-			DSymSectionProvider.getDSYMForProgram(program) != null) {
-			return true;
+		switch (format) {
+			case ElfLoader.ELF_NAME:
+			case PeLoader.PE_NAME:
+				return BaseSectionProvider.hasDWARFSections(program) ||
+					ExternalDebugInfo.fromProgram(program) != null;
+			case MachoLoader.MACH_O_NAME:
+				return DSymSectionProvider.getDSYMForProgram(program) != null;
 		}
 		return false;
 	}
@@ -394,14 +394,6 @@ public class DWARFProgram implements Closeable {
 
 		String origName = isAnon ? null : name;
 		String workingName = ensureSafeNameLength(name);
-		switch (diea.getTag()) {
-			// fixup DWARF entries that are related to Ghidra symbols
-			case DWARFTag.DW_TAG_subroutine_type:
-			case DWARFTag.DW_TAG_subprogram:
-			case DWARFTag.DW_TAG_inlined_subroutine:
-				workingName = SymbolUtilities.replaceInvalidChars(workingName, false);
-				break;
-		}
 
 		DWARFNameInfo result =
 			parentDNI.createChild(origName, workingName, DWARFUtil.getSymbolTypeFromDIE(diea));

@@ -199,7 +199,7 @@ public class PrototypeModel {
 		DataType[] arr = new DataType[1];
 		arr[0] = clone;
 		ArrayList<VariableStorage> res = new ArrayList<>();
-		outputParams.assignMap(program, arr, false, res, false);
+		outputParams.assignMap(program, arr, res, false);
 		if (res.size() > 0) {
 			return res.get(0);
 		}
@@ -247,7 +247,7 @@ public class PrototypeModel {
 		}
 
 		DataType arr[] = new DataType[argIndex + 2];
-		arr[0] = DataType.VOID;				// Assume the return type is void
+		arr[0] = VoidDataType.dataType;				// Assume the return type is void
 		for (int i = 0; i < argIndex; ++i) {
 			if (params != null && i < params.length) {
 				arr[i + 1] = params[i].getDataType();			// Copy in current types if we have them
@@ -291,8 +291,8 @@ public class PrototypeModel {
 		}
 
 		ArrayList<VariableStorage> res = new ArrayList<>();
-		outputParams.assignMap(program, dataTypes, false, res, addAutoParams);
-		inputParams.assignMap(program, dataTypes, true, res, addAutoParams);
+		outputParams.assignMap(program, dataTypes, res, addAutoParams);
+		inputParams.assignMap(program, dataTypes, res, addAutoParams);
 		VariableStorage[] finalres = new VariableStorage[res.size()];
 		res.toArray(finalres);
 
@@ -351,7 +351,7 @@ public class PrototypeModel {
 		}
 		else if (strategy.equals("register")) {
 			inputParams = new ParamListStandard();
-			outputParams = new ParamListStandard();
+			outputParams = new ParamListRegisterOut();
 			inputListType = InputListType.REGISTER;
 		}
 		else {

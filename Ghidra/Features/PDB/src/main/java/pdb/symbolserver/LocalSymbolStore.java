@@ -339,14 +339,15 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 		File destinationFileTmp = new File(rootDir, relativeDestinationFilename + ".tmp");
 		destinationFileTmp.delete();
 
-		monitor.setMessage("Storing " + filename + " in local symbol store ");
-
-		if (symbolServerInputStream.getExpectedLength() >= 0) {
-			monitor.initialize(symbolServerInputStream.getExpectedLength());
-		}
-		try {
-			long bytesCopied = FileUtilities.copyStreamToFile(
-				symbolServerInputStream.getInputStream(), destinationFileTmp, false, monitor);
+		long expectedLength = symbolServerInputStream.getExpectedLength();
+		String expectedLenMsg =
+			expectedLength >= 0 ? (" (" + FileUtilities.formatLength(expectedLength) + ")") : "";
+		monitor.setIndeterminate(expectedLength < 0);
+		monitor.initialize(expectedLength);
+		monitor.setMessage("Storing " + filename + " in local symbol store" + expectedLenMsg);
+		try (InputStream is = symbolServerInputStream.getInputStream()) {
+			long bytesCopied =
+				FileUtilities.copyStreamToFile(is, destinationFileTmp, false, monitor);
 			if (symbolServerInputStream.getExpectedLength() >= 0 &&
 				bytesCopied != symbolServerInputStream.getExpectedLength()) {
 				throw new IOException("Copy length mismatch, expected " +
@@ -361,7 +362,6 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 		finally {
 			destinationFileTmp.delete();
 		}
-
 	}
 
 	@Override

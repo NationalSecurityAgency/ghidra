@@ -19,9 +19,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.RangeSet;
 
@@ -30,11 +27,11 @@ import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
 import agent.gdb.manager.breakpoint.GdbBreakpointType;
 import agent.gdb.manager.impl.cmd.*;
+import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import agent.gdb.manager.parsing.GdbCValueParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import agent.gdb.manager.reason.GdbReason;
-import ghidra.async.AsyncLazyValue;
-import ghidra.async.AsyncReference;
+import ghidra.async.*;
 
 /**
  * The implementation of {@link GdbThread}
@@ -158,6 +155,46 @@ public class GdbThreadImpl implements GdbThread {
 		return registers.request();
 	}
 
+	private List<String> generateEvaluateSizesParts(Collection<String> names) {
+		List<String> result = new ArrayList<>();
+		StringBuffer buf = new StringBuffer("{");
+		for (String n : names) {
+			String toAdd = "sizeof($" + n + "),";
+			if (buf.length() + toAdd.length() > GdbEvaluateCommand.MAX_EXPR_LEN) {
+				assert buf.length() > 0;
+				// Remove trailing comma
+				result.add(buf.substring(0, buf.length() - 1) + "}");
+				buf.delete(1, buf.length()); // Leave leading brace
+			}
+			buf.append(toAdd);
+		}
+		if (buf.length() > 0) {
+			result.add(buf.substring(0, buf.length() - 1) + "}");
+		}
+		return result;
+	}
+
+	private CompletableFuture<List<String>> doEvaluateSizesInParts(Collection<String> names) {
+		List<String> parts = generateEvaluateSizesParts(names);
+		if (parts.isEmpty()) {
+			// I guess names was empty
+			return CompletableFuture.completedFuture(List.of());
+		}
+		if (parts.size() == 1) {
+			return evaluate(parts.get(0)).thenApply(List::of);
+		}
+		AsyncFence fence = new AsyncFence();
+		String[] result = new String[parts.size()];
+		for (int i = 0; i < result.length; i++) {
+			String p = parts.get(i);
+			final int j = i;
+			fence.include(evaluate(p).thenAccept(r -> {
+				result[j] = r;
+			}));
+		}
+		return fence.ready().thenApply(__ -> Arrays.asList(result));
+	}
+
 	private CompletableFuture<GdbRegisterSet> doListRegisters() {
 		Map<Integer, String> namesByNumber = new TreeMap<>();
 		return execute(new GdbListRegisterNamesCommand(manager, id)).thenCompose(names -> {
@@ -168,20 +205,17 @@ public class GdbThreadImpl implements GdbThread {
 				}
 				namesByNumber.put(i, n);
 			}
-			List<String> sizeofNames = namesByNumber.values()
-					.stream()
-					.map(n -> "sizeof($" + n + ")")
-					.collect(Collectors.toList());
-			String expr = "{" + StringUtils.join(sizeofNames, ",") + "}";
-			return evaluate(expr);
-		}).thenApply(value -> {
+			return doEvaluateSizesInParts(namesByNumber.values());
+		}).thenApply(values -> {
 			List<GdbRegister> regs = new ArrayList<>();
-			List<Integer> sizes;
-			try {
-				sizes = GdbCValueParser.parseArray(value).expectInts();
-			}
-			catch (GdbParseError e) {
-				throw new AssertionError("GDB did not give an integer array!");
+			List<Integer> sizes = new ArrayList<>();
+			for (String v : values) {
+				try {
+					sizes.addAll(GdbCValueParser.parseArray(v).expectInts());
+				}
+				catch (GdbParseError e) {
+					throw new AssertionError("GDB did not give an integer array!");
+				}
 			}
 			if (sizes.size() != namesByNumber.size()) {
 				throw new AssertionError("GDB did not give all the sizes!");
@@ -232,15 +266,15 @@ public class GdbThreadImpl implements GdbThread {
 	}
 
 	@Override
-	public CompletableFuture<Void> console(String command) {
+	public CompletableFuture<Void> console(String command, CompletesWithRunning cwr) {
 		return execute(new GdbConsoleExecCommand(manager, id, null, command,
-			GdbConsoleExecCommand.Output.CONSOLE)).thenApply(e -> null);
+			GdbConsoleExecCommand.Output.CONSOLE, cwr)).thenApply(e -> null);
 	}
 
 	@Override
-	public CompletableFuture<String> consoleCapture(String command) {
+	public CompletableFuture<String> consoleCapture(String command, CompletesWithRunning cwr) {
 		return execute(new GdbConsoleExecCommand(manager, id, null, command,
-			GdbConsoleExecCommand.Output.CAPTURE));
+			GdbConsoleExecCommand.Output.CAPTURE, cwr));
 	}
 
 	@Override

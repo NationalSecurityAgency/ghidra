@@ -19,7 +19,7 @@ import javax.swing.Icon;
 
 import resources.ResourceManager;
 
-public abstract class ExperimentalLayoutProvider extends FGLayoutProvider {
+public abstract class ExperimentalLayoutProvider extends FGLayoutProviderExtensionPoint {
 
 	private static final Icon ICON = ResourceManager.loadImage("images/package_development.png");
 

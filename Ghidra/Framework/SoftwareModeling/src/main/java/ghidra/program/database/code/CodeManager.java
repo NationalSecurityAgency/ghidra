@@ -2825,31 +2825,37 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	Address getDefinedAddressAfter(Address address) {
-		DBRecord dataRec = null;
-		DBRecord instRec = null;
+		lock.acquire();
 		try {
-			dataRec = dataAdapter.getRecordAfter(address);
-			instRec = instAdapter.getRecordAfter(address);
+			DBRecord dataRec = null;
+			DBRecord instRec = null;
+			try {
+				dataRec = dataAdapter.getRecordAfter(address);
+				instRec = instAdapter.getRecordAfter(address);
+			}
+			catch (IOException e) {
+				program.dbError(e);
+				return null;
+			}
+			if (dataRec == null && instRec == null) {
+				return null;
+			}
+			if (dataRec == null) {
+				return addrMap.decodeAddress(instRec.getKey());
+			}
+			if (instRec == null) {
+				return addrMap.decodeAddress(dataRec.getKey());
+			}
+			Address dataAddr = addrMap.decodeAddress(dataRec.getKey());
+			Address instAddr = addrMap.decodeAddress(instRec.getKey());
+			if (dataAddr.compareTo(instAddr) < 0) {
+				return dataAddr;
+			}
+			return instAddr;
 		}
-		catch (IOException e) {
-			program.dbError(e);
-			return null;
+		finally {
+			lock.release();
 		}
-		if (dataRec == null && instRec == null) {
-			return null;
-		}
-		if (dataRec == null) {
-			return addrMap.decodeAddress(instRec.getKey());
-		}
-		if (instRec == null) {
-			return addrMap.decodeAddress(dataRec.getKey());
-		}
-		Address dataAddr = addrMap.decodeAddress(dataRec.getKey());
-		Address instAddr = addrMap.decodeAddress(instRec.getKey());
-		if (dataAddr.compareTo(instAddr) < 0) {
-			return dataAddr;
-		}
-		return instAddr;
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -3043,12 +3049,12 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	/**
-	 * Remove matching DEFAULT memory reference from oldRefList
+	 * Remove matching memory reference from oldRefList (considers toAddr and opIndex only)
 	 * @param oldRefList list of existing DEFAULT memory references (may be null)
 	 * @param toAddr new reference desination address
 	 * @param opIndex new reference operand
 	 * @param refType new reference type
-	 * @return existing reference if it already exists in oldRefList, else null
+	 * @return existing reference if it already exists in oldRefList with matching refType, else null
 	 */
 	private Reference removeOldReference(List<Reference> oldRefList, Address toAddr, int opIndex,
 			RefType refType) {
@@ -3058,10 +3064,12 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		Iterator<Reference> iterator = oldRefList.iterator();
 		while (iterator.hasNext()) {
 			Reference ref = iterator.next();
-			if (opIndex == ref.getOperandIndex() && refType == ref.getReferenceType() &&
-				toAddr.equals(ref.getToAddress())) {
+			if (opIndex == ref.getOperandIndex() && toAddr.equals(ref.getToAddress())) {
 				iterator.remove();
-				return ref;
+				if (refType == ref.getReferenceType()) {
+					return ref;
+				}
+				break; // return null - can't re-use due to refType change
 			}
 		}
 		return null;
@@ -3115,11 +3123,15 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	int getLength(Address addr) {
+		lock.acquire();
 		try {
 			return lengthMgr.getInt(addr);
 		}
 		catch (NoValueException e) {
 			return -1;
+		}
+		finally {
+			lock.release();
 		}
 	}
 

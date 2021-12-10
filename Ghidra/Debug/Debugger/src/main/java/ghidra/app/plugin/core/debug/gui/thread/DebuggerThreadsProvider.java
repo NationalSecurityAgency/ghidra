@@ -33,6 +33,7 @@ import docking.WindowPosition;
 import docking.action.*;
 import docking.widgets.HorizontalTabPanel;
 import docking.widgets.HorizontalTabPanel.TabListCellRenderer;
+import docking.widgets.dialogs.InputDialog;
 import docking.widgets.table.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -53,8 +54,9 @@ import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
-import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.datastruct.CollectionChangeListener;
@@ -120,10 +122,10 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	protected class StepTickBackwardAction extends AbstractStepTickBackwardAction {
+	protected class EmulateTickBackwardAction extends AbstractEmulateTickBackwardAction {
 		public static final String GROUP = DebuggerResources.GROUP_CONTROL;
 
-		public StepTickBackwardAction() {
+		public EmulateTickBackwardAction() {
 			super(plugin);
 			setToolBarData(new ToolBarData(ICON, GROUP, "2"));
 			addLocalAction(this);
@@ -157,10 +159,10 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	protected class StepTickForwardAction extends AbstractStepTickForwardAction {
+	protected class EmulateTickForwardAction extends AbstractEmulateTickForwardAction {
 		public static final String GROUP = DebuggerResources.GROUP_CONTROL;
 
-		public StepTickForwardAction() {
+		public EmulateTickForwardAction() {
 			super(plugin);
 			setToolBarData(new ToolBarData(ICON, GROUP, "3"));
 			addLocalAction(this);
@@ -353,11 +355,12 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 
 	DockingAction actionSaveTrace;
 	StepSnapBackwardAction actionStepSnapBackward;
-	StepTickBackwardAction actionStepTickBackward;
-	StepTickForwardAction actionStepTickForward;
+	EmulateTickBackwardAction actionEmulateTickBackward;
+	EmulateTickForwardAction actionEmulateTickForward;
 	StepSnapForwardAction actionStepSnapForward;
 	SeekTracePresentAction actionSeekTracePresent;
 	ToggleDockingAction actionSyncFocus;
+	DockingAction actionGoToTime;
 	Set<Object> strongRefs = new HashSet<>(); // Eww
 
 	public DebuggerThreadsProvider(final DebuggerThreadsPlugin plugin) {
@@ -376,7 +379,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		// TODO: Should I receive clicks on that renderer to seek to a given snap?
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 
-		myActionContext = new DebuggerSnapActionContext(0);
+		myActionContext = new DebuggerSnapActionContext(current.getTrace(), current.getViewSnap());
 		createActions();
 		contextChanged();
 
@@ -521,15 +524,20 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	}
 
 	private void rowActivated(ThreadRow row) {
+		if (row == null) {
+			return;
+		}
 		TraceThread thread = row.getThread();
 		Trace trace = thread.getTrace();
 		TraceRecorder recorder = modelService.getRecorder(trace);
-		if (recorder != null) {
-			TargetThread targetThread = recorder.getTargetThread(thread);
-			if (targetThread != null && targetThread.isValid()) {
-				DebugModelConventions.requestActivation(targetThread);
-			}
+		if (recorder == null) {
+			return;
 		}
+		TargetThread targetThread = recorder.getTargetThread(thread);
+		if (targetThread == null || !targetThread.isValid()) {
+			return;
+		}
+		DebugModelConventions.requestActivation(targetThread);
 	}
 
 	protected void buildMainPanel() {
@@ -609,7 +617,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 				snap = 0;
 			}
 			traceManager.activateSnap(snap);
-			myActionContext = new DebuggerSnapActionContext(snap);
+			myActionContext = new DebuggerSnapActionContext(current.getTrace(), snap);
 			contextChanged();
 		});
 	}
@@ -664,14 +672,18 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	protected void createActions() {
 		// TODO: Make other actions use builder?
 		actionStepSnapBackward = new StepSnapBackwardAction();
-		actionStepTickBackward = new StepTickBackwardAction();
-		actionStepTickForward = new StepTickForwardAction();
+		actionEmulateTickBackward = new EmulateTickBackwardAction();
+		actionEmulateTickForward = new EmulateTickForwardAction();
 		actionStepSnapForward = new StepSnapForwardAction();
 		actionSeekTracePresent = new SeekTracePresentAction();
 		actionSyncFocus = SynchronizeFocusAction.builder(plugin)
 				.selected(traceManager != null && traceManager.isSynchronizeFocus())
 				.enabledWhen(c -> traceManager != null)
 				.onAction(c -> toggleSyncFocus(actionSyncFocus.isSelected()))
+				.buildAndInstallLocal(this);
+		actionGoToTime = GoToTimeAction.builder(plugin)
+				.enabledWhen(c -> current.getTrace() != null)
+				.onAction(c -> activatedGoToTime())
 				.buildAndInstallLocal(this);
 		traceManager.addSynchronizeFocusChangeListener(
 			strongRef(new ToToggleSelectionListener(actionSyncFocus)));
@@ -682,6 +694,22 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 			return;
 		}
 		traceManager.setSynchronizeFocus(enabled);
+	}
+
+	private void activatedGoToTime() {
+		InputDialog dialog =
+			new InputDialog("Go To Time", "Schedule:", current.getTime().toString());
+		tool.showDialog(dialog);
+		if (dialog.isCanceled()) {
+			return;
+		}
+		try {
+			TraceSchedule time = TraceSchedule.parse(dialog.getValue());
+			traceManager.activateTime(time);
+		}
+		catch (IllegalArgumentException e) {
+			Msg.showError(this, getComponent(), "Go To Time", "Could not parse schedule");
+		}
 	}
 
 	private void traceTabSelected(ListSelectionEvent e) {

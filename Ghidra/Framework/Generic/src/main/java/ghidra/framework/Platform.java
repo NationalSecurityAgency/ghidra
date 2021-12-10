@@ -26,54 +26,116 @@ import java.util.List;
 public enum Platform {
 
 	/**
-	 * Identifies a Windows 32-bit OS (e.g., Windows NT, 2000, XP, etc.).
+	 * Identifies a Windows x86 32-bit OS.
 	 */
-	WIN_32(OperatingSystem.WINDOWS, Architecture.X86, "win32", ".dll", ".exe"),
+	WIN_X86_32(OperatingSystem.WINDOWS, Architecture.X86, "win_x86_32", ".dll", ".exe"),
 
 	/**
-	 * Identifies a Windows 64-bit OS (e.g., XP-64, etc.).
+	 * Identifies a Windows x86 64-bit OS.
 	 */
-	WIN_64(OperatingSystem.WINDOWS, Architecture.X86_64, "win64", ".dll", ".exe"),
+	WIN_X86_64(OperatingSystem.WINDOWS, Architecture.X86_64, "win_x86_64", ".dll", ".exe"),
 
 	/**
-	 * Identifies a Windows OS, the architecture for which we do not know or have not encountered
+	 * Identifies a Linux x86 32-bit OS.
 	 */
-	WIN_UNKOWN(OperatingSystem.WINDOWS, Architecture.UNKNOWN, "win64", ".dll", ".exe"),
+	LINUX_X86_32(OperatingSystem.LINUX, Architecture.X86, "linux_x86_32", ".so", ""),
 
 	/**
-	 * Identifies a Linux OS.
+	 * Identifies a Linux x86 64-bit OS.
 	 */
-	LINUX(OperatingSystem.LINUX, Architecture.X86, "linux32", ".so", ""),
+	LINUX_X86_64(OperatingSystem.LINUX, Architecture.X86_64, "linux_x86_64", ".so", ""),
 
 	/**
-	 * Identifies a Linux OS x86-64.
+	 * Identifies a Linux ARM 64-bit OS.
 	 */
-	LINUX_64(OperatingSystem.LINUX, Architecture.X86_64, "linux64", ".so", ""),
+	LINUX_ARM_64(OperatingSystem.LINUX, Architecture.ARM_64, "linux_arm_64", ".so", ""),
 
 	/**
-	 * Identifies a Linux OS, the architecture for which we do not know or have not encountered
+	 * Identifies a macOS x86 32-bit OS.
 	 */
-	LINUX_UKNOWN(OperatingSystem.LINUX, Architecture.UNKNOWN, "linux64", ".so", ""),
+	MAC_X86_32(OperatingSystem.MAC_OS_X, Architecture.X86, "mac_x86_32", ".dylib", ""),
 
 	/**
-	 * Identifies a Mac OS X for the Intel x86 32-bit platform.
+	 * Identifies a macOS x86 64-bit OS.
 	 */
-	MAC_OSX_32(OperatingSystem.MAC_OS_X, Architecture.X86, "osx32", ".dylib", ""),
+	MAC_X86_64(OperatingSystem.MAC_OS_X, Architecture.X86_64, "mac_x86_64", ".dylib", ""),
 
 	/**
-	 * Identifies a Mac OS X for the Intel x86 64-bit platform.
+	 * Identifies a macOS ARM 64-bit OS.
 	 */
-	MAC_OSX_64(OperatingSystem.MAC_OS_X, Architecture.X86_64, "osx64", ".dylib", ""),
-
-	/**
-	 * Identifies a Mac OS, the architecture for which we do not know or have not encountered
-	 */
-	MAC_UNKNOWN(OperatingSystem.MAC_OS_X, Architecture.UNKNOWN, "osx64", ".dylib", ""),
+	MAC_ARM_64(OperatingSystem.MAC_OS_X, Architecture.ARM_64, "mac_arm_64", ".so", ""),
 
 	/**
 	 * Identifies an unsupported OS.
 	 */
-	UNSUPPORTED(OperatingSystem.UNSUPPORTED, Architecture.UNKNOWN, null, null, "");
+	UNSUPPORTED(OperatingSystem.UNSUPPORTED, Architecture.UNKNOWN, null, null, ""),
+
+	/**
+	 * Identifies a Windows 64-bit OS.
+	 * 
+	 * @deprecated Use {@link #WIN_X86_64} instead.
+	 */
+	@Deprecated(since = "10.1", forRemoval = true)
+	WIN_64(OperatingSystem.WINDOWS, Architecture.X86_64, "win_x86_64", ".dll", ".exe"),
+	
+	/**
+	 * Identifies a Windows OS, the architecture for which we do not know or have not encountered.
+	 * We'll treat it as {@link #WIN_X86_64} and hope for the best.
+	 * 
+	 * @deprecated Unknown architectures are not supported
+	 */
+	@Deprecated(since = "10.1", forRemoval = true)
+	WIN_UNKOWN(OperatingSystem.WINDOWS, Architecture.UNKNOWN, "win_x86_64", ".dll", ".exe"),
+
+	/**
+	 * Identifies a Linux X86 32-bit OS.
+	 * 
+	 * @deprecated Use {@link #LINUX_X86_32} instead.
+	 */
+	@Deprecated(since = "10.1", forRemoval = true)
+	LINUX(OperatingSystem.LINUX, Architecture.X86, "linux_x86_32", ".so", ""),
+
+	/**
+	 * Identifies a Linux X86 64-bit OS.
+	 * 
+	 * @deprecated Use {@link #LINUX_X86_64} instead.
+	 */
+	@Deprecated(since = "10.1", forRemoval = true)
+	LINUX_64(OperatingSystem.LINUX, Architecture.X86_64, "linux_x86_64", ".so", ""),
+	
+	/**
+	 * Identifies a Linux OS, the architecture for which we do not know or have not encountered.
+	 * We'll treat it as {@link #LINUX_X86_64} and hope for the best.
+	 * 
+	 * @deprecated Unknown architectures are not supported
+	 */
+	@Deprecated(since = "10.1", forRemoval = true)
+	LINUX_UKNOWN(OperatingSystem.LINUX, Architecture.UNKNOWN, "linux_x86_64", ".so", ""),
+
+	/**
+	 * Identifies a macOS X86 32-bit OS.
+	 * 
+	 * @deprecated Use {@link #MAC_OSX_32} instead.
+	 */
+	@Deprecated(since = "10.1", forRemoval = true)
+	MAC_OSX_32(OperatingSystem.MAC_OS_X, Architecture.X86, "mac_x86_32", ".dylib", ""),
+
+	/**
+	 * Identifies a macOS X86 64-bit OS.
+	 * 
+	 * @deprecated Use {@link #MAC_X86_64} instead.
+	 */
+	@Deprecated(since = "10.1", forRemoval = true)
+	MAC_OSX_64(OperatingSystem.MAC_OS_X, Architecture.X86_64, "mac_x86_64", ".dylib", ""),
+	
+	/**
+	 * Identifies a macOS OS, the architecture for which we do not know or have not encountered.
+	 * We'll treat it as {@link #MAC_X86_64} and hope for the best.
+	 * 
+	 * @deprecated Use {@link #MAC_X86_64} instead.
+	 */
+	@Deprecated(since = "10.1", forRemoval = true)
+	MAC_UNKNOWN(OperatingSystem.MAC_OS_X, Architecture.UNKNOWN, "mac_x86_64", ".dylib", "");
 
 	/**
 	 * A constant identifying the current platform.
@@ -145,7 +207,7 @@ public enum Platform {
 			paths.add("/usr/X11R6/bin");
 			paths.add("/usr/X11R6/lib");
 		}
-		else if (CURRENT_PLATFORM == WIN_64) {
+		else if (CURRENT_PLATFORM == WIN_X86_64) {
 			String windir = System.getenv("SystemRoot");
 			if (windir != null) {
 				File syswow64 = new File(windir, "SysWOW64");

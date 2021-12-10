@@ -15,8 +15,6 @@
  */
 package ghidra.formats.gfilesystem;
 
-import ghidra.util.SystemUtilities;
-
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -29,6 +27,7 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.list.ListPanel;
+import ghidra.util.SystemUtilities;
 
 /**
  * Dialog that presents the user with a list of strings and returns the object
@@ -96,17 +95,17 @@ public class SelectFromListDialog<T> extends DialogComponentProvider {
 	private void doSelect() {
 		selectedObject = null;
 		actionComplete = false;
-		DockingWindowManager activeInstance = DockingWindowManager.getActiveInstance();
-		activeInstance.showDialog(this);
+		DockingWindowManager.showDialog(this);
 		if (actionComplete) {
 			selectedObject = list.get(listPanel.getSelectedIndex());
 		}
 	}
 
 	private JPanel buildWorkPanel(String prompt) {
-		DefaultListModel<Object> listModel = new DefaultListModel<Object>() {
+		DefaultListModel<Object> listModel = new DefaultListModel<>() {
 			@Override
 			public String getElementAt(int index) {
+				@SuppressWarnings("unchecked")
 				T t = (T) super.getElementAt(index);
 				return toStringFunc.apply(t);
 			}

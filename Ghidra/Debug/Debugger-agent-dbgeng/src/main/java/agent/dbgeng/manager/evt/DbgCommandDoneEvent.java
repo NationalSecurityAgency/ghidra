@@ -18,16 +18,10 @@ package agent.dbgeng.manager.evt;
 import agent.dbgeng.manager.DbgCommand;
 import agent.dbgeng.manager.DbgState;
 
-/**
- * The event corresponding with "{@code ^done}"
- */
 public class DbgCommandDoneEvent extends AbstractDbgCompletedCommandEvent {
 
 	private DbgCommand<?> cmd;
 
-	/**
-	 * Construct a new event, parsing the tail for information
-	 */
 	public DbgCommandDoneEvent() {
 		super();
 	}

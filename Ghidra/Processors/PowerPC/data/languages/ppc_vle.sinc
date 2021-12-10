@@ -34,7 +34,7 @@ sd4WPlusRxAddr: SD4_VLE(RX_VLE)	is SD4_VLE & RX_VLE				{tmp:$(REGISTER_SIZE) = R
 OIMM: val						is UI5_VLE [ val = UI5_VLE+1; ] { export *[const]:$(REGISTER_SIZE) val; }
 
 @if REGISTER_SIZE == "4"
-SCALE: val						is BIT_10 & SCL_VLE & IMM8 [ val = (((0xFFFFFFFF << ((SCL_VLE*8) + 8)) | (0xFFFFFFFF >> (32 - (SCL_VLE*8)))) * BIT_10) | IMM8;   ] { export *[const]:4 val;}
+SCALE: val						is BIT_10 & SCL_VLE & IMM8 [ val = (((0xFFFFFFFF << ((SCL_VLE*8) + 8)) | (0xFFFFFFFF >> (32 - (SCL_VLE*8)))) * BIT_10) | (IMM8 << (SCL_VLE*8));   ] { export *[const]:4 val;}
 @else
 # Due to the way this big >> would work in java (arithmetic), we have to modify the orig way this was done.
 # (0xFFFFFFFFFFFFFFFF >> (64 - (SCL_VLE*8))  <--- Original
@@ -215,8 +215,9 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 
 :e_lbzu	D,d8PlusRaAddress		is $(ISVLE) & OP=6 & D & A & XOP_8_VLE=0 & d8PlusRaAddress
 {
-	D = zext(*:1(d8PlusRaAddress));
-	A = d8PlusRaAddress;
+	ea:$(REGISTER_SIZE) = d8PlusRaAddress;
+	D = zext(*:1(ea));
+	A = ea;
 }
 
 # e_ldmvcsrrw 6 (0b0001_10) 0b00101 RA 0b0001_0000 D8
@@ -299,14 +300,16 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 
 :e_lhau	D,d8PlusRaAddress		is $(ISVLE) & OP=6 & D & A & XOP_8_VLE=3 & d8PlusRaAddress
 {
-	D = sext(*:2(d8PlusRaAddress));
-	A = d8PlusRaAddress;
+	ea:$(REGISTER_SIZE) = d8PlusRaAddress;
+	D = sext(*:2(ea));
+	A = ea;
 }
 
 :e_lhzu	D,d8PlusRaAddress		is $(ISVLE) & OP=6 & D & A & XOP_8_VLE=1 & d8PlusRaAddress
 {
-	D = zext(*:2(d8PlusRaAddress));
-	A = d8PlusRaAddress;
+	ea:$(REGISTER_SIZE) = d8PlusRaAddress;
+	D = zext(*:2(ea));
+	A = ea;
 }
 
 :e_lwz	D,dPlusRaOrZeroAddress	is $(ISVLE) & OP=20 & D & dPlusRaOrZeroAddress
@@ -320,8 +323,9 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 
 :e_lwzu	D,d8PlusRaAddress		is $(ISVLE) & OP=6 & D & A & XOP_8_VLE=2 & d8PlusRaAddress
 {
-	D = zext(*:4(d8PlusRaAddress));
-	A = d8PlusRaAddress;
+	ea:$(REGISTER_SIZE) = d8PlusRaAddress;
+	D = zext(*:4(ea));
+	A = ea;
 }
 
 :e_stb	S,dPlusRaOrZeroAddress	is $(ISVLE) & OP=13 & S & dPlusRaOrZeroAddress
@@ -335,8 +339,9 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 
 :e_stbu	S,d8PlusRaAddress		is $(ISVLE) & OP=6 & XOP_8_VLE=4 & S & A & d8PlusRaAddress
 {
-	*:1(d8PlusRaAddress) = S:1;
-	A = d8PlusRaAddress;
+	ea:$(REGISTER_SIZE) = d8PlusRaAddress;
+	*:1(ea) = S:1;
+	A = ea;
 }
 
 :e_sth S,dPlusRaOrZeroAddress	is $(ISVLE) & OP=23 & S & dPlusRaOrZeroAddress
@@ -350,8 +355,9 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 
 :sthu S,d8PlusRaAddress			is $(ISVLE) & OP=6 & XOP_8_VLE=5 & S & A & d8PlusRaAddress
 {
-	*:2(d8PlusRaAddress) = S:2;
-	A = d8PlusRaAddress;
+	ea:$(REGISTER_SIZE) = d8PlusRaAddress;
+	*:2(ea) = S:2;
+	A = ea;
 }
 
 # e_stmvcsrrw 6 (0b0001_10) 0b00101 RA 0b0001_0001 D8
@@ -436,12 +442,13 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 
 :e_stwu S,d8PlusRaAddress		is $(ISVLE) & OP=6 & XOP_8_VLE=6 & S & A & d8PlusRaAddress
 {
+	ea:$(REGISTER_SIZE) = d8PlusRaAddress;
 @ifdef BIT_64
-	*:4(d8PlusRaAddress) = S:4;
+	*:4(ea) = S:4;
 @else
-	*:4(d8PlusRaAddress) = S;
+	*:4(ea) = S;
 @endif
-	A = d8PlusRaAddress;
+	A = ea;
 }
 
 :e_lmw	D,d8PlusRaOrZeroAddress	is $(ISVLE) & OP=6 & XOP_8_VLE=8 & D & BITS_21_25 & d8PlusRaOrZeroAddress & LDMR31 [ lsmul = BITS_21_25; ]

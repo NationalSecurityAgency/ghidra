@@ -16,16 +16,13 @@
 package ghidra.file.formats.android.odex;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
-import ghidra.util.BoundedInputStream;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
@@ -43,44 +40,24 @@ public class OdexFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException, CryptoException {
 
 		if (file != null) {
 			if (file.equals(dexFile)) {
-				return new BoundedInputStream(provider.getInputStream(odexHeader.getDexOffset()),
-					odexHeader.getDexLength());
+				return new ByteProviderWrapper(provider, odexHeader.getDexOffset(),
+					odexHeader.getDexLength(), dexFile.getFSRL());
 			}
 			if (file.equals(depsFile)) {
-				return new BoundedInputStream(provider.getInputStream(odexHeader.getDepsOffset()),
-					odexHeader.getDepsLength());
+				return new ByteProviderWrapper(provider, odexHeader.getDepsOffset(),
+					odexHeader.getDepsLength(), depsFile.getFSRL());
 			}
 			if (file.equals(auxFile)) {
-				return new BoundedInputStream(provider.getInputStream(odexHeader.getAuxOffset()),
-					odexHeader.getAuxLength());
+				return new ByteProviderWrapper(provider, odexHeader.getAuxOffset(),
+					odexHeader.getAuxLength(), auxFile.getFSRL());
 			}
 		}
 		return null;
-	}
-
-	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		StringBuilder builder = new StringBuilder();
-		builder.append("Magic:       " + odexHeader.getMagic()).append("\n");
-		builder.append("Dex Offset:  " + Integer.toHexString(odexHeader.getDexOffset())).append(
-			"\n");
-		builder.append("Dex Length:  " + Integer.toHexString(odexHeader.getDexLength())).append(
-			"\n");
-		builder.append("Deps Offset: " + Integer.toHexString(odexHeader.getDepsOffset())).append(
-			"\n");
-		builder.append("Deps Length: " + Integer.toHexString(odexHeader.getDepsLength())).append(
-			"\n");
-		builder.append("Aux Offset:  " + Integer.toHexString(odexHeader.getAuxOffset())).append(
-			"\n");
-		builder.append("Aux Length:  " + Integer.toHexString(odexHeader.getAuxLength())).append(
-			"\n");
-		builder.append("Flags:       " + Integer.toHexString(odexHeader.getFlags())).append("\n");
-		return builder.toString();
 	}
 
 	@Override

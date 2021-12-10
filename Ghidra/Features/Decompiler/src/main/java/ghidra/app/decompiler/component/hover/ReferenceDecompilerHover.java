@@ -34,7 +34,11 @@ public class ReferenceDecompilerHover extends AbstractReferenceHover
 	private static final String DESCRIPTION =
 		"Shows \"referred to\" code and data from the decompiler.";
 
-	private static final int PRIORITY = 25;
+	// note: this is relative to other DecompilerHovers; a higher priority gets called first
+	// Use high value so this hover gets called first.  The method for determining what the user
+	// is hovering in the Decompiler is less then perfect.  We choose to allow the more precise
+	// hovers get a chance to process the request first.
+	private static final int PRIORITY = 50;
 
 	public ReferenceDecompilerHover(PluginTool tool) {
 		super(tool, PRIORITY);

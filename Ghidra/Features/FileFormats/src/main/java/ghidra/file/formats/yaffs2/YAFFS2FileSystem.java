@@ -16,11 +16,10 @@
 package ghidra.file.formats.yaffs2;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
+import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.ByteProviderInputStream;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
@@ -48,8 +47,8 @@ public class YAFFS2FileSystem extends GFileSystemBase {
 
 	@Override
 	public void open(TaskMonitor monitor) throws IOException, CancelledException {
-		YAFFS2InputStream yaffs2Input =
-			new YAFFS2InputStream(new ByteProviderInputStream(provider, 0, provider.length()));
+		// TODO: should yaffsInput be closed?
+		YAFFS2InputStream yaffs2Input = new YAFFS2InputStream(provider.getInputStream(0));
 
 		// go through the image file, looking at each header entry, ignoring the data, storing the dir tree
 		while (!monitor.isCancelled()) {
@@ -98,12 +97,7 @@ public class YAFFS2FileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public String getInfo(GFile file, TaskMonitor monitor) {
-		return "YAFFS2, Yet Another Flash File System V2, commonly used for Android System and UserData images.";
-	}
-
-	@Override
-	protected InputStream getData(GFile file, TaskMonitor monitor)
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// get saved entry from selected file
 		YAFFS2Entry entry = map2.get(file);
@@ -118,11 +112,10 @@ public class YAFFS2FileSystem extends GFileSystemBase {
 		long size = entry.getSize();
 
 		// return bytes for the selected file
-		YAFFS2InputStream YAFFS2Input =
-			new YAFFS2InputStream(new ByteProviderInputStream(provider, 0, provider.length()));
-		InputStream inputStream = YAFFS2Input.getEntryData(fileOffset, size);
-		YAFFS2Input.close();
-		return inputStream;
+		try (YAFFS2InputStream YAFFS2Input = new YAFFS2InputStream(provider.getInputStream(0))) {
+			byte[] entryData = YAFFS2Input.getEntryData(fileOffset, size);
+			return new ByteArrayProvider(entryData, file.getFSRL());
+		}
 	}
 
 	private void storeEntry(YAFFS2Entry entry, TaskMonitor monitor) {

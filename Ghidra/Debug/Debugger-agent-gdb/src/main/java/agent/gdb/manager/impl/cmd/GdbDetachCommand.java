@@ -40,8 +40,7 @@ public class GdbDetachCommand extends AbstractGdbCommandWithThreadId<Void> {
 
 	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
+		if (super.handle(evt, pending)) {
 			return true;
 		}
 		else if (evt instanceof GdbThreadExitedEvent) {

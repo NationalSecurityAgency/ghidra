@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
+import java.awt.Color;
+
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;
 import ghidra.service.graph.*;
@@ -35,9 +37,8 @@ public class TypeGraphTask extends Task {
 	private String graphTitle;
 	private GraphDisplayProvider graphService;
 
-	public static final String TYPE_ATTRIBUTE = "Type";
-	public static final String EMBEDDED = "Composite";
-	public static final String POINTER = "Reference";
+	public static final String COMPOSITE = "Composite";
+	public static final String REFERENCE = "Reference";
 
 	/*
 	 * Constructor
@@ -57,8 +58,18 @@ public class TypeGraphTask extends Task {
 
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
+		GraphType graphType = new GraphTypeBuilder("Data Graph")
+				.edgeType(REFERENCE)
+				.edgeType(COMPOSITE)
+				.build();
 
-		AttributedGraph graph = new AttributedGraph();
+		GraphDisplayOptions options = new GraphDisplayOptionsBuilder(graphType)
+				.defaultVertexColor(Color.BLUE)
+				.edge(COMPOSITE, Color.MAGENTA)
+				.edge(REFERENCE, Color.BLUE)
+				.build();
+
+		AttributedGraph graph = new AttributedGraph(graphTitle, graphType);
 		try {
 			if (type instanceof Pointer) {
 				recursePointer((Pointer) type, graph, null, monitor);
@@ -75,7 +86,7 @@ public class TypeGraphTask extends Task {
 		GraphDisplay display;
 		try {
 			display = graphService.getGraphDisplay(false, monitor);
-			display.setGraph(graph, graphTitle, false, monitor);
+			display.setGraph(graph, options, graphTitle, false, monitor);
 		}
 		catch (GraphException e) {
 			Msg.showError(this, null, "Data Type Graph Error",
@@ -94,11 +105,8 @@ public class TypeGraphTask extends Task {
 		}
 		else {
 			AttributedEdge edge = graph.addEdge(lastVertex, newVertex);
-			if (edgeType == POINTER) {
-				edge.setAttribute("Color", "Blue");
-			}
-			edge.setAttribute(TYPE_ATTRIBUTE, edgeType);
-			if (edge.hasAttribute("Weight")) {
+			edge.setEdgeType(edgeType);
+			if (edge.hasAttribute(AttributedGraph.WEIGHT)) {
 				//did this already, don't cycle
 				return;
 			}
@@ -115,7 +123,7 @@ public class TypeGraphTask extends Task {
 				recursePointer((Pointer) dt, graph, newVertex, monitor);
 			}
 			else if (dt instanceof Composite) {
-				recurseComposite((Composite) dt, graph, newVertex, EMBEDDED, monitor);
+				recurseComposite((Composite) dt, graph, newVertex, COMPOSITE, monitor);
 			}
 		}
 	}
@@ -135,7 +143,7 @@ public class TypeGraphTask extends Task {
 			recursePointer((Pointer) ptrType, graph, lastVertex, monitor);
 		}
 		else if (ptrType instanceof Composite) {
-			recurseComposite((Composite) ptrType, graph, lastVertex, POINTER, monitor);
+			recurseComposite((Composite) ptrType, graph, lastVertex, REFERENCE, monitor);
 		}
 	}
 

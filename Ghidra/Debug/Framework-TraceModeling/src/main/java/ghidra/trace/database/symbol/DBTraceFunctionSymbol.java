@@ -34,8 +34,8 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.VariableUtilities.VariableConflictHandler;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.DBTraceUtils.AddressDBFieldCodec;
-import ghidra.trace.database.DBTraceUtils.DecodesAddresses;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
+import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.bookmark.DBTraceBookmarkType;
 import ghidra.trace.database.listing.DBTraceCommentAdapter;
 import ghidra.trace.database.listing.DBTraceData;
@@ -150,11 +150,6 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 
 		lifespan = DBTraceUtils.toRange(startSnap, endSnap);
 		thunked = thunkedKey == -1 ? null : manager.functionStore.getObjectAt(thunkedKey);
-	}
-
-	@Override
-	public Address decodeAddress(int spaceId, long offset) {
-		return manager.trace.getBaseAddressFactory().getAddress(spaceId, offset);
 	}
 
 	protected void set(Range<Long> lifespan, Address entryPoint, String name,

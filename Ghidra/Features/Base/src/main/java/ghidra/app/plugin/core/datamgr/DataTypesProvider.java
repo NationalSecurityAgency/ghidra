@@ -177,9 +177,14 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new ExpandAllAction(plugin)); // Tree
 
 		// VeryLast group
-		addLocalAction(getIncludeDataMembersInSearchAction()); // Common
-		addLocalAction(new FindDataTypesAction(plugin)); // Common
-		addLocalAction(new FindDataTypesBySizeAction(plugin)); // Common
+		addLocalAction(new FindDataTypesByNameAction(plugin, "1"));
+		addLocalAction(new FindDataTypesBySizeAction(plugin, "2"));
+		addLocalAction(new FindStructuresByOffsetAction(plugin, "3"));
+		addLocalAction(new FindStructuresBySizeAction(plugin, "4"));
+		includeDataMembersInSearchAction =
+			new IncludeDataTypesInFilterAction(plugin, this, "5");
+		addLocalAction(includeDataMembersInSearchAction);
+
 		addLocalAction(new ApplyFunctionDataTypesAction(plugin)); // Tree
 		addLocalAction(new CaptureFunctionDataTypesAction(plugin)); // Tree
 		addLocalAction(new SetFavoriteDataTypeAction(plugin)); // Data Type
@@ -189,7 +194,6 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		// ZVeryLast group
 		addLocalAction(new FindReferencesToDataTypeAction(plugin)); // DataType
 		addLocalAction(new FindReferencesToFieldAction(plugin)); // DataType
-//    	addLocalAction( new FindDataTypesContainingAction(plugin) ); // DataType
 		addLocalAction(new FindBaseDataTypeAction(plugin)); // DataType
 		addLocalAction(new DisplayTypeAsGraphAction(plugin));
 
@@ -210,7 +214,6 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new OpenProjectArchiveAction(plugin));
 		addLocalAction(new CreateArchiveAction(plugin));
 		addLocalAction(new CreateProjectArchiveAction(plugin));
-		addLocalAction(new RefreshAction(plugin));
 		ToggleDockingAction previewAction = getPreviewWindowAction();
 		addLocalAction(previewAction);
 
@@ -322,13 +325,6 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		return previewWindowAction;
 	}
 
-	private ToggleDockingAction getIncludeDataMembersInSearchAction() {
-		if (includeDataMembersInSearchAction == null) {
-			includeDataMembersInSearchAction = new IncludeDataTypesInFilterAction(plugin, this);
-		}
-		return includeDataMembersInSearchAction;
-	}
-
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		GTreeNode clickedNode = null;
@@ -343,6 +339,15 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			Point point = event.getPoint();
 			clickedNode = archiveGTree.getNodeForLocation(point.x, point.y);
 			isToolbarAction = false;
+		}
+		else {
+			// Called via a keybinding; use the selected node in the tree to represent the clicked
+			// node.  This allows users to use a keybinding to show the context menu and have all
+			// actions installed.
+			TreePath path = archiveGTree.getSelectionPath();
+			if (path != null) {
+				clickedNode = (GTreeNode) path.getLastPathComponent();
+			}
 		}
 
 		return new DataTypesActionContext(this, plugin.getProgram(), archiveGTree, clickedNode,
@@ -641,7 +646,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		getPreviewWindowAction().setSelected(previewWindowVisible);
 
 		boolean dataMembersInSearch = saveState.getBoolean(INCLUDE_DATA_MEMBERS_IN_SEARCH, false);
-		getIncludeDataMembersInSearchAction().setSelected(dataMembersInSearch);
+		includeDataMembersInSearchAction.setSelected(dataMembersInSearch);
 	}
 
 	void save(SaveState saveState) {
@@ -651,7 +656,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			getConflictHandlerModesAction().getCurrentUserData().toString());
 		saveState.putBoolean(PREVIEW_WINDOW_STATE, getPreviewWindowAction().isSelected());
 		saveState.putBoolean(INCLUDE_DATA_MEMBERS_IN_SEARCH,
-			getIncludeDataMembersInSearchAction().isSelected());
+			includeDataMembersInSearchAction.isSelected());
 	}
 
 	public DataTypeArchiveGTree getGTree() {
@@ -788,7 +793,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		archiveGTree.setIncludeDataTypeMembersInSearch(includeDataMembersInFilter);
 
 		// make sure the action is in sync
-		ToggleDockingAction action = getIncludeDataMembersInSearchAction();
+		ToggleDockingAction action = includeDataMembersInSearchAction;
 		boolean selected = action.isSelected();
 		if (selected != includeDataMembersInFilter) {
 			action.setSelected(includeDataMembersInFilter);

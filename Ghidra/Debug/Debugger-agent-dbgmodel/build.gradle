@@ -64,7 +64,7 @@ task nodepJar(type: Jar) {
 	dependsOn(configureNodepJar)
 	dependsOn(jar)
 
-	appendix = 'nodep'
+	archiveAppendix = 'nodep'
 	manifest {
 		attributes['Main-Class'] = 'agent.dbgmodel.gadp.DbgModelGadpServer'
 	}
@@ -79,7 +79,7 @@ task nodepJar(type: Jar) {
 
 test {
 	jvmArgs('-Xrs') // TODO: Is this needed, or left over from trial-and-error
-	if ("win64".equals(getCurrentPlatformName())) {
-		dependsOn(":Framework-Debugging:testSpecimenWin64")
+	if ("win_x86_64".equals(getCurrentPlatformName())) {
+		dependsOn(":Framework-Debugging:testSpecimenWin_x86_64")
 	}
 }

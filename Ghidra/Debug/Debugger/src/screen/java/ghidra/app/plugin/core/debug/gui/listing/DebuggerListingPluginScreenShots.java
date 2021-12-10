@@ -23,6 +23,7 @@ import com.google.common.collect.Range;
 
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
+import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToDialog;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.program.model.lang.RegisterValue;
@@ -135,7 +136,7 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 
 		performAction(listingProvider.actionGoTo, false);
 		DebuggerGoToDialog dialog = waitForDialogComponent(DebuggerGoToDialog.class);
-		dialog.textExpression.setText("RAX");
+		dialog.setExpression("RAX");
 
 		captureDialog(dialog);
 	}

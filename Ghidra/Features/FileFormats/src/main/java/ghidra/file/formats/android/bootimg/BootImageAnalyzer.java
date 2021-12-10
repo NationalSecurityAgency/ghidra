@@ -17,7 +17,9 @@ package ghidra.file.formats.android.bootimg;
 
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.program.model.address.Address;
@@ -32,7 +34,7 @@ public class BootImageAnalyzer extends FileFormatAnalyzer implements AnalysisWor
 
 	@Override
 	public String getName() {
-		return "Android Boot or Recovery Image Annotation";
+		return "Android Boot, Recovery, or Vendor Image Annotation";
 	}
 
 	@Override
@@ -42,13 +44,13 @@ public class BootImageAnalyzer extends FileFormatAnalyzer implements AnalysisWor
 
 	@Override
 	public String getDescription() {
-		return "Annotates Android Boot and Recovery Image files.";
+		return "Annotates Android Boot, Recovery, or Vendor Image files.";
 	}
 
 	@Override
 	public boolean canAnalyze(Program program) {
 		try {
-			return BootImageUtil.isBootImage(program);
+			return BootImageUtil.isBootImage(program) || BootImageUtil.isVendorBootImage(program);
 		}
 		catch (Exception e) {
 			// not a boot image
@@ -61,62 +63,97 @@ public class BootImageAnalyzer extends FileFormatAnalyzer implements AnalysisWor
 		return true;
 	}
 
-	private MessageLog log;
+	private MessageLog messageLog;
 
 	@Override
 	public boolean analyze(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws Exception {
-		this.log = log;
+		this.messageLog = log;
 		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(program);
 		return manager.scheduleWorker(this, null, false, monitor);
 	}
 
 	@Override
-	public boolean analysisWorkerCallback(Program program, Object workerContext, TaskMonitor monitor)
-			throws Exception, CancelledException {
+	public boolean analysisWorkerCallback(Program program, Object workerContext,
+			TaskMonitor monitor) throws Exception, CancelledException {
 
 		Address address = program.getMinAddress();
 
 		ByteProvider provider = new MemoryByteProvider(program.getMemory(), address);
 		BinaryReader reader = new BinaryReader(provider, true);
 
-		BootImage header = new BootImage(reader);
+		if (BootImageUtil.isBootImage(program)) {
 
-		if (!header.getMagic().equals(BootImageConstants.BOOT_IMAGE_MAGIC)) {
-			return false;
+			BootImageHeader header = BootImageHeaderFactory.getBootImageHeader(reader);
+
+			if (!BootImageConstants.BOOT_MAGIC.equals(header.getMagic())) {
+				return false;
+			}
+
+			DataType headerDataType = header.toDataType();
+
+			Data headerData = createData(program, address, headerDataType);
+
+			if (headerData == null) {
+				messageLog.appendMsg("Unable to create header data.");
+				return false;
+			}
+
+			createFragment(program, headerDataType.getName(), toAddr(program, 0),
+				toAddr(program, header.getPageSize()));
+
+			if (header.getKernelSize() > 0) {
+				Address start = toAddr(program, header.getKernelOffset());
+				Address end = toAddr(program, header.getKernelOffset() + header.getKernelSize());
+				createFragment(program, BootImageConstants.KERNEL, start, end);
+			}
+
+			if (header.getRamdiskSize() > 0) {
+				Address start = toAddr(program, header.getRamdiskOffset());
+				Address end = toAddr(program, header.getRamdiskOffset() + header.getRamdiskSize());
+				createFragment(program, BootImageConstants.RAMDISK, start, end);
+			}
+
+			if (header.getSecondSize() > 0) {
+				Address start = toAddr(program, header.getSecondOffset());
+				Address end = toAddr(program, header.getSecondOffset() + header.getSecondSize());
+				createFragment(program, BootImageConstants.SECOND_STAGE, start, end);
+			}
+
+			changeDataSettings(program, monitor);
 		}
+		else if (BootImageUtil.isVendorBootImage(program)) {
+			VendorBootImageHeader header =
+				VendorBootImageHeaderFactory.getVendorBootImageHeader(reader);
 
-		DataType headerDataType = header.toDataType();
+			if (!header.getMagic().equals(BootImageConstants.VENDOR_BOOT_MAGIC)) {
+				return false;
+			}
 
-		Data headerData = createData(program, address, headerDataType);
+			DataType headerDataType = header.toDataType();
 
-		if (headerData == null) {
-			log.appendMsg("Unable to create header data.");
+			Data headerData = createData(program, address, headerDataType);
+
+			if (headerData == null) {
+				messageLog.appendMsg("Unable to create header data.");
+			}
+
+			createFragment(program, headerDataType.getName(), toAddr(program, 0),
+				toAddr(program, headerData.getLength()));
+
+			if (header.getVendorRamdiskSize() > 0) {
+				Address start = toAddr(program, header.getVendorRamdiskOffset());
+				Address end = toAddr(program,
+					header.getVendorRamdiskOffset() + header.getVendorRamdiskSize());
+				createFragment(program, BootImageConstants.RAMDISK, start, end);
+			}
+
+			if (header.getDtbSize() > 0) {
+				Address start = toAddr(program, header.getDtbOffset());
+				Address end = toAddr(program, header.getDtbOffset() + header.getDtbSize());
+				createFragment(program, BootImageConstants.DTB, start, end);
+			}
 		}
-
-		createFragment(program, headerDataType.getName(), toAddr(program, 0),
-			toAddr(program, header.getPageSize()));
-
-		if (header.getKernelSize() > 0) {
-			Address start = toAddr(program, header.getKernelOffset());
-			Address end = toAddr(program, header.getKernelOffset() + header.getKernelSize());
-			createFragment(program, BootImageConstants.KERNEL, start, end);
-		}
-
-		if (header.getRamDiskSize() > 0) {
-			Address start = toAddr(program, header.getRamDiskOffset());
-			Address end = toAddr(program, header.getRamDiskOffset() + header.getRamDiskSize());
-			createFragment(program, BootImageConstants.RAMDISK, start, end);
-		}
-
-		if (header.getSecondStageSize() > 0) {
-			Address start = toAddr(program, header.getSecondStageOffset());
-			Address end =
-				toAddr(program, header.getSecondStageOffset() + header.getSecondStageSize());
-			createFragment(program, BootImageConstants.SECOND_STAGE, start, end);
-		}
-
-		changeDataSettings(program, monitor);
 
 		removeEmptyFragments(program);
 

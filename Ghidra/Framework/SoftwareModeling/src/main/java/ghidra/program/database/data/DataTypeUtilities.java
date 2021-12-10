@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import ghidra.app.util.NamespaceUtils;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.data.*;
@@ -174,12 +175,6 @@ public class DataTypeUtilities {
 					return true;
 				}
 			}
-			if (firstDataType instanceof Structure) {
-				DataTypeComponent flexDtc = ((Structure) firstDataType).getFlexibleArrayComponent();
-				if (flexDtc != null && isSecondPartOfFirst(flexDtc.getDataType(), secondDataType)) {
-					return true;
-				}
-			}
 		}
 		return false;
 	}
@@ -307,7 +302,7 @@ public class DataTypeUtilities {
 	}
 
 	public static String getName(Array arrayDt, boolean showBaseSizeForDynamics) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append(getArrayBaseDataType(arrayDt).getName());
 		if (showBaseSizeForDynamics) {
 			buf.append(getArrayElementLengthForDynamic(arrayDt));
@@ -317,7 +312,7 @@ public class DataTypeUtilities {
 	}
 
 	public static String getDisplayName(Array arrayDt, boolean showBaseSizeForDynamics) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append(getArrayBaseDataType(arrayDt).getDisplayName());
 		if (showBaseSizeForDynamics) {
 			buf.append(getArrayElementLengthForDynamic(arrayDt));
@@ -328,7 +323,7 @@ public class DataTypeUtilities {
 
 	public static String getMnemonic(Array arrayDt, boolean showBaseSizeForDynamics,
 			Settings settings) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append(getArrayBaseDataType(arrayDt).getMnemonic(settings));
 		if (showBaseSizeForDynamics) {
 			buf.append(getArrayElementLengthForDynamic(arrayDt));
@@ -347,23 +342,16 @@ public class DataTypeUtilities {
 	 */
 	public static CategoryPath getDataTypeCategoryPath(CategoryPath baseCategory,
 			Namespace namespace) {
-		Namespace ns = namespace;
-		String path = "";
-		while (!ns.isGlobal() && !(ns instanceof Library)) {
-			if (path.length() != 0) {
-				path = "/" + path;
+		List<String> categoryPathParts = new ArrayList<>();
+		for (Namespace ns : NamespaceUtils.getNamespaceParts(namespace)) {
+			if (ns instanceof Library) {
+				break; // assume the Library is a root and no other categories are above it
 			}
-			path = ns.getName() + path;
-			ns = ns.getParentNamespace();
+			categoryPathParts.add(ns.getName());
 		}
-		if (path.length() == 0) {
-			return baseCategory;
-		}
-		String categoryPath = CategoryPath.DELIMITER_CHAR + path;
-		if (!baseCategory.equals(CategoryPath.ROOT)) {
-			categoryPath = baseCategory.getPath() + categoryPath;
-		}
-		return new CategoryPath(categoryPath);
+		return categoryPathParts.isEmpty()
+				? baseCategory
+				: new CategoryPath(baseCategory, categoryPathParts);
 	}
 
 	/**

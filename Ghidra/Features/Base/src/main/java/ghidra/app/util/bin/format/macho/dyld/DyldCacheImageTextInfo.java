@@ -26,10 +26,10 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a dyld_cache_image_text_info structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
  */
 @SuppressWarnings("unused")
-public class DyldCacheImageTextInfo implements StructConverter {
+public class DyldCacheImageTextInfo implements DyldCacheImage, StructConverter {
 
 	private byte[] uuid;
 	private long loadAddress;
@@ -52,12 +52,13 @@ public class DyldCacheImageTextInfo implements StructConverter {
 
 		path = reader.readAsciiString(pathOffset);
 	}
+	
+	@Override
+	public long getAddress() {
+		return loadAddress;
+	}
 
-	/**
-	 * Gets the path of the image text.
-	 * 
-	 * @return The path of the image text.
-	 */
+	@Override
 	public String getPath() {
 		return path;
 	}

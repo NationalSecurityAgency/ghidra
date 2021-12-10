@@ -88,23 +88,11 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	}
 
 	@Override
-	public Symbol createSymbol(Address addr, String name, SourceType source)
-			throws InvalidInputException {
-		return createLabel(addr, name, source);
-	}
-
-	@Override
 	public Symbol createLabel(Address addr, String name, Namespace namespace, SourceType source)
 			throws InvalidInputException {
 		return symbolManager.labels()
 				.create(program.snap, null, addr, name,
 					assertTraceNamespace(namespace), source);
-	}
-
-	@Override
-	public Symbol createSymbol(Address addr, String name, Namespace namespace, SourceType source)
-			throws DuplicateNameException, InvalidInputException {
-		return createLabel(addr, name, namespace, source);
 	}
 
 	@Override
@@ -194,26 +182,6 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	@Override
 	public Symbol getGlobalSymbol(String name, Address addr) {
 		return getSymbol(name, addr, global);
-	}
-
-	@Override
-	public Symbol getSymbol(String name, Namespace namespace) {
-		try (LockHold hold = program.trace.lockRead()) {
-			for (TraceSymbol sym : symbolManager.allSymbols()
-					.getChildrenNamed(name,
-						assertTraceNamespace(namespace))) {
-				if (requireVisible(sym) == null) {
-					continue;
-				}
-				return sym;
-			}
-			return null;
-		}
-	}
-
-	@Override
-	public Symbol getSymbol(String name) {
-		return getSymbol(name, global);
 	}
 
 	@Override
@@ -324,6 +292,13 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 				symbolManager.labelsAndFunctions().getAt(program.snap, null, addr, true);
 			return at.toArray(new Symbol[at.size()]);
 		}
+	}
+
+	@Override
+	public SymbolIterator getSymbolsAsIterator(Address addr) {
+		Symbol[] symbols = getSymbols(addr);
+		List<Symbol> list = Arrays.asList(symbols);
+		return new SymbolIteratorAdapter(list.iterator());
 	}
 
 	@Override

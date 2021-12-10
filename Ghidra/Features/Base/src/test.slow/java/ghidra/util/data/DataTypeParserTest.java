@@ -128,6 +128,8 @@ public class DataTypeParserTest extends AbstractEditorTest {
 		checkValidDt("byte*64*32**16*8");
 		checkValidDt("byte*8*");
 		checkValidDt("byte*32*16*32");
+		checkValidDt("byte[]"); // treated the same as byte[0]
+		checkValidDt("byte[0]");
 		checkValidDt("byte[5]");
 		checkValidDt("byte[22][13]");
 		checkValidDt("byte*[2]");
@@ -141,8 +143,6 @@ public class DataTypeParserTest extends AbstractEditorTest {
 		checkInvalidDt("aaa*{");
 		checkInvalidDt("byte*5");
 		checkInvalidDt("byte*16*[.]");
-		checkInvalidDt("byte[]");
-		checkInvalidDt("byte[0]");
 		checkInvalidDt("*byte");
 		checkInvalidDt("byte[7]*[12a]");
 		checkInvalidDt("*");

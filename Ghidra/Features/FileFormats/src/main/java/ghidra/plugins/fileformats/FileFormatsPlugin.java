@@ -22,9 +22,8 @@ import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 
-import docking.ActionContext;
 import docking.action.DockingAction;
-import docking.action.MenuData;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
@@ -91,176 +90,126 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 		actions.forEach(action -> getTool().removeAction(action));
 	}
 
+	private boolean isAPK(FSRL fsrl) {
+		return (fsrl != null) && (fsrl.getName() != null) &&
+			"apk".equalsIgnoreCase(FilenameUtils.getExtension(fsrl.getName()));
+	}
+
+	private void doExportToEclipse(FSRL fsrl, File outputDirectory, TaskMonitor monitor) {
+		try (RefdFile refdFile =
+			FileSystemService.getInstance().getRefdFile(fsrl, monitor)) {
+			AndroidProjectCreator creator =
+				new AndroidProjectCreator(refdFile.file.getFSRL(), outputDirectory);
+			creator.create(monitor);
+
+			if (creator.getLog().hasMessages()) {
+				Msg.showInfo(this, getTool().getActiveWindow(), "Export to Eclipse Project",
+					creator.getLog().toString());
+			}
+		}
+		catch (IOException | CancelledException e) {
+			FSUtilities.displayException(this, getTool().getActiveWindow(),
+				"Error Exporting to Eclipse", e.getMessage(), e);
+		}
+	}
+
 	private DockingAction createEclipseProjectAction() {
+		return new ActionBuilder("FSB Export Eclipse Project", this.getName())
+				.withContext(FSBActionContext.class)
+				.enabledWhen(ac -> ac.notBusy() && JadProcessWrapper.isJadPresent() &&
+					isAPK(ac.getFileFSRL()))
+				.popupMenuPath("Export Eclipse Project")
+				.popupMenuIcon(ImageManager.ECLIPSE)
+				.popupMenuGroup("H")
+				.onAction(
+					ac -> {
+						FSRL fsrl = ac.getFileFSRL();
+						if (fsrl == null) {
+							Msg.info(this, "Unable to export eclipse project");
+							return;
+						}
 
-		FSBAction action = new FSBAction("Export Eclipse Project", this) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				if (context instanceof FSBActionContext) {
-					FSBActionContext fsbContext = (FSBActionContext) context;
-					FSRL fsrl = FSBUtils.getFileFSRLFromContext(context);
-					if (fsrl == null) {
-						Msg.info(this, "Unable to export eclipse project");
-						return;
-					}
-
-					if (chooserEclipse == null) {
-						chooserEclipse = new GhidraFileChooser(null);
-					}
-					chooserEclipse.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
-					chooserEclipse.setTitle("Select Eclipe Project Directory");
-					chooserEclipse.setApproveButtonText("SELECT");
-					chooserEclipse.setSelectedFile(null);
-					File outputDirectory = chooserEclipse.getSelectedFile();
-					if (outputDirectory == null) {
-						return;
-					}
-					fsbContext.getTree()
-							.runTask(
-								monitor -> doExportToEclipse(fsrl, outputDirectory, monitor));
-				}
-			}
-
-			private void doExportToEclipse(FSRL fsrl, File outputDirectory, TaskMonitor monitor) {
-				try (RefdFile refdFile =
-					FileSystemService.getInstance().getRefdFile(fsrl, monitor)) {
-					AndroidProjectCreator creator =
-						new AndroidProjectCreator(refdFile.file, outputDirectory);
-					creator.create(monitor);
-
-					if (creator.getLog().hasMessages()) {
-						Msg.showInfo(this, getTool().getActiveWindow(), "Export to Eclipse Project",
-							creator.getLog().toString());
-					}
-				}
-				catch (IOException | CancelledException e) {
-					FSUtilities.displayException(this, getTool().getActiveWindow(),
-						"Error Exporting to Eclipse", e.getMessage(), e);
-				}
-
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				if (JadProcessWrapper.isJadPresent() && (context instanceof FSBActionContext)) {
-					FSBActionContext fsbContext = (FSBActionContext) context;
-					FSRL fsrl = FSBUtils.getFileFSRLFromContext(context);
-					return !fsbContext.getTree().isBusy() && (fsrl != null) &&
-						(fsrl.getName() != null) &&
-						("apk".equalsIgnoreCase(FilenameUtils.getExtension(fsrl.getName())));
-				}
-				return false;
-			}
-
-			@Override
-			public boolean isAddToPopup(ActionContext context) {
-				return context instanceof FSBActionContext;
-			}
-		};
-		action.setPopupMenuData(
-			new MenuData(new String[] { action.getMenuText() }, ImageManager.ECLIPSE, "H"));
-		action.setEnabled(true);
-		return action;
+						if (chooserEclipse == null) {
+							chooserEclipse = new GhidraFileChooser(null);
+						}
+						chooserEclipse.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
+						chooserEclipse.setTitle("Select Eclipe Project Directory");
+						chooserEclipse.setApproveButtonText("SELECT");
+						chooserEclipse.setSelectedFile(null);
+						File outputDirectory = chooserEclipse.getSelectedFile();
+						if (outputDirectory == null) {
+							return;
+						}
+						GTree gTree = ac.getTree();
+						gTree.runTask(monitor -> doExportToEclipse(fsrl, outputDirectory, monitor));
+					})
+				.build();
 	}
 
 	private DockingAction createDecompileJarAction() {
+		return new ActionBuilder("FSB Decompile JAR", this.getName())
+				.withContext(FSBActionContext.class)
+				.enabledWhen(ac -> ac.notBusy() && JadProcessWrapper.isJadPresent() &&
+					ac.getFileFSRL() != null)
+				.popupMenuPath("Decompile JAR")
+				.popupMenuIcon(ImageManager.JAR)
+				.popupMenuGroup("J")
+				.onAction(
+					ac -> {
+						FSRL jarFSRL = ac.getFileFSRL();
+						if (jarFSRL == null) {
+							return;
+						}
 
-		FSBAction action = new FSBAction("Decompile JAR", this) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				if (context instanceof FSBActionContext) {
-					FSBActionContext fsbContext = (FSBActionContext) context;
-					FSRL jarFSRL = FSBUtils.getFileFSRLFromContext(context);
-					if (jarFSRL == null) {
-						return;
-					}
+						if (chooserJarFolder == null) {
+							chooserJarFolder = new GhidraFileChooser(null);
+						}
+						chooserJarFolder.setFileSelectionMode(
+							GhidraFileChooserMode.DIRECTORIES_ONLY);
+						chooserJarFolder.setTitle("Select JAR Output Directory");
+						chooserJarFolder.setApproveButtonText("SELECT");
+						chooserJarFolder.setSelectedFile(null);
+						File outputDirectory = chooserJarFolder.getSelectedFile();
+						if (outputDirectory == null) {
+							return;
+						}
+						GTree gTree = ac.getTree();
+						gTree.runTask(monitor -> {
+							try {
+								JarDecompiler decompiler =
+									new JarDecompiler(jarFSRL, outputDirectory);
+								decompiler.decompile(monitor);
 
-					if (chooserJarFolder == null) {
-						chooserJarFolder = new GhidraFileChooser(null);
-					}
-					chooserJarFolder.setFileSelectionMode(
-						GhidraFileChooserMode.DIRECTORIES_ONLY);
-					chooserJarFolder.setTitle("Select JAR Output Directory");
-					chooserJarFolder.setApproveButtonText("SELECT");
-					chooserJarFolder.setSelectedFile(null);
-					File outputDirectory = chooserJarFolder.getSelectedFile();
-					if (outputDirectory == null) {
-						return;
-					}
-					GTree gTree = fsbContext.getTree();
-					gTree.runTask(monitor -> {
-						try {
-							JarDecompiler decompiler =
-								new JarDecompiler(jarFSRL, outputDirectory);
-							decompiler.decompile(monitor);
-
-							if (decompiler.getLog().hasMessages()) {
-								Msg.showInfo(this, gTree,
-									"Decompiling Jar " + jarFSRL.getName(),
-									decompiler.getLog().toString());
+								if (decompiler.getLog().hasMessages()) {
+									Msg.showInfo(this, gTree,
+										"Decompiling Jar " + jarFSRL.getName(),
+										decompiler.getLog().toString());
+								}
 							}
-						}
-						catch (Exception e) {
-							FSUtilities.displayException(this, gTree, "Error Decompiling Jar",
-								e.getMessage(), e);
-						}
-					});
-				}
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				if (JadProcessWrapper.isJadPresent() && (context instanceof FSBActionContext)) {
-					FSBActionContext fsbContext = (FSBActionContext) context;
-					FSRL fsrl = FSBUtils.getFileFSRLFromContext(context);
-					return !fsbContext.getTree().isBusy() && (fsrl != null) &&
-						JarDecompiler.isJarFilename(fsrl.getName());
-				}
-				return false;
-			}
-
-			@Override
-			public boolean isAddToPopup(ActionContext context) {
-				return context instanceof FSBActionContext;
-			}
-
-		};
-		action.setPopupMenuData(
-			new MenuData(new String[] { action.getMenuText() }, ImageManager.JAR, "J"));
-		action.setEnabled(true);
-		return action;
+							catch (Exception e) {
+								FSUtilities.displayException(this, gTree, "Error Decompiling Jar",
+									e.getMessage(), e);
+							}
+						});
+					})
+				.build();
 	}
 
 	private DockingAction createCryptoTemplateAction() {
-		FSBAction action = new FSBAction("Create Crypto Key Template", this) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				FSRL fsrl = FSBUtils.getFSRLFromContext(context, true);
-				if (context.getContextObject() instanceof FSBRootNode && fsrl != null) {
-					createCryptoTemplate(fsrl, (FSBRootNode) context.getContextObject());
-				}
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				if (context instanceof FSBActionContext) {
-					FSBActionContext fsbContext = (FSBActionContext) context;
-					FSRL fsrl = FSBUtils.getFSRLFromContext(context, true);
-					return !fsbContext.getTree().isBusy() && (fsrl != null) &&
-						(context.getContextObject() instanceof FSBRootNode);
-				}
-				return false;
-			}
-
-			@Override
-			public boolean isAddToPopup(ActionContext context) {
-				return context instanceof FSBActionContext;
-			}
-		};
-		action.setPopupMenuData(new MenuData(new String[] { action.getMenuText() + "..." },
-			ImageManager.KEY, "Z", MenuData.NO_MNEMONIC, "B"));
-		action.setEnabled(true);
-		return action;
+		return new ActionBuilder("FSB Create Crypto Key Template", this.getName())
+				.withContext(FSBActionContext.class)
+				.enabledWhen(ac -> ac.notBusy() && ac.getSelectedNode() instanceof FSBRootNode &&
+					ac.getFSRL(true) != null)
+				.popupMenuPath("Create Crypto Key Template...")
+				.popupMenuGroup("Z", "B")
+				.onAction(
+					ac -> {
+						FSRL fsrl = ac.getFSRL(true);
+						if (ac.getSelectedNode() instanceof FSBRootNode && fsrl != null) {
+							createCryptoTemplate(fsrl, (FSBRootNode) ac.getSelectedNode());
+						}
+					})
+				.build();
 	}
 
 	/**
@@ -316,76 +265,52 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 	}
 
 	private DockingAction createLoadKernelAction() {
-		FSBAction action = new FSBAction("Load iOS Kernel", this) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				if (context instanceof FSBActionContext) {
-					FSBActionContext fsbContext = (FSBActionContext) context;
-					Object contextObject = fsbContext.getContextObject();
-
-					FSRL fsrl = FSBUtils.getFSRLFromContext(context, true);
-					List<FSRL> fileList = new ArrayList<>();
-
-					if (fsrl != null) {
-						if (contextObject instanceof FSBRootNode) {
-							List<GTreeNode> children = ((FSBRootNode) contextObject).getChildren();
-							for (GTreeNode childNode : children) {
-								if (childNode instanceof FSBNode) {
-									FSBNode baseNode = (FSBNode) childNode;
-									fileList.add(baseNode.getFSRL());
-								}
-							}
-						}
-						else if (contextObject instanceof FSBFileNode ||
-							contextObject instanceof FSBDirNode) {
-							fileList.add(fsrl);
-						}
-					}
-
-					if (!fileList.isEmpty()) {
-						if (OptionDialog.showYesNoDialog(null, "Load iOS Kernel?",
-							"Performing this action will load the entire kernel and all KEXT files." +
-								"\n" + "Do you want to continue?") == OptionDialog.YES_OPTION) {
-							loadIOSKernel(fileList);
-						}
-					}
-					else {
-						getTool().setStatusInfo("Load iOS kernel -- nothing to do.");
-					}
-				}
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				if (context instanceof FSBActionContext) {
-					FSBActionContext fsbContext = (FSBActionContext) context;
-					if (fsbContext.getTree().isBusy()) {
+		return new ActionBuilder("FSB Load iOS Kernel", this.getName())
+				.withContext(FSBActionContext.class)
+				.enabledWhen(ac -> {
+					if (ac.isBusy()) {
 						return false;
 					}
-					Object contextObject = context.getContextObject();
-					if (contextObject instanceof FSBFileNode ||
-						contextObject instanceof FSBDirNode) {
-						contextObject = FSBUtils.getNodesRoot((FSBNode) contextObject);
-					}
-					if (contextObject instanceof FSBRootNode) {
-						FSBRootNode node = (FSBRootNode) contextObject;
-						return node.getFSRef() != null &&
-							node.getFSRef().getFilesystem() instanceof PrelinkFileSystem;
-					}
-				}
-				return false;
-			}
+					FSBRootNode rootNode = ac.getRootOfSelectedNode();
+					return rootNode != null && rootNode.getFSRef() != null &&
+						rootNode.getFSRef().getFilesystem() instanceof PrelinkFileSystem;
+				})
+				.popupMenuPath("Load iOS Kernel")
+				.popupMenuIcon(ImageManager.iOS)
+				.popupMenuGroup("I")
+				.onAction(
+					ac -> {
+						FSRL fsrl = ac.getFSRL(true);
+						List<FSRL> fileList = new ArrayList<>();
 
-			@Override
-			public boolean isAddToPopup(ActionContext context) {
-				return context instanceof FSBActionContext;
-			}
-		};
+						if (fsrl != null) {
+							FSBNode selectedNode = ac.getSelectedNode();
+							if (selectedNode instanceof FSBRootNode) {
+								for (GTreeNode childNode : ac.getSelectedNode().getChildren()) {
+									if (childNode instanceof FSBNode) {
+										FSBNode baseNode = (FSBNode) childNode;
+										fileList.add(baseNode.getFSRL());
+									}
+								}
+							}
+							else if (selectedNode instanceof FSBFileNode ||
+								selectedNode instanceof FSBDirNode) {
+								fileList.add(fsrl);
+							}
+						}
 
-		action.setPopupMenuData(
-			new MenuData(new String[] { action.getMenuText() }, ImageManager.iOS, "I"));
-		action.setEnabled(true);
-		return action;
+						if (!fileList.isEmpty()) {
+							if (OptionDialog.showYesNoDialog(null, "Load iOS Kernel?",
+								"Performing this action will load the entire kernel and all KEXT files." +
+									"\n" + "Do you want to continue?") == OptionDialog.YES_OPTION) {
+								loadIOSKernel(fileList);
+							}
+						}
+						else {
+							getTool().setStatusInfo("Load iOS kernel -- nothing to do.");
+						}
+					})
+				.build();
 	}
 
 	/**

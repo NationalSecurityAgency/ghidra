@@ -49,7 +49,7 @@
     surprising. For example, disassembling some instructions and then stepping back in time will
     cause that disassembly to disappear.</P>
 
-    <P>Because not all memory is captured, some background coloring is used to indicate the state
+    <P>Because not all memory is recorded, some background coloring is used to indicate the state
     of attempted memory reads. Regardless of state, the most-recent contents, as recorded in the
     trace, are displayed in the listing, defaulting to 00. "Stale" memory, that is ranges of memory
     which have not been read at the current time, are displayed with a darker background. Where
@@ -142,33 +142,32 @@
     and/or needs a version upgrade. It will attempt to open the program, allowing Ghidra to prompt
     you about the situation.</P>
 
-    <H3><A name="capture_memory"></A>Capture Memory</H3>
+    <H3><A name="read_memory"></A>Read Memory</H3>
 
     <P>This action is available when the current trace is "at the present" with a live target, and
-    there is a selection of addresses in the dynamic listing. It will instruct the recorder to
-    capture the contents of memory for the selected range(s). Typically, the viewable addresses are
-    automatically captured &mdash; see the Auto-Read action.</P>
+    there is a selection of addresses in the dynamic listing. It will instruct the recorder to read
+    and record the contents of memory for the selected range(s). Typically, the viewable addresses
+    are automatically read, anyway &mdash; see the Auto-Read action.</P>
 
     <H3><A name="auto_memory"></A>Auto-Read Memory</H3>
 
     <P>This action is always available on all dynamic listings. It configures whether or not the
-    memory range(s) displayed in the listing are automatically captured. Like the Capture Memory
-    action, capture can only occur when the current trace is "at the present" with a live target.
-    It occurs when the user scrolls the listing, or when the listing is otherwise navigated to a
-    new location. Note that other components may capture memory, regardless of this listing's
-    configuration. For example, the recorder typically captures the page of memory pointed to by
-    the program counter. In other words, this action <EM>cannot</EM> "disable all memory captures."
-    The options are pluggable, but currently consist of:</P>
+    memory range(s) displayed in the listing are automatically read and recorded. Like the Read
+    Memory action, it is only permitted when the current trace is "at the present" with a live
+    target. It occurs when the user scrolls the listing, or when the listing is otherwise navigated
+    to a new location. Note that other components may read memory, regardless of this listing's
+    configuration. For example, the recorder typically reads the page of memory pointed to by the
+    program counter. In other words, this action <EM>cannot</EM> "disable all memory reads." The
+    options are pluggable, but currently consist of:</P>
 
     <UL>
-      <LI>Do Not Read Memory - disables automatic memory capture <EM>for this listing
-      only</EM>.</LI>
+      <LI>Do Not Read Memory - disables automatic memory reads <EM>for this listing only</EM>.</LI>
 
       <LI>Read Visible Memory - automatically reads stale ranges that enter this listing's
       view.</LI>
 
       <LI>Read Visible Memory, RO Once - (default) behaves like Read Visible Memory, except it will
-      neglect to capture read-only ranges that have been captured previously.</LI>
+      neglect read-only ranges that have been read previously.</LI>
     </UL>
 
     <H2><A name="colors"></A>Tool Options: Colors</H2>

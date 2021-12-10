@@ -51,7 +51,14 @@ public class Column {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "[x=" + x + ", width=" + width + ", padded width=" +
-			getPaddedWidth(false) + "]";
+
+		//@formatter:off
+		return getClass().getSimpleName() + "{\n" +
+			"\tcolumn: " + index + ",\n" +
+			"\tx: " + x + ",\n" +
+			"\twidth: " + width + ",\n" +
+			"\tpadded width: " + getPaddedWidth(false) + "\n" +
+		"}";
+		//@formatter:on
 	}
 }

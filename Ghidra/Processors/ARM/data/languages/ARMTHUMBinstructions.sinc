@@ -213,15 +213,22 @@ macro th_addflags(op1,op2) {
   tmpOV = scarry(op1,op2);
 }
 
-#See Section 2-13, "Overflow Detection", of Hacker's Delight (2nd ed)
+#See ARM Architecture reference section "Pseudocode details of addition and subtraction"
 macro th_add_with_carry_flags(op1,op2){
-	tmpCY = ((CY == 0) && carry(op1,op2)) || ((CY == 1) && (op1 >= op1 + op2 + 1:4));
-	local total= op1 + op2 + zext(CY);
-	local sign_total = (total >> 31) != 0;
-	local sign_op1 = (op1 >> 31) != 0;
-	local sign_op2 = (op2 >> 31) != 0;
-	tmpOV = (sign_op1 == sign_op2) && (sign_total != sign_op1);
+  local CYz = zext(CY);
+  local result = op1 + op2;
+  tmpCY = carry( op1, op2 ) || carry( result, CYz );
+  tmpOV = scarry( op1, op2) ^^ scarry( result, CYz );
 }
+
+#Note: used for subtraction op1 - (op2 + !CY)
+#sets tmpCY if there is NO borrow
+macro th_sub_with_carry_flags(op1, op2){
+  local result = op1 - op2;
+  tmpCY = (op1 > op2) || (result < zext(CY)); 
+  tmpOV = sborrow(op1,op2) ^^ sborrow(result,zext(!CY));	
+}
+
 
 macro th_test_flags(result){
   ZR = (result == 0);
@@ -324,7 +331,7 @@ it_thfcc: "gt"	is fcond=12	{ tmp:1 = !ZR && (NG == OV); export tmp; }
 it_thfcc: "le"	is fcond=13	{ tmp:1 = !ZR && (NG == OV); export tmp; }
 it_thfcc: "al"	is fcond=14	{ tmp:1 = 1; export tmp; }
 
-@define IT_THFCC    "it_thfcc & (thc0707=0 | thc0606=0 | thc0505=0)"
+@define IT_THFCC    "it_thfcc & (thc0707=0 | thc0606=0 | thc0505=0 | thc0404=0)"
 
 ByteRotate: "#"^rot		is throt [rot = throt << 3; ] { export *[const]:1 rot; }
 
@@ -3688,7 +3695,7 @@ macro th_set_carry_for_ror(result, count) {
 :sbc^CheckInIT_CZNO^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x106 & Rm0305 & Rd0002 & CheckInIT_CZNO
 {
   build ItCond;
-  th_add_with_carry_flags(Rd0002,~Rm0305);
+  th_sub_with_carry_flags(Rd0002,Rm0305);
   Rd0002 = Rd0002 - Rm0305 - zext(!CY);
   resflags(Rd0002);
   build CheckInIT_CZNO;
@@ -3700,7 +3707,7 @@ macro th_set_carry_for_ror(result, count) {
 {
   build ItCond;
   build ThumbExpandImm12;
-  th_add_with_carry_flags(Rn0003,~ThumbExpandImm12);
+  th_sub_with_carry_flags(Rn0003,ThumbExpandImm12);
   Rd0811 = Rn0003 - ThumbExpandImm12 - zext(!CY);
   resflags(Rd0811);
   build thSBIT_CZNO;
@@ -3710,7 +3717,7 @@ macro th_set_carry_for_ror(result, count) {
 {
   build ItCond;
   build thshift2;
-  th_add_with_carry_flags(Rn0003,~thshift2);
+  th_sub_with_carry_flags(Rn0003,thshift2);
   Rd0811 = Rn0003 - thshift2 - zext(!CY);
   resflags(Rd0811);
   build thSBIT_CZNO;

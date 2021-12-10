@@ -15,216 +15,210 @@
  */
 package ghidra.file.formats.android.dex.format;
 
+import java.io.IOException;
+import java.util.*;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-import java.io.IOException;
-import java.util.*;
-
 /**
  * code_item
- * 
+ * <br>
  * referenced from encoded_method
- * 
+ * <br>
  * appears in the data section
- * 
+ * <br>
  * alignment: 4 bytes
+ * <br>
+ * https://source.android.com/devices/tech/dalvik/dex-format#code-item
+ * <br>
+ * https://android.googlesource.com/platform/art/+/master/libdexfile/dex/code_item_accessors.h
+ * <br>
+ * https://android.googlesource.com/platform/art/+/android-9.0.0_r3/libdexfile/dex/compact_dex_file.h
  */
 public class CodeItem implements StructConverter {
 
-	private short registersSize;
-	private short incomingSize;
-	private short outgoingSize;
-	private short triesSize;
-	private int debugInfoOffset;
-	private int instructionSize;
-	private short [] instructions;
-	private byte [] instructionBytes;
-	private short padding;
-	private List< TryItem > tries = new ArrayList< TryItem >( );
-	private EncodedCatchHandlerList handlers;
-	private DebugInfoItem debugInfo;
+	public static final String CODE_ITEM = "code_item";
 
-	public CodeItem( BinaryReader reader ) throws IOException {
-		registersSize = reader.readNextShort( );
-		incomingSize = reader.readNextShort( );
-		outgoingSize = reader.readNextShort( );
-		triesSize = reader.readNextShort( );
-		debugInfoOffset = reader.readNextInt( );
-		instructionSize = reader.readNextInt( );
-		if ( instructionSize == 0 ) {
-			instructionBytes = new byte[ 0 ];
-			instructions = new short[ 0 ];
+	protected short registersSize;
+	protected short incomingSize;
+	protected short outgoingSize;
+	protected short triesSize;
+	protected int debugInfoOffset;
+	protected int instructionSize;
+	protected short[] instructions;
+	protected byte[] instructionBytes;
+	protected short padding;
+	protected List<TryItem> tries = new ArrayList<TryItem>();
+	protected EncodedCatchHandlerList handlers;
+	protected DebugInfoItem debugInfo;
+
+	protected CodeItem() {
+		//do nothing
+	}
+
+	public CodeItem(BinaryReader reader) throws IOException {
+		registersSize = reader.readNextShort();
+		incomingSize = reader.readNextShort();
+		outgoingSize = reader.readNextShort();
+		triesSize = reader.readNextShort();
+		debugInfoOffset = reader.readNextInt();
+		instructionSize = reader.readNextInt();
+		if (instructionSize == 0) {
+			instructionBytes = new byte[0];
+			instructions = new short[0];
 		}
 		else {
-			instructionBytes = reader.readByteArray( reader.getPointerIndex( ), instructionSize * 2 );
-			instructions = reader.readNextShortArray( instructionSize );
+			instructionBytes = reader.readByteArray(reader.getPointerIndex(), instructionSize * 2);
+			instructions = reader.readNextShortArray(instructionSize);
 		}
-		if ( hasPadding( ) ) {
-			padding = reader.readNextShort( );
+		if (hasPadding()) {
+			padding = reader.readNextShort();
 		}
-		for ( int i = 0 ; i < triesSize ; ++i ) {
-			tries.add( new TryItem( reader ) );
+		for (int i = 0; i < triesSize; ++i) {
+			tries.add(new TryItem(reader));
 		}
-		if ( triesSize > 0 ) {
-			handlers = new EncodedCatchHandlerList( reader );
+		if (triesSize > 0) {
+			handlers = new EncodedCatchHandlerList(reader);
 		}
 
-		if ( debugInfoOffset > 0 ) {
-			long oldIndex = reader.getPointerIndex( );
+		if (debugInfoOffset > 0) {
+			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex( debugInfoOffset );
-				debugInfo = new DebugInfoItem( reader );
+				reader.setPointerIndex(debugInfoOffset);
+				debugInfo = new DebugInfoItem(reader);
 			}
 			finally {
-				reader.setPointerIndex( oldIndex );
+				reader.setPointerIndex(oldIndex);
 			}
 		}
 	}
 
 	/**
-	 * <pre>
 	 * The number of registers used by this code
-	 * </pre>
+	 * @return number of registers used by this code
 	 */
-	public short getRegistersSize( ) {
+	public short getRegistersSize() {
 		return registersSize;
 	}
 
 	/**
-	 * <pre>
-	 * The number of words of incoming arguments to the method that this code is for
-	 * </pre>
+	 * The number of words of incoming arguments to the method.
+	 * @return number of words of incoming arguments to the method
 	 */
-	public short getIncomingSize( ) {
+	public short getIncomingSize() {
 		return incomingSize;
 	}
 
 	/**
-	 * <pre>
 	 * The number of words of outgoing argument space required by this code for method invocation
-	 * </pre>
+	 * @return number of words of outgoing argument space required by this code for method invocation
 	 */
-	public short getOutgoingSize( ) {
+	public short getOutgoingSize() {
 		return outgoingSize;
 	}
 
 	/**
-	 * <pre>
 	 * The number of try_items for this instance. 
 	 * If non-zero, then these appear as the tries array just 
 	 * after the insns in this instance.
-	 * </pre>
+	 * @return number of try_items for this instance
 	 */
-	public short getTriesSize( ) {
+	public short getTriesSize() {
 		return triesSize;
 	}
 
 	/**
-	 * <pre>
 	 * Offset from the start of the file to the debug info 
 	 * (line numbers + local variable info) sequence for this code, or 0 if there 
 	 * simply is no information. The offset, if non-zero, should be to a location 
 	 * in the data section. The format of the data is specified by "debug_info_item" below.
-	 * </pre>
+	 * @return offset from the start of the file to the debug info
 	 */
-	public int getDebugInfoOffset( ) {
+	public int getDebugInfoOffset() {
 		return debugInfoOffset;
 	}
 
 	/**
 	 * Size of the instructions list, in 16-bit code units
+	 * @return size of the instructions list
 	 */
-	public int getInstructionSize( ) {
+	public int getInstructionSize() {
 		return instructionSize;
 	}
 
 	/**
-	 * <pre>
 	 * Actual array of bytecode. 
 	 * The format of code in an insns array is specified by the companion document Dalvik bytecode. 
 	 * Note that though this is defined as an array of ushort, 
 	 * there are some internal structures that prefer four-byte alignment. 
 	 * Also, if this happens to be in an endian-swapped file, then the swapping is 
 	 * only done on individual ushorts and not on the larger internal structures.
-	 * </pre>
+	 * @return array of bytecode
 	 */
-	public short [] getInstructions( ) {
+	public short[] getInstructions() {
 		return instructions;
 	}
 
-	public byte [] getInstructionBytes( ) {
+	public byte[] getInstructionBytes() {
 		return instructionBytes;
 	}
 
 	/**
-	 * <pre>
 	 * Two bytes of padding to make tries four-byte aligned. 
 	 * This element is only present if tries_size is non-zero and insns_size is odd.
-	 * </pre>
+	 * @return 2-bytes of padding
 	 */
-	public short getPadding( ) {
+	public short getPadding() {
 		return padding;
 	}
 
 	/**
-	 * <pre>
 	 * Array indicating where in the code exceptions are caught and how to handle them. 
 	 * Elements of the array must be non-overlapping in range and in order from low to high address. 
 	 * This element is only present if tries_size is non-zero.
-	 * </pre>
+	 * @return array of Try's
 	 */
-	public List< TryItem > getTries( ) {
-		return Collections.unmodifiableList( tries );
+	public List<TryItem> getTries() {
+		return Collections.unmodifiableList(tries);
 	}
 
 	/**
-	 * <pre>
-	 * Bytes representing a list of lists of catch types and associated handler addresses. 
+	 * Bytes representing lists of catch types and associated handler addresses. 
 	 * Each try_item has a byte-wise offset into this structure. 
 	 * This element is only present if tries_size is non-zero.
-	 * </pre>
+	 * @return lists of catch types
 	 */
-	public EncodedCatchHandlerList getHandlerList( ) {
+	public EncodedCatchHandlerList getHandlerList() {
 		return handlers;
 	}
 
-	public DebugInfoItem getDebugInfo( ) {
+	public DebugInfoItem getDebugInfo() {
 		return debugInfo;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		String suffix = hasPadding( ) ? "_p" : "";
-		String name = "code_item" + "_" + ( instructionSize * 2 ) + suffix;
-		Structure structure = new StructureDataType( name, 0 );
-		structure.add( WORD, "registers_size", null );
-		structure.add( WORD, "ins_size", null );
-		structure.add( WORD, "outs_size", null );
-		structure.add( WORD, "tries_size", null );
-		structure.add( DWORD, "debug_info_off", null );
-		structure.add( DWORD, "insns_size", null );
-		structure.add( new ArrayDataType( WORD, instructionSize, WORD.getLength( ) ), "insns", null );
-		if ( hasPadding( ) ) {
-			structure.add( WORD, "padding", null );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		String suffix = hasPadding() ? "_p" : "";
+		String name = CODE_ITEM + "_" + (instructionSize * 2) + suffix;
+		Structure structure = new StructureDataType(name, 0);
+		structure.add(WORD, "registers_size", null);
+		structure.add(WORD, "ins_size", null);
+		structure.add(WORD, "outs_size", null);
+		structure.add(WORD, "tries_size", null);
+		structure.add(DWORD, "debug_info_off", null);
+		structure.add(DWORD, "insns_size", null);
+		structure.add(new ArrayDataType(WORD, instructionSize, WORD.getLength()), "insns", null);
+		if (hasPadding()) {
+			structure.add(WORD, "padding", null);
 		}
-		// for ( int i = 0 ; i < tries.size( ) ; ++i ) {
-		// DataType dataType = tries.get( i ).toDataType( );
-		// structure.add( dataType, "tries_" + i, null );
-		// unique = dataType.getLength( );
-		// }
-		// if ( triesSize != 0 ) {
-		// DataType dataType = handlers.toDataType( );
-		// structure.add( dataType, "handlers", null );
-		// unique = dataType.getLength( );
-		// }
-		structure.setCategoryPath( new CategoryPath( "/dex/code_item" ) );
+		structure.setCategoryPath(new CategoryPath("/dex/code_item"));
 		return structure;
 	}
 
-	private boolean hasPadding( ) {
-		return ( instructionSize % 2 ) != 0;
+	private boolean hasPadding() {
+		return (instructionSize % 2) != 0;
 	}
 }

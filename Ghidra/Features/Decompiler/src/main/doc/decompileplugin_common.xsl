@@ -32,13 +32,13 @@
       <l:template name="table" text="the table titled &#8220;%t&#8221;"/>
     </l:context>
     <l:context name="xref">
-      <l:template name="sect1" text="“%t”"/>
-       <l:template name="sect2" text="“%t”"/>
-       <l:template name="sect3" text="“%t”"/>
-       <l:template name="sect4" text="“%t”"/>
-       <l:template name="sect5" text="“%t”"/>
-       <l:template name="section" text="“%t”"/>
-       <l:template name="simplesect" text="“%t”"/>
+      <l:template name="sect1" text="%t"/>
+       <l:template name="sect2" text="%t"/>
+       <l:template name="sect3" text="%t"/>
+       <l:template name="sect4" text="%t"/>
+       <l:template name="sect5" text="%t"/>
+       <l:template name="section" text="%t"/>
+       <l:template name="simplesect" text="%t"/>
     </l:context>
   </l:l10n>
 </l:i18n>

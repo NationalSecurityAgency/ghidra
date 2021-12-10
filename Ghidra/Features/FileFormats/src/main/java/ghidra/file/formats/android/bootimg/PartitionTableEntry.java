@@ -22,31 +22,34 @@ import java.io.IOException;
 
 public class PartitionTableEntry {
 
-	private byte [] name;
+	private byte[] name;
 	private int start;
 	private int length;
 	private int flags;
 
 	public PartitionTableEntry(ByteProvider provider) throws IOException {
-		this( new BinaryReader( provider, true ) );
+		this(new BinaryReader(provider, true));
 	}
 
 	public PartitionTableEntry(BinaryReader reader) throws IOException {
-		name    =  reader.readNextByteArray( 16 );
-		start   =  reader.readNextInt();
-		length  =  reader.readNextInt();
-		flags   =  reader.readNextInt();
+		name = reader.readNextByteArray(16);
+		start = reader.readNextInt();
+		length = reader.readNextInt();
+		flags = reader.readNextInt();
 	}
 
 	public String getName() {
-		return new String( name );
+		return new String(name);
 	}
+
 	public int getStart() {
 		return start;
 	}
+
 	public int getLength() {
 		return length;
 	}
+
 	public int getFlags() {
 		return flags;
 	}

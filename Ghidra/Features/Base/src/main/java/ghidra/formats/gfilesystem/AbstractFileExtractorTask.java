@@ -15,15 +15,10 @@
  */
 package ghidra.formats.gfilesystem;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.CryptoException;
 import ghidra.util.exception.IOCancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
@@ -190,7 +185,7 @@ public abstract class AbstractFileExtractorTask extends Task {
 	}
 
 	protected void extractFile(GFile srcFile, File outputFile, TaskMonitor monitor)
-			throws CancelledException, CryptoException {
+			throws CancelledException {
 
 		monitor.setMessage(srcFile.getName());
 		try (InputStream in = getSourceFileInputStream(srcFile, monitor)) {

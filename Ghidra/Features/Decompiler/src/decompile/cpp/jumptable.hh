@@ -409,7 +409,7 @@ class JumpBasic2 : public JumpBasic {
   virtual bool foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump);
 public:
   JumpBasic2(JumpTable *jt) : JumpBasic(jt) {}	///< Constructor
-  void initializeStart(const PathMeld &pathMeld);	///< Pass in the prior PathMeld calculation
+  void initializeStart(const PathMeld &pMeld);	///< Pass in the prior PathMeld calculation
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext);
   virtual JumpModel *clone(JumpTable *jt) const;

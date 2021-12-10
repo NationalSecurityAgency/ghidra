@@ -28,6 +28,7 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 
@@ -56,8 +57,8 @@ public class FidStatistics extends GhidraScript {
 
 		private String sym1;
 		private String sym2;
-		
-		public SymbolPair(String a,String b) {
+
+		public SymbolPair(String a, String b) {
 			sym1 = a;
 			sym2 = b;
 		}
@@ -70,7 +71,7 @@ public class FidStatistics extends GhidraScript {
 			}
 			return sym2.compareTo(o.sym2);
 		}
-		
+
 	}
 
 	public static class MatchRecord {
@@ -83,7 +84,7 @@ public class FidStatistics extends GhidraScript {
 		private float childScore;
 		private float parentScore;
 
-		public MatchRecord(FidSearchResult result,String finalMatchName,boolean isFalse) {
+		public MatchRecord(FidSearchResult result, String finalMatchName, boolean isFalse) {
 			this.progName = result.function.getProgram().getDomainFile().getPathname();
 			this.fullHash = result.hashQuad.getFullHash();
 			this.funcName = result.function.getName();
@@ -125,7 +126,7 @@ public class FidStatistics extends GhidraScript {
 		public int noMatch;
 		public int nameMatched;
 		public int falsePositive;
-		
+
 		public StatRecord() {
 			totalFunction = 0;
 			matchUniquely = 0;
@@ -136,8 +137,8 @@ public class FidStatistics extends GhidraScript {
 			falsePositive = 0;
 		}
 
-		public static void indent(StringBuilder buf,String last) {
-			for(int i=last.length();i<10;++i) {
+		public static void indent(StringBuilder buf, String last) {
+			for (int i = last.length(); i < 10; ++i) {
 				buf.append(' ');
 			}
 		}
@@ -145,35 +146,36 @@ public class FidStatistics extends GhidraScript {
 		public void print(StringBuilder buf) {
 			String str = Integer.toString(totalFunction);
 			buf.append(str);
-			indent(buf,str);
+			indent(buf, str);
 			str = Integer.toString(noMatch);
 			buf.append(str);
-			indent(buf,str);
+			indent(buf, str);
 			str = Integer.toString(matchUniquely + matchMultiply);
 			buf.append(str);
 			indent(buf, str);
 			str = Integer.toString(hitCount);
 			buf.append(str);
 			indent(buf, str);
-			str = '(' + Integer.toString(matchUniquely) + ',' + Integer.toString(matchMultiply) + ')';
+			str =
+				'(' + Integer.toString(matchUniquely) + ',' + Integer.toString(matchMultiply) + ')';
 			buf.append(str);
-			indent(buf,str);
+			indent(buf, str);
 			str = Integer.toString(nameMatched);
 			buf.append(str);
-			indent(buf,str);
+			indent(buf, str);
 			str = Integer.toString(falsePositive);
 			buf.append(str);
 		}
-		
+
 		public static String getColumns() {
 			return "Total     No Match  Possible  Hits      uniq/mult N-Match   False";
 		}
 	}
 
-	private void addEquivSymbols(String a,String b) {
-		SymbolPair pair = new SymbolPair(a,b);
+	private void addEquivSymbols(String a, String b) {
+		SymbolPair pair = new SymbolPair(a, b);
 		equivSymbols.add(pair);
-		pair = new SymbolPair(b,a);
+		pair = new SymbolPair(b, a);
 		equivSymbols.add(pair);
 	}
 
@@ -182,164 +184,185 @@ public class FidStatistics extends GhidraScript {
 		service = new FidService();
 		matchAnalysis = new MatchNameAnalysis();
 		equivSymbols = new TreeSet<SymbolPair>();
-		addEquivSymbols("entry","_WinMainCRTStartup");
-		addEquivSymbols("__alloca_probe","__chkstk");
-		addEquivSymbols("_strncpy_s_downlevel","_strncpy_s");
-		addEquivSymbols("_strcpy_s_downlevel","_strcpy_s");
+		addEquivSymbols("entry", "_WinMainCRTStartup");
+		addEquivSymbols("__alloca_probe", "__chkstk");
+		addEquivSymbols("_strncpy_s_downlevel", "_strncpy_s");
+		addEquivSymbols("_strcpy_s_downlevel", "_strcpy_s");
 		addEquivSymbols("strcat_s_downlevel", "strcat_s");
-		addEquivSymbols("_memcpy_s_downlevel","_memcpy_s");
+		addEquivSymbols("_memcpy_s_downlevel", "_memcpy_s");
 		addEquivSymbols("_memmove_s_downlevel", "_memmove_s");
-		addEquivSymbols("__ftol2_downlevel","__ftol2");
+		addEquivSymbols("__ftol2_downlevel", "__ftol2");
 		addEquivSymbols("_wmakepath_s_downlevel", "_wmakepath_s");
 		addEquivSymbols("entry", "_wWinMainCRTStartup");
 		addEquivSymbols("entry", "_wmainCRTStartup");
 		addEquivSymbols("entry", "_mainCRTStartup");
-		addEquivSymbols("entry","__DllMainCRTStartup@12");
+		addEquivSymbols("entry", "__DllMainCRTStartup@12");
 		addEquivSymbols("_errno", "__doserrno");
-		addEquivSymbols("?StringCchCopyW@@YGJPAGIPBG@Z","_StringCchCopyW@12");
+		addEquivSymbols("?StringCchCopyW@@YGJPAGIPBG@Z", "_StringCchCopyW@12");
 		addEquivSymbols("_StringCchCopyNW@16", "?StringCchCopyNW@@YGJPAGIPBGI@Z");
-		addEquivSymbols("_StringCchLengthW@12","?StringCchLengthW@@YGJPB_WIPAI@Z");
+		addEquivSymbols("_StringCchLengthW@12", "?StringCchLengthW@@YGJPB_WIPAI@Z");
 		addEquivSymbols("_StringCchLengthA@12", "?StringCchLengthA@@YGJPBDIPAI@Z");
-		addEquivSymbols("_RtlStringCchCopyW@12","=_StringCchCopyW@12");
-		addEquivSymbols("?RtlStringCchCopyW@@YGJPAGIPBG@Z","_StringCchCopyA@12");
-		addEquivSymbols("_RtlStringCchCopyW@12","_StringCchCopyW@12");
+		addEquivSymbols("_RtlStringCchCopyW@12", "=_StringCchCopyW@12");
+		addEquivSymbols("?RtlStringCchCopyW@@YGJPAGIPBG@Z", "_StringCchCopyA@12");
+		addEquivSymbols("_RtlStringCchCopyW@12", "_StringCchCopyW@12");
 		addEquivSymbols("_RtlStringCchCopyNW@16", "?StringCchCopyNW@@YGJPAGIPBGI@Z");
 		addEquivSymbols("?RtlStringCchLengthW@@YGJPBGIPAI@Z", "?StringCchLengthW@@YGJPB_WIPAI@Z");
 		addEquivSymbols("_RtlStringCchLengthW@12", "?StringCchLengthW@@YGJPB_WIPAI@Z");
 		addEquivSymbols("?RtlStringCchCatW@@YGJPAGIPBG@Z", "_StringCchCatA@12");
 		addEquivSymbols("?StringCchCatW@@YGJPAGIPBG@Z", "_StringCchCatA@12");
 		addEquivSymbols("_StringCchCatW@12", "_StringCchCatA@12");
-		addEquivSymbols("?StringCchCopyW@@YGJPAGIPBG@Z","_StringCchCopyA@12");
-		addEquivSymbols("?ULongLongToUInt@@YGJ_KPAI@Z","_ULongLongToULong@12");
-		addEquivSymbols("_ULongLongToUInt@12","_ULongLongToULong@12");
-		addEquivSymbols("_ULongLongToUInt@12","_ULongLongToULong@12");
-		addEquivSymbols("?ULongLongToULong@@YGJ_KPAK@Z","_ULongLongToULong@12");
+		addEquivSymbols("?StringCchCopyW@@YGJPAGIPBG@Z", "_StringCchCopyA@12");
+		addEquivSymbols("?ULongLongToUInt@@YGJ_KPAI@Z", "_ULongLongToULong@12");
+		addEquivSymbols("_ULongLongToUInt@12", "_ULongLongToULong@12");
+		addEquivSymbols("_ULongLongToUInt@12", "_ULongLongToULong@12");
+		addEquivSymbols("?ULongLongToULong@@YGJ_KPAK@Z", "_ULongLongToULong@12");
 		addEquivSymbols("_RtlULongLongToULong@12", "_ULongLongToULong@12");
 		addEquivSymbols("_RtlULongLongToUInt@12", "_ULongLongToULong@12");
 		addEquivSymbols("?RtlULongLongToULong@@YGJ_KPAK@Z", "_ULongLongToULong@12");
 		addEquivSymbols("?ULongPtrAdd@@YGJKKPAK@Z", "_ULongAdd@12");
-		addEquivSymbols("_ULongAdd@12","?ULongAdd@@YGJKKPAK@Z");
-		addEquivSymbols("_ULongAdd@12","?SizeTAdd@@YGJIIPAI@Z");
-		addEquivSymbols("_ULongAdd@12","?UIntAdd@@YGJIIPAI@Z");
-		addEquivSymbols("_ULongAdd@12","?SIZETAdd@@YGJKKPAK@Z");
-		addEquivSymbols("_RtlULongAdd@12","?RtlULongAdd@@YGJKKPAK@Z");
-		addEquivSymbols("_RtlSIZETAdd@12","?RtlULongAdd@@YGJKKPAK@Z");
-		addEquivSymbols("_UIntAdd@12","_ULongAdd@12");
-		addEquivSymbols("LoadStringA","LoadStringW");
+		addEquivSymbols("_ULongAdd@12", "?ULongAdd@@YGJKKPAK@Z");
+		addEquivSymbols("_ULongAdd@12", "?SizeTAdd@@YGJIIPAI@Z");
+		addEquivSymbols("_ULongAdd@12", "?UIntAdd@@YGJIIPAI@Z");
+		addEquivSymbols("_ULongAdd@12", "?SIZETAdd@@YGJKKPAK@Z");
+		addEquivSymbols("_RtlULongAdd@12", "?RtlULongAdd@@YGJKKPAK@Z");
+		addEquivSymbols("_RtlSIZETAdd@12", "?RtlULongAdd@@YGJKKPAK@Z");
+		addEquivSymbols("_UIntAdd@12", "_ULongAdd@12");
+		addEquivSymbols("LoadStringA", "LoadStringW");
 		addEquivSymbols("_StringCchCopyW@12", "_StringCchCopyA@12");
-		addEquivSymbols("?StringCchCopyA@@YGJPADIPBD@Z","_StringCchCopyA@12");
-		addEquivSymbols("StringCchVPrintfA","StringCchVPrintfW");
+		addEquivSymbols("?StringCchCopyA@@YGJPADIPBD@Z", "_StringCchCopyA@12");
+		addEquivSymbols("StringCchVPrintfA", "StringCchVPrintfW");
 		addEquivSymbols("?StringCchCatW@@YGJPAGIPBG@Z", "_StringCchCatW@12");
 		addEquivSymbols("__safecrt_fassign", "__fassign_l");
-		addEquivSymbols("?StringLengthWorkerW@@YGJPBGIPAI@Z","_StringLengthWorkerW@12");
+		addEquivSymbols("?StringLengthWorkerW@@YGJPBGIPAI@Z", "_StringLengthWorkerW@12");
 		addEquivSymbols("?StringCatWorkerW@@YGJPAGIPBG@Z", "_StringCatWorkerW@12");
-		addEquivSymbols("_decode_aligned_offset_block@12","_decode_verbatim_block@12");
-		addEquivSymbols("??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@V_STL70@@@std@@QAE@ABV01@@Z",
-						"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV01@@Z");
+		addEquivSymbols("_decode_aligned_offset_block@12", "_decode_verbatim_block@12");
+		addEquivSymbols(
+			"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@V_STL70@@@std@@QAE@ABV01@@Z",
+			"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ABV01@@Z");
 		addEquivSymbols("??0?$CSimpleStringT@G$0A@@ATL@@QAE@PBGHPAUIAtlStringMgr@1@@Z",
-						"??0?$CSimpleStringT@_W$0A@@ATL@@QAE@PB_WHPAUIAtlStringMgr@1@@Z");
-		addEquivSymbols("_NFMdeco_destroy@8","_NFMcomp_destroy@8");
-		addEquivSymbols("_StringCchVPrintfW@16","?StringCchVPrintfW@@YGJPAGIPBGPAD@Z");
-		addEquivSymbols("_StringCbVPrintfA@16","?StringCchVPrintfW@@YGJPAGIPBGPAD@Z");
+			"??0?$CSimpleStringT@_W$0A@@ATL@@QAE@PB_WHPAUIAtlStringMgr@1@@Z");
+		addEquivSymbols("_NFMdeco_destroy@8", "_NFMcomp_destroy@8");
+		addEquivSymbols("_StringCchVPrintfW@16", "?StringCchVPrintfW@@YGJPAGIPBGPAD@Z");
+		addEquivSymbols("_StringCbVPrintfA@16", "?StringCchVPrintfW@@YGJPAGIPBGPAD@Z");
 		addEquivSymbols("?StringCchPrintfA@@YAJPADIPBDZZ", "?StringCchPrintfW@@YAJPAGIPBGZZ");
-		addEquivSymbols("_StringCchPrintfW","?StringCchPrintfW@@YAJPAGIPBGZZ");
-		addEquivSymbols("_StringCbPrintfA","?StringCchPrintfW@@YAJPAGIPBGZZ");
-		addEquivSymbols("?AtlA2WHelper@@YGPAGPAGPBDH@Z","?AfxA2WHelper@@YGPA_WPA_WPBDH@Z");
+		addEquivSymbols("_StringCchPrintfW", "?StringCchPrintfW@@YAJPAGIPBGZZ");
+		addEquivSymbols("_StringCbPrintfA", "?StringCchPrintfW@@YAJPAGIPBGZZ");
+		addEquivSymbols("?AtlA2WHelper@@YGPAGPAGPBDH@Z", "?AfxA2WHelper@@YGPA_WPA_WPBDH@Z");
 		addEquivSymbols("??0?$CSimpleStringT@G$0A@@ATL@@QAE@PAUIAtlStringMgr@1@@Z",
-						"??0?$CSimpleStringT@D$0A@@ATL@@QAE@PAUIAtlStringMgr@1@@Z");
-		addEquivSymbols("_RtlStringCchCopyA@12","?StringCchCopyA@@YGJPADIPBD@Z");
-		addEquivSymbols("??0?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@QAE@PBGHPAUIAtlStringMgr@1@@Z",
-						"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@PBDHPAUIAtlStringMgr@1@@Z");
-		addEquivSymbols("??0?$CSimpleStringT@G$0A@@ATL@@QAE@ABV01@@Z","??0?$CSimpleStringT@D$0A@@ATL@@QAE@ABV01@@Z");
-		addEquivSymbols("??0?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@QAE@PBGPAUIAtlStringMgr@1@@Z",
-						"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@PB_WPAUIAtlStringMgr@1@@Z");
-		addEquivSymbols("??0?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@QAE@ABV01@@Z",
-						"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@ABV01@@Z");
-		addEquivSymbols("__ltoa_s_downlevel","__ltow_s");
-		addEquivSymbols("??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@V_STL70@@@std@@QAE@XZ",
-						"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ");
-		addEquivSymbols("_StringCchPrintfA","?StringCchPrintfW@@YAJPAGIPBGZZ");
+			"??0?$CSimpleStringT@D$0A@@ATL@@QAE@PAUIAtlStringMgr@1@@Z");
+		addEquivSymbols("_RtlStringCchCopyA@12", "?StringCchCopyA@@YGJPADIPBD@Z");
+		addEquivSymbols(
+			"??0?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@QAE@PBGHPAUIAtlStringMgr@1@@Z",
+			"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@PBDHPAUIAtlStringMgr@1@@Z");
+		addEquivSymbols("??0?$CSimpleStringT@G$0A@@ATL@@QAE@ABV01@@Z",
+			"??0?$CSimpleStringT@D$0A@@ATL@@QAE@ABV01@@Z");
+		addEquivSymbols(
+			"??0?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@QAE@PBGPAUIAtlStringMgr@1@@Z",
+			"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@PB_WPAUIAtlStringMgr@1@@Z");
+		addEquivSymbols(
+			"??0?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@QAE@ABV01@@Z",
+			"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@ABV01@@Z");
+		addEquivSymbols("__ltoa_s_downlevel", "__ltow_s");
+		addEquivSymbols(
+			"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@V_STL70@@@std@@QAE@XZ",
+			"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ");
+		addEquivSymbols("_StringCchPrintfA", "?StringCchPrintfW@@YAJPAGIPBGZZ");
 		addEquivSymbols("?StringCbPrintfA@@YAJPADIPBDZZ", "?StringCchPrintfW@@YAJPAGIPBGZZ");
 		addEquivSymbols("?ULongMult@@YGJKKPAK@Z", "_ULongMult@12");
 		addEquivSymbols("?_Getwctypes@@YAPB_WPB_W0PAFPBU_Ctypevec@@@Z", "__Getwctypes");
 		addEquivSymbols("?_Getwctype@@YAF_WPBU_Ctypevec@@@Z", "__Getwctype");
 		addEquivSymbols("?_Getwctype@@YAF_WPEBU_Ctypevec@@@Z", "_Getwctype");
 		addEquivSymbols("?AtlW2AHelper@@YGPADPADPBGH@Z", "?AfxW2AHelper@@YGPADPADPB_WH@Z");
-		addEquivSymbols("??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@V_STL70@@@std@@QAE@ID@Z",
-						"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ID@Z");
-		addEquivSymbols("?StringCchPrintfA@@YAJPADIPBDZZ","?StringCbPrintfA@@YAJPADIPBDZZ");
-		addEquivSymbols("??0?$CStringT@DV?$StrTraitATL@DV?$ChTraitsCRT@D@ATL@@@ATL@@@ATL@@QAE@PBDHPAUIAtlStringMgr@1@@Z",
-						"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@PBDHPAUIAtlStringMgr@1@@Z");
-		addEquivSymbols("_wmemcpy_s","?CopyCharsOverlapped@?$CSimpleStringT@_W$0A@@ATL@@SAXPA_WIPB_WH@Z");
-		addEquivSymbols("?StringCbCopyA@@YGJPADIPBD@Z","_StringCbCopyA@12");
-		addEquivSymbols("??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@V_STL70@@@std@@QAE@IG@Z",
-						"??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@IG@Z");
+		addEquivSymbols(
+			"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@V_STL70@@@std@@QAE@ID@Z",
+			"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@ID@Z");
+		addEquivSymbols("?StringCchPrintfA@@YAJPADIPBDZZ", "?StringCbPrintfA@@YAJPADIPBDZZ");
+		addEquivSymbols(
+			"??0?$CStringT@DV?$StrTraitATL@DV?$ChTraitsCRT@D@ATL@@@ATL@@@ATL@@QAE@PBDHPAUIAtlStringMgr@1@@Z",
+			"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@PBDHPAUIAtlStringMgr@1@@Z");
+		addEquivSymbols("_wmemcpy_s",
+			"?CopyCharsOverlapped@?$CSimpleStringT@_W$0A@@ATL@@SAXPA_WIPB_WH@Z");
+		addEquivSymbols("?StringCbCopyA@@YGJPADIPBD@Z", "_StringCbCopyA@12");
+		addEquivSymbols(
+			"??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@V_STL70@@@std@@QAE@IG@Z",
+			"??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@IG@Z");
 		addEquivSymbols("??1?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@XZ",
 			"??1?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@V_STL70@@@std@@QEAA@XZ");
 		addEquivSymbols("?CopyChars@?$CSimpleStringT@G$0A@@ATL@@SAXPAGIPBGH@Z",
-						"?CopyCharsOverlapped@?$CSimpleStringT@_W$0A@@ATL@@SAXPA_WIPB_WH@Z");
-		addEquivSymbols("??0?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@QAE@PBGPAUIAtlStringMgr@1@@Z",
-						"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@PB_WPAUIAtlStringMgr@1@@Z");
+			"?CopyCharsOverlapped@?$CSimpleStringT@_W$0A@@ATL@@SAXPA_WIPB_WH@Z");
+		addEquivSymbols(
+			"??0?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@QAE@PBGPAUIAtlStringMgr@1@@Z",
+			"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@PB_WPAUIAtlStringMgr@1@@Z");
 		addEquivSymbols("wcscpy_s_downlevel", "wcscpy_s");
 		addEquivSymbols("_StringCbCopyA@12", "_StringCchCopyA@12");
 		addEquivSymbols("_wcscat_s_downlevel", "_wcscat_s");
-		addEquivSymbols("??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@V_STL70@@@std@@QAE@PBD@Z",
-						"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBD@Z");
+		addEquivSymbols(
+			"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@V_STL70@@@std@@QAE@PBD@Z",
+			"??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBD@Z");
 		addEquivSymbols("?_Towupper@@YA_W_WPBU_Ctypevec@@@Z", "__Towupper");
 		addEquivSymbols("?_Towlower@@YA_W_WPBU_Ctypevec@@@Z", "__Towlower");
 		addEquivSymbols("?_Towupper@@YA_W_WPEBU_Ctypevec@@@Z", "_Towupper");
 		addEquivSymbols("?_Towlower@@YA_W_WPEBU_Ctypevec@@@Z", "_Towlower");
 		addEquivSymbols("_wcsncpy_s_downlevel", "_wcsncpy_s");
 		addEquivSymbols("_strnlen_downlevel", "_strnlen");
-		addEquivSymbols("GetProxyDllInfo","_GetProxyDllInfo@8");
-		addEquivSymbols("DllGetClassObject","_DllGetClassObject@12");
+		addEquivSymbols("GetProxyDllInfo", "_GetProxyDllInfo@8");
+		addEquivSymbols("DllGetClassObject", "_DllGetClassObject@12");
 		addEquivSymbols("_PrxDllGetClassObject@12", "_DllGetClassObject@12");
 		addEquivSymbols("__itoa_s_downlevel", "__itow_s");
 		addEquivSymbols("?StringCbVPrintfA@@YGJPADIPBD0@Z", "?StringCchVPrintfW@@YGJPAGIPBGPAD@Z");
 		addEquivSymbols("?UShortMult@@YGJGGPAG@Z", "?RtlUShortMult@@YGJGGPAG@Z");
 		addEquivSymbols("??1?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@QAE@XZ",
-						"??1?$CStringT@_WV?$StrTraitMFC@_WV?$ChTraitsOS@_W@ATL@@@@@ATL@@QAE@XZ");
-		addEquivSymbols("?memcpy_s@Checked@ATL@@YAXPAXIPBXI@Z", "?memmove_s@Checked@ATL@@YAXPAXIPBXI@Z");
-		addEquivSymbols("?tcsncpy_s@Checked@ATL@@YAHPAGIPBGI@Z", "?memmove_s@Checked@ATL@@YAXPAXIPBXI@Z");
-		addEquivSymbols("?wmemcpy_s@Checked@ATL@@YAXPAGIPBGI@Z", "?memmove_s@Checked@ATL@@YAXPAXIPBXI@Z");
-		addEquivSymbols("??$AtlMultiply@I@ATL@@YAJPAIII@Z","??$AtlMultiply@K@ATL@@YAJPAKKK@Z");
+			"??1?$CStringT@_WV?$StrTraitMFC@_WV?$ChTraitsOS@_W@ATL@@@@@ATL@@QAE@XZ");
+		addEquivSymbols("?memcpy_s@Checked@ATL@@YAXPAXIPBXI@Z",
+			"?memmove_s@Checked@ATL@@YAXPAXIPBXI@Z");
+		addEquivSymbols("?tcsncpy_s@Checked@ATL@@YAHPAGIPBGI@Z",
+			"?memmove_s@Checked@ATL@@YAXPAXIPBXI@Z");
+		addEquivSymbols("?wmemcpy_s@Checked@ATL@@YAXPAGIPBGI@Z",
+			"?memmove_s@Checked@ATL@@YAXPAXIPBXI@Z");
+		addEquivSymbols("??$AtlMultiply@I@ATL@@YAJPAIII@Z", "??$AtlMultiply@K@ATL@@YAJPAKKK@Z");
 		addEquivSymbols("__it_wcsncpy", "_wcsncpy");
-		addEquivSymbols("??1?$CFixedStringT@V?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@$0BA@@ATL@@UAE@XZ",
-						"??1?$CFixedStringT@V?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@$0EA@@ATL@@UAE@XZ");
+		addEquivSymbols(
+			"??1?$CFixedStringT@V?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@$0BA@@ATL@@UAE@XZ",
+			"??1?$CFixedStringT@V?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@$0EA@@ATL@@UAE@XZ");
 		addEquivSymbols("?StringCbCatA@@YGJPADIPBD@Z", "_StringCchCatA@12");
-		addEquivSymbols("??0?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@QAE@PBG@Z",
-						"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@PB_W@Z");
+		addEquivSymbols(
+			"??0?$CStringT@GV?$StrTraitATL@GV?$ChTraitsCRT@G@ATL@@@ATL@@@ATL@@QAE@PBG@Z",
+			"??0?$CStringT@DV?$StrTraitMFC@DV?$ChTraitsCRT@D@ATL@@@@@ATL@@QAE@PB_W@Z");
 		addEquivSymbols("UShortAdd", "RtlUShortAdd");
 		addEquivSymbols("_StringCchPrintfA", "?StringCbPrintfA@@YAJPADIPBDZZ");
 		addEquivSymbols("?StringCbCopyA@@YGJPADIPBD@Z", "_StringCchCopyA@12");
 
 		// 64-bit
-		addEquivSymbols("??1?$CTempBuffer@G$0BAA@VCCRTAllocator@ATL@@@ATL@@QEAA@XZ","??1?$CTempBuffer@D$0IA@VCCRTAllocator@ATL@@@ATL@@QEAA@XZ");
-		addEquivSymbols("?IsEqualGUID@@YAHAEBU_GUID@@0@Z","IsEqualGUID");
-		addEquivSymbols("??1?$CAtlSafeAllocBufferManager@V_CCRTAllocator@_ATL_SAFE_ALLOCA_IMPL@ATL@@@_ATL_SAFE_ALLOCA_IMPL@ATL@@QEAA@XZ",
-						"??1?$CAtlSafeAllocBufferManager@VCCRTAllocator@ATL@@@_ATL_SAFE_ALLOCA_IMPL@ATL@@QEAA@XZ");
-		addEquivSymbols("??_E_Locimp@locale@std@@MEAAPEAXI@Z","??_G_Locimp@locale@std@@MEAAPEAXI@Z");
-		addEquivSymbols("?StringCchCopyW@@YAJPEAG_KPEBG@Z","StringCchCopyW");
-		addEquivSymbols("StringCchPrintfA","?StringCbPrintfA@@YAJPEAD_KPEBDZZ");
-		addEquivSymbols("?StringCchCatA@@YAJPEAD_KPEBD@Z","StringCchCatA");
-		addEquivSymbols("?StringCbCatA@@YAJPEAD_KPEBD@Z","StringCchCatA");
-		addEquivSymbols("entry","mainCRTStartup");
-		addEquivSymbols("entry","wmainCRTStartup");
-		addEquivSymbols("entry","WinMainCRTStartup");
-		addEquivSymbols("WPP_SF_ii","WPP_SF_qq");
-		addEquivSymbols("WPP_SF_DDDDD","WPP_SF_ddddd");
-		addEquivSymbols("?FDIDestroy@@$$J0YAHPEAX@Z","FDIDestroy");
-		addEquivSymbols("??1?$CTempBuffer@G$0IA@VCCRTAllocator@ATL@@@ATL@@QEAA@XZ","??1?$CTempBuffer@D$0IA@VCCRTAllocator@ATL@@@ATL@@QEAA@XZ");
-		addEquivSymbols("WPP_SF_xx","WPP_SF_qq");
-		addEquivSymbols("WPP_SF_iii","WPP_SF_qqq");
-		addEquivSymbols("RtlStringCchCopyW","StringCchCopyW");
-		addEquivSymbols("_strcmpi","_stricmp");
-		addEquivSymbols("WPP_SF_DDDDDDDD","WPP_SF_dddddddd");
-		addEquivSymbols("?StringCchPrintfA@@YAJPEAD_KPEBDZZ","?StringCbPrintfA@@YAJPEAD_KPEBDZZ");
-		addEquivSymbols("WPP_SF_h","WPP_SF_H");
-		addEquivSymbols("WPP_SF_qqDD","WPP_SF_qqdd");
-		addEquivSymbols("WPP_SF_DqD","WPP_SF_dqd");
-		addEquivSymbols("WPP_SF_Dq","WPP_SF_dq");
+		addEquivSymbols("??1?$CTempBuffer@G$0BAA@VCCRTAllocator@ATL@@@ATL@@QEAA@XZ",
+			"??1?$CTempBuffer@D$0IA@VCCRTAllocator@ATL@@@ATL@@QEAA@XZ");
+		addEquivSymbols("?IsEqualGUID@@YAHAEBU_GUID@@0@Z", "IsEqualGUID");
+		addEquivSymbols(
+			"??1?$CAtlSafeAllocBufferManager@V_CCRTAllocator@_ATL_SAFE_ALLOCA_IMPL@ATL@@@_ATL_SAFE_ALLOCA_IMPL@ATL@@QEAA@XZ",
+			"??1?$CAtlSafeAllocBufferManager@VCCRTAllocator@ATL@@@_ATL_SAFE_ALLOCA_IMPL@ATL@@QEAA@XZ");
+		addEquivSymbols("??_E_Locimp@locale@std@@MEAAPEAXI@Z",
+			"??_G_Locimp@locale@std@@MEAAPEAXI@Z");
+		addEquivSymbols("?StringCchCopyW@@YAJPEAG_KPEBG@Z", "StringCchCopyW");
+		addEquivSymbols("StringCchPrintfA", "?StringCbPrintfA@@YAJPEAD_KPEBDZZ");
+		addEquivSymbols("?StringCchCatA@@YAJPEAD_KPEBD@Z", "StringCchCatA");
+		addEquivSymbols("?StringCbCatA@@YAJPEAD_KPEBD@Z", "StringCchCatA");
+		addEquivSymbols("entry", "mainCRTStartup");
+		addEquivSymbols("entry", "wmainCRTStartup");
+		addEquivSymbols("entry", "WinMainCRTStartup");
+		addEquivSymbols("WPP_SF_ii", "WPP_SF_qq");
+		addEquivSymbols("WPP_SF_DDDDD", "WPP_SF_ddddd");
+		addEquivSymbols("?FDIDestroy@@$$J0YAHPEAX@Z", "FDIDestroy");
+		addEquivSymbols("??1?$CTempBuffer@G$0IA@VCCRTAllocator@ATL@@@ATL@@QEAA@XZ",
+			"??1?$CTempBuffer@D$0IA@VCCRTAllocator@ATL@@@ATL@@QEAA@XZ");
+		addEquivSymbols("WPP_SF_xx", "WPP_SF_qq");
+		addEquivSymbols("WPP_SF_iii", "WPP_SF_qqq");
+		addEquivSymbols("RtlStringCchCopyW", "StringCchCopyW");
+		addEquivSymbols("_strcmpi", "_stricmp");
+		addEquivSymbols("WPP_SF_DDDDDDDD", "WPP_SF_dddddddd");
+		addEquivSymbols("?StringCchPrintfA@@YAJPEAD_KPEBDZZ", "?StringCbPrintfA@@YAJPEAD_KPEBDZZ");
+		addEquivSymbols("WPP_SF_h", "WPP_SF_H");
+		addEquivSymbols("WPP_SF_qqDD", "WPP_SF_qqdd");
+		addEquivSymbols("WPP_SF_DqD", "WPP_SF_dqd");
+		addEquivSymbols("WPP_SF_Dq", "WPP_SF_dq");
 		addEquivSymbols("std::vector<>::_Assign_rv", "std::vector<>::_Move_assign_from");
 		addEquivSymbols("std::vector<>::_Assign_rv", "std::vector<>::_Move_from");
 	}
@@ -360,21 +383,20 @@ public class FidStatistics extends GhidraScript {
 		}
 	}
 
-	private boolean checkNames(String a,String b) {
+	private boolean checkNames(String a, String b) {
 		if (a.equals(b)) {
 			return true;
 		}
-		return equivSymbols.contains(new SymbolPair(a,b));
+		return equivSymbols.contains(new SymbolPair(a, b));
 	}
 
 	private String chooseFunctionName(FidSearchResult result) {
 		Program program = result.function.getProgram();
-		Symbol[] symbols = program.getSymbolTable().getSymbols(result.function.getEntryPoint());
-		if (symbols.length > 1) {
-			for (Symbol symbol : symbols) {
-				if (matchAnalysis.containsRawName(symbol.getName())) {
-					return symbol.getName();
-				}
+		SymbolIterator it =
+			program.getSymbolTable().getSymbolsAsIterator(result.function.getEntryPoint());
+		for (Symbol symbol : it) {
+			if (matchAnalysis.containsRawName(symbol.getName())) {
+				return symbol.getName();
 			}
 		}
 		return result.function.getName();
@@ -384,7 +406,7 @@ public class FidStatistics extends GhidraScript {
 			throws CancelledException, IOException {
 		StatRecord record = statRecord;
 		record.totalFunction += 1;
-		if (result.matches==null || result.matches.size() == 0) {
+		if (result.matches == null || result.matches.size() == 0) {
 			record.noMatch += 1;
 		}
 		else {
@@ -407,17 +429,17 @@ public class FidStatistics extends GhidraScript {
 			NameVersions nameVersions = NameVersions.generate(funcName, program);
 			boolean exactNameMatch = false;
 			Iterator<String> iter = matchAnalysis.getRawNameIterator();
-			while(iter.hasNext()) {
+			while (iter.hasNext()) {
 				String raw = iter.next();
 				NameVersions matchNames = NameVersions.generate(raw, program);
 				if (matchNames.rawName == null) {
 					continue;
 				}
-				if (checkNames(nameVersions.rawName,matchNames.rawName)) {
+				if (checkNames(nameVersions.rawName, matchNames.rawName)) {
 					exactNameMatch = true;
 					break;
 				}
-				if (checkNames(nameVersions.similarName,matchNames.similarName)) {
+				if (checkNames(nameVersions.similarName, matchNames.similarName)) {
 					exactNameMatch = true;
 					break;
 				}
@@ -441,7 +463,7 @@ public class FidStatistics extends GhidraScript {
 				if (matchNames.demangledBaseName == null) {
 					continue;
 				}
-				if (checkNames(nameVersions.demangledBaseName,matchNames.demangledBaseName)) {
+				if (checkNames(nameVersions.demangledBaseName, matchNames.demangledBaseName)) {
 					exactNameMatch = true;
 					break;
 				}
@@ -463,7 +485,7 @@ public class FidStatistics extends GhidraScript {
 				record.hitCount += 1;
 			}
 			if (exactNameMatch && ((score < scoreThreshold) || !matchHappened)) {
-				MatchRecord matchRecord = new MatchRecord(result,null,false);
+				MatchRecord matchRecord = new MatchRecord(result, null, false);
 				StringBuilder buffer = new StringBuilder();
 				matchRecord.print(buffer);
 				lowTruePositive.append(buffer.toString());
@@ -471,22 +493,23 @@ public class FidStatistics extends GhidraScript {
 			}
 			else if ((!exactNameMatch) && (score >= scoreThreshold) && matchHappened) {
 				record.falsePositive += 1;
-				MatchRecord matchRecord = new MatchRecord(result,finalMatchName,true);
+				MatchRecord matchRecord = new MatchRecord(result, finalMatchName, true);
 				StringBuilder buffer = new StringBuilder();
 				matchRecord.print(buffer);
 				highFalsePositive.append(buffer.toString());
 				highFalsePositive.append('\n');
 			}
 		}
-		
+
 	}
 
-	private void processProgram(Program program,FidQueryService queryService) throws MemoryAccessException, CancelledException, VersionException, IOException {
-		FidProgramSeeker programSeeker = service.getProgramSeeker(program,queryService, 10.0f);
+	private void processProgram(Program program, FidQueryService queryService)
+			throws MemoryAccessException, CancelledException, VersionException, IOException {
+		FidProgramSeeker programSeeker = service.getProgramSeeker(program, queryService, 10.0f);
 		monitor.setMessage("Processing " + program.getName());
 		monitor.initialize(program.getFunctionManager().getFunctionCount());
 		FunctionIterator iter = program.getFunctionManager().getFunctionsNoStubs(true);
-		while(iter.hasNext()) {
+		while (iter.hasNext()) {
 			Function func = iter.next();
 			monitor.incrementProgress(1);
 			if (func.getName().startsWith("FUN_") || func.getName().startsWith("Ordinal_")) {
@@ -500,7 +523,8 @@ public class FidStatistics extends GhidraScript {
 		}
 	}
 
-	private LinkedList<DomainFile> buildDomainFileList() throws CancelledException, VersionException, IOException {
+	private LinkedList<DomainFile> buildDomainFileList()
+			throws CancelledException, VersionException, IOException {
 		ArrayList<DomainFolder> folders = new ArrayList<DomainFolder>();
 		while (true) {
 			monitor.checkCanceled();
@@ -526,12 +550,12 @@ public class FidStatistics extends GhidraScript {
 	@Override
 	protected void run() throws Exception {
 		initialize();
-		
+
 		LinkedList<DomainFile> programList = buildDomainFileList();
 		File lowFile = askFile("Select file to report true matches", "OK");
 		File highFile = askFile("Select file to report false positives", "OK");
-		scoreThreshold = (float)askDouble("Choose score threshold", "OK");
-		
+		scoreThreshold = (float) askDouble("Choose score threshold", "OK");
+
 		lowTruePositive = new FileWriter(lowFile);
 		highFalsePositive = new FileWriter(highFile);
 
@@ -540,7 +564,7 @@ public class FidStatistics extends GhidraScript {
 		int maxPrograms = programList.size();
 		int counter = 0;
 		try {
-			for(DomainFile domainFile : programList) {
+			for (DomainFile domainFile : programList) {
 				Program program = null;
 				try {
 					program = (Program) domainFile.getDomainObject(this, false, false, monitor);
@@ -551,7 +575,7 @@ public class FidStatistics extends GhidraScript {
 						lastLanguage = program.getLanguage();
 						queryService = service.openFidQueryService(lastLanguage, false);
 					}
-					processProgram(program,queryService);
+					processProgram(program, queryService);
 					counter += 1;
 					monitor.setMessage("Processing programs ...");
 					monitor.initialize(maxPrograms);
@@ -563,14 +587,15 @@ public class FidStatistics extends GhidraScript {
 					}
 				}
 			}
-		} catch(CancelledException ex) {
+		}
+		catch (CancelledException ex) {
 			// A cancel in middle of processing still allows results to get printed
 		}
 
 		queryService.close();
 		lowTruePositive.close();
 		highFalsePositive.close();
-	
+
 		println(StatRecord.getColumns());
 		StringBuilder buffer = new StringBuilder();
 		statRecord.print(buffer);

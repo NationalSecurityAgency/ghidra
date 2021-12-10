@@ -15,61 +15,18 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import java.awt.Color;
-import java.math.BigInteger;
-
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.colors.DebuggerTrackedRegisterBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.app.util.viewer.util.AddressIndexMap;
-import ghidra.framework.options.AutoOptions;
-import ghidra.framework.options.annotation.AutoOptionConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
+import ghidra.framework.plugintool.Plugin;
 
 public abstract class DebuggerTrackedRegisterListingBackgroundColorModel
-		implements ListingBackgroundColorModel {
-	private Color defaultBackgroundColor;
-	private Program program;
-	private AddressIndexMap addressIndexMap;
+		extends DebuggerTrackedRegisterBackgroundColorModel implements ListingBackgroundColorModel {
 
-	// TODO: Seems I should at least rename this option
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_MARKERS)
-	Color trackingColor;
-	@SuppressWarnings("unused")
-	private final AutoOptions.Wiring autoOptionsWiring;
-
-	public DebuggerTrackedRegisterListingBackgroundColorModel(DebuggerListingPlugin plugin,
+	public DebuggerTrackedRegisterListingBackgroundColorModel(Plugin plugin,
 			ListingPanel listingPanel) {
-		autoOptionsWiring = AutoOptions.wireOptions(plugin, this);
+		super(plugin);
 		modelDataChanged(listingPanel);
-	}
-
-	@Override
-	public Color getBackgroundColor(BigInteger index) {
-		if (program == null) {
-			return defaultBackgroundColor;
-		}
-		ProgramLocation loc = getTrackedLocation();
-		if (loc == null) {
-			return defaultBackgroundColor;
-		}
-		Address address = addressIndexMap.getAddress(index);
-		if (!loc.getAddress().equals(address)) {
-			return defaultBackgroundColor;
-		}
-		return trackingColor;
-	}
-
-	@Override
-	public Color getDefaultBackgroundColor() {
-		return defaultBackgroundColor;
-	}
-
-	@Override
-	public void setDefaultBackgroundColor(Color c) {
-		defaultBackgroundColor = c;
 	}
 
 	@Override
@@ -77,6 +34,4 @@ public abstract class DebuggerTrackedRegisterListingBackgroundColorModel
 		this.program = listingPanel == null ? null : listingPanel.getProgram();
 		this.addressIndexMap = listingPanel == null ? null : listingPanel.getAddressIndexMap();
 	}
-
-	protected abstract ProgramLocation getTrackedLocation();
 }

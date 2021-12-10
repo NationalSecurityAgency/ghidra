@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import ghidra.framework.model.*;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 
 class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 
@@ -47,7 +47,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFolderAdded(folder);
 			}
@@ -60,7 +60,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFileAdded(file);
 			}
@@ -73,7 +73,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFolderRemoved(parent, name);
 			}
@@ -87,7 +87,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFileRemoved(parent, name, fileID);
 			}
@@ -100,7 +100,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFolderRenamed(folder, oldName);
 			}
@@ -113,7 +113,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFileRenamed(file, oldName);
 			}
@@ -126,7 +126,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFolderMoved(folder, oldParent);
 			}
@@ -140,7 +140,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFileMoved(file, oldParent, oldName);
 			}
@@ -153,7 +153,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFolderSetActive(folder);
 			}
@@ -166,7 +166,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFileStatusChanged(file, fileIDset);
 			}
@@ -179,7 +179,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFileObjectOpenedForUpdate(file, object);
 			}
@@ -192,7 +192,7 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFileObjectClosed(file, object);
 			}
@@ -205,12 +205,11 @@ class DomainFolderChangeListenerList implements DomainFolderChangeListener {
 		if (list.isEmpty()) {
 			return;
 		}
-		Runnable r = () -> {
+		Swing.runNow(() -> {
 			for (DomainFolderChangeListener listener : list) {
 				listener.domainFileObjectReplaced(file, oldObject);
 			}
-		};
-		SystemUtilities.runSwingNow(r);
+		});
 	}
 
 	public void clearAll() {

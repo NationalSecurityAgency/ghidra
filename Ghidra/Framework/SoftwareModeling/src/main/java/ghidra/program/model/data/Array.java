@@ -32,7 +32,10 @@ public interface Array extends DataType {
 	int getNumElements();
 
 	/**
-	 * Returns the length of an element in the array
+	 * Returns the length of an element in the array.  In the case
+	 * of a Dynamic base datatype, this element length will have been explicitly specified
+	 * at the time of construction.  For a zero-length base type an element length of 1 
+	 * will be reported with {@link #getLength()} returning the number of elements.
 	 * @return the length of one element in the array.
 	 */
 	int getElementLength();
@@ -99,6 +102,9 @@ public interface Array extends DataType {
 	 * @return a String if it is an array of chars; otherwise empty string, never null.
 	 */
 	default public String getArrayRepresentation(MemBuffer buf, Settings settings, int length) {
+		if (getNumElements() == 0) {
+			return "";
+		}
 		if (!buf.isInitializedMemory()) {
 			return StringDataInstance.UNKNOWN;
 		}

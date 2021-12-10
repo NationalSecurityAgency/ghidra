@@ -81,7 +81,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 	private int refRepeatableCommentStyle;
 
 	// The codeUnitFormatOptions is used to monitor "follow pointer..." option to avoid
-	// duplication of data within auto-comment.  We don't bother adding a listener 
+	// duplication of data within auto-comment.  We don't bother adding a listener
 	// to kick the model since this is done by the operand field.
 	private BrowserCodeUnitFormatOptions codeUnitFormatOptions;
 
@@ -310,7 +310,8 @@ public class EolCommentFieldFactory extends FieldFactory {
 			new DisplayableEol(cu, alwaysShowRepeatable, alwaysShowRefRepeatables,
 				alwaysShowAutomatic, codeUnitFormatOptions.followReferencedPointers(),
 				maxDisplayLines, useAbbreviatedAutomatic, showAutomaticFunctions);
-		ArrayList<FieldElement> elementList = new ArrayList<>();
+
+		List<FieldElement> elementList = new ArrayList<>();
 
 		// This Code Unit's End of Line Comment
 		AttributedString myEolPrefixString =
@@ -335,7 +336,6 @@ public class EolCommentFieldFactory extends FieldFactory {
 		if (alwaysShowRefRepeatables || elementList.isEmpty()) {
 			AttributedString refRepeatPrefixString = new AttributedString(SEMICOLON_PREFIX,
 				refRepeatableCommentColor, getMetrics(refRepeatableCommentStyle), false, null);
-			//int refRepeatLinesSoFar = 0;
 			int refRepeatCount = displayableEol.getReferencedRepeatableCommentsCount();
 			for (int subTypeIndex = 0; subTypeIndex < refRepeatCount; subTypeIndex++) {
 				RefRepeatComment refRepeatComment =
@@ -345,7 +345,6 @@ public class EolCommentFieldFactory extends FieldFactory {
 					refRepeatComments, program, refRepeatPrefixString, showSemicolon, isWordWrap,
 					prependRefAddress, refRepeatComment.getAddress(), getNextRow(elementList));
 				elementList.addAll(refRepeatFieldElements);
-				//refRepeatLinesSoFar += refRepeatComments.length;
 			}
 		}
 
@@ -368,7 +367,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 			maxDisplayLines, hlProvider);
 	}
 
-	private int getNextRow(ArrayList<FieldElement> elementList) {
+	private int getNextRow(List<FieldElement> elementList) {
 		int elementIndex = elementList.size() - 1;
 		if (elementIndex >= 0) {
 			FieldElement element = elementList.get(elementIndex);

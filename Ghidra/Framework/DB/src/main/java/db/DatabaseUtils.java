@@ -24,47 +24,47 @@ public class DatabaseUtils {
 
 	private DatabaseUtils() {
 	}
-	
+
 	/**
 	 * Reassign the long key assigned to a contiguous group of records within a table.
 	 * A shift in the key value is computed as the difference of oldStart and newStart.
-	 * Existing records whoose keys lie within the new range will be removed prior to
+	 * Existing records whose keys lie within the new range will be removed prior to
 	 * moving the target set of records.
 	 * @param table table within which records should be moved.
 	 * @param oldStart old key value for start of range
 	 * @param newStart new key value for start of range
 	 * @param size determines the range of keys to be moved (oldStart to oldStart+size-1, inclusive)
-	 * @throws IOException
+	 * @throws IOException if there is an error moving the records
 	 */
-	public static void moveRecords(Table table, long oldStart, long newStart, long size) throws IOException{
+	public static void moveRecords(Table table, long oldStart, long newStart, long size)
+			throws IOException {
 		if (oldStart == newStart) {
 			return;
 		}
 		if (size <= 0) {
 			throw new IllegalArgumentException("size must be > 0");
 		}
-		if ((oldStart + size -1 < 0) || (newStart+size-1 <0)){
+		if ((oldStart + size - 1 < 0) || (newStart + size - 1 < 0)) {
 			throw new IllegalArgumentException("Illegal range: end range overflow");
 		}
 
-	
 		DBHandle tmp = new DBHandle();
 		Table tmpTable = tmp.createTable("tmp", table.getSchema());
 		long txID = tmp.startTransaction();
-		
+
 		long keyDiff = newStart - oldStart;
-		RecordIterator it = table.iterator(oldStart, oldStart+size-1, oldStart);
-		while(it.hasNext()) {
+		RecordIterator it = table.iterator(oldStart, oldStart + size - 1, oldStart);
+		while (it.hasNext()) {
 			DBRecord rec = it.next();
-			rec.setKey(rec.getKey()+keyDiff);
+			rec.setKey(rec.getKey() + keyDiff);
 			tmpTable.putRecord(rec);
 		}
 
-		table.deleteRecords(oldStart, oldStart+size-1);
-		table.deleteRecords(newStart, newStart+size-1);
-	
-		it = tmpTable.iterator(newStart, newStart+size-1, newStart);
-		while(it.hasNext()) {
+		table.deleteRecords(oldStart, oldStart + size - 1);
+		table.deleteRecords(newStart, newStart + size - 1);
+
+		it = tmpTable.iterator(newStart, newStart + size - 1, newStart);
+		while (it.hasNext()) {
 			DBRecord rec = it.next();
 			table.putRecord(rec);
 		}

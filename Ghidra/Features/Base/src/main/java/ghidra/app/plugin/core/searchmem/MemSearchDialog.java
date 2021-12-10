@@ -59,6 +59,13 @@ class MemSearchDialog extends DialogComponentProvider {
 	private static final SearchData DEFAULT_SEARCH_DATA =
 		SearchData.createInvalidInputSearchData(ENTER_TEXT_MESSAGE);
 
+	// The fields that use this value take in user input.  If the user input large, it affects
+	// the minimum and preferred size of the the fields.  This, in turn, affects how this dialog
+	// gets packed when the Advanced button is toggled.   Without using a size restriction, this
+	// dialog's contents may move as the dialog is re-packed.
+	private static final int INPUT_FIELD_MIN_SIZE_WIDTH = 140;
+	private static final int INPUT_FIELD_MIN_SIZE_HEIGHT = 25;
+
 	MemSearchPlugin plugin;
 	boolean isMnemonic;
 
@@ -152,11 +159,6 @@ class MemSearchDialog extends DialogComponentProvider {
 		super.taskCompleted(task);
 		isSearching = false;
 		updateSearchButtonEnablement();
-	}
-
-	void dispose() {
-		close();
-		this.plugin = null;
 	}
 
 	private void setEndianEnabled(boolean enabled) {
@@ -305,10 +307,9 @@ class MemSearchDialog extends DialogComponentProvider {
 		inputPanel.setLayout(new GridLayout(0, 1));
 		valueComboBox = new GhidraComboBox<>();
 		valueComboBox.setEditable(true);
+
 		valueField = (JTextField) valueComboBox.getEditor().getEditorComponent();
-
 		valueField.setToolTipText(currentFormat.getToolTip());
-
 		valueField.setDocument(new RestrictedInputDocument());
 		valueField.addActionListener(ev -> {
 			if (nextButton.isEnabled()) {
@@ -320,6 +321,15 @@ class MemSearchDialog extends DialogComponentProvider {
 		hexSeqField = new GDLabel();
 		hexSeqField.setName("HexSequenceField");
 		hexSeqField.setBorder(BorderFactory.createLoweredBevelBorder());
+
+		// see note for field minimum size field above
+		Dimension size = new Dimension(INPUT_FIELD_MIN_SIZE_WIDTH, INPUT_FIELD_MIN_SIZE_HEIGHT);
+		valueComboBox.setPreferredSize(size);
+		valueComboBox.setMinimumSize(size);
+
+		hexSeqField.setPreferredSize(size);
+		hexSeqField.setMinimumSize(size);
+
 		inputPanel.add(hexSeqField);
 
 		JPanel searchPanel = new JPanel(new BorderLayout());

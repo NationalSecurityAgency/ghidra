@@ -15,8 +15,7 @@
  */
 package ghidra.feature.vt.api.markuptype;
 
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_LABELS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.LABELS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
 
 import java.util.*;
 
@@ -230,10 +229,6 @@ public class LabelMarkupType extends VTMarkupType {
 
 		if (replaceAll) {
 			LabelMarkupUtils.removeAllLabels(getDestinationProgram(association),
-				destinationAddress);
-		}
-		else if (replaceDefault) {
-			LabelMarkupUtils.removeDefaultLabels(getDestinationProgram(association),
 				destinationAddress);
 		}
 

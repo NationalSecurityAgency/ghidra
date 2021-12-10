@@ -23,7 +23,7 @@ import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.app.util.HighlightProvider;
-import ghidra.app.util.XReferenceUtil;
+import ghidra.app.util.XReferenceUtils;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -36,8 +36,6 @@ import ghidra.program.util.VariableXRefFieldLocation;
 
 /**
  * Variable Cross-reference Field Factory
- * <br>
- *
  */
 public class VariableXRefFieldFactory extends XRefFieldFactory {
 
@@ -76,9 +74,6 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 		initDisplayOptions();
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getField(ProxyObj, int)
-	 */
 	@Override
 	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
 		Object obj = proxy.getObject();
@@ -89,7 +84,7 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 		Variable var = (Variable) obj;
 		List<Reference> xrefs = new ArrayList<>();
 		List<Reference> offcuts = new ArrayList<>();
-		XReferenceUtil.getVariableRefs(var, xrefs, offcuts);
+		XReferenceUtils.getVariableRefs(var, xrefs, offcuts, maxXRefs);
 
 		if (xrefs.size() + offcuts.size() == 0) {
 			return null;
@@ -164,9 +159,6 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 			width, maxXRefs, hlProvider);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getFieldLocation(ghidra.app.util.viewer.field.ListingField, BigInteger, int, ghidra.program.util.ProgramLocation)
-	 */
 	@Override
 	public FieldLocation getFieldLocation(ListingField bf, BigInteger index, int fieldNum,
 			ProgramLocation loc) {
@@ -188,9 +180,6 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getProgramLocation(int, int, ghidra.app.util.viewer.field.ListingField)
-	 */
 	@Override
 	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
 		Object obj = bf.getProxy().getObject();
@@ -207,7 +196,7 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 			Variable var = (Variable) obj;
 			List<Reference> xrefs = new ArrayList<>();
 			List<Reference> offcuts = new ArrayList<>();
-			XReferenceUtil.getVariableRefs(var, xrefs, offcuts);
+			XReferenceUtils.getVariableRefs(var, xrefs, offcuts, maxXRefs);
 
 			Reference ref = null;
 			if (index < xrefs.size()) {
@@ -225,9 +214,6 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#acceptsType(int, java.lang.Class)
-	 */
 	@Override
 	public boolean acceptsType(int category, Class<?> proxyObjectClass) {
 		if (!Variable.class.isAssignableFrom(proxyObjectClass)) {
@@ -239,7 +225,7 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new VariableXRefFieldFactory(formatModel, provider, displayOptions, fieldOptions);
+			ToolOptions options, ToolOptions fieldOptions) {
+		return new VariableXRefFieldFactory(formatModel, provider, options, fieldOptions);
 	}
 }

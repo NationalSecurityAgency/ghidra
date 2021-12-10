@@ -41,138 +41,147 @@ public class ClassDefItem implements StructConverter {
 	private ClassDataItem _classDataItem;
 	private EncodedArrayItem _staticValues;
 
-	public ClassDefItem( BinaryReader reader ) throws IOException {
-		classIndex = reader.readNextInt( );
-		accessFlags = reader.readNextInt( );
-		superClassIndex = reader.readNextInt( );
-		interfacesOffset = reader.readNextInt( );
-		sourceFileIndex = reader.readNextInt( );
-		annotationsOffset = reader.readNextInt( );
-		classDataOffset = reader.readNextInt( );
-		staticValuesOffset = reader.readNextInt( );
+	public ClassDefItem(BinaryReader reader, DexHeader dexHeader) throws IOException {
+		classIndex = reader.readNextInt();
+		accessFlags = reader.readNextInt();
+		superClassIndex = reader.readNextInt();
+		interfacesOffset = reader.readNextInt();
+		sourceFileIndex = reader.readNextInt();
+		annotationsOffset = reader.readNextInt();
+		classDataOffset = reader.readNextInt();
+		staticValuesOffset = reader.readNextInt();
 
-		if ( interfacesOffset > 0 ) {
-			long oldIndex = reader.getPointerIndex( );
+		if (interfacesOffset > 0) {
+			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex( interfacesOffset );
-				_interfaces = new TypeList( reader );
+				reader.setPointerIndex(DexUtil.adjustOffset(interfacesOffset, dexHeader));
+				_interfaces = new TypeList(reader);
 			}
 			finally {
-				reader.setPointerIndex( oldIndex );
+				reader.setPointerIndex(oldIndex);
 			}
 		}
 
-		if ( annotationsOffset > 0 ) {
-			long oldIndex = reader.getPointerIndex( );
+		if (annotationsOffset > 0) {
+			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex( annotationsOffset );
-				_annotationsDirectoryItem = new AnnotationsDirectoryItem( reader );
+				reader.setPointerIndex(DexUtil.adjustOffset(annotationsOffset, dexHeader));
+				_annotationsDirectoryItem = new AnnotationsDirectoryItem(reader, dexHeader);
 			}
 			finally {
-				reader.setPointerIndex( oldIndex );
+				reader.setPointerIndex(oldIndex);
 			}
 		}
 
-		if ( classDataOffset > 0 ) {
-			long oldIndex = reader.getPointerIndex( );
+		if (classDataOffset > 0) {
+			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex( classDataOffset );
-				_classDataItem = new ClassDataItem( reader );
+				reader.setPointerIndex(DexUtil.adjustOffset(classDataOffset, dexHeader));
+				_classDataItem = new ClassDataItem(reader, dexHeader);
 			}
 			finally {
-				reader.setPointerIndex( oldIndex );
+				reader.setPointerIndex(oldIndex);
 			}
 		}
 
-		if ( staticValuesOffset > 0 ) {
-			long oldIndex = reader.getPointerIndex( );
+		if (staticValuesOffset > 0) {
+			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex( staticValuesOffset );
-				_staticValues = new EncodedArrayItem( reader );
+				reader.setPointerIndex(DexUtil.adjustOffset(staticValuesOffset, dexHeader));
+				_staticValues = new EncodedArrayItem(reader);
 			}
 			finally {
-				reader.setPointerIndex( oldIndex );
+				reader.setPointerIndex(oldIndex);
 			}
 		}
 	}
 
-	public int getClassIndex( ) {
+	public int getClassIndex() {
 		return classIndex;
 	}
 
-	public int getAccessFlags( ) {
+	public int getAccessFlags() {
 		return accessFlags;
 	}
 
-	public int getSuperClassIndex( ) {
+	public int getSuperClassIndex() {
 		return superClassIndex;
 	}
 
-	public int getInterfacesOffset( ) {
+	public int getInterfacesOffset() {
 		return interfacesOffset;
 	}
 
-	public int getSourceFileIndex( ) {
+	public int getSourceFileIndex() {
 		return sourceFileIndex;
 	}
 
-	public int getAnnotationsOffset( ) {
+	/**
+	 * NOTE: For CDEX files, this value is relative to DataOffset in DexHeader
+	 * @return the relative offset to annotations
+	 */
+	public int getAnnotationsOffset() {
 		return annotationsOffset;
 	}
 
-	public int getClassDataOffset( ) {
+	public int getClassDataOffset() {
 		return classDataOffset;
 	}
 
-	public int getStaticValuesOffset( ) {
+	public int getStaticValuesOffset() {
 		return staticValuesOffset;
 	}
 
-	public TypeList getInterfaces( ) {
+	public TypeList getInterfaces() {
 		return _interfaces;
 	}
 
-	public AnnotationsDirectoryItem getAnnotationsDirectoryItem( ) {
+	public AnnotationsDirectoryItem getAnnotationsDirectoryItem() {
 		return _annotationsDirectoryItem;
 	}
 
-	public ClassDataItem getClassDataItem( ) {
+	public ClassDataItem getClassDataItem() {
 		return _classDataItem;
 	}
 
-	public EncodedArrayItem getStaticValues( ) {
+	public EncodedArrayItem getStaticValues() {
 		return _staticValues;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = StructConverterUtil.toDataType( ClassDefItem.class );
-		dataType.setCategoryPath( new CategoryPath( "/dex" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = StructConverterUtil.toDataType(ClassDefItem.class);
+		dataType.setCategoryPath(new CategoryPath("/dex"));
 		return dataType;
 	}
 
-	public String toString( DexHeader header, int index, TaskMonitor monitor ) throws CancelledException {
-		StringBuilder builder = new StringBuilder( );
-		if ( index != -1 ) {
-			builder.append( "Class Index: 0x" + Integer.toHexString( index ) + "\n" );
+	public String toString(DexHeader header, int index, TaskMonitor monitor)
+			throws CancelledException {
+		StringBuilder builder = new StringBuilder();
+		if (index != -1) {
+			builder.append("Class Index: 0x" + Integer.toHexString(index) + "\n");
 		}
-		builder.append( "Class: " + DexUtil.convertTypeIndexToString( header, getClassIndex( ) ) + "\n" );
-		builder.append( "Class Access Flags:\n" + AccessFlags.toString( getAccessFlags( ) ) + "\n" );
-		builder.append( "Superclass: " + DexUtil.convertTypeIndexToString( header, getSuperClassIndex( ) ) + "\n" );
+		builder.append(
+			"Class: " + DexUtil.convertTypeIndexToString(header, getClassIndex()) + "\n");
+		builder.append("Class Access Flags:\n" + AccessFlags.toString(getAccessFlags()) + "\n");
+		builder.append(
+			"Superclass: " + DexUtil.convertTypeIndexToString(header, getSuperClassIndex()) + "\n");
 
-		if ( getInterfacesOffset( ) > 0 ) {
-			builder.append( "Interfaces: " + "\n" );
-			TypeList interfaces = getInterfaces( );
-			for ( TypeItem type : interfaces.getItems( ) ) {
-				monitor.checkCanceled( );
-				builder.append( "\t" + DexUtil.convertTypeIndexToString( header, type.getType( ) ) + "\n" );
+		if (getInterfacesOffset() > 0) {
+			builder.append("Interfaces: " + "\n");
+			TypeList interfaces = getInterfaces();
+			for (TypeItem type : interfaces.getItems()) {
+				monitor.checkCanceled();
+				builder.append(
+					"\t" + DexUtil.convertTypeIndexToString(header, type.getType()) + "\n");
 			}
 		}
 
-		if ( getSourceFileIndex( ) > 0 ) {
-			builder.append( "Source File: " + DexUtil.convertToString( header, getSourceFileIndex( ) ) + "\n" );
+		if (getSourceFileIndex() > 0) {
+			builder.append(
+				"Source File: " + DexUtil.convertToString(header, getSourceFileIndex()) + "\n");
 		}
 
-		return builder.toString( );
+		return builder.toString();
 	}
 }

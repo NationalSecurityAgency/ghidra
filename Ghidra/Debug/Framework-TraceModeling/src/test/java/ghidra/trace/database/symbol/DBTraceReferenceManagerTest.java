@@ -26,6 +26,7 @@ import org.junit.*;
 import com.google.common.collect.Range;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
@@ -461,6 +462,39 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 	}
 
 	@Test
+	public void testClearReferencesTo() {
+		DBTraceReference keptRef;
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.addMemoryReference(0, b.addr(0x4000), b.addr(0x5000), 3);
+			b.addOffsetReference(0, b.addr(0x4001), b.addr(0x5000), 20);
+			b.addShiftedReference(0, b.addr(0x4002), b.addr(0x5000), 1);
+			keptRef = b.addMemoryReference(0, b.addr(0x8000), b.addr(0x5001));
+		}
+
+		assertEquals(3, manager.getReferencesTo(0, b.addr(0x5000)).size());
+		assertEquals(1, manager.getReferencesTo(0, b.addr(0x5001)).size());
+
+		try (UndoableTransaction tid = b.startTransaction()) {
+			manager.clearReferencesTo(Range.atLeast(10L), b.range(0x4000, 0x5000));
+		}
+
+		assertEquals(3, manager.getReferencesTo(0, b.addr(0x5000)).size());
+		assertEquals(0, manager.getReferencesTo(10, b.addr(0x5000)).size());
+		assertEquals(Range.closed(0L, 9L),
+			manager.getReferencesTo(0, b.addr(0x5000)).iterator().next().getLifespan());
+
+		try (UndoableTransaction tid = b.startTransaction()) {
+			manager.clearReferencesTo(Range.atLeast(0L), b.range(0x4000, 0x5000));
+		}
+
+		assertEquals(0, manager.getReferencesTo(0, b.addr(0x5000)).size());
+		assertEquals(0, manager.getReferencesTo(-1, b.addr(0x5000)).size());
+		assertEquals(1, manager.getReferencesTo(0, b.addr(0x5001)).size());
+		assertEquals(keptRef, manager.getReferencesTo(0, b.addr(0x5001)).iterator().next());
+		assertEquals(Range.atLeast(0L), keptRef.getLifespan());
+	}
+
+	@Test
 	public void testGetReferenceSourcesAndDestinations() {
 		try (UndoableTransaction tid = b.startTransaction()) {
 			b.addMemoryReference(0, b.addr(0x4000), b.addr(0x5000));
@@ -554,5 +588,59 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		b.trace.redo();
 
 		assertEquals(3, manager.getReferenceCountFrom(0, b.addr(0x4000)));
+	}
+
+	@Test
+	public void testOverlaySpaces() throws Exception {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			AddressSpace os = b.trace.getMemoryManager()
+					.createOverlayAddressSpace("test",
+						b.trace.getBaseAddressFactory().getDefaultAddressSpace());
+
+			b.addMemoryReference(0, os.getAddress(0x4000), os.getAddress(0x5000));
+			b.addMemoryReference(0, os.getAddress(0x4001), b.addr(0x5001));
+			b.addMemoryReference(0, b.addr(0x4002), os.getAddress(0x5002));
+		}
+
+		File saved = b.save();
+
+		try (@SuppressWarnings("hiding") // On purpose
+		ToyDBTraceBuilder b = new ToyDBTraceBuilder(saved)) {
+			@SuppressWarnings("hiding") // On purpose
+			DBTraceReferenceManager manager = b.trace.getReferenceManager();
+
+			AddressSpace ds = b.trace.getBaseAddressFactory().getDefaultAddressSpace();
+			AddressSpace os = b.trace.getBaseAddressFactory().getAddressSpace("test");
+			assertNotNull(os);
+
+			DBTraceReference ref;
+
+			ref = manager.getReference(0, os.getAddress(0x4000), os.getAddress(0x5000), -1);
+			assertNotNull(ref);
+			assertEquals(os, ref.getFromAddress().getAddressSpace());
+			assertEquals(os, ref.getToAddress().getAddressSpace());
+
+			ref = manager.getReference(0, os.getAddress(0x4001), b.addr(0x5001), -1);
+			assertNotNull(ref);
+			assertEquals(os, ref.getFromAddress().getAddressSpace());
+			assertEquals(ds, ref.getToAddress().getAddressSpace());
+
+			ref = manager.getReference(0, b.addr(0x4002), os.getAddress(0x5002), -1);
+			assertNotNull(ref);
+			assertEquals(ds, ref.getFromAddress().getAddressSpace());
+			assertEquals(os, ref.getToAddress().getAddressSpace());
+
+			assertEquals(0, manager.getReferenceCountFrom(0, b.addr(0x4001)));
+			assertEquals(1, manager.getReferenceCountFrom(0, os.getAddress(0x4001)));
+
+			assertEquals(0, manager.getReferenceCountFrom(0, os.getAddress(0x4002)));
+			assertEquals(1, manager.getReferenceCountFrom(0, b.addr(0x4002)));
+
+			assertEquals(0, manager.getReferenceCountTo(0, os.getAddress(0x5001)));
+			assertEquals(1, manager.getReferenceCountTo(0, b.addr(0x5001)));
+
+			assertEquals(0, manager.getReferenceCountTo(0, b.addr(0x5002)));
+			assertEquals(1, manager.getReferenceCountTo(0, os.getAddress(0x5002)));
+		}
 	}
 }

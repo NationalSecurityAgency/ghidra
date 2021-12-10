@@ -87,44 +87,44 @@ class DataTypePanel extends JPanel {
 
 		pathAttrSet = new SimpleAttributeSet();
 		pathAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		pathAttrSet.addAttribute(StyleConstants.FontSize, new Integer(11));
+		pathAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
 		pathAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
 		pathAttrSet.addAttribute(StyleConstants.Foreground, MergeConstants.CONFLICT_COLOR);
 
 		nameAttrSet = new SimpleAttributeSet();
 		nameAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		nameAttrSet.addAttribute(StyleConstants.FontSize, new Integer(11));
+		nameAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
 		nameAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
 
 		sourceAttrSet = new SimpleAttributeSet();
 		sourceAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		sourceAttrSet.addAttribute(StyleConstants.FontSize, new Integer(11));
+		sourceAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
 		sourceAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
 		sourceAttrSet.addAttribute(StyleConstants.Foreground, SOURCE_COLOR);
 
 		offsetAttrSet = new SimpleAttributeSet();
 		offsetAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
-		offsetAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
+		offsetAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
 		offsetAttrSet.addAttribute(StyleConstants.Foreground, Color.BLACK);
 
 		contentAttrSet = new SimpleAttributeSet();
 		contentAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
-		contentAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
+		contentAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
 		contentAttrSet.addAttribute(StyleConstants.Foreground, Color.BLUE);
 
 		fieldNameAttrSet = new SimpleAttributeSet();
 		fieldNameAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
-		fieldNameAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
+		fieldNameAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
 		fieldNameAttrSet.addAttribute(StyleConstants.Foreground, new Color(204, 0, 204));
 
 		commentAttrSet = new SimpleAttributeSet();
 		commentAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
-		commentAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
+		commentAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
 		commentAttrSet.addAttribute(StyleConstants.Foreground, new Color(0, 204, 51));
 
 		deletedAttrSet = new SimpleAttributeSet();
 		deletedAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		deletedAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
+		deletedAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
 		deletedAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
 		deletedAttrSet.addAttribute(StyleConstants.Foreground, Color.RED);
 
@@ -149,7 +149,7 @@ class DataTypePanel extends JPanel {
 	}
 
 	private void formatAlignment(Composite composite) {
-		String str = CompositeDataTypeImpl.getAlignmentAndPackingString(composite);
+		String str = CompositeInternal.getAlignmentAndPackingString(composite);
 		insertString(str + "\n\n", sourceAttrSet);
 	}
 
@@ -178,10 +178,7 @@ class DataTypePanel extends JPanel {
 		DataType dt = dtc.getDataType();
 		StringBuilder buffer = new StringBuilder();
 		buffer.append(dt.getName());
-		if (dtc.isFlexibleArrayComponent()) {
-			buffer.append("[0]");
-		}
-		else if (dt instanceof BitFieldDataType &&
+		if (dt instanceof BitFieldDataType &&
 			!((Composite) dtc.getParent()).isPackingEnabled()) {
 			BitFieldDataType bfDt = (BitFieldDataType) dt;
 			buffer.append("(");
@@ -204,14 +201,9 @@ class DataTypePanel extends JPanel {
 		offsetWidth += 2; // factor in 0x prefix
 		String offsetStr = "";
 		if (offsetWidth > 0) {
-			if (!dtc.isFlexibleArrayComponent()) {
-				offsetStr = "0x" + Integer.toHexString(dtc.getOffset());
-				offsetStr = StringUtilities.pad(offsetStr, ' ', offsetWidth - offsetStr.length());
-				offsetStr += ": ";
-			}
-			else {
-				offsetStr = StringUtilities.pad(offsetStr, ' ', offsetWidth + 2);
-			}
+			offsetStr = "0x" + Integer.toHexString(dtc.getOffset());
+			offsetStr = StringUtilities.pad(offsetStr, ' ', offsetWidth - offsetStr.length());
+			offsetStr += ": ";
 			insertString("  " + offsetStr + "  ", offsetAttrSet);
 		}
 		fieldName = pad(fieldName, fieldNameWidth);
@@ -233,10 +225,8 @@ class DataTypePanel extends JPanel {
 		boolean showComponentOffset = false;
 
 		DataTypeComponent[] components = comp.getDefinedComponents();
-		DataTypeComponent flexDtc = null;
 		if (comp instanceof Structure) {
 			showComponentOffset = !comp.isPackingEnabled();
-			flexDtc = ((Structure) comp).getFlexibleArrayComponent();
 		}
 
 		int offsetLength = showComponentOffset ? Integer.toHexString(comp.getLength()).length() : 0;
@@ -246,21 +236,38 @@ class DataTypePanel extends JPanel {
 			maxDtNameLength = max(getDataTypeName(component), maxDtNameLength);
 			maxFieldNameLength = max(component.getFieldName(), maxFieldNameLength);
 		}
-		if (flexDtc != null) {
-			maxDtNameLength = max(getDataTypeName(flexDtc), maxDtNameLength);
-			maxFieldNameLength = max(flexDtc.getFieldName(), maxFieldNameLength);
-		}
 
 		for (DataTypeComponent component : components) {
 			renderComponent(component, maxDtNameLength, maxFieldNameLength, offsetLength);
-		}
-		if (flexDtc != null) {
-			renderComponent(flexDtc, maxDtNameLength, maxFieldNameLength, offsetLength);
 		}
 
 		insertString("}\n\n", contentAttrSet);
 		insertAlignment(comp);
 		insertLength(comp);
+	}
+
+	private class EnumEntry implements Comparable<EnumEntry> {
+
+		private final String name;
+		private final long value;
+		private final String comment;
+
+		EnumEntry(String name, long value, String comment) {
+			this.name = name;
+			this.value = value;
+			this.comment = comment;
+
+		}
+
+		@Override
+		public int compareTo(EnumEntry o) {
+			int c = Long.compare(value, o.value);
+			if (c == 0) {
+				c = name.compareTo(o.name);
+			}
+			return c;
+		}
+
 	}
 
 	private void formatEnumText(Enum enuum) {
@@ -271,26 +278,39 @@ class DataTypePanel extends JPanel {
 
 		StringBuffer sb = new StringBuffer();
 
-		String[] names = enuum.getNames();
-		int maxLength = 0;
-		for (String name : names) {
-			if (name.length() > maxLength) {
-				maxLength = name.length();
-			}
-		}
-		long[] values = enuum.getValues();
-		Arrays.sort(values);
+		int maxNameLength = 0;
+		int maxValueLength = 0;
 
-		for (int i = 0; i < values.length; i++) {
-			String name = enuum.getName(values[i]);
-			name = pad(name, maxLength);
-			sb.append("    " + name + " = 0x" + Long.toHexString(values[i]) + " ");
-			if (i < values.length - 1) {
-				sb.append("\n");
-			}
+		String[] names = enuum.getNames();
+		EnumEntry[] entries = new EnumEntry[names.length];
+		for (int i = 0; i < names.length; i++) {
+			String name = names[i];
+			EnumEntry entry = new EnumEntry(name, enuum.getValue(name), enuum.getComment(name));
+			entries[i] = entry;
+			maxNameLength = Math.max(maxNameLength, name.length());
+			String valStr = Long.toHexString(entry.value);
+			maxValueLength = Math.max(maxValueLength, valStr.length());
 		}
-		sb.append("\n }\n");
+		Arrays.sort(entries);
+
+		for (EnumEntry entry : entries) {
+			renderEnumEntry(entry, maxNameLength, maxValueLength);
+		}
+		sb.append("}\n");
 		insertString(sb.toString(), contentAttrSet);
+	}
+
+	private void renderEnumEntry(EnumEntry entry, int maxNameLength, int maxValueLength) {
+		String name = entry.name;
+		name = pad(name, maxNameLength);
+		String valStr = Long.toHexString(entry.value);
+		valStr = pad(valStr, maxValueLength);
+		insertString("    " + name, fieldNameAttrSet);
+		insertString(" = 0x" + valStr, contentAttrSet);
+		if (entry.comment != null) {
+			insertString("   " + entry.comment, commentAttrSet);
+		}
+		insertString("\n", contentAttrSet);
 	}
 
 	private void formatTypeDefText(TypeDef td) {

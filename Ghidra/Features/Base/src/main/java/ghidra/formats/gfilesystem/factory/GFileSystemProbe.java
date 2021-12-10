@@ -18,8 +18,7 @@ package ghidra.formats.gfilesystem.factory;
 /**
  * An empty interface that is a common type for the real probe interfaces to derive from.
  * <p>
- * See {@link GFileSystemProbeBytesOnly}, {@link GFileSystemProbeFull}, or 
- * {@link GFileSystemProbeWithFile}
+ * See {@link GFileSystemProbeBytesOnly}, {@link GFileSystemProbeByteProvider}
  */
 public interface GFileSystemProbe {
 	// empty interface

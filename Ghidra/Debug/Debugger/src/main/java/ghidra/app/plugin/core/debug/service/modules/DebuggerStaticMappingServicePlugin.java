@@ -63,26 +63,25 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-@PluginInfo( //
-	shortDescription = "Debugger static mapping manager", //
-	description = "Track and manage static mappings (program-trace relocations)", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
+@PluginInfo(
+	shortDescription = "Debugger static mapping manager",
+	description = "Track and manage static mappings (program-trace relocations)",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
 	eventsConsumed = {
-		ProgramOpenedPluginEvent.class, //
-		ProgramClosedPluginEvent.class, //
-		TraceOpenedPluginEvent.class, // 
-		TraceClosedPluginEvent.class, //
-	}, //
-	servicesRequired = { //
-		ProgramManager.class, //
-		DebuggerTraceManagerService.class, //
-	}, //
-	servicesProvided = { //
-		DebuggerStaticMappingService.class, //
-	} // 
-)
+		ProgramOpenedPluginEvent.class,
+		ProgramClosedPluginEvent.class,
+		TraceOpenedPluginEvent.class,
+		TraceClosedPluginEvent.class,
+	},
+	servicesRequired = {
+		ProgramManager.class,
+		DebuggerTraceManagerService.class,
+	},
+	servicesProvided = {
+		DebuggerStaticMappingService.class,
+	})
 public class DebuggerStaticMappingServicePlugin extends Plugin
 		implements DebuggerStaticMappingService, DomainFolderChangeAdapter {
 
@@ -284,7 +283,6 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 		private Program program;
 		private AddressRange staticRange;
-		private Long shift; // from static image to trace
 
 		public MappingEntry(TraceStaticMapping mapping) {
 			this.mapping = mapping;
@@ -310,8 +308,6 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				Address minAddr = opened.getAddressFactory().getAddress(mapping.getStaticAddress());
 				Address maxAddr = addOrMax(minAddr, mapping.getLength() - 1);
 				this.staticRange = new AddressRangeImpl(minAddr, maxAddr);
-				this.shift = mapping.getMinTraceAddress().getOffset() -
-					staticRange.getMinAddress().getOffset();
 				return true;
 			}
 			return false;
@@ -321,7 +317,6 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			if (this.program == closed) {
 				this.program = null;
 				this.staticRange = null;
-				this.shift = null;
 				return true;
 			}
 			return false;
@@ -566,7 +561,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 
 		protected void collectOpenMappedPrograms(AddressRange rng, Range<Long> span,
-				Map<Program, ShiftAndAddressSetView> result) {
+				Map<Program, Collection<MappedAddressRange>> result) {
 			TraceAddressSnapRange tatr = new ImmutableTraceAddressSnapRange(rng, span);
 			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
 				MappingEntry me = out.getValue();
@@ -576,16 +571,16 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				if (!out.getKey().intersects(tatr)) {
 					continue;
 				}
-
-				ShiftAndAddressSetView set = result.computeIfAbsent(me.program,
-					p -> new ShiftAndAddressSetView(-me.shift, new AddressSet()));
-				((AddressSet) set.getAddressSetView()).add(me.mapTraceRangeToProgram(rng));
+				AddressRange srcRng = out.getKey().getRange().intersect(rng);
+				AddressRange dstRng = me.mapTraceRangeToProgram(rng);
+				result.computeIfAbsent(me.program, p -> new TreeSet<>())
+						.add(new MappedAddressRange(srcRng, dstRng));
 			}
 		}
 
-		public Map<Program, ShiftAndAddressSetView> getOpenMappedViews(AddressSetView set,
+		public Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(AddressSetView set,
 				Range<Long> span) {
-			Map<Program, ShiftAndAddressSetView> result = new HashMap<>();
+			Map<Program, Collection<MappedAddressRange>> result = new HashMap<>();
 			for (AddressRange rng : set) {
 				collectOpenMappedPrograms(rng, span, result);
 			}
@@ -716,7 +711,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 
 		protected void collectOpenMappedViews(AddressRange rng,
-				Map<TraceSnap, ShiftAndAddressSetView> result) {
+				Map<TraceSnap, Collection<MappedAddressRange>> result) {
 			for (Entry<MappingEntry, Address> inPreceeding : inbound.headMapByValue(
 				rng.getMaxAddress(), true).entrySet()) {
 				Address start = inPreceeding.getValue();
@@ -727,14 +722,17 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				if (!me.isInProgramRange(rng)) {
 					continue;
 				}
-				ShiftAndAddressSetView set = result.computeIfAbsent(me.getTraceSnap(),
-					p -> new ShiftAndAddressSetView(me.shift, new AddressSet()));
-				((AddressSet) set.getAddressSetView()).add(me.mapProgramRangeToTrace(rng));
+
+				AddressRange srcRange = me.staticRange.intersect(rng);
+				AddressRange dstRange = me.mapProgramRangeToTrace(rng);
+				result.computeIfAbsent(me.getTraceSnap(), p -> new TreeSet<>())
+						.add(new MappedAddressRange(srcRange, dstRange));
 			}
 		}
 
-		public Map<TraceSnap, ShiftAndAddressSetView> getOpenMappedViews(AddressSetView set) {
-			Map<TraceSnap, ShiftAndAddressSetView> result = new HashMap<>();
+		public Map<TraceSnap, Collection<MappedAddressRange>> getOpenMappedViews(
+				AddressSetView set) {
+			Map<TraceSnap, Collection<MappedAddressRange>> result = new HashMap<>();
 			for (AddressRange rng : set) {
 				collectOpenMappedViews(rng, result);
 			}
@@ -1076,23 +1074,13 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		for (ModuleMapEntry ent : entries) {
 			monitor.checkCanceled();
 			try {
-				addModuleMapping(ent.getModule(), ent.getModuleRange().getLength(),
-					ent.getProgram(), truncateExisting);
+				DebuggerStaticMappingUtils.addModuleMapping(ent.getModule(),
+					ent.getModuleRange().getLength(), ent.getProgram(), truncateExisting);
 			}
 			catch (Exception e) {
 				Msg.error(this, "Could not add mapping " + ent + ": " + e.getMessage());
 			}
 		}
-	}
-
-	@Override
-	public void addSectionMapping(TraceSection from, Program toProgram, MemoryBlock to,
-			boolean truncateExisting) throws TraceConflictedMappingException {
-		TraceLocation fromLoc = new DefaultTraceLocation(from.getTrace(), null,
-			from.getModule().getLifespan(), from.getStart());
-		ProgramLocation toLoc = new ProgramLocation(toProgram, to.getStart());
-		long length = Math.min(from.getRange().getLength(), to.getSize());
-		addMapping(fromLoc, toLoc, length, truncateExisting);
 	}
 
 	@Override
@@ -1119,8 +1107,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		for (SectionMapEntry ent : entries) {
 			monitor.checkCanceled();
 			try {
-				addSectionMapping(ent.getSection(), ent.getProgram(), ent.getBlock(),
-					truncateExisting);
+				DebuggerStaticMappingUtils.addSectionMapping(ent.getSection(), ent.getProgram(),
+					ent.getBlock(), truncateExisting);
 			}
 			catch (Exception e) {
 				Msg.error(this, "Could not add mapping " + ent + ": " + e.getMessage());
@@ -1141,8 +1129,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	protected <T> T noProject() {
-		Msg.warn(this, "The given program does not exist in any project");
-		return null;
+		return DebuggerStaticMappingUtils.noProject(this);
 	}
 
 	protected InfoPerTrace requireTrackedInfo(Trace trace) {
@@ -1231,9 +1218,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	@Override
-	public Map<Program, ShiftAndAddressSetView> getOpenMappedViews(Trace trace,
-			AddressSetView set,
-			long snap) {
+	public Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(Trace trace,
+			AddressSetView set, long snap) {
 		InfoPerTrace info = requireTrackedInfo(trace);
 		if (info == null) {
 			return null;
@@ -1242,7 +1228,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	@Override
-	public Map<TraceSnap, ShiftAndAddressSetView> getOpenMappedViews(Program program,
+	public Map<TraceSnap, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
 			AddressSetView set) {
 		InfoPerProgram info = requireTrackedInfo(program);
 		if (info == null) {

@@ -31,7 +31,7 @@ public class EncodedTypeAddressPair implements StructConverter {
 	private int typeIndexLength;// in bytes
 	private int addressLength;// in bytes
 
-	public EncodedTypeAddressPair( BinaryReader reader ) throws IOException {
+	public EncodedTypeAddressPair(BinaryReader reader) throws IOException {
 		LEB128 leb128 = LEB128.readUnsignedValue(reader);
 		typeIndex = leb128.asUInt32();
 		typeIndexLength = leb128.getLength();
@@ -41,11 +41,11 @@ public class EncodedTypeAddressPair implements StructConverter {
 		addressLength = leb128.getLength();
 	}
 
-	public int getTypeIndex( ) {
+	public int getTypeIndex() {
 		return typeIndex;
 	}
 
-	public int getAddress( ) {
+	public int getAddress() {
 		return address;
 	}
 
@@ -58,11 +58,12 @@ public class EncodedTypeAddressPair implements StructConverter {
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "encoded_type_addr_pair_" + typeIndexLength + "_" + addressLength, 0 );
-		structure.add( new ArrayDataType( BYTE, typeIndexLength, BYTE.getLength( ) ), "type_idx", null );
-		structure.add( new ArrayDataType( BYTE, addressLength, BYTE.getLength( ) ), "addr", null );
-		structure.setCategoryPath( new CategoryPath( "/dex/encoded_type_addr_pair" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure = new StructureDataType(
+			"encoded_type_addr_pair_" + typeIndexLength + "_" + addressLength, 0);
+		structure.add(new ArrayDataType(BYTE, typeIndexLength, BYTE.getLength()), "type_idx", null);
+		structure.add(new ArrayDataType(BYTE, addressLength, BYTE.getLength()), "addr", null);
+		structure.setCategoryPath(new CategoryPath("/dex/encoded_type_addr_pair"));
 		return structure;
 	}
 }

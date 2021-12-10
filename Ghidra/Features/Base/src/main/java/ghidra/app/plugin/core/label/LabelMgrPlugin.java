@@ -43,7 +43,7 @@ import ghidra.util.Msg;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.CODE_VIEWER,
 	shortDescription = "Edit Labels",
-	description = "This plugin provides actions and dialogs for adding, removing and editing labels in the code browser",
+	description = "This plugin provides actions and dialogs for adding, removing and editing labels",
 	servicesRequired = { GoToService.class }
 )
 //@formatter:on
@@ -56,8 +56,7 @@ public class LabelMgrPlugin extends Plugin {
 	/**
 	 * Constructor
 	 *
-	 * @param plugintool
-	 *            reference to the tool
+	 * @param tool the tool
 	 */
 	public LabelMgrPlugin(PluginTool tool) {
 		super(tool);
@@ -65,9 +64,6 @@ public class LabelMgrPlugin extends Plugin {
 		setupActions();
 	}
 
-	/**
-	 * Creation of the Label Mgr plugin actions.
-	 */
 	private void setupActions() {
 		DockingAction addLabelAction = new AddLabelAction(this);
 		tool.addAction(addLabelAction); // add the plugin action
@@ -92,10 +88,6 @@ public class LabelMgrPlugin extends Plugin {
 		tool.addAction(allHistoryAction);
 	}
 
-	/**
-	 * Create the necessary dialogs for this plugin. The dialogs are Name Label
-	 * and Choose Alias.
-	 */
 	AddEditDialog getAddEditDialog() {
 		if (addEditDialog == null) {
 			addEditDialog = new AddEditDialog("", tool);
@@ -118,9 +110,10 @@ public class LabelMgrPlugin extends Plugin {
 	}
 
 	/**
-	 * Removes the label or alias that the cursor is over from the current label
-	 * field. If an exception is caught during the removal of the label or
-	 * alias, a message is written to the status area.
+	 * Removes the label or alias that the cursor is over from the current label field. If an 
+	 * exception is caught during the removal of the label or alias, a message is written to the 
+	 * status area.
+	 * @param context the action context
 	 */
 	protected void removeLabelCallback(ListingActionContext context) {
 		Symbol s = getSymbol(context);
@@ -136,6 +129,7 @@ public class LabelMgrPlugin extends Plugin {
 	/**
 	 * AddLabelAction calls this method when an action occurs. At this point in
 	 * time, all we want to do is to display the Add Label Dialog.
+	 * @param context the action context
 	 */
 	protected void addLabelCallback(ListingActionContext context) {
 		getAddEditDialog().addLabel(context.getAddress(), context.getProgram());
@@ -144,6 +138,7 @@ public class LabelMgrPlugin extends Plugin {
 	/**
 	 * EditLabelAction calls this method when an action occurs. At this point in
 	 * time, all we want to do is to display the Add Label Dialog.
+	 * @param context the action context
 	 */
 	void editLabelCallback(ListingActionContext context) {
 
@@ -275,8 +270,8 @@ public class LabelMgrPlugin extends Plugin {
 	/**
 	 * Return true if the given context has label history.
 	 *
-	 * @param contextObj
-	 * @return
+	 * @param context the action context
+	 * @return true if the given context has label history
 	 */
 	boolean hasLabelHistory(ListingActionContext context) {
 		ProgramLocation location = context.getLocation();
@@ -298,10 +293,10 @@ public class LabelMgrPlugin extends Plugin {
 		if (!(context.getLocation() instanceof OperandFieldLocation)) {
 			return null;
 		}
+
 		OperandFieldLocation opLoc = (OperandFieldLocation) context.getLocation();
 		Address address = opLoc.getAddress();
 		int opIndex = opLoc.getOperandIndex();
-
 		Data dataComp = getDataComponent(context);
 		if (dataComp != null) {
 			if (isInUnion(dataComp)) {
@@ -311,8 +306,6 @@ public class LabelMgrPlugin extends Plugin {
 		}
 
 		ReferenceManager refMgr = context.getProgram().getReferenceManager();
-		//SymbolTable st = currentProgram.getSymbolTable();
-
 		return refMgr.getPrimaryReferenceFrom(address, opIndex);
 	}
 

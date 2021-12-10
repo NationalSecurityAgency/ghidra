@@ -27,7 +27,7 @@ import ghidra.program.database.ProgramModifierListener;
 import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for merging data types.
@@ -66,12 +66,11 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					struct.insertBitFieldAt(3, 2, 6, td, 2, "bf1", null);
 					struct.insertBitFieldAt(3, 2, 4, td, 2, "bf2", null);
 					struct.add(new QWordDataType());
-
-					struct.setFlexibleArrayComponent(td, "flex", "my flex");
+					struct.add(new ArrayDataType(td, 0, -1), 0, "flex", "my flex");
 
 					structRef.set(struct);
 
-					c.removeCategory("Category5", TaskMonitorAdapter.DUMMY);
+					c.removeCategory("Category5", TaskMonitor.DUMMY);
 					Category c5 = c.createCategory("Category5");
 					c5.addDataType(struct, DataTypeConflictHandler.DEFAULT_HANDLER);
 					commit = true;
@@ -187,7 +186,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					Structure s = (Structure) c.getDataType("IntStruct");
-					c.remove(s, TaskMonitorAdapter.DUMMY);
+					c.remove(s, TaskMonitor.DUMMY);
 					s = new StructureDataType(c.getCategoryPath(), "IntStruct", 0, dtm);
 					s.add(new QWordDataType(), "f1", "my f1");
 					s.add(new FloatDataType());
@@ -220,7 +219,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 
 		Structure s = (Structure) dt;
 		assertEquals("my f1", s.getComponent(0).getComment());
-		DataTypeComponent dtc = s.getComponentAt(17);
+		DataTypeComponent dtc = s.getComponentContaining(17);
 		assertEquals(7, dtc.getOrdinal());
 		assertEquals("my bf1", dtc.getComment());
 	}
@@ -243,7 +242,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					Structure s = (Structure) c.getDataType("IntStruct");
-					c.remove(s, TaskMonitorAdapter.DUMMY);
+					c.remove(s, TaskMonitor.DUMMY);
 					s = new StructureDataType(c.getCategoryPath(), "IntStruct", 0);
 					s.add(new QWordDataType());
 					s.add(new FloatDataType());
@@ -440,7 +439,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -479,7 +478,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 
 				try {
 					DataType dt = dtm.addDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -530,7 +529,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -581,7 +580,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"FloatStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -611,7 +610,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -659,7 +658,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -715,7 +714,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -734,7 +733,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -963,7 +962,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -992,7 +991,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1050,7 +1049,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					Structure s = (Structure) dt;
 					s.add(new ByteDataType());
 					Category parent = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-					parent.removeCategory("Category3", TaskMonitorAdapter.DUMMY);
+					parent.removeCategory("Category3", TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1116,7 +1115,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					Structure s = (Structure) dt;
 					s.add(new ByteDataType());
 					Category parent = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-					parent.removeCategory("Category3", TaskMonitorAdapter.DUMMY);
+					parent.removeCategory("Category3", TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {

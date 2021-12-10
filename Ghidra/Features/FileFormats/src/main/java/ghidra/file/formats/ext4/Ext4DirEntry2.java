@@ -15,65 +15,50 @@
  */
 package ghidra.file.formats.ext4;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-import java.io.IOException;
+public class Ext4DirEntry2 extends Ext4DirEntry implements StructConverter {
+	protected byte file_type;
 
-public class Ext4DirEntry2 implements StructConverter {
-
-	private int inode;
-	private short rec_len;
-	private byte name_len;
-	private byte file_type;
-	private String name;
-	private byte[] extra;
-
-	public Ext4DirEntry2( ByteProvider provider ) throws IOException {
-		this( new BinaryReader( provider, true ) );
-	}
-	
-	public Ext4DirEntry2( BinaryReader reader ) throws IOException {
-		inode = reader.readNextInt( );
-		rec_len = reader.readNextShort( );
-		name_len = reader.readNextByte( );
-		file_type = reader.readNextByte( );
-		name = reader.readNextAsciiString( name_len & 0xff );
-		
-		int extraSize = ( rec_len & 0xffff ) - ( 8 + ( name_len & 0xff ) );
-		if ( extraSize > 0 ) {
-			extra = reader.readNextByteArray( extraSize );
+	/**
+	 * Reads a Ext4DirEntry2 from the stream.
+	 * 
+	 * @param reader BinaryReader to read from
+	 * @return new Ext4DirEntry2, or null if eof
+	 * @throws IOException if error when reading
+	 */
+	public static Ext4DirEntry2 read(BinaryReader reader) throws IOException {
+		if (reader.getPointerIndex() + 8 >= reader.length()) {
+			return null;
 		}
-	}
-	
-	public int getInode() {
-		return inode;
+		Ext4DirEntry2 result = new Ext4DirEntry2();
+		result.inode = reader.readNextInt();
+		result.rec_len = reader.readNextShort();
+		int uNameLen = reader.readNextUnsignedByte();
+		result.name_len = (short) uNameLen;	// direntry2's only have a byte for name_len
+		result.file_type = reader.readNextByte();
+		result.name = new String(reader.readNextByteArray(uNameLen), StandardCharsets.UTF_8);
+
+		int extraSize = Short.toUnsignedInt(result.rec_len) - (SIZEOF_FIXEDFIELDS + uNameLen);
+		if (extraSize > 0) {
+			result.extra = reader.readNextByteArray(extraSize);
+		}
+
+		return result;
 	}
 
-	public short getRec_len() {
-		return rec_len;
-	}
-
-	public byte getName_len() {
-		return name_len;
+	private Ext4DirEntry2() {
+		// nothing
 	}
 
 	public byte getFile_type() {
 		return file_type;
-	}
-
-	public String getName() {
-		return name;
-	}
-	
-	public byte[] getExtra() {
-		return extra;
 	}
 
 	@Override

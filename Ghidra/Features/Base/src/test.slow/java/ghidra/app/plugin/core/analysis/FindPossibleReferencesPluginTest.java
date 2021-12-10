@@ -86,7 +86,7 @@ public class FindPossibleReferencesPluginTest extends AbstractGhidraHeadedIntegr
 	@Test
     public void testSelection() throws Exception {
 		openProgram(build32BitX86());
-		select("010010df", "010010f0");
+		select("010010e0", "010010f0");
 		doSearch("01001000");// When you have a selection, it does NOT search for the single
 								// address in the selection, instead, it bizarrely searches the
 								// entire program for all the addresses in the selection.
@@ -106,11 +106,11 @@ public class FindPossibleReferencesPluginTest extends AbstractGhidraHeadedIntegr
     public void testRestoreSelection() throws Exception {
 		openProgram(build32BitX86());
 
-		select("010010df", "010010f0");
+		select("010010e0", "010010f0");
 		doSearch("01003ac2");
 
 		assertEquals(1, table.getRowCount());
-		assertTrue(provider.getTitle().contains("Selection @ 010010df"));
+		assertTrue(provider.getTitle().contains("Selection @ 010010e0"));
 
 		clearSelection();
 
@@ -122,7 +122,7 @@ public class FindPossibleReferencesPluginTest extends AbstractGhidraHeadedIntegr
 		assertNotNull(restoreSelectionAction);
 		performAction(restoreSelectionAction, true);
 
-		assertEquals(new ProgramSelection(addr("10010df"), addr("10010f0")),
+		assertEquals(new ProgramSelection(addr("10010e0"), addr("10010f0")),
 			TestUtils.invokeInstanceMethod("getCurrentSelection", codeBrowser));
 	}
 

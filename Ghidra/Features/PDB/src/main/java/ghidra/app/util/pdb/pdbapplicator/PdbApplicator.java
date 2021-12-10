@@ -440,7 +440,7 @@ public class PdbApplicator {
 	}
 
 	/**
-	 * Puts error message to {@link PdbLog} and to Msg.error() which will 
+	 * Puts error message to {@link PdbLog} and to Msg.error() which will
 	 * also log a stack trace if exception is specified.
 	 * @param originator a Logger instance, "this", or YourClass.class
 	 * @param message the error message to display/log
@@ -1591,8 +1591,8 @@ public class PdbApplicator {
 					program, address, SourceType.IMPORTED);
 			}
 
-			symbol = SymbolUtilities.createPreferredLabelOrFunctionSymbol(program, address,
-				namespace, name, SourceType.IMPORTED);
+			symbol =
+				program.getSymbolTable().createLabel(address, name, namespace, SourceType.IMPORTED);
 		}
 		catch (InvalidInputException e) {
 			log.appendMsg("PDB Warning: Unable to create symbol at " + address +

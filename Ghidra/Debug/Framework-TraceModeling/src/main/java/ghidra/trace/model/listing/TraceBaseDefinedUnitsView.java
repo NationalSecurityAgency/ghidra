@@ -32,6 +32,7 @@ public interface TraceBaseDefinedUnitsView<T extends TraceCodeUnit>
 	/**
 	 * Clear the units contained within the given span and address range.
 	 * 
+	 * <p>
 	 * Any units alive before the given span are truncated instead of deleted. That is, their end
 	 * snaps are reduced such that they no longer intersect the given span. Note that the same is
 	 * not true of a unit's start snap. If the start snap is contained in the span, the unit is

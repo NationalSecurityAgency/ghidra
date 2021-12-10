@@ -26,17 +26,16 @@ import ghidra.util.exception.DuplicateNameException;
  * DataTypeComponents from dataTypes that can not be modified.
  */
 public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializable {
-	private final static long serialVersionUID = 1;
 
-	private DataType dataType;
-	private DynamicDataType parent; // parent prototype containing us
-	private int offset; // offset in parent
-	private int ordinal; // position in parent
-	private Settings settings;
-
+	private final DataType dataType;
+	private final DynamicDataType parent; // parent prototype containing us
+	private final int offset; // offset in parent
+	private final int ordinal; // position in parent
+	private final String comment; // comment about this component.
+	private final int length; // my length
+	
 	private String fieldName; // name of this prototype in the component
-	private String comment; // comment about this component.
-	private int length; // my length
+	private Settings settings;
 
 	/**
 	 * Create a new DataTypeComponent
@@ -74,11 +73,6 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 	}
 
 	@Override
-	public boolean isFlexibleArrayComponent() {
-		return false; // Unsupported use
-	}
-
-	@Override
 	public boolean isBitFieldComponent() {
 		return dataType instanceof BitFieldDataType;
 	}
@@ -91,40 +85,26 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#getOffset()
-	 */
 	@Override
 	public int getOffset() {
 		return offset;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#getEndOffset()
-	 */
 	@Override
 	public int getEndOffset() {
 		return offset + length - 1;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#getComment()
-	 */
 	@Override
 	public String getComment() {
 		return comment;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#setComment(java.lang.String)
-	 */
 	@Override
 	public void setComment(String comment) {
+		// ignore - read-only
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#getFieldName()
-	 */
 	@Override
 	public String getFieldName() {
 		if (fieldName == null) {
@@ -133,76 +113,39 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 		return fieldName;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#getDefaultFieldName()
-	 */
 	@Override
 	public String getDefaultFieldName() {
 		return "field_" + getOrdinal();
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#setFieldName(java.lang.String)
-	 */
 	@Override
 	public void setFieldName(String fieldName) throws DuplicateNameException {
+		// ignore - read-only
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#getDataType()
-	 */
 	@Override
 	public DataType getDataType() {
 		return dataType;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#getParent()
-	 */
 	@Override
 	public DataType getParent() {
 		return parent;
 	}
 
-	/**
-	 * Set the byte offset of where this component begins in its immediate parent
-	 * data type.
-	 * @param offset the offset
-	 */
-	void setOffset(int offset) {
-		this.offset = offset;
-	}
-
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#getLength()
-	 */
 	@Override
 	public int getLength() {
+		if (length == 0) {
+			return 1;
+		}
 		return length;
 	}
 
-	void setLength(int length) {
-		this.length = length;
-	}
-
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#getOrdinal()
-	 */
 	@Override
 	public int getOrdinal() {
 		return ordinal;
 	}
 
-	/**
-	 * @param ordinal
-	 */
-	void setOrdinal(int ordinal) {
-		this.ordinal = ordinal;
-	}
-
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#getDefaultSettings()
-	 */
 	@Override
 	public Settings getDefaultSettings() {
 		if (settings == null) {
@@ -211,17 +154,11 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 		return settings;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeComponent#setDefaultSettings(ghidra.docking.settings.Settings)
-	 */
 	@Override
 	public void setDefaultSettings(Settings settings) {
 		this.settings = settings;
 	}
 
-	/**
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof DataTypeComponent)) {
@@ -238,9 +175,6 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 			isSameString(comment, dtc.getComment());
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.data.DataTypeComponent#isEquivalent(ghidra.program.model.data.DataTypeComponent)
-	 */
 	@Override
 	public boolean isEquivalent(DataTypeComponent dtc) {
 		DataType myDt = getDataType();

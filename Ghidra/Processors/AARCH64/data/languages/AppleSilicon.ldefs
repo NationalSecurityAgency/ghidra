@@ -1,0 +1,18 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<language_definitions>
+  <language processor="AARCH64"
+            endian="little"
+            size="64"
+            variant="AppleSilicon"
+            version="1.5"
+            slafile="AARCH64_AppleSilicon.sla"
+            processorspec="AARCH64.pspec"
+            manualindexfile="../manuals/AARCH64.idx"
+            id="AARCH64:LE:64:AppleSilicon">
+    <description>AppleSilicon ARM v8.5-A LE instructions, LE data, AMX extensions</description>
+    <compiler name="default" spec="AARCH64.cspec" id="default"/>
+    <external_name tool="gnu" name="aarch64"/>
+    <external_name tool="gnu" name="aarch64:ilp32"/>
+    <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+  </language>
+</language_definitions>

@@ -25,9 +25,11 @@ import ghidra.app.util.opinion.Loader;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.AddressSourceInfo;
 import ghidra.program.database.mem.FileBytes;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.reloc.Relocation;
 import ghidra.util.Conv;
 import ghidra.util.HelpLocation;
@@ -43,11 +45,10 @@ public abstract class AbstractLoaderExporter extends Exporter {
 	 * Creates a new {@link AbstractLoaderExporter}
 	 * 
 	 * @param name The display name of this exporter
-	 * @param extension The default extension for this exporter
 	 * @param help The {@link HelpLocation} for this exporter
 	 */
-	protected AbstractLoaderExporter(String name, String extension, HelpLocation help) {
-		super(name, extension, help);
+	protected AbstractLoaderExporter(String name, HelpLocation help) {
+		super(name, "", help);
 	}
 	
 	/**
@@ -76,44 +77,45 @@ public abstract class AbstractLoaderExporter extends Exporter {
 			return false;
 		}
 
+		List<FileBytes> fileBytes = memory.getAllFileBytes();
+		if (fileBytes.isEmpty()) {
+			log.appendMsg("Exporting a program with no file source bytes is not supported");
+			return false;
+		}
+		if (fileBytes.size() > 1) {
+			log.appendMsg("Exporting a program with more than 1 file source is not supported");
+			return false;
+		}
+
 		// Write source program's file bytes to a temp file
 		File tempFile = File.createTempFile("ghidra_export_", null);
 		try (OutputStream out = new FileOutputStream(tempFile, false)) {
-			FileBytes[] fileBytes = memory.getAllFileBytes()
-					.stream()
-					.filter(fb -> program.getExecutablePath().endsWith(fb.getFilename()))
-					.toArray(FileBytes[]::new);
-			for (FileBytes bytes : fileBytes) {
-				FileUtilities.copyStreamToStream(new FileBytesInputStream(bytes), out, monitor);
-			}
+			FileUtilities.copyStreamToStream(new FileBytesInputStream(fileBytes.get(0)), out,
+				monitor);
 		}
 		
 		// Undo relocations in the temp file
-		// NOTE: not all relocations are file-backed
-		String error = null;
+		// NOTE: not all relocations are file-backed, and some are only partially file-backed
 		try (RandomAccessFile fout = new RandomAccessFile(tempFile, "rw")) {
 			Iterable<Relocation> relocs = () -> program.getRelocationTable().getRelocations();
 			for (Relocation reloc : relocs) {
-				AddressSourceInfo info = memory.getAddressSourceInfo(reloc.getAddress());
-				if (info == null) {
+				Address addr = reloc.getAddress();
+				AddressSourceInfo addrSourceInfo = memory.getAddressSourceInfo(addr);
+				if (addrSourceInfo == null) {
 					continue;
 				}
-				long offset = info.getFileOffset();
-				byte[] bytes = reloc.getBytes();
+				long offset = addrSourceInfo.getFileOffset();
 				if (offset >= 0) {
-					if (offset + bytes.length > fout.length()) {
-						error = "Relocation at " + reloc.getAddress() + " exceeds file length";
-						break;
-					}
+					MemoryBlockSourceInfo memSourceInfo = addrSourceInfo.getMemoryBlockSourceInfo();
+					byte[] bytes = reloc.getBytes();
+					int len = Math.min(bytes.length,
+						(int) memSourceInfo.getMaxAddress().subtract(addr) + 1);
 					fout.seek(offset);
-					fout.write(bytes);
+					fout.write(bytes, 0, len);
 				}
 			}
 		}
-		
-		// If errors occurred, log them and delete the malformed temp file
-		if (error != null) {
-			log.appendMsg(error);
+		catch (Exception e) {
 			if (!tempFile.delete()) {
 				log.appendMsg("Failed to delete malformed file: " + tempFile);
 			}

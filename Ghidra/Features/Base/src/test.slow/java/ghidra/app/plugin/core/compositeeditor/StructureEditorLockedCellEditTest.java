@@ -51,7 +51,7 @@ public class StructureEditorLockedCellEditTest extends AbstractStructureEditorTe
 		try {
 			DataTypeManager dataTypeManager = cat.getDataTypeManager();
 			if (dt.getDataTypeManager() != dataTypeManager) {
-				dt = (Structure) dt.clone(dataTypeManager);
+				dt = dt.clone(dataTypeManager);
 			}
 
 			CategoryPath categoryPath = cat.getCategoryPath();

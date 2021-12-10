@@ -19,11 +19,14 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.macho.SectionNames;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Utilities;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.DuplicateNameException;
 
 public class ObjectiveC2_Class implements StructConverter {
@@ -36,13 +39,22 @@ public class ObjectiveC2_Class implements StructConverter {
 	private ObjectiveC2_Class superclass;
 	private ObjectiveC2_Cache cache;
 	private ObjectiveC2_Implementation vtable;
-	private ObjectiveC2_ClassRW data;
+	private ObjectiveC2_ClassRW data; // class_rw_t * plus custom rr/alloc flags
 
 	public ObjectiveC2_Class(ObjectiveC2_State state, BinaryReader reader) {
 		this._state = state;
 		this._index = reader.getPointerIndex();
 
 		state.classIndexMap.put(_index, this);
+		
+		// Some class references point to a GOT entry. These aren't real class structures, so don't 
+		// parse them.
+		AddressSpace space = _state.program.getAddressFactory().getDefaultAddressSpace();
+		Address addr = space.getAddress(_index);
+		Symbol symbol = _state.program.getSymbolTable().getPrimarySymbol(addr);
+		if (symbol.getParentNamespace().getName().equals(SectionNames.SECT_GOT)) {
+			return;
+		}
 
 		try {
 			readISA(reader);
@@ -103,6 +115,10 @@ public class ObjectiveC2_Class implements StructConverter {
 			//Trying to read uninitialized memory
 			return;
 		}
+
+		// Fix pointer by applying Swift FAST_DATA_MASK (see objc-runtime-new.h for details)
+		index &= _state.is64bit ? ~0x7L : ~0x3L;
+
 		if (index != 0 && reader.isValidIndex(index)) {
 			long originalIndex = reader.getPointerIndex();
 			reader.setPointerIndex(index);

@@ -16,8 +16,7 @@
 package agent.gdb.manager.impl.cmd;
 
 import agent.gdb.manager.GdbState;
-import agent.gdb.manager.evt.GdbCommandErrorEvent;
-import agent.gdb.manager.evt.GdbConsoleOutputEvent;
+import agent.gdb.manager.evt.*;
 import agent.gdb.manager.impl.*;
 import agent.gdb.manager.impl.GdbManagerImpl.Interpreter;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
@@ -58,6 +57,7 @@ public abstract class AbstractGdbCommand<T> implements GdbCommand<T> {
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * <p>
 	 * Selects mi2 by default. Check {@link GdbManagerImpl#hasCli()} before selecting the
 	 * command-line (console) interface.
 	 */
@@ -95,6 +95,25 @@ public abstract class AbstractGdbCommand<T> implements GdbCommand<T> {
 			}
 		}
 		return evt;
+	}
+
+	@Override
+	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
+		/**
+		 * Unfortunately, GDB prints {@code ^running} even if the command causing that result is
+		 * issued from the CLI. This is a problem when "using an existing session," because the user
+		 * will likely type "start" into the existing CLI. Thus, we have to be careful not to let
+		 * spurious {@code ^running} command-completion events actually complete any command, except
+		 * ones where we expect that result. This seems a bug in GDB to me.
+		 */
+		if (evt instanceof GdbCommandRunningEvent) {
+			return false;
+		}
+		if (evt instanceof AbstractGdbCompletedCommandEvent) {
+			pending.claim(evt);
+			return true;
+		}
+		return false;
 	}
 
 	@Override

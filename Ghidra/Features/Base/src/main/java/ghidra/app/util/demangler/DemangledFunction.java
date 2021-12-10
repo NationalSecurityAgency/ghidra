@@ -29,6 +29,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
@@ -346,6 +347,9 @@ public class DemangledFunction extends DemangledObject {
 	 * This method assumes preconditions test has been run.
 	 */
 	private boolean shouldDisassemble(Program program, Address address, DemanglerOptions options) {
+		if (!address.isMemoryAddress() || MemoryBlock.isExternalBlockAddress(address, program)) {
+			return false;
+		}
 		CodeUnit codeUnit = program.getListing().getCodeUnitAt(address);
 		return (codeUnit instanceof Data); // preconditions check guarantees data is undefined data.
 	}
@@ -382,7 +386,10 @@ public class DemangledFunction extends DemangledObject {
 		// Account for register context.  This class may trigger disassembly, so we need to make
 		// sure that the context is correctly set before that happens.  Also, be sure to apply
 		// the function to the correct address.
-		address = PseudoDisassembler.setTargeContextForDisassembly(program, address);
+
+		if (address.isMemoryAddress()) {
+			address = PseudoDisassembler.setTargeContextForDisassembly(program, address);
+		}
 
 		if (!passesPreconditions(program, address)) {
 			return true; // eventually will not return anything 

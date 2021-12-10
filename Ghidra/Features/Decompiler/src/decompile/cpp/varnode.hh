@@ -116,8 +116,9 @@ public:
     unsignedprint = 0x40,	///< Constant that must be explicitly printed as unsigned
     stack_store = 0x80,		///< Created by an explicit STORE
     locked_input = 0x100,	///< Input that exists even if its unused
-    spacebase_placeholder = 0x200 ///< This varnode is inserted artificially to track a register
+    spacebase_placeholder = 0x200, ///< This varnode is inserted artificially to track a register
 				///< value at a specific point in the code
+    stop_uppropagation = 0x400	///< Data-types do not propagate from an output into \b this
   };
 private:
   mutable uint4 flags;		///< The collection of boolean attributes for this Varnode
@@ -243,6 +244,7 @@ public:
   bool isActiveHeritage(void) const { return ((addlflags&Varnode::activeheritage)!=0); } ///< Is \b this currently being traced by the Heritage algorithm?
   bool isStackStore(void) const { return ((addlflags&Varnode::stack_store)!=0); } ///< Was this originally produced by an explicit STORE
   bool isLockedInput(void) const { return ((addlflags&Varnode::locked_input)!=0); }	///< Is always an input, even if unused
+  bool stopsUpPropagation(void) const { return ((addlflags&Varnode::stop_uppropagation)!=0); }	///< Is data-type propagation stopped
 
   /// Is \b this just a special placeholder representing INDIRECT creation?
   bool isIndirectZero(void) const { return ((flags&(Varnode::indirect_creation|Varnode::constant))==(Varnode::indirect_creation|Varnode::constant)); }
@@ -301,12 +303,14 @@ public:
   void setAutoLiveHold(void) { flags |= Varnode::autolive_hold; }	///< Place temporary hold on dead code removal
   void clearAutoLiveHold(void) { flags &= ~Varnode::autolive_hold; }	///< Clear temporary hold on dead code removal
   void setUnsignedPrint(void) { addlflags |= Varnode::unsignedprint; } ///< Force \b this to be printed as unsigned
+  void setStopUpPropagation(void) { addlflags |= Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
+  void clearStopUpPropagation(void) { addlflags &= ~Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
   bool updateType(Datatype *ct,bool lock,bool override); ///< (Possibly) set the Datatype given various restrictions
   void setStackStore(void) { addlflags |= Varnode::stack_store; } ///< Mark as produced by explicit CPUI_STORE
   void setLockedInput(void) { addlflags |= Varnode::locked_input; }	///< Mark as existing input, even if unused
   void copySymbol(const Varnode *vn); ///< Copy symbol info from \b vn
   void copySymbolIfValid(const Varnode *vn);	///< Copy symbol info from \b vn if constant value matches
-  Datatype *getLocalType(void) const; ///< Calculate type of Varnode based on local information
+  Datatype *getLocalType(bool &blockup) const; ///< Calculate type of Varnode based on local information
   bool copyShadow(const Varnode *op2) const; ///< Are \b this and \b op2 copied from the same source?
   void saveXml(ostream &s) const; ///< Save a description of \b this as an XML tag
   static bool comparePointers(const Varnode *a,const Varnode *b) { return (*a < *b); }	///< Compare Varnodes as pointers

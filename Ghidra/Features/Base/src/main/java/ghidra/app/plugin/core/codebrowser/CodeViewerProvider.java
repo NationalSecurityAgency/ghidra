@@ -158,8 +158,12 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		listingPanel.setStringSelectionListener(this);
 		listingPanel.addIndexMapChangeListener(this);
 
-		codeViewerClipboardProvider = new CodeBrowserClipboardProvider(tool, this);
+		codeViewerClipboardProvider = newClipboardProvider();
 		tool.addPopupActionProvider(this);
+	}
+
+	protected CodeBrowserClipboardProvider newClipboardProvider() {
+		return new CodeBrowserClipboardProvider(tool, this);
 	}
 
 	@Override
@@ -172,6 +176,17 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	 * @return true if this listing is backed by a dynamic data source (e.g., debugger)
 	 */
 	public boolean isDynamicListing() {
+		return false;
+	}
+
+	/**
+	 * TODO: Remove or rename this to something that accommodates redirecting writes, e.g., to a
+	 * debug target process, particularly for assembly, which may involve code unit modification
+	 * after a successful write, reported asynchronously :/ .
+	 * 
+	 * @return true if this listing represents a read-only view
+	 */
+	public boolean isReadOnly() {
 		return false;
 	}
 
@@ -690,6 +705,16 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		return true;
 	}
 
+	/**
+	 * Extension point to specify titles when dual panels are active
+	 * 
+	 * @param panelProgram the program assigned to the panel whose title is requested
+	 * @return the title of the panel for the given program
+	 */
+	protected String computePanelTitle(Program panelProgram) {
+		return panelProgram.getDomainFile().toString();
+	}
+
 	public void setPanel(ListingPanel lp) {
 		Program myProgram = listingPanel.getListingModel().getProgram();
 		Program otherProgram = lp.getListingModel().getProgram();
@@ -697,10 +722,10 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		String otherName = myName;
 
 		if (myProgram != null) {
-			myName = myProgram.getDomainFile().toString();
+			myName = computePanelTitle(myProgram);
 		}
 		if (otherProgram != null) {
-			otherName = otherProgram.getDomainFile().toString();
+			otherName = computePanelTitle(otherProgram);
 		}
 		if (otherPanel != null) {
 			removeHoverServices(otherPanel);
@@ -1051,20 +1076,20 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	/**
-	 * Add the ListingDisplayListener to the listing panel
+	 * Add the {@link AddressSetDisplayListener} to the listing panel
 	 * 
 	 * @param listener the listener to add
 	 */
-	public void addListingDisplayListener(ListingDisplayListener listener) {
-		listingPanel.addListingDisplayListener(listener);
+	public void addDisplayListener(AddressSetDisplayListener listener) {
+		listingPanel.addDisplayListener(listener);
 	}
 
 	/**
-	 * Remove the ListingDisplayListener from the listing panel
+	 * Remove the {@link AddressSetDisplayListener} from the listing panel
 	 * 
 	 * @param listener the listener to remove
 	 */
-	public void removeListingDisplayListener(ListingDisplayListener listener) {
-		listingPanel.removeListingDisplayListener(listener);
+	public void removeDisplayListener(AddressSetDisplayListener listener) {
+		listingPanel.removeDisplayListener(listener);
 	}
 }

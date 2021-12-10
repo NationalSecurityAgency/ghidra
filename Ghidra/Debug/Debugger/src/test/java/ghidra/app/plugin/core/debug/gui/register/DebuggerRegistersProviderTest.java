@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.register;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;
@@ -23,15 +23,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.junit.*;
+import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
-import ghidra.app.plugin.core.debug.gui.listing.*;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersProvider.RegisterTableColumns;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceTest;
 import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncTestUtils;
 import ghidra.program.model.data.*;
@@ -47,6 +48,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerGUITest
 		implements AsyncTestUtils {
 
@@ -57,6 +59,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 	protected Register r0;
 	protected Register pc;
 	protected Register sp;
+	protected Register contextreg;
 
 	protected Register r0h;
 	protected Register r0l;
@@ -77,6 +80,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		r0 = tb.language.getRegister("r0");
 		pc = tb.language.getProgramCounter();
 		sp = tb.language.getDefaultCompilerSpec().getStackPointer();
+		contextreg = tb.language.getContextBaseRegister();
 
 		pch = tb.language.getRegister("pch");
 		pcl = tb.language.getRegister("pcl");
@@ -377,6 +381,38 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 
 		assertPCRowTypePopulated();
 		assertR0RowTypePopulated();
+	}
+
+	// TODO: Test that contextreg cannot be modified
+	// TODO: Make contextreg modifiable by Registers window
+
+	@Test
+	public void testDeadModifyValueEmulates() throws Exception {
+		traceManager.openTrace(tb.trace);
+
+		TraceThread thread = addThread();
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		assertTrue(registersProvider.actionEnableEdits.isEnabled());
+		performAction(registersProvider.actionEnableEdits);
+
+		addRegisterValues(thread);
+		waitForDomainObject(tb.trace);
+
+		TraceMemoryRegisterSpace regVals =
+			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+
+		RegisterRow row = findRegisterRow(r0);
+
+		setRowText(row, "1234");
+		waitForSwing();
+		waitForPass(() -> {
+			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertEquals(BigInteger.valueOf(0x1234),
+				regVals.getValue(viewSnap, r0).getUnsignedValue());
+			assertEquals(BigInteger.valueOf(0x1234), row.getValue());
+		});
 	}
 
 	@Test
@@ -698,7 +734,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		}
 		addRegisterValues(thread);
 		addRegisterTypes(thread);
-		// Ensure cause is goto PC, not register tracking 
+		// Ensure cause is goto PC, not register tracking
 		listingPlugin.setTrackingSpec(
 			LocationTrackingSpec.fromConfigName(NoneLocationTrackingSpec.CONFIG_NAME));
 		traceManager.activateThread(thread);

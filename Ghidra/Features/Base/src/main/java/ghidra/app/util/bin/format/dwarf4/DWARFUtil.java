@@ -15,12 +15,13 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeValue;
@@ -30,6 +31,7 @@ import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.Conv;
 
@@ -565,6 +567,66 @@ public class DWARFUtil {
 		List<DIEAggregate> referers =
 			diea.getProgram().getTypeReferers(diea, DWARFTag.DW_TAG_typedef);
 		return (referers.size() == 1) ? referers.get(0) : null;
+	}
+
+	public static class LengthResult {
+		public final long length;
+		public final int format;	// either DWARF_32 or DWARF_64
+
+		private LengthResult(long length, int format) {
+			this.length = length;
+			this.format = format;
+		}
+	}
+
+	/**
+	 * Read a variable-length length value from the stream.
+	 * <p>
+	 * 
+	 * @param reader {@link BinaryReader} stream to read from
+	 * @param program Ghidra {@link Program} 
+	 * @return new {@link LengthResult}, never null; length == 0 should be checked for and treated
+	 * specially
+	 * @throws IOException if io error
+	 * @throws DWARFException if invalid values
+	 */
+	public static LengthResult readLength(BinaryReader reader, Program program)
+			throws IOException, DWARFException {
+		long length = reader.readNextUnsignedInt();
+		int format;
+
+		if (length == 0xffffffffL) {
+			// Length of 0xffffffff implies 64-bit DWARF format
+			// Mostly untested as there is no easy way to force the compiler
+			// to generate this
+			length = reader.readNextLong();
+			format = DWARFCompilationUnit.DWARF_64;
+		}
+		else if (length >= 0xfffffff0L) {
+			// Length of 0xfffffff0 or greater is reserved for DWARF
+			throw new DWARFException("Reserved DWARF length value: " + Long.toHexString(length) +
+				". Unknown extension.");
+		}
+		else if (length == 0) {
+			// Test for special case of weird BE MIPS 64bit length value.
+			// Instead of following DWARF std (a few lines above with length == MAX_INT),
+			// it writes a raw 64bit long (BE). The upper 32 bits (already read as length) will 
+			// always be 0 since super-large binaries from that system weren't really possible.
+			// The next 32 bits will be the remainder of the value.
+			if ( reader.isBigEndian() && program.getDefaultPointerSize() == 8) {
+				length = reader.readNextUnsignedInt();
+				format = DWARFCompilationUnit.DWARF_64;
+			}
+			else {
+				// length 0 signals an error to caller
+				format = DWARFCompilationUnit.DWARF_32; // doesn't matter
+			}
+		}
+		else {
+			format = DWARFCompilationUnit.DWARF_32;
+		}
+
+		return new LengthResult(length, format);
 	}
 
 }

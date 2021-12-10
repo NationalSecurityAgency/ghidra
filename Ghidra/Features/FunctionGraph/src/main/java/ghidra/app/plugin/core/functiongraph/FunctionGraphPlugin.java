@@ -21,6 +21,7 @@ import javax.swing.ImageIcon;
 
 import org.jdom.Element;
 
+import docking.tool.ToolConstants;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
@@ -57,7 +58,8 @@ import resources.ResourceManager;
 //@formatter:on
 public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeListener {
 	static final String FUNCTION_GRAPH_NAME = "Function Graph";
-	static final String PLUGIN_OPTIONS_NAME = FUNCTION_GRAPH_NAME;
+	static final String OPTIONS_NAME_PATH =
+		ToolConstants.GRAPH_OPTIONS + Options.DELIMITER + FUNCTION_GRAPH_NAME;
 
 	static final ImageIcon ICON = ResourceManager.loadImage("images/function_graph.png");
 
@@ -147,14 +149,20 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	}
 
 	private void initializeOptions() {
-		ToolOptions options = tool.getOptions(PLUGIN_OPTIONS_NAME);
+		ToolOptions options = tool.getOptions(ToolConstants.GRAPH_OPTIONS);
 		options.addOptionsChangeListener(this);
-		functionGraphOptions.registerOptions(options);
-		functionGraphOptions.loadOptions(options);
+
+		// Graph -> Function Graph
+		Options fgOptions = options.getOptions(FUNCTION_GRAPH_NAME);
+
+		functionGraphOptions.registerOptions(fgOptions);
+		functionGraphOptions.loadOptions(fgOptions);
 
 		for (FGLayoutProvider layoutProvider : layoutProviders) {
+
+			// Graph -> Function Graph -> Layout Name
 			String layoutName = layoutProvider.getLayoutName();
-			Options layoutToolOptions = options.getOptions(layoutName);
+			Options layoutToolOptions = fgOptions.getOptions(layoutName);
 			FGLayoutOptions layoutOptions = layoutProvider.createLayoutOptions(layoutToolOptions);
 			if (layoutOptions == null) {
 				continue; // many layouts do not have options
@@ -170,7 +178,9 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
 
-		functionGraphOptions.loadOptions(options);
+		// Graph -> Function Graph
+		Options fgOptions = options.getOptions(FUNCTION_GRAPH_NAME);
+		functionGraphOptions.loadOptions(fgOptions);
 
 		connectedProvider.optionsChanged();
 

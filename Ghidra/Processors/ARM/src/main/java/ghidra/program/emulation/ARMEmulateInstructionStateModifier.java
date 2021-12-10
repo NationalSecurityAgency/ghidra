@@ -36,11 +36,11 @@ public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateM
 	public ARMEmulateInstructionStateModifier(Emulate emu) {
 		super(emu);
 		TModeReg = language.getRegister("TMode");
-		TBreg = language.getRegister("ISAModeSwitch");
+		TBreg = language.getRegister("ISAModeSwitch"); // generic register which mirrors TB register value
 		if (TModeReg != null) {
 			if (TBreg == null) {
 				throw new RuntimeException("Expected language " + language.getLanguageID() +
-					" to have TB register defined");
+					" to have ISAModeSwitch register defined");
 			}
 			tMode = new RegisterValue(TModeReg, BigInteger.ONE);
 			aMode = new RegisterValue(TModeReg, BigInteger.ZERO);
@@ -122,14 +122,15 @@ public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateM
 		}
 		BigInteger tModeValue = BigInteger.ZERO;
 		if (contextRegisterValue != null) {
-			tModeValue = contextRegisterValue.getRegisterValue(TModeReg).getUnsignedValueIgnoreMask();
+			tModeValue =
+				contextRegisterValue.getRegisterValue(TModeReg).getUnsignedValueIgnoreMask();
 		}
 		if (!BigInteger.ZERO.equals(tModeValue)) {
 			tModeValue = BigInteger.ONE;
 		}
 		emu.getMemoryState().setValue(TBreg, tModeValue);
 	}
-	
+
 	/**
 	 * Handle odd addresses which may occur when jumping/returning indirectly
 	 * to Thumb mode.  It is assumed that language will properly handle

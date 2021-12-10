@@ -159,11 +159,22 @@ public class ComponentPlaceholder {
 		return group;
 	}
 
-	DetachedWindowNode getWindowNode() {
+	DetachedWindowNode getDetachedWindowNode() {
 		Node node = compNode.parent;
 		while (node != null) {
 			if (node instanceof DetachedWindowNode) {
 				return (DetachedWindowNode) node;
+			}
+			node = node.parent;
+		}
+		return null;
+	}
+
+	WindowNode getWindowNode() {
+		Node node = compNode.parent;
+		while (node != null) {
+			if (node instanceof WindowNode) {
+				return (WindowNode) node;
 			}
 			node = node.parent;
 		}
@@ -279,9 +290,9 @@ public class ComponentPlaceholder {
 
 	// makes sure that the given window is not in an iconified state
 	private void activateWindow() {
-		DetachedWindowNode windowNode = getWindowNode();
+		DetachedWindowNode windowNode = getDetachedWindowNode();
 		if (windowNode != null) {
-			Window window = getWindowNode().getWindow();
+			Window window = getDetachedWindowNode().getWindow();
 			if (window instanceof Frame) {
 				Frame frame = (Frame) window;
 				frame.setState(Frame.NORMAL);

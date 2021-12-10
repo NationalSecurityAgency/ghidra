@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +18,20 @@ package ghidra.program.model.symbol;
 import ghidra.program.model.address.Address;
 
 /**
- * <code>OffsetReference</code> is a memory reference whoose "to" address is
+ * <code>OffsetReference</code> is a memory reference whose "to" address is
  * computed from a base address plus an offset.
  */
 public interface OffsetReference extends Reference {
-	
+
 	/**
 	 * Returns the offset.
+	 * @return the offset
 	 */
 	public long getOffset();
-	
+
 	/**
 	 * Returns the base address.
+	 * @return the address
 	 */
 	public Address getBaseAddress();
 

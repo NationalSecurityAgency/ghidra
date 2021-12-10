@@ -112,10 +112,8 @@ class BuildUtil(object):
         try:
             if not os.path.isdir(dname):
                 self.makedirs(dname)
-            if os.path.isfile(fname):
+            else:
                 self.copy(fname, dname, verbose=True)
-            elif os.path.isdir(fname):
-                self.copy(fname, dname, dir=True, verbose=True)
         except IOError as e:
             self.log_err('Error occurred exporting %s to %s' % (fname, dname))
             self.log_err("Unexpected error: %s" % str(e))
@@ -129,9 +127,9 @@ class BuildUtil(object):
         try: os.makedirs(dir)
         except: pass
 
-    # copy a file to a directory
-    def copy(self, fname, dname, verbose=True, dir=False):
-        if not dir:
+    # copy a file/directory to a directory
+    def copy(self, fname, dname, verbose=True):
+        if not os.path.isdir(fname):
             if verbose: self.log_info('cp -av %s %s' % (fname, dname))
             shutil.copy(fname, dname)
         else:

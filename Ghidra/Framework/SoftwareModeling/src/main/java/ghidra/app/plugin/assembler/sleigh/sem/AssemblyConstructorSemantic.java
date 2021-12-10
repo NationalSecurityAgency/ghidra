@@ -46,9 +46,10 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	/**
 	 * Build a new SLEIGH constructor semantic
+	 * 
 	 * @param cons the SLEIGH constructor
-	 * @param indices the indices of RHS non-terminals in the associated production that represent an
-	 *                operand in the SLEIGH constructor
+	 * @param indices the indices of RHS non-terminals in the associated production that represent
+	 *            an operand in the SLEIGH constructor
 	 */
 	public AssemblyConstructorSemantic(Constructor cons, List<Integer> indices) {
 		this.cons = cons;
@@ -73,6 +74,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	/**
 	 * Get the SLEIGH constructor
+	 * 
 	 * @return the constructor
 	 */
 	public Constructor getConstructor() {
@@ -81,6 +83,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	/**
 	 * Get the associated encoding patterns for the constructor
+	 * 
 	 * @return the patterns
 	 */
 	public Collection<AssemblyResolvedConstructor> getPatterns() {
@@ -92,6 +95,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	/**
 	 * Convert the index of a print piece to its associated operand index
+	 * 
 	 * @param printpos position excluding whitespace and string tokens.
 	 * @return the operand index
 	 */
@@ -101,6 +105,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	/**
 	 * Get the list of operand indices in print piece order
+	 * 
 	 * @return the list
 	 */
 	public List<Integer> getOperandIndices() {
@@ -111,8 +116,9 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * Get an iterator over the operand indices
 	 * 
 	 * If this iterator is advanced for each non-terminal, while simultaneously iterating over the
-	 * RHS of the associated production, then this will identify the corresponding operand index
-	 * for each non-terminal
+	 * RHS of the associated production, then this will identify the corresponding operand index for
+	 * each non-terminal
+	 * 
 	 * @return the iterator
 	 */
 	public Iterator<Integer> getOperandIndexIterator() {
@@ -142,17 +148,17 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * than ("specializes") another, i.e., it matches on more bits than another pattern, the more
 	 * specific pattern is chosen. Second, if the two are equally special, then the one that occurs
 	 * first in the SLEIGH specification is taken. So, during resolution, if a less-special or
-	 * later-occurring constructor is chosen, we must prevent continued resolution from matching
-	 * the more-special  or earlier-occurring pattern(s).
+	 * later-occurring constructor is chosen, we must prevent continued resolution from matching the
+	 * more-special or earlier-occurring pattern(s).
 	 * 
 	 * Essentially, this states, "you may choose any value matching my pattern, except those that
 	 * match these forbidden patterns."
 	 * 
-	 * This takes a given pattern, and searches the rest of the language for any patterns that
-	 * would take precedence, and combines them as forbidden patterns with the given pattern.
+	 * This takes a given pattern, and searches the rest of the language for any patterns that would
+	 * take precedence, and combines them as forbidden patterns with the given pattern.
 	 * 
 	 * @param pat the given pattern
-	 * @return the same pattern with forbidden records added 
+	 * @return the same pattern with forbidden records added
 	 */
 	protected AssemblyResolvedConstructor withComputedForbids(AssemblyResolvedConstructor pat) {
 		// Forbid anything more specific (or otherwise takes precedence) over me.
@@ -194,7 +200,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 				// OK, they overlap. Let's see if its a strict subset
 				if (comb.bitsEqual(sibpat)) {
 					forbids.add(sibpat.withDescription(
-						cons + " forbids " + sibcons + " by pattern specificity"));
+						sibcons + " forbids " + cons + " by pattern specificity"));
 					return CONTINUE;
 				}
 				else if (comb.bitsEqual(pat)) {
@@ -205,7 +211,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 				// Finally, check the line number
 				if (sibcons.getId() < cons.getId()) {
 					forbids.add(
-						sibpat.withDescription(cons + " forbids " + sibcons + " by rule position"));
+						sibpat.withDescription(sibcons + " forbids " + cons + " by rule position"));
 					return CONTINUE;
 				}
 
@@ -219,22 +225,24 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	/**
 	 * Solve this constructor's context changes
+	 * 
 	 * @param res the combined resolution requirements derived from the subconstructors
 	 * @param vals any defined symbols (usually {@code inst_start}, and {@code inst_next})
 	 * @param opvals a map from operand index to operand value
 	 * @return the resolution with context changes applied in reverse, or an error
 	 * 
-	 * Each value in {@code opvals} must either be a numeric value, e.g., an index from a varnode
-	 * list, or another {@link AssemblyResolvedConstructor} for a subconstructor operand.
+	 *         Each value in {@code opvals} must either be a numeric value, e.g., an index from a
+	 *         varnode list, or another {@link AssemblyResolvedConstructor} for a subconstructor
+	 *         operand.
 	 * 
-	 * It's helpful to think of the SLEIGH disassembly process here. Normally, once the appropriate
-	 * constructor has been identified (by matching patterns), its context changes are applied, and
-	 * then its operands parsed (possibly parsing subconstructor operands). Thus, {@code res} can
-	 * be thought of as the intermediate result between applying context changes and parsing
-	 * operands, except in reverse. The output of this method corresponds to the state before
-	 * context changes were applied, i.e., immediately after selecting the constructor. Thus, in
-	 * reverse, the context is solved immediately before applying the selected constructor
-	 * patterns.
+	 *         It's helpful to think of the SLEIGH disassembly process here. Normally, once the
+	 *         appropriate constructor has been identified (by matching patterns), its context
+	 *         changes are applied, and then its operands parsed (possibly parsing subconstructor
+	 *         operands). Thus, {@code res} can be thought of as the intermediate result between
+	 *         applying context changes and parsing operands, except in reverse. The output of this
+	 *         method corresponds to the state before context changes were applied, i.e.,
+	 *         immediately after selecting the constructor. Thus, in reverse, the context is solved
+	 *         immediately before applying the selected constructor patterns.
 	 * 
 	 * @see AssemblyTreeResolver#resolveSelectedChildren(AssemblyProduction, List, List, Collection)
 	 */
@@ -300,10 +308,11 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * @param outer the state before context changes
 	 * @return the state after context changes
 	 * 
-	 * Unlike the usual disassembly process, this method does not take into account any information
-	 * from the instruction encoding. Any context bits that depend on it are set to unknown
-	 * ({@code x}) in the output. This method is used to pre-compute a context transition graph in
-	 * order to quickly resolve purely-recursive semantics on the root constructor table.
+	 *         Unlike the usual disassembly process, this method does not take into account any
+	 *         information from the instruction encoding. Any context bits that depend on it are set
+	 *         to unknown ({@code x}) in the output. This method is used to pre-compute a context
+	 *         transition graph in order to quickly resolve purely-recursive semantics on the root
+	 *         constructor table.
 	 */
 	public AssemblyResolvedConstructor applyForward(AssemblyResolvedConstructor outer) {
 		AssemblyResolvedConstructor res = outer;

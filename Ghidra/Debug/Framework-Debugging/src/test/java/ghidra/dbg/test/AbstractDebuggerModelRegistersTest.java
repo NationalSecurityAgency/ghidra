@@ -114,6 +114,15 @@ public abstract class AbstractDebuggerModelRegistersTest extends AbstractDebugge
 		return m.findWithIndex(TargetRegisterBank.class, "0", seedPath);
 	}
 
+	/**
+	 * @param seedPath the path to the target or thread
+	 * @return the set of banks
+	 * @throws Throwable if anything goes wrong
+	 */
+	protected Map<List<String>, TargetRegisterBank> findRegisterBanks(List<String> seedPath) throws Throwable {
+		return m.findAll(TargetRegisterBank.class, seedPath, true);
+	}
+
 	@Test
 	public void testRegisterBankIsWhereExpected() throws Throwable {
 		m.build();

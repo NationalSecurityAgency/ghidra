@@ -36,11 +36,19 @@ public class GTreeStartEditingTask extends GTreeTask {
 
 	private final GTreeNode parent;
 	private final String childName;
+	private GTreeNode editNode;
 
 	public GTreeStartEditingTask(GTree gTree, JTree jTree, GTreeNode parent, String childName) {
 		super(gTree);
 		this.parent = parent;
 		this.childName = childName;
+	}
+
+	public GTreeStartEditingTask(GTree gTree, JTree jTree, GTreeNode editNode) {
+		super(gTree);
+		this.parent = editNode.getParent();
+		this.childName = editNode.getName();
+		this.editNode = editNode;
 	}
 
 	@Override
@@ -66,10 +74,12 @@ public class GTreeStartEditingTask extends GTreeTask {
 			return;
 		}
 
-		GTreeNode editNode = parent.getChild(childName);
 		if (editNode == null) {
-			Msg.debug(this, "Can't find node \"" + childName + "\" to edit.");
-			return;
+			editNode = parent.getChild(childName);
+			if (editNode == null) {
+				Msg.debug(this, "Can't find node \"" + childName + "\" to edit.");
+				return;
+			}
 		}
 
 		TreePath path = editNode.getTreePath();

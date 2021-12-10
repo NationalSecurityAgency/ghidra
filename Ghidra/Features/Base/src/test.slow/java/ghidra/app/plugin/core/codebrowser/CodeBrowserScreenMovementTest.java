@@ -212,25 +212,25 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 		for (int i = 0; i < 22; i++) {
 			scrollbar.getUnitIncrement(1);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(addr("0x1001027"), codeBrowser.getAddressTopOfScreen());
 
 		for (int i = 0; i < 18; i++) {
 			scrollbar.getUnitIncrement(-1);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(addr("0x1001000"), codeBrowser.getAddressTopOfScreen());
 
 		for (int i = 0; i < 16; i++) {
 			scrollbar.getBlockIncrement(1);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(addr("0x1001136"), codeBrowser.getAddressTopOfScreen());
 
 		for (int i = 0; i < 16; i++) {
 			scrollbar.getBlockIncrement(-1);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(addr("0x1001000"), codeBrowser.getAddressTopOfScreen());
 
 	}
@@ -333,25 +333,25 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 		for (int i = 0; i < 20; i++) {
 			scrollbar.getUnitIncrement(1);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(addr("0x1001025"), codeBrowser.getAddressTopOfScreen());
 
 		for (int i = 0; i < 16; i++) {
 			scrollbar.getUnitIncrement(-1);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(addr("0x1001000"), codeBrowser.getAddressTopOfScreen());
 
 		for (int i = 0; i < 16; i++) {
 			scrollbar.getBlockIncrement(1);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(addr("0x1001136"), codeBrowser.getAddressTopOfScreen());
 
 		for (int i = 0; i < 16; i++) {
 			scrollbar.getBlockIncrement(-1);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(addr("0x1001000"), codeBrowser.getAddressTopOfScreen());
 
 	}
@@ -412,7 +412,7 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 
 		codeBrowser.goToField(addr("0x1007000"), "+", 0, 0);
 		click(codeBrowser, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		codeBrowser.goToField(addr("0x1007001"), "Address", 0, 0);
 		assertEquals("01007001", codeBrowser.getCurrentFieldText());
@@ -423,7 +423,7 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 
 		codeBrowser.goToField(addr("0x1007000"), "+", 0, 0);
 		click(codeBrowser, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		codeBrowser.goToField(addr("0x1007000"), "Address", 0, 0);
 		for (int i = 0; i < 7; i++) {
@@ -450,7 +450,7 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 
 		codeBrowser.goToField(addr("0x1007000"), "+", 0, 0);
 		click(codeBrowser, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		codeBrowser.goToField(addr("0x1007008"), "Address", 0, 0);
 		assertEquals("01007008", codeBrowser.getCurrentFieldText());
 		codeBrowser.goToField(addr("0x1007010"), "Address", 0, 0);
@@ -458,7 +458,7 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 
 		codeBrowser.goToField(addr("0x1007000"), "+", 0, 0);
 		click(codeBrowser, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		codeBrowser.goToField(addr("0x1007000"), "Address", 0, 0);
 		codeBrowser.goToField(addr("0x1007008"), "Address", 0, 0);
 		assertEquals("01007000", codeBrowser.getCurrentFieldText());
@@ -477,14 +477,14 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 
 		codeBrowser.goToField(addr("0x1007000"), "+", 0, 0);
 		click(codeBrowser, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		codeBrowser.goToField(addr("0x1007023"), "+", 0, 0);
 		click(codeBrowser, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		codeBrowser.goToField(addr("0x100702a"), "+", 0, 0);
 		click(codeBrowser, 1);
-		waitForPostedSwingRunnables();
-		waitForPostedSwingRunnables();
+		waitForSwing();
+		waitForSwing();
 
 		codeBrowser.goToField(addr("0x100702b"), "Address", 0, 0);
 		assertEquals("0100702b", codeBrowser.getCurrentFieldText());
@@ -525,6 +525,7 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 		goTo(codeBrowser, addr("0x1007000"));
 
 		for (int i = 0; i < 300; i++) {
+
 			cursorRight(fp);
 
 			if (!codeBrowser.getCurrentFieldText().equals(cb2.getCurrentFieldText())) {
@@ -533,11 +534,11 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 			assertEquals(codeBrowser.getCurrentFieldText(), cb2.getCurrentFieldText());
 
 			if (!codeBrowser.getCurrentFieldLoction().equals(cb2.getCurrentFieldLoction())) {
-				System.err.println("location no equal at cursor move: " + i);
+				System.err.println("location not equal at cursor move: " + i);
 			}
+
 			assertEquals(codeBrowser.getCurrentFieldLoction(), cb2.getCurrentFieldLoction());
 		}
-
 	}
 
 	@Test
@@ -561,13 +562,13 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 
 		codeBrowser.goToField(addr("0x1007000"), "+", 0, 0);
 		click(codeBrowser, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		codeBrowser.goToField(addr("0x1007023"), "+", 0, 0);
 		click(codeBrowser, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		codeBrowser.goToField(addr("0x100702a"), "+", 0, 0);
 		click(codeBrowser, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// this should open the other structure
 		codeBrowser.goToField(addr("0x1007023"), "Address", 0, 0);
@@ -809,7 +810,7 @@ public class CodeBrowserScreenMovementTest extends AbstractProgramBasedTest {
 				fieldOptions.setInt(name, 0);
 			}
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		plugin.updateNow();
 	}
 

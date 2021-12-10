@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf4.DWARFUtil.LengthResult;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -107,16 +108,20 @@ public class DWARFCompilationUnit {
 	 * from the debug_info section and the debug_abbr section and its compileUnit DIE (ie.
 	 * the first DIE right after the header).
 	 * <p>
-	 * Returns NULL if there was an ignorable error while reading the compilation unit (and
+	 * Returns {@code NULL} if there was an ignorable error while reading the compilation unit (and
 	 * leaves the input stream at the next compilation unit to read), otherwise throws
 	 * an IOException if there was an unrecoverable error.
+	 * <p>
+	 * Also returns {@code NULL} (and leaves the stream at EOF) if the remainder of the stream 
+	 * is filled with null bytes. 
 	 *
 	 * @param dwarfProgram the dwarf program.
 	 * @param debugInfoBR the debug info binary reader.
 	 * @param debugAbbrBR the debug abbreviation binary reader
 	 * @param cuNumber the compilation unit number
 	 * @param monitor the current task monitor
-	 * @return the read compilation unit.
+	 * @return the read compilation unit, or null if the compilation unit was bad/empty and should 
+	 * be ignored
 	 * @throws DWARFException if an invalid or unsupported DWARF version is read.
 	 * @throws IOException if the length of the compilation unit is invalid.
 	 * @throws CancelledException if the task has been canceled.
@@ -126,32 +131,25 @@ public class DWARFCompilationUnit {
 			throws DWARFException, IOException, CancelledException {
 
 		long startOffset = debugInfoBR.getPointerIndex();
-		long length = debugInfoBR.readNextUnsignedInt();
-		int format;
-
-		if (length == 0xffffffffL) {
-			// Length of 0xffffffff implies 64-bit DWARF format
-			// Mostly untested as there is no easy way to force the compiler
-			// to generate this
-			length = debugInfoBR.readNextLong();
-			format = DWARF_64;
-		}
-		else if (length >= 0xfffffff0L) {
-			// Length of 0xfffffff0 or greater is reserved for DWARF
-			throw new DWARFException("Reserved DWARF length value: " + Long.toHexString(length) +
-				". Unknown extension.");
-		}
-		else if (length == 0) {
-			throw new DWARFException("Invalid length 0 for DWARF Compilation Unit at 0x" +
-				Long.toHexString(startOffset));
-		}
-		else {
-			format = DWARF_32;
+		LengthResult lengthInfo =
+			DWARFUtil.readLength(debugInfoBR, dwarfProgram.getGhidraProgram());
+		if (lengthInfo.length == 0) {
+			if (isAllZerosUntilEOF(debugInfoBR)) {
+				// hack to handle trailing padding at end of section.  (similar to the check for
+				// unexpectedTerminator in readDIEs(), when padding occurs inside the bounds
+				// of the compile unit's range after the end of the root DIE's children)
+				debugInfoBR.setPointerIndex(debugInfoBR.length());
+				return null;
+			}
+			else {
+				throw new DWARFException(
+					"Invalid DWARF length 0 at 0x" + Long.toHexString(startOffset));
+			}
 		}
 
-		long endOffset = (debugInfoBR.getPointerIndex() + length);
+		long endOffset = debugInfoBR.getPointerIndex() + lengthInfo.length;
 		short version = debugInfoBR.readNextShort();
-		long abbreviationOffset = DWARFUtil.readOffsetByDWARFformat(debugInfoBR, format);
+		long abbreviationOffset = DWARFUtil.readOffsetByDWARFformat(debugInfoBR, lengthInfo.format);
 		byte pointerSize = debugInfoBR.readNextByte();
 		long firstDIEOffset = debugInfoBR.getPointerIndex();
 
@@ -172,16 +170,16 @@ public class DWARFCompilationUnit {
 		Map<Integer, DWARFAbbreviation> abbrMap =
 			DWARFAbbreviation.readAbbreviations(debugAbbrBR, dwarfProgram, monitor);
 
-		DWARFCompilationUnit cu =
-			new DWARFCompilationUnit(dwarfProgram, startOffset, endOffset, length, format, version,
-				abbreviationOffset, pointerSize, cuNumber, firstDIEOffset, abbrMap);
+		DWARFCompilationUnit cu = new DWARFCompilationUnit(dwarfProgram, startOffset, endOffset,
+			lengthInfo.length, lengthInfo.format, version, abbreviationOffset, pointerSize,
+			cuNumber, firstDIEOffset, abbrMap);
 
 		try {
 			DebugInfoEntry compileUnitDIE =
 				DebugInfoEntry.read(debugInfoBR, cu, dwarfProgram.getAttributeFactory());
 
-			DWARFCompileUnit compUnit = DWARFCompileUnit.read(
-				DIEAggregate.createSingle(compileUnitDIE), dwarfProgram.getDebugLine());
+			DWARFCompileUnit compUnit =
+				DWARFCompileUnit.read(DIEAggregate.createSingle(compileUnitDIE));
 			cu.setCompileUnit(compUnit);
 			return cu;
 		}
@@ -194,6 +192,16 @@ public class DWARFCompilationUnit {
 			debugInfoBR.setPointerIndex(cu.getEndOffset());
 			return null;
 		}
+	}
+
+	private static boolean isAllZerosUntilEOF(BinaryReader reader) throws IOException {
+		reader = reader.clone();
+		while (reader.getPointerIndex() < reader.length()) {
+			if (reader.readNextByte() != 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

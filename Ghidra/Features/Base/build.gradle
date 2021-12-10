@@ -87,7 +87,7 @@ task buildCParser(type: JavaExec) {
 	outputs.dir file("${outputDir}")
 
 	classpath = configurations.javacc
-	main = 'javacc'
+	mainClass = 'javacc'
 	workingDir = "${srcDir}"
 	args "-OUTPUT_DIRECTORY=${outputDir}"
 	// args "-DEBUG_PARSER=true"
@@ -107,7 +107,7 @@ task buildCPPParser(type: JavaExec) {
 	outputs.dir file("${outputDir}")
 	
 	classpath = configurations.javacc	
-	main = 'javacc'
+	mainClass = 'javacc'
 	workingDir = "${srcDir}"
 	args "-OUTPUT_DIRECTORY=${outputDir}"
 	// args "-DEBUG_PARSER=true"

@@ -19,14 +19,15 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * A class used to convert data types into ANSI-C.
- * 
+ *
  * The ANSI-C code should compile on most platforms.
  */
 public class DataTypeWriter {
@@ -53,25 +54,23 @@ public class DataTypeWriter {
 	private boolean cppStyleComments = false;
 
 	/**
-	 * Constructs a new instance of this class using the
-	 * given writer. The default annotation handler is used.
-	 * @param dtm data-type manager corresponding to target program or null
-	 * for default
+	 * Constructs a new instance of this class using the given writer. The default annotation
+	 * handler is used.
+	 * @param dtm data-type manager corresponding to target program or null for default
 	 * @param writer the writer to use when writing data types
-	 * @throws IOException 
+	 * @throws IOException if there is an exception writing the output
 	 */
 	public DataTypeWriter(DataTypeManager dtm, Writer writer) throws IOException {
 		this(dtm, writer, new DefaultAnnotationHandler());
 	}
 
 	/**
-	 * Constructs a new instance of this class using the
-	 * given writer. The default annotation handler is used.
-	 * @param dtm data-type manager corresponding to target program or null
-	 * for default
+	 * Constructs a new instance of this class using the given writer. The default annotation
+	 * handler is used.
+	 * @param dtm data-type manager corresponding to target program or null for default
 	 * @param writer the writer to use when writing data types
 	 * @param cppStyleComments whether to use C++ style comments
-	 * @throws IOException 
+	 * @throws IOException if there is an exception writing the output
 	 */
 	public DataTypeWriter(DataTypeManager dtm, Writer writer, boolean cppStyleComments)
 			throws IOException {
@@ -79,13 +78,11 @@ public class DataTypeWriter {
 	}
 
 	/**
-	 * Constructs a new instance of this class using the
-	 * given writer and annotation handler
-	 * @param dtm data-type manager corresponding to target program or null
-	 * for default
+	 * Constructs a new instance of this class using the given writer and annotation handler
+	 * @param dtm data-type manager corresponding to target program or null for default
 	 * @param writer the writer to use when writing data types
 	 * @param annotator the annotation handler to use to annotate the data types
-	 * @throws IOException 
+	 * @throws IOException if there is an exception writing the output
 	 */
 	public DataTypeWriter(DataTypeManager dtm, Writer writer, AnnotationHandler annotator)
 			throws IOException {
@@ -93,14 +90,12 @@ public class DataTypeWriter {
 	}
 
 	/**
-	 * Constructs a new instance of this class using the
-	 * given writer and annotation handler
-	 * @param dtm data-type manager corresponding to target program or null
-	 * for default
+	 * Constructs a new instance of this class using the given writer and annotation handler
+	 * @param dtm data-type manager corresponding to target program or null for default
 	 * @param writer the writer to use when writing data types
 	 * @param annotator the annotation handler to use to annotate the data types
 	 * @param cppStyleComments whether to use C++ style comments
-	 * @throws IOException 
+	 * @throws IOException if there is an exception writing the output
 	 */
 	public DataTypeWriter(DataTypeManager dtm, Writer writer, AnnotationHandler annotator,
 			boolean cppStyleComments) throws IOException {
@@ -130,11 +125,11 @@ public class DataTypeWriter {
 	}
 
 	/**
-	 * Converts all data types in the data type manager into ANSI-C code. 
+	 * Converts all data types in the data type manager into ANSI-C code.
 	 * @param dataTypeManager the manager containing the data types to write
 	 * @param monitor the task monitor
-	 * @throws IOException if an I/O error occurs when writing the data types to the specified writer
-	 * @throws CancelledException 
+	 * @throws IOException if there is an exception writing the output
+	 * @throws CancelledException if the action is cancelled by the user
 	 */
 	public void write(DataTypeManager dataTypeManager, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -142,11 +137,11 @@ public class DataTypeWriter {
 	}
 
 	/**
-	 * Converts all data types in the category into ANSI-C code. 
+	 * Converts all data types in the category into ANSI-C code.
 	 * @param category the category containing the datatypes to write
 	 * @param monitor the task monitor
-	 * @throws IOException if an I/O error occurs when writing the data types to the specified writer
-	 * @throws CancelledException 
+	 * @throws IOException if there is an exception writing the output
+	 * @throws CancelledException if the action is cancelled by the user
 	 */
 	public void write(Category category, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -163,11 +158,11 @@ public class DataTypeWriter {
 	}
 
 	/**
-	 * Converts all data types in the array into ANSI-C code. 
+	 * Converts all data types in the array into ANSI-C code.
 	 * @param dataTypes the data types to write
 	 * @param monitor the task monitor
-	 * @throws IOException if an I/O error occurs when writing the data types to the specified writer
-	 * @throws CancelledException 
+	 * @throws IOException if there is an exception writing the output
+	 * @throws CancelledException if the action is cancelled by the user
 	 */
 	public void write(DataType[] dataTypes, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -181,11 +176,11 @@ public class DataTypeWriter {
 	}
 
 	/**
-	 * Converts all data types in the list into ANSI-C code. 
+	 * Converts all data types in the list into ANSI-C code.
 	 * @param dataTypes the data types to write
 	 * @param monitor the task monitor
-	 * @throws IOException if an I/O error occurs when writing the data types to the specified writer
-	 * @throws CancelledException 
+	 * @throws IOException if there is an exception writing the output
+	 * @throws CancelledException if the action is cancelled by the user
 	 */
 	public void write(List<DataType> dataTypes, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -222,8 +217,8 @@ public class DataTypeWriter {
 	/**
 	 * Writes the data type as ANSI-C using the underlying writer.
 	 * @param dt the data type to write as ANSI-C
-	 * @param monitor
-	 * @throws IOException
+	 * @param monitor the task monitor
+	 * @throws IOException if there is an exception writing the output
 	 */
 	private void doWrite(DataType dt, TaskMonitor monitor, boolean throwExceptionOnInvalidType)
 			throws IOException, CancelledException {
@@ -447,15 +442,7 @@ public class DataTypeWriter {
 			deferWrite(componentType);
 
 			// TODO the return value of this is not used--delete?
-			getTypeDeclaration(null, componentType, component.getLength(), false, true, monitor);
-		}
-
-		if (composite instanceof Structure) {
-			Structure s = (Structure) composite;
-			if (s.hasFlexibleArrayComponent()) {
-				DataType componentType = s.getFlexibleArrayComponent().getDataType();
-				deferWrite(componentType);
-			}
+			getTypeDeclaration(null, componentType, component.getLength(), true, monitor);
 		}
 	}
 
@@ -464,7 +451,7 @@ public class DataTypeWriter {
 
 		String compositeType = composite instanceof Structure ? "struct" : "union";
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		sb.append(compositeType + " " + composite.getDisplayName() + " {");
 
 		String descrip = composite.getDescription();
@@ -478,13 +465,6 @@ public class DataTypeWriter {
 			writeComponent(component, composite, sb, monitor);
 		}
 
-		if (composite instanceof Structure) {
-			Structure s = (Structure) composite;
-			if (s.hasFlexibleArrayComponent()) {
-				writeComponent(s.getFlexibleArrayComponent(), composite, sb, monitor);
-			}
-		}
-
 		sb.append(annotator.getSuffix(composite, null));
 		sb.append("};");
 
@@ -493,7 +473,7 @@ public class DataTypeWriter {
 		writer.write(EOL);
 	}
 
-	private void writeComponent(DataTypeComponent component, Composite composite, StringBuffer sb,
+	private void writeComponent(DataTypeComponent component, Composite composite, StringBuilder sb,
 			TaskMonitor monitor) throws IOException, CancelledException {
 		sb.append("    ");
 		sb.append(annotator.getPrefix(composite, component));
@@ -505,8 +485,8 @@ public class DataTypeWriter {
 
 		DataType componentDataType = component.getDataType();
 
-		sb.append(getTypeDeclaration(fieldName, componentDataType, component.getLength(),
-			component.isFlexibleArrayComponent(), false, monitor));
+		sb.append(getTypeDeclaration(fieldName, componentDataType, component.getLength(), false,
+			monitor));
 
 		sb.append(";");
 		sb.append(annotator.getSuffix(composite, component));
@@ -519,14 +499,13 @@ public class DataTypeWriter {
 	}
 
 	private String getTypeDeclaration(String name, DataType dataType, int instanceLength,
-			boolean isFlexArray, boolean writeEnabled, TaskMonitor monitor)
-			throws IOException, CancelledException {
+			boolean writeEnabled, TaskMonitor monitor) throws IOException, CancelledException {
 
 		if (name == null) {
 			name = "";
 		}
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		String componentString = null;
 		if (dataType instanceof Dynamic) {
 			componentString = getDynamicComponentString((Dynamic) dataType, name, instanceLength);
@@ -560,9 +539,6 @@ public class DataTypeWriter {
 			}
 			else {
 				componentString = getDataTypePrefix(dataType) + dataType.getDisplayName();
-				if (isFlexArray) {
-					componentString += "[0]";
-				}
 				if (name.length() != 0) {
 					componentString += " " + name;
 				}
@@ -599,11 +575,12 @@ public class DataTypeWriter {
 		}
 
 		writer.write("typedef enum " + enumName + " " + "{");
-		String descrip = enumm.getDescription();
-		if (descrip != null && descrip.length() != 0) {
-			writer.write(" " + comment(descrip));
+		String description = enumm.getDescription();
+		if (description != null && description.length() != 0) {
+			writer.write(" " + comment(description));
 		}
 		writer.write(EOL);
+
 		String[] names = enumm.getNames();
 		for (int j = 0; j < names.length; j++) {
 			writer.write("    ");
@@ -611,7 +588,14 @@ public class DataTypeWriter {
 			writer.write(names[j]);
 			writer.write("=");
 			writer.write(Long.toString(enumm.getValue(names[j])));
+
+			String comment = enumm.getComment(names[j]);
+			if (!StringUtils.isBlank(comment)) {
+				writer.write(" " + comment(comment));
+			}
+
 			writer.write(annotator.getSuffix(enumm, names[j]));
+
 			if (j < names.length - 1) {
 				writer.write(",");
 			}
@@ -624,7 +608,7 @@ public class DataTypeWriter {
 
 	/**
 	 * Typedef Format: typedef <TYPE_DEF_NAME> <BASE_TYPE_NAME>
-	 * @throws CancelledException 
+	 * @throws CancelledException if the action is cancelled by the user
 	 */
 	private void writeTypeDef(TypeDef typeDef, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -665,7 +649,7 @@ public class DataTypeWriter {
 			writeDeferredDeclarations(monitor);
 		}
 
-		String typedefString = getTypeDeclaration(typedefName, dataType, -1, false, true, monitor);
+		String typedefString = getTypeDeclaration(typedefName, dataType, -1, true, monitor);
 
 		writer.write("typedef " + typedefString + ";");
 		writer.write(EOL);
@@ -722,16 +706,14 @@ public class DataTypeWriter {
 	}
 
 	/**
-	 * Write all built-in data types declarations into ANSI-C code.
-	 * Those types whose name matches the corresponding primitive C-type.
-	 * are not included.
-	 * @throws IOException if an I/O error occurs when writing the data types to the specified writer
-	 * @throws CancelledException 
+	 * Write all built-in data types declarations into ANSI-C code. Those types whose name matches
+	 * the corresponding primitive C-type. are not included.
+	 * @throws IOException if there is an exception writing the output
 	 */
 	private void writeBuiltInDeclarations(DataTypeManager manager) throws IOException {
 
 		try {
-			write(DataType.DEFAULT, TaskMonitorAdapter.DUMMY_MONITOR);
+			write(DataType.DEFAULT, TaskMonitor.DUMMY);
 
 			SourceArchive builtInArchive =
 				manager.getSourceArchive(DataTypeManager.BUILT_IN_ARCHIVE_UNIVERSAL_ID);
@@ -744,7 +726,7 @@ public class DataTypeWriter {
 					(dt instanceof Dynamic)) {
 					continue;
 				}
-				write(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+				write(dt, TaskMonitor.DUMMY);
 			}
 		}
 		catch (CancelledException e) {
@@ -877,8 +859,8 @@ public class DataTypeWriter {
 			if (writeEnabled) {
 				write(dataType, monitor);
 			}
-			String argument = getTypeDeclaration(paramName, dataType, param.getLength(), false,
-				writeEnabled, monitor);
+			String argument =
+				getTypeDeclaration(paramName, dataType, param.getLength(), writeEnabled, monitor);
 
 			buf.append(argument);
 
@@ -890,7 +872,7 @@ public class DataTypeWriter {
 			buf.append(ghidra.program.model.listing.FunctionSignature.VAR_ARGS_DISPLAY_STRING);
 		}
 		if ((n == 0) && (!hasVarArgs)) { // If no parameters
-			buf.append(DataType.VOID.getName()); // Print "void" keyword
+			buf.append(VoidDataType.dataType.getName()); // Print "void" keyword
 		}
 		buf.append(")");
 		return buf.toString();

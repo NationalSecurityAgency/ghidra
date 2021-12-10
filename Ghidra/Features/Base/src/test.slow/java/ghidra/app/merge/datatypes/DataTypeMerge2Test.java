@@ -1115,12 +1115,8 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
 	public void testEditEnum() throws Exception {
-		// edit DLL_Table in latest; edit DLL_Table in private
-		// only DLL_Table should be in conflict; not the ones where it is used.
+
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -1140,9 +1136,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -1180,7 +1173,164 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		assertNotNull(dt);
 		Enum enumm = (Enum) dt;
 		assertEquals(0x10, enumm.getValue("Pink"));
+	}
 
+	@Test
+	public void testEditEnumComments_NoConflict_CommentAddedInLatest() throws Exception {
+
+		mtf.initialize("notepad", new ProgramModifierListener() {
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				Category c = dtm.getCategory(new CategoryPath("/MISC"));
+				DataType dt = c.getDataType("FavoriteColors");
+				try {
+					Enum enumm = (Enum) dt;
+					String valueName = "Pink";
+					long value = enumm.getValue(valueName);
+					enumm.remove(valueName);
+					enumm.add(valueName, value, "This is the latest comment on server");
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				// no change
+			}
+
+		});
+		executeMerge(DataTypeMergeManager.OPTION_MY);
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
+		Category c = dtm.getCategory(new CategoryPath("/MISC"));
+		DataType dt = c.getDataType("FavoriteColors");
+		assertNotNull(dt);
+		Enum enumm = (Enum) dt;
+		assertEquals(0x3, enumm.getValue("Pink"));
+		assertEquals("This is the latest comment on server", enumm.getComment("Pink"));
+	}
+
+	@Test
+	public void testEditEnumComments_Conflict_TakeMyChanges() throws Exception {
+
+		mtf.initialize("notepad", new ProgramModifierListener() {
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				Category c = dtm.getCategory(new CategoryPath("/MISC"));
+				DataType dt = c.getDataType("FavoriteColors");
+				try {
+					Enum enumm = (Enum) dt;
+					String valueName = "Pink";
+					long value = enumm.getValue(valueName);
+					enumm.remove(valueName);
+					enumm.add(valueName, value, "This is the latest comment on server");
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				Category c = dtm.getCategory(new CategoryPath("/MISC"));
+				DataType dt = c.getDataType("FavoriteColors");
+
+				try {
+					Enum enumm = (Enum) dt;
+					String valueName = "Pink";
+					long value = enumm.getValue(valueName);
+					enumm.remove(valueName);
+					enumm.add(valueName, value, "This my local updated comment");
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+		});
+		executeMerge(DataTypeMergeManager.OPTION_MY);
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
+		Category c = dtm.getCategory(new CategoryPath("/MISC"));
+		DataType dt = c.getDataType("FavoriteColors");
+		assertNotNull(dt);
+		Enum enumm = (Enum) dt;
+		assertEquals(0x3, enumm.getValue("Pink"));
+		assertEquals("This my local updated comment", enumm.getComment("Pink"));
+	}
+
+	@Test
+	public void testEditEnumComments_Conflict_TakeLatestChanges() throws Exception {
+
+		mtf.initialize("notepad", new ProgramModifierListener() {
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				Category c = dtm.getCategory(new CategoryPath("/MISC"));
+				DataType dt = c.getDataType("FavoriteColors");
+				try {
+					Enum enumm = (Enum) dt;
+					String valueName = "Pink";
+					long value = enumm.getValue(valueName);
+					enumm.remove(valueName);
+					enumm.add(valueName, value, "This is the latest comment on server");
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				Category c = dtm.getCategory(new CategoryPath("/MISC"));
+				DataType dt = c.getDataType("FavoriteColors");
+
+				try {
+					Enum enumm = (Enum) dt;
+					String valueName = "Pink";
+					long value = enumm.getValue(valueName);
+					enumm.remove(valueName);
+					enumm.add(valueName, value, "This my local updated comment");
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+		});
+		executeMerge(DataTypeMergeManager.OPTION_LATEST);
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
+		Category c = dtm.getCategory(new CategoryPath("/MISC"));
+		DataType dt = c.getDataType("FavoriteColors");
+		assertNotNull(dt);
+		Enum enumm = (Enum) dt;
+		assertEquals(0x3, enumm.getValue("Pink"));
+		assertEquals("This is the latest comment on server", enumm.getComment("Pink"));
 	}
 
 	@Test
@@ -1355,9 +1505,8 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				FunctionDefinition fd =
-					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
-						"MyFunctionDef");
+				FunctionDefinition fd = (FunctionDefinition) dtm
+						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 
 				try {
 					fd.setReturnType(bar);
@@ -1376,9 +1525,8 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				FunctionDefinition fd =
-					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
-						"MyFunctionDef");
+				FunctionDefinition fd = (FunctionDefinition) dtm
+						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 				ParameterDefinition[] vars = fd.getArguments();
 
 				int transactionID = program.startTransaction("test");
@@ -1423,9 +1571,8 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				FunctionDefinition fd =
-					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
-						"MyFunctionDef");
+				FunctionDefinition fd = (FunctionDefinition) dtm
+						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 
 				try {
 					fd.setReturnType(bar);
@@ -1446,9 +1593,8 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				FunctionDefinition fd =
-					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
-						"MyFunctionDef");
+				FunctionDefinition fd = (FunctionDefinition) dtm
+						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 				ParameterDefinition[] vars = fd.getArguments();
 
 				int transactionID = program.startTransaction("test");
@@ -1491,9 +1637,8 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				int transactionID = program.startTransaction("test");
-				FunctionDefinition fd =
-					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
-						"MyFunctionDef");
+				FunctionDefinition fd = (FunctionDefinition) dtm
+						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 
 				try {
 					fd.setVarArgs(true);
@@ -1514,9 +1659,8 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				FunctionDefinition fd =
-					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
-						"MyFunctionDef");
+				FunctionDefinition fd = (FunctionDefinition) dtm
+						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 				ParameterDefinition[] vars = fd.getArguments();
 
 				int transactionID = program.startTransaction("test");
@@ -1560,9 +1704,8 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				int transactionID = program.startTransaction("test");
-				FunctionDefinition fd =
-					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
-						"MyFunctionDef");
+				FunctionDefinition fd = (FunctionDefinition) dtm
+						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 
 				try {
 					fd.setVarArgs(true);
@@ -1583,9 +1726,8 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-				FunctionDefinition fd =
-					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
-						"MyFunctionDef");
+				FunctionDefinition fd = (FunctionDefinition) dtm
+						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 				ParameterDefinition[] vars = fd.getArguments();
 
 				int transactionID = program.startTransaction("test");
@@ -1633,9 +1775,8 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				int transactionID = program.startTransaction("test");
 
-				FunctionDefinition fd =
-					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
-						"MyFunctionDef");
+				FunctionDefinition fd = (FunctionDefinition) dtm
+						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 
 				try {
 					fd.setReturnType(VoidDataType.dataType);
@@ -1655,9 +1796,8 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 
-				FunctionDefinition fd =
-					(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"),
-						"MyFunctionDef");
+				FunctionDefinition fd = (FunctionDefinition) dtm
+						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 				ParameterDefinition[] vars = fd.getArguments();
 
 				int transactionID = program.startTransaction("test");

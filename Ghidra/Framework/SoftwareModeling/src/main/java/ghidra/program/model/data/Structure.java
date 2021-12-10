@@ -16,11 +16,12 @@
 package ghidra.program.model.data;
 
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * The structure interface.
  * <p>
- * NOTE: Structures containing only a flexible array will report a length of 1 which will result in
+ * NOTE: A zero-length Structure will report a length of 1 which will result in
  * improper code unit sizing since we are unable to support a defined data of length 0.
  * <p>
  * NOTE: The use of zero-length bitfields within non-packed structures is discouraged since they have
@@ -33,39 +34,105 @@ public interface Structure extends Composite {
 	public Structure clone(DataTypeManager dtm);
 
 	/**
-	 * Returns the component of this structure with the indicated ordinal. If the specified ordinal
-	 * equals {@link #getNumComponents()} the defined flexible array component will be returned,
-	 * otherwise an out of bounds exception will be thrown. Use of
-	 * {@link #getFlexibleArrayComponent()} is preferred for obtaining this special trailing
-	 * component.
+	 * Returns the component of this structure with the indicated ordinal.
 	 * 
 	 * @param ordinal the ordinal of the component requested.
 	 * @return the data type component.
 	 * @throws IndexOutOfBoundsException if the ordinal is out of bounds
 	 */
 	@Override
-	public abstract DataTypeComponent getComponent(int ordinal) throws IndexOutOfBoundsException;
+	public DataTypeComponent getComponent(int ordinal) throws IndexOutOfBoundsException;
 
 	/**
-	 * Gets the immediate child component that contains the byte at the given offset. If the
-	 * specified offset corresponds to a bit-field,the first bit-field component containing the
-	 * offset will be returned.
+	 * Gets the first defined component located at or after the specified offset. 
+	 * Note: The returned component may be a zero-length component.
 	 * 
-	 * @param offset the byte offset into this data type
-	 * @return the immediate child component.
+	 * @param offset the byte offset into this structure
+	 * @return the first defined component located at or after the specified offset or null if not found.
 	 */
-	public abstract DataTypeComponent getComponentAt(int offset);
+	public DataTypeComponent getDefinedComponentAtOrAfterOffset(int offset);
 
 	/**
-	 * Returns the primitive Data Type that is at this offset. This is useful for prototypes that
-	 * have components that are made up of other components If the specified offset corresponds to a
-	 * bit-field,the BitFieldDataType of the first bit-field component containing the offset will be
-	 * returned.
+	 * Gets the first non-zero-length component that contains the byte at the specified offset. 
+	 * Note that one or more components may share the same offset when a bit-field or zero-length
+	 * component is present since these may share an offset.  A null may be returned under one of
+	 * the following conditions:
+	 * <ul>
+	 * <li>offset only corresponds to a zero-length component within a packed structure</li>
+	 * <li>offset corresponds to a padding byte within a packed structure</li>
+	 * <li>offset is &gt;= structure length.</li>
+	 * </ul>
+	 * If a bitfield is returned, and the caller supports bitfields, it is recommended that 
+	 * {@link #getComponentsContaining(int)} be invoked to gather all bitfields which contain the 
+	 * specified offset.
+	 * 
+	 * @param offset the byte offset into this structure
+	 * @return the first non-zero-length component that contains the byte at the specified offset
+	 * or null if not found.
+	 */
+	public DataTypeComponent getComponentContaining(int offset);
+	
+	/**
+	 * Gets the first non-zero-length component that starts at the specified offset. 
+	 * Note that one or more components may share the same offset when a bit-field or zero-length
+	 * component is present since these may share an offset.  A null may be returned under one of
+	 * the following conditions:
+	 * <ul>
+	 * <li>offset only corresponds to a zero-length component within a packed structure</li>
+	 * <li>offset corresponds to a padding byte within a packed structure</li>
+	 * <li>offset is contained within a component but is not the starting offset of that component</li>
+	 * <li>offset is &gt;= structure length</li>
+	 * </ul>
+	 * If a bitfield is returned, and the caller supports bitfields, it is recommended that 
+	 * {@link #getComponentsContaining(int)} be invoked to gather all bitfields which contain the 
+	 * specified offset.
+	 * 
+	 * @param offset the byte offset into this structure
+	 * @return the first component that starts at specified offset or null if not found.
+	 */
+	public default DataTypeComponent getComponentAt(int offset) {
+		DataTypeComponent dtc = getComponentContaining(offset);
+		// scan forward with bitfields to find one which starts with offset
+		while (dtc != null && dtc.isBitFieldComponent() && dtc.getOffset() < offset &&
+			dtc.getOrdinal() < (getNumComponents() - 1)) {
+			dtc = getComponent(dtc.getOrdinal() + 1);
+		}
+		if (dtc != null && dtc.getOffset() == offset) {
+			return dtc;
+		}
+		return null;
+	}
+	
+	/**
+	 * Get an ordered list of components that contain the byte at the specified offset.
+	 * Unlike {@link #getComponentAt(int)} and {@link #getComponentContaining(int)} this method will
+	 * include zero-length components if they exist at the specified offset.  For this reason the
+	 * specified offset may equal the structure length to obtain and trailing zero-length components.
+	 * Note that this method will only return more than one component when a bit-fields and/or 
+	 * zero-length components are present since these may share an offset. An empty list may be 
+	 * returned under the following conditions:
+	 * <ul>
+	 * <li>offset only corresponds to a padding byte within a packed structure</li>
+	 * <li>offset is equal structure length and no trailing zero-length components exist</li>
+	 * <li>offset is &gt; structure length</li>
+	 * </ul>
+	 * 
+	 * @param offset the byte offset into this structure
+	 * @return a list of zero or more components containing the specified offset
+	 */
+	public List<DataTypeComponent> getComponentsContaining(int offset);
+
+	/**
+	 * Returns the lowest-level component that contains the specified offset. This is useful 
+	 * for structures that have sub-structures. This method is best used when working with 
+	 * known structures which do not contain bitfields or zero-length components since in 
+	 * those situations multiple components may correspond to the specified offset.  
+	 * A similar ambiguous condition occurs if offset corresponds to a union component.
 	 * 
 	 * @param offset the byte offset into this data type.
-	 * @return the primitive data type at the offset.
+	 * @return a primitive component data type which contains the specified offset.
 	 */
-	public abstract DataTypeComponent getDataTypeAt(int offset);
+	public DataTypeComponent getDataTypeAt(int offset);
 
 	/**
 	 * Inserts a new bitfield at the specified ordinal position in this structure. Within packed
@@ -153,11 +220,12 @@ public interface Structure extends Composite {
 
 	/**
 	 * Inserts a new datatype at the specified offset into this structure. Inserting a component
-	 * will causing any conflicting component to shift down to the extent necessary to avoid a
+	 * will cause any conflicting components to shift down to the extent necessary to avoid a
 	 * conflict.
 	 * 
 	 * @param offset the byte offset into the structure where the new datatype is to be inserted.
-	 * @param dataType the datatype to insert.
+	 * @param dataType the datatype to insert.  If {@link DataType#DEFAULT} is specified for a packed 
+	 * 				structure an {@link Undefined1DataType} will be used in its place.
 	 * @param length the length to associate with the dataType. For fixed length types a length
 	 *            &lt;= 0 will use the length of the resolved dataType.
 	 * @return the componentDataType created.
@@ -171,11 +239,15 @@ public interface Structure extends Composite {
 
 	/**
 	 * Inserts a new datatype at the specified offset into this structure. Inserting a component
-	 * will causing any conflicting component to shift down to the extent necessary to avoid a
+	 * will cause any conflicting components to shift down to the extent necessary to avoid a
 	 * conflict.
+	 * <p>
+	 * This method does not support bit-field insertions which must use the method 
+	 * {@link #insertBitFieldAt(int, int, int, DataType, int, String, String)}.
 	 * 
 	 * @param offset the byte offset into the structure where the new datatype is to be inserted.
-	 * @param dataType the datatype to insert.
+	 * @param dataType the datatype to insert.  If {@link DataType#DEFAULT} is specified for a packed 
+	 * 				structure an {@link Undefined1DataType} will be used in its place.
 	 * @param length the length to associate with the dataType. For fixed length types a length
 	 *            &lt;= 0 will use the length of the resolved dataType.
 	 * @param name the field name to associate with this component.
@@ -190,25 +262,48 @@ public interface Structure extends Composite {
 			String comment) throws IllegalArgumentException;
 
 	/**
-	 * Deletes the component containing the specified offset in this structure. If the offset
-	 * corresponds to a bit-field, all bit-fields whose base type group contains the offset will be
-	 * removed.
+	 * Deletes all defined components containing the specified offset in this structure. If the offset
+	 * corresponds to a bit-field or zero-length component (e.g., 0-element array) multiple 
+	 * components may be deleted.  Bit-fields are only cleared and may leave residual undefined 
+	 * components in their place.  This method will generally reduce the length of the structure.
+	 * The {@link #clearAtOffset(int)} method should be used for non-packed structures to 
+	 * preserve the structure length and placement of other components.
 	 * 
-	 * @param offset the byte offset into the structure where the datatype is to be deleted.
+	 * @param offset the byte offset into the structure where the component(s) are to be deleted.
+	 * An offset equal to the structure length may be specified to delete any trailing zero-length 
+	 * components.
+	 * 
+	 * @throws IllegalArgumentException if a negative offset is specified
 	 */
-	public void deleteAtOffset(int offset);
+	public void deleteAtOffset(int offset) throws IllegalArgumentException;
 
 	/**
-	 * Remove all components from this structure (including flex-array), effectively setting the
+	 * Remove all components from this structure, effectively setting the
 	 * length to zero.  Packing and minimum alignment settings are unaffected.
 	 */
 	public void deleteAll();
 
 	/**
-	 * Clears the defined component at the given component ordinal. Clearing a component within
+	 * Clears all defined components containing the specified offset in this structure. If the offset
+	 * corresponds to a bit-field or zero-length component (e.g., 0-element array) multiple 
+	 * components may be cleared.  This method will preserve the structure length and placement 
+	 * of other components since freed space will appear as undefined components.
+	 * <p>
+	 * To avoid clearing zero-length components at a specified offset within a non-packed structure,
+	 * the {@link #replaceAtOffset(int, DataType, int, String, String)} may be used with to clear
+	 * only the sized component at the offset by specified {@link DataType#DEFAULT} as the replacement
+	 * datatype. 
+	 * 
+	 * @param offset the byte offset into the structure where the component(s) are to be deleted.
+	 */
+	public void clearAtOffset(int offset);
+
+	/**
+	 * Clears the defined component at the specified component ordinal. Clearing a component within
 	 * a non-packed structure causes a defined component to be replaced with a number of undefined 
-	 * dataTypes to offset the removal of the defined dataType.  In the case of a packed 
-	 * structure the component is deleted without backfill. 
+	 * components.  This may not the case when clearing a zero-length component or bit-field 
+	 * which may not result in such undefined components.  In the case of a packed structure 
+	 * clearing is always completed without backfill. 
 	 * 
 	 * @param ordinal the ordinal of the component to clear.
 	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
@@ -216,114 +311,127 @@ public interface Structure extends Composite {
 	public void clearComponent(int ordinal) throws IndexOutOfBoundsException;
 
 	/**
-	 * Replaces the component at the given component ordinal with a new component of the indicated
-	 * data type.
+	 * Replaces the component at the specified ordinal with a new component using the 
+	 * specified datatype, length, name and comment.  In the case of a packed structure 
+	 * a 1-for-1 replacement will occur.  In the case of a non-packed structure certain
+	 * restrictions apply:
+	 * <ul>
+	 * <li>A zero-length component may only be replaced with another zero-length component.</li>
+	 * <li>If ordinal corresponds to a bit-field, all bit-fields which overlap the specified 
+	 * bit-field will be replaced.</li>
+	 * </ul>
+	 * There must be sufficient space to complete the replacement factoring in the space freed 
+	 * by the consumed component(s).  If there are no remaining defined components beyond the 
+	 * consumed components the structure will expand its length as needed. For a packed structure, this 
+	 * method behaves the same as a ordinal-based delete followed by an insert.
+	 * <p>
+	 * Datatypes not permitted include {@link FactoryDataType} types, non-sizable 
+	 * {@link Dynamic} types, and those which result in a circular direct dependency.
+	 * <p>
+	 * NOTE: In general, it is not recommended that this method be used with non-packed 
+	 * structures where the replaced component is a bit-field.
 	 * 
 	 * @param ordinal the ordinal of the component to be replaced.
-	 * @param dataType the datatype to insert.
-	 * @param length the length of the dataType to insert. For fixed length types a length &lt;= 0
-	 *            will use the length of the resolved dataType.
-	 * @return the new component 
-	 * @throws IllegalArgumentException if the specified data type is not allowed to replace a
-	 *             component in this composite data type or an invalid length is specified. For
-	 *             example, suppose dt1 contains dt2. Therefore it is not valid to replace a dt2
-	 *             component with dt1 since this would cause a cyclic dependency. In addition, any
-	 *             attempt to replace an existing bit-field component or specify a
-	 *             {@link BitFieldDataType} will produce this error.
+	 * @param dataType the datatype to insert. If {@link DataType#DEFAULT} is specified for a packed 
+	 *             structure an {@link Undefined1DataType} will be used in its place.  If {@link DataType#DEFAULT} 
+	 *             is specified for a non-packed structure this is equivelant to {@link #clearComponent(int)}, ignoring
+	 *             the length, name and comment arguments.
+	 * @param length component length for containing the specified dataType. A positive length is required 
+	 *             for sizable {@link Dynamic} datatypes and should be specified as -1 for fixed-length
+	 *             datatypes to rely on their resolved size.
+	 * @return the new component.
+	 * @throws IllegalArgumentException may be caused by: 1) invalid offset specified, 2) invalid datatype or 
+	 *             associated length specified, or 3) insufficient space for replacement.
 	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
 	public DataTypeComponent replace(int ordinal, DataType dataType, int length)
 			throws IndexOutOfBoundsException, IllegalArgumentException;
 
 	/**
-	 * Replaces the component at the given component ordinal with a new component of the indicated
-	 * data type.
+	 * Replaces the component at the specified ordinal with a new component using the 
+	 * specified datatype, length, name and comment.  In the case of a packed structure 
+	 * a 1-for-1 replacement will occur.  In the case of a non-packed structure certain
+	 * restrictions apply:
+	 * <ul>
+	 * <li>A zero-length component may only be replaced with another zero-length component.</li>
+	 * <li>If ordinal corresponds to a bit-field, all bit-fields which overlap the specified 
+	 * bit-field will be replaced.</li>
+	 * </ul>
+	 * There must be sufficient space to complete the replacement factoring in the space freed 
+	 * by the consumed component(s).  If there are no remaining defined components beyond the 
+	 * consumed components the structure will expand its length as needed. For a packed structure, this 
+	 * method behaves the same as a ordinal-based delete followed by an insert.
+	 * <p>
+	 * Datatypes not permitted include {@link FactoryDataType} types, non-sizable 
+	 * {@link Dynamic} types, and those which result in a circular direct dependency.
+	 * <p>
+	 * NOTE: In general, it is not recommended that this method be used with non-packed 
+	 * structures where the replaced component is a bit-field.
 	 * 
 	 * @param ordinal the ordinal of the component to be replaced.
-	 * @param dataType the datatype to insert.
-	 * @param length the length to associate with the dataType. For fixed length types a length
-	 *            &lt;= 0 will use the length of the resolved dataType.
-	 * @param name the field name to associate with this component.
-	 * @param comment the comment to associate with this component.
+	 * @param dataType the datatype to insert.  If {@link DataType#DEFAULT} is specified for a packed 
+	 *             structure an {@link Undefined1DataType} will be used in its place.  If {@link DataType#DEFAULT} 
+	 *             is specified for a non-packed structure this is equivelant to {@link #clearComponent(int)}, ignoring
+	 *             the length, name and comment arguments.
+	 * @param length component length for containing the specified dataType. A positive length is required 
+	 *             for sizable {@link Dynamic} datatypes and should be specified as -1 for fixed-length
+	 *             datatypes to rely on their resolved size.
+	 * @param name the field name to associate with this component or null.
+	 * @param comment the comment to associate with this component or null.
 	 * @return the new component.
-	 * @throws IllegalArgumentException if the specified data type is not allowed to replace a
-	 *             component in this composite data type or an invalid length is specified. For
-	 *             example, suppose dt1 contains dt2. Therefore it is not valid to replace a dt2
-	 *             component with dt1 since this would cause a cyclic dependency. In addition, any
-	 *             attempt to replace an existing bit-field component or specify a
-	 *             {@link BitFieldDataType} will produce this error.
+	 * @throws IllegalArgumentException may be caused by: 1) invalid offset specified, 2) invalid datatype or 
+	 *             associated length specified, or 3) insufficient space for replacement.
 	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
 	public DataTypeComponent replace(int ordinal, DataType dataType, int length, String name,
 			String comment) throws IndexOutOfBoundsException, IllegalArgumentException;
 
 	/**
-	 * Replaces the component at the specified byte offset with a new component of the indicated
-	 * data type. If the offset corresponds to a bit-field, all bit-fields at that offset will be
-	 * removed and replaced by the specified component. Keep in mind bit-field or any component
-	 * removal must clear sufficient space in a structure with packing disabled to complete
-	 * the replacement.
+	 * Replaces all components containing the specified byte offset with a new component using the 
+	 * specified datatype, length, name and comment. If the offset corresponds to a bit-field 
+	 * more than one component may be consumed by this replacement.  
+	 * <p>
+	 * This method may not be used to replace a zero-length component since there may be any number 
+	 * of zero-length components at the same offset. If the only defined component(s) at the specified
+	 * offset are zero-length the subsequent undefined will be replaced in the case of a non-packed 
+	 * structure.  For a packed structure such a case would be treated as an insert as would an offset 
+	 * which is not contained within a component.  
+	 * <p>
+	 * For a non-packed structure a replacement will attempt to consume sufficient
+	 * space within moving other defined components.  There must be sufficient space to complete 
+	 * the replacement factoring in the space freed by the consumed component(s).  When replacing the 
+	 * last defined component the structure size will be expanded as needed to fit the new component.
+	 * For a packed If there are no remaining defined components beyond 
+	 * the consumed components, or an offset equals to the structure length is specified, the
+	 * structure will expand its length as needed. 
+	 * <p>
+	 * For a non-packed structure the new component will use the specified offset.  In the case of 
+	 * packed structure, the actual offset will be determined during a repack.
+	 * <p>
+	 * Datatypes not permitted include {@link FactoryDataType} types, non-sizable 
+	 * {@link Dynamic} types, and those which result in a circular direct dependency.
 	 * 
-	 * @param offset the byte offset into the structure where the datatype is to be replaced.
-	 * @param dataType the datatype to insert.
-	 * @param length the length to associate with the dataType. For fixed length types a length
-	 *            &lt;= 0 will use the length of the resolved dataType.
-	 * @param name the field name to associate with this component.
-	 * @param comment the comment to associate with this component.
+	 * @param offset the byte offset into the structure where the datatype is to be placed.  The specified
+	 *             offset must be less than the length of the structure. 
+	 * @param dataType the datatype to insert.  If {@link DataType#DEFAULT} is specified for a packed 
+	 * 			   structure an {@link Undefined1DataType} will be used in its place.  If {@link DataType#DEFAULT} 
+	 *             is specified for a non-packed structure this is equivelant to clearing all components, 
+	 *             which contain the specified offset, ignoring the length, name and comment arguments.
+	 * @param length component length for containing the specified dataType. A positive length is required 
+	 *             for sizable {@link Dynamic} datatypes and should be specified as -1 for fixed-length
+	 *             datatypes to rely on their resolved size.
+	 * @param name the field name to associate with this component or null.
+	 * @param comment the comment to associate with this component or null.
 	 * @return the new component.
-	 * @throws IllegalArgumentException if the specified data type is not allowed to replace a
-	 *             component in this composite data type or an invalid length is specified. For
-	 *             example, suppose dt1 contains dt2. Therefore it is not valid to replace a dt2
-	 *             component with dt1 since this would cause a cyclic dependency. In addition, any
-	 *             attempt to replace an existing bit-field component or specify a
-	 *             {@link BitFieldDataType} will produce this error.
+	 * @throws IllegalArgumentException may be caused by: 1) invalid offset specified, 2) invalid datatype or 
+	 *             associated length specified, or 3) insufficient space for replacement.
 	 */
 	public DataTypeComponent replaceAtOffset(int offset, DataType dataType, int length, String name,
 			String comment) throws IllegalArgumentException;
 
 	/**
-	 * Determine if a trailing flexible array component has been defined.
-	 * 
-	 * @return true if trailing flexible array component has been defined.
-	 */
-	public boolean hasFlexibleArrayComponent();
-
-	/**
-	 * Get the optional trailing flexible array component associated with this structure.
-	 * <p>
-	 * NOTE: The trailing flexable array may be assigned an incorrect offset
-	 * when packing is enabled and the minimum alignment is specified.  In such cases, 
-	 * the flex array may be less than the overall structure length.  Currently, it is
-	 * assumed the trailing flex array will have an offset equal to the overall
-	 * structure length.
-	 * 
-	 * @return optional trailing flexible array component associated with this structure or null if
-	 *         not present.
-	 */
-	public DataTypeComponent getFlexibleArrayComponent();
-
-	/**
-	 * Set the optional trailing flexible array component associated with this structure.
-	 * 
-	 * @param flexType the flexible array dataType (example: for 'char[0]' the type 'char' should be
-	 *            specified)
-	 * @param name component field name or null for default name
-	 * @param comment component comment
-	 * @return updated flexible array component
-	 * @throws IllegalArgumentException if specified flexType is not permitted (e.g., self
-	 *             referencing or unsupported type)
-	 */
-	public DataTypeComponent setFlexibleArrayComponent(DataType flexType, String name,
-			String comment) throws IllegalArgumentException;
-
-	/**
-	 * Remove the optional trailing flexible array component associated with this structure.
-	 */
-	public void clearFlexibleArrayComponent();
-
-	/**
-	 * Increases the size of the structure by the given amount by adding undefined filler at the
-	 * end of the structure.  NOTE: This method only has an affect on structures with packing disabled.
+	 * Increases the size of the structure by the specified amount by adding undefined filler at the
+	 * end of the structure.  NOTE: This method only has an affect on non-packed structures.
 	 * 
 	 * @param amount the amount by which to grow the structure.
 	 * @throws IllegalArgumentException if amount &lt; 1

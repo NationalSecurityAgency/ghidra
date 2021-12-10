@@ -41,11 +41,8 @@ public abstract class VtTask extends Task {
 
 	@Override
 	public final void run(TaskMonitor monitor) {
-		boolean restoreEvents = false;
-		if (session != null && shouldSuspendSessionEvents()) {
-			session.setEventsEnabled(false);
-			restoreEvents = true;
-		}
+		boolean restoreEvents = suspendEvents();
+
 		try {
 			success = doWork(monitor);
 		}
@@ -62,10 +59,28 @@ public abstract class VtTask extends Task {
 		}
 	}
 
+	private boolean suspendEvents() {
+
+		if (session == null) {
+			return false; // no events to suspend
+		}
+
+		if (!shouldSuspendSessionEvents()) {
+			return false; // this task has chosen not to suspend events
+		}
+
+		if (!session.isSendingEvents()) {
+			return false; // someone external to this task is managing events
+		}
+
+		session.setEventsEnabled(false);
+		return true;
+	}
+
 	/**
 	 * Determine if session events should be suspended during task execution.
-	 * This can improve performance during task execution at the expense of bulk 
-	 * table updates at task completion.  Method return false by default.  
+	 * This can improve performance during task execution at the expense of bulk
+	 * table updates at task completion.  Method return false by default.
 	 * If not constructed with a session this method is not used.
 	 * @return true if events should be suspended
 	 */
@@ -143,7 +158,6 @@ public abstract class VtTask extends Task {
 
 	/**
 	 * Returns an HTML formated error message
-	 * @param messagePrefix the error message header
 	 * @return an HTML formatted error message
 	 */
 	public String getErrorDetails() {

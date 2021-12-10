@@ -20,7 +20,8 @@ import java.util.Set;
 
 import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.GdbThread;
-import agent.gdb.manager.evt.*;
+import agent.gdb.manager.evt.GdbCommandDoneEvent;
+import agent.gdb.manager.evt.GdbThreadCreatedEvent;
 import agent.gdb.manager.impl.*;
 
 /**
@@ -42,8 +43,7 @@ public class GdbAttachCommand extends AbstractGdbCommand<Set<GdbThread>> {
 
 	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		if (evt instanceof AbstractGdbCompletedCommandEvent) {
-			pending.claim(evt);
+		if (super.handle(evt, pending)) {
 			return true;
 		}
 		else if (evt instanceof GdbThreadCreatedEvent) {

@@ -261,8 +261,8 @@ double FloatFormat::getHostFloat(uintb encoding,floatclass *type) const
 bool FloatFormat::roundToNearestEven(uintb &signif, int4 lowbitpos)
 
 {
-  uintb lowbitmask = (lowbitpos < 8 * sizeof(uintb)) ? (1UL << lowbitpos) : 0;
-  uintb midbitmask = 1UL << (lowbitpos - 1);
+  uintb lowbitmask = (lowbitpos < 8 * sizeof(uintb)) ? ((uintb)1 << lowbitpos) : 0;
+  uintb midbitmask = (uintb)1 << (lowbitpos - 1);
   uintb epsmask = midbitmask - 1;
   bool odd = (signif & lowbitmask) != 0;
   if ((signif & midbitmask) != 0 && ((signif & epsmask) != 0 || odd)) {
@@ -301,7 +301,7 @@ uintb FloatFormat::getEncoding(double host) const
     if (roundToNearestEven(signif, 8 * sizeof(uintb) - frac_size - exp)) {
       // TODO handle round to normal case
       if ((signif >> (8 * sizeof(uintb) - 1)) == 0) {
-	signif = 1UL << (8 * sizeof(uintb) - 1);
+	signif = (uintb)1 << (8 * sizeof(uintb) - 1);
 	exp += 1;
       }
     }
@@ -313,7 +313,7 @@ uintb FloatFormat::getEncoding(double host) const
     // if high bit is clear, then the add overflowed. Increase exp and set
     // signif to 1.
     if ((signif >> (8 * sizeof(uintb) - 1)) == 0) {
-      signif = 1UL << (8 * sizeof(uintb) - 1);
+      signif = (uintb)1 << (8 * sizeof(uintb) - 1);
       exp += 1;
     }
   }
@@ -362,7 +362,7 @@ uintb FloatFormat::convertEncoding(uintb encoding,
   else { // incoming is normal
     exp -= formin->bias;
     if (jbitimplied)
-      signif = (1UL << (8 * sizeof(uintb) - 1)) | (signif >> 1);
+      signif = ((uintb)1 << (8 * sizeof(uintb) - 1)) | (signif >> 1);
   }
 
   exp += bias;
@@ -374,7 +374,7 @@ uintb FloatFormat::convertEncoding(uintb encoding,
     if (roundToNearestEven(signif, 8 * sizeof(uintb) - frac_size - exp)) {
       // TODO handle carry to normal case
       if ((signif >> (8 * sizeof(uintb) - 1)) == 0) {
-	signif = 1UL << (8 * sizeof(uintb) - 1);
+	signif = (uintb)1 << (8 * sizeof(uintb) - 1);
 	exp += 1;
       }
     }
@@ -386,7 +386,7 @@ uintb FloatFormat::convertEncoding(uintb encoding,
     // if high bit is clear, then the add overflowed. Increase exp and set
     // signif to 1.
     if ((signif >> (8 * sizeof(uintb) - 1)) == 0) {
-      signif = 1UL << (8 * sizeof(uintb) - 1);
+      signif = (uintb)1 << (8 * sizeof(uintb) - 1);
       exp += 1;
     }
   }

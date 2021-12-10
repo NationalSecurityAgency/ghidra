@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,13 @@
  */
 package ghidra.util.table;
 
+import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
-import docking.widgets.table.threaded.ThreadedTableModel;
 
-public abstract class GhidraProgramTableModel<ROW_TYPE> extends
-		ThreadedTableModel<ROW_TYPE, Program> implements ProgramTableModel {
+public abstract class GhidraProgramTableModel<ROW_TYPE>
+		extends ThreadedTableModel<ROW_TYPE, Program> implements ProgramTableModel {
 
 	protected Program program;
 
@@ -47,9 +46,10 @@ public abstract class GhidraProgramTableModel<ROW_TYPE> extends
 	}
 
 	/**
-	 * Extension point for getting a row-specific program.  Most models don't need this 
-	 * capability. 
+	 * Extension point for getting a row-specific program.  Most models don't need this
+	 * capability.
 	 * @param t The ROW_TYPE row object
+	 * @return the program
 	 */
 	protected Program getProgramForRow(ROW_TYPE t) {
 		return getProgram();

@@ -17,6 +17,8 @@ package ghidra.graph.program;
 
 import docking.widgets.EventTrigger;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.graph.DataFlowGraphType;
+import ghidra.graph.ProgramGraphDisplayOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.CodeUnit;
@@ -35,6 +37,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DataReferenceGraphTask extends Task {
 
+	private static final String VERTEX_COLOR_OVERRIDE = "Color";
 	private String graphTitle;
 	private GraphDisplayProvider graphProvider;
 	private boolean reuseGraph;
@@ -117,7 +120,7 @@ public class DataReferenceGraphTask extends Task {
 				/* TODO
 				 * Want to make initial vertex easy to find, is this the best way?
 				 */
-				centerVertex.setAttribute("Color", "Orange");
+				centerVertex.setAttribute(VERTEX_COLOR_OVERRIDE, "Orange");
 			}
 		}
 		catch (CancelledException e) {
@@ -128,19 +131,16 @@ public class DataReferenceGraphTask extends Task {
 		try {
 			if (display == null) {
 				display = graphProvider.getGraphDisplay(reuseGraph, monitor);
-				display.defineEdgeAttribute(DataReferenceGraph.REF_SOURCE_ATTRIBUTE);
-				display.defineEdgeAttribute(DataReferenceGraph.REF_TYPE_ATTRIBUTE);
-				display.defineEdgeAttribute(DataReferenceGraph.REF_SYMBOL_ATTRIBUTE);
-				display.defineVertexAttribute(DataReferenceGraph.DATA_ATTRIBUTE);
-				display.setVertexLabelAttribute(DataReferenceGraph.LABEL_ATTRIBUTE,
-					GraphDisplay.ALIGN_LEFT, 12, true, maxLabelLength);
 
 				DataReferenceGraphDisplayListener listener =
 					new DataReferenceGraphDisplayListener(tool, display, program, totalMaxDepth);
 				display.setGraphDisplayListener(listener);
 			}
-
-			display.setGraph(graph, graphTitle, appendGraph, monitor);
+			GraphDisplayOptions graphDisplayOptions =
+				new ProgramGraphDisplayOptions(new DataFlowGraphType(), tool);
+			// set the vertex color override so that we can color "initial" vertices differently
+			graphDisplayOptions.setVertexColorOverrideAttributeKey(VERTEX_COLOR_OVERRIDE);
+			display.setGraph(graph, graphDisplayOptions, graphTitle, appendGraph, monitor);
 
 			if (location != null) {
 				// initialize the graph location, but don't have the graph send an event

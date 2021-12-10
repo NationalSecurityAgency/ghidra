@@ -51,6 +51,11 @@ IfaceTerm::IfaceTerm(const string &prmpt,istream &is,ostream &os)
 IfaceTerm::~IfaceTerm(void)
 
 {
+  while(!inputstack.empty()) {
+    delete sptr;
+    sptr = inputstack.back();
+    inputstack.pop_back();
+  }
 #ifdef __TERMINAL__
   if (is_terminal) {
     tcsetattr(ifd,TCSANOW,&itty); // Restore original terminal settings
@@ -237,15 +242,12 @@ void IfaceTerm::readLine(string &line)
   } while(val != '\n');
 }
 
-void IfaceTerm::pushScript(const string &filename,const string &newprompt)
+void IfaceTerm::pushScript(istream *iptr,const string &newprompt)
 
 {
-  ifstream *s = new ifstream(filename.c_str());
-  if (!*s)
-    throw IfaceParseError("Unable to open script file");
   inputstack.push_back(sptr);
-  sptr = s;
-  IfaceStatus::pushScript(filename,newprompt);
+  sptr = iptr;
+  IfaceStatus::pushScript(iptr,newprompt);
 }
 
 void IfaceTerm::popScript(void)
@@ -254,6 +256,7 @@ void IfaceTerm::popScript(void)
   delete sptr;
   sptr = inputstack.back();
   inputstack.pop_back();
+  IfaceStatus::popScript();
 }
 
 bool IfaceTerm::isStreamFinished(void) const

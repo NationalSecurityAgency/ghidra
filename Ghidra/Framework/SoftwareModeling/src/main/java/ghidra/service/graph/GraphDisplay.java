@@ -140,33 +140,6 @@ public interface GraphDisplay {
 	public void close();
 
 	/**
-	 * Defines a vertex attribute type for this graph window
-	 * 
-	 * @param name the name of the attribute which may be attached to vertices
-	 */
-	public void defineVertexAttribute(String name);
-
-	/**
-	 * Defines an edge attribute type for this graph window
-	 * 
-	 * @param name the name of the attribute which may be attached to edges.
-	 */
-	public void defineEdgeAttribute(String name);
-
-	/**
-	 * Sets the name of the attribute which should be used as the primary vertex label
-	 * 
-	 * @param attributeName the name of the attribute to use as the display label for vertices
-	 * @param alignment (ALIGN_LEFT, ALIGN_RIGHT, or ALIGN_CENTER)
-	 * @param size the font size to use for the display label
-	 * @param monospace true if the font should be monospaced
-	 * @param maxLines the maximum number lines to display in the vertex labels
-	 */
-	public void setVertexLabelAttribute(String attributeName, int alignment, int size,
-			boolean monospace,
-			int maxLines);
-
-	/**
 	 * Sets the graph to be displayed or consumed by this graph display
 	 * 
 	 * @param graph the graph to display or consume
@@ -174,10 +147,25 @@ public interface GraphDisplay {
 	 * @param monitor a {@link TaskMonitor} which can be used to cancel the graphing operation
 	 * @param append if true, append the new graph to any existing graph
 	 * @throws CancelledException thrown if the graphing operation was cancelled
+	 * @deprecated You should now use the form that takes in a {@link GraphDisplayOptions}
 	 */
-	public void setGraph(AttributedGraph graph, String title, boolean append,
-			TaskMonitor monitor)
-			throws CancelledException;
+	public default void setGraph(AttributedGraph graph, String title, boolean append,
+			TaskMonitor monitor) throws CancelledException {
+		setGraph(graph, new GraphDisplayOptions(graph.getGraphType()), title, append, monitor);
+	}
+	/**
+	 * Sets the graph to be displayed or consumed by this graph display
+	 * 
+	 * @param graph the graph to display or consume
+	 * @param options {@link GraphDisplayOptions} for configuring how the display will
+	 * render vertices and edges based on there vertex type and edge type respectively.
+	 * @param title a title for the graph
+	 * @param monitor a {@link TaskMonitor} which can be used to cancel the graphing operation
+	 * @param append if true, append the new graph to any existing graph
+	 * @throws CancelledException thrown if the graphing operation was cancelled
+	 */
+	public void setGraph(AttributedGraph graph, GraphDisplayOptions options, String title,
+			boolean append, TaskMonitor monitor) throws CancelledException;
 
 	/**
 	 * Clears all graph vertices and edges from this graph display

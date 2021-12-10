@@ -1115,6 +1115,17 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 	}
 
+	@Override
+	public void removeAllReferencesTo(Address toAddr) {
+		try {
+			removeAllTo(toAddr);
+		}
+		catch (IOException e) {
+			program.dbError(e);
+		}
+
+	}
+
 	void removeReference(Address fromAddr, Address toAddr, int opIndex) {
 		lock.acquire();
 		try {

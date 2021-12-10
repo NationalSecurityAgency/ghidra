@@ -29,6 +29,12 @@ public class RefdFile implements Closeable {
 	public final FileSystemRef fsRef;
 	public final GFile file;
 
+	/**
+	 * Creates a RefdFile instance, taking ownership of the supplied fsRef.
+	 * 
+	 * @param fsRef {@link FileSystemRef} that pins the filesystem open
+	 * @param file GFile file inside the specified filesystem
+	 */
 	public RefdFile(FileSystemRef fsRef, GFile file) {
 		this.fsRef = fsRef;
 		this.file = file;

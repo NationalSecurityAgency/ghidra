@@ -20,6 +20,8 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldUtils;
@@ -245,19 +247,32 @@ public class PreCommentFieldFactory extends FieldFactory {
 	}
 
 	private String[] getDataAutoComments(Data data) {
-
-		// Build flexible array comment
-		Address addr = data.getMinAddress().previous();
-		if (addr != null) {
-			return getFlexArrayComment(data, addr);
-		}
-		return null;
+		return getPreceedingComponentAutoComment(data);
 	}
 
-	private String[] getFlexArrayComment(Data data, Address addr) {
+	/**
+	 * A composite which immediately preceeds the current address may contain trailing zero-length 
+	 * components which implicitly refer to this address and are not rendered by the opened composite.
+	 * This comment is intended to convey the existence of such hidden components which correspond
+	 * to addr.
+	 * <br>
+	 * NOTE: Implementation only provides comment for one trailing zero-length component.  This could
+	 * be improved to return a comment for all applicable trailing zero-length components. 
+	 * @param data data location whose pre-comment is currently be generated
+	 * @return auto-comment or null
+	 */
+	private String[] getPreceedingComponentAutoComment(Data data) {
 
+		// NOTE: A zero-length composite has a length of 1 which may cause it to improperly consume
+		// the address location which actually corresponds to a trailing zero-length 
+		// component.
+		
 		int levelsToIgnore = 0;
 		String label = null;
+		Address prevDataAddr = data.getMinAddress().previous();
+		if (prevDataAddr == null) {
+			return null;
+		}
 
 		int[] cpath = data.getComponentPath();
 		if (cpath != null && cpath.length > 0) {
@@ -273,46 +288,56 @@ public class PreCommentFieldFactory extends FieldFactory {
 		}
 		else {
 			Program p = data.getProgram();
-			data = p.getListing().getDefinedDataContaining(addr);
-			if (data == null || !(data.isStructure() || data.isDynamic())) {
+			data = p.getListing().getDefinedDataContaining(prevDataAddr);
+			if (data == null || !(data.isStructure() || data.isDynamic())) {  // FIXME!! refer to DynamicDataType which has components - Union?
 				return null;
 			}
 			Symbol s = p.getSymbolTable().getPrimarySymbol(data.getAddress());
 			label = s != null ? s.getName(true) : data.getDataType().getName();
 		}
 
-		// locate deepest structure containing addr which will be checked for flex array
+		DataTypeComponent lastDtc = null;
 		while (true) {
-			int offset = (int) addr.subtract(data.getMinAddress());
-			Data component = data.getComponentAt(offset);
-			if (component == null || !component.isStructure()) {
+			DataType dt = data.getDataType();
+
+			if (dt instanceof Structure) {
+				Structure struct = (Structure) dt;
+				List<DataTypeComponent> components =
+					struct.getComponentsContaining(struct.getLength());
+				lastDtc = components.isEmpty() ? null : components.get(components.size() - 1);
+			}
+			else if (dt instanceof DynamicDataType) {
+				DynamicDataType ddt = (DynamicDataType) dt;
+				lastDtc = ddt.getComponentAt(data.getLength(), data);
+				int lastDtcOrdinal = ddt.getNumComponents(data) - 1;
+				if (lastDtc != null && lastDtc.getOrdinal() < lastDtcOrdinal) {
+					lastDtc = ddt.getComponent(lastDtcOrdinal, data);
+				}
+			}
+			
+			if (lastDtc == null || lastDtc.getLength() == 0) {
 				break;
+			}
+			
+			Data component = data.getComponent(lastDtc.getOrdinal());
+			if (component == null) {
+				return null;
 			}
 			data = component;
 		}
 
-		return buildFlexArrayComment(data, levelsToIgnore, label);
-	}
-
-	private String[] buildFlexArrayComment(Data data, int levelsToIgnore, String label) {
-
-		DataType dt = data.getBaseDataType();
-
-		DataTypeComponent flexComponent = null;
-		if (dt instanceof Structure) {
-			flexComponent = ((Structure) dt).getFlexibleArrayComponent();
-		}
-		else if (dt instanceof DynamicDataType) {
-			flexComponent = ((DynamicDataType) dt).getFlexibleArrayComponent(data);
-		}
-
-		if (flexComponent == null) {
+		if (lastDtc == null || lastDtc.isBitFieldComponent()) {
 			return null;
 		}
+		
+		return buildZeroLengthComponentAutoComment(lastDtc, data, levelsToIgnore, label);
+	}
 
-		String fieldName = flexComponent.getFieldName();
-		if (fieldName == null) {
-			fieldName = flexComponent.getDefaultFieldName();
+	private String[] buildZeroLengthComponentAutoComment(DataTypeComponent lastZeroLengthComponent, Data data, int levelsToIgnore, String label) {
+
+		String fieldName = lastZeroLengthComponent.getFieldName();
+		if (StringUtils.isEmpty(fieldName)) {
+			fieldName = lastZeroLengthComponent.getDefaultFieldName();
 		}
 
 		StringBuilder flexName = new StringBuilder(fieldName);
@@ -331,8 +356,8 @@ public class PreCommentFieldFactory extends FieldFactory {
 			flexName.insert(0, label + ".");
 		}
 
-		return new String[] { "Flexible Array: " + flexComponent.getDataType().getName() + "[] " +
-			flexName.toString() };
+		return new String[] { "Zero-length Component: " + lastZeroLengthComponent.getDataType().getName() + " " +
+				flexName.toString() };
 	}
 
 	private ListingTextField getTextField(String[] comments, String[] autoComment,

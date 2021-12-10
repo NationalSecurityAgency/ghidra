@@ -29,6 +29,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
+import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
 	name = "BreakpointLocation",
@@ -39,6 +40,10 @@ import ghidra.program.model.address.Address;
 public class GdbModelTargetBreakpointLocation
 		extends DefaultTargetObject<TargetObject, GdbModelTargetBreakpointSpec>
 		implements TargetBreakpointLocation {
+
+	/** prefix used in GDB's watchpoint specs for static locations */
+	protected static final String LOC_PREFIX = "-location";
+
 	protected static String indexLocation(GdbBreakpointLocation loc) {
 		return PathUtils.makeIndex(loc.getSub());
 	}
@@ -91,10 +96,7 @@ public class GdbModelTargetBreakpointLocation
 	protected CompletableFuture<Void> initWpt() {
 		assert loc.getAddr() == null;
 		String what = parent.info.getWhat();
-		if (!what.startsWith(GdbBreakpointLocation.WATCHPOINT_LOCATION_PREFIX)) {
-			throw new AssertionError("non-location location");
-		}
-		String exp = what.substring(GdbBreakpointLocation.WATCHPOINT_LOCATION_PREFIX.length());
+		String exp = what.startsWith(LOC_PREFIX) ? what.substring(LOC_PREFIX.length()) : what;
 		int iid = Unique.assertOne(loc.getInferiorIds());
 		GdbModelTargetInferior inf = impl.session.inferiors.getTargetInferior(iid);
 		String addrSizeExp = String.format("{(long long)&(%s), (long long)sizeof(%s)}", exp, exp);
@@ -113,6 +115,12 @@ public class GdbModelTargetBreakpointLocation
 			address = impl.space.getAddress(vals.get(0));
 			length = vals.get(1).intValue();
 			doChangeAttributes("Initialized");
+		}).exceptionally(ex -> {
+			Msg.warn(this, "Could not evaluated breakpoint location and/or size: " + ex);
+			address = impl.space.getAddress(0);
+			length = 1;
+			doChangeAttributes("Defaulted for eval/parse error");
+			return null;
 		});
 	}
 

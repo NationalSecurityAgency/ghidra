@@ -69,6 +69,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			DBTraceMemorySpace mem = trace.getMemoryManager().get(this, false);
 			if (mem == null) {
 				// TODO: 0-fill instead? Will need to check memory space bounds.
+				return 0;
 			}
 			return mem.getViewBytes(program.snap, address.add(addressOffset), buffer);
 		}
@@ -415,25 +416,33 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 				forward)));
 	}
 
+	protected AddressSetView getCommentAddresses(int commentType, AddressSetView addrSet) {
+		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
+			s -> program.trace.getCommentAdapter()
+					.getAddressSetView(Range.singleton(s), e -> e.getType() == commentType)));
+	}
+
+	protected AddressSetView getCommentAddresses(AddressSetView addrSet) {
+		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
+			s -> program.trace.getCommentAdapter()
+					.getAddressSetView(Range.singleton(s))));
+	}
+
 	@Override
 	public CodeUnitIterator getCommentCodeUnitIterator(int commentType, AddressSetView addrSet) {
-		// TODO Auto-generated method stub
-		return null;
+		return new WrappingCodeUnitIterator(
+			getCodeUnitIterator(getCommentAddresses(commentType, addrSet), true));
 	}
 
 	@Override
 	public AddressIterator getCommentAddressIterator(int commentType, AddressSetView addrSet,
 			boolean forward) {
-		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
-			s -> program.trace.getCommentAdapter()
-					.getAddressSetView(Range.singleton(s), e -> e.getType() == commentType)))
-							.getAddresses(forward);
+		return getCommentAddresses(commentType, addrSet).getAddresses(forward);
 	}
 
 	@Override
 	public AddressIterator getCommentAddressIterator(AddressSetView addrSet, boolean forward) {
-		// TODO Auto-generated method stub
-		return null;
+		return getCommentAddresses(addrSet).getAddresses(forward);
 	}
 
 	@Override

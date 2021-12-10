@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- *
- */
 package ghidra.program.database.util;
 
 import java.io.IOException;
@@ -26,7 +23,9 @@ import db.RecordIterator;
 /**
  * Implementation of a RecordIterator that is always empty.
  */
+
 public class EmptyRecordIterator implements RecordIterator {
+	public static final RecordIterator INSTANCE = new EmptyRecordIterator();
 
 	/**
 	 * @see db.RecordIterator#hasNext()

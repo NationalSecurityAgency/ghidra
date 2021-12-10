@@ -1,7 +1,51 @@
 define pcodeop rdrand;
 define pcodeop rdrandIsValid;
-:RDRAND rm16     is vexMode=0 & opsize=0 & byte=0x0f; byte=0xC7; (rm16 & reg_opcode=6 ...) { rm16 = rdrand(); CF=rdrandIsValid(); }
-:RDRAND rm32     is vexMode=0 & opsize=1 & byte=0x0f; byte=0xC7; (rm32 & reg_opcode=6 ...) { rm32 = rdrand(); CF=rdrandIsValid(); }
+
+macro rdflags(){
+	OF = 0; SF = 0; ZF = 0; AF = 0; PF = 0;
+}
+
+:RDRAND Rmr16     is vexMode=0 & opsize=0 & byte=0x0f; byte=0xC7; mod=3 & Rmr16 & reg_opcode=6 
+{ 
+	Rmr16 = rdrand(); 
+	CF=rdrandIsValid();
+	rdflags();
+	
+}
+:RDRAND Rmr32     is vexMode=0 & opsize=1 & byte=0x0f; byte=0xC7; mod=3 & Rmr32 & reg_opcode=6 
+{ 
+	Rmr32 = rdrand(); 
+	CF=rdrandIsValid();
+	rdflags();
+}
 @ifdef IA64
-:RDRAND rm64     is vexMode=0 & opsize=2 & $(REX_W) & byte=0x0f; byte=0xC7; (rm64 & reg_opcode=6 ...) { rm64 = rdrand(); CF=rdrandIsValid(); }
+:RDRAND Rmr64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(REX_W) & byte=0x0f; byte=0xC7; mod=3 & Rmr64 & reg_opcode=6 
+{ 
+	Rmr64 = rdrand(); 
+	CF=rdrandIsValid();
+	rdflags();
+}
+@endif
+
+define pcodeop rdseed;
+define pcodeop rdseedIsValid;
+:RDSEED Rmr16     is vexMode=0 & opsize=0 & byte=0x0f; byte=0xC7; mod=3 & Rmr16 & reg_opcode=7 
+{ 
+	Rmr16 = rdseed(); 
+	CF=rdseedIsValid();
+	rdflags();
+}
+:RDSEED Rmr32     is vexMode=0 & opsize=1 & byte=0x0f; byte=0xC7; mod=3 & Rmr32 & reg_opcode=7 
+{ 
+	Rmr32 = rdseed(); 
+	CF=rdseedIsValid();
+	rdflags();
+}
+@ifdef IA64
+:RDSEED Rmr64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(REX_W) & byte=0x0f; byte=0xC7; mod=3 & Rmr64 & reg_opcode=7 
+{ 
+	Rmr64 = rdseed(); 
+	CF=rdseedIsValid();
+	rdflags();
+}
 @endif

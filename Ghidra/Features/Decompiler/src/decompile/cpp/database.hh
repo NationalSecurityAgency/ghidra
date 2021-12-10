@@ -605,9 +605,9 @@ public:
   /// \brief Find a Symbol by name within \b this Scope
   ///
   /// If there are multiple Symbols with the same name, all are passed back.
-  /// \param name is the name to search for
+  /// \param nm is the name to search for
   /// \param res will contain any matching Symbols
-  virtual void findByName(const string &name,vector<Symbol *> &res) const=0;
+  virtual void findByName(const string &nm,vector<Symbol *> &res) const=0;
 
   /// \brief Check if the given name is occurs within the given scope path.
   ///
@@ -671,7 +671,7 @@ public:
   /// \param ind is the index position to set (within the category)
   virtual void setCategory(Symbol *sym,int4 cat,int4 ind)=0;
 
-  virtual SymbolEntry *addSymbol(const string &name,Datatype *ct,
+  virtual SymbolEntry *addSymbol(const string &nm,Datatype *ct,
 				 const Address &addr,const Address &usepoint);
 
   const string &getName(void) const { return name; }		///< Get the name of the Scope
@@ -679,8 +679,8 @@ public:
   bool isGlobal(void) const { return (fd == (Funcdata *)0); }	///< Return \b true if \b this scope is global
 
   // The main global querying routines
-  void queryByName(const string &name,vector<Symbol *> &res) const;	///< Look-up symbols by name
-  Funcdata *queryFunction(const string &name) const;			///< Look-up a function by name
+  void queryByName(const string &nm,vector<Symbol *> &res) const;	///< Look-up symbols by name
+  Funcdata *queryFunction(const string &nm) const;			///< Look-up a function by name
   SymbolEntry *queryByAddr(const Address &addr,
 			   const Address &usepoint) const;	  	///< Get Symbol with matching address
   SymbolEntry *queryContainer(const Address &addr,int4 size,
@@ -691,7 +691,7 @@ public:
   Funcdata *queryExternalRefFunction(const Address &addr) const;	///< Look-up a function thru an \e external \e reference
   LabSymbol *queryCodeLabel(const Address &addr) const;			///< Look-up a code label by address
 
-  Scope *resolveScope(const string &name, bool strategy) const;		///< Find a child Scope of \b this
+  Scope *resolveScope(const string &nm, bool strategy) const;		///< Find a child Scope of \b this
   Scope *discoverScope(const Address &addr,int4 sz,const Address &usepoint);	///< Find the owning Scope of a given memory range
   ScopeMap::const_iterator childrenBegin() const { return children.begin(); }	///< Beginning iterator of child scopes
   ScopeMap::const_iterator childrenEnd() const { return children.end(); }	///< Ending iterator of child scopes
@@ -705,7 +705,7 @@ public:
   const Scope *findDistinguishingScope(const Scope *op2) const;	///< Find first ancestor of \b this not shared by given scope
   Architecture *getArch(void) const { return glb; }		///< Get the Architecture associated with \b this
   Scope *getParent(void) const { return parent; }		///< Get the parent Scope (or NULL if \b this is the global Scope)
-  Symbol *addSymbol(const string &name,Datatype *ct);		///< Add a new Symbol \e without mapping it to an address
+  Symbol *addSymbol(const string &nm,Datatype *ct);		///< Add a new Symbol \e without mapping it to an address
   SymbolEntry *addMapPoint(Symbol *sym,const Address &addr,
 			   const Address &usepoint);		///< Map a Symbol to a specific address
   Symbol *addMapSym(const Element *el);				///< Add a mapped Symbol from a \<mapsym> XML tag
@@ -729,7 +729,7 @@ class ScopeInternal : public Scope {
   void processHole(const Element *el);
   void processCollision(const Element *el);
   void insertNameTree(Symbol *sym);
-  SymbolNameTree::const_iterator findFirstByName(const string &name) const;
+  SymbolNameTree::const_iterator findFirstByName(const string &nm) const;
 protected:
   virtual Scope *buildSubScope(uint8 id,const string &nm);	///< Build an unattached Scope to be associated as a sub-scope of \b this
   virtual void addSymbolInternal(Symbol *sym);
@@ -776,7 +776,7 @@ public:
   virtual LabSymbol *findCodeLabel(const Address &addr) const;
   virtual SymbolEntry *findOverlap(const Address &addr,int4 size) const;
 
-  virtual void findByName(const string &name,vector<Symbol *> &res) const;
+  virtual void findByName(const string &nm,vector<Symbol *> &res) const;
   virtual bool isNameUsed(const string &nm,const Scope *op2) const;
   virtual Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const;
 

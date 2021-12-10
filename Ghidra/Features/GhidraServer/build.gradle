@@ -21,7 +21,7 @@ apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features GhidraServer'
 
-def yajswRelease = "yajsw-stable-12.12"
+def yajswRelease = "yajsw-beta-13.01"
 
 configurations {
 	runGhidraServer
@@ -35,10 +35,6 @@ dependencies {
 	runGhidraServer project
 }
 
-addExports([
-	'java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED'
-])
-
 CopySpec yajswCopySpec = copySpec {
 	File depsFile = file("${DEPS_DIR}/GhidraServer/${yajswRelease}.zip")
 	File binRepoFile = file("${BIN_REPO}/Ghidra/Features/GhidraServer/${yajswRelease}.zip")
@@ -46,15 +42,20 @@ CopySpec yajswCopySpec = copySpec {
 	// First check if the file is in the dependencies repo.  If not, check in the bin repo.
 	def yajswZipTree = depsFile.exists() ? zipTree(depsFile) : zipTree(binRepoFile)
 	
+	// In yajsw-beta-13.01.zip there is not a top level directory like there was in previous
+	// versions, so we need the "into".  This is a bug which will be fixed in a future version,
+	// of yajsw, so for the next upgrade we'll likely need to get rid of the into and preface each 
+	// include with a ${yajswRelease} like we used to do.
 	from(yajswZipTree) {
-		include "${yajswRelease}/lib/core/**"
-		include "${yajswRelease}/lib/extended/**"
-		include "${yajswRelease}/templates/**"
-		include "${yajswRelease}/*.jar"
-		include "${yajswRelease}/doc/**"
-		include "${yajswRelease}/LICENSE.txt"
-		include "${yajswRelease}/yajsw.policy.txt"
+		include "lib/core/**"
+		include "lib/extended/**"
+		include "templates/**"
+		include "*.jar"
+		include "doc/**"
+		include "LICENSE.txt"
+		include "yajsw.policy.txt"
 	}
+	into "${yajswRelease}"
 }
 // Unpack YAJSW archive into build/data for development use
 task yajswDevUnpack(type:Copy) {

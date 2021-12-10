@@ -17,7 +17,7 @@ package ghidra.pcode.emu;
 
 import java.util.List;
 
-import ghidra.pcode.emu.AbstractPcodeMachine.ThreadPcodeExecutorState;
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.DefaultPcodeThread.SleighEmulationLibrary;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
@@ -224,6 +224,24 @@ public interface PcodeThread<T> {
 	void setSuspended(boolean suspended);
 
 	/**
+	 * Get the thread's SLEIGH language (processor model)
+	 * 
+	 * @return the language
+	 */
+	default SleighLanguage getLanguage() {
+		return getExecutor().getLanguage();
+	}
+
+	/**
+	 * Get the thread's p-code arithmetic
+	 * 
+	 * @return the arithmetic
+	 */
+	default PcodeArithmetic<T> getArithmetic() {
+		return getExecutor().getArithmetic();
+	}
+
+	/**
 	 * Get the thread's p-code executor
 	 * 
 	 * <p>
@@ -249,7 +267,7 @@ public interface PcodeThread<T> {
 	 * 
 	 * <p>
 	 * The memory part of this state is shared among all threads in the same machine. See
-	 * {@link PcodeMachine#getMemoryState()}.
+	 * {@link PcodeMachine#getSharedState()}.
 	 * 
 	 */
 	ThreadPcodeExecutorState<T> getState();

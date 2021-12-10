@@ -20,4 +20,8 @@ import ghidra.program.model.mem.Memory;
 public interface TraceProgramViewMemory extends Memory, SnapSpecificTraceView {
 	@Override
 	TraceProgramView getProgram();
+
+	void setForceFullView(boolean forceFullView);
+
+	boolean isForceFullView();
 }

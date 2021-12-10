@@ -414,11 +414,11 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 					}
 				}
 			}
-			else { // Structure
+			else { // Structure and DynamicDataType
 				List<Data> dataList = data.getComponentsContaining((int) addr.subtract(dataAddr));
-				if (dataList != null) {  // nested flex-arrays can cause odd behavior
+				if (dataList != null) {
 					for (Data subData : dataList) {
-						// The only case where more than one subData exists is for bit-fields.
+						// The only case where more than one subData exists is for bit-fields and zero-length data.
 						// Depending upon the packing, bit-fields at different offsets may overlap
 						if (subData.getMinAddress().equals(addr)) {
 							list.add(subData);

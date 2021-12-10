@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- *
- */
 package ghidra.program.database.util;
-
-import ghidra.util.Msg;
-import ghidra.util.exception.ClosedException;
 
 import java.io.IOException;
 
 import db.DBRecord;
 import db.RecordIterator;
+import ghidra.util.Msg;
+import ghidra.util.exception.ClosedException;
 
 /**
  * Iterator that only returns records from another iterator that match the given query.

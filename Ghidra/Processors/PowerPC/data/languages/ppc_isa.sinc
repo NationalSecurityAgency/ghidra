@@ -116,11 +116,11 @@ define pcodeop rvwinkleOp;
     b:8 = 0;
     tmp:8 = 0;
     <loop>
-         b = (64 - (i*8+7));
-         tmp = (S >> (64 - (i*8+7))); b = tmp & 1;  # GetBit
+         b = (63 - (i*8+7));
+         tmp = (S >> (63 - (i*8+7))); b = tmp & 1;  # GetBit
          s = s ^ b;
    	    i = i + 1;
-    if (i < 7) goto <loop>;
+    if (i < 8) goto <loop>;
     A =  s;
 } 
 
@@ -134,22 +134,37 @@ define pcodeop rvwinkleOp;
 # binutils: power7.d:  90:      7c 83 2b f8     cmpb    r3,r4,r5
 # name	 cmpb	 code	 7c0003f8	 mask	 ff0700fc00000000	 flags	 @POWER6 @476 @A2 	 operands	31	 3b	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
 :cmpb S,A,B is $(NOTVLE) & OP=31 & S & A & B & XOP_1_10=508 &		BIT_0=0 { #  PCODE-YES
-    i:8 = 0;
     tmpS:8 = 0;
     tmpB:8 = 0;
     val:8  = 0;
-    <loop>
-        tmpS = (S << (i*8)) & 0xFF; # get next S byte
-        tmpB = (S << (i*8)) & 0xFF; # get next B byte
-        if (tmpS == tmpB) goto <equal>;
-            val = (val << (i*8));  # set low byte to 0x00
-        goto <contLoop>;
-        <equal>
-            val = (val << (i*8));  # set low byte to 0xFF
-            val = val | 0xFF;
-        <contLoop>
-        i = i + 1;
-    if (i < 7) goto <loop>;
+    zero:8 = 0;
+    ones:8 = 0xff;
+    
+    # Unrolled the loop
+	tmpS = (S >> 56) & 0xFF; # get next S byte
+	tmpB = (B >> 56) & 0xFF; # get next B byte
+	val = (zext(tmpS == tmpB) * ones) + (zext(tmpS != tmpB) * zero);
+	tmpS = (S >> 48) & 0xFF; # get next S byte
+	tmpB = (B >> 48) & 0xFF; # get next B byte
+	val = val << 8 | (zext(tmpS == tmpB) * ones) + (zext(tmpS != tmpB) * zero);
+	tmpS = (S >> 40) & 0xFF; # get next S byte
+	tmpB = (B >> 40) & 0xFF; # get next B byte
+	val = val << 8 | (zext(tmpS == tmpB) * ones) + (zext(tmpS != tmpB) * zero);
+	tmpS = (S >> 32) & 0xFF; # get next S byte
+	tmpB = (B >> 32) & 0xFF; # get next B byte
+	val = val << 8 | (zext(tmpS == tmpB) * ones) + (zext(tmpS != tmpB) * zero);
+	tmpS = (S >> 24) & 0xFF; # get next S byte
+	tmpB = (B >> 24) & 0xFF; # get next B byte
+	val = val << 8 | (zext(tmpS == tmpB) * ones) + (zext(tmpS != tmpB) * zero);
+	tmpS = (S >> 16) & 0xFF; # get next S byte
+	tmpB = (B >> 16) & 0xFF; # get next B byte
+	val = val << 8 | (zext(tmpS == tmpB) * ones) + (zext(tmpS != tmpB) * zero);
+	tmpS = (S >> 8) & 0xFF; # get next S byte
+	tmpB = (B >> 8) & 0xFF; # get next B byte
+	val = val << 8 | (zext(tmpS == tmpB) * ones) + (zext(tmpS != tmpB) * zero);
+	tmpS = S & 0xFF; # get next S byte
+	tmpB = B & 0xFF; # get next B byte
+	val = val << 8 | (zext(tmpS == tmpB) * ones) + (zext(tmpS != tmpB) * zero);
     A = val;
 } 
 # PowerISA II: 3.3.12 Fixed-Point Logical Instructions
@@ -169,20 +184,12 @@ define pcodeop BitPermuteDoubleword;
 # binutils: a2.d: 64c:  7d 6a 02 f4     popcntw r10,r11
 # binutils: power7.d:  dc:      7e 8a 02 f4     popcntw r10,r20
 # name	 popcntw	 code	 7c0002f4	 mask	 ffff00fc00000000	 flags	 @POWER7 @A2 	 operands	31	 3b	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
-:popcntw A,S is $(NOTVLE) & OP=31 & S & A & XOP_1_10=378 & Rc & BITS_11_15=0 { 
-	i:8 = 0;
-	j:8 = 0;
-	n:8 = 0;
-	x:8 = 0;
-    tmp:8 = 0;
-	<loop> 
-		n = 0;
-		<loop1>
-            tmp = (S >> (64 - (j*8+7))); x = tmp & 1; # Get bit
-			n = n + x;
-		if (j < 31) goto <loop1>;
-		A = n;		
-	if (i < 1) goto <loop>;
+:popcntw A,S is $(NOTVLE) & OP=31 & S & A & XOP_1_10=378 & Rc & BITS_11_15=0 {
+	local tmp1:4 = S(0);
+	tmp1 = popcount(tmp1);
+	local tmp2:4 = S(4);
+	tmp2 = popcount(tmp2);
+	A = (zext(tmp2) << 32) + zext(tmp1);
 } 
 
 # PowerISA II: 3.3.12 Fixed-Point Logical Instructions
@@ -192,23 +199,18 @@ define pcodeop BitPermuteDoubleword;
 # binutils: a2.d: 644:  7d 6a 00 f4     popcntb r10,r11
 # name	 popcntb	 code	 7c0000f4	 mask	 ffff00fc00000000	 flags	 @POWER5 	 operands	31	 3b	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
 :popcntb A,S is OP=31 & S  & A & BITS_11_15=0 & XOP_1_10=122 & BIT_0=0 { 
-	i:8 = 0;
-	j:8 = 0;
-	n:8 = 0;
-	x:8 = 0;
-	tmp:8 = 0;
+	local i:8 = 0;
+	local tmp:8 = 0;
+	local tmpb:1 = 0;
+	local mask:8 = 0xff;
 	<loop_i>
-       n = 0;
-       <loop_j>
-          tmp = (S >> (64 - (i*8+j))); x = tmp & 1; # Get bit
-          if (x != 1) goto <cont_loop_j>;
-             n = n + 1;
-          <cont_loop_j>
-          j = j + 1;
-       if (j < 7) goto <loop_j>;
-       i = i + 1;
-	if (i < 7) goto <loop_i>;
-    A = n;
+		tmp = (S >> (i*8));
+		tmpb = tmp(0);
+		tmpb = popcount(tmpb);
+		A = (A & ~(mask)) + (zext(tmpb) << (i*8));
+		mask = mask << 8;
+    	i = i + 1;
+	if (i < 8) goto <loop_i>;
 } 
 
 
@@ -221,24 +223,9 @@ define pcodeop BitPermuteDoubleword;
 # binutils: power7.d:  80:      7c 83 01 34     prtyw   r3,r4
 # name	 prtyw	 code	 7c000134	 mask	 ffff00fc00000000	 flags	 @POWER6 @476 @A2 	 operands	31	 3b	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
 :prtyw A,S is $(NOTVLE) & OP=31 & S & A & BITS_11_15=0 & XOP_1_10=154 & BIT_0=0 { 
-	s:8 = 0;
-	t:8 = 0;
-	i:8 = 0;
-	x:8 = 0;
-    tmp:8 = 0;
-	<loop1>
-        tmp = (S >> (64 - (i*8+7))); x = tmp & 1; # get bit
-		s = s ^ x;
-	if (i < 3) goto <loop1>;
-	i = 4;
-	<loop2>
-        tmp = (S >> (64 - (i*8+7))); x = tmp & 1; # get bit
-		t = t ^ x;
-	if (i < 7) goto <loop2>;
-    tmp = t;             # upper 4 bytes has t value
-    tmp = (tmp << 32);
-    tmp = tmp & s;       # lower 4 bytes has s value
-    S = tmp;
+	local temp:8 = S;
+	A[0,32] =  zext(((popcount(temp & 0x01010101:8)) & 1:8) == 1:8);
+	A[32,32] = zext(((popcount(temp & 0x0101010100000000:8)) & 1:8) == 1:8);
 } 
 
 # =======================================================================
@@ -352,9 +339,8 @@ define pcodeop AddAndGenerateSixes;
     # C low 4 bytes to TH high 4 bytes
     tmp = zext(c);
     tmp = tmp << 32;
-    TH = tmp;
-
     divOverflow(A,B);
+    TH = tmp;
 }
 
 # PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
@@ -380,9 +366,9 @@ define pcodeop DivideWordExtended4;
     # C low 4 bytes to TH high 4 bytes
     tmp = zext(c);
     tmp = tmp << 32;
+    divOverflow(A,B);
     TH = tmp;
 
-    divOverflow(A,B);
     cr0flags(TH);
 }
 
@@ -460,9 +446,8 @@ define pcodeop DivideWordExtended4;
     # C low 4 bytes to TH high 4 bytes
     tmp = zext(c);
     tmp = tmp << 32;
-    TH = tmp;
-
     divOverflow(A,B);
+    TH = tmp;
 }
 
 # PowerISA II: 3.3.8 Fixed-Point Arithmetic Instructions
@@ -487,9 +472,9 @@ define pcodeop DivideWordExtended4;
     # C low 4 bytes to TH high 4 bytes
     tmp = zext(c);
     tmp = tmp << 32;
+    divOverflow(A,B);
     TH = tmp;
 
-    divOverflow(A,B);
     cr0flags(TH);
 }
 
@@ -502,14 +487,7 @@ define pcodeop DivideWordExtended4;
 # binutils: power7.d:  e0:      7e 8a 03 f4     popcntd r10,r20
 # name	 popcntd	 code	 7c0003f4	 mask	 ffff00fc00000000	 flags	 @POWER7 @A2 	 operands	31	 3b	0	0	0	0	0	0	 																																																																																																																																																																																																																																														
 :popcntd A,S is $(NOTVLE) & OP=31 & S & A & XOP_1_10=506 & Rc & BITS_11_15=0 { 
-	n:8 = 0;
-    i:8 = 0;
-    tmp:8 = 0;
-	<loop>
-       tmp = (S >> (64 - (i*8+7))); b:8 = tmp & 1; 
-       n = n + b;
-    if (i < 63) goto <loop>;
-    A = n;
+	A = popcount(S);
 } 
 
 # =======================================================================
@@ -840,7 +818,7 @@ define pcodeop DetermineLeftmostZeroByte;
    if ( tmpX == 8 ) goto <done_searching>;
       tmpX = tmpX + 1;
 
-   if ( ( ( tmpD << ( (tmpX - 1) * 8 ) ) & 0xFF00000000000000 ) != 0 ) goto <unmatched>;
+   if ( ( ( tmpD << ( (tmpX-1) * 8 ) ) & 0xFF00000000000000 ) != 0 ) goto <unmatched>;
 
    <done_searching>
 
@@ -886,12 +864,12 @@ define pcodeop  DetermineLeftmostZeroByte1;
    <unmatched>
 
    if ( tmpX == 8 ) goto <done_searching>;
-      tmpX = tmpX + 1;
+   tmpX = tmpX + 1;
 
    if ( ( ( tmpD << ( (tmpX - 1) * 8 ) ) & 0xFF00000000000000 ) != 0 ) goto <unmatched>;
 
-      # matched
-      tmpY = 1;
+   # matched
+   tmpY = 1;
 
    <done_searching>
 
@@ -907,38 +885,22 @@ define pcodeop  DetermineLeftmostZeroByte1;
    # Rc section
 
    # Set bit 35 of CR to SO
-@ifdef BIT_64
-   cr0 = ( cr0 & 0xFFFFFFFFEFFFFFFF ) | ( xer_so << 28 );
-@else
-   cr0 = ( cr0 & 0xEFFFFFFF ) | ( xer_so << 28 );
-@endif
+   cr0 = (cr0 & 0xe) | zext( xer_so & 1);
+
 
    # Set bits 32:34 of CR
    if ( tmpY != 1 ) goto <no_match>;
 
    if ( tmpX >= 5 ) goto <high_bytes>;
-@ifdef BIT_64
-      cr0 = ( cr0 & 0xFFFFFFFF1FFFFFFF ) | 0x0000000040000000;
-@else
-      cr0 = ( cr0 & 0x1FFFFFFF ) | 0x40000000;
-@endif
+      cr0 = ( cr0 & 0x1 ) | 4;
       goto <finished>;
 
    <high_bytes>
-@ifdef BIT_64
-      cr0 = ( cr0 & 0xFFFFFFFF1FFFFFFF ) | 0x0000000080000000;
-@else
-      cr0 = ( cr0 & 0x1FFFFFFF ) | 0x80000000;
-@endif
+      cr0 =  ( cr0 & 0x1 ) | 8;
       goto <finished>;
 
    <no_match>
-@ifdef BIT_64
-      cr0 = ( cr0 & 0xFFFFFFFF1FFFFFFF ) | 0x0000000020000000;
-@else
-      cr0 = ( cr0 & 0x1FFFFFFF ) | 0x20000000;
-@endif
-
+      cr0 = ( cr0 & 0x1 ) | 2;
    <finished>
 }
 
@@ -1683,16 +1645,16 @@ define pcodeop eieioOp;
 # binutils-descr: "divdeuo",	XO(31,393,1,0),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
 # binutils: mytest.d:   28:	7c 64 2f 12 	divdeuo r3,r4,r5
 :divdeuo RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=393 & OE=1 & Rc=0 & RT & A & B  { 
-	RT = A/B;
 	divOverflow(A,B);
+	RT = A/B;
 } 
 
 # binutils-descr: "divdeuo.",	XO(31,393,1,1),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
 define pcodeop divdeuoDotOp;
 # binutils: mytest.d:   2c:	7c 64 2f 13 	divdeuo. r3,r4,r5
 :divdeuo. RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=393 & OE=1 & Rc=1 & RT & A & B  { 
-	RT = A/B;
 	divOverflow(A,B);
+	RT = A/B;
 	cr0flags(RT);
 } 
 
@@ -1726,16 +1688,16 @@ define pcodeop stfddxOp;
 define pcodeop divdeoOp;
 # binutils: mytest.d:   38:	7c 64 2f 52 	divdeo  r3,r4,r5
 :divdeo RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=425 & OE=1 & Rc=0 & RT & A & B  { 
-	RT = A s/ B;
 	divOverflow(A,B);
+	RT = A s/ B;
 } 
 
 # binutils-descr: "divdeo.",	XO(31,425,1,1),	XO_MASK,  POWER7|PPCA2,	PPCNONE,	{RT, RA, RB}
 define pcodeop divdeoDotOp;
 # binutils: mytest.d:   3c:	7c 64 2f 53 	divdeo. r3,r4,r5
 :divdeo. RT,A,B is $(NOTVLE) & OP=31 & XOP_1_9=425 & OE=1 & Rc=1 & RT & A & B  { 
-	RT = A s/ B;
 	divOverflow(A,B);
+	RT = A s/ B;
 	cr0flags(RT);
 } 
 
@@ -2574,10 +2536,12 @@ define pcodeop InstructionCacheBlockLockSetX;
 
 :cmpeqb CRFD,A,B			is $(NOTVLE) & OP=31 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=224 & A & B & CRFD {
 	tmpa:1 = A:1;
-	CRFD = (tmpa == B[0,8]) | (tmpa == B[8,8]) | (tmpa == B[16,8]) | (tmpa == B[24,8]);
+	match:1 = (tmpa == B[0,8]) | (tmpa == B[8,8]) | (tmpa == B[16,8]) | (tmpa == B[24,8]);
 @if REGISTER_SIZE == "8"
-	CRFD = CRFD | (tmpa == B[32,8]) | (tmpa == B[40,8]) | (tmpa == B[48,8]) | (tmpa == B[56,8]);
+	match = match | (tmpa == B[32,8]) | (tmpa == B[40,8]) | (tmpa == B[48,8]) | (tmpa == B[56,8]);
 @endif
+	# 0b0 | match | 0b0 | 0b0
+	CRFD = (match & 1) << 2;
 }
 
 :cmprb CRFD,L2,A,B		is $(NOTVLE) & OP=31 & BIT_22=0 & BIT_0=0 & XOP_1_10=192 & A & B & CRFD & L2 {
@@ -2586,7 +2550,9 @@ define pcodeop InstructionCacheBlockLockSetX;
 	tmp1hi:1 = B[24,8];
 	tmp2lo:1 = B[0,8];
 	tmp2hi:1 = B[8,8];
-	CRFD = ((tmpin >= tmp2lo) & (tmpin <= tmp2hi)) | (((tmpin >= tmp1lo) & (tmpin <= tmp1hi)) * L2:1);
+	in_range:1 = ((tmpin >= tmp2lo) & (tmpin <= tmp2hi)) | (((tmpin >= tmp1lo) & (tmpin <= tmp1hi)) * L2:1);
+	# 0b0 | in_range | 0b0 | 0b0
+	CRFD = (in_range & 1) << 2;
 }
 
 :cnttzw A,S				is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=538 & Rc=0 {
@@ -2731,9 +2697,8 @@ define pcodeop InstructionCacheBlockLockSetX;
 
 :setb D,BFA				is $(NOTVLE) & OP=31 & BITS_11_17=0 & BIT_0=0 & XOP_1_10=128 & D & BFA {
 	tmpcr:8 = 1 << (8 * BFA:1);
-	tmpr0:1 = (crall & tmpcr) != 0;
-	tmpr1:1 = (crall & (tmpcr << 1)) != 0;
-	
+	tmpr0:1 = (BFA & 0x8) != 0;
+	tmpr1:1 = (BFA & 0x4) != 0;
 	D = (-1 * zext(tmpr0)) + (1 * zext(tmpr0 == 0) * zext(tmpr1));
 }
 

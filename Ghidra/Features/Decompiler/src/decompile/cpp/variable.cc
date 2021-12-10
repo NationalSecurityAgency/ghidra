@@ -153,6 +153,9 @@ void HighVariable::updateType(void) const
   vn = getTypeRepresentative();
 
   type = vn->getType();
+  if (type->hasStripped())
+    type = type->getStripped();
+
 				// Update lock flags
   flags &= ~Varnode::typelock;
   if (vn->isTypeLock())
@@ -523,23 +526,23 @@ int4 HighVariable::markExpression(Varnode *vn,vector<HighVariable *> &highList)
       path.pop_back();
       continue;
     }
-    Varnode *vn = node.op->getIn(node.slot);
+    Varnode *curVn = node.op->getIn(node.slot);
     node.slot += 1;
-    if (vn->isAnnotation()) continue;
-    if (vn->isExplicit()) {
-      high = vn->getHigh();
+    if (curVn->isAnnotation()) continue;
+    if (curVn->isExplicit()) {
+      high = curVn->getHigh();
       if (high->isMark()) continue;	// Already in the list
       high->setMark();
       highList.push_back(high);
       continue;				// Truncate at explicit
     }
-    if (!vn->isWritten()) continue;
-    op = vn->getDef();
+    if (!curVn->isWritten()) continue;
+    op = curVn->getDef();
     if (op->isCall())
       retVal |= 1;
     if (op->code() == CPUI_LOAD)
       retVal |= 2;
-    path.push_back(PcodeOpNode(vn->getDef(),0));
+    path.push_back(PcodeOpNode(curVn->getDef(),0));
   }
   return retVal;
 }

@@ -346,10 +346,13 @@ int main(int argc,char **argv)
 --
 --LNK=src/libsla.a
 --
+--libsla.a:
+--	$(MAKE) -C src/ $@
+--
 --sleighexample.o:	sleighexample.cc
 --	$(CXX) -c $(DBG_CXXFLAGS) $(INCLUDES) $< -o $@
 --
---sleighexample:	sleighexample.o
+--sleighexample:	sleighexample.o libsla.a
 --	$(CXX) $(DBG_CXXFLAGS) -o sleighexample sleighexample.o $(LNK)
 --
 --clean:
