@@ -147,6 +147,8 @@ public interface DebuggerResources {
 	ImageIcon ICON_READ_MEMORY = ICON_REGIONS;
 	//ResourceManager.loadImage("images/read-memory.png");
 
+	ImageIcon ICON_RENAME_SNAPSHOT = ICON_TIME;
+
 	// TODO: Draw an icon
 	ImageIcon ICON_MAP_IDENTICALLY = ResourceManager.loadImage("images/doubleArrow.png");
 	ImageIcon ICON_MAP_MODULES = ResourceManager.loadImage("images/modules.png");
@@ -175,6 +177,10 @@ public interface DebuggerResources {
 	ImageIcon ICON_EMULATE = ICON_PROCESS; // TODO
 	ImageIcon ICON_CONFIG = ResourceManager.loadImage("images/conf.png");
 	ImageIcon ICON_TOGGLE = ResourceManager.loadImage("images/system-switch-user.png");
+
+	ImageIcon ICON_DIFF = ResourceManager.loadImage("images/table_relationship.png");
+	ImageIcon ICON_DIFF_PREV = ResourceManager.loadImage("images/up.png");
+	ImageIcon ICON_DIFF_NEXT = ResourceManager.loadImage("images/down.png");
 
 	HelpLocation HELP_PACKAGE = new HelpLocation("Debugger", "package");
 
@@ -368,6 +374,7 @@ public interface DebuggerResources {
 	String GROUP_TRACE_CLOSE = "Dbg7.b. Trace Close";
 	String GROUP_MAINTENANCE = "Dbg8. Maintenance";
 	String GROUP_MAPPING = "Dbg9. Map Modules/Sections";
+	String GROUP_DIFF_NAV = "DiffNavigate";
 
 	static void tableRowActivationAction(GTable table, Runnable runnable) {
 		table.addMouseListener(new MouseAdapter() {
@@ -1639,6 +1646,26 @@ public interface DebuggerResources {
 		}
 	}
 
+	// TODO: Perhaps to reduce overloading of "snapshot" we should use "event" instead?
+	interface RenameSnapshotAction {
+		String NAME = "Rename Current Snapshot";
+		String DESCRIPTION =
+			"Modify the description of the snapshot (event) in the current view";
+		String GROUP = GROUP_TRACE;
+		Icon ICON = ICON_RENAME_SNAPSHOT;
+		String HELP_ANCHOR = "rename_snapshot";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuGroup(GROUP, "zzz")
+					.keyBinding("CTRL SHIFT N")
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
 	interface SynchronizeFocusAction {
 		String NAME = "Synchronize Focus";
 		String DESCRIPTION = "Synchronize trace activation with debugger focus/select";
@@ -1872,6 +1899,57 @@ public interface DebuggerResources {
 					.description(DESCRIPTION)
 					.menuGroup(GROUP_GENERAL)
 					.menuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface CompareTimesAction {
+		String NAME = "Compare";
+		String DESCRIPTION = "Compare this point in time to another";
+		String GROUP = "zzz"; // Same as for "Diff" action
+		Icon ICON = ICON_DIFF;
+		String HELP_ANCHOR = "compare";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarGroup(GROUP)
+					.toolBarIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface PrevDifferenceAction {
+		String NAME = "Previous Difference";
+		String DESCRIPTION = "Go to the previous highlighted difference";
+		String GROUP = GROUP_DIFF_NAV;
+		Icon ICON = ICON_DIFF_PREV;
+		String HELP_ANCHOR = "prev_diff";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarGroup(GROUP)
+					.toolBarIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface NextDifferenceAction {
+		String NAME = "Next Difference";
+		String DESCRIPTION = "Go to the next highlighted difference";
+		String GROUP = GROUP_DIFF_NAV;
+		Icon ICON = ICON_DIFF_NEXT;
+		String HELP_ANCHOR = "next_diff";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarGroup(GROUP)
+					.toolBarIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

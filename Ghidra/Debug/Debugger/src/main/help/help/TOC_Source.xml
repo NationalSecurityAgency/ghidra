@@ -157,6 +157,10 @@
 			        sortgroup="p"
 			        target="help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html" />
 
+			<tocdef id="DebuggerTraceDiffPlugin" text="Comparing Times"
+			        sortgroup="p1"
+			        target="help/topics/DebuggerTraceViewDiffPlugin/DebuggerTraceViewDiffPlugin.html" />
+			
 			<tocdef id="DebuggerBots" text="Bots: Workflow Automation" 
 			        sortgroup="q" 
 			        target="help/topics/DebuggerBots/DebuggerBots.html" />

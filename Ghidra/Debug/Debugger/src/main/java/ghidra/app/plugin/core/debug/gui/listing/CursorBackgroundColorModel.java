@@ -26,6 +26,7 @@ import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.AutoOptions.Wiring;
 import ghidra.framework.options.annotation.AutoOptionConsumed;
+import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 
@@ -41,7 +42,7 @@ class CursorBackgroundColorModel implements ListingBackgroundColorModel {
 	@SuppressWarnings("unused")
 	private final Wiring autoOptionsWiring;
 
-	public CursorBackgroundColorModel(DebuggerListingPlugin plugin, ListingPanel listingPanel) {
+	public CursorBackgroundColorModel(Plugin plugin, ListingPanel listingPanel) {
 		autoOptionsWiring = AutoOptions.wireOptions(plugin, this);
 		modelDataChanged(listingPanel);
 	}

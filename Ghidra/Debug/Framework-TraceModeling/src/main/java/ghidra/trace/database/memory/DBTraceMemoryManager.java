@@ -328,6 +328,17 @@ public class DBTraceMemoryManager
 	}
 
 	@Override
+	public Long getSnapOfMostRecentChangeToBlock(long snap, Address address) {
+		return delegateRead(address.getAddressSpace(),
+			m -> m.getSnapOfMostRecentChangeToBlock(snap, address));
+	}
+
+	@Override
+	public int getBlockSize() {
+		return DBTraceMemorySpace.BLOCK_SIZE;
+	}
+
+	@Override
 	public void pack() {
 		delegateWriteAll(getActiveSpaces(), m -> m.pack());
 	}
