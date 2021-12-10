@@ -85,6 +85,37 @@ public class OrganizationNodeTest extends AbstractDockingTest {
 	}
 
 	@Test
+	public void testInsertNodeMixedCase() {
+		List<GTreeNode> nodeList = nodes("Aaa", "AAa", "Aab", "AAb", "AAc", "Aac", "AAd", "Aad",
+			"AAe", "Aae", "AAf", "Aaf", "Z");
+		List<GTreeNode> result = organize(nodeList, 3);
+		// this in two nodes, the group starting with "A" and the node "Z" (Z) was added so that
+		// an "A" group would be a top level group
+
+		OrganizationNode groupA = (OrganizationNode) result.get(0);
+		assertEquals("A", groupA.getName());
+
+		assertEquals(2, groupA.getChildCount());
+		OrganizationNode groupAa = (OrganizationNode) groupA.getChild(0);
+		OrganizationNode groupAA = (OrganizationNode) groupA.getChild(1);
+		assertEquals("Aa", groupAa.getName());
+		assertEquals("AA", groupAA.getName());
+		assertEquals(6, groupAa.getChildCount());
+		assertEquals(6, groupAA.getChildCount());
+
+		groupA.insertNode(node("AAaz"));
+		// node should be added to AA group
+		assertEquals(6, groupAa.getChildCount());
+		assertEquals(7, groupAA.getChildCount());
+
+		groupA.insertNode(node("Aaaz"));
+		// node should be added to Aa group
+		assertEquals(7, groupAa.getChildCount());
+		assertEquals(7, groupAA.getChildCount());
+
+	}
+
+	@Test
 	public void testManySameLabels() {
 		List<GTreeNode> nodeList =
 			nodes("A", "DUP", "DUP", "DUP", "DUP", "DUP", "DUP", "DUP", "DUP", "DUP", "DUP",

@@ -300,7 +300,7 @@ public class OrganizationNode extends SymbolTreeNode {
 	public int compareTo(GTreeNode node) {
 		if (!(node instanceof OrganizationNode)) {
 			String nodeName = node.getName();
-			if (nodeName.regionMatches(true, 0, baseName, 0, baseName.length())) {
+			if (nodeName.regionMatches(false, 0, baseName, 0, baseName.length())) {
 				// Consider this node equal to the org node, as the symbol node will be a child
 				// of this org node.  This allows us to quickly search for the parent of any
 				// given symbol node.
