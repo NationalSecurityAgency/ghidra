@@ -285,6 +285,11 @@ public abstract class DebuggerReadsMemoryTrait {
 		return autoSpec;
 	}
 
+	/* testing */
+	public AddressSetView getVisible() {
+		return visible;
+	}
+
 	protected abstract AddressSetView getSelection();
 
 	protected abstract void repaintPanel();

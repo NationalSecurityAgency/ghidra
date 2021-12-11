@@ -192,13 +192,13 @@ class DomainObjectChangeSupport {
 
 	private List<DomainObjectListener> atomicAddListener(DomainObjectListener l) {
 
-		List<DomainObjectListener> previousLisetners = new ArrayList<>();
+		List<DomainObjectListener> previousListeners = new ArrayList<>();
 		for (DomainObjectListener listener : listeners) {
-			previousLisetners.add(listener);
+			previousListeners.add(listener);
 		}
 
 		listeners.add(l);
-		return previousLisetners;
+		return previousListeners;
 	}
 
 //==================================================================================================

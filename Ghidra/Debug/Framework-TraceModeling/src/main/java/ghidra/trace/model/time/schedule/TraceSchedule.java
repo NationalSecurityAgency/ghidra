@@ -345,6 +345,22 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	}
 
 	/**
+	 * Validate this schedule for the given trace
+	 * 
+	 * <p>
+	 * This performs a dry run of the sequence on the given trace. If the schedule starts on the
+	 * "last thread," it verifies the snapshot gives the event thread. It also checks that every
+	 * thread key in the sequence exists in the trace.
+	 * 
+	 * @param trace the trace against which to validate this schedule
+	 */
+	public void validate(Trace trace) {
+		TraceThread lastThread = getEventThread(trace);
+		lastThread = steps.validate(trace, lastThread);
+		lastThread = pSteps.validate(trace, lastThread);
+	}
+
+	/**
 	 * Realize the machine state for this schedule using the given trace and pre-positioned machine
 	 * 
 	 * <p>
@@ -385,13 +401,13 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * This schedule is left unmodified. If it had any p-code steps, those steps are dropped in the
 	 * resulting schedule.
 	 * 
-	 * @param thread the thread to step
+	 * @param thread the thread to step, or null for the "last thread"
 	 * @param tickCount the number of ticks to take the thread forward
 	 * @return the resulting schedule
 	 */
 	public TraceSchedule steppedForward(TraceThread thread, long tickCount) {
 		Sequence steps = this.steps.clone();
-		steps.advance(new TickStep(thread.getKey(), tickCount));
+		steps.advance(new TickStep(thread == null ? -1 : thread.getKey(), tickCount));
 		return new TraceSchedule(snap, steps, new Sequence());
 	}
 
@@ -441,13 +457,13 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * Returns the equivalent of executing the schedule followed by stepping the given thread
 	 * {@code pTickCount} more p-code operations
 	 * 
-	 * @param thread the thread to step
+	 * @param thread the thread to step, or null for the "last thread"
 	 * @param pTickCount the number of p-code ticks to take the thread forward
 	 * @return the resulting schedule
 	 */
 	public TraceSchedule steppedPcodeForward(TraceThread thread, int pTickCount) {
 		Sequence pTicks = this.pSteps.clone();
-		pTicks.advance(new TickStep(thread.getKey(), pTickCount));
+		pTicks.advance(new TickStep(thread == null ? -1 : thread.getKey(), pTickCount));
 		return new TraceSchedule(snap, steps.clone(), pTicks);
 	}
 

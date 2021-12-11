@@ -16,16 +16,22 @@
 package ghidra.app.plugin.core.debug.gui;
 
 import docking.ActionContext;
+import ghidra.trace.model.Trace;
 
 public class DebuggerSnapActionContext extends ActionContext {
-	private final long tick;
+	private final Trace trace;
+	private final long snap;
 
-	public DebuggerSnapActionContext(long tick) {
-		// TODO: Also require track object?
-		this.tick = tick;
+	public DebuggerSnapActionContext(Trace trace, long snap) {
+		this.trace = trace;
+		this.snap = snap;
 	}
 
-	public long getTick() {
-		return tick;
+	public Trace getTrace() {
+		return trace;
+	}
+
+	public long getSnap() {
+		return snap;
 	}
 }

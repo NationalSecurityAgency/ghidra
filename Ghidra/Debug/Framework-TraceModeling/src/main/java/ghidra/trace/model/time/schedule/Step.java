@@ -91,8 +91,8 @@ public interface Step extends Comparable<Step> {
 		TraceThread thread = isEventThread() ? eventThread : tm.getThread(getThreadKey());
 		if (thread == null) {
 			if (isEventThread()) {
-				throw new IllegalArgumentException(
-					"Thread key -1 can only be used if last/event thread is given");
+				throw new IllegalArgumentException("Thread must be given, e.g., 0:t1-3, " +
+					"since the last thread or snapshot event thread is not given.");
 			}
 			throw new IllegalArgumentException(
 				"Thread with key " + getThreadKey() + " does not exist in given trace");
@@ -160,6 +160,10 @@ public interface Step extends Comparable<Step> {
 			PcodeMachine<T> machine, Consumer<PcodeThread<T>> stepAction, TaskMonitor monitor)
 			throws CancelledException {
 		TraceThread thread = getThread(tm, eventThread);
+		if (machine == null) {
+			// Just performing validation (specifically thread parts)
+			return thread;
+		}
 		PcodeThread<T> emuThread = machine.getThread(thread.getPath(), true);
 		execute(emuThread, stepAction, monitor);
 		return thread;
