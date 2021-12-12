@@ -6,14 +6,16 @@ set -o pipefail
 # sonatype, so that we can promote it to maven central:
 # https://repo1.maven.org/maven2/io/shiftleft/ghidra/
 # see also https://github.com/NationalSecurityAgency/ghidra/issues/799
-VERSION=10.0_PUBLIC_20210621
-VERSION_SHORT=10.0_PUBLIC
+VERSION=10.1_PUBLIC_20211210
+VERSION_SHORT=10.1_PUBLIC
+VERSION_SHORTER=10.1
 SONATYPE_URL=https://oss.sonatype.org/service/local/staging/deploy/maven2/
 # the server id from your local ~/.m2/settings.xml
 REPO_ID=sonatype-nexus-staging
 
-echo "download and unzip ghidra distribution"
-wget https://ghidra-sre.org/ghidra_${VERSION}.zip
+DISTRO_URL=https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${VERSION_SHORTER}_build/ghidra_${VERSION}.zip
+echo "download and unzip ghidra distribution from $DISTRO_URL"
+wget $DISTRO_URL
 unzip ghidra_$VERSION.zip
 rm ghidra_$VERSION.zip
 cd ghidra_${VERSION_SHORT}
