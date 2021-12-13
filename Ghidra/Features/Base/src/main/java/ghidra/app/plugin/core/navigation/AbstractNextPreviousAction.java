@@ -74,7 +74,7 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 
 		try {
 			boolean direction = isForward;
-			if ((context.getEventModifiers() & ActionEvent.SHIFT_MASK) != 0) {
+			if ((context.getEventClickModifiers() & ActionEvent.SHIFT_MASK) != 0) {
 				direction = !direction;
 			}
 
@@ -123,7 +123,7 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 
 	private String getDescriptionString() {
 		String prefix = isForward ? "Go To Next " : "Go To Previous ";
-		return prefix + getNavigationTypeName() + " (shift inverts direction)";
+		return prefix + getNavigationTypeName() + " (shift-click inverts direction)";
 	}
 
 	abstract protected String getNavigationTypeName();

@@ -116,7 +116,7 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 		ActionContext context = getActionContext();
 
 		context.setSourceObject(event.getSource());
-		context.setEventModifiers(event.getModifiers());
+		context.setEventClickModifiers(event.getModifiers());
 
 		// this gives the UI some time to repaint before executing the action
 		SwingUtilities.invokeLater(() -> {

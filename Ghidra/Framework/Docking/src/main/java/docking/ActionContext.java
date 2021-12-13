@@ -78,7 +78,7 @@ public class ActionContext {
 	private MouseEvent mouseEvent;
 	private Object contextObject;
 	private Object sourceObject;
-	private int eventModifiers;
+	private int eventClickModifiers;
 	private ActionContext globalContext;
 
 	// Note: the setting of this object is delayed.  This allows clients to build-up the state
@@ -185,25 +185,25 @@ public class ActionContext {
 	}
 
 	/**
-	 * Sets the modifiers for this event.
+	 * Sets the modifiers for this event that were present when the item was clicked on.
 	 * 
 	 * @param modifiers bit-masked int, see {@link ActionEvent#getModifiers()} or
 	 * {@link MouseEvent#getModifiersEx()}
 	 */
-	public void setEventModifiers(int modifiers) {
-		this.eventModifiers = modifiers;
+	public void setEventClickModifiers(int modifiers) {
+		this.eventClickModifiers = modifiers;
 	}
 
 	/**
-	 * Returns the modifiers for this event.
+	 * Returns the click modifiers for this event.
 	 * <p>
 	 * Only present for some mouse assisted events, e.g. clicking on a toolbar button or choosing
 	 * a menu item in a popup menu. 
 	 * 
 	 * @return bit-masked int, see {@link InputEvent#SHIFT_MASK}, etc
 	 */
-	public int getEventModifiers() {
-		return eventModifiers;
+	public int getEventClickModifiers() {
+		return eventClickModifiers;
 	}
 
 	/**
@@ -229,7 +229,7 @@ public class ActionContext {
 	 */
 	public ActionContext setMouseEvent(MouseEvent e) {
 		this.mouseEvent = e;
-		this.eventModifiers = e.getModifiersEx();
+		this.eventClickModifiers = e.getModifiersEx();
 		return this;
 	}
 

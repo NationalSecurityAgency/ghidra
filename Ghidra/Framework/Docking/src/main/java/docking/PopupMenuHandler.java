@@ -48,7 +48,7 @@ public class PopupMenuHandler extends MenuHandler {
         
 		DockingWindowManager.clearMouseOverHelp();
 		actionContext.setSourceObject(event.getSource());
-		actionContext.setEventModifiers(event.getModifiers());
+		actionContext.setEventClickModifiers(event.getModifiers());
 		
 		// this gives the UI some time to repaint before executing the action
         SwingUtilities.invokeLater( new Runnable() {
