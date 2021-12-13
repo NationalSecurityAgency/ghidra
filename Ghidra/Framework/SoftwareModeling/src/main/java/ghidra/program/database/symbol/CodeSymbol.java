@@ -218,29 +218,8 @@ public class CodeSymbol extends SymbolDB {
 	 */
 	@Override
 	public boolean isValidParent(Namespace parent) {
-		return SymbolType.LABEL.isValidParent(symbolMgr.getProgram(), parent, address,
-			isExternal());
-
-//		if (isExternal() != parent.isExternal()) {
-//			return false;
-//		}
-//		Symbol newParentSym = parent.getSymbol();
-//		if (symbolMgr.getProgram() != newParentSym.getProgram()) {
-//			return false;
-//		}
-//		SymbolDB functionSymbol = symbolMgr.getFunctionSymbol(parent);
-//		if (functionSymbol != null) {
-//			if (isExternal()) {
-//				return false;
-//			}
-//			CodeUnit cu = (CodeUnit) getObject();
-//			if (cu != null) {
-//				Function function = (Function) functionSymbol.getObject();
-//				return function.getBody().contains(cu.getMinAddress());
-//			}
-//			return false;
-//		}
-//		return true;
+		return super.isValidParent(parent) &&
+			SymbolType.LABEL.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
 	}
 
 	@Override

@@ -39,8 +39,8 @@ public interface Namespace {
 	public static final String NAMESPACE_DELIMITER = "::";
 
 	/**
-	 * Get the symbol for this namespace; Note: The global namespace will return null
-	 * @return the symbol for this namespace; Note: The global namespace will return null
+	 * Get the symbol for this namespace.
+	 * @return the symbol for this namespace.
 	 */
 	public Symbol getSymbol();
 

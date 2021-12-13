@@ -91,23 +91,7 @@ public class NamespaceSymbol extends SymbolDB {
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		// TODO: Not sure what other constraints should be placed on namespace movement
-		return SymbolType.NAMESPACE.isValidParent(symbolMgr.getProgram(), parent, address,
-			isExternal());
-
-//		if (parent == symbolMgr.getProgram().getGlobalNamespace()) {
-//			return true;
-//		}
-//		if (isExternal() != parent.isExternal()) {
-//			return false;
-//		}
-//		Symbol newParentSym = parent.getSymbol();
-//		if (symbolMgr.getProgram() != newParentSym.getProgram()) {
-//			return false;
-//		}
-//		if (isExternal() && symbolMgr.getFunctionSymbol(parent) != null) {
-//			// External function can not have a child namespace
-//			return false;
-//		}
-//		return true;
+		return super.isValidParent(parent) && SymbolType.NAMESPACE
+				.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
 	}
 }

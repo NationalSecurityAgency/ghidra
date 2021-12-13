@@ -27,6 +27,7 @@ import db.*;
 import ghidra.program.database.*;
 import ghidra.program.database.code.CodeManager;
 import ghidra.program.database.external.ExternalManagerDB;
+import ghidra.program.database.function.FunctionDB;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.references.ReferenceDBManager;
@@ -582,8 +583,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			return new VariableSymbolDB(this, cache, type, variableStorageMgr, addr, record);
 		}
 		else if (type == SymbolType.GLOBAL_VAR) {
-// TODO: Should this be a variable symbol which can return a variable ??
-			return new GlobalRegisterSymbol(this, cache, addr, record);
+			return new GlobalVariableSymbolDB(this, cache, variableStorageMgr, addr, record);
 		}
 		throw new IllegalArgumentException("No symbol type for " + type);
 	}
@@ -884,6 +884,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			namespace = program.getGlobalNamespace();
 		}
 
+		checkValidNamespaceArgument(namespace);
+
 		long namespaceId = namespace.getID();
 
 		lock.acquire();
@@ -966,6 +968,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			namespace = namespaceMgr.getGlobalNamespace();
 		}
 
+		checkValidNamespaceArgument(namespace);
+
 		// if name is possible default parameter or local variable name, must do brute force search
 		if (namespace instanceof Function &&
 			SymbolUtilities.isPossibleDefaultLocalOrParamName(name)) {
@@ -1040,6 +1044,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			namespace = namespaceMgr.getGlobalNamespace();
 		}
 
+		checkValidNamespaceArgument(namespace);
+
 		// if name is possible default parameter or local variable name, must do brute force search
 		if (namespace instanceof Function &&
 			SymbolUtilities.isPossibleDefaultLocalOrParamName(name)) {
@@ -1090,6 +1096,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public SymbolIterator getSymbols(Namespace namespace) {
+		checkValidNamespaceArgument(namespace);
 		return getSymbols(namespace.getID());
 	}
 
@@ -2472,7 +2479,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * Creates variable symbols. Note this is not a method defined in the Symbol Table interface.
 	 * It is intended to be used by Ghidra program internals.
 	 * @param name the name of the variable
-	 * @param namespace the function that contains the variable.
+	 * @param function the function that contains the variable.
 	 * @param type the type of the variable (can only be PARAMETER or LOCAL_VAR)
 	 * @param firstUseOffsetOrOrdinal the offset in the function where the variable is first used.
 	 * @param storage the VariableStorage (stack, registers, etc.)
@@ -2481,7 +2488,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * @throws DuplicateNameException if there is another variable in this function with that name.
 	 * @throws InvalidInputException if the name contains illegal characters (space for example)
 	 */
-	public VariableSymbolDB createVariableSymbol(String name, Namespace namespace, SymbolType type,
+	public VariableSymbolDB createVariableSymbol(String name, FunctionDB function, SymbolType type,
 			int firstUseOffsetOrOrdinal, VariableStorage storage, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
 
@@ -2489,16 +2496,13 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			throw new IllegalArgumentException("Invalid symbol type for variable: " + type);
 		}
 
-		if (!(namespace instanceof Function)) {
-			throw new IllegalArgumentException(
-				"Function must be namespace for local variable or parameter");
-		}
+		checkValidNamespaceArgument(function);
 
 		lock.acquire();
 		try {
 			source = adjustSourceTypeIfNecessary(name, type, source, storage);
 			Address varAddr = variableStorageMgr.getVariableStorageAddress(storage, true);
-			return (VariableSymbolDB) doCreateSpecialSymbol(varAddr, name, namespace, type, null,
+			return (VariableSymbolDB) doCreateSpecialSymbol(varAddr, name, function, type, null,
 				Integer.valueOf(firstUseOffsetOrOrdinal), null, source, true);
 		}
 		catch (IOException e) {
@@ -2553,7 +2557,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		lock.acquire();
 		try {
 
-			checkIsValidNamespaceForMyProgram(namespace);
+			checkValidNamespaceArgument(namespace);
 
 			Symbol namespaceSymbol = namespace.getSymbol();
 			String name = namespaceSymbol.getName();
@@ -2589,33 +2593,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		}
 	}
 
-	private void checkIsValidNamespaceForMyProgram(Namespace namespace) {
-
-		if (namespace == null) {
-			return;
-		}
-
-		if (namespace == program.getGlobalNamespace()) {
-			return;
-		}
-
-		Symbol symbol = namespace.getSymbol();
-		if (!(symbol instanceof SymbolDB)) {
-			// unexpected namespace type; all supported types will be db objects
-			throw new IllegalArgumentException(
-				"Namespace is not a valid parent for symbols: " + namespace.getClass());
-		}
-
-		SymbolDB dbSymbol = (SymbolDB) symbol;
-		if (program != dbSymbol.getProgram()) {
-			throw new IllegalArgumentException(
-				"Namespace symbol is from a different program");
-		}
-
-		// may throw a ConcurrentModificationException
-		dbSymbol.checkDeleted();
-	}
-
 	@Override
 	public Namespace getOrCreateNameSpace(Namespace parent, String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
@@ -2623,7 +2600,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		lock.acquire();
 		try {
 
-			checkIsValidNamespaceForMyProgram(parent);
+			checkValidNamespaceArgument(parent);
 
 			Symbol namespaceSymbol = getFirstSymbol(name, parent, s -> {
 				return s.getSymbolType() == SymbolType.NAMESPACE ||
@@ -2718,7 +2695,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	@Override
 	public Symbol createLabel(Address addr, String name, SourceType source)
 			throws InvalidInputException {
-
 		return createLabel(addr, name, null, source);
 	}
 
@@ -2909,6 +2885,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 		namespace = namespace == null ? namespaceMgr.getGlobalNamespace() : namespace;
 
+		checkValidNamespaceArgument(namespace);
+
 		checkAddressAndNameSpaceValidForSymbolType(addr, namespace, type);
 
 		return namespace;
@@ -3072,5 +3050,19 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	private Symbol getSpecificSymbol(String name, Namespace namespace, SymbolType type) {
 		return getFirstSymbol(name, namespace, s -> s.getSymbolType() == type);
+	}
+
+	void checkValidNamespaceArgument(Namespace namespace) throws IllegalArgumentException {
+		if (!isMyNamespace(namespace)) {
+			String kind = (namespace instanceof Function) ? "function" : "namespace";
+			throw new IllegalArgumentException(
+				kind + " is from different program instance: " + namespace);
+		}
+	}
+
+	boolean isMyNamespace(Namespace namespace) {
+		Symbol newNamespaceSymbol = namespace.getSymbol();
+		return newNamespaceSymbol != null && !newNamespaceSymbol.isDeleted() &&
+			(newNamespaceSymbol.getProgram() == getProgram());
 	}
 }
