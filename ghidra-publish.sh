@@ -21,6 +21,13 @@ rm ghidra_$VERSION.zip
 cd ghidra_${VERSION_SHORT}
 support/buildGhidraJar
 
+# add classes from ByteViewer.jar - those are looked up at runtime via reflection
+# context: lookup happens transitively by loading classes from _Root/Ghidra/EXTENSION_POINT_CLASSES
+unzip Ghidra/Features/ByteViewer/lib/ByteViewer.jar -d byteviewer
+cd byteviewer
+zip -r ../ghidra.jar *
+cd ..
+
 # install into local maven repo, mostly to generate a pom
 mvn install:install-file -DgroupId=io.shiftleft -DartifactId=ghidra -Dpackaging=jar -Dversion=$VERSION -Dfile=ghidra.jar -DgeneratePom=true
 cp ~/.m2/repository/io/shiftleft/ghidra/$VERSION/ghidra-$VERSION.pom pom.xml
