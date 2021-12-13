@@ -72,11 +72,6 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 	private static final String OPTION_OUTPUT_INLINE_FUNC_COMMENTS_DESC =
 		"Add comments to the start of inlined functions";
 
-	private static final String OPTION_COPY_ANON_TYPES =
-		"Create local copy of anonymous types for struct fields";
-	private static final String OPTION_COPY_ANON_TYPES_DESC =
-		"Clones anonymous types used in a struct and creates a local copy using the name of the field.";
-
 	private static final String OPTION_OUTPUT_FUNC_SIGS = "Output function signatures";
 	private static final String OPTION_OUTPUT_FUNC_SIGS_DESC =
 		"Create function signature data types for each function encountered in the DWARF debug data.";
@@ -165,6 +160,7 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 		return false;
 	}
 
+	@Deprecated(forRemoval = true, since = "10.0")
 	private boolean oldCheckIfDWARFImported(Program prog) {
 		// this was the old way of checking if the DWARF analyzer had already been run.  Keep
 		// it around for a little bit so existing programs that have already imported DWARF data
@@ -208,9 +204,6 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 		options.registerOption(OPTION_NAME_LENGTH_CUTOFF, importOptions.getNameLengthCutoff(), null,
 			OPTION_NAME_LENGTH_CUTOFF_DESC);
 
-		options.registerOption(OPTION_COPY_ANON_TYPES, importOptions.isCopyRenameAnonTypes(), null,
-			OPTION_COPY_ANON_TYPES_DESC);
-
 		options.registerOption(OPTION_OUTPUT_FUNC_SIGS, importOptions.isCreateFuncSignatures(),
 			null, OPTION_OUTPUT_FUNC_SIGS_DESC);
 	}
@@ -235,8 +228,6 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 			options.getInt(OPTION_IMPORT_LIMIT_DIE_COUNT, importOptions.getImportLimitDIECount()));
 		importOptions.setNameLengthCutoff(
 			options.getInt(OPTION_NAME_LENGTH_CUTOFF, importOptions.getNameLengthCutoff()));
-		importOptions.setCopyRenameAnonTypes(
-			options.getBoolean(OPTION_COPY_ANON_TYPES, importOptions.isCopyRenameAnonTypes()));
 		importOptions.setCreateFuncSignatures(
 			options.getBoolean(OPTION_OUTPUT_FUNC_SIGS, importOptions.isCreateFuncSignatures()));
 	}
