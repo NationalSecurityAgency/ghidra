@@ -54,7 +54,7 @@ public class FieldFactoryNameMapper {
 
 	private static FieldFactory createInstance(Class<? extends FieldFactory> factoryClass) {
 		try {
-			return factoryClass.newInstance();
+			return factoryClass.getConstructor().getConstructor().newInstance();
 		}
 		catch (IllegalAccessException e) {
 		}

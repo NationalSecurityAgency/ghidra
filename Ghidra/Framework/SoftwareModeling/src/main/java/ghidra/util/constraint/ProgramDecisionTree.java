@@ -30,7 +30,7 @@ public class ProgramDecisionTree extends DecisionTree<Program> {
 			ClassSearcher.getClasses(ProgramConstraint.class);
 		for (Class<? extends ProgramConstraint> constraintClass : classes) {
 			try {
-				ProgramConstraint contraint = constraintClass.newInstance();
+				ProgramConstraint contraint = constraintClass.getConstructor().newInstance();
 				registerConstraintType(contraint.getName(), constraintClass);
 			}
 			catch (Exception e) {

@@ -38,7 +38,7 @@ public class SaveableObjectPropertySet extends PropertySet {
 							"does not implement the Saveable interface");
 		}
 		try {
-			objectClass.newInstance();
+            objectClass.getConstructor().newInstance();
 		} catch(Exception e) {
 			throw new IllegalArgumentException("Class "+objectClass+
 				"must be public and have a public, no args, constructor");
@@ -108,7 +108,7 @@ public class SaveableObjectPropertySet extends PropertySet {
         try {
             String className = (String)ois.readObject();
             Class<?> c = Class.forName(className);	
-            Saveable obj = (Saveable)c.newInstance();
+            Saveable obj = (Saveable) c.getConstructor().newInstance();
             obj.restore(new ObjectStorageStreamAdapter(ois));	
             putObject(index, obj);
         } catch (Exception e) {

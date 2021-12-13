@@ -154,7 +154,7 @@ public class DecisionTree<T> {
 			return null;
 		}
 		try {
-			return constraintClass.newInstance();
+			return constraintClass.getConstructor().newInstance();
 		}
 		catch (Exception e) {
 			throw new XmlParseException(

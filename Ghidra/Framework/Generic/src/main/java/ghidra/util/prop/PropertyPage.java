@@ -27,6 +27,7 @@ import ghidra.util.datastruct.*;
 import ghidra.util.exception.NoValueException;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Manages property values of type int, String, Object, and
@@ -196,13 +197,17 @@ class PropertyPage implements Serializable {
 	        int row = getRow(offset,false);
 	
 			try {
-		        Saveable so = (Saveable)objectClass.newInstance();
+		        Saveable so = (Saveable) objectClass.getConstructor().newInstance();
 		        so.restore(new ObjectStorageAdapter(table, row));  
 		        return so;
 			}catch(IllegalAccessException e) {
 			}catch(InstantiationException e) {
-			}
-		}
+			} catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
         return null;
     }
 	/**

@@ -134,7 +134,7 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 	private static Stringable createStringable(String name) {
 		Class<? extends Stringable> clazz = getNameMap().get(name);
 		try {
-			return clazz.newInstance();
+			return clazz.getConstructor().newInstance();
 		}
 		catch (Exception e) {
 			// handled later by null

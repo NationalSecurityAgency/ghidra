@@ -18,6 +18,7 @@ package ghidra.app.util.headless;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
 
 import sun.java2d.HeadlessGraphicsEnvironment;
@@ -78,7 +79,7 @@ public class MyHeadlessGraphicsEnvironment extends GraphicsEnvironment {
 	
 	private void getRealGraphicsEnvironemnt() {
 		try {
-			localEnv = (GraphicsEnvironment) Class.forName(preferredGraphicsEnv).newInstance();
+			localEnv = (GraphicsEnvironment) Class.forName(preferredGraphicsEnv).getConstructor().getConstructor().newInstance();
 			if (isHeadless()) {
 				localEnv = new HeadlessGraphicsEnvironment(localEnv);
 			}
@@ -88,6 +89,10 @@ public class MyHeadlessGraphicsEnvironment extends GraphicsEnvironment {
 			throw new Error("Could not instantiate Graphics Environment: " + preferredGraphicsEnv);
 		} catch (IllegalAccessException e) {
 			throw new Error("Could not access Graphics Environment: " + preferredGraphicsEnv);
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			e.printStackTrace();
 		}
 	}
 

@@ -163,7 +163,7 @@ public class LanguageTranslatorFactory {
 				continue; // ignore utility implementations
 			}
 			try {
-				translators.add((LanguageTranslator) translatorClass.newInstance());
+				translators.add((LanguageTranslator) translatorClass.getConstructor().getConstructor().newInstance());
 			}
 			catch (Exception e) {
 				Msg.error(this,

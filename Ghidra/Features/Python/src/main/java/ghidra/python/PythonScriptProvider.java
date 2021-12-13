@@ -16,6 +16,7 @@
 package ghidra.python;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
@@ -88,10 +89,10 @@ public class PythonScriptProvider extends GhidraScriptProvider {
 
 	@Override
 	public GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
-			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+			throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 
 		Class<?> clazz = Class.forName(PythonScript.class.getName());
-		GhidraScript script = (GhidraScript) clazz.newInstance();
+		GhidraScript script = (GhidraScript) clazz.getConstructor().newInstance();
 		script.setSourceFile(sourceFile);
 		return script;
 	}

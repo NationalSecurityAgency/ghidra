@@ -54,7 +54,7 @@ public abstract class PluginPackage implements ExtensionPoint, Comparable<Plugin
 		for (Class<? extends PluginPackage> class1 : classes) {
 			PluginPackage pluginPackage;
 			try {
-				pluginPackage = class1.newInstance();
+				pluginPackage = class1.getConstructor().newInstance();
 
 				String name = pluginPackage.getName().toLowerCase();
 				if (map.containsKey(name)) {

@@ -22,6 +22,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.font.TextAttribute;
 import java.awt.im.InputMethodHighlight;
 import java.awt.image.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
@@ -176,7 +177,7 @@ public class MyHeadlessToolkit extends Toolkit {
                     throw new AWTError("Toolkit not found: " + preferredToolkit);
                 }
                 if (cls != null) {
-                    localToolKit = (Toolkit)cls.newInstance();
+                    localToolKit = (Toolkit) cls.getConstructor().getConstructor().newInstance();
                     if (GraphicsEnvironment.isHeadless()) {
                     	localToolKit = new HeadlessToolkit(localToolKit);
                     }
@@ -185,9 +186,13 @@ public class MyHeadlessToolkit extends Toolkit {
                 throw new AWTError("Could not instantiate Toolkit: " + preferredToolkit);
             } catch (IllegalAccessException e) {
                 throw new AWTError("Could not access Toolkit: " + preferredToolkit);
-            }
-            
-        } finally {
+            } catch (NoSuchMethodException e) {
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
+				e.printStackTrace();
+			}
+
+		} finally {
             // Make sure to always re-enable the JIT.
             java.lang.Compiler.enable();
         }

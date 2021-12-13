@@ -35,7 +35,7 @@ public class WrappedCustomOption implements WrappedOption {
 		String customOptionClassName = saveState.getString("CUSTOM OPTION CLASS", null);
 		try {
 			Class<?> c = Class.forName(customOptionClassName);
-			value = (CustomOption) c.newInstance();
+			value = (CustomOption) c.getConstructor().newInstance();
 			value.readState(saveState);
 		}
 		catch (Exception e) {

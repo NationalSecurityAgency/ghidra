@@ -16,6 +16,7 @@
 package ghidra.feature.fid.service;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -63,7 +64,7 @@ public class FidService {
 			ClassSearcher.getClasses(InstructionSkipper.class);
 		for (Class<? extends InstructionSkipper> clazz : classes) {
 			try {
-				InstructionSkipper skipper = clazz.newInstance();
+				InstructionSkipper skipper = clazz.getConstructor().getConstructor().newInstance();
 				Processor processor = skipper.getApplicableProcessor();
 				List<InstructionSkipper> list = skippers.get(processor);
 				if (list == null) {
@@ -77,8 +78,12 @@ public class FidService {
 			}
 			catch (IllegalAccessException e) {
 				// we tried
-			}
-		}
+			} catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
 	}
 
 	/**

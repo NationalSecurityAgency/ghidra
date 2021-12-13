@@ -72,7 +72,7 @@ public class SummarizeAnalyzers extends GhidraScript {
 		for (Class<? extends Analyzer> element : classes) {
 			Analyzer analyzer;
 			try {
-				analyzer = element.newInstance();
+				analyzer = element.getConstructor().newInstance();
 			}
 			catch (Exception e) {
 				Msg.showError(this, null, "Analyzer Error", "Cannot instantiate " + element + "  " +
