@@ -378,9 +378,11 @@ public class ElfDefaultGotPltMarkup {
 					// TODO: record artificial relative relocation for reversion/export concerns
 					entry1Value += imageBaseAdj; // adjust first entry value
 					if (elf.is64Bit()) {
+						elfLoadHelper.addFakeRelocTableEntry(gotStart, 8);
 						memory.setLong(gotStart, entry1Value);
 					}
 					else {
+						elfLoadHelper.addFakeRelocTableEntry(gotStart, 4);
 						memory.setInt(gotStart, (int) entry1Value);
 					}
 				}
