@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.gui.objects.components;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
 import java.util.Map;
 
 import javax.swing.JTree;
@@ -27,6 +29,7 @@ import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetObject;
+import ghidra.util.SystemUtilities;
 
 // TODO: In the new scheme, I'm not sure this is applicable anymore.
 class ObjectTreeCellRenderer extends GTreeRenderer {
@@ -101,7 +104,7 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 					}
 				}
 			}
-			component.setFont(container.isSubscribed() ? defaultFont : unsubscribedFont);
+			component.setFont(SystemUtilities.adjustForFontSizeOverride(container.isSubscribed() ? defaultFont : unsubscribedFont));
 		}
 		return component;
 	}
