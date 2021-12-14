@@ -177,7 +177,7 @@ public class GraphDisplayOptionsBuilder {
 	 * @return this GraphDisplayOptionsBuilder
 	 */
 	public GraphDisplayOptionsBuilder maxNodeCount(int maxNodeCount) {
-		displayOptions.getMaxNodeCount();
+		displayOptions.setMaxNodeCount(maxNodeCount);
 		return this;
 	}
 
