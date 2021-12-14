@@ -17,6 +17,8 @@ package ghidra.framework.plugintool.mgr;
 
 import java.awt.Dimension;
 import java.rmi.ConnectException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import javax.swing.JComponent;
@@ -25,7 +27,7 @@ import javax.swing.SwingUtilities;
 import ghidra.framework.cmd.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.datastruct.PriorityQueue;
 import ghidra.util.exception.RollbackException;
 import ghidra.util.task.*;
@@ -34,6 +36,11 @@ import ghidra.util.task.*;
  * Manages a queue of background tasks that execute commands.
  */
 public class ToolTaskManager implements Runnable {
+
+	private static final String TIME_FORMAT_STRING = "yyyy-MM-dd HH:mm:ss";
+	private static final DateTimeFormatter TIME_FORMATTER =
+		DateTimeFormatter.ofPattern(TIME_FORMAT_STRING);
+
 	private volatile PluginTool tool;
 	private volatile boolean isExecuting;
 
@@ -292,17 +299,27 @@ public class ToolTaskManager implements Runnable {
 		}
 	}
 
-	/**
-	 * @see java.lang.Runnable#run()
-	 */
+	private String time() {
+		if (!SystemUtilities.isInDevelopmentMode()) {
+			// The dev console log appender does not show date info for log messages.  This method
+			// allows us to show the time in the dev console, which is useful for debugging.  The
+			// application log files always contain a date for each message.
+			return "";
+		}
+
+		LocalDateTime localDate = DateUtils.toLocalDate(new Date());
+		return TIME_FORMATTER.format(localDate) + " ";
+	}
+
 	@Override
 	public void run() {
 		try {
-			Msg.debug(this, (new Date()) + " Background processing started...");
+
+			Msg.debug(this, time() + "Background processing started...");
 			startQueueTime = System.currentTimeMillis();
 			for (BackgroundCommandTask task = getNextTask(); task != null; task = getNextTask()) {
 
-				Msg.debug(this, (new Date()) + " Exec Task " + task.getTaskTitle());
+				Msg.debug(this, time() + "Exec Task " + task.getTaskTitle());
 				startTaskTime = System.currentTimeMillis();
 
 				synchronized (this) {
@@ -321,8 +338,7 @@ public class ToolTaskManager implements Runnable {
 			}
 
 			double totalTime = (System.currentTimeMillis() - startQueueTime) / 1000.00;
-			Msg.debug(this,
-				(new Date()) + " Background processing complete (" + totalTime + " secs)");
+			Msg.debug(this, time() + "Background processing complete (" + totalTime + " secs)");
 		}
 		finally {
 			synchronized (this) {
@@ -361,9 +377,9 @@ public class ToolTaskManager implements Runnable {
 	 */
 	public void taskCompleted(UndoableDomainObject obj, BackgroundCommandTask task,
 			TaskMonitor monitor) {
+
 		double taskTime = (System.currentTimeMillis() - startTaskTime) / 1000.00;
-		Msg.debug(this,
-			(new Date()) + " " + task.getTaskTitle() + " task finish (" + taskTime + " secs)");
+		Msg.debug(this, time() + task.getTaskTitle() + " task finish (" + taskTime + " secs)");
 		obj.flushEvents();
 		try {
 			while (!monitor.isCancelled()) {
@@ -376,13 +392,13 @@ public class ToolTaskManager implements Runnable {
 						break;
 					}
 				}
-				Msg.debug(this, (new Date()) + "  Queue - " + cmd.getName());
+				Msg.debug(this, time() + "Queue - " + cmd.getName());
 				toolTaskMonitor.updateTaskCmd(cmd);
 				long localStart = System.currentTimeMillis();
 				cmd.applyTo(obj, monitor);
 				cmd.taskCompleted();
 				double totalTime = (System.currentTimeMillis() - localStart) / 1000.00;
-				Msg.debug(this, (new Date()) + "  (" + totalTime + " secs)");
+				Msg.debug(this, time() + "(" + totalTime + " secs)");
 				obj.flushEvents();
 			}
 		}
@@ -413,12 +429,12 @@ public class ToolTaskManager implements Runnable {
 		}
 		task.getCommand().taskCompleted();
 		double totalTime = (System.currentTimeMillis() - startTaskTime) / 1000.00;
-		Msg.debug(this,
-			(new Date()) + " " + task.getTaskTitle() + " task complete (" + totalTime + " secs)");
+		Msg.debug(this, time() + task.getTaskTitle() + " task complete (" + totalTime + " secs)");
 	}
 
 	/**
 	 * Clear the queue of scheduled commands.
+	 * @param obj domain object
 	 */
 	public synchronized void clearQueuedCommands(UndoableDomainObject obj) {
 		PriorityQueue<BackgroundCommand> queue = queuedCommandsMap.get(obj);
