@@ -846,6 +846,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
 
+			long type = reloc.getType();
+			if (type == 0) {
+				continue; // ignore relocation type 0 (i.e., ..._NONE)
+			}
+
 			int symbolIndex = reloc.getSymbolIndex();
 			String symbolName = null;
 			if (symbolIndex >= 0 && symbolIndex < symbols.length) {
@@ -863,7 +868,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			byte[] bytes = elf.is64Bit() ? new byte[8] : new byte[4];
 
-			long type = reloc.getType();
 			if (relrRelocationType != 0) {
 				type = relrRelocationType;
 				reloc.setType(relrRelocationType);
@@ -927,6 +931,28 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		DataConverter dataConverter = DataConverter.getInstance(elf.isBigEndian());
 		return signExtend ? dataConverter.getSignedValue(bytes, len)
 				: dataConverter.getValue(bytes, len);
+	}
+
+	@Override
+	public boolean addFakeRelocTableEntry(Address address, int length)
+			throws MemoryAccessException, AddressOverflowException {
+		byte[] bytes = new byte[length];
+		Address maxAddr = address.addNoWrap(length - 1);
+		RelocationTable relocationTable = program.getRelocationTable();
+		Relocation relocation = relocationTable.getRelocation(address);
+		if (relocation != null) {
+			return false;
+		}
+		relocation = relocationTable.getRelocationAfter(address);
+		if (relocation != null && relocation.getAddress().compareTo(maxAddr) <= 0) {
+			return false;
+		}
+		int cnt = memory.getBytes(address, bytes);
+		if (cnt != length) {
+			throw new MemoryAccessException();
+		}
+		relocationTable.add(address, 0, new long[0], bytes, null);
+		return true;
 	}
 
 	/**
