@@ -570,9 +570,11 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 			checkDeleted();
 			checkEditOK();
 
+			SymbolType type = getSymbolType();
+
 			source = validateNameSource(newName, source);
 
-			symbolMgr.validateSource(newName, getAddress(), getSymbolType(), source);
+			symbolMgr.validateSource(newName, getAddress(), type, source);
 
 			Namespace oldNamespace = getParentNamespace();
 			boolean namespaceChange = !oldNamespace.equals(newNamespace);
@@ -604,8 +606,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				}
 
 				if (checkForDuplicates) {
-					symbolMgr.checkDuplicateSymbolName(address, newName, newNamespace,
-						getSymbolType());
+					symbolMgr.checkDuplicateSymbolName(address, newName, newNamespace, type);
 				}
 			}
 
@@ -631,9 +632,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 					symbolMgr.symbolNamespaceChanged(this, oldNamespace);
 				}
 				if (nameChange) {
-					SymbolType symbolType = getSymbolType();
 					if (isExternal() &&
-						(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.LABEL)) {
+						(type == SymbolType.FUNCTION || type == SymbolType.LABEL)) {
 						ExternalManagerDB externalManager = symbolMgr.getExternalManager();
 						ExternalLocationDB externalLocation =
 							(ExternalLocationDB) externalManager.getExternalLocation(this);
@@ -649,6 +649,11 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 								s.getName());
 						}
 					}
+				}
+				
+				if (type == SymbolType.NAMESPACE || type == SymbolType.CLASS) {
+					// function class structure path change may impact auto-params
+					symbolMgr.getProgram().getFunctionManager().invalidateCache(true);
 				}
 			}
 			else {
