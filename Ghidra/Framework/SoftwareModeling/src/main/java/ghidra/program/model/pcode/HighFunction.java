@@ -164,6 +164,9 @@ public class HighFunction extends PcodeSyntaxTree {
 	 *      a) switch flow
 	 */
 	private void grabOverrides() {
+		if (!(func instanceof FunctionDB)) {
+			return; // undefined function
+		}
 		SymbolTable symtab = func.getProgram().getSymbolTable();
 		Namespace space = findOverrideSpace(func);
 		if (space == null) {

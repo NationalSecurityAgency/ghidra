@@ -572,6 +572,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 
 			SymbolType type = getSymbolType();
 
+			symbolMgr.checkValidNamespaceArgument(newNamespace);
+
 			source = validateNameSource(newName, source);
 
 			symbolMgr.validateSource(newName, getAddress(), type, source);
@@ -1009,7 +1011,9 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	@Override
-	public abstract boolean isValidParent(Namespace parent);
+	public boolean isValidParent(Namespace parent) {
+		return symbolMgr.isMyNamespace(parent);
+	}
 
 	/**
 	 * Change the record and key associated with this symbol
