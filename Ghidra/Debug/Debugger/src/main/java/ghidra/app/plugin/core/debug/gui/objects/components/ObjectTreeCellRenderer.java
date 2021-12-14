@@ -35,8 +35,8 @@ import ghidra.util.SystemUtilities;
 class ObjectTreeCellRenderer extends GTreeRenderer {
 
 	private final DebuggerObjectsProvider provider;
-	private Font defaultFont = new Font("Tahoma", Font.PLAIN, 11);
-	private Font unsubscribedFont = new Font("Tahoma", Font.ITALIC, 11);
+	private Font defaultFont = SystemUtilities.adjustForFontSizeOverride(new Font("Tahoma", Font.PLAIN, 11));
+	private Font unsubscribedFont = SystemUtilities.adjustForFontSizeOverride(new Font("Tahoma", Font.ITALIC, 11));
 
 	/**
 	 * @param provider
@@ -104,7 +104,7 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 					}
 				}
 			}
-			component.setFont(SystemUtilities.adjustForFontSizeOverride(container.isSubscribed() ? defaultFont : unsubscribedFont));
+			component.setFont(container.isSubscribed() ? defaultFont : unsubscribedFont);
 		}
 		return component;
 	}
