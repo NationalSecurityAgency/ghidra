@@ -237,7 +237,7 @@ REL2: addr    is simm16 [ addr = inst_next + simm16; ]   { export *:2 addr; }
 # 1-byte operand, immediate/direct/indexed/extended addressing mode
 OP1: "#"imm8    is op45=0; imm8
 {
-    export imm8;
+    export *[const]:1 imm8;
 }
 OP1: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
 {
@@ -257,7 +257,7 @@ OP1: imm16    is op45=3; imm16
 # 2-byte operand, direct/indexed/extended addressing mode
 OP2: "#"imm16    is (op47=8 | op47=0xC); imm16
 {
-    export imm16;
+    export *[const]:2 imm16;
 }
 OP2: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
 {
