@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.app.plugin.core.function;
 
-import ghidra.app.context.ListingActionContext;
-import ghidra.app.context.ListingContextAction;
-import ghidra.program.model.data.DataType;
-
 import java.awt.event.KeyEvent;
 
 import docking.action.KeyBindingData;
+import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ListingContextAction;
+import ghidra.program.model.data.DataType;
 
 
 /**
@@ -55,7 +53,7 @@ class ClearFunctionAction extends ListingContextAction {
 
     @Override
     public void actionPerformed(ListingActionContext context) {
-		funcPlugin.createData(DataType.DEFAULT, context, false);
+		funcPlugin.createData(DataType.DEFAULT, context, true, false);
     }
 
     @Override

@@ -18,6 +18,7 @@ package ghidra.app.services;
 import ghidra.app.context.ListingActionContext;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataUtilities;
 
 /**
  * Service for creating data
@@ -36,14 +37,17 @@ public interface DataService {
 	public boolean isCreateDataAllowed(ListingActionContext context);
 
 	/**
-	 * Apply the given data type at a location.
+	 * Apply the given data type at a location.   
 	 *
 	 * @param dt data type to create at the location
 	 * @param context the context containing program, location, and selection information
+	 * @param stackPointers if true, and supported, and the existing context-specified data is a 
+	 * pointer, the specified datatype should be stacked onto the existing pointer if permitted.
+	 * (see {@link DataUtilities#reconcileAppliedDataType(DataType, DataType, boolean)}).
 	 * @param enableConflictHandling if true, the service may prompt the user to resolve data 
 	 *        conflicts
 	 * @return true if the data could be created at the current location
 	 */
 	public boolean createData(DataType dt, ListingActionContext context,
-			boolean enableConflictHandling);
+			boolean stackPointers, boolean enableConflictHandling);
 }
