@@ -72,8 +72,10 @@ public class LldbModelTargetModuleContainerImpl extends LldbModelTargetObjectImp
 		TargetThread eventThread =
 			(TargetThread) getModel().getModelObject(thread);
 		changeElements(List.of(), List.of(targetModule), Map.of(), "Loaded");
-		getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
-			"Library " + info.getModuleName(index) + " loaded", List.of(targetModule));
+		if (eventThread != null) {
+			getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
+					"Library " + info.getModuleName(index) + " loaded", List.of(targetModule));
+		}
 	}
 
 	@Override
@@ -84,8 +86,10 @@ public class LldbModelTargetModuleContainerImpl extends LldbModelTargetObjectImp
 			SBThread thread = getManager().getEventThread();
 			TargetThread eventThread =
 				(TargetThread) getModel().getModelObject(thread);
-			getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
-				"Library " + info.getModuleName(index) + " unloaded", List.of(targetModule));
+			if (eventThread != null) {
+				getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
+						"Library " + info.getModuleName(index) + " unloaded", List.of(targetModule));
+			}
 			LldbModelImpl impl = (LldbModelImpl) model;
 			impl.deleteModelObject(targetModule.getModule());
 		}
