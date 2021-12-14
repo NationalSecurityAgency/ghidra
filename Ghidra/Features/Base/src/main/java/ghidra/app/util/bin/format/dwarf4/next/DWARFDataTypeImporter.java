@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import java.io.IOException;
+
 import org.apache.commons.lang3.StringUtils;
 
-import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.DataTypeNamingUtil;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
@@ -30,9 +30,7 @@ import ghidra.program.database.DatabaseObject;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Creates Ghidra {@link DataType}s using information from DWARF debug entries.  The caller
@@ -48,7 +46,6 @@ public class DWARFDataTypeImporter {
 	private DWARFDataTypeManager dwarfDTM;
 	private DWARFImportOptions importOptions;
 	private DWARFDataType voidDDT;
-	private DWARFNameInfo rootDNI;
 
 	/**
 	 * Tracks which {@link DIEAggregate DIEAs} have been visited by {@link #getDataTypeWorker(DIEAggregate, DataType)}
@@ -93,7 +90,6 @@ public class DWARFDataTypeImporter {
 		this.importOptions = importOptions;
 		this.voidDDT = new DWARFDataType(dwarfDTM.getVoidType(),
 			DWARFNameInfo.fromDataType(dwarfDTM.getVoidType()), -1);
-		this.rootDNI = prog.getUncategorizedRootDNI();
 	}
 
 	public DWARFDataType getDDTByInstance(DataType dtInstance) {
@@ -369,28 +365,6 @@ public class DWARFDataTypeImporter {
 
 		return refdDT;
 	}
-
-//	/**
-//	 * Mash parameter datatype names together to make a mangling suffix to append to
-//	 * a function def name.
-//	 * <p>
-//	 * @param returnTypeDT
-//	 * @param parameters
-//	 * @return
-//	 */
-//	private String getMangledFuncDefName(DataType returnTypeDT,
-//			List<ParameterDefinition> parameters) {
-//		StringBuilder sb = new StringBuilder();
-//		sb.append(mangleDTName(returnTypeDT.getName()));
-//		for (ParameterDefinition p : parameters) {
-//			sb.append("_").append(mangleDTName(p.getDataType().getName()));
-//		}
-//		return sb.toString();
-//	}
-//
-//	private String mangleDTName(String s) {
-//		return s.replaceAll(" ", "_").replaceAll("\\*", "ptr");
-//	}
 
 	/**
 	 * Creates a Ghidra {@link Enum} datatype.
@@ -849,14 +823,6 @@ public class DWARFDataTypeImporter {
 				}
 			}
 
-			// If the child's datatype is an anon datatype, copy the datatype into our
-			// structure's categorypath and give it a name based on the member name.
-			if (isAnonDataType(childDT) && importOptions.isCopyRenameAnonTypes()) {
-				DataType copiedType = copyAnonTypeForMember(childDT.dataType,
-					new CategoryPath(structure.getCategoryPath(), structure.getName()), memberName);
-				childDT = new DWARFDataType(copiedType, null, childDT.offsets);
-			}
-
 			boolean hasMemberOffset =
 				childDIEA.hasAttribute(DWARFAttribute.DW_AT_data_member_location);
 
@@ -1233,7 +1199,6 @@ public class DWARFDataTypeImporter {
 
 		boolean typedefWithSameName = DataTypeUtilities.equalsIgnoreConflict(
 			typedefDNI.asDataTypePath().getPath(), refdDT.dataType.getPathName());
-		boolean typedefPointingToAnonType = isAnonDataType(refdDT);
 
 		if (typedefWithSameName) {
 			if (importOptions.isElideTypedefsWithSameName()) {
@@ -1245,27 +1210,6 @@ public class DWARFDataTypeImporter {
 			// there isn't a gratuitous conflict.
 			String newName = typedefDNI.getName() + "_typedef";
 			typedefDNI = typedefDNI.replaceName(newName, newName);
-		}
-
-		if (typedefPointingToAnonType && importOptions.isCopyRenameAnonTypes() &&
-			DWARFUtil.getReferringTypedef(refdDIEA) == diea) {
-			// if this typedef points to an anon type (and we are the only typedef pointing
-			// to the anon type), copy the anon type to our namespace as our name, return
-			// it instead of a new typedef
-			DWARFDataType result = new DWARFDataType(
-				DataTypeUtils.copyToNamedBaseDataType(refdDT.dataType, dataTypeManager), typedefDNI,
-				diea.getOffset());
-			try {
-				DataType namedType = DataTypeUtils.getNamedBaseDataType(result.dataType);
-				namedType.setNameAndCategory(typedefDNI.getParent().asCategoryPath(),
-					typedefDNI.getName());
-				dataTypeInstanceToDDTMap.put(namedType, result);
-			}
-			catch (InvalidNameException | DuplicateNameException e) {
-				// fall thru to default action of just returning original type unchanged
-			}
-
-			return result;
 		}
 
 		TypedefDataType typedefDT = new TypedefDataType(typedefDNI.getParentCP(),
@@ -1290,67 +1234,6 @@ public class DWARFDataTypeImporter {
 			return voidDDT;
 		}
 		return new DWARFDataType(dt, dni, diea.getOffset());
-	}
-
-	/**
-	 * Returns true if the specified {@link DataType} (or if its a pointer, the pointed to
-	 * DataType) is a data type that did not have a name and was assigned an name in the form
-	 * "anon_datatype".
-	 *
-	 * @param dt
-	 * @return
-	 */
-	private static boolean isAnonDataType(DWARFDataType ddt) {
-		if (ddt.dni != null && ddt.dni.isAnon()) {
-			return true;
-		}
-		DataType namedType = DataTypeUtils.getNamedBaseDataType(ddt.dataType);
-		return namedType.getName().startsWith("anon_");
-	}
-
-	/**
-	 * Copy an anon Datatype (or a chain of pointers to a anon DataType) into a new CategoryPath
-	 * with a new name that is appropriate for a structure member field.
-	 * <p>
-	 * Use this method when a struct has a field with an anon datatype.  The new copied
-	 * datatype will be called "anonorigname_for_structurefieldname"
-	 * <p>
-	 *
-	 * @param dt - DataType to copy
-	 * @param destCategory {@link CategoryPath} to copy to
-	 * @param membername the name of the structure member that uses this anon datatype.
-	 * @return new DataType that is a copy of the old type, but in a new location and name.
-	 */
-	private DataType copyAnonTypeForMember(DataType dt, CategoryPath destCategory,
-			String membername) {
-		List<Pointer> ptrChainTypes = new ArrayList<>();
-		DataType actualDT = dt;
-		while (actualDT instanceof Pointer) {
-			ptrChainTypes.add((Pointer) actualDT);
-			actualDT = ((Pointer) actualDT).getDataType();
-		}
-
-		if (actualDT.getCategoryPath().equals(destCategory)) {
-			return dt;
-		}
-
-		DataType copy = actualDT.copy(dataTypeManager);
-		try {
-			copy.setNameAndCategory(destCategory, copy.getName() + "_for_" + membername);
-		}
-		catch (InvalidNameException | DuplicateNameException e) {
-			Msg.error(this, "Failed to copy anon type " + dt);
-			return dt;
-		}
-
-		DataType result = copy;
-		for (int i = ptrChainTypes.size() - 1; i >= 0; i--) {
-			Pointer origPtr = ptrChainTypes.get(i);
-			result = new PointerDataType(result,
-				origPtr.hasLanguageDependantLength() ? -1 : origPtr.getLength(), dataTypeManager);
-		}
-
-		return result;
 	}
 
 	static class DWARFDataType {

@@ -1,5 +1,30 @@
 <img src="Ghidra/Features/Base/src/main/resources/images/GHIDRA_3.png" width="400">
 
+# WARNING
+
+**WARNING:** There has been a [published CVE security vulnerability](https://nvd.nist.gov/vuln/detail/CVE-2021-44228)
+noted in Ghidra dependencies within 2 `log4j` jar files.  We strongly encourage anyone using 
+previous versions of Ghidra to remediate this issue by either upgrading to 
+[Ghidra 10.1](https://github.com/NationalSecurityAgency/ghidra/releases/tag/Ghidra_10.1_build), 
+or patching your current version.  To patch your current Ghidra installation, delete:
+
+* `Ghidra/Framework/Generic/lib/log4j-api-2.12.1.jar`
+* `Ghidra/Framework/Generic/lib/log4j-core-2.12.1.jar`
+
+and replace with the newer log4j 2.15.0 version:
+
+* [`Ghidra/Framework/Generic/lib/log4j-api-2.15.0.jar`](https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.15.0/log4j-api-2.15.0.jar)
+* [`Ghidra/Framework/Generic/lib/log4j-core-2.15.0.jar`](https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.15.0/log4j-core-2.15.0.jar)
+
+If you are running Ghidra from the development environment, please pull the latest `master` branch
+(or `patch`/`stable` if applicable), and execute the following to upgrade your repo to the newer 
+`log4j`: 
+```
+$ gradle prepdev cleanEclipse eclipse
+```
+
+---
+
 # Ghidra Software Reverse Engineering Framework
 
 Ghidra is a software reverse engineering (SRE) framework created and maintained by the 

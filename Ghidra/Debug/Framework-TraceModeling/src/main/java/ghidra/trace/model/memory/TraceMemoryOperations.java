@@ -473,6 +473,32 @@ public interface TraceMemoryOperations {
 	}
 
 	/**
+	 * Find the internal storage block that most-recently defines the value at the given snap and
+	 * address, and return the block's snap.
+	 * 
+	 * <p>
+	 * This method reveals portions of the internal storage so that clients can optimize difference
+	 * computations by eliminating corresponding ranges defined by the same block. If the underlying
+	 * implementation cannot answer this question, this returns the given snap.
+	 * 
+	 * @param snap the time
+	 * @param address the location
+	 * @return the most snap for the most recent containing block
+	 */
+	Long getSnapOfMostRecentChangeToBlock(long snap, Address address);
+
+	/**
+	 * Get the block size used by internal storage.
+	 * 
+	 * <p>
+	 * This method reveals portions of the internal storage so that clients can optimize searches.
+	 * If the underlying implementation cannot answer this question, this returns 0.
+	 * 
+	 * @return the block size
+	 */
+	int getBlockSize();
+
+	/**
 	 * Optimize storage space
 	 * 
 	 * <p>

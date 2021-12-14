@@ -146,7 +146,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			return;
 		}
 		monitor.setMessage("Processing entry table...");
-		processEntryTable(st, ib, et, symbolTable, space);
+		processEntryTable(st, ib, et, symbolTable, space, log);
 
 		if (monitor.isCancelled()) {
 			return;
@@ -340,7 +340,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				}
 
 				//create a comment to describe this resource...
-				StringBuffer buf = new StringBuffer();
+				StringBuilder buf = new StringBuilder();
 				buf.append("Resource Type:  " + Conv.toHexString(type.getTypeID()) + " (" + type +
 					")" + "\n");
 				buf.append(
@@ -380,14 +380,10 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 							listing.createData(straddr, new StringDataType(),
 								Conv.byteToInt(string.getLength()));
 						}
-						catch (AddressOverflowException e) {
-							//TODO:
-						}
-						catch (CodeUnitInsertionException e) {
-							//TODO:
-						}
-						catch (DataTypeConflictException e) {
-							//TODO:
+						catch (AddressOverflowException | CodeUnitInsertionException
+								| DataTypeConflictException e) {
+							log.appendMsg("Error creating data");
+							log.appendException(e);
 						}
 					}
 				}
@@ -507,7 +503,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private void processEntryTable(SegmentTable st, InformationBlock ib, EntryTable et,
-			SymbolTable symbolTable, SegmentedAddressSpace space) {
+			SymbolTable symbolTable, SegmentedAddressSpace space, MessageLog log) {
 
 		//process the main entry point defined in the information block...
 		short segmentIdx = ib.getEntryPointSegment();
@@ -520,8 +516,8 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				symbolTable.createLabel(entryAddr, "entry", SourceType.IMPORTED);
 			}
 			catch (InvalidInputException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.appendMsg("Error creating label at " + entryAddr);
+				log.appendException(e);
 			}
 		}
 
@@ -539,11 +535,16 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			for (EntryPoint pt : pts) {
 				int seg = 0;
 				if (bundle.isMoveable()) {
-					seg = st.getSegments()[pt.getSegment() - 1].getSegmentID();
+					int segmentIndex = Byte.toUnsignedInt(pt.getSegment()) - 1;
+					if (segmentIndex < 0 || segmentIndex >= st.getSegments().length) {
+						log.appendMsg("Invalid segmentIndex " + segmentIndex);
+						continue;
+					}
+					seg = st.getSegments()[segmentIndex].getSegmentID();
 				}
 				else if (bundle.isConstant()) {
 					//todo: how to handle constants...?
-					System.out.println("NE - constant entry point...");
+					log.appendMsg("NE - constant entry point...");
 				}
 				else {
 					seg = st.getSegments()[bundle.getType() - 1].getSegmentID();
@@ -785,8 +786,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 					SourceType.IMPORTED);
 			}
 			catch (InvalidInputException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Msg.error(this, "Error creating label " + name + "@" + addr, e);
 			}
 		}
 	}

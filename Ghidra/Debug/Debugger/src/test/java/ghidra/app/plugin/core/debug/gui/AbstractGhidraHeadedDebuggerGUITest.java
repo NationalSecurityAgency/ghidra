@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -40,11 +41,13 @@ import org.junit.runner.Description;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.Unique;
+import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceInternal;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.*;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.dbg.model.AbstractTestTargetRegisterBank;
 import ghidra.dbg.model.TestDebuggerModelBuilder;
 import ghidra.dbg.target.*;
@@ -57,6 +60,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
+import ghidra.program.util.ProgramLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.trace.database.ToyDBTraceBuilder;
@@ -409,6 +413,64 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		clickMouse(button, m);
 	}
 
+	protected static void assertListingBackgroundAt(Color expected, ListingPanel panel,
+			Address addr, int yAdjust) throws AWTException, InterruptedException {
+		ProgramLocation oneBack = new ProgramLocation(panel.getProgram(), addr.previous());
+		runSwing(() -> panel.goTo(addr));
+		runSwing(() -> panel.goTo(oneBack, false));
+		waitForPass(() -> {
+			Rectangle r = panel.getBounds();
+			// Capture off screen, so that focus/stacking doesn't matter
+			BufferedImage image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
+			Graphics g = image.getGraphics();
+			try {
+				runSwing(() -> panel.paint(g));
+			}
+			finally {
+				g.dispose();
+			}
+			Point locP = panel.getLocationOnScreen();
+			Point locFP = panel.getLocationOnScreen();
+			locFP.translate(-locP.x, -locP.y);
+			Rectangle cursor = panel.getCursorBounds();
+			assertNotNull("Cannot get cursor bounds", cursor);
+			Color actual = new Color(image.getRGB(locFP.x + cursor.x - 1,
+				locFP.y + cursor.y + cursor.height * 3 / 2 + yAdjust));
+			assertEquals(expected, actual);
+		});
+	}
+
+	protected static void goTo(ListingPanel listingPanel, ProgramLocation location) {
+		waitForPass(() -> {
+			runSwing(() -> listingPanel.goTo(location));
+			ProgramLocation confirm = listingPanel.getCursorLocation();
+			assertNotNull(confirm);
+			assertEquals(location.getAddress(), confirm.getAddress());
+		});
+	}
+
+	protected static LocationTrackingSpec getLocationTrackingSpec(String name) {
+		return LocationTrackingSpec.fromConfigName(name);
+	}
+
+	protected static AutoReadMemorySpec getAutoReadMemorySpec(String name) {
+		return AutoReadMemorySpec.fromConfigName(name);
+	}
+
+	protected final LocationTrackingSpec trackNone =
+		getLocationTrackingSpec(NoneLocationTrackingSpec.CONFIG_NAME);
+	protected final LocationTrackingSpec trackPc =
+		getLocationTrackingSpec(PCLocationTrackingSpec.CONFIG_NAME);
+	protected final LocationTrackingSpec trackSp =
+		getLocationTrackingSpec(SPLocationTrackingSpec.CONFIG_NAME);
+
+	protected final AutoReadMemorySpec readNone =
+		getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);
+	protected final AutoReadMemorySpec readVisible =
+		getAutoReadMemorySpec(VisibleAutoReadMemorySpec.CONFIG_NAME);
+	protected final AutoReadMemorySpec readVisROOnce =
+		getAutoReadMemorySpec(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
+
 	protected TestEnv env;
 	protected PluginTool tool;
 
@@ -468,8 +530,12 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 		if (mb != null) {
 			if (mb.testModel != null) {
-				// TODO: Stop recordings, too?
 				modelService.removeModel(mb.testModel);
+
+				runSwing(() -> traceManager.setSaveTracesByDefault(false));
+				for (TraceRecorder recorder : modelService.getTraceRecorders()) {
+					recorder.stopRecording();
+				}
 			}
 		}
 

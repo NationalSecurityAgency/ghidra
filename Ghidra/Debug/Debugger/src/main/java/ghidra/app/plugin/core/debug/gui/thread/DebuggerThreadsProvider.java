@@ -379,7 +379,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		// TODO: Should I receive clicks on that renderer to seek to a given snap?
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 
-		myActionContext = new DebuggerSnapActionContext(0);
+		myActionContext = new DebuggerSnapActionContext(current.getTrace(), current.getViewSnap());
 		createActions();
 		contextChanged();
 
@@ -617,7 +617,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 				snap = 0;
 			}
 			traceManager.activateSnap(snap);
-			myActionContext = new DebuggerSnapActionContext(snap);
+			myActionContext = new DebuggerSnapActionContext(current.getTrace(), snap);
 			contextChanged();
 		});
 	}

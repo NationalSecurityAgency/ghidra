@@ -368,7 +368,7 @@ public class Sequence implements Comparable<Sequence> {
 	 * 
 	 * @param trace the trace to which the machine is bound
 	 * @param eventThread the thread for the first step, if it applies to the "last thread"
-	 * @param machine the machine to step
+	 * @param machine the machine to step, or null to validate the sequence
 	 * @param action the action to step each thread
 	 * @param monitor a monitor for cancellation and progress reports
 	 * @return the last trace thread stepped during execution
@@ -382,6 +382,22 @@ public class Sequence implements Comparable<Sequence> {
 			thread = step.execute(tm, thread, machine, action, monitor);
 		}
 		return thread;
+	}
+
+	/**
+	 * Validate this sequence for the given trace
+	 * 
+	 * @param trace the trace
+	 * @param eventThread the thread for the first step, if it applies to the "last thread"
+	 * @return the last trace thread that would be stepped by this sequence
+	 */
+	public TraceThread validate(Trace trace, TraceThread eventThread) {
+		try {
+			return execute(trace, eventThread, null, null, null);
+		}
+		catch (CancelledException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	/**

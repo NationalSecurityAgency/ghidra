@@ -705,6 +705,16 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		return true;
 	}
 
+	/**
+	 * Extension point to specify titles when dual panels are active
+	 * 
+	 * @param panelProgram the program assigned to the panel whose title is requested
+	 * @return the title of the panel for the given program
+	 */
+	protected String computePanelTitle(Program panelProgram) {
+		return panelProgram.getDomainFile().toString();
+	}
+
 	public void setPanel(ListingPanel lp) {
 		Program myProgram = listingPanel.getListingModel().getProgram();
 		Program otherProgram = lp.getListingModel().getProgram();
@@ -712,10 +722,10 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		String otherName = myName;
 
 		if (myProgram != null) {
-			myName = myProgram.getDomainFile().toString();
+			myName = computePanelTitle(myProgram);
 		}
 		if (otherProgram != null) {
-			otherName = otherProgram.getDomainFile().toString();
+			otherName = computePanelTitle(otherProgram);
 		}
 		if (otherPanel != null) {
 			removeHoverServices(otherPanel);
