@@ -433,7 +433,7 @@ public class AutoTableDisassemblerPlugin extends ProgramPlugin implements Domain
 	// address table in the selected rows
 	private int getIndexOfShortestAddressTable(int[] selectedRows) {
 
-		if (selectedRows.length < 0) {
+		if (selectedRows.length == 0) {
 			throw new AssertionError(
 				"There must be rows selected in " + "order to process multiple rows.");
 		}
