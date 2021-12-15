@@ -334,24 +334,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 				if (e.getClickCount() != 2 || e.getButton() != MouseEvent.BUTTON1) {
 					return;
 				}
-				if (myActionContext == null) {
-					return;
-				}
-				WatchRow row = myActionContext.getWatchRow();
-				if (row == null) {
-					return;
-				}
-				Throwable error = row.getError();
-				if (error != null) {
-					Msg.showError(this, getComponent(), "Evaluation error",
-						"Could not evaluate watch", error);
-					return;
-				}
-				Address address = myActionContext.getWatchRow().getAddress();
-				if (listingService == null || address == null || !address.isMemoryAddress()) {
-					return;
-				}
-				listingService.goTo(address, true);
+				navigateToSelectedWatch();
 			}
 		});
 
@@ -369,6 +352,44 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 		myActionContext =
 			new DebuggerWatchActionContext(this, watchFilterPanel.getSelectedItems(), watchTable);
 		super.contextChanged();
+	}
+
+	protected void navigateToSelectedWatch() {
+		if (myActionContext == null) {
+			return;
+		}
+		WatchRow row = myActionContext.getWatchRow();
+		if (row == null) {
+			return;
+		}
+		int modelCol = watchTable.convertColumnIndexToModel(watchTable.getSelectedColumn());
+		Throwable error = row.getError(); // I don't care the selected column for errors
+		if (error != null) {
+			Msg.showError(this, getComponent(), "Evaluation error",
+				"Could not evaluate watch", error);
+		}
+		else if (modelCol == WatchTableColumns.ADDRESS.ordinal()) {
+			Address address = row.getAddress();
+			if (address != null) {
+				navigateToAddress(address);
+			}
+		}
+		else if (modelCol == WatchTableColumns.REPR.ordinal()) {
+			Object val = row.getValueObj();
+			if (val instanceof Address) {
+				navigateToAddress((Address) val);
+			}
+		}
+	}
+
+	protected void navigateToAddress(Address address) {
+		if (listingService == null) {
+			return;
+		}
+		if (address.isMemoryAddress()) {
+			listingService.goTo(address, true);
+			return;
+		}
 	}
 
 	protected void createActions() {
