@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin.format.elf;
 
+import java.util.*;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.*;
 
 import generic.continues.GenericFactory;
 import ghidra.app.util.bin.*;
@@ -614,7 +615,7 @@ public class ElfHeader implements StructConverter, Writeable {
 			// The p_offset may not refer to the start of the DYNAMIC table so we must use
 			// p_vaddr to find it relative to a PT_LOAD segment
 			long vaddr = dynamicHeaders[0].getVirtualAddress();
-			if (vaddr == 0) {
+			if (vaddr == 0 || dynamicHeaders[0].getFileSize() == 0) {
 				Msg.warn(this, "ELF Dynamic table appears to have been stripped from binary");
 				return;
 			}
