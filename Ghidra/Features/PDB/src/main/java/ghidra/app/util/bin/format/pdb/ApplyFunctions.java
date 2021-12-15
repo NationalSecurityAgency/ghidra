@@ -112,7 +112,7 @@ class ApplyFunctions {
 			return null;
 		}
 		AddressSet thunkBody = new AddressSet(thunkFunction.getBody());
-		boolean hasRangeMatch = true;
+		boolean hasRangeMatch = false;
 		AddressRangeIterator ari = thunkBody.getAddressRanges(true);
 		while (ari.hasNext()) {
 			if (monitor.isCancelled()) {
