@@ -20,7 +20,6 @@ import java.awt.FontMetrics;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 
 import docking.widgets.fieldpanel.internal.LayoutBackgroundColorManager;
 import docking.widgets.fieldpanel.support.FieldSelection;
@@ -34,7 +33,6 @@ import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.annotation.AutoOptionConsumed;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.TraceMemoryState;
 
 public class DebuggerMemoryByteViewerComponent extends ByteViewerComponent
@@ -71,37 +69,45 @@ public class DebuggerMemoryByteViewerComponent extends ByteViewerComponent
 			}
 			Trace trace = coordinates.getTrace();
 			// TODO: Mimic the listing's background, or factor into common
-			long snap = coordinates.getSnap();
+			long viewSnap = coordinates.getViewSnap();
 			// TODO: Span out and cache?
 			AddressSetView lineAddresses = translator.convertFieldToAddress(lineFieldSel);
-			// Because UNKNOWN need not be explicitly recorded, compute it by subtracting others
-			AddressSet unknown = new AddressSet(lineAddresses);
-			for (AddressRange range : lineAddresses) {
-				for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : trace.getMemoryManager()
-						.getStates(snap, range)) {
-					if (entry.getValue() != TraceMemoryState.UNKNOWN) {
-						unknown.delete(entry.getKey().getRange());
-					}
-					Color color = colorForState(entry.getValue());
-					if (color == null) {
-						continue;
-					}
-					// NOTE: Only TraceMemoryState.ERROR should reach here
-					FieldSelection resultFieldSel =
-						translator.convertAddressToField(entry.getKey().getRange());
-					if (!resultFieldSel.isEmpty()) {
-						selections.add(new ColoredFieldSelection(resultFieldSel, color));
-					}
+			AddressSet known = new AddressSet();
+			AddressSet error = new AddressSet();
+
+			for (Address addr : lineAddresses.getAddresses(true)) {
+				TraceMemoryState state =
+					trace.getMemoryManager().getViewState(viewSnap, addr).getValue();
+				switch (state) {
+					case KNOWN:
+						known.add(addr);
+						break;
+					case ERROR:
+						error.add(addr);
+						break;
+					default:
+						// Don't care
 				}
 			}
-			if (unknownColor == null) {
+			AddressSet unknown = new AddressSet(lineAddresses);
+			unknown.delete(known);
+			unknown.delete(error);
+
+			doAddSelections(unknownColor, unknown, translator, selections);
+			doAddSelections(errorColor, error, translator, selections);
+		}
+
+		protected void doAddSelections(Color color, AddressSetView set,
+				SelectionTranslator translator, List<ColoredFieldSelection> selections) {
+			if (color == null) {
 				return;
 			}
-			for (AddressRange unk : unknown) {
-				FieldSelection resultFieldSel = translator.convertAddressToField(unk);
-				if (!resultFieldSel.isEmpty()) {
-					selections.add(new ColoredFieldSelection(resultFieldSel, unknownColor));
+			for (AddressRange rng : set) {
+				FieldSelection resultFieldSel = translator.convertAddressToField(rng);
+				if (resultFieldSel.isEmpty()) {
+					continue;
 				}
+				selections.add(new ColoredFieldSelection(resultFieldSel, color));
 			}
 		}
 	}
@@ -131,18 +137,6 @@ public class DebuggerMemoryByteViewerComponent extends ByteViewerComponent
 			new TraceMemoryStateSelectionGenerator(),
 			vpanel.getProvider().trackingTrait.getSelectionGenerator());
 		// NOTE: Cursor, being line-by-line, is done via background color model in super
-	}
-
-	protected Color colorForState(TraceMemoryState state) {
-		switch (state) {
-			case ERROR:
-				return errorColor;
-			case KNOWN:
-				return null;
-			case UNKNOWN:
-				return unknownColor;
-		}
-		throw new AssertionError();
 	}
 
 	@Override
