@@ -134,7 +134,8 @@ public class DWARFNameInfoTest extends DWARFTestBase {
 		DataType substructDT = dwarfDTM.getDataType(substructDIE.getOffset(), null);
 
 		assertEquals(rootCP.getPath() + "/struct", structDT.getPathName());
-		assertEquals(rootCP.getPath() + "/struct/anon_struct_0", substructDT.getPathName());
+		assertEquals(rootCP.getPath() + "/struct/anon_struct_200_0_00000001",
+			substructDT.getPathName());
 	}
 
 	@Test
@@ -150,7 +151,7 @@ public class DWARFNameInfoTest extends DWARFTestBase {
 		DataType substructDT = dwarfDTM.getDataType(substructDIE.getOffset(), null);
 
 		assertEquals(rootCP.getPath() + "/struct", structDT.getPathName());
-		assertEquals(rootCP.getPath() + "/struct/anon_struct_for_f1",
+		assertEquals(rootCP.getPath() + "/struct/anon_struct_10_0_00000001_for_f1",
 			substructDT.getPathName());
 	}
 
@@ -168,7 +169,7 @@ public class DWARFNameInfoTest extends DWARFTestBase {
 		DataType substructDT = dwarfDTM.getDataType(substructDIE.getOffset(), null);
 
 		assertEquals(rootCP.getPath() + "/struct", structDT.getPathName());
-		assertEquals(rootCP.getPath() + "/struct/anon_struct_for_f1_f2",
+		assertEquals(rootCP.getPath() + "/struct/anon_struct_10_0_00000001_for_f1_f2",
 			substructDT.getPathName());
 	}
 

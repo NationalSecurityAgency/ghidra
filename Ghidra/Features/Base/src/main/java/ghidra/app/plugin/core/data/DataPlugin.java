@@ -287,20 +287,20 @@ public class DataPlugin extends Plugin implements DataService {
 
 	@Override
 	public boolean createData(DataType dt, ListingActionContext context,
-			boolean enableConflictHandling) {
+			boolean stackPointers, boolean enableConflictHandling) {
 // TODO: conflict handler (i.e., removal of other conflicting data not yet supported)
 		ProgramLocation location = context.getLocation();
 		if (!(location instanceof CodeUnitLocation)) {
 			return false;
 		}
 
-		return doCreateData(context, dt);
+		return doCreateData(context, dt, stackPointers);
 	}
 
 	/*
 	 * This version uses the ListingActionContext and does not depend on any plugin's currentProgram
 	 */
-	boolean doCreateData(ListingActionContext context, DataType dt) {
+	boolean doCreateData(ListingActionContext context, DataType dt, boolean stackPointers) {
 		ProgramSelection selection = context.getSelection();
 		ProgramLocation location = context.getLocation();
 		Program program = context.getProgram();
@@ -308,33 +308,34 @@ public class DataPlugin extends Plugin implements DataService {
 		dt = dt.clone(program.getDataTypeManager());
 		boolean didCreateData = false;
 		if (selection != null && !selection.isEmpty()) {
-			didCreateData = createDataForSelection(program, dt, selection);
+			didCreateData = createDataForSelection(program, dt, stackPointers, selection);
 		}
 		else if (location != null) {
-			didCreateData = createDataAtLocation(program, dt, location);
+			didCreateData = createDataAtLocation(program, dt, stackPointers, location);
 		}
 
 		updateRecentlyUsed(dt);
 		return didCreateData;
 	}
 
-	private boolean createDataAtLocation(Program program, DataType dt, ProgramLocation location) {
+	private boolean createDataAtLocation(Program program, DataType dt, boolean stackPointers,
+			ProgramLocation location) {
 		Address start = location.getAddress();
 		int[] startPath = location.getComponentPath();
 		Command cmd;
 		if (startPath != null && startPath.length != 0) {
-			cmd = new CreateDataInStructureCmd(start, startPath, dt, true);
+			cmd = new CreateDataInStructureCmd(start, startPath, dt, stackPointers);
 		}
 		else {
-			if (!checkEnoughSpace(program, start, dt, true)) {
+			if (!checkEnoughSpace(program, start, dt, stackPointers)) {
 				return false;
 			}
-			cmd = new CreateDataCmd(start, true, true, dt);
+			cmd = new CreateDataCmd(start, true, stackPointers, dt);
 		}
 		return getTool().execute(cmd, program);
 	}
 
-	private boolean createDataForSelection(Program program, DataType dt,
+	private boolean createDataForSelection(Program program, DataType dt, boolean stackPointers,
 			ProgramSelection selection) {
 		BackgroundCommand cmd;
 		Address start = selection.getMinAddress();
@@ -343,7 +344,8 @@ public class DataPlugin extends Plugin implements DataService {
 			int[] startPath = interSel.getFrom().getComponentPath();
 
 			int length = (int) selection.getNumAddresses(); // interior selections can't be that big
-			cmd = new CreateDataInStructureBackgroundCmd(start, startPath, length, dt, true);
+			cmd =
+				new CreateDataInStructureBackgroundCmd(start, startPath, length, dt, stackPointers);
 		}
 		else {
 			cmd = new CreateDataBackgroundCmd(selection, dt, true);
@@ -360,7 +362,7 @@ public class DataPlugin extends Plugin implements DataService {
 	}
 
 	private boolean checkEnoughSpace(Program program, Address start, DataType dataType,
-			boolean convertPointers) {
+			boolean stackingEnabled) {
 
 		Listing listing = program.getListing();
 		Data data = listing.getDataAt(start);
@@ -369,7 +371,7 @@ public class DataPlugin extends Plugin implements DataService {
 			return false;
 		}
 
-		if (canConvertPointer(dataType, data, convertPointers)) {
+		if (stackingEnabled && canConvertPointer(dataType, data)) {
 			return true;
 		}
 
@@ -388,7 +390,7 @@ public class DataPlugin extends Plugin implements DataService {
 			return false;
 		}
 
-		if (intstrutionExists(listing, dataType, start, end)) {
+		if (instructionExists(listing, dataType, start, end)) {
 			tool.setStatusInfo("Invalid data location.  Instruction exists at " + start + '.');
 			return false;
 		}
@@ -414,12 +416,7 @@ public class DataPlugin extends Plugin implements DataService {
 		return true;
 	}
 
-	private boolean canConvertPointer(DataType dataType, Data existingData,
-			boolean convertPointers) {
-
-		if (!convertPointers) {
-			return false;
-		}
+	private boolean canConvertPointer(DataType dataType, Data existingData) {
 
 		if (!existingData.isDefined()) {
 			return false;
@@ -465,7 +462,7 @@ public class DataPlugin extends Plugin implements DataService {
 		return false; // OK to clear the existing data
 	}
 
-	private boolean intstrutionExists(Listing listing, DataType dataType, Address start,
+	private boolean instructionExists(Listing listing, DataType dataType, Address start,
 			Address end) {
 
 		Instruction instruction = listing.getInstructionAfter(start);
