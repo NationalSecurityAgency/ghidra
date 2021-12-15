@@ -454,7 +454,7 @@ public class DataSettingsDialog extends DialogComponentProvider {
 
 	private void applySettings() {
 		int txId = program.startTransaction(name);
-		boolean success = true;
+		boolean success = false;
 		try {
 			if (selection != null) {
 				applyCommonSettings();
