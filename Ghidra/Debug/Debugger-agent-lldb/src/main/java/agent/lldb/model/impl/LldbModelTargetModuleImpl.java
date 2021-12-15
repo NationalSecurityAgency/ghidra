@@ -112,11 +112,13 @@ public class LldbModelTargetModuleImpl extends LldbModelTargetObjectImpl
 
 	@Override
 	public void setRange(AddressRangeImpl range) {
-		changeAttributes(List.of(), List.of(), Map.of( //
-			RANGE_ATTRIBUTE_NAME, range, //
-			"BaseAddress", range.getMinAddress(), //
-			"Len", Long.toHexString(range.getLength()) //
-		), "Initialized");
+		if (range != null) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+					RANGE_ATTRIBUTE_NAME, range, //
+					"BaseAddress", range.getMinAddress(), //
+					"Len", Long.toHexString(range.getLength()) //
+			), "Initialized");
+		}
 	}
 
 }

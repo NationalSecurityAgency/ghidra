@@ -56,10 +56,14 @@ public class LldbModelTargetModuleSectionImpl extends LldbModelTargetObjectImpl
 		long sz = section.GetFileByteSize().longValue();
 		Address max = min.add(sz);
 		range = new AddressRangeImpl(min, max);
+		if (range != null) {
+			changeAttributes(List.of(), List.of(), Map.of( //
+				RANGE_ATTRIBUTE_NAME, range //
+			), "Initialized");
+		}
 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			MODULE_ATTRIBUTE_NAME, sections.getParent(), //
-			RANGE_ATTRIBUTE_NAME, range, //
 			DISPLAY_ATTRIBUTE_NAME, getDescription(0), //
 			"Address", min, //
 			"File Offset", section.GetFileOffset().toString(16), //
