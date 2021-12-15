@@ -52,6 +52,7 @@ public enum PdbKind {
 			}
 			if (makeUpper) {
 				c = Character.toUpperCase(c);
+				makeUpper = false;
 			}
 			buf.append(c);
 		}
