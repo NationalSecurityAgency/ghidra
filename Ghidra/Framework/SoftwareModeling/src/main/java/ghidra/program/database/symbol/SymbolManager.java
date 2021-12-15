@@ -884,6 +884,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			namespace = program.getGlobalNamespace();
 		}
 
+		if (isDeletedNamespace(namespace)) {
+			return null;
+		}
 		checkValidNamespaceArgument(namespace);
 
 		long namespaceId = namespace.getID();
@@ -968,6 +971,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			namespace = namespaceMgr.getGlobalNamespace();
 		}
 
+		List<Symbol> list = new ArrayList<>();
+		if (isDeletedNamespace(namespace)) {
+			return list;
+		}
 		checkValidNamespaceArgument(namespace);
 
 		// if name is possible default parameter or local variable name, must do brute force search
@@ -981,7 +988,6 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			return searchNamespaceForSymbols(name, namespace);
 		}
 
-		List<Symbol> list = new ArrayList<>();
 		lock.acquire();
 		try {
 			RecordIterator it = adapter.getSymbolsByNameAndNamespace(name, namespace.getID());
@@ -1044,6 +1050,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			namespace = namespaceMgr.getGlobalNamespace();
 		}
 
+		if (isDeletedNamespace(namespace)) {
+			return null;
+		}
 		checkValidNamespaceArgument(namespace);
 
 		// if name is possible default parameter or local variable name, must do brute force search
@@ -1096,6 +1105,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	@Override
 	public SymbolIterator getSymbols(Namespace namespace) {
+		if (isDeletedNamespace(namespace)) {
+			return SymbolIterator.EMPTY_ITERATOR;
+		}
 		checkValidNamespaceArgument(namespace);
 		return getSymbols(namespace.getID());
 	}
@@ -3064,5 +3076,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		Symbol newNamespaceSymbol = namespace.getSymbol();
 		return newNamespaceSymbol != null && !newNamespaceSymbol.isDeleted() &&
 			(newNamespaceSymbol.getProgram() == getProgram());
+	}
+
+	boolean isDeletedNamespace(Namespace namespace) {
+		Symbol newNamespaceSymbol = namespace.getSymbol();
+		return (newNamespaceSymbol == null) || newNamespaceSymbol.isDeleted();
 	}
 }
