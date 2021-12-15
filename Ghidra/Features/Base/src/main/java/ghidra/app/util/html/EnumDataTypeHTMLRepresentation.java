@@ -100,25 +100,28 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 		List<ValidatableLine> list = new ArrayList<>(values.length);
 		for (long value : values) {
 
-			String name = enumDataType.getName(value);
-			if (trim) {
-				name = StringUtilities.trimMiddle(name, ToolTipUtils.LINE_LENGTH);
-			}
+			String[] names = enumDataType.getNames(value);
+			for (String name : names) {
+				if (trim) {
+					name = StringUtilities.trimMiddle(name, ToolTipUtils.LINE_LENGTH);
+				}
 
-			String hexString = Long.toHexString(value);
-			if (value < 0) {
-				// Long will print leading FF for 8 bytes, regardless of enum size.  Keep only
-				// n bytes worth of text.  For example, when n is 2, turn FFFFFFFFFFFFFF12 into FF12
-				int length = hexString.length();
-				hexString = hexString.substring(length - (n * 2));
-			}
+				String hexString = Long.toHexString(value);
+				if (value < 0) {
+					// Long will print leading FF for 8 bytes, regardless of enum size.  Keep only
+					// n bytes worth of text.  For example, when n is 2, turn FFFFFFFFFFFFFF12 into
+					// FF12
+					int length = hexString.length();
+					hexString = hexString.substring(length - (n * 2));
+				}
 
-			String comment = enumDataType.getComment(name);
-			if (trim && comment != null) {
-				comment = StringUtilities.trim(comment, ToolTipUtils.LINE_LENGTH);
-			}
+				String comment = enumDataType.getComment(name);
+				if (trim && comment != null) {
+					comment = StringUtilities.trim(comment, ToolTipUtils.LINE_LENGTH);
+				}
 
-			list.add(new TextLine(name + " = 0x" + hexString + "    " + comment));
+				list.add(new TextLine(name + " = 0x" + hexString + "    " + comment));
+			}
 		}
 
 		return list;

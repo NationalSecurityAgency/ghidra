@@ -122,7 +122,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	}
 
 	// TODO add methods:
-	// createDefaultToyProgram() with no params	
+	// createDefaultToyProgram() with no params
 	// createDefaultX86Program() with no params
 	// createDefaultX86ProgramBuilder() with no params
 	// createClassicNotepadProgram()
@@ -198,10 +198,12 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
-	 * logic. 
+	 * logic.
 	 * 
 	 * @param p the program
 	 * @param c the code to execute
+	 * @see #modifyProgram(Program, ExceptionalCallback)
+	 * @see #modifyProgram(Program, ExceptionalFunction)
 	 */
 	public static <E extends Exception> void tx(Program p, ExceptionalCallback<E> c) {
 		int txId = p.startTransaction("Test - Function in Transaction");
@@ -227,6 +229,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * 
 	 * @param p the program
 	 * @param c the code to execute
+	 * @see #modifyProgram(Program, ExceptionalFunction)
 	 */
 	public static <E extends Exception> void modifyProgram(Program p, ExceptionalCallback<E> c) {
 		tx(p, c);
@@ -239,6 +242,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @param program the program
 	 * @param f the function for modifying the program and creating the desired result
 	 * @return the result
+	 * @see #modifyProgram(Program, ExceptionalCallback)
 	 */
 	public <R, E extends Exception> R modifyProgram(Program program,
 			ExceptionalFunction<Program, R, E> f) {
@@ -462,11 +466,11 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	}
 
 	/**
-	 * A convenience method that allows you to open the given program in a default tool, 
-	 * navigating to the given address. 
+	 * A convenience method that allows you to open the given program in a default tool,
+	 * navigating to the given address.
 	 * 
 	 * <P>Note: this is a blocking operation.  Your test will not proceed while this method is
-	 * sleeping. 
+	 * sleeping.
 	 * 
 	 * <P><B>Do not leave this call in your test when committing changes.</B>
 	 * @param p the program
@@ -507,7 +511,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	}
 
 	/**
-	 * Waits for a launched script to complete by using the given listener. 
+	 * Waits for a launched script to complete by using the given listener.
 	 * 
 	 * @param listener the listener used to track script progress
 	 * @param timeoutMS the max time to wait; failing if exceeded
