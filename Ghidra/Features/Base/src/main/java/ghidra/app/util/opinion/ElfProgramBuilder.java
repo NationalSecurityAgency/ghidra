@@ -15,24 +15,27 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigInteger;
+import java.nio.file.AccessMode;
 import java.text.NumberFormat;
 import java.util.*;
 
+import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
 
+import generic.continues.GenericFactory;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.bin.format.elf.relocation.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.options.Options;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.database.register.AddressRangeObjectMap;
@@ -53,6 +56,7 @@ import ghidra.util.*;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
@@ -1352,7 +1356,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		// Mapped data/object symbol addresses with specific sizes
 		HashMap<Address, Integer> dataAllocationMap = new HashMap<>();
 
-		ElfSymbolTable[] symbolTables = elf.getSymbolTables();
+		List<ElfSymbolTable> symbolTables = new ArrayList<>();
+		symbolTables.addAll(List.of(elf.getSymbolTables()));
+		symbolTables.addAll(getGnuDebugDataSymbolTables(monitor));
+
 
 		int totalCount = 0;
 		for (ElfSymbolTable elfSymbolTable : symbolTables) {
@@ -1388,6 +1395,61 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		// create undefined data code units for symbols
 		allocateUndefinedSymbolData(dataAllocationMap);
+	}
+
+	/**
+	 * Returns any symbol tables that are embedded in the ".gnu_debugdata" section.
+	 * <p>
+	 * The ".gnu_debugdata" section contains a xz compressed minimal ELF file that has symbols that
+	 * have been stripped from this binary.
+	 * 
+	 * @param monitor checked for cancelation when copying data
+	 * @return list of ElfSymbolTables, empty if not present
+	 */
+	private List<ElfSymbolTable> getGnuDebugDataSymbolTables(TaskMonitor monitor) {
+		ElfSectionHeader debugDataSection = elf.getSection(".gnu_debugdata");
+		Address debugDataAddr = findLoadAddress(debugDataSection, 0);
+		if (debugDataAddr != null) {
+			try {
+				File tmpFile = File.createTempFile("ghidra_gnu_debugdata", null);
+				try (ByteProviderWrapper compressedDebugDataBP = new ByteProviderWrapper(
+					new MemoryByteProvider(memory, debugDataAddr), 0, debugDataSection.getSize());
+						XZCompressorInputStream xzIS =
+							new XZCompressorInputStream(compressedDebugDataBP.getInputStream(0));
+						ObfuscatedOutputStream oos =
+							new ObfuscatedOutputStream(new FileOutputStream(tmpFile));) {
+
+					FileUtilities.copyStreamToStream(xzIS, oos, monitor);
+					oos.close();
+
+					try (ByteProvider debugDataBP =
+						new ObfuscatedFileByteProvider(tmpFile, null, AccessMode.READ)) {
+
+						GenericFactory factory = MessageLogContinuesFactory.create(log);
+						ElfHeader minidebugElf =
+							ElfHeader.createElfHeader(factory, debugDataBP, null);
+						minidebugElf.parse();
+
+						ElfSymbolTable[] minidebugSymbolTables = minidebugElf.getSymbolTables();
+						int debugSymbolsCount = 0;
+						for (ElfSymbolTable symTable : minidebugSymbolTables) {
+							debugSymbolsCount += symTable.getSymbols().length;
+						}
+						log(String.format("Found %d symbols in .gnu_debugdata", debugSymbolsCount));
+
+						return List.of(minidebugSymbolTables);
+					}
+				}
+				finally {
+					tmpFile.delete();
+				}
+			}
+			catch (IOException | ElfException e) {
+				log("Error extracting .gnu_debugdata section embedded symbols.");
+				Msg.error(this, "Error extracting .gnu_debugdata section embedded symbols.", e);
+			}
+		}
+		return List.of();
 	}
 
 	private void processSymbols(ElfSymbol[] symbols, HashMap<Address, Integer> dataAllocationMap,
