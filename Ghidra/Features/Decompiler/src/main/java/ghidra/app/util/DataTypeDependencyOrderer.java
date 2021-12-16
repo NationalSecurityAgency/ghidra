@@ -361,13 +361,8 @@ public class DataTypeDependencyOrderer {
 		if (entry == null) {
 			return;
 		}
-		Set<Entry> dependents = whoDependsOnMe.get(entry);
-		if (dependents == null) {
-			dependents = new HashSet<>();
-			whoDependsOnMe.put(entry, dependents);
-		}
-		Set<Entry> support = new HashSet<>();
-		whoIDependOn.put(entry, support);
+        Set<Entry> dependents = whoDependsOnMe.computeIfAbsent(entry, k -> new HashSet<>());
+		whoIDependOn.put(entry, dependents);
 	}
 
 	private void removeMyDependentsEdgesToMe(Entry entry) {
