@@ -18,6 +18,7 @@ package docking.widgets.tree;
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 
+import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.worker.PriorityJob;
@@ -61,7 +62,9 @@ public abstract class GTreeTask extends PriorityJob {
 		// note: call this on the Swing thread, since the Swing thread maintains the node state
 		//       (we have seen errors where the tree will return nodes that are in the process
 		//       of being disposed)
+		Msg.debug(this, "before translate: " + path);
 		GTreeNode nodeForPath = SystemUtilities.runSwingNow(() -> tree.getViewNodeForPath(path));
+		Msg.debug(this, "After translate, node = " + nodeForPath);
 		if (nodeForPath != null) {
 			return nodeForPath.getTreePath();
 		}

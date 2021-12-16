@@ -15,8 +15,7 @@
  */
 package docking.widgets.tree.tasks;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.CellEditor;
 import javax.swing.JTree;
@@ -30,23 +29,22 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import util.CollectionUtils;
 
 public class GTreeStartEditingTask extends GTreeTask {
 
-	private final GTreeNode parent;
+	private final GTreeNode modelParent;
 	private final String childName;
 	private GTreeNode editNode;
 
 	public GTreeStartEditingTask(GTree gTree, JTree jTree, GTreeNode parent, String childName) {
 		super(gTree);
-		this.parent = parent;
+		this.modelParent = parent;
 		this.childName = childName;
 	}
 
 	public GTreeStartEditingTask(GTree gTree, JTree jTree, GTreeNode editNode) {
 		super(gTree);
-		this.parent = editNode.getParent();
+		this.modelParent = tree.getModelNodeForPath(editNode.getParent().getTreePath());
 		this.childName = editNode.getName();
 		this.editNode = editNode;
 	}
@@ -67,17 +65,16 @@ public class GTreeStartEditingTask extends GTreeTask {
 	}
 
 	private void edit() {
-
+		GTreeNode viewParent = tree.getViewNodeForPath(modelParent.getTreePath());
 		if (editNode == null) {
-			editNode = parent.getChild(childName);
+			editNode = viewParent.getChild(childName);
 			if (editNode == null) {
 				Msg.debug(this, "Can't find node \"" + childName + "\" to edit.");
 				return;
 			}
 		}
-
 		TreePath path = editNode.getTreePath();
-		final Set<GTreeNode> childrenBeforeEdit = new HashSet<>(parent.getChildren());
+		final Set<GTreeNode> childrenBeforeEdit = new HashSet<>(viewParent.getChildren());
 
 		final CellEditor cellEditor = tree.getCellEditor();
 		cellEditor.addCellEditorListener(new CellEditorListener() {
@@ -89,8 +86,10 @@ public class GTreeStartEditingTask extends GTreeTask {
 
 			@Override
 			public void editingStopped(ChangeEvent e) {
+				String newName = Objects.toString(cellEditor.getCellEditorValue());
 				cellEditor.removeCellEditorListener(this);
-				SystemUtilities.runSwingLater(this::reselectNodeHandlingPotentialChildChange);
+				SystemUtilities
+						.runSwingLater(() -> reselectNodeHandlingPotentialChildChange(newName));
 			}
 
 			/**
@@ -103,12 +102,12 @@ public class GTreeStartEditingTask extends GTreeTask {
 			 */
 			private void reselectNode() {
 				String newName = editNode.getName();
-				GTreeNode newChild = parent.getChild(newName);
-				if (newChild == null) {
+				GTreeNode newModelChild = modelParent.getChild(newName);
+
+				if (newModelChild == null) {
 					throw new AssertException("Unable to find new node by name: " + newName);
 				}
-
-				tree.setSelectedNode(newChild);
+				tree.setSelectedNode(tree.getViewNodeForPath(newModelChild.getTreePath()));
 			}
 
 			/**
@@ -125,25 +124,25 @@ public class GTreeStartEditingTask extends GTreeTask {
 			 *                       the state of the edited node's parent, both before and after
 			 *                       the edit.
 			 */
-			private void reselectNodeHandlingPotentialChildChange() {
-				SystemUtilities.runSwingLater(this::doReselectNodeHandlingPotentialChildChange);
+			private void reselectNodeHandlingPotentialChildChange(String newName) {
+				SystemUtilities
+						.runSwingLater(() -> doReselectNodeHandlingPotentialChildChange(newName));
 			}
 
-			private void doReselectNodeHandlingPotentialChildChange() {
-				Set<GTreeNode> childrenAfterEdit = new HashSet<>(parent.getChildren());
-				if (childrenAfterEdit.equals(childrenBeforeEdit)) {
-					reselectNode(); // default re-select--the original child is still there
-					return;
-				}
+			private void doReselectNodeHandlingPotentialChildChange(String newName) {
+				GTreeNode newModelChild = modelParent.getChild(newName);
+				List<GTreeNode> children = modelParent.getChildren();
+				Msg.debug(this, children.toString());
 
-				// we have to figure out the new node to select
-				childrenAfterEdit.removeAll(childrenBeforeEdit);
-				if (childrenAfterEdit.size() != 1) {
-					return; // no way for us to figure out the correct child to edit
-				}
+				if (newModelChild != null) {
+					tree.ignoreFilter(newModelChild);
 
-				GTreeNode newChild = CollectionUtils.any(childrenAfterEdit);
-				tree.setSelectedNode(newChild);
+					tree.setSelectedNode(newModelChild);
+					Msg.debug(this, "new child not null");
+				}
+				else {
+					Msg.debug(this, "child is null");
+				}
 			}
 		});
 

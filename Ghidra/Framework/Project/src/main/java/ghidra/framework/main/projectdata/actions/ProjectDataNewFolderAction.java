@@ -33,7 +33,8 @@ import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
 import resources.ResourceManager;
 
-public class ProjectDataNewFolderAction<T extends ProjectTreeContext> extends ContextSpecificAction<T> {
+public class ProjectDataNewFolderAction<T extends ProjectTreeContext>
+		extends ContextSpecificAction<T> {
 
 	private static Icon icon = ResourceManager.loadImage("images/folder_add.png");
 
@@ -66,8 +67,9 @@ public class ProjectDataNewFolderAction<T extends ProjectTreeContext> extends Co
 		Swing.runLater(() -> {
 			GTreeNode node = findNodeForFolder(tree, newFolder);
 			if (node != null) {
+				tree.ignoreFilter(node);
 				tree.setEditable(true);
-				tree.startEditing(node.getParent(), node.getName());
+				tree.startEditing(node);
 			}
 		});
 
@@ -79,7 +81,7 @@ public class ProjectDataNewFolderAction<T extends ProjectTreeContext> extends Co
 			return parentFolder.createFolder(name);
 		}
 		catch (InvalidNameException | IOException e) {
-			throw new AssertException("Unexpected Error creating new folder: "+name, e);
+			throw new AssertException("Unexpected Error creating new folder: " + name, e);
 		}
 	}
 

@@ -107,6 +107,7 @@ public class GTree extends JPanel implements BusyListener {
 	private GTreeFilter filter;
 	private GTreeFilterProvider filterProvider;
 	private SwingUpdateManager filterUpdateManager;
+	private Set<GTreeNode> ignoredNodes = new HashSet<>();
 
 	/**
 	 * Creates a GTree with the given root node.  The created GTree will use a threaded model
@@ -241,6 +242,7 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	public void dispose() {
+		ignoredNodes.clear();
 		filterUpdateManager.dispose();
 		worker.dispose();
 
@@ -269,11 +271,23 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	public void filterChanged() {
+		ignoredNodes.clear();
+		updateModelFilter();
+	}
+
+	public void ignoreFilter(GTreeNode node) {
+		ignoredNodes.add(node);
 		updateModelFilter();
 	}
 
 	protected void updateModelFilter() {
 		filter = filterProvider.getFilter();
+		if (!ignoredNodes.isEmpty()) {
+			filter = new IgnoredNodesGtreeFilter(filter, ignoredNodes);
+		}
+
+		// TODO  why?
+		filterUpdateManager.stop();
 
 		if (lastFilterTask != null) {
 			// it is safe to repeatedly call cancel
@@ -964,10 +978,16 @@ public class GTree extends JPanel implements BusyListener {
 		// the Swing thread.  To deal with this, we use a construct that will run our request
 		// once the given node has been added to the parent.
 		//
-		BooleanSupplier isReady = () -> parent.getChild(childName) != null;
+		GTreeNode modelParent = getModelNodeForPath(parent.getTreePath());
+		BooleanSupplier isReady = () -> modelParent.getChild(childName) != null;
 		int expireMs = 3000;
 		ExpiringSwingTimer.runWhen(isReady, expireMs, () -> {
-			runTask(new GTreeStartEditingTask(GTree.this, tree, parent, childName));
+			if (isFiltered()) {
+				GTreeNode child = modelParent.getChild(childName);
+				ignoreFilter(child);
+				updateModelFilter();
+			}
+			runTask(new GTreeStartEditingTask(GTree.this, tree, modelParent, childName));
 		});
 	}
 
