@@ -118,35 +118,54 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		Icon downIcon = ResourceManager.loadImage("images/down.png");
 
 		assertEquals(downIcon, direction.getToolBarData().getIcon());
-		assertEquals("Go To Next Instruction", nextInst.getDescription());
-		assertEquals("Go To Next Data", nextData.getDescription());
-		assertEquals("Go To Next Undefined", nextUndef.getDescription());
-		assertEquals("Go To Next Label", nextLabel.getDescription());
-		assertEquals("Go To Next Function", nextFunc.getDescription());
-		assertEquals("Go To Next Instruction Not In a Function", nextNonFunc.getDescription());
-		assertEquals("Go To Next Bookmark: All Types", nextBookmark.getDescription());
+		assertEquals("Go To Next Instruction (shift-click inverts direction)",
+			nextInst.getDescription());
+		assertEquals("Go To Next Data (shift-click inverts direction)", nextData.getDescription());
+		assertEquals("Go To Next Undefined (shift-click inverts direction)",
+			nextUndef.getDescription());
+		assertEquals("Go To Next Label (shift-click inverts direction)",
+			nextLabel.getDescription());
+		assertEquals("Go To Next Function (shift-click inverts direction)",
+			nextFunc.getDescription());
+		assertEquals("Go To Next Instruction Not In a Function (shift-click inverts direction)",
+			nextNonFunc.getDescription());
+		assertEquals("Go To Next Bookmark: All Types",
+			nextBookmark.getDescription());
 
 		performAction(direction, cb.getProvider(), true);
 
 		assertEquals(upIcon, direction.getToolBarData().getIcon());
-		assertEquals("Go To Previous Instruction", nextInst.getDescription());
-		assertEquals("Go To Previous Data", nextData.getDescription());
-		assertEquals("Go To Previous Undefined", nextUndef.getDescription());
-		assertEquals("Go To Previous Label", nextLabel.getDescription());
-		assertEquals("Go To Previous Function", nextFunc.getDescription());
-		assertEquals("Go To Previous Instruction Not In a Function", nextNonFunc.getDescription());
-		assertEquals("Go To Previous Bookmark: All Types", nextBookmark.getDescription());
+		assertEquals("Go To Previous Instruction (shift-click inverts direction)",
+			nextInst.getDescription());
+		assertEquals("Go To Previous Data (shift-click inverts direction)",
+			nextData.getDescription());
+		assertEquals("Go To Previous Undefined (shift-click inverts direction)",
+			nextUndef.getDescription());
+		assertEquals("Go To Previous Label (shift-click inverts direction)",
+			nextLabel.getDescription());
+		assertEquals("Go To Previous Function (shift-click inverts direction)",
+			nextFunc.getDescription());
+		assertEquals("Go To Previous Instruction Not In a Function (shift-click inverts direction)",
+			nextNonFunc.getDescription());
+		assertEquals("Go To Previous Bookmark: All Types",
+			nextBookmark.getDescription());
 
 		performAction(direction, cb.getProvider(), true);
 
 		assertEquals(downIcon, direction.getToolBarData().getIcon());
-		assertEquals("Go To Next Instruction", nextInst.getDescription());
-		assertEquals("Go To Next Data", nextData.getDescription());
-		assertEquals("Go To Next Undefined", nextUndef.getDescription());
-		assertEquals("Go To Next Label", nextLabel.getDescription());
-		assertEquals("Go To Next Function", nextFunc.getDescription());
-		assertEquals("Go To Next Instruction Not In a Function", nextNonFunc.getDescription());
-		assertEquals("Go To Next Bookmark: All Types", nextBookmark.getDescription());
+		assertEquals("Go To Next Instruction (shift-click inverts direction)",
+			nextInst.getDescription());
+		assertEquals("Go To Next Data (shift-click inverts direction)", nextData.getDescription());
+		assertEquals("Go To Next Undefined (shift-click inverts direction)",
+			nextUndef.getDescription());
+		assertEquals("Go To Next Label (shift-click inverts direction)",
+			nextLabel.getDescription());
+		assertEquals("Go To Next Function (shift-click inverts direction)",
+			nextFunc.getDescription());
+		assertEquals("Go To Next Instruction Not In a Function (shift-click inverts direction)",
+			nextNonFunc.getDescription());
+		assertEquals("Go To Next Bookmark: All Types",
+			nextBookmark.getDescription());
 	}
 
 	@Test
