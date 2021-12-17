@@ -289,7 +289,6 @@ public class ByteViewerPanel extends JPanel
 		}
 		if (blocks != null && blocks.length > 0) {
 			columnHeader.setColumnName(indexPanel, blocks[0].getIndexName());
-			setCursorLocation(blocks[0], BigInteger.ZERO, 0);
 		}
 		indexPanel.dataChanged(BigInteger.ZERO, indexMap.getNumIndexes());
 		indexSetChanged();
