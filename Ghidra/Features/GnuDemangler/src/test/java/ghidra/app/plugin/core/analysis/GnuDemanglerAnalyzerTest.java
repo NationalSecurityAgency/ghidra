@@ -33,12 +33,12 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
+import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
-public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadlessIntegrationTest {
+public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private ProgramDB program;
 	private GnuDemanglerAnalyzer analyzer = new GnuDemanglerAnalyzer();
