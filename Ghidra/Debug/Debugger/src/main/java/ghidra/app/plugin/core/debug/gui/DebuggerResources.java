@@ -1500,6 +1500,24 @@ public interface DebuggerResources {
 		}
 	}
 
+	interface NewMemoryAction{
+		String NAME = "New Memory View";
+		String DESCRIPTION = "Open a new memory bytes view";
+		String GROUP = GROUP_TRANSIENT_VIEWS;
+		Icon ICON = ICON_MEMORY_BYTES;
+		String HELP_ANCHOR = "new_memory";
+		
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME,ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.menuIcon(ICON)
+					.menuPath("Window", DebuggerPluginPackage.NAME, NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+	
 	abstract class AbstractStepSnapForwardAction extends DockingAction {
 		public static final String NAME = "Step Trace Snap Forward";
 		public static final Icon ICON = ICON_SNAP_FORWARD;
