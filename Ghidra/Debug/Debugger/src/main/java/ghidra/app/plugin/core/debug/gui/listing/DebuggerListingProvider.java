@@ -1034,7 +1034,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	public void cloneWindow() {
 		final DebuggerListingProvider newProvider = plugin.createNewDisconnectedProvider();
 		final ViewerPosition vp = getListingPanel().getFieldPanel().getViewerPosition();
+		final SaveState saveState = new SaveState();
+		writeConfigState(saveState);
 		Swing.runLater(() -> {
+			newProvider.readConfigState(saveState);
+
 			newProvider.goToCoordinates(current);
 			newProvider.getListingPanel()
 					.getFieldPanel()
