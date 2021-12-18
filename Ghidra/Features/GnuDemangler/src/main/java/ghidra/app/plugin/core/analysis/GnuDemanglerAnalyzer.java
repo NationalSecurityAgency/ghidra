@@ -26,6 +26,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import ghidra.util.SystemUtilities;
 
 /**
  * A version of the demangler analyzer to handle GNU GCC symbols
@@ -75,10 +76,6 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	@Override
 	public void registerOptions(Options options, Program program) {
-		BooleanEditor editor = new BooleanEditor();
-		editor.setValue(Boolean.valueOf(useDeprecatedDemangler));
-		FormatEditor formatEditor = new FormatEditor(demanglerFormat, editor);
-		editor.addPropertyChangeListener(formatEditor);
 
 		HelpLocation help = new HelpLocation("AutoAnalysisPlugin", "Demangler_Analyzer");
 		options.registerOption(OPTION_NAME_APPLY_SIGNATURE, doSignatureEnabled, help,
@@ -87,11 +84,24 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		options.registerOption(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns,
 			help, OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
 
-		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, OptionType.BOOLEAN_TYPE,
-			useDeprecatedDemangler, help, OPTION_DESCRIPTION_DEPRECATED_DEMANGLER, editor);
+		BooleanEditor deprecatedEditor = null;
+		FormatEditor formatEditor = null;
+		if (!SystemUtilities.isInHeadlessMode()) {
+			// Only add the custom options editor when not headless.   The custom editor allows
+			// the list of choices presented to the user to change depending on the state of the
+			// useDeprecatedDemangler flag.
+			deprecatedEditor = new BooleanEditor();
+			deprecatedEditor.setValue(Boolean.valueOf(useDeprecatedDemangler));
+			formatEditor = new FormatEditor(demanglerFormat, deprecatedEditor);
+			deprecatedEditor.addPropertyChangeListener(formatEditor);
+		}
 
-		options.registerOption(OPTION_NAME_DEMANGLER_FORMAT, OptionType.ENUM_TYPE, demanglerFormat,
-			help, OPTION_DESCRIPTION_DEMANGLER_FORMAT, formatEditor);
+		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, OptionType.BOOLEAN_TYPE,
+			useDeprecatedDemangler, help, OPTION_DESCRIPTION_DEPRECATED_DEMANGLER,
+			deprecatedEditor);
+
+		options.registerOption(OPTION_NAME_DEMANGLER_FORMAT, OptionType.ENUM_TYPE,
+			demanglerFormat, help, OPTION_DESCRIPTION_DEMANGLER_FORMAT, formatEditor);
 	}
 
 	@Override
