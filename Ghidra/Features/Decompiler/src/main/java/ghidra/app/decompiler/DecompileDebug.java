@@ -318,6 +318,7 @@ public class DecompileDebug {
 				if (count % 20 == 19) {
 					buf.append("\n  ");
 				}
+				count++;
 			}
 			buf.append("00\n</bytes>\n");
 			buf.append("</string>\n");
