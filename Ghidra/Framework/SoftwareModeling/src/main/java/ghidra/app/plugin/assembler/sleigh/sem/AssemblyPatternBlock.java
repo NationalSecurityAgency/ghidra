@@ -99,45 +99,6 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	}
 
 	/**
-	 * Convert the given long to a pattern block (having offset 0 and a full mask)
-	 * NOTE: The result will be 8 bytes in length
-	 * @param value the value to convert
-	 * @return the pattern block containing the big-endian representation of the value
-	 */
-	public static AssemblyPatternBlock fromLong(long value) {
-		byte[] mask = new byte[8];
-		byte[] vals = new byte[8];
-		for (int i = vals.length; i >= 0; i--) {
-			mask[i] = -1;
-			vals[i] = (byte) (value & 0xff);
-			value >>= 8;
-		}
-		AssemblyPatternBlock res = new AssemblyPatternBlock(0, mask, vals);
-		return res;
-	}
-
-	/**
-	 * Convert the given masked long to a pattern block (having offset 0)
-	 * NOTE: The result will be 8 bytes in length
-	 * @param ml the masked long, whose values and mask to convert
-	 * @return the pattern block containing the big-endian representation of the value
-	 */
-	public static AssemblyPatternBlock fromMaskedLong(MaskedLong ml) {
-		byte[] mask = new byte[8];
-		byte[] vals = new byte[8];
-		long lmask = ml.getMask();
-		long value = ml.longValue();
-		for (int i = vals.length; i >= 0; i--) {
-			mask[i] = (byte) (lmask & 0xff);
-			vals[i] = (byte) (value & 0xff);
-			lmask >>= 8;
-			value >>= 8;
-		}
-		AssemblyPatternBlock res = new AssemblyPatternBlock(0, mask, vals);
-		return res;
-	}
-
-	/**
 	 * Convert a string representation to a pattern block
 	 * @see NumericUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String)
 	 * @param str the string to convert
