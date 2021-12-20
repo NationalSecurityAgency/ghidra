@@ -7,6 +7,30 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.1.1 Change History (December 2021)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed headless analysis exception related to running UI code from the GNU Demangler analyzer. (GP-1613, Issue #3765)</li>
+    <li><I>Basic Infrastructure</I>. Upgrade logging dependency to use <i>log4j</i> 2.17.0 (GP-1621)</li>
+    <li><I>Debugger:Memory</I>. Added <B>New Memory Bytes View</B> to Window->Debugger menu. (GP-1465)</li>
+    <li><I>Debugger:Memory</I>. Fixed issue with Debugger Memory view scrolling. (GP-1591)</li>
+    <li><I>GUI</I>. Removed restriction that prevented renaming tree nodes while the tree is filtered. (GP-1507)</li>
+    <li><I>GUI</I>. Fixed issue where renaming a symbol in the symbol tree could result in the symbol appearing more than once (under different organizational nodes) (GP-1587)</li>
+    <li><I>Help</I>. Fixed NullPointerException when using the help system with animation disasbled. (GP-1612, Issue #3767)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Basic Infrastructure</I>. Fixed the <I>"ERROR StatusLogger Reconfiguration failed"</I> message that appeared in the log when Ghidra was launched with <I>support/ghidraDebug</I> script. (GP-1607)</li>
+    <li><I>Debugger</I>. Fixed null pointer exception in Debugger when opening a program from a shared project. (GP-1490)</li>
+    <li><I>Debugger</I>. Fixed issue with context menus on the trace selector tabs in Debugger Threads window. (GP-1494)</li>
+    <li><I>Debugger</I>. Fix for font resizing (GP-1597, Issue #3752)</li>
+    <li><I>Debugger</I>. Fixes null-pointer exceptions in lldb (GP-1600, Issue #3645)</li>
+    <li><I>Debugger:Listing</I>. Fixed default configuration problem when cloning the Debugger Listing window. (GP-1479)</li>
+    <li><I>Importer</I>. Fix issue importing NE binaries that have a segment number greater than 127. (GP-1576, Issue #3715)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.1 Change History (December 2021)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>
