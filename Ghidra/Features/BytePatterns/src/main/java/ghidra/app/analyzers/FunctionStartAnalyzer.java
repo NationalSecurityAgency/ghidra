@@ -715,6 +715,8 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 				public boolean added(Program addedProgram, AddressSetView addedSet,
 						TaskMonitor addedMonitor, MessageLog addedLog) throws CancelledException {
 					AddressIterator addresses = addedSet.getAddresses(true);
+					
+					outerloop:
 					while (addresses.hasNext() && !addedMonitor.isCancelled()) {
 						Address address = addresses.next();
 						// if there are any conditional references, then this can't be a function start
@@ -723,9 +725,8 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 						while (referencesTo.hasNext()) {
 							Reference reference = referencesTo.next();
 							if (reference.getReferenceType().isConditional()) {
-								continue;
+								continue outerloop;
 							}
-
 						}
 						Function funcAt =
 							addedProgram.getFunctionManager().getFunctionContaining(address);
