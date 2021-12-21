@@ -79,6 +79,7 @@ public interface UndoableTransaction extends AutoCloseable {
 		@Override
 		public void close() {
 			if (open) {
+				open = false;
 				endTransaction(commit);
 			}
 		}
