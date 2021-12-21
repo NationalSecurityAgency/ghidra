@@ -81,6 +81,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 	public DefaultTraceRecorder(DebuggerModelServicePlugin plugin, Trace trace, TargetObject target,
 			DefaultDebuggerTargetTraceMapper mapper) {
+		trace.addConsumer(this);
 		this.plugin = plugin;
 		this.tool = plugin.getTool();
 		this.trace = trace;
@@ -99,9 +100,6 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		this.symbolRecorder = new DefaultSymbolRecorder(this);
 		this.timeRecorder = new DefaultTimeRecorder(this);
 		this.objectManager = new TraceObjectManager(target, mapper, this);
-
-		trace.addConsumer(this);
-
 	}
 
 	/*---------------- OBJECT MANAGER METHODS -------------------*/
@@ -358,9 +356,14 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	protected void invalidate() {
-		valid = false;
 		objectManager.disposeModelListeners();
-		trace.release(this);
+		synchronized (this) {
+			if (!valid) {
+				return;
+			}
+			valid = false;
+			trace.release(this);
+		}
 	}
 
 	/*---------------- FOCUS-SUPPORT METHODS -------------------*/
