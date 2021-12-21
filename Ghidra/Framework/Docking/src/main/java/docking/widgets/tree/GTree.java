@@ -25,7 +25,8 @@ import java.awt.event.MouseListener;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.List;
-import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -60,7 +61,7 @@ public class GTree extends JPanel implements BusyListener {
 
 	/**
 	 * This is the root node of the tree's data model.  It may or may not be the root node
-	 * that is currently being displayed by the tree. If there is currently a 
+	 * that is currently being displayed by the tree. If there is currently a
 	 * filter applied, then then the displayed root node will be a clone whose children have been
 	 * trimmed to only those that match the filter.  By keeping this variable around, we can give
 	 * this node to clients, regardless of the root node visible in the tree.
@@ -68,16 +69,16 @@ public class GTree extends JPanel implements BusyListener {
 	private volatile GTreeNode realModelRootNode;
 
 	/**
-	 * This is the root that is currently being displayed. This node will be either exactly the 
+	 * This is the root that is currently being displayed. This node will be either exactly the
 	 * same instance as the realModelRootNode (if no filter has been applied) or it will be the
-	 * filtered clone of the realModelRootNode. 
+	 * filtered clone of the realModelRootNode.
 	 */
 	private volatile GTreeNode realViewRootNode;
 
 	/**
 	 * The rootParent is a node that is assigned as the parent to the realRootNode. It's primary purpose is
 	 * to allow nodes access to the tree. It overrides the getTree() method on GTreeNode to return
-	 * this tree. This eliminated the need for clients to create special root nodes that had 
+	 * this tree. This eliminated the need for clients to create special root nodes that had
 	 * public setTree/getTree methods.
 	 */
 	private GTreeRootParentNode rootParent = new GTreeRootParentNode(this);
@@ -276,17 +277,23 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	public void ignoreFilter(GTreeNode node) {
+		if (!isFiltered()) {
+			return;
+		}
 		ignoredNodes.add(node);
 		updateModelFilter();
 	}
 
 	protected void updateModelFilter() {
 		filter = filterProvider.getFilter();
-		if (!ignoredNodes.isEmpty()) {
+		if (filter != null && !ignoredNodes.isEmpty()) {
 			filter = new IgnoredNodesGtreeFilter(filter, ignoredNodes);
 		}
 
-		// TODO  why?
+		// Normally this call is made from the update manager, which means we do not need to stop
+		// it manually.  However, this method may be called directly by the tree.  In that case,
+		// we will be performing a filter now, so there is no need to allow the update manager
+		// to keep buffering.
 		filterUpdateManager.stop();
 
 		if (lastFilterTask != null) {
@@ -338,7 +345,7 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
-	 * Signal to the tree that it should record its expanded and selected state when a 
+	 * Signal to the tree that it should record its expanded and selected state when a
 	 * new filter is applied
 	 */
 	void saveFilterRestoreState() {
@@ -571,23 +578,49 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
+	 * Gets the model node for the given node. This is useful if the node that is in the path has
+	 * been replaced by a new node that is equal, but a different instance.  One way this happens
+	 * is if the tree is filtered and therefor the displayed nodes are clones of the model nodes.
+	 * This can also happen if the tree nodes are rebuilt for some reason.
+	 * 
+	 * @param node the node
+	 * @return the corresponding model node in the tree.  If the tree is filtered the viewed node
+	 *         will be a clone of the corresponding model node.
+	 */
+	public GTreeNode getModelNode(GTreeNode node) {
+		return getNodeForPath(getModelRoot(), node.getTreePath());
+	}
+
+	/**
 	 * Gets the model node for the given path. This is useful if the node that is in the path has
 	 * been replaced by a new node that is equal, but a different instance.  One way this happens
-	 * is if the tree is filtered and therefor the displayed nodes are clones of the model nodes.  This
-	 * can also happen if the tree nodes are rebuilt for some reason.
+	 * is if the tree is filtered and therefor the displayed nodes are clones of the model nodes.
+	 * This can also happen if the tree nodes are rebuilt for some reason.
 	 * 
 	 * @param path the path of the node
-	 * @return the corresponding model node in the tree.  If the tree is filtered the viewed node will
-	 * be a clone of the corresponding model node.
+	 * @return the corresponding model node in the tree.  If the tree is filtered the viewed node
+	 *         will be a clone of the corresponding model node.
 	 */
 	public GTreeNode getModelNodeForPath(TreePath path) {
 		return getNodeForPath(getModelRoot(), path);
 	}
 
 	/**
-	 * Gets the view node for the given path. This is useful to translate to a tree path that
-	 * is valid for the currently displayed tree.  (Remember that if the tree is filtered,
-	 * then the displayed nodes are clones of the model nodes.)
+	 * Gets the view node for the given node. This is useful to translate to a tree path that is
+	 * valid for the currently displayed tree.  (Remember that if the tree is filtered, then the
+	 * displayed nodes are clones of the model nodes.)
+	 * 
+	 * @param node the node
+	 * @return the current node in the displayed (possibly filtered) tree
+	 */
+	public GTreeNode getViewNode(GTreeNode node) {
+		return getNodeForPath(getViewRoot(), node.getTreePath());
+	}
+
+	/**
+	 * Gets the view node for the given path. This is useful to translate to a tree path that is
+	 * valid for the currently displayed tree.  (Remember that if the tree is filtered, then the
+	 * displayed nodes are clones of the model nodes.)
 	 * 
 	 * @param path the path of the node
 	 * @return the current node in the displayed (possibly filtered) tree
@@ -608,8 +641,9 @@ public class GTree extends JPanel implements BusyListener {
 			}
 			return null; // invalid path--the root of the path is not equal to our root!
 		}
+
 		if (node.getRoot() == root) {
-			return node;
+			return node; // this node is a valid child of the given root
 		}
 
 		GTreeNode parentNode = getNodeForPath(root, path.getParentPath());
@@ -735,7 +769,7 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
-	 * Sets the root node for this tree. 
+	 * Sets the root node for this tree.
 	 * <P>
 	 * NOTE: if this method is not called from the Swing thread, then the root node will be set
 	 * later on the Swing thread.  That is, this method will return before the work has been done.
@@ -782,7 +816,7 @@ public class GTree extends JPanel implements BusyListener {
 
 	/**
 	 * This method returns the root node that was provided to the tree by the client, whether from the
-	 * constructor or from {@link #setRootNode(GTreeNode)}. 
+	 * constructor or from {@link #setRootNode(GTreeNode)}.
 	 * This node represents the data model and always contains all the nodes regardless of any filter
 	 * being applied. If a filter is applied to the tree, then this is not the actual root node being
 	 * displayed by the {@link JTree}.
@@ -796,7 +830,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * This method returns the root node currently being displayed by the {@link JTree}.  If there
 	 * are no filters applied, then this will be the same as the model root (See {@link #getModelRoot()}).
 	 * If a filter is applied, then this will be a clone of the model root that contains clones of all
-	 * nodes matching the filter. 
+	 * nodes matching the filter.
 	 * @return the root node currently being display by the {@link JTree}
 	 */
 	public GTreeNode getViewRoot() {
@@ -956,15 +990,96 @@ public class GTree extends JPanel implements BusyListener {
 		tree.setEditable(editable);
 	}
 
+	// Waits for the given model node, passing it to the consumer when available
+	private void getModelNode(GTreeNode parent, String childName, Consumer<GTreeNode> consumer) {
+
+		int expireMs = 3000;
+		Supplier<GTreeNode> supplier = () -> {
+			GTreeNode modelParent = getModelNode(parent);
+			if (modelParent != null) {
+				return modelParent.getChild(childName);
+			}
+			return null;
+		};
+		ExpiringSwingTimer.get(supplier, expireMs, consumer);
+	}
+
+	// Waits for the given view node, passing it to the consumer when available
+	private void getViewNode(GTreeNode parent, String childName, Consumer<GTreeNode> consumer) {
+
+		int expireMs = 3000;
+		Supplier<GTreeNode> supplier = () -> {
+			GTreeNode viewParent = getViewNode(parent);
+			if (viewParent != null) {
+				return viewParent.getChild(childName);
+			}
+			return null;
+		};
+		ExpiringSwingTimer.get(supplier, expireMs, consumer);
+	}
+
 	/**
-	 * Requests that the node with the given name, in the given parent, be edited.  This 
-	 * operation is asynchronous.  This request will be buffered as needed to wait for 
-	 * the given node to be added to the parent, up to a timeout period.  
+	 * A specialized method that will get the child node from the given parent node when it
+	 * becomes available to the model.  This method will ensure that the named child passes any
+	 * current filter in order for the child to appear in the tree.  This effect is temporary and
+	 * will be undone when next the filter changes.
+	 * 
+	 * <p>This method is intended to be used by clients using an asynchronous node model, where
+	 * new nodes will get created by application-level events.  Such clients may wish to perform
+	 * work when newly created nodes become available.  This method simplifies the concurrent
+	 * nature of the GTree, asynchronous nodes and the processing of asynchronous application-level
+	 * events by providing a callback mechanism for clients.  <b>This method is non-blocking.</b>
+	 * 
+	 * <p>Note: this method assumes that the given parent node is in the view and not filtered
+	 * out of the view.  This method makes no attempt to ensure the given parent node passes any
+	 * existing filter.
+	 * 
+	 * <p>Note: this method will not wait forever for the given node to appear.  It will eventually
+	 * give up if the node never arrives.
+	 * 
+	 * @param parent the model's parent node.  If the view's parent node is passed, it will
+	 *               be translated to the model node.
+	 * @param childName the name of the desired child
+	 * @param consumer the consumer callback to which the child node will be given when available
+	 */
+	public void forceNewNodeIntoView(GTreeNode parent, String childName,
+			Consumer<GTreeNode> consumer) {
+
+		/*
+		
+			If the GTree were to use Java's CompletableStage API, then the code below
+			could be written thusly:
+			
+			tree.getNewNode(modelParent, newName)
+				.thenCompose(newModelChild -> {
+			 		tree.ignoreFilter(newModelChild);
+			 		return tree.getNewNode(viewParent, newName);
+			 	))
+			 	.thenAccept(consumer);
+		
+		*/
+
+		// ensure we operate on the model node which will always have the given child not the view
+		// node, which may have its child filtered
+		GTreeNode modelParent = getModelNode(parent);
+		getModelNode(modelParent, childName, newModelChild -> {
+			// force the filter to accept the new node
+			ignoreFilter(newModelChild);
+
+			// Wait for the view to update from any filtering that may take place
+			getViewNode(modelParent, childName, consumer);
+		});
+	}
+
+	/**
+	 * Requests that the node with the given name, in the given parent, be edited.  This operation
+	 * is asynchronous.  This request will be buffered as needed to wait for the given node to be
+	 * added to the parent, up to a timeout period.
 	 * 
 	 * @param parent the parent node
 	 * @param childName the name of the child to edit
 	 */
-	public void startEditing(GTreeNode parent, final String childName) {
+	public void startEditing(GTreeNode parent, String childName) {
 
 		// we call this here, even though the JTree will do this for us, so that we will trigger
 		// a load call before this task is run, in case lazy nodes are involved in this tree,
@@ -973,26 +1088,19 @@ public class GTree extends JPanel implements BusyListener {
 
 		//
 		// The request to edit the node may be for a node that has not yet been added to this
-		// tree.  Further, some clients will buffer events, which means that the node the client 
+		// tree.  Further, some clients will buffer events, which means that the node the client
 		// wishes to edit may not yet be in the parent node even if we run this request later on
 		// the Swing thread.  To deal with this, we use a construct that will run our request
 		// once the given node has been added to the parent.
 		//
-		GTreeNode modelParent = getModelNodeForPath(parent.getTreePath());
-		BooleanSupplier isReady = () -> modelParent.getChild(childName) != null;
-		int expireMs = 3000;
-		ExpiringSwingTimer.runWhen(isReady, expireMs, () -> {
-			if (isFiltered()) {
-				GTreeNode child = modelParent.getChild(childName);
-				ignoreFilter(child);
-				updateModelFilter();
-			}
-			runTask(new GTreeStartEditingTask(GTree.this, tree, modelParent, childName));
+		GTreeNode modelParent = getModelNode(parent);
+		forceNewNodeIntoView(modelParent, childName, newViewNode -> {
+			runTask(new GTreeStartEditingTask(GTree.this, tree, newViewNode));
 		});
 	}
 
 	/**
-	 * Requests that the node be edited.  This operation is asynchronous.  
+	 * Requests that the node be edited.  This operation is asynchronous.
 	 * 
 	 * @param child the node to edit
 	 */
@@ -1248,7 +1356,7 @@ public class GTree extends JPanel implements BusyListener {
 		private void updateDefaultKeyBindings() {
 
 			// Remove the edit keybinding, as the GTree triggers editing via a task, since it
-			// is multi-threaded.  Doing this allows users to assign their own key bindings to 
+			// is multi-threaded.  Doing this allows users to assign their own key bindings to
 			// the edit task.
 			KeyBindingUtils.clearKeyBinding(this, "startEditing");
 		}

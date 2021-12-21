@@ -15,6 +15,7 @@
  */
 package docking.widgets.tree.support;
 
+import java.util.Objects;
 import java.util.Set;
 
 import docking.widgets.tree.GTreeNode;
@@ -28,8 +29,8 @@ public class IgnoredNodesGtreeFilter implements GTreeFilter {
 	private Set<GTreeNode> ignoredNodes;
 
 	public IgnoredNodesGtreeFilter(GTreeFilter filter, Set<GTreeNode> ignoredNodes) {
-		this.filter = filter;
-		this.ignoredNodes = ignoredNodes;
+		this.filter = Objects.requireNonNull(filter);
+		this.ignoredNodes = Objects.requireNonNull(ignoredNodes);
 	}
 
 	@Override
