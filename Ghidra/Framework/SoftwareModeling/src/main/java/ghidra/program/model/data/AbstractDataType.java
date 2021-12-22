@@ -16,6 +16,7 @@
 package ghidra.program.model.data;
 
 import java.net.URL;
+import java.util.Collection;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
@@ -170,7 +171,7 @@ public abstract class AbstractDataType implements DataType {
 	}
 
 	@Override
-	public DataType[] getParents() {
+	public Collection<DataType> getParents() {
 		// not-applicable
 		return null;
 	}
