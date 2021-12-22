@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Color;
 
@@ -118,54 +119,41 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		Icon downIcon = ResourceManager.loadImage("images/down.png");
 
 		assertEquals(downIcon, direction.getToolBarData().getIcon());
-		assertEquals("Go To Next Instruction (shift-click inverts direction)",
-			nextInst.getDescription());
-		assertEquals("Go To Next Data (shift-click inverts direction)", nextData.getDescription());
-		assertEquals("Go To Next Undefined (shift-click inverts direction)",
-			nextUndef.getDescription());
-		assertEquals("Go To Next Label (shift-click inverts direction)",
-			nextLabel.getDescription());
-		assertEquals("Go To Next Function (shift-click inverts direction)",
-			nextFunc.getDescription());
-		assertEquals("Go To Next Instruction Not In a Function (shift-click inverts direction)",
-			nextNonFunc.getDescription());
-		assertEquals("Go To Next Bookmark: All Types",
-			nextBookmark.getDescription());
+		assertStartsWith("Go To Next Instruction", nextInst.getDescription());
+		assertStartsWith("Go To Next Data", nextData.getDescription());
+		assertStartsWith("Go To Next Undefined", nextUndef.getDescription());
+		assertStartsWith("Go To Next Label", nextLabel.getDescription());
+		assertStartsWith("Go To Next Function", nextFunc.getDescription());
+		assertStartsWith("Go To Next Instruction Not In a Function", nextNonFunc.getDescription());
+		assertStartsWith("Go To Next Bookmark: All Types", nextBookmark.getDescription());
 
 		performAction(direction, cb.getProvider(), true);
 
 		assertEquals(upIcon, direction.getToolBarData().getIcon());
-		assertEquals("Go To Previous Instruction (shift-click inverts direction)",
-			nextInst.getDescription());
-		assertEquals("Go To Previous Data (shift-click inverts direction)",
-			nextData.getDescription());
-		assertEquals("Go To Previous Undefined (shift-click inverts direction)",
-			nextUndef.getDescription());
-		assertEquals("Go To Previous Label (shift-click inverts direction)",
-			nextLabel.getDescription());
-		assertEquals("Go To Previous Function (shift-click inverts direction)",
-			nextFunc.getDescription());
-		assertEquals("Go To Previous Instruction Not In a Function (shift-click inverts direction)",
+		assertStartsWith("Go To Previous Instruction", nextInst.getDescription());
+		assertStartsWith("Go To Previous Data", nextData.getDescription());
+		assertStartsWith("Go To Previous Undefined", nextUndef.getDescription());
+		assertStartsWith("Go To Previous Label", nextLabel.getDescription());
+		assertStartsWith("Go To Previous Function", nextFunc.getDescription());
+		assertStartsWith("Go To Previous Instruction Not In a Function",
 			nextNonFunc.getDescription());
-		assertEquals("Go To Previous Bookmark: All Types",
-			nextBookmark.getDescription());
+		assertStartsWith("Go To Previous Bookmark: All Types", nextBookmark.getDescription());
 
 		performAction(direction, cb.getProvider(), true);
 
 		assertEquals(downIcon, direction.getToolBarData().getIcon());
-		assertEquals("Go To Next Instruction (shift-click inverts direction)",
-			nextInst.getDescription());
-		assertEquals("Go To Next Data (shift-click inverts direction)", nextData.getDescription());
-		assertEquals("Go To Next Undefined (shift-click inverts direction)",
-			nextUndef.getDescription());
-		assertEquals("Go To Next Label (shift-click inverts direction)",
-			nextLabel.getDescription());
-		assertEquals("Go To Next Function (shift-click inverts direction)",
-			nextFunc.getDescription());
-		assertEquals("Go To Next Instruction Not In a Function (shift-click inverts direction)",
-			nextNonFunc.getDescription());
-		assertEquals("Go To Next Bookmark: All Types",
-			nextBookmark.getDescription());
+		assertStartsWith("Go To Next Instruction", nextInst.getDescription());
+		assertStartsWith("Go To Next Data", nextData.getDescription());
+		assertStartsWith("Go To Next Undefined", nextUndef.getDescription());
+		assertStartsWith("Go To Next Label", nextLabel.getDescription());
+		assertStartsWith("Go To Next Function", nextFunc.getDescription());
+		assertStartsWith("Go To Next Instruction Not In a Function", nextNonFunc.getDescription());
+		assertStartsWith("Go To Next Bookmark: All Types", nextBookmark.getDescription());
+	}
+
+	private static void assertStartsWith(String expected, String actual) {
+		assertTrue("startsWith expected: \"" + expected + "\", got: \"" + actual + "\"",
+			actual.startsWith(expected));
 	}
 
 	@Test
