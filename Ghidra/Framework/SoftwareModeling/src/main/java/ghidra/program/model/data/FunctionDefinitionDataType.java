@@ -97,11 +97,13 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 		Parameter[] parameters = function.getParameters();
 
 		ArrayList<ParameterDefinition> paramList = new ArrayList<ParameterDefinition>();
+		int ordinalAdjustment = 0;
 		for (Parameter parameter : parameters) {
 			if (formalSignature && parameter.isAutoParameter()) {
+				--ordinalAdjustment;
 				continue;
 			}
-			paramList.add(getParameterDefinition(parameter, formalSignature));
+			paramList.add(getParameterDefinition(parameter, formalSignature, ordinalAdjustment));
 		}
 		params = paramList.toArray(new ParameterDefinition[paramList.size()]);
 
@@ -117,10 +119,11 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 		}
 	}
 
-	private ParameterDefinition getParameterDefinition(Parameter param, boolean useFormalType) {
+	private ParameterDefinition getParameterDefinition(Parameter param, boolean useFormalType,
+			int ordinalAdjustment) {
 		return new ParameterDefinitionImpl(param.getName(),
 			useFormalType ? param.getFormalDataType() : param.getDataType(), param.getComment(),
-			param.getOrdinal());
+			param.getOrdinal() + ordinalAdjustment);
 	}
 
 	private void init(FunctionSignature sig) {
