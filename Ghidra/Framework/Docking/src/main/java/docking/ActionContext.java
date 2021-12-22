@@ -239,8 +239,10 @@ public class ActionContext {
 	 * @return this context
 	 */
 	public ActionContext setMouseEvent(MouseEvent e) {
-		this.mouseEvent = e;
-		this.eventClickModifiers = e.getModifiersEx();
+		if (e != null) {
+			this.mouseEvent = e;
+			this.eventClickModifiers = e.getModifiersEx();
+		}
 		return this;
 	}
 
