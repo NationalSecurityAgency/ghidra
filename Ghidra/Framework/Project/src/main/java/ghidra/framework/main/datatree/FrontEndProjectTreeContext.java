@@ -20,6 +20,7 @@ import java.util.List;
 import javax.swing.tree.TreePath;
 
 import docking.ComponentProvider;
+import docking.widgets.tree.GTreeNode;
 import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.main.datatable.ProjectTreeContext;
 import ghidra.framework.model.*;
@@ -55,5 +56,10 @@ public class FrontEndProjectTreeContext extends ProjectDataContext
 	@Override
 	public DataTree getTree() {
 		return tree;
+	}
+
+	@Override
+	public GTreeNode getContextNode() {
+		return (GTreeNode) super.getContextObject();
 	}
 }

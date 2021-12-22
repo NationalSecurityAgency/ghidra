@@ -276,7 +276,7 @@ public class GTree extends JPanel implements BusyListener {
 		updateModelFilter();
 	}
 
-	public void ignoreFilter(GTreeNode node) {
+	private void ignoreFilter(GTreeNode node) {
 		if (!isFiltered()) {
 			return;
 		}
@@ -1094,8 +1094,8 @@ public class GTree extends JPanel implements BusyListener {
 		// once the given node has been added to the parent.
 		//
 		GTreeNode modelParent = getModelNode(parent);
-		forceNewNodeIntoView(modelParent, childName, newViewNode -> {
-			runTask(new GTreeStartEditingTask(GTree.this, tree, newViewNode));
+		forceNewNodeIntoView(modelParent, childName, viewNode -> {
+			runTask(new GTreeStartEditingTask(GTree.this, tree, viewNode));
 		});
 	}
 
@@ -1111,7 +1111,14 @@ public class GTree extends JPanel implements BusyListener {
 		// which must be loaded before we can edit
 		expandPath(child.getParent());
 
-		runTask(new GTreeStartEditingTask(GTree.this, tree, child));
+		// force the filter to accept the new node
+		ignoreFilter(child);
+
+		// Wait for the view to update from any filtering that may take place
+		GTreeNode modelParent = getModelNode(child.getParent());
+		getViewNode(modelParent, child.getName(), viewNode -> {
+			runTask(new GTreeStartEditingTask(GTree.this, tree, viewNode));
+		});
 	}
 
 	@Override

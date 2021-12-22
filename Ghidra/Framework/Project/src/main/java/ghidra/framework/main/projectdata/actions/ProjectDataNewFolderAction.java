@@ -16,8 +16,6 @@
 package ghidra.framework.main.projectdata.actions;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.Icon;
 
@@ -26,10 +24,10 @@ import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
 import ghidra.framework.main.datatable.ProjectTreeContext;
 import ghidra.framework.main.datatree.DataTree;
+import ghidra.framework.main.datatree.DomainFileNode;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.util.InvalidNameException;
-import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
 import resources.ResourceManager;
 
@@ -54,25 +52,14 @@ public class ProjectDataNewFolderAction<T extends ProjectTreeContext>
 		return (context.getFolderCount() + context.getFileCount()) == 1;
 	}
 
-	/**
-	 * Create a new folder for the selected node that represents
-	 * a folder.
-	 */
 	private void createNewFolder(T context) {
+
 		DomainFolder parentFolder = getFolder(context);
-
 		DomainFolder newFolder = createNewFolderWithDefaultName(parentFolder);
+		GTreeNode parent = getParentNode(context);
 		DataTree tree = context.getTree();
-
-		Swing.runLater(() -> {
-			GTreeNode node = findNodeForFolder(tree, newFolder);
-			if (node != null) {
-				tree.ignoreFilter(node);
-				tree.setEditable(true);
-				tree.startEditing(node);
-			}
-		});
-
+		tree.setEditable(true);
+		tree.startEditing(parent, newFolder.getName());
 	}
 
 	private DomainFolder createNewFolderWithDefaultName(DomainFolder parentFolder) {
@@ -83,30 +70,6 @@ public class ProjectDataNewFolderAction<T extends ProjectTreeContext>
 		catch (InvalidNameException | IOException e) {
 			throw new AssertException("Unexpected Error creating new folder: " + name, e);
 		}
-	}
-
-	/**
-	 * Get folder path as list with top-level folder being first in the list.  
-	 * Root folder is not included in list.
-	 * @param folder
-	 * @param folderPathList folder path list
-	 */
-	private static final void getFolderPath(DomainFolder folder, List<String> folderPathList) {
-		if (folder.getParent() != null) {
-			// don't recurse if we are the root, don't add our 'name' to the list
-			getFolderPath(folder.getParent(), folderPathList);
-			folderPathList.add(folder.getName());
-		}
-	}
-
-	private GTreeNode findNodeForFolder(DataTree tree, DomainFolder newFolder) {
-		List<String> folderPathList = new ArrayList<>();
-		getFolderPath(newFolder, folderPathList);
-		GTreeNode node = tree.getModelRoot();
-		for (int i = 0; node != null && i < folderPathList.size(); i++) {
-			node = node.getChild(folderPathList.get(i));
-		}
-		return node;
 	}
 
 	private String getNewFolderName(DomainFolder parent) {
@@ -130,4 +93,12 @@ public class ProjectDataNewFolderAction<T extends ProjectTreeContext>
 		return file.getParent();
 	}
 
+	private GTreeNode getParentNode(T context) {
+
+		GTreeNode node = context.getContextNode();
+		if (node instanceof DomainFileNode) {
+			return ((DomainFileNode) node).getParent();
+		}
+		return node;
+	}
 }

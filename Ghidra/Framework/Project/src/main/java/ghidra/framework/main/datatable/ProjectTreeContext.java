@@ -19,12 +19,13 @@ import java.util.List;
 
 import javax.swing.tree.TreePath;
 
+import docking.widgets.tree.GTreeNode;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 
 /**
- * Common methods appropriate for both the {@link FrontEndProjectTreeContext} and the 
+ * Common methods appropriate for both the {@link FrontEndProjectTreeContext} and the
  * {@link DialogProjectTreeContext}.  The project tree actions require that the contexts be
  * separate even though they need many of the same methods. By extracting the methods to this
  * interface, the contexts can be kept separate, but can share action code.
@@ -67,4 +68,9 @@ public interface ProjectTreeContext {
 	 */
 	public TreePath[] getSelectionPaths();
 
+	/**
+	 * Returns the node that represents the context object for this context
+	 * @return the node
+	 */
+	public GTreeNode getContextNode();
 }
