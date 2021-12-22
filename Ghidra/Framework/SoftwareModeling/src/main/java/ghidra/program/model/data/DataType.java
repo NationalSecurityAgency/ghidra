@@ -16,6 +16,7 @@
 package ghidra.program.model.data;
 
 import java.net.URL;
+import java.util.Collection;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
@@ -484,11 +485,13 @@ public interface DataType {
 	public void dataTypeNameChanged(DataType dt, String oldName);
 
 	/**
-	 * Get the parents of this datatype
-	 * 
-	 * @return an array of parents of this datatype
+	 * Get the parents of this datatype.
+	 *
+	 * NOTE: This method is intended to be used on a DB-managed datatype only and is not
+	 * fully supported for use with non-DB datatype instances. 
+	 * @return parents of this datatype
 	 */
-	public DataType[] getParents();
+	public Collection<DataType> getParents();
 
 	/**
 	 * Gets the alignment to be used when aligning this datatype within another datatype.
