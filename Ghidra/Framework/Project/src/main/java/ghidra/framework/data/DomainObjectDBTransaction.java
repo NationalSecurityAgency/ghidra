@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,14 @@
  */
 package ghidra.framework.data;
 
+import java.util.*;
+
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
-
-import java.util.*;
 
 /**
  * <code>DomainObjectDBTransaction</code> represents an atomic undoable operation performed
@@ -145,7 +144,7 @@ class DomainObjectDBTransaction implements Transaction {
 		try {
 			entry = list.get(transactionID - baseId);
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			throw new IllegalStateException("Transaction not found");
 		}
 		if (entry.status != NOT_DONE) {

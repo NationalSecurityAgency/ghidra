@@ -102,7 +102,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 		if (list == null || list.isEmpty()) {
 			return null;
 		}
-		return list.toArray(new String[list.size()]);
+		return list.toArray(new String[0]);
 	}
 
 	@Override
@@ -112,7 +112,6 @@ public class EnumDataType extends GenericDataType implements Enum {
 			comment = "";
 		}
 		return comment;
-
 	}
 
 	@Override

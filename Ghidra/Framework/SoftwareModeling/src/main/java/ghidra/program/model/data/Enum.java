@@ -38,9 +38,9 @@ public interface Enum extends DataType {
 	public String getName(long value);
 
 	/**
-	 * Get all the names for the given value.
-	 * @param value value of the enum entry.
-	 * @return null if no names with the given value were found.
+	 * Returns all names that map to the given value.
+	 * @param value value for the enum entries.
+	 * @return all names; null if there is not name for the given value.
 	 */
 	public String[] getNames(long value);
 

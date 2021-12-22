@@ -81,7 +81,7 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private Program buildProgram() throws Exception {
-		ToyProgramBuilder builder = new ToyProgramBuilder("notepad", true);
+		ToyProgramBuilder builder = new ToyProgramBuilder("sample", true);
 		builder.createMemory("test", "0x01006000", 0x1000);
 
 		builder.createEquate("0x010060f0", "ANOTHER_ONE", 1, 0);
@@ -116,7 +116,7 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testEquateTableView() throws Exception {
-		// verify that the equate table shows the equates and the references	
+		// verify that the equate table shows the equates and the references
 		assertNotNull(refsTable);
 		assertNotNull(refsModel);
 		assertEquals(1, refsModel.getRowCount());
@@ -137,7 +137,7 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRefsNavigation() {
-		// select a row in the refs table; the browser should go there	
+		// select a row in the refs table; the browser should go there
 
 		setRowSelection(equatesTable, 1, 1);
 
@@ -271,7 +271,7 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(pluginAction.isEnabled());
 		performAction(pluginAction, false);
 
-		OptionDialog d = waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
+		OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(d);
 		assertEquals("Delete Equate?", d.getTitle());
 
@@ -307,7 +307,7 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(pluginAction.isEnabled());
 		performAction(pluginAction, false);
 
-		OptionDialog d = waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
+		OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(d);
 		assertEquals("Delete Equate?", d.getTitle());
 
@@ -328,7 +328,7 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 //==================================================================================================
 // Private methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void setRowSelection(JTable table, int rowStart, int rowEnd) {
 		waitForSwing();

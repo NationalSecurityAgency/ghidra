@@ -164,7 +164,7 @@ if [ "${MODE}" = "debug" ] || [ "${MODE}" = "debug-suspend" ]; then
 		SUSPEND=y
 	fi
 	 
-	VMARG_LIST+=" -Dlog4j.configuration=\"${DEBUG_LOG4J}\""  
+	VMARG_LIST+=" -Dlog4j.configurationFile=\"${DEBUG_LOG4J}\""  
 	VMARG_LIST+=" -agentlib:jdwp=transport=dt_socket,server=y,suspend=${SUSPEND},address=${DEBUG_ADDRESS}"
 	
 

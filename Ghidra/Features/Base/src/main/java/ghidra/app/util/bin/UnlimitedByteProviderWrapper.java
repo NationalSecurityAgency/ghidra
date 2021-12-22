@@ -15,20 +15,29 @@
  */
 package ghidra.app.util.bin;
 
-import java.io.File;
 import java.io.IOException;
 
 import ghidra.formats.gfilesystem.FSRL;
 
 /**
- * A {@link ByteProvider} constrained to a sub-section of an existing {@link ByteProvider}.
+ * A {@link ByteProvider} constrained to a sub-section of an existing {@link ByteProvider}
+ * although reads beyond the specified sub-section are permitted but will return zero byte
+ * values.  The methods {@link #length()} and {@link #getInputStream(long)} remain
+ * bounded by the specified sub-section.
  */
-public class ByteProviderWrapper implements ByteProvider {
+public class UnlimitedByteProviderWrapper extends ByteProviderWrapper {
 
-	protected final ByteProvider provider;
-	protected final long subOffset;
-	protected final long subLength;
-	protected final FSRL fsrl;
+	/**
+	 * Creates a wrapper around a {@link ByteProvider} that contains the same bytes as the specified
+	 * provider.
+	 * <p>
+	 * 
+	 * @param provider {@link ByteProvider} to wrap
+	 * @throws IOException if error
+	 */
+	public UnlimitedByteProviderWrapper(ByteProvider provider) throws IOException {
+		this(provider, 0, provider.length(), provider.getFSRL());
+	}
 
 	/**
 	 * Creates a wrapper around a {@link ByteProvider} that contains the same bytes as the specified
@@ -39,95 +48,66 @@ public class ByteProviderWrapper implements ByteProvider {
 	 * @param fsrl {@link FSRL} identity for the instance
 	 * @throws IOException if error
 	 */
-	public ByteProviderWrapper(ByteProvider provider, FSRL fsrl) throws IOException {
+	public UnlimitedByteProviderWrapper(ByteProvider provider, FSRL fsrl) throws IOException {
 		this(provider, 0, provider.length(), fsrl);
 	}
 
 	/**
-	 * Constructs a {@link ByteProviderWrapper} around the specified {@link ByteProvider},
+	 * Constructs a {@link UnlimitedByteProviderWrapper} around the specified {@link ByteProvider},
 	 * constrained to a subsection of the provider.
 	 * 
 	 * @param provider the {@link ByteProvider} to wrap
 	 * @param subOffset the offset in the {@link ByteProvider} of where to start the new
-	 *   {@link ByteProviderWrapper} 
-	 * @param subLength the length of the new {@link ByteProviderWrapper} 
+	 *   {@link UnlimitedByteProviderWrapper} 
+	 * @param subLength the length of the new {@link UnlimitedByteProviderWrapper} 
 	 */
-	public ByteProviderWrapper(ByteProvider provider, long subOffset, long subLength) {
+	public UnlimitedByteProviderWrapper(ByteProvider provider, long subOffset, long subLength) {
 		this(provider, subOffset, subLength, null);
 	}
 
 	/**
-	 * Constructs a {@link ByteProviderWrapper} around the specified {@link ByteProvider},
+	 * Constructs a {@link UnlimitedByteProviderWrapper} around the specified {@link ByteProvider},
 	 * constrained to a subsection of the provider.
 	 * 
 	 * @param provider the {@link ByteProvider} to wrap
 	 * @param subOffset the offset in the {@link ByteProvider} of where to start the new
-	 *   {@link ByteProviderWrapper} 
-	 * @param subLength the length of the new {@link ByteProviderWrapper} 
+	 *   {@link UnlimitedByteProviderWrapper} 
+	 * @param subLength the length of the new {@link UnlimitedByteProviderWrapper} 
 	 * @param fsrl {@link FSRL} identity of the file this ByteProvider represents
 	 */
-	public ByteProviderWrapper(ByteProvider provider, long subOffset, long subLength, FSRL fsrl) {
-		this.provider = provider;
-		this.subOffset = subOffset;
-		this.subLength = subLength;
-		this.fsrl = fsrl;
-	}
-
-	@Override
-	public void close() throws IOException {
-		// do not close the wrapped provider
-	}
-
-	@Override
-	public FSRL getFSRL() {
-		return fsrl;
-	}
-
-	@Override
-	public File getFile() {
-		// there is no file that represents the actual contents of the subrange, so return null
-		return null;
-	}
-
-	@Override
-	public String getName() {
-		return (fsrl != null)
-				? fsrl.getName()
-				: String.format("%s[0x%x,0x%x]", provider.getName(), subOffset, subLength);
-	}
-
-	@Override
-	public String getAbsolutePath() {
-		return (fsrl != null)
-				? fsrl.getPath()
-				: String.format("%s[0x%x,0x%x]", provider.getAbsolutePath(), subOffset, subLength);
-	}
-
-	@Override
-	public long length() throws IOException {
-		return subLength;
+	public UnlimitedByteProviderWrapper(ByteProvider provider, long subOffset, long subLength, FSRL fsrl) {
+		super(provider, subOffset, subLength, fsrl);
 	}
 
 	@Override
 	public boolean isValidIndex(long index) {
-		return (0 <= index && index < subLength) && provider.isValidIndex(subOffset + index);
+		return index >= 0;
 	}
 
 	@Override
 	public byte readByte(long index) throws IOException {
-		if (index < 0 || index >= subLength) {
+		if (index < 0) {
 			throw new IOException("Invalid index: " + index);
+		}
+		if (index >= subLength) {
+			return 0;
 		}
 		return provider.readByte(subOffset + index);
 	}
 
 	@Override
 	public byte[] readBytes(long index, long length) throws IOException {
-		if (index < 0 || index >= subLength) {
+		if (index < 0) {
 			throw new IOException("Invalid index: " + index);
 		}
+		if (index >= subLength) {
+			return new byte[(int) length];
+		}
 		if (index + length > subLength) {
-			throw new IOException("Unable to read past EOF: " + index + ", " + length);
+			byte[] bytes = new byte[(int) length];
+			byte[] partialBytes = provider.readBytes(subOffset + index, subLength - index);
+			System.arraycopy(partialBytes, 0, bytes, 0, partialBytes.length);
+			return bytes;
 		}
 		return provider.readBytes(subOffset + index, length);
 	}

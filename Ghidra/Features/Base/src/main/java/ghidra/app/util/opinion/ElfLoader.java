@@ -106,7 +106,8 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 
 		try {
-			ElfHeader elf = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider);
+			ElfHeader elf =
+				ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider, null);
 			// TODO: Why do we convey image base to loader ?  This will be managed by each loader !
 			List<QueryResult> results =
 				QueryOpinionService.query(getName(), elf.getMachineName(), elf.getFlags());
@@ -149,7 +150,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 
 		try {
 			GenericFactory factory = MessageLogContinuesFactory.create(log);
-			ElfHeader elf = ElfHeader.createElfHeader(factory, provider);
+			ElfHeader elf = ElfHeader.createElfHeader(factory, provider, msg -> log.appendMsg(msg));
 			ElfProgramBuilder.loadElf(elf, program, options, log, monitor);
 		}
 		catch (ElfException e) {

@@ -216,7 +216,7 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 				// group_size
 				long groupSize = LEB128.readAsLong(reader, true);
 				if (groupSize > remainingRelocations) {
-					Msg.warn(this, "Group relocation count " + groupSize +
+					elfHeader.logError("Group relocation count " + groupSize +
 						" exceeded total count " + remainingRelocations);
 					break;
 				}

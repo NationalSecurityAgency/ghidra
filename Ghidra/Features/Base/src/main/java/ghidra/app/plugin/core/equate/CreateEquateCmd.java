@@ -32,7 +32,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.task.TaskMonitor;
 
 /**
- *Class to handle creating new equates for a selection or the whole program
+ * Class to handle creating new equates for a selection or the whole program
  */
 public class CreateEquateCmd extends BackgroundCommand {
 
@@ -46,9 +46,10 @@ public class CreateEquateCmd extends BackgroundCommand {
 	/**
 	 * 
 	 * @param scalar user defined scalar to search for in program
-	 * @param iter the range of code units for which to maybe create equates 
+	 * @param iter the range of code units for which to maybe create equates
 	 * @param equateName user defined name for the new equate to be set
-	 * @param overwriteExisting
+	 * @param overwriteExisting true to rename existing equates
+	 * @param context the action context
 	 */
 	public CreateEquateCmd(Scalar scalar, CodeUnitIterator iter, String equateName,
 			boolean overwriteExisting, ListingActionContext context) {
@@ -64,9 +65,10 @@ public class CreateEquateCmd extends BackgroundCommand {
 	/**
 	 * 
 	 * @param scalar user defined scalar to search for in program
-	 * @param iter the range of code units for which to maybe create equates 
+	 * @param iter the range of code units for which to maybe create equates
 	 * @param enoom the enum to use for formatting the equate name
-	 * @param overwriteExisting
+	 * @param overwriteExisting true to rename existing equates
+	 * @param context the action context
 	 */
 	public CreateEquateCmd(Scalar scalar, CodeUnitIterator iter, Enum enoom,
 			boolean overwriteExisting, ListingActionContext context) {
@@ -138,7 +140,6 @@ public class CreateEquateCmd extends BackgroundCommand {
 	private void createEquate(DomainObject domain, CodeUnit codeUnit, int opIndex,
 			Scalar scalar) {
 
-
 		EquateTable equateTable = codeUnit.getProgram().getEquateTable();
 		Address address = codeUnit.getAddress();
 		Equate curEquate = equateTable.getEquate(address, opIndex, targetScalarValue);
@@ -156,7 +157,7 @@ public class CreateEquateCmd extends BackgroundCommand {
 			cmd.applyTo(domain);
 		}
 	}
-	
+
 	private String generateFormattedEquateName() {
 		Program program = context.getProgram();
 		Enum enumWithId = (Enum) program.getDataTypeManager().addDataType(enoom, null);

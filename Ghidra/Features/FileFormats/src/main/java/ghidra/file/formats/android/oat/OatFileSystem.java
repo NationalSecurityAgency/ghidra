@@ -56,14 +56,16 @@ public class OatFileSystem extends GFileSystemBase {
 
 			if (magicMatch) {
 				ElfHeader elf =
-					ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider);
+					ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider, null);
 				elf.parse();
 
 				ElfSymbolTable dynamicSymbolTable = elf.getDynamicSymbolTable();
-				ElfSymbol[] symbols = dynamicSymbolTable.getSymbols();
-				for (ElfSymbol symbol : symbols) {
-					if (OatConstants.SYMBOL_OAT_DATA.equals(symbol.getNameAsString())) {
-						return true;
+				if (dynamicSymbolTable != null) {
+					ElfSymbol[] symbols = dynamicSymbolTable.getSymbols();
+					for (ElfSymbol symbol : symbols) {
+						if (OatConstants.SYMBOL_OAT_DATA.equals(symbol.getNameAsString())) {
+							return true;
+						}
 					}
 				}
 
@@ -96,7 +98,8 @@ public class OatFileSystem extends GFileSystemBase {
 			monitor.setMaximum(10);
 			monitor.setMessage("Parsing ELF header...");
 			monitor.incrementProgress(1);
-			ElfHeader elf = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider);
+			ElfHeader elf =
+				ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider, null);
 			elf.parse();
 			monitor.incrementProgress(1);
 

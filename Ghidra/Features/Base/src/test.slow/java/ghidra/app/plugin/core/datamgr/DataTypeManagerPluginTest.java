@@ -34,7 +34,6 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
-import docking.DialogComponentProvider;
 import docking.DockingUtils;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
@@ -229,11 +228,11 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		DockingActionIf action = getAction(plugin, "New Category");
 		assertTrue(action.isEnabledForContext(treeContext));
 
-		// select "New Category" action
+		// select "New Category" action (allowed with filter in place)
 		DataTypeTestUtils.performAction(action, tree, false);
 
-		DialogComponentProvider dialog = waitForDialogComponent("Cannot Edit Tree Node");
-		close(dialog);
+//		DialogComponentProvider dialog = waitForDialogComponent("Cannot Edit Tree Node");
+//		close(dialog);
 
 		// verify that  the tree opens a new node with the default category name is "New Category"
 		assertEquals(childCount + 1, miscNode.getChildCount());

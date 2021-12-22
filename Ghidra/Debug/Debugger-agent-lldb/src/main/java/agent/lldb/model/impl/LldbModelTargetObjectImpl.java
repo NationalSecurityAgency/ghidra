@@ -241,16 +241,25 @@ public class LldbModelTargetObjectImpl extends DefaultTargetObject<TargetObject,
 
 	@Override
 	public void addMapObject(Object object, TargetObject targetObject) {
+		if (object == null) {
+			return;
+		}
 		objectMap.put(DebugClient.getModelKey(object), targetObject);
 	}
 
 	@Override
 	public TargetObject getMapObject(Object object) {
+		if (object == null) {
+			return null;
+		}
 		return objectMap.get(DebugClient.getModelKey(object));
 	}
 
 	@Override
 	public void deleteMapObject(Object object) {
+		if (object == null) {
+			return;
+		}
 		objectMap.remove(DebugClient.getModelKey(object));
 	}
 
