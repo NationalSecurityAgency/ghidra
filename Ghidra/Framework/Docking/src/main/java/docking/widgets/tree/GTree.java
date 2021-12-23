@@ -1102,23 +1102,22 @@ public class GTree extends JPanel implements BusyListener {
 	/**
 	 * Requests that the node be edited.  This operation is asynchronous.
 	 * 
-	 * @param child the node to edit
+	 * @param node the node to edit
 	 */
-	public void startEditing(GTreeNode child) {
+	public void startEditing(GTreeNode node) {
 
 		// we call this here, even though the JTree will do this for us, so that we will trigger
 		// a load call before this task is run, in case lazy nodes are involved in this tree,
 		// which must be loaded before we can edit
-		expandPath(child.getParent());
+		expandPath(node.getParent());
 
-		// force the filter to accept the new node
-		ignoreFilter(child);
+		GTreeNode viewNode = getViewNode(node);
+		if (viewNode == null) {
+			startEditing(node.getParent(), node.getName());
+			return;
+		}
 
-		// Wait for the view to update from any filtering that may take place
-		GTreeNode modelParent = getModelNode(child.getParent());
-		getViewNode(modelParent, child.getName(), viewNode -> {
-			runTask(new GTreeStartEditingTask(GTree.this, tree, viewNode));
-		});
+		runTask(new GTreeStartEditingTask(GTree.this, tree, viewNode));
 	}
 
 	@Override
