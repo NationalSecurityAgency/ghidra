@@ -207,6 +207,17 @@ public class ActionContext {
 	}
 
 	/**
+	 * Tests the click modifiers for this event to see if they contain any bit from the
+	 * specified modifiersMask parameter.
+	 * 
+	 * @param modifiersMask bitmask to test
+	 * @return boolean true if any bit in the eventClickModifiers matches the mask
+	 */
+	public boolean hasAnyEventClickModifiers(int modifiersMask) {
+		return (eventClickModifiers & modifiersMask) != 0;
+	}
+
+	/**
 	 * Sets the sourceObject for this ActionContext.  This method is used internally by the 
 	 * DockingWindowManager. ComponentProvider and action developers should only use this 
 	 * method for testing.
@@ -228,8 +239,10 @@ public class ActionContext {
 	 * @return this context
 	 */
 	public ActionContext setMouseEvent(MouseEvent e) {
-		this.mouseEvent = e;
-		this.eventClickModifiers = e.getModifiersEx();
+		if (e != null) {
+			this.mouseEvent = e;
+			this.eventClickModifiers = e.getModifiersEx();
+		}
 		return this;
 	}
 

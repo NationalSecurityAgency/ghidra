@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.navigation;
 
 import java.awt.event.ActionEvent;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
 
 import docking.action.KeyBindingData;
 import docking.action.ToolBarData;
@@ -32,6 +33,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.AddressFieldLocation;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -74,21 +76,15 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 
 		try {
 			boolean direction = isForward;
-			if ((context.getEventClickModifiers() & ActionEvent.SHIFT_MASK) != 0) {
+			if (context.hasAnyEventClickModifiers(ActionEvent.SHIFT_MASK)) {
 				direction = !direction;
 			}
 
-			Address address =
-				direction ? getNextAddress(monitor, context.getProgram(), context.getAddress())
-						: getPreviousAddress(monitor, context.getProgram(), context.getAddress());
+			Address address = direction
+					? getNextAddress(monitor, context.getProgram(), context.getAddress())
+					: getPreviousAddress(monitor, context.getProgram(), context.getAddress());
 
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					gotoAddress(context, address);
-				}
-			});
-
+			Swing.runLater(() -> gotoAddress(context, address));
 		}
 		catch (CancelledException e) {
 			// cancelled

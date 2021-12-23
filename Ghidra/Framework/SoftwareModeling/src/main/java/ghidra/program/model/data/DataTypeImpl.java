@@ -120,7 +120,7 @@ public abstract class DataTypeImpl extends AbstractDataType {
 	}
 
 	@Override
-	public DataType[] getParents() {
+	public Collection<DataType> getParents() {
 		List<DataType> parents = new ArrayList<>();
 		Iterator<WeakReference<DataType>> iterator = parentList.iterator();
 		while (iterator.hasNext()) {
@@ -133,8 +133,7 @@ public abstract class DataTypeImpl extends AbstractDataType {
 				parents.add(dataType);
 			}
 		}
-		DataType[] array = new DataType[parents.size()];
-		return parents.toArray(array);
+		return parents;
 	}
 
 	/**
