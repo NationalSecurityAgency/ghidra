@@ -20,6 +20,8 @@
 package ghidra.app.plugin.processors.sleigh;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import ghidra.app.plugin.processors.sleigh.symbol.*;
 import ghidra.app.plugin.processors.sleigh.template.*;
@@ -51,7 +53,7 @@ public abstract class PcodeEmit {
 	private int fallOffset;
 	private UniqueAddressFactory uniqueFactory;
 	private VarnodeData outcache;
-	protected VarnodeData[] incache;
+	protected List<VarnodeData> incache;
 	private VarnodeData[] dyncache;
 	protected ArrayList<Integer> labeldef = null;
 	protected int numOps = 0;							// Number of PcodeOps generated so far
@@ -130,7 +132,7 @@ public abstract class PcodeEmit {
 			}
 		}
 
-		incache = new VarnodeData[8];	// Maximum number of inputs
+		incache = new ArrayList<>(8);	// Start with the previous maximum number of inputs
 		dyncache = null;
 	}
 
@@ -209,10 +211,10 @@ public abstract class PcodeEmit {
 		dest.offset = fallOverride.getOffset();
 		dest.size = dest.space.getPointerSize();
 
-		dump(startAddress, PcodeOp.BRANCH, new VarnodeData[] { dest }, 1, null);
+		dump(startAddress, PcodeOp.BRANCH, List.of(dest), 1, null);
 	}
 
-	abstract void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out);
+	abstract void dump(Address instrAddr, int opcode, List<VarnodeData> in, int isize, VarnodeData out);
 
 	private boolean dumpBranchOverride(OpTpl opt) {
 		int opcode = opt.getOpcode();
@@ -486,29 +488,30 @@ public abstract class PcodeEmit {
 		// First build all the inputs
 		for (int i = 0; i < isize; ++i) {
 			vn = opt.getInput()[i];
-			incache[i] = new VarnodeData();
+			incache.add(i, new VarnodeData());
 			if (vn.isDynamic(walker)) {
 				dyncache = new VarnodeData[3];
 				dyncache[0] = new VarnodeData();
 				dyncache[1] = new VarnodeData();
 				dyncache[2] = new VarnodeData();
-				generateLocation(vn, incache[i]);	// Temporary storage
-				dyncache[2].space = incache[i].space;
-				dyncache[2].offset = incache[i].offset;
-				dyncache[2].size = incache[i].size;
+				VarnodeData inData = incache.get(i);
+				generateLocation(vn, inData);	// Temporary storage
+				dyncache[2].space = inData.space;
+				dyncache[2].offset = inData.offset;
+				dyncache[2].size = inData.size;
 				AddressSpace spc = generatePointer(vn, dyncache[1]);
 				dyncache[0].space = const_space;
 				dyncache[0].offset = spc.getSpaceID();
 				dyncache[0].size = 4;		// Size of spaceid
-				dump(startAddress, PcodeOp.LOAD, dyncache, 2, dyncache[2]);
+				dump(startAddress, PcodeOp.LOAD, Arrays.asList(dyncache), 2, dyncache[2]);
 				numOps += 1;
 			}
 			else {
-				generateLocation(vn, incache[i]);
+				generateLocation(vn, incache.get(i));
 			}
 		}
 		if ((isize > 0) && (opt.getInput()[0].isRelative())) {
-			incache[0].offset += labelbase;
+			incache.get(0).offset += labelbase;
 			addLabelRef();
 		}
 		outvn = opt.getOutput();
@@ -531,7 +534,7 @@ public abstract class PcodeEmit {
 				dyncache[0].space = const_space;
 				dyncache[0].offset = spc.getSpaceID();
 				dyncache[0].size = 4;		// Size of spaceid;
-				dump(startAddress, PcodeOp.STORE, dyncache, 3, null);
+				dump(startAddress, PcodeOp.STORE, Arrays.asList(dyncache), 3, null);
 				numOps += 1;
 			}
 			else {
@@ -728,21 +731,21 @@ public abstract class PcodeEmit {
 		}
 	}
 
-	void checkOverlays(int opcode, VarnodeData[] in, int isize, VarnodeData out) {
+	void checkOverlays(int opcode, List<VarnodeData> in, int isize, VarnodeData out) {
 		if (overlayspace != null) {
 			if (uniqueFactory == null) {
 				return;
 			}
 			if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
-				int spaceId = (int) in[0].offset;
+				int spaceId = (int) in.get(0).offset;
 				AddressSpace space = uniqueFactory.getAddressFactory().getAddressSpace(spaceId);
 				if (space.isOverlaySpace()) {
 					space = ((OverlayAddressSpace) space).getOverlayedSpace();
-					in[0].offset = space.getSpaceID();
+					in.get(0).offset = space.getSpaceID();
 				}
 			}
 			for (int i = 0; i < isize; ++i) {
-				VarnodeData v = in[0];
+				VarnodeData v = in.get(0);
 				if (v.space.equals(overlayspace)) {
 					v.space = ((OverlayAddressSpace) v.space).getOverlayedSpace();
 				}
@@ -761,17 +764,18 @@ public abstract class PcodeEmit {
 	 * @param in input varnodes
 	 * @return opcode of modified instruction
 	 */
-	int checkOverrides(int opcode, VarnodeData[] in) {
+	int checkOverrides(int opcode, List<VarnodeData> in) {
 		if (override == null) {
 			return opcode;
 		}
+		
+		VarnodeData dest = in.get(0);
 
 		//If there is an overriding call reference on an indirect call, change it to  
 		//to a direct call, unless a call override has already been applied at this instruction
 		if (opcode == PcodeOp.CALLIND && !override.isCallOverrideRefApplied()) {
 			Address callRef = override.getOverridingReference(RefType.CALL_OVERRIDE_UNCONDITIONAL);
 			if (callRef != null) {
-				VarnodeData dest = in[0];
 				dest.space = callRef.getAddressSpace();
 				dest.offset = callRef.getOffset();
 				dest.size = dest.space.getPointerSize();
@@ -788,7 +792,6 @@ public abstract class PcodeEmit {
 			override.isCallOtherJumpOverrideApplied();
 		if (opcode == PcodeOp.CALLOTHER && !callOtherOverrideApplied) {
 			Address overrideRef = override.getOverridingReference(RefType.CALLOTHER_OVERRIDE_CALL);
-			VarnodeData dest = in[0];
 			if (overrideRef != null) {
 				dest.space = overrideRef.getAddressSpace();
 				dest.offset = overrideRef.getOffset();
@@ -809,8 +812,7 @@ public abstract class PcodeEmit {
 		// Simple call reference override - grab destination from appropriate reference
 		// Only perform reference override if destination function does not have a call-fixup		
 		if (opcode == PcodeOp.CALL && !override.isCallOverrideRefApplied() &&
-			!override.hasCallFixup(in[0].space.getAddress(in[0].offset))) {
-			VarnodeData dest = in[0];
+			!override.hasCallFixup(dest.space.getAddress(dest.offset))) {
 			//call to override.getPrimaryCallReference kept for backward compatibility with
 			//old call override mechanism
 			//old mechanism has precedence over new
@@ -835,10 +837,9 @@ public abstract class PcodeEmit {
 		// Fall-through override - alter branch to next instruction
 		if (fallOverride != null && (opcode == PcodeOp.CBRANCH || opcode == PcodeOp.BRANCH)) {
 			//don't apply fallthrough overrides into the constant space
-			if (in[0].space.getType() == AddressSpace.TYPE_CONSTANT) {
+			if (dest.space.getType() == AddressSpace.TYPE_CONSTANT) {
 				return opcode;
 			}
-			VarnodeData dest = in[0];
 			if (defaultFallAddress.getOffset() == dest.offset) {
 				dest.space = fallOverride.getAddressSpace();
 				dest.offset = fallOverride.getOffset();
@@ -853,13 +854,12 @@ public abstract class PcodeEmit {
 			!override.isJumpOverrideRefApplied()) {
 			//if the destination varnode is in the const space, it's a pcode-relative branch.
 			//these should not be overridden
-			if (in[0].space.getType() == AddressSpace.TYPE_CONSTANT) {
+			if (dest.space.getType() == AddressSpace.TYPE_CONSTANT) {
 				return opcode;
 			}
 			Address overrideRef =
 				override.getOverridingReference(RefType.JUMP_OVERRIDE_UNCONDITIONAL);
 			if (overrideRef != null) {
-				VarnodeData dest = in[0];
 				dest.space = overrideRef.getAddressSpace();
 				dest.offset = overrideRef.getOffset();
 				dest.size = dest.space.getPointerSize();
