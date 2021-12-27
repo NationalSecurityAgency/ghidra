@@ -123,18 +123,27 @@
 
 
     <tocdef id="Ghidra Functionality" 
-			sortgroup="e"
-	        text="Ghidra Functionality"
-	        target = "help/topics/Intro/GhidraFunctionality.htm">
-        	<tocdef id="Code Browser" text="Code Browser" target="help/topics/CodeBrowserPlugin/CodeBrowser.htm" >
-            <tocdef id="Browser Field Formatter" sortgroup="a" text="Browser Field Formatter"  target="help/topics/CodeBrowserPlugin/Browser_Field_Formatter.htm" />
-            <tocdef id="Markers" sortgroup="b" text="Markers"  target="help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMarkers" />
-            <tocdef id="Cursor Text Highlight" sortgroup="c" text="Cursor Text Highlight"  target="help/topics/CodeBrowserPlugin/CodeBrowser.htm#cursorTextHighlight" />
-            <tocdef id="Code Browser Configuration Options" sortgroup="d" text="Configuration Options"  target="help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm" />
-            
-
+		sortgroup="e"
+        text="Ghidra Functionality"
+        target = "help/topics/Intro/GhidraFunctionality.htm">
+    	<tocdef id="Code Browser" text="Code Browser" target="help/topics/CodeBrowserPlugin/CodeBrowser.htm" >
+        	<tocdef id="Browser Field Formatter" sortgroup="a" text="Browser Field Formatter"  target="help/topics/CodeBrowserPlugin/Browser_Field_Formatter.htm" />
+        	<tocdef id="Markers" sortgroup="b" text="Markers"  target="help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMarkers" />
+        	<tocdef id="Cursor Text Highlight" sortgroup="c" text="Cursor Text Highlight"  target="help/topics/CodeBrowserPlugin/CodeBrowser.htm#cursorTextHighlight" />
+        	<tocdef id="Code Browser Configuration Options" sortgroup="d" text="Configuration Options"  target="help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm" />
         </tocdef>
-        
+
+		<tocdef id="Data Type Manager" sortgroup="c" text="Data Type Manager"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">
+    		<tocdef id="DTM Concepts" sortgroup="a" text="Basic Concepts"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Basic_Concepts" />		
+    		<tocdef id="DTM Window" sortgroup="b" text="Data Type Window"  target="help/topics/DataTypeManagerPlugin/data_type_manager_window.html" />
+    		<tocdef id="DTM Working With Archives" sortgroup="c" text="Archives"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Archives" />
+    		<tocdef id="DTM Working With Categories" sortgroup="d" text="Categories"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Category" />
+    		<tocdef id="DTM Working With Data Types" sortgroup="e" text="Data Types"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Data_Types" />
+    		<tocdef id="DTM Managing Archives" sortgroup="f" text="Managing Archives"  target="help/topics/DataTypeManagerPlugin/data_type_manager_archives.html" />
+    		<tocdef id="Structure Editor" sortgroup="d" text="Structure Editor"  target="help/topics/DataTypeEditors/StructureEditor.htm" />
+    		<tocdef id="Enum Editor" sortgroup="e" text="Enum Editor"  target="help/topics/DataTypeEditors/EnumEditor.htm" />
+		</tocdef>        
+
         <tocdef id="Assembler" text="Assembler" target="help/topics/AssemblerPlugin/Assembler.htm"></tocdef>
 
         <tocdef id="Entropy Overview" text="Entropy Overview"  target="help/topics/OverviewPlugin/Overview.htm#EntropyOverviewBar" >
@@ -220,16 +229,6 @@
             <tocdef id="Data" sortgroup="c" text="Data"  target="help/topics/DataPlugin/Data.htm" >
                 <tocdef id="Create Data" sortgroup="a" text="Create Data"  target="help/topics/DataPlugin/Data.htm" />
                 <tocdef id="Data Types" sortgroup="b" text="Data Types"  target="help/topics/DataPlugin/Data.htm#DataTypes" />
-                <tocdef id="Data Type Manager" sortgroup="c" text="Data Type Manager"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">
-                		<tocdef id="DTM Concepts" sortgroup="a" text="Basic Concepts"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Basic_Concepts" />		
-                		<tocdef id="DTM Window" sortgroup="b" text="Data Type Window"  target="help/topics/DataTypeManagerPlugin/data_type_manager_window.html" />
-                		<tocdef id="DTM Working With Archives" sortgroup="c" text="Archives"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Archives" />
-                		<tocdef id="DTM Working With Categories" sortgroup="d" text="Categories"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Category" />
-                		<tocdef id="DTM Working With Data Types" sortgroup="e" text="Data Types"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Data_Types" />
-                		<tocdef id="DTM Managing Archives" sortgroup="f" text="Managing Archives"  target="help/topics/DataTypeManagerPlugin/data_type_manager_archives.html" />
-                </tocdef>
-                <tocdef id="Structure Editor" sortgroup="d" text="Structure Editor"  target="help/topics/DataTypeEditors/StructureEditor.htm" />
-                <tocdef id="Enum Editor" sortgroup="e" text="Enum Editor"  target="help/topics/DataTypeEditors/EnumEditor.htm" />
                 <tocdef id="Translate Strings" sortgroup="e" text="Translate Strings"  target="help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm" />
                 <tocdef id="Save Image" sortgroup="e" text="Save Image"  target="help/topics/ResourceActionsPlugin/ResourceActions.html" />
             </tocdef>

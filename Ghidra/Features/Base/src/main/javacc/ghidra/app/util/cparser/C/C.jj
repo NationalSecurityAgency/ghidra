@@ -625,8 +625,9 @@ public class CParser {
     private void applyFunctionQualifiers(Declaration dec, FunctionDefinitionDataType funcDT) {
         List<Integer> qualifierList = dec.getQualifiers();
         if (qualifierList.contains(NORETURN) ) {
-            // TODO: set no return on function
+            funcDT.setNoReturn(true);
         }
+        // TODO: switch to setting calling convention by string identifier
         for (Integer qualifier : qualifierList) {
                 switch (qualifier) {
                     case CDECL:

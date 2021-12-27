@@ -21,9 +21,13 @@ import db.*;
 import ghidra.util.exception.VersionException;
 
 class CategoryDBAdapterV0 extends CategoryDBAdapter {
+
+	private static final int VERSION = 0;
+
 	static final String CATEGORY_TABLE_NAME = "Categories";
 	static final int V0_CATEGORY_NAME_COL = 0;
 	static final int V0_CATEGORY_PARENT_COL = 1;
+
 	static final Schema V0_SCHEMA =
 		new Schema(0, "Category ID", new Field[] { StringField.INSTANCE, LongField.INSTANCE },
 			new String[] { "Name", "Parent ID" });
@@ -31,34 +35,38 @@ class CategoryDBAdapterV0 extends CategoryDBAdapter {
 	private Table table;
 
 	/**
-	 * Constructor
-	 * 
+	 * Gets a version 0 adapter for the Category database table.
+	 * @param handle handle to the database containing the table.
+	 * @param tablePrefix prefix to be used with default table name
+	 * @param create true if this constructor should create the table.
+	 * @throws VersionException if the the table's version does not match the expected version
+	 * for this adapter.
+	 * @throws IOException if an IO error occurs
 	 */
-	public CategoryDBAdapterV0(DBHandle handle, int openMode) throws VersionException, IOException {
-
-		if (openMode == DBConstants.CREATE) {
-			table = handle.createTable(CATEGORY_TABLE_NAME, V0_SCHEMA,
-				new int[] { V0_CATEGORY_PARENT_COL });
+	CategoryDBAdapterV0(DBHandle handle, String tablePrefix, boolean create)
+			throws VersionException, IOException {
+		String tableName = tablePrefix + CATEGORY_TABLE_NAME;
+		if (create) {
+			table = handle.createTable(tableName, V0_SCHEMA, new int[] { V0_CATEGORY_PARENT_COL });
 		}
 		else {
-			table = handle.getTable(CATEGORY_TABLE_NAME);
+			table = handle.getTable(tableName);
 			if (table == null) {
-				throw new VersionException("Missing Table: " + CATEGORY_TABLE_NAME);
+				throw new VersionException("Missing Table: " + tableName);
 			}
-			else if (table.getSchema().getVersion() != 0) {
-				throw new VersionException("Expected version 0 for table " + CATEGORY_TABLE_NAME +
-					" but got " + table.getSchema().getVersion());
+			if (table.getSchema().getVersion() != VERSION) {
+				throw new VersionException(false);
 			}
 		}
 	}
 
 	@Override
-	public DBRecord getRecord(long categoryID) throws IOException {
+	DBRecord getRecord(long categoryID) throws IOException {
 		return table.getRecord(categoryID);
 	}
 
 	@Override
-	public Field[] getRecordIdsWithParent(long categoryID) throws IOException {
+	Field[] getRecordIdsWithParent(long categoryID) throws IOException {
 		return table.findRecords(new LongField(categoryID), V0_CATEGORY_PARENT_COL);
 	}
 
@@ -76,7 +84,7 @@ class CategoryDBAdapterV0 extends CategoryDBAdapter {
 	}
 
 	@Override
-	public DBRecord createCategory(String name, long parentID) throws IOException {
+	DBRecord createCategory(String name, long parentID) throws IOException {
 		long key = table.getKey();
 		if (key == 0) {
 			key = 1;
@@ -90,12 +98,12 @@ class CategoryDBAdapterV0 extends CategoryDBAdapter {
 	}
 
 	@Override
-	public boolean removeCategory(long categoryID) throws IOException {
+	boolean removeCategory(long categoryID) throws IOException {
 		return table.deleteRecord(categoryID);
 	}
 
 	@Override
-	public DBRecord getRootRecord() throws IOException {
+	DBRecord getRootRecord() throws IOException {
 		Field[] keys = table.findRecords(new LongField(-1), V0_CATEGORY_PARENT_COL);
 		if (keys.length != 1) {
 			throw new IOException("Found " + keys.length + " entries for root category");

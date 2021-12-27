@@ -15,22 +15,22 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import java.io.IOException;
-
 import ghidra.app.util.bin.format.dwarf4.*;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFEncoding;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
+import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFDataTypeImporter.DWARFDataType;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 import utility.function.Dummy;
 
@@ -726,13 +726,19 @@ public class DWARFDataTypeManager {
 		FunctionDefinitionDataType funcDef =
 			new FunctionDefinitionDataType(dni.getParentCP(), dni.getName(), dataTypeManager);
 		funcDef.setReturnType(returnDataType);
+		funcDef.setNoReturn(diea.getBool(DWARFAttribute.DW_AT_noreturn, false));
 		funcDef.setArguments(params.toArray(new ParameterDefinition[params.size()]));
 
 		if (!diea.getHeadFragment().getChildren(DWARFTag.DW_TAG_unspecified_parameters).isEmpty()) {
 			funcDef.setVarArgs(true);
 		}
 		if (foundThisParam) {
-			funcDef.setGenericCallingConvention(GenericCallingConvention.thiscall);
+			try {
+				funcDef.setCallingConvention(CompilerSpec.CALLING_CONVENTION_thiscall);
+			}
+			catch (InvalidInputException e) {
+				Msg.error(this, "Unexpected calling convention error", e);
+			}
 		}
 
 		return funcDef;

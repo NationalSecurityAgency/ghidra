@@ -55,7 +55,6 @@ public class PrototypeModel {
 	private AddressSet localRange;	// Range on the stack considered for local storage
 	private AddressSet paramRange;	// Range on the stack considered for parameter storage
 	private InputListType inputListType = InputListType.STANDARD;
-	private GenericCallingConvention genericCallingConvention;
 	private boolean hasThis;		// Convention has a this (auto-parameter)
 	private boolean isConstruct;		// Convention is used for object construction
 	private boolean hasUponEntry;	// Does this have an uponentry injection
@@ -88,7 +87,6 @@ public class PrototypeModel {
 		paramRange = new AddressSet(model.paramRange);
 		hasThis = model.hasThis || name.equals(CompilerSpec.CALLING_CONVENTION_thiscall);
 		isConstruct = model.isConstruct;
-		genericCallingConvention = GenericCallingConvention.getGenericCallingConvention(name);
 		hasUponEntry = model.hasUponEntry;
 		hasUponReturn = model.hasUponReturn;
 	}
@@ -107,19 +105,10 @@ public class PrototypeModel {
 		compatModel = null;
 		localRange = null;
 		paramRange = null;
-		genericCallingConvention = GenericCallingConvention.unknown;
 		hasThis = false;
 		isConstruct = false;
 		hasUponEntry = false;
 		hasUponReturn = false;
-	}
-
-	/**
-	 * Get the generic calling convention enum associated with this
-	 * @return the enum
-	 */
-	public GenericCallingConvention getGenericCallingConvention() {
-		return genericCallingConvention;
 	}
 
 	/**
@@ -439,10 +428,6 @@ public class PrototypeModel {
 			encoder.writeString(ATTRIB_EXTRAPOP, "unknown");
 		}
 		encoder.writeSignedInteger(ATTRIB_STACKSHIFT, stackshift);
-		GenericCallingConvention nameType = GenericCallingConvention.guessFromName(name);
-		if (nameType != genericCallingConvention) {
-			encoder.writeString(ATTRIB_TYPE, genericCallingConvention.getDeclarationName());
-		}
 		if (hasThis) {
 			encoder.writeBool(ATTRIB_HASTHIS, true);
 		}
@@ -602,13 +587,6 @@ public class PrototypeModel {
 			extrapop = SpecXmlUtils.decodeInt(extpopStr);
 		}
 		stackshift = SpecXmlUtils.decodeInt(protoElement.getAttribute("stackshift"));
-		String type = protoElement.getAttribute("type");
-		if (type != null) {
-			genericCallingConvention = GenericCallingConvention.getGenericCallingConvention(type);
-		}
-		else {
-			genericCallingConvention = GenericCallingConvention.guessFromName(name);
-		}
 		hasThis = false;
 		isConstruct = false;
 		String thisString = protoElement.getAttribute("hasthis");
@@ -740,9 +718,6 @@ public class PrototypeModel {
 			return false;
 		}
 		if (extrapop != obj.extrapop || stackshift != obj.stackshift) {
-			return false;
-		}
-		if (genericCallingConvention != obj.genericCallingConvention) {
 			return false;
 		}
 		if (hasThis != obj.hasThis || isConstruct != obj.isConstruct) {

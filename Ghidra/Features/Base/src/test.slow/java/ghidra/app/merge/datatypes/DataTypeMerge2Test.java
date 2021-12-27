@@ -45,17 +45,12 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testDataTypeEditedInMy() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Make no changes to Latest.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -99,9 +94,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testDataTypeEditedInBoth() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -126,9 +119,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -171,9 +161,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testDataTypeRenamedChanged() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -197,9 +185,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -235,9 +220,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testDataTypeRenamedChanged2() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -263,9 +246,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -309,9 +289,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testDataTypeRenamedChanged3() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -340,9 +318,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -383,9 +358,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testDataTypeRenamedChanged4() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -411,9 +384,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -458,9 +428,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testDataTypeRenamedInBoth() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -487,9 +455,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -532,9 +497,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testRenamedChanged() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -556,9 +519,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -602,9 +562,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		// in Latest move data type; in MY change the name;
 		// should be a conflict
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -628,9 +586,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -666,9 +621,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testRenamedChangedMoved() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -699,9 +652,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -739,9 +689,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testRenamedChangedMovedNoConflict() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -772,9 +720,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -813,9 +758,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testRenamedChangedMovedNoConflict2() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -835,9 +778,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -889,9 +829,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		// edit DLL_Table in latest; edit DLL_Table in private
 		// only DLL_Table should be in conflict; not the ones where it is used.
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -919,9 +857,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -963,9 +898,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		// edit DLL_Table in latest; edit DLL_Table in private
 		// only DLL_Table should be in conflict; not the ones where it is used.
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -993,9 +926,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -1037,9 +967,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		// edit ArrayStruct in latest; edit ArrayStruct in private
 		// only ArrayStruct should be in conflict; not the ones where it is used.
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -1067,9 +995,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -1337,9 +1262,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testDeletedInLatest() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -1356,9 +1279,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -1429,9 +1349,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testAddedFuncSig() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -1448,9 +1366,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -1496,9 +1411,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testEditFuncSig() throws Exception {
 
 		mtf.initialize("notepad3", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1517,9 +1430,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1562,9 +1472,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testEditFuncSig2() throws Exception {
 
 		mtf.initialize("notepad3", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1585,9 +1493,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1629,9 +1534,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testEditFuncSig3() throws Exception {
 
 		mtf.initialize("notepad3", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1642,6 +1545,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 				try {
 					fd.setVarArgs(true);
+					fd.setNoReturn(true);
 					Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 					dtm.remove(foo, TaskMonitor.DUMMY);
 					commit = true;
@@ -1651,9 +1555,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1689,16 +1590,15 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		assertEquals(DataType.DEFAULT, vars[0].getDataType());
 		assertEquals("this is a comment", vars[0].getComment());
 		assertEquals(DataType.DEFAULT, vars[1].getDataType());
-		assertEquals(false, fd.hasVarArgs());
+		assertFalse(fd.hasVarArgs());
+		assertFalse(fd.hasNoReturn());
 	}
 
 	@Test
 	public void testEditFuncSig4() throws Exception {
 
 		mtf.initialize("notepad3", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1709,6 +1609,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 				try {
 					fd.setVarArgs(true);
+					fd.setNoReturn(true);
 					Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 					dtm.remove(foo, TaskMonitor.DUMMY);
 					commit = true;
@@ -1718,9 +1619,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1759,16 +1657,15 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		checkDataType(new CharDataType(), vars[1].getDataType());
 		checkDataType(new Undefined4DataType(), vars[2].getDataType());
 		checkDataType(new Undefined4DataType(), vars[3].getDataType());
-		assertEquals(true, fd.hasVarArgs());
+		assertTrue(fd.hasVarArgs());
+		assertTrue(fd.hasNoReturn());
 	}
 
 	@Test
 	public void testEditFuncSig5() throws Exception {
 
 		mtf.initialize("notepad3", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1788,9 +1685,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1808,6 +1702,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 						"this is another comment");
 					fd.setArguments(newVars);
 					fd.setVarArgs(true);
+					fd.setNoReturn(true);
 					commit = true;
 				}
 				finally {
@@ -1831,6 +1726,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		assertEquals("Bar", vars[4].getName());
 		assertEquals("this is another comment", vars[4].getComment());
 		assertTrue(fd.hasVarArgs());
+		assertTrue(fd.hasNoReturn());
 	}
 
 	private void checkDataType(DataType expectedDataType, DataType actualDataType) {
@@ -1842,9 +1738,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 	public void testAddConflictFuncSig1() throws Exception {
 
 		mtf.initialize("notepad3", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1866,9 +1760,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				boolean commit = false;
@@ -1902,7 +1793,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		assertEquals("format", vars[0].getName());
 		assertEquals(null, vars[0].getComment());
 		checkDataType(new WordDataType(), fd1.getReturnType());
-		assertEquals(false, fd1.hasVarArgs());
+		assertFalse(fd1.hasVarArgs());
 
 		FunctionDefinition fd2 =
 			(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"), "printf.conflict");
@@ -1913,7 +1804,80 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		assertEquals("format", vars2[0].getName());
 		assertEquals(null, vars2[0].getComment());
 		checkDataType(new WordDataType(), fd2.getReturnType());
-		assertEquals(true, fd2.hasVarArgs());
+		assertTrue(fd2.hasVarArgs());
+	}
+
+	@Test
+	public void testAddConflictFuncSig2() throws Exception {
+
+		mtf.initialize("notepad3", new ProgramModifierListener() {
+
+			@Override
+			public void modifyLatest(ProgramDB program) throws Exception {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					FunctionDefinition fd =
+						new FunctionDefinitionDataType(new CategoryPath("/MISC"), "exit");
+					fd.setReturnType(VoidDataType.dataType);
+					fd.setNoReturn(false);
+					fd.setArguments(
+						new ParameterDefinition[] { new ParameterDefinitionImpl("rc",
+							IntegerDataType.dataType, null) });
+					dtm.addDataType(fd, DataTypeConflictHandler.DEFAULT_HANDLER);
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) throws Exception {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					FunctionDefinition fd =
+						new FunctionDefinitionDataType(new CategoryPath("/MISC"), "exit");
+					fd.setReturnType(VoidDataType.dataType);
+					fd.setNoReturn(true);
+					fd.setArguments(
+						new ParameterDefinition[] { new ParameterDefinitionImpl("rc",
+							IntegerDataType.dataType, null) });
+					dtm.addDataType(fd, DataTypeConflictHandler.DEFAULT_HANDLER);
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+		});
+		executeMerge(DataTypeMergeManager.OPTION_MY);
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
+		FunctionDefinition fd1 =
+			(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"), "exit");
+		assertNotNull(fd1);
+		ParameterDefinition[] vars = fd1.getArguments();
+		assertEquals(1, vars.length);
+		checkDataType(IntegerDataType.dataType, vars[0].getDataType());
+		assertEquals("rc", vars[0].getName());
+		assertEquals(null, vars[0].getComment());
+		checkDataType(VoidDataType.dataType, fd1.getReturnType());
+		assertFalse(fd1.hasNoReturn());
+
+		FunctionDefinition fd2 =
+			(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"), "exit.conflict");
+		assertNotNull(fd2);
+		ParameterDefinition[] vars2 = fd2.getArguments();
+		assertEquals(1, vars2.length);
+		checkDataType(IntegerDataType.dataType, vars2[0].getDataType());
+		assertEquals("rc", vars2[0].getName());
+		assertEquals(null, vars2[0].getComment());
+		checkDataType(VoidDataType.dataType, fd2.getReturnType());
+		assertTrue(fd2.hasNoReturn());
 	}
 
 }

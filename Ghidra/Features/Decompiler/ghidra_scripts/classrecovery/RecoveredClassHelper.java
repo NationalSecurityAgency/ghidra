@@ -8187,7 +8187,7 @@ public class RecoveredClassHelper {
 		if ((DataTypeUtilities.equalsIgnoreConflict(signature.getName(), definition.getName())) &&
 			DataTypeUtilities.isSameOrEquivalentDataType(definition.getReturnType(),
 				signature.getReturnType()) &&
-			(definition.getGenericCallingConvention() == signature.getGenericCallingConvention()) &&
+			signature.getCallingConventionName().equals(definition.getCallingConventionName()) &&
 			(definition.hasVarArgs() == signature.hasVarArgs())) {
 			ParameterDefinition[] sigargs = signature.getArguments();
 			ParameterDefinition[] defArgs = definition.getArguments();

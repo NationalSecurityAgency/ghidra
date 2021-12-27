@@ -15,7 +15,13 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
+import java.io.IOException;
+
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.ProgramArchitecture;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager {
 	
@@ -23,10 +29,10 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager {
 	 * The data type manager for original composite data type being edited.
 	 * This is where the edited datatype will be written back to.
 	 */
-	private DataTypeManager originalDTM;
-	private Composite originalComposite;
-	private Composite viewComposite;
-	private int transactionID;
+	private final DataTypeManager originalDTM;
+	private final Composite originalComposite;
+	private final Composite viewComposite;
+	private final int transactionID;
 
 	/**
 	 * Creates a data type manager that the structure editor will use
@@ -39,16 +45,42 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager {
 		this.originalComposite = originalComposite;
 		transactionID = startTransaction(""); 
 		originalDTM = originalComposite.getDataTypeManager();
-		universalID = originalDTM.getUniversalID(); // mimic original DTM
+
+		ProgramArchitecture arch = originalDTM.getProgramArchitecture();
+		if (arch != null) {
+			try {
+				setProgramArchitecture(arch, null, true, TaskMonitor.DUMMY);
+			}
+			catch (CancelledException e) {
+				throw new AssertException(e); // unexpected
+			}
+			catch (IOException e) {
+				errHandler.dbError(e);
+			}
+		}
+
 		viewComposite = (Composite) super.resolve(originalComposite, null);
 	}
-	
+
+	@Override
+	protected final boolean isArchitectureChangeAllowed() {
+		return false;
+	}
+
 	@Override
     public void close() {
 		endTransaction(transactionID, true);
 		super.close();
 	}
 	
+	/**
+	 * Get the {@link DataTypeManager} associated with the original composite datatype being edited.
+	 * @return original datatype manager
+	 */
+	public DataTypeManager getOriginalDataTypeManager() {
+		return originalDTM;
+	}
+
 	@Override
     public ArchiveType getType() {
 		return originalDTM.getType();

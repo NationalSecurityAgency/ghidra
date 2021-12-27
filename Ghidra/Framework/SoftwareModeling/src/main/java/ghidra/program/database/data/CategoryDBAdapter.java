@@ -18,16 +18,25 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.model.data.Category;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 abstract class CategoryDBAdapter {
 	static final int CATEGORY_NAME_COL = CategoryDBAdapterV0.V0_CATEGORY_NAME_COL;
 	static final int CATEGORY_PARENT_COL = CategoryDBAdapterV0.V0_CATEGORY_PARENT_COL;
 
-	static CategoryDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
+	/**
+	 * Gets an adapter for working with the {@link Category} database table.
+	 * @param handle handle to the database to be accessed.
+	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
+	 * @param tablePrefix prefix to be used with default table name
+	 * @return adapter instance
+	 * @throws VersionException if the database handle's version doesn't match the expected version.
+	 * @throws IOException if there is a problem accessing the database.
+	 */
+	static CategoryDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix)
 			throws VersionException, IOException {
-		return new CategoryDBAdapterV0(handle, openMode);
+		return new CategoryDBAdapterV0(handle, tablePrefix, openMode == DBConstants.CREATE);
 	}
 
 	/**
@@ -81,7 +90,16 @@ abstract class CategoryDBAdapter {
 	 */
 	abstract DBRecord getRootRecord() throws IOException;
 
+	/**
+	 * Update record in database
+	 * @param record category record
+	 * @throws IOException if IO error occurs
+	 */
 	abstract void putRecord(DBRecord record) throws IOException;
 
+	/**
+	 * Get the total number of category records
+	 * @return category record count
+	 */
 	abstract int getRecordCount();
 }

@@ -18,6 +18,9 @@ package ghidra.program.model.data;
 import java.util.*;
 
 import db.Transaction;
+import ghidra.program.database.map.AddressMap;
+import ghidra.program.model.lang.ProgramArchitecture;
+import ghidra.program.model.lang.PrototypeModel;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
@@ -84,6 +87,12 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 
 	@Override
 	public Iterator<Composite> getAllComposites() {
+		// stub
+		return null;
+	}
+
+	@Override
+	public Iterator<FunctionDefinition> getAllFunctionDefinitions() {
 		// stub
 		return null;
 	}
@@ -372,6 +381,23 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 	}
 
 	@Override
+	public AddressMap getAddressMap() {
+		// stub
+		return null;
+	}
+
+	@Override
+	public ProgramArchitecture getProgramArchitecture() {
+		// stub
+		return null;
+	}
+
+	@Override
+	public String getProgramArchitectureSummary() {
+		return null;
+	}
+
+	@Override
 	public DataOrganization getDataOrganization() {
 		// stub
 		return null;
@@ -411,6 +437,26 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 	public boolean allowsDefaultComponentSettings() {
 		// stub
 		return false;
+	}
+
+	@Override
+	public Collection<String> getKnownCallingConventionNames() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Collection<String> getDefinedCallingConventionNames() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public PrototypeModel getDefaultCallingConvention() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public PrototypeModel getCallingConvention(String name) {
+		throw new UnsupportedOperationException();
 	}
 
 }

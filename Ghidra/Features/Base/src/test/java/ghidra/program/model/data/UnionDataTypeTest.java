@@ -21,12 +21,12 @@ import org.junit.*;
 
 import com.google.common.collect.Sets;
 
-import generic.test.AbstractGTest;
+import generic.test.AbstractGenericTest;
 
 /**
  *
  */
-public class UnionDataTypeTest extends AbstractGTest {
+public class UnionDataTypeTest extends AbstractGenericTest {
 
 	private Union union;
 

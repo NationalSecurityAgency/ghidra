@@ -180,6 +180,10 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new LockArchiveAction(plugin)); // Archive
 		addLocalAction(new UnlockArchiveAction(plugin)); // Archive
 
+		// Arch group
+		addLocalAction(new SetArchiveArchitectureAction(plugin)); // Archive
+		addLocalAction(new ClearArchiveArchitectureAction(plugin)); // Archive
+
 		// Repository group : version control actions
 		addVersionControlActions(); // Archive
 

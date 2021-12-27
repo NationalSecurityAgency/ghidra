@@ -15,11 +15,11 @@
  */
 package ghidra.trace.database.program;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 import generic.NestedIterator;
 import ghidra.program.database.ProgramDB;
@@ -64,7 +64,7 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 	}
 
 	@Override
-	public List<String> getCallingConventionNames() {
+	public Collection<String> getCallingConventionNames() {
 		return functions.getCallingConventionNames();
 	}
 
@@ -76,11 +76,6 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 	@Override
 	public PrototypeModel getCallingConvention(String name) {
 		return functions.getCallingConvention(name);
-	}
-
-	@Override
-	public PrototypeModel[] getCallingConventions() {
-		return functions.getCallingConventions();
 	}
 
 	@Override

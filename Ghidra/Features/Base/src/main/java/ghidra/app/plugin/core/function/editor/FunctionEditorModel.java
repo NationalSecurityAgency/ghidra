@@ -124,15 +124,24 @@ public class FunctionEditorModel {
 		return false;
 	}
 
-	public List<String> getCallingConventionNames() {
-		return functionManager.getCallingConventionNames();
+	List<String> getCallingConventionNames() {
+		Collection<String> names =
+			function.getProgram().getFunctionManager().getCallingConventionNames();
+		List<String> list = new ArrayList<>(names);
+		if (callingConventionName != null && !names.contains(callingConventionName)) {
+			list.add(callingConventionName);
+			Collections.sort(list);
+		}
+		list.add(0, Function.DEFAULT_CALLING_CONVENTION_STRING);
+		list.add(0, Function.UNKNOWN_CALLING_CONVENTION_STRING);
+		return list;
 	}
 
-	public String[] getCallFixupNames() {
+	String[] getCallFixupNames() {
 		return program.getCompilerSpec().getPcodeInjectLibrary().getCallFixupNames();
 	}
 
-	public void setName(String name) {
+	void setName(String name) {
 		if (this.name.equals(name)) {
 			return;
 		}
@@ -147,20 +156,20 @@ public class FunctionEditorModel {
 		notifyDataChanged();
 	}
 
-	public String getCallingConventionName() {
+	String getCallingConventionName() {
 		return callingConventionName;
 	}
 
-	public void setHasVarArgs(boolean b) {
+	void setHasVarArgs(boolean b) {
 		hasVarArgs = b;
 		notifyDataChanged();
 	}
 
-	public String getName() {
+	String getName() {
 		return name;
 	}
 
-	public void dispose() {
+	void dispose() {
 		listener = new ModelChangeListener() {
 			@Override
 			public void tableRowsChanged() {
@@ -316,7 +325,7 @@ public class FunctionEditorModel {
 		return true;
 	}
 
-	public boolean hasValidName() {
+	boolean hasValidName() {
 		if (name.length() == 0) {
 			statusText = "Missing function name";
 			return false;
@@ -381,11 +390,11 @@ public class FunctionEditorModel {
 		return true;
 	}
 
-	public boolean isValid() {
+	boolean isValid() {
 		return isValid;
 	}
 
-	public String getFunctionSignatureTextFromModel() {
+	String getFunctionSignatureTextFromModel() {
 		StringBuilder buf = new StringBuilder();
 		buf.append(returnInfo.getFormalDataType().getName()).append(" ");
 		buf.append(getNameString());
@@ -420,7 +429,7 @@ public class FunctionEditorModel {
 		return buf.toString();
 	}
 
-	public String getNameString() {
+	String getNameString() {
 		return name.length() == 0 ? "?" : name;
 	}
 
@@ -428,15 +437,15 @@ public class FunctionEditorModel {
 		return param.getName();
 	}
 
-	public boolean hasVarArgs() {
+	boolean hasVarArgs() {
 		return hasVarArgs;
 	}
 
-	public DataType getReturnType() {
+	DataType getReturnType() {
 		return returnInfo.getDataType();
 	}
 
-	public DataType getFormalReturnType() {
+	DataType getFormalReturnType() {
 		return returnInfo.getFormalDataType();
 	}
 
@@ -444,14 +453,14 @@ public class FunctionEditorModel {
 		return setParameterFormalDataType(returnInfo, formalReturnType);
 	}
 
-	public String getStatusText() {
+	String getStatusText() {
 		if (isInParsingMode) {
 			return PARSING_MODE_STATUS_TEXT;
 		}
 		return statusText;
 	}
 
-	public void setIsInLine(boolean isInLine) {
+	void setIsInLine(boolean isInLine) {
 		if (isInLine == this.isInLine) {
 			return;
 		}
@@ -462,12 +471,12 @@ public class FunctionEditorModel {
 		notifyDataChanged();
 	}
 
-	public void setNoReturn(boolean isNoReturn) {
+	void setNoReturn(boolean isNoReturn) {
 		this.isNoReturn = isNoReturn;
 		notifyDataChanged();
 	}
 
-	public boolean isInlineAllowed() {
+	boolean isInlineAllowed() {
 		return !getAffectiveFunction().isExternal();
 	}
 
@@ -481,19 +490,19 @@ public class FunctionEditorModel {
 		return function.isThunk() ? function.getThunkedFunction(true) : function;
 	}
 
-	public boolean isInLine() {
+	boolean isInLine() {
 		return isInLine;
 	}
 
-	public boolean isNoReturn() {
+	boolean isNoReturn() {
 		return isNoReturn;
 	}
 
-	public String getCallFixupName() {
+	String getCallFixupName() {
 		return callFixupName;
 	}
 
-	public void setCallFixupName(String callFixupName) {
+	void setCallFixupName(String callFixupName) {
 		if (callFixupName.equals(this.callFixupName)) {
 			return;
 		}
@@ -555,11 +564,11 @@ public class FunctionEditorModel {
 		}
 	}
 
-	public int[] getSelectedParameterRows() {
+	int[] getSelectedParameterRows() {
 		return selectedFunctionRows;
 	}
 
-	public void addParameter() {
+	void addParameter() {
 		if (listener != null) {
 			listener.tableRowsChanged();
 		}
@@ -700,7 +709,7 @@ public class FunctionEditorModel {
 		notifyDataChanged();
 	}
 
-	public void moveSelectedParameterUp() {
+	void moveSelectedParameterUp() {
 		if (!canMoveParameterUp()) {
 			throw new AssertException("Attempted to move parameters up when not allowed.");
 		}
@@ -716,7 +725,7 @@ public class FunctionEditorModel {
 		notifyDataChanged();
 	}
 
-	public void moveSelectedParameterDown() {
+	void moveSelectedParameterDown() {
 		if (!canMoveParameterDown()) {
 			throw new AssertException("Attempted to move parameters down when not allowed.");
 		}
@@ -736,7 +745,7 @@ public class FunctionEditorModel {
 		return parameters;
 	}
 
-	public boolean canRemoveParameters() {
+	boolean canRemoveParameters() {
 		if (selectedFunctionRows.length == 0) {
 			return false;
 		}
@@ -748,7 +757,7 @@ public class FunctionEditorModel {
 		return true;
 	}
 
-	public boolean canMoveParameterUp() {
+	boolean canMoveParameterUp() {
 		// remember first row (return type) and auto-params cannot be moved.
 		int minRowToMoveUp = 2 + autoParamCount;
 		if (parameters.size() > 0 && parameters.get(0).getName().equals("this")) {
@@ -757,7 +766,7 @@ public class FunctionEditorModel {
 		return selectedFunctionRows.length == 1 && selectedFunctionRows[0] >= minRowToMoveUp;
 	}
 
-	public boolean canMoveParameterDown() {
+	boolean canMoveParameterDown() {
 		if (selectedFunctionRows.length != 1) {
 			return false;
 		}
@@ -770,12 +779,12 @@ public class FunctionEditorModel {
 		return selectedRow >= minRowToMoveDown && selectedRow < parameters.size();
 	}
 
-	public void setParameterName(ParamInfo param, String newName) {
+	void setParameterName(ParamInfo param, String newName) {
 		param.setName(newName);
 		notifyDataChanged();
 	}
 
-	public boolean setParameterFormalDataType(ParamInfo param, DataType formalDataType) {
+	boolean setParameterFormalDataType(ParamInfo param, DataType formalDataType) {
 		boolean isReturn = (param.getOrdinal() == Parameter.RETURN_ORIDINAL);
 		try {
 			formalDataType = VariableUtilities.checkDataType(formalDataType, isReturn, 0, program);
@@ -839,11 +848,11 @@ public class FunctionEditorModel {
 		}
 	}
 
-	public VariableStorage getReturnStorage() {
+	VariableStorage getReturnStorage() {
 		return returnInfo.getStorage();
 	}
 
-	public Function getFunction() {
+	Function getFunction() {
 		return function;
 	}
 
@@ -940,7 +949,7 @@ public class FunctionEditorModel {
 		return allowCustomStorage;
 	}
 
-	public boolean apply() {
+	boolean apply() {
 		if (!modelChanged) {
 			return true;
 		}
@@ -1085,16 +1094,10 @@ public class FunctionEditorModel {
 	}
 
 	public void setFunctionData(FunctionDefinitionDataType functionDefinition) {
+		
 		name = functionDefinition.getName();
 
-		GenericCallingConvention genericCallingConvention =
-			functionDefinition.getGenericCallingConvention();
-		if (genericCallingConvention != null &&
-			genericCallingConvention != GenericCallingConvention.unknown) {
-			PrototypeModel matchConvention =
-				function.getProgram().getCompilerSpec().matchConvention(genericCallingConvention);
-			setCallingConventionName(matchConvention.getName());
-		}
+		setCallingConventionName(functionDefinition.getCallingConventionName());
 
 		if (!isSameSize(returnInfo.getFormalDataType(), functionDefinition.getReturnType())) {
 			returnInfo.setStorage(VariableStorage.UNASSIGNED_STORAGE);
@@ -1110,6 +1113,7 @@ public class FunctionEditorModel {
 			parameters.add(new ParamInfo(this, paramDefinition));
 		}
 		hasVarArgs = functionDefinition.hasVarArgs();
+
 		fixupOrdinals();
 
 		if (allowCustomStorage) {
@@ -1162,11 +1166,11 @@ public class FunctionEditorModel {
 		return null;
 	}
 
-	public boolean isInParsingMode() {
+	boolean isInParsingMode() {
 		return isInParsingMode;
 	}
 
-	public void setSignatureFieldText(String text) {
+	void setSignatureFieldText(String text) {
 		signatureFieldText = text;
 		boolean signatureTextFieldInSync =
 			signatureFieldText.equals(getFunctionSignatureTextFromModel());
@@ -1177,24 +1181,32 @@ public class FunctionEditorModel {
 		}
 	}
 
-	public void resetSignatureTextField() {
+	void resetSignatureTextField() {
 		setSignatureFieldText(getFunctionSignatureTextFromModel());
 	}
 
-	public boolean hasChanges() {
+	boolean hasChanges() {
 		return !Objects.equals(getFunctionSignatureTextFromModel(), signatureFieldText);
 	}
 
-	public void parseSignatureFieldText() throws ParseException, CancelledException {
+	void parseSignatureFieldText() throws ParseException, CancelledException {
 		FunctionSignatureParser parser =
 			new FunctionSignatureParser(program.getDataTypeManager(), dataTypeManagerService);
 		FunctionDefinitionDataType f = parser.parse(getFunctionSignature(), signatureFieldText);
 
+		// Preserve calling convention and noreturn flag from current model
+		f.setNoReturn(isNoReturn);
+		try {
+			f.setCallingConvention(callingConventionName);
+		}
+		catch (InvalidInputException e) {
+			// ignore
+		}
 		setFunctionData(f);
 		isInParsingMode = false;
 	}
 
-	public int getFunctionNameStartPosition() {
+	int getFunctionNameStartPosition() {
 		return returnInfo.getFormalDataType().getName().length() + 1;
 	}
 

@@ -23,7 +23,6 @@ import ghidra.framework.Application;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
-import ghidra.program.database.data.ProjectDataTypeManager;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.listing.DataTypeArchive;
@@ -32,7 +31,6 @@ import ghidra.program.util.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Database implementation for Data Type Archive. 
@@ -493,7 +491,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 //		}
 
 		try {
-			dataTypeManager = new ProjectDataTypeManager(dbh, openMode, this, lock, monitor);
+			dataTypeManager = new ProjectDataTypeManager(this, dbh, openMode, this, lock, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
@@ -506,7 +504,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	private void initManagers(int openMode, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		monitor.checkCanceled();
-		dataTypeManager.setDataTypeArchive(this);
 		dataTypeManager.archiveReady(openMode, monitor);
 	}
 

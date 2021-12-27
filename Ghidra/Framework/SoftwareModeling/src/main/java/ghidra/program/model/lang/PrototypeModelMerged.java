@@ -24,6 +24,7 @@ import java.util.*;
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.pcode.Encoder;
 import ghidra.xml.*;
 
@@ -101,7 +102,11 @@ public class PrototypeModelMerged extends PrototypeModel {
 		for (int i = 0; i < modellist.length; ++i) {
 			ScoreProtoModel scoremodel = new ScoreProtoModel(true, modellist[i], params.length);
 			for (Parameter p : params) {
-				scoremodel.addParameter(p.getMinAddress(), p.getLength());
+				VariableStorage storage = p.getVariableStorage();
+				if (storage.isUnassignedStorage() || storage.isBadStorage()) {
+					continue;
+				}
+				scoremodel.addParameter(storage.getMinAddress(), p.getLength());
 			}
 			scoremodel.doScore();
 			int score = scoremodel.getScore();

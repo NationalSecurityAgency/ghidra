@@ -79,6 +79,7 @@ class CParserTask extends Task {
 
 			plugin.parse(filenames, options, dtMgr, monitor);
 			if (dataFileName != null) {
+				// TODO: does not consider existing datatypes
 				if (dtMgr.getDataTypeCount(true) != 0) {
 					try {
 						((FileDataTypeManager) dtMgr).save();

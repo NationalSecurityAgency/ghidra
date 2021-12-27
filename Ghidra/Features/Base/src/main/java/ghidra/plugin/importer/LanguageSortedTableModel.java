@@ -129,6 +129,14 @@ public class LanguageSortedTableModel extends AbstractSortedTableModel<LanguageC
 				}
 				++index;
 			}
+			// Try again using just LanguageID
+			index = 0;
+			for (LanguageCompilerSpecPair pair : languageList) {
+				if (pair.getLanguageID().equals(toFind.getLanguageID())) {
+					return index;
+				}
+				++index;
+			}
 		}
 		return -1;
 	}

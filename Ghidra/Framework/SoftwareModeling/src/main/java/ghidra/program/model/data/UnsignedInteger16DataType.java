@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 /**
  * A fixed size 16 byte unsigned integer (commonly referred to in C as uint128_t)
  */
-public class UnsignedInteger16DataType extends AbstractIntegerDataType {
-
-	private static final long serialVersionUID = 1L;
+public class UnsignedInteger16DataType extends AbstractUnsignedIntegerDataType {
 
 	/** A statically defined UnsignedInteger16DataType instance.*/
 	public final static UnsignedInteger16DataType dataType = new UnsignedInteger16DataType();
@@ -30,7 +28,7 @@ public class UnsignedInteger16DataType extends AbstractIntegerDataType {
 	}
 
 	public UnsignedInteger16DataType(DataTypeManager dtm) {
-		super("uint16", false, dtm);
+		super("uint16", dtm);
 	}
 
 	@Override

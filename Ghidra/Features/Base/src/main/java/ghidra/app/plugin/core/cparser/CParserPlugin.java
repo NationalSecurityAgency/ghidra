@@ -15,18 +15,11 @@
  */
 package ghidra.app.plugin.core.cparser;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 import javax.swing.SwingUtilities;
-
-import org.apache.commons.io.DirectoryWalker.CancelException;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -39,6 +32,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.C.CParser;
+import ghidra.app.util.cparser.CPP.ParseException;
 import ghidra.app.util.cparser.CPP.PreProcessor;
 import ghidra.framework.Application;
 import ghidra.framework.options.SaveState;
@@ -46,13 +40,9 @@ import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.database.data.ProgramDataTypeManager;
-import ghidra.program.model.data.BuiltInDataTypeManager;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -206,6 +196,7 @@ public class CParserPlugin extends ProgramPlugin {
 		cpp.setOutputStream(bos);
 		cpp.setMonitor(monitor);
 
+		int fileCount = 0;
 		try {
 			for (String filename : filenames) {
 				if (monitor.isCancelled()) {
@@ -230,14 +221,26 @@ public class CParserPlugin extends ProgramPlugin {
 						}
 					}
 				}
-				else {
+				else if (file.exists()) {
+					++fileCount;
 					parseFile(filename, monitor, cpp);
+				}
+				else {
+					Msg.error(this, "Skipping file not found:" + filename);
 				}
 			}
 		}
 		catch (RuntimeException re) {
 			os.close();
-			throw new ghidra.app.util.cparser.CPP.ParseException(re.getMessage());
+			throw new ParseException(re.getMessage());
+		}
+
+		if (fileCount == 0) {
+			throw new ParseException("Failed to find any header files to parse!");
+		}
+		else if (fileCount != filenames.length) {
+			Msg.warn(this,
+				"Only found " + fileCount + " of " + filenames.length + " specified header files");
 		}
 
 		// process all the defines and add any that are integer values into

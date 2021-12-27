@@ -35,11 +35,12 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	static final int V0_COMPOSITE_LENGTH_COL = 4;
 	static final int V0_COMPOSITE_NUM_COMPONENTS_COL = 5;
 
-	static final Schema V0_COMPOSITE_SCHEMA = new Schema(VERSION, "Data Type ID",
-		new Field[] { StringField.INSTANCE, StringField.INSTANCE, BooleanField.INSTANCE,
-			LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE },
-		new String[] { "Name", "Comment", "Is Union", "Category ID", "Length",
-			"Number Of Components" });
+// DO NOT REMOVE - this documents the schema used in version 0.
+//	static final Schema V0_COMPOSITE_SCHEMA = new Schema(VERSION, "Data Type ID",
+//		new Field[] { StringField.INSTANCE, StringField.INSTANCE, BooleanField.INSTANCE,
+//			LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE },
+//		new String[] { "Name", "Comment", "Is Union", "Category ID", "Length",
+//			"Number Of Components" });
 
 	private Table compositeTable;
 
@@ -49,20 +50,14 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 */
-	public CompositeDBAdapterV0(DBHandle handle) throws VersionException {
+	CompositeDBAdapterV0(DBHandle handle) throws VersionException {
 
 		compositeTable = handle.getTable(COMPOSITE_TABLE_NAME);
 		if (compositeTable == null) {
 			throw new VersionException("Missing Table: " + COMPOSITE_TABLE_NAME);
 		}
-		int version = compositeTable.getSchema().getVersion();
-		if (version != VERSION) {
-			String msg = "Expected version " + VERSION + " for table " + COMPOSITE_TABLE_NAME +
-				" but got " + compositeTable.getSchema().getVersion();
-			if (version < VERSION) {
-				throw new VersionException(msg, VersionException.OLDER_VERSION, true);
-			}
-			throw new VersionException(msg, VersionException.NEWER_VERSION, false);
+		if (compositeTable.getSchema().getVersion() != VERSION) {
+			throw new VersionException(false);
 		}
 	}
 
@@ -71,12 +66,12 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	int getRecordCount() {
+	public int getRecordCount() {
 		return compositeTable.getRecordCount();
 	}
 
 	@Override
-	public DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
+	DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
 			int length, int computedAlignment, long sourceArchiveID, long sourceDataTypeID,
 			long lastChangeTime, int packValue, int minAlignment) throws IOException {
 		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
@@ -84,7 +79,7 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public DBRecord getRecord(long dataTypeID) throws IOException {
+	DBRecord getRecord(long dataTypeID) throws IOException {
 		return translateRecord(compositeTable.getRecord(dataTypeID));
 	}
 
@@ -94,18 +89,18 @@ class CompositeDBAdapterV0 extends CompositeDBAdapter implements RecordTranslato
 	}
 
 	@Override
-	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
+	void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean removeRecord(long compositeID) throws IOException {
+	boolean removeRecord(long compositeID) throws IOException {
 		throw new UnsupportedOperationException("Not allowed to update prior version #" + VERSION +
 			" of " + COMPOSITE_TABLE_NAME + " table.");
 	}
 
 	@Override
-	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
+	Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return compositeTable.findRecords(new LongField(categoryID),
 			CompositeDBAdapter.COMPOSITE_CAT_COL);
 	}

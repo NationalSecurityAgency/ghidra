@@ -22,6 +22,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import db.DBRecord;
+import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -33,6 +34,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.bookmark.DBTraceBookmarkType;
+import ghidra.trace.database.data.DBTraceDataTypeManager;
 import ghidra.trace.database.listing.DBTraceCommentAdapter;
 import ghidra.trace.database.listing.DBTraceData;
 import ghidra.trace.database.program.DBTraceProgramView;
@@ -122,7 +124,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 	@DBAnnotatedField(column = FIXUP_COLUMN_NAME)
 	protected String callFixup;
 	@DBAnnotatedField(column = CALLING_CONVENTION_COLUMN_NAME)
-	protected byte callingConventionID = DBTraceSymbolManager.DEFAULT_CALLING_CONVENTION_ID;
+	protected byte callingConventionID = DataTypeManagerDB.UNKNOWN_CALLING_CONVENTION_ID;
 	// TODO: Pack into flags if more bits needed
 	@DBAnnotatedField(column = SIGNATURE_SOURCE_COLUMN_NAME)
 	protected SourceType signatureSource = SourceType.ANALYSIS; // Assumed default, 0-ordinal
@@ -484,7 +486,8 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 	}
 
 	protected boolean hasExplicitCallingConvention() {
-		return callingConventionID != -1 && callingConventionID != -2;
+		return callingConventionID != DataTypeManagerDB.DEFAULT_CALLING_CONVENTION_ID &&
+			callingConventionID != DataTypeManagerDB.UNKNOWN_CALLING_CONVENTION_ID;
 	}
 
 	@Override
@@ -1734,16 +1737,14 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 			if (cs == null) {
 				return null;
 			}
-			if (DBTraceSymbolManager.UNKNOWN_CALLING_CONVENTION_ID == callingConventionID) {
+			DBTraceDataTypeManager dtm = manager.dataTypeManager;
+			if (callingConventionID == DataTypeManagerDB.UNKNOWN_CALLING_CONVENTION_ID) {
 				return null;
 			}
-			if (DBTraceSymbolManager.DEFAULT_CALLING_CONVENTION_ID == callingConventionID) {
+			if (callingConventionID == DataTypeManagerDB.DEFAULT_CALLING_CONVENTION_ID) {
 				return cs.getDefaultCallingConvention();
 			}
-			String ccName = manager.callingConventionMap.getKey(callingConventionID);
-			if (ccName == null) {
-				return null;
-			}
+			String ccName = dtm.getCallingConventionName(callingConventionID);
 			return cs.getCallingConvention(ccName);
 		}
 	}
@@ -1751,28 +1752,8 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 	@Override
 	public String getCallingConventionName() {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			if (DBTraceSymbolManager.UNKNOWN_CALLING_CONVENTION_ID == callingConventionID) {
-				return null;
-			}
-			if (DBTraceSymbolManager.DEFAULT_CALLING_CONVENTION_ID == callingConventionID) {
-				return DBTraceSymbolManager.DEFAULT_CALLING_CONVENTION_NAME;
-			}
-			return manager.callingConventionMap.getKey(callingConventionID);
-		}
-	}
-
-	@Override
-	public String getDefaultCallingConventionName() {
-		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			PrototypeModel cc = manager.functions.getDefaultCallingConvention();
-			if (cc == null) {
-				return DBTraceSymbolManager.DEFAULT_CALLING_CONVENTION_NAME;
-			}
-			String ccName = cc.getName();
-			if (ccName == null) { // Really?
-				return DBTraceSymbolManager.DEFAULT_CALLING_CONVENTION_NAME;
-			}
-			return ccName;
+			DBTraceDataTypeManager dtm = manager.dataTypeManager;
+			return dtm.getCallingConventionName(callingConventionID);
 		}
 	}
 
@@ -1783,12 +1764,16 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 				thunked.setCallingConvention(name);
 				return;
 			}
-			if (Objects.equals(getCallingConventionName(), name)) {
-				return;
+
+			DBTraceDataTypeManager dtm = manager.dataTypeManager;
+			byte id = dtm.getCallingConventionID(name, true);
+			if (id == callingConventionID) {
+				return; // no change
 			}
+
 			doLoadVariables();
 
-			this.callingConventionID = manager.findOrRecordCallingConvention(name);
+			callingConventionID = id;
 			update(CALLING_CONVENTION_COLUMN);
 
 			boolean hasCustomStorage = hasCustomVariableStorage();
@@ -1813,11 +1798,14 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 					new TraceChangeRecord<>(TraceFunctionChangeType.CHANGED, getSpace(), this));
 			}
 		}
+		catch (IOException e) {
+			manager.dbError(e);
+		}
 	}
 
 	protected void createClassStructIfNeeded() {
 		PrototypeModel cc = getCallingConvention();
-		if (cc == null || cc.getGenericCallingConvention() != GenericCallingConvention.thiscall) {
+		if (cc == null || !CompilerSpec.CALLING_CONVENTION_thiscall.equals(cc.getName())) {
 			return;
 		}
 		Namespace parentNS = getParentNamespace();

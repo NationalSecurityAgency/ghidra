@@ -21,6 +21,10 @@ import ghidra.program.model.lang.CompilerSpec;
  * <code>GenericCallingConvention</code> identifies the generic calling convention
  * associated with a specific function definition.  This can be used to help identify
  * the appropriate compiler-specific function prototype (i.e., calling convention).
+ * 
+ * @deprecated Calling convention name strings should be used instead of this class.
+ * {@link CompilerSpec} provides constants for those included in this enumeration and other
+ * setter/getter methods exist for using the string form.
  */
 public enum GenericCallingConvention {
 
@@ -76,38 +80,13 @@ public enum GenericCallingConvention {
 
 	/**
 	 * Returns the GenericCallingConvention corresponding to the specified
-	 * type string or unknown.  Case and underscore prefix is ignored.
-	 * @param callingConvention calling convention name
-	 * @return GenericCallingConvention
+	 * type string or unknown if name is not defined.
+	 * @param callingConvention calling convention declaration name (e.g., "__stdcall")
+	 * @return GenericCallingConvention or {@link #unknown} if not found.
 	 */
 	public static GenericCallingConvention getGenericCallingConvention(String callingConvention) {
-		while (callingConvention.startsWith("_")) {
-			callingConvention = callingConvention.substring(1);
-		}
 		for (GenericCallingConvention value : GenericCallingConvention.values()) {
 			if (value.name().equalsIgnoreCase(callingConvention)) {
-				return value;
-			}
-		}
-		return unknown;
-	}
-
-	/**
-	 * Returns the GenericCallingConvention which is likely to correspond with the
-	 * specified prototype name.
-	 * @param callingConvention compiler specific calling convention name
-	 * @return GenericCallingConvention
-	 */
-	public static GenericCallingConvention guessFromName(String callingConvention) {
-		if (callingConvention == null) {
-			return unknown;
-		}
-		callingConvention = callingConvention.toLowerCase();
-		for (GenericCallingConvention value : GenericCallingConvention.values()) {
-			if (value == unknown) {
-				continue;
-			}
-			if (callingConvention.contains(value.name())) {
 				return value;
 			}
 		}

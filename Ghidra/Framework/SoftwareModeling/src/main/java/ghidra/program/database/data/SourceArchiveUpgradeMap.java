@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.util.UniversalID;
 
@@ -31,8 +30,8 @@ public class SourceArchiveUpgradeMap {
 		new long[] { OLD_CLIB_ARCHIVE_ID, OLD_NTDDK_ARCHIVE_ID, OLD_WINDOWS_ARCHIVE_ID };
 
 	private CompilerSpecID WINDOWS_CSPEC_ID = new CompilerSpecID("windows");
-	private Map<UniversalID, SourceArchive> windowsMap;
-	private Map<UniversalID, SourceArchive> defaultMap;
+
+	private Map<UniversalID, SourceArchive> oldArchiveRemappings;
 
 	public SourceArchiveUpgradeMap() {
 
@@ -47,34 +46,25 @@ public class SourceArchiveUpgradeMap {
 		SourceArchive newDefaultClibArchive =
 			new SourceArchiveImpl(NEW_DEFAULT_CLIB_ARCHIVE_ID, NEW_DEFAULT_CLIB_ARCHIVE_NAME);
 
-		// create mapping for WINDOWS
-		windowsMap = new HashMap<UniversalID, SourceArchive>();
-		windowsMap.put(new UniversalID(OLD_CLIB_ARCHIVE_ID), newWindowsArchive);
-		windowsMap.put(new UniversalID(OLD_WINDOWS_ARCHIVE_ID), newWindowsArchive);
-		windowsMap.put(new UniversalID(OLD_NTDDK_ARCHIVE_ID), newWindowsArchive);
+		oldArchiveRemappings = new HashMap<UniversalID, SourceArchive>();
 
-		// create defaultMap
-		defaultMap = new HashMap<UniversalID, SourceArchive>();
-		defaultMap.put(new UniversalID(OLD_CLIB_ARCHIVE_ID), newDefaultClibArchive);
+		// create mappings for old Windows archives
+		oldArchiveRemappings.put(new UniversalID(OLD_CLIB_ARCHIVE_ID), newWindowsArchive);
+		oldArchiveRemappings.put(new UniversalID(OLD_WINDOWS_ARCHIVE_ID), newWindowsArchive);
+		oldArchiveRemappings.put(new UniversalID(OLD_NTDDK_ARCHIVE_ID), newWindowsArchive);
+
+		// create mappings for old default archives
+		oldArchiveRemappings.put(new UniversalID(OLD_CLIB_ARCHIVE_ID), newDefaultClibArchive);
+
+		// create mappings for old removed archives
 		SourceArchive removedSourceArchive = new SourceArchiveImpl();
-		defaultMap.put(new UniversalID(OLD_WINDOWS_ARCHIVE_ID), removedSourceArchive);
-		defaultMap.put(new UniversalID(OLD_NTDDK_ARCHIVE_ID), removedSourceArchive);
+		oldArchiveRemappings.put(new UniversalID(OLD_WINDOWS_ARCHIVE_ID), removedSourceArchive);
+		oldArchiveRemappings.put(new UniversalID(OLD_NTDDK_ARCHIVE_ID), removedSourceArchive);
 
 	}
 
-	public SourceArchive getMappedSourceArchive(SourceArchive sourceArchive,
-			CompilerSpec compiler) {
-		if (compiler != null) {
-			CompilerSpecID compilerSpecID = compiler.getCompilerSpecID();
-			if (WINDOWS_CSPEC_ID.equals(compilerSpecID)) {
-				SourceArchive replacementSourceArchive =
-					windowsMap.get(sourceArchive.getSourceArchiveID());
-				if (replacementSourceArchive != null) {
-					return replacementSourceArchive;
-				}
-			}
-		}
-		return defaultMap.get(sourceArchive.getSourceArchiveID());
+	public SourceArchive getMappedSourceArchive(SourceArchive sourceArchive) {
+		return oldArchiveRemappings.get(sourceArchive.getSourceArchiveID());
 	}
 
 	public static boolean isReplacedSourceArchive(long id) {

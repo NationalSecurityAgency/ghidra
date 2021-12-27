@@ -20,8 +20,7 @@ import java.util.List;
 
 import generic.algorithms.CRC64;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.UnknownRegister;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.util.LanguageTranslator;
 import ghidra.util.exception.InvalidInputException;
@@ -58,7 +57,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	public static final VariableStorage VOID_STORAGE = new VariableStorage();
 
 	protected final Varnode[] varnodes;
-	protected final Program program;
+	protected final ProgramArchitecture programArch;
 
 	private List<Register> registers;
 	private int size;
@@ -69,42 +68,45 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	 * Construct an empty variable storage for reserved usage (i.e., BAD_STORAGE, UNMAPPED_STORAGE)
 	 */
 	protected VariableStorage() {
-		this.program = null;
+		this.programArch = null;
 		this.varnodes = null;
 	}
 
 	/**
 	 * Construct variable storage
-	 * @param program
+	 * @param programArch program architecture details
 	 * @param varnodes one or more ordered storage varnodes
 	 * @throws InvalidInputException if specified varnodes violate storage restrictions
 	 */
-	public VariableStorage(Program program, Varnode... varnodes) throws InvalidInputException {
-		this.program = program;
+	public VariableStorage(ProgramArchitecture programArch, Varnode... varnodes)
+			throws InvalidInputException {
+		this.programArch = programArch;
 		this.varnodes = varnodes.clone();
 		checkVarnodes();
 	}
 
 	/**
 	 * Construct register variable storage
-	 * @param program
+	 * @param programArch program architecture details
 	 * @param registers one or more ordered registers
 	 * @throws InvalidInputException if specified registers violate storage restrictions
 	 */
-	public VariableStorage(Program program, Register... registers) throws InvalidInputException {
-		this(program, getVarnodeList(registers));
+	public VariableStorage(ProgramArchitecture programArch, Register... registers)
+			throws InvalidInputException {
+		this(programArch, getVarnodeList(registers));
 	}
 
 	/**
 	 * Construct stack variable storage
-	 * @param program
+	 * @param programArch program architecture details
 	 * @param stackOffset stack offset
 	 * @param size stack element size
 	 * @throws InvalidInputException if specified registers violate storage restrictions
 	 */
-	public VariableStorage(Program program, int stackOffset, int size) throws InvalidInputException {
-		this(program, new Varnode(program.getAddressFactory().getStackSpace().getAddress(
-			stackOffset), size));
+	public VariableStorage(ProgramArchitecture programArch, int stackOffset, int size)
+			throws InvalidInputException {
+		this(programArch, new Varnode(
+			programArch.getAddressFactory().getStackSpace().getAddress(stackOffset), size));
 	}
 
 	private static Varnode[] getVarnodeList(Register[] registers) {
@@ -117,34 +119,37 @@ public class VariableStorage implements Comparable<VariableStorage> {
 
 	/**
 	 * Construct variable storage
-	 * @param program
+	 * @param programArch program architecture details
 	 * @param varnodes one or more ordered storage varnodes
 	 * @throws InvalidInputException if specified varnodes violate storage restrictions
 	 */
-	public VariableStorage(Program program, List<Varnode> varnodes) throws InvalidInputException {
-		this.program = program;
+	public VariableStorage(ProgramArchitecture programArch, List<Varnode> varnodes)
+			throws InvalidInputException {
+		this.programArch = programArch;
 		this.varnodes = varnodes.toArray(new Varnode[varnodes.size()]);
 		checkVarnodes();
 	}
 
 	/**
 	 * Construct variable storage
-	 * @param program
-	 * @param address
-	 * @param size
-	 * @throws InvalidInputException
+	 * @param programArch program architecture details
+	 * @param address varnode address
+	 * @param size varnode size
+	 * @throws InvalidInputException if specified varnodes violate storage restrictions
 	 */
-	public VariableStorage(Program program, Address address, int size) throws InvalidInputException {
-		this(program, new Varnode(address, size));
+	public VariableStorage(ProgramArchitecture programArch, Address address, int size)
+			throws InvalidInputException {
+		this(programArch, new Varnode(address, size));
 	}
 
 	/**
 	 * Construct variable storage
-	 * @param program
+	 * @param programArch program architecture details
 	 * @param serialization storage serialization string
-	 * @throws InvalidInputException
+	 * @return deserialized variable storage.  {@link #BAD_STORAGE} may be returned on failure.
+	 * @throws InvalidInputException if specified varnodes violate storage restrictions
 	 */
-	public static VariableStorage deserialize(Program program, String serialization)
+	public static VariableStorage deserialize(ProgramArchitecture programArch, String serialization)
 			throws InvalidInputException {
 		if (serialization == null || UNASSIGNED.equals(serialization)) {
 			return UNASSIGNED_STORAGE;
@@ -155,18 +160,18 @@ public class VariableStorage implements Comparable<VariableStorage> {
 		if (BAD.equals(serialization)) {
 			return BAD_STORAGE;
 		}
-		List<Varnode> varnodes = getVarnodes(program.getAddressFactory(), serialization);
+		List<Varnode> varnodes = getVarnodes(programArch.getAddressFactory(), serialization);
 		if (varnodes == null) {
 			return BAD_STORAGE;
 		}
-		return new VariableStorage(program, varnodes);
+		return new VariableStorage(programArch, varnodes);
 	}
 
 	/**
 	 * @return program for which this storage is associated
 	 */
-	public Program getProgram() {
-		return program;
+	public ProgramArchitecture getProgramArchitecture() {
+		return programArch;
 	}
 
 	/**
@@ -181,7 +186,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 			throw new IllegalArgumentException("A minimum of one varnode must be specified");
 		}
 
-		AddressFactory addrFactory = program.getAddressFactory();
+		AddressFactory addrFactory = programArch.getAddressFactory();
 		size = 0;
 		for (int i = 0; i < varnodes.length; i++) {
 			Varnode varnode = varnodes[i];
@@ -212,7 +217,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 			}
 
 			if (!storageAddr.isStackAddress()) {
-				Register reg = program.getRegister(storageAddr, varnode.getSize());
+				Register reg =
+					programArch.getLanguage().getRegister(storageAddr, varnode.getSize());
 				if (reg != null && !(reg instanceof UnknownRegister)) {
 					isRegister = true;
 					if (registers == null) {
@@ -255,12 +261,12 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	/**
 	 * Attempt to clone variable storage for use in a different program.
 	 * Dynamic storage characteristics will not be preserved.
-	 * @param newProgram target program
+	 * @param newProgramArch target program architecture details
 	 * @return cloned storage
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException if specified varnodes violate storage restrictions
 	 */
-	public VariableStorage clone(Program newProgram) throws InvalidInputException {
-		if (program == null || newProgram == program) {
+	public VariableStorage clone(ProgramArchitecture newProgramArch) throws InvalidInputException {
+		if (programArch == null || newProgramArch == programArch) {
 			if (getClass().equals(VariableStorage.class)) {
 				return this; // only reuse if simple VariableStorage instance
 			}
@@ -270,14 +276,14 @@ public class VariableStorage implements Comparable<VariableStorage> {
 			if (isBadStorage()) {
 				return BAD_STORAGE;
 			}
-			return new VariableStorage(newProgram, varnodes);
+			return new VariableStorage(newProgramArch, varnodes);
 		}
-		if (!newProgram.getLanguage().equals(program.getLanguage())) {
+		if (!newProgramArch.getLanguage().equals(programArch.getLanguage())) {
 			throw new IllegalArgumentException(
 				"Variable storage incompatible with program language: " +
-					newProgram.getLanguage().toString());
+					newProgramArch.getLanguage().toString());
 		}
-		AddressFactory newAddressFactory = newProgram.getAddressFactory();
+		AddressFactory newAddressFactory = newProgramArch.getAddressFactory();
 		Varnode[] v = getVarnodes();
 		Varnode[] newVarnodes = new Varnode[v.length];
 		for (int i = 0; i < v.length; i++) {
@@ -291,7 +297,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 			newVarnodes[i] =
 				new Varnode(newSpace.getAddress(v[i].getOffset()), v[i].getSize());
 		}
-		return new VariableStorage(newProgram, newVarnodes);
+		return new VariableStorage(newProgramArch, newVarnodes);
 	}
 
 	@Override
@@ -322,9 +328,9 @@ public class VariableStorage implements Comparable<VariableStorage> {
 		builder.append(varnode.getSize());
 	}
 
-	private String getAddressString(Address address, int size) {
+	private String getAddressString(Address address, int sz) {
 		if (address.isRegisterAddress() || address.isMemoryAddress()) {
-			Register register = program.getRegister(address, size);
+			Register register = programArch.getLanguage().getRegister(address, sz);
 			if (register != null) {
 				return register.toString();
 			}
@@ -610,7 +616,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 
 	/**
 	 * Determine if this variable storage intersects the specified variable storage
-	 * @param variableStorage
+	 * @param variableStorage other variable storage
 	 * @return true if any intersection exists between this storage and the specified
 	 * variable storage
 	 */
@@ -666,8 +672,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 
 	/**
 	 * Determine if the specified address is contained within this storage
-	 * @param address
-	 * @return
+	 * @param address address
+	 * @return true if this storage varnode(s) contain specified address
 	 */
 	public boolean contains(Address address) {
 		if (varnodes == null) {
@@ -751,7 +757,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 
 	/**
 	 * Generate VariableStorage serialization string
-	 * @param varnodes
+	 * @param varnodes one or more storage varnodes
 	 * @return storage serialization string useful for subsequent reconstruction
 	 * of a VariableStorage object
 	 */
@@ -773,9 +779,10 @@ public class VariableStorage implements Comparable<VariableStorage> {
 
 	/**
 	 * Parse a storage serialization string to produce an array or varnodes
-	 * @param addrFactory
-	 * @param serialization
+	 * @param addrFactory address factory
+	 * @param serialization serialized variable storage string (see {@link #getSerializationString()}).
 	 * @return array of varnodes or null if invalid
+	 * @throws InvalidInputException if specified registers violate storage restrictions
 	 */
 	public static List<Varnode> getVarnodes(AddressFactory addrFactory, String serialization)
 			throws InvalidInputException {
@@ -866,7 +873,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 							translator.getOldLanguage().getAddressFactory().getRegisterSpace().getAddress(
 								offset);
 						String newOffsetStr =
-							translateRegisterVarnodeOffset(oldRegAddr, size, translator, space);
+							translateRegisterVarnodeOffset(oldRegAddr, size, translator);
 						if (newOffsetStr != null) {
 							// if mapping failed - leave it unchanged
 							offsetStr = newOffsetStr;
@@ -896,15 +903,15 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	}
 
 	/**
-	 * Translate register varnode address offsetStr
-	 * @param translator
-	 * @param space
-	 * @param offsetStr
-	 * @param sizeStr
-	 * @return translated offsetStr or null if BAD translation
+	 * Translate old register storage defined by oldRegAddr and varnodeSize using the 
+	 * specified translator.
+	 * @param oldRegAddr old register address
+	 * @param varnodeSize varnode size
+	 * @param translator language translator
+	 * @return new register offset within same space as oldRegAddr or null if translation failed.
 	 */
 	private static String translateRegisterVarnodeOffset(Address oldRegAddr, int varnodeSize,
-			LanguageTranslator translator, AddressSpace newRegisterSpace) {
+			LanguageTranslator translator) {
 		// Handle register movement within register space only
 		// Assumes all translators will map register space properly
 		// If old or new register not found no adjustment is made

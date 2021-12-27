@@ -20,7 +20,6 @@ import java.util.*;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataOrganization;
-import ghidra.program.model.data.GenericCallingConvention;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Encoder;
@@ -55,7 +54,7 @@ public abstract class LanguageTranslatorAdapter implements LanguageTranslator {
 	 * @param oldLanguage
 	 * @param newLanguage
 	 */
-	private LanguageTranslatorAdapter(Language oldLanguage, Language newLanguage) {
+	protected LanguageTranslatorAdapter(Language oldLanguage, Language newLanguage) {
 		this.oldLanguage = oldLanguage;
 		this.newLanguage = newLanguage;
 		oldLanguageID = oldLanguage.getLanguageID();
@@ -483,7 +482,7 @@ public abstract class LanguageTranslatorAdapter implements LanguageTranslator {
 	 * @param newLanguage
 	 * @return default translator or null if reasonable mappings can not be determined.
 	 */
-	static LanguageTranslator getDefaultLanguageTranslator(Language oldLanguage,
+	public static LanguageTranslator getDefaultLanguageTranslator(Language oldLanguage,
 			Language newLanguage) {
 
 		DefaultLanguageTranslator translator =
@@ -626,7 +625,7 @@ class TemporaryCompilerSpec implements CompilerSpec {
 	}
 
 	@Override
-	public PrototypeModel matchConvention(GenericCallingConvention genericCallingConvention) {
+	public PrototypeModel matchConvention(String callingConvention) {
 		throw new UnsupportedOperationException("Language for upgrade use only (matchConvention)");
 	}
 

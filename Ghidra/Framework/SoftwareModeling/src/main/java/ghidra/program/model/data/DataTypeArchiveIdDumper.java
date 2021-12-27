@@ -39,6 +39,7 @@ public class DataTypeArchiveIdDumper implements GhidraLaunchable {
 
 		FileWriter writer = new FileWriter(outputFile);
 		FileDataTypeManager archive = FileDataTypeManager.openFileArchive(archiveFile, false);
+		archive.reportWarning();
 		UniversalID universalID2 = archive.getUniversalID();
 		writer.write("FILE_ID: " + Long.toHexString(universalID2.getValue()));
 		writer.write("\n");

@@ -22,12 +22,12 @@ import java.util.List;
 import org.apache.commons.compress.utils.Sets;
 import org.junit.*;
 
-import generic.test.AbstractGTest;
+import generic.test.AbstractGenericTest;
 
 /**
  *
  */
-public class StructureDataTypeTest extends AbstractGTest {
+public class StructureDataTypeTest extends AbstractGenericTest {
 
 	private Structure struct;
 

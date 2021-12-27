@@ -37,6 +37,7 @@ import ghidra.framework.ApplicationConfiguration;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.*;
@@ -63,8 +64,27 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		FileDataTypeManager newFileArchive = null;
 		try {
 			monitor.initialize(100);
+
 			oldFileArchive = FileDataTypeManager.openFileArchive(oldFile, false);
+			ArchiveWarning warning = oldFileArchive.getWarning();
+			if (warning == ArchiveWarning.LANGUAGE_UPGRADE_REQURED) {
+				throw new IOException("Archive requires language upgrade: " + oldFile);
+			}
+			if (warning != ArchiveWarning.NONE) {
+				throw new IOException("Archive language error occured: " + oldFile,
+					oldFileArchive.getWarningDetail());
+			}
+
 			newFileArchive = FileDataTypeManager.openFileArchive(newFile, true);
+			warning = newFileArchive.getWarning();
+			if (warning == ArchiveWarning.LANGUAGE_UPGRADE_REQURED) {
+				throw new IOException("Archive requires language upgrade: " + newFile);
+			}
+			if (warning != ArchiveWarning.NONE) {
+				throw new IOException("Archive language error occured: " + newFile,
+					newFileArchive.getWarningDetail());
+			}
+
 			UniversalID oldUniversalID = oldFileArchive.getUniversalID();
 			UniversalID newUniversalID = newFileArchive.getUniversalID();
 			Msg.info(DataTypeArchiveTransformer.class, "Old file ID = " + oldUniversalID);
@@ -739,12 +759,10 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 
 		FileDataTypeManager destinationFileArchive =
 			FileDataTypeManager.openFileArchive(destinationFile, false);
-		if (destinationFileArchive != null) {
-			UniversalID destinationUniversalID = destinationFileArchive.getUniversalID();
-			destinationFileArchive.close();
-			Msg.info(DataTypeArchiveTransformer.class,
-				"Resulting file ID = " + destinationUniversalID.getValue());
-		}
+		UniversalID destinationUniversalID = destinationFileArchive.getUniversalID();
+		destinationFileArchive.close();
+		Msg.info(DataTypeArchiveTransformer.class,
+			"Resulting file ID = " + destinationUniversalID.getValue());
 	}
 
 	static File myOldFile = null;

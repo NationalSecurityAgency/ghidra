@@ -42,8 +42,8 @@ import ghidra.util.task.TaskMonitor;
  */
 public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
-	private ProgramBasedDataTypeManager dataMgr;
 	private Listing listing;
+	private ProgramBasedDataTypeManager dataMgr;
 	private AddressSpace space;
 	private int transactionID;
 
@@ -62,11 +62,12 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Before
 	public void setUp() throws Exception {
 		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY, this);
+		listing = program.getListing();
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		dataMgr = program.getDataTypeManager();
-		listing = program.getListing();
 		transactionID = program.startTransaction("Test");
 		addBlock();
+
 		// pointer-typedef has the largest 
 //		System.out.println("Defined string settings:");
 //		for (SettingsDefinition def : StringDataType.dataType.getSettingsDefinitions()) {
@@ -164,8 +165,8 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testIsEmpty() throws Exception {
 
-		Data data = listing.getDataAt(addr(10));
-		Settings defaultSettings = data.getDataType().getDefaultSettings();
+		DataType dt = dataMgr.resolve(StringDataType.dataType, null);
+		Settings defaultSettings = dt.getDefaultSettings();
 		defaultSettings.setString(STRING_SETTING_NAME, "red");
 		defaultSettings.setLong(LONG_SETTING_NAME, 10);
 
@@ -390,7 +391,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDefaultSettingsOnTypedef() throws Exception {
-		DataType byteDT = dataMgr.resolve(new ByteDataType(), null);
+		DataType byteDT = dataMgr.resolve(ByteDataType.dataType, null);
 		SettingsDefinition[] settingsDefinitions = byteDT.getSettingsDefinitions();
 		Settings settings = byteDT.getDefaultSettings();
 		FormatSettingsDefinition.DEF.setChoice(settings, FormatSettingsDefinition.OCTAL);
@@ -418,7 +419,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDefaultSettingsOnTypedef2() throws Exception {
-		DataType byteDT = dataMgr.resolve(new ByteDataType(), null);
+		DataType byteDT = dataMgr.resolve(ByteDataType.dataType, null);
 		Settings settings = byteDT.getDefaultSettings();
 
 		TypedefDataType tdt = new TypedefDataType("ByteTypedef", byteDT);
@@ -438,7 +439,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDefaultSettingsOnTypedefUndoRedo() throws Exception {
-		DataType byteDT = dataMgr.resolve(new ByteDataType(), null);
+		DataType byteDT = dataMgr.resolve(ByteDataType.dataType, null);
 		Settings settings = byteDT.getDefaultSettings();
 		settings.setLong("format", FormatSettingsDefinition.OCTAL);
 		endTransaction();
@@ -466,7 +467,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDefaultSettingsOnDeletedTypdef() throws Exception {
-		DataType byteDT = dataMgr.resolve(new ByteDataType(), null);
+		DataType byteDT = dataMgr.resolve(ByteDataType.dataType, null);
 		Settings settings = byteDT.getDefaultSettings();
 		settings.setLong("format", FormatSettingsDefinition.OCTAL);
 

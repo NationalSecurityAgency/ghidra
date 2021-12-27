@@ -28,6 +28,7 @@ import ghidra.util.exception.VersionException;
  * Version 0 implementation for accessing the Enumeration database table. 
  */
 class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
+
 	static final int VERSION = 0;
 
 	// Enum Columns
@@ -36,10 +37,11 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 	static final int V0_ENUM_CAT_COL = 2;
 	static final int V0_ENUM_SIZE_COL = 3;
 
-	static final Schema V0_ENUM_SCHEMA = new Schema(
-		VERSION, "Enum ID", new Field[] { StringField.INSTANCE, StringField.INSTANCE,
-			LongField.INSTANCE, ByteField.INSTANCE },
-		new String[] { "Name", "Comment", "Category ID", "Size" });
+// DO NOT REMOVE - this documents the schema used in version 0.
+//	static final Schema V0_ENUM_SCHEMA = new Schema(
+//		VERSION, "Enum ID", new Field[] { StringField.INSTANCE, StringField.INSTANCE,
+//			LongField.INSTANCE, ByteField.INSTANCE },
+//		new String[] { "Name", "Comment", "Category ID", "Size" });
 
 	private Table enumTable;
 
@@ -53,16 +55,11 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 
 		enumTable = handle.getTable(ENUM_TABLE_NAME);
 		if (enumTable == null) {
-			throw new VersionException("Missing Table: " + ENUM_TABLE_NAME);
+			throw new VersionException(true);
 		}
 		int version = enumTable.getSchema().getVersion();
 		if (version != VERSION) {
-			String msg = "Expected version " + VERSION + " for table " + ENUM_TABLE_NAME +
-				" but got " + enumTable.getSchema().getVersion();
-			if (version < VERSION) {
-				throw new VersionException(msg, VersionException.OLDER_VERSION, true);
-			}
-			throw new VersionException(msg, VersionException.NEWER_VERSION, false);
+			throw new VersionException(false);
 		}
 	}
 

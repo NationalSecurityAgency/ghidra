@@ -164,15 +164,6 @@ public interface DataOrganization {
 	 */
 	int getAlignment(DataType dataType);
 
-//	/**
-//	 * Determines the offset where the specified data type should be placed to be properly aligned.
-//	 * @param minimumOffset the minimum allowable offset where the data type can be placed.
-//	 * @param dataType the data type
-//	 * @param dtSize the data type's size
-//	 * @return the aligned offset for the data type
-//	 */
-//	int getAlignmentOffset(int minimumOffset, DataType dataType, int dtSize);
-
 	/**
 	 * Determine if this DataOrganization is equivalent to another specific instance
 	 * @param obj is the other instance

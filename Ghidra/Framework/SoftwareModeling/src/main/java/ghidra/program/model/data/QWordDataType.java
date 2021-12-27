@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 /**
  * Provides a definition of a Quad Word within a program.
  */
-public class QWordDataType extends AbstractIntegerDataType {
-
-	private static final long serialVersionUID = 1L;
+public class QWordDataType extends AbstractUnsignedIntegerDataType {
 
 	/** A statically defined QWordDataType instance.*/
 	public final static QWordDataType dataType = new QWordDataType();
@@ -30,7 +28,7 @@ public class QWordDataType extends AbstractIntegerDataType {
 	}
 
 	public QWordDataType(DataTypeManager dtm) {
-		super("qword", false, dtm);
+		super("qword", dtm);
 	}
 
 	@Override

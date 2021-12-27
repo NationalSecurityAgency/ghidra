@@ -123,4 +123,11 @@ public interface DataTypeManagerChangeListener {
 	 */
 	public void sourceArchiveAdded(final DataTypeManager dataTypeManager,
 			final SourceArchive sourceArchive);
+
+	/**
+	 * Notification that the program architecture associated with the specified
+	 * dataTypeManager has changed.
+	 * @param dataTypeManager data type manager referring to the given source information.
+	 */
+	public void programArchitectureChanged(DataTypeManager dataTypeManager);
 }

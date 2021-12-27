@@ -15,14 +15,14 @@
  */
 package ghidra.program.database.function;
 
+import java.io.IOException;
+
+import db.*;
+import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.VersionException;
-
-import java.io.IOException;
-
-import db.*;
 
 class FunctionAdapterV3 extends FunctionAdapter {
 
@@ -116,7 +116,7 @@ class FunctionAdapterV3 extends FunctionAdapter {
 		rec.setByteValue(FUNCTION_FLAGS_COL, getSignatureSourceFlagBits(SourceType.DEFAULT));
 		rec.setLongValue(RETURN_DATA_TYPE_ID_COL, returnDataTypeId);
 		rec.setByteValue(CALLING_CONVENTION_ID_COL,
-			CallingConventionDBAdapter.UNKNOWN_CALLING_CONVENTION_ID);
+			DataTypeManagerDB.UNKNOWN_CALLING_CONVENTION_ID);
 		rec.setIntValue(STACK_PURGE_COL, Function.UNKNOWN_STACK_DEPTH_CHANGE);
 		table.putRecord(rec);
 		return rec;

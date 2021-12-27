@@ -40,48 +40,41 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 			StringField.INSTANCE, StringField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE },
 		new String[] { "Parent", "Offset", "Data Type ID", "Field Name", "Comment",
 			"Component Size", "Ordinal" });
+
 	private Table componentTable;
 
 	/**
 	 * Gets a version 0 adapter for the Component database table.
 	 * @param handle handle to the database containing the table.
+	 * @param tablePrefix prefix to be used with default table name
 	 * @param create true if this constructor should create the table.
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
+	 * @throws IOException if an IO error occurs
 	 */
-	public ComponentDBAdapterV0(DBHandle handle, boolean create)
+	ComponentDBAdapterV0(DBHandle handle, String tablePrefix, boolean create)
 			throws VersionException, IOException {
-
+		String tableName = tablePrefix + COMPONENT_TABLE_NAME;
 		if (create) {
-			componentTable = handle.createTable(COMPONENT_TABLE_NAME, V0_COMPONENT_SCHEMA,
+			componentTable = handle.createTable(tableName, V0_COMPONENT_SCHEMA,
 				new int[] { V0_COMPONENT_PARENT_ID_COL });
 		}
 		else {
-			componentTable = handle.getTable(COMPONENT_TABLE_NAME);
+			componentTable = handle.getTable(tableName);
 			if (componentTable == null) {
-				throw new VersionException("Missing Table: " + COMPONENT_TABLE_NAME);
+				throw new VersionException("Missing Table: " + tableName);
 			}
-			int version = componentTable.getSchema().getVersion();
-			if (version != VERSION) {
-				String msg = "Expected version " + VERSION + " for table " + COMPONENT_TABLE_NAME +
-					" but got " + componentTable.getSchema().getVersion();
-				if (version < VERSION) {
-					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
-				}
-				throw new VersionException(msg, VersionException.NEWER_VERSION, false);
+			if (componentTable.getSchema().getVersion() != VERSION) {
+				throw new VersionException(false);
 			}
 		}
 	}
 
 	@Override
-	public DBRecord createRecord(long dataTypeID, long parentID, int length, int ordinal, int offset,
+	DBRecord createRecord(long dataTypeID, long parentID, int length, int ordinal, int offset,
 			String name, String comment) throws IOException {
-
-		long tableKey = componentTable.getKey();
-//		if (tableKey <= DataManager.VOID_DATATYPE_ID) {
-//			tableKey = DataManager.VOID_DATATYPE_ID +1;
-//		}
-		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.COMPONENT, tableKey);
+		long key =
+			DataTypeManagerDB.createKey(DataTypeManagerDB.COMPONENT, componentTable.getKey());
 		DBRecord record = ComponentDBAdapter.COMPONENT_SCHEMA.createRecord(key);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_PARENT_ID_COL, parentID);
 		record.setLongValue(ComponentDBAdapter.COMPONENT_OFFSET_COL, offset);
@@ -95,22 +88,22 @@ class ComponentDBAdapterV0 extends ComponentDBAdapter {
 	}
 
 	@Override
-	public DBRecord getRecord(long componentID) throws IOException {
+	DBRecord getRecord(long componentID) throws IOException {
 		return componentTable.getRecord(componentID);
 	}
 
 	@Override
-	public void updateRecord(DBRecord record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		componentTable.putRecord(record);
 	}
 
 	@Override
-	public boolean removeRecord(long componentID) throws IOException {
+	boolean removeRecord(long componentID) throws IOException {
 		return componentTable.deleteRecord(componentID);
 	}
 
 	@Override
-	public Field[] getComponentIdsInComposite(long compositeID) throws IOException {
+	Field[] getComponentIdsInComposite(long compositeID) throws IOException {
 		return componentTable.findRecords(new LongField(compositeID),
 			ComponentDBAdapter.COMPONENT_PARENT_ID_COL);
 	}

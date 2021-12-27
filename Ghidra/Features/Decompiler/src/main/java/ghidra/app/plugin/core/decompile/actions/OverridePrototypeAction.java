@@ -32,6 +32,7 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 
 public class OverridePrototypeAction extends AbstractDecompilerAction {
 
@@ -220,7 +221,13 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		}
 
 		PcodeOp callOp = getCallOp(context.getProgram(), context.getTokenAtCursor());
-		return callOp != null;
+		if (callOp == null) {
+			return false;
+		}
+
+		// don't enable if override already in place
+		return DeletePrototypeOverrideAction.getSymbol(context.getFunction(),
+			context.getTokenAtCursor()) == null;
 	}
 
 	@Override
@@ -295,7 +302,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		 * @param conv initial calling convention
 		 */
 		public ProtoOverrideDialog(PluginTool tool, Function func, String signature, String conv) {
-			super(tool, "Override Signature", func, false, false, false);
+			super(tool, "Override Signature", func, false, true, false);
 			setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionOverrideSignature"));
 			this.initialSignature = signature;
 			this.initialConvention = conv;
@@ -331,9 +338,15 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 				return false;
 			}
 
-			GenericCallingConvention convention =
-				GenericCallingConvention.guessFromName(getCallingConvention());
-			functionDefinition.setGenericCallingConvention(convention);
+			functionDefinition.setNoReturn(hasNoReturnSelected());
+
+			try {
+				functionDefinition.setCallingConvention(getCallingConvention());
+			}
+			catch (InvalidInputException e) {
+				// should not occur since dialog restricts calling convention choice
+			}
+
 			return true;
 		}
 

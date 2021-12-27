@@ -21,14 +21,14 @@ import org.junit.*;
 
 import com.google.common.collect.Sets;
 
-import generic.test.AbstractGTest;
+import generic.test.AbstractGenericTest;
 import ghidra.program.model.data.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
  *
  */
-public class UnionDBTest extends AbstractGTest {
+public class UnionDBTest extends AbstractGenericTest {
 
 	private DataTypeManager dataMgr;
 	private UnionDB union;

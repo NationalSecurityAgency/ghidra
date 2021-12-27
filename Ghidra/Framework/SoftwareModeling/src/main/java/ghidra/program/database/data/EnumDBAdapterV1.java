@@ -24,6 +24,8 @@ import ghidra.util.exception.VersionException;
 
 /**
  * Version 1 implementation for accessing the Enumeration database table. 
+ * 
+ * NOTE: Use of tablePrefix introduced with this adapter version.
  */
 class EnumDBAdapterV1 extends EnumDBAdapter {
 	static final int VERSION = 1;
@@ -50,29 +52,27 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 	/**
 	 * Gets a version 1 adapter for the Enumeration database table.
 	 * @param handle handle to the database containing the table.
+	 * @param tablePrefix prefix to be used with default table name
 	 * @param create true if this constructor should create the table.
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
+	 * @throws IOException an IO error occured during table creation
 	 */
-	public EnumDBAdapterV1(DBHandle handle, boolean create) throws VersionException, IOException {
-
+	public EnumDBAdapterV1(DBHandle handle, String tablePrefix, boolean create)
+			throws VersionException, IOException {
+		String tableName = tablePrefix + ENUM_TABLE_NAME;
 		if (create) {
-			enumTable = handle.createTable(ENUM_TABLE_NAME, V1_ENUM_SCHEMA,
+			enumTable = handle.createTable(tableName, V1_ENUM_SCHEMA,
 				new int[] { V1_ENUM_CAT_COL, V1_ENUM_UNIVERSAL_DT_ID_COL });
 		}
 		else {
-			enumTable = handle.getTable(ENUM_TABLE_NAME);
+			enumTable = handle.getTable(tableName);
 			if (enumTable == null) {
-				throw new VersionException("Missing Table: " + ENUM_TABLE_NAME);
+				throw new VersionException(true);
 			}
 			int version = enumTable.getSchema().getVersion();
 			if (version != VERSION) {
-				String msg = "Expected version " + VERSION + " for table " + ENUM_TABLE_NAME +
-					" but got " + enumTable.getSchema().getVersion();
-				if (version < VERSION) {
-					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
-				}
-				throw new VersionException(msg, VersionException.NEWER_VERSION, false);
+				throw new VersionException(version < VERSION);
 			}
 		}
 	}
@@ -121,7 +121,7 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 
 	@Override
 	protected void deleteTable(DBHandle handle) throws IOException {
-		handle.deleteTable(ENUM_TABLE_NAME);
+		handle.deleteTable(enumTable.getName());
 	}
 
 	@Override

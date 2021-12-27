@@ -123,12 +123,11 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 		if (callingConvention.equals(Function.DEFAULT_CALLING_CONVENTION_STRING)) {
 			callingConvention = function.getCallingConvention().getName();
 		}
-		if (callingConvention != null &&
-			!callingConvention.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
+		if (!callingConvention.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
 			as = new AttributedString(callingConvention + " ", FunctionColors.RETURN_TYPE,
 				getMetrics());
 			textElements
-				.add(new FunctionCallingConventionFieldElement(as, elementIndex, 0, startCol));
+					.add(new FunctionCallingConventionFieldElement(as, elementIndex, 0, startCol));
 			startCol += as.length();
 			elementIndex++;
 		}

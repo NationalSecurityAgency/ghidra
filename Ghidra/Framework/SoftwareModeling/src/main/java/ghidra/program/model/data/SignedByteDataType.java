@@ -20,9 +20,7 @@ import ghidra.program.model.lang.DecompilerLanguage;
 /**
  * Provides a definition of a Signed Byte within a program.
  */
-public class SignedByteDataType extends AbstractIntegerDataType {
-
-	private static final long serialVersionUID = 1L;
+public class SignedByteDataType extends AbstractSignedIntegerDataType {
 
 	/** A statically defined SignedByteDataType instance.*/
 	public final static SignedByteDataType dataType = new SignedByteDataType();
@@ -32,7 +30,7 @@ public class SignedByteDataType extends AbstractIntegerDataType {
 	}
 
 	public SignedByteDataType(DataTypeManager dtm) {
-		super("sbyte", true, dtm);
+		super("sbyte", dtm);
 	}
 
 	@Override
@@ -52,8 +50,9 @@ public class SignedByteDataType extends AbstractIntegerDataType {
 
 	@Override
 	public String getDecompilerDisplayName(DecompilerLanguage language) {
-		if (language == DecompilerLanguage.JAVA_LANGUAGE)
+		if (language == DecompilerLanguage.JAVA_LANGUAGE) {
 			return "byte";
+		}
 		return name;
 	}
 

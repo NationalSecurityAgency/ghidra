@@ -721,7 +721,7 @@ public class SpecExtension {
 				PrototypeModel currentModel = function.getCallingConvention();
 				if (currentModel != null && currentModel.getName().equals(modelName)) {
 					try {
-						function.setCallingConvention("unknown");
+						function.setCallingConvention(Function.UNKNOWN_CALLING_CONVENTION_STRING);
 					}
 					catch (InvalidInputException e) {
 						// shouldn't reach here
