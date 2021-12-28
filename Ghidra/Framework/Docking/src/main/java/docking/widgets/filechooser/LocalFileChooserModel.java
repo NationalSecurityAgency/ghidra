@@ -15,10 +15,11 @@
  */
 package docking.widgets.filechooser;
 
-import java.io.File;
-import java.io.FileFilter;
 import java.util.HashMap;
 import java.util.Map;
+
+import java.io.File;
+import java.io.FileFilter;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -91,8 +92,8 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 	 * @see ghidra.util.filechooser.GhidraFileChooserModel#getRoots()
 	 */
 	@Override
-	public File[] getRoots() {
-		if (roots.length == 0) {
+	public File[] getRoots(boolean forceUpdate) {
+		if (roots.length == 0 || forceUpdate) {
 			roots = File.listRoots();
 
 			// pre-populate root Description cache mapping with placeholder values that will be
@@ -229,7 +230,7 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 	 */
 	@Override
 	public boolean isDirectory(File file) {
-		File[] localRoots = getRoots();
+		File[] localRoots = getRoots(false);
 		for (int i = 0; i < localRoots.length; i++) {
 			if (localRoots[i].equals(file)) {
 				return true;
