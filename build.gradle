@@ -76,6 +76,12 @@ if (flatRepo.isDirectory()) {
 			jcenter()
 			flatDir name: "flat", dirs:["$flatRepo"]
 		}
+		buildscript {
+			repositories {
+				mavenLocal()
+				mavenCentral()
+			}
+		}
 	}
 }
 else {	

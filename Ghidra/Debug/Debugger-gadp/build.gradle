@@ -23,42 +23,19 @@ apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
 
 apply plugin: 'eclipse'
-eclipse.project.name = 'Debug Debugger-gadp'
+apply plugin: 'com.google.protobuf'
 
-configurations {
-	allProtocArtifacts
-	protocArtifact
-}
+eclipse.project.name = 'Debug Debugger-gadp'
 
 def platform = getCurrentPlatformName()
 
+buildscript {
+  dependencies {
+    classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.18'
+  }
+}
+
 dependencies {
-	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:windows-x86_64@exe'
-	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:linux-x86_64@exe'
-	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:linux-aarch_64@exe'
-	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:osx-x86_64@exe'
-	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:osx-aarch_64@exe'
-
-	if (isCurrentWindows()) {
-		protocArtifact 'com.google.protobuf:protoc:3.17.3:windows-x86_64@exe'
-	}
-	if (isCurrentLinux()) {
-		if (platform.endsWith("x86_64")) {
-			protocArtifact 'com.google.protobuf:protoc:3.17.3:linux-x86_64@exe'
-		}
-		else {
-			protocArtifact 'com.google.protobuf:protoc:3.17.3:linux-aarch_64@exe'
-		}
-	}
-	if (isCurrentMac()) {
-		if (platform.endsWith("x86_64")) {
-			protocArtifact 'com.google.protobuf:protoc:3.17.3:osx-x86_64@exe'
-		}
-		else {
-			protocArtifact 'com.google.protobuf:protoc:3.17.3:osx-aarch_64@exe'
-		}
-	}
-
 	api 'com.google.protobuf:protobuf-java:3.17.3'
 	api project(':Framework-AsyncComm')
 	api project(':Framework-Debugging')
@@ -68,43 +45,8 @@ dependencies {
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 }
 
-/*protobuf {
+protobuf {
 	protoc {
 		artifact = 'com.google.protobuf:protoc:3.17.3'
 	}
-}*/
-
-task generateProto {
-	ext.srcdir = file("src/main/proto")
-	ext.src = fileTree(srcdir) {
-		include "**/*.proto"
-	}
-	ext.outdir = file("build/generated/source/proto/main/java")
-	outputs.dir(outdir)
-	inputs.files(src)
-	dependsOn(configurations.protocArtifact)
-	doLast {
-		def exe = configurations.protocArtifact.first()
-		if (!isCurrentWindows()) {
-			exe.setExecutable(true)
-		}
-		exec {
-			commandLine exe, "--java_out=$outdir", "-I$srcdir"
-			args src
-		}
-	}
 }
-
-tasks.compileJava.dependsOn(tasks.generateProto)
-tasks.eclipse.dependsOn(tasks.generateProto)
-rootProject.tasks.prepDev.dependsOn(tasks.generateProto)
-
-sourceSets {
-	main {
-		java {
-			srcDir tasks.generateProto.outdir
-		}
-	}
-}
-zipSourceSubproject.dependsOn generateProto
-
