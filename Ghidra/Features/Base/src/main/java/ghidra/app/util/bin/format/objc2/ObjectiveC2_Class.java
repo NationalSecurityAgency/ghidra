@@ -52,7 +52,7 @@ public class ObjectiveC2_Class implements StructConverter {
 		AddressSpace space = _state.program.getAddressFactory().getDefaultAddressSpace();
 		Address addr = space.getAddress(_index);
 		Symbol symbol = _state.program.getSymbolTable().getPrimarySymbol(addr);
-		if (symbol.getParentNamespace().getName().equals(SectionNames.SECT_GOT)) {
+		if (symbol != null && symbol.getParentNamespace().getName().equals(SectionNames.SECT_GOT)) {
 			return;
 		}
 
