@@ -15,15 +15,16 @@
  */
 package docking.widgets.filechooser;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.io.File;
-import java.io.FileFilter;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.io.File;
+import java.io.FileFilter;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -718,11 +719,12 @@ public class GhidraFileChooser extends DialogComponentProvider
 	}
 
 	private void updateMyComputer() {
-		updateMyComputer(true);
+		updateMyComputer(false, true);
 	}
 
-	private void updateMyComputer(boolean addToHistory) {
-		worker.schedule(new UpdateMyComputerJob(myComputerButton.getFile(), addToHistory));
+	private void updateMyComputer(boolean forceUpdate, boolean addToHistory) {
+		worker.schedule(
+			new UpdateMyComputerJob(myComputerButton.getFile(), forceUpdate, addToHistory));
 	}
 
 	private void updateDesktop() {
@@ -778,7 +780,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 	private void updateDirAndSelectFile(File directory, File fileToSelect, boolean forceUpdate,
 			boolean addToHistory) {
 		if (MY_COMPUTER.equals(directory)) {
-			updateMyComputer(addToHistory);
+			updateMyComputer(forceUpdate, addToHistory);
 			setSelectedFileAndUpdateDisplay(fileToSelect);
 			return;
 		}
@@ -1485,6 +1487,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 		return scrollPane;
 	}
 
+	@Override
 	public void dispose() {
 		actionManager.dispose();
 		close();
@@ -2017,16 +2020,18 @@ public class GhidraFileChooser extends DialogComponentProvider
 
 		private final File myComputerFile;
 		private final boolean addToHistory;
+		private final boolean forceUpdate;
 		private List<File> roots;
 
-		public UpdateMyComputerJob(File myComputerFile, boolean addToHistory) {
+		public UpdateMyComputerJob(File myComputerFile, boolean forceUpdate, boolean addToHistory) {
 			this.myComputerFile = myComputerFile;
 			this.addToHistory = addToHistory;
+			this.forceUpdate = forceUpdate;
 		}
 
 		@Override
 		public void run() {
-			roots = Arrays.asList(fileChooserModel.getRoots());
+			roots = Arrays.asList(fileChooserModel.getRoots(forceUpdate));
 			Collections.sort(roots);
 		}
 
