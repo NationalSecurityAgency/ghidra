@@ -167,21 +167,25 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 		case RISCV_ElfRelocationConstants.R_RISCV_TLS_TPREL64:
 			// TLS relocation word64 = TLS + S + A + S_TLS_OFFSET - TLS_DTV_OFFSET
 			markAsWarning(program, relocationAddress, "R_RISCV_TLS_TPREL64", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());                  
-			break;
-
-		case RISCV_ElfRelocationConstants.R_RISCV_BRANCH:
-			// PC-relative branch (SB-Type)
-			markAsWarning(program, relocationAddress, "R_RISCV_BRANCH", symbolName, symbolIndex,
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
-		case RISCV_ElfRelocationConstants.R_RISCV_JAL:
-			// PC-relative jump (UJ-Type)
-			markAsWarning(program, relocationAddress, "R_RISCV_JAL", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+		case RISCV_ElfRelocationConstants.R_RISCV_BRANCH:{
+			// PC-relative branch (B-Type)
+			int target = (int) (addend + symbolValue - offset);
+			value32 = ((target & 0x01e) << 7) | ((target & 0x0800) >> 4) | ((target & 0x03e0) << 20) |
+					((target & 0x1000) << 19) | memory.getInt(relocationAddress);
+			memory.setInt(relocationAddress, value32);
 			break;
-
+		}
+		case RISCV_ElfRelocationConstants.R_RISCV_JAL: {
+			// PC-relative jump (J-Type)
+			int target = (int) (addend + symbolValue - offset);
+			value32 = (target & 0xff000) | ((target & 0x00800) << 9) | ((target & 0x007fe) << 20) |
+					((target & 0x100000) << 11) | memory.getInt(relocationAddress);
+			memory.setInt(relocationAddress, value32);
+			break;
+		}
 		case RISCV_ElfRelocationConstants.R_RISCV_CALL: {
 			// PC-relative call MACRO call,tail (auipc+jalr pair)
 			int target = (int) (addend + symbolValue - offset);
