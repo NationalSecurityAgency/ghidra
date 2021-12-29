@@ -376,18 +376,29 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
-		case RISCV_ElfRelocationConstants.R_RISCV_RVC_BRANCH:
+		case RISCV_ElfRelocationConstants.R_RISCV_RVC_BRANCH: {
 			// PC-relative branch offset (CB-Type)
-			markAsWarning(program, relocationAddress, "R_RISCV_RVC_BRANCH", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+			short target = (short) (addend + symbolValue - offset);
+			// 15   13  |  12 11 10|9 7|       6 5 4 3 2|1 0
+			// C.BEQZ offset[8|4:3] src offset[7:6|2:1|5] C1
+			value16 = (short)(((target & 0x100) << 4) | ((target & 0x18) << 7) | ((target & 0xc0) >> 1) |
+					((target & 0x06) << 2) | ((target & 0x20) >> 3) | (memory.getShort(relocationAddress) & 0xe383));
+			memory.setShort(relocationAddress, value16);
 			break;
-
-		case RISCV_ElfRelocationConstants.R_RISCV_RVC_JUMP:
+		}
+		case RISCV_ElfRelocationConstants.R_RISCV_RVC_JUMP: {
 			// PC-relative jump offset (CJ-Type)
-			markAsWarning(program, relocationAddress, "R_RISCV_RVC_BRANCH", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+			short target = (short) (addend + symbolValue - offset);
+			// Complicated swizzling going on here.
+			// For details, see The RISC-V Instruction Set Manual Volume I: Unprivileged ISA
+			// 15  13  |  12 11 10 9 8 7 6 5 3 2|1 0
+			// C.J offset[11| 4|9:8|10|6|7|3:1|5] C1
+			value16 = (short) (((target & 0x800) << 1) | ((target & 0x10) << 7) | ((target & 0x300) << 1) |
+					((target & 0x400) >> 2) | ((target & 0x40) << 1) | ((target & 0x80) >> 1) |
+					((target & 0x0e) << 2) | ((target & 0x20) >> 3) | (memory.getShort(relocationAddress) & 0xe003));
+			memory.setShort(relocationAddress, value16);
 			break;
-
+		}
 		case RISCV_ElfRelocationConstants.R_RISCV_RVC_LUI:
 			// Absolute address (CI-Type)
 			markAsWarning(program, relocationAddress, "R_RISCV_RVC_LUI", symbolName, symbolIndex,
