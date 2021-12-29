@@ -22,21 +22,20 @@ import java.nio.charset.Charset;
 import org.junit.Before;
 import org.junit.Test;
 
+import generic.test.AbstractGTest;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.address.GenericAddressSpace;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.LittleEndianDataConverter;
-import ghidra.util.UniversalIdGenerator;
 
-public class DialogResourceDataTypeTest {
+public class DialogResourceDataTypeTest extends AbstractGTest {
 
 	private GenericAddressSpace addressSpace;
 
 	@Before
 	public void setUp() {
-		UniversalIdGenerator.initialize();
 		addressSpace = new GenericAddressSpace("Test Address Space", 32, AddressSpace.TYPE_RAM, 1);
 	}
 

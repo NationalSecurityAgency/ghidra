@@ -203,11 +203,12 @@ public class DialogResourceDataType extends DynamicDataType {
 	//for DLGITEMTEMPLATE structures this is the font size and typeface array
 	//for DLGITEMTEMPLATEEX structures three additional fields (weight, italic, and
 	//charset) are added in between the font size and typeface
-	private int addDialogFontComponents(MemBuffer memBuffer, List<DataTypeComponent> comps, int tempOffset,
-			boolean ex) {
+	private int addDialogFontComponents(MemBuffer memBuffer, List<DataTypeComponent> comps,
+			int tempOffset, boolean ex) {
 		//add Dialog Font size
-		tempOffset = addComp(new ShortDataType(), 2, "Dialog Font Size", memBuffer.getAddress().add(tempOffset), comps,
-				tempOffset);
+		tempOffset =
+			addComp(new ShortDataType(), 2, "Dialog Font Size",
+				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
 
 		if (ex) {
 			//add Dialog Font weight
