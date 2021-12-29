@@ -38,10 +38,12 @@ public class ObjectiveC2_Method extends ObjectiveC_Method {
 		if (isSmallList) {
 			int nameOffset = (int)ObjectiveC1_Utilities.readNextIndex(reader, true);
 			long namePtr;
-			if (state.is32bit)
+			if (state.is32bit) {
 				namePtr = reader.readInt(_index + nameOffset);
-			else
+			}
+			else {
 				namePtr = reader.readLong(_index + nameOffset);
+			}
 
 			name = reader.readAsciiString(namePtr);
 
