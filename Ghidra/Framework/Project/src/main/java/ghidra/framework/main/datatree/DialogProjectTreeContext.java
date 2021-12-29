@@ -21,6 +21,7 @@ import java.util.List;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
+import docking.widgets.tree.GTreeNode;
 import ghidra.framework.main.datatable.ProjectTreeContext;
 import ghidra.framework.model.*;
 
@@ -93,4 +94,8 @@ public class DialogProjectTreeContext extends ActionContext implements ProjectTr
 		return selectedFiles.size();
 	}
 
+	@Override
+	public GTreeNode getContextNode() {
+		return (GTreeNode) super.getContextObject();
+	}
 }

@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
-import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
@@ -291,16 +290,12 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		CategoryNode miscNode = (CategoryNode) programNode.getChild("MISC");
 		expandNode(miscNode);
 
-		TreePath structureNodePath = structureNode.getTreePath();
-		TreePath category3Path = category3Node.getTreePath();
-		TreePath miscPath = miscNode.getTreePath();
-
 		// copy/drag ArrayStruct to MISC
 		copyNodeToNode(structureNode, miscNode);
 
-		structureNode = (DataTypeNode) tree.getViewNodeForPath(structureNodePath);
-		category3Node = (CategoryNode) tree.getViewNodeForPath(category3Path);
-		miscNode = (CategoryNode) tree.getViewNodeForPath(miscPath);
+		structureNode = (DataTypeNode) tree.getViewNode(structureNode);
+		category3Node = (CategoryNode) tree.getViewNode(category3Node);
+		miscNode = (CategoryNode) tree.getViewNode(miscNode);
 
 		CategoryNode parent = miscNode;
 		DataTypeNode node =
@@ -324,16 +319,12 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		CategoryNode miscNode = (CategoryNode) programNode.getChild("MISC");
 		expandNode(miscNode);
 
-		TreePath structureNodePath = structureNode.getTreePath();
-		TreePath category3Path = category3Node.getTreePath();
-		TreePath miscPath = miscNode.getTreePath();
-
 		// copy/drag ArrayStruct to MISC
 		copyNodeToNode(structureNode, miscNode);
 
-		structureNode = (DataTypeNode) tree.getViewNodeForPath(structureNodePath);
-		category3Node = (CategoryNode) tree.getViewNodeForPath(category3Path);
-		miscNode = (CategoryNode) tree.getViewNodeForPath(miscPath);
+		structureNode = (DataTypeNode) tree.getViewNode(structureNode);
+		category3Node = (CategoryNode) tree.getViewNode(category3Node);
+		miscNode = (CategoryNode) tree.getViewNode(miscNode);
 
 		DataTypeNode node = (DataTypeNode) miscNode.getChild(structName);
 		assertNotNull(node);
@@ -509,23 +500,19 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		CategoryNode miscNode = (CategoryNode) programNode.getChild("MISC");
 		expandNode(miscNode);
 
-		TreePath structureNodePath = structureNode.getTreePath();
-		TreePath category3Path = category3Node.getTreePath();
-		TreePath miscPath = miscNode.getTreePath();
-
 		// drag/move ArrayStruct to MISC/ArrayStruct
 		DataTypeNode miscStructureNode = (DataTypeNode) miscNode.getChild("ArrayStruct");
 		dragNodeToNode(structureNode, miscStructureNode);
 
 		pressButtonOnOptionDialog("No");
 
-		structureNode = (DataTypeNode) tree.getViewNodeForPath(structureNodePath);
+		structureNode = (DataTypeNode) tree.getViewNode(structureNode);
 		assertNotNull(structureNode.getParent());
 
-		category3Node = (CategoryNode) tree.getViewNodeForPath(category3Path);
+		category3Node = (CategoryNode) tree.getViewNode(category3Node);
 		assertNotNull(category3Node.getChild("ArrayStruct"));
 
-		miscNode = (CategoryNode) tree.getViewNodeForPath(miscPath);
+		miscNode = (CategoryNode) tree.getViewNode(miscNode);
 		DataTypeNode node = (DataTypeNode) miscNode.getChild("ArrayStruct");
 		assertTrue(!structure.isEquivalent(node.getDataType()));
 	}
@@ -583,21 +570,17 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		DataTypeNode miscStructureNode = (DataTypeNode) miscNode.getChild("ArrayStruct");
 		DataType origDt = miscStructureNode.getDataType();
 
-		TreePath structureNodePath = structureNode.getTreePath();
-		TreePath category3Path = category3Node.getTreePath();
-		TreePath miscPath = miscNode.getTreePath();
-
 		copyNodeToNode(structureNode, miscStructureNode);
 
 		pressButtonOnOptionDialog("No");
 
-		structureNode = (DataTypeNode) tree.getViewNodeForPath(structureNodePath);
+		structureNode = (DataTypeNode) tree.getViewNode(structureNode);
 		assertNotNull(structureNode.getParent());
 
-		category3Node = (CategoryNode) tree.getViewNodeForPath(category3Path);
+		category3Node = (CategoryNode) tree.getViewNode(category3Node);
 		assertNotNull(category3Node.getChild("ArrayStruct"));
 
-		miscNode = (CategoryNode) tree.getViewNodeForPath(miscPath);
+		miscNode = (CategoryNode) tree.getViewNode(miscNode);
 		DataTypeNode node = (DataTypeNode) miscNode.getChild(structName);
 		assertEquals(origDt, node.getDataType());
 	}
@@ -621,21 +604,17 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		DataTypeNode miscStructureNode = (DataTypeNode) miscNode.getChild("ArrayStruct");
 		DataType miscStructure = miscStructureNode.getDataType();
 
-		TreePath structureNodePath = structureNode.getTreePath();
-		TreePath category3Path = category3Node.getTreePath();
-		TreePath miscPath = miscNode.getTreePath();
-
 		copyNodeToNode(structureNode, miscStructureNode);
 
 		pressButtonOnOptionDialog("Yes");
 
-		structureNode = (DataTypeNode) tree.getViewNodeForPath(structureNodePath);
+		structureNode = (DataTypeNode) tree.getViewNode(structureNode);
 		assertNotNull(structureNode.getParent());
 
-		category3Node = (CategoryNode) tree.getViewNodeForPath(category3Path);
+		category3Node = (CategoryNode) tree.getViewNode(category3Node);
 		assertNotNull(category3Node.getChild(structName));
 
-		miscNode = (CategoryNode) tree.getViewNodeForPath(miscPath);
+		miscNode = (CategoryNode) tree.getViewNode(miscNode);
 		DataTypeNode node = (DataTypeNode) miscNode.getChild(structName);
 		assertTrue(structure.isEquivalent(node.getDataType()));
 
