@@ -237,20 +237,21 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 		case RISCV_ElfRelocationConstants.R_RISCV_HI20:
 			// Absolute address %hi(symbol) (U-Type)
-			markAsWarning(program, relocationAddress, "R_RISCV_HI20", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+			value32 = (int)((symbolValue + 0x800) & 0xfffff000) | memory.getInt(relocationAddress);
+			memory.setInt(relocationAddress, value32);
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_LO12_I:
 			// Absolute address %lo(symbol) (I-Type)
-			markAsWarning(program, relocationAddress, "R_RISCV_LO12_I", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+			value32 = ((int)(symbolValue & 0x00000fff) << 20) | memory.getInt(relocationAddress);
+			memory.setInt(relocationAddress, value32);
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_LO12_S:
 			// Absolute address %lo(symbol) (S-Type)
-			markAsWarning(program, relocationAddress, "R_RISCV_LO12_S", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+			value32 = (int)(symbolValue & 0x00000fff);
+			value32 = ((value32 & 0x1f) << 7) | ((value32 & 0xfe0) << 20) | memory.getInt(relocationAddress);
+			memory.setInt(relocationAddress, value32);
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_TPREL_HI20:
