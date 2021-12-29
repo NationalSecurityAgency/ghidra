@@ -182,12 +182,17 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
-		case RISCV_ElfRelocationConstants.R_RISCV_CALL:
+		case RISCV_ElfRelocationConstants.R_RISCV_CALL: {
 			// PC-relative call MACRO call,tail (auipc+jalr pair)
-			markAsWarning(program, relocationAddress, "R_RISCV_CALL", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+			int target = (int) (addend + symbolValue - offset);
+			int target_l = target << 20 >> 20;
+			int target_h = target - target_l;
+			value32 = (target_h & 0xfffff000) | memory.getInt(relocationAddress);
+			memory.setInt(relocationAddress, value32);
+			value32 = ((target_l & 0x00000fff) << 20) | memory.getInt(relocationAddress.add(4));
+			memory.setInt(relocationAddress.add(4), value32);
 			break;
-
+		}
 		case RISCV_ElfRelocationConstants.R_RISCV_CALL_PLT:
 			// PC-relative call (PLT) MACRO call,tail (auipc+jalr pair) PIC
 			markAsWarning(program, relocationAddress, "R_RISCV_CALL_PLT", symbolName, symbolIndex,
