@@ -120,12 +120,15 @@
           <addr offset="0" space="stack"/>
         </pentry>
       </input>
-      <output>
+      <output returnstorageid="2">
         <pentry minsize="1" maxsize="8" metatype="float">
           <register name="d0"/>
         </pentry>
         <pentry minsize="1" maxsize="8" extension="zero">
           <register name="x0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8" extension="zero">
+          <register name="x8"/>
         </pentry>
       </output>
       <unaffected>

@@ -384,6 +384,7 @@
 
       <element name="output">
         <optional> <attribute name="killedbycall"/> </optional>
+        <optional> <attribute name="returnstorageid"/> </optional>
         <zeroOrMore>
           <element name="pentry">
             <ref name="pentry_type"/>

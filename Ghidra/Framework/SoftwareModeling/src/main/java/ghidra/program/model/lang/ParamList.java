@@ -44,7 +44,7 @@ public interface ParamList {
 	public void assignMap(Program prog, DataType[] proto, ArrayList<VariableStorage> res,
 			boolean addAutoParams);
 
-	public void saveXml(StringBuilder buffer, boolean isInput);
+	public void saveXml(StringBuilder buffer);
 
 	public void restoreXml(XmlPullParser parser, CompilerSpec cspec) throws XmlParseException;
 

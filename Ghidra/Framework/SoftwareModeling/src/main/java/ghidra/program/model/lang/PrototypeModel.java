@@ -384,9 +384,9 @@ public class PrototypeModel {
 			SpecXmlUtils.encodeStringAttribute(buffer, "strategy", "register");
 		}
 		buffer.append(">\n");
-		inputParams.saveXml(buffer, true);
+		inputParams.saveXml(buffer);
 		buffer.append('\n');
-		outputParams.saveXml(buffer, false);
+		outputParams.saveXml(buffer);
 		buffer.append('\n');
 		if (hasUponEntry || hasUponReturn) {
 			InjectPayload payload =
