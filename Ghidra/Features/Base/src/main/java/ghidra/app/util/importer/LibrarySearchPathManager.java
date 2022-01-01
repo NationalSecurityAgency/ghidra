@@ -28,7 +28,7 @@ public class LibrarySearchPathManager {
 
 	private static List<String> pathList = createPathList();
 
-	private static boolean hasBeenRestored;
+	private static boolean hasBeenRestored = false;
 
 	private static List<String> createPathList() {
 		pathList = new ArrayList<>();
@@ -103,6 +103,7 @@ public class LibrarySearchPathManager {
 		}
 
 		setLibraryPaths(paths);
+		hasBeenRestored = true;
 	}
 
 	/**
