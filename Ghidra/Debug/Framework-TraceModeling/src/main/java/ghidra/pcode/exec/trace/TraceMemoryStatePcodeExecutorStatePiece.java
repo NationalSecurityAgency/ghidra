@@ -67,7 +67,7 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	}
 
 	public void setThread(TraceThread thread) {
-		if (thread != null & thread.getTrace() != trace) {
+		if (thread != null && thread.getTrace() != trace) {
 			throw new IllegalArgumentException("Thread, if given, must be part of the same trace");
 		}
 		this.thread = thread;

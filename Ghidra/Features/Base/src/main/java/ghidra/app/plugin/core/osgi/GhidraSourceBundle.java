@@ -624,7 +624,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 			if (bundle != null) {
 				bundleHost.deactivateSynchronously(bundle);
 			}
-			return anythingChanged | wipeBinDir();
+			return anythingChanged || wipeBinDir();
 		}
 		catch (IOException | GhidraBundleException e) {
 			Msg.showError(this, null, "Source bundle clean error",

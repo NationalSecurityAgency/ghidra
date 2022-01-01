@@ -287,7 +287,7 @@ public class DmgFileReader implements Closeable {
 	 * If the entry is actually a directory, then -1 is returned.
 	 */
 	public long getLength( FSEntry entry ) {
-		if ( entry != null & entry.isFile() ) {
+		if (entry != null && entry.isFile()) {
 			FSFork mainFork = entry.asFile().getMainFork();
 			if ( mainFork.getLength() > 0 ) {
 				return mainFork.getLength();

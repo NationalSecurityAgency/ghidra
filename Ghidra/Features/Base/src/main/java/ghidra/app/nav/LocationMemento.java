@@ -126,13 +126,10 @@ public class LocationMemento {
 		if (loc1.getClass() == loc2.getClass()) {
 			return true;
 		}
-		// at this point we know they have the some addresses, but different location types (fields)
+		// at this point we know they have the same addresses, but different location types (fields)
 		// also consider generic program locations to be equal to addressField locations
-		boolean isAddr1 =
-			loc1 instanceof AddressFieldLocation || loc1.getClass() == ProgramLocation.class;
-		boolean isAddr2 =
-			loc2 instanceof AddressFieldLocation || loc2.getClass() == ProgramLocation.class;
-		return isAddr1 & isAddr2;
+		return (loc1 instanceof AddressFieldLocation || loc1.getClass() == ProgramLocation.class) &&
+			(loc2 instanceof AddressFieldLocation || loc2.getClass() == ProgramLocation.class);
 	}
 
 	public void saveState(SaveState saveState) {

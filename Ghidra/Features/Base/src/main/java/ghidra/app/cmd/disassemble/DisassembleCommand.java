@@ -309,7 +309,7 @@ public class DisassembleCommand extends BackgroundCommand {
 			doDisassemblySeeds(disassembler, seedSet, mgr);
 		}
 
-		return disassemblyPerformed || (!nonExecutableStart & !unalignedStart);
+		return disassemblyPerformed || (!nonExecutableStart && !unalignedStart);
 	}
 
 	/**

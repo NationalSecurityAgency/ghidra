@@ -491,8 +491,7 @@ public abstract class PCodeTestAbstractControlBlock {
 				return false;
 			}
 			FunctionInfo other = (FunctionInfo) obj;
-			return functionName.equals(other.functionName) &
-				functionAddr.equals(other.functionAddr);
+			return functionName.equals(other.functionName) && functionAddr.equals(other.functionAddr);
 		}
 
 		@Override

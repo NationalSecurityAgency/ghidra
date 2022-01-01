@@ -1784,7 +1784,7 @@ public class BufferMgr {
 					// Monitor not supported for remote saves
 					monitor.setCancelEnabled(false);
 					outFile = ((ManagedBufferFile) sourceFile).getSaveFile();
-					monitor.setCancelEnabled(oldCancelState & !monitor.isCancelled());
+					monitor.setCancelEnabled(oldCancelState && !monitor.isCancelled());
 				}
 				if (outFile == null) {
 					throw new IOException("Save not allowed");
@@ -1816,7 +1816,7 @@ public class BufferMgr {
 				}
 				finally {
 					((ManagedBufferFile) sourceFile).saveCompleted(success);
-					monitor.setCancelEnabled(oldCancelState & !monitor.isCancelled());
+					monitor.setCancelEnabled(oldCancelState && !monitor.isCancelled());
 				}
 
 				setSourceFile(outFile);

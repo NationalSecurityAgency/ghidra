@@ -164,10 +164,10 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 		if (result != 0) {
 			return result;
 		}
-		if (this.accepted & !that.accepted) {
+		if (this.accepted && !that.accepted) {
 			return 1;
 		}
-		if (!this.accepted & that.accepted) {
+		if (!this.accepted && that.accepted) {
 			return -1;
 		}
 		result = (this.error - that.error);

@@ -158,7 +158,7 @@ public class FunctionPrototype {
 			(f.getSignatureSource() != SourceType.DEFAULT) && f.getParameterCount() == 0;
 		dotdotdot = f.hasVarArgs();
 		isinline = f.isInline();
-		noreturn = f.hasNoReturn() | isNoReturnInjection(f, injectname);
+		noreturn = f.hasNoReturn() || isNoReturnInjection(f, injectname);
 		custom = f.hasCustomVariableStorage();
 
 		// This assumes that the Purge is the value popped from the excluding normal
