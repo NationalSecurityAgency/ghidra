@@ -38,9 +38,6 @@ import ghidra.util.SystemUtilities;
  * Configuration options for the decompiler
  * This stores the options and can create an XML
  * string to be sent to the decompiler process
- *
- *
- *
  */
 public class DecompileOptions {
 	private final static String PREDICATE_OPTIONSTRING = "Analysis.Simplify predication";
@@ -60,7 +57,7 @@ public class DecompileOptions {
 	private final static String ELIMINATE_UNREACHABLE_OPTIONSTRING =
 		"Analysis.Eliminate unreachable code";
 	private final static String ELIMINATE_UNREACHABLE_OPTIONDESCRIPTION =
-		"If set, branches and code that can never be executed are " + "eliminated as dead code";
+		"If set, branches and code that can never be executed are eliminated as dead code";
 	private final static boolean ELIMINATE_UNREACHABLE_OPTIONDEFAULT = true;
 	private boolean eliminateUnreachable;
 
@@ -144,7 +141,7 @@ public class DecompileOptions {
 
 	private final static String CONVENTION_OPTIONSTRING = "Display.Print calling convention name";
 	private final static String CONVENTION_OPTIONDESCRIPTION =
-		"If set, the names of callling conventions (which differ " +
+		"If set, the names of calling conventions (when they differ " +
 			"from the default) will be printed as part of the function prototype.";
 	private final static boolean CONVENTION_OPTIONDEFAULT = true;	// Must match PrintC::resetDefaultsPrintC
 	private boolean conventionPrint;
@@ -158,14 +155,14 @@ public class DecompileOptions {
 
 	private final static String MAXWIDTH_OPTIONSTRING = "Display.Maximum characters in a code line";
 	private final static String MAXWIDTH_OPTIONDESCRIPTION =
-		"Maximum number of characters allowed per line before " + "before line breaks are forced.";
+		"Maximum number of characters allowed per line before before line breaks are forced.";
 	private final static int MAXWIDTH_OPTIONDEFAULT = 100;	// Must match EmitPrettyPrint::resetDefaultsPrettyPrint
 	private int maxwidth;
 
 	private final static String INDENTWIDTH_OPTIONSTRING =
 		"Display.Number of characters per indent level";
 	private final static String INDENTWIDTH_OPTIONDESCRIPTION =
-		"Number of characters indented for each level of control-flow " + "or scope nesting";
+		"Number of characters indented for each level of control-flow or scope nesting";
 	private final static int INDENTWIDTH_OPTIONDEFAULT = 2;	// Must match EmitXml::resetDefaultsInternal
 	private int indentwidth;
 
@@ -210,7 +207,7 @@ public class DecompileOptions {
 
 	private final static String COMMENTPLATE_OPTIONSTRING = "Display.Display PLATE comments";
 	private final static String COMMENTPLATE_OPTIONDESCRIPTION =
-		"If set, disassembly plate comments are displayed " + "in the decompiler C output";
+		"If set, disassembly plate comments are displayed in the decompiler C output";
 	private final static boolean COMMENTPLATE_OPTIONDEFAULT = false;	// Must match PrintLanguage::resetDefaultsInternal
 	private boolean commentPLATEInclude;
 
@@ -237,7 +234,7 @@ public class DecompileOptions {
 
 	private final static String COMMENTHEAD_OPTIONSTRING = "Display.Display Header comment";
 	private final static String COMMENTHEAD_OPTIONDESCRIPTION =
-		"If set, the entry point plate comment is displayed as " + "a function header comment.";
+		"If set, the entry point plate comment is displayed as a function header comment.";
 	private final static boolean COMMENTHEAD_OPTIONDEFAULT = true;	// Must match PrintLanguage::resetDefaultsInternal
 	private boolean commentHeadInclude;
 
