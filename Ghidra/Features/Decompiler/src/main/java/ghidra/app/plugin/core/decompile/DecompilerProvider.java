@@ -812,6 +812,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		RetypeLocalAction retypeLocalAction = new RetypeLocalAction();
 		setGroupInfo(retypeLocalAction, variableGroup, subGroupPosition++);
 
+		CreatePointerRelative createRelativeAction = new CreatePointerRelative();
+		setGroupInfo(createRelativeAction, variableGroup, subGroupPosition++);
+
 		RetypeGlobalAction retypeGlobalAction = new RetypeGlobalAction();
 		setGroupInfo(retypeGlobalAction, variableGroup, subGroupPosition++);
 
@@ -991,6 +994,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(setEquateAction);
 		addLocalAction(removeEquateAction);
 		addLocalAction(retypeLocalAction);
+		addLocalAction(createRelativeAction);
 		addLocalAction(retypeGlobalAction);
 		addLocalAction(retypeReturnAction);
 		addLocalAction(retypeFieldAction);

@@ -260,7 +260,7 @@ public class PcodeDataTypeManager {
 	 * @param offset is the offset into the base data-type
 	 * @return the inner data-type
 	 */
-	private DataType findSubType(DataType base, int offset) {
+	public static DataType findPointerRelativeInner(DataType base, int offset) {
 		if (base instanceof TypeDef) {
 			base = ((TypeDef) base).getBaseDataType();
 		}
@@ -297,7 +297,7 @@ public class PcodeDataTypeManager {
 		}
 		resBuf.append(">\n");
 		DataType parent = pointer.getDataType();
-		DataType ptrto = findSubType(parent, (int) offset);
+		DataType ptrto = findPointerRelativeInner(parent, (int) offset);
 		buildTypeRef(resBuf, ptrto, 1);
 		buildTypeRef(resBuf, parent, 1);
 		resBuf.append("\n<off>").append(offset).append("</off>\n");

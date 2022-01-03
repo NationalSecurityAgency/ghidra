@@ -59,7 +59,11 @@ public class RetypeLocalAction extends AbstractDecompilerAction {
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK));
 	}
 
-	private void retypeSymbol(Program program, HighSymbol highSymbol, Varnode exactSpot,
+	protected RetypeLocalAction(String name) {
+		super(name);
+	}
+
+	protected void retypeSymbol(Program program, HighSymbol highSymbol, Varnode exactSpot,
 			DataType dt, PluginTool tool) {
 		HighFunction hfunction = highSymbol.getHighFunction();
 
