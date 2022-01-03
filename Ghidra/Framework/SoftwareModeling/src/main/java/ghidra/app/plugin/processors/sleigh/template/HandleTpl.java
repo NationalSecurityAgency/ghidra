@@ -45,6 +45,17 @@ public class HandleTpl {
 	protected HandleTpl() {
 	}
 
+	public HandleTpl(ConstTpl spc, ConstTpl sz, ConstTpl ptrspc, ConstTpl ptroff, ConstTpl ptrsz,
+			ConstTpl tmpspc, ConstTpl tmpoff) {
+		space = spc;
+		size = sz;
+		ptrspace = ptrspc;
+		ptroffset = ptroff;
+		ptrsize = ptrsz;
+		temp_space = tmpspc;
+		temp_offset = tmpoff;
+	}
+
 	public void fix(FixedHandle hand, ParserWalker walker) {
 		if (ptrspace.getType() == ConstTpl.REAL) {
 			// The export is unstarred, but this doesn't mean
@@ -72,8 +83,9 @@ public class HandleTpl {
 	}
 
 	public void fixPrintPiece(FixedHandle hand, ParserWalker walker, int handleIndex) {
-		if (!hand.fixable)
+		if (!hand.fixable) {
 			return;
+		}
 		if (hand.space.getType() != AddressSpace.TYPE_CONSTANT) {
 			hand.fixable = false;
 			return;

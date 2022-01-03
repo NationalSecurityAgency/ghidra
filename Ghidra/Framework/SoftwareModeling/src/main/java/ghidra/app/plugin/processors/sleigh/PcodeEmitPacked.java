@@ -17,7 +17,8 @@ package ghidra.app.plugin.processors.sleigh;
 
 import java.util.ArrayList;
 
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.InstructionContext;
 import ghidra.program.model.lang.PackedBytes;
 import ghidra.program.model.pcode.PcodeOp;
@@ -63,11 +64,10 @@ public class PcodeEmitPacked extends PcodeEmit {
 	 * @param ictx instruction contexts
 	 * @param fallOffset default instruction fall offset (i.e., instruction length including delay slotted instructions)
 	 * @param override required if pcode overrides are to be utilized
-	 * @param uniqueFactory required when override specified or if overlay normalization is required
 	 */
 	public PcodeEmitPacked(ParserWalker walk, InstructionContext ictx, int fallOffset,
-			PcodeOverride override, UniqueAddressFactory uniqueFactory) {
-		super(walk, ictx, fallOffset, override, uniqueFactory);
+			PcodeOverride override) {
+		super(walk, ictx, fallOffset, override);
 		buf = new PackedBytes(512);
 	}
 
@@ -80,8 +80,7 @@ public class PcodeEmitPacked extends PcodeEmit {
 		if (labelref == null) {
 			return;
 		}
-		for (int i = 0; i < labelref.size(); ++i) {
-			LabelRef ref = labelref.get(i);
+		for (LabelRef ref : labelref) {
 			if ((ref.labelIndex >= labeldef.size()) || (labeldef.get(ref.labelIndex) == null)) {
 				throw new SleighException("Reference to non-existant sleigh label");
 			}
@@ -102,7 +101,7 @@ public class PcodeEmitPacked extends PcodeEmit {
 	@Override
 	void addLabelRef() {
 		if (labelref == null) {
-			labelref = new ArrayList<LabelRef>();
+			labelref = new ArrayList<>();
 		}
 		int labelIndex = (int) incache[0].offset;
 		int labelSize = incache[0].size;

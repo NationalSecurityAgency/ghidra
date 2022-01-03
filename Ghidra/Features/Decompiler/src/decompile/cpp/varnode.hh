@@ -339,7 +339,7 @@ class VarnodeBank {
   mutable Varnode searchvn;	///< Template varnode for searching trees
   Varnode *xref(Varnode *vn);	///< Insert a Varnode into the sorted lists
 public:
-  VarnodeBank(AddrSpaceManager *m,AddrSpace *uspace,uintm ubase);	///< Construct the container
+  VarnodeBank(AddrSpaceManager *m);				///< Construct the container
   void clear(void);						///< Clear out all Varnodes and reset counters
   ~VarnodeBank(void) { clear(); }				///< Destructor
   int4 numVarnodes(void) const { return loc_tree.size(); }	///< Get number of Varnodes \b this contains

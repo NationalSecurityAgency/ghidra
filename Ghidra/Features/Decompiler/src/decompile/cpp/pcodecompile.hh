@@ -58,7 +58,7 @@ class PcodeCompile {
   AddrSpace *uniqspace;
   uint4 local_labelcount;	// Number of labels in current constructor
   bool enforceLocalKey;		// Force slaspec to use 'local' keyword when defining temporary varnodes
-  virtual uintb allocateTemp(void)=0;
+  virtual uint4 allocateTemp(void)=0;
   virtual void addSymbol(SleighSymbol *sym)=0;
 public:
   PcodeCompile(void) { defaultspace=(AddrSpace *)0; constantspace=(AddrSpace *)0;

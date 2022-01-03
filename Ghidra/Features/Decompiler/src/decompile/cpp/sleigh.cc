@@ -186,6 +186,30 @@ AddrSpace *SleighBuilder::generatePointer(const VarnodeTpl *vntpl,VarnodeData &v
   return hand.space;
 }
 
+void SleighBuilder::generatePointerAdd(PcodeData *op,const VarnodeTpl *vntpl)
+
+{
+  uintb offsetPlus = vntpl->getOffset().getReal() & 0xffff;
+  if (offsetPlus == 0) {
+    return;
+  }
+  PcodeData *nextop = cache->allocateInstruction();
+  nextop->opc = op->opc;
+  nextop->invar = op->invar;
+  nextop->isize = op->isize;
+  nextop->outvar = op->outvar;
+  op->isize = 2;
+  op->opc = CPUI_INT_ADD;
+  VarnodeData *newparams = op->invar = cache->allocateVarnodes(2);
+  newparams[0] = nextop->invar[1];
+  newparams[1].space = const_space;	// Add in V_OFFSET_PLUS
+  newparams[1].offset = offsetPlus;
+  newparams[1].size = newparams[0].size;
+  op->outvar = nextop->invar + 1;	// Output of ADD is input to original op
+  op->outvar->space = uniq_space;		// Result of INT_ADD in special runtime temp
+  op->outvar->offset = uniq_space->getTrans()->getUniqueStart(Translate::RUNTIME_BITRANGE_EA);
+}
+
 void SleighBuilder::dump(OpTpl *op)
 
 {				// Dump on op through low-level dump interface
@@ -211,6 +235,8 @@ void SleighBuilder::dump(OpTpl *op)
       loadvars[0].space = const_space;
       loadvars[0].offset = (uintb)(uintp)spc;
       loadvars[0].size = sizeof(spc);
+      if (vn->getOffset().getSelect() == ConstTpl::v_offset_plus)
+	generatePointerAdd(load_op, vn);
     }
     else
       generateLocation(vn,invars[i]);
@@ -238,6 +264,8 @@ void SleighBuilder::dump(OpTpl *op)
       storevars[0].space = const_space;
       storevars[0].offset = (uintb)(uintp)spc; // space in which to store
       storevars[0].size = sizeof(spc);
+      if (outvn->getOffset().getSelect() == ConstTpl::v_offset_plus)
+	generatePointerAdd(store_op,outvn);
     }
     else {
       thisop->outvar = cache->allocateVarnodes(1);

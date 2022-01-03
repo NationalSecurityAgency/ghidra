@@ -18,7 +18,7 @@ package ghidra.program.model.address;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import ghidra.program.model.lang.BasicCompilerSpec;
+import ghidra.program.model.lang.SpaceNames;
 import ghidra.util.datastruct.IntObjectHashtable;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -128,7 +128,7 @@ public class DefaultAddressFactory implements AddressFactory {
 
 	private void checkReservedJoin(AddressSpace space) {
 		if (space.getType() == AddressSpace.TYPE_JOIN ||
-			space.getName().equals(BasicCompilerSpec.JOIN_SPACE_NAME)) {
+			space.getName().equals(SpaceNames.JOIN_SPACE_NAME)) {
 			throw new IllegalArgumentException("Join space should not be specified");
 		}
 	}
@@ -142,7 +142,7 @@ public class DefaultAddressFactory implements AddressFactory {
 
 	private void checkReservedStack(AddressSpace space) {
 		if (space.getType() == AddressSpace.TYPE_STACK ||
-			space.getName().equalsIgnoreCase(BasicCompilerSpec.STACK_SPACE_NAME)) {
+			space.getName().equalsIgnoreCase(SpaceNames.STACK_SPACE_NAME)) {
 			throw new IllegalArgumentException("Stack space should not be specified");
 		}
 	}
@@ -399,7 +399,7 @@ public class DefaultAddressFactory implements AddressFactory {
 			throw new DuplicateNameException("Space named " + space.getName() + " already exists!");
 		}
 		if (space.getType() == AddressSpace.TYPE_VARIABLE) {
-			spaceNameTable.put("join", space);// Add VARIABLE space with name "join"
+			spaceNameTable.put(SpaceNames.JOIN_SPACE_NAME, space);// Add VARIABLE space with name "join"
 			return;// Don't put it in the spaces array or the id lookup table
 		}
 		spaces.add(space);

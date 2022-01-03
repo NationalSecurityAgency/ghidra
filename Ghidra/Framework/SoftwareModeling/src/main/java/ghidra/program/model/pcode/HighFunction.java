@@ -25,8 +25,7 @@ import ghidra.program.database.function.FunctionDB;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
@@ -64,7 +63,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		func = function;
 		this.language = language;
 		this.compilerSpec = compilerSpec;
-		localSymbols = new LocalSymbolMap(this, "stack");
+		localSymbols = new LocalSymbolMap(this, SpaceNames.STACK_SPACE_NAME);
 		globalSymbols = new GlobalSymbolMap(this);
 		proto = new FunctionPrototype(localSymbols, function);
 		jumpTables = null;

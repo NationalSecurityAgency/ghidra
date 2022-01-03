@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,9 @@
  */
 package ghidra.program.model.lang;
 
+import java.util.ArrayList;
+
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.UniqueAddressFactory;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.PcodeOp;
@@ -25,8 +25,6 @@ import ghidra.program.model.pcode.PcodeOverride;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.RefType;
-
-import java.util.ArrayList;
 
 /**
  * Class to represent an invalid instruction prototype.
@@ -39,6 +37,7 @@ public class InvalidPrototype implements InstructionPrototype, ParserContext {
 
 	/**
 	 * Construct a new invalid instruction prototype.
+	 * @param lang is the Language for which the invalid instruction is discovered
 	 */
 	public InvalidPrototype(Language lang) {
 		super();
@@ -151,14 +150,12 @@ public class InvalidPrototype implements InstructionPrototype, ParserContext {
 	}
 
 	@Override
-	public PcodeOp[] getPcode(InstructionContext context, PcodeOverride override,
-			UniqueAddressFactory uniqueFactory) {
+	public PcodeOp[] getPcode(InstructionContext context, PcodeOverride override) {
 		return new PcodeOp[] { new PcodeOp(context.getAddress(), 0, PcodeOp.UNIMPLEMENTED) };
 	}
 
 	@Override
-	public PackedBytes getPcodePacked(InstructionContext context, PcodeOverride override,
-			UniqueAddressFactory uniqueFactory) {
+	public PackedBytes getPcodePacked(InstructionContext context, PcodeOverride override) {
 		return null;
 	}
 
@@ -184,7 +181,7 @@ public class InvalidPrototype implements InstructionPrototype, ParserContext {
 
 	@Override
 	public RefType getOperandRefType(int opIndex, InstructionContext context,
-			PcodeOverride override, UniqueAddressFactory uniqueFactory) {
+			PcodeOverride override) {
 		return null;
 	}
 

@@ -15,21 +15,22 @@
  */
 package ghidra.program.model.pcode;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.address.GenericAddressSpace;
+import ghidra.program.model.lang.SpaceNames;
 
 public class VarnodeTest extends AbstractGenericTest {
 
-	private static AddressSpace ramSpace = new GenericAddressSpace("ram", 64,
-		AddressSpace.TYPE_RAM, 0);
+	private static AddressSpace ramSpace =
+		new GenericAddressSpace("ram", 64, AddressSpace.TYPE_RAM, 0);
 
-	private static AddressSpace stackSpace = new GenericAddressSpace("stack", ramSpace.getSize(),
-		ramSpace.getAddressableUnitSize(), AddressSpace.TYPE_STACK, 0);
+	private static AddressSpace stackSpace = new GenericAddressSpace(SpaceNames.STACK_SPACE_NAME,
+		ramSpace.getSize(), ramSpace.getAddressableUnitSize(), AddressSpace.TYPE_STACK, 0);
 
 	// @formatter:off
 	
@@ -145,8 +146,8 @@ public class VarnodeTest extends AbstractGenericTest {
 		super();
 	}
 
-@Test
-    public void testRamIntersects() {
+	@Test
+	public void testRamIntersects() {
 		for (int i = 0; i < RAM_NODES.length; i++) {
 			assertTrue("Varnodes expected to intersect [" + i + "]",
 				RAM_NODES[i].intersects(INTERSECTING_RAM_NODES[i]));
@@ -157,8 +158,8 @@ public class VarnodeTest extends AbstractGenericTest {
 		}
 	}
 
-@Test
-    public void testStackIntersects() {
+	@Test
+	public void testStackIntersects() {
 		for (int i = 0; i < STACK_NODES.length; i++) {
 			assertTrue("Varnodes expected to intersect [" + i + "]",
 				STACK_NODES[i].intersects(INTERSECTING_STACK_NODES[i]));

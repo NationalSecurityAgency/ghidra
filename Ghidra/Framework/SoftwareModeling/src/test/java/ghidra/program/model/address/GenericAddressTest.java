@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.program.model.lang.SpaceNames;
 import ghidra.util.exception.DuplicateNameException;
 
 public class GenericAddressTest extends AbstractGenericTest {
@@ -37,7 +38,8 @@ public class GenericAddressTest extends AbstractGenericTest {
 		space2 = new GenericAddressSpace("Test2", 8, AddressSpace.TYPE_RAM, 1);
 		wordSpace = new GenericAddressSpace("Test3", 16, 2, AddressSpace.TYPE_RAM, 1);
 		regSpace = new GenericAddressSpace("Register", 8, AddressSpace.TYPE_REGISTER, 0);
-		stackSpace = new GenericAddressSpace("stack", 8, AddressSpace.TYPE_STACK, 0);
+		stackSpace =
+			new GenericAddressSpace(SpaceNames.STACK_SPACE_NAME, 8, AddressSpace.TYPE_STACK, 0);
 		factory =
 			new TestAddressFactory(new AddressSpace[] { space, space2, regSpace }, stackSpace);
 		space = factory.getAddressSpace(space.getName());

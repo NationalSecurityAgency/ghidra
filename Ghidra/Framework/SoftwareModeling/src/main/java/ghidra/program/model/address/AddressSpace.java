@@ -17,7 +17,7 @@ package ghidra.program.model.address;
 
 import java.math.BigInteger;
 
-import ghidra.program.model.lang.BasicCompilerSpec;
+import ghidra.program.model.lang.SpaceNames;
 import ghidra.program.model.listing.Program;
 
 /**
@@ -70,7 +70,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * get loaded into the final memory image and for user-defined spaces.
 	 */
 	public static final AddressSpace OTHER_SPACE = new GenericAddressSpace(
-		BasicCompilerSpec.OTHER_SPACE_NAME, 64, TYPE_OTHER, BasicCompilerSpec.OTHER_SPACE_INDEX);
+		SpaceNames.OTHER_SPACE_NAME, 64, TYPE_OTHER, SpaceNames.OTHER_SPACE_INDEX);
 
 	/**
 	 * The <code>EXTERNAL_SPACE</code> is used to contain all external locations (i.e., data and functions) 

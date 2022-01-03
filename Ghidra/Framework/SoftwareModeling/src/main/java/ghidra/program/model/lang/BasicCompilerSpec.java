@@ -48,14 +48,6 @@ import ghidra.xml.*;
  */
 public class BasicCompilerSpec implements CompilerSpec {
 
-	public static final String STACK_SPACE_NAME = "stack";
-	public static final String JOIN_SPACE_NAME = "join";
-	public static final String OTHER_SPACE_NAME = "OTHER";
-
-	//must match AddrSpace enum (see space.hh)
-	public static final int CONSTANT_SPACE_INDEX = 0;
-	public static final int OTHER_SPACE_INDEX = 1;
-
 	private final CompilerSpecDescription description;
 	private String sourceName;
 	private final SleighLanguage language;
@@ -426,21 +418,21 @@ public class BasicCompilerSpec implements CompilerSpec {
 	@Override
 	public AddressSpace getAddressSpace(String spaceName) {
 		AddressSpace space;
-		if (STACK_SPACE_NAME.equals(spaceName)) {
+		if (SpaceNames.STACK_SPACE_NAME.equals(spaceName)) {
 			space = stackSpace;
 		}
-		else if (JOIN_SPACE_NAME.equals(spaceName)) {
+		else if (SpaceNames.JOIN_SPACE_NAME.equals(spaceName)) {
 			if (joinSpace == null) {
 				// This is a special address space that is only used internally to represent bonded registers
-				joinSpace =
-					new GenericAddressSpace(JOIN_SPACE_NAME, 64, AddressSpace.TYPE_JOIN, 10);
+				joinSpace = new GenericAddressSpace(SpaceNames.JOIN_SPACE_NAME, 64,
+					AddressSpace.TYPE_JOIN, 10);
 			}
 			space = joinSpace;
 		}
 		else {
 			space = language.getAddressFactory().getAddressSpace(spaceName);
 		}
-		if (spaceName.equals(OTHER_SPACE_NAME)) {
+		if (spaceName.equals(SpaceNames.OTHER_SPACE_NAME)) {
 			space = AddressSpace.OTHER_SPACE;
 		}
 		if (space == null) {
@@ -701,7 +693,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 		parser.end();
 
 		if (stackPointer == null) {
-			stackSpace = new GenericAddressSpace(STACK_SPACE_NAME,
+			stackSpace = new GenericAddressSpace(SpaceNames.STACK_SPACE_NAME,
 				language.getDefaultSpace().getSize(),
 				language.getDefaultSpace().getAddressableUnitSize(), AddressSpace.TYPE_STACK, 0);
 		}
@@ -979,7 +971,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 			throw new SleighException("Undefined base stack space: " + baseSpaceName);
 		}
 		int stackSpaceSize = Math.min(stackPointer.getBitLength(), stackBaseSpace.getSize());
-		stackSpace = new GenericAddressSpace(STACK_SPACE_NAME, stackSpaceSize,
+		stackSpace = new GenericAddressSpace(SpaceNames.STACK_SPACE_NAME, stackSpaceSize,
 			stackBaseSpace.getAddressableUnitSize(), AddressSpace.TYPE_STACK, 0);
 		String reverseJustifyStr = el.getAttribute("reversejustify");
 		if (reverseJustifyStr != null) {

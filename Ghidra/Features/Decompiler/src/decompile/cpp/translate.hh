@@ -292,21 +292,32 @@ public:
 /// with the processor. In particular, it knows about all the
 /// address spaces, registers, and spacebases for the processor.
 class Translate : public AddrSpaceManager {
+public:
+  /// Tagged addresses in the \e unique address space
+  enum UniqueLayout {
+    RUNTIME_BOOLEAN_INVERT=0,		///< Location of the runtime temporary for boolean inversion
+    RUNTIME_RETURN_LOCATION=0x80,	///< Location of the runtime temporary storing the return value
+    RUNTIME_BITRANGE_EA=0x100,		///< Location of the runtime temporary for storing an effective address
+    INJECT=0x200,			///< Range of temporaries for use in compiling p-code snippets
+    ANALYSIS=0x10000000			///< Range of temporaries for use during decompiler analysis
+  };
+private:
   bool target_isbigendian;	///< \b true if the general endianness of the process is big endian
-  uintm unique_base;		///< Starting offset into unique space
+  uint4 unique_base;		///< Starting offset into unique space
 protected:
   int4 alignment;      ///< Byte modulo on which instructions are aligned
   vector<FloatFormat> floatformats; ///< Floating point formats utilized by the processor
 
   void setBigEndian(bool val);	///< Set general endianness to \b big if val is \b true
-  void setUniqueBase(uintm val); ///< Set the base offset for new temporary registers
+  void setUniqueBase(uint4 val); ///< Set the base offset for new temporary registers
 public:
   Translate(void); 		///< Constructor for the translator
   void setDefaultFloatFormats(void); ///< If no explicit float formats, set up default formats
   bool isBigEndian(void) const; ///< Is the processor big endian?
   const FloatFormat *getFloatFormat(int4 size) const; ///< Get format for a particular floating point encoding
   int4 getAlignment(void) const; ///< Get the instruction alignment for the processor
-  uintm getUniqueBase(void) const; ///< Get the base offset for new temporary registers
+  uint4 getUniqueBase(void) const; ///< Get the base offset for new temporary registers
+  uint4 getUniqueStart(UniqueLayout layout) const;	///< Get a tagged address within the \e unique space
 
   /// \brief Initialize the translator given XML configuration documents
   ///
@@ -551,7 +562,7 @@ inline void Translate::setBigEndian(bool val) {
 /// for the pcode engine, and sets the base offset where registers
 /// created by the simplification process can start being allocated.
 /// \param val is the boundary offset
-inline void Translate::setUniqueBase(uintm val) {
+inline void Translate::setUniqueBase(uint4 val) {
   if (val>unique_base) unique_base = val;
 }
 
@@ -573,14 +584,19 @@ inline int4 Translate::getAlignment(void) const {
   return alignment;
 }
 
-/// This routine gets the base offset, within the \e unique
-/// temporary register space, where new registers can be
-/// allocated for the simplification process.  Locations before
-/// this offset are reserved registers needed by the pcode
-/// translation engine.
+/// Return the first offset within the \e unique space after the range statically reserved by Translate.
+/// This is generally the starting offset where dynamic temporary registers can start to be allocated.
 /// \return the first allocatable offset
-inline uintm Translate::getUniqueBase(void) const {
+inline uint4 Translate::getUniqueBase(void) const {
   return unique_base;
+}
+
+/// Regions of the \e unique space are reserved for specific uses. We select the start of a specific
+/// region based on the given tag.
+/// \param layout is the given tag
+/// \return the absolute offset into the \e unique space
+inline uint4 Translate::getUniqueStart(UniqueLayout layout) const {
+  return (layout != ANALYSIS) ? layout + unique_base : layout;
 }
 
 #endif

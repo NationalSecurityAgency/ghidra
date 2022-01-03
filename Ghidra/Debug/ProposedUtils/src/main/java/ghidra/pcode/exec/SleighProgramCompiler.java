@@ -18,54 +18,27 @@ package ghidra.pcode.exec;
 import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jdom.JDOMException;
-import org.xml.sax.*;
 
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
-import ghidra.pcodeCPort.slgh_compile.PcodeParser;
 import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.UnknownInstructionException;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.PcodeOp;
-import ghidra.util.Msg;
-import ghidra.xml.XmlPullParser;
-import ghidra.xml.XmlPullParserFactory;
 
 public class SleighProgramCompiler {
 	private static final String EXPRESSION_SOURCE_NAME = "expression";
 
 	public static PcodeParser createParser(SleighLanguage language) {
-		String translatorTag =
-			language.buildTranslatorTag(language.getAddressFactory(), language.getUniqueBase(),
-				language.getSymbolTable());
-		try {
-			return new PcodeParser(translatorTag);
-		}
-		catch (JDOMException e) {
-			throw new AssertionError(e);
-		}
+		return new PcodeParser(language, UniqueLayout.INJECT.getOffset(language));
 	}
 
 	public static ConstructTpl compileTemplate(Language language, PcodeParser parser,
 			String sourceName, String text) {
-		try {
-			// This is quite the conversion, no?
-			String templateXml =
-				PcodeParser.stringifyTemplate(
-					Objects.requireNonNull(parser.compilePcode(text, EXPRESSION_SOURCE_NAME, 1)));
-			MyErrorHandler eh = new MyErrorHandler();
-			XmlPullParser xmlParser =
-				XmlPullParserFactory.create(templateXml, EXPRESSION_SOURCE_NAME, eh, false);
-			ConstructTpl template = new ConstructTpl();
-			template.restoreXml(xmlParser, language.getAddressFactory());
-			return template;
-		}
-		catch (SAXException | UnknownInstructionException e) {
-			throw new AssertionError(e);
-		}
+		ConstructTpl template =
+			Objects.requireNonNull(parser.compilePcode(text, EXPRESSION_SOURCE_NAME, 1));
+		return template;
 	}
 
 	public static List<PcodeOp> buildOps(Language language, ConstructTpl template)
@@ -123,25 +96,6 @@ public class SleighProgramCompiler {
 		}
 		catch (UnknownInstructionException | MemoryAccessException e) {
 			throw new AssertionError(e);
-		}
-	}
-
-	static class MyErrorHandler implements ErrorHandler {
-		SAXParseException exc;
-
-		@Override
-		public void warning(SAXParseException e) throws SAXException {
-			Msg.warn(this, e);
-		}
-
-		@Override
-		public void error(SAXParseException e) throws SAXException {
-			exc = e;
-		}
-
-		@Override
-		public void fatalError(SAXParseException e) throws SAXException {
-			exc = e;
 		}
 	}
 }

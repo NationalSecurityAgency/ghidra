@@ -19,20 +19,15 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.jdom.JDOMException;
-import org.xml.sax.*;
-
-import ghidra.app.plugin.processors.sleigh.SleighException;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.app.plugin.processors.sleigh.template.*;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slgh_compile.PcodeParser;
+import ghidra.app.plugin.processors.sleigh.*;
+import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
 import ghidra.program.model.lang.InjectPayload.InjectParameter;
 import ghidra.program.model.listing.Program;
 import ghidra.sleigh.grammar.Location;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import ghidra.xml.*;
+import ghidra.xml.XmlParseException;
+import ghidra.xml.XmlPullParser;
 
 public class PcodeInjectLibrary {
 	protected SleighLanguage language;
@@ -47,7 +42,7 @@ public class PcodeInjectLibrary {
 
 	public PcodeInjectLibrary(SleighLanguage l) {
 		language = l;
-		uniqueBase = language.getUniqueBase();
+		uniqueBase = UniqueLayout.INJECT.getOffset(l);
 		callFixupMap = new TreeMap<>();
 		callOtherFixupMap = new TreeMap<>();
 		callOtherOverride = null;
@@ -168,90 +163,21 @@ public class PcodeInjectLibrary {
 			return;			// Dynamic p-code generation, or already parsed
 		}
 
-		String translateSpec = language.buildTranslatorTag(language.getAddressFactory(), uniqueBase,
-			language.getSymbolTable());
-
-		try {
-			PcodeParser parser = new PcodeParser(translateSpec);
-			Location loc = new Location(sourceName, 1);
-			InjectParameter[] input = payload.getInput();
-			for (InjectParameter element : input) {
-				parser.addOperand(loc, element.getName(), element.getIndex());
-			}
-			InjectParameter[] output = payload.getOutput();
-			for (InjectParameter element : output) {
-				parser.addOperand(loc, element.getName(), element.getIndex());
-			}
-			String constructTplXml =
-				PcodeParser.stringifyTemplate(parser.compilePcode(pcodeText, sourceName, 1));
-			if (constructTplXml == null) {
-				throw new SleighException("pcode compile failed " + sourceName);
-			}
-			final SAXParseException[] exception = new SAXParseException[1];
-			XmlPullParser xmlParser =
-				XmlPullParserFactory.create(constructTplXml, sourceName, new ErrorHandler() {
-					@Override
-					public void warning(SAXParseException e) throws SAXException {
-						Msg.warn(this, e.getMessage());
-					}
-
-					@Override
-					public void fatalError(SAXParseException e) throws SAXException {
-						exception[0] = e;
-					}
-
-					@Override
-					public void error(SAXParseException e) throws SAXException {
-						exception[0] = e;
-					}
-				}, false);
-
-			ConstructTpl constructTpl = new ConstructTpl();
-			constructTpl.restoreXml(xmlParser, language.getAddressFactory());
-			if (exception[0] != null) {
-				throw new SleighException("pcode compiler returned invalid xml " + sourceName,
-					exception[0]);
-			}
-			OpTpl[] opTemplates = constructTpl.getOpVec();
-			adjustUniqueBase(opTemplates);
-
-			payloadSleigh.setTemplate(constructTpl);
+		PcodeParser parser = new PcodeParser(language, uniqueBase);
+		Location loc = new Location(sourceName, 1);
+		InjectParameter[] input = payload.getInput();
+		for (InjectParameter element : input) {
+			parser.addOperand(loc, element.getName(), element.getIndex());
 		}
-		catch (UnknownInstructionException e) {
-			throw new SleighException("compiled pcode contains invalid opcode " + sourceName, e);
+		InjectParameter[] output = payload.getOutput();
+		for (InjectParameter element : output) {
+			parser.addOperand(loc, element.getName(), element.getIndex());
 		}
-		catch (JDOMException e) {
-			throw new SleighException(
-				"pcode compile failed due to invalid translator tag " + sourceName, e);
-		}
-		catch (SAXException e) {
-			throw new SleighException("pcode compiler returned invalid xml " + sourceName, e);
-		}
-	}
+		ConstructTpl constructTpl = parser.compilePcode(pcodeText, sourceName, 1);
 
-	//changed to protected for PcodeInjectLibraryJava
-	protected void adjustUniqueBase(OpTpl[] opTemplates) {
-		for (OpTpl opt : opTemplates) {
-			VarnodeTpl out = opt.getOutput();
-			if (out != null) {
-				adjustUniqueBase(out);
-			}
-			for (VarnodeTpl in : opt.getInput()) {
-				adjustUniqueBase(in);
-			}
-		}
-	}
+		uniqueBase = parser.getNextTempOffset();
 
-	private void adjustUniqueBase(VarnodeTpl v) {
-		ConstTpl space = v.getSpace();
-		if (!space.isUniqueSpace()) {
-			return;
-		}
-		ConstTpl c = v.getOffset();
-		long offset = c.getReal();
-		if (offset >= uniqueBase) {
-			uniqueBase = offset + SleighBase.MAX_UNIQUE_SIZE;
-		}
+		payloadSleigh.setTemplate(constructTpl);
 	}
 
 	/**

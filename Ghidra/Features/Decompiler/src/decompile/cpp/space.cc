@@ -350,16 +350,17 @@ void AddrSpace::restoreXml(const Element *el)
   calcScaleMask();
 }
 
+const string ConstantSpace::NAME = "const";
+
+const int4 ConstantSpace::INDEX = 0;
+
 /// This constructs the unique constant space
 /// By convention, the name is always "const" and the index
 /// is always 0.
 /// \param m is the associated address space manager
 /// \param t is the associated processor translator
-/// \param nm is the name
-/// \param ind is the integer identifier
-ConstantSpace::ConstantSpace(AddrSpaceManager *m,const Translate *t,
-			     const string &nm,int4 ind)
-  : AddrSpace(m,t,IPTR_CONSTANT,nm,sizeof(uintb),1,ind,0,0)
+ConstantSpace::ConstantSpace(AddrSpaceManager *m,const Translate *t)
+  : AddrSpace(m,t,IPTR_CONSTANT,NAME,sizeof(uintb),1,INDEX,0,0)
 {
   clearFlags(heritaged|does_deadcode|big_endian);
   if (HOST_ENDIAN==1)		// Endianness always matches host
@@ -390,16 +391,18 @@ void ConstantSpace::restoreXml(const Element *el)
   throw LowlevelError("Should never restore the constant space from XML");
 }
 
+const string OtherSpace::NAME = "OTHER";
+
+const int4 OtherSpace::INDEX = 1;
+
 /// Construct the \b other space, which is automatically constructed
 /// by the compiler, and is only constructed once.  The name should
 /// always by \b OTHER.
 /// \param m is the associated address space manager
 /// \param t is the associated processor translator
-/// \param nm is the name of the space
 /// \param ind is the integer identifier
-OtherSpace::OtherSpace(AddrSpaceManager *m,const Translate *t,
-		       const string &nm,int4 ind)
-  : AddrSpace(m,t,IPTR_PROCESSOR,nm,sizeof(uintb),1,ind,0,0)
+OtherSpace::OtherSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
+  : AddrSpace(m,t,IPTR_PROCESSOR,NAME,sizeof(uintb),1,INDEX,0,0)
 {
   clearFlags(heritaged|does_deadcode);
   setFlags(is_otherspace);
@@ -426,17 +429,19 @@ void OtherSpace::saveXml(ostream &s) const
   s << "/>\n";
 }
 
+const string UniqueSpace::NAME = "unique";
+
+const uint4 UniqueSpace::SIZE = 4;
+
 /// This is the constructor for the \b unique space, which is
 /// automatically constructed by the analysis engine, and
 /// constructed only once.  The name should always be \b unique.
 /// \param m is the associated address space manager
 /// \param t is the associated processor translator
-/// \param nm is the name of the space
 /// \param ind is the integer identifier
 /// \param fl are attribute flags (currently unused)
-UniqueSpace::UniqueSpace(AddrSpaceManager *m,const Translate *t,const string &nm,
-			 int4 ind,uint4 fl)
-  : AddrSpace(m,t,IPTR_INTERNAL,nm,sizeof(uintm),1,ind,fl,0)
+UniqueSpace::UniqueSpace(AddrSpaceManager *m,const Translate *t,int4 ind,uint4 fl)
+  : AddrSpace(m,t,IPTR_INTERNAL,NAME,SIZE,1,ind,fl,0)
 {
   setFlags(hasphysical);
 }
@@ -455,14 +460,15 @@ void UniqueSpace::saveXml(ostream &s) const
   s << "/>\n";
 }
 
+const string JoinSpace::NAME = "join";
+
 /// This is the constructor for the \b join space, which is automatically constructed by the
 /// analysis engine, and constructed only once. The name should always be \b join.
 /// \param m is the associated address space manager
 /// \param t is the associated processor translator
-/// \param nm is the name of the space
 /// \param ind is the integer identifier
-JoinSpace::JoinSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind)
-  : AddrSpace(m,t,IPTR_JOIN,nm,sizeof(uintm),1,ind,0,0)
+JoinSpace::JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
+  : AddrSpace(m,t,IPTR_JOIN,NAME,sizeof(uintm),1,ind,0,0)
 {
   // This is a virtual space
   // setFlags(hasphysical);
