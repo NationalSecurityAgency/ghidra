@@ -38,13 +38,13 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.model.util.PropertyMap;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.listing.UndefinedDBTraceData;
-import ghidra.trace.database.memory.DBTraceMemoryRegion;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.symbol.DBTraceFunctionSymbol;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.map.TracePropertyMap;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewListing;
 import ghidra.trace.model.symbol.TraceFunctionSymbol;
@@ -79,7 +79,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	protected final TraceCodeOperations codeOperations;
 
 	protected final DBTraceProgramViewRootModule rootModule;
-	protected final Map<DBTraceMemoryRegion, DBTraceProgramViewFragment> fragmentsByRegion =
+	protected final Map<TraceMemoryRegion, DBTraceProgramViewFragment> fragmentsByRegion =
 		new HashMap<>();
 
 	protected final Map<AddressSnap, UndefinedDBTraceData> undefinedCache =
@@ -779,7 +779,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, Address addr) {
-		DBTraceMemoryRegion region = program.memory.getTopRegion(
+		TraceMemoryRegion region = program.memory.getTopRegion(
 			s -> program.trace.getMemoryManager().getRegionContaining(s, addr));
 		if (region == null) {
 			return null;
@@ -798,7 +798,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, String name) {
-		DBTraceMemoryRegion region = program.memory.getTopRegion(
+		TraceMemoryRegion region = program.memory.getTopRegion(
 			s -> program.trace.getMemoryManager().getLiveRegionByPath(s, name));
 		if (region == null) {
 			return null;

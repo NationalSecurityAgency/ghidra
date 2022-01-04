@@ -62,26 +62,33 @@ public class PathPattern implements PathPredicates {
 		return pattern.hashCode();
 	}
 
+	@Override
+	public PathPredicates or(PathPredicates that) {
+		if (this.equals(that)) {
+			return this;
+		}
+		PathMatcher result = new PathMatcher();
+		result.addPattern(this);
+		if (that instanceof PathPattern) {
+			result.addPattern(this);
+		}
+		else if (that instanceof PathMatcher) {
+			PathMatcher matcher = (PathMatcher) that;
+			result.patterns.addAll(matcher.patterns);
+		}
+		else {
+			throw new AssertionError();
+		}
+		return result;
+	}
+
 	public static boolean isWildcard(String pat) {
 		return "[]".equals(pat) || "".equals(pat);
 	}
 
-	public static boolean keyMatches(String pat, String key) {
-		if (key.equals(pat)) {
-			return true;
-		}
-		if ("[]".equals(pat) && PathUtils.isIndex(key)) {
-			return true;
-		}
-		if ("".equals(pat) && PathUtils.isName(key)) {
-			return true;
-		}
-		return false;
-	}
-
 	protected boolean matchesUpTo(List<String> path, int length) {
 		for (int i = 0; i < length; i++) {
-			if (!keyMatches(pattern.get(i), path.get(i))) {
+			if (!PathPredicates.keyMatches(pattern.get(i), path.get(i))) {
 				return false;
 			}
 		}
@@ -145,8 +152,22 @@ public class PathPattern implements PathPredicates {
 	}
 
 	@Override
+	public Set<String> getNextKeys(List<String> path) {
+		if (path.size() >= pattern.size()) {
+			return Set.of();
+		}
+		if (!matchesUpTo(path, path.size())) {
+			return Set.of();
+		}
+		return Set.of(pattern.get(path.size()));
+	}
+
+	@Override
 	public Set<String> getNextNames(List<String> path) {
 		if (path.size() >= pattern.size()) {
+			return Set.of();
+		}
+		if (!matchesUpTo(path, path.size())) {
 			return Set.of();
 		}
 		String pat = pattern.get(path.size());
@@ -159,6 +180,9 @@ public class PathPattern implements PathPredicates {
 	@Override
 	public Set<String> getNextIndices(List<String> path) {
 		if (path.size() >= pattern.size()) {
+			return Set.of();
+		}
+		if (!matchesUpTo(path, path.size())) {
 			return Set.of();
 		}
 		String pat = pattern.get(path.size());
@@ -174,7 +198,7 @@ public class PathPattern implements PathPredicates {
 	}
 
 	@Override
-	public PathPattern applyIndices(List<String> indices) {
+	public PathPattern applyKeys(List<String> indices) {
 		List<String> result = new ArrayList<>(pattern.size());
 		Iterator<String> it = indices.iterator();
 		for (String pat : pattern) {
@@ -196,18 +220,18 @@ public class PathPattern implements PathPredicates {
 	}
 
 	/**
-	 * If the given path matches, extract indices where matched by wildcards
+	 * If the given path matches, extract keys where matched by wildcards
 	 * 
 	 * <p>
-	 * This is essentially the inverse of {@link #applyIndices(List)}, but can only be asked of one
+	 * This is essentially the inverse of {@link #applyKeys(List)}, but can only be asked of one
 	 * pattern. The keys are returned from left to right, in the order matched by the pattern. Only
 	 * those keys matched by a wildcard are included in the result. Indices are extracted with the
 	 * brackets {@code []} removed.
 	 * 
 	 * @param path the path to match
-	 * @return the list of matched indices or {@code null} if not matched
+	 * @return the list of matched keys or {@code null} if not matched
 	 */
-	public List<String> matchIndices(List<String> path) {
+	public List<String> matchKeys(List<String> path) {
 		int length = pattern.size();
 		if (length != path.size()) {
 			return null;
@@ -216,7 +240,7 @@ public class PathPattern implements PathPredicates {
 		for (int i = 0; i < length; i++) {
 			String pat = pattern.get(i);
 			String key = path.get(i);
-			if (!keyMatches(pat, key)) {
+			if (!PathPredicates.keyMatches(pat, key)) {
 				return null;
 			}
 			if (isWildcard(pat)) {

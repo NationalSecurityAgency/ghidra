@@ -100,7 +100,8 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 					else {
 						throw new AssertionError();
 					}
-					manager.addRegion(module.getName() + ":" + section.getName(),
+					manager.addRegion(
+						"Processes[1].Memory[" + module.getName() + ":" + section.getName() + "]",
 						module.getLifespan(), section.getRange(), flags);
 				}
 			}
@@ -110,19 +111,19 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	protected void addModules() throws Exception {
 		TraceModuleManager manager = tb.trace.getModuleManager();
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			modExe = manager.addLoadedModule("first_proc", "first_proc",
+			modExe = manager.addLoadedModule("Processes[1].Modules[first_proc]", "first_proc",
 				tb.range(0x55550000, 0x5575007f), 0);
-			secExeText =
-				modExe.addSection("first_proc[.text]", ".text", tb.range(0x55550000, 0x555500ff));
-			secExeData =
-				modExe.addSection("first_proc[.data]", ".data", tb.range(0x55750000, 0x5575007f));
+			secExeText = modExe.addSection("Processes[1].Modules[first_proc].Sections[.text]",
+				".text", tb.range(0x55550000, 0x555500ff));
+			secExeData = modExe.addSection("Processes[1].Modules[first_proc].Sections[.data]",
+				".data", tb.range(0x55750000, 0x5575007f));
 
-			modLib = manager.addLoadedModule("some_lib", "some_lib",
+			modLib = manager.addLoadedModule("Processes[1].Modules[some_lib]", "some_lib",
 				tb.range(0x7f000000, 0x7f10003f), 0);
-			secLibText =
-				modLib.addSection("some_lib[.text]", ".text", tb.range(0x7f000000, 0x7f0003ff));
-			secLibData =
-				modLib.addSection("some_lib[.data]", ".data", tb.range(0x7f100000, 0x7f10003f));
+			secLibText = modLib.addSection("Processes[1].Modules[some_lib].Sections[.text]",
+				".text", tb.range(0x7f000000, 0x7f0003ff));
+			secLibData = modLib.addSection("Processes[1].Modules[some_lib].Sections[.data]",
+				".data", tb.range(0x7f100000, 0x7f10003f));
 		}
 	}
 
@@ -144,8 +145,10 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	protected void assertProviderPopulated() {
-		List<ModuleRow> modulesDisplayed = modulesProvider.moduleTableModel.getModelData();
-		// I should be able to assume this is sorted by base address
+		List<ModuleRow> modulesDisplayed =
+			new ArrayList<>(modulesProvider.moduleTableModel.getModelData());
+		modulesDisplayed.sort(Comparator.comparing(r -> r.getBase()));
+		// I should be able to assume this is sorted by base address. It's the default sort column.
 		assertEquals(2, modulesDisplayed.size());
 
 		ModuleRow execRow = modulesDisplayed.get(0);
@@ -156,7 +159,9 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		ModuleRow libRow = modulesDisplayed.get(1);
 		assertEquals(tb.addr(0x7f000000), libRow.getBase());
 
-		List<SectionRow> sectionsDisplayed = modulesProvider.sectionTableModel.getModelData();
+		List<SectionRow> sectionsDisplayed =
+			new ArrayList<>(modulesProvider.sectionTableModel.getModelData());
+		sectionsDisplayed.sort(Comparator.comparing(r -> r.getStart()));
 		assertEquals(4, sectionsDisplayed.size());
 
 		SectionRow execTextRow = sectionsDisplayed.get(0);
@@ -261,13 +266,17 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		}
 		waitForDomainObject(tb.trace);
 
-		List<ModuleRow> modulesDisplayed = modulesProvider.moduleTableModel.getModelData();
+		List<ModuleRow> modulesDisplayed =
+			new ArrayList<>(modulesProvider.moduleTableModel.getModelData());
+		modulesDisplayed.sort(Comparator.comparing(r -> r.getBase()));
 		assertEquals(1, modulesDisplayed.size());
 
 		ModuleRow libRow = modulesDisplayed.get(0);
 		assertEquals("some_lib", libRow.getName());
 
-		List<SectionRow> sectionsDisplayed = modulesProvider.sectionTableModel.getModelData();
+		List<SectionRow> sectionsDisplayed =
+			new ArrayList<>(modulesProvider.sectionTableModel.getModelData());
+		sectionsDisplayed.sort(Comparator.comparing(r -> r.getStart()));
 		assertEquals(2, sectionsDisplayed.size());
 
 		SectionRow libTextRow = sectionsDisplayed.get(0);
@@ -543,13 +552,15 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		// TODO: A region should not be required first. Just to get a memMapper?
-		mb.testProcess1.addRegion("first_proc:.text", mb.rng(0x55550000, 0x555500ff), "rx");
+		mb.testProcess1.addRegion("Memory[first_proc:.text]", mb.rng(0x55550000, 0x555500ff),
+			"rx");
 		TestTargetModule module =
-			mb.testProcess1.modules.addModule("first_proc", mb.rng(0x55550000, 0x555500ff));
+			mb.testProcess1.modules.addModule("Modules[first_proc]",
+				mb.rng(0x55550000, 0x555500ff));
 		// NOTE: A section should not be required at this point.
 		TestTargetTypedefDataType typedef = module.types.addTypedefDataType("myInt",
 			new DefaultTargetPrimitiveDataType(PrimitiveKind.SINT, 4));
@@ -577,7 +588,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			conv.convertTargetDataType(typedef).get(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS);
 		// TODO: Some heuristic or convention to extract the module name, if applicable
 		waitForPass(() -> {
-			DataType actType = dtm.getDataType("/Processes[1].Modules[first_proc].Types/myInt");
+			DataType actType = dtm.getDataType("/Modules[first_proc].Types/myInt");
 			assertTypeEquals(expType, actType);
 		});
 
@@ -596,11 +607,12 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		// TODO: A region should not be required first. Just to get a memMapper?
-		mb.testProcess1.addRegion("first_proc:.text", mb.rng(0x55550000, 0x555500ff), "rx");
+		mb.testProcess1.addRegion("first_proc:.text", mb.rng(0x55550000, 0x555500ff),
+			"rx");
 		TestTargetModule module =
 			mb.testProcess1.modules.addModule("first_proc", mb.rng(0x55550000, 0x555500ff));
 		// NOTE: A section should not be required at this point.

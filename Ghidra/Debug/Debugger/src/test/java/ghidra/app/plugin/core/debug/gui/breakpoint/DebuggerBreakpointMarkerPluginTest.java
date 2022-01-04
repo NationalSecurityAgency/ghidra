@@ -137,7 +137,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 		createProgramFromTrace(trace);
 		intoProject(trace);

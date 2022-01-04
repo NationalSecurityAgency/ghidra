@@ -38,7 +38,8 @@ public class BreakpointLocationRow {
 	}
 
 	public boolean isEnabled() {
-		return loc.isEnabled();
+		TraceRecorder recorder = provider.modelService.getRecorder(loc.getTrace());
+		return recorder != null && loc.isEnabled(recorder.getSnap());
 	}
 
 	public void setEnabled(boolean enabled) {

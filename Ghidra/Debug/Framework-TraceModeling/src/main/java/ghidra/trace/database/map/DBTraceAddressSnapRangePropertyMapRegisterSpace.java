@@ -21,20 +21,20 @@ import java.util.concurrent.locks.ReadWriteLock;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap.DBTraceAddressSnapRangePropertyMapDataFactory;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.map.TraceAddressSnapRangePropertyMapRegisterSpace;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.DBCachedObjectStoreFactory;
 import ghidra.util.exception.VersionException;
 
 public class DBTraceAddressSnapRangePropertyMapRegisterSpace<T, DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>>
 		extends DBTraceAddressSnapRangePropertyMapSpace<T, DR>
 		implements TraceAddressSnapRangePropertyMapRegisterSpace<T> {
-	protected final DBTraceThread thread;
+	protected final TraceThread thread;
 	protected final int frameLevel;
 
 	public DBTraceAddressSnapRangePropertyMapRegisterSpace(String tableName,
 			DBCachedObjectStoreFactory storeFactory, ReadWriteLock lock, AddressSpace space,
-			DBTraceThread thread, int frameLevel, Class<DR> dataType,
+			TraceThread thread, int frameLevel, Class<DR> dataType,
 			DBTraceAddressSnapRangePropertyMapDataFactory<T, DR> dataFactory)
 			throws VersionException, IOException {
 		super(tableName, storeFactory, lock, space, dataType, dataFactory);
@@ -43,7 +43,7 @@ public class DBTraceAddressSnapRangePropertyMapRegisterSpace<T, DR extends Abstr
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return thread;
 	}
 

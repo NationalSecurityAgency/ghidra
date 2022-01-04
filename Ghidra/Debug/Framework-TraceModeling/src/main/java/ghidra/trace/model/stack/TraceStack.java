@@ -17,6 +17,7 @@ package ghidra.trace.model.stack;
 
 import java.util.List;
 
+import ghidra.trace.model.TraceUniqueObject;
 import ghidra.trace.model.thread.TraceThread;
 
 /**
@@ -29,7 +30,7 @@ import ghidra.trace.model.thread.TraceThread;
  * for that analysis. If this information wasn't recorded during a session, this can store the
  * result of that analysis.
  */
-public interface TraceStack {
+public interface TraceStack extends TraceUniqueObject {
 
 	/**
 	 * Get the thread whose stack this is

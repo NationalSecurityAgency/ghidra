@@ -31,7 +31,6 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.symbol.DBTraceSymbolManager.DBTraceSymbolIDEntry;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
 import ghidra.trace.model.symbol.TraceSymbolManager;
@@ -193,11 +192,10 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 	public Collection<? extends T> getIntersecting(Range<Long> span, TraceThread thread,
 			AddressRange range, boolean includeDynamicSymbols) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			DBTraceThread dbThread =
-				thread == null ? null : manager.trace.getThreadManager().assertIsMine(thread);
-			manager.assertValidThreadAddress(dbThread, range.getMinAddress()); // Only examines space
+			manager.trace.getThreadManager().assertIsMine(thread);
+			manager.assertValidThreadAddress(thread, range.getMinAddress()); // Only examines space
 			DBTraceAddressSnapRangePropertyMapSpace<Long, DBTraceSymbolIDEntry> space =
-				manager.idMap.get(DBTraceSpaceKey.create(range.getAddressSpace(), dbThread, 0),
+				manager.idMap.get(DBTraceSpaceKey.create(range.getAddressSpace(), thread, 0),
 					false);
 			if (space == null) {
 				return Collections.emptyList();
@@ -214,11 +212,10 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 	public Collection<? extends T> getIntersecting(Range<Long> span, TraceThread thread,
 			AddressRange range, boolean includeDynamicSymbols, boolean forward) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			DBTraceThread dbThread =
-				thread == null ? null : manager.trace.getThreadManager().assertIsMine(thread);
-			manager.assertValidThreadAddress(dbThread, range.getMinAddress()); // Only examines space
+			manager.trace.getThreadManager().assertIsMine(thread);
+			manager.assertValidThreadAddress(thread, range.getMinAddress()); // Only examines space
 			DBTraceAddressSnapRangePropertyMapSpace<Long, DBTraceSymbolIDEntry> space =
-				manager.idMap.get(DBTraceSpaceKey.create(range.getAddressSpace(), dbThread, 0),
+				manager.idMap.get(DBTraceSpaceKey.create(range.getAddressSpace(), thread, 0),
 					false);
 			if (space == null) {
 				return Collections.emptyList();

@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.model;
+package ghidra.trace.model.target;
 
-import ghidra.util.database.ObjectKey;
-
-public interface TraceObject {
-	/**
-	 * Get an opaque unique id for this object, whose hash is immutable
-	 * 
-	 * @return the opaque object id
-	 */
-	ObjectKey getObjectKey();
+public class DuplicateKeyException extends RuntimeException {
+	public DuplicateKeyException(String key) {
+		super(key);
+	}
 }

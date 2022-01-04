@@ -208,7 +208,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		mb.testProcess1.memory.writeMemory(mb.addr(0x00400000), tb.arr(1, 2, 3, 4));
 
 		recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 
@@ -348,7 +348,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		mb.testProcess1.addRegion(".text", mb.rng(0x00400000, 0x00401000), "rx");
 
 		recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 

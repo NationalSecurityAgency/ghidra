@@ -35,7 +35,6 @@ import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
 import ghidra.trace.database.listing.DBTraceCodeRegisterSpace;
 import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.program.TraceProgramView;
@@ -50,7 +49,7 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	protected final DomainObjectEventQueues eventQueues;
 
 	private final DBTraceProgramView view;
-	private final DBTraceThread thread;
+	private final TraceThread thread;
 
 	private final DBTraceProgramViewRegisterListing listing;
 	private final DBTraceProgramViewRegisterMemory memory;

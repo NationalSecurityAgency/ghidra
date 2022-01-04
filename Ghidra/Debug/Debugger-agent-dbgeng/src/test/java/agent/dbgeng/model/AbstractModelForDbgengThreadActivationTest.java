@@ -63,7 +63,7 @@ public abstract class AbstractModelForDbgengThreadActivationTest
 	@Override
 	protected void activateViaInterpreter(TargetObject obj, TargetInterpreter interpreter)
 			throws Throwable {
-		String threadId = getThreadPattern().matchIndices(obj.getPath()).get(1);
+		String threadId = getThreadPattern().matchKeys(obj.getPath()).get(1);
 		// TODO: This test is imperfect, since processes are activated as well
 		waitOn(interpreter.execute("~" + threadId + " s"));
 	}
@@ -78,7 +78,7 @@ public abstract class AbstractModelForDbgengThreadActivationTest
 				.filter(l -> l.trim().startsWith("."))
 				.collect(Collectors.toList())).trim();
 		String threadId = getIdFromCapture(line);
-		String expId = getThreadPattern().matchIndices(expected.getPath()).get(1);
+		String expId = getThreadPattern().matchKeys(expected.getPath()).get(1);
 		assertEquals(expId, threadId);
 	}
 }

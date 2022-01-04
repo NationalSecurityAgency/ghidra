@@ -41,6 +41,7 @@ import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackManager;
 import ghidra.trace.model.symbol.*;
+import ghidra.trace.model.target.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -52,6 +53,47 @@ import resources.ResourceManager;
 
 public interface Trace extends DataTypeManagerDomainObject {
 	ImageIcon TRACE_ICON = ResourceManager.loadImage("images/video-x-generic16.png");
+
+	public static final class TraceObjectChangeType<T, U>
+			extends DefaultTraceChangeType<T, U> {
+		/**
+		 * An object was created, but not necessarily inserted.
+		 */
+		public static final TraceObjectChangeType<TraceObject, Void> CREATED =
+			new TraceObjectChangeType<>();
+		/**
+		 * An object's lifespan changed.
+		 */
+		public static final TraceObjectChangeType<TraceObject, Range<Long>> LIFESPAN_CHANGED =
+			new TraceObjectChangeType<>();
+		/**
+		 * An object was deleted.
+		 */
+		public static final TraceObjectChangeType<TraceObject, Void> DELETED =
+			new TraceObjectChangeType<>();
+		/**
+		 * An object's value changed.
+		 * 
+		 * <p>
+		 * If the old value is uniform for the new value's lifespan, that value is passed as the old
+		 * value. Otherwise, {@code null} is passed for the old value. If the value was cleared,
+		 * {@code null} is passed for the new value.
+		 */
+		public static final TraceObjectChangeType<TraceObjectValue, Object> VALUE_CHANGED =
+			new TraceObjectChangeType<>();
+		/**
+		 * An object's value changed in lifespan.
+		 * 
+		 * <p>
+		 * This is only called for the value on which {@link TraceObjectValue#setLifespan(Range)} or
+		 * similar is called. If other values are truncated or deleted, there is no event. Listeners
+		 * concerned about a single snap need only check if the snap is contained in the new and old
+		 * lifespans. Listeners concerned about the full timeline can refresh the parent object's
+		 * values, or compute the coalescing and truncation manually.
+		 */
+		public static final TraceObjectChangeType<TraceObjectValue, Range<Long>> //
+		VALUE_LIFESPAN_CHANGED = new TraceObjectChangeType<>();
+	}
 
 	public static final class TraceBookmarkChangeType<T, U> extends DefaultTraceChangeType<T, U> {
 		public static final TraceBookmarkChangeType<TraceBookmarkType, Void> TYPE_ADDED =
@@ -349,6 +391,8 @@ public interface Trace extends DataTypeManagerDomainObject {
 	TraceMemoryManager getMemoryManager();
 
 	TraceModuleManager getModuleManager();
+
+	TraceObjectManager getObjectManager();
 
 	TraceReferenceManager getReferenceManager();
 

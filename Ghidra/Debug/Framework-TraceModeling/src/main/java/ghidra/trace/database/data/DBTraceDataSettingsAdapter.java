@@ -29,7 +29,6 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceSettingsEntry;
 import ghidra.trace.database.map.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
@@ -183,7 +182,7 @@ public class DBTraceDataSettingsAdapter
 			implements DBTraceDataSettingsOperations {
 		public DBTraceDataSettingsRegisterSpace(String tableName,
 				DBCachedObjectStoreFactory storeFactory, ReadWriteLock lock, AddressSpace space,
-				DBTraceThread thread, int frameLevel, Class<DBTraceSettingsEntry> dataType,
+				TraceThread thread, int frameLevel, Class<DBTraceSettingsEntry> dataType,
 				DBTraceAddressSnapRangePropertyMapDataFactory<DBTraceSettingsEntry, DBTraceSettingsEntry> dataFactory)
 				throws VersionException, IOException {
 			super(tableName, storeFactory, lock, space, thread, frameLevel, dataType, dataFactory);
@@ -217,7 +216,7 @@ public class DBTraceDataSettingsAdapter
 
 	@Override
 	protected DBTraceAddressSnapRangePropertyMapRegisterSpace<DBTraceSettingsEntry, DBTraceSettingsEntry> createRegisterSpace(
-			AddressSpace space, DBTraceThread thread, DBTraceSpaceEntry ent)
+			AddressSpace space, TraceThread thread, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
 		return new DBTraceDataSettingsRegisterSpace(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()),

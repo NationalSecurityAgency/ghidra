@@ -32,10 +32,10 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.memory.DBTraceMemoryRegion;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.model.listing.TraceCodeUnit;
 import ghidra.trace.model.map.TracePropertyMap;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.symbol.TraceSymbol;
@@ -74,7 +74,7 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter 
 			if (!showBlockName) {
 				return address.toString(false, pad);
 			}
-			DBTraceMemoryRegion region =
+			TraceMemoryRegion region =
 				getTrace().getMemoryManager().getRegionContaining(getStartSnap(), address);
 			if (region == null) {
 				return address.toString(showBlockName, pad);

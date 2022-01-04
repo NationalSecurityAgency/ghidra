@@ -29,6 +29,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
 import ghidra.trace.database.memory.*;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewMemory;
 import ghidra.trace.util.MemoryAdapter;
@@ -53,7 +54,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 	}
 
 	protected void regionBlockRemoved(
-			RemovalNotification<DBTraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> rn) {
+			RemovalNotification<TraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> rn) {
 		// Nothing
 	}
 
@@ -138,7 +139,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 	@Override
 	public AddressSetView getExecuteSet() {
 		AddressSet result = new AddressSet();
-		for (DBTraceMemoryRegion region : memoryManager.getRegionsInternal()) {
+		for (TraceMemoryRegion region : memoryManager.getAllRegions()) {
 			if (!region.isExecute() || !program.isRegionVisible(region, region.getLifespan())) {
 				continue;
 			}
@@ -520,8 +521,12 @@ public abstract class AbstractDBTraceProgramViewMemory
 	protected synchronized void changeRange(AddressRange remove, AddressRange add) {
 		if (!forceFullView) {
 			AddressSet temp = new AddressSet(addressSet);
-			temp.delete(remove);
-			temp.add(add);
+			if (remove != null) {
+				temp.delete(remove);
+			}
+			if (add != null) {
+				temp.add(add);
+			}
 			addressSet = temp;
 		}
 	}

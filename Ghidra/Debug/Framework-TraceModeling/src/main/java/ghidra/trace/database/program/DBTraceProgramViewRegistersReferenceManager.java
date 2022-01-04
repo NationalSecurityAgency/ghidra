@@ -15,17 +15,17 @@
  */
 package ghidra.trace.database.program;
 
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.listing.TraceCodeOperations;
 import ghidra.trace.model.symbol.TraceReferenceOperations;
+import ghidra.trace.model.thread.TraceThread;
 
 public class DBTraceProgramViewRegistersReferenceManager
 		extends AbstractDBTraceProgramViewReferenceManager {
 
-	private final DBTraceThread thread;
+	private final TraceThread thread;
 
 	public DBTraceProgramViewRegistersReferenceManager(DBTraceProgramView program,
-			DBTraceThread thread) {
+			TraceThread thread) {
 		super(program);
 		this.thread = thread;
 	}
