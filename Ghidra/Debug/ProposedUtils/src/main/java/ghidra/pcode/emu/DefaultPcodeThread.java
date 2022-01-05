@@ -284,11 +284,17 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		}
 		postExecuteInstruction();
 		frame = null;
+		instruction = null;
 	}
 
 	@Override
 	public PcodeFrame getFrame() {
 		return frame;
+	}
+
+	@Override
+	public Instruction getInstruction() {
+		return instruction;
 	}
 
 	protected void assertCompletedInstruction() {
