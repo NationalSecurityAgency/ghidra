@@ -668,8 +668,6 @@ public class ListingCodeComparisonPanel
 			setHelpLocation(helpLocation);
 			setDescription("Set Navigate Next/Previous Area Marker options");
 
-			setPerformActionOnPrimaryButtonClick(false);
-
 			ActionState<String> allAreaMarkers =
 				new ActionState<>(ALL_AREA_MARKERS, bothIcon, ALL_AREA_MARKERS);
 			allAreaMarkers.setHelpLocation(helpLocation);

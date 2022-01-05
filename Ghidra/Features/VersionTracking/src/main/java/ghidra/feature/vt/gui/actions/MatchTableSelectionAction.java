@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +16,20 @@
 package ghidra.feature.vt.gui.actions;
 
 import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.*;
-import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.feature.vt.gui.provider.matchtable.VTMatchTableProvider;
-import ghidra.util.HelpLocation;
 
 import javax.swing.Icon;
 
-import resources.ResourceManager;
 import docking.action.ToolBarData;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
+import ghidra.feature.vt.gui.plugin.VTPlugin;
+import ghidra.feature.vt.gui.provider.matchtable.VTMatchTableProvider;
+import ghidra.util.HelpLocation;
+import resources.ResourceManager;
 
-public class MatchTableSelectionAction extends MultiStateDockingAction<TableSelectionTrackingState> {
+public class MatchTableSelectionAction
+		extends MultiStateDockingAction<TableSelectionTrackingState> {
 
 	private static final String MENU_GROUP = VTPlugin.VT_SETTINGS_MENU_GROUP;
 
@@ -44,7 +44,6 @@ public class MatchTableSelectionAction extends MultiStateDockingAction<TableSele
 		setToolBarData(new ToolBarData(null, MENU_GROUP));
 		setDescription("Adjust the Apply Mark-up Settings for Applying Matches");
 		setEnabled(true);
-		setPerformActionOnPrimaryButtonClick(false); // pressing button shows drop-down
 
 		HelpLocation helpLocation =
 			new HelpLocation("VersionTrackingPlugin", "Match_Table_Selection");
@@ -55,17 +54,17 @@ public class MatchTableSelectionAction extends MultiStateDockingAction<TableSele
 		Icon trackRowIndexSelectionIcon = ResourceManager.loadImage("images/table_gear.png");
 
 		ActionState<TableSelectionTrackingState> trackSelectedIndexActionState =
-			new ActionState<TableSelectionTrackingState>("Track Selected Index",
+			new ActionState<>("Track Selected Index",
 				trackRowIndexSelectionIcon, MAINTAIN_SELECTED_ROW_INDEX);
 		trackSelectedIndexActionState.setHelpLocation(helpLocation);
 
 		ActionState<TableSelectionTrackingState> trackMatchSelectionActionState =
-			new ActionState<TableSelectionTrackingState>("Track Selected Match",
+			new ActionState<>("Track Selected Match",
 				trackMatchSelectionIcon, MAINTAIN_SELECTED_ROW_VALUE);
 		trackMatchSelectionActionState.setHelpLocation(helpLocation);
 
 		ActionState<TableSelectionTrackingState> noSelectionTrackingActionState =
-			new ActionState<TableSelectionTrackingState>("No Selection Tracking",
+			new ActionState<>("No Selection Tracking",
 				noSelectionTrackingIcon, NO_SELECTION_TRACKING);
 		noSelectionTrackingActionState.setHelpLocation(helpLocation);
 

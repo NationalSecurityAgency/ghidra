@@ -32,7 +32,7 @@ public interface DataType {
 
 	/**
 	 * WARNING: do not add <code>default</code> method implementations to this interface. Doing so
-	 * intereferes with correct initialization of the static instance variables {@link #DEFAULT} and
+	 * interferes with correct initialization of the static instance variables {@link #DEFAULT} and
 	 * {@link #VOID} below.
 	 */
 
@@ -559,7 +559,7 @@ public interface DataType {
 	 * The datatypes must be of the same "type" (i.e. structure can only be replacedWith another
 	 * structure.
 	 * 
-	 * @param datatype the datatype that contains the internals to upgrade to.
+	 * @param dataType the datatype that contains the internals to upgrade to.
 	 * @throws UnsupportedOperationException if the datatype does not support change.
 	 * @throws IllegalArgumentException if the given datatype is not the same type as this datatype.
 	 */
