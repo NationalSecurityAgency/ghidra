@@ -41,6 +41,16 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 	private FileSystemView fsView = FileSystemView.getFileSystemView();
 	private Map<File, String> rootDescripMap = new HashMap<>();
 	private Map<File, Icon> rootIconMap = new HashMap<>();
+
+	/**
+	 * This is a cache of file icons, as returned from the OS's file icon service.
+	 * <p>
+	 * This cache is cleared each time a directory is requested (via {@link #getListing(File, FileFilter)} 
+	 * so that any changes to a file's icon are visible the next time the user hits
+	 * refresh or navigates into a directory. 
+	 */
+	private Map<File, Icon> fileIconMap = new HashMap<>();
+
 	private File[] roots = new File[0];
 	private GhidraFileChooserListener listener;
 
@@ -177,6 +187,11 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 	 */
 	@Override
 	public File[] getListing(File directory, final FileFilter filter) {
+		// This clears the previously cached icons and avoids issues with modifying the map
+		// while its being used by other methods by throwing away the instance and allocating
+		// a new one.
+		fileIconMap = new HashMap<>();
+		
 		if (directory == null) {
 			return new File[0];
 		}
@@ -189,18 +204,21 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 	 */
 	@Override
 	public Icon getIcon(File file) {
-		if (rootIconMap.containsKey(file)) {
-			return rootIconMap.get(file);
+		Icon result = rootIconMap.get(file);
+		if (result == null && file != null && file.exists()) {
+			result = fileIconMap.computeIfAbsent(file, this::getSystemIcon);
 		}
-		if (file != null && file.exists()) {
-			try {
-				return fsView.getSystemIcon(file);
-			}
-			catch (Exception e) {
-				// ignore, fall thru
-			}
+		return (result != null) ? result : PROBLEM_FILE_ICON;
+	}
+
+	private Icon getSystemIcon(File file) {
+		try {
+			return fsView.getSystemIcon(file);
 		}
-		return PROBLEM_FILE_ICON;
+		catch (Exception e) {
+			// ignore, return null
+		}
+		return null;
 	}
 
 	/**
