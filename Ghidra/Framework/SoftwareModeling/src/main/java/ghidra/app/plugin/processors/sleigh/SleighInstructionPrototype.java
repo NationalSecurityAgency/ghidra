@@ -161,19 +161,22 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 	private static void addExplicitFlow(ConstructState state, OpTpl op, int flags,
 			FlowSummary summary) {
-		if (summary.flowState == null)
+		if (summary.flowState == null) {
 			summary.flowState = new ArrayList<>();
+		}
 		FlowRecord res = new FlowRecord();
 		summary.flowState.add(res);
 		res.flowFlags = flags;
 		res.op = op;
 		res.addressnode = null;
 		VarnodeTpl dest = op.getInput()[0];		// First varnode input contains the destination address
-		if ((flags & (JUMPOUT | CALL | CROSSBUILD)) == 0)
+		if ((flags & (JUMPOUT | CALL | CROSSBUILD)) == 0) {
 			return;
+		}
 		// If the flow is out of the instruction, store the ConstructState so we can easily calculate address
-		if (state == null)
+		if (state == null) {
 			return;
+		}
 		if ((flags & CROSSBUILD) != 0) {
 			res.addressnode = state;
 		}
@@ -218,24 +221,31 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 					break;
 				case PcodeOp.BRANCH:
 					destType = res.lastop.getInput()[0].getOffset().getType();
-					if (destType == ConstTpl.J_NEXT)
+					if (destType == ConstTpl.J_NEXT) {
 						flags = BRANCH_TO_END;
-					else if (destType == ConstTpl.J_START)
+					}
+					else if (destType == ConstTpl.J_START) {
 						flags = NO_FALLTHRU;
-					else if (destType == ConstTpl.J_RELATIVE)
+					}
+					else if (destType == ConstTpl.J_RELATIVE) {
 						flags = NO_FALLTHRU;
-					else
+					}
+					else {
 						flags = JUMPOUT | NO_FALLTHRU;
+					}
 					addExplicitFlow(walker.getState(), res.lastop, flags, res);
 					break;
 				case PcodeOp.CBRANCH:
 					destType = res.lastop.getInput()[0].getOffset().getType();
-					if (destType == ConstTpl.J_NEXT)
+					if (destType == ConstTpl.J_NEXT) {
 						flags = BRANCH_TO_END;
-					else if ((destType != ConstTpl.J_START) && (destType != ConstTpl.J_RELATIVE))
+					}
+					else if ((destType != ConstTpl.J_START) && (destType != ConstTpl.J_RELATIVE)) {
 						flags = JUMPOUT;
-					else
+					}
+					else {
 						flags = 0;
+					}
 					addExplicitFlow(walker.getState(), res.lastop, flags, res);
 					break;
 				case PcodeOp.CALL:
@@ -252,8 +262,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 					break;
 				case PcodeOp.INDIRECT:			// Encode delayslot
 					destType = (int) res.lastop.getInput()[0].getOffset().getReal();
-					if (destType > res.delay)
+					if (destType > res.delay) {
 						res.delay = destType;
+					}
 				default:
 					break;
 
@@ -263,8 +274,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	public static FlowType flowListToFlowType(List<FlowRecord> flowstate) {
-		if (flowstate == null)
+		if (flowstate == null) {
 			return RefType.FALL_THROUGH;
+		}
 		int flags = 0;
 		for (FlowRecord rec : flowstate) {
 			flags &= ~(NO_FALLTHRU | CROSSBUILD | LABEL);
@@ -307,8 +319,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 	private static FlowType convertFlowFlags(int flowFlags) {
 
-		if ((flowFlags & LABEL) != 0)
+		if ((flowFlags & LABEL) != 0) {
 			flowFlags |= BRANCH_TO_END;
+		}
 		flowFlags &= ~(CROSSBUILD | LABEL);
 		// NOTE: If prototype has cross-build, flow must be determined dynamically
 		switch (flowFlags) { // Convert flags to a standard flowtype
@@ -395,8 +408,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null)
+		if (obj == null) {
 			return false;
+		}
 		return (hashCode() == obj.hashCode()); // Trust entirely in hash
 	}
 
@@ -415,8 +429,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 	@Override
 	public FlowType getFlowType(InstructionContext context) {
-		if (!hasCrossBuilds)
+		if (!hasCrossBuilds) {
 			return flowType;
+		}
 		int flags = 0;
 		try {
 			flags = gatherFlags(0, context, -1);
@@ -473,8 +488,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 	@Override
 	public int getOpType(int opIndex, InstructionContext context) {
-		if (opIndex < 0 || opIndex >= opresolve.length)
+		if (opIndex < 0 || opIndex >= opresolve.length) {
 			return OperandType.DYNAMIC;
+		}
 
 		SleighParserContext protoContext;
 		try {
@@ -485,20 +501,25 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 		}
 		ConstructState opState = mnemonicState.getSubState(opresolve[opIndex]);
 		FixedHandle hand = protoContext.getFixedHandle(opState);
-		if (hand.isInvalid())
+		if (hand.isInvalid()) {
 			return OperandType.DYNAMIC;
+		}
 		int indirect = isIndirect(opresolve[opIndex]) ? OperandType.INDIRECT : 0;
 		if (hand.offset_space == null) { // Static handle
 			int type = hand.space.getType();
-			if (type == AddressSpace.TYPE_REGISTER)
+			if (type == AddressSpace.TYPE_REGISTER) {
 				return OperandType.REGISTER | indirect;
-			if (type == AddressSpace.TYPE_CONSTANT)
+			}
+			if (type == AddressSpace.TYPE_CONSTANT) {
 				return OperandType.SCALAR | indirect;
+			}
 			OperandSymbol sym = mnemonicState.getConstructor().getOperand(opresolve[opIndex]);
-			if (sym.isCodeAddress())
+			if (sym.isCodeAddress()) {
 				return (OperandType.ADDRESS | OperandType.CODE | indirect);
-			if (type == AddressSpace.TYPE_RAM)
+			}
+			if (type == AddressSpace.TYPE_RAM) {
 				return (OperandType.ADDRESS | OperandType.DATA | indirect);
+			}
 		}
 		return OperandType.DYNAMIC | indirect;
 	}
@@ -565,13 +586,16 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	private int gatherFlags(int curflags, InstructionContext context, int secnum)
 			throws MemoryAccessException, UnknownContextException {
 		List<FlowRecord> curlist = null;
-		if (secnum < 0)
+		if (secnum < 0) {
 			curlist = flowStateList;
-		else if ((flowStateListNamed != null) && (secnum < flowStateListNamed.size()))
+		}
+		else if ((flowStateListNamed != null) && (secnum < flowStateListNamed.size())) {
 			curlist = flowStateListNamed.get(secnum);
+		}
 
-		if (curlist == null)
+		if (curlist == null) {
 			return curflags;
+		}
 
 		for (FlowRecord rec : curlist) {
 			if ((rec.flowFlags & CROSSBUILD) != 0) {
@@ -618,13 +642,16 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			InstructionContext context, int secnum)
 			throws MemoryAccessException, UnknownContextException {
 		List<FlowRecord> curlist = null;
-		if (secnum < 0)
+		if (secnum < 0) {
 			curlist = flowStateList;
-		else if ((flowStateListNamed != null) && (secnum < flowStateListNamed.size()))
+		}
+		else if ((flowStateListNamed != null) && (secnum < flowStateListNamed.size())) {
 			curlist = flowStateListNamed.get(secnum);
+		}
 
-		if (curlist == null)
+		if (curlist == null) {
 			return;
+		}
 
 		for (FlowRecord rec : curlist) {
 			if ((rec.flowFlags & CROSSBUILD) != 0) {
@@ -654,8 +681,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	@Override
 	public Address[] getFlows(InstructionContext context) {
 
-		if (flowStateList.size() == 0)
+		if (flowStateList.size() == 0) {
 			return emptyFlow;
+		}
 
 		ArrayList<Address> addresses = new ArrayList<>();
 		try {
@@ -668,8 +696,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			return emptyFlow;
 		}
 
-		if (addresses.size() == 0)
+		if (addresses.size() == 0) {
 			return emptyFlow;
+		}
 		return addresses.toArray(new Address[addresses.size()]);
 	}
 
@@ -746,8 +775,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			protoContext = (SleighParserContext) context.getParserContext();
 			ConstructState opState = mnemonicState.getSubState(opresolve[opIndex]);
 			hand = protoContext.getFixedHandle(opState);
-			if (hand.isInvalid())
+			if (hand.isInvalid()) {
 				return null;
+			}
 		}
 		catch (Exception e) {
 			return null;
@@ -769,8 +799,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 			ConstructState opState = mnemonicState.getSubState(opresolve[opIndex]);
 			FixedHandle hand = protoContext.getFixedHandle(opState);
-			if (hand.isInvalid())
+			if (hand.isInvalid()) {
 				return null;
+			}
 			if (hand.space.getType() == AddressSpace.TYPE_CONSTANT) {
 				int size = hand.size;
 				if (size == 0) {
@@ -798,8 +829,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			SleighParserContext protoContext = (SleighParserContext) context.getParserContext();
 			ConstructState opState = mnemonicState.getSubState(opresolve[opIndex]);
 			FixedHandle hand = protoContext.getFixedHandle(opState);
-			if (hand.isInvalid())
+			if (hand.isInvalid()) {
 				return null;
+			}
 			if (hand.space.getType() == AddressSpace.TYPE_REGISTER) {
 				return language.getRegister(hand.space, hand.offset_offset, hand.size);
 			}
@@ -834,7 +866,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	public Object[] getInputObjects(InstructionContext context) {
 		PcodeOp[] pcode = null;
 		try {
-			pcode = getPcode(context, null, null);
+			pcode = getPcode(context, null);
 		}
 		catch (Exception e) {
 			return new Object[0];
@@ -892,7 +924,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	public Object[] getResultObjects(InstructionContext context) {
 		PcodeOp[] pcode = null;
 		try {
-			pcode = getPcode(context, null, null);
+			pcode = getPcode(context, null);
 		}
 		catch (Exception e) {
 			return new Object[0];
@@ -944,8 +976,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	@Override
-	public PcodeOp[] getPcode(InstructionContext context, PcodeOverride override,
-			UniqueAddressFactory uniqueFactory) {
+	public PcodeOp[] getPcode(InstructionContext context, PcodeOverride override) {
 		try {
 			SleighParserContext protoContext = (SleighParserContext) context.getParserContext();
 			int fallOffset = getLength();
@@ -964,8 +995,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 			ParserWalker walker = new ParserWalker(protoContext);
 			walker.baseState();
-			PcodeEmitObjects emit =
-				new PcodeEmitObjects(walker, context, fallOffset, override, uniqueFactory);
+			PcodeEmitObjects emit = new PcodeEmitObjects(walker, context, fallOffset, override);
 			emit.build(walker.getConstructor().getTempl(), -1);
 			emit.resolveRelatives();
 			if (!isindelayslot) {
@@ -986,8 +1016,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	@Override
-	public PackedBytes getPcodePacked(InstructionContext context, PcodeOverride override,
-			UniqueAddressFactory uniqueFactory) {
+	public PackedBytes getPcodePacked(InstructionContext context, PcodeOverride override) {
 		int fallOffset = getLength();
 		try {
 			SleighParserContext protoContext = (SleighParserContext) context.getParserContext();
@@ -1006,8 +1035,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 			ParserWalker walker = new ParserWalker(protoContext);
 			walker.baseState();
-			PcodeEmitPacked emit =
-				new PcodeEmitPacked(walker, context, fallOffset, override, uniqueFactory);
+			PcodeEmitPacked emit = new PcodeEmitPacked(walker, context, fallOffset, override);
 			emit.write(PcodeEmitPacked.inst_tag);
 			emit.dumpOffset(emit.getFallOffset());
 
@@ -1067,7 +1095,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 	@Override
 	public RefType getOperandRefType(int opIndex, InstructionContext context,
-			PcodeOverride override, UniqueAddressFactory uniqueFactory) {
+			PcodeOverride override) {
 		if (opIndex < 0 || opIndex >= opRefTypes.length) {
 			return null;
 		}
@@ -1085,7 +1113,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			if (refType != null) {
 				return refType;
 			}
-			cacheDefaultOperandRefTypes(context, uniqueFactory);
+			cacheDefaultOperandRefTypes(context);
 			return opRefTypes[opIndex];
 		}
 
@@ -1097,7 +1125,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 		catch (MemoryAccessException e) {
 			return RefType.DATA;
 		}
-		PcodeOp[] pcode = getPcode(context, override, uniqueFactory);
+		PcodeOp[] pcode = getPcode(context, override);
 		if (pcode == null || pcode.length == 0) {
 			return RefType.DATA;
 		}
@@ -1121,8 +1149,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 		return refType;
 	}
 
-	private void cacheDefaultOperandRefTypes(InstructionContext context,
-			UniqueAddressFactory uniqueFactory) {
+	private void cacheDefaultOperandRefTypes(InstructionContext context) {
 
 		// Resolve handles for each operand
 		SleighParserContext protoContext;
@@ -1132,7 +1159,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 		catch (MemoryAccessException e) {
 			throw new RuntimeException(e);
 		}
-		PcodeOp[] pcode = getPcode(context, null, uniqueFactory);
+		PcodeOp[] pcode = getPcode(context, null);
 		if (pcode == null || pcode.length == 0) {
 			return;
 		}
@@ -1342,8 +1369,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 					if (subct != null) {
 						walker.setConstructor(subct);
 						subct.applyContext(walker, debug);
-						if (debug != null)
+						if (debug != null) {
 							debug.indent();
+						}
 						break;
 					}
 					if (debug != null) {
@@ -1355,8 +1383,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 					}
 				}
 				else {
-					if (debug != null)
+					if (debug != null) {
 						debug.dumpPattern(sym, walker);
+					}
 				}
 				walker.setCurrentLength(sym.getMinimumLength());
 				walker.popOperand();
@@ -1416,10 +1445,12 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 				ConstructTpl templ = ct.getTempl();
 				if (templ != null) {
 					HandleTpl res = templ.getResult();
-					if (res != null) // Pop up handle to containing operand
+					if (res != null) {	// Pop up handle to containing operand
 						res.fix(walker.getParentHandle(), walker);
-					else
+					}
+					else {
 						walker.getParentHandle().setInvalid();
+					}
 				}
 				walker.popOperand();
 			}
@@ -1442,8 +1473,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			if (ct != null) {
 				int oper = walker.getOperand();
 				int numoper = ct.getNumOperands();
-				if (oper == 0)		// Upon first entry to this Constructor
+				if (oper == 0) {		// Upon first entry to this Constructor
 					ct.applyContext(walker, debug); // Apply its context changes
+				}
 				if (oper < numoper) {
 					walker.pushOperand(oper);
 					continue;

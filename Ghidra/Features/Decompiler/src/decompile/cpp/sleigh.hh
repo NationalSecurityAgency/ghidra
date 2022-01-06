@@ -136,6 +136,7 @@ class SleighBuilder : public PcodeBuilder {
   void buildEmpty(Constructor *ct,int4 secnum);
   void generateLocation(const VarnodeTpl *vntpl,VarnodeData &vn);
   AddrSpace *generatePointer(const VarnodeTpl *vntpl,VarnodeData &vn);
+  void generatePointerAdd(PcodeData *op,const VarnodeTpl *vntpl);
   void setUniqueOffset(const Address &addr);	///< Set uniquifying bits for the current instruction
 public:
   SleighBuilder(ParserWalker *w,DisassemblyCache *dcache,PcodeCacher *pc,AddrSpace *cspc,AddrSpace *uspc,uint4 umask);

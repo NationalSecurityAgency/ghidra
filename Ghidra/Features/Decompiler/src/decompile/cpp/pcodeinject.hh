@@ -162,7 +162,7 @@ public:
 class PcodeInjectLibrary {
 protected:
   Architecture *glb;			///< The Architecture to which the injection payloads apply
-  uintb tempbase;			///< Offset within \e unique space for allocating temporaries within a payload
+  uint4 tempbase;			///< Offset within \e unique space for allocating temporaries within a payload
   vector<InjectPayload *> injection;	///< Registered injections
   map<string,int4> callFixupMap;	///< Map of registered call-fixup names to injection id
   map<string,int4> callOtherFixupMap;	///< Map of registered callother-fixup names to injection id
@@ -195,9 +195,9 @@ protected:
   /// \param injectid is the id of the InjectPayload to finalize
   virtual void registerInject(int4 injectid)=0;
 public:
-  PcodeInjectLibrary(Architecture *g,uintb tmpbase) { glb = g; tempbase = tmpbase; }	///< Constructor
+  PcodeInjectLibrary(Architecture *g,uint4 tmpbase) { glb = g; tempbase = tmpbase; }	///< Constructor
   virtual ~PcodeInjectLibrary(void);				///< Destructor
-  uintb getUniqueBase(void) const { return tempbase; }		///< Get the (current) offset for building temporary registers
+  uint4 getUniqueBase(void) const { return tempbase; }		///< Get the (current) offset for building temporary registers
   int4 getPayloadId(int4 type,const string &nm) const;		///< Map name and type to the payload id
   InjectPayload *getPayload(int4 id) const { return injection[id]; }	///< Get the InjectPayload by id
   string getCallFixupName(int4 injectid) const;			///< Get the call-fixup name associated with an id

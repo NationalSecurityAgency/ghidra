@@ -852,17 +852,15 @@ void Varnode::printRaw(ostream &s,const Varnode *vn)
 }
 
 /// \param m is the underlying address space manager
-/// \param uspace is the \e unique space
-/// \param ubase is the base offset for allocating temporaries
-VarnodeBank::VarnodeBank(AddrSpaceManager *m,AddrSpace *uspace,uintm ubase)
+VarnodeBank::VarnodeBank(AddrSpaceManager *m)
   : searchvn(0,Address(Address::m_minimal),(Datatype *)0)
 
 {
   manage = m;
   searchvn.flags = Varnode::input; // searchvn is always an input varnode of size 0
-  uniq_space = uspace;
-  uniqbase = ubase;
-  uniqid = ubase;
+  uniq_space = m->getUniqueSpace();
+  uniqbase = uniq_space->getTrans()->getUniqueStart(Translate::ANALYSIS);
+  uniqid = uniqbase;
   create_index = 0;
 }
 
