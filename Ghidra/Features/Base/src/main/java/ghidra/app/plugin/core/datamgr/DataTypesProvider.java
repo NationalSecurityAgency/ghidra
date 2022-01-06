@@ -780,6 +780,25 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		contextChanged();
 	}
 
+	/**
+	 * Returns a list of all the data types selected in the data types tree
+	 * @return a list of all the data types selected in the data types tree
+	 */
+	public List<DataType> getSelectedDataTypes() {
+		List<DataType> selectedDataTypes = new ArrayList<>();
+		DataTypeArchiveGTree gTree = getGTree();
+		for (TreePath path : gTree.getSelectionPaths()) {
+			Object node = path.getLastPathComponent();
+			if (node instanceof DataTypeNode) {
+				DataType dataType = ((DataTypeNode) node).getDataType();
+				if (dataType != null) {
+					selectedDataTypes.add(dataType);
+				}
+			}
+		}
+		return selectedDataTypes;
+	}
+
 	// this is a callback from the action--we need this to prevent callbacks, as the other
 	// version of this method will try to get the method, which will lazily created it, which
 	// will trigger a callback...

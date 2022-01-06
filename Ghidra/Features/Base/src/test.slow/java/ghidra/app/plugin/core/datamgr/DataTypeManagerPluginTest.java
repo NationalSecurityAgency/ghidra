@@ -52,6 +52,7 @@ import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.function.AbstractEditFunctionSignatureDialog;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
+import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.options.ToolOptions;
@@ -900,9 +901,40 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertMatchingStructures(resultsProvider, "Structure_0x10", "Structure_0x20");
 	}
 
+	@Test
+	public void testGetSelectedDatatypesFromService() {
+		DataTypeManagerService dataTypeManagerService =
+			tool.getService(DataTypeManagerService.class);
+
+		assertEquals(0, dataTypeManagerService.getSelectedDatatypes().size());
+
+		CategoryPath path = new CategoryPath("/MISC");
+		DataType dt1 = program.getDataTypeManager().getDataType(path, "ArrayStruct");
+		DataType dt2 = program.getDataTypeManager().getDataType(path, "ArrayUnion");
+
+		selectDataTypes(dt1, dt2);
+
+		List<DataType> selectedDatatypes = dataTypeManagerService.getSelectedDatatypes();
+		assertEquals(2, selectedDatatypes.size());
+		assertTrue(selectedDatatypes.contains(dt1));
+		assertTrue(selectedDatatypes.contains(dt2));
+	}
+
 //==================================================================================================
 // Private methods
 //==================================================================================================
+	private void selectDataTypes(DataType dt1, DataType dt2) {
+		String catName1 = dt1.getCategoryPath().getName(); // assumes path is only 1 level
+		CategoryNode cat1 = (CategoryNode) programNode.getChild(catName1);
+		DataTypeNode node1 = cat1.getNode(dt1);
+
+		String catName2 = dt2.getCategoryPath().getName(); // assumes path is only 1 level
+		CategoryNode cat2 = (CategoryNode) programNode.getChild(catName2);
+		DataTypeNode node2 = cat2.getNode(dt2);
+
+		tree.setSelectedNodes(node1, node2);
+		waitForTree(tree);
+	}
 
 	private void createStructureWithOffset_0x4() {
 

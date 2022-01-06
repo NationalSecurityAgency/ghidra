@@ -122,6 +122,11 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 	}
 
 	@Override
+	public List<DataType> getSelectedDatatypes() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public DataType getDataType(TreePath selectedPath) {
 		throw new UnsupportedOperationException();
 	}
