@@ -28,6 +28,7 @@ import ghidra.pcode.emu.*;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Instruction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
@@ -331,6 +332,11 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		@Override
 		public PcodeFrame getFrame() {
+			return null;
+		}
+		
+		@Override
+		public Instruction getInstruction() {
 			return null;
 		}
 
