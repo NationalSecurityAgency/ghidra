@@ -1562,37 +1562,36 @@ public class DBTraceProgramView implements TraceProgramView {
 		trace.removeTransactionListener(listener);
 	}
 
-	public void updateMemoryAddRegionBlock(DBTraceMemoryRegion region) {
+	public void updateMemoryAddRegionBlock(TraceMemoryRegion region) {
 		if (!isRegionVisible(region)) {
 			return;
 		}
 		memory.updateAddRegionBlock(region);
 	}
 
-	public void updateMemoryChangeRegionBlockName(DBTraceMemoryRegion region) {
+	public void updateMemoryChangeRegionBlockName(TraceMemoryRegion region) {
 		if (!isRegionVisible(region)) {
 			return;
 		}
 		memory.updateChangeRegionBlockName(region);
 	}
 
-	public void updateMemoryChangeRegionBlockFlags(DBTraceMemoryRegion region) {
-		if (!isRegionVisible(region)) {
+	public void updateMemoryChangeRegionBlockFlags(TraceMemoryRegion region, Range<Long> lifespan) {
+		if (!isRegionVisible(region, lifespan)) {
 			return;
 		}
 		memory.updateChangeRegionBlockFlags(region);
 	}
 
-	public void updateMemoryChangeRegionBlockRange(DBTraceMemoryRegion region,
-			AddressRange oldRange,
-			AddressRange newRange) {
+	public void updateMemoryChangeRegionBlockRange(TraceMemoryRegion region,
+			AddressRange oldRange, AddressRange newRange) {
 		if (!isRegionVisible(region)) {
 			return;
 		}
 		memory.updateChangeRegionBlockRange(region, oldRange, newRange);
 	}
 
-	public void updateMemoryChangeRegionBlockLifespan(DBTraceMemoryRegion region,
+	public void updateMemoryChangeRegionBlockLifespan(TraceMemoryRegion region,
 			Range<Long> oldLifespan, Range<Long> newLifespan) {
 		boolean inOld = isRegionVisible(region, oldLifespan);
 		boolean inNew = isRegionVisible(region, newLifespan);
@@ -1604,7 +1603,7 @@ public class DBTraceProgramView implements TraceProgramView {
 		}
 	}
 
-	public void updateMemoryDeleteRegionBlock(DBTraceMemoryRegion region) {
+	public void updateMemoryDeleteRegionBlock(TraceMemoryRegion region) {
 		if (!isRegionVisible(region)) {
 			return;
 		}

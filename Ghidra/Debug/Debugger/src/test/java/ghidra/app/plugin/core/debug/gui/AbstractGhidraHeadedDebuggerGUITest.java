@@ -43,8 +43,7 @@ import docking.widgets.tree.GTreeNode;
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceInternal;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
+import ghidra.app.plugin.core.debug.service.model.*;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -521,6 +520,8 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	@After
 	public void tearDown() {
+		runSwing(() -> traceManager.setSaveTracesByDefault(false));
+
 		if (tb != null) {
 			if (traceManager != null && traceManager.getOpenTraces().contains(tb.trace)) {
 				traceManager.closeTrace(tb.trace);
@@ -531,8 +532,6 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		if (mb != null) {
 			if (mb.testModel != null) {
 				modelService.removeModel(mb.testModel);
-
-				runSwing(() -> traceManager.setSaveTracesByDefault(false));
 				for (TraceRecorder recorder : modelService.getTraceRecorders()) {
 					recorder.stopRecording();
 				}
@@ -586,6 +585,17 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	protected void useTrace(Trace trace) {
 		tb = new ToyDBTraceBuilder(trace);
+	}
+
+	protected DebuggerTargetTraceMapper createTargetTraceMapper(TargetObject target)
+			throws Exception {
+		return new TestDebuggerTargetTraceMapper(target) {
+			@Override
+			public TraceRecorder startRecording(DebuggerModelServicePlugin service, Trace trace) {
+				useTrace(trace);
+				return super.startRecording(service, trace);
+			}
+		};
 	}
 
 	protected void createAndOpenTrace(String langID) throws IOException {

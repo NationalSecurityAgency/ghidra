@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -55,11 +55,11 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
-import ghidra.trace.database.stack.DBTraceStack;
 import ghidra.trace.database.stack.DBTraceStackManager;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
+import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.database.UndoableTransaction;
@@ -468,7 +468,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
@@ -762,7 +762,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x555500ff), "rx");
@@ -957,7 +957,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
 			DBTraceStackManager sm = tb.trace.getStackManager();
-			DBTraceStack stack = sm.getStack(thread, 0, true);
+			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00401234));
 			stack.getFrame(1, true).setProgramCounter(tb.addr(0x00404321));
 		}
@@ -1019,7 +1019,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 
 			DBTraceStackManager sm = tb.trace.getStackManager();
-			DBTraceStack stack = sm.getStack(thread, 0, true);
+			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, true);
 		}
 		waitForDomainObject(tb.trace);
@@ -1049,7 +1049,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			mm.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
-			DBTraceStack stack = sm.getStack(thread, 0, true);
+			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00401234));
 		}
 		waitForDomainObject(tb.trace);
@@ -1059,7 +1059,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		assertEquals(tb.addr(0x00401234), memBytesProvider.getLocation().getAddress());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			DBTraceStack stack = sm.getStack(thread, 0, true);
+			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00404321));
 		}
 		waitForDomainObject(tb.trace);
@@ -1074,7 +1074,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
@@ -1106,7 +1106,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
@@ -1150,7 +1150,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");

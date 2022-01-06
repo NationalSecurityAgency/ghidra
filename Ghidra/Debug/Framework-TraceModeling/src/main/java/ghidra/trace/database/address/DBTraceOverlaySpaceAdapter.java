@@ -63,11 +63,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			extends AbstractDBFieldCodec<Address, OT, BinaryField> {
 		static final Charset UTF8 = Charset.forName("UTF-8");
 
-		public AddressDBFieldCodec(Class<OT> objectType, Field field, int column) {
-			super(Address.class, objectType, BinaryField.class, field, column);
-		}
-
-		protected byte[] encode(Address address) {
+		public static byte[] encode(Address address) {
 			if (address == null) {
 				return null;
 			}
@@ -86,6 +82,31 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			return buf.array();
 		}
 
+		public static Address decode(byte[] enc, DBTraceOverlaySpaceAdapter osa) {
+			if (enc == null) {
+				return null;
+			}
+			else {
+				ByteBuffer buf = ByteBuffer.wrap(enc);
+				byte overlay = buf.get();
+				final AddressSpace as;
+				if (overlay == 1) {
+					short key = buf.getShort();
+					as = osa.spacesByKey.get(key & 0xffffL);
+				}
+				else {
+					short id = buf.getShort();
+					as = osa.trace.getInternalAddressFactory().getAddressSpace(id);
+				}
+				long offset = buf.getLong();
+				return as.getAddress(offset);
+			}
+		}
+
+		public AddressDBFieldCodec(Class<OT> objectType, Field field, int column) {
+			super(Address.class, objectType, BinaryField.class, field, column);
+		}
+
 		@Override
 		public void store(Address value, BinaryField f) {
 			f.setBinaryData(encode(value));
@@ -101,25 +122,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 		protected void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			byte[] data = record.getBinaryData(column);
-			if (data == null) {
-				setValue(obj, null);
-			}
-			else {
-				ByteBuffer buf = ByteBuffer.wrap(data);
-				byte overlay = buf.get();
-				final AddressSpace as;
-				if (overlay == 1) {
-					short key = buf.getShort();
-					as = obj.getOverlaySpaceAdapter().spacesByKey.get(key & 0xffffL);
-				}
-				else {
-					short id = buf.getShort();
-					as = obj.getOverlaySpaceAdapter().trace.getInternalAddressFactory()
-							.getAddressSpace(id);
-				}
-				long offset = buf.getLong();
-				setValue(obj, as.getAddress(offset));
-			}
+			setValue(obj, decode(data, obj.getOverlaySpaceAdapter()));
 		}
 	}
 

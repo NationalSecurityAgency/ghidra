@@ -210,6 +210,11 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		public ModuleTableModel() {
 			super("Modules", ModuleTableColumns.class, TraceModule::getObjectKey, ModuleRow::new);
 		}
+
+		@Override
+		public List<ModuleTableColumns> defaultSortOrder() {
+			return List.of(ModuleTableColumns.BASE);
+		}
 	}
 
 	protected static class SectionTableModel
@@ -219,6 +224,11 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		public SectionTableModel() {
 			super("Sections", SectionTableColumns.class, TraceSection::getObjectKey,
 				SectionRow::new);
+		}
+
+		@Override
+		public List<SectionTableColumns> defaultSortOrder() {
+			return List.of(SectionTableColumns.START);
 		}
 	}
 

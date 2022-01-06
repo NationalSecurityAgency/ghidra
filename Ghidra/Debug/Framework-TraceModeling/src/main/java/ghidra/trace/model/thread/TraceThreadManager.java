@@ -45,7 +45,7 @@ public interface TraceThreadManager {
 	 * Add a thread with the given lifespan
 	 * 
 	 * @param path the "full name" of the thread
-	 * @param name "short name" of the thread
+	 * @param display "short name" of the thread
 	 * @param lifespan the lifespan of the thread
 	 * @return the new thread
 	 * @throws DuplicateNameException if a thread with the given full name already exists within an
@@ -107,6 +107,10 @@ public interface TraceThreadManager {
 
 	/**
 	 * Get live threads at the given snap, ordered eldest first
+	 * 
+	 * <p>
+	 * Note that thread whose destruction was observed at the given snap are not considered alive,
+	 * i.e, the upper end of the lifespan is treated as open.
 	 * 
 	 * @param snap the snap
 	 * @return the collection

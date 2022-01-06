@@ -21,13 +21,13 @@ import com.google.common.collect.Range;
 
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceObject;
+import ghidra.trace.model.TraceUniqueObject;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A thread in a trace
  */
-public interface TraceThread extends TraceObject {
+public interface TraceThread extends TraceUniqueObject {
 
 	/**
 	 * Get the trace containing this thread

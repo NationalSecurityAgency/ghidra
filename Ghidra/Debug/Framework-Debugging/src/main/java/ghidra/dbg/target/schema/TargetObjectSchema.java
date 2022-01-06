@@ -718,6 +718,17 @@ public interface TargetObjectSchema {
 		return null;
 	}
 
+	/**
+	 * Find the nearest ancestor implementing the given interface along the given path
+	 * 
+	 * <p>
+	 * If the given path implements the interface, it is returned, i.e., it is not strictly an
+	 * ancestor.
+	 * 
+	 * @param type the interface to search for
+	 * @param path the seed path
+	 * @return the found path, or {@code null} if no ancestor implements the interface
+	 */
 	default List<String> searchForAncestor(Class<? extends TargetObject> type, List<String> path) {
 		for (; path != null; path = PathUtils.parent(path)) {
 			TargetObjectSchema schema = getSuccessorSchema(path);

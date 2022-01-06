@@ -37,9 +37,9 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.database.symbol.DBTraceReferenceManager;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.TraceCodeSpace;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.ByteArrayUtils;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStoreFactory;
@@ -169,7 +169,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return null;
 	}
 

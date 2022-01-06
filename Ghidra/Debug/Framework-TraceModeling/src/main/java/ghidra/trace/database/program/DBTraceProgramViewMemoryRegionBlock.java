@@ -20,18 +20,16 @@ import java.math.BigInteger;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
-import ghidra.trace.database.memory.DBTraceMemoryRegion;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.trace.model.memory.TraceMemorySpaceInputStream;
+import ghidra.trace.model.memory.*;
 
 // TODO: Proper locking all over here
 public class DBTraceProgramViewMemoryRegionBlock extends AbstractDBTraceProgramViewMemoryBlock {
 
-	private final DBTraceMemoryRegion region;
+	private final TraceMemoryRegion region;
 
 	public DBTraceProgramViewMemoryRegionBlock(DBTraceProgramView program,
-			DBTraceMemoryRegion region) {
+			TraceMemoryRegion region) {
 		super(program);
 		this.region = region;
 	}

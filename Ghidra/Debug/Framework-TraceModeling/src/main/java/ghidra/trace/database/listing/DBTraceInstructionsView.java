@@ -38,7 +38,6 @@ import ghidra.trace.model.listing.TraceInstructionsView;
 import ghidra.trace.util.OverlappingObjectIterator;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
-import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 

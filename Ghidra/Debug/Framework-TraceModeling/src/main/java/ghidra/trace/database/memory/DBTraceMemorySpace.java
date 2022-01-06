@@ -33,16 +33,17 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.database.DBTraceUtils.AddressRangeMapSetter;
 import ghidra.trace.database.DBTraceUtils.OffsetSnap;
 import ghidra.trace.database.listing.DBTraceCodeSpace;
 import ghidra.trace.database.map.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceViewportSpanIterator;
 import ghidra.util.*;
@@ -261,7 +262,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return null;
 	}
 
@@ -274,55 +275,42 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		if (state == null) {
 			throw new NullPointerException();
 		}
-		// Go one out to find abutting ranges, too.
-		Address prev = start.previous();
-		if (prev == null) {
-			prev = start;
-		}
-		Address next = end.next();
-		if (next == null) {
-			next = end;
-		}
-		Map<TraceAddressSnapRange, TraceMemoryState> toPut = new HashMap<>();
-		for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : stateMapSpace.reduce(
-			TraceAddressSnapRangeQuery.intersecting(prev, next, snap, snap)).entries()) {
-			// NOTE: Entries are in no particular order
-			AddressRange range = entry.getKey().getRange();
-			boolean precedesMin = range.getMinAddress().compareTo(start) < 0;
-			boolean procedesMax = range.getMaxAddress().compareTo(end) > 0;
-			boolean sameState = entry.getValue() == state;
-			if (precedesMin && procedesMax && sameState) {
-				return; // The value in this range is already the desired state
+
+		new AddressRangeMapSetter<Entry<TraceAddressSnapRange, TraceMemoryState>, TraceMemoryState>() {
+			@Override
+			protected AddressRange getRange(Entry<TraceAddressSnapRange, TraceMemoryState> entry) {
+				return entry.getKey().getRange();
 			}
-			stateMapSpace.remove(entry);
-			if (precedesMin) {
-				if (sameState) {
-					start = range.getMinAddress();
-				}
-				else {
-					toPut.put(
-						new ImmutableTraceAddressSnapRange(range.getMinAddress(), prev, snap, snap),
-						entry.getValue());
-				}
+
+			@Override
+			protected TraceMemoryState getValue(
+					Entry<TraceAddressSnapRange, TraceMemoryState> entry) {
+				return entry.getValue();
 			}
-			if (procedesMax) {
-				if (sameState) {
-					end = range.getMaxAddress();
-				}
-				else {
-					toPut.put(
-						new ImmutableTraceAddressSnapRange(next, range.getMaxAddress(), snap, snap),
-						entry.getValue());
-				}
+
+			@Override
+			protected void remove(Entry<TraceAddressSnapRange, TraceMemoryState> entry) {
+				stateMapSpace.remove(entry);
 			}
-		}
-		if (state != TraceMemoryState.UNKNOWN) {
-			stateMapSpace.put(start, end, snap, state);
-		}
-		assert toPut.size() <= 2;
-		for (Entry<TraceAddressSnapRange, TraceMemoryState> ent : toPut.entrySet()) {
-			stateMapSpace.put(ent.getKey(), ent.getValue());
-		}
+
+			@Override
+			protected Iterable<Entry<TraceAddressSnapRange, TraceMemoryState>> getIntersecting(
+					Address lower, Address upper) {
+				return stateMapSpace
+						.reduce(TraceAddressSnapRangeQuery.intersecting(lower, upper, snap, snap))
+						.entries();
+			}
+
+			@Override
+			protected Entry<TraceAddressSnapRange, TraceMemoryState> put(AddressRange range,
+					TraceMemoryState value) {
+				if (value != TraceMemoryState.UNKNOWN) {
+					stateMapSpace.put(new ImmutableTraceAddressSnapRange(range, snap), value);
+				}
+				return null; // Don't need to return it
+			}
+		}.set(start, end, state);
+
 		trace.setChanged(new TraceChangeRecord<>(TraceMemoryStateChangeType.CHANGED, this,
 			new ImmutableTraceAddressSnapRange(start, end, snap, snap), state));
 	}

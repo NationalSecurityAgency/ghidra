@@ -19,13 +19,13 @@ import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.Iterator;
-import java.util.Objects;
+import java.util.*;
+import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-import com.google.common.collect.BoundType;
-import com.google.common.collect.Range;
+import com.google.common.collect.*;
 
 import db.*;
 import ghidra.program.model.address.*;
@@ -267,6 +267,155 @@ public enum DBTraceUtils {
 		}
 	}
 
+	public static abstract class RangeMapSetter<E, D extends Comparable<D>, R, V> {
+		protected abstract R getRange(E entry);
+
+		protected abstract V getValue(E entry);
+
+		protected abstract void remove(E entry);
+
+		protected abstract D getLower(R range);
+
+		protected abstract D getUpper(R range);
+
+		protected abstract R toRange(D lower, D upper);
+
+		protected abstract D getPrevious(D d);
+
+		protected abstract D getNext(D d);
+
+		protected abstract Iterable<E> getIntersecting(D lower, D upper);
+
+		protected abstract E put(R range, V value);
+
+		protected D getPreviousOrSame(D d) {
+			D prev = getPrevious(d);
+			if (prev == null) {
+				return d;
+			}
+			return prev;
+		}
+
+		protected D getNextOrSame(D d) {
+			D next = getNext(d);
+			if (next == null) {
+				return d;
+			}
+			return next;
+		}
+
+		protected boolean connects(R r1, R r2) {
+			return getPreviousOrSame(getLower(r1)).compareTo(getUpper(r2)) <= 0 ||
+				getPreviousOrSame(getLower(r2)).compareTo(getUpper(r1)) <= 0;
+		}
+
+		public E set(R range, V value) {
+			return set(getLower(range), getUpper(range), value);
+		}
+
+		public E set(D lower, D upper, V value) {
+			// Go one out to find abutting ranges, too.
+			D prev = getPreviousOrSame(lower);
+			D next = getNextOrSame(upper);
+			Map<R, V> toPut = new HashMap<>();
+			for (E entry : getIntersecting(prev, next)) {
+				R r = getRange(entry);
+				boolean precedesMin = getLower(r).compareTo(lower) < 0;
+				boolean succeedsMax = getUpper(r).compareTo(upper) > 0;
+				boolean sameVal = Objects.equals(getValue(entry), value);
+				if (precedesMin && succeedsMax && sameVal) {
+					return entry; // The value in this range is already set as specified
+				}
+				remove(entry);
+				if (precedesMin) {
+					if (sameVal) {
+						lower = getLower(r);
+					}
+					else {
+						toPut.put(toRange(getLower(r), prev), getValue(entry));
+					}
+				}
+				if (succeedsMax) {
+					if (sameVal) {
+						upper = getUpper(r);
+					}
+					else {
+						toPut.put(toRange(next, getUpper(r)), getValue(entry));
+					}
+				}
+			}
+			E result = put(toRange(lower, upper), value);
+			assert toPut.size() <= 2;
+			for (Entry<R, V> ent : toPut.entrySet()) {
+				put(ent.getKey(), ent.getValue());
+			}
+			return result;
+		}
+	}
+
+	public static abstract class AddressRangeMapSetter<E, V>
+			extends RangeMapSetter<E, Address, AddressRange, V> {
+		@Override
+		protected Address getLower(AddressRange range) {
+			return range.getMinAddress();
+		}
+
+		@Override
+		protected Address getUpper(AddressRange range) {
+			return range.getMaxAddress();
+		}
+
+		@Override
+		protected AddressRange toRange(Address lower, Address upper) {
+			return new AddressRangeImpl(lower, upper);
+		}
+
+		@Override
+		protected Address getPrevious(Address d) {
+			return d.previous();
+		}
+
+		@Override
+		protected Address getNext(Address d) {
+			return d.next();
+		}
+	}
+
+	public static abstract class LifespanMapSetter<E, V>
+			extends RangeMapSetter<E, Long, Range<Long>, V> {
+
+		@Override
+		protected Long getLower(Range<Long> range) {
+			return lowerEndpoint(range);
+		}
+
+		@Override
+		protected Long getUpper(Range<Long> range) {
+			return upperEndpoint(range);
+		}
+
+		@Override
+		protected Range<Long> toRange(Long lower, Long upper) {
+			return DBTraceUtils.toRange(lower, upper);
+		}
+
+		@Override
+		protected Long getPrevious(Long d) {
+			if (d == null || d == Long.MIN_VALUE) {
+				return null;
+			}
+			return d - 1;
+		}
+
+		@Override
+		protected Long getNext(Long d) {
+			if (d == null || d == Long.MAX_VALUE) {
+				return null;
+			}
+			return d + 1;
+		}
+	}
+
 	public static long lowerEndpoint(Range<Long> range) {
 		if (!range.hasLowerBound()) {
 			return Long.MIN_VALUE;
@@ -384,6 +533,16 @@ public enum DBTraceUtils {
 		}
 		// NOTE: We know it intersects 
 		lifespanSetter.accept(data, toRange(data.getY1(), lowerEndpoint(span) - 1));
+	}
+
+	public static List<Range<Long>> subtract(Range<Long> a, Range<Long> b) {
+		RangeSet<Long> set = TreeRangeSet.create();
+		set.add(a);
+		set.remove(b);
+		return set.asRanges()
+				.stream()
+				.map(r -> toRange(lowerEndpoint(r), upperEndpoint(r)))
+				.collect(Collectors.toList());
 	}
 
 	@SuppressWarnings("unchecked")

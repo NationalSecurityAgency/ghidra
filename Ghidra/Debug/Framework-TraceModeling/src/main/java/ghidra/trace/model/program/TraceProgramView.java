@@ -50,7 +50,7 @@ public interface TraceProgramView extends Program {
 	TraceTimeViewport getViewport();
 
 	/**
-	 * Get the latest snap
+	 * Get the trace's latest snap
 	 * 
 	 * @return the maximum snap
 	 */

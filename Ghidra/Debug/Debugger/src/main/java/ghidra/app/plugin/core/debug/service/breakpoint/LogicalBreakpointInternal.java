@@ -288,7 +288,7 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 		public TraceEnablement computeEnablement() {
 			TraceEnablement en = TraceEnablement.MISSING;
 			for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
-				en = en.combine(TraceEnablement.fromBool(bpt.obj.isEnabled()));
+				en = en.combine(TraceEnablement.fromBool(bpt.obj.isEnabled(recorder.getSnap())));
 				if (en == TraceEnablement.MIXED) {
 					return en;
 				}

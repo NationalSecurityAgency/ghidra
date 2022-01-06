@@ -18,24 +18,24 @@ package ghidra.trace.database.bookmark;
 import java.io.IOException;
 
 import ghidra.program.model.address.AddressSpace;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.bookmark.TraceBookmarkRegisterSpace;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.VersionException;
 
 public class DBTraceBookmarkRegisterSpace extends DBTraceBookmarkSpace
 		implements TraceBookmarkRegisterSpace {
-	private final DBTraceThread thread;
+	private final TraceThread thread;
 	private final int frameLevel;
 
 	public DBTraceBookmarkRegisterSpace(DBTraceBookmarkManager manager, AddressSpace space,
-			DBTraceThread thread, int frameLevel) throws VersionException, IOException {
+			TraceThread thread, int frameLevel) throws VersionException, IOException {
 		super(manager, space);
 		this.thread = thread;
 		this.frameLevel = frameLevel;
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return thread;
 	}
 

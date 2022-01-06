@@ -26,10 +26,10 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceBased;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace.TraceBookmarkChangeType;
 import ghidra.trace.model.bookmark.TraceBookmarkSpace;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectIndex;
@@ -65,7 +65,7 @@ public class DBTraceBookmarkSpace implements TraceBookmarkSpace, DBTraceSpaceBas
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return null;
 	}
 
