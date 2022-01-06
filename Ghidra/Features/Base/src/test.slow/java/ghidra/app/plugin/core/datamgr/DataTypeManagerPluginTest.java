@@ -349,10 +349,12 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		waitForTree();
 
 		// make sure the new node is selected
-		TreePath[] selectionPaths = tree.getSelectionPaths();
-		assertNotNull(selectionPaths);
-		assertEquals(1, selectionPaths.length);
+		waitFor(() -> {
+			TreePath[] selectionPaths = tree.getSelectionPaths();
+			return selectionPaths != null && selectionPaths.length == 1;
+		});
 
+		TreePath[] selectionPaths = tree.getSelectionPaths();
 		CategoryNode newMiscNode = (CategoryNode) programNode.getChild(newCategoryName);
 		GTreeNode selectedNode = (GTreeNode) selectionPaths[0].getLastPathComponent();
 		assertEquals(newMiscNode, selectedNode);
@@ -797,8 +799,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresByOffsetAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresByOffsetAction.NAME);
 		assertMatchingStructures(resultsProvider, "ArrayStruct");
 	}
 
@@ -813,8 +815,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresByOffsetAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresByOffsetAction.NAME);
 		assertMatchingStructures(resultsProvider);
 	}
 
@@ -829,8 +831,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresByOffsetAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresByOffsetAction.NAME);
 		assertMatchingStructures(resultsProvider, "ArrayStruct");
 	}
 
@@ -850,8 +852,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresByOffsetAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresByOffsetAction.NAME);
 		assertMatchingStructures(resultsProvider, "Structure_0x8", "Structure_0x10",
 			"Structure_0x20");
 	}
@@ -872,8 +874,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresBySizeAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresBySizeAction.NAME);
 		assertMatchingStructures(resultsProvider, "Structure_0x8");
 	}
 
@@ -893,8 +895,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresBySizeAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresBySizeAction.NAME);
 		assertMatchingStructures(resultsProvider, "Structure_0x10", "Structure_0x20");
 	}
 
