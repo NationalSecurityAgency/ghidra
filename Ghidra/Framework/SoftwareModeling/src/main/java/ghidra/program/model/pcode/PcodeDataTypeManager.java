@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.docking.settings.FormatSettingsDefinition;
 import ghidra.program.database.data.PointerTypedefInspector;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
@@ -784,6 +785,7 @@ public class PcodeDataTypeManager {
 	 */
 	private void buildTypeDef(StringBuilder resBuf, TypeDef type, int size) {
 		DataType refType = type.getDataType();
+		String format = null;
 		int sz = refType.getLength();
 		if (sz <= 0) {
 			sz = size;
@@ -810,9 +812,20 @@ public class PcodeDataTypeManager {
 				}
 			}
 		}
+		else {
+			if (FormatSettingsDefinition.DEF.hasValue(type.getDefaultSettings())) {
+				format = FormatSettingsDefinition.DEF.getValueString(type.getDefaultSettings());
+				if (format.length() > 4) {
+					format = format.substring(0, 3);
+				}
+			}
+		}
 
 		resBuf.append("<def");
 		appendNameIdAttributes(resBuf, type);
+		if (format != null) {
+			SpecXmlUtils.encodeStringAttribute(resBuf, "format", format);
+		}
 		resBuf.append('>');
 
 		buildTypeRef(resBuf, refType, sz);

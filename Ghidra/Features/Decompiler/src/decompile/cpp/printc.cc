@@ -1158,7 +1158,8 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
   force_unsigned_token = false;
   force_sized_token = false;
   if ((vn != (const Varnode *)0)&&(!vn->isAnnotation())) {
-    Symbol *sym = vn->getHigh()->getSymbol();
+    HighVariable *high = vn->getHigh();
+    Symbol *sym = high->getSymbol();
     if (sym != (Symbol *)0) {
       if (sym->isNameLocked() && (sym->getCategory() == Symbol::equate)) {
 	if (pushEquate(val,sz,(EquateSymbol *)sym,vn,op))
@@ -1168,6 +1169,8 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
     }
     force_unsigned_token = vn->isUnsignedPrint();
     force_sized_token = vn->isLongPrint();
+    if (displayFormat == 0)	// The symbol's formatting overrides any formatting on the data-type
+      displayFormat = high->getType()->getDisplayFormat();
   }
   if (sign && displayFormat != Symbol::force_char) { // Print the constant as signed
     uintb mask = calc_mask(sz);
@@ -1476,17 +1479,22 @@ void PrintC::pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,con
   uint4 displayFormat = 0;
   bool isSigned = (ct->getMetatype() == TYPE_INT);
   if ((vn != (const Varnode *)0)&&(!vn->isAnnotation())) {
-    Symbol *sym = vn->getHigh()->getSymbol();
+    HighVariable *high = vn->getHigh();
+    Symbol *sym = high->getSymbol();
     if (sym != (Symbol *)0) {
       if (sym->isNameLocked() && (sym->getCategory() == Symbol::equate)) {
 	if (pushEquate(val,vn->getSize(),(EquateSymbol *)sym,vn,op))
 	  return;
       }
       displayFormat = sym->getDisplayFormat();
-      if (displayFormat == Symbol::force_bin || displayFormat == Symbol::force_dec || displayFormat == Symbol::force_oct) {
-        push_integer(val, ct->getSize(), isSigned, vn, op);
-        return;
-      }
+    }
+    if (displayFormat == 0)
+      displayFormat = high->getType()->getDisplayFormat();
+  }
+  if (displayFormat != 0 && displayFormat != Symbol::force_char) {
+    if (!castStrategy->caresAboutCharRepresentation(vn, op)) {
+      push_integer(val, ct->getSize(), isSigned, vn, op);
+      return;
     }
   }
   if ((ct->getSize()==1)&&(val >= 0x80)) {

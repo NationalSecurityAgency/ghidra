@@ -1406,7 +1406,12 @@ void parse_C(Architecture *glb,istream &s)
     Datatype *ct = decl->buildType(glb);
     if (decl->getIdentifier().size() == 0)
       throw ParseError("Missing identifier for typedef");
-    glb->types->setName(ct,decl->getIdentifier());
+    if (ct->getMetatype() == TYPE_STRUCT) {
+      glb->types->setName(ct,decl->getIdentifier());
+    }
+    else {
+      glb->types->getTypedef(ct,decl->getIdentifier(),0,0);
+    }
   }
   else if (decl->getBaseType()->getMetatype()==TYPE_STRUCT) {
     // We parsed a struct, treat as a typedef
