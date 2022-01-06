@@ -52,6 +52,7 @@ import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.pcode.exec.PcodeFrame;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.trace.model.Trace;
@@ -350,10 +351,11 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	GhidraTable uniqueTable;
 	UniqueTableModel uniqueTableModel = new UniqueTableModel();
-	private GhidraTableFilterPanel<UniqueRow> uniqueFilterPanel;
+	GhidraTableFilterPanel<UniqueRow> uniqueFilterPanel;
 
 	GhidraTable pcodeTable;
 	PcodeTableModel pcodeTableModel = new PcodeTableModel();
+	JLabel instructionLabel;
 	// No filter panel on p-code
 
 	DockingAction actionStepBackward;
@@ -460,6 +462,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		JPanel pcodePanel = new JPanel(new BorderLayout());
 		pcodeTable = new GhidraTable(pcodeTableModel);
 		pcodePanel.add(new JScrollPane(pcodeTable));
+		instructionLabel = new JLabel();
+		pcodePanel.add(instructionLabel, BorderLayout.NORTH);
 		mainPanel.setLeftComponent(pcodePanel);
 
 		JPanel uniquePanel = new JPanel(new BorderLayout());
@@ -624,6 +628,9 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	}
 
 	protected void doLoadPcodeFrame() {
+		if (instructionLabel != null) {
+			instructionLabel.setText("(no instruction)");
+		}
 		if (emulationService == null) {
 			return;
 		}
@@ -663,6 +670,13 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 			 */
 			populateSingleton(EnumPcodeRow.DECODE);
 			return;
+		}
+		Instruction instruction = thread.getInstruction();
+		if (instruction == null) {
+			instructionLabel.setText("(no instruction)");
+		}
+		else {
+			instructionLabel.setText(instruction.toString());
 		}
 		PcodeFrame frame = thread.getFrame();
 		if (frame == null) {
