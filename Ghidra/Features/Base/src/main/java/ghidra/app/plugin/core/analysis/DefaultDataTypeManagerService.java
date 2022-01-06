@@ -193,6 +193,11 @@ public class DefaultDataTypeManagerService implements DataTypeManagerService {
 	}
 
 	@Override
+	public List<DataType> getSelectedDatatypes() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void setRecentlyUsed(DataType dt) {
 		throw new UnsupportedOperationException();
 	}
