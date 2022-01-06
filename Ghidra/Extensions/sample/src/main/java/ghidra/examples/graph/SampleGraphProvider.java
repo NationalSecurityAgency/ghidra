@@ -348,7 +348,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 			new MultiStateDockingAction<>(RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
 
 				@Override
-				protected void doActionPerformed(ActionContext context) {
+				public void actionPerformed(ActionContext context) {
 					// this callback is when the user clicks the button
 					LayoutProvider<SampleVertex, SampleEdge, SampleGraph> currentUserData =
 						getCurrentUserData();
