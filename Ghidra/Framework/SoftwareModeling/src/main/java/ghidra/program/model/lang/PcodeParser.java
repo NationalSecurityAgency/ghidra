@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pcodeCPort.slgh_compile;
+package ghidra.program.model.lang;
 
 import java.io.*;
 import java.util.*;
@@ -21,32 +21,39 @@ import java.util.stream.Collectors;
 
 import org.antlr.runtime.*;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jdom.*;
 
 import generic.stl.VectorSTL;
-import ghidra.app.plugin.processors.sleigh.SleighException;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.processors.sleigh.*;
+import ghidra.app.plugin.processors.sleigh.symbol.Symbol;
+import ghidra.app.plugin.processors.sleigh.symbol.SymbolTable;
+import ghidra.app.plugin.processors.sleigh.symbol.UseropSymbol;
+import ghidra.app.plugin.processors.sleigh.symbol.VarnodeSymbol;
+import ghidra.app.plugin.processors.sleigh.template.*;
 import ghidra.pcode.utils.MessageFormattingUtils;
 import ghidra.pcodeCPort.address.Address;
 import ghidra.pcodeCPort.context.SleighError;
-import ghidra.pcodeCPort.error.LowlevelError;
-import ghidra.pcodeCPort.semantics.*;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
+import ghidra.pcodeCPort.slgh_compile.*;
 import ghidra.pcodeCPort.slghsymbol.*;
-import ghidra.pcodeCPort.space.AddrSpace;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.pcodeCPort.slghsymbol.EndSymbol;
+import ghidra.pcodeCPort.slghsymbol.OperandSymbol;
+import ghidra.pcodeCPort.slghsymbol.StartSymbol;
+import ghidra.pcodeCPort.space.*;
 import ghidra.pcodeCPort.xml.DocumentStorage;
+import ghidra.program.model.address.*;
 import ghidra.sleigh.grammar.*;
 import ghidra.sleigh.grammar.SleighParser_SemanticParser.semantic_return;
 import ghidra.util.exception.AssertException;
 
+/**
+ * This class is intended to parse p-code snippets, typically from compiler specification files
+ * or extensions.  This is outside the normal SLEIGH compilation process, and the parser is built
+ * on top of an existing SleighLanguage.
+ */
 public class PcodeParser extends PcodeCompile {
 
-	public final static Logger log = LogManager.getLogger(PcodeParser.class);
-
 	private SleighBase sleigh;
+	private AddressFactory addrFactory;
 	private long tempbase;
 	private HashMap<String, SleighSymbol> symbolMap = new HashMap<>();
 
@@ -60,25 +67,14 @@ public class PcodeParser extends PcodeCompile {
 	}
 
 	/**
-	 * Build parser from a translator string
-	 * @param sleighSpec sleigh translator spec including address-spaces and register definitions, see
-	 * {@link SleighLanguage#buildTranslatorTag(ghidra.program.model.address.AddressFactory, long, ghidra.app.plugin.processors.sleigh.symbol.SymbolTable, boolean)}
-	 * @throws JDOMException
+	 * Build parser from an existing SleighLanguage.
+	 * @param language is the existing language
+	 * @param ubase is the starting offset for allocating temporary registers
 	 */
-	public PcodeParser(String sleighSpec) throws JDOMException {
-		DocumentStorage store = new DocumentStorage();
-		Document doc = null;
-		try {
-			doc = store.parseDocument(new StringBufferInputStream(sleighSpec));
-		}
-		catch (IOException e) {
-			throw new AssertException(); // unexpected on string
-		}
-		store.registerTag(doc.getRootElement());
+	public PcodeParser(SleighLanguage language, long ubase) {
 
-		PcodeTranslate translate = new PcodeTranslate();
-		translate.initialize(store);
-		sleigh = translate;
+		addrFactory = language.getAddressFactory();
+		sleigh = new PcodeTranslate(language, ubase);
 		initializeSymbols();
 	}
 
@@ -97,6 +93,7 @@ public class PcodeParser extends PcodeCompile {
 	 * Inject a symbol representing an "operand" to the pcode snippet.  This puts a placeholder in the
 	 * resulting template, which gets filled in with the context specific storage locations when final
 	 * p-code is generated
+	 * @param loc is location information for the operand
 	 * @param name of operand symbol
 	 * @param index to use for the placeholder
 	 */
@@ -130,6 +127,10 @@ public class PcodeParser extends PcodeCompile {
 		currentSymbols.clear();
 	}
 
+	public long getNextTempOffset() {
+		return tempbase;
+	}
+
 	@Override
 	public long allocateTemp() {
 		long base = tempbase;
@@ -138,8 +139,8 @@ public class PcodeParser extends PcodeCompile {
 	}
 
 	@Override
-	public VectorSTL<OpTpl> createMacroUse(Location location, MacroSymbol sym,
-			VectorSTL<ExprTree> param) {
+	public VectorSTL<ghidra.pcodeCPort.semantics.OpTpl> createMacroUse(Location location,
+			MacroSymbol sym, VectorSTL<ExprTree> param) {
 		throw new SleighError("Pcode snippet parsing does not support use of macros", location);
 	}
 
@@ -169,6 +170,7 @@ public class PcodeParser extends PcodeCompile {
 
 	@Override
 	public void recordNop(Location location) {
+		// No NOP statistics collected for snippet parsing
 	}
 
 	// Make sure label symbols are used properly
@@ -181,19 +183,19 @@ public class PcodeParser extends PcodeCompile {
 			LabelSymbol labsym = (LabelSymbol) sym;
 			if (labsym.getRefCount() == 0) {
 				errors.add(MessageFormattingUtils.format(labsym.location,
-						String.format("Label <%s> was placed but never used",  sym.getName())));
+					String.format("Label <%s> was placed but never used", sym.getName())));
 
 			}
 			else if (!labsym.isPlaced()) {
 				errors.add(MessageFormattingUtils.format(labsym.location,
-						String.format("Label <%s> was referenced but never placed",  sym.getName())));
+					String.format("Label <%s> was referenced but never placed", sym.getName())));
 			}
 		}
 		return errors.stream().collect(Collectors.joining("  "));
 
 	}
 
-	private ConstructTpl buildConstructor(ConstructTpl rtl) {
+	private ConstructTpl buildConstructor(ghidra.pcodeCPort.semantics.ConstructTpl rtl) {
 		String errstring = "";
 		if (rtl != null) {
 			errstring = checkLabels();
@@ -210,38 +212,99 @@ public class PcodeParser extends PcodeCompile {
 		if (errstring.length() != 0) {
 			throw new SleighException(errstring);
 		}
-		return rtl;
+		return translateConstructTpl(rtl);
 	}
 
+	/**
+	 * This class wraps on existing SleighLanguage with the SleighBase interface expected by
+	 * PcodeCompile.  It populates the symbol table with user-defined operations and the global
+	 * VarnodeSymbol objects, which typically includes all the general purpose registers.
+	 */
 	private static class PcodeTranslate extends SleighBase {
 
-		@Override
-		public void initialize(DocumentStorage store) {
-			Element el = store.getTag("sleigh");
-			if (el == null) {
-				throw new LowlevelError("Could not find sleigh tag");
+		private void copySpaces(SleighLanguage language) {
+			insertSpace(new ConstantSpace(this));
+			insertSpace(
+				new OtherSpace(this, SpaceNames.OTHER_SPACE_NAME, SpaceNames.OTHER_SPACE_INDEX));
+			AddressSpace[] spaces = language.getAddressFactory().getAllAddressSpaces();
+			for (AddressSpace spc : spaces) {
+				if (spc.getUnique() < 2) {
+					continue;
+				}
+				AddrSpace resSpace;
+				int sz = spc.getSize();
+				if (spc instanceof SegmentedAddressSpace) {
+					// TODO: SegmentedAddressSpace shouldn't really return 21
+					sz = 32;
+				}
+				if (sz > 64) {
+					sz = 64;
+				}
+				int bytesize = (sz + 7) / 8; // Convert bits to bytes
+				switch (spc.getType()) {
+					case AddressSpace.TYPE_UNIQUE:
+						resSpace = new UniqueSpace(this, spc.getUnique(), 0);
+						break;
+					case AddressSpace.TYPE_OTHER:
+						resSpace = new OtherSpace(this, spc.getName(), spc.getUnique());
+						break;
+					case AddressSpace.TYPE_RAM:
+						resSpace = new AddrSpace(this, spacetype.IPTR_PROCESSOR, spc.getName(),
+							bytesize, spc.getAddressableUnitSize(), spc.getUnique(),
+							AddrSpace.hasphysical, 1);
+						break;
+					case AddressSpace.TYPE_REGISTER:
+						resSpace = new AddrSpace(this, spacetype.IPTR_PROCESSOR, spc.getName(),
+							bytesize, spc.getAddressableUnitSize(), spc.getUnique(),
+							AddrSpace.hasphysical, 0);
+						break;
+					default:
+						resSpace = null;
+				}
+				if (resSpace == null) {
+					break;
+				}
+				insertSpace(resSpace);
 			}
-			target_endian = XmlUtils.decodeBoolean(el.getAttributeValue("bigendian")) ? 1 : 0;
-			alignment = XmlUtils.decodeUnknownInt(el.getAttributeValue("align"));
-			long ubase = XmlUtils.decodeUnknownLong(el.getAttributeValue("uniqbase"));
+			setDefaultSpace(language.getDefaultSpace().getUnique());
+		}
+
+		/**
+		 * Populate the predefined symbol table for the parser from the given SLEIGH language.
+		 * We only use user-defined op symbols and varnode symbols.
+		 * @param language is the SLEIGH language
+		 */
+		private void copySymbols(SleighLanguage language) {
+			SymbolTable langTable = language.getSymbolTable();
+			symtab.addScope();		// Global scope
+			for (Symbol sym : langTable.getSymbolList()) {
+				if (sym instanceof UseropSymbol) {
+					UserOpSymbol cloneSym = new UserOpSymbol(null, sym.getName());
+					cloneSym.setIndex(((UseropSymbol) sym).getIndex());
+					symtab.addSymbol(cloneSym);
+				}
+				else if (sym instanceof VarnodeSymbol) {
+					VarnodeData vData = ((VarnodeSymbol) sym).getFixedVarnode();
+					if ("contextreg".equals(sym.getName())) {
+						continue;
+					}
+					ghidra.pcodeCPort.slghsymbol.VarnodeSymbol cloneSym;
+					AddrSpace base = getSpace(vData.space.getUnique());
+					cloneSym = new ghidra.pcodeCPort.slghsymbol.VarnodeSymbol(null, sym.getName(),
+						base, vData.offset, vData.size);
+					symtab.addSymbol(cloneSym);
+				}
+			}
+		}
+
+		public PcodeTranslate(SleighLanguage language, long ubase) {
+			super();
+			target_endian = language.isBigEndian() ? 1 : 0;
+			alignment = 0;
 			setUniqueBase(ubase);
 
-			List<?> list = el.getChildren();
-			Iterator<?> iter = list.iterator();
-			Element child = (Element) iter.next();
-			while (child.getName().equals("floatformat")) {
-				child = (Element) iter.next(); // skip over
-			}
-			restoreXmlSpaces(child);
-
-			child = (Element) iter.next();
-
-			while ("truncate_space".equals(child.getName())) {
-				// TODO: do we care about space truncations ?
-				child = (Element) iter.next();
-			}
-
-			symtab.restoreXml(child, this);
+			copySpaces(language);
+			copySymbols(language);
 
 			for (int i = 0; i < numSpaces(); i++) {
 				AddrSpace space = getSpace(i);
@@ -250,29 +313,77 @@ public class PcodeParser extends PcodeCompile {
 		}
 
 		@Override
-		public int instructionLength(Address baseaddr) {
-			return 0;
+		public void initialize(DocumentStorage store) {
+			// Unused
 		}
 
 		@Override
 		public int printAssembly(PrintStream s, int size, Address baseaddr) {
 			return 0;
 		}
+
+		@Override
+		public int instructionLength(Address baseaddr) {
+			return 0;
+		}
 	}
 
-	public static String stringifyTemplate(ConstructTpl ctl) {
-
-		if (ctl == null) {
-			return null;
+	public ConstructTpl translateConstructTpl(
+			ghidra.pcodeCPort.semantics.ConstructTpl constructTpl) {
+		HandleTpl handle = null;
+		if (constructTpl.getResult() != null) {
+			handle = translateHandleTpl(constructTpl.getResult());
 		}
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		ctl.saveXml(new PrintStream(out), -1);   // for main section?
-		return out.toString();
+		OpTpl[] vec = new OpTpl[constructTpl.getOpvec().size()];
+		for (int i = 0; i < vec.length; ++i) {
+			vec[i] = translateOpTpl(constructTpl.getOpvec().get(i));
+		}
+		return new ConstructTpl(vec, handle, constructTpl.numLabels());
+	}
+
+	public HandleTpl translateHandleTpl(ghidra.pcodeCPort.semantics.HandleTpl handleTpl) {
+		return new HandleTpl(translateConstTpl(handleTpl.getSpace()),
+			translateConstTpl(handleTpl.getSize()), translateConstTpl(handleTpl.getPtrSpace()),
+			translateConstTpl(handleTpl.getPtrOffset()), translateConstTpl(handleTpl.getPtrSize()),
+			translateConstTpl(handleTpl.getTempSpace()),
+			translateConstTpl(handleTpl.getTempOffset()));
+	}
+
+	public OpTpl translateOpTpl(ghidra.pcodeCPort.semantics.OpTpl opTpl) {
+		VarnodeTpl output = null;
+		if (opTpl.getOut() != null) {
+			output = translateVarnodeTpl(opTpl.getOut());
+		}
+		VarnodeTpl[] input = new VarnodeTpl[opTpl.numInput()];
+		for (int i = 0; i < input.length; ++i) {
+			input[i] = translateVarnodeTpl(opTpl.getIn(i));
+		}
+		return new OpTpl(opTpl.getOpcode().ordinal(), output, input);
+	}
+
+	public VarnodeTpl translateVarnodeTpl(ghidra.pcodeCPort.semantics.VarnodeTpl varnodeTpl) {
+		return new VarnodeTpl(translateConstTpl(varnodeTpl.getSpace()),
+			translateConstTpl(varnodeTpl.getOffset()), translateConstTpl(varnodeTpl.getSize()));
+	}
+
+	public ConstTpl translateConstTpl(ghidra.pcodeCPort.semantics.ConstTpl constTpl) {
+		AddrSpace spc = constTpl.getSpace();
+		AddressSpace resSpace = null;
+		if (spc != null) {
+			resSpace = addrFactory.getAddressSpace(spc.getName());
+		}
+		int select = 0;
+		ghidra.pcodeCPort.semantics.ConstTpl.v_field field = constTpl.getSelect();
+		if (field != null) {
+			select = field.ordinal();
+		}
+		return new ConstTpl(constTpl.getType().ordinal(), constTpl.getReal(), resSpace,
+			constTpl.getHandleIndex(), select);
 	}
 
 	/**
 	 * Compile pcode semantic statements.
-	 * @param pcodeStatements
+	 * @param pcodeStatements is the raw source to parse
 	 * @param srcFile source filename from which pcodeStatements came (
 	 * @param srcLine line number in srcFile corresponding to pcodeStatements
 	 * @return ConstructTpl. A null may be returned or 
@@ -357,32 +468,35 @@ public class PcodeParser extends PcodeCompile {
 	}
 
 	@Override
-	public VectorSTL<OpTpl> createCrossBuild(Location where, VarnodeTpl v, SectionSymbol second) {
+	public VectorSTL<ghidra.pcodeCPort.semantics.OpTpl> createCrossBuild(Location where,
+			ghidra.pcodeCPort.semantics.VarnodeTpl v, SectionSymbol second) {
 		throw new SleighError("Pcode snippet parsing does not support use of sections", where);
 	}
 
 	@Override
-	public SectionVector standaloneSection(ConstructTpl main) {
+	public SectionVector standaloneSection(ghidra.pcodeCPort.semantics.ConstructTpl main) {
 		// Create SectionVector for just the main rtl section with no named sections
 		SectionVector res = new SectionVector(main, null);
 		return res;
 	}
 
 	@Override
-	public SectionVector firstNamedSection(ConstructTpl main, SectionSymbol sym) {
-		throw new SleighError("Pcode snippet parsing does not support use of sections",
-			sym.location);
-	}
-
-	@Override
-	public SectionVector nextNamedSection(SectionVector vec, ConstructTpl section,
+	public SectionVector firstNamedSection(ghidra.pcodeCPort.semantics.ConstructTpl main,
 			SectionSymbol sym) {
 		throw new SleighError("Pcode snippet parsing does not support use of sections",
 			sym.location);
 	}
 
 	@Override
-	public SectionVector finalNamedSection(SectionVector vec, ConstructTpl section) {
+	public SectionVector nextNamedSection(SectionVector vec,
+			ghidra.pcodeCPort.semantics.ConstructTpl section, SectionSymbol sym) {
+		throw new SleighError("Pcode snippet parsing does not support use of sections",
+			sym.location);
+	}
+
+	@Override
+	public SectionVector finalNamedSection(SectionVector vec,
+			ghidra.pcodeCPort.semantics.ConstructTpl section) {
 		throw new SleighError("Pcode snippet parsing does not support use of sections", null); // can never get here
 	}
 }

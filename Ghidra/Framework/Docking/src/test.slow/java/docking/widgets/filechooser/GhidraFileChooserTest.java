@@ -19,15 +19,11 @@
 package docking.widgets.filechooser;
 
 import static docking.widgets.filechooser.GhidraFileChooserMode.*;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.text.IsEmptyString.isEmptyOrNullString;
 import static org.junit.Assert.*;
 
-import java.awt.*;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseEvent;
-import java.io.*;
-import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,6 +31,12 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import java.awt.*;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseEvent;
+import java.io.*;
+import java.nio.file.*;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -1336,7 +1338,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		DirectoryList dirlist = getListView();
 		DirectoryListModel listModel = (DirectoryListModel) dirlist.getModel();
-		File[] roots = chooser.getModel().getRoots();
+		File[] roots = chooser.getModel().getRoots(false);
 		assertEquals(roots.length, listModel.getSize());
 		for (File element : roots) {
 			listModel.contains(element);

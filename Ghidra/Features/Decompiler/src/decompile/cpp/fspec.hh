@@ -286,12 +286,13 @@ public:
 /// value of the pointer
 class FspecSpace : public AddrSpace {
 public:
-  FspecSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind);	///< Constructor
+  FspecSpace(AddrSpaceManager *m,const Translate *t,int4 ind);	///< Constructor
   virtual void saveXmlAttributes(ostream &s,uintb offset) const;
   virtual void saveXmlAttributes(ostream &s,uintb offset,int4 size) const;
   virtual void printRaw(ostream &s,uintb offset) const;
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el);
+  static const string NAME;		///< Reserved name for the fspec space
 };
 
 /// \brief Basic elements of a parameter: address, data-type, properties

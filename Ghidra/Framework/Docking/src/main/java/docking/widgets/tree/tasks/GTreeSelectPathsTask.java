@@ -98,7 +98,7 @@ public class GTreeSelectPathsTask extends GTreeTask {
 		selectionModel.setSelectionPaths(treePaths, origin);
 
 		if (treePaths != null && treePaths.length > 0) {
-			// Scroll to the last item, as the tree will make the given path appear at the 
+			// Scroll to the last item, as the tree will make the given path appear at the
 			// bottom of the view.  By scrolling the last item, all the selected items above
 			// this one will appear in the view as well.
 			jTree.scrollPathToVisible(treePaths[treePaths.length - 1]);

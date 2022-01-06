@@ -34,7 +34,7 @@ public abstract class AbstractDockingTool implements Tool {
 	protected DockingWindowManager winMgr;
 	protected ToolActions toolActions;
 	protected Map<String, ToolOptions> optionsMap = new HashMap<>();
-	protected boolean configChangedFlag;
+	private boolean configChangedFlag;
 
 	@Override
 	public boolean isVisible() {

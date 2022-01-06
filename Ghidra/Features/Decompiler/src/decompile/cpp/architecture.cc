@@ -644,9 +644,9 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
   translate = newtrans;
   modifySpaces(newtrans);	// Give architecture chance to modify spaces, before copying
   copySpaces(newtrans);
-  insertSpace( new FspecSpace(this,translate,"fspec",numSpaces()));
-  insertSpace( new IopSpace(this,translate,"iop",numSpaces()));
-  insertSpace( new JoinSpace(this,translate,"join",numSpaces()));
+  insertSpace( new FspecSpace(this,translate,numSpaces()));
+  insertSpace( new IopSpace(this,translate,numSpaces()));
+  insertSpace( new JoinSpace(this,translate,numSpaces()));
   userops.initialize(this);
   if (translate->getAlignment() <= 8)
     min_funcsymbol_size = translate->getAlignment();
@@ -843,7 +843,7 @@ void Architecture::addOtherSpace(void)
 
 {
   Scope *scope = symboltab->getGlobalScope();
-  AddrSpace *otherSpace = getSpaceByName("OTHER");
+  AddrSpace *otherSpace = getSpaceByName(OtherSpace::NAME);
   symboltab->addRange(scope,otherSpace,0,otherSpace->getHighest());
   if (otherSpace->isOverlayBase()) {
     int4 num = numSpaces();

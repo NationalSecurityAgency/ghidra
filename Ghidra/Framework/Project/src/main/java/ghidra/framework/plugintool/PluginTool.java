@@ -137,7 +137,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 		boolean hasErrors = restoreFromXml(template.getToolElement());
 		if (!hasErrors) {
-			configChangedFlag = false;
+			setConfigChanged(false);
 		}
 		optionsMgr.validateOptions();
 	}
@@ -1095,7 +1095,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	public boolean shouldSave() {
-		return configChangedFlag; // ignore the window layout changes
+		return hasConfigChanged(); // ignore the window layout changes
 	}
 
 	/**
@@ -1106,28 +1106,26 @@ public abstract class PluginTool extends AbstractDockingTool {
 		if (toolServices.canAutoSave(this)) {
 			saveTool();
 		}
-		else {
-			if (configChangedFlag) {
-				int result = OptionDialog.showOptionDialog(getToolFrame(), SAVE_DIALOG_TITLE,
-					"This tool has changed.  There are/were multiple instances of this tool\n" +
-						"running and Ghidra cannot determine if this tool instance should\n" +
-						"automatically be saved.  Do you want to save the configuration of this tool\n" +
-						"instance?",
-					"Save", "Save As...", "Don't Save", OptionDialog.WARNING_MESSAGE);
-				if (result == OptionDialog.CANCEL_OPTION) {
-					return false;
-				}
-				if (result == OptionDialog.OPTION_ONE) {
-					saveTool();
-				}
-				else if (result == OptionDialog.OPTION_TWO) {
-					boolean didSave = saveToolAs();
-					if (!didSave) {
-						return doSaveTool();
-					}
-				}
-				// option 3 is don't save; just exit
+		else if (hasConfigChanged()) {
+			int result = OptionDialog.showOptionDialog(getToolFrame(), SAVE_DIALOG_TITLE,
+				"This tool has changed.  There are/were multiple instances of this tool\n" +
+					"running and Ghidra cannot determine if this tool instance should\n" +
+					"automatically be saved.  Do you want to save the configuration of this tool\n" +
+					"instance?",
+				"Save", "Save As...", "Don't Save", OptionDialog.WARNING_MESSAGE);
+			if (result == OptionDialog.CANCEL_OPTION) {
+				return false;
 			}
+			if (result == OptionDialog.OPTION_ONE) {
+				saveTool();
+			}
+			else if (result == OptionDialog.OPTION_TWO) {
+				boolean didSave = saveToolAs();
+				if (!didSave) {
+					return doSaveTool();
+				}
+			}
+			// option 3 is don't save; just exit
 		}
 		return true;
 	}

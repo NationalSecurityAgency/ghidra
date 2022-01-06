@@ -24,9 +24,7 @@
 Funcdata::Funcdata(const string &nm,Scope *scope,const Address &addr,FunctionSymbol *sym,int4 sz)
   : baseaddr(addr),
     funcp(),
-    vbank(scope->getArch(),
-	  scope->getArch()->getUniqueSpace(),
-	  0x10000000),		// Unique space which is reused per function starts here
+    vbank(scope->getArch()),
     heritage(this),
     covermerge(*this)
 

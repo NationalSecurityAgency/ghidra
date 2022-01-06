@@ -36,6 +36,7 @@ import ghidra.framework.remote.GhidraServerHandle;
 import ghidra.net.ApplicationKeyManagerFactory;
 import ghidra.server.remote.ServerTestUtil;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
+import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 @Category(PortSensitiveCategory.class)
@@ -110,7 +111,8 @@ public class GhidraServerSerialFilterFailureTest extends AbstractGhidraHeadlessI
 
 		ServerInfo server = new ServerInfo("localhost", ServerTestUtil.GHIDRA_TEST_SERVER_PORT);
 		
-		GhidraServerHandle serverHandle = ServerConnectTask.getGhidraServerHandle(server);
+		GhidraServerHandle serverHandle =
+			ServerConnectTask.getGhidraServerHandle(server, TaskMonitor.DUMMY);
 		
 		try {
 			serverHandle.getRepositoryServer(getBogusUserSubject(), new Callback[0]);

@@ -54,7 +54,7 @@ dependencies {
 	runtimeOnly "org.slf4j:slf4j-nop:1.7.25"
 	
 	// use this if you want slf4j log messages sent to log4j
-	//	runtimeOnly "org.apache.logging.log4j:log4j-slf4j-impl:2.17.0" 
+	//	runtimeOnly "org.apache.logging.log4j:log4j-slf4j-impl:2.17.1" 
 	
    	compileOnly "junit:junit:4.12"
 	
