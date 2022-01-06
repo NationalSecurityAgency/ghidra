@@ -171,7 +171,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			if (ctxSpace == null) {
 				return;
 			}
-			ctxSpace.setValue(language, null, tasr.getLifespan(), tasr.getRange());
+			ctxSpace.removeValue(language, contextReg, tasr.getLifespan(), tasr.getRange());
 			return;
 		}
 		DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, true);
