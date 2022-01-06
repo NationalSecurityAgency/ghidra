@@ -127,27 +127,6 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 		return codecElem;
 	}
 
-	class A extends DBCachedDomainObjectAdapter {
-
-		protected A(DBHandle dbh, DBOpenMode openMode, TaskMonitor monitor, String name,
-				int timeInterval, int bufSize, Object consumer) {
-			super(dbh, openMode, monitor, name, timeInterval, bufSize, consumer);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public boolean isChangeable() {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		@Override
-		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-	}
-
 	protected void checkCodecTypes(TypeElement objectType) {
 
 		//experiment(new Blargh(null, null));
