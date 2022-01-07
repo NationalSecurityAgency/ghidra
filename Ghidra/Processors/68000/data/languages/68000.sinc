@@ -604,6 +604,12 @@ macro addflags(op1,op2) {
  XF = CF;
 }
 
+macro addxflags(op1, op2) {
+	local opSum = op1 + op2;
+	CF = carry(op1, op2) || carry(opSum, zext(XF));
+	VF = scarry(op1, op2) ^^ scarry(opSum, zext(XF));
+}
+
 macro subflags(op1,op2) {
  CF = op1 < op2;
  VF = sborrow(op1,op2);
@@ -726,11 +732,11 @@ with : extGUARD=1 {
 
 
 :addx.b Tyb,Txb			is op=13 & op8=1 & op67=0 & op45=0 & Tyb & Txb
-					{ local tmp =XF+Tyb; addflags(tmp,Txb); Txb=Txb+tmp; extendedResultFlags(Txb); }
+					{ addxflags(Tyb,Txb); Txb=Tyb+Txb+zext(XF); extendedResultFlags(Txb); }
 :addx.w Tyw,Txw			is op=13 & op8=1 & op67=1 & op45=0 & Tyw & Txw
-					{ local tmp =zext(XF)+Tyw; addflags(tmp,Txw); Txw=Txw+tmp; extendedResultFlags(Txw); }
+					{ addxflags(Tyw,Txw); Txw=Tyw+Txw+zext(XF); extendedResultFlags(Txw); }
 :addx.l Ty,Tx			is op=13 & op8=1 & op67=2 & op45=0 & Ty & Tx
-					{ local tmp =zext(XF)+Ty; addflags(tmp,Tx); Tx=Tx+tmp; extendedResultFlags(Tx); }
+					{ addxflags(Ty,Tx); Tx=Ty+Tx+zext(XF); extendedResultFlags(Tx); }
 
 :and.b eab,reg9dnb		is (op=12 & reg9dnb & op68=0 & $(DAT_ALTER_ADDR_MODES))... & eab				{ logflags(); reg9dnb = reg9dnb & eab; resflags(reg9dnb); }
 :and.w eaw,reg9dnw		is (op=12 & reg9dnw & op68=1 & $(DAT_ALTER_ADDR_MODES))... & eaw				{ logflags(); reg9dnw = reg9dnw & eaw; resflags(reg9dnw); }
