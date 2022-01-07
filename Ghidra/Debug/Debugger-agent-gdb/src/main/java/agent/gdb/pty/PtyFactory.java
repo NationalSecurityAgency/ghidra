@@ -17,10 +17,30 @@ package agent.gdb.pty;
 
 import java.io.IOException;
 
+import agent.gdb.pty.linux.LinuxPtyFactory;
+import agent.gdb.pty.windows.ConPtyFactory;
+import ghidra.framework.OperatingSystem;
+
 /**
  * A mechanism for opening pseudo-terminals
  */
 public interface PtyFactory {
+
+	/**
+	 * Choose a factory of local pty's for the host operating system
+	 * 
+	 * @return the factory
+	 */
+	static PtyFactory local() {
+		switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
+			case LINUX:
+				return new LinuxPtyFactory();
+			case WINDOWS:
+				return new ConPtyFactory();
+			default:
+				throw new UnsupportedOperationException();
+		}
+	}
 
 	/**
 	 * Open a new pseudo-terminal

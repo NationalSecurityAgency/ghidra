@@ -144,7 +144,8 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 				gdb.start(gdbCmd, args);
 			}
 			catch (IOException e) {
-				throw new DebuggerModelTerminatingException("Error while starting GDB", e);
+				throw new DebuggerModelTerminatingException(
+					"Error while starting GDB: " + e.getMessage(), e);
 			}
 		}).thenCompose(__ -> {
 			return gdb.runRC();

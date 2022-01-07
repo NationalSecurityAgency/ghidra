@@ -15,12 +15,11 @@
  */
 package agent.gdb.manager.impl;
 
-import static ghidra.async.AsyncUtils.loop;
-
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -40,12 +39,14 @@ import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import agent.gdb.manager.parsing.GdbMiParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import agent.gdb.pty.*;
+import agent.gdb.pty.windows.AnsiBufferedInputStream;
 import ghidra.GhidraApplicationLayout;
 import ghidra.async.*;
 import ghidra.async.AsyncLock.Hold;
 import ghidra.dbg.error.DebuggerModelTerminatingException;
 import ghidra.dbg.util.HandlerMap;
 import ghidra.dbg.util.PrefixMap;
+import ghidra.framework.OperatingSystem;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -107,8 +108,13 @@ public class GdbManagerImpl implements GdbManager {
 		PtyThread(Pty pty, Channel channel, Interpreter interpreter) {
 			this.pty = pty;
 			this.channel = channel;
-			this.reader =
-				new BufferedReader(new InputStreamReader(pty.getParent().getInputStream()));
+			InputStream inputStream = pty.getParent().getInputStream();
+			// TODO: This should really only be applied to the MI2 console
+			// But, we don't know what we have until we read it....
+			if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
+				inputStream = new AnsiBufferedInputStream(inputStream);
+			}
+			this.reader = new BufferedReader(new InputStreamReader(inputStream));
 			this.interpreter = interpreter;
 			hasWriter = new CompletableFuture<>();
 		}
@@ -202,9 +208,9 @@ public class GdbManagerImpl implements GdbManager {
 	private final AsyncLock cmdLock = new AsyncLock();
 	private final AtomicReference<AsyncLock.Hold> cmdLockHold = new AtomicReference<>(null);
 	private ExecutorService executor;
-	private final AsyncTimer timer = AsyncTimer.DEFAULT_TIMER;
 
 	private GdbPendingCommand<?> curCmd = null;
+	private int interruptCount = 0;
 
 	private final Map<Integer, GdbInferiorImpl> inferiors = new LinkedHashMap<>();
 	private GdbInferiorImpl curInferior = null;
@@ -248,6 +254,7 @@ public class GdbManagerImpl implements GdbManager {
 			File userSettings = layout.getUserSettingsDir();
 			File logFile = new File(userSettings, "GDB.log");
 			try {
+				logFile.getParentFile().mkdirs();
 				logFile.createNewFile();
 			}
 			catch (Exception e) {
@@ -287,6 +294,7 @@ public class GdbManagerImpl implements GdbManager {
 	}
 
 	private void defaultPrefixes() {
+		mi2PrefixMap.put("-exec-interrupt", GdbCommandEchoInterruptEvent::new);
 		mi2PrefixMap.put("-", GdbCommandEchoEvent::new);
 		mi2PrefixMap.put("~", GdbConsoleOutputEvent::fromMi2);
 		mi2PrefixMap.put("@", GdbTargetOutputEvent::new);
@@ -320,6 +328,7 @@ public class GdbManagerImpl implements GdbManager {
 	}
 
 	private void defaultHandlers() {
+		handlerMap.putVoid(GdbCommandEchoInterruptEvent.class, this::pushCmdInterrupt);
 		handlerMap.putVoid(GdbCommandEchoEvent.class, this::ignoreCmdEcho);
 		handlerMap.putVoid(GdbConsoleOutputEvent.class, this::processStdOut);
 		handlerMap.putVoid(GdbTargetOutputEvent.class, this::processTargetOut);
@@ -637,7 +646,8 @@ public class GdbManagerImpl implements GdbManager {
 						.get(10, TimeUnit.SECONDS);
 			}
 			catch (InterruptedException | ExecutionException | TimeoutException e) {
-				throw new IOException("Could not detect GDB's interpreter mode");
+				throw new IOException(
+					"Could not detect GDB's interpreter mode. Try " + gdbCmd + " -i mi2");
 			}
 			if (state.get() == GdbState.EXIT) {
 				throw new IOException("GDB terminated before first prompt");
@@ -651,15 +661,24 @@ public class GdbManagerImpl implements GdbManager {
 					// Looks terrible, but we're already in this world
 					cliThread.writer.print("set confirm off" + newLine);
 					cliThread.writer.print("set pagination off" + newLine);
-					cliThread.writer
-							.print("new-ui mi2 " + mi2Pty.getChild().nullSession() + newLine);
+					String ptyName;
+					try {
+						ptyName = Objects.requireNonNull(mi2Pty.getChild().nullSession());
+					}
+					catch (UnsupportedOperationException e) {
+						throw new IOException(
+							"Pty implementation does not support null sessions. Try " + gdbCmd +
+								" i mi2",
+							e);
+					}
+					cliThread.writer.print("new-ui mi2 " + ptyName + newLine);
 					cliThread.writer.flush();
 
 					mi2Thread = new PtyThread(mi2Pty, Channel.STDOUT, Interpreter.MI2);
 					mi2Thread.setName("GDB Read MI2");
 					mi2Thread.start();
 					try {
-						mi2Thread.hasWriter.get(2, TimeUnit.SECONDS);
+						mi2Thread.hasWriter.get(10, TimeUnit.SECONDS);
 					}
 					catch (InterruptedException | ExecutionException | TimeoutException e) {
 						throw new IOException(
@@ -720,10 +739,13 @@ public class GdbManagerImpl implements GdbManager {
 			// NB. confirm and pagination are already disabled here
 			return AsyncUtils.NIL;
 		}
-		else {
-			// NB. Don't disable pagination here. MI2 is not paginated.
-			return console("set confirm off", CompletesWithRunning.CANNOT);
-		}
+		// NB. Don't disable pagination here. MI2 is not paginated.
+		return CompletableFuture.allOf(
+			console("set confirm off", CompletesWithRunning.CANNOT),
+			console("set new-console on", CompletesWithRunning.CANNOT).exceptionally(e -> {
+				// not Windows. So what?
+				return null;
+			}));
 	}
 
 	protected void resync() {
@@ -918,6 +940,12 @@ public class GdbManagerImpl implements GdbManager {
 	}
 
 	protected synchronized void processEvent(GdbEvent<?> evt) {
+		if (evt instanceof AbstractGdbCompletedCommandEvent && interruptCount > 0) {
+			interruptCount--;
+			Msg.debug(this, "Ignoring " + evt +
+				" from -exec-interrupt. new count = " + interruptCount);
+			return;
+		}
 		/**
 		 * NOTE: I've forgotten why, but the the state update needs to happen between handle and
 		 * finish.
@@ -1004,6 +1032,10 @@ public class GdbManagerImpl implements GdbManager {
 
 	protected void processGdbExited(int exitcode) {
 		Msg.info(this, "GDB exited with code " + exitcode);
+	}
+
+	protected void pushCmdInterrupt(GdbCommandEchoInterruptEvent evt, Void v) {
+		interruptCount++;
 	}
 
 	/**
@@ -1376,6 +1408,7 @@ public class GdbManagerImpl implements GdbManager {
 	/**
 	 * Check that a command completion event was claimed
 	 * 
+	 * <p>
 	 * Except under certain error conditions, GDB should never issue a command completed event that
 	 * is not associated with a command. A command implementation in the manager must claim the
 	 * completion event. This is an assertion to ensure no implementation forgets to do that.
@@ -1736,33 +1769,6 @@ public class GdbManagerImpl implements GdbManager {
 	public CompletableFuture<String> consoleCapture(String command, CompletesWithRunning cwr) {
 		return execute(new GdbConsoleExecCommand(this, null, null, command,
 			GdbConsoleExecCommand.Output.CAPTURE, cwr));
-	}
-
-	@Override
-	public CompletableFuture<Void> interrupt() {
-		AtomicInteger retryCount = new AtomicInteger();
-		return loop(TypeSpec.VOID, loop -> {
-			GdbCommand<Void> interrupt = new GdbInterruptCommand(this);
-			execute(interrupt).thenApply(e -> (Throwable) null)
-					.exceptionally(e -> e)
-					.handle(loop::consume);
-		}, TypeSpec.cls(Throwable.class), (exc, loop) -> {
-			Msg.debug(this, "Executed an interrupt");
-			if (exc == null) {
-				loop.exit();
-			}
-			else if (state.get() == GdbState.STOPPED) {
-				// Not the cleanest, but as long as we're stopped, why not call it good?
-				loop.exit();
-			}
-			else if (retryCount.getAndAdd(1) >= INTERRUPT_MAX_RETRIES) {
-				loop.exit(exc);
-			}
-			else {
-				Msg.error(this, "Error executing interrupt: " + exc);
-				timer.mark().after(INTERRUPT_RETRY_PERIOD_MILLIS).handle(loop::repeat);
-			}
-		});
 	}
 
 	@Override

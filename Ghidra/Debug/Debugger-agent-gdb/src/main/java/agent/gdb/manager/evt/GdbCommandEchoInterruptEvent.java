@@ -18,13 +18,16 @@ package agent.gdb.manager.evt;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 
 /**
- * An "event" corresponding with GDB/MI commands
+ * An "event" corresponding with the {@code -exec-interrupt} GDB/MI command
  * 
  * <p>
- * If using a PTY configured with local echo, the manager needs to recognize and ignore the commands
- * it issued. GDB/MI makes them easy to distinguish, because they start with "-".
+ * If issued, the {@code -exec-interrupt} command is always issued "out of band". It skips the queue
+ * and is printed straight to GDB's pty, usually preceded by a Ctrl-C (char 3). As a result, GDB is
+ * going to print {@code ^done}, which will get mistaken for the completion of a command in the
+ * queue. By recognizing the command being echoed back, we can identify the done event that does
+ * with it, and ignore it.
  */
-public class GdbCommandEchoEvent extends AbstractGdbEvent<String> {
+public class GdbCommandEchoInterruptEvent extends AbstractGdbEvent<String> {
 
 	/**
 	 * Construct a new "event", passing the tail through as information
@@ -32,7 +35,7 @@ public class GdbCommandEchoEvent extends AbstractGdbEvent<String> {
 	 * @param tail the text following the event type in the GDB/MI event record
 	 * @throws GdbParseError if the tail cannot be parsed
 	 */
-	public GdbCommandEchoEvent(CharSequence tail) throws GdbParseError {
+	public GdbCommandEchoInterruptEvent(CharSequence tail) throws GdbParseError {
 		super(tail);
 	}
 
