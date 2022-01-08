@@ -62,24 +62,19 @@ public interface InjectPayload {
 			index = i;
 		}
 
-		@Override
-		public boolean equals(Object obj) {
-			InjectParameter op2 = (InjectParameter) obj;
-			if (index != op2.index || size != op2.size) {
+		/**
+		 * Determine if this InjectParameter and another instance are equivalent
+		 * @param obj is the other instance
+		 * @return true if they are equivalent
+		 */
+		public boolean isEquivalent(InjectParameter obj) {
+			if (!name.equals(obj.name)) {
 				return false;
 			}
-			if (!name.equals(op2.name)) {
+			if (index != obj.index || size != obj.size) {
 				return false;
 			}
 			return true;
-		}
-
-		@Override
-		public int hashCode() {
-			int hash = name.hashCode();
-			hash = 79 * hash + index;
-			hash = 79 * hash + size;
-			return hash;
 		}
 	}
 
@@ -160,4 +155,12 @@ public interface InjectPayload {
 	 * @throws XmlParseException for badly formed XML
 	 */
 	public void restoreXml(XmlPullParser parser, SleighLanguage language) throws XmlParseException;
+
+	/**
+	 * Determine if this InjectPayload and another instance are equivalent
+	 * (have the same name and generate the same p-code)
+	 * @param obj is the other payload
+	 * @return true if they are equivalent
+	 */
+	public boolean isEquivalent(InjectPayload obj);
 }

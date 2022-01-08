@@ -617,57 +617,58 @@ public class PrototypeModel {
 		return inputParams.getPotentialRegisterStorage(prog);
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		PrototypeModel op2 = (PrototypeModel) obj;
-		if (!name.equals(op2.name)) {
+	/**
+	 * Determine if this PrototypeModel is equivalent to another instance
+	 * @param obj is the other instance
+	 * @return true if they are equivalent
+	 */
+	public boolean isEquivalent(PrototypeModel obj) {
+		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		if (extrapop != op2.extrapop || stackshift != op2.stackshift) {
+		if (!name.equals(obj.name)) {
 			return false;
 		}
-		if (genericCallingConvention != op2.genericCallingConvention) {
+		if (extrapop != obj.extrapop || stackshift != obj.stackshift) {
 			return false;
 		}
-		if (hasThis != op2.hasThis || isConstruct != op2.isConstruct) {
+		if (genericCallingConvention != obj.genericCallingConvention) {
 			return false;
 		}
-		if (hasUponEntry != op2.hasUponEntry || hasUponReturn != op2.hasUponReturn) {
+		if (hasThis != obj.hasThis || isConstruct != obj.isConstruct) {
 			return false;
 		}
-		if (inputListType != op2.inputListType) {
+		if (hasUponEntry != obj.hasUponEntry || hasUponReturn != obj.hasUponReturn) {
 			return false;
 		}
-		if (!inputParams.equals(op2.inputParams)) {
+		if (inputListType != obj.inputListType) {
 			return false;
 		}
-		if (!outputParams.equals(op2.outputParams)) {
+		if (!inputParams.isEquivalent(obj.inputParams)) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(unaffected, op2.unaffected)) {
+		if (!outputParams.isEquivalent(obj.outputParams)) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(killedbycall, op2.killedbycall)) {
+		if (!SystemUtilities.isArrayEqual(unaffected, obj.unaffected)) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(likelytrash, op2.likelytrash)) {
+		if (!SystemUtilities.isArrayEqual(killedbycall, obj.killedbycall)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(localRange, op2.localRange)) {
+		if (!SystemUtilities.isArrayEqual(likelytrash, obj.likelytrash)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(paramRange, op2.paramRange)) {
+		if (!SystemUtilities.isEqual(localRange, obj.localRange)) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(returnaddress, op2.returnaddress)) {
+		if (!SystemUtilities.isEqual(paramRange, obj.paramRange)) {
+			return false;
+		}
+		if (!SystemUtilities.isArrayEqual(returnaddress, obj.returnaddress)) {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		return name.hashCode();
 	}
 
 	@Override
