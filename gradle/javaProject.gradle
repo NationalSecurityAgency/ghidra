@@ -188,13 +188,6 @@ ext.addExports = { List<String> exports ->
 // Fixup generated Eclipse projects
 apply plugin: 'eclipse'
 eclipse.classpath.file.whenMerged { classpath ->
-
-	// Gradle 5.6 has a bug that creates duplicate classpath entries, so we must dedupe them.
-	// https://github.com/gradle/gradle/issues/10393 
-	classpath.entries.unique(true) {
-		(it instanceof org.gradle.plugins.ide.eclipse.model.ProjectDependency) ? it.path : it
-	}
-	
 	// Prevent Gradle 5.6 from setting the 'test' attribute on our test source folders and jars. 
 	// If we don't do this, things that we have outside of test directories that depend on test 
 	// libraries (like junit) will not compile in Eclipse.
