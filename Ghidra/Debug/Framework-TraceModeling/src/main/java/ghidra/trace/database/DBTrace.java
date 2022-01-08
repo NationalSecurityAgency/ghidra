@@ -42,7 +42,6 @@ import ghidra.trace.database.language.DBTraceLanguageManager;
 import ghidra.trace.database.listing.DBTraceCodeManager;
 import ghidra.trace.database.listing.DBTraceCommentAdapter;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
-import ghidra.trace.database.memory.DBTraceMemoryRegion;
 import ghidra.trace.database.module.DBTraceModuleManager;
 import ghidra.trace.database.module.DBTraceStaticMappingManager;
 import ghidra.trace.database.program.DBTraceProgramView;
@@ -50,9 +49,11 @@ import ghidra.trace.database.program.DBTraceVariableSnapProgramView;
 import ghidra.trace.database.property.DBTraceAddressPropertyManager;
 import ghidra.trace.database.stack.DBTraceStackManager;
 import ghidra.trace.database.symbol.*;
+import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.util.TraceChangeManager;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.*;
@@ -103,6 +104,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceMemoryManager memoryManager;
 	@DependentService
 	protected DBTraceModuleManager moduleManager;
+	@DependentService
+	protected DBTraceObjectManager objectManager;
 	@DependentService
 	protected DBTraceOverlaySpaceAdapter overlaySpaceAdapter;
 	@DependentService
@@ -341,6 +344,14 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@DependentService
+	protected DBTraceObjectManager createObjectManager()
+			throws CancelledException, IOException {
+		return createTraceManager("Object Manager",
+			(openMode, monitor) -> new DBTraceObjectManager(dbh, openMode, rwLock, monitor,
+				baseLanguage, this));
+	}
+
+	@DependentService
 	protected DBTraceOverlaySpaceAdapter createOverlaySpaceAdapter()
 			throws CancelledException, IOException {
 		return createTraceManager("Overlay Space Adapter",
@@ -391,9 +402,11 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@DependentService
-	protected DBTraceThreadManager createThreadManager() throws IOException, CancelledException {
+	protected DBTraceThreadManager createThreadManager(DBTraceObjectManager objectManager)
+			throws IOException, CancelledException {
 		return createTraceManager("Thread Manager",
-			(openMode, monitor) -> new DBTraceThreadManager(dbh, openMode, rwLock, monitor, this));
+			(openMode, monitor) -> new DBTraceThreadManager(dbh, openMode, rwLock, monitor, this,
+				objectManager));
 	}
 
 	@DependentService
@@ -492,6 +505,11 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	@Override
 	public DBTraceModuleManager getModuleManager() {
 		return moduleManager;
+	}
+
+	@Override
+	public DBTraceObjectManager getObjectManager() {
+		return objectManager;
 	}
 
 	@Internal
@@ -716,29 +734,29 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		}
 	}
 
-	public void updateViewsAddRegionBlock(DBTraceMemoryRegion region) {
+	public void updateViewsAddRegionBlock(TraceMemoryRegion region) {
 		allViews(v -> v.updateMemoryAddRegionBlock(region));
 	}
 
-	public void updateViewsChangeRegionBlockName(DBTraceMemoryRegion region) {
+	public void updateViewsChangeRegionBlockName(TraceMemoryRegion region) {
 		allViews(v -> v.updateMemoryChangeRegionBlockName(region));
 	}
 
-	public void updateViewsChangeRegionBlockFlags(DBTraceMemoryRegion region) {
-		allViews(v -> v.updateMemoryChangeRegionBlockFlags(region));
+	public void updateViewsChangeRegionBlockFlags(TraceMemoryRegion region, Range<Long> lifespan) {
+		allViews(v -> v.updateMemoryChangeRegionBlockFlags(region, lifespan));
 	}
 
-	public void updateViewsChangeRegionBlockRange(DBTraceMemoryRegion region,
+	public void updateViewsChangeRegionBlockRange(TraceMemoryRegion region,
 			AddressRange oldRange, AddressRange newRange) {
 		allViews(v -> v.updateMemoryChangeRegionBlockRange(region, oldRange, newRange));
 	}
 
-	public void updateViewsChangeRegionBlockLifespan(DBTraceMemoryRegion region,
+	public void updateViewsChangeRegionBlockLifespan(TraceMemoryRegion region,
 			Range<Long> oldLifespan, Range<Long> newLifespan) {
 		allViews(v -> v.updateMemoryChangeRegionBlockLifespan(region, oldLifespan, newLifespan));
 	}
 
-	public void updateViewsDeleteRegionBlock(DBTraceMemoryRegion region) {
+	public void updateViewsDeleteRegionBlock(TraceMemoryRegion region) {
 		allViews(v -> v.updateMemoryDeleteRegionBlock(region));
 	}
 

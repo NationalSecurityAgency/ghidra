@@ -55,9 +55,9 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	protected void addThreads() throws Exception {
 		TraceThreadManager manager = tb.trace.getThreadManager();
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			thread1 = manager.addThread("Thread 1", Range.atLeast(0L));
+			thread1 = manager.addThread("Processes[1].Threads[1]", Range.atLeast(0L));
 			thread1.setComment("A comment");
-			thread2 = manager.addThread("Thread 2", Range.closed(5L, 10L));
+			thread2 = manager.addThread("Processes[1].Threads[2]", Range.closed(5L, 10L));
 			thread2.setComment("Another comment");
 		}
 	}
@@ -99,7 +99,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		ThreadRow thread1Record = threadsDisplayed.get(0);
 		assertEquals(thread1, thread1Record.getThread());
-		assertEquals("Thread 1", thread1Record.getName());
+		assertEquals("Processes[1].Threads[1]", thread1Record.getName());
 		assertEquals(Range.atLeast(0L), thread1Record.getLifespan());
 		assertEquals(0, thread1Record.getCreationSnap());
 		assertEquals("", thread1Record.getDestructionSnap());
@@ -475,13 +475,15 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		// Not live, so no seek
 		assertEquals(0, traceManager.getCurrentSnap());
 
+		tb.close();
+
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		// Threads needs registers to be recognized by the recorder
 		mb.createTestThreadRegisterBanks();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		// Wait till two threads are observed in the database

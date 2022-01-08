@@ -94,7 +94,7 @@ public abstract class AbstractModelForLldbProcessActivationTest
 				.filter(l -> l.trim().startsWith("*"))
 				.collect(Collectors.toList())).trim();
 		String procId = getIdFromCapture(line);
-		String expId = getProcessPattern().matchIndices(expected.getPath()).get(1);
+		String expId = getProcessPattern().matchKeys(expected.getPath()).get(1);
 		assertEquals(Long.parseLong(expId, 16), Long.parseLong(procId));
 	}
 	

@@ -97,7 +97,7 @@ public abstract class AbstractModelForLldbSessionActivationTest
 				.filter(l -> l.trim().startsWith("*"))
 				.collect(Collectors.toList())).trim();
 		String procId = getIdFromCapture(line);
-		String expId = getSessionPattern().matchIndices(expected.getPath()).get(0);
+		String expId = getSessionPattern().matchKeys(expected.getPath()).get(0);
 		assertEquals(Long.parseLong(expId, 16), Long.parseLong(procId));
 	}
 

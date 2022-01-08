@@ -31,10 +31,10 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.space.DBTraceSpaceKey;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.TraceData;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 
 public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey {
@@ -42,10 +42,10 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 	protected final long snap;
 	protected final Range<Long> lifespan;
 	protected final Address address;
-	protected final DBTraceThread thread;
+	protected final TraceThread thread;
 	protected final int frameLevel;
 
-	public UndefinedDBTraceData(DBTrace trace, long snap, Address address, DBTraceThread thread,
+	public UndefinedDBTraceData(DBTrace trace, long snap, Address address, TraceThread thread,
 			int frameLevel) {
 		this.trace = trace;
 		this.snap = snap;
@@ -118,7 +118,7 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return thread;
 	}
 

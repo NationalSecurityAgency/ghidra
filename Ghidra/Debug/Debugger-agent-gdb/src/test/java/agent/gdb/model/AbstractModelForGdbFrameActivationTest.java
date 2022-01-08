@@ -72,7 +72,7 @@ public abstract class AbstractModelForGdbFrameActivationTest
 	@Override
 	protected void activateViaInterpreter(TargetObject obj, TargetInterpreter interpreter)
 			throws Throwable {
-		String index = Unique.assertOne(STACK_PATTERN.matchIndices(obj.getPath()));
+		String index = Unique.assertOne(STACK_PATTERN.matchKeys(obj.getPath()));
 		waitOn(interpreter.execute("frame " + index));
 	}
 

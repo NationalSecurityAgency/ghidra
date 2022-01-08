@@ -38,7 +38,6 @@ import ghidra.trace.model.listing.TraceInstructionsView;
 import ghidra.trace.util.OverlappingObjectIterator;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
-import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -172,7 +171,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			if (ctxSpace == null) {
 				return;
 			}
-			ctxSpace.setValue(language, null, tasr.getLifespan(), tasr.getRange());
+			ctxSpace.removeValue(language, contextReg, tasr.getLifespan(), tasr.getRange());
 			return;
 		}
 		DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, true);

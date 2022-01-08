@@ -121,28 +121,28 @@ public abstract class AbstractModelForDbgengBreakpointsTest
 	@Override
 	protected void disableViaInterpreter(TargetTogglable t, TargetInterpreter interpreter)
 			throws Throwable {
-		String bpId = getBreakPattern().matchIndices(t.getPath()).get(BREAK_ID_POS);
+		String bpId = getBreakPattern().matchKeys(t.getPath()).get(BREAK_ID_POS);
 		waitOn(interpreter.execute("bd " + bpId));
 	}
 
 	@Override
 	protected void enableViaInterpreter(TargetTogglable t, TargetInterpreter interpreter)
 			throws Throwable {
-		String bpId = getBreakPattern().matchIndices(t.getPath()).get(BREAK_ID_POS);
+		String bpId = getBreakPattern().matchKeys(t.getPath()).get(BREAK_ID_POS);
 		waitOn(interpreter.execute("be " + bpId));
 	}
 
 	@Override
 	protected void deleteViaInterpreter(TargetDeletable d, TargetInterpreter interpreter)
 			throws Throwable {
-		String bpId = getBreakPattern().matchIndices(d.getPath()).get(BREAK_ID_POS);
+		String bpId = getBreakPattern().matchKeys(d.getPath()).get(BREAK_ID_POS);
 		waitOn(interpreter.execute("bc " + bpId));
 	}
 
 	@Override
 	protected void assertLocCoversViaInterpreter(AddressRange range, TargetBreakpointKind kind,
 			TargetBreakpointLocation loc, TargetInterpreter interpreter) throws Throwable {
-		String bpId = getBreakPattern().matchIndices(loc.getPath()).get(BREAK_ID_POS);
+		String bpId = getBreakPattern().matchKeys(loc.getPath()).get(BREAK_ID_POS);
 		String line = waitOn(interpreter.executeCapture("bl " + bpId)).trim();
 		assertFalse(line.contains("\n"));
 		// NB. WinDbg numbers breakpoints in base 10, by default
@@ -153,7 +153,7 @@ public abstract class AbstractModelForDbgengBreakpointsTest
 	@Override
 	protected void assertEnabledViaInterpreter(TargetTogglable t, boolean enabled,
 			TargetInterpreter interpreter) throws Throwable {
-		String bpId = getBreakPattern().matchIndices(t.getPath()).get(BREAK_ID_POS);
+		String bpId = getBreakPattern().matchKeys(t.getPath()).get(BREAK_ID_POS);
 		String line = waitOn(interpreter.executeCapture("bl " + bpId)).trim();
 		assertFalse(line.contains("\n"));
 		assertTrue(line.startsWith(bpId));
@@ -164,7 +164,7 @@ public abstract class AbstractModelForDbgengBreakpointsTest
 	@Override
 	protected void assertDeletedViaInterpreter(TargetDeletable d, TargetInterpreter interpreter)
 			throws Throwable {
-		String bpId = getBreakPattern().matchIndices(d.getPath()).get(BREAK_ID_POS);
+		String bpId = getBreakPattern().matchKeys(d.getPath()).get(BREAK_ID_POS);
 		String line = waitOn(interpreter.executeCapture("bl " + bpId)).trim();
 		assertEquals("", line);
 	}

@@ -119,7 +119,7 @@ public abstract class AbstractModelForGdbBreakpointsTest
 	protected void disableViaInterpreter(TargetTogglable t, TargetInterpreter interpreter)
 			throws Throwable {
 		assert t instanceof TargetBreakpointSpec; // TODO: or Location
-		String index = Unique.assertOne(BREAK_PATTERN.matchIndices(t.getPath()));
+		String index = Unique.assertOne(BREAK_PATTERN.matchKeys(t.getPath()));
 		waitOn(interpreter.execute("disable " + index));
 	}
 
@@ -127,7 +127,7 @@ public abstract class AbstractModelForGdbBreakpointsTest
 	protected void enableViaInterpreter(TargetTogglable t, TargetInterpreter interpreter)
 			throws Throwable {
 		assert t instanceof TargetBreakpointSpec; // TODO: or Location
-		String index = Unique.assertOne(BREAK_PATTERN.matchIndices(t.getPath()));
+		String index = Unique.assertOne(BREAK_PATTERN.matchKeys(t.getPath()));
 		waitOn(interpreter.execute("enable " + index));
 	}
 
@@ -135,7 +135,7 @@ public abstract class AbstractModelForGdbBreakpointsTest
 	protected void deleteViaInterpreter(TargetDeletable d, TargetInterpreter interpreter)
 			throws Throwable {
 		assert d instanceof TargetBreakpointSpec; // TODO: or Location
-		String index = Unique.assertOne(BREAK_PATTERN.matchIndices(d.getPath()));
+		String index = Unique.assertOne(BREAK_PATTERN.matchKeys(d.getPath()));
 		waitOn(interpreter.execute("delete " + index));
 	}
 
@@ -143,7 +143,7 @@ public abstract class AbstractModelForGdbBreakpointsTest
 	protected void assertLocCoversViaInterpreter(AddressRange range, TargetBreakpointKind kind,
 			TargetBreakpointLocation loc, TargetInterpreter interpreter) throws Throwable {
 		String index =
-			Unique.assertOne(BREAK_PATTERN.matchIndices(loc.getSpecification().getPath()));
+			Unique.assertOne(BREAK_PATTERN.matchKeys(loc.getSpecification().getPath()));
 		String output = waitOn(interpreter.executeCapture("info break " + index));
 		String line = Unique.assertOne(Stream.of(output.split("\n"))
 				.filter(l -> !l.trim().startsWith("Num"))
@@ -156,7 +156,7 @@ public abstract class AbstractModelForGdbBreakpointsTest
 	protected void assertEnabledViaInterpreter(TargetTogglable t, boolean enabled,
 			TargetInterpreter interpreter) throws Throwable {
 		assert t instanceof TargetBreakpointSpec; // TODO: or Location
-		String index = Unique.assertOne(BREAK_PATTERN.matchIndices(t.getPath()));
+		String index = Unique.assertOne(BREAK_PATTERN.matchKeys(t.getPath()));
 		String output = waitOn(interpreter.executeCapture("info break " + index));
 		String line = Unique.assertOne(Stream.of(output.split("\n"))
 				.filter(l -> !l.trim().startsWith("Num"))
@@ -170,7 +170,7 @@ public abstract class AbstractModelForGdbBreakpointsTest
 	protected void assertDeletedViaInterpreter(TargetDeletable d, TargetInterpreter interpreter)
 			throws Throwable {
 		assert d instanceof TargetBreakpointSpec; // TODO: or Location
-		String index = Unique.assertOne(BREAK_PATTERN.matchIndices(d.getPath()));
+		String index = Unique.assertOne(BREAK_PATTERN.matchKeys(d.getPath()));
 		String output = waitOn(interpreter.executeCapture("info break " + index));
 		assertTrue(output.contains("No breakpoint"));
 	}

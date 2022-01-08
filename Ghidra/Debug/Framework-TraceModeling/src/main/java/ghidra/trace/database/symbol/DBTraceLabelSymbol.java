@@ -28,9 +28,9 @@ import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCo
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.listing.*;
 import ghidra.trace.database.space.DBTraceSpaceKey;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
@@ -70,7 +70,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	@DBAnnotatedField(column = END_SNAP_COLUMN_NAME)
 	protected long endSnap;
 
-	protected DBTraceThread thread;
+	protected TraceThread thread;
 	protected Range<Long> lifespan;
 
 	public DBTraceLabelSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
@@ -89,7 +89,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 		lifespan = DBTraceUtils.toRange(startSnap, endSnap);
 	}
 
-	protected void set(Range<Long> lifespan, DBTraceThread thread, Address address, String name,
+	protected void set(Range<Long> lifespan, TraceThread thread, Address address, String name,
 			DBTraceNamespaceSymbol parent, SourceType source) {
 		this.name = name;
 		this.parentID = parent.getID();
@@ -146,7 +146,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return thread;
 	}
 

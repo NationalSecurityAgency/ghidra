@@ -48,7 +48,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		waitForPass(() -> {
 			assertNotNull(recorder.getTraceThread(mb.testThread1));
 			assertNotNull(recorder.getTraceThread(mb.testThread2));
@@ -61,7 +61,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		TestTargetMemoryRegion targetRegion =
@@ -97,7 +97,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 		Language lang = trace.getBaseLanguage();
 		Register r0 = lang.getRegister("r0");
@@ -131,7 +131,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 		Language lang = trace.getBaseLanguage();
 		Register pc = lang.getRegister("pc");
@@ -180,7 +180,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 		Language lang = trace.getBaseLanguage();
 		Register pc = lang.getRegister("pc");
@@ -229,7 +229,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 		Language lang = trace.getBaseLanguage();
 		Register pc = lang.getRegister("pc");

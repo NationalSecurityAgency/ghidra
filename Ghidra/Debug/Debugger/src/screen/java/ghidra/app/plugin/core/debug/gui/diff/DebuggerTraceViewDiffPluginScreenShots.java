@@ -31,9 +31,9 @@ import ghidra.async.AsyncTestUtils;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.memory.TraceMemoryFlag;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Swing;
 import ghidra.util.database.UndoableTransaction;
@@ -105,7 +105,7 @@ public class DebuggerTraceViewDiffPluginScreenShots extends GhidraScreenShotGene
 
 	@Test
 	public void testCaptureDebuggerTimeSelectionDialog() throws Throwable {
-		DBTraceThread thread;
+		TraceThread thread;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			DBTraceTimeManager tm = tb.trace.getTimeManager();
 			thread = tb.getOrAddThread("main", 0);

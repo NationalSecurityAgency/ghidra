@@ -152,6 +152,12 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 	public void setDataTypeSelected(DataType dataType);
 
 	/**
+	 * Returns the list of data types that are currently selected in the data types tree
+	 * @return  the list of data types that are currently selected in the data types tree
+	 */
+	public List<DataType> getSelectedDatatypes();
+
+	/**
 	 * Shows the user a dialog that allows them to choose a data type from a tree of all available
 	 * data types.
 	 * 

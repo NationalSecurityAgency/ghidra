@@ -941,6 +941,8 @@ public class DbgManagerImpl implements DbgManager {
 					if (status.threadState.equals(ExecutionState.RUNNING)) {
 						//System.err.println("RUNNING " + id);
 						dbgState = DbgState.RUNNING;
+						// NB: Needed by GADP variants, but not IN-VM
+						getEventListeners().fire.memoryChanged(currentProcess, 0L, 0, evt.getCause());
 						processEvent(new DbgRunningEvent(eventThread.getId()));
 					}
 					if (!threads.containsValue(eventThread)) {

@@ -22,6 +22,7 @@ import ghidra.pcode.emu.DefaultPcodeThread.SleighEmulationLibrary;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.listing.Instruction;
 
 /**
  * An emulated thread of execution
@@ -156,6 +157,13 @@ public interface PcodeThread<T> {
 	 * @return the current frame
 	 */
 	PcodeFrame getFrame();
+
+	/**
+	 * Get the current decoded instruction, if applicable
+	 * 
+	 * @return the instruction
+	 */
+	Instruction getInstruction();
 
 	/**
 	 * Execute the next instruction, ignoring injects

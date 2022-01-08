@@ -148,6 +148,9 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	@Override
 	public <T> boolean isCompletelyVisible(AddressRange range, Range<Long> lifespan, T object,
 			Occlusion<T> occlusion) {
+		if (range == null) {
+			return false;
+		}
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
 				for (Range<Long> rng : ordered) {

@@ -36,12 +36,12 @@ import ghidra.trace.database.map.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceKey;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceFunctionTagChangeType;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.*;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -661,7 +661,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		// DataTypes of Function returns, params, locals, globalRegs
 	}
 
-	protected void assertValidThreadAddress(DBTraceThread thread, Address address) {
+	protected void assertValidThreadAddress(TraceThread thread, Address address) {
 		if (thread != null && address.isMemoryAddress()) {
 			throw new IllegalArgumentException(
 				"Memory addresses cannot be associated with a thread");
@@ -886,7 +886,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 
 	protected boolean doDeleteSymbol(AbstractDBTraceSymbol symbol) {
 		byte typeID = symbol.getSymbolType().getID();
-		DBTraceThread thread = symbol.getThread();
+		TraceThread thread = symbol.getThread();
 		AbstractDBTraceSymbol deleted = symbolViews.get(typeID).store.deleteKey(symbol.getKey());
 		if (deleted == null) {
 			return false;
@@ -901,21 +901,21 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		return true;
 	}
 
-	protected void putID(Range<Long> lifespan, DBTraceThread thread, Address address, long id) {
+	protected void putID(Range<Long> lifespan, TraceThread thread, Address address, long id) {
 		idMap.get(DBTraceSpaceKey.create(address.getAddressSpace(), thread, 0), true)
 				.put(address, lifespan, id);
 		// TODO: Add to ancestors' too?
 		// NOTE: Might be hard to remove because of overlaps
 	}
 
-	protected void putID(Range<Long> lifespan, DBTraceThread thread, AddressRange rng, long id) {
+	protected void putID(Range<Long> lifespan, TraceThread thread, AddressRange rng, long id) {
 		idMap.get(DBTraceSpaceKey.create(rng.getAddressSpace(), thread, 0), true)
 				.put(rng, lifespan, id);
 		// TODO: Add to ancestors' too?
 		// NOTE: Might be hard to remove because of overlaps
 	}
 
-	protected void delID(DBTraceThread thread, AddressSpace addressSpace, long id) {
+	protected void delID(TraceThread thread, AddressSpace addressSpace, long id) {
 		DBTraceAddressSnapRangePropertyMapSpace<Long, DBTraceSymbolIDEntry> space =
 			idMap.get(DBTraceSpaceKey.create(addressSpace, thread, 0), false);
 		if (space == null) {
@@ -929,7 +929,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	}
 
 	protected void assertNotDuplicate(AbstractDBTraceSymbol exclude, Range<Long> lifespan,
-			DBTraceThread thread, Address address, String name, DBTraceNamespaceSymbol parent)
+			TraceThread thread, Address address, String name, DBTraceNamespaceSymbol parent)
 			throws DuplicateNameException {
 		if (address.isMemoryAddress()) {
 			for (AbstractDBTraceSymbol duplicate : labelsAndFunctions.getIntersecting(lifespan,

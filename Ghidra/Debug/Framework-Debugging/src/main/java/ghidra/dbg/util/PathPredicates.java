@@ -23,6 +23,38 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils.PathComparator;
 
 public interface PathPredicates {
+
+	static boolean keyMatches(String pat, String key) {
+		if (key.equals(pat)) {
+			return true;
+		}
+		if ("[]".equals(pat)) {
+			return PathUtils.isIndex(key);
+		}
+		if ("".equals(pat)) {
+			return PathUtils.isName(key);
+		}
+		return false;
+	}
+
+	static boolean anyMatches(Set<String> pats, String key) {
+		return pats.stream().anyMatch(p -> keyMatches(p, key));
+	}
+
+	static PathPredicates pattern(String... keyPatterns) {
+		return new PathPattern(List.of(keyPatterns));
+	}
+
+	static PathPredicates pattern(List<String> keyPatterns) {
+		return new PathPattern(keyPatterns);
+	}
+
+	static PathPredicates parse(String pattern) {
+		return new PathPattern(PathUtils.parse(pattern));
+	}
+
+	PathPredicates or(PathPredicates that);
+
 	/**
 	 * Check if the entire path passes
 	 * 
@@ -59,10 +91,22 @@ public interface PathPredicates {
 	boolean ancestorMatches(List<String> path, boolean strict);
 
 	/**
-	 * Assuming a successor of path could match, get the patterns for the next possible key
+	 * Get the patterns for the next possible key
 	 * 
 	 * <p>
-	 * If the pattern could accept a name next, get all patterns describing those names
+	 * If a successor of the given path cannot match this pattern, the empty set is returned.
+	 * 
+	 * @param path the ancestor path
+	 * @return a set of patterns where indices are enclosed in brackets ({@code [])
+	 */
+	Set<String> getNextKeys(List<String> path);
+
+	/**
+	 * Get the patterns for the next possible name
+	 * 
+	 * <p>
+	 * If a successor of the given path cannot match this pattern, the empty set is returned. If the
+	 * pattern could accept a name next, get all patterns describing those names
 	 * 
 	 * @param path the ancestor path
 	 * @return a set of patterns
@@ -73,10 +117,11 @@ public interface PathPredicates {
 	 * Assuming a successor of path could match, get the patterns for the next possible index
 	 * 
 	 * <p>
-	 * If the pattern could accept an index next, get all patterns describing those indices
+	 * If a successor of the given path cannot match this pattern, the empty set is returned. If the
+	 * pattern could accept an index next, get all patterns describing those indices
 	 * 
 	 * @param path the ancestor path
-	 * @return a set of patterns, without brack@Override ets ({@code [])
+	 * @return a set of patterns, without brackets ({@code [])
 	 */
 	Set<String> getNextIndices(List<String> path);
 
@@ -93,18 +138,6 @@ public interface PathPredicates {
 	 * @return the singleton pattern, or {@code null}
 	 */
 	PathPattern getSingletonPattern();
-
-	static boolean anyMatches(Set<String> pats, String key) {
-		for (String pat : pats) {
-			if ("".equals(pat)) {
-				return true;
-			}
-			if (key.equals(pat)) {
-				return true;
-			}
-		}
-		return false;
-	}
 
 	default NavigableMap<List<String>, ?> getCachedValues(TargetObject seed) {
 		return getCachedValues(List.of(), seed);
@@ -259,10 +292,10 @@ public interface PathPredicates {
 	 * @param indices the indices to substitute
 	 * @return the pattern or matcher with the applied substitutions
 	 */
-	PathPredicates applyIndices(List<String> indices);
+	PathPredicates applyKeys(List<String> indices);
 
 	default PathPredicates applyIndices(String... indices) {
-		return applyIndices(List.of(indices));
+		return applyKeys(List.of(indices));
 	}
 
 	/**

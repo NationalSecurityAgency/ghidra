@@ -22,6 +22,7 @@ import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 
 public class ThreadRow {
@@ -109,6 +110,12 @@ public class ThreadRow {
 
 	@Override
 	public String toString() {
-		return getName();
+		try {
+			return getName();
+		}
+		catch (Exception e) {
+			Msg.error(this, "Error rendering as string: " + e);
+			return "<ERROR>";
+		}
 	}
 }

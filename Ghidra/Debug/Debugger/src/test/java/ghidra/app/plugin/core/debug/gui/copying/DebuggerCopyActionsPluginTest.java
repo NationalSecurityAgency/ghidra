@@ -37,7 +37,6 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.*;
@@ -457,9 +456,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		mb.testModel.addModelListener(listener);
 
 		mb.createTestProcessesAndThreads();
-		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
-		useTrace(recorder.getTrace());
+		modelService.recordTarget(mb.testProcess1, createTargetTraceMapper(mb.testProcess1));
 		mb.testProcess1.memory.addRegion(".text", mb.rng(0x55550000, 0x5555ffff), "rx");
 		mb.testProcess1.memory.setMemory(mb.addr(0x55550000), mb.arr(1, 2, 3, 4, 5, 6, 7, 8));
 		waitForPass(() -> {
