@@ -180,6 +180,14 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 					map.getKey(machoHeaderOffset)));
 			}
 		}
+		
+		// Sort Mach-O's vmaddr
+		Collections.sort(prelinkMachoInfoList, new Comparator<PrelinkMachoInfo>() {
+		    @Override
+		    public int compare(PrelinkMachoInfo a, PrelinkMachoInfo b) {
+		        return a.headerAddr.compareTo(b.headerAddr);
+		    }
+		});
 
 		// Process each PRELINK Mach-O
 		monitor.initialize(prelinkMachoInfoList.size());
