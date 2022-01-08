@@ -383,7 +383,7 @@ abstract class AbstractAddressSpace implements AddressSpace {
 				"Address Overflow in add: " + addr + " + 0x" + Long.toHexString(displacement));
 		}
 		long addrOff = addr.getOffset();
-		long maxOff = maxAddress.getOffset();
+		long maxOff = maxAddress.getOffset() + 1;
 		long result = addrOff + displacement;
 		if (maxOff < 0) { // 64 bit unsigned
 			if (addrOff < 0 && result >= 0) {
