@@ -235,6 +235,10 @@ task zipJavadocs(type: Zip) {
  *
  **********************************************************************************************/
 task assembleDistribution (type: Copy) {
+	// force this task to always be "out of date"
+	// Not sure why this is necessary, but without it, gradle thinks this task is "up to date"
+	// every other time it is run even though in both cases the output directory has been removed
+	outputs.upToDateWhen {false}
 
 	group 'private'
 	description "Copies core files/folders to the distribution location."
@@ -369,6 +373,11 @@ task assembleDistribution (type: Copy) {
  *********************************************************************************/
 project.PLATFORMS.each { platform ->
 	task ("assembleDistribution_${platform.name}", type: Copy ) { 	
+		// force this task to always be "out of date"
+		// Not sure why this is necessary, but without it, gradle thinks this task is "up to date"
+		// every other time it is run even though in both cases the output directory has been removed
+		outputs.upToDateWhen {false}
+
 		
 		// delete the gradle ziptree temp directory because of gradle bug not cleaning up its temp files.
 		delete rootProject.file("build/tmp/expandedArchives")
