@@ -64,7 +64,7 @@ You may not need all of these, depending on which portions you are building or d
 * PyDev. We build against version 6.3.1 - Build dependency for the GhidraDev plugin.
     - https://sourceforge.net/projects/pydev/files/pydev/
 
-There are many, many others automatically downloaded by Gradle from Maven Central and Bintray JCenter when building and/or setting up the development environment.
+There are many, many others automatically downloaded by Gradle from Maven Central when building and/or setting up the development environment.
 If you need these offline, a reasonable course of action is to set up a development environment online, perhaps perform a build, and then scrape Gradle's cache.
 
 ## Install Development and Build Tools
@@ -94,9 +94,9 @@ or unzip a snapshot .zip of the ghidra repository
 
 ## Setup Build Dependency Repository
 
-Ghidra's build uses artifacts named as available in Maven Central and Bintray JCenter, when possible.
+Ghidra's build uses artifacts named as available in Maven Central, when possible.
 Unfortunately, in some cases, the artifact or the particular version we desire is not available.
-So, in addition to mavenCentral and jcenter, you must configure a flat directory-style repository for
+So, in addition to mavenCentral, you must configure a flat directory-style repository for
 manually-downloaded dependencies.
 
 The flat directory-style repository can be created and populated automatically by a provided script, 

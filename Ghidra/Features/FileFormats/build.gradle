@@ -34,10 +34,6 @@ dependencies {
 
 	api 'org.ow2.asm:asm-debug-all:4.1'
 
-	api 'org.smali:baksmali:1.4.0' // TODO: upgrade to 2.2.6
-	api 'org.smali:dexlib:1.4.0'
-	api 'org.smali:util:1.4.0'
-
 	api 'net.sf.sevenzipjbinding:sevenzipjbinding:16.02-2.01'
 	api ':AXMLPrinter2'
 	
