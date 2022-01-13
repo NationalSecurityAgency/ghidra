@@ -75,6 +75,16 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
+	public String getName() {
+		return "";
+	}
+
+	@Override
+	public void setName(String name) {
+		throw new IllegalStateException("Breakpoint must be saved to a program before naming");
+	}
+
+	@Override
 	public void setTraceAddress(TraceRecorder recorder, Address address) {
 		throw new AssertionError();
 	}

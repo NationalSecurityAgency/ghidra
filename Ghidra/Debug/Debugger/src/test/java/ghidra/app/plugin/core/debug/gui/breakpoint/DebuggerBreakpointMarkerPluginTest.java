@@ -507,6 +507,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		performAction(action, staticCtx(addr(program, 0x0400321)), false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
+		dialog.setName("Test name");
 		dialog.okCallback();
 
 		waitForPass(() -> {
@@ -514,6 +515,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 				breakpointService.getBreakpointsAt(program, addr(program, 0x00400321)));
 			assertEquals(expectedKinds, lb.getKinds());
 			assertEquals(Enablement.ENABLED, lb.computeEnablement());
+			assertEquals("Test name", lb.getName());
 		});
 	}
 

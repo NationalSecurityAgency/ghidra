@@ -331,15 +331,19 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 		private void breakpointBookmarkChanged(Bookmark bookmark) {
 			synchronized (lock) {
-				breakpointBookmarkDeleted(bookmark);
+				breakpointBookmarkDeleted(bookmark, true);
 				breakpointBookmarkAdded(bookmark);
 			}
 		}
 
 		private void breakpointBookmarkDeleted(Bookmark bookmark) {
+			breakpointBookmarkDeleted(bookmark, false);
+		}
+
+		private void breakpointBookmarkDeleted(Bookmark bookmark, boolean forChange) {
 			try (RemoveCollector c = new RemoveCollector(changeListeners.fire)) {
 				synchronized (lock) {
-					info.forgetProgramBreakpoint(bookmark, c);
+					info.forgetProgramBreakpoint(bookmark, forChange, c);
 				}
 			}
 		}
@@ -644,7 +648,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		protected LogicalBreakpointInternal removeFromLogicalBreakpoint(Bookmark bookmark,
-				RemoveCollector c) {
+				boolean forChange, RemoveCollector c) {
 			Address address = bookmark.getAddress();
 			Set<LogicalBreakpointInternal> set = breakpointsByAddress.get(address);
 			if (set == null) {
@@ -653,7 +657,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			}
 			for (LogicalBreakpointInternal lb : Set.copyOf(set)) {
 				if (lb.untrackBreakpoint(program, bookmark)) {
-					if (lb.isEmpty()) {
+					if (lb.isEmpty() && !forChange) {
 						// If being disposed, this info may no longer be in the map
 						removeLogicalBreakpoint(address, lb);
 						removeLogicalBreakpointGlobally(lb);
@@ -696,7 +700,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 					.getBookmarksIterator(LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE)
 					.forEachRemaining(marks::add);
 			for (Bookmark bm : marks) {
-				forgetProgramBreakpoint(bm, r);
+				forgetProgramBreakpoint(bm, false, r);
 			}
 		}
 
@@ -716,11 +720,11 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 						continue;
 					}
 					if (bm != program.getBookmarkManager().getBookmark(bm.getId())) {
-						forgetProgramBreakpoint(bm, r);
+						forgetProgramBreakpoint(bm, false, r);
 						continue;
 					}
 					if (!lb.getProgramLocation().getByteAddress().equals(bm.getAddress())) {
-						forgetProgramBreakpoint(bm, r);
+						forgetProgramBreakpoint(bm, false, r);
 						continue;
 					}
 				}
@@ -751,13 +755,22 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			}
 		}
 
-		protected void forgetProgramBreakpoint(Bookmark breakpoint, RemoveCollector c) {
-			LogicalBreakpointInternal lb = removeFromLogicalBreakpoint(breakpoint, c);
+		protected void forgetProgramBreakpoint(Bookmark breakpoint, boolean forChange,
+				RemoveCollector c) {
+			LogicalBreakpointInternal lb = removeFromLogicalBreakpoint(breakpoint, forChange, c);
 			if (lb == null) {
 				return;
 			}
-			assert lb.isEmpty() == (breakpointsByAddress.get(breakpoint.getAddress()) == null ||
-				!breakpointsByAddress.get(breakpoint.getAddress()).contains(lb));
+			assert isConsistentAfterRemoval(breakpoint, lb, forChange);
+		}
+
+		private boolean isConsistentAfterRemoval(Bookmark breakpoint, LogicalBreakpointInternal lb,
+				boolean forChange) {
+			Set<LogicalBreakpointInternal> present =
+				breakpointsByAddress.get(breakpoint.getAddress());
+			boolean shouldBeAbsent = lb.isEmpty() && !forChange;
+			boolean isAbsent = present == null || !present.contains(lb);
+			return shouldBeAbsent == isAbsent;
 		}
 	}
 
@@ -994,7 +1007,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 	@Override
 	public CompletableFuture<Void> placeBreakpointAt(Program program, Address address, long length,
-			Collection<TraceBreakpointKind> kinds) {
+			Collection<TraceBreakpointKind> kinds, String name) {
 		/**
 		 * TODO: This is quite a waste, but it gets the job done. The instance created here is
 		 * dropped. It's just used for its breakpoint placement logic, part of which I had to
@@ -1010,7 +1023,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				lb.setTraceAddress(ti.recorder, loc.getAddress());
 			}
 		}
-		return lb.enable();
+		return lb.enableWithName(name);
 	}
 
 	@Override
@@ -1029,9 +1042,9 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 	@Override
 	public CompletableFuture<Void> placeBreakpointAt(ProgramLocation loc, long length,
-			Collection<TraceBreakpointKind> kinds) {
+			Collection<TraceBreakpointKind> kinds, String name) {
 		return DebuggerLogicalBreakpointService.programOrTrace(loc,
-			(p, a) -> placeBreakpointAt(p, a, length, kinds),
+			(p, a) -> placeBreakpointAt(p, a, length, kinds, name),
 			(t, a) -> placeBreakpointAt(t, a, length, kinds));
 	}
 

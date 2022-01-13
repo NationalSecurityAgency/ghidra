@@ -256,6 +256,29 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		waitForPass(() -> assertEquals(Enablement.ENABLED, row.getEnablement()));
 	}
 
+	@Test
+	public void testRenameStaticViaTable() throws Exception {
+		createProgram();
+		programManager.openProgram(program);
+		addStaticMemoryAndBreakpoint();
+		waitForDomainObject(program);
+
+		LogicalBreakpointRow row =
+			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
+		assertEquals("", row.getName());
+
+		row.setName("Test name");
+		waitForDomainObject(program);
+
+		assertEquals("Test name", row.getName());
+
+		// Check that name persists, since bookmark is swapped
+		row.setEnabled(false);
+		waitForDomainObject(program);
+
+		assertEquals("Test name", row.getName());
+	}
+
 	// TODO: Test a scenario where one spec manifests two breaks, select both, and perform actions
 
 	// TODO: Test a scenario where one spec manifests the same mapped breakpoint in two traces

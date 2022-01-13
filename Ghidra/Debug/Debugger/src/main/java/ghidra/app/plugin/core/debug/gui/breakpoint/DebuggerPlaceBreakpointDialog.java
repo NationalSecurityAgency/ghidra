@@ -34,6 +34,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.util.MessageType;
+import ghidra.util.Swing;
 import ghidra.util.layout.PairLayout;
 
 public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
@@ -42,10 +43,12 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 	private Address address;
 	private long length;
 	private Set<TraceBreakpointKind> kinds;
+	private String name;
 
 	private JTextField fieldAddress;
 	private JTextField fieldLength;
 	private JComboBox<String> fieldKinds;
+	private JTextField fieldName;
 
 	public DebuggerPlaceBreakpointDialog() {
 		super(AbstractSetBreakpointAction.NAME, true, true, true, false);
@@ -81,6 +84,11 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 		panel.add(labelKinds);
 		panel.add(fieldKinds);
 
+		JLabel labelName = new JLabel("Name");
+		fieldName = new JTextField();
+		panel.add(labelName);
+		panel.add(fieldName);
+
 		addWorkPanel(panel);
 
 		addOKButton();
@@ -88,16 +96,18 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 	}
 
 	public void prompt(PluginTool tool, DebuggerLogicalBreakpointService service, String title,
-			ProgramLocation loc, long length, Collection<TraceBreakpointKind> kinds) {
+			ProgramLocation loc, long length, Collection<TraceBreakpointKind> kinds, String name) {
 		this.service = service;
 		this.program = loc.getProgram();
 		this.address = loc.getAddress(); // byte address can be confusing here.
 		this.length = length;
 		this.kinds = Set.copyOf(kinds);
+		this.name = name;
 
 		this.fieldAddress.setText(address.toString());
 		this.fieldLength.setText(Long.toUnsignedString(length));
 		this.fieldKinds.setSelectedItem(TraceBreakpointKindSet.encode(kinds));
+		this.fieldName.setText("");
 
 		clearStatusText();
 
@@ -128,13 +138,21 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 			return;
 		}
 
+		name = fieldName.getText();
+
 		ProgramLocation loc = new ProgramLocation(program, address);
-		service.placeBreakpointAt(loc, length, kinds).thenAccept(__ -> {
+		service.placeBreakpointAt(loc, length, kinds, name).thenAccept(__ -> {
 			close();
 		}).exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
 			setStatusText(ex.getMessage(), MessageType.ERROR, true);
 			return null;
 		});
+	}
+
+	/* testing */
+	void setName(String name) {
+		this.name = name;
+		Swing.runNow(() -> this.fieldName.setText(name));
 	}
 }
