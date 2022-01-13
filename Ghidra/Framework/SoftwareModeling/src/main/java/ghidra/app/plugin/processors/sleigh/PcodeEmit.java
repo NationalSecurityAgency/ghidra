@@ -773,7 +773,7 @@ public abstract class PcodeEmit {
 				}
 			}
 			for (int i = 0; i < isize; ++i) {
-				VarnodeData v = in[0];
+				VarnodeData v = in[i];
 				if (v.space.equals(overlayspace)) {
 					v.space = ((OverlayAddressSpace) v.space).getOverlayedSpace();
 				}

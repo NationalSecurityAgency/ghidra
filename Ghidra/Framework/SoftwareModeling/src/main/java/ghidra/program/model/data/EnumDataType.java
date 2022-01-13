@@ -342,7 +342,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 			if (subValue != 0) {
 				String part = getName(subValue);
 				if (part == null) {
-					part = getStringForNoMatchingValue(subValue);
+					part = Long.toHexString(subValue).toUpperCase() + 'h';
 				}
 				if (buf.length() != 0) {
 					buf.append(" | ");
@@ -358,19 +358,6 @@ public class EnumDataType extends GenericDataType implements Enum {
 			bitGroups = EnumValuePartitioner.partition(getValues(), getLength());
 		}
 		return bitGroups;
-	}
-
-	private String getStringForNoMatchingValue(long value) {
-		String valueName;
-		String valueStr;
-		if (value < 0 || value >= 32) {
-			valueStr = "0x" + Long.toHexString(value);
-		}
-		else {
-			valueStr = Long.toString(value);
-		}
-		valueName = "" + valueStr;
-		return valueName;
 	}
 
 	@Override

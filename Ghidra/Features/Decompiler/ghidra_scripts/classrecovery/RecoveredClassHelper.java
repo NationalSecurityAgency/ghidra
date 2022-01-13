@@ -4665,9 +4665,21 @@ public class RecoveredClassHelper {
 					replaceClassStructure(vfunction, recoveredClass.getName(), classStruct);
 				}
 
+
+				String forClassSuffix = getForClassSuffix(vftableStructureName);
+				String functionDefName = vfunction.getName();
+				int indexOfSuffix = functionDefName.indexOf(forClassSuffix);
+
+				// if vfunction name has the "for_parent" suffix, strip it off for the function definition name
+				if (indexOfSuffix > 0) {
+					functionDefName = functionDefName.substring(0, indexOfSuffix);
+
+				}
+
 				// get the classPath of highest level parent with vfAddress in their vftable
 				classPath =
-					getCategoryPathForFunctionSignature(vfunction, recoveredClass, vftableAddress);
+					getCategoryPathForFunctionSignature(vfunction, functionDefName, recoveredClass,
+						vftableAddress);
 
 				Symbol vfunctionSymbol = symbolTable.getPrimarySymbol(vfunction.getEntryPoint());
 				Namespace parentNamespace = vfunctionSymbol.getParentNamespace();
@@ -4695,12 +4707,14 @@ public class RecoveredClassHelper {
 				// Create comment to indicate it is a virtual function and which number in the table
 				String comment = VFUNCTION_COMMENT + vfunctionNumber;
 
-				// add suffix for multi classes to distinguish which vftable it is for
-				String commentSuffix = getForClassSuffix(vftableStructureName);
-				if (!commentSuffix.isEmpty()) {
-					int index = commentSuffix.indexOf("for_");
+				// add comment suffix for multi classes to distinguish which vftable it is for
+
+				if (!forClassSuffix.isEmpty()) {
+
+					int index = forClassSuffix.indexOf("for_");
+					String commentSuffix = "";
 					if (index > 0) {
-						commentSuffix = " for parent class " + commentSuffix.substring(index + 4);
+						commentSuffix = " for parent class " + forClassSuffix.substring(index + 4);
 					}
 					comment = comment + commentSuffix;
 				}
@@ -4712,6 +4726,10 @@ public class RecoveredClassHelper {
 
 				FunctionDefinition functionDataType =
 					new FunctionDefinitionDataType(vfunction, true);
+
+				if (!vfunction.getName().equals(functionDefName)) {
+					functionDataType.setName(functionDefName);
+				}
 
 				functionDataType.setReturnType(vfunction.getReturnType());
 
@@ -4966,13 +4984,16 @@ public class RecoveredClassHelper {
 	/**
 	 * Method to retrieve the class path of the highest ancestor with matching vfunction in its vftable
 	 * @param vfunction the given virtual function
+	 * @param functionDefName the given function definition name
 	 * @param recoveredClass the given class
 	 * @param vftableAddress the given virtual function table from the given class
 	 * @return the class path for the highest ancestor with matching virtual function in its vftable
 	 * @throws CancelledException when cancelled
+	 * @throws InvalidNameException if functionDefName is invalid name
 	 */
-	CategoryPath getCategoryPathForFunctionSignature(Function vfunction,
-			RecoveredClass recoveredClass, Address vftableAddress) throws CancelledException {
+	CategoryPath getCategoryPathForFunctionSignature(Function vfunction, String functionDefName,
+			RecoveredClass recoveredClass, Address vftableAddress)
+			throws CancelledException, InvalidNameException {
 
 		// if class has no parent, return its own classPath
 		CategoryPath classPath = recoveredClass.getClassPath();
@@ -4987,33 +5008,42 @@ public class RecoveredClassHelper {
 			return classPath;
 		}
 
-		Iterator<RecoveredClass> classHierarchyIterator;
-		if (recoveredClass.hasSingleInheritance()) {
-			List<RecoveredClass> classHierarchy = recoveredClass.getClassHierarchy();
-			classHierarchyIterator = classHierarchy.listIterator(1);
-		}
-		else {
-			// get the parent that goes with the given vftableAddress
-			// if there is no parent associated with the vftable then return the current
-			// class's class path
+		// if the class has multiple inheritance or single virtual inheritance get the parent from
+		// the "_for_<parentName>" in the given vftable
+		if (recoveredClass.hasMultipleInheritance() ||
+			(recoveredClass.hasSingleInheritance() && recoveredClass.inheritsVirtualAncestor())) {
 			RecoveredClass parentClass = recoveredClass.getVftableBaseClass(vftableAddress);
+
+			// if can't recover the parent from the vftable just return the class's class path
 			if (parentClass == null) {
 				return classPath;
 			}
 
-			// get the class hierarchy for the parent
-			List<RecoveredClass> classHierarchy =
-				recoveredClass.getClassHierarchyMap().get(parentClass);
-			if (classHierarchy == null) {
-				return classPath;
-			}
-
-			classHierarchyIterator = classHierarchy.iterator();
+			// else return the parent associated with the vftableAddress
+			return parentClass.getClassPath();
 		}
 
-		FunctionDefinition functionDataType = new FunctionDefinitionDataType(vfunction, true);
+		// else class has normal single inheritance so just search for the matching function definition
+		// in one of the class's ancestors and return the ancestor class it is found in or if not found, 
+		// return the current class
+		List<RecoveredClass> classHierarchy = recoveredClass.getClassHierarchy();
 
-		functionDataType.setReturnType(vfunction.getReturnType());
+		// classHierarchy list always contains current class in first item so skip that one
+		// to search only the ancestors
+		Iterator<RecoveredClass> classHierarchyIterator = classHierarchy.listIterator(1);
+
+		// TODO: eventually use the function definition to do an equivalence check amongst 
+		// possible same-name vfunctions to make sure getting the correct one
+		// in this case need to update the below check in dtMan to look through the .conflicts
+//		FunctionDefinition functionDataType = new FunctionDefinitionDataType(vfunction, true);
+//
+//		functionDataType.setReturnType(vfunction.getReturnType());
+//		try {
+//			functionDataType.setName(functionDefName);
+//		}
+//		catch (DuplicateNameException e) {
+//			// ignore -- don't rename if it is already the same name
+//		}
 
 		while (classHierarchyIterator.hasNext()) {
 			monitor.checkCanceled();
@@ -5022,7 +5052,8 @@ public class RecoveredClassHelper {
 
 			CategoryPath currentClassPath = currentClass.getClassPath();
 			DataType existingDataType =
-				dataTypeManager.getDataType(currentClassPath, functionDataType.getName());
+				dataTypeManager.getDataType(currentClassPath, functionDefName);
+
 			if (existingDataType != null) {
 				return currentClassPath;
 			}

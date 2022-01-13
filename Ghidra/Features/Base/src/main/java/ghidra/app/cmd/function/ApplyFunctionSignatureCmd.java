@@ -76,10 +76,6 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 		this.setName = setName;
 	}
 
-	/**
-	 *
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 		program = (Program) obj;
@@ -111,10 +107,10 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 
 	/**
 	 * Sets a function's signature in the program.
-	 * @param program The program containing the function.
 	 * @param func the function
 	 * @param signature the signature to apply
-	 * @param preserveCallingConvention if true, the functions calling convention will not be modified
+	 * @param preserveCallingConvention if true, the functions calling convention will not be
+	 * 			modified
 	 * @param forceName force the name of the signature onto the function
 	 *                  normally the name is only set on default function names (not user-defined).
 	 * @param source the source of this function signature
@@ -224,7 +220,7 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 		PrototypeModel convention = function.getCallingConvention();
 		if (convention == null || !preserveCallingConvention) {
 			convention = preferredModel;
-// NOTE: This has been disable since it can cause imported signature information to be 
+// NOTE: This has been disable since it can cause imported signature information to be
 // ignored and overwritten by subsequent analysis
 //			if (convention == null && compilerSpec.getCallingConventions().length > 1) {
 //				// use default source for signature if convention is really unknown so that we
@@ -337,12 +333,13 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 	 * The C language assumes array datatypes are passed simply as pointers (by reference) even though
 	 * other datatypes are passed by value.  This routine converts the datatype to the appropriate pointer
 	 * in situations where we need to get at the exact type being passed by "value"
-	 * @param dt
-	 * @return
+	 * @param dt the type
+	 * @param dtm the data type manager
+	 * @return the updated type
 	 */
-	public static DataType settleCDataType(DataType dt, DataTypeManager dtm) {
+	private static DataType settleCDataType(DataType dt, DataTypeManager dtm) {
 		if (dt == null) {
-			return dt;
+			return null;
 		}
 		DataType baseType = dt;
 		if (baseType instanceof TypedefDataType) {
