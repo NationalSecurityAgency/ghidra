@@ -18,7 +18,9 @@ package agent.gdb.manager.impl;
 import static ghidra.dbg.testutil.DummyProc.run;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -36,6 +38,7 @@ import agent.gdb.manager.*;
 import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
 import agent.gdb.pty.PtyFactory;
+import agent.gdb.pty.linux.LinuxPtyFactory;
 import ghidra.async.AsyncReference;
 import ghidra.dbg.testutil.DummyProc;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -46,7 +49,22 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 	protected static final long TIMEOUT_MILLISECONDS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
-	protected abstract PtyFactory getPtyFactory();
+	protected File gdbBin;
+
+	protected File findGdbBin() {
+		return new File(GdbManager.DEFAULT_GDB_CMD);
+	}
+
+	@Before
+	public void findAndCheckGdb() {
+		gdbBin = findGdbBin();
+		assumeTrue(gdbBin.exists());
+	}
+
+	protected PtyFactory getPtyFactory() {
+		// TODO: Choose by host OS
+		return new LinuxPtyFactory();
+	}
 
 	protected abstract CompletableFuture<Void> startManager(GdbManager manager);
 
@@ -140,6 +158,21 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			List<GdbProcessThreadGroup> procs = waitOn(mgr.listAvailableProcesses());
 			List<Integer> pids = procs.stream().map(p -> p.getPid()).collect(Collectors.toList());
 			assertTrue(pids.contains(1)); // Weak check, but on Linux, 1 (init) is always running
+		}
+	}
+
+	@Test
+	public void testListModulesAndSections() throws Throwable {
+		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
+			waitOn(startManager(mgr));
+			GdbInferior inferior = mgr.currentInferior();
+			waitOn(inferior.fileExecAndSymbols("/usr/bin/echo"));
+			Map<String, GdbModule> modules = waitOn(inferior.listModules());
+			GdbModule modEcho = modules.get("/usr/bin/echo");
+			assertNotNull(modEcho);
+			Map<String, GdbModuleSection> sectionsEcho = waitOn(modEcho.listSections());
+			GdbModuleSection secEchoText = sectionsEcho.get(".text");
+			assertNotNull(secEchoText);
 		}
 	}
 
@@ -284,12 +317,16 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 		}
 	}
 
+	protected String getExpectedDefaultArgsVar() {
+		return null;
+	}
+
 	@Test
 	public void testSetVarGetVar() throws Throwable {
 		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			String val = waitOn(mgr.currentInferior().getVar("args"));
-			assertEquals(null, val);
+			assertEquals(getExpectedDefaultArgsVar(), val);
 			waitOn(mgr.currentInferior().setVar("args", "test"));
 			val = waitOn(mgr.currentInferior().getVar("args"));
 			assertEquals("test", val);

@@ -31,6 +31,9 @@ import ghidra.util.Msg;
 public class GdbModuleImpl implements GdbModule {
 	protected static final Pattern OBJECT_FILE_LINE_PATTERN =
 		Pattern.compile("\\s*Object file: (?<name>.*)");
+	protected static final Pattern V11_FILE_LINE_PATTERN =
+		Pattern.compile("\\s*(Object)|(Exec) file: `(?<name>.*)', file type (?<type>.*)");
+	protected static final String GNU_DEBUGDATA_PREFIX = ".gnu_debugdata for ";
 
 	// Pattern observed in GDB 8 (probably applies to previous, too)
 	protected static final Pattern OBJECT_SECTION_LINE_PATTERN_V8 = Pattern.compile(

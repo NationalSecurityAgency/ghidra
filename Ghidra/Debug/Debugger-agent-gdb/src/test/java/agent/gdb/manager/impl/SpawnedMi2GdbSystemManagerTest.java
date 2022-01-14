@@ -15,7 +15,6 @@
  */
 package agent.gdb.manager.impl;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
@@ -23,13 +22,8 @@ import org.junit.Ignore;
 
 import agent.gdb.manager.GdbManager;
 
-@Ignore("Need to install GDB 7.6.1 to the expected directory on CI")
-public class SpawnedMi2Gdb7Dot6Dot1ManagerTest extends AbstractGdbManagerTest {
-	@Override
-	protected File findGdbBin() {
-		return new File("/opt/gdb-7.6.1/bin/gdb");
-	}
-
+@Ignore("Need compatible version install on CI")
+public class SpawnedMi2GdbSystemManagerTest extends AbstractGdbManagerTest {
 	@Override
 	protected CompletableFuture<Void> startManager(GdbManager manager) {
 		try {
