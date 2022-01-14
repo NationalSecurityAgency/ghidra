@@ -25,6 +25,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.*;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetInterpreter;
@@ -34,6 +35,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.CollectionChangeListener;
 
@@ -67,6 +69,8 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 	protected DebuggerInterpreterService interpreterService;
 	@AutoServiceConsumed
 	public DebuggerModelService modelService;
+	@AutoServiceConsumed
+	private DebuggerConsoleService consoleService;
 
 	private List<DebuggerObjectsProvider> providers = new ArrayList<>();
 	private boolean firstPass = true;
@@ -269,4 +273,13 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		}
 		providers.get(0).readConfigState(saveState);
 	}
+
+	public void objectError(String title, String message) {
+		if (consoleService == null) {
+			Msg.showError(this, null, title, message);
+			return;
+		}
+		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message);
+	}
+
 }

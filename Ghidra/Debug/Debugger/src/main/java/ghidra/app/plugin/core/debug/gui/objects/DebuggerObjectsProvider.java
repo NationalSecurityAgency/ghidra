@@ -68,7 +68,8 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.PrivatelyQueuedListener;
 import ghidra.util.table.GhidraTable;
 import resources.ResourceManager;
@@ -464,7 +465,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		if (pane != null) {
 			if (currentModel != null) {
 				currentModel.fetchModelRoot().thenAccept(this::refresh).exceptionally(ex -> {
-					Msg.error(this, "Error refreshing model root", ex);
+					plugin.objectError("Refresh", "Error refreshing model root");
 					return null;
 				});
 			}
@@ -667,7 +668,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 					table.setColumns();
 					// TODO: What with attrs?
 				}).exceptionally(ex -> {
-					Msg.error(this, "Failed to fetch attributes", ex);
+					plugin.objectError("Build Table", "Failed to fetch attributes");
 					return null;
 				});
 			}
@@ -682,7 +683,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public void addTargetToMap(ObjectContainer container) {
 		DebuggerObjectsProvider provider = container.getProvider();
 		if (!this.equals(provider)) {
-			Msg.error(this, "TargetMap corrupted");
+			plugin.objectError("Add Target", "TargetMap corrupted");
 		}
 		TargetObject targetObject = container.getTargetObject();
 		if (targetObject != null && !container.isLink()) {
