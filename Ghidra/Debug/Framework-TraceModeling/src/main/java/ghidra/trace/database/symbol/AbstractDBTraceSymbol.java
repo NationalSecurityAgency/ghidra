@@ -39,10 +39,10 @@ import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses
 import ghidra.trace.database.program.DBTraceProgramView;
 import ghidra.trace.database.symbol.DBTraceSymbolManager.DBTraceSymbolIDEntry;
 import ghidra.trace.database.symbol.DBTraceSymbolManager.MySymbolTypes;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.symbol.TraceSymbol;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
@@ -172,7 +172,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return null;
 	}
 

@@ -86,10 +86,6 @@ public:
     is_otherspace = 512,	///< Quick check for the OtherSpace derived class
     has_nearpointers = 0x400	///< Does there exist near pointers into this space
   };
-  enum {
-    constant_space_index = 0,	///< Reserved index for the constant space
-    other_space_index = 1	///< Reserved index for the other space
-  };
 private:
   spacetype type;		///< Type of space (PROCESSOR, CONSTANT, INTERNAL, ...)
   AddrSpaceManager *manage;     ///< Manager for processor using this space
@@ -178,19 +174,23 @@ public:
 /// by the offset field of an Address.
 class ConstantSpace : public AddrSpace {
 public:
-  ConstantSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind); ///< Only constructor
+  ConstantSpace(AddrSpaceManager *m,const Translate *t); ///< Only constructor
   virtual void printRaw(ostream &s,uintb offset) const;
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el);
+  static const string NAME;		// Reserved name for the address space
+  static const int4 INDEX;		// Reserved index for constant space
 };
 
 /// \brief Special AddrSpace for special/user-defined address spaces
 class OtherSpace : public AddrSpace {
 public:
-  OtherSpace(AddrSpaceManager *m, const Translate *t, const string &nm, int4 ind);	///< Constructor
+  OtherSpace(AddrSpaceManager *m, const Translate *t, int4 ind);	///< Constructor
   OtherSpace(AddrSpaceManager *m, const Translate *t);	///< For use with restoreXml
   virtual void printRaw(ostream &s, uintb offset) const;
   virtual void saveXml(ostream &s) const;
+  static const string NAME;		// Reserved name for the address space
+  static const int4 INDEX;		// Reserved index for the other space
 };
 
 /// \brief The pool of temporary storage registers
@@ -204,9 +204,11 @@ public:
 /// \b unique.  
 class UniqueSpace : public AddrSpace {
 public:
-  UniqueSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,uint4 fl);	///< Constructor
+  UniqueSpace(AddrSpaceManager *m,const Translate *t,int4 ind,uint4 fl);	///< Constructor
   UniqueSpace(AddrSpaceManager *m,const Translate *t);	///< For use with restoreXml
   virtual void saveXml(ostream &s) const;
+  static const string NAME;		///< Reserved name for the unique space
+  static const uint4 SIZE;		///< Fixed size (in bytes) for unique space offsets
 };
 
 /// \brief The pool of logically joined variables
@@ -219,7 +221,7 @@ public:
 /// have an absolute meaning, the database may vary what offset is assigned to what set of pieces.
 class JoinSpace : public AddrSpace {
 public:
-  JoinSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind);
+  JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind);
   virtual void saveXmlAttributes(ostream &s,uintb offset) const;
   virtual void saveXmlAttributes(ostream &s,uintb offset,int4 size) const;
   virtual uintb restoreXmlAttributes(const Element *el,uint4 &size) const;
@@ -227,6 +229,7 @@ public:
   virtual uintb read(const string &s,int4 &size) const;
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el);
+  static const string NAME;		///< Reserved name for the join space
 };
 
 /// \brief An overlay space.

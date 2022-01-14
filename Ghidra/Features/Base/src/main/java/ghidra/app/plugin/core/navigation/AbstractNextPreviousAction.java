@@ -15,7 +15,10 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import javax.swing.*;
+import java.awt.event.ActionEvent;
+
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
 
 import docking.action.KeyBindingData;
 import docking.action.ToolBarData;
@@ -30,6 +33,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.AddressFieldLocation;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -71,17 +75,16 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 	void gotoNextPrevious(TaskMonitor monitor, final NavigatableActionContext context) {
 
 		try {
-			final Address address =
-				isForward ? getNextAddress(monitor, context.getProgram(), context.getAddress())
-						: getPreviousAddress(monitor, context.getProgram(), context.getAddress());
+			boolean direction = isForward;
+			if (context.hasAnyEventClickModifiers(ActionEvent.SHIFT_MASK)) {
+				direction = !direction;
+			}
 
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					gotoAddress(context, address);
-				}
-			});
+			Address address = direction
+					? getNextAddress(monitor, context.getProgram(), context.getAddress())
+					: getPreviousAddress(monitor, context.getProgram(), context.getAddress());
 
+			Swing.runLater(() -> gotoAddress(context, address));
 		}
 		catch (CancelledException e) {
 			// cancelled
@@ -116,7 +119,7 @@ public abstract class AbstractNextPreviousAction extends NavigatableContextActio
 
 	private String getDescriptionString() {
 		String prefix = isForward ? "Go To Next " : "Go To Previous ";
-		return prefix + getNavigationTypeName();
+		return prefix + getNavigationTypeName() + " (shift-click inverts direction)";
 	}
 
 	abstract protected String getNavigationTypeName();

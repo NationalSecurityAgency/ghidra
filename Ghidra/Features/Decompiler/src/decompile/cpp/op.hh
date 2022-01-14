@@ -31,12 +31,13 @@
 /// within the \b fspec space.
 class IopSpace : public AddrSpace {
 public:
-  IopSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind);
+  IopSpace(AddrSpaceManager *m,const Translate *t,int4 ind);
   virtual void saveXmlAttributes(ostream &s,uintb offset) const { s << " space=\"iop\""; }
   virtual void saveXmlAttributes(ostream &s,uintb offset,int4 size) const { s << " space=\"iop\""; }
   virtual void printRaw(ostream &s,uintb offset) const;
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el);
+  static const string NAME;			///< Reserved name for the iop space
 };
 
 /// \brief Lowest level operation of the \b p-code language

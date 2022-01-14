@@ -49,10 +49,10 @@ public abstract class PcodeEmit {
 	private Address defaultFallAddress;
 	private Address fallOverride;
 	private int fallOffset;
-	private UniqueAddressFactory uniqueFactory;
+	private SleighLanguage language;
+	private AddressFactory addressFactory;
 	private VarnodeData outcache;
 	protected VarnodeData[] incache;
-	private VarnodeData[] dyncache;
 	protected ArrayList<Integer> labeldef = null;
 	protected int numOps = 0;							// Number of PcodeOps generated so far
 	private int labelbase = 0;
@@ -76,10 +76,9 @@ public abstract class PcodeEmit {
 	 * @param ictx is the InstructionContext interface to resolve requests for context
 	 * @param fallOffset default instruction fall offset (i.e., instruction length including delay slotted instructions)
 	 * @param override required if pcode overrides are to be utilized
-	 * @param uniqueFactory required when override specified or if overlay normalization is required
 	 */
 	public PcodeEmit(ParserWalker walk, InstructionContext ictx, int fallOffset,
-			PcodeOverride override, UniqueAddressFactory uniqueFactory) {
+			PcodeOverride override) {
 		this.walker = walk;
 		this.parsercontext = walk.getParserContext();
 		this.instcontext = ictx;
@@ -88,30 +87,27 @@ public abstract class PcodeEmit {
 		AddressSpace myspace = startAddress.getAddressSpace();
 		if (myspace.isOverlaySpace()) {
 			overlayspace = myspace;
-			startAddress = ((OverlayAddressSpace) myspace).getOverlayedSpace().getAddress(
-				startAddress.getOffset());
+			startAddress = ((OverlayAddressSpace) myspace).getOverlayedSpace()
+					.getAddress(startAddress.getOffset());
 		}
 		this.fallOffset = fallOffset;
-		this.uniqueFactory = uniqueFactory;
 		this.override = override;
 		SleighInstructionPrototype sleighproto = parsercontext.getPrototype();
 		if (sleighproto != null) {
-			SleighLanguage sleighlang = (SleighLanguage) sleighproto.getLanguage();
-			uniq_space = sleighlang.getAddressFactory().getUniqueSpace();
-			uniquemask = sleighlang.getUniqueAllocationMask();
+			language = (SleighLanguage) sleighproto.getLanguage();
+			addressFactory = language.getAddressFactory();
+			uniq_space = addressFactory.getUniqueSpace();
+			uniquemask = language.getUniqueAllocationMask();
 			uniqueoffset = (startAddress.getOffset() & uniquemask) << 4;
 		}
 		else {		// This can happen for CallFixup snippets, but these don't need their temporary vars patched up
+			language = null;
 			uniq_space = null;
 			uniquemask = 0;
 			uniqueoffset = 0;
 		}
 
 		if (override != null) {
-			if (uniqueFactory == null) {
-				throw new IllegalArgumentException(
-					"uniqueFactory required when override is specified");
-			}
 			flowOverride = override.getFlowOverride();
 			if (flowOverride == FlowOverride.NONE) {
 				flowOverride = null;
@@ -131,7 +127,6 @@ public abstract class PcodeEmit {
 		}
 
 		incache = new VarnodeData[8];	// Maximum number of inputs
-		dyncache = null;
 	}
 
 	private void setUniqueOffset(Address addr) {
@@ -159,7 +154,7 @@ public abstract class PcodeEmit {
 	 */
 	private void setLabel(OpTpl op) {
 		if (labeldef == null) {
-			labeldef = new ArrayList<Integer>();
+			labeldef = new ArrayList<>();
 		}
 		int labelindex = (int) op.getInput()[0].getOffset().getReal() + labelbase;
 		while (labeldef.size() <= labelindex) {
@@ -282,9 +277,11 @@ public abstract class PcodeEmit {
 			//   CALL <dest>
 			//   <label>
 
-			Address tmpAddr = uniqueFactory.getNextUniqueAddress();
-			VarnodeTpl tmp = new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()),
-				new ConstTpl(ConstTpl.REAL, tmpAddr.getOffset()), inputs[1].getSize());
+			VarnodeTpl tmp =
+				new VarnodeTpl(new ConstTpl(uniq_space),
+					new ConstTpl(ConstTpl.REAL,
+						UniqueLayout.RUNTIME_BOOLEAN_INVERT.getOffset(language)),
+					inputs[1].getSize());
 			int labelIndex = labelcount++;
 			VarnodeTpl label = new VarnodeTpl(new ConstTpl(const_space),
 				new ConstTpl(ConstTpl.J_RELATIVE, labelIndex), new ConstTpl(ConstTpl.REAL, 8));
@@ -338,9 +335,9 @@ public abstract class PcodeEmit {
 			//   tmp = COPY &<dest>
 			//   RETURN tmp
 
-			Address tmpAddr = uniqueFactory.getNextUniqueAddress();
-			VarnodeTpl tmp = new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()),
-				new ConstTpl(ConstTpl.REAL, tmpAddr.getOffset()),
+			VarnodeTpl tmp = new VarnodeTpl(new ConstTpl(uniq_space),
+				new ConstTpl(ConstTpl.REAL,
+					UniqueLayout.RUNTIME_RETURN_LOCATION.getOffset(language)),
 				new ConstTpl(ConstTpl.REAL, ptrSize));
 
 			VarnodeTpl destAddr = new VarnodeTpl(new ConstTpl(const_space), inputs[0].getOffset(),
@@ -379,13 +376,15 @@ public abstract class PcodeEmit {
 			//   RETURN <dest>
 			//   <label>
 
-			Address tmpAddr = uniqueFactory.getNextUniqueAddress();
-			VarnodeTpl tmp = new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()),
-				new ConstTpl(ConstTpl.REAL, tmpAddr.getOffset()), inputs[1].getSize());
+			VarnodeTpl tmp =
+				new VarnodeTpl(new ConstTpl(uniq_space),
+					new ConstTpl(ConstTpl.REAL,
+						UniqueLayout.RUNTIME_BOOLEAN_INVERT.getOffset(language)),
+					inputs[1].getSize());
 
-			tmpAddr = uniqueFactory.getNextUniqueAddress();
-			VarnodeTpl tmp2 = new VarnodeTpl(new ConstTpl(tmpAddr.getAddressSpace()),
-				new ConstTpl(ConstTpl.REAL, tmpAddr.getOffset()),
+			VarnodeTpl tmp2 = new VarnodeTpl(new ConstTpl(uniq_space),
+				new ConstTpl(ConstTpl.REAL,
+					UniqueLayout.RUNTIME_RETURN_LOCATION.getOffset(language)),
 				new ConstTpl(ConstTpl.REAL, ptrSize));
 
 			VarnodeTpl destAddr = new VarnodeTpl(new ConstTpl(const_space), inputs[0].getOffset(),
@@ -478,8 +477,37 @@ public abstract class PcodeEmit {
 		return hand.space;
 	}
 
+	/**
+	 * Adjust the dynamic pointer to account for a V_OFFSET_PLUS in the given VarnodeTpl.
+	 * We are passed in an existing array (dyncache) of VarnodeData for input/output.
+	 * We assume the location of the base pointer is in dyncache[1]
+	 * @param dyncache is the existing array
+	 * @param vn is the V_OFFSET_PLUS VarnodeTpl to adjust for
+	 */
+	private void generatePointerAdd(VarnodeData[] dyncache, VarnodeTpl vn) {
+		long offsetPlus = vn.getOffset().getReal() & 0xffff;
+		if (offsetPlus == 0) {
+			return;
+		}
+		VarnodeData tmpData = dyncache[0];		// Swap dyncache[1] with dyncache[0]
+		dyncache[0] = dyncache[1];
+		dyncache[1] = tmpData;
+		dyncache[1].space = const_space;	// Put V_OFFSET_PLUS constant in dyncache[1]
+		dyncache[1].offset = offsetPlus;
+		dyncache[1].size = dyncache[0].size;
+		dyncache[2].space = uniq_space;		// Result of INT_ADD in special runtime temp
+		dyncache[2].offset = UniqueLayout.RUNTIME_BITRANGE_EA.getOffset(language);
+		dyncache[2].size = dyncache[0].size;
+		dump(startAddress, PcodeOp.INT_ADD, dyncache, 2, dyncache[2]);
+		numOps += 1;
+		tmpData = dyncache[2];
+		dyncache[2] = dyncache[1];
+		dyncache[1] = tmpData;
+	}
+
 	private void dump(OpTpl opt) {
 
+		VarnodeData[] dyncache = null;
 		VarnodeTpl vn, outvn;
 		int isize = opt.getInput().length;
 
@@ -493,13 +521,16 @@ public abstract class PcodeEmit {
 				dyncache[1] = new VarnodeData();
 				dyncache[2] = new VarnodeData();
 				generateLocation(vn, incache[i]);	// Temporary storage
-				dyncache[2].space = incache[i].space;
-				dyncache[2].offset = incache[i].offset;
-				dyncache[2].size = incache[i].size;
 				AddressSpace spc = generatePointer(vn, dyncache[1]);
+				if (vn.getOffset().getSelect() == ConstTpl.V_OFFSET_PLUS) {
+					generatePointerAdd(dyncache, vn);
+				}
 				dyncache[0].space = const_space;
 				dyncache[0].offset = spc.getSpaceID();
 				dyncache[0].size = 4;		// Size of spaceid
+				dyncache[2].space = incache[i].space;
+				dyncache[2].offset = incache[i].offset;
+				dyncache[2].size = incache[i].size;
 				dump(startAddress, PcodeOp.LOAD, dyncache, 2, dyncache[2]);
 				numOps += 1;
 			}
@@ -524,13 +555,16 @@ public abstract class PcodeEmit {
 				generateLocation(outvn, outcache);	// Temporary storage
 				dump(startAddress, opt.getOpcode(), incache, isize, outcache);
 				numOps += 1;
-				dyncache[2].space = outcache.space;
-				dyncache[2].offset = outcache.offset;
-				dyncache[2].size = outcache.size;
 				AddressSpace spc = generatePointer(outvn, dyncache[1]);
+				if (outvn.getOffset().getSelect() == ConstTpl.V_OFFSET_PLUS) {
+					generatePointerAdd(dyncache, outvn);
+				}
 				dyncache[0].space = const_space;
 				dyncache[0].offset = spc.getSpaceID();
 				dyncache[0].size = 4;		// Size of spaceid;
+				dyncache[2].space = outcache.space;
+				dyncache[2].offset = outcache.offset;
+				dyncache[2].size = outcache.size;
 				dump(startAddress, PcodeOp.STORE, dyncache, 3, null);
 				numOps += 1;
 			}
@@ -576,8 +610,8 @@ public abstract class PcodeEmit {
 	/**
 	 * Insert the p-code of instruction(s) in the delay slot at this point in the p-code generation for the current instruction
 	 * @param op is the DELAYSLOT directive
-	 * @throws UnknownInstructionException
-	 * @throws MemoryAccessException
+	 * @throws UnknownInstructionException for problems finding the delay slot Instruction
+	 * @throws MemoryAccessException for problems resolving details of the delay slot Instruction
 	 */
 	private void delaySlot(OpTpl op) throws UnknownInstructionException, MemoryAccessException {
 
@@ -620,8 +654,8 @@ public abstract class PcodeEmit {
 	 * Inject the p-code for a different instruction at this point in the p-code generation for current instruction
 	 * @param bld is the CROSSBUILD directive containing the section number and address parameters
 	 * @param secnum is the section number of the section containing the CROSSBUILD directive
-	 * @throws UnknownInstructionException
-	 * @throws MemoryAccessException
+	 * @throws UnknownInstructionException for problems finding the referenced Instruction
+	 * @throws MemoryAccessException for problems resolving details of the referenced Instruction
 	 */
 	private void appendCrossBuild(OpTpl bld, int secnum)
 			throws UnknownInstructionException, MemoryAccessException {
@@ -703,8 +737,8 @@ public abstract class PcodeEmit {
 	 * Build a named p-code section of a constructor that contains only implied BUILD directives
 	 * @param ct Constructor to build section for
 	 * @param secnum index of the section to be built
-	 * @throws MemoryAccessException 
-	 * @throws UnknownInstructionException 
+	 * @throws MemoryAccessException for problems resolving details of the underlying Instruction
+	 * @throws UnknownInstructionException for problems finding the underlying Instruction
 	 */
 	private void buildEmpty(Constructor ct, int secnum)
 			throws UnknownInstructionException, MemoryAccessException {
@@ -730,19 +764,16 @@ public abstract class PcodeEmit {
 
 	void checkOverlays(int opcode, VarnodeData[] in, int isize, VarnodeData out) {
 		if (overlayspace != null) {
-			if (uniqueFactory == null) {
-				return;
-			}
 			if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
 				int spaceId = (int) in[0].offset;
-				AddressSpace space = uniqueFactory.getAddressFactory().getAddressSpace(spaceId);
+				AddressSpace space = addressFactory.getAddressSpace(spaceId);
 				if (space.isOverlaySpace()) {
 					space = ((OverlayAddressSpace) space).getOverlayedSpace();
 					in[0].offset = space.getSpaceID();
 				}
 			}
 			for (int i = 0; i < isize; ++i) {
-				VarnodeData v = in[0];
+				VarnodeData v = in[i];
 				if (v.space.equals(overlayspace)) {
 					v.space = ((OverlayAddressSpace) v.space).getOverlayedSpace();
 				}

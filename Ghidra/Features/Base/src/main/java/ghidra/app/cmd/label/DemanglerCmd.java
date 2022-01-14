@@ -50,8 +50,9 @@ public class DemanglerCmd extends BackgroundCommand {
 
 	@Override
 	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		Program prog = (Program) obj;
 
+		// search until we find a demangler that can handle the given mangled input
+		Program prog = (Program) obj;
 		for (Demangler demangler : getDemanglers()) {
 			if (!demangler.canDemangle(prog)) {
 				continue;
@@ -62,11 +63,11 @@ public class DemanglerCmd extends BackgroundCommand {
 			}
 
 			if (result != null) {
-				break; // successful; don't try a different demangler
+				return true; // successful; don't try a different demangler
 			}
 		}
 
-		return true;
+		return false;
 	}
 
 	private boolean doDemangle(Demangler demangler, Program program, TaskMonitor monitor) {
@@ -77,6 +78,7 @@ public class DemanglerCmd extends BackgroundCommand {
 		catch (DemangledException e) {
 			if (e.isInvalidMangledName()) {
 				//ignore invalid names, consider as not an error
+				setStatusMsg("Invalid mangled name");
 				return true; // no real error
 			}
 

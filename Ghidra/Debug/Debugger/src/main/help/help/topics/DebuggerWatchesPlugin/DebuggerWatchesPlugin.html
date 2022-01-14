@@ -57,7 +57,7 @@
 
       <LI>Address - when evaluation succeeds, the address of the watch's value. This field is
       really only meaningful when the outermost operator of the expression is a memory dereference.
-      Double-clicking a row will navigate the primary dynamic listing to this address, if
+      Double-clicking this cell will navigate the primary dynamic listing to this address, if
       possible.</LI>
 
       <LI>Value - the raw bytes of the watched buffer. If the expression is a register, then this
@@ -71,7 +71,9 @@
       possible.</LI>
 
       <LI>Representation - the value of the watch as interpreted by the selected data type. This
-      field is not yet user modifiable, even if the <B>Enable Edits</B> toggle is on.</LI>
+      field is not yet user modifiable, even if the <B>Enable Edits</B> toggle is on. If the value
+      is an address, i.e., Type is a pointer, then double-clicking this cell will navigate the
+      primary dynamic listing, if possible.</LI>
 
       <LI>Error - if an error occurs during compilation or evaluation of the expression, that error
       is rendered here. Double-clicking the row will display the stack trace. Note that errors

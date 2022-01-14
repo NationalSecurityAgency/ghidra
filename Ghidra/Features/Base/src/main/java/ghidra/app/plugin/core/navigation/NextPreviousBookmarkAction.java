@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.Iterator;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
+import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -37,6 +37,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import resources.ResourceManager;
 
 public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> {
@@ -101,7 +102,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 	}
 
 	@Override
-	protected void doActionPerformed(ActionContext context) {
+	public void actionPerformed(ActionContext context) {
 		if (context instanceof NavigatableActionContext) {
 			gotoNextPrevious((NavigatableActionContext) context, this.getCurrentUserData());
 		}
@@ -197,16 +198,16 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 //==================================================================================================
 	private void gotoNextPrevious(final NavigatableActionContext context,
 			final String bookmarkType) {
-		final Address address =
-			isForward ? getNextAddress(context.getProgram(), context.getAddress(), bookmarkType)
-					: getPreviousAddress(context.getProgram(), context.getAddress(), bookmarkType);
+		boolean direction = isForward;
+		if (context.hasAnyEventClickModifiers(ActionEvent.SHIFT_MASK)) {
+			direction = !direction;
+		}
 
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				gotoAddress(context, address);
-			}
-		});
+		Address address = direction
+				? getNextAddress(context.getProgram(), context.getAddress(), bookmarkType)
+				: getPreviousAddress(context.getProgram(), context.getAddress(), bookmarkType);
+
+		Swing.runLater(() -> gotoAddress(context, address));
 	}
 
 	private void gotoAddress(NavigatableActionContext listingActionContext, Address address) {
@@ -234,6 +235,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 	public String getToolTipText() {
 		String description = "Go To " + (isForward ? "Next" : "Previous");
 		description += " Bookmark: " + getCurrentState().getName();
+		description += " (shift-click inverts direction)";
 		return description;
 	}
 

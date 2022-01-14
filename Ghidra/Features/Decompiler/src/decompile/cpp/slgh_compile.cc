@@ -1739,7 +1739,7 @@ void MacroBuilder::setLabel(OpTpl *op)
   outvec.push_back(clone);
 }
 
-uintb SleighPcode::allocateTemp(void)
+uint4 SleighPcode::allocateTemp(void)
 
 {
   return compiler->getUniqueAddr();
@@ -1799,14 +1799,14 @@ void SleighCompile::predefinedSymbols(void)
 				// Some predefined symbols
   root = new SubtableSymbol("instruction"); // Base constructors
   symtab.addSymbol(root);
-  insertSpace(new ConstantSpace(this,this,"const",AddrSpace::constant_space_index));
+  insertSpace(new ConstantSpace(this,this));
   SpaceSymbol *spacesym = new SpaceSymbol(getConstantSpace()); // Constant space
   symtab.addSymbol(spacesym);
-  OtherSpace *otherSpace = new OtherSpace(this,this,"OTHER",AddrSpace::other_space_index);
+  OtherSpace *otherSpace = new OtherSpace(this,this,OtherSpace::INDEX);
   insertSpace(otherSpace);
   spacesym = new SpaceSymbol(otherSpace);
   symtab.addSymbol(spacesym);
-  insertSpace(new UniqueSpace(this,this,"unique",numSpaces(),0));
+  insertSpace(new UniqueSpace(this,this,numSpaces(),0));
   spacesym = new SpaceSymbol(getUniqueSpace()); // Temporary register space
   symtab.addSymbol(spacesym);
   StartSymbol *startsym = new StartSymbol("inst_start",getConstantSpace());
@@ -2271,10 +2271,10 @@ void SleighCompile::reportWarning(const string &msg)
 /// this method does not make an assumption about the size of the requested temporary Varnode.
 /// It reserves a fixed amount of space and returns its starting offset.
 /// \return the starting offset of the new temporary register
-uintb SleighCompile::getUniqueAddr(void)
+uint4 SleighCompile::getUniqueAddr(void)
 
 {
-  uintb base = getUniqueBase();
+  uint4 base = getUniqueBase();
   setUniqueBase(base + SleighBase::MAX_UNIQUE_SIZE);
   return base;
 }
@@ -3422,7 +3422,7 @@ void SleighCompile::checkUniqueAllocation(void)
     if (i>=tables.size()) break;
     sym = tables[i];
   }
-  uintm ubase = getUniqueBase(); // We have to adjust the unique base
+  uint4 ubase = getUniqueBase(); // We have to adjust the unique base
   ubase <<= sa;
   setUniqueBase(ubase);
 }

@@ -173,7 +173,7 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 			assertEquals(3, allBreakpoints.size());
 		});
 		waitForPass(() -> {
-			assertFalse(bpt.isEnabled());
+			assertFalse(bpt.isEnabled(0));
 		});
 		/**
 		 * TODO: Might be necessary to debounce and wait for service callbacks to settle. Sometimes,

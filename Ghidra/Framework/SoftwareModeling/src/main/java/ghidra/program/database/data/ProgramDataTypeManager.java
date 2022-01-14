@@ -135,8 +135,6 @@ public class ProgramDataTypeManager extends DataTypeManagerDB
 	public void dataTypeChanged(DataType dt, boolean isAutoChange) {
 		super.dataTypeChanged(dt, isAutoChange);
 		if (!isCreatingDataType()) {
-			program.getCodeManager().invalidateCache(false);
-			program.getFunctionManager().invalidateCache(false);
 			program.dataTypeChanged(getID(dt), ChangeManager.DOCR_DATA_TYPE_CHANGED,
 				isAutoChange, null, dt);
 		}

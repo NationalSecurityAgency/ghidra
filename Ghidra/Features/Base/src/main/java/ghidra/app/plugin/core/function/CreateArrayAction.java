@@ -93,7 +93,7 @@ class CreateArrayAction extends ListingContextAction {
 				return;
 			}
 			Array array = new ArrayDataType(dt, n, dt.getLength());
-			plugin.createData(array, context, false);
+			plugin.createData(array, context, true, false);
 		}
 		else if (loc instanceof VariableLocation) {
 			VariableLocation varLoc = (VariableLocation) loc;
@@ -110,7 +110,7 @@ class CreateArrayAction extends ListingContextAction {
 					return;
 				}
 				Array array = new ArrayDataType(dt, n, len);
-				plugin.createData(array, context, true);
+				plugin.createData(array, context, true, true);
 			}
 		}
 	}

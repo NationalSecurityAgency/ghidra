@@ -243,8 +243,7 @@ public class BufferMgr {
 		// Copy file parameters into cache file
 		if (sourceFile != null) {
 			String[] parmNames = sourceFile.getParameterNames();
-			for (int i = 0; i < parmNames.length; i++) {
-				String name = parmNames[i];
+			for (String name : parmNames) {
 				cacheFile.setParameter(name, sourceFile.getParameter(name));
 			}
 		}
@@ -282,12 +281,11 @@ public class BufferMgr {
 			openInstances = new HashSet<>();
 
 			Runnable cleanupTask = () -> {
-				Object[] instanceList;
+				BufferMgr[] instanceList;
 				synchronized (BufferMgr.class) {
-					instanceList = openInstances.toArray();
+					instanceList = openInstances.toArray(new BufferMgr[openInstances.size()]);
 				}
-				for (int i = 0; i < instanceList.length; i++) {
-					BufferMgr bufferMgr = (BufferMgr) instanceList[i];
+				for (BufferMgr bufferMgr : instanceList) {
 					try {
 						bufferMgr.dispose();
 					}
@@ -817,7 +815,7 @@ public class BufferMgr {
 			return node;
 		}
 		else if (node.locked) {
-			throw new IOException("Locked buffer");
+			throw new IOException("Locked buffer: " + id);
 		}
 
 		// if requested, load from disk cache file and add node to memory cache list
@@ -1647,18 +1645,18 @@ public class BufferMgr {
 
 			// Recover free buffer list
 			int[] freeIndexes = recoveryFile.getFreeIndexList();
-			for (int i = 0; i < freeIndexes.length; i++) {
+			for (int index : freeIndexes) {
 				monitor.checkCanceled();
-				if (freeIndexes[i] >= origIndexCount) {
+				if (index >= origIndexCount) {
 					// Newly allocated free buffer
 					BufferNode node =
-						createNewBufferNode(freeIndexes[i], currentCheckpointHead, null);
+						createNewBufferNode(index, currentCheckpointHead, null);
 					node.isDirty = true;
 					node.modified = true;
 					node.empty = true;
 				}
-				else if (!indexProvider.isFree(freeIndexes[i])) {
-					deleteBuffer(freeIndexes[i]);
+				else if (!indexProvider.isFree(index)) {
+					deleteBuffer(index);
 				}
 			}
 
@@ -1953,8 +1951,7 @@ public class BufferMgr {
 
 		// Copy file parameters from cache file
 		String[] parmNames = cacheFile.getParameterNames();
-		for (int i = 0; i < parmNames.length; i++) {
-			String name = parmNames[i];
+		for (String name : parmNames) {
 			outFile.setParameter(name, cacheFile.getParameter(name));
 		}
 	}
@@ -2051,8 +2048,8 @@ public class BufferMgr {
 		if (cacheFiles == null) {
 			return;
 		}
-		for (int i = 0; i < cacheFiles.length; i++) {
-			cacheFiles[i].delete();
+		for (File file : cacheFiles) {
+			file.delete();
 		}
 	}
 }

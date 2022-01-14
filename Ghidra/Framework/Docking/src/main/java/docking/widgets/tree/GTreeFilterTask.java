@@ -25,12 +25,11 @@ import ghidra.util.task.TaskMonitor;
 public class GTreeFilterTask extends GTreeTask {
 
 	private final GTreeFilter filter;
-	private boolean cancelledProgramatically;
+	private volatile boolean cancelledProgramatically;
 
 	public GTreeFilterTask(GTree tree, GTreeFilter filter) {
 		super(tree);
 		this.filter = filter;
-
 		tree.saveFilterRestoreState();
 	}
 

@@ -33,10 +33,10 @@ import ghidra.program.model.lang.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.database.stack.DBTraceStack;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.LanguageTestWatcher;
 import ghidra.util.database.*;
 import ghidra.util.task.ConsoleTaskMonitor;
@@ -1027,7 +1027,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		Register r0h = b.language.getRegister("r0h");
 		Register r0l = b.language.getRegister("r0l");
 
-		DBTraceThread thread;
+		TraceThread thread;
 		try (UndoableTransaction tid = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread1", 0);
 			DBTraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
@@ -1048,7 +1048,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			assertEquals(new BigInteger("76543210", 16), regs.getValue(0, r0h).getUnsignedValue());
 			assertEquals(new BigInteger("FEDCBA98", 16), regs.getValue(0, r0l).getUnsignedValue());
 
-			DBTraceStack stack = b.trace.getStackManager().getStack(thread, 0, true);
+			TraceStack stack = b.trace.getStackManager().getStack(thread, 0, true);
 			stack.setDepth(2, true);
 			assertEquals(regs, memory.getMemoryRegisterSpace(stack.getFrame(0, false), false));
 			DBTraceMemoryRegisterSpace frame =
@@ -1072,7 +1072,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		Register phase = b.language.getRegister("phase");
 		Register counter = b.language.getRegister("counter");
 
-		DBTraceThread thread;
+		TraceThread thread;
 		try (UndoableTransaction tid = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread1", 0);
 			DBTraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
@@ -1106,7 +1106,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 	@Test
 	public void testManyStateEntries() throws Exception {
 		Register pc = b.language.getRegister("pc");
-		DBTraceThread thread;
+		TraceThread thread;
 		try (UndoableTransaction tid = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread1", 0);
 			DBTraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);

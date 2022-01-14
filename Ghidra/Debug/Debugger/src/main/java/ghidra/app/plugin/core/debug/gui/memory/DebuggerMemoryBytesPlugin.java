@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import org.jdom.Element;
 
+import docking.action.DockingAction;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -31,6 +32,7 @@ import ghidra.app.plugin.core.byteviewer.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.NewMemoryAction;
 import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
@@ -71,6 +73,8 @@ public class DebuggerMemoryBytesPlugin
 	private static final String KEY_DISCONNECTED_COUNT = "disconnectedCount";
 	private static final String PREFIX_DISCONNECTED_PROVIDER = "disconnectedProvider";
 
+	protected DockingAction actionNewMemory;
+
 	@AutoServiceConsumed
 	private ProgramManager programManager;
 	// NOTE: This plugin doesn't extend AbstractDebuggerPlugin
@@ -102,7 +106,10 @@ public class DebuggerMemoryBytesPlugin
 	}
 
 	private void createActions() {
-		// TODO
+		actionNewMemory = NewMemoryAction.builder(this)
+				.enabled(true)
+				.onAction(c -> createNewDisconnectedProvider())
+				.buildAndInstall(tool);
 	}
 
 	public DebuggerMemoryBytesProvider createViewerIfMissing(LocationTrackingSpec spec,

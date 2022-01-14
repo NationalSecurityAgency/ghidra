@@ -64,6 +64,7 @@ public class WatchRow {
 	private byte[] value;
 	private byte[] prevValue; // Value at previous coordinates
 	private String valueString;
+	private Object valueObj;
 	private Throwable error = null;
 
 	public WatchRow(DebuggerWatchesProvider provider, String expression) {
@@ -77,6 +78,7 @@ public class WatchRow {
 		reads = null;
 		value = null;
 		valueString = null;
+		valueObj = null;
 	}
 
 	protected void recompile() {
@@ -125,19 +127,28 @@ public class WatchRow {
 			address = valueWithAddress.getRight();
 			reads = executorWithAddress.getReads();
 
-			valueString = parseAsDataType();
+			valueObj = parseAsDataTypeObj();
+			valueString = parseAsDataTypeStr();
 		}
 		catch (Exception e) {
 			error = e;
 		}
 	}
 
-	protected String parseAsDataType() {
+	protected String parseAsDataTypeStr() {
 		if (dataType == null || value == null) {
 			return "";
 		}
 		MemBuffer buffer = new ByteMemBufferImpl(address, value, language.isBigEndian());
 		return dataType.getRepresentation(buffer, SettingsImpl.NO_SETTINGS, value.length);
+	}
+	
+	protected Object parseAsDataTypeObj() {
+		if (dataType == null || value == null) {
+			return null;
+		}
+		MemBuffer buffer = new ByteMemBufferImpl(address, value, language.isBigEndian());
+		return dataType.getValue(buffer, SettingsImpl.NO_SETTINGS, value.length);
 	}
 
 	public static class ReadDepsTraceBytesPcodeExecutorState
@@ -299,7 +310,8 @@ public class WatchRow {
 	public void setDataType(DataType dataType) {
 		this.typePath = dataType == null ? null : dataType.getPathName();
 		this.dataType = dataType;
-		valueString = parseAsDataType();
+		valueString = parseAsDataTypeStr();
+		valueObj = parseAsDataTypeObj();
 		provider.contextChanged();
 	}
 
@@ -357,6 +369,10 @@ public class WatchRow {
 		return valueString;
 	}
 
+	public Object getValueObj() {
+		return valueObj;
+	}
+	
 	public boolean isValueEditable() {
 		return address != null && provider.isEditsEnabled();
 	}

@@ -27,6 +27,7 @@ import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.memstate.UniqueMemoryBank.WordInfo;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.address.GenericAddressSpace;
+import ghidra.program.model.lang.SpaceNames;
 
 public class UniqueMemoryBankTest extends AbstractGenericTest {
 
@@ -39,7 +40,8 @@ public class UniqueMemoryBankTest extends AbstractGenericTest {
 
 	@Before
 	public void setUp() {
-		uniqueSpace = new GenericAddressSpace("unique", 64, AddressSpace.TYPE_UNIQUE, 0);
+		uniqueSpace =
+			new GenericAddressSpace(SpaceNames.UNIQUE_SPACE_NAME, 64, AddressSpace.TYPE_UNIQUE, 0);
 		uniqueBank = new UniqueMemoryBank(uniqueSpace, false);
 	}
 

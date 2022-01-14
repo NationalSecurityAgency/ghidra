@@ -18,13 +18,13 @@ package ghidra.trace.model.modules;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceObject;
+import ghidra.trace.model.TraceUniqueObject;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A section of a module in a trace
  */
-public interface TraceSection extends TraceObject {
+public interface TraceSection extends TraceUniqueObject {
 
 	/**
 	 * Get the trace containing this section
@@ -85,14 +85,16 @@ public interface TraceSection extends TraceObject {
 	 * @see #getRange()
 	 */
 	default Address getStart() {
-		return getRange().getMinAddress();
+		AddressRange range = getRange();
+		return range == null ? null : range.getMinAddress();
 	}
 
 	/**
 	 * @see #getRange()
 	 */
 	default Address getEnd() {
-		return getRange().getMaxAddress();
+		AddressRange range = getRange();
+		return range == null ? null : range.getMaxAddress();
 	}
 
 	/**

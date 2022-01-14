@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.debug.gui.thread;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -361,6 +361,12 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	SeekTracePresentAction actionSeekTracePresent;
 	ToggleDockingAction actionSyncFocus;
 	DockingAction actionGoToTime;
+
+	DockingAction actionCloseTrace;
+	DockingAction actionCloseOtherTraces;
+	DockingAction actionCloseDeadTraces;
+	DockingAction actionCloseAllTraces;
+
 	Set<Object> strongRefs = new HashSet<>(); // Eww
 
 	public DebuggerThreadsProvider(final DebuggerThreadsPlugin plugin) {
@@ -555,6 +561,11 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		threadTable.getSelectionModel().addListSelectionListener(this::threadRowSelected);
 		threadTable.addMouseListener(new MouseAdapter() {
 			@Override
+			public void mousePressed(MouseEvent e) {
+				setThreadRowActionContext();
+			}
+
+			@Override
 			public void mouseReleased(MouseEvent e) {
 				int selectedRow = threadTable.getSelectedRow();
 				ThreadRow row = threadTableModel.getRowObject(selectedRow);
@@ -584,15 +595,13 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		list.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
-				checkTraceTabPopupViaMouse(e);
+				setTraceTabActionContext(e);
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				checkTraceTabPopupViaMouse(e);
 			}
 		});
-		// TODO: The popup key? Only seems to have rawCode=0x93 (147) in Swing
 		mainPanel.add(traceTabs, BorderLayout.NORTH);
 
 		TableColumnModel columnModel = threadTable.getColumnModel();
@@ -622,53 +631,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		});
 	}
 
-	private void checkTraceTabPopupViaMouse(MouseEvent e) {
-		if (!e.isPopupTrigger()) {
-			return;
-		}
-		JList<Trace> list = traceTabs.getList();
-		int i = list.locationToIndex(e.getPoint());
-		if (i < 0) {
-			return;
-		}
-		Rectangle cell = list.getCellBounds(i, i);
-		if (!cell.contains(e.getPoint())) {
-			return;
-		}
-		showTraceTabPopup(e.getComponent(), e.getPoint(), i);
-	}
-
-	private void showTraceTabPopup(Component comp, Point p, int i) {
-		// TODO: Make this use action contexts and docking actions instead
-		traceTabPopupMenu.removeAll();
-		final Trace trace = traceTabs.getItem(i);
-		JMenuItem closeItem =
-			new JMenuItem("Close " + trace.getName(), DebuggerResources.ICON_CLOSE);
-		closeItem.addActionListener(evt -> {
-			traceManager.closeTrace(trace);
-		});
-		JMenuItem closeOthers = new JMenuItem("Close Others", DebuggerResources.ICON_CLOSE);
-		closeOthers.addActionListener(evt -> {
-			traceManager.closeOtherTraces(trace);
-		});
-		JMenuItem closeDead = new JMenuItem("Close Dead", DebuggerResources.ICON_CLOSE);
-		closeDead.addActionListener(evt -> {
-			traceManager.closeDeadTraces();
-		});
-		JMenuItem closeAll = new JMenuItem("Close All", DebuggerResources.ICON_CLOSE);
-		closeAll.addActionListener(evt -> {
-			for (Trace t : List.copyOf(traceManager.getOpenTraces())) {
-				traceManager.closeTrace(t);
-			}
-		});
-		traceTabPopupMenu.add(closeItem);
-		traceTabPopupMenu.addSeparator();
-		traceTabPopupMenu.add(closeOthers);
-		traceTabPopupMenu.add(closeDead);
-		traceTabPopupMenu.add(closeAll);
-		traceTabPopupMenu.show(comp, p.x, p.y);
-	}
-
 	protected void createActions() {
 		// TODO: Make other actions use builder?
 		actionStepSnapBackward = new StepSnapBackwardAction();
@@ -687,6 +649,27 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 				.buildAndInstallLocal(this);
 		traceManager.addSynchronizeFocusChangeListener(
 			strongRef(new ToToggleSelectionListener(actionSyncFocus)));
+
+		actionCloseTrace = CloseTraceAction.builderPopup(plugin)
+				.withContext(DebuggerTraceFileActionContext.class)
+				.popupWhen(c -> c.getTrace() != null)
+				.onAction(c -> traceManager.closeTrace(c.getTrace()))
+				.buildAndInstallLocal(this);
+		actionCloseAllTraces = CloseAllTracesAction.builderPopup(plugin)
+				.withContext(DebuggerTraceFileActionContext.class)
+				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty())
+				.onAction(c -> traceManager.closeAllTraces())
+				.buildAndInstallLocal(this);
+		actionCloseOtherTraces = CloseOtherTracesAction.builderPopup(plugin)
+				.withContext(DebuggerTraceFileActionContext.class)
+				.popupWhen(c -> traceManager.getOpenTraces().size() > 1 && c.getTrace() != null)
+				.onAction(c -> traceManager.closeOtherTraces(c.getTrace()))
+				.buildAndInstallLocal(this);
+		actionCloseDeadTraces = CloseDeadTracesAction.builderPopup(plugin)
+				.withContext(DebuggerTraceFileActionContext.class)
+				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty() && modelService != null)
+				.onAction(c -> traceManager.closeDeadTraces())
+				.buildAndInstallLocal(this);
 	}
 
 	private void toggleSyncFocus(boolean enabled) {
@@ -712,24 +695,50 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	private Trace computeClickedTraceTab(MouseEvent e) {
+		JList<Trace> list = traceTabs.getList();
+		int i = list.locationToIndex(e.getPoint());
+		if (i < 0) {
+			return null;
+		}
+		Rectangle cell = list.getCellBounds(i, i);
+		if (!cell.contains(e.getPoint())) {
+			return null;
+		}
+		return traceTabs.getItem(i);
+	}
+
+	private Trace setTraceTabActionContext(MouseEvent e) {
+		Trace newTrace = e == null ? traceTabs.getSelectedItem() : computeClickedTraceTab(e);
+		actionCloseTrace.getPopupMenuData()
+				.setMenuItemName(
+					CloseTraceAction.NAME_PREFIX + (newTrace == null ? "..." : newTrace.getName()));
+		myActionContext = new DebuggerTraceFileActionContext(newTrace);
+		contextChanged();
+		return newTrace;
+	}
+
 	private void traceTabSelected(ListSelectionEvent e) {
 		if (e.getValueIsAdjusting()) {
 			return;
 		}
-		Trace newTrace = traceTabs.getSelectedItem();
-		myActionContext = new DebuggerThreadActionContext(newTrace, null);
-		contextChanged();
+		Trace newTrace = setTraceTabActionContext(null);
 		cbCoordinateActivation.invoke(() -> traceManager.activateTrace(newTrace));
+	}
+
+	private ThreadRow setThreadRowActionContext() {
+		ThreadRow row = threadFilterPanel.getSelectedItem();
+		myActionContext = new DebuggerThreadActionContext(current.getTrace(),
+			row == null ? null : row.getThread());
+		contextChanged();
+		return row;
 	}
 
 	private void threadRowSelected(ListSelectionEvent e) {
 		if (e.getValueIsAdjusting()) {
 			return;
 		}
-		ThreadRow row = threadFilterPanel.getSelectedItem();
-		myActionContext = new DebuggerThreadActionContext(current.getTrace(),
-			row == null ? null : row.getThread());
-		contextChanged();
+		ThreadRow row = setThreadRowActionContext();
 		if (row != null && traceManager != null) {
 			cbCoordinateActivation.invoke(() -> traceManager.activateThread(row.getThread()));
 		}

@@ -31,7 +31,6 @@ import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.*;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Trace.TraceBookmarkChangeType;
 import ghidra.trace.model.bookmark.TraceBookmarkManager;
@@ -160,7 +159,7 @@ public class DBTraceBookmarkManager
 	protected static DBTraceSpaceKey unpackRegSpaceKey(AddressSpace space,
 			DBTraceThreadManager threadManager, long id) {
 		long threadKey = unpackRegThread(id);
-		DBTraceThread thread = threadManager.getThread(threadKey);
+		TraceThread thread = threadManager.getThread(threadKey);
 		assert thread != null;
 		int frameLevel = unpackRegFrame(id);
 		return DBTraceSpaceKey.create(space, thread, frameLevel);
@@ -186,7 +185,7 @@ public class DBTraceBookmarkManager
 
 	@Override
 	protected DBTraceBookmarkRegisterSpace createRegisterSpace(AddressSpace space,
-			DBTraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
+			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceBookmarkRegisterSpace(this, space, thread, ent.getFrameLevel());
 	}
 

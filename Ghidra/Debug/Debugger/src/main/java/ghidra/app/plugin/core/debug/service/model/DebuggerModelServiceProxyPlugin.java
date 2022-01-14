@@ -63,22 +63,14 @@ import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-@PluginInfo(
-	shortDescription = "Debugger models manager service (proxy to front-end)",
-	description = "Manage debug sessions, connections, and trace recording",
-	category = PluginCategoryNames.DEBUGGER,
-	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.RELEASED,
-	eventsConsumed = {
-		ProgramActivatedPluginEvent.class,
-		ProgramClosedPluginEvent.class,
-	},
-	servicesRequired = {
-		DebuggerTraceManagerService.class,
-	},
-	servicesProvided = {
-		DebuggerModelService.class,
-	})
+@PluginInfo(shortDescription = "Debugger models manager service (proxy to front-end)", description = "Manage debug sessions, connections, and trace recording", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsConsumed = {
+	ProgramActivatedPluginEvent.class,
+	ProgramClosedPluginEvent.class,
+}, servicesRequired = {
+	DebuggerTraceManagerService.class,
+}, servicesProvided = {
+	DebuggerModelService.class,
+})
 public class DebuggerModelServiceProxyPlugin extends Plugin
 		implements DebuggerModelServiceInternal {
 
@@ -250,7 +242,6 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 				.enabledWhen(ctx -> currentProgram != null)
 				.onAction(this::debugProgramButtonActivated)
 				.onActionStateChanged(this::debugProgramStateActivated)
-				.performActionOnButtonClick(true)
 				.addState(DUMMY_LAUNCH_STATE)
 				.buildAndInstall(tool);
 		actionDisconnectAll = DisconnectAllAction.builder(this, delegate)
@@ -383,7 +374,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		List<DebuggerProgramLaunchOffer> offers = program == null ? List.of()
 				: getProgramLaunchOffers(program).collect(Collectors.toList());
 		List<ActionState<DebuggerProgramLaunchOffer>> states = offers.stream()
-				.map(o -> new ActionState<DebuggerProgramLaunchOffer>(o.getButtonTitle(),
+				.map(o -> new ActionState<>(o.getButtonTitle(),
 					o.getIcon(), o))
 				.collect(Collectors.toList());
 		if (!states.isEmpty()) {

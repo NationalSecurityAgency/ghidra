@@ -866,7 +866,7 @@ public class VarnodeContext implements ProcessorContext {
 				continue;
 			}
 			BigInteger rbval = rval.getUnsignedValue();
-			if (bval.equals(rbval)) {
+			if (bval == null || bval.equals(rbval)) {
 				lastSetAddr = address;
 				break;
 			}

@@ -65,7 +65,7 @@ public class DWARFProgram implements Closeable {
 	 * for more info.
 	 * <p>
 	 * @param program {@link Program} to test
-	 * @return boolean true if program has DWARF info, false if not
+	 * @return boolean true if program probably has DWARF info, false if not
 	 */
 	public static boolean isDWARF(Program program) {
 		String format = Objects.requireNonNullElse(program.getExecutableFormat(), "");
@@ -79,6 +79,27 @@ public class DWARFProgram implements Closeable {
 				return DSymSectionProvider.getDSYMForProgram(program) != null;
 		}
 		return false;
+	}
+
+	/**
+	 * Returns true if the specified {@link Program program} has DWARF information.
+	 * <p>
+	 * This is similar to {@link #isDWARF(Program)}, but is a stronger check that is more
+	 * expensive as it could involve searching for external files.
+	 * <p>
+	 * 
+	 * @param program {@link Program} to test
+	 * @param monitor {@link TaskMonitor} that can be used to cancel
+	 * @return boolean true if the program has DWARF info, false if not
+	 */
+	public static boolean hasDWARFData(Program program, TaskMonitor monitor) {
+		if (!isDWARF(program)) {
+			return false;
+		}
+		try (DWARFSectionProvider dsp =
+			DWARFSectionProviderFactory.createSectionProviderFor(program, monitor)) {
+			return dsp != null;
+		}
 	}
 
 	private final Program program;

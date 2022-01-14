@@ -159,6 +159,12 @@ public class Table {
 		return nodeMgr.getVarKeyNode(bufferId);
 	}
 
+	/**
+	 * Get node identified by buffer - must be released by caller (requires DBHandle lock)
+	 * @param bufferId buffer ID
+	 * @return buffer node
+	 * @throws IOException if IO error occurs
+	 */
 	private FieldKeyNode getFieldKeyNode(int bufferId) throws IOException {
 		if (schema.useFixedKeyNodes()) {
 			return nodeMgr.getFixedKeyNode(bufferId);
@@ -167,7 +173,7 @@ public class Table {
 	}
 
 	/**
-	 * Accumulate node statistics
+	 * Accumulate node statistics (requires DBHandle lock)
 	 * @param stats statistics collection object
 	 * @param bufferId node buffer ID to examine
 	 * @throws IOException thrown if IO error occurs
@@ -947,7 +953,7 @@ public class Table {
 	}
 
 	/**
-	 * Store a record which uses a long key
+	 * Store a record which uses a long key (requires DBHandle lock)
 	 * @param record recore to be inserted or updated
 	 * @throws IOException throw if an IO Error occurs
 	 */
@@ -996,7 +1002,7 @@ public class Table {
 	}
 
 	/**
-	 * Store a record which uses a Field key
+	 * Store a record which uses a Field key (requires DBHandle lock)
 	 * @param record record to be inserted or updated
 	 * @throws IOException throw if an IO Error occurs
 	 */
@@ -2044,22 +2050,22 @@ public class Table {
 		private int expectedModCount;
 
 		/**
-		 * Construct a record iterator over all records. 
+		 * Construct a record iterator over all records. (requires DBHandle lock)
 		 * @throws IOException thrown if IO error occurs
 		 */
-		LongKeyRecordIterator() throws IOException {
+		private LongKeyRecordIterator() throws IOException {
 			this(Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE);
 			hasPrev = false;
 		}
 
 		/**
-		 * Construct a record iterator.
+		 * Construct a record iterator. (requires DBHandle lock)
 		 * @param minKey minimum allowed primary key.
 		 * @param maxKey maximum allowed primary key.
 		 * @param startKey the first primary key value.
 		 * @throws IOException thrown if IO error occurs
 		 */
-		LongKeyRecordIterator(long minKey, long maxKey, long startKey) throws IOException {
+		private LongKeyRecordIterator(long minKey, long maxKey, long startKey) throws IOException {
 
 			expectedModCount = modCount;
 
@@ -2651,10 +2657,7 @@ public class Table {
 	}
 
 	/**
-	 * A long key iterator class.  The initial iterator is optimized for
-	 * short iterations.  If it determined that the iterator is to be used 
-	 * for a large number of iterations, the underlying iterator is switched
-	 * to one optimized for longer iterations.
+	 * A long key iterator class.
 	 */
 	private class LongKeyIterator implements DBLongIterator {
 
@@ -2665,30 +2668,35 @@ public class Table {
 
 		/**
 		 * Construct a record iterator over all records. 
+		 * Long-running iterator used (all keys in buffer read at once)
 		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyIterator() throws IOException {
-			keyIter = new LongKeyIterator2();
+			keyIter = new LongDurationLongKeyIterator(); // optimized for long iterations
+			iterCnt = Integer.MAX_VALUE; // disable LongKeyIterator2-to-LongKeyIterator1 change-over logic
 		}
 
 		/**
-		 * Construct a record iterator.
+		 * Construct a record iterator. The underlying iterator is optimized for
+		 * short iterations.  If it determined that the iterator is to be used 
+		 * for a large number of iterations, the underlying iterator is switched
+		 * to one optimized for longer iterations.
 		 * @param minKey minimum allowed primary key.
 		 * @param maxKey maximum allowed primary key.
 		 * @param startKey the first primary key value.
 		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyIterator(long minKey, long maxKey, long startKey) throws IOException {
-			keyIter = new LongKeyIterator1(minKey, maxKey, startKey);
+			keyIter = new ShortDurationLongKeyIterator(minKey, maxKey, startKey);
 		}
 
 		@Override
 		public boolean hasNext() throws IOException {
 			synchronized (db) {
-				if (iterCnt < SHORT_ITER_THRESHOLD) {
+				if (iterCnt <= SHORT_ITER_THRESHOLD) {
 					if (++iterCnt > SHORT_ITER_THRESHOLD) {
-						// Long iterations should use LongKeyIterator1
-						keyIter = new LongKeyIterator1((LongKeyIterator2) keyIter);
+						// Switch to long-running iterator
+						keyIter = new LongDurationLongKeyIterator((ShortDurationLongKeyIterator) keyIter);
 					}
 				}
 				return keyIter.hasNext();
@@ -2698,10 +2706,10 @@ public class Table {
 		@Override
 		public boolean hasPrevious() throws IOException {
 			synchronized (db) {
-				if (iterCnt < SHORT_ITER_THRESHOLD) {
+				if (iterCnt <= SHORT_ITER_THRESHOLD) {
 					if (++iterCnt > SHORT_ITER_THRESHOLD) {
-						// Long iterations should use LongKeyIterator1
-						keyIter = new LongKeyIterator1((LongKeyIterator2) keyIter);
+						// Switch to long-running iterator
+						keyIter = new LongDurationLongKeyIterator((ShortDurationLongKeyIterator) keyIter);
 					}
 				}
 				return keyIter.hasPrevious();
@@ -2728,7 +2736,7 @@ public class Table {
 	 * A long key iterator class - optimized for long iterations since
 	 * all keys are read for each record node.
 	 */
-	private class LongKeyIterator1 implements DBLongIterator {
+	private class LongDurationLongKeyIterator implements DBLongIterator {
 
 		private int bufferId;
 		private int keyIndex;
@@ -2745,7 +2753,22 @@ public class Table {
 		private long minKey;
 		private long maxKey;
 
-		LongKeyIterator1(LongKeyIterator2 keyIter) throws IOException {
+		/**
+		 * Construct a record iterator over all records. 
+		 * @throws IOException thrown if IO error occurs
+		 */
+		LongDurationLongKeyIterator() throws IOException {
+			this(Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE);
+			hasPrev = false;
+		}
+
+		/**
+		 * Iterator hand-off constructor.  Transition from short-running to 
+		 * long-running iterator.
+		 * @param keyIter partially used short-running iterator
+		 * @throws IOException if IO error occurs
+		 */
+		LongDurationLongKeyIterator(ShortDurationLongKeyIterator keyIter) throws IOException {
 
 			this.bufferId = keyIter.bufferId;
 			this.keyIndex = keyIter.keyIndex;
@@ -2764,8 +2787,14 @@ public class Table {
 					reset();
 				}
 				else {
-					LongKeyRecordNode leaf = (LongKeyRecordNode) nodeMgr.getLongKeyNode(bufferId);
-					getKeys(leaf);
+					try {
+						LongKeyRecordNode leaf =
+							(LongKeyRecordNode) nodeMgr.getLongKeyNode(bufferId);
+						getKeys(leaf);
+					}
+					finally {
+						nodeMgr.releaseNodes();
+					}
 				}
 
 			}
@@ -2779,7 +2808,7 @@ public class Table {
 		 * @param startKey the first primary key value.
 		 * @throws IOException thrown if IO error occurs
 		 */
-		LongKeyIterator1(long minKey, long maxKey, long startKey) throws IOException {
+		LongDurationLongKeyIterator(long minKey, long maxKey, long startKey) throws IOException {
 
 //			if (startKey < minKey || startKey > maxKey || minKey > maxKey)
 //				throw new IllegalArgumentException();
@@ -3070,7 +3099,7 @@ public class Table {
 	 * A long key iterator class - optimized for short iterations since
 	 * the number of keys read from each record node is minimized.
 	 */
-	private class LongKeyIterator2 implements DBLongIterator {
+	private class ShortDurationLongKeyIterator implements DBLongIterator {
 
 		private int bufferId;
 		private int keyIndex;
@@ -3087,25 +3116,13 @@ public class Table {
 		private long maxKey;
 
 		/**
-		 * Construct a record iterator over all records. 
-		 * @throws IOException thrown if IO error occurs
-		 */
-		LongKeyIterator2() throws IOException {
-			this(Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE);
-			hasPrev = false;
-		}
-
-		/**
 		 * Construct a record iterator.
 		 * @param minKey minimum allowed primary key.
 		 * @param maxKey maximum allowed primary key.
 		 * @param startKey the first primary key value.
 		 * @throws IOException thrown if IO error occurs
 		 */
-		LongKeyIterator2(long minKey, long maxKey, long startKey) throws IOException {
-
-//			if (startKey < minKey || startKey > maxKey || minKey > maxKey)
-//				throw new IllegalArgumentException();
+		ShortDurationLongKeyIterator(long minKey, long maxKey, long startKey) throws IOException {
 
 			this.minKey = minKey;
 			this.maxKey = maxKey;
@@ -3345,7 +3362,7 @@ public class Table {
 		private int iterCnt = 0;
 
 		/**
-		 * Construct a record iterator.
+		 * Construct a record iterator. (requires DBHandle lock)
 		 * @param minKey minimum key value.  Null corresponds to minimum key value.
 		 * @param maxKey maximum key value.  Null corresponds to maximum key value.
 		 * @param startKey the first primary key value.  If null minKey will be assumed,
@@ -3353,11 +3370,11 @@ public class Table {
 		 * @throws IOException thrown if IO error occurs
 		 */
 		FieldKeyIterator(Field minKey, Field maxKey, Field startKey) throws IOException {
-			keyIter = new FieldKeyIterator2(minKey, maxKey, startKey);
+			keyIter = new ShortDurationFieldKeyIterator(minKey, maxKey, startKey);
 		}
 
 		/**
-		 * Construct a record iterator.
+		 * Construct a record iterator. (requires DBHandle lock)
 		 * @param minKey minimum key value.  Null corresponds to minimum key value.
 		 * @param maxKey maximum key value.  Null corresponds to maximum key value.
 		 * @param before true if initial position is before range, else after range
@@ -3378,16 +3395,16 @@ public class Table {
 				}
 			}
 
-			keyIter = new FieldKeyIterator2(minKey, maxKey, startKey);
+			keyIter = new ShortDurationFieldKeyIterator(minKey, maxKey, startKey);
 		}
 
 		@Override
 		public boolean hasNext() throws IOException {
 			synchronized (db) {
-				if (iterCnt < SHORT_ITER_THRESHOLD) {
+				if (iterCnt <= SHORT_ITER_THRESHOLD) {
 					if (++iterCnt > SHORT_ITER_THRESHOLD) {
-						// Long iterations should use LongKeyIterator1
-						keyIter = new FieldKeyIterator1((FieldKeyIterator2) keyIter);
+						// Switch to long-running iterator
+						keyIter = new LongDurationFieldKeyIterator((ShortDurationFieldKeyIterator) keyIter);
 					}
 				}
 				return keyIter.hasNext();
@@ -3397,10 +3414,10 @@ public class Table {
 		@Override
 		public boolean hasPrevious() throws IOException {
 			synchronized (db) {
-				if (iterCnt < SHORT_ITER_THRESHOLD) {
+				if (iterCnt <= SHORT_ITER_THRESHOLD) {
 					if (++iterCnt > SHORT_ITER_THRESHOLD) {
-						// Long iterations should use LongKeyIterator1
-						keyIter = new FieldKeyIterator1((FieldKeyIterator2) keyIter);
+						// Switch to long-running iterator
+						keyIter = new LongDurationFieldKeyIterator((ShortDurationFieldKeyIterator) keyIter);
 					}
 				}
 				return keyIter.hasPrevious();
@@ -3427,7 +3444,7 @@ public class Table {
 	 * A Field key iterator class - optimized for long iterations since
 	 * all keys are read for each record node.
 	 */
-	private class FieldKeyIterator1 implements DBFieldIterator {
+	private class LongDurationFieldKeyIterator implements DBFieldIterator {
 
 		private int bufferId;
 		private int keyIndex;
@@ -3443,7 +3460,13 @@ public class Table {
 		private Field minKey;
 		private Field maxKey;
 
-		FieldKeyIterator1(FieldKeyIterator2 keyIter) throws IOException {
+		/**
+		 * Iterator hand-off constructor.  Transition from short-running to 
+		 * long-running iterator.
+		 * @param keyIter partially used short-running iterator
+		 * @throws IOException if IO error occurs
+		 */
+		LongDurationFieldKeyIterator(ShortDurationFieldKeyIterator keyIter) throws IOException {
 
 			this.bufferId = keyIter.bufferId;
 			this.keyIndex = keyIter.keyIndex;
@@ -3461,15 +3484,20 @@ public class Table {
 					reset();
 				}
 				else {
-					FieldKeyRecordNode leaf = (FieldKeyRecordNode) getFieldKeyNode(bufferId);
-					getKeys(leaf);
+					try {
+						FieldKeyRecordNode leaf = (FieldKeyRecordNode) getFieldKeyNode(bufferId);
+						getKeys(leaf);
+					}
+					finally {
+						nodeMgr.releaseNodes();
+					}
 				}
 
 			}
 		}
 
 		/**
-		 * Initialize (or re-initialize) iterator state.
+		 * Initialize (or re-initialize) iterator state. (require DBHandle lock)
 		 * An empty or null keys array will force a complete initialization.
 		 * Otherwise, following the delete the keys array and keyIndex should reflect the state
 		 * following a delete.
@@ -3587,6 +3615,10 @@ public class Table {
 			}
 		}
 
+		/**
+		 * Reset iterator (require DBHandle lock)
+		 * @throws IOException if IO error occurs
+		 */
 		private void reset() throws IOException {
 			boolean hadNext = hasNext;
 			boolean hadPrev = hasPrev;
@@ -3765,7 +3797,7 @@ public class Table {
 	 * A Field key iterator class - optimized for short iterations since
 	 * the number of keys read from each record node is minimized.
 	 */
-	private class FieldKeyIterator2 implements DBFieldIterator {
+	private class ShortDurationFieldKeyIterator implements DBFieldIterator {
 
 		private int bufferId;
 		private int keyIndex;
@@ -3781,14 +3813,14 @@ public class Table {
 		private Field maxKey;
 
 		/**
-		 * Construct a record iterator.
+		 * Construct a record iterator. (requires DBHandle lock)
 		 * @param minKey minimum key value.  Null corresponds to minimum key value.
 		 * @param maxKey maximum key value.  Null corresponds to maximum key value.
 		 * @param startKey the first primary key value.  If null minKey will be assumed,
 		 * if still null the minimum indexed value will be assumed.
-		 * @throws IOException
+		 * @throws IOException if IO error occurs
 		 */
-		FieldKeyIterator2(Field minKey, Field maxKey, Field startKey) throws IOException {
+		ShortDurationFieldKeyIterator(Field minKey, Field maxKey, Field startKey) throws IOException {
 
 			this.minKey = minKey;
 			this.maxKey = maxKey;
@@ -3874,6 +3906,10 @@ public class Table {
 			}
 		}
 
+		/**
+		 * Reset iterator (requires DBHandle lock)
+		 * @throws IOException if IO error occurs
+		 */
 		private void reset() throws IOException {
 			boolean hadNext = hasNext;
 			boolean hadPrev = hasPrev;

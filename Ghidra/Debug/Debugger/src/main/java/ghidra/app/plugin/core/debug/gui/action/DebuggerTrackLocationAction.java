@@ -25,7 +25,6 @@ public interface DebuggerTrackLocationAction extends TrackLocationAction {
 	static MultiStateActionBuilder<LocationTrackingSpec> builder(Plugin owner) {
 		MultiStateActionBuilder<LocationTrackingSpec> builder = TrackLocationAction.builder(owner);
 		builder.toolBarGroup(owner.getName());
-		builder.performActionOnButtonClick(true);
 		for (LocationTrackingSpec spec : LocationTrackingSpec.allSpecs().values()) {
 			builder.addState(spec.getMenuName(), spec.getMenuIcon(), spec);
 		}

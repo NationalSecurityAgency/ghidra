@@ -839,10 +839,14 @@ public class MDMangGhidra extends MDMang {
 	 */
 	private String getDataTypeName(MDDataType dataType) {
 		String name = dataType.getName();
-		if (name.isBlank()) {
-			return dataType.toString();
+		if (!name.isBlank()) {
+			return name;
 		}
-		return name;
+		name = dataType.getTypeName();
+		if (!name.isBlank()) {
+			return name;
+		}
+		return dataType.toString();
 	}
 }
 

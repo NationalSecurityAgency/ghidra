@@ -16,6 +16,7 @@
 package ghidra.program.model.data;
 
 import java.net.URL;
+import java.util.Collection;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
@@ -31,7 +32,7 @@ public interface DataType {
 
 	/**
 	 * WARNING: do not add <code>default</code> method implementations to this interface. Doing so
-	 * intereferes with correct initialization of the static instance variables {@link #DEFAULT} and
+	 * interferes with correct initialization of the static instance variables {@link #DEFAULT} and
 	 * {@link #VOID} below.
 	 */
 
@@ -484,11 +485,13 @@ public interface DataType {
 	public void dataTypeNameChanged(DataType dt, String oldName);
 
 	/**
-	 * Get the parents of this datatype
-	 * 
-	 * @return an array of parents of this datatype
+	 * Get the parents of this datatype.
+	 *
+	 * NOTE: This method is intended to be used on a DB-managed datatype only and is not
+	 * fully supported for use with non-DB datatype instances. 
+	 * @return parents of this datatype
 	 */
-	public DataType[] getParents();
+	public Collection<DataType> getParents();
 
 	/**
 	 * Gets the alignment to be used when aligning this datatype within another datatype.
@@ -556,7 +559,7 @@ public interface DataType {
 	 * The datatypes must be of the same "type" (i.e. structure can only be replacedWith another
 	 * structure.
 	 * 
-	 * @param datatype the datatype that contains the internals to upgrade to.
+	 * @param dataType the datatype that contains the internals to upgrade to.
 	 * @throws UnsupportedOperationException if the datatype does not support change.
 	 * @throws IllegalArgumentException if the given datatype is not the same type as this datatype.
 	 */

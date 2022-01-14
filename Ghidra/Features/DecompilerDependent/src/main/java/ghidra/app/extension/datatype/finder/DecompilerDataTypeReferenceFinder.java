@@ -174,8 +174,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 
 		types.add(dt);
 
-		DataType[] parents = dt.getParents();
-		for (DataType parent : parents) {
+		for (DataType parent : dt.getParents()) {
 			buildTypeLineage(parent, types);
 		}
 	}

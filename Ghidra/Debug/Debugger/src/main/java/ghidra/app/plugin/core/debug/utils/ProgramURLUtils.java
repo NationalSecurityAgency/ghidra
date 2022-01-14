@@ -23,6 +23,7 @@ import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 
 public enum ProgramURLUtils {
 	;
@@ -33,7 +34,9 @@ public enum ProgramURLUtils {
 		if (projectLocator == null) {
 			return null;
 		}
-		RepositoryAdapter repository = file.getParent().getProjectData().getRepository();
+		DomainFolder parent = file.getParent();
+		ProjectData projectData = parent == null ? null : parent.getProjectData();
+		RepositoryAdapter repository = projectData == null ? null : projectData.getRepository();
 		if (repository != null) { // There is an associated remote repo
 			if (file.isVersioned()) { // The domain file exists there
 				ServerInfo server = repository.getServerInfo();
@@ -66,6 +69,11 @@ public enum ProgramURLUtils {
 			}
 			URL localProjURL = new URL(asString.substring(0, bangLoc));
 			ProjectData projectData = project.getProjectData(localProjURL);
+			if (projectData == null) {
+				Msg.error(ProgramURLUtils.class, "The repository containing " + ghidraURL +
+					" is not open in the Project manager.");
+				return null;
+			}
 			return projectData.getFile(asString.substring(bangLoc + 1));
 		}
 		catch (MalformedURLException e) {

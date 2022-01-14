@@ -145,7 +145,7 @@ public abstract class AbstractModelForLldbBreakpointsTest
 	@Override
 	protected void disableViaInterpreter(TargetTogglable t, TargetInterpreter interpreter)
 			throws Throwable {
-		String bpId = getBreakPattern().matchIndices(t.getPath()).get(BREAK_ID_POS);
+		String bpId = getBreakPattern().matchKeys(t.getPath()).get(BREAK_ID_POS);
 		String type = getTypeFromSpec(t);
 		waitOn(interpreter.execute(getCommand("disable", type, bpId)));
 	}
@@ -153,7 +153,7 @@ public abstract class AbstractModelForLldbBreakpointsTest
 	@Override
 	protected void enableViaInterpreter(TargetTogglable t, TargetInterpreter interpreter)
 			throws Throwable {
-		String bpId = getBreakPattern().matchIndices(t.getPath()).get(BREAK_ID_POS);
+		String bpId = getBreakPattern().matchKeys(t.getPath()).get(BREAK_ID_POS);
 		String type = getTypeFromSpec(t);
 		waitOn(interpreter.execute(getCommand("enable", type, bpId)));
 	}
@@ -161,7 +161,7 @@ public abstract class AbstractModelForLldbBreakpointsTest
 	@Override
 	protected void deleteViaInterpreter(TargetDeletable d, TargetInterpreter interpreter)
 			throws Throwable {
-		String bpId = getBreakPattern().matchIndices(d.getPath()).get(BREAK_ID_POS);
+		String bpId = getBreakPattern().matchKeys(d.getPath()).get(BREAK_ID_POS);
 		String type = getTypeFromSpec(d);
 		waitOn(interpreter.execute(getCommand("delete", type, bpId)));
 	}
@@ -169,7 +169,7 @@ public abstract class AbstractModelForLldbBreakpointsTest
 	@Override
 	protected void assertLocCoversViaInterpreter(AddressRange range, TargetBreakpointKind kind,
 			TargetBreakpointLocation loc, TargetInterpreter interpreter) throws Throwable {
-		List<String> matchIndices = getBreakPattern().matchIndices(loc.getSpecification().getPath());
+		List<String> matchIndices = getBreakPattern().matchKeys(loc.getSpecification().getPath());
 		String bpId = matchIndices.get(BREAK_ID_POS);
 		String type = getTypeFromKind(kind);
 		String line = waitOn(interpreter.executeCapture(getCommand("list", type, bpId))).trim();
@@ -182,7 +182,7 @@ public abstract class AbstractModelForLldbBreakpointsTest
 	@Override
 	protected void assertEnabledViaInterpreter(TargetTogglable t, boolean enabled,
 			TargetInterpreter interpreter) throws Throwable {
-		String bpId = getBreakPattern().matchIndices(t.getPath()).get(BREAK_ID_POS);
+		String bpId = getBreakPattern().matchKeys(t.getPath()).get(BREAK_ID_POS);
 		String type = getTypeFromSpec(t);
 		String line = waitOn(interpreter.executeCapture(getCommand("list", type, bpId))).trim();
 		assertTrue(line.contains(bpId.substring(1)+":"));
@@ -192,7 +192,7 @@ public abstract class AbstractModelForLldbBreakpointsTest
 	@Override
 	protected void assertDeletedViaInterpreter(TargetDeletable d, TargetInterpreter interpreter)
 			throws Throwable {
-		String bpId = getBreakPattern().matchIndices(d.getPath()).get(BREAK_ID_POS);
+		String bpId = getBreakPattern().matchKeys(d.getPath()).get(BREAK_ID_POS);
 		String type = getTypeFromSpec(d);
 		String line = waitOn(interpreter.executeCapture(type + " list ")).trim();
 		assertFalse(line.contains(bpId+":"));

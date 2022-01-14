@@ -163,6 +163,23 @@ class EnumDB extends DataTypeDB implements Enum {
 	}
 
 	@Override
+	public String[] getNames(long value) {
+		lock.acquire();
+		try {
+			checkIsValid();
+			initializeIfNeeded();
+			List<String> list = valueMap.get(value);
+			if (list == null || list.isEmpty()) {
+				return new String[0];
+			}
+			return list.toArray(new String[0]);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
 	public boolean hasLanguageDependantLength() {
 		return false;
 	}
@@ -528,7 +545,7 @@ class EnumDB extends DataTypeDB implements Enum {
 			if (subValue != 0) {
 				String part = getName(subValue);
 				if (part == null) {
-					part = getStringForNoMatchingValue(subValue);
+					part = Long.toHexString(subValue).toUpperCase() + 'h';
 				}
 				if (buf.length() != 0) {
 					buf.append(" | ");
@@ -544,19 +561,6 @@ class EnumDB extends DataTypeDB implements Enum {
 			bitGroups = EnumValuePartitioner.partition(getValues(), getLength());
 		}
 		return bitGroups;
-	}
-
-	private String getStringForNoMatchingValue(long value) {
-		String valueName;
-		String valueStr;
-		if (value < 0 || value >= 32) {
-			valueStr = "0x" + Long.toHexString(value);
-		}
-		else {
-			valueStr = Long.toString(value);
-		}
-		valueName = "" + valueStr;
-		return valueName;
 	}
 
 	@Override

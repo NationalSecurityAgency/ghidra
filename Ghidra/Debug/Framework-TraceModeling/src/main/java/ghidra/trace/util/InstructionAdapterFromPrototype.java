@@ -18,7 +18,6 @@ package ghidra.trace.util;
 import java.util.List;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.UniqueAddressFactory;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionPcodeOverride;
@@ -137,13 +136,8 @@ public interface InstructionAdapterFromPrototype extends Instruction {
 	@Override
 	default RefType getOperandRefType(int opIndex) {
 		InstructionPrototype prototype = getPrototype();
-		Language language = prototype.getLanguage();
 		InstructionPcodeOverride override = new InstructionPcodeOverride(this);
-		// TODO: addressFactory may need to be from program/trace (so it has cSpec)
-		UniqueAddressFactory uniqueFactory =
-			new UniqueAddressFactory(language.getAddressFactory(), language);
-		return prototype.getOperandRefType(opIndex, getInstructionContext(), override,
-			uniqueFactory);
+		return prototype.getOperandRefType(opIndex, getInstructionContext(), override);
 	}
 
 	@Override
@@ -159,14 +153,11 @@ public interface InstructionAdapterFromPrototype extends Instruction {
 	@Override
 	default PcodeOp[] getPcode(boolean includeOverrides) {
 		if (!includeOverrides) {
-			return getPrototype().getPcode(getInstructionContext(), null, null);
+			return getPrototype().getPcode(getInstructionContext(), null);
 		}
 		InstructionPrototype prototype = getPrototype();
-		Language language = prototype.getLanguage();
 		InstructionPcodeOverride override = new InstructionPcodeOverride(this);
-		UniqueAddressFactory uniqueFactory =
-			new UniqueAddressFactory(language.getAddressFactory(), language);
-		return prototype.getPcode(getInstructionContext(), override, uniqueFactory);
+		return prototype.getPcode(getInstructionContext(), override);
 	}
 
 	/**

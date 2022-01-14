@@ -50,7 +50,7 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 			"r1", new byte[] { 6 })));
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		Trace trace = recorder.getTrace();
@@ -93,7 +93,7 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 			"r1", new byte[] { 6 })));
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		Trace trace = recorder.getTrace();

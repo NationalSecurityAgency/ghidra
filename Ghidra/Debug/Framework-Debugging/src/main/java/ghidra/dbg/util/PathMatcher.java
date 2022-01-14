@@ -38,6 +38,23 @@ public class PathMatcher implements PathPredicates {
 		return String.format("<PathMatcher\n  %s\n>", StringUtils.join(patterns, "\n  "));
 	}
 
+	@Override
+	public PathPredicates or(PathPredicates that) {
+		PathMatcher result = new PathMatcher();
+		result.patterns.addAll(this.patterns);
+		if (that instanceof PathMatcher) {
+			PathMatcher matcher = (PathMatcher) that;
+			result.patterns.addAll(matcher.patterns);
+		}
+		else if (that instanceof PathPattern) {
+			result.patterns.add((PathPattern) that);
+		}
+		else {
+			throw new AssertionError();
+		}
+		return result;
+	}
+
 	/**
 	 * TODO: We could probably do a lot better, esp. for many patterns, by using a trie.
 	 */
@@ -82,6 +99,23 @@ public class PathMatcher implements PathPredicates {
 	}
 
 	@Override
+	public Set<String> getNextKeys(List<String> path) {
+		Set<String> result = new HashSet<>();
+		for (PathPattern pattern : patterns) {
+			result.addAll(pattern.getNextKeys(path));
+		}
+		if (result.contains("")) {
+			result.removeIf(PathUtils::isName);
+			result.add("");
+		}
+		if (result.contains("[]")) {
+			result.removeIf(PathUtils::isIndex);
+			result.add("[]");
+		}
+		return result;
+	}
+
+	@Override
 	public Set<String> getNextNames(List<String> path) {
 		Set<String> result = new HashSet<>();
 		for (PathPattern pattern : patterns) {
@@ -111,10 +145,10 @@ public class PathMatcher implements PathPredicates {
 	}
 
 	@Override
-	public PathMatcher applyIndices(List<String> indices) {
+	public PathMatcher applyKeys(List<String> indices) {
 		PathMatcher result = new PathMatcher();
 		for (PathPattern pat : patterns) {
-			result.addPattern(pat.applyIndices(indices));
+			result.addPattern(pat.applyKeys(indices));
 		}
 		return result;
 	}

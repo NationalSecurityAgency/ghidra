@@ -69,7 +69,7 @@ protected:
   void reregisterContext(void);	///< Reregister context fields for a new executable
   void restoreXml(const Element *el);	///< Read a SLEIGH specification from XML
 public:
-  static const uintb MAX_UNIQUE_SIZE;    ///< Maximum size of a varnode in the unique space (should match value in SleighBase.java)
+  static const uint4 MAX_UNIQUE_SIZE;    ///< Maximum size of a varnode in the unique space (should match value in SleighBase.java)
   SleighBase(void);		///< Construct an uninitialized translator
   bool isInitialized(void) const { return (root != (SubtableSymbol *)0); }	///< Return \b true if \b this is initialized
   virtual ~SleighBase(void) {}	///< Destructor

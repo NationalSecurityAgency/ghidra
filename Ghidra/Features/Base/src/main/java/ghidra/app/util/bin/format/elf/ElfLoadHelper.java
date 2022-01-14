@@ -17,8 +17,7 @@ package ghidra.app.util.bin.format.elf;
 
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -202,5 +201,19 @@ public interface ElfLoadHelper {
 	 */
 	public long getOriginalValue(Address addr, boolean signExtend)
 			throws MemoryAccessException;
+
+	/**
+	 * Add a fake relocation table entry if none previously existed for the specified address.
+	 * This is intended to record original file bytes when forced modifications have been
+	 * performed during the ELF import processing.  A relocation type of 0 will be specified for
+	 * fake entry.
+	 * @param address relocation address
+	 * @param length number of bytes affected
+	 * @return true if recorded successfully, or false if conflict with existing relocation entry occurs
+	 * @throws MemoryAccessException if unable to read bytes from memory
+	 * @throws AddressOverflowException if range address wrap occurs
+	 */
+	public boolean addFakeRelocTableEntry(Address address, int length)
+			throws MemoryAccessException, AddressOverflowException;
 
 }

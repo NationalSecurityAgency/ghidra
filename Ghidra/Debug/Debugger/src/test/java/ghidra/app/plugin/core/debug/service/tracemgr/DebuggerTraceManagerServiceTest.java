@@ -31,7 +31,6 @@ import ghidra.dbg.model.TestTargetStack;
 import ghidra.dbg.model.TestTargetStackFrameHasRegisterBank;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.framework.model.DomainFile;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
@@ -116,7 +115,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		assertNull(traceManager.getCurrentThread());
 
-		DBTraceThread thread;
+		TraceThread thread;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Thread 1", 0);
 		}
@@ -297,7 +296,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		traceManager.openTrace(trace);
@@ -338,7 +337,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		waitForValue(() -> modelService.getTarget(trace));
@@ -400,7 +399,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		traceManager.openTrace(trace);

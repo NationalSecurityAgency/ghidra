@@ -129,6 +129,7 @@ public class CreateTypeDefAction extends AbstractTypeDefAction {
 
 		GTreeNode finalParentNode = info.getParentNode();
 		String newNodeName = newTypeDef.getName();
+		dataTypeManager.flushEvents();
 		gTree.startEditing(finalParentNode, newNodeName);
 	}
 

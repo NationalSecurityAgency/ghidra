@@ -25,6 +25,7 @@ import java.io.*;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.processors.sleigh.UniqueLayout;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.lang.*;
@@ -212,9 +213,7 @@ public class DecompInterface {
 			DecompileProcessFactory.release(decompProcess);
 			decompProcess = DecompileProcessFactory.get();
 		}
-		// use static uniqueBase since we don't know how many dynamically generated 
-		// variables Ghidra may add to the language/compile-spec uniqueBase
-		long uniqueBase = 0x10000000;
+		long uniqueBase = UniqueLayout.SLEIGH_BASE.getOffset(pcodelanguage);
 		String tspec =
 			pcodelanguage.buildTranslatorTag(program.getAddressFactory(), uniqueBase, null);
 		String coretypes = dtmanage.buildCoreTypes();

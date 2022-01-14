@@ -67,7 +67,6 @@ public class DecompileCallback {
 	private DecompileDebug debug;
 	private Program program;
 	private Listing listing;
-	private UniqueAddressFactory uniqueFactory;
 	private Function cachedFunction;
 	private AddressSet undefinedBody;
 	private Address funcEntry;
@@ -88,7 +87,6 @@ public class DecompileCallback {
 			PcodeDataTypeManager dt) {
 		program = prog;
 		pcodelanguage = language;
-		uniqueFactory = new UniqueAddressFactory(prog.getAddressFactory(), language);
 		pcodecompilerspec = compilerSpec;
 		listing = program.getListing();
 		addrfactory = program.getAddressFactory();
@@ -138,7 +136,6 @@ public class DecompileCallback {
 		if (pseudoDisassembler != null) {
 			pseudoDisassembler.resetDisassemblerContext();
 		}
-		uniqueFactory.reset();
 	}
 
 	/**
@@ -294,7 +291,7 @@ public class DecompileCallback {
 
 			PackedBytes pcode = instr.getPrototype()
 					.getPcodePacked(instr.getInstructionContext(),
-						new InstructionPcodeOverride(instr), uniqueFactory);
+						new InstructionPcodeOverride(instr));
 
 			return pcode;
 		}

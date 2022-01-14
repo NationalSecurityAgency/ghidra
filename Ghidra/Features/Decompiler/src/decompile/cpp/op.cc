@@ -16,16 +16,17 @@
 #include "op.hh"
 #include "funcdata.hh"
 
+const string IopSpace::NAME = "iop";
+
 /// Constructor for the \b iop space.
 /// There is only one such space, and it is considered internal
 /// to the model, i.e. the Translate engine should never generate
 /// addresses in this space.
 /// \param m is the associated address space manager
 /// \param t is the associated processor translator
-/// \param nm is the name of the space (always \b iop)
 /// \param ind is the associated index
-IopSpace::IopSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind)
-  : AddrSpace(m,t,IPTR_IOP,nm,sizeof(void *),1,ind,0,1)
+IopSpace::IopSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
+  : AddrSpace(m,t,IPTR_IOP,NAME,sizeof(void *),1,ind,0,1)
 {
   clearFlags(heritaged|does_deadcode|big_endian);
   if (HOST_ENDIAN==1)		// Endianness always set to host

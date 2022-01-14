@@ -34,7 +34,6 @@ import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.symbol.DBTraceReferenceSpace.DBTraceReferenceEntry;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.symbol.TraceReference;
@@ -70,7 +69,7 @@ public class DBTraceReferenceManager extends
 
 	@Override
 	protected DBTraceReferenceRegisterSpace createRegisterSpace(AddressSpace space,
-			DBTraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
+			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceReferenceRegisterSpace(this, dbh, space, ent, thread);
 	}
 

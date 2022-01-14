@@ -50,7 +50,6 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.symbol.DBTraceReference;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.language.TraceGuestLanguage;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.listing.TraceInstruction;
@@ -796,7 +795,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			// In space without memory, yet.
 			und = manager.undefinedData().getAt(0, b.data(0x7fff));
 
-			DBTraceThread thread = b.getOrAddThread("Thread1", 0);
+			TraceThread thread = b.getOrAddThread("Thread1", 0);
 			DBTraceMemoryRegisterSpace regMem =
 				b.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			Register r4 = b.language.getRegister("r4");

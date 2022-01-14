@@ -1702,16 +1702,17 @@ int4 ParamActive::getNumUsed(void) const
   return count;
 }
 
+const string FspecSpace::NAME = "fspec";
+
 /// Constructor for the \b fspec space.
 /// There is only one such space, and it is considered
 /// internal to the model, i.e. the Translate engine should never
 /// generate addresses in this space.
 /// \param m is the associated address space manager
 /// \param t is the associated processor translator
-/// \param nm is the name of the space (always \b fspec)
 /// \param ind is the index associated with the space
-FspecSpace::FspecSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind)
-  : AddrSpace(m,t,IPTR_FSPEC,nm,sizeof(void *),1,ind,0,1)
+FspecSpace::FspecSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
+  : AddrSpace(m,t,IPTR_FSPEC,NAME,sizeof(void *),1,ind,0,1)
 {
   clearFlags(heritaged|does_deadcode|big_endian);
   if (HOST_ENDIAN==1)		// Endianness always set by host

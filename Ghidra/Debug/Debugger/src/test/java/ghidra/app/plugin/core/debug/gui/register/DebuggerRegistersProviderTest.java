@@ -146,7 +146,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			Register::isBaseRegister);
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 
 		waitFor(() -> {
 			TraceThread thread = recorder.getTraceThread(mb.testThread1);
