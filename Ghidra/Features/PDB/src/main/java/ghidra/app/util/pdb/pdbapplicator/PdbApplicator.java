@@ -739,7 +739,8 @@ public class PdbApplicator {
 		int num = ipi.getTypeIndexMaxExclusive() - ipi.getTypeIndexMin();
 		monitor.initialize(num);
 		setMonitorMessage("PDB: Processing " + num + " item type components...");
-		for (int indexNumber = ipi.getTypeIndexMin(); indexNumber < num; indexNumber++) {
+		for (int indexNumber =
+			ipi.getTypeIndexMin(); indexNumber < ipi.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCanceled();
 			MsTypeApplier applier = getTypeApplier(RecordNumber.itemRecordNumber(indexNumber));
 			applier.apply();
