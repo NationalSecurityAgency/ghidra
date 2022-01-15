@@ -523,6 +523,21 @@ public interface LogicalBreakpoint {
 	Bookmark getProgramBookmark();
 
 	/**
+	 * If the logical breakpoint is present in a program, get its name.
+	 * 
+	 * @return the name, or the empty string
+	 */
+	String getName();
+
+	/**
+	 * If the logical breakpoint is present in a program, set its name.
+	 * 
+	 * @param name the name
+	 * @throws IllegalStateException if the breakpoint is not present in a program
+	 */
+	void setName(String name);
+
+	/**
 	 * If the logical breakpoint has a mapped program location, get that location.
 	 * 
 	 * @return the location if mapped, or {@code null}
