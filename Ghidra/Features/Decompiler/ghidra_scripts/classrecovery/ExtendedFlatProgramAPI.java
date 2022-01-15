@@ -1333,7 +1333,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 			commaIndex--;
 		}
 
-		String shortenedName = className.substring(0, nextComma) + " ...>";
+		String shortenedName = className.substring(0, nextComma) + "...>";
 		return shortenedName;
 	}
 
