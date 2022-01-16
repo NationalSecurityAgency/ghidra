@@ -96,15 +96,8 @@ public class ModuleManifestFile {
 		}
 		else if (trimmedLine.startsWith(EXCLUDE_FROM_GHIDRA_JAR)) {
 			String[] tokens = trimmedLine.split(":");
-
-            if (tokens.length == 2) {
-                if (tokens[1].toLowerCase().trim().compareTo("false") == 0)
-                    excludeFromGhidraJar = false;
-                else
-                    excludeFromGhidraJar = true;
-            }
-            else
-                excludeFromGhidraJar = true; // Default to not be included in build
+			String value = tokens.length == 2 ? tokens[1].trim() : "";
+			excludeFromGhidraJar = Boolean.valueOf(value);
 		}
 		else if (trimmedLine.startsWith(MODULE_FILE_LICENSE)) {
 			processModuleFileLicense(trimmedLine);
