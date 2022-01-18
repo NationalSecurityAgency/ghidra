@@ -38,6 +38,7 @@ public interface DebuggerModelServiceInternal extends DebuggerModelService {
 	/**
 	 * Force the set of factory instances to be that given
 	 * 
+	 * <p>
 	 * This exists for testing the factory change listeners. A test depending on a controlled
 	 * collection of model factories must invoke this method before said test. Conventionally, it is
 	 * the responsibility of each test to ensure its own preconditions are met. For a test depending
@@ -51,6 +52,7 @@ public interface DebuggerModelServiceInternal extends DebuggerModelService {
 	/**
 	 * Set the model factories back to those found on the classpath
 	 * 
+	 * <p>
 	 * This exists for testing the factory change listeners. A test depending on
 	 * classpath-discovered factories must invoke this method. It must consider that a previous test
 	 * may have overridden the factories using {@link #setModelFactories(Collection)}.
@@ -65,6 +67,7 @@ public interface DebuggerModelServiceInternal extends DebuggerModelService {
 	/**
 	 * Start and open a new trace on the given target
 	 *
+	 * <p>
 	 * Starts a new trace, and opens it in the tool
 	 * 
 	 * @see #recordTarget(TargetObject)

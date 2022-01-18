@@ -34,7 +34,7 @@ public class ObjectElementRow {
 			map = attributes;
 		}).exceptionally(ex -> {
 			DebuggerObjectsPlugin plugin = provider.getPlugin();
-			plugin.objectError("Create Row", "Failed to fetch attributes");
+			plugin.objectError("Failed to fetch attributes");
 			return null;
 		});
 	}

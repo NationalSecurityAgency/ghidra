@@ -63,14 +63,22 @@ import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-@PluginInfo(shortDescription = "Debugger models manager service (proxy to front-end)", description = "Manage debug sessions, connections, and trace recording", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsConsumed = {
-	ProgramActivatedPluginEvent.class,
-	ProgramClosedPluginEvent.class,
-}, servicesRequired = {
-	DebuggerTraceManagerService.class,
-}, servicesProvided = {
-	DebuggerModelService.class,
-})
+@PluginInfo(
+	shortDescription = "Debugger models manager service (proxy to front-end)",
+	description = "Manage debug sessions, connections, and trace recording",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		ProgramActivatedPluginEvent.class,
+		ProgramClosedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerTraceManagerService.class,
+	},
+	servicesProvided = {
+		DebuggerModelService.class,
+	})
 public class DebuggerModelServiceProxyPlugin extends Plugin
 		implements DebuggerModelServiceInternal {
 
@@ -499,9 +507,9 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	}
 
 	@Override
-	public TraceRecorder recordTarget(TargetObject target, DebuggerTargetTraceMapper mapper)
-			throws IOException {
-		return delegate.recordTarget(target, mapper);
+	public TraceRecorder recordTarget(TargetObject target, DebuggerTargetTraceMapper mapper,
+			ActionSource source) throws IOException {
+		return delegate.recordTarget(target, mapper, source);
 	}
 
 	@Override

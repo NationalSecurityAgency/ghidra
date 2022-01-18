@@ -465,7 +465,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		if (pane != null) {
 			if (currentModel != null) {
 				currentModel.fetchModelRoot().thenAccept(this::refresh).exceptionally(ex -> {
-					plugin.objectError("Refresh", "Error refreshing model root");
+					plugin.objectError("Error refreshing model root");
 					return null;
 				});
 			}
@@ -668,7 +668,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 					table.setColumns();
 					// TODO: What with attrs?
 				}).exceptionally(ex -> {
-					plugin.objectError("Build Table", "Failed to fetch attributes");
+					plugin.objectError("Failed to fetch attributes");
 					return null;
 				});
 			}
@@ -683,7 +683,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public void addTargetToMap(ObjectContainer container) {
 		DebuggerObjectsProvider provider = container.getProvider();
 		if (!this.equals(provider)) {
-			plugin.objectError("Add Target", "TargetMap corrupted");
+			plugin.objectError("TargetMap corrupted");
 		}
 		TargetObject targetObject = container.getTargetObject();
 		if (targetObject != null && !container.isLink()) {
