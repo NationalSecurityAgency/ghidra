@@ -64,6 +64,24 @@ public class MultiIconBuilder {
 	}
 
 	/**
+	 * Adds the specified icon as an overlay to the base icon at the given offsets and scaled
+	 * to the specified width and height.
+	 * 
+	 * @param icon the icon to overlay
+	 * @param w width of the overlaid icon
+	 * @param h height of the overlaid icon
+	 * @param x the horizontal offset of the overlay with respect to the base icon
+	 * @param y the vertical offset of the overlay with respect to the base icon
+	 * @return this builder (for chaining)
+	 */
+	public MultiIconBuilder addIcon(Icon icon, int w, int h, int x, int y) {
+		ImageIcon scaled = ResourceManager.getScaledIcon(icon, w, h);
+		TranslateIcon txIcon = new TranslateIcon(scaled, x, y);
+		multiIcon.addIcon(txIcon);
+		return this;
+	}
+
+	/**
 	 * Adds the given icon as an overlay to the base icon, to the lower-right
 	 * 
 	 * @param icon the icon
