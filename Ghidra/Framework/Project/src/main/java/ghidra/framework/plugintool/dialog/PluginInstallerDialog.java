@@ -48,22 +48,19 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 	/**
 	 * Constructs a new provider.
-	 * 
+	 *
 	 * @param title the title of the provider
 	 * @param tool the current tool
+	 * @param model the plugin configuration model
 	 * @param pluginDescriptions the list of plugins to display in the dialog
 	 */
-	public PluginInstallerDialog(String title, PluginTool tool,
+	public PluginInstallerDialog(String title, PluginTool tool, PluginConfigurationModel model,
 			List<PluginDescription> pluginDescriptions) {
 		super(title, true, false, true, false);
 
 		this.tool = tool;
-
-		if (model == null) {
-			model = new PluginConfigurationModel(tool);
-		}
-
 		this.pluginDescriptions = pluginDescriptions;
+		this.model = model;
 
 		addWorkPanel(getWorkPanel());
 		addOKButton();
@@ -90,7 +87,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 	 * Returns the details panel.
 	 * <p>
 	 * Note: This is primarily for test access
-	 * 
+	 *
 	 * @return the details panel
 	 */
 	PluginDetailsPanel getDetailsPanel() {
@@ -101,20 +98,13 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 	 * Returns the filter panel.
 	 * <p>
 	 * Note: This is primarily for test access
-	 * 
+	 *
 	 * @return the filter panel
 	 */
 	GTableFilterPanel<PluginDescription> getFilterPanel() {
 		return tableFilterPanel;
 	}
 
-	/**
-	 * Returns the plugin configuration model.
-	 * <p>
-	 * Note: This is primarily for test access
-	 * 
-	 * @return the plugin configuration model
-	 */
 	PluginConfigurationModel getModel() {
 		return model;
 	}
@@ -127,7 +117,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout());
 
-		detailsPanel = new PluginDetailsPanel(model);
+		detailsPanel = new PluginDetailsPanel(tool, model);
 		JPanel pluginTablePanel = createPluginTablePanel(detailsPanel);
 
 		final JSplitPane splitPane =
@@ -174,12 +164,10 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 		table.getColumnModel()
 				.getColumn(PluginInstallerTableModel.NAME_COL)
-				.setCellRenderer(
-					new NameCellRenderer());
+				.setCellRenderer(new NameCellRenderer());
 		table.getColumnModel()
 				.getColumn(PluginInstallerTableModel.STATUS_COL)
-				.setCellRenderer(
-					new StatusCellRenderer());
+				.setCellRenderer(new StatusCellRenderer());
 
 		HelpService help = Help.getHelpService();
 		help.registerHelp(table, new HelpLocation(GenericHelpTopics.TOOL, "PluginDialog"));
@@ -237,7 +225,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Renderer for the plugin name column. 
+	 * Renderer for the plugin name column.
 	 */
 	private class NameCellRenderer extends GTableCellRenderer {
 

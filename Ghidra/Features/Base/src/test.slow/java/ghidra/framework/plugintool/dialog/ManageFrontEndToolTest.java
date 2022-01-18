@@ -32,28 +32,15 @@ import ghidra.test.TestEnv;
 import ghidra.util.classfinder.ClassSearcher;
 
 /**
- *
- * Test configure the Front End tool.
- *
- *
+ * Test configure the Front End tool
  */
 public class ManageFrontEndToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private TestEnv env;
 	private FrontEndTool tool;
 	private FrontEndPlugin plugin;
-	private ManagePluginsDialog provider;
-
+	private ManagePluginsDialog managePluginsDialog;
 	private PluginConfigurationModel pluginModel;
-	private PluginManagerComponent pluginManagerComponent;
-
-	/**
-	 * Constructor for ManageFrontEndToolTest.
-	 * @param arg0
-	 */
-	public ManageFrontEndToolTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -65,15 +52,12 @@ public class ManageFrontEndToolTest extends AbstractGhidraHeadedIntegrationTest 
 		showProvider();
 	}
 
-	/*
-	 * @see TestCase#tearDown()
-	 */
 	@After
 	public void tearDown() throws Exception {
 
 		runSwing(() -> {
 			tool.setConfigChanged(false);
-			provider.close();
+			managePluginsDialog.close();
 		});
 		env.dispose();
 	}
@@ -97,7 +81,7 @@ public class ManageFrontEndToolTest extends AbstractGhidraHeadedIntegrationTest 
 		final Plugin p = getPlugin(tool, ArchivePlugin.class);
 		assertNotNull(p);
 		runSwing(() -> {
-			provider.close();
+			managePluginsDialog.close();
 			tool.removePlugins(new Plugin[] { p });
 		});
 
@@ -108,7 +92,7 @@ public class ManageFrontEndToolTest extends AbstractGhidraHeadedIntegrationTest 
 
 		action = getAction(tool, plugin.getName(), "Close Project");
 		performAction(action, true);
-		assertTrue(!provider.isVisible());
+		assertFalse(managePluginsDialog.isVisible());
 	}
 
 	private void showProvider() throws Exception {
@@ -118,9 +102,7 @@ public class ManageFrontEndToolTest extends AbstractGhidraHeadedIntegrationTest 
 		waitForPostedSwingRunnables();
 		runSwing(() -> tool.showConfig(false, false));
 
-		provider = tool.getManagePluginsDialog();
-		pluginManagerComponent = (PluginManagerComponent) getInstanceField("comp", provider);
-		pluginModel = (PluginConfigurationModel) getInstanceField("model", pluginManagerComponent);
-
+		managePluginsDialog = tool.getManagePluginsDialog();
+		pluginModel = managePluginsDialog.getPluginConfigurationModel();
 	}
 }

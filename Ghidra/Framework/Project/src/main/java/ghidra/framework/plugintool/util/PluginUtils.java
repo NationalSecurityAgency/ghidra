@@ -52,20 +52,21 @@ public class PluginUtils {
 	public static List<PluginDescription> getPluginDescriptions(PluginTool tool,
 			List<Class<?>> plugins) {
 
-		// First define the list of plugin descriptions to return.
+		// First define the list of plugin descriptions to return
 		List<PluginDescription> retPlugins = new ArrayList<>();
 
-		// Get all plugins that have been loaded.
-		PluginConfigurationModel model = new PluginConfigurationModel(tool, null);
-		List<PluginDescription> allPluginDescriptions = model.getAllPluginDescriptions();
+		// Get all plugins that have been loaded
+		PluginClassManager pluginClassManager = tool.getPluginClassManager();
+		List<PluginDescription> allPluginDescriptions =
+			pluginClassManager.getManagedPluginDescriptions();
 
-		// For each plugin classes we're searching for, see if an entry exists in the list of all
-		// loaded plugins.
+		// see if an entry exists in the list of all loaded plugins
 		for (Class<?> plugin : plugins) {
 			String pluginName = plugin.getSimpleName();
 
-			Optional<PluginDescription> desc = allPluginDescriptions.stream().filter(
-				d -> (pluginName.equals(d.getName()))).findAny();
+			Optional<PluginDescription> desc = allPluginDescriptions.stream()
+					.filter(d -> (pluginName.equals(d.getName())))
+					.findAny();
 			if (desc.isPresent()) {
 				retPlugins.add(desc.get());
 			}
