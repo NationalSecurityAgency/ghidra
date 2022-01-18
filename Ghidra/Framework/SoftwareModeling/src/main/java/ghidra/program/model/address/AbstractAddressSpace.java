@@ -322,25 +322,21 @@ abstract class AbstractAddressSpace implements AddressSpace {
 				"Address Overflow in subtract: " + addr + " - 0x" + Long.toHexString(displacement));
 		}
 		long addrOff = addr.getOffset();
-		long maxOff = maxAddress.getOffset();
-		long minOff = minAddress.getOffset();
 		long result = addrOff - displacement;
-		if (maxOff < 0) { // 64 bit unsigned
-			if (addrOff >= 0 && result < 0) {
-				throw new AddressOverflowException("Address Overflow in subtract: " + addr +
-					" - 0x" + Long.toHexString(displacement));
-			}
-			else if ((addrOff < 0 && result < 0) || (addrOff >= 0 && result >= 0)) {
-				if (result > addrOff) {
-					throw new AddressOverflowException("Address Overflow in subtract: " + addr +
-						" - 0x" + Long.toHexString(displacement));
-				}
+
+		// An integer underflow occurred if:
+		//   1) the result is less than the address space's min address, or
+		//   2) if the result is greater than the starting addr
+		if (signed) {
+			if (result < minAddress.getOffset() || result > addrOff) {
+				throw new AddressOverflowException(
+					String.format("Address Overflow in subtract: %s - 0x%x", addr, displacement));
 			}
 		}
 		else {
-			if (result > addrOff || result < minOff) {
-				throw new AddressOverflowException("Address Overflow in subtract: " + addr +
-					" - 0x" + Long.toHexString(displacement));
+			if (Long.compareUnsigned(addrOff, result) < 0) {
+				throw new AddressOverflowException(
+					String.format("Address Overflow in subtract: %s - 0x%x", addr, displacement));
 			}
 		}
 		return getUncheckedAddress(result);
@@ -383,27 +379,25 @@ abstract class AbstractAddressSpace implements AddressSpace {
 				"Address Overflow in add: " + addr + " + 0x" + Long.toHexString(displacement));
 		}
 		long addrOff = addr.getOffset();
-		long maxOff = maxAddress.getOffset();
 		long result = addrOff + displacement;
-		if (maxOff < 0) { // 64 bit unsigned
-			if (addrOff < 0 && result >= 0) {
+
+		// An integer overflow occurred if:
+		//   1) the result is larger than the address space's max address (a no-op when unsigned && maxaddr=MAX_UINT64)
+		// or
+		//   2) if the result is less than the starting addr (because result exceeded MAX_UINT64)
+		if (signed) {
+			if (result < addrOff || result > maxAddress.getOffset()) {
 				throw new AddressOverflowException(
-					"Address Overflow in add: " + addr + " + 0x" + Long.toHexString(displacement));
-			}
-			else if ((addrOff < 0 && result < 0) || (addrOff >= 0 && result >= 0)) {
-				if (result < addrOff) {
-					throw new AddressOverflowException("Address Overflow in add: " + addr +
-						" + 0x" + Long.toHexString(displacement));
-				}
+					String.format("Address Overflow in add: %s 0x%x", addr, displacement));
 			}
 		}
 		else {
-			if (result < addrOff || result > maxOff) {
+			if (Long.compareUnsigned(maxAddress.getOffset(), result) < 0 ||
+				Long.compareUnsigned(result, addrOff) < 0) {
 				throw new AddressOverflowException(
-					"Address Overflow in add: " + addr + " + 0x" + Long.toHexString(displacement));
+					String.format("Address Overflow in add: %s 0x%x", addr, displacement));
 			}
 		}
-
 		return getUncheckedAddress(result);
 	}
 
