@@ -15,8 +15,9 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import java.io.IOException;
 import java.util.*;
+
+import java.io.IOException;
 
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFEncoding;
@@ -720,26 +721,23 @@ public class DWARFDataTypeManager {
 		DataType returnDataType = getDataType(diea.getTypeRef(), baseDataTypeVoid);
 		boolean foundThisParam = false;
 		List<ParameterDefinition> params = new ArrayList<>();
-		for (DebugInfoEntry childEntry : diea.getHeadFragment()
-				.getChildren(
-					DWARFTag.DW_TAG_formal_parameter)) {
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+		for (DIEAggregate paramDIEA : diea.getFunctionParamList()) {
 
-			String paramName = childDIEA.getName();
-			DataType paramDT = getDataType(childDIEA.getTypeRef(), null);
+			String paramName = paramDIEA.getName();
+			DataType paramDT = getDataType(paramDIEA.getTypeRef(), null);
 			if (paramDT == null || paramDT.getLength() <= 0) {
 				Msg.error(this,
 					"Bad function parameter type for function " + dni.asCategoryPath() +
 						", param " + params.size() + " : " + paramDT + ", func die " +
 						diea.getHexOffset() + ", param type die: " +
-						childDIEA.getTypeRef().getHexOffset());
+						paramDIEA.getTypeRef().getHexOffset());
 				return null;
 			}
 
 			ParameterDefinition pd = new ParameterDefinitionImpl(paramName, paramDT, null);
 			params.add(pd);
 
-			foundThisParam |= DWARFUtil.isThisParam(childDIEA);
+			foundThisParam |= DWARFUtil.isThisParam(paramDIEA);
 		}
 		FunctionDefinitionDataType funcDef =
 			new FunctionDefinitionDataType(dni.getParentCP(), dni.getName(), dataTypeManager);
