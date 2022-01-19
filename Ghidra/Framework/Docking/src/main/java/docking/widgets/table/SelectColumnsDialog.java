@@ -58,8 +58,10 @@ public class SelectColumnsDialog extends DialogComponentProvider {
 
 		// Skip column 0, which has already been set to a boolean renderer
 		for (int i = 1; i < ghidraTable.getColumnCount(); i++) {
-			ghidraTable.getColumnModel().getColumn(i).setCellRenderer(
-				new ColumnSelectorStringRenderer());
+			ghidraTable.getColumnModel()
+					.getColumn(i)
+					.setCellRenderer(
+						new ColumnSelectorStringRenderer());
 		}
 
 		ghidraTable.setBorder(BorderFactory.createEtchedBorder());
@@ -78,6 +80,7 @@ public class SelectColumnsDialog extends DialogComponentProvider {
 	}
 
 	private void initialize() {
+
 		List<TableColumn> columns = columnModel.getAllColumns();
 		columnList = new ArrayList<>(columns.size());
 		for (TableColumn column : columns) {
@@ -134,6 +137,11 @@ public class SelectColumnsDialog extends DialogComponentProvider {
 				columnModel.setVisible(column, visible);
 			}
 		}
+
+		// force a save of the new table column state here so clients to not use the table with
+		// a pending state save
+		columnModel.forceSaveState();
+
 		close();
 	}
 

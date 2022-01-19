@@ -506,7 +506,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		if (dt instanceof Composite) {
 			Composite composite = (Composite) dt;
 			String origDtPath = composite.getPathName();
-			if (!origDtPath.equals(model.getOriginalDataTypePath())) {
+			if (!origDtPath.equals(model.getOriginalDataTypePath().getPath())) {
 				model.fixupOriginalPath(composite);
 			}
 		}
