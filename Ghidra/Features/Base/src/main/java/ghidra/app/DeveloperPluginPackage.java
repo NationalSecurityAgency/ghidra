@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +16,20 @@
 package ghidra.app;
 
 import ghidra.framework.plugintool.util.PluginPackage;
+import ghidra.framework.plugintool.util.PluginStatus;
 import resources.ResourceManager;
 
 public class DeveloperPluginPackage extends PluginPackage {
 	public static final String NAME = "Developer";
-	
+
 	public DeveloperPluginPackage() {
 		super(NAME, ResourceManager.loadImage("images/applications-engineering.png"),
-				"These plugins provide features useful for developing and debugging plugins.",
-				DEVELOPER_PRIORITY);
+			"These plugins provide features useful for developing and debugging plugins.",
+			DEVELOPER_PRIORITY);
+	}
+
+	@Override
+	public PluginStatus getActivationLevel() {
+		return PluginStatus.STABLE;
 	}
 }
