@@ -202,6 +202,24 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 	}
 
 	@Test
+	public void testAddInstructionInScratch() throws CodeUnitInsertionException {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.trace.getMemoryManager().putBytes(-5L, b.addr(0x4001), b.buf(0xaa));
+			TraceInstruction i4000 =
+				b.addInstruction(-10, b.addr(0x4000), b.language, b.buf(0xf4, 0));
+			assertEquals(Range.closed(-10L, -6L), i4000.getLifespan());
+
+			TraceInstruction i4004 =
+				b.addInstruction(-1, b.addr(0x4004), b.language, b.buf(0xf4, 0));
+			assertEquals(Range.closed(-1L, -1L), i4004.getLifespan());
+
+			TraceInstruction i4008 =
+				b.addInstruction(-10, b.addr(0x4008), b.language, b.buf(0xf4, 0));
+			assertEquals(Range.closed(-10L, -1L), i4008.getLifespan());
+		}
+	}
+
+	@Test
 	public void testPutBytesTruncatesInstruction() throws CodeUnitInsertionException {
 		try (UndoableTransaction tid = b.startTransaction()) {
 			TraceInstruction i4000 =

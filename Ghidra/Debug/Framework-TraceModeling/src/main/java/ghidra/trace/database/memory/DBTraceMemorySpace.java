@@ -85,7 +85,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 	protected final DBCachedObjectStore<DBTraceMemoryBufferEntry> bufferStore;
 	protected final DBCachedObjectStore<DBTraceMemoryBlockEntry> blockStore;
 	protected final DBCachedObjectIndex<OffsetSnap, DBTraceMemoryBlockEntry> blocksByOffset;
-	protected final Map<OffsetSnap, DBTraceMemoryBlockEntry> blockCache = CacheBuilder
+	protected final Map<OffsetSnap, DBTraceMemoryBlockEntry> blockCacheMostRecent = CacheBuilder
 			.newBuilder()
 			.removalListener(this::blockCacheEntryRemoved)
 			.maximumSize(10)
@@ -495,7 +495,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		if (!inclusive) {
 			loc = new OffsetSnap(loc.offset, loc.snap - 1);
 		}
-		ent = blockCache.get(loc);
+		ent = blockCacheMostRecent.get(loc);
 		if (ent != null) {
 			return ent;
 		}
@@ -504,13 +504,26 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			return null;
 		}
 		ent = it.next();
-		if (ent.getOffset() != loc.offset) {
+		if (ent.getOffset() != loc.offset || ent.isScratch() != loc.isScratch()) {
 			return null;
 		}
-		blockCache.put(loc, ent);
+		blockCacheMostRecent.put(loc, ent);
 		return ent;
 	}
 
+	/**
+	 * Locate the soonest block entry for the given offset-snap pair
+	 * 
+	 * <p>
+	 * To qualify, the entry must have a snap greater than (or optionally equal to) that given and
+	 * an offset exactly equal to that given. That is, it is the earliest in time, but most follow
+	 * the given snap. Additionally, if the given snap is in scratch space, the found entry must
+	 * also be in scratch space.
+	 * 
+	 * @param loc the offset-snap pair
+	 * @param inclusive true to allow equal snap
+	 * @return the found entry, or null
+	 */
 	protected DBTraceMemoryBlockEntry findSoonestBlockEntry(OffsetSnap loc, boolean inclusive) {
 		Iterator<DBTraceMemoryBlockEntry> it;
 		if (inclusive) {
@@ -524,7 +537,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			return null;
 		}
 		DBTraceMemoryBlockEntry next = it.next();
-		if (next.getOffset() != loc.offset) {
+		if (next.getOffset() != loc.offset || next.isScratch() != loc.isScratch()) {
 			return null;
 		}
 		return next;
@@ -553,19 +566,19 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			}
 			ent = ent.copy(loc);
 			ent.setBytes(buf, dstOffset, maxLen);
-			blockCache.put(loc, ent);
 			return;
 		}
-		// (1) or (2a)
+		// (1) or (2b)
 		ent = blockStore.create();
 		ent.setLoc(loc);
+		blockCacheMostRecent.clear();
+		blockCacheMostRecent.put(loc, ent);
 		if (ent.cmpBytes(buf, dstOffset, maxLen) == 0) {
 			// Keep the entry, but don't allocate storage in a buffer
 			buf.position(buf.position() + maxLen);
 			return;
 		}
 		ent.setBytes(buf, dstOffset, maxLen);
-		blockCache.put(loc, ent);
 	}
 
 	protected static class OutSnap {
@@ -580,13 +593,14 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			OutSnap lastSnap, Set<TraceAddressSnapRange> changed) throws IOException {
 		// NOTE: Do not leave the buffer advanced from here
 		int pos = buf.position();
+		// exclusive?
 		Iterator<DBTraceMemoryBlockEntry> it =
-			blocksByOffset.tail(new OffsetSnap(loc.offset, loc.snap + 1), true).values().iterator(); // exclusive
+			blocksByOffset.tail(new OffsetSnap(loc.offset, loc.snap + 1), true).values().iterator();
 		AddressSet remaining = new AddressSet(space.getAddress(loc.offset + dstOffset),
 			space.getAddress(loc.offset + dstOffset + maxLen - 1));
 		while (it.hasNext()) {
 			DBTraceMemoryBlockEntry next = it.next();
-			if (next.getOffset() != loc.offset) {
+			if (next.getOffset() != loc.offset || next.isScratch() != loc.isScratch()) {
 				break;
 			}
 			AddressSetView withState =
@@ -904,6 +918,26 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		return BLOCK_SIZE;
 	}
 
+	protected boolean isCross(long lower, long upper) {
+		return lower < 0 && upper >= 0;
+	}
+
+	/**
+	 * Determine the truncation snap if the given span and range include byte changes
+	 * 
+	 * <p>
+	 * Code units do not understand or accommodate changes in time, so the underlying bytes of the
+	 * unit must be the same throughout its lifespan. Typically, units are placed with a desired
+	 * creation snap, and then its life is extended into the future opportunistically. Thus, when
+	 * truncating, we desire to keep the start snap, then search for the soonest byte change within
+	 * the desired lifespan. Furthermore, we generally don't permit a unit to exist in both record
+	 * and scratch spaces, i.e., it cannot span both the -1 and 0 snaps.
+	 * 
+	 * @param span the desired lifespan
+	 * @param range the address range covered
+	 * @return the first snap that should be excluded, or {@link Long#MIN_VALUE} to indicate no
+	 *         change.
+	 */
 	public long getFirstChange(Range<Long> span, AddressRange range) {
 		assertInSpace(range);
 		long lower = DBTraceUtils.lowerEndpoint(span);
@@ -911,21 +945,24 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		if (lower == upper) {
 			return Long.MIN_VALUE;
 		}
-		Range<Long> fwdOne = DBTraceUtils.toRange(lower + 1, upper);
+		boolean cross = isCross(lower, upper);
+		if (cross && lower == -1) {
+			return 0; // Avoid reversal of range end points. 
+		}
+		Range<Long> fwdOne = DBTraceUtils.toRange(lower + 1, cross ? -1 : upper);
 		ByteBuffer buf1 = ByteBuffer.allocate(BLOCK_SIZE);
 		ByteBuffer buf2 = ByteBuffer.allocate(BLOCK_SIZE);
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			for (TraceAddressSnapRange tasr : stateMapSpace.reduce(
 				TraceAddressSnapRangeQuery.intersecting(range, fwdOne)
-						.starting(
-							Rectangle2DDirection.BOTTOMMOST))
+						.starting(Rectangle2DDirection.BOTTOMMOST))
 					.orderedKeys()) {
 				AddressRange toExamine = range.intersect(tasr.getRange());
 				if (doCheckBytesChanged(tasr.getY1(), toExamine, buf1, buf2)) {
 					return tasr.getY1();
 				}
 			}
-			return Long.MIN_VALUE;
+			return cross ? 0 : Long.MIN_VALUE;
 		}
 		catch (IOException e) {
 			blockStore.dbError(e);
@@ -948,7 +985,8 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			getBytes(snap, start, oldBytes);
 			// New in the sense that they're about to replace the old bytes
 			ByteBuffer newBytes = ByteBuffer.allocate(len);
-			if (snap != 0) {
+			// NB. Don't want to wrap to Long.MAX_VALUE, but also don't want to read from scratch
+			if (snap != 0 && snap != Long.MIN_VALUE) {
 				getBytes(snap - 1, start, newBytes);
 				newBytes.flip();
 			}
@@ -1003,7 +1041,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			stateMapSpace.invalidateCache();
 			bufferStore.invalidateCache();
 			blockStore.invalidateCache();
-			blockCache.clear();
+			blockCacheMostRecent.clear();
 		}
 	}
 }
