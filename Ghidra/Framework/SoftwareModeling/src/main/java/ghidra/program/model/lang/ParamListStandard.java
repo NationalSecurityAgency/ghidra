@@ -381,10 +381,18 @@ public class ParamListStandard implements ParamList {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		ParamListStandard op2 = (ParamListStandard) obj;
-		if (!SystemUtilities.isArrayEqual(entry, op2.entry)) {
+	public boolean isEquivalent(ParamList obj) {
+		if (this.getClass() != obj.getClass()) {
 			return false;
+		}
+		ParamListStandard op2 = (ParamListStandard) obj;
+		if (entry.length != op2.entry.length) {
+			return false;
+		}
+		for (int i = 0; i < entry.length; ++i) {
+			if (!entry[i].isEquivalent(op2.entry[i])) {
+				return false;
+			}
 		}
 		if (numgroup != op2.numgroup || pointermax != op2.pointermax) {
 			return false;
@@ -396,20 +404,6 @@ public class ParamListStandard implements ParamList {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = numgroup;
-		hash = 79 * hash + pointermax;
-		hash = 79 * hash + (thisbeforeret ? 27 : 19);
-		for (ParamEntry param : entry) {
-			hash = 79 * hash + param.hashCode();
-		}
-		if (spacebase == null) {
-			hash = 79 * hash + spacebase.hashCode();
-		}
-		return hash;
 	}
 
 	@Override

@@ -102,21 +102,14 @@ public class InjectPayloadCallfixup extends InjectPayloadSleigh {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean isEquivalent(InjectPayload obj) {
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
 		InjectPayloadCallfixup op2 = (InjectPayloadCallfixup) obj;
 		if (!targetSymbolNames.equals(op2.targetSymbolNames)) {
 			return false;
 		}
-		return super.equals(obj);
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = 13;
-		for (String target : targetSymbolNames) {
-			hash = 79 * hash + target.hashCode();
-		}
-		hash = 79 * hash + super.hashCode();
-		return hash;
+		return super.isEquivalent(obj);
 	}
 }

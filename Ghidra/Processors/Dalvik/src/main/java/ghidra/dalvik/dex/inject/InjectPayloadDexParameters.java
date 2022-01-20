@@ -201,12 +201,17 @@ public class InjectPayloadDexParameters implements InjectPayload {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		return (obj instanceof InjectPayloadDexParameters);		// All instances are equal
-	}
-
-	@Override
-	public int hashCode() {
-		return 123474219;		// All instances are equal
+	public boolean isEquivalent(InjectPayload obj) {
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		InjectPayloadDexParameters op2 = (InjectPayloadDexParameters) obj;
+		if (!name.equals(op2.name)) {
+			return false;
+		}
+		if (!sourceName.equals(op2.sourceName)) {
+			return false;
+		}
+		return true;
 	}
 }

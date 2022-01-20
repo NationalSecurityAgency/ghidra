@@ -237,4 +237,18 @@ public interface CompilerSpec {
 	 * @return read-only set of property keys
 	 */
 	public Set<String> getPropertyKeys();
+
+	/**
+	 * Marshal this entire specification to an XML stream.  An XML document is written with
+	 * root tag \<compiler_spec>.
+	 * @param buffer is the XML stream
+	 */
+	public void saveXml(StringBuilder buffer);
+
+	/**
+	 * Determine if this CompilerSpec is equivalent to another specified instance
+	 * @param obj is the other instance
+	 * @return true if they are equivalent
+	 */
+	public boolean isEquivalent(CompilerSpec obj);
 }

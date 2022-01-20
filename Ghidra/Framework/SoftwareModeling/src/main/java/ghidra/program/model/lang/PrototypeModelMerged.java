@@ -20,7 +20,6 @@ import java.util.*;
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Parameter;
-import ghidra.util.SystemUtilities;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
@@ -215,20 +214,19 @@ public class PrototypeModelMerged extends PrototypeModel {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		PrototypeModelMerged op2 = (PrototypeModelMerged) obj;
-		if (!name.equals(op2.name)) {
+	public boolean isEquivalent(PrototypeModel obj) {
+		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		return SystemUtilities.isArrayEqual(modellist, op2.modellist);
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = name.hashCode();
-		for (PrototypeModel model : modellist) {
-			hash = 79 * hash + model.hashCode();
+		PrototypeModelMerged op2 = (PrototypeModelMerged) obj;
+		if (modellist.length != op2.modellist.length) {
+			return false;
 		}
-		return hash;
+		for (int i = 0; i < modellist.length; ++i) {
+			if (!modellist[i].getName().equals(op2.modellist[i].getName())) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

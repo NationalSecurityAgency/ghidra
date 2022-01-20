@@ -302,16 +302,6 @@ public class BasicCompilerSpec implements CompilerSpec {
 		}
 	}
 
-	/**
-	 * Convenience method to marshal this entire object, via saveXml, into a String object.
-	 * @return a String containing this entire spec as an XML document.
-	 */
-	public String getXMLString() {
-		StringBuilder buffer = new StringBuilder();
-		saveXml(buffer);
-		return buffer.toString();
-	}
-
 	@Override
 	public void applyContextSettings(DefaultProgramContext programContext) {
 		for (ContextSetting cs : ctxsetting) {
@@ -512,11 +502,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 		}
 	}
 
-	/**
-	 * Marshal this entire specification to an XML stream.  An XML document is written with
-	 * root tag \<compiler_spec>.
-	 * @param buffer is the XML stream
-	 */
+	@Override
 	public void saveXml(StringBuilder buffer) {
 		buffer.append("<compiler_spec>\n");
 		saveProperties(buffer);
@@ -1125,111 +1111,114 @@ public class BasicCompilerSpec implements CompilerSpec {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		BasicCompilerSpec op2 = (BasicCompilerSpec) obj;
-		if (aggressiveTrim != op2.aggressiveTrim || copiedThisModel != op2.copiedThisModel) {
+	public boolean isEquivalent(CompilerSpec obj) {
+		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		if (!dataOrganization.equals(op2.dataOrganization)) {
+		BasicCompilerSpec other = (BasicCompilerSpec) obj;
+		if (aggressiveTrim != other.aggressiveTrim || copiedThisModel != other.copiedThisModel) {
 			return false;
 		}
-		if (!ctxsetting.equals(op2.ctxsetting)) {
+		if (!dataOrganization.isEquivalent(other.dataOrganization)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(deadCodeDelay, op2.deadCodeDelay)) {
+		if (ctxsetting.size() != other.ctxsetting.size()) {
+			return false;
+		}
+		for (int i = 0; i < ctxsetting.size(); ++i) {
+			if (!ctxsetting.get(i).isEquivalent(other.ctxsetting.get(i))) {
+				return false;
+			}
+		}
+		if (!SystemUtilities.isEqual(deadCodeDelay, other.deadCodeDelay)) {
 			return false;
 		}
 		if (defaultModel != null) {
-			if (op2.defaultModel == null) {
+			if (other.defaultModel == null) {
 				return false;
 			}
-			if (!defaultModel.name.equals(op2.defaultModel.name)) {
+			if (!defaultModel.name.equals(other.defaultModel.name)) {
 				return false;
 			}
 		}
-		else if (op2.defaultModel != null) {
+		else if (other.defaultModel != null) {
 			return false;
 		}
 		if (evalCalledModel != null) {
-			if (op2.evalCalledModel == null) {
+			if (other.evalCalledModel == null) {
 				return false;
 			}
-			if (!evalCalledModel.name.equals(op2.evalCalledModel.name)) {
+			if (!evalCalledModel.name.equals(other.evalCalledModel.name)) {
 				return false;
 			}
 		}
-		else if (op2.evalCalledModel != null) {
+		else if (other.evalCalledModel != null) {
 			return false;
 		}
 		if (evalCurrentModel != null) {
-			if (op2.evalCurrentModel == null) {
+			if (other.evalCurrentModel == null) {
 				return false;
 			}
-			if (!evalCurrentModel.name.equals(op2.evalCurrentModel.name)) {
+			if (!evalCurrentModel.name.equals(other.evalCurrentModel.name)) {
 				return false;
 			}
 		}
-		else if (op2.evalCurrentModel != null) {
+		else if (other.evalCurrentModel != null) {
 			return false;
 		}
-		if (allmodels.length != op2.allmodels.length) {
+		if (allmodels.length != other.allmodels.length) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(allmodels, op2.allmodels)) {
+		for (int i = 0; i < allmodels.length; ++i) {
+			if (!allmodels[i].isEquivalent(other.allmodels[i])) {
+				return false;
+			}
+		}
+		if (!SystemUtilities.isEqual(extraRanges, other.extraRanges)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(extraRanges, op2.extraRanges)) {
+		if (funcPtrAlign != other.funcPtrAlign) {
 			return false;
 		}
-		if (funcPtrAlign != op2.funcPtrAlign) {
+		if (!globalSet.equals(other.globalSet)) {
 			return false;
 		}
-		if (!globalSet.equals(op2.globalSet)) {
+		if (!SystemUtilities.isEqual(inferPtrBounds, other.inferPtrBounds)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(inferPtrBounds, op2.inferPtrBounds)) {
+		if (!SystemUtilities.isEqual(noHighPtr, other.noHighPtr)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(noHighPtr, op2.noHighPtr)) {
+		if (!pcodeInject.isEquivalent(other.pcodeInject)) {
 			return false;
 		}
-		if (!pcodeInject.equals(op2.pcodeInject)) {
+		if (!SystemUtilities.isEqual(preferSplit, other.preferSplit)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(preferSplit, op2.preferSplit)) {
+		if (!properties.equals(other.properties)) {
 			return false;
 		}
-		if (!properties.equals(op2.properties)) {
+		if (!SystemUtilities.isEqual(readOnlySet, other.readOnlySet)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(readOnlySet, op2.readOnlySet)) {
+		if (!SystemUtilities.isEqual(returnAddress, other.returnAddress)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(returnAddress, op2.returnAddress)) {
+		if (reverseJustifyStack != other.reverseJustifyStack) {
 			return false;
 		}
-		if (reverseJustifyStack != op2.reverseJustifyStack) {
+		if (!SystemUtilities.isEqual(spaceBases, other.spaceBases)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(spaceBases, op2.spaceBases)) {
+		if (!SystemUtilities.isEqual(stackBaseSpace, other.stackBaseSpace)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(stackBaseSpace, op2.stackBaseSpace)) {
+		if (stackGrowsNegative != other.stackGrowsNegative) {
 			return false;
 		}
-		if (stackGrowsNegative != op2.stackGrowsNegative) {
-			return false;
-		}
-		if (!SystemUtilities.isEqual(stackPointer, op2.stackPointer)) {
+		if (!SystemUtilities.isEqual(stackPointer, other.stackPointer)) {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = language.getLanguageID().hashCode();
-		hash = 79 * description.getCompilerSpecID().hashCode() + hash;
-		return hash;
 	}
 }
