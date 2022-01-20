@@ -1431,7 +1431,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public void startRecording(TargetProcess targetObject, boolean prompt) {
-		TraceRecorder rec;
+		TraceRecorder rec = modelService.getRecorder(targetObject);
+		if (rec != null) {
+			return; // Already being recorded
+		}
 		if (prompt) {
 			rec = modelService.recordTargetPromptOffers(targetObject);
 		}
