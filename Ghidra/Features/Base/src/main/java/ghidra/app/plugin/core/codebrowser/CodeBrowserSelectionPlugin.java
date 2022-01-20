@@ -57,20 +57,10 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 
 	private static final String SELECT_GROUP = "Select Group";
 	private static final String SELECTION_LIMIT_OPTION_NAME = "Table From Selection Limit";
-	private static final int DEFAULT_TABLE_LIMIT = 20000;
 
 	public CodeBrowserSelectionPlugin(PluginTool tool) {
 		super(tool);
 		createActions();
-		registerOptions();
-	}
-
-	private void registerOptions() {
-		ToolOptions toolOptions = tool.getOptions(ToolConstants.TOOL_OPTIONS);
-		toolOptions.registerOption(SELECTION_LIMIT_OPTION_NAME, DEFAULT_TABLE_LIMIT,
-			new HelpLocation("CodeBrowserPlugin", "Selection_Table"),
-			"The maximum number of code units to include when creating a table from " +
-				"a selection in the Listing");
 	}
 
 	private void createActions() {
@@ -126,14 +116,14 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 			Msg.showWarn(this, null, "No Table Service", "Please add the TableServicePlugin.");
 			return;
 		}
+
 		Program program = componentProvider.getProgram();
 		Listing listing = program.getListing();
-
 		ProgramSelection selection = componentProvider.getSelection();
 		CodeUnitIterator codeUnits = listing.getCodeUnits(selection, true);
 		if (!codeUnits.hasNext()) {
 			tool.setStatusInfo(
-				"Unable to create table from selection: no " + "code units in selection");
+				"Unable to create table from selection: no code units in selection");
 			return;
 		}
 
@@ -151,7 +141,6 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 
 		CodeUnitFromSelectionTableModelLoader loader =
 			new CodeUnitFromSelectionTableModelLoader(iterator, selection);
-
 		return new CustomLoadingAddressTableModel(" - from " + selection.getMinAddress(), tool,
 			program, loader, null, true);
 	}
@@ -172,8 +161,8 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				throws CancelledException {
 
 			ToolOptions options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
-			int resultsLimit =
-				options.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, DEFAULT_TABLE_LIMIT);
+			int resultsLimit = options.getInt(GhidraOptions.OPTION_SEARCH_LIMIT,
+				PluginConstants.DEFAULT_SEARCH_LIMIT);
 
 			long size = selection.getNumAddresses();
 			monitor.initialize(size);

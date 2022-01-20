@@ -66,7 +66,7 @@ import ghidra.util.table.field.LabelTableColumn;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 
-public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
+public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
 	private PluginTool tool;
 	private AddressFactory addrFactory;
