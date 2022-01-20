@@ -899,6 +899,7 @@ src/main/resources/help/Dummy_HelpSet.hs||GHIDRA||reviewed||END|
 src/main/resources/help/empty.htm||GHIDRA||||END|
 src/main/resources/images/2leftarrow.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/2rightarrow.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
+src/main/resources/images/ArmedMarkSelection.png||GHIDRA||||END|
 src/main/resources/images/Array.png||GHIDRA||||END|
 src/main/resources/images/B.gif||GHIDRA||||END|
 src/main/resources/images/BookShelf.png||GHIDRA||||END|
@@ -927,6 +928,7 @@ src/main/resources/images/Instructions_32.png||GHIDRA||||END|
 src/main/resources/images/L.gif||GHIDRA||||END|
 src/main/resources/images/LocalVariable.gif||GHIDRA||||END|
 src/main/resources/images/M.gif||GHIDRA||||END|
+src/main/resources/images/MarkSelection.png||GHIDRA||||END|
 src/main/resources/images/Merge.png||GHIDRA||||END|
 src/main/resources/images/MultiDuplicateData.png||GHIDRA||||END|
 src/main/resources/images/Namespace.gif||GHIDRA||||END|
@@ -1082,6 +1084,7 @@ src/main/resources/images/lock.gif||GHIDRA||||END|
 src/main/resources/images/lock.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/magnifier.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/media-flash.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/media-playback-stop.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/mem_chip3.png||GHIDRA||reviewed||END|
 src/main/resources/images/memory16.gif||GHIDRA||||END|
 src/main/resources/images/menu16.gif||GHIDRA||||END|
