@@ -15,19 +15,10 @@
  */
 package docking.widgets.fieldpanel;
 
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.LayoutManager;
-import java.awt.LayoutManager2;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.LayoutListener;
@@ -35,15 +26,17 @@ import docking.widgets.fieldpanel.support.AnchoredLayout;
 import docking.widgets.fieldpanel.support.FieldLocation;
 
 /**
- * A {@link LayoutManager} that can be applied to a {@link FieldPanel}, allowing
- * {@link Component}s to be placed over a given field location.
+ * A {@link LayoutManager} that can be applied to a {@link FieldPanel}, allowing {@link Component}s
+ * to be placed over a given field location.
  * 
+ * <p>
  * To apply it, use {@link Container#setLayout(LayoutManager)} to install it. In this case, the
  * {@link Container} must be a {@link FieldPanel}. Then, use
  * {@link Container#add(Component, Object)}, passing a {@link FieldLocation} as the constraint.
- * Currently, you must call {@link #layoutContainer(Container)} manually after you add or remove
- * any components.
+ * Currently, you must call {@link #layoutContainer(Container)} manually after you add or remove any
+ * components.
  * 
+ * <p>
  * When this layout manager is removed from the {@link FieldPanel}, you should call
  * {@link #unregister()} in order to dispose of internal resources.
  */
@@ -109,6 +102,7 @@ public class FieldPanelOverLayoutManager implements LayoutManager2 {
 
 	/**
 	 * Add a component to be position over the given location
+	 * 
 	 * @param loc the location of the field to occlude
 	 * @param comp the component to be placed over the field
 	 */
@@ -121,6 +115,7 @@ public class FieldPanelOverLayoutManager implements LayoutManager2 {
 
 	/**
 	 * Remove a component by its field location
+	 * 
 	 * @param loc the location of the field
 	 * @return true if there was a component placed at the given location
 	 */
@@ -135,6 +130,7 @@ public class FieldPanelOverLayoutManager implements LayoutManager2 {
 
 	/**
 	 * Remove a component
+	 * 
 	 * @param comp the component to remove
 	 * @return true if the component existed
 	 */
@@ -156,6 +152,7 @@ public class FieldPanelOverLayoutManager implements LayoutManager2 {
 
 	/**
 	 * Add a listener for overlay layout events
+	 * 
 	 * @param listener the listener to add
 	 */
 	public void addLayoutListener(FieldPanelOverLayoutListener listener) {
@@ -164,6 +161,7 @@ public class FieldPanelOverLayoutManager implements LayoutManager2 {
 
 	/**
 	 * Remove a listener for overlay layout events
+	 * 
 	 * @param listener the listener to remove
 	 */
 	public void removeLayoutListener(FieldPanelOverLayoutListener listener) {
@@ -172,6 +170,7 @@ public class FieldPanelOverLayoutManager implements LayoutManager2 {
 
 	/**
 	 * Get the list of register overlay layout event listeners
+	 * 
 	 * @return the array
 	 */
 	public FieldPanelOverLayoutListener[] getLayoutListeners() {
@@ -188,6 +187,7 @@ public class FieldPanelOverLayoutManager implements LayoutManager2 {
 
 	/**
 	 * Fire the given overlay layout event to all registered listeners
+	 * 
 	 * @param ev
 	 */
 	protected void fireLayoutListeners(FieldPanelOverLayoutEvent ev) {

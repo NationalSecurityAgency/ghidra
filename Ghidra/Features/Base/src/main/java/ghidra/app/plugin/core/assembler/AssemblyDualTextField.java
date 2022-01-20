@@ -49,6 +49,7 @@ import resources.ResourceManager;
 /**
  * A pair of text fields suitable for guided assembly
  * 
+ * <p>
  * This object must be updated with program location information, so that it knows the applicable
  * language and address. It then provides two text boxes: one for the mnemonic, and one for the
  * operands. The two are linked so that the user can intuitively navigate between them as if they
@@ -56,6 +57,7 @@ import resources.ResourceManager;
  * based syntax errors returned by the assembler. When a valid instruction is present, it provides
  * the resulting instruction bytes.
  * 
+ * <p>
  * To detect when the user has activated an instruction-bytes entry, add an
  * {@link AutocompletionListener} and check that the selection is an {@link AssemblyInstruction}.
  * Otherwise, the usual autocompletion behavior is applied automatically.
@@ -93,6 +95,7 @@ public class AssemblyDualTextField {
 
 		/**
 		 * Get the foreground color for the item
+		 * 
 		 * @return the color
 		 */
 		public Color getColor() {
@@ -101,6 +104,7 @@ public class AssemblyDualTextField {
 
 		/**
 		 * Get the (possibly HTML) text to display for the item
+		 * 
 		 * @return the text
 		 */
 		public String getDisplay() {
@@ -109,6 +113,7 @@ public class AssemblyDualTextField {
 
 		/**
 		 * Get the text to insert when the item is activated
+		 * 
 		 * @return the text
 		 */
 		public String getText() {
@@ -117,6 +122,7 @@ public class AssemblyDualTextField {
 
 		/**
 		 * Override this to permit activation by default, i.e., on CTRL-SPACE
+		 * 
 		 * @return true to permit defaulting, false to prevent it
 		 */
 		public boolean getCanDefault() {
@@ -167,6 +173,7 @@ public class AssemblyDualTextField {
 	/**
 	 * Represents an encoding for a complete assembly instruction
 	 * 
+	 * <p>
 	 * These provide no insertion text, since their activation should be handled by a custom
 	 * listener.
 	 */
@@ -184,6 +191,7 @@ public class AssemblyDualTextField {
 
 		/**
 		 * Get the assembled instruction bytes
+		 * 
 		 * @return the bytes
 		 */
 		public byte[] getData() {
@@ -208,7 +216,9 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Represents the description of an error encountered during parsing or assembling
-	 * NOTE: not used until error descriptions improve
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> not used until error descriptions improve
 	 */
 	static class AssemblyError extends AssemblyCompletion {
 		private String text;
@@ -237,6 +247,7 @@ public class AssemblyDualTextField {
 	/**
 	 * A customized autocompleter for assembly
 	 * 
+	 * <p>
 	 * This positions the list at the bottom left of the field(s), and considers the full text of
 	 * the linked text boxes when retrieving the prefix. It also delegates the item styling to the
 	 * item instances.
@@ -337,8 +348,11 @@ public class AssemblyDualTextField {
 
 	/**
 	 * A listener which activates the autocompleter on ENTER (in addition to the default
-	 * CTRL-SPACE). Because the user must activate an entry to specify the desired assembly, we
-	 * make ENTER pull of the list, hinting that the user must make a selection.
+	 * CTRL-SPACE).
+	 * 
+	 * <p>
+	 * Because the user must activate an entry to specify the desired assembly, we make ENTER pull
+	 * up the list, hinting that the user must make a selection.
 	 */
 	class EnterKeyListener implements KeyListener {
 		@Override
@@ -404,8 +418,10 @@ public class AssemblyDualTextField {
 	/**
 	 * Set the current program location
 	 * 
+	 * <p>
 	 * This may cause the construction of a new assembler, if one suitable for the given program's
 	 * language has not yet been built.
+	 * 
 	 * @param loc the location
 	 */
 	public void setProgramLocation(ProgramLocation loc) {
@@ -418,6 +434,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Specify the language and address without binding to a program
+	 * 
 	 * @param lang the language
 	 * @param addr the address
 	 */
@@ -431,6 +448,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * For dual mode: Get the text field containing the mnemonic portion of the assembly
+	 * 
 	 * @return the text field
 	 */
 	public JTextField getMnemonicField() {
@@ -439,6 +457,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * For dual mode: Get the text field containing the operands portion of the assembly
+	 * 
 	 * @return the text field
 	 */
 	public JTextField getOperandsField() {
@@ -455,8 +474,10 @@ public class AssemblyDualTextField {
 	/**
 	 * Get a reference to the autocompleter
 	 * 
+	 * <p>
 	 * This is useful for adding the custom listener needed to detect activation of assembled
 	 * instruction entries.
+	 * 
 	 * @return the autocompleter
 	 */
 	public TextFieldAutocompleter<AssemblyCompletion> getAutocompleter() {
@@ -473,21 +494,26 @@ public class AssemblyDualTextField {
 
 	/**
 	 * An enum type to specify which variant of the assembly input is shown.
-	 * 
-	 * <ul>
-	 *   <li>{@link #INVISIBLE} hides both variants. Nothing is shown.</li>
-	 *   <li>{@link #DUAL_VISIBLE} shows the dual-box linked variant, suitable when the current
-	 *       instruction has operands.</li>
-	 *   <li>{@link #SINGLE_VISIBLE} shows the single-box unlinked variant, suitable when the
-	 *       current instruction does not have operands.</li>
-	 * </ul>
 	 */
 	public enum VisibilityMode {
-		INVISIBLE, DUAL_VISIBLE, SINGLE_VISIBLE;
+		/**
+		 * Hide both variants. Nothing is shown.
+		 */
+		INVISIBLE,
+		/**
+		 * Show the dual-box linked variant, suitable when the current instruction has operands.
+		 */
+		DUAL_VISIBLE,
+		/**
+		 * Show the single-box unlinked variant, suitable when the current instruction has no
+		 * operands.
+		 */
+		SINGLE_VISIBLE;
 	}
 
 	/**
 	 * Set the visibility of the text box(es)
+	 * 
 	 * @param visibility the VisibilityMode to set.
 	 */
 	public void setVisible(VisibilityMode visibility) {
@@ -508,9 +534,22 @@ public class AssemblyDualTextField {
 	}
 
 	/**
+	 * Set the font for all text fields
+	 * 
+	 * @param font the new font
+	 */
+	public void setFont(Font font) {
+		linker.setFont(font);
+		assembly.setFont(font);
+	}
+
+	/**
 	 * Add a focus listener to the box(es)
 	 * 
-	 * NOTE: The listener will not fire when focus passes among the linked boxes of the dual variant.
+	 * <p>
+	 * <b>NOTE:</b> The listener will not fire when focus passes among the linked boxes of the dual
+	 * variant.
+	 * 
 	 * @param listener the listener
 	 */
 	public void addFocusListener(FocusListener listener) {
@@ -520,6 +559,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Add a key listener to the box(es)
+	 * 
 	 * @param listener the listener
 	 */
 	public void addKeyListener(KeyListener listener) {
@@ -530,6 +570,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Get the full assembly text
+	 * 
 	 * @return the text
 	 */
 	public String getText() {
@@ -541,6 +582,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Set the text of the visible field(s)
+	 * 
 	 * @param text the text
 	 */
 	public void setText(String text) {
@@ -554,6 +596,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Set the caret position of the visible field(s)
+	 * 
 	 * @param pos the position
 	 */
 	public void setCaretPosition(int pos) {
@@ -572,9 +615,11 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Sets the style of the text fields
-	 * @param field the field to configure
 	 * 
+	 * <p>
 	 * This is an extension point.
+	 * 
+	 * @param field the field to configure
 	 */
 	protected void configureField(JTextField field) {
 		Font mono = new Font(Font.MONOSPACED, Font.PLAIN, 12); // TODO: Font size from options
@@ -583,15 +628,18 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Construct the HTML display for a given suggestion
+	 *
+	 * <p>
+	 * This is an extension point.
+	 * 
+	 * <p>
+	 * Currently, this just shows the current prefix in bold, and the text that would be inserted as
+	 * normal weight.
+	 * 
 	 * @param prefix the text currently in the fields
 	 * @param suggestion the text suggested by the assembly syntax analyzer
 	 * @param bufferleft the portion of the prefix that is also part of the suggestion
 	 * @return a formatted string that hints to the effect of selecting this suggestion
-	 * 
-	 * This is an extension point.
-	 * 
-	 * Currently, this just shows the current prefix in bold, and the text that would be inserted
-	 * as normal weight.
 	 */
 	protected String formatSuggestion(String prefix, String suggestion, String bufferleft) {
 		String extra = suggestion.substring(bufferleft.length());
@@ -602,18 +650,22 @@ public class AssemblyDualTextField {
 	/**
 	 * Provides an ordering for assembled instructions appearing in the list
 	 * 
+	 * <p>
 	 * The items with the highest preference are positioned at the top of the list
+	 * 
+	 * <p>
+	 * This is an extension point.
+	 * 
+	 * <p>
+	 * Currently, a proposed instruction having the same constructor tree as the existing one is the
+	 * most preferred. Second, are instructions having a similar tree as the existing one --
+	 * "similar" is not yet well defined, but at the moment, it means their constructor tree strings
+	 * have a long common prefix. Third, instructions having the same encoded length as the existing
+	 * one are preferred. Last, the shortest instructions are preferred.
+	 * 
 	 * @param rc a resolved instruction
 	 * @param existing the instruction, if any, currently under the user's cursor
 	 * @return a preference
-	 * 
-	 * This is an extension point.
-	 * 
-	 * Currently, a proposed instruction having the same constructor tree as the existing one is
-	 * the most preferred. Second, are instructions having a similar tree as the existing one --
-	 * "similar" is not yet well defined, but at the moment, it means their constructor tree
-	 * strings have a long common prefix. Third, instructions having the same encoded length as
-	 * the existing one are preferred. Last, the shortest instructions are preferred.
 	 */
 	protected int computePreference(AssemblyResolvedConstructor rc, Instruction existing) {
 		if (existing == null) {
@@ -632,16 +684,19 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Compute valid completions given the prefix
-	 * @param text the prefix
-	 * @return the collection of completion items
 	 * 
+	 * <p>
 	 * This is an extension point.
 	 * 
-	 * If text parses and assembles, then the completion set will include assembled
-	 * instruction-byte entries. Note that there may still be valid textual completions to continue
-	 * the instruction. The suggestions yielded by all syntax errors are used to create textual
-	 * completions. If the suggestion is prefixed by the buffer where the syntax error ocurred,
-	 * then, the tail of that suggestion is made into a completion entry.
+	 * <p>
+	 * If text parses and assembles, then the completion set will include assembled instruction-byte
+	 * entries. Note that there may still be valid textual completions to continue the instruction.
+	 * The suggestions yielded by all syntax errors are used to create textual completions. If the
+	 * suggestion is prefixed by the buffer where the syntax error ocurred, then, the tail of that
+	 * suggestion is made into a completion entry.
+	 * 
+	 * @param text the prefix
+	 * @return the collection of completion items
 	 */
 	protected Collection<AssemblyCompletion> computeCompletions(String text) {
 		final AssemblyPatternBlock ctx = assembler.getContextAt(addr);
