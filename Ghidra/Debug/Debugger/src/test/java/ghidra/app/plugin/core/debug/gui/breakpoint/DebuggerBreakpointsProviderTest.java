@@ -121,7 +121,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace = recorder.getTrace();
 
 		addLiveMemoryAndBreakpoint(mb.testProcess1, recorder);
@@ -145,7 +145,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace = recorder.getTrace();
 
 		addLiveMemoryAndBreakpoint(mb.testProcess1, recorder);
@@ -210,7 +210,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace = recorder.getTrace();
 		createProgramFromTrace(trace);
 		intoProject(trace);
@@ -494,7 +494,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace = recorder.getTrace();
 		createProgramFromTrace(trace);
 		intoProject(trace);
@@ -537,11 +537,11 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder1 = modelService.recordTarget(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace1 = recorder1.getTrace();
 
 		TraceRecorder recorder3 = modelService.recordTarget(mb.testProcess3,
-			createTargetTraceMapper(mb.testProcess3));
+			createTargetTraceMapper(mb.testProcess3), ActionSource.AUTOMATIC);
 		Trace trace3 = recorder3.getTrace();
 
 		createProgramFromTrace(trace1);

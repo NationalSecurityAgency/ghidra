@@ -26,6 +26,7 @@ import org.junit.Test;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.services.ActionSource;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
@@ -50,7 +51,7 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 			"r1", new byte[] { 6 })));
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		Trace trace = recorder.getTrace();
@@ -93,7 +94,7 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 			"r1", new byte[] { 6 })));
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		Trace trace = recorder.getTrace();
