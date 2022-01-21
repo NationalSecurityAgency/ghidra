@@ -672,6 +672,7 @@ public:
   virtual ~ProtoModel(void);				///< Destructor
   const string &getName(void) const { return name; }	///< Get the name of the prototype model
   Architecture *getArch(void) const { return glb; }	///< Get the owning Architecture
+  const ProtoModel *getAliasParent(void) const { return compatModel; }	///< Return \e model \b this is an alias of (or null)
   uint4 hasEffect(const Address &addr,int4 size) const;	///< Determine side-effect of \b this on the given memory range
   int4 getExtraPop(void) const { return extrapop; }	///< Get the stack-pointer \e extrapop for \b this model
   void setExtraPop(int4 ep) { extrapop = ep; }		///< Set the stack-pointer \e extrapop
