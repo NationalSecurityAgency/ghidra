@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.assembler;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.*;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import docking.action.*;
 import docking.widgets.autocomplete.*;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.GhidraOptions;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
@@ -40,6 +42,7 @@ import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.listingpanel.ListingModelAdapter;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.util.ProgramTransaction;
 import ghidra.program.model.address.Address;
@@ -77,7 +80,7 @@ public class AssembleDockingAction extends DockingAction {
 	private Language lang;
 	private Assembler assembler;
 	private final MyListener listener = new MyListener();
-	//private PluginTool tool;
+	private final PluginTool tool;
 
 	// Callback to keep the autocompleter positioned under the fields
 	private FieldPanelOverLayoutListener autoCompleteMover = (FieldPanelOverLayoutEvent ev) -> {
@@ -154,8 +157,13 @@ public class AssembleDockingAction extends DockingAction {
 	}
 
 	public AssembleDockingAction(PluginTool tool, String name, String owner) {
-		this(name, owner);
-		//this.tool = tool;
+		super(name, owner);
+		this.tool = tool;
+
+		String group = "Disassembly";
+		setPopupMenuData(new MenuData(new String[] { "Patch Instruction" }, group));
+		setKeyBindingData(new KeyBindingData(KEYBIND_ASSEMBLE));
+		setHelpLocation(new HelpLocation("AssemblerPlugin", "AssembleAction"));
 
 		// If I lose focus, cancel the assembly
 		input.addFocusListener(new FocusListener() {
@@ -213,14 +221,6 @@ public class AssembleDockingAction extends DockingAction {
 		//codepane.repaint();
 		fieldLayoutManager.layoutContainer(codepane);
 		codepane.requestFocusInWindow();
-	}
-
-	private AssembleDockingAction(String name, String owner) {
-		super(name, owner);
-		String group = "Disassembly";
-		setPopupMenuData(new MenuData(new String[] { "Patch Instruction" }, group));
-		setKeyBindingData(new KeyBindingData(KEYBIND_ASSEMBLE));
-		setHelpLocation(new HelpLocation("AssemblerPlugin", "AssembleAction"));
 	}
 
 	/**
@@ -305,6 +305,12 @@ public class AssembleDockingAction extends DockingAction {
 
 		cache.get(lang).get(null);
 		assembler = Assemblers.getAssembler(prog);
+
+		ToolOptions displayOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
+		Font font = displayOptions.getFont(GhidraOptions.OPTION_BASE_FONT, null);
+		if (font != null) {
+			input.setFont(font);
+		}
 
 		input.setProgramLocation(cur);
 		FieldLocation locMnem = findFieldLocation(addr, "Mnemonic");
