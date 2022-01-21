@@ -20,6 +20,7 @@ package ghidra.app.util.demangler;
  */
 public class DemanglerOptions {
 
+	private boolean applyCallingConvention = true;
 	private boolean applySignature = true;
 	private boolean doDisassembly = true;
 	private boolean demangleOnlyKnownPatterns = true;
@@ -60,6 +61,24 @@ public class DemanglerOptions {
 	 */
 	public boolean doDisassembly() {
 		return doDisassembly;
+	}
+
+	/**
+	 * Checks if the apply function signature calling convention option is currently set
+	 *
+	 * @return true if set to apply calling conventions
+	 */
+	public boolean applyCallingConvention() {
+		return applyCallingConvention;
+	}
+
+	/**
+	 * Set the option to apply function signature calling conventions
+	 *
+	 * @param applyCallingConvention true to apply calling conventions
+	 */
+	public void setApplyCallingConvention(boolean applyCallingConvention) {
+		this.applyCallingConvention = applyCallingConvention;
 	}
 
 	/**
