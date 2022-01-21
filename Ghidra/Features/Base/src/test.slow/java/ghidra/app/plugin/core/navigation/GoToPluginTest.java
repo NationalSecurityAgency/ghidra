@@ -769,16 +769,105 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
+	@Test
+	public void testComponentExpression() throws Exception {
+		// vector start "0x1002100"
+		// array start "0x1002200"
+
+		// These are for simplicity
+		String first = "0x01002100";
+		String last = "0x01002104";
+		String end = "0x01002108";
+		String element0 = "0x01002200";
+		String element1 = "0x01002204";
+
+		loadProgram("x86");
+
+		ProgramLocation vector = new ProgramLocation(program, addr(first));
+		ProgramLocation array = new ProgramLocation(program, addr(element0));
+
+		cbPlugin.goTo(vector);
+		setText("entry");
+		performOkCallback();
+		assertEquals(
+			"Component expression interfered with another expression type",
+			addr("0x1006420"), cbPlugin.getCurrentAddress());
+
+		cbPlugin.goTo(vector);
+		setText("this.last");
+		performOkCallback();
+		assertEquals("Failed to goto this.last", addr(last), cbPlugin.getCurrentAddress());
+
+		cbPlugin.goTo(vector);
+		setText("this->end");
+		performOkCallback();
+		assertEquals("Failed to goto this->end", addr(end), cbPlugin.getCurrentAddress());
+
+		cbPlugin.goTo(vector);
+		setText("*this->first");
+		performOkCallback();
+		assertEquals("Failed to goto *this->first", addr(element0), cbPlugin.getCurrentAddress());
+
+		cbPlugin.goTo(vector);
+		setText("this->first[1]");
+		performOkCallback();
+		assertEquals(
+			"Failed to goto this->first[1]", addr(element1), cbPlugin.getCurrentAddress());
+
+		cbPlugin.goTo(vector);
+		setText("this->first[0]->end");
+		performOkCallback();
+		assertEquals(
+			"Failed to goto this->first[0]->end", addr(end), cbPlugin.getCurrentAddress());
+
+		cbPlugin.goTo(vector);
+		setText("this->first[0]->first[0]");
+		performOkCallback();
+		assertEquals(
+			"Failed to goto this->first[0]->first[0]",
+			addr(element0), cbPlugin.getCurrentAddress());
+
+		// dereference null check
+		cbPlugin.goTo(vector);
+		setText("*this->first[0]->first[3]");
+		performOkCallback();
+		assertEquals("No results for *this->first[0]->first[3]", dialog.getStatusText());
+
+		cbPlugin.goTo(array);
+		setText("[1]");
+		performOkCallback();
+		assertEquals("Failed to goto [1]", addr(element1), cbPlugin.getCurrentAddress());
+
+		cbPlugin.goTo(array);
+		setText("this[1]");
+		performOkCallback();
+		assertEquals("Failed to goto this[1]", addr(element1), cbPlugin.getCurrentAddress());
+
+		cbPlugin.goTo(array);
+		setText("[0]->first");
+		performOkCallback();
+		assertEquals("Failed to goto [0]->first", addr(first), cbPlugin.getCurrentAddress());
+
+		cbPlugin.goTo(array);
+		setText("this[0]->first");
+		performOkCallback();
+		assertEquals("Failed to goto this[0]->first", addr(first), cbPlugin.getCurrentAddress());
+	}
+
+	private void waitForGoTo(Address target, String msg) throws Exception {
+		assertEquals(msg, target, cbPlugin.getCurrentAddress());
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================
+
 	private void setOptionToAllowNavigationToOtherOpenPrograms() throws Exception {
 		runSwing(() -> {
 			ToolOptions options = tool.getOptions("Navigation");
 			options.setBoolean("'Go To' in Current Program Only", false);
 		});
 	}
-
-//==================================================================================================
-// Private Methods
-//==================================================================================================
 
 	private void assertItemsStartWtih(List<String> list, String prefix) {
 		for (String s : list) {
@@ -894,6 +983,27 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		finally {
 			p.endTransaction(txID, true);
 		}
+
+		// data for component expression testing
+		Structure struct = new StructureDataType("vector", 0);
+		struct.add(PointerDataType.dataType, "first", null);
+		struct.add(PointerDataType.dataType, "last", null);
+		struct.add(PointerDataType.dataType, "end", null);
+
+		// vector data
+		builder.setBytes("0x01002100", "00 22 00 01");
+		builder.setBytes("0x01002104", "0c 22 00 01");
+		builder.setBytes("0x01002108", "10 22 00 01");
+
+		// Data for array of 3 pointers with a final null pointer
+		// Each points back to a corresponding vector field.
+		Array array = new ArrayDataType(PointerDataType.dataType, 4, -1);
+		builder.setBytes("0x01002200", "00 21 00 01");
+		builder.setBytes("0x01002204", "04 21 00 01");
+		builder.setBytes("0x01002208", "08 21 00 01");
+
+		builder.applyDataType("0x01002100", struct);
+		builder.applyDataType("0x01002200", array);
 
 		return p;
 	}
