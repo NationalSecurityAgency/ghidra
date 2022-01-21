@@ -669,7 +669,7 @@ public class SpecExtension {
 	private void clearPrototypeEvaluationModel(EvaluationModelType modelType, String modelName) {
 		CompilerSpec compilerSpec = program.getCompilerSpec();
 		PrototypeModel evalModel = compilerSpec.getPrototypeEvaluationModel(modelType);
-		if (!evalModel.getName().equals(modelName)) {
+		if (evalModel == null || !evalModel.getName().equals(modelName)) {
 			return;
 		}
 		String newName = compilerSpec.getDefaultCallingConvention().getName();
