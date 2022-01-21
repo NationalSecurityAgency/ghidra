@@ -15,21 +15,26 @@
  */
 package agent.gdb.manager.impl;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Ignore;
 
 import agent.gdb.manager.GdbManager;
-import agent.gdb.pty.PtyFactory;
-import agent.gdb.pty.linux.LinuxPtyFactory;
 
-@Ignore("Need compatible GDB version for CI")
-public class SpawnedMi2GdbManagerTest2 extends AbstractGdbManagerTest {
+@Ignore("Does not exist on CI")
+public class SpawnedMi2GdbHomeLocalManagerTest extends AbstractGdbManagerTest {
+	@Override
+	protected File findGdbBin() {
+		String home = System.getProperty("user.home");
+		return new File(home, "local/bin/gdb");
+	}
+
 	@Override
 	protected CompletableFuture<Void> startManager(GdbManager manager) {
 		try {
-			manager.start(GdbManager.DEFAULT_GDB_CMD, "-i", "mi2");
+			manager.start(gdbBin.getAbsolutePath(), "-i", "mi2");
 			return manager.runRC();
 		}
 		catch (IOException e) {
@@ -38,8 +43,7 @@ public class SpawnedMi2GdbManagerTest2 extends AbstractGdbManagerTest {
 	}
 
 	@Override
-	protected PtyFactory getPtyFactory() {
-		// TODO: Choose by host OS
-		return new LinuxPtyFactory();
+	protected String getExpectedDefaultArgsVar() {
+		return "";
 	}
 }
