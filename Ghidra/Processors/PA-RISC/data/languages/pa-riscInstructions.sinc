@@ -1640,17 +1640,20 @@ define pcodeop diag;
 	FPRT32 = float2float(FPR232);
 }
  
-:FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpdf & freg2sgl & fptsgl {
+:FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fpdf & freg2sgl & fptsgl {
 # if src format is sgl, this is sgl to dbl
 # if src format is dbl, this is dbl to sgl
 # sgl to sgl or dbl to dbl don't make sense
 # and we don't support quad right now	
-	if (fpsf == 0:1) goto <SGL2DBL>;
-	fptsgl = float2float(FPR264);
-	goto <DONE>;
-	<SGL2DBL>
 	FPRT64 = float2float(freg2sgl);
-	<DONE>
+}
+
+:FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fpdf & freg2sgl & fptsgl {
+# if src format is sgl, this is sgl to dbl
+# if src format is dbl, this is dbl to sgl
+# sgl to sgl or dbl to dbl don't make sense
+# and we don't support quad right now	
+	fptsgl = float2float(FPR264);
 }
  
 :FCNVXF^fpsf^fpdf FPR232,FPRT32							is opfam=0x0E & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fpdf {
@@ -1659,81 +1662,64 @@ define pcodeop diag;
 
 # int2float -- support single/double size ints and single/double floats
 # so handle 4 different cases
-:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw & fpdfraw {
-	srcIsSgl:1 =  ((fpsfraw:1 == 0:1));
-	srcIsDbl:1 =  ((fpsfraw:1 != 0:1));
-	destIsSgl:1 = ((fpdfraw:1 == 0:1));
-	destIsDbl:1 = ((fpdfraw:1 != 0:1));
-	isSS:1 = srcIsSgl && destIsSgl;
-	isSD:1 = srcIsSgl && destIsDbl;
-	isDS:1 = srcIsDbl && destIsSgl;
-#	isDD:1 = srcIsDbl && destIsDbl;
-	if (isSS) goto <SGLSGL>;
-	if (isSD) goto <SGLDBL>;
-	if (isDS) goto <DBLSGL>;
-	FPRT64 = int2float(FPR264);
-	goto <DONE>;
-	<SGLDBL>
-	FPRT64 = int2float(freg2sgl);
-	goto <DONE>;
-	<DBLSGL>
-	fptsgl = int2float(FPR264);
-	goto <DONE>;
-	<SGLSGL>
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=0 & fpdfraw=0 {
 	fptsgl = int2float(freg2sgl);
-	<DONE>
+}
+
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=0 & fpdfraw=1 {
+	FPRT64 = int2float(freg2sgl);
+}
+
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=1 & fpdfraw=0 {
+	fptsgl = int2float(FPR264);
+}
+
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=1 & fpdfraw=1 {
+	FPRT64 = int2float(FPR264);
 }
 
 :FCNVFX^fpsf^fixeddf FPR232,FPRT32							is opfam=0x0E & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fixeddf {
 	temp:4 = round(FPR232);
 	FPRT32 = trunc(temp);
-} 
-:FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fixeddf & fptsgl & freg2sgl {
-# figure out if the value in the fp register is single or double precision
-# the register is always specified as a 64 bit register, so that doesn't tell us the size, we must use the fpsf format
-	temp:8 = 0;
-	if (fpsf == 1:1) goto <DOUBLE>;
-	temp = float2float(freg2sgl); # convert single precision to double
-	goto <CONVERT>;
-	<DOUBLE>
-	temp = FPR264; 
+}
 
-	<CONVERT>
+:FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fixeddf & fptsgl & freg2sgl {
+	local temp:8 = FPR264; 
 	temp = round(temp);
 	FPRT64 = trunc(temp);
 } 
+
+:FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fixeddf & fptsgl & freg2sgl {
+	local temp:8 = float2float(freg2sgl); # convert single precision to double
+	temp = round(temp);
+	FPRT64 = trunc(temp);
+}
  
 :FCNVFXT^fpsf^fixeddf FPR232,FPRT32						is opfam=0x0E & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fixeddf {
 	FPRT32 = trunc(FPR232);
 } 
 
-:FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fixeddf & fpsfraw & fptsgl & freg2sgl {
-# figure out if the value in the fp register is single or double precision
-# the register is always specified as a 64 bit register, so that doesn't tell us the size, we must use the fpsf (fp source format) format
-# The source will either be the full 64 bits (double precision) or the left half of the register (single precision)
-# source format is double precision, so 64 bits are used
-	isDouble:1 = (fpsf == 1:1);
-	if (isDouble) goto <DOUBLE>;
-	value:4 = freg2sgl; # get single precision value from left half of 64 bit register
-	goto <FLOAT2INT>;
-	<DOUBLE>
-	value = float2float(FPR264); # convert double precision to single
-	<FLOAT2INT>
+:FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fixeddf & fpsfraw & fptsgl & freg2sgl {
+	local value:4 = float2float(FPR264); # convert double precision to single
 	fptsgl = trunc(value);
-} 
+}
+
+:FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fixeddf & fpsfraw & fptsgl & freg2sgl {
+	local value:4 = freg2sgl; # get single precision value from left half of 64 bit register
+	fptsgl = trunc(value);
+}
 
  # Floating Point Functions
 :FCPY^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=2 & freg1=0 & FPR232 & FPRT32 & fpfmt {
 	FPRT32 = FPR232;
 } 
 
-:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fptsgl & freg2sgl {
-	if (fpfmt==0:1) goto <SGL>;
-	FPRT64 = FPR264;
-	goto <DONE>;
-	<SGL>
+:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 & fptsgl & freg2sgl {
 	fptsgl = freg2sgl;
-	<DONE>
+}
+
+:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & freg2sgl {
+	FPRT64 = FPR264;
 }
 
 :FABS^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=3 & freg1=0 & bit5=0 & bit8=0 & FPR232 & FPRT32 & fpfmt {
@@ -1763,52 +1749,48 @@ define pcodeop diag;
 	FPRT32 = FPR132 f+ FPR232;
 } 
 
-:FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & freg1sgl & freg2sgl & fptsgl {
-	if (fpfmt==0:1) goto <SGL>;
-	FPRT64 = FPR164 f+ FPR264;
-	goto <DONE>;
-	<SGL>
+:FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & freg1sgl & freg2sgl & fptsgl {
 	fptsgl = freg1sgl f+ freg2sgl;
-	<DONE>
+}
+
+:FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & freg1sgl & freg2sgl & fptsgl {
+	FPRT64 = FPR164 f+ FPR264;
 }
 
 :FSUB^fpfmt FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=1 & FPR232 & FPR132 & FPRT32 & fpfmt {
 	FPRT32 = FPR232 f- FPR132;
 } 
 
-:FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fptsgl & freg1sgl & freg2sgl {
-	if (fpfmt==0:1) goto <SGL>;
-	FPRT64 = FPR264 f- FPR164;
-	goto <DONE>;
-	<SGL>
+:FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & freg1sgl & freg2sgl {
 	fptsgl = freg2sgl f- freg1sgl;
-	<DONE>
+}
+
+:FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & fptsgl & freg1sgl & freg2sgl {
+	FPRT64 = FPR264 f- FPR164;
 }
 
 :FMPY^fpfmt FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=2 & bit8=0 & FPR232 & FPR132 & FPRT32 & fpfmt {
 	FPRT32 = FPR132 f* FPR232;
 } 
 
-:FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fptsgl & freg1sgl & freg2sgl {
-	if (fpfmt==0:1) goto <SGL>;
-	FPRT64 = FPR164 f* FPR264;
-	goto <DONE>;
-	<SGL>
+:FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & freg1sgl & freg2sgl {
 	fptsgl = freg1sgl f* freg2sgl;
-	<DONE>
+}
+
+:FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & fptsgl & freg1sgl & freg2sgl {
+	FPRT64 = FPR164 f* FPR264;
 }
 
 :FDIV^fpfmt FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=3 & FPR232 & FPR132 & FPRT32 & fpfmt {
 	FPRT32 = FPR232 f/ FPR132;
 } 
 
-:FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fptsgl & freg1sgl & freg2sgl {
-	if (fpfmt==0:1) goto <SGL>;
-	FPRT64 = FPR264 f/ FPR164;
-	goto <DONE>;
-	<SGL>
+:FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & freg1sgl & freg2sgl {
 	fptsgl = freg2sgl f/ freg1sgl;
-	<DONE>
+}
+
+:FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & fptsgl & freg1sgl & freg2sgl {
+	FPRT64 = FPR264 f/ FPR164;
 }
 
 # 64 bit version
@@ -1844,38 +1826,40 @@ define pcodeop diag;
 
 # Floating Point Compare
 # 32 bit register comparison
-:FCMP^fpfmt1bit^fpcmp FPR232,FPR132						is opfam=0x0E & fpclass=2 & fpsub=0 & FPR232 & FPR132 & fpfmt1bit & fpcmp & fpcmp64 {
-	result:1 = 0:1;
+:FCMP^fpfmt1bit^fpcmp FPR232,FPR132						is opfam=0x0E & fpclass=2 & fpsub=0 & FPR232 & FPR132 & fpfmt1bit & bit11=0 & fpcmp {
+	local result:1 = 0:1;
 	# shift the previous compareBit onto the compareQueue
 	compareQueue = (compareQueue << 1);
 	compareQueue = compareQueue | compareBit;
-	# decide how wide a comparison we are doing
-	if (fpfmt1bit == 1:1) goto <DOUBLECMP>;
-	# single comparison
 	result = fpcmp;
-	goto <WRITERESULT>;
-	# do double (full 64 bit) comp here
-	<DOUBLECMP>
+	compareBit = result;
+}
+
+:FCMP^fpfmt1bit^fpcmp64 FPR232,FPR132						is opfam=0x0E & fpclass=2 & fpsub=0 & FPR232 & FPR132 & fpfmt1bit & bit11=1 & fpcmp64 {
+	local result:1 = 0:1;
+	# shift the previous compareBit onto the compareQueue
+	compareQueue = (compareQueue << 1);
+	compareQueue = compareQueue | compareBit;
 	result = fpcmp64;
-	<WRITERESULT>
 	compareBit = result;
 }
 
 # 64 bit register comparison 
-:FCMP^fpfmt^fpcmp64 FPR264,FPR164						is opfam=0x0C & fpclass=2 & fpsub=0 & FPR264 & FPR164 & fpfmt & fpcmp & fpcmp64 {
-	result:1 = 0:1;
+:FCMP^fpfmt^fpcmp FPR264,FPR164						is opfam=0x0C & fpclass=2 & fpsub=0 & FPR264 & FPR164 & fpfmt & fpsfraw=0 & fpcmp {
+	local result:1 = 0:1;
 	# shift the previous compareBit onto the compareQueue
 	compareQueue = (compareQueue << 1);
 	compareQueue = compareQueue | compareBit;
-	# decide how wide a comparison we are doing
-	if (fpfmt == 1:1) goto <DOUBLECMP>;
-	# single comparison
 	result = fpcmp;
-	goto <WRITERESULT>;
-	# do double (full 64 bit) comp here
-	<DOUBLECMP>
+	compareBit = result;
+}
+
+:FCMP^fpfmt^fpcmp64 FPR264,FPR164						is opfam=0x0C & fpclass=2 & fpsub=0 & FPR264 & FPR164 & fpfmt & fpsfraw=1 & fpcmp64 {
+	local result:1 = 0:1;
+	# shift the previous compareBit onto the compareQueue
+	compareQueue = (compareQueue << 1);
+	compareQueue = compareQueue | compareBit;
 	result = fpcmp64;
-	<WRITERESULT>
 	compareBit = result;
 }
 
