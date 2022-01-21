@@ -260,7 +260,7 @@ public class ImporterDialog extends DialogComponentProvider {
 				set.add(loader);
 			}
 		}
-		loaderComboBox = new GhidraComboBox<>(new Vector<>(set));
+		loaderComboBox = new GhidraComboBox<>(set);
 		loaderComboBox.addItemListener(e -> selectedLoaderChanged());
 		loaderComboBox.setEnterKeyForwarding(true);
 		loaderComboBox.setRenderer(
