@@ -48,6 +48,11 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	private static final String OPTION_DESCRIPTION_APPLY_SIGNATURE =
 		"Apply any recovered function signature, in addition to the function name";
 
+	private static final String OPTION_NAME_APPLY_CALLING_CONVENTION =
+		"Apply Function Calling Conventions";
+	private static final String OPTION_DESCRIPTION_APPLY_CALLING_CONVENTION =
+		"Apply any recovered function signature calling convention";
+
 	static final String OPTION_NAME_USE_DEPRECATED_DEMANGLER = "Use Deprecated Demangler";
 	private static final String OPTION_DESCRIPTION_DEPRECATED_DEMANGLER =
 		"Signals to use the deprecated demangler when the modern demangler cannot demangle a " +
@@ -57,7 +62,8 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	private static final String OPTION_DESCRIPTION_DEMANGLER_FORMAT =
 		"The demangling format to use";
 
-	private boolean doSignatureEnabled = true;
+	private boolean applyFunctionSignature = true;
+	private boolean applyCallingConvention = true;
 	private boolean demangleOnlyKnownPatterns = false;
 	private GnuDemanglerFormat demanglerFormat = GnuDemanglerFormat.AUTO;
 	private boolean useDeprecatedDemangler = false;
@@ -78,8 +84,11 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	public void registerOptions(Options options, Program program) {
 
 		HelpLocation help = new HelpLocation("AutoAnalysisPlugin", "Demangler_Analyzer");
-		options.registerOption(OPTION_NAME_APPLY_SIGNATURE, doSignatureEnabled, help,
+		options.registerOption(OPTION_NAME_APPLY_SIGNATURE, applyFunctionSignature, help,
 			OPTION_DESCRIPTION_APPLY_SIGNATURE);
+
+		options.registerOption(OPTION_NAME_APPLY_CALLING_CONVENTION, applyCallingConvention, help,
+			OPTION_DESCRIPTION_APPLY_CALLING_CONVENTION);
 
 		options.registerOption(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns,
 			help, OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
@@ -106,7 +115,10 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
-		doSignatureEnabled = options.getBoolean(OPTION_NAME_APPLY_SIGNATURE, doSignatureEnabled);
+		applyFunctionSignature =
+			options.getBoolean(OPTION_NAME_APPLY_SIGNATURE, applyFunctionSignature);
+		applyCallingConvention =
+			options.getBoolean(OPTION_NAME_APPLY_CALLING_CONVENTION, applyCallingConvention);
 		demangleOnlyKnownPatterns =
 			options.getBoolean(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns);
 		demanglerFormat = options.getEnum(OPTION_NAME_DEMANGLER_FORMAT, GnuDemanglerFormat.AUTO);
@@ -119,7 +131,8 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		GnuDemanglerOptions options =
 			new GnuDemanglerOptions(demanglerFormat, useDeprecatedDemangler);
 		options.setDoDisassembly(true);
-		options.setApplySignature(doSignatureEnabled);
+		options.setApplySignature(applyFunctionSignature);
+		options.setApplyCallingConvention(applyCallingConvention);
 		options.setDemangleOnlyKnownPatterns(demangleOnlyKnownPatterns);
 		return options;
 	}

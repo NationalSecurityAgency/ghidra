@@ -434,7 +434,8 @@ public class DemangledFunction extends DemangledObject {
 			return true;
 		}
 
-		Structure classStructure = maybeUpdateCallingConventionAndCreateClass(program, function);
+		Structure classStructure =
+			maybeUpdateCallingConventionAndCreateClass(program, function, options);
 
 		FunctionDefinitionDataType signature = new FunctionDefinitionDataType(function, true);
 
@@ -598,9 +599,9 @@ public class DemangledFunction extends DemangledObject {
 	}
 
 	private Structure maybeUpdateCallingConventionAndCreateClass(Program program,
-			Function function) {
+			Function function, DemanglerOptions options) {
 
-		String convention = validateCallingConvention(program, function);
+		String convention = validateCallingConvention(program, function, options);
 		if (convention == null) {
 			if (!isThisCall(function)) {
 				return null;
@@ -619,7 +620,12 @@ public class DemangledFunction extends DemangledObject {
 		return null;
 	}
 
-	private String validateCallingConvention(Program program, Function function) {
+	private String validateCallingConvention(Program program, Function function,
+			DemanglerOptions options) {
+
+		if (!options.applyCallingConvention()) {
+			return null;
+		}
 
 		if (callingConvention == null) {
 			return null;
