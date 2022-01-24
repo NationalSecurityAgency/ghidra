@@ -2857,14 +2857,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			DataType classVftablePointer = vfPointerDataTypes.get(vftableAddress);
 
 			// simple case the offset for vftablePtr is 0
-			if (EditStructureUtils.canAdd(classStructureDataType, 0,
-				classVftablePointer.getLength(),
-				monitor)) {
-				classStructureDataType =
-					EditStructureUtils.addDataTypeToStructure(classStructureDataType,
-					0, classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
-
-			}
+			// if can fit or grow structure, add the vftablePtr to it
+			EditStructureUtils.addDataTypeToStructure(classStructureDataType, 0,
+				classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
 		}
 		// if single inheritance or multi non-virtual (wouldn't have called this method if
 		// it were virtually inherited) put parent struct and data into class struct
@@ -2905,13 +2900,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 						" : structure should exist but doesn't.");
 				}
 
-				if (EditStructureUtils.canAdd(classStructureDataType, parentOffset,
-					baseClassStructure.getLength(), monitor)) {
-					classStructureDataType =
-						EditStructureUtils.addDataTypeToStructure(classStructureDataType,
-							parentOffset,
-							baseClassStructure, baseClassStructure.getName(), monitor);
-				}
+				// if it fits at offset or is at the end and class structure can be grown, 
+				// copy the whole baseClass structure to the class Structure at the given offset
+				EditStructureUtils.addDataTypeToStructure(classStructureDataType, parentOffset,
+					baseClassStructure, baseClassStructure.getName(), monitor);
 			}
 
 		}
@@ -2920,9 +2912,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		int dataOffset = getDataOffset(recoveredClass, classStructureDataType);
 		int dataLen = UNKNOWN;
 		if (dataOffset != NONE) {
-			dataLen =
-				EditStructureUtils.getNumberOfUndefinedsStartingAtOffset(classStructureDataType,
-				dataOffset, monitor);
+			dataLen = EditStructureUtils.getNumberOfUndefinedsStartingAtOffset(
+				classStructureDataType, dataOffset, monitor);
 		}
 
 		if (dataLen != UNKNOWN && dataLen > 0) {
@@ -2931,9 +2922,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				classStructureDataType, dataLen, dataOffset);
 
 			if (recoveredClassDataStruct != null) {
-				classStructureDataType = EditStructureUtils.addDataTypeToStructure(
-					classStructureDataType,
-					dataOffset, recoveredClassDataStruct, "data", monitor);
+				// if it fits at offset or is at the end and class structure can be grown, 
+				// copy the whole baseClass structure to the class Structure at the given offset
+				EditStructureUtils.addDataTypeToStructure(classStructureDataType, dataOffset,
+					recoveredClassDataStruct, "data", monitor);
 			}
 
 		}

@@ -5489,36 +5489,39 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to add the given structcure component to the given structure at the given offset 
-	 * @param structureDataType the structure to add to
-	 * @param structureToAdd the structure to add
-	 * @param startOffset the starting offset where to add 
-	 * @param endOffset the ending offset of the added structure
-	 * @return the updated structure
+	 * Method to add the structure components from the given structureToAdd from the given starting 
+	 * offset to the given ending offset of the  to the given structure at the given offset 
+	 * @param structure the structure to add to
+	 * @param structureToAdd the structure to add a subset of components from to the given structure
+	 * @param startOffset the starting offset of where to start adding in the container structure
+	 * @param dataLength the total length of the data components to add
+	 * @return true if the structure was updated or false if the components cannot be added
 	 * @throws CancelledException if cancelled
 	 */
-	public Structure addIndividualComponentsToStructure(Structure structureDataType,
-			Structure structureToAdd, int startOffset, int endOffset) throws CancelledException {
+	public boolean addIndividualComponentsToStructure(Structure structure, Structure structureToAdd,
+			int startOffset, int dataLength) throws CancelledException {
 
-		DataTypeComponent[] definedComponents = structureToAdd.getDefinedComponents();
-		for (int ii = 0; ii < definedComponents.length; ii++) {
+		// this check does not allow growing of structure. It only allows adding to the structure if 
+		// the block of components to add will fit at the given offset
+		if (!EditStructureUtils.canAdd(structure, startOffset, dataLength, false,
+			monitor)) {
+			return false;
+		}
+
+		for (DataTypeComponent dataTypeComponent : structureToAdd.getDefinedComponents()) {
 
 			monitor.checkCanceled();
 
-			DataTypeComponent dataTypeComponent = structureToAdd.getComponent(ii);
-
-			int dataComponentOffset = dataTypeComponent.getOffset();
-			if (endOffset != NONE && (dataComponentOffset + startOffset) >= endOffset) {
-				return structureDataType;
+			// only copy the components up to the given total dataLength to copy 
+			if ((dataTypeComponent.getOffset() + dataTypeComponent.getLength()) > dataLength) {
+				break;
 			}
 
-			String fieldname = dataTypeComponent.getFieldName();
-
-			structureDataType = EditStructureUtils.addDataTypeToStructure(structureDataType,
-				startOffset + dataComponentOffset, dataTypeComponent.getDataType(), fieldname,
-				monitor);
+			structure.replaceAtOffset(startOffset + dataTypeComponent.getOffset(),
+				dataTypeComponent.getDataType(), -1, dataTypeComponent.getFieldName(),
+				dataTypeComponent.getComment());
 		}
-		return structureDataType;
+		return true;
 	}
 
 
@@ -6193,7 +6196,7 @@ public class RecoveredClassHelper {
 	 * Method to retrieve the offset of the class data in the given structure
 	 * @param recoveredClass the given class
 	 * @param structure the given structure
-	 * @return the offset of the class data in the given structure
+	 * @return the offset of the class data in the given structure or NONE if there isn't one
 	 * @throws CancelledException if cancelled
 	 */
 	public int getDataOffset(RecoveredClass recoveredClass, Structure structure)
@@ -8204,22 +8207,17 @@ public class RecoveredClassHelper {
 
 				monitor.checkCanceled();
 
-				// if enough empty bytes - add class vftable pointer
-				if (EditStructureUtils.canAdd(classStructureDataType, vftableOffset,
-					classVftablePointer.getLength(), monitor)) {
-
-					classStructureDataType =
-						EditStructureUtils.addDataTypeToStructure(classStructureDataType,
-							vftableOffset,
-							classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
-
+				// if enough empty bytes or can grow the structure - add class vftable pointer
+				boolean addedToStructure =
+					EditStructureUtils.addDataTypeToStructure(classStructureDataType, vftableOffset,
+						classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
+				if (addedToStructure) {
 					addedVftablePointer = true;
 					continue;
 				}
 
 				// if already has a base class vftable pointer replace with main class vftablePtr
 				// get the item at that location
-				//NEW: replaced with get containing
 				// if offset is in the middle, get the top of the component
 				DataTypeComponent currentComponent =
 					classStructureDataType.getComponentContaining(vftableOffset);
@@ -8298,16 +8296,12 @@ public class RecoveredClassHelper {
 
 			DataType vbaseStructPointer = dataTypeManager.getPointer(vbtableStructure);
 
-			int dataLength = vbaseStructPointer.getLength();
-			if (EditStructureUtils.canAdd(classStructureDataType, vbtableOffset, dataLength,
-				monitor)) {
-
-				classStructureDataType =
-					EditStructureUtils.addDataTypeToStructure(classStructureDataType,
-					vbtableOffset, vbaseStructPointer, VBTABLE_PTR, monitor);
-
-			}
-			else if (overwrite) {
+			// if it fits at offset or is at the end and class structure can be grown, 
+			// copy the whole baseClass structure to the class Structure at the given offset
+			boolean addedToStructure = EditStructureUtils.addDataTypeToStructure(
+				classStructureDataType, vbtableOffset, vbaseStructPointer, VBTABLE_PTR, monitor);
+			if (!addedToStructure && overwrite && classStructureDataType
+					.getLength() >= (vbtableOffset + vbaseStructPointer.getLength())) {
 				classStructureDataType.replaceAtOffset(vbtableOffset, vbaseStructPointer,
 					vbaseStructPointer.getLength(), VBTABLE_PTR, "");
 			}
