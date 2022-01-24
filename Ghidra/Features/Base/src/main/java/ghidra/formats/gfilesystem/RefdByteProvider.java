@@ -45,6 +45,10 @@ public class RefdByteProvider implements ByteProvider {
 		this.fsrl = fsrl;
 	}
 
+	/* package */ ByteProvider getWrappedByteProvider() {
+		return provider;
+	}
+
 	@Override
 	public void close() throws IOException {
 		provider.close();
