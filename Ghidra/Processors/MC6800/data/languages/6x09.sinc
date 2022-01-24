@@ -91,131 +91,238 @@ EA: simm5,idxReg    is simm5 & idxReg & noOffset5=0
      local addr:2 = idxReg + sext(offs);
      export addr; 
 }
-EA: ","idxReg    is idxReg & noOffset5=1 & idxMode=4 # no offset
+EA: ","^idxReg    is idxReg & noOffset5=1 & idxMode=0b00100 # no offset
 {
      local addr:2 = idxReg;
      export addr; 
 }
-EA: simm8,idxReg    is idxReg & noOffset5=1 & idxMode=8; simm8 # 8-bit offset
+EA: simm8,idxReg    is idxReg & noOffset5=1 & idxMode=0b01000; simm8 # 8-bit offset
 {
      local addr:2 = idxReg + simm8;
      export addr; 
 }
-EA: simm16,idxReg    is idxReg & noOffset5=1 & idxMode=9; simm16 # 16-bit offset
+EA: simm16,idxReg    is idxReg & noOffset5=1 & idxMode=0b01001; simm16 # 16-bit offset
 {
      local addr:2 = idxReg + simm16;
      export addr; 
 }
-EA: "B,"idxReg    is idxReg & noOffset5=1 & idxMode=5 # B,R
+
+@ifdef H6309
+EA: ","^W    is idxReg=0b00 & noOffset5=1 & idxMode=0b01111 & W # no offset
 {
-     local addr:2 = idxReg + sext(B);
+     local addr:2 = W;
      export addr; 
 }
-EA: "A,"idxReg    is idxReg & noOffset5=1 & idxMode=6 # A,R
+EA: simm16,W    is idxReg=0b01 & noOffset5=1 & idxMode=0b01111; simm16 & W # 16-bit offset
+{
+     local addr:2 = W + simm16;
+     export addr; 
+}
+@endif # H6309
+
+EA: A,idxReg    is idxReg & noOffset5=1 & idxMode=0b00110 & A # A,R
 {
      local addr:2 = idxReg + sext(A);
      export addr; 
 }
-EA: D,idxReg    is D & idxReg & noOffset5=1 & idxMode=11 # D,R
+EA: B,idxReg    is idxReg & noOffset5=1 & idxMode=0b00101 & B # B,R
+{
+     local addr:2 = idxReg + sext(B);
+     export addr; 
+}
+EA: D,idxReg    is idxReg & noOffset5=1 & idxMode=0b01011 & D # D,R
 {
      local addr:2 = idxReg + D;
      export addr; 
 }
-EA: ","idxReg"+"    is idxReg & noOffset5=1 & idxMode=0 # ,R+
+
+@ifdef H6309
+EA: E,idxReg    is idxReg & noOffset5=1 & idxMode=0b00111 & E # E,R
+{
+     local addr:2 = idxReg + sext(E);
+     export addr; 
+}
+EA: F,idxReg    is idxReg & noOffset5=1 & idxMode=0b01010 & F # F,R
+{
+     local addr:2 = idxReg + sext(F);
+     export addr; 
+}
+EA: W,idxReg    is idxReg & noOffset5=1 & idxMode=0b01110 & W # W,R
+{
+     local addr:2 = idxReg + W;
+     export addr; 
+}
+@endif # H6309
+
+
+EA: ","^idxReg^"+"    is idxReg & noOffset5=1 & idxMode=0b00000 # ,R+
 {
      addr:2 = idxReg;
      idxReg = idxReg + 1;
      export addr;
 }
-EA: ","idxReg"++"    is idxReg & noOffset5=1 & idxMode=1 # ,R++
+EA: ","^idxReg^"++"    is idxReg & noOffset5=1 & idxMode=0b00001 # ,R++
 {
      local addr:2 = idxReg;
      idxReg = idxReg + 2;
      export addr;
 }
-EA: ",-"idxReg    is idxReg & noOffset5=1 & idxMode=2 # ,-R
+EA: ",-"^idxReg    is idxReg & noOffset5=1 & idxMode=0b00010 # ,-R
 {
      idxReg = idxReg - 1;
      local addr:2 = idxReg;
      export addr;
 }
-EA: ",--"idxReg    is idxReg & noOffset5=1 & idxMode=3 # ,--R
+EA: ",--"^idxReg    is idxReg & noOffset5=1 & idxMode=0b00011 # ,--R
 {
      idxReg = idxReg - 2;
      local addr:2 = idxReg;
      export addr;
 }
-EA: addr",PCR" is noOffset5=1 & idxMode=12; simm8 [ addr = inst_next + simm8; ] 
+
+@ifdef H6309
+EA: ","^W^"++"    is idxReg=0b10 & noOffset5=1 & idxMode=0b01111 & W # ,W++
+{
+     local addr:2 = W;
+     W = W + 2;
+     export addr;
+}
+EA: ",--"^W    is idxReg=0b11 & noOffset5=1 & idxMode=0b01111 & W # ,--W
+{
+     W = W - 2;
+     local addr:2 = W;
+     export addr;
+}
+@endif # H6309
+
+EA: addr,"PCR" is noOffset5=1 & idxMode=0b01100; simm8 [ addr = inst_next + simm8; ] 
 {
      export addr; 
 }
-EA: addr",PCR" is noOffset5=1 & idxMode=13; simm16 [ addr = inst_next + simm16; ] 
+EA: addr,"PCR" is noOffset5=1 & idxMode=0b01101; simm16 [ addr = inst_next + simm16; ] 
 {
      export addr; 
 }
-EA: "[,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=20
+EA: "[,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=0b10100
 {
      local addr:2 = *:2 idxReg;
      export addr; 
 }
-EA: "["simm8,idxReg"]"    is idxReg & noOffset5=1 & idxMode=24; simm8
+EA: "["simm8,idxReg"]"    is idxReg & noOffset5=1 & idxMode=0b11000; simm8
 {
      local offs:1 = simm8;
      local addr:2 = idxReg + sext(offs);
      addr = *:2 addr;
      export addr; 
 }
-EA: "["simm16,idxReg"]"    is idxReg & noOffset5=1 & idxMode=25; simm16
+EA: "["simm16,idxReg"]"    is idxReg & noOffset5=1 & idxMode=0b11001; simm16
 {
      local addr:2 = idxReg + simm16;
      addr = *:2 addr;
      export addr; 
 }
-EA: "[B,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=21
+
+@ifdef H6309
+EA: "[,"W"]"    is idxReg=0b00 & noOffset5=1 & idxMode=0b10000 & W
 {
-     local addr:2 = idxReg + sext(B);
+     local addr:2 = *:2 W;
+     export addr; 
+}
+EA: "["simm16,W"]"    is idxReg=0b01 & noOffset5=1 & idxMode=0b10000; simm16 & W
+{
+     local addr:2 = W + simm16;
      addr = *:2 addr;
      export addr; 
 }
-EA: "[A,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=22
+@endif # H6309
+
+EA: "["^A,idxReg"]"    is A & idxReg & noOffset5=1 & idxMode=0b10110
 {
      local addr:2 = idxReg + sext(A);
      addr = *:2 addr;
      export addr; 
 }
-EA: "["D,idxReg"]"    is D & idxReg & noOffset5=1 & idxMode=27
+EA: "["^B,idxReg"]"    is B & idxReg & noOffset5=1 & idxMode=0b10101
+{
+     local addr:2 = idxReg + sext(B);
+     addr = *:2 addr;
+     export addr; 
+}
+EA: "["^D,idxReg"]"    is D & idxReg & noOffset5=1 & idxMode=0b11011
 {
      local addr:2 = idxReg + D;
      addr = *:2 addr;
      export addr; 
 }
-EA: "[,"idxReg"++]"    is idxReg & noOffset5=1 & idxMode=17
+
+@ifdef H6309
+EA: "["^E,idxReg"]"    is E & idxReg & noOffset5=1 & idxMode=0b10111
+{
+     local addr:2 = idxReg + sext(E);
+     addr = *:2 addr;
+     export addr; 
+}
+EA: "["^F,idxReg"]"    is F & idxReg & noOffset5=1 & idxMode=0b11010
+{
+     local addr:2 = idxReg + sext(F);
+     addr = *:2 addr;
+     export addr; 
+}
+EA: "["^W,idxReg"]"    is W & idxReg & noOffset5=1 & idxMode=0b11110
+{
+     local addr:2 = idxReg + W;
+     addr = *:2 addr;
+     export addr; 
+}
+@endif # H6309
+
+
+EA: "[,"idxReg"++]"    is idxReg & noOffset5=1 & idxMode=0b10001
 {
      local addr:2 = idxReg;
      addr = *:2 addr;
      idxReg = idxReg + 2;
      export addr;
 }
-EA: "[,--"idxReg"]"    is idxReg & noOffset5=1 & idxMode=19
+EA: "[,--"idxReg"]"    is idxReg & noOffset5=1 & idxMode=0b10011
 {
      idxReg = idxReg - 2;
      local addr:2 = idxReg;
      addr = *:2 addr;
      export addr;
 }
-EA: "["addr",PCR]" is noOffset5=1 & idxMode=28; simm8 [ addr = inst_next + simm8; ] 
+
+@ifdef H6309
+EA: "[,"^W^"++]"    is W & idxReg=0b10 & noOffset5=1 & idxMode=0b10000
+{
+     local addr:2 = W;
+     addr = *:2 addr;
+     W = W + 2;
+     export addr;
+}
+EA: "[,--"^W^"]"    is W & idxReg=0b11 & noOffset5=1 & idxMode=0b10000
+{
+     W = W - 2;
+     local addr:2 = W;
+     addr = *:2 addr;
+     export addr;
+}
+@endif # H6309
+
+EA: "["addr",PCR]" is noOffset5=1 & idxMode=0b11100; simm8 [ addr = inst_next + simm8; ] 
 {
      local eaddr:2 = inst_next + simm8;
      eaddr = *:2 eaddr;
      export eaddr; 
 }
-EA: "["addr",PCR]" is noOffset5=1 & idxMode=29; simm16 [ addr = inst_next + simm16; ] 
+EA: "["addr",PCR]" is noOffset5=1 & idxMode=0b11101; simm16 [ addr = inst_next + simm16; ] 
 {
      local eaddr:2 = inst_next + simm16;
      eaddr = *:2 eaddr;
      export eaddr; 
 }
-EA: "["addr"]" is imm8=0x9F; simm16 [ addr = inst_next; ] 
+
+EA: "["addr"]" is noOffset5=1 & idxReg=0b00 & idxMode=0b11101; simm16 [ addr = inst_next; ] 
 {
      local eaddr:2 = inst_next;
      eaddr = *:2 eaddr;
