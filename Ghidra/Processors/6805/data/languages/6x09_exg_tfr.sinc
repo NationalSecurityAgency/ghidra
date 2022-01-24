@@ -16,11 +16,11 @@ EXG_r0Tmp: V    is reg0_exg=7 & V   { exg16_r0 = 0x0; }
 EXG_r0Tmp: A    is reg0_exg=8 & A   { exg8l_r0 = A; exg8h_r0 = A; }
 EXG_r0Tmp: B    is reg0_exg=9 & B   { exg8l_r0 = B; exg8h_r0 = B; }
 EXG_r0Tmp: CC   is reg0_exg=10 & CC { exg8l_r0 = CC; exg8h_r0 = CC;}
-EXG_r0Tmp: DP   is reg0_exg=12 & DP { exg8l_r0 = DP; exg8h_r0 = DP;}
+EXG_r0Tmp: DP   is reg0_exg=11 & DP { exg8l_r0 = DP; exg8h_r0 = DP;}
+EXG_r0Tmp: 0    is reg0_exg=12      { exg16_r0 = 0x0; }
 EXG_r0Tmp: 0    is reg0_exg=13      { exg16_r0 = 0x0; }
-EXG_r0Tmp: 0    is reg0_exg=14      { exg16_r0 = 0x0; }
-EXG_r0Tmp: E    is reg0_exg=15 & E  { exg8l_r0 = E; exg8h_r0 = E; }
-EXG_r0Tmp: F    is reg0_exg=16 & F  { exg8l_r0 = F; exg8h_r0 = F; }
+EXG_r0Tmp: E    is reg0_exg=14 & E  { exg8l_r0 = E; exg8h_r0 = E; }
+EXG_r0Tmp: F    is reg0_exg=15 & F  { exg8l_r0 = F; exg8h_r0 = F; }
 
 EXG_r1Tmp: D    is reg1_exg=0 & D   { exg16_r1 = D; }
 EXG_r1Tmp: X    is reg1_exg=1 & X   { exg16_r1 = X; }
@@ -33,11 +33,11 @@ EXG_r1Tmp: V    is reg1_exg=7 & V   { exg16_r1 = 0x0; }
 EXG_r1Tmp: A    is reg1_exg=8 & A   { exg8l_r1 = A; exg8h_r1 = A; }
 EXG_r1Tmp: B    is reg1_exg=9 & B   { exg8l_r1 = B; exg8h_r1 = B; }
 EXG_r1Tmp: CC   is reg1_exg=10 & CC { exg8l_r1 = CC; exg8h_r1 = CC;}
-EXG_r1Tmp: DP   is reg1_exg=12 & DP { exg8l_r1 = DP; exg8h_r1 = DP;}
+EXG_r1Tmp: DP   is reg1_exg=11 & DP { exg8l_r1 = DP; exg8h_r1 = DP;}
+EXG_r1Tmp: 0    is reg1_exg=12      { exg16_r1 = 0x0; }
 EXG_r1Tmp: 0    is reg1_exg=13      { exg16_r1 = 0x0; }
-EXG_r1Tmp: 0    is reg1_exg=14      { exg16_r1 = 0x0; }
-EXG_r1Tmp: E    is reg1_exg=15 & E  { exg8l_r1 = E; exg8h_r1 = E; }
-EXG_r1Tmp: F    is reg1_exg=16 & F  { exg8l_r1 = F; exg8h_r1 = F; }
+EXG_r1Tmp: E    is reg1_exg=14 & E  { exg8l_r1 = E; exg8h_r1 = E; }
+EXG_r1Tmp: F    is reg1_exg=15 & F  { exg8l_r1 = F; exg8h_r1 = F; }
 
 EXG_r0Set: D    is reg0_exg=0 & D   { D = exg16_r1; }
 EXG_r0Set: X    is reg0_exg=1 & X   { X = exg16_r1; }
@@ -161,7 +161,7 @@ TFR_GOTO: is reg1_exg   {  } # PC not set
 }
 
 # Transfer register to another register
-:TFR EXG_r0Set,EXG_r1Set    is op=0x1F; EXG_r0Set & EXG_r1Set & EXG_r0Tmp & TFR_GOTO
+:TFR EXG_r0Tmp,EXG_r1Set    is op=0x1F; EXG_r1Set & EXG_r0Tmp & TFR_GOTO
 {
     build EXG_r0Tmp;
     build EXG_r1Set;
