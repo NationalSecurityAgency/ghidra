@@ -327,7 +327,7 @@ def initTestJVM(Task task, String rootDirName) {
 	    
 		task.jvmArgs '-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,
 			'-DupgradeTimeErrorMessage=' + upgradeTimeErrorMessage,
-			'-Dlog4j.configuration=' + logPropertiesUrl,
+			'-Dlog4j.configurationFile=' + logPropertiesUrl,
 			'-Dghidra.test.property.batch.mode=true',
 			'-Dghidra.test.property.parallel.mode=' + parallelMode,
 			'-Dghidra.test.property.output.dir=' + testOutputDir,

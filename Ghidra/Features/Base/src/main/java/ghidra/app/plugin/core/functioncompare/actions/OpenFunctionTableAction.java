@@ -24,7 +24,7 @@ import javax.swing.ImageIcon;
 
 import docking.ActionContext;
 import docking.action.*;
-import docking.widgets.dialogs.TableChooserDialog;
+import docking.widgets.dialogs.TableSelectionDialog;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.app.plugin.core.functioncompare.MultiFunctionComparisonPanel;
 import ghidra.app.plugin.core.functionwindow.FunctionRowObject;
@@ -108,8 +108,8 @@ public class OpenFunctionTableAction extends DockingAction {
 		FunctionTableModel model = new FunctionTableModel(tool, currentProgram);
 		model.reload(programManagerService.getCurrentProgram());
 
-		TableChooserDialog<FunctionRowObject> diag =
-			new TableChooserDialog<>("Select Functions: " + currentProgram.getName(),
+		TableSelectionDialog<FunctionRowObject> diag =
+			new TableSelectionDialog<>("Select Functions: " + currentProgram.getName(),
 				model, true);
 		tool.showDialog(diag);
 		List<FunctionRowObject> rows = diag.getSelectionItems();
