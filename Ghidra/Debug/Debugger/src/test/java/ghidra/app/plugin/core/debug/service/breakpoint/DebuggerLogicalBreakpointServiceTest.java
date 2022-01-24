@@ -571,7 +571,9 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		traceManager.openTrace(trace);
 		waitForSwing();
 
-		assertLogicalBreakpointForLoneAccessBreakpoint(trace);
+		waitForPass(() -> {
+			assertLogicalBreakpointForLoneAccessBreakpoint(trace);
+		});
 	}
 
 	@Test
