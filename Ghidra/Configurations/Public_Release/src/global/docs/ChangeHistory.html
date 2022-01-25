@@ -25,6 +25,7 @@
     <li><I>Analysis</I>. Fixed another bug with recovering Objective-C method names. (GP-1642, Issue #3817)</li>
     <li><I>Analysis</I>. Certain switch cases using the AARCH64 CSEL instruction will now recover correctly.  Previously internal CBRANCH instructions could cause switch flow recovery failure in the decompiler switch analyzer. (GP-1687)</li>
     <li><I>Analysis</I>. Fixed unused Microsoft Demangler options. (GP-1688, Issue #3892)</li>
+    <li><I>Analysis</I>. (U) Reverted change (GP-1575) introduced with Ghidra 10.1 which improperly factored image-base into analysis of ELF LSDA Gcc exception records. (GP-1702)</li>
     <li><I>Build</I>. Fixed <code>gradle buildGhidra</code> issue where a second build doesn't include all the files. This issue appears to be a bug introduced in Gradle 7. (GP-1648, Issue #3827)</li>
     <li><I>Data Types</I>. Fixed display of multiple Enum values. (GP-1657, Issue #3810)</li>
     <li><I>Debugger</I>. Now invalidating caches for dbgeng/dbgmodel in the GADP variants so the memory is not left stale. (GP-846)</li>
