@@ -899,7 +899,6 @@ src/main/resources/help/Dummy_HelpSet.hs||GHIDRA||reviewed||END|
 src/main/resources/help/empty.htm||GHIDRA||||END|
 src/main/resources/images/2leftarrow.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/2rightarrow.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
-src/main/resources/images/ArmedMarkSelection.png||GHIDRA||||END|
 src/main/resources/images/Array.png||GHIDRA||||END|
 src/main/resources/images/B.gif||GHIDRA||||END|
 src/main/resources/images/BookShelf.png||GHIDRA||||END|

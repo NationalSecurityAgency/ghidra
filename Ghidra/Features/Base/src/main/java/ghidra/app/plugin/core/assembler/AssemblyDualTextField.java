@@ -73,7 +73,7 @@ public class AssemblyDualTextField {
 
 	protected Program program;
 	protected Assembler assembler;
-	protected Address addr;
+	protected Address address;
 	protected Instruction existing;
 	protected boolean exhaustUndefined = false;
 
@@ -416,18 +416,26 @@ public class AssemblyDualTextField {
 	}
 
 	/**
+	 * @see #setProgramLocation(Program, Address)
+	 */
+	public void setProgramLocation(ProgramLocation loc) {
+		setProgramLocation(loc.getProgram(), loc.getAddress());
+	}
+
+	/**
 	 * Set the current program location
 	 * 
 	 * <p>
 	 * This may cause the construction of a new assembler, if one suitable for the given program's
 	 * language has not yet been built.
 	 * 
-	 * @param loc the location
+	 * @param program the program
+	 * @param address the non-null address
 	 */
-	public void setProgramLocation(ProgramLocation loc) {
-		this.program = loc.getProgram();
-		this.addr = loc.getAddress();
-		this.existing = program.getListing().getInstructionAt(addr);
+	public void setProgramLocation(Program program, Address address) {
+		this.program = program;
+		this.address = Objects.requireNonNull(address);
+		this.existing = program.getListing().getInstructionAt(address);
 
 		this.assembler = Assemblers.getAssembler(program);
 	}
@@ -438,9 +446,9 @@ public class AssemblyDualTextField {
 	 * @param lang the language
 	 * @param addr the address
 	 */
-	public void setLanguageLocation(Language lang, long addr) {
+	public void setLanguageLocation(Language lang, Address addr) {
 		this.program = null;
-		this.addr = lang.getDefaultSpace().getAddress(addr);
+		this.address = addr;
 		this.existing = null;
 
 		this.assembler = Assemblers.getAssembler(lang);
@@ -514,7 +522,7 @@ public class AssemblyDualTextField {
 	/**
 	 * Set the visibility of the text box(es)
 	 * 
-	 * @param visibility the VisibilityMode to set.
+	 * @param visibility the {@link VisibilityMode} to set.
 	 */
 	public void setVisible(VisibilityMode visibility) {
 		switch (visibility) {
@@ -530,6 +538,35 @@ public class AssemblyDualTextField {
 				linker.setVisible(false);
 				assembly.setVisible(true);
 				break;
+		}
+	}
+
+	/**
+	 * Get the visibility of the text box(es)
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> This method assumes nothing else changes the visibility of the text boxes. If
+	 * anything else does, then it should be sure to maintain a configuration consistent with one of
+	 * the {@link VisibilityMode}s.
+	 * 
+	 * @return the current mode
+	 */
+	public VisibilityMode getVisible() {
+		if (linker.isVisible()) {
+			if (assembly.isVisible()) {
+				throw new AssertionError();
+			}
+			else {
+				return VisibilityMode.DUAL_VISIBLE;
+			}
+		}
+		else {
+			if (assembly.isVisible()) {
+				return VisibilityMode.SINGLE_VISIBLE;
+			}
+			else {
+				return VisibilityMode.INVISIBLE;
+			}
 		}
 	}
 
@@ -699,7 +736,7 @@ public class AssemblyDualTextField {
 	 * @return the collection of completion items
 	 */
 	protected Collection<AssemblyCompletion> computeCompletions(String text) {
-		final AssemblyPatternBlock ctx = assembler.getContextAt(addr);
+		final AssemblyPatternBlock ctx = assembler.getContextAt(address);
 
 		Set<AssemblyCompletion> result = new TreeSet<>();
 		Collection<AssemblyParseResult> parses = assembler.parseLine(text);
@@ -720,7 +757,7 @@ public class AssemblyDualTextField {
 		parses = assembler.parseLine(fullText);
 		for (AssemblyParseResult parse : parses) {
 			if (!parse.isError()) {
-				AssemblyResolutionResults sems = assembler.resolveTree(parse, addr);
+				AssemblyResolutionResults sems = assembler.resolveTree(parse, address);
 				for (AssemblyResolution ar : sems) {
 					if (ar.isError()) {
 						//result.add(new AssemblyError("", ar.toString()));
@@ -749,7 +786,7 @@ public class AssemblyDualTextField {
 	public class AssemblyDualTextFieldDemo implements GhidraLaunchable {
 		public final LanguageID DEMO_LANG_ID = new LanguageID("x86:LE:64:default");
 		public final String ADDR_FORMAT = "@%08x:";
-		long curAddr = 0;
+		Address curAddr;
 
 		@Override
 		public void launch(GhidraApplicationLayout layout, String[] args) throws Exception {
@@ -768,6 +805,7 @@ public class AssemblyDualTextField {
 
 			SleighLanguageProvider provider = new SleighLanguageProvider();
 			SleighLanguage lang = (SleighLanguage) provider.getLanguage(DEMO_LANG_ID);
+			curAddr = lang.getDefaultSpace().getAddress(0);
 
 			input.setLanguageLocation(lang, curAddr);
 
@@ -788,7 +826,7 @@ public class AssemblyDualTextField {
 					String data = NumericUtilities.convertBytesToString(ins.getData());
 					asm.setText(asm.getText() + data);
 					input.clear();
-					curAddr += ins.getData().length;
+					curAddr = curAddr.addWrap(ins.getData().length);
 					input.setLanguageLocation(lang, curAddr);
 					addrlabel.setText(String.format(ADDR_FORMAT, curAddr));
 				}
