@@ -856,6 +856,15 @@ public class TextFieldLinker {
 	}
 
 	/**
+	 * Check if all component fields are visible
+	 * 
+	 * @return false if any component is not visible, true otherwise
+	 */
+	public boolean isVisible() {
+		return linkedFields.stream().allMatch(lf -> lf.field.isVisible());
+	}
+
+	/**
 	 * Add a focus listener
 	 * 
 	 * <p>
