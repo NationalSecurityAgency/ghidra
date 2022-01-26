@@ -28,6 +28,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.Swing;
 
 public class MultiLineMessageDialog extends DialogComponentProvider {
 	/** Used for error messages. */
@@ -61,16 +62,21 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 	 */
 	public static void showModalMessageDialog(Component parent, String title, String shortMessage,
 			String detailedMessage, int messageType) {
-		MultiLineMessageDialog mlmd =
-			new MultiLineMessageDialog(title, shortMessage, detailedMessage, messageType, true);
-		DockingWindowManager.showDialog(parent, mlmd);
+		Swing.runNow(() -> {
+			MultiLineMessageDialog dialog =
+				new MultiLineMessageDialog(title, shortMessage, detailedMessage, messageType, true);
+			DockingWindowManager.showDialog(parent, dialog);
+		});
 	}
 
 	public static void showMessageDialog(Component parent, String title, String shortMessage,
 			String detailedMessage, int messageType) {
-		MultiLineMessageDialog mlmd =
-			new MultiLineMessageDialog(title, shortMessage, detailedMessage, messageType, false);
-		DockingWindowManager.showDialog(parent, mlmd);
+		Swing.runNow(() -> {
+			MultiLineMessageDialog dialog =
+				new MultiLineMessageDialog(title, shortMessage, detailedMessage, messageType,
+					false);
+			DockingWindowManager.showDialog(parent, dialog);
+		});
 	}
 
 	/**
