@@ -15,15 +15,20 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import java.io.IOException;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
+
 import java.util.*;
 import java.util.stream.Collectors;
+
+import java.io.IOException;
 
 import ghidra.app.cmd.comments.AppendCommentCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFNumericAttribute;
-import ghidra.app.util.bin.format.dwarf4.encoding.*;
+import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
+import ghidra.app.util.bin.format.dwarf4.encoding.DWARFSourceLanguage;
 import ghidra.app.util.bin.format.dwarf4.expression.*;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -111,7 +116,7 @@ public class DWARFFunctionImporter {
 
 			try {
 				switch (diea.getTag()) {
-					case DWARFTag.DW_TAG_subprogram:
+					case DW_TAG_subprogram:
 						try {
 							processSubprogram(diea);
 						}
@@ -119,7 +124,7 @@ public class DWARFFunctionImporter {
 							Msg.error(this, "Failed to process subprog " + diea.getHexOffset(), e);
 						}
 						break;
-					case DWARFTag.DW_TAG_variable:
+					case DW_TAG_variable:
 						// only process variable definitions that are static variables
 						// (ie. they are children of the compunit root, ie. depth == 1)
 						// local variables should be children of dw_tag_subprograms
@@ -133,12 +138,12 @@ public class DWARFFunctionImporter {
 							}
 						}
 						break;
-					case DWARFTag.DW_TAG_label:
+					case DW_TAG_label:
 						processLabel(diea);
 						break;
 
-					case DWARFTag.DW_TAG_gnu_call_site:
-					case DWARFTag.DW_TAG_call_site:
+					case DW_TAG_gnu_call_site:
+					case DW_TAG_call_site:
 						DIEAggregate partDIEA = DIEAggregate.createSkipHead(diea);
 						if (partDIEA != null && !isBadSubprogramDef(partDIEA)) {
 							processSubprogram(partDIEA);
@@ -260,16 +265,13 @@ public class DWARFFunctionImporter {
 		boolean skipFuncSignature = false;
 		List<Parameter> formalParams = new ArrayList<>();
 
-		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(
-			DWARFTag.DW_TAG_formal_parameter)) {
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+		for (DIEAggregate paramDIEA : diea.getFunctionParamList()) {
 
-			DataType childDT = dwarfDTM.getDataType(childDIEA.getTypeRef(), null);
-			if (childDT == null || DataTypeComponent.usesZeroLengthComponent(childDT)) {
-				String paramName =
-					childDIEA.getString(DWARFAttribute.DW_AT_name, "param" + formalParams.size());
+			DataType paramDT = dwarfDTM.getDataType(paramDIEA.getTypeRef(), null);
+			if (paramDT == null || DataTypeComponent.usesZeroLengthComponent(paramDT)) {
+				String paramName = paramDIEA.getString(DW_AT_name, "param" + formalParams.size());
 				Msg.warn(this, "DWARF: zero-length function parameter " + paramName +
-					":" + childDT.getName() + ", omitting from definition of " +
+					":" + paramDT.getName() + ", omitting from definition of " +
 					dfunc.dni.getName() + "@" + dfunc.address);
 				// skip this parameter because its data type is a zero-width type that typically does
 				// not generate code.  If this varies compiler-to-compiler, setting 
@@ -277,7 +279,7 @@ public class DWARFFunctionImporter {
 				continue;
 			}
 
-			Parameter formalParam = createFormalParameter(childDIEA);
+			Parameter formalParam = createFormalParameter(paramDIEA);
 			if (formalParam == null) {
 				skipFuncSignature = true;
 				break;
@@ -285,7 +287,7 @@ public class DWARFFunctionImporter {
 			formalParams.add(formalParam);
 
 			if (!formalParamsOnly) {
-				DWARFVariable var = processVariable(childDIEA, dfunc, null, -1);
+				DWARFVariable var = processVariable(paramDIEA, dfunc, null, -1);
 				if (var == null) {
 					// we had an error, can't rely on detailed param data, fallback to
 					// formal params
@@ -297,15 +299,14 @@ public class DWARFFunctionImporter {
 				}
 			}
 		}
-		dfunc.varArg =
-			!diea.getHeadFragment().getChildren(DWARFTag.DW_TAG_unspecified_parameters).isEmpty();
+		dfunc.varArg = !diea.getChildren(DW_TAG_unspecified_parameters).isEmpty();
 
 		processFuncChildren(diea, dfunc);
 
 		Function gfunc = createFunction(dfunc, diea);
 
 		if (gfunc != null) {
-			if (diea.getBool(DWARFAttribute.DW_AT_noreturn, false)) {
+			if (diea.getBool(DW_AT_noreturn, false)) {
 				gfunc.setNoReturn(true);
 			}
 			if (formalParams.isEmpty() && dfunc.localVarErrors) {
@@ -341,7 +342,7 @@ public class DWARFFunctionImporter {
 		}
 
 	}
-
+	
 	private void updateFunctionSignatureWithFormalParams(Function gfunc, List<Parameter> params,
 			DataType returnType, boolean varArgs, DIEAggregate diea) {
 		try {
@@ -411,7 +412,7 @@ public class DWARFFunctionImporter {
 			DIEAggregate childDIEA = prog.getAggregate(childEntry);
 
 			switch (childDIEA.getTag()) {
-				case DWARFTag.DW_TAG_variable: {
+				case DW_TAG_variable: {
 					DWARFVariable var =
 						processVariable(childDIEA, dfunc, null, dfunc.address.getOffset());
 
@@ -420,18 +421,18 @@ public class DWARFFunctionImporter {
 					}
 					break;
 				}
-				case DWARFTag.DW_TAG_lexical_block:
+				case DW_TAG_lexical_block:
 					processLexicalBlock(childDIEA, dfunc);
 					break;
-				case DWARFTag.DW_TAG_label:
+				case DW_TAG_label:
 					processLabel(childDIEA);
 					break;
-				case DWARFTag.DW_TAG_inlined_subroutine:
+				case DW_TAG_inlined_subroutine:
 					processInlinedSubroutine(childDIEA, dfunc);
 					break;
 
-				case DWARFTag.DW_TAG_gnu_call_site:
-				case DWARFTag.DW_TAG_call_site:
+				case DW_TAG_gnu_call_site:
+				case DW_TAG_call_site:
 					DIEAggregate partDIEA = DIEAggregate.createSkipHead(diea);
 					if (partDIEA != null && !isBadSubprogramDef(partDIEA)) {
 						processSubprogram(partDIEA);
@@ -443,7 +444,7 @@ public class DWARFFunctionImporter {
 	}
 
 	private Parameter createFormalParameter(DIEAggregate diea) {
-		String name = diea.getString(DWARFAttribute.DW_AT_name, null);
+		String name = diea.getString(DW_AT_name, null);
 		DataType dt = dwarfDTM.getDataType(diea.getTypeRef(), dwarfDTM.getVoidType());
 
 		try {
@@ -575,7 +576,7 @@ public class DWARFFunctionImporter {
 					String contextStr = (dfunc != null)
 							? " for function " + dfunc.dni.getName() + "@" + dfunc.address
 							: "";
-					if (diea.getTag() != DWARFTag.DW_TAG_formal_parameter) {
+					if (diea.getTag() != DW_TAG_formal_parameter) {
 						Msg.warn(this,
 							"Variable " + dvar.dni.getName() + "[" + dvar.type.getName() +
 								", size=" + dvar.type.getLength() + "]" + contextStr +
@@ -630,7 +631,7 @@ public class DWARFFunctionImporter {
 				return;
 			}
 
-			boolean external = diea.getBool(DWARFAttribute.DW_AT_external, false);
+			boolean external = diea.getBool(DW_AT_external, false);
 
 			outputGlobal(staticVariableAddress, dvar.type, external,
 				DWARFSourceInfo.create(diea), dvar.dni);
@@ -702,12 +703,11 @@ public class DWARFFunctionImporter {
 		// location of this lexical block?
 
 		// Process low and high pc if it exists
-		if (diea.hasAttribute(DWARFAttribute.DW_AT_low_pc) &&
-			diea.hasAttribute(DWARFAttribute.DW_AT_high_pc)) {
+		if (diea.hasAttribute(DW_AT_low_pc) && diea.hasAttribute(DW_AT_high_pc)) {
 			lowPC = diea.getLowPC(0);
 		}
 		// Otherwise process a range list
-		else if (diea.hasAttribute(DWARFAttribute.DW_AT_ranges)) {
+		else if (diea.hasAttribute(DW_AT_ranges)) {
 			List<DWARFRange> ranges = diea.parseDebugRange(DWARFAttribute.DW_AT_ranges);
 
 			// No range found
@@ -742,14 +742,13 @@ public class DWARFFunctionImporter {
 		Number highPC = null;
 
 		// Process low and high pc if it exists
-		if (diea.hasAttribute(DWARFAttribute.DW_AT_low_pc) &&
-			diea.hasAttribute(DWARFAttribute.DW_AT_high_pc)) {
+		if (diea.hasAttribute(DW_AT_low_pc) && diea.hasAttribute(DW_AT_high_pc)) {
 			lowPC = diea.getLowPC(0);
 			highPC = diea.getHighPC();
 		}
 		// Otherwise process a range list
-		else if (diea.hasAttribute(DWARFAttribute.DW_AT_ranges)) {
-			List<DWARFRange> ranges = diea.parseDebugRange(DWARFAttribute.DW_AT_ranges);
+		else if (diea.hasAttribute(DW_AT_ranges)) {
+			List<DWARFRange> ranges = diea.parseDebugRange(DW_AT_ranges);
 
 			// No range found
 			if (ranges.isEmpty()) {
@@ -1475,7 +1474,7 @@ public class DWARFFunctionImporter {
 		}
 
 		String name = prog.getEntryName(diea);
-		if (name != null && diea.hasAttribute(DWARFAttribute.DW_AT_low_pc)) {
+		if (name != null && diea.hasAttribute(DW_AT_low_pc)) {
 			Address address = toAddr(diea.getLowPC(0));
 			if (address.getOffset() != 0) {
 				try {

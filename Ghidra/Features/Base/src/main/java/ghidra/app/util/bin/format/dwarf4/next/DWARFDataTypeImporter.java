@@ -15,6 +15,10 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.DW_AT_count;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.DW_AT_upper_bound;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_subrange_type;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -277,12 +281,10 @@ public class DWARFDataTypeImporter {
 
 		boolean foundThisParam = false;
 		List<ParameterDefinition> params = new ArrayList<>();
-		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(
-			DWARFTag.DW_TAG_formal_parameter)) {
-			DIEAggregate childDIEA = prog.getAggregate(childEntry);
+		for (DIEAggregate paramDIEA : diea.getFunctionParamList()) {
 
-			String paramName = childDIEA.getName();
-			DWARFDataType paramDT = getDataType(childDIEA.getTypeRef(), null);
+			String paramName = paramDIEA.getName();
+			DWARFDataType paramDT = getDataType(paramDIEA.getTypeRef(), null);
 			if (paramDT == null || paramDT.dataType.getLength() <= 0) {
 				Msg.error(this, "Bad function parameter type for " + dni.asCategoryPath());
 				return null;
@@ -291,7 +293,7 @@ public class DWARFDataTypeImporter {
 			ParameterDefinition pd = new ParameterDefinitionImpl(paramName, paramDT.dataType, null);
 			params.add(pd);
 
-			foundThisParam |= DWARFUtil.isThisParam(childDIEA);
+			foundThisParam |= DWARFUtil.isThisParam(paramDIEA);
 		}
 
 		FunctionDefinitionDataType funcDef =
@@ -299,7 +301,7 @@ public class DWARFDataTypeImporter {
 		funcDef.setReturnType(returnType.dataType);
 		funcDef.setArguments(params.toArray(new ParameterDefinition[params.size()]));
 
-		if (!diea.getHeadFragment().getChildren(DWARFTag.DW_TAG_unspecified_parameters).isEmpty()) {
+		if (!diea.getChildren(DWARFTag.DW_TAG_unspecified_parameters).isEmpty()) {
 			funcDef.setVarArgs(true);
 		}
 
@@ -416,8 +418,7 @@ public class DWARFDataTypeImporter {
 	}
 
 	private void populateStubEnum(Enum enumDT, DIEAggregate diea) {
-		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(
-			DWARFTag.DW_TAG_enumerator)) {
+		for (DebugInfoEntry childEntry : diea.getChildren(DWARFTag.DW_TAG_enumerator)) {
 			DIEAggregate childDIEA = prog.getAggregate(childEntry);
 			String childName = childDIEA.getName();
 
@@ -599,8 +600,7 @@ public class DWARFDataTypeImporter {
 		long unionSize = diea.getUnsignedLong(DWARFAttribute.DW_AT_byte_size, -1);
 
 		UnionDataType union = (UnionDataType) ddt.dataType;
-		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(
-			DWARFTag.DW_TAG_member)) {
+		for (DebugInfoEntry childEntry : diea.getChildren(DWARFTag.DW_TAG_member)) {
 			DIEAggregate childDIEA = prog.getAggregate(childEntry);
 
 			// skip static member vars as they do not have storage in the structure
@@ -790,7 +790,7 @@ public class DWARFDataTypeImporter {
 	private void populateStubStruct_worker(DWARFDataType ddt, StructureDataType structure,
 			DIEAggregate diea, int childTagType) throws IOException, DWARFExpressionException {
 
-		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(childTagType)) {
+		for (DebugInfoEntry childEntry : diea.getChildren(childTagType)) {
 
 			DIEAggregate childDIEA = prog.getAggregate(childEntry);
 			// skip static member vars as they do not have storage in the structure
@@ -1035,20 +1035,19 @@ public class DWARFDataTypeImporter {
 		// The first element in the DWARF dimension list would be where a wild-card (-1 length)
 		// dimension would be defined.
 		List<Integer> dimensions = new ArrayList<>();
-		List<DebugInfoEntry> subrangeDIEs =
-			diea.getHeadFragment().getChildren(DWARFTag.DW_TAG_subrange_type);
+		List<DebugInfoEntry> subrangeDIEs = diea.getChildren(DW_TAG_subrange_type);
 		for (int subRangeDIEIndex = 0; subRangeDIEIndex < subrangeDIEs.size(); subRangeDIEIndex++) {
 			DIEAggregate subrangeAggr = prog.getAggregate(subrangeDIEs.get(subRangeDIEIndex));
 			long numElements = -1;
 			try {
-				if (subrangeAggr.hasAttribute(DWARFAttribute.DW_AT_count)) {
+				if (subrangeAggr.hasAttribute(DW_AT_count)) {
 					numElements =
-						subrangeAggr.parseUnsignedLong(DWARFAttribute.DW_AT_count, 0xbadbeef);
+						subrangeAggr.parseUnsignedLong(DW_AT_count, 0xbadbeef);
 				}
 				// Otherwise check for an upper bound
-				else if (subrangeAggr.hasAttribute(DWARFAttribute.DW_AT_upper_bound)) {
+				else if (subrangeAggr.hasAttribute(DW_AT_upper_bound)) {
 					long upperBound =
-						subrangeAggr.parseUnsignedLong(DWARFAttribute.DW_AT_upper_bound, 0xbadbeef);
+						subrangeAggr.parseUnsignedLong(DW_AT_upper_bound, 0xbadbeef);
 
 					// fix special flag values used by DWARF to indicate that the array dimension
 					// is unknown.  64bit 0xffffff...s and 32bit 0xffff..s will
