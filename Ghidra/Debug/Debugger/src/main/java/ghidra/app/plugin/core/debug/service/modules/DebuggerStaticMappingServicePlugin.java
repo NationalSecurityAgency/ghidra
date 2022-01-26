@@ -135,8 +135,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			return staticRange.getMinAddress();
 		}
 
-		public TraceSnap getTraceSnap() {
-			return new DefaultTraceSnap(mapping.getTrace(), mapping.getStartSnap());
+		public TraceSpan getTraceSpan() {
+			return new DefaultTraceSpan(mapping.getTrace(), mapping.getLifespan());
 		}
 
 		public TraceAddressSnapRange getTraceAddressSnapRange() {
@@ -499,7 +499,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 
 		protected void collectOpenMappedViews(AddressRange rng,
-				Map<TraceSnap, Collection<MappedAddressRange>> result) {
+				Map<TraceSpan, Collection<MappedAddressRange>> result) {
 			for (Entry<MappingEntry, Address> inPreceeding : inbound.headMapByValue(
 				rng.getMaxAddress(), true).entrySet()) {
 				Address start = inPreceeding.getValue();
@@ -513,14 +513,14 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 				AddressRange srcRange = me.staticRange.intersect(rng);
 				AddressRange dstRange = me.mapProgramRangeToTrace(rng);
-				result.computeIfAbsent(me.getTraceSnap(), p -> new TreeSet<>())
+				result.computeIfAbsent(me.getTraceSpan(), p -> new TreeSet<>())
 						.add(new MappedAddressRange(srcRange, dstRange));
 			}
 		}
 
-		public Map<TraceSnap, Collection<MappedAddressRange>> getOpenMappedViews(
+		public Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(
 				AddressSetView set) {
-			Map<TraceSnap, Collection<MappedAddressRange>> result = new HashMap<>();
+			Map<TraceSpan, Collection<MappedAddressRange>> result = new HashMap<>();
 			for (AddressRange rng : set) {
 				collectOpenMappedViews(rng, result);
 			}
@@ -922,7 +922,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	@Override
-	public Map<TraceSnap, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
+	public Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
 			AddressSetView set) {
 		synchronized (lock) {
 			InfoPerProgram info = requireTrackedInfo(program);

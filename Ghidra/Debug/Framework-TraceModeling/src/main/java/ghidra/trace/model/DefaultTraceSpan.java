@@ -17,18 +17,26 @@ package ghidra.trace.model;
 
 import java.util.Objects;
 
+import com.google.common.collect.Range;
+
+import ghidra.trace.database.DBTraceUtils;
+
 /**
  * NOTE: This is used to mark <trace,snap>; regardless of whether that snapshot is actually in the
  * database.... Cannot just use TraceSnapshot here.
  */
-public class DefaultTraceSnap implements TraceSnap {
+public class DefaultTraceSpan implements TraceSpan {
 
 	private final Trace trace;
-	private final long snap;
+	private final Range<Long> span;
 
-	public DefaultTraceSnap(Trace trace, long snap) {
+	private final int hash;
+
+	public DefaultTraceSpan(Trace trace, Range<Long> span) {
 		this.trace = trace;
-		this.snap = snap;
+		this.span = span;
+
+		this.hash = Objects.hash(trace, span);
 	}
 
 	@Override
@@ -37,13 +45,13 @@ public class DefaultTraceSnap implements TraceSnap {
 	}
 
 	@Override
-	public long getSnap() {
-		return snap;
+	public Range<Long> getSpan() {
+		return span;
 	}
 
 	@Override
 	public String toString() {
-		return "TraceSnap<" + trace + ": " + snap + ">";
+		return "TraceSnap<" + trace + ": " + span + ">";
 	}
 
 	@Override
@@ -51,14 +59,14 @@ public class DefaultTraceSnap implements TraceSnap {
 		if (this == obj) {
 			return true;
 		}
-		if (!(obj instanceof DefaultTraceSnap)) {
+		if (!(obj instanceof DefaultTraceSpan)) {
 			return false;
 		}
-		DefaultTraceSnap that = (DefaultTraceSnap) obj;
+		DefaultTraceSpan that = (DefaultTraceSpan) obj;
 		if (this.trace != that.trace) {
 			return false;
 		}
-		if (this.snap != that.snap) {
+		if (!Objects.equals(this.span, that.span)) {
 			return false;
 		}
 		return true;
@@ -66,11 +74,11 @@ public class DefaultTraceSnap implements TraceSnap {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(trace, snap);
+		return hash;
 	}
 
 	@Override
-	public int compareTo(TraceSnap that) {
+	public int compareTo(TraceSpan that) {
 		if (this == that) {
 			return 0;
 		}
@@ -79,7 +87,13 @@ public class DefaultTraceSnap implements TraceSnap {
 		if (result != 0) {
 			return result;
 		}
-		result = Long.compareUnsigned(this.snap, that.getSnap());
+		result = Long.compare(DBTraceUtils.lowerEndpoint(this.span),
+			DBTraceUtils.lowerEndpoint(that.getSpan()));
+		if (result != 0) {
+			return result;
+		}
+		result = Long.compare(DBTraceUtils.upperEndpoint(this.span),
+			DBTraceUtils.upperEndpoint(that.getSpan()));
 		if (result != 0) {
 			return result;
 		}

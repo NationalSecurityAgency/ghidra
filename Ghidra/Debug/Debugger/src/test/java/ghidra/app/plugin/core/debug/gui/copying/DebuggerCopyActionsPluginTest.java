@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import com.google.common.collect.Range;
 
-import docking.ActionContext;
 import docking.action.DockingActionIf;
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
@@ -43,7 +42,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.model.DefaultTraceLocation;
@@ -68,29 +66,20 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		listingProvider = waitForComponentProvider(DebuggerListingProvider.class);
 	}
 
-	protected void select(Address min, Address max) {
-		select(new ProgramSelection(min, max));
-	}
-
-	protected void select(AddressSetView set) {
-		select(new ProgramSelection(set));
-	}
-
-	protected void select(ProgramSelection sel) {
-		runSwing(() -> {
-			listingProvider.setSelection(sel);
-		});
-	}
-
 	protected void assertDisabled(DockingActionIf action) {
-		ActionContext context = listingProvider.getActionContext(null);
-		assertFalse(action.isEnabledForContext(context));
+		assertDisabled(listingProvider, action);
 	}
 
 	protected void performEnabledAction(DockingActionIf action) {
-		ActionContext context = listingProvider.getActionContext(null);
-		waitForCondition(() -> action.isEnabledForContext(context));
-		performAction(action, context, false);
+		performEnabledAction(listingProvider, action, false);
+	}
+
+	protected void select(Address min, Address max) {
+		select(listingProvider, min, max);
+	}
+
+	protected void select(AddressSetView set) {
+		select(listingProvider, set);
 	}
 
 	@Test

@@ -374,6 +374,7 @@ public interface DebuggerResources {
 	String GROUP_TRACE_CLOSE = "Dbg7.b. Trace Close";
 	String GROUP_MAINTENANCE = "Dbg8. Maintenance";
 	String GROUP_MAPPING = "Dbg9. Map Modules/Sections";
+	String GROUP_WATCHES = "DbgA. Watches";
 	String GROUP_DIFF_NAV = "DiffNavigate";
 
 	static void tableRowActivationAction(GTable table, Runnable runnable) {
@@ -1552,16 +1553,16 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface NewMemoryAction{
+	interface NewMemoryAction {
 		String NAME = "New Memory View";
 		String DESCRIPTION = "Open a new memory bytes view";
 		String GROUP = GROUP_TRANSIENT_VIEWS;
 		Icon ICON = ICON_MEMORY_BYTES;
 		String HELP_ANCHOR = "new_memory";
-		
+
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME,ownerName)
+			return new ActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
 					.menuGroup(GROUP)
 					.menuIcon(ICON)
@@ -1569,7 +1570,7 @@ public interface DebuggerResources {
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
-	
+
 	abstract class AbstractStepSnapForwardAction extends DockingAction {
 		public static final String NAME = "Step Trace Snap Forward";
 		public static final Icon ICON = ICON_SNAP_FORWARD;
@@ -1932,6 +1933,24 @@ public interface DebuggerResources {
 		}
 	}
 
+	interface WatchAction {
+		String NAME = "Watch";
+		String DESCRIPTION = "Watch the selected item";
+		String GROUP = GROUP_WATCHES;
+		Icon ICON = ICON_PROVIDER_WATCHES;
+		String HELP_ANCHOR = "watch";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.popupMenuPath(NAME)
+					.popupMenuGroup(GROUP)
+					.popupMenuIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
 	interface HideScratchSnapshotsAction {
 		String NAME = "Hide Scratch";
 		String DESCRIPTION = "Hide negative snaps, typically used as emulation scratch space";
@@ -2042,6 +2061,7 @@ public interface DebuggerResources {
 		public String getToolTip() {
 			return "A connected debugger client";
 		}
+
 	}
 
 	static <T> Function<Throwable, T> showError(Component parent, String message) {

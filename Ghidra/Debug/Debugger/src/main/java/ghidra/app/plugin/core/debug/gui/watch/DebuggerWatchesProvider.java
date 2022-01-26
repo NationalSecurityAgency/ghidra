@@ -18,10 +18,12 @@ package ghidra.app.plugin.core.debug.gui.watch;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.*;
+import java.util.Map.Entry;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -33,12 +35,16 @@ import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
-import ghidra.app.services.DebuggerListingService;
-import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.app.plugin.core.debug.gui.register.DebuggerRegisterActionContext;
+import ghidra.app.plugin.core.debug.gui.register.RegisterRow;
+import ghidra.app.services.*;
+import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
@@ -51,16 +57,19 @@ import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeConflictException;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Listing;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
+import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.Msg;
@@ -243,6 +252,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	// TODO: Allow address marking
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager; // For goto time (emu mods)
+	@AutoServiceConsumed
+	private DebuggerStaticMappingService mappingService; // For listing action
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -284,6 +295,9 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	DockingAction actionSelectAllReads;
 	DockingAction actionAdd;
 	DockingAction actionRemove;
+
+	DockingAction actionAddFromLocation;
+	DockingAction actionAddFromRegister;
 
 	private DebuggerWatchActionContext myActionContext;
 
@@ -423,6 +437,18 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 				.enabledWhen(ctx -> !ctx.getWatchRows().isEmpty())
 				.onAction(this::activatedRemove)
 				.buildAndInstallLocal(this);
+
+		// Pop-up context actions
+		actionAddFromLocation = WatchAction.builder(plugin)
+				.withContext(ProgramLocationActionContext.class)
+				.enabledWhen(this::hasDynamicLocation)
+				.onAction(this::activatedAddFromLocation)
+				.buildAndInstall(tool);
+		actionAddFromRegister = WatchAction.builder(plugin)
+				.withContext(DebuggerRegisterActionContext.class)
+				.enabledWhen(this::hasValidWatchRegister)
+				.onAction(this::activatedAddFromRegister)
+				.buildAndInstall(tool);
 	}
 
 	protected boolean selHasDataType(DebuggerWatchActionContext ctx) {
@@ -549,10 +575,135 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 		watchTableModel.deleteWith(context.getWatchRows()::contains);
 	}
 
+	private ProgramLocation getDynamicLocation(ProgramLocation someLoc) {
+		if (someLoc.getProgram() instanceof TraceProgramView) {
+			return someLoc;
+		}
+		return mappingService.getDynamicLocationFromStatic(current.getView(), someLoc);
+	}
+
+	private AddressSetView getDynamicAddresses(Program program, AddressSetView set) {
+		if (program instanceof TraceProgramView) {
+			return set;
+		}
+		if (set == null) {
+			return null;
+		}
+		AddressSet result = new AddressSet();
+		for (Entry<TraceSpan, Collection<MappedAddressRange>> ent : mappingService
+				.getOpenMappedViews(program, set)
+				.entrySet()) {
+			if (ent.getKey().getTrace() != current.getTrace()) {
+				continue;
+			}
+			if (!ent.getKey().getSpan().contains(current.getSnap())) {
+				continue;
+			}
+			for (MappedAddressRange rng : ent.getValue()) {
+				result.add(rng.getDestinationAddressRange());
+			}
+		}
+		return result;
+	}
+
+	private boolean hasDynamicLocation(ProgramLocationActionContext context) {
+		ProgramLocation dynLoc = getDynamicLocation(context.getLocation());
+		return dynLoc != null;
+	}
+
+	private boolean tryForSelection(ProgramLocationActionContext context) {
+		AddressSetView dynSel = getDynamicAddresses(context.getProgram(), context.getSelection());
+		if (dynSel == null || dynSel.isEmpty()) {
+			return false;
+		}
+		for (AddressRange rng : dynSel) {
+			addWatch(TraceSleighUtils
+					.generateExpressionForRange(current.getTrace().getBaseLanguage(), rng));
+		}
+		return true;
+	}
+
+	private boolean tryForDataInListing(ProgramLocationActionContext context) {
+		if (!(context instanceof ListingActionContext)) {
+			return false;
+		}
+		ListingActionContext lac = (ListingActionContext) context;
+		CodeUnit cu = lac.getCodeUnit();
+		if (cu == null) {
+			return false;
+		}
+		AddressSet cuAs = new AddressSet();
+		cuAs.add(cu.getMinAddress(), cu.getMaxAddress());
+		AddressSetView dynCuAs = getDynamicAddresses(context.getProgram(), cuAs);
+
+		// Verify mapping is complete and contiguous
+		if (dynCuAs.getNumAddressRanges() != 1) {
+			return false;
+		}
+		AddressRange dynCuRng = dynCuAs.getFirstRange();
+		if (dynCuRng.getLength() != cu.getLength()) {
+			return false;
+		}
+
+		WatchRow row = addWatch(TraceSleighUtils
+				.generateExpressionForRange(current.getTrace().getBaseLanguage(), dynCuRng));
+		if (cu instanceof Data) {
+			Data data = (Data) cu;
+			// TODO: Problems may arise if trace and program have different data organizations
+			row.setDataType(data.getDataType());
+		}
+		return true;
+	}
+
+	private boolean trySingleAddress(ProgramLocationActionContext context) {
+		ProgramLocation dynLoc = getDynamicLocation(context.getLocation());
+		if (dynLoc == null) {
+			return false;
+		}
+		addWatch(TraceSleighUtils.generateExpressionForRange(current.getTrace().getBaseLanguage(),
+			new AddressRangeImpl(dynLoc.getAddress(), dynLoc.getAddress())));
+		return true;
+	}
+
+	private void activatedAddFromLocation(ProgramLocationActionContext context) {
+		if (tryForSelection(context)) {
+			return;
+		}
+		if (tryForDataInListing(context)) {
+			return;
+		}
+		trySingleAddress(context);
+	}
+
+	private boolean hasValidWatchRegister(DebuggerRegisterActionContext context) {
+		RegisterRow row = context.getSelected();
+		if (row == null) {
+			return false;
+		}
+		if (row.getRegister().isProcessorContext()) {
+			return false;
+		}
+		return true;
+	}
+
+	private void activatedAddFromRegister(DebuggerRegisterActionContext context) {
+		RegisterRow regRow = context.getSelected();
+		if (regRow == null) {
+			return;
+		}
+		Register reg = regRow.getRegister();
+		if (reg.isProcessorContext()) {
+			return;
+		}
+		WatchRow watchRow = addWatch(reg.getName());
+		watchRow.setDataType(regRow.getDataType());
+	}
+
 	public WatchRow addWatch(String expression) {
-		WatchRow row = new WatchRow(this, expression);
+		WatchRow row = new WatchRow(this, "");
 		row.setCoordinates(current);
 		watchTableModel.add(row);
+		row.setExpression(expression);
 		return row;
 	}
 
