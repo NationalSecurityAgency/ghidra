@@ -13,21 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.pty.linux;
+package agent.gdb.pty.windows;
 
-import java.io.IOException;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
 
-import agent.gdb.pty.Pty;
-import agent.gdb.pty.PtyFactory;
+import agent.gdb.pty.windows.jna.ConsoleApiNative;
 
-public class LinuxPtyFactory implements PtyFactory {
-	@Override
-	public Pty openpty() throws IOException {
-		return LinuxPty.openpty();
+public class PseudoConsoleHandle extends Handle {
+
+	protected static class PseudoConsoleState extends State {
+		public PseudoConsoleState(HANDLE handle) {
+			super(handle);
+		}
+
+		@Override
+		public void run() {
+			ConsoleApiNative.INSTANCE.ClosePseudoConsole(handle);
+		}
+	}
+
+	public PseudoConsoleHandle(HANDLE handle) {
+		super(handle);
 	}
 
 	@Override
-	public String getDescription() {
-		return "local (Linux)";
+	protected State newState(HANDLE handle) {
+		return new PseudoConsoleState(handle);
 	}
 }

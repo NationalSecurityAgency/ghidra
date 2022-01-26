@@ -20,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.GdbManager;
 import agent.gdb.model.impl.GdbModelImpl;
-import agent.gdb.pty.linux.LinuxPtyFactory;
+import agent.gdb.pty.PtyFactory;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
@@ -50,9 +50,8 @@ public class GdbInJvmDebuggerModelFactory implements DebuggerModelFactory {
 
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {
-		// TODO: Choose Linux or Windows pty based on host OS
 		List<String> gdbCmdLine = ShellUtils.parseArgs(gdbCmd);
-		GdbModelImpl model = new GdbModelImpl(new LinuxPtyFactory());
+		GdbModelImpl model = new GdbModelImpl(PtyFactory.local());
 		return model
 				.startGDB(existing ? null : gdbCmdLine.get(0),
 					gdbCmdLine.subList(1, gdbCmdLine.size()).toArray(String[]::new))

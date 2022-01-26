@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.pty.linux;
+package agent.gdb.pty.windows;
 
 import java.io.IOException;
 
 import agent.gdb.pty.Pty;
 import agent.gdb.pty.PtyFactory;
 
-public class LinuxPtyFactory implements PtyFactory {
+public class ConPtyFactory implements PtyFactory {
 	@Override
 	public Pty openpty() throws IOException {
-		return LinuxPty.openpty();
+		return ConPty.openpty();
 	}
 
 	@Override
 	public String getDescription() {
-		return "local (Linux)";
+		return "local (Windows)";
 	}
 }

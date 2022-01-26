@@ -264,7 +264,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			waitOn(libcLoaded);
 			Thread.sleep(100); // TODO: Why?
 			Msg.debug(this, "Interrupting");
-			waitOn(mgr.interrupt());
+			mgr.sendInterruptNow();
 			waitOn(mgr.waitForState(GdbState.STOPPED));
 			assertResponsive(mgr);
 		}
@@ -285,7 +285,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			waitOn(libcLoaded);
 			Thread.sleep(100); // TODO: Why?
 			Msg.debug(this, "Interrupting");
-			waitOn(mgr.interrupt());
+			mgr.sendInterruptNow();
 			Msg.debug(this, "Verifying at syscall");
 			String out = waitOn(mgr.consoleCapture("x/1i $pc-2"));
 			// TODO: This is x86-specific
@@ -296,7 +296,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			CompletableFuture<Void> stopped = mgr.waitForState(GdbState.STOPPED);
 			Thread.sleep(100); // NB: Not exactly reliable, but verify we're waiting
 			assertFalse(stopped.isDone());
-			waitOn(mgr.interrupt());
+			mgr.sendInterruptNow();
 			waitOn(stopped);
 			assertResponsive(mgr);
 		}

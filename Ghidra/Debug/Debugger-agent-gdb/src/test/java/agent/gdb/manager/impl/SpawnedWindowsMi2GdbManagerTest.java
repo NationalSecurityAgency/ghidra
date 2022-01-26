@@ -13,21 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.pty.linux;
+package agent.gdb.manager.impl;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
-import agent.gdb.pty.Pty;
+import org.junit.Ignore;
+
+import agent.gdb.manager.GdbManager;
 import agent.gdb.pty.PtyFactory;
+import agent.gdb.pty.windows.ConPtyFactory;
 
-public class LinuxPtyFactory implements PtyFactory {
+@Ignore("Need compatible version on CI")
+public class SpawnedWindowsMi2GdbManagerTest extends AbstractGdbManagerTest {
 	@Override
-	public Pty openpty() throws IOException {
-		return LinuxPty.openpty();
+	protected CompletableFuture<Void> startManager(GdbManager manager) {
+		try {
+			manager.start("C:\\msys64\\mingw64\\bin\\gdb.exe", "-i", "mi2");
+			return manager.runRC();
+		}
+		catch (IOException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	@Override
-	public String getDescription() {
-		return "local (Linux)";
+	protected PtyFactory getPtyFactory() {
+		// TODO: Choose by host OS
+		return new ConPtyFactory();
 	}
 }

@@ -28,6 +28,8 @@ dependencies {
 	api project(':Debugger-gadp')
 	api project(':Python')
 	api 'com.jcraft:jsch:0.1.55'
+	api "net.java.dev.jna:jna:5.4.0"
+	api "net.java.dev.jna:jna-platform:5.4.0"
 
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
