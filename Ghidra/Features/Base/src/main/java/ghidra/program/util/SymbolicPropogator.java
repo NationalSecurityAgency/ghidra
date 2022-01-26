@@ -1053,7 +1053,7 @@ public class SymbolicPropogator {
 								// if internal flow joins back together, just skip over effect
 								// Warning this is arbitrary choice of one branch over the other....!!!
 								// look at pcode up to destination, if all non flow or internal, just skip
-								int sequenceOffset = (int) in[0].getOffset();
+								int sequenceOffset = pcodeIndex + (int) in[0].getOffset();
 								int i = pcodeIndex + 1;
 								for (; i < sequenceOffset; i++) {
 									if (isBranch(ops[i])) {
@@ -1061,12 +1061,6 @@ public class SymbolicPropogator {
 									}
 								}
 								if (i == sequenceOffset) {
-									if (fallThru != null) {
-										// we don't know what will happen from here on, but anything before should in theory propagate
-										vContext.propogateResults(true);
-										vContext.mergeToFutureFlowState(minInstrAddress,
-											instruction.getFallThrough());
-									}
 									// everything that is in the cache from here on should be cleared
 									mustClearAllUntil_PcodeIndex = sequenceOffset;
 									break;

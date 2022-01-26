@@ -716,6 +716,9 @@ public class VarnodeContext implements ProcessorContext {
 			result = null;
 		}
 		if (out.isUnique()) {
+			if (mustClear) {
+				result = null;
+			}
 			tempUniqueVals.put(out, result);
 		}
 		else {
