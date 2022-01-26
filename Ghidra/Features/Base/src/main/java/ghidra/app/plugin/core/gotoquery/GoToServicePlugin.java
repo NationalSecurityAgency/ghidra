@@ -53,20 +53,27 @@ import ghidra.program.util.ProgramSelection;
 )
 //@formatter:on
 public final class GoToServicePlugin extends ProgramPlugin {
+
 	private GoToServiceImpl gotoService;
 	private boolean disposed;
 
 	/**
 	 * Creates a new instance of the <CODE>GoToServicePlugin</CODE>
-	 * @param plugintool the tool
+	 * @param tool the tool
 	 */
-	public GoToServicePlugin(PluginTool plugintool) {
-		super(plugintool, true, true);
+	public GoToServicePlugin(PluginTool tool) {
+		super(tool, true, true);
+
+		Options opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
+
+		// we register this option here, since the other search plugins all depend on this service
+		opt.registerOption(GhidraOptions.OPTION_SEARCH_LIMIT,
+			PluginConstants.DEFAULT_SEARCH_LIMIT, null,
+			"The maximum number of search results.");
 
 		gotoService = new GoToServiceImpl(this, new DefaultNavigatable());
 
 		registerServiceProvided(GoToService.class, gotoService);
-
 	}
 
 	@Override

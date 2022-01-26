@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.exceptionhandlers.gcc;
 
-import ghidra.app.util.opinion.ElfLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -35,7 +34,6 @@ public class DwarfDecodeContext {
 	private Object decodedValue;
 	private int encodedLength;
 	private MemBuffer buffer;
-	private long originalImageBaseOffset;  // offset from image base used in original dwarf, and the actual load image base
 
 	/**
 	 * Constructs a Dwarf decode context.
@@ -98,8 +96,6 @@ public class DwarfDecodeContext {
 		this.ehBlock = ehBlock;
 		this.functionEntryPoint = entryPoint;
 
-		Long oib = ElfLoader.getElfOriginalImageBase(program);
-		this.originalImageBaseOffset = program.getImageBase().getOffset() - oib.longValue();
 	}
 
 	/**
@@ -183,13 +179,5 @@ public class DwarfDecodeContext {
 	 */
 	public Address getFunctionEntryPoint() {
 		return functionEntryPoint;
-	}
-
-	/**
-	 * Gets the offset from the programs image base and the dwarf original image base
-	 * @return offset that if added to the current image base would be the original dwarf image base
-	 */
-	public long getOriginalImageBaseOffset() {
-		return originalImageBaseOffset;
 	}
 }

@@ -34,6 +34,7 @@ import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
@@ -276,8 +277,10 @@ abstract class OperandFieldHelper extends FieldFactory {
 			Data data = (Data) obj;
 			Address refAddr = null;
 			Reference primaryReference =
-				data.getProgram().getReferenceManager().getPrimaryReferenceFrom(
-					data.getMinAddress(), 0);
+				data.getProgram()
+						.getReferenceManager()
+						.getPrimaryReferenceFrom(
+							data.getMinAddress(), 0);
 			Object value = data.getValue();
 			if (primaryReference != null) {
 				refAddr = primaryReference.getToAddress();
@@ -291,8 +294,9 @@ abstract class OperandFieldHelper extends FieldFactory {
 			Program program = data.getProgram();
 			if (value instanceof Scalar) {
 				Scalar scalar = (Scalar) value;
-				Equate equate = program.getEquateTable().getEquate(data.getMinAddress(), opIndex,
-					scalar.getValue());
+				Equate equate = program.getEquateTable()
+						.getEquate(data.getMinAddress(), opIndex,
+							scalar.getValue());
 				if (equate != null) {
 					return new EquateOperandFieldLocation(program, data.getMinAddress(), refAddr,
 						equate.getDisplayName(), equate, opIndex, subOpIndex,
@@ -374,13 +378,37 @@ abstract class OperandFieldHelper extends FieldFactory {
 				getMetrics(attributes.styleAttribute), underline, underlineColor);
 		FieldElement field = new OperandFieldElement(as, 0, 0, 0);
 
-		if ((isWordWrap && (value instanceof String)) || dataValueRepresentation.hasError()) {
+		if (shouldWordWrap(data, dataValueRepresentation)) {
 			return ListingTextField.createWordWrappedTextField(this, proxy, field,
 				startX + varWidth, width, maxDisplayLines, hlProvider);
 		}
 
 		return ListingTextField.createSingleLineTextField(this, proxy, field, startX + varWidth,
 			width, hlProvider);
+	}
+
+	// a place to update data types that support word wrapping
+	private boolean shouldWordWrap(Data data, OperandRepresentationList dataValueRepresentation) {
+
+		if (dataValueRepresentation.hasError()) {
+			return true;
+		}
+
+		if (!isWordWrap) {
+			return false;
+		}
+
+		Object value = data.getValue();
+		if (value instanceof String) {
+			return true;
+		}
+
+		DataType dt = data.getDataType();
+		if (dt instanceof Enum) {
+			return true; // enums use String text for names and these may be ORed together
+		}
+
+		return false;
 	}
 
 	private ColorStyleAttributes getAttributesForData(Data data, Object value) {
@@ -514,8 +542,8 @@ abstract class OperandFieldHelper extends FieldFactory {
 	}
 
 	private boolean containsNonPrimary(Reference[] refs) {
-		for (int i = 0; i < refs.length; i++) {
-			if (!refs[i].isPrimary()) {
+		for (Reference ref : refs) {
+			if (!ref.isPrimary()) {
 				return true;
 			}
 		}

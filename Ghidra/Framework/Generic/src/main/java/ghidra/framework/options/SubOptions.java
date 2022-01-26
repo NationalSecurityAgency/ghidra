@@ -368,4 +368,27 @@ public class SubOptions implements Options {
 		Set<String> leaves = AbstractOptions.getLeaves(optionPaths);
 		return new ArrayList<String>(leaves);
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (obj.getClass() != getClass()) {
+			return false;
+		}
+		SubOptions other = (SubOptions) obj;
+		if (!options.equals(other.options)) {
+			return false;
+		}
+		return prefix.equals(other.prefix);
+	}
+
+	@Override
+	public int hashCode() {
+		return prefix.hashCode();
+	}
 }

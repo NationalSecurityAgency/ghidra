@@ -88,8 +88,8 @@ public abstract class PcodeEmit {
 		AddressSpace myspace = startAddress.getAddressSpace();
 		if (myspace.isOverlaySpace()) {
 			overlayspace = myspace;
-			startAddress = ((OverlayAddressSpace) myspace).getOverlayedSpace().getAddress(
-				startAddress.getOffset());
+			startAddress = ((OverlayAddressSpace) myspace).getOverlayedSpace()
+					.getAddress(startAddress.getOffset());
 		}
 		this.fallOffset = fallOffset;
 		this.uniqueFactory = uniqueFactory;
@@ -742,7 +742,7 @@ public abstract class PcodeEmit {
 				}
 			}
 			for (int i = 0; i < isize; ++i) {
-				VarnodeData v = in[0];
+				VarnodeData v = in[i];
 				if (v.space.equals(overlayspace)) {
 					v.space = ((OverlayAddressSpace) v.space).getOverlayedSpace();
 				}

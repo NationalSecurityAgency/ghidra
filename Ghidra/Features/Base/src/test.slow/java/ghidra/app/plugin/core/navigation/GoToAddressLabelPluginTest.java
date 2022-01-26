@@ -66,7 +66,7 @@ import ghidra.util.table.field.LabelTableColumn;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 
-public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
+public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
 	private PluginTool tool;
 	private AddressFactory addrFactory;
@@ -506,20 +506,19 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testQueryResultsMaxHitsDynamicFound() throws Exception {
 		loadProgram("x86");
 		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
-		opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, 20);
+		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 20);
 
 		setText("L*");
 		performOkCallback();
 		GhidraProgramTableModel<?> model = waitForModel();
 		assertEquals(20, model.getRowCount());
-
 	}
 
 	@Test
 	public void testQueryResultsMaxHitsDefinedFound() throws Exception {
 		loadProgram("x86");
 		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
-		opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, 5);
+		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 5);
 
 		createLabel("1006960", "abc1");
 		createLabel("1006961", "abc2");
@@ -533,7 +532,6 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		performOkCallback();
 		GhidraProgramTableModel<?> model = waitForModel();
 		assertEquals(5, model.getRowCount());
-
 	}
 
 	@Test

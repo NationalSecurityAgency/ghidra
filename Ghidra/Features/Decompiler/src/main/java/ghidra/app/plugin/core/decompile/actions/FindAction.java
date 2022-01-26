@@ -45,14 +45,13 @@ public class FindAction extends AbstractDecompilerAction {
 		if (findDialog == null) {
 			findDialog =
 				new FindDialog("Decompiler Find Text", new DecompilerSearcher(decompilerPanel)) {
-				@Override
-				protected void dialogClosed() {
-					// clear the search results when the dialog is closed
-					decompilerPanel.setSearchResults(null);
-				}
-			};
-			findDialog
-					.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
+					@Override
+					protected void dialogClosed() {
+						// clear the search results when the dialog is closed
+						decompilerPanel.setSearchResults(null);
+					}
+				};
+			findDialog.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
 		}
 		return findDialog;
 	}
