@@ -42,7 +42,7 @@ public class FidAnalyzer extends AbstractAnalyzer {
 	private static final String OPTION_DESCRIPTION_CREATE_BOOKMARKS =
 		"If checked, an analysis bookmark will be created for each function which was matched " +
 			"against one or more known library functions.";
-	private static final String APPLY_ALL_FID_LABELS_OPTION_NAME = "Always Apply FID Labels";
+	private static final String APPLY_ALL_FID_LABELS_OPTION_NAME = "Always apply FID labels";
 	private static final String APPLY_ALL_FID_LABELS_OPTION_DESCRIPTION = "Enable this option to " +
 		"always apply FID labels at functions regardless of existing labels at that function." +
 		" When enabled, FID labels will always be added." +
@@ -57,13 +57,13 @@ public class FidAnalyzer extends AbstractAnalyzer {
 	private boolean alwaysApplyFidLabels = APPLY_ALL_FID_LABELS_DEFAULT;
 	private boolean createBookmarksEnabled = OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED;
 
-	private static final String SCORE_THRESHOLD_OPTION_NAME = "Instruction Count Threshold";
+	private static final String SCORE_THRESHOLD_OPTION_NAME = "Instruction count threshold";
 	private static final String SCORE_THRESHOLD_OPTION_DESCRIPTION =
 		"The minimum score that a potential match must meet to be labeled by the analyzer. " +
 			"Score corresponds roughly to the number of instructions in the function.";
 	private float scoreThreshold;
 
-	private static final String MULTIMATCH_THRESHOLD_OPTION_NAME = "Multiple Match Threshold";
+	private static final String MULTIMATCH_THRESHOLD_OPTION_NAME = "Multiple match threshold";
 	private static final String MULTIMATCH_THRESHOLD_OPTION_DESCRIPTION =
 		"If there are multiple conflicting matches for a function, its score must exceed " +
 			"this secondary threshold in order to be labeled by the analyzer";
@@ -112,9 +112,8 @@ public class FidAnalyzer extends AbstractAnalyzer {
 
 		// Name Change can change the nature of a function from a system
 		// library. Probably a better way to do this.
-		AutoAnalysisManager.getAnalysisManager(program)
-				.functionModifierChanged(
-					cmd.getFIDLocations());
+		AutoAnalysisManager.getAnalysisManager(program).functionModifierChanged(
+			cmd.getFIDLocations());
 		return true;
 	}
 
