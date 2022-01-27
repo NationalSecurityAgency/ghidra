@@ -59,7 +59,7 @@ dependencies {
 		}
 	}
 
-	api 'com.google.protobuf:protobuf-java:3.17.3'
+	api 'com.google.protobuf:protobuf-java:3.18.2'
 	api project(':Framework-AsyncComm')
 	api project(':Framework-Debugging')
 	api project(':ProposedUtils')
