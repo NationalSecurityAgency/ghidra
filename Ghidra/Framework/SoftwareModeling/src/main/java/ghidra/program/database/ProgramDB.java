@@ -2079,6 +2079,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				if (newCompilerSpecID != null) {
 					compilerSpec = ProgramCompilerSpec.getProgramCompilerSpec(this,
 						language.getCompilerSpecByID(newCompilerSpecID));
+					if (compilerSpec instanceof ProgramCompilerSpec) {
+						((ProgramCompilerSpec) compilerSpec).resetProgramOptions(monitor);
+					}
 				}
 				compilerSpecID = compilerSpec.getCompilerSpecID();
 				languageVersion = language.getVersion();
