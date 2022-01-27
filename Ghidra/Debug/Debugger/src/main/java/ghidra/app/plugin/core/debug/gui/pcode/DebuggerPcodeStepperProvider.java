@@ -16,6 +16,8 @@
 package ghidra.app.plugin.core.debug.gui.pcode;
 
 import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.AffineTransform;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.List;
@@ -65,6 +67,8 @@ import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
 public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
+	private static final FontRenderContext METRIC_FRC =
+		new FontRenderContext(new AffineTransform(), false, false);
 	private static final String BACKGROUND_COLOR = "Background Color";
 	private static final String ADDRESS_COLOR = "Address Color";
 	private static final String CONSTANT_COLOR = "Constant Color";
@@ -455,6 +459,12 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		pcodeTableModel.fireTableDataChanged();
 	}
 
+	protected int computeSeqColWidth(JLabel renderer) {
+		Font font = renderer.getFont();
+		Insets insets = renderer.getBorder().getBorderInsets(renderer);
+		return (int) font.getStringBounds("00", METRIC_FRC).getWidth() + insets.left + insets.right;
+	}
+
 	protected void buildMainPanel() {
 		JPanel pcodePanel = new JPanel(new BorderLayout());
 		pcodeTable = new GhidraTable(pcodeTableModel);
@@ -483,9 +493,11 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 		TableColumnModel pcodeColModel = pcodeTable.getColumnModel();
 		TableColumn seqCol = pcodeColModel.getColumn(PcodeTableColumns.SEQUENCE.ordinal());
-		seqCol.setCellRenderer(new CounterBackgroundCellRenderer());
-		seqCol.setMinWidth(24);
-		seqCol.setMaxWidth(24);
+		CounterBackgroundCellRenderer seqColRenderer = new CounterBackgroundCellRenderer();
+		seqCol.setCellRenderer(seqColRenderer);
+		int seqColWidth = computeSeqColWidth(seqColRenderer);
+		seqCol.setMinWidth(seqColWidth);
+		seqCol.setMaxWidth(seqColWidth);
 		TableColumn codeCol = pcodeColModel.getColumn(PcodeTableColumns.CODE.ordinal());
 		codeCol.setCellRenderer(new PcodeCellRenderer());
 		//codeCol.setPreferredWidth(75);
