@@ -489,7 +489,7 @@ public class DefaultProjectManager implements ProjectManager {
 		catch (Exception e) {
 			Msg.showError(LOG, null, "Tool Chest Error", "Failed to create tool chest.", e);
 		}
-		return userToolChest;
+		return toolChest;
 	}
 
 	/**
