@@ -18,13 +18,6 @@
     program. Allowing the user to build libraries of data types and to share them between programs,
     projects, and different users is a long term goal for Ghidra.</P>
 
-    <P>Prior to Ghidra 4.3, sharing data types even between programs in the same project was very
-    difficult. (users would have to drag data types, one at a time, from one program or archive to
-    another to propagate changes to data types). As of Ghidra 4.3, significant progress has been
-    made to make sharing data types easier, but the inherent complexity of this problem requires
-    users to understand a number of basic concepts to take advantage of the new features.<BR>
-    </P>
-
 	<BLOCKQUOTE>
 	
 	<H2>Topics</H2>
@@ -1008,7 +1001,7 @@
             <LI><I>Rename</I> the data type that you are dragging to have ".conflict" appended to
             it to make a unique name.</LI>
 
-            <LI><I>Replace</I> the existing data type with the one you are dragging (or, pasting);
+            <LI><I>Replace</I> the existing data type with the new one;
             this means any use of the existing data types is <B><I>replaced</I></B> with the new
             data type; the existing data type is deleted.</LI>
 
@@ -1023,30 +1016,9 @@
         <BLOCKQUOTE>
           <P>A data type can be replaced by another data type. This means that every occurrence of
           the original data type in a program is replaced by the new data type and the original
-          data type is deleted. There are two ways to replace a data type.</P>
+          data type is deleted. To replace a data type, right-click on the type to be replaced 
+          and select the <B><I>Replace Data Type...</I></B> action.</P>
 
-          <TABLE style="width: 100%; text-align: left;" border="0" cellpadding="2" cellspacing="2">
-            <TBODY>
-              <TR valign="top">
-                <TD style="vertical-align: top; width: 130px;">1. <B>Drag-N-Drop</B></TD>
-
-                <TD style="vertical-align: top;">Click on the replacement data type and drag it
-                onto the data type to be replaced.</TD>
-              </TR>
-
-              <TR valign="top">
-                <TD style="vertical-align: top; width: 130px;">2. <B>Copy/Paste</B></TD>
-
-                <TD style="vertical-align: top;">Right-click on the replacement data type to be
-                moved and select the <I><B>Cut</B></I> action. Next, right-click on the data type
-                to be replaced and select the <I><B>Paste</B></I> action.</TD>
-              </TR>
-            </TBODY>
-          </TABLE>
-        </BLOCKQUOTE>
-
-        <BLOCKQUOTE>
-          <P>Either way, a confirmation dialog will appear.</P>
         </BLOCKQUOTE>
 
         <H3><A name="Favorites"></A>Setting Favorite Data Types</H3>
