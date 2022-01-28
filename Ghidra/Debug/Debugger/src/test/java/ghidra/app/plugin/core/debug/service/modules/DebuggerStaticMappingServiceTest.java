@@ -384,7 +384,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		copyTrace();
 		add2ndMapping();
 
-		Map<TraceSnap, Collection<MappedAddressRange>> views =
+		Map<TraceSpan, Collection<MappedAddressRange>> views =
 			mappingService.getOpenMappedViews(program, new AddressSet());
 		assertTrue(views.isEmpty());
 	}
@@ -407,12 +407,14 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		// After
 		set.add(stSpace.getAddress(0xbadbadbadL), stSpace.getAddress(0xbadbadbadL + 0xff));
 
-		Map<TraceSnap, Collection<MappedAddressRange>> views =
+		Map<TraceSpan, Collection<MappedAddressRange>> views =
 			mappingService.getOpenMappedViews(program, set);
 		Msg.info(this, views);
 		assertEquals(2, views.size());
-		Collection<MappedAddressRange> mappedSet1 = views.get(new DefaultTraceSnap(tb.trace, 0));
-		Collection<MappedAddressRange> mappedSet2 = views.get(new DefaultTraceSnap(copy, 0));
+		Collection<MappedAddressRange> mappedSet1 =
+			views.get(new DefaultTraceSpan(tb.trace, Range.atLeast(0L)));
+		Collection<MappedAddressRange> mappedSet2 =
+			views.get(new DefaultTraceSpan(copy, Range.atLeast(0L)));
 
 		assertEquals(Set.of(
 			new MappedAddressRange(tb.range(stSpace, 0x00200000, 0x002000ff),

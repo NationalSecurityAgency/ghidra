@@ -15,8 +15,10 @@
  */
 package ghidra.trace.model;
 
-public interface TraceSnap extends Comparable<TraceSnap> {
+import com.google.common.collect.Range;
+
+public interface TraceSpan extends Comparable<TraceSpan> {
 	Trace getTrace();
 
-	long getSnap();
+	Range<Long> getSpan();
 }

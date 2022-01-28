@@ -119,6 +119,18 @@
     <P>This action is always available. It adds a blank watch to the table. Modify the expression
     to make the entry useful.</P>
 
+    <H3><A name="watch"></A>Watch</H3>
+
+    <P>This action is available in context menus for addresses, selections, or registers. It adds
+    the selected item(s) to the watch table. If the context is derived from a static view, it first
+    attempts to map it to the current trace. For selections, it adds a typeless watch for each
+    range. For single-address locations derived from a listing, it adds a typed watch on the
+    current code unit. For other single-address locations, it adds a 1-byte typeless watch on the
+    address. For registers, it adds a watch on that register. Note that <CODE>contextreg</CODE> and
+    its children cannot be watched, due to a limitation in Sleigh.</P>
+
+    <P>If the context</P>
+
     <H3><A name="remove"></A>Remove</H3>
 
     <P>This action is available when at least one watch is selected. It removes those watches.</P>
