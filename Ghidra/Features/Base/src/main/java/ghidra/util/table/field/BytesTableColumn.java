@@ -51,7 +51,7 @@ public class BytesTableColumn extends ProgramLocationTableColumnExtensionPoint<A
 		{ BYTE_COUNT, MEMORY_OFFSET, ENDIANESS, FORMAT };
 
 	private final GColumnRenderer<Byte[]> monospacedRenderer =
-		new AbstractGColumnRenderer<Byte[]>() {
+		new AbstractGColumnRenderer<>() {
 			@Override
 			protected void configureFont(JTable table, TableModel model, int column) {
 				setFont(getFixedWidthFont());
@@ -75,7 +75,7 @@ public class BytesTableColumn extends ProgramLocationTableColumnExtensionPoint<A
 					return bytesToString(bytes);
 				}
 
-				StringBuffer buffer = new StringBuffer();
+				StringBuilder buffer = new StringBuilder();
 				for (int i = startIx; i != endIx; i += inc) {
 					if (buffer.length() != 0) {
 						buffer.append(' ');
@@ -86,7 +86,7 @@ public class BytesTableColumn extends ProgramLocationTableColumnExtensionPoint<A
 			}
 
 			private String bytesToString(Byte[] bytes) {
-				StringBuffer buf = new StringBuffer();
+				StringBuilder buf = new StringBuilder();
 				for (byte b : bytes) {
 					char c = (char) (b & 0xff);
 					if (c > 32 && c < 128) {
