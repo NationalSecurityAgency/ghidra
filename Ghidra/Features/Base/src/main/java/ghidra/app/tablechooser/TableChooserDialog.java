@@ -378,6 +378,7 @@ public class TableChooserDialog extends DialogComponentProvider
 		return rowObjects;
 	}
 
+	@Override
 	public void dispose() {
 		table.dispose();
 		workers.forEach(w -> w.cancel(true));
@@ -421,24 +422,30 @@ public class TableChooserDialog extends DialogComponentProvider
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
-			Component superRenderer;
-			if (delegate instanceof GTableCellRenderer) {
-				superRenderer = super.getTableCellRendererComponent(data);
+			Component renderer;
+			if (delegate == null) {
+				renderer = super.getTableCellRendererComponent(data);
 			}
 			else {
-				superRenderer = super.getTableCellRendererComponent(data.getTable(),
-					data.getValue(), data.isSelected(), data.hasFocus(), data.getRowViewIndex(),
-					data.getColumnViewIndex());
+				if (delegate instanceof GTableCellRenderer) {
+					renderer =
+						((GTableCellRenderer) delegate).getTableCellRendererComponent(data);
+				}
+				else {
+					renderer = delegate.getTableCellRendererComponent(data.getTable(),
+						data.getValue(), data.isSelected(), data.hasFocus(), data.getRowViewIndex(),
+						data.getColumnViewIndex());
+				}
 			}
 
 			AddressableRowObject ro = (AddressableRowObject) data.getRowObject();
 			if (sharedPending.contains(ro)) {
-				superRenderer.setBackground(pendingColor);
-				superRenderer.setForeground(data.getTable().getSelectionForeground());
-				superRenderer.setForeground(Color.BLACK);
+				renderer.setBackground(pendingColor);
+				renderer.setForeground(data.getTable().getSelectionForeground());
+				renderer.setForeground(Color.BLACK);
 			}
 
-			return superRenderer;
+			return renderer;
 		}
 
 		void setDelegate(TableCellRenderer delegate) {
