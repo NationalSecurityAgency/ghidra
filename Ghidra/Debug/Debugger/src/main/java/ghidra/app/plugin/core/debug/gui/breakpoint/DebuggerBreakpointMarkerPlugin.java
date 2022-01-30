@@ -567,7 +567,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			}
 			ProgramLocation location = getLocationFromContext(context);
 			long length = computeDefaultLength(context, kinds);
-			placeBreakpointDialog.prompt(tool, breakpointService, NAME, location, length, kinds);
+			placeBreakpointDialog.prompt(tool, breakpointService, NAME, location, length, kinds,
+				"");
 		}
 
 		@Override
@@ -954,7 +955,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			}
 			Set<TraceBreakpointKind> kinds = computeDefaultKinds(context, supported);
 			long length = computeDefaultLength(context, kinds);
-			placeBreakpointDialog.prompt(tool, breakpointService, title, loc, length, kinds);
+			placeBreakpointDialog.prompt(tool, breakpointService, title, loc, length, kinds, "");
 			return;
 		}
 		Enablement en = breakpointService.computeEnablement(bs, loc);

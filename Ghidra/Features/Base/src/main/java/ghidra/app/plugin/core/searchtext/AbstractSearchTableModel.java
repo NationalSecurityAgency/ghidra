@@ -32,7 +32,6 @@ import ghidra.util.task.TaskMonitor;
  */
 public abstract class AbstractSearchTableModel extends ProgramLocationPreviewTableModel {
 
-	private final static int DEFAULT_SEARCH_LIMIT = 500;
 	final static String TITLE = "Text Search";
 
 	protected SearchOptions options;
@@ -50,7 +49,8 @@ public abstract class AbstractSearchTableModel extends ProgramLocationPreviewTab
 		this.set = set;
 		this.options = options;
 		Options opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
-		searchLimit = opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, DEFAULT_SEARCH_LIMIT);
+		searchLimit =
+			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
 	}
 
 	@Override

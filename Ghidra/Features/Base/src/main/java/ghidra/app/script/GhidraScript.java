@@ -17,14 +17,10 @@ package ghidra.app.script;
 
 import java.awt.Color;
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.rmi.ConnectException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.swing.SwingUtilities;
-
-import docking.DockingWindowManager;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -87,12 +83,12 @@ import ghidra.util.task.TaskMonitor;
  * When you create a new script using the script manager,
  * you will automatically receive a source code stub (as shown below).
  * <pre>
- *  //TODO write a description for this script
+ *  // TODO write a description for this script
  *
  * 	public class NewScript extends GhidraScript {
  *
  * 		public void run() throws Exception {
- * 			//TODO Add User Code Here
+ * 			// TODO Add User Code Here
  * 		}
  * 	}
  * </pre>
@@ -565,7 +561,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			// only change client authenticator in headless mode
 			try {
 				HeadlessClientAuthenticator
-					.installHeadlessClientAuthenticator(ClientUtil.getUserName(), null, false);
+						.installHeadlessClientAuthenticator(ClientUtil.getUserName(), null, false);
 			}
 			catch (IOException e) {
 				throw new RuntimeException("Unexpected Exception", e);
@@ -1340,10 +1336,9 @@ public abstract class GhidraScript extends FlatProgramAPI {
 				Msg.error(this, errorBuffer.toString());
 			}
 			else {
-				MultiLineMessageDialog dialog = new MultiLineMessageDialog("Analysis Options",
+				MultiLineMessageDialog.showMessageDialog(null, "Analysis Options",
 					"Ghidra encountered error(s) when attempting to set analysis options.",
-					errorBuffer.toString(), MultiLineMessageDialog.WARNING_MESSAGE, false);
-				DockingWindowManager.showDialog(null, dialog);
+					errorBuffer.toString(), MultiLineMessageDialog.WARNING_MESSAGE);
 			}
 		}
 	}
@@ -1366,10 +1361,9 @@ public abstract class GhidraScript extends FlatProgramAPI {
 				Msg.error(this, errorMsg);
 			}
 			else {
-				MultiLineMessageDialog dialog = new MultiLineMessageDialog("Analysis Options",
+				MultiLineMessageDialog.showMessageDialog(null, "Analysis Options",
 					"Ghidra encountered error(s) when attempting to set analysis options.",
-					errorMsg, MultiLineMessageDialog.WARNING_MESSAGE, false);
-				DockingWindowManager.showDialog(null, dialog);
+					errorMsg, MultiLineMessageDialog.WARNING_MESSAGE);
 			}
 		}
 	}
@@ -1796,23 +1790,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			Msg.info(this, message);
 		}
 		else {
-
-			final String name = getClass().getName();
-			if (SwingUtilities.isEventDispatchThread()) {
-				Msg.showInfo(getClass(), null, name, message);
-			}
-			else {
-				try {
-					SwingUtilities
-						.invokeAndWait(() -> Msg.showInfo(getClass(), null, name, message));
-				}
-				catch (InterruptedException e) {
-					// shouldn't happen
-				}
-				catch (InvocationTargetException e) {
-					// shouldn't happen
-				}
-			}
+			String name = getClass().getName();
+			Msg.showInfo(getClass(), null, name, message);
 		}
 	}
 
@@ -1981,7 +1960,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 		T lastValue = (mappedValue != null) ? mappedValue : defaultValue;
 
-		T newValue = asker.apply(lastValue); // may be cancelled
+		T newValue = swing(asker, lastValue); // may be cancelled
 
 		map.put(clazz, newValue);
 		return newValue;
@@ -2039,22 +2018,17 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		File choice = doAsk(File.class, title, approveButtonText, existingValue, lastValue -> {
 
 			GhidraFileChooser chooser = new GhidraFileChooser(null);
-			AtomicReference<File> ref = new AtomicReference<>();
-
-			Runnable r = () -> {
-				chooser.setSelectedFile(lastValue);
-				chooser.setTitle(title);
-				chooser.setApproveButtonText(approveButtonText);
-				chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
-				ref.set(chooser.getSelectedFile());
-			};
-			Swing.runNow(r);
+			chooser.setSelectedFile(lastValue);
+			chooser.setTitle(title);
+			chooser.setApproveButtonText(approveButtonText);
+			chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
+			File file = chooser.getSelectedFile();
 
 			if (chooser.wasCancelled()) {
 				throw new CancelledException();
 			}
 
-			return ref.get();
+			return file;
 		});
 
 		return choice;
@@ -2121,22 +2095,17 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		File choice = doAsk(DIRECTORY.class, title, approveButtonText, existingValue, lastValue -> {
 
 			GhidraFileChooser chooser = new GhidraFileChooser(null);
-			AtomicReference<File> ref = new AtomicReference<>();
-
-			Runnable r = () -> {
-				chooser.setSelectedFile(lastValue);
-				chooser.setTitle(title);
-				chooser.setApproveButtonText(approveButtonText);
-				chooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
-				ref.set(chooser.getSelectedFile());
-			};
-			Swing.runNow(r);
+			chooser.setSelectedFile(lastValue);
+			chooser.setTitle(title);
+			chooser.setApproveButtonText(approveButtonText);
+			chooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
+			File file = chooser.getSelectedFile();
 
 			if (chooser.wasCancelled()) {
 				throw new CancelledException();
 			}
 
-			return ref.get();
+			return file;
 		});
 
 		return choice;
@@ -2230,19 +2199,13 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			doAsk(clazz, title, approveButtonText, existingValue, lastValue -> {
 
 				SelectLanguageDialog dialog = new SelectLanguageDialog(title, approveButtonText);
-				AtomicReference<LanguageCompilerSpecPair> ref = new AtomicReference<>();
-
-				Runnable r = () -> {
-					dialog.setSelectedLanguage(lastValue);
-					ref.set(dialog.getSelectedLanguage());
-				};
-				Swing.runNow(r);
-
+				dialog.setSelectedLanguage(lastValue);
+				dialog.show();
 				if (dialog.wasCancelled()) {
 					throw new CancelledException();
 				}
 
-				return ref.get();
+				return dialog.getSelectedLanguage();
 			});
 
 		return choice;
@@ -2309,21 +2272,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		DomainFolder choice = doAsk(Program.class, title, "", existingValue, lastValue -> {
 
 			DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.CHOOSE_FOLDER);
-			AtomicReference<DomainFolder> ref = new AtomicReference<>();
-
-			dtd.addOkActionListener(e -> {
-				ref.set(dtd.getDomainFolder());
-				dtd.close();
-			});
-
-			Runnable r = () -> dtd.showComponent();
-			Swing.runNow(r);
-
+			dtd.show();
 			if (dtd.wasCancelled()) {
 				throw new CancelledException();
 			}
 
-			return ref.get();
+			return dtd.getDomainFolder();
 		});
 
 		return choice;
@@ -2676,21 +2630,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		DomainFile choice = doAsk(Program.class, title, "", existingValue, lastValue -> {
 
 			DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
-			AtomicReference<DomainFile> ref = new AtomicReference<>();
-
-			dtd.addOkActionListener(e -> {
-				ref.set(dtd.getDomainFile());
-				dtd.close();
-			});
-
-			Runnable r = () -> dtd.showComponent();
-			Swing.runNow(r);
-
+			dtd.show();
 			if (dtd.wasCancelled()) {
 				throw new CancelledException();
 			}
 
-			return ref.get();
+			return dtd.getDomainFile();
 		});
 
 		if (choice == null) {
@@ -2768,21 +2713,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		DomainFile choice = doAsk(DomainFile.class, title, message, existingValue, lastValue -> {
 
 			DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
-			AtomicReference<DomainFile> ref = new AtomicReference<>();
-
-			dtd.addOkActionListener(e -> {
-				ref.set(dtd.getDomainFile());
-				dtd.close();
-			});
-
-			Runnable r = () -> dtd.showComponent();
-			Swing.runNow(r);
-
+			dtd.show();
 			if (dtd.wasCancelled()) {
 				throw new CancelledException();
 			}
 
-			return ref.get();
+			return dtd.getDomainFile();
 		});
 
 		return choice;
@@ -3170,18 +3106,14 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		Class<?> clazz = choices.get(0).getClass();
 		List<T> choice = doAsk(clazz, title, message, existingValue, lastValue -> {
 
-			AtomicReference<List<T>> reference = new AtomicReference<>();
 			MultipleOptionsDialog<T> dialog =
 				new MultipleOptionsDialog<>(title, message, choices, true);
-
-			Runnable r = () -> reference.set(dialog.getUserChoices());
-			Swing.runNow(r);
-
+			dialog.show();
 			if (dialog.isCanceled()) {
 				throw new CancelledException();
 			}
 
-			return reference.get();
+			return dialog.getUserChoices();
 		});
 
 		return choice;
@@ -3247,18 +3179,14 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		Class<?> clazz = choices.get(0).getClass();
 		List<T> choice = doAsk(clazz, title, message, existingValue, lastValue -> {
 
-			AtomicReference<List<T>> reference = new AtomicReference<>();
 			MultipleOptionsDialog<T> dialog =
 				new MultipleOptionsDialog<>(title, message, choices, choiceLabels, true);
-
-			Runnable r = () -> reference.set(dialog.getUserChoices());
-			Swing.runNow(r);
-
+			dialog.show();
 			if (dialog.isCanceled()) {
 				throw new CancelledException();
 			}
 
-			return reference.get();
+			return dialog.getUserChoices();
 		});
 
 		return choice;
@@ -3742,22 +3670,20 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		Swing.runLater(runnable);
 	}
 
-	private void show(final String title, final TableService table,
-			final AddressSetView addresses) {
+	private void show(String title, TableService table, AddressSetView addresses) {
 		PluginTool tool = state.getTool();
 		if (tool == null) {
 			println("Couldn't show table!");
 			return;
 		}
 
-		Runnable runnable = () -> {
+		Swing.runLater(() -> {
 			AddressSetTableModel model =
 				new AddressSetTableModel(title, state.getTool(), currentProgram, addresses, null);
 			TableComponentProvider<Address> tableProvider = table.showTableWithMarkers(title,
 				"GhidraScript", model, Color.GREEN, null, "Script Results", null);
 			tableProvider.installRemoveItemsAction();
-		};
-		Swing.runLater(runnable);
+		});
 	}
 
 	private Map<Class<?>, Object> getScriptMap(String title, String message) {
@@ -3780,4 +3706,26 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		}
 		return buffer.toString();
 	}
+
+	private static <T> T swing(CancellableFunction<T, T> f, T t) throws CancelledException {
+
+		AtomicBoolean wasCancelled = new AtomicBoolean();
+		T result = Swing.runNow(() -> {
+
+			try {
+				return f.apply(t);
+			}
+			catch (CancelledException e) {
+				wasCancelled.set(true);
+				return null;
+			}
+		});
+
+		if (wasCancelled.get()) {
+			throw new CancelledException();
+		}
+
+		return result;
+	}
+
 }

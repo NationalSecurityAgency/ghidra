@@ -42,4 +42,22 @@ public interface BitFieldPacking {
 	 * a zero-length bit-field
 	 */
 	int getZeroLengthBoundary();
+
+	/**
+	 * Determine if this BitFieldPacking is equivalent to another specified instance
+	 * @param obj is the other instance
+	 * @return true if they are equivalent
+	 */
+	public default boolean isEquivalent(BitFieldPacking obj) {
+		if (isTypeAlignmentEnabled() != obj.isTypeAlignmentEnabled()) {
+			return false;
+		}
+		if (useMSConvention() != obj.useMSConvention()) {
+			return false;
+		}
+		if (getZeroLengthBoundary() != obj.getZeroLengthBoundary()) {
+			return false;
+		}
+		return true;
+	}
 }

@@ -286,7 +286,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			return new File(uri);
 		}
 		catch (URISyntaxException e) {
-			e.printStackTrace();
+			Msg.error(this, "Unable to convert URL to URI", e);
 		}
 		return null;
 	}

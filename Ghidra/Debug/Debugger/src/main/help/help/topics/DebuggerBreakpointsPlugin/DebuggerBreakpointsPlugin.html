@@ -69,27 +69,31 @@
       <LI>Enabled - displays an icon indicating the state of the breakpoint. Clicking the icon
       toggles the breakpoint.</LI>
 
-      <UL style="list-style-type: none">
-        <LI><IMG alt="" src="images/breakpoint-enable.png"> Enabled</LI>
+        <UL style="list-style-type: none">
+          <LI><IMG alt="" src="images/breakpoint-enable.png"> Enabled</LI>
 
-        <LI><IMG alt="" src="images/breakpoint-disable.png"> Disabled</LI>
+          <LI><IMG alt="" src="images/breakpoint-disable.png"> Disabled</LI>
 
-        <LI><IMG alt="" src="images/breakpoint-mixed-ed.png"> Inconsistent: Enabled with disabled
-        locations</LI>
+          <LI><IMG alt="" src="images/breakpoint-mixed-ed.png"> Inconsistent: Enabled with disabled
+          locations</LI>
 
-        <LI><IMG alt="" src="images/breakpoint-mixed-de.png"> Inconsistent: Disabled with enabled
-        locations</LI>
+          <LI><IMG alt="" src="images/breakpoint-mixed-de.png"> Inconsistent: Disabled with enabled
+          locations</LI>
 
-        <LI><IMG alt="" src="images/breakpoint-ineffective-e.png"> Enabled but ineffective</LI>
+          <LI><IMG alt="" src="images/breakpoint-ineffective-e.png"> Enabled but ineffective</LI>
 
-        <LI><IMG alt="" src="images/breakpoint-ineffective-d.png"> Disabled and ineffective</LI>
-      </UL>
+          <LI><IMG alt="" src="images/breakpoint-ineffective-d.png"> Disabled and ineffective</LI>
+        </UL>
 
-      <LI>Image - gives the name of the Ghidra program, if the breakpoint is mapped to one.</LI>
+      <LI>Name - gives the user-defined name of the breakpoint. This cell is only populated and
+      modifiable when the breakpoint is mapped and saved to a program, since the name is associated
+      with the static location.</LI>
 
-      <LI>Address - gives the address of the breakpoint. For a breakpoint mapped to a Ghidra
-      program, this gives the address in that program. For a breakpoint not mapped, this gives the
-      address in its trace.</LI>
+      <LI>Address - gives the address of the breakpoint. For a breakpoint mapped to a program, this
+      gives the address in that program. For a breakpoint not mapped, this gives the address in its
+      trace.</LI>
+
+      <LI>Image - gives the name of the program, if the breakpoint is mapped to one.</LI>
 
       <LI>Length - usually 1. For access breakpoints, this notes the length in bytes of the address
       range.</LI>

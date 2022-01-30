@@ -55,27 +55,18 @@ import resources.ResourceManager;
 //@formatter:on
 public class CodeBrowserSelectionPlugin extends Plugin {
 
+	private static final String SELECT_GROUP = "Select Group";
 	private static final String SELECTION_LIMIT_OPTION_NAME = "Table From Selection Limit";
-	private static final int DEFAULT_TABLE_LIMIT = 20000;
 
 	public CodeBrowserSelectionPlugin(PluginTool tool) {
 		super(tool);
 		createActions();
-		registerOptions();
-	}
-
-	private void registerOptions() {
-		ToolOptions toolOptions = tool.getOptions(ToolConstants.TOOL_OPTIONS);
-		toolOptions.registerOption(SELECTION_LIMIT_OPTION_NAME, DEFAULT_TABLE_LIMIT,
-			new HelpLocation("CodeBrowserPlugin", "Selection_Table"),
-			"The maximum number of code units to include when creating a table from " +
-				"a selection in the Listing");
 	}
 
 	private void createActions() {
 		new ActionBuilder("Select All", getName())
 				.menuPath(ToolConstants.MENU_SELECTION, "&All in View")
-				.menuGroup("Select Group", "a")
+				.menuGroup(SELECT_GROUP, "a")
 				.keyBinding("ctrl A")
 				.supportsDefaultToolContext(true)
 				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select All"))
@@ -86,7 +77,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 
 		new ActionBuilder("Clear Selection", getName())
 				.menuPath(ToolConstants.MENU_SELECTION, "&Clear Selection")
-				.menuGroup("Select Group", "b")
+				.menuGroup(SELECT_GROUP, "b")
 				.supportsDefaultToolContext(true)
 				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Clear Selection"))
 				.withContext(CodeViewerActionContext.class)
@@ -97,13 +88,15 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 
 		new ActionBuilder("Select Complement", getName())
 				.menuPath(ToolConstants.MENU_SELECTION, "&Complement")
-				.menuGroup("Select Group", "c")
+				.menuGroup(SELECT_GROUP, "c")
 				.supportsDefaultToolContext(true)
 				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select Complement"))
 				.withContext(CodeViewerActionContext.class)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectComplement())
 				.buildAndInstall(tool);
+
+		tool.addAction(new MarkAndSelectionAction(getName(), SELECT_GROUP, "d"));
 
 		new ActionBuilder("Create Table From Selection", getName())
 				.menuPath(ToolConstants.MENU_SELECTION, "Create Table From Selection")
@@ -114,6 +107,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
 				.onAction(c -> createTable((CodeViewerProvider) c.getComponentProvider()))
 				.buildAndInstall(tool);
+
 	}
 
 	private void createTable(CodeViewerProvider componentProvider) {
@@ -122,14 +116,14 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 			Msg.showWarn(this, null, "No Table Service", "Please add the TableServicePlugin.");
 			return;
 		}
+
 		Program program = componentProvider.getProgram();
 		Listing listing = program.getListing();
-
 		ProgramSelection selection = componentProvider.getSelection();
 		CodeUnitIterator codeUnits = listing.getCodeUnits(selection, true);
 		if (!codeUnits.hasNext()) {
 			tool.setStatusInfo(
-				"Unable to create table from selection: no " + "code units in selection");
+				"Unable to create table from selection: no code units in selection");
 			return;
 		}
 
@@ -147,7 +141,6 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 
 		CodeUnitFromSelectionTableModelLoader loader =
 			new CodeUnitFromSelectionTableModelLoader(iterator, selection);
-
 		return new CustomLoadingAddressTableModel(" - from " + selection.getMinAddress(), tool,
 			program, loader, null, true);
 	}
@@ -168,8 +161,8 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 				throws CancelledException {
 
 			ToolOptions options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
-			int resultsLimit =
-				options.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, DEFAULT_TABLE_LIMIT);
+			int resultsLimit = options.getInt(GhidraOptions.OPTION_SEARCH_LIMIT,
+				PluginConstants.DEFAULT_SEARCH_LIMIT);
 
 			long size = selection.getNumAddresses();
 			monitor.initialize(size);

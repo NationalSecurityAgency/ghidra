@@ -75,6 +75,10 @@ public enum DBTraceUtils {
 		public int hashCode() {
 			return Objects.hash(offset, snap);
 		}
+
+		public boolean isScratch() {
+			return DBTraceUtils.isScratch(snap);
+		}
 	}
 
 	// TODO: Should this be in by default?
@@ -460,6 +464,10 @@ public enum DBTraceUtils {
 		return a.isConnected(b) && !a.intersection(b).isEmpty();
 	}
 
+	public static boolean isScratch(long snap) {
+		return snap < 0;
+	}
+
 	public static <C extends Comparable<C>> int compareRanges(Range<C> a, Range<C> b) {
 		int result;
 		if (!a.hasLowerBound() && b.hasLowerBound()) {
@@ -516,6 +524,7 @@ public enum DBTraceUtils {
 	/**
 	 * TODO: Document me
 	 * 
+	 * <p>
 	 * Only call this method for entries which definitely intersect the given span
 	 * 
 	 * @param data

@@ -69,7 +69,7 @@ public class DefaultProjectManager implements ProjectManager {
 	protected DefaultProjectManager() {
 		recentlyOpenedProjectsList = new ArrayList<>();
 		recentlyViewedProjectsList = new ArrayList<>();
-		createUserToolChest();
+		userToolChest = createUserToolChest();
 		// get locator for last opened project
 		lastOpenedProject = getLastOpenedProject();
 		// read known projects from ghidra preferences...
@@ -479,17 +479,17 @@ public class DefaultProjectManager implements ProjectManager {
 		toolChest.replaceToolTemplate(template);
 	}
 
-	private void createUserToolChest() {
-
-		userToolChest = new ToolChestImpl();
+	protected ToolChest createUserToolChest() {
+		ToolChest toolChest = new ToolChestImpl();
 		try {
-			if (userToolChest.getToolCount() == 0) {
-				installTools(userToolChest);
+			if (toolChest.getToolCount() == 0) {
+				installTools(toolChest);
 			}
 		}
 		catch (Exception e) {
 			Msg.showError(LOG, null, "Tool Chest Error", "Failed to create tool chest.", e);
 		}
+		return toolChest;
 	}
 
 	/**

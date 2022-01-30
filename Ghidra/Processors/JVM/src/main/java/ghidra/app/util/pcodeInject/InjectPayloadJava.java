@@ -21,6 +21,7 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.javaclass.format.ClassFileAnalysisState;
 import ghidra.javaclass.format.ClassFileJava;
 import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
+import ghidra.program.model.lang.InjectPayload;
 import ghidra.program.model.lang.InjectPayloadCallother;
 import ghidra.program.model.listing.Program;
 
@@ -50,5 +51,17 @@ public abstract class InjectPayloadJava extends InjectPayloadCallother {
 		}
 		ClassFileJava classFile = analysisState.getClassFile();
 		return classFile.getConstantPool();
+	}
+
+	@Override
+	public boolean isEquivalent(InjectPayload obj) {
+		if (this.getClass() != obj.getClass()) {
+			return false;
+		}
+		InjectPayloadJava op2 = (InjectPayloadJava) obj;
+		if (uniqueBase != op2.uniqueBase) {
+			return false;
+		}
+		return super.isEquivalent(obj);
 	}
 }

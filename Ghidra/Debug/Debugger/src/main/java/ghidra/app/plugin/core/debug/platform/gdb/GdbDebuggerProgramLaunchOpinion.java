@@ -73,6 +73,27 @@ public class GdbDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 		}
 	}
 
+	protected class InVmGdbConPtyDebuggerProgramLaunchOffer
+			extends AbstractGdbDebuggerProgramLaunchOffer {
+		private static final String FACTORY_CLS_NAME = 
+			"agent.gdb.GdbInJvmConPtyDebuggerModelFactory";
+
+		public InVmGdbConPtyDebuggerProgramLaunchOffer(Program program, PluginTool tool,
+				DebuggerModelFactory factory) {
+			super(program, tool, factory);
+		}
+		
+		@Override
+		public String getConfigName() {
+			return "IN-VM GDB (Windows)";
+		}
+		
+		@Override
+		public String getMenuTitle() {
+			return "in GDB locally IN-VM (Windows)";
+		}
+	}
+
 	protected class GadpGdbDebuggerProgramLaunchOffer
 			extends AbstractGdbDebuggerProgramLaunchOffer {
 		private static final String FACTORY_CLS_NAME =
@@ -142,6 +163,9 @@ public class GdbDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 			}
 			else if (clsName.equals(SshGdbDebuggerProgramLaunchOffer.FACTORY_CLS_NAME)) {
 				offers.add(new SshGdbDebuggerProgramLaunchOffer(program, tool, factory));
+			}
+			else if (clsName.equals(InVmGdbConPtyDebuggerProgramLaunchOffer.FACTORY_CLS_NAME)) {
+				offers.add(new InVmGdbConPtyDebuggerProgramLaunchOffer(program, tool, factory));
 			}
 		}
 		return offers;

@@ -17,16 +17,25 @@ package agent.gdb.pty.linux;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.*;
 import java.util.*;
 
+import org.junit.Before;
 import org.junit.Test;
 
+import agent.gdb.pty.AbstractPtyTest;
 import agent.gdb.pty.PtySession;
 import ghidra.dbg.testutil.DummyProc;
+import ghidra.framework.OperatingSystem;
 
-public class LinuxPtyTest {
+public class LinuxPtyTest extends AbstractPtyTest {
+	@Before
+	public void checkLinux() {
+		assumeTrue(OperatingSystem.LINUX == OperatingSystem.CURRENT_OPERATING_SYSTEM);
+	}
+
 	@Test
 	public void testOpenClosePty() throws IOException {
 		LinuxPty pty = LinuxPty.openpty();
@@ -80,54 +89,6 @@ public class LinuxPtyTest {
 			 */
 			assertEquals(1, dies.waitExited());
 		}
-	}
-
-	public Thread pump(InputStream is, OutputStream os) {
-		Thread t = new Thread(() -> {
-			byte[] buf = new byte[1024];
-			while (true) {
-				int len;
-				try {
-					len = is.read(buf);
-					os.write(buf, 0, len);
-				}
-				catch (IOException e) {
-					throw new AssertionError(e);
-				}
-			}
-		});
-		t.setDaemon(true);
-		t.start();
-		return t;
-	}
-
-	public BufferedReader loggingReader(InputStream is) {
-		return new BufferedReader(new InputStreamReader(is)) {
-			@Override
-			public String readLine() throws IOException {
-				String line = super.readLine();
-				System.out.println("log: " + line);
-				return line;
-			}
-		};
-	}
-
-	public Thread runExitCheck(int expected, PtySession session) {
-		Thread exitCheck = new Thread(() -> {
-			while (true) {
-				try {
-					assertEquals("Early exit with wrong code", expected,
-						session.waitExited());
-					return;
-				}
-				catch (InterruptedException e) {
-					System.err.println("Exit check interrupted");
-				}
-			}
-		});
-		exitCheck.setDaemon(true);
-		exitCheck.start();
-		return exitCheck;
 	}
 
 	@Test

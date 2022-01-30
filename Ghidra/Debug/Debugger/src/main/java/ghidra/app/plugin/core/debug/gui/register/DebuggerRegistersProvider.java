@@ -1109,6 +1109,14 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return loadRegistersAndValues();
 	}
 
+	public RegisterRow getRegisterRow(Register register) {
+		return regMap.get(register);
+	}
+
+	public void setSelectedRow(RegisterRow row) {
+		regsFilterPanel.setSelectedItem(row);
+	}
+
 	public DebuggerRegistersProvider cloneAsDisconnected() {
 		DebuggerRegistersProvider clone = plugin.createNewDisconnectedProvider();
 		clone.coordinatesActivated(current); // This should also enact the same selection

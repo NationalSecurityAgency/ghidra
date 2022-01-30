@@ -29,7 +29,7 @@ import ghidra.xml.*;
  * Class for context configuration information as
  * part of the compiler configuration (CompilerSpec)
  */
-public class ContextSetting {
+public final class ContextSetting {
 	private Register register;  // Register being set in default context
 	private BigInteger value;     // value being set in default context
 	private Address startAddr; // Beginning address of context
@@ -108,31 +108,25 @@ public class ContextSetting {
 		buffer.append("/>\n");
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		ContextSetting op2 = (ContextSetting) obj;
-		if (!startAddr.equals(op2.startAddr)) {
+	/**
+	 * Determine if this ContextSetting is equivalent to another specified instance
+	 * @param obj is the other instance
+	 * @return true if they are equivalent
+	 */
+	public boolean isEquivalent(ContextSetting obj) {
+		if (!startAddr.equals(obj.startAddr)) {
 			return false;
 		}
-		if (!endAddr.equals(op2.endAddr)) {
+		if (!endAddr.equals(obj.endAddr)) {
 			return false;
 		}
-		if (!register.equals(op2.register)) {
+		if (!register.equals(obj.register)) {
 			return false;
 		}
-		if (!value.equals(op2.value)) {
+		if (!value.equals(obj.value)) {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = startAddr.hashCode();
-		hash = 79 * hash + endAddr.hashCode();
-		hash = 79 * hash + register.hashCode();
-		hash = 79 * hash + value.hashCode();
-		return hash;
 	}
 
 	public static void parseContextSet(List<ContextSetting> resList, XmlPullParser parser,

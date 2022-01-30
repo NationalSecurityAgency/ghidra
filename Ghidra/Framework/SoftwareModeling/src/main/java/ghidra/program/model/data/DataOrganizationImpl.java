@@ -18,7 +18,6 @@ package ghidra.program.model.data;
 import java.util.*;
 
 import ghidra.program.model.lang.Language;
-import ghidra.util.SystemUtilities;
 import ghidra.util.exception.NoValueException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
@@ -509,7 +508,7 @@ public class DataOrganizationImpl implements DataOrganization {
 		// Otherwise just assume the default alignment.
 		return getDefaultAlignment();
 	}
-	
+
 	/**
 	 * Determines the first offset that is equal to or greater than the minimum offset which 
 	 * has the specified alignment.  If a non-positive alignment is specified the origina
@@ -735,86 +734,5 @@ public class DataOrganizationImpl implements DataOrganization {
 
 		parser.end();
 
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		DataOrganizationImpl op2 = (DataOrganizationImpl) obj;
-		if (absoluteMaxAlignment != op2.absoluteMaxAlignment) {
-			return false;
-		}
-		if (bigEndian != op2.bigEndian) {
-			return false;
-		}
-		if (!bitFieldPacking.equals(op2.bitFieldPacking)) {
-			return false;
-		}
-		if (charSize != op2.charSize || wideCharSize != op2.wideCharSize) {
-			return false;
-		}
-		if (defaultAlignment != op2.defaultAlignment) {
-			return false;
-		}
-		if (defaultPointerAlignment != op2.defaultPointerAlignment) {
-			return false;
-		}
-		if (doubleSize != op2.doubleSize || floatSize != op2.floatSize) {
-			return false;
-		}
-		if (integerSize != op2.integerSize || longLongSize != op2.longLongSize) {
-			return false;
-		}
-		if (shortSize != op2.shortSize) {
-			return false;
-		}
-		if (longSize != op2.longSize || longDoubleSize != op2.longDoubleSize) {
-			return false;
-		}
-		if (isSignedChar != op2.isSignedChar) {
-			return false;
-		}
-		if (machineAlignment != op2.machineAlignment) {
-			return false;
-		}
-		if (pointerSize != op2.pointerSize || pointerShift != op2.pointerShift) {
-			return false;
-		}
-		Set<Integer> keys = sizeAlignmentMap.keySet();
-		Set<Integer> op2keys = op2.sizeAlignmentMap.keySet();
-		if (keys.size() != op2keys.size()) {
-			return false;
-		}
-		for (int k : keys) {
-			if (!SystemUtilities.isEqual(sizeAlignmentMap.get(k), op2.sizeAlignmentMap.get(k))) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = bitFieldPacking.hashCode();
-		hash = 79 * hash + absoluteMaxAlignment;
-		hash = 79 * hash + (bigEndian ? 27 : 13);
-		hash = 79 * hash + charSize;
-		hash = 79 * hash + defaultAlignment;
-		hash = 79 * hash + defaultPointerAlignment;
-		hash = 79 * hash + doubleSize;
-		hash = 79 * hash + floatSize;
-		hash = 79 * hash + integerSize;
-		hash = 79 * hash + (isSignedChar ? 1 : 3);
-		hash = 79 * hash + longDoubleSize;
-		hash = 79 * hash + longLongSize;
-		hash = 79 * hash + longSize;
-		hash = 79 * hash + machineAlignment;
-		hash = 79 * hash + pointerShift;
-		hash = 79 * hash + pointerSize;
-		hash = 79 * hash + shortSize;
-		hash = 79 * hash + wideCharSize;
-		for (int k : sizeAlignmentMap.keySet()) {
-			hash = 79 * hash + sizeAlignmentMap.get(k);
-		}
-		return hash;
 	}
 }

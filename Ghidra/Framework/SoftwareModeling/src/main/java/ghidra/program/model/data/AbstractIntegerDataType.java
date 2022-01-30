@@ -188,16 +188,52 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 		return new Scalar(size * 8, val, isSigned());
 	}
 
+	/**
+	 * Get the number of bits in the integral type
+	 * 
+	 * @param type the type
+	 * @return the number of bits
+	 */
+	protected static int getBitCount(Class<? extends Number> type) {
+		if (type == Byte.class) {
+			return Byte.SIZE;
+		}
+		if (type == Short.class) {
+			return Short.SIZE;
+		}
+		if (type == Integer.class) {
+			return Integer.SIZE;
+		}
+		if (type == Long.class) {
+			return Long.SIZE;
+		}
+		throw new AssertionError();
+	}
+
 	protected BigInteger castValueToEncode(Object value) throws DataTypeEncodeException {
 		if (value instanceof BigInteger) {
 			return (BigInteger) value;
 		}
 		if (value instanceof Scalar) {
+			// I'll take the scalar's signedness and neglect this type's....
 			return ((Scalar) value).getBigInteger();
 		}
-		if (value instanceof Byte || value instanceof Short || value instanceof Character ||
-			value instanceof Integer || value instanceof Long) {
-			return BigInteger.valueOf(((Number) value).longValue());
+		if (value instanceof Character) {
+			int numeric = Character.getNumericValue((Character) value);
+			if (numeric < 0) {
+				throw new DataTypeEncodeException("Character cannot be converted to number", value,
+					this);
+			}
+			return BigInteger.valueOf(numeric);
+		}
+		if (value instanceof Byte || value instanceof Short || value instanceof Integer ||
+			value instanceof Long) {
+			Number number = (Number) value;
+			BigInteger signedVal = BigInteger.valueOf(number.longValue());
+			if (isSigned() || signedVal.signum() >= 0) {
+				return signedVal;
+			}
+			return signedVal.add(BigInteger.ONE.shiftLeft(getBitCount(number.getClass())));
 		}
 		throw new DataTypeEncodeException("Unsupported value type", value, this);
 	}
@@ -217,11 +253,21 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			throw new DataTypeEncodeException("Length mismatch", value, this);
 		}
 		BigInteger bigValue = castValueToEncode(value);
-		byte[] encoding = Utils.bigIntegerToBytes(bigValue, length, isSigned());
-		if (!ENDIAN.isBigEndian(settings, buf)) {
-			ArrayUtilities.reverse(encoding);
+		if (bigValue.signum() == -1 && !isSigned()) {
+			throw new DataTypeEncodeException("Unsigned type cannot have negative value", value,
+				this);
 		}
-		return encoding;
+		BigInteger maxValueExclusive = BigInteger.ONE.shiftLeft(length * 8 - (isSigned() ? 1 : 0));
+		BigInteger minValueInclusive = isSigned()
+				? BigInteger.ONE.shiftLeft(length * 8 - 1).negate()
+				: BigInteger.ZERO;
+		if (bigValue.compareTo(maxValueExclusive) >= 0) {
+			throw new DataTypeEncodeException("Value is too large", bigValue, this);
+		}
+		if (minValueInclusive.compareTo(bigValue) > 0) {
+			throw new DataTypeEncodeException("Value is too small", bigValue, this);
+		}
+		return Utils.bigIntegerToBytes(bigValue, length, ENDIAN.isBigEndian(settings, buf));
 	}
 
 	@Override
@@ -337,12 +383,15 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			case FormatSettingsDefinition.DECIMAL:
 				radix = 10;
 				suffix = "";
+				break;
 			case FormatSettingsDefinition.BINARY:
 				radix = 2;
 				suffix = "b";
+				break;
 			case FormatSettingsDefinition.OCTAL:
 				radix = 8;
 				suffix = "o";
+				break;
 			default:
 				throw new AssertionError();
 		}
@@ -355,6 +404,21 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 		}
 		catch (Exception e) {
 			throw new DataTypeEncodeException(repr, this, e);
+		}
+
+		/**
+		 * Ghidra doesn't actually heed signedness unless the format is DECIMAL. Thus, for user
+		 * input, and to make this an inverse of getRepresentation, we'll adjust values between SMAX
+		 * and UMAX to ensure they get encoded as expected, rather than rejected. We'll still accept
+		 * signed values, though, since the user would rightly expect those to work, even though
+		 * it'll get echoed back in unsigned form.
+		 */
+		if (format != FormatSettingsDefinition.DECIMAL && isSigned()) {
+			BigInteger umax = BigInteger.ONE.shiftLeft(8 * length);
+			BigInteger smax = umax.shiftRight(1);
+			if (smax.compareTo(value) <= 0 && value.compareTo(umax) < 0) {
+				value = value.subtract(umax);
+			}
 		}
 		return encodeValue(value, buf, settings, length);
 	}

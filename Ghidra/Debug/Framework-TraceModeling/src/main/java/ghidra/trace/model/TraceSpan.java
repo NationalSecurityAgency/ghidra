@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.feature.fid.plugin;
+package ghidra.trace.model;
 
-import ghidra.framework.plugintool.util.PluginPackage;
-import resources.ResourceManager;
+import com.google.common.collect.Range;
 
-/**
- * Plugin package for the FID plugin.
- */
-public class FidPluginPackage extends PluginPackage {
-	public static final String NAME = "Function ID";
+public interface TraceSpan extends Comparable<TraceSpan> {
+	Trace getTrace();
 
-	public FidPluginPackage() {
-		super(NAME, ResourceManager.loadImage("images/vcard.png"),
-				"These plugins are for creating, maintaining, and debugging function identification libraries.");
-	}
+	Range<Long> getSpan();
 }

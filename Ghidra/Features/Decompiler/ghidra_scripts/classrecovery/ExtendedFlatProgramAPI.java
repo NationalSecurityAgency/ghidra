@@ -121,7 +121,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		// check for or create function pointer if valid function pointed to
 		Data data = currentProgram.getListing().getDefinedDataAt(address);
 		if (data != null) {
-			if (data.isPointer() && getPointedToFunction(address) != null) {
+			if (data.isPointer() && getReferencedFunction(address) != null) {
 				return true;
 			}
 		}
@@ -131,7 +131,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 			try {
 				data = createData(address, pointerDataType);
-				if (getPointedToFunction(address) != null) {
+				if (getReferencedFunction(address) != null) {
 					return true;
 				}
 				clearListing(address);
@@ -212,12 +212,12 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to get the function pointed to by the given address if there is one. If the pointed to function
+	 * Method to get the function referenced at the given address if there is one. If the function
 	 * is a thunk, get the thunked function
 	 * @param address the given address
 	 * @return the (thunked if a thunk) function pointed to by the given address
 	 */
-	public Function getPointedToFunction(Address address) {
+	public Function getReferencedFunction(Address address) {
 
 		List<Address> referencesFrom = getReferenceFromAddresses(address);
 		if (referencesFrom.size() != 1) {
@@ -243,7 +243,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to get a list of addressses that are references from the given address
+	 * Method to get a list of addresses that are the "reference froms" of the given address
 	 * @param address the given address
 	 * @return a list of addresses that are references from the given address
 	 */
@@ -1333,7 +1333,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 			commaIndex--;
 		}
 
-		String shortenedName = className.substring(0, nextComma) + " ...>";
+		String shortenedName = className.substring(0, nextComma) + "...>";
 		return shortenedName;
 	}
 

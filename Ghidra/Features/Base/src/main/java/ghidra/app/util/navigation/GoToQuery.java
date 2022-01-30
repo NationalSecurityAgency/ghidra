@@ -71,13 +71,8 @@ public class GoToQuery {
 		this.plugin = plugin;
 		this.goToService = goToService;
 		this.navigationOptions = navigationOptions;
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
 
-		if (!opt.contains(GhidraOptions.OPTION_SEARCH_LIMIT)) {
-			opt.registerOption(GhidraOptions.OPTION_SEARCH_LIMIT,
-				PluginConstants.DEFAULT_SEARCH_LIMIT, null,
-				"The maximum number of search hits before stopping.");
-		}
+		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
 		this.maxHits =
 			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
 		this.fromAddress = fromAddr;
@@ -496,7 +491,7 @@ public class GoToQuery {
 		Program program = navigatable.getProgram();
 		SymbolTable symTable = program.getSymbolTable();
 
-		List<Symbol> symbols = new ArrayList<Symbol>();
+		List<Symbol> symbols = new ArrayList<>();
 		SymbolIterator symbolIterator = symTable.getSymbols(queryData.getQueryString());
 		while (symbolIterator.hasNext()) {
 			Symbol symbol = symbolIterator.next();

@@ -422,12 +422,14 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 		return focusScope.requestFocus(focus).thenApply(__ -> true).exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
+			String msg = "Could not focus " + focus + ": " + ex.getMessage();
+			plugin.getTool().setStatusInfo(msg);
 			if (ex instanceof DebuggerModelAccessException) {
-				String msg = "Could not focus " + focus + ": " + ex.getMessage();
 				Msg.info(this, msg);
-				plugin.getTool().setStatusInfo(msg);
 			}
-			Msg.showError(this, null, "Focus Sync", "Could not focus " + focus, ex);
+			else {
+				Msg.error(this, "Could not focus " + focus, ex);
+			}
 			return false;
 		});
 	}

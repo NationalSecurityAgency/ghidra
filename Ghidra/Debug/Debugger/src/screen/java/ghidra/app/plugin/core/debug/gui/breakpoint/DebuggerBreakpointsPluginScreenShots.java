@@ -116,9 +116,9 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder1 = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			new TestDebuggerTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		TraceRecorder recorder3 = modelService.recordTarget(mb.testProcess3,
-			new TestDebuggerTargetTraceMapper(mb.testProcess3));
+			new TestDebuggerTargetTraceMapper(mb.testProcess3), ActionSource.AUTOMATIC);
 		Trace trace1 = recorder1.getTrace();
 		Trace trace3 = recorder3.getTrace();
 

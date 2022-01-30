@@ -98,12 +98,10 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		// if we get here, then no exception happened--good!
 	}
 
-	/**
+	/*
 	 * Test that askBytes method auto-populates dialog with value in .properties file.
 	 *
 	 * Also test that subsequent calls to the dialog show the last-used value.
-	 *
-	 * @throws Exception
 	 */
 	@Test
 	public void testAskBytes() throws Exception {
@@ -309,12 +307,10 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(anotherTempFile, myFile[0]);
 	}
 
-	/**
+	/*
 	 * Test that askDirectory method auto-populates dialog with value in .properties file.
 	 *
 	 * Also test that subsequent calls to the dialog show the last-used value.
-	 *
-	 * @throws Exception
 	 */
 	@Test
 	public void testAskDirectory() throws Exception {
@@ -416,12 +412,10 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		FileUtilities.deleteDir(anotherTempSubDir);
 	}
 
-	/**
+	/*
 	 * Test that askLanguage method auto-populates dialog with value in .properties file.
 	 *
 	 * Also test that subsequent calls to the dialog show the last-used value.
-	 *
-	 * @throws Exception
 	 */
 	@Test
 	public void testAskLanguage() throws Exception {
@@ -662,11 +656,9 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(choice_eenie, chosen);
 	}
 
-	/**
+	/*
 	 * Test that askChoice method auto-populates dialog with user-supplied default value (in the
 	 * absence of a .properties file).
-	 *
-	 * @throws Exception
 	 */
 	@Test
 	public void testAskChoiceDefaultValue() throws Exception {

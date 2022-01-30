@@ -22,8 +22,7 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.TestDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
-import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.app.services.TraceRecorder;
+import ghidra.app.services.*;
 import ghidra.dbg.model.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
@@ -54,8 +53,8 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 		mb.createTestModel();
 		TestTargetProcess process = mb.testModel.addProcess(1234);
 
-		TraceRecorder recorder =
-			modelService.recordTarget(process, new TestDebuggerTargetTraceMapper(process));
+		TraceRecorder recorder = modelService.recordTarget(process,
+			new TestDebuggerTargetTraceMapper(process), ActionSource.AUTOMATIC);
 		Trace trace = recorder.getTrace();
 
 		TestTargetThread mainThread = process.addThread(1);
@@ -96,10 +95,10 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 
 		TestTargetProcess dummy1 = mb.testModel.addProcess(4321);
 		TestTargetProcess dummy2 = mb.testModel.addProcess(5432);
-		TraceRecorder recDummy1 =
-			modelService.recordTarget(dummy1, new TestDebuggerTargetTraceMapper(dummy1));
-		TraceRecorder recDummy2 =
-			modelService.recordTarget(dummy2, new TestDebuggerTargetTraceMapper(dummy2));
+		TraceRecorder recDummy1 = modelService.recordTarget(dummy1,
+			new TestDebuggerTargetTraceMapper(dummy1), ActionSource.AUTOMATIC);
+		TraceRecorder recDummy2 = modelService.recordTarget(dummy2,
+			new TestDebuggerTargetTraceMapper(dummy2), ActionSource.AUTOMATIC);
 
 		traceManager.setAutoCloseOnTerminate(false);
 

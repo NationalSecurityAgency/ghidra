@@ -49,40 +49,19 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
 //@formatter:on
 public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListener {
 
-	//////////////////////////////////////////////////////////////////////
-	//                                                                  //
-	// Instance fields             										//
-	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
-
-	private GoToAddressLabelDialog goToDialog;
-	private DockingAction action;
-	// configurable properties
-	private int maximumGotoEntries;
-	private boolean cStyleInput;
-	private boolean goToMemory;
-
-	//////////////////////////////////////////////////////////////////////
-	//                                                                  //
-	// Class fields and methods             							//
-	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
-
 	private static final int DEFAULT_MAX_GOTO_ENTRIES = 10;
 	private static final boolean DEFAULT_C_STYLE = false;
 
-	/**
-	 * This option controls the Go To dialog's feature that remembers the last successful
-	 * go to entry.
-	 */
+	// remembers the last successful 'go to' entry
 	private static final String GO_TO_MEMORY = "Goto Dialog Memory";
 	private static final boolean DEFAULT_MEMORY = true;
 
-	//////////////////////////////////////////////////////////////////////
-	//                                                                  //
-	// Constructor               										//
-	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
+	private GoToAddressLabelDialog goToDialog;
+	private DockingAction action;
+
+	private int maximumGotoEntries;
+	private boolean cStyleInput;
+	private boolean goToMemory;
 
 	public GoToAddressLabelPlugin(PluginTool pluginTool) {
 		super(pluginTool);
@@ -120,16 +99,10 @@ public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListe
 		GoToService gotoService = tool.getService(GoToService.class);
 		goToDialog = new GoToAddressLabelDialog(gotoService, this);
 		maximumGotoEntries = DEFAULT_MAX_GOTO_ENTRIES;
-		getOptions();
+		initOptions();
 
 		tool.addAction(action);
 	}
-
-	//////////////////////////////////////////////////////////////////////
-	//                                                                  //
-	// Configurable properties
-	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
 
 	public final int getMaximumGotoEntries() {
 		return maximumGotoEntries;
@@ -145,16 +118,6 @@ public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListe
 		goToDialog.writeConfigState(saveState);
 	}
 
-	/**
-	 * Notification that an option changed.
-	 *
-	 * @param options options object containing the property that changed
-	 * @param group name of the group to which this option is associated,
-	 *        null if not associated with any group
-	 * @param opName name of option that changed
-	 * @param oldValue old value of the option
-	 * @param newValue new value of the option
-	 */
 	@Override
 	public void optionsChanged(ToolOptions options, String opName, Object oldValue,
 			Object newValue) {
@@ -177,12 +140,6 @@ public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListe
 		}
 	}
 
-	//////////////////////////////////////////////////////////////////////
-	//                                                                  //
-	// Overridden Plugin Methods               			     			//
-	//                                                                  //
-	//////////////////////////////////////////////////////////////////////
-
 	@Override
 	public void dispose() {
 		ToolOptions options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
@@ -191,9 +148,8 @@ public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListe
 		super.dispose();
 	}
 
-	private void getOptions() {
+	private void initOptions() {
 		ToolOptions opt = tool.getOptions(ToolConstants.TOOL_OPTIONS);
-		// descriptions
 		opt.registerOption(GhidraOptions.OPTION_NUMERIC_FORMATTING, DEFAULT_C_STYLE, null,
 			"Interpret value entered in the Go To dialog as either hex, " +
 				"octal, or binary number.");
@@ -206,7 +162,6 @@ public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListe
 				"successful go to input in the combo box of the Go " +
 				"To dialog and will select the " + "value for easy paste replacement.");
 
-		// options
 		maximumGotoEntries =
 			opt.getInt(GhidraOptions.OPTION_MAX_GO_TO_ENTRIES, DEFAULT_MAX_GOTO_ENTRIES);
 
