@@ -28,8 +28,6 @@ public class LibrarySearchPathManager {
 
 	private static List<String> pathList = createPathList();
 
-	private static boolean hasBeenRestored;
-
 	private static List<String> createPathList() {
 		pathList = new ArrayList<>();
 		loadJavaLibraryPath();
@@ -83,26 +81,6 @@ public class LibrarySearchPathManager {
 		for (String path : paths) {
 			addPath(path);
 		}
-	}
-
-	/**
-	 * Call this to restore paths that were previously persisted.  If you really need to change
-	 * the paths <b>for the entire JVM</b>, then call {@link #setLibraryPaths(String[])}.
-	 *
-	 * @param paths the paths to restore
-	 */
-	public static void restoreLibraryPaths(String[] paths) {
-
-		if (hasBeenRestored) {
-			//
-			// We code that restores paths from tool config files.  It is a mistake to do this
-			// every time we load a tool, as the values can get out-of-sync if tools do not
-			// save properly.  Logically, we only need to restore once.
-			//
-			return;
-		}
-
-		setLibraryPaths(paths);
 	}
 
 	/**
