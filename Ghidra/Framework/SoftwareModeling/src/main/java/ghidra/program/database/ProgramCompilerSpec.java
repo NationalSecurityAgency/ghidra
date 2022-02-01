@@ -121,20 +121,19 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 		ArrayList<PrototypeModel> finalList = new ArrayList<>();
 		TreeSet<String> currentNames = new TreeSet<>();
 		for (PrototypeModel model : allmodels) {
-			currentNames.add(model.getName());
 			if (usermodels.containsKey(model.getName())) {
 				continue;
 			}
+			currentNames.add(model.getName());
 			finalList.add(model);		// Add original non-userdef models
 		}
 
+		usermodels.clear();
 		for (PrototypeModel model : extensions) {
 			if (currentNames.contains(model.getName())) {
-				if (!usermodels.containsKey(model.getName())) {
-					Msg.warn(this,
-						"Cannot override prototype model " + model.getName() + " with extension");
-					continue;
-				}
+				Msg.warn(this,
+					"Cannot override prototype model " + model.getName() + " with extension");
+				continue;
 			}
 			markPrototypeAsExtension(model);
 			finalList.add(model);
