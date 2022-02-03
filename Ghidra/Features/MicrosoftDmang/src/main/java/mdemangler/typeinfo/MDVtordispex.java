@@ -33,16 +33,16 @@ public class MDVtordispex extends MDMemberFunctionInfo {
 
 	@Override
 	protected void parseInternal() throws MDException {
-		// TODO: what is this?  Possibly the displacement?
+		// 20200507: Believe this to be <offset-to-vptr>
 		MDEncodedNumber a = new MDEncodedNumber(dmang);
 		a.parse();
-		// TODO: what is this?  Possibly the adjustment?
+		// 20200507: Believe this to be <vbase-offset-offset>
 		MDEncodedNumber b = new MDEncodedNumber(dmang);
 		b.parse();
-		// TODO: what is this?
+		// 20200507: Believe this to be <offset-to-vtordisp>
 		MDEncodedNumber c = new MDEncodedNumber(dmang);
 		c.parse();
-		// TODO: what is this?
+		// 20200507: Believe this to be <static-offset>
 		MDEncodedNumber d = new MDEncodedNumber(dmang);
 		d.parse();
 		nameModifier = "`vtordispex{" + a + "," + b + "," + c + "," + d + "}' ";
