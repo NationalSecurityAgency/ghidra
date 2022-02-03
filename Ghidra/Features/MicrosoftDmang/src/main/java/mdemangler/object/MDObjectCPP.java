@@ -257,7 +257,7 @@ public class MDObjectCPP extends MDObject {
 					break;
 				}
 				builder.append(ch);
-				dmang.next();
+				dmang.increment();
 			}
 			int end = dmang.getIndex();
 			if ((end - start) != 32 || ch != '@') {

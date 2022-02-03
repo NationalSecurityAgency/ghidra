@@ -15,8 +15,7 @@
  */
 package mdemangler;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.rules.TestName;
 
@@ -87,7 +86,8 @@ public class MDBaseTestConfiguration {
 		}
 
 		// Meant to be overridden, as needed by extended classes
-		doDemangleSymbol();
+		demangItem = doDemangleSymbol(mdm, mangled);
+		demangled = (demangItem == null) ? "" : demangItem.toString();
 
 		doBasicTestsAndOutput();
 
@@ -192,15 +192,12 @@ public class MDBaseTestConfiguration {
 	}
 
 	// Meant to be overridden, as needed by extended classes
-	protected void doDemangleSymbol() throws Exception {
+	protected MDParsableItem doDemangleSymbol(MDMang mdmIn, String mangledIn) throws Exception {
 		try {
-			demangItem = mdm.demangle(mangled, true);
-			demangled = demangItem.toString();
+			return mdmIn.demangle(mangledIn, true);
 		}
 		catch (MDException e) {
-			Msg.info(this, "Could not demangle: " + mangled, e);
-			demangItem = null;
-			demangled = "";
+			return null;
 		}
 	}
 
