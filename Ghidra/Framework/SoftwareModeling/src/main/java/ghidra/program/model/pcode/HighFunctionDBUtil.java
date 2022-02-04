@@ -635,18 +635,6 @@ public class HighFunctionDBUtil {
 			return null;
 		}
 		Address addr = storage.getFirstVarnode().getAddress();
-		if (storage.size() != dt.getLength() && program.getMemory().isBigEndian()) {
-			// maintain address of lsb
-			long delta = storage.size() - dt.getLength();
-			try {
-				addr = addr.addNoWrap(delta);
-			}
-			catch (AddressOverflowException e) {
-				throw new InvalidInputException(
-					"Unable to resize global storage for " + dt.getName() + " at " + addr);
-			}
-		}
-
 		Listing listing = program.getListing();
 		Data d = listing.getDataAt(addr);
 		if (d != null && d.getDataType().isEquivalent(dt)) {
