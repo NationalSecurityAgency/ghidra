@@ -16,6 +16,7 @@
 package mdemangler.object;
 
 import mdemangler.*;
+import mdemangler.MDMang.ProcessingMode;
 import mdemangler.datatype.MDDataTypeParser;
 import mdemangler.template.MDTemplateNameAndArguments;
 
@@ -25,8 +26,50 @@ import mdemangler.template.MDTemplateNameAndArguments;
  */
 public class MDMangObjectParser {
 
-	public static MDParsableItem parse(MDMang dmang) throws MDException {
+	public static MDParsableItem determineItemAndParse(MDMang dmang) throws MDException {
+		boolean retry = false;
+		MDException firstException = null;
+		MDParsableItem myItem = null;
+		int index = dmang.getIndex();
+		try {
+			myItem = parseDefaultStandard(dmang);
+			if (myItem != null) {
+				myItem.parse();
+			}
+			else {
+				retry = true;
+			}
+		}
+		catch (MDException e) {
+			retry = true;
+			myItem = null;
+			firstException = e;
+		}
+		if (!retry) {
+			return myItem;
+		}
+		try {
+			dmang.setIndex(index);
+			myItem = parseLlvm(dmang);
+			if (myItem != null) {
+				myItem.parse();
+			}
+		}
+		catch (MDException e) {
+			if (firstException != null) {
+				throw firstException;
+			}
+			throw e;
+		}
+		if (myItem == null && firstException != null) {
+			throw firstException;
+		}
+		return myItem;
+	}
+
+	public static MDParsableItem parseDefaultStandard(MDMang dmang) throws MDException {
 		MDParsableItem item;
+		dmang.setProcessingMode(ProcessingMode.DEFAULT_STANDARD);
 		if (dmang.peek() == '?') {
 			if (dmang.peek(1) == '@') {
 				item = new MDObjectCodeView(dmang);
@@ -49,6 +92,17 @@ public class MDMangObjectParser {
 		else {
 			item = new MDObjectC(dmang);
 		}
+		return item;
+	}
+
+	public static MDParsableItem parseLlvm(MDMang dmang) {
+		// Might eliminate next test if we create other "non-standard" processing
+		//  that does not begin with "?$".
+		if (dmang.peek() != '?' && dmang.peek(1) != '$') {
+			return null;
+		}
+		dmang.setProcessingMode(ProcessingMode.LLVM);
+		MDObjectCPP item = new MDObjectCPP(dmang);
 		return item;
 	}
 
@@ -96,7 +150,7 @@ public class MDMangObjectParser {
 	 * @throws MDException Upon <b><code>MDMang</code></b> parsing issues that cause us to fail
 	 *  processing.
 	 */
-	public static MDParsableItem parseObjectReserved(MDMang dmang) throws MDException {
+	public static MDParsableItem parseObjectReserved(MDMang dmang) {
 		MDParsableItem item;
 		if (dmang.positionStartsWith("__TI")) {
 			dmang.increment("__TI".length());

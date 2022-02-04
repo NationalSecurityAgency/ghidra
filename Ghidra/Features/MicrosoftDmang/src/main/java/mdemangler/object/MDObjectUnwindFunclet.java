@@ -37,14 +37,12 @@ public class MDObjectUnwindFunclet extends MDObjectReserved {
 	@Override
 	public void insert(StringBuilder builder) {
 		super.insert(builder);
-		dmang.appendString(builder,
-			"[UnwindFunclet," + digits + "]{" + internalItem + "}");
+		dmang.appendString(builder, "[UnwindFunclet," + digits + "]{" + internalItem + "}");
 	}
 
 	@Override
 	protected void parseInternal() throws MDException {
-		internalItem = MDMangObjectParser.parse(dmang);
-		internalItem.parse();
+		internalItem = MDMangObjectParser.determineItemAndParse(dmang);
 		dmang.increment(); // '$'
 		//Here, we have seen $9 and $10 (two digits for $10).
 		//TODO: forward programming to test beyond one digit.

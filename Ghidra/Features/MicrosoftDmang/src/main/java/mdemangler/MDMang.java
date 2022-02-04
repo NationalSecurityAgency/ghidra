@@ -45,6 +45,30 @@ public class MDMang {
 
 	protected List<MDContext> contextStack = new ArrayList<>();
 
+	public enum ProcessingMode {
+		DEFAULT_STANDARD, LLVM
+	}
+
+	private ProcessingMode processingMode = ProcessingMode.DEFAULT_STANDARD;
+
+	public void setProcessingMode(ProcessingMode processingMode) {
+		this.processingMode = processingMode;
+	}
+
+	public ProcessingMode getProcessingMode() {
+		return processingMode;
+	}
+
+	public boolean isProcessingModeActive(ProcessingMode mode) {
+		switch (mode) {
+			case LLVM:
+				return processingMode == mode && (getIndex() == 0);
+			default:
+				break;
+		}
+		return processingMode == mode;
+	}
+
 	/**
 	 * Demangles the string passed in.
 	 *
@@ -69,14 +93,15 @@ public class MDMang {
 	 * @param errorOnRemainingChars
 	 *            boolean flag indicating whether remaining characters causes an
 	 *            error.
+	 * @return item detected and parsed
+	 * @throws MDException upon error parsing item
 	 */
 	public MDParsableItem demangle(boolean errorOnRemainingChars) throws MDException {
 		if (mangled == null) {
 			throw new MDException("MDMang: Mangled string is null.");
 		}
 		pushContext();
-		item = MDMangObjectParser.parse(this);
-		item.parse();
+		item = MDMangObjectParser.determineItemAndParse(this);
 		if (item instanceof MDObjectCPP) {
 			// MDMANG SPECIALIZATION USED.
 			item = getEmbeddedObject((MDObjectCPP) item);
@@ -163,11 +188,19 @@ public class MDMang {
 
 	/**
 	 * Returns the current index.
-	 *
 	 * @return the current index.
 	 */
 	public int getIndex() {
 		return iter.getIndex();
+	}
+
+	/**
+	 * Sets the current index.
+	 * @param index the position to set.
+	 * @throws IllegalArgumentException if index is not in range from 0 to string.length()-1
+	 */
+	public void setIndex(int index) {
+		iter.setIndex(index);
 	}
 
 	/**
