@@ -46,17 +46,17 @@ public class MDGhidraTestConfiguration extends MDBaseTestConfiguration {
 	}
 
 	@Override
-	protected void doDemangleSymbol() throws Exception {
+	protected MDParsableItem doDemangleSymbol(MDMang mdmIn, String mangledIn) throws Exception {
+		MDParsableItem returnItem;
 		try {
 			//Set true in operational mode.
-			demangItem = ((MDMangGhidra) mdm).demangle(mangled, false); // "false" is different
-			demangled = demangItem.toString();
-			demangledObject = ((MDMangGhidra) mdm).getObject();
+			returnItem = ((MDMangGhidra) mdmIn).demangle(mangledIn, false); // "false" is different
+			demangledObject = ((MDMangGhidra) mdmIn).getObject();
 		}
 		catch (MDException e) {
-			demangItem = null;
-			demangled = "";
+			returnItem = null;
 		}
+		return returnItem;
 	}
 
 	@Override

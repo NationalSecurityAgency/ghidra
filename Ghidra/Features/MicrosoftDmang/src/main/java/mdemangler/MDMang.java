@@ -70,13 +70,15 @@ public class MDMang {
 	}
 
 	/**
-	 * Demangles the string passed in.
+	 * Demangles the string passed in and returns a parsed item.
 	 *
 	 * @param mangledIn
 	 *            the string to be demangled.
 	 * @param errorOnRemainingChars
 	 *            boolean flag indicating whether remaining characters causes an
 	 *            error.
+	 * @return the item that has been parsed.
+	 * @throws MDException upon parsing error
 	 */
 	public MDParsableItem demangle(String mangledIn, boolean errorOnRemainingChars)
 			throws MDException {
@@ -88,7 +90,7 @@ public class MDMang {
 	}
 
 	/**
-	 * Demangles the string passed in.
+	 * Demangles the string already stored and returns a parsed item.
 	 *
 	 * @param errorOnRemainingChars
 	 *            boolean flag indicating whether remaining characters causes an
