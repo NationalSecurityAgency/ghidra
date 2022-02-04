@@ -168,7 +168,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public boolean isSnapshot() {
-		// we are a snapshot when we are 'disconnected' 
+		// we are a snapshot when we are 'disconnected'
 		return !isConnected();
 	}
 
@@ -183,7 +183,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	 * TODO: Remove or rename this to something that accommodates redirecting writes, e.g., to a
 	 * debug target process, particularly for assembly, which may involve code unit modification
 	 * after a successful write, reported asynchronously :/ .
-	 * 
+	 *
 	 * @return true if this listing represents a read-only view
 	 */
 	public boolean isReadOnly() {
@@ -707,7 +707,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	/**
 	 * Extension point to specify titles when dual panels are active
-	 * 
+	 *
 	 * @param panelProgram the program assigned to the panel whose title is requested
 	 * @return the title of the panel for the given program
 	 */
@@ -993,11 +993,29 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		return null;
 	}
 
+	/**
+	 * Add the {@link AddressSetDisplayListener} to the listing panel
+	 *
+	 * @param listener the listener to add
+	 */
+	public void addDisplayListener(AddressSetDisplayListener listener) {
+		listingPanel.addDisplayListener(listener);
+	}
+
+	/**
+	 * Remove the {@link AddressSetDisplayListener} from the listing panel
+	 *
+	 * @param listener the listener to remove
+	 */
+	public void removeDisplayListener(AddressSetDisplayListener listener) {
+		listingPanel.removeDisplayListener(listener);
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
 
-	class ToggleHeaderAction extends ToggleDockingAction {
+	private class ToggleHeaderAction extends ToggleDockingAction {
 		ToggleHeaderAction() {
 			super("Toggle Header", plugin.getName());
 			setEnabled(true);
@@ -1073,23 +1091,5 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 			return list.toArray(new Highlight[list.size()]);
 		}
-	}
-
-	/**
-	 * Add the {@link AddressSetDisplayListener} to the listing panel
-	 * 
-	 * @param listener the listener to add
-	 */
-	public void addDisplayListener(AddressSetDisplayListener listener) {
-		listingPanel.addDisplayListener(listener);
-	}
-
-	/**
-	 * Remove the {@link AddressSetDisplayListener} from the listing panel
-	 * 
-	 * @param listener the listener to remove
-	 */
-	public void removeDisplayListener(AddressSetDisplayListener listener) {
-		listingPanel.removeDisplayListener(listener);
 	}
 }

@@ -97,9 +97,7 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDownAssemblerPluginTest() {
-		if (program != null) {
-			program.release(this);
-		}
+		env.dispose();
 	}
 
 	protected void assertDualFields() {
@@ -117,11 +115,15 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		});
 	}
 
+	private void goTo(Address address) {
+		runSwing(() -> codeViewer.goTo(program, new ProgramLocation(program, address)));
+		waitForSwing();
+	}
+
 	@Test
 	public void testActionPatchInstructionNoExisting() throws Exception {
 		Address address = space.getAddress(0x00400000);
-		codeViewer.goTo(program, new ProgramLocation(program, address));
-		waitForSwing();
+		goTo(address);
 
 		performAction(assemblerPlugin.patchInstructionAction, codeViewer, true);
 		assertDualFields();
@@ -149,8 +151,7 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			trans.commit();
 		}
 
-		codeViewer.goTo(program, new ProgramLocation(program, address));
-		waitForSwing();
+		goTo(address);
 
 		performAction(assemblerPlugin.patchInstructionAction, codeViewer, true);
 		assertDualFields();
@@ -173,8 +174,7 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	// TODO: Test disabled on read-only listings
 
 	protected Data doPatchAt(Address address, String expText, String newText) {
-		codeViewer.goTo(program, new ProgramLocation(program, address));
-		waitForSwing();
+		goTo(address);
 
 		performAction(assemblerPlugin.patchDataAction, codeViewer, true);
 		assertTrue(dataInput.isVisible());

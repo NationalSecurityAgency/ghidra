@@ -36,13 +36,11 @@ import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotGenerator {
-	DebuggerLogicalBreakpointService breakpointService;
-	DebuggerBreakpointMarkerPlugin breakpointMarkerPlugin;
-	ProgramManager programManager;
+	private DebuggerLogicalBreakpointService breakpointService;
+	private DebuggerBreakpointMarkerPlugin breakpointMarkerPlugin;
+	private ProgramManager programManager;
 
-	CodeViewerProvider listing;
-
-	Program program;
+	private CodeViewerProvider listing;
 
 	protected static Address addr(Program program, long offset) {
 		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
@@ -94,7 +92,8 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 
 	@Test
 	public void testCaptureDebuggerPlaceBreakpointDialog() throws Throwable {
-		listing.goTo(program, new ProgramLocation(program, addr(program, 0x00401c63)));
+		runSwing(
+			() -> listing.goTo(program, new ProgramLocation(program, addr(program, 0x00401c63))));
 		performAction(breakpointMarkerPlugin.actionSetSoftwareBreakpoint, false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
