@@ -38,11 +38,6 @@ public class NullClangHighlightController extends ClangHighlightController {
 	}
 
 	@Override
-	public String getHighlightedText() {
-		return null;
-	}
-
-	@Override
 	public void addPrimaryHighlights(ClangNode parentNode,
 			TokenHighlightColorProvider colorProvider) {
 		// stub

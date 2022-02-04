@@ -15,17 +15,26 @@
  */
 package docking.widgets.fieldpanel.support;
 
-import ghidra.framework.options.SaveState;
-import ghidra.util.Msg;
-
 import java.math.BigInteger;
 import java.util.*;
 
 import org.jdom.Element;
 
+import docking.widgets.fieldpanel.Layout;
+import ghidra.framework.options.SaveState;
+
 /**
- * Interface for reporting the FieldViewer selection.  The selection consists of
- * a sequence of ranges of indexes.
+ * This class represents a selection in a field viewer.
+ * <p>
+ * A {@link FieldSelection} may be within a single layout or may cross multiple layouts.  To
+ * determine if a selection crosses multiple layouts, you can get the {@link FieldRange range} of
+ * the selection.   You can then use the range's start and end locations to determine if the
+ * selection spans multiple layouts.   If the start and end indexes of the range are the same, then
+ * the selection is within a single layout; otherwise, the selection spans multiple layouts.
+ * 
+ * @see FieldRange
+ * @see FieldLocation
+ * @see Layout
  */
 public class FieldSelection implements Iterable<FieldRange> {
 
@@ -35,7 +44,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 	 * Construct a new empty FieldSelection.
 	 */
 	public FieldSelection() {
-		ranges = new ArrayList<FieldRange>(4);
+		ranges = new ArrayList<>(4);
 	}
 
 	/**
@@ -43,7 +52,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 	 * @param selection the FieldSelection to copy.
 	 */
 	public FieldSelection(FieldSelection selection) {
-		ranges = new ArrayList<FieldRange>(selection.ranges.size());
+		ranges = new ArrayList<>(selection.ranges.size());
 		for (FieldRange range : selection.ranges) {
 			ranges.add(new FieldRange(range));
 		}
@@ -53,7 +62,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 	 * Removes all indexes from the list.
 	 */
 	public void clear() {
-		ranges = new ArrayList<FieldRange>(4);
+		ranges = new ArrayList<>(4);
 	}
 
 	/**
@@ -69,6 +78,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 	 * Returns the range if the given Field at the given index is in the selection.
 	 * Otherwise returns null.
 	 * @param loc location to find the range for.
+	 * @return the range
 	 */
 	public FieldRange getRangeContaining(FieldLocation loc) {
 		int insertIndex = Collections.binarySearch(ranges, new FieldRange(loc, FieldLocation.MAX));
@@ -95,9 +105,11 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 	/**
 	 * Returns true if the all the fields in the layout with the given index are
-	 *  included in this selection.
+	 * included in this selection.
 	 * @param index index of the layout to test.
-
+	 * @return true if the all the fields in the layout with the given index are
+	 * included in this selection.
+	
 	 */
 	public boolean containsEntirely(BigInteger index) {
 		FieldLocation start = new FieldLocation(index, 0, 0, 0);
@@ -229,12 +241,14 @@ public class FieldSelection implements Iterable<FieldRange> {
 				}
 			}
 		}
+
 		insertIndex++;
 		while (insertIndex < ranges.size()) {
 			FieldRange range = ranges.get(insertIndex);
 			if (!deleteRange.intersects(range)) {
 				return;
 			}
+
 			FieldRange leftOver = range.subtract(deleteRange);
 			if (range.isEmpty()) {
 				ranges.remove(insertIndex);
@@ -264,6 +278,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 	/**
 	 * Returns the current number of ranges in the list.
+	 * @return the current number of ranges in the list.
 	 */
 	public int getNumRanges() {
 		return ranges.size();
@@ -272,6 +287,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 	/**
 	 * Returns the i'th Field Range in the selection.
 	 * @param rangeNum the index of the range to retrieve.
+	 * @return the range
 	 */
 	public FieldRange getFieldRange(int rangeNum) {
 		return ranges.get(rangeNum);
@@ -279,8 +295,9 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 	/**
 	* Compute the intersection of this field selection and another one.
-	* The intersection of two field selections is all fields existing in 
+	* The intersection of two field selections is all fields existing in
 	* both selections.
+	* 
 	* <P>Note: This field selection becomes the intersection.
 	*
 	* @param selection field selection to intersect.
@@ -304,6 +321,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 	/**
 	 * Computes the intersection of this field selection and the given field selection.
 	 * @param selection the selection to intersect with.
+	 * @return the selection
 	 */
 	public final FieldSelection findIntersection(FieldSelection selection) {
 		if (selection == null || this.ranges.size() == 0 || selection.ranges.size() == 0) {
@@ -323,16 +341,14 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 	/**
 	 * Delete all fields in the ranges in the given field selection from this one.
-	 * @param selection the field selection fields to remove from this 
-	 * field selection.
+	 * @param selection the field selection fields to remove from this field selection.
 	 */
 	public final void delete(FieldSelection selection) {
 		if (selection == null || this.ranges.size() == 0 || selection.ranges.size() == 0) {
 			return;
 		}
 
-		// process all ranges in the selection, delete each one's
-		// associated fields from this set.
+		// process all ranges in the selection, delete each associated fields from this set
 		for (FieldRange range : selection.ranges) {
 			removeRange(range.start, range.end);
 		}
@@ -340,63 +356,50 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 	/**
 	 * Insert all fields in the ranges in the given field selection from this one.
-	 * @param selection the field selection fields to add to this 
-	 * field selection.
+	 * @param selection the field selection fields to add to this field selection.
 	 */
 	public final void insert(FieldSelection selection) {
 		if (selection == null || selection.getNumRanges() == 0) {
 			return;
 		}
 
-		// process all ranges in the selection, add each one's
-		// associated fields from this set.
+		// process all ranges in the selection, add each associated fields from this set
 		for (FieldRange range : selection.ranges) {
 			addRange(range.start, range.end);
 		}
 	}
 
-	/**
-	 * Prints out the ranges for debugging.
-	 */
-	public void printRanges() {
-		Msg.debug(this, "*********");
-		for (FieldRange range : ranges) {
-			Msg.debug(this, range);
-		}
-		Msg.debug(this, "**********");
-	}
-
 	@Override
 	public String toString() {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		for (FieldRange range : ranges) {
 			buf.append(range.toString());
 		}
 		return buf.toString();
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((ranges == null) ? 0 : ranges.hashCode());
+		return result;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof FieldSelection)) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
 			return false;
 		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
 		FieldSelection other = (FieldSelection) obj;
-		if (ranges.size() != other.ranges.size()) {
-			return false;
-		}
-		int n = ranges.size();
-		for (int i = 0; i < n; i++) {
-			FieldRange thisRange = ranges.get(i);
-			FieldRange otherRange = other.ranges.get(i);
-			if (!thisRange.equals(otherRange)) {
-				return false;
-			}
-		}
-		return true;
+		return Objects.equals(ranges, other.ranges);
 	}
 
 	public void save(SaveState saveState) {
@@ -424,7 +427,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 	}
 
 	public boolean isEmpty() {
-		return ranges.size() == 0;
+		return ranges.isEmpty();
 	}
 
 	public FieldSelection intersect(int index) {
@@ -448,15 +451,17 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 		int insertIndex = Collections.binarySearch(ranges, range);
 
-		// if exact match, return it;
+		// if exact match, return it
 		if (insertIndex >= 0) {
 			intersection.addRange(range);
 			return intersection;
 		}
+
 		insertIndex = -insertIndex - 2;
 		if (insertIndex < 0) {
 			insertIndex++;
 		}
+
 		while (insertIndex < ranges.size()) {
 			FieldRange searchRange = ranges.get(insertIndex);
 			if (searchRange.start.compareTo(range.end) >= 0) {

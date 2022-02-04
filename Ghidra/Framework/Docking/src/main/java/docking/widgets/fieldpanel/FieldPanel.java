@@ -392,6 +392,8 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the default background color.
+	 * @return the default background color.
+	 * @see #getBackground()
 	 */
 	public Color getBackgroundColor() {
 		return backgroundColorModel.getDefaultBackgroundColor();
@@ -431,6 +433,7 @@ public class FieldPanel extends JPanel
 	/**
 	 *
 	 * Returns the foreground color.
+	 * @return the foreground color.
 	 */
 	public Color getForegroundColor() {
 		return paintContext.getForeground();
@@ -438,6 +441,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the color used as the background for selected items.
+	 * @return the color used as the background for selected items.
 	 */
 	public Color getSelectionColor() {
 		return paintContext.getSelectionColor();
@@ -445,18 +449,24 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the color color used as the background for highlighted items.
+	 * @return the color color used as the background for highlighted items.
 	 */
 	public Color getHighlightColor() {
 		return paintContext.getHighlightColor();
 	}
 
 	/**
-	 * Returns the current cursor color.
+	 * Returns the cursor color when this field panel is focused.
+	 * @return the cursor color when this field panel is focused.
 	 */
 	public Color getFocusedCursorColor() {
 		return paintContext.getFocusedCursorColor();
 	}
 
+	/**
+	 * Returns the cursor color when this field panel is not focused.
+	 * @return the cursor color when this field panel is not focused.
+	 */
 	public Color getNonFocusCursorColor() {
 		return paintContext.getNotFocusedCursorColor();
 	}
@@ -485,6 +495,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the point in pixels of where the cursor is located.
+	 * @return the point in pixels of where the cursor is located.
 	 */
 	public Point getCursorPoint() {
 		Rectangle bounds = getCursorBounds();
@@ -529,7 +540,7 @@ public class FieldPanel extends JPanel
 		selectionListeners.remove(listener);
 	}
 
-	/** 
+	/**
 	 * Adds a selection listener that will be notified while the selection is being created
 	 * @param listener the listener to be notified
 	 */
@@ -537,7 +548,7 @@ public class FieldPanel extends JPanel
 		liveSelectionListeners.add(listener);
 	}
 
-	/** 
+	/**
 	 * Removes the selection listener from being notified when the selection is being created
 	 * @param listener the listener to be removed from being notified
 	 */
@@ -680,6 +691,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the current selection.
+	 * @return the current selection.
 	 */
 	public FieldSelection getSelection() {
 		return new FieldSelection(selection);
@@ -687,6 +699,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the current highlight (marked area).
+	 * @return the current highlight (marked area).
 	 */
 	public FieldSelection getHighlight() {
 		return new FieldSelection(highlight);
@@ -730,7 +743,6 @@ public class FieldPanel extends JPanel
 		return setCursorPosition(index, fieldNum, row, col, EventTrigger.API_CALL);
 	}
 
-	// for subclasses to control the event trigger
 	/**
 	 * Sets the cursorPosition to the given location with the given trigger.
 	 * 
@@ -762,6 +774,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the state of the cursor. True if on, false if off.
+	 * @return the state of the cursor. True if on, false if off.
 	 */
 	public boolean isCursorOn() {
 		return cursorHandler.isCursorOn();
@@ -858,6 +871,7 @@ public class FieldPanel extends JPanel
 	 * that layout. For example, if the layout is completely displayed, yPos will be 0. If part of
 	 * the layout is off the top off the screen, then yPos will have a negative value (indicating
 	 * that it begins above the displayable part of the screen.
+	 * @return the position
 	 */
 	public ViewerPosition getViewerPosition() {
 		if (layouts.size() > 0) {
@@ -872,7 +886,8 @@ public class FieldPanel extends JPanel
 	 * &lt;= 0, meaning the layout may be partially off the top of the screen.
 	 *
 	 * @param index the index of the layout to show at the top of the screen.
-	 * @param yPos the position to show the layout.
+	 * @param xPos the x position to set.
+	 * @param yPos the y position to set.
 	 */
 	public void setViewerPosition(BigInteger index, int xPos, int yPos) {
 		if (index.compareTo(BigInteger.ZERO) >= 0 && index.compareTo(model.getNumIndexes()) < 0) {
@@ -909,7 +924,6 @@ public class FieldPanel extends JPanel
 	}
 
 	@Override
-	// BigLayoutModelListener
 	public void dataChanged(BigInteger start, BigInteger end) {
 		if (layouts.isEmpty()) {
 			notifyScrollListenerDataChanged(start, end);
@@ -961,7 +975,6 @@ public class FieldPanel extends JPanel
 	}
 
 	@Override
-	// BigLayoutModelListener
 	public void modelSizeChanged(IndexMapper indexMapper) {
 		BigInteger anchorIndex =
 			layouts.isEmpty() ? BigInteger.ZERO : indexMapper.map(layouts.get(0).getIndex());
@@ -1044,6 +1057,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the offset of the cursor from the top of the screen
+	 * @return the offset of the cursor from the top of the screen
 	 */
 	public int getCursorOffset() {
 		return getOffset(cursorPosition);
@@ -1238,7 +1252,9 @@ public class FieldPanel extends JPanel
 	}
 
 	/**
-	 * Finds the layout containing the given point.
+	 * Finds the layout containing the given y position.
+	 * @param y the y position.
+	 * @return the layout.
 	 */
 	AnchoredLayout findLayoutAt(int y) {
 		for (AnchoredLayout layout : layouts) {
@@ -1304,10 +1320,11 @@ public class FieldPanel extends JPanel
 		}
 	}
 
-// ==================================================================================================
+//==================================================================================================
 // Inner Classes
-// ==================================================================================================
-	public class FieldPanelMouseAdapter extends MouseAdapter {
+//==================================================================================================
+
+	private class FieldPanelMouseAdapter extends MouseAdapter {
 
 		@Override
 		public void mousePressed(MouseEvent e) {
@@ -1329,12 +1346,12 @@ public class FieldPanel extends JPanel
 			hoverHandler.hoverExited();
 		}
 
-		public boolean isButton3(MouseEvent e) {
+		private boolean isButton3(MouseEvent e) {
 			return e.getButton() == MouseEvent.BUTTON3;
 		}
 	}
 
-	public class FieldPanelMouseMotionAdapter extends MouseMotionAdapter {
+	private class FieldPanelMouseMotionAdapter extends MouseMotionAdapter {
 		@Override
 		public void mouseDragged(MouseEvent e) {
 			hoverHandler.stopHover();
@@ -1347,74 +1364,74 @@ public class FieldPanel extends JPanel
 		}
 	}
 
-	interface KeyAction {
+	public interface KeyAction {
 		public void handleKeyEvent(KeyEvent event);
 	}
 
-	class UpKeyAction implements KeyAction {
+	private class UpKeyAction implements KeyAction {
 		@Override
 		public void handleKeyEvent(KeyEvent e) {
 			keyHandler.vkUp(e);
 		}
 	}
 
-	class DownKeyAction implements KeyAction {
+	private class DownKeyAction implements KeyAction {
 		@Override
 		public void handleKeyEvent(KeyEvent e) {
 			keyHandler.vkDown(e);
 		}
 	}
 
-	class LeftKeyAction implements KeyAction {
+	private class LeftKeyAction implements KeyAction {
 		@Override
 		public void handleKeyEvent(KeyEvent e) {
 			keyHandler.vkLeft(e);
 		}
 	}
 
-	class RightKeyAction implements KeyAction {
+	private class RightKeyAction implements KeyAction {
 		@Override
 		public void handleKeyEvent(KeyEvent e) {
 			keyHandler.vkRight(e);
 		}
 	}
 
-	class HomeKeyAction implements KeyAction {
+	private class HomeKeyAction implements KeyAction {
 		@Override
 		public void handleKeyEvent(KeyEvent e) {
 			keyHandler.vkHome(e);
 		}
 	}
 
-	class EndKeyAction implements KeyAction {
+	private class EndKeyAction implements KeyAction {
 		@Override
 		public void handleKeyEvent(KeyEvent e) {
 			keyHandler.vkEnd(e);
 		}
 	}
 
-	class PageUpKeyAction implements KeyAction {
+	private class PageUpKeyAction implements KeyAction {
 		@Override
 		public void handleKeyEvent(KeyEvent e) {
 			keyHandler.vkPageUp(e);
 		}
 	}
 
-	class PageDownKeyAction implements KeyAction {
+	private class PageDownKeyAction implements KeyAction {
 		@Override
 		public void handleKeyEvent(KeyEvent e) {
 			keyHandler.vkPageDown(e);
 		}
 	}
 
-	class EnterKeyAction implements KeyAction {
+	private class EnterKeyAction implements KeyAction {
 		@Override
 		public void handleKeyEvent(KeyEvent e) {
 			keyHandler.vkEnter(e);
 		}
 	}
 
-	class FieldPanelKeyAdapter extends KeyAdapter {
+	private class FieldPanelKeyAdapter extends KeyAdapter {
 		private Map<KeyStroke, KeyAction> actionMap;
 
 		FieldPanelKeyAdapter() {
@@ -1460,8 +1477,7 @@ public class FieldPanel extends JPanel
 			// Shift is handled special, so mask it off in the event before getting the action.
 			// If the shift is being held, the selection is extended while moving the cursor.
 			int keyCode = e.getKeyCode();
-			int modifiers =
-				e.getModifiers() & ~(InputEvent.SHIFT_DOWN_MASK | InputEvent.SHIFT_MASK);
+			int modifiers = e.getModifiersEx() & ~InputEvent.SHIFT_DOWN_MASK;
 			KeyEvent maskedEvent = new KeyEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers,
 				keyCode, e.getKeyChar(), e.getKeyLocation());
 
@@ -1490,7 +1506,7 @@ public class FieldPanel extends JPanel
 		}
 	}
 
-	public class FieldPanelFocusListener implements FocusListener {
+	private class FieldPanelFocusListener implements FocusListener {
 		@Override
 		public void focusGained(FocusEvent e) {
 			inFocus = true;
@@ -1511,7 +1527,7 @@ public class FieldPanel extends JPanel
 		}
 	}
 
-	public class BigFieldPanelMouseWheelListener implements MouseWheelListener {
+	private class BigFieldPanelMouseWheelListener implements MouseWheelListener {
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
 			double wheelRotation = e.getPreciseWheelRotation();
@@ -1555,7 +1571,7 @@ public class FieldPanel extends JPanel
 		}
 	}
 
-	public class MouseHandler implements ActionListener {
+	private class MouseHandler implements ActionListener {
 		private Timer scrollTimer; // used to generate auto scroll
 		private int mouseDownX;
 		private int mouseDownY;
@@ -1563,11 +1579,11 @@ public class FieldPanel extends JPanel
 		private int timerScrollAmount;
 		private FieldLocation timerPoint;
 
-		public MouseHandler() {
+		MouseHandler() {
 			scrollTimer = new Timer(100, this);
 		}
 
-		public void dispose() {
+		void dispose() {
 			scrollTimer.stop();
 		}
 
@@ -1588,7 +1604,7 @@ public class FieldPanel extends JPanel
 			}
 		}
 
-		public void mousePressed(MouseEvent e) {
+		void mousePressed(MouseEvent e) {
 			requestFocus();
 			didDrag = false;
 			if (e.getButton() != MouseEvent.BUTTON1) {
@@ -1624,11 +1640,11 @@ public class FieldPanel extends JPanel
 			}
 		}
 
-		public boolean didDrag() {
+		boolean didDrag() {
 			return didDrag;
 		}
 
-		public void mouseDragged(MouseEvent e) {
+		void mouseDragged(MouseEvent e) {
 			if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == 0) {
 				return;
 			}
@@ -1652,7 +1668,7 @@ public class FieldPanel extends JPanel
 			}
 		}
 
-		public void mouseReleased(MouseEvent e) {
+		void mouseReleased(MouseEvent e) {
 			scrollTimer.stop();
 			if (e.getButton() != MouseEvent.BUTTON1) {
 				return;
@@ -1661,7 +1677,7 @@ public class FieldPanel extends JPanel
 			cursorHandler.setCursorPos(e.getX(), e.getY(), EventTrigger.GUI_ACTION);
 			if (didDrag) {
 				// Send an event after the drag is finished.  Event are suppressed while dragging,
-				// meaning that the above call to setCursorPos() will not have fired an event 
+				// meaning that the above call to setCursorPos() will not have fired an event
 				// because the internal cursor position did not change during the mouse release.
 				cursorHandler.notifyCursorChanged(EventTrigger.GUI_ACTION);
 			}
@@ -1672,55 +1688,51 @@ public class FieldPanel extends JPanel
 		}
 
 		/**
-		 * Basically checks if the the "shift" modifier is on and the "control" modifier is not.
-		 * Note that "control" is operating system dependent. It is <control> on windows, and
-		 * <command> on mac.
+		 * Checks if the the "shift" modifier is on and the "control" modifier is not.
 		 */
 		private boolean isAddToContiguousSelectionActivator(MouseEvent e) {
 			return (e.isShiftDown() && !DockingUtils.isControlModifier(e));
 		}
 
 		/**
-		 * Basically checks if the the "control" modifier is on and the shift modifier is not. Note
-		 * that "control" is operating system dependent. It is <control> on windows, and <command>
-		 * on mac.
+		 * Checks if the the "control" modifier is on and the shift modifier is not.
 		 */
 		private boolean isAddRemoveDisjointSelectionActivator(MouseEvent e) {
 			return DockingUtils.isControlModifier(e) && !e.isShiftDown();
 		}
 	}
 
-	class KeyHandler {
+	private class KeyHandler {
 
-		public void shiftKeyPressed() {
+		void shiftKeyPressed() {
 			selectionHandler.beginSelectionSequence(cursorPosition);
 		}
 
-		public void shiftKeyReleased() {
+		void shiftKeyReleased() {
 			selectionHandler.endSelectionSequence();
 		}
 
-		public void vkUp(KeyEvent e) {
+		void vkUp(KeyEvent e) {
 			cursorHandler.doCursorUp(EventTrigger.GUI_ACTION);
 			selectionHandler.updateSelectionSequence(cursorPosition);
 		}
 
-		public void vkDown(KeyEvent e) {
+		void vkDown(KeyEvent e) {
 			cursorHandler.doCursorDown(EventTrigger.GUI_ACTION);
 			selectionHandler.updateSelectionSequence(cursorPosition);
 		}
 
-		public void vkLeft(KeyEvent e) {
+		void vkLeft(KeyEvent e) {
 			cursorHandler.doCursorLeft(EventTrigger.GUI_ACTION);
 			selectionHandler.updateSelectionSequence(cursorPosition);
 		}
 
-		public void vkRight(KeyEvent e) {
+		void vkRight(KeyEvent e) {
 			cursorHandler.doCursorRight(EventTrigger.GUI_ACTION);
 			selectionHandler.updateSelectionSequence(cursorPosition);
 		}
 
-		public void vkEnd(KeyEvent e) {
+		void vkEnd(KeyEvent e) {
 			if (DockingUtils.isControlModifier(e)) {
 				doEndOfFile(EventTrigger.GUI_ACTION);
 			}
@@ -1730,7 +1742,7 @@ public class FieldPanel extends JPanel
 			selectionHandler.updateSelectionSequence(cursorPosition);
 		}
 
-		public void vkHome(KeyEvent e) {
+		void vkHome(KeyEvent e) {
 			if (DockingUtils.isControlModifier(e)) {
 				doTopOfFile(EventTrigger.GUI_ACTION);
 			}
@@ -1740,27 +1752,26 @@ public class FieldPanel extends JPanel
 			selectionHandler.updateSelectionSequence(cursorPosition);
 		}
 
-		public void vkPageUp(KeyEvent e) {
+		void vkPageUp(KeyEvent e) {
 			doPageUp(EventTrigger.GUI_ACTION);
 			selectionHandler.updateSelectionSequence(cursorPosition);
 		}
 
-		public void vkPageDown(KeyEvent e) {
+		void vkPageDown(KeyEvent e) {
 			doPageDown(EventTrigger.GUI_ACTION);
 			selectionHandler.updateSelectionSequence(cursorPosition);
 		}
 
-		public void vkEnter(KeyEvent e) {
+		void vkEnter(KeyEvent e) {
 			Point pt = getCursorPoint();
 			if (pt != null) {
 				notifyFieldMouseListeners(new MouseEvent(e.getComponent(), e.getID(), e.getWhen(),
 					0, pt.x, pt.y, 2, false, MouseEvent.BUTTON1));
 			}
 		}
-
 	}
 
-	class SelectionHandler {
+	private class SelectionHandler {
 		private boolean selectionOn = true;
 		private boolean selectionChanged;
 		private boolean removeFromSelection;
@@ -1828,7 +1839,7 @@ public class FieldPanel extends JPanel
 			selectionChanged = true;
 		}
 
-		public void enableSelection(boolean b) {
+		void enableSelection(boolean b) {
 			selectionOn = b;
 			if (!selectionOn) {
 				selection.clear();
@@ -1836,7 +1847,7 @@ public class FieldPanel extends JPanel
 		}
 	}
 
-	public class CursorHandler {
+	private class CursorHandler {
 		private int lastX = 0;
 		private boolean cursorOn = true;
 		private Field currentField;
@@ -1846,7 +1857,7 @@ public class FieldPanel extends JPanel
 			cursorBlinker = new CursorBlinker(FieldPanel.this);
 		}
 
-		public void setBlinkCursor(Boolean blinkCursor) {
+		void setBlinkCursor(Boolean blinkCursor) {
 			if (blinkCursor && cursorBlinker == null) {
 				cursorBlinker = new CursorBlinker(FieldPanel.this);
 			}
@@ -1856,28 +1867,28 @@ public class FieldPanel extends JPanel
 			}
 		}
 
-		public boolean isCursorOn() {
+		boolean isCursorOn() {
 			return cursorOn;
 		}
 
-		public void setCursorOn(boolean cursorOn) {
+		void setCursorOn(boolean cursorOn) {
 			this.cursorOn = cursorOn;
 
 		}
 
-		public void focusLost() {
+		void focusLost() {
 			if (cursorBlinker != null) {
 				cursorBlinker.stop();
 			}
 		}
 
-		public void focusGained() {
+		void focusGained() {
 			if (cursorBlinker != null) {
 				cursorBlinker.restart();
 			}
 		}
 
-		public Field getCurrentField() {
+		Field getCurrentField() {
 			if (currentField == null) {
 				AnchoredLayout layout = findLayoutOnScreen(cursorPosition.getIndex());
 				if (layout != null) {
@@ -2135,7 +2146,7 @@ public class FieldPanel extends JPanel
 
 		}
 
-		public void scrollToCursor() {
+		void scrollToCursor() {
 			doScrollTo(cursorPosition);
 		}
 
