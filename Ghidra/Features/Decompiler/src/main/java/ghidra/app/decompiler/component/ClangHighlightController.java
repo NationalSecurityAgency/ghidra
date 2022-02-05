@@ -35,7 +35,7 @@ import util.CollectionUtils;
 /**
  * Class to handle highlights for a decompiled function.
  * 
- * <p>This class does not painting directly.  Rather, this class tracks the currently highlighted
+ * <p>This class does not paint directly.  Rather, this class tracks the currently highlighted
  * tokens and then sets the highlight color on the token when it is highlighted and clears the
  * highlight color when the highlight is removed.
  * 
@@ -206,7 +206,7 @@ public abstract class ClangHighlightController {
 	 * Return the current highlighted token (if exists and unique)
 	 * @return token or null
 	 */
-	private ClangToken getHighlightedToken() {
+	public ClangToken getHighlightedToken() {
 		if (primaryHighlightTokens.size() == 1) {
 			HighlightToken hlToken = CollectionUtils.any(primaryHighlightTokens);
 			return hlToken.getToken();
