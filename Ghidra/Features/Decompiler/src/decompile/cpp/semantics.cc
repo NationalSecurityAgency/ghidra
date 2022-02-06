@@ -20,6 +20,7 @@ ConstTpl::ConstTpl(const_type tp)
 
 {				// Constructor for relative jump constants and uniques
   type = tp;
+  select = v_space;
 }
 
 ConstTpl::ConstTpl(const_type tp,uintb val)
@@ -54,6 +55,7 @@ ConstTpl::ConstTpl(AddrSpace *sid)
 {
   type = spaceid;
   value.spaceid = sid;
+  select = v_space;
 }
 
 bool ConstTpl::isConstSpace(void) const

@@ -46,7 +46,7 @@ private:
   static void printHandleSelector(ostream &s,v_field val);
   static v_field readHandleSelector(const string &name);
 public:
-  ConstTpl(void) { type = real; value_real = 0; }
+  ConstTpl(void) { type = real; value_real = 0; select = v_space; }
   ConstTpl(const ConstTpl &op2) {
     type=op2.type; value=op2.value; value_real=op2.value_real; select=op2.select; }
   ConstTpl(const_type tp,uintb val);

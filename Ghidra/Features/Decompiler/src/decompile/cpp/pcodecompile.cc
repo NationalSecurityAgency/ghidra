@@ -623,7 +623,17 @@ vector<OpTpl *> *PcodeCompile::assignBitRange(VarnodeTpl *vn,uint4 bitoffset,uin
   bool shiftneeded = (bitoffset != 0);
   bool zextneeded = true;
   uintb mask = (uintb)2;
-  mask = ~(((mask<<(numbits-1))-1) << bitoffset);
+  int4 masknumbits = sizeof(mask) * 8;
+  if (numbits - 1 < masknumbits)
+    mask <<= (numbits - 1);
+  else
+    mask = 0;
+  --mask;
+  if (bitoffset < masknumbits)
+    mask <<= bitoffset;
+  else
+    mask = 0;
+  mask = ~(mask);
 
   if (vn->getSize().getType()==ConstTpl::real) {
     // If we know the size of the bitranged varnode, we can
@@ -728,8 +738,12 @@ ExprTree *PcodeCompile::createBitRange(SpecificSymbol *sym,uint4 bitoffset,uint4
   }
 
   uintb mask = (uintb)2;
-  mask = ((mask<<(numbits-1))-1);
-  
+  if (numbits - 1 < sizeof(mask) * 8)
+    mask <<= (numbits - 1);
+  else
+    mask = 0;
+  --mask;
+
   if (truncneeded && ((bitoffset % 8)==0)) {
     truncshift = bitoffset/8;
     bitoffset = 0;

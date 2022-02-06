@@ -2150,8 +2150,8 @@ string SleighCompile::checkSymbols(SymbolScope *scope)
   ostringstream msg;
   SymbolTree::const_iterator iter;
   for(iter=scope->begin();iter!=scope->end();++iter) {
+    if ((*iter)->getType() != SleighSymbol::label_symbol) continue;
     LabelSymbol *sym = (LabelSymbol *)*iter;
-    if (sym->getType() != SleighSymbol::label_symbol) continue;
     if (sym->getRefCount() == 0)
       msg << "   Label <" << sym->getName() << "> was placed but not used" << endl;
     else if (!sym->isPlaced())
