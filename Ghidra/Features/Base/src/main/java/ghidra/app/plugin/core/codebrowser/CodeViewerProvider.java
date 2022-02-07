@@ -20,6 +20,7 @@ import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
@@ -99,6 +100,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private CoordinatedListingPanelListener coordinatedListingPanelListener;
 	private FormatManager formatMgr;
 	private FieldPanelCoordinator coordinator;
+
+	private FocusingMouseListener focusingMouseListener;
 
 	private CodeBrowserClipboardProvider codeViewerClipboardProvider;
 	private ClipboardService clipboardService;
@@ -1011,6 +1014,45 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		listingPanel.removeDisplayListener(listener);
 	}
 
+	private synchronized void createFocusingMouseListener() {
+		if (focusingMouseListener == null) {
+			focusingMouseListener = new FocusingMouseListener();
+		}
+	}
+
+	public void addOverviewProvider(OverviewProvider overviewProvider) {
+		createFocusingMouseListener();
+		JComponent component = overviewProvider.getComponent();
+
+		// just in case we get repeated calls
+		component.removeMouseListener(focusingMouseListener);
+		component.addMouseListener(focusingMouseListener);
+		overviewProvider.setNavigatable(this);
+		getListingPanel().addOverviewProvider(overviewProvider);
+	}
+
+	public void addMarginProvider(MarginProvider marginProvider) {
+		createFocusingMouseListener();
+		JComponent component = marginProvider.getComponent();
+
+		// just in case we get repeated calls
+		component.removeMouseListener(focusingMouseListener);
+		component.addMouseListener(focusingMouseListener);
+		getListingPanel().addMarginProvider(marginProvider);
+	}
+
+	public void removeOverviewProvider(OverviewProvider overviewProvider) {
+		JComponent component = overviewProvider.getComponent();
+		component.removeMouseListener(focusingMouseListener);
+		getListingPanel().removeOverviewProvider(overviewProvider);
+	}
+
+	public void removeMarginProvider(MarginProvider marginProvider) {
+		JComponent component = marginProvider.getComponent();
+		component.removeMouseListener(focusingMouseListener);
+		getListingPanel().removeMarginProvider(marginProvider);
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
@@ -1090,6 +1132,13 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			}
 
 			return list.toArray(new Highlight[list.size()]);
+		}
+	}
+
+	private class FocusingMouseListener extends MouseAdapter {
+		@Override
+		public void mousePressed(MouseEvent e) {
+			getListingPanel().getFieldPanel().requestFocus();
 		}
 	}
 }

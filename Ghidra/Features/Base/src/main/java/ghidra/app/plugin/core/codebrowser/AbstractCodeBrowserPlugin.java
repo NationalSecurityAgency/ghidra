@@ -16,8 +16,6 @@
 package ghidra.app.plugin.core.codebrowser;
 
 import java.awt.Color;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +82,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	private MarkerSet currentHighlightMarkers;
 	private MarkerSet currentCursorMarkers;
 	private ChangeListener markerChangeListener;
-	private FocusingMouseListener focusingMouseListener = new FocusingMouseListener();
 
 	private Color cursorHighlightColor;
 	private boolean isHighlightCursorLine;
@@ -269,36 +266,22 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 	@Override
 	public void addOverviewProvider(OverviewProvider overviewProvider) {
-		JComponent component = overviewProvider.getComponent();
-
-		// just in case we get repeated calls
-		component.removeMouseListener(focusingMouseListener);
-		component.addMouseListener(focusingMouseListener);
-		connectedProvider.getListingPanel().addOverviewProvider(overviewProvider);
+		connectedProvider.addOverviewProvider(overviewProvider);
 	}
 
 	@Override
 	public void addMarginProvider(MarginProvider marginProvider) {
-		JComponent component = marginProvider.getComponent();
-
-		// just in case we get repeated calls
-		component.removeMouseListener(focusingMouseListener);
-		component.addMouseListener(focusingMouseListener);
-		connectedProvider.getListingPanel().addMarginProvider(marginProvider);
+		connectedProvider.addMarginProvider(marginProvider);
 	}
 
 	@Override
 	public void removeOverviewProvider(OverviewProvider overviewProvider) {
-		JComponent component = overviewProvider.getComponent();
-		component.removeMouseListener(focusingMouseListener);
-		connectedProvider.getListingPanel().removeOverviewProvider(overviewProvider);
+		connectedProvider.removeOverviewProvider(overviewProvider);
 	}
 
 	@Override
 	public void removeMarginProvider(MarginProvider marginProvider) {
-		JComponent component = marginProvider.getComponent();
-		component.removeMouseListener(focusingMouseListener);
-		connectedProvider.getListingPanel().removeMarginProvider(marginProvider);
+		connectedProvider.removeMarginProvider(marginProvider);
 	}
 
 	@Override
@@ -927,12 +910,4 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			fieldPanel.repaint();
 		}
 	}
-
-	private class FocusingMouseListener extends MouseAdapter {
-		@Override
-		public void mousePressed(MouseEvent e) {
-			connectedProvider.getListingPanel().getFieldPanel().requestFocus();
-		}
-	}
-
 }

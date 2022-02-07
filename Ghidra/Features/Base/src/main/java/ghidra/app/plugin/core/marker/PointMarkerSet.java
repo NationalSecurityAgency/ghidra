@@ -39,14 +39,15 @@ class PointMarkerSet extends MarkerSetImpl {
 	private Color fillColor;
 
 	/**
-	 * @param navigationManager  manager for these point markers
+	 * @param navigationManager manager for these point markers
 	 * @param name the name for this point marker
 	 * @param desc the description associated with this point marker
 	 * @param priority to sort out what displays on top, higher is more likely to be on top
 	 * @param showMarkers true indicates to show area markers (on the left side of the browser.)
-	 * @param showNavigation true indicates to show area navigation markers (on the right side of the browser.)
-	 * @param colorBackground colorBackground the color of marked areas in navigation bar
-	 *              If color is null, no results are displayed in the associated marker bar.
+	 * @param showNavigation true indicates to show area navigation markers (on the right side of
+	 *            the browser.)
+	 * @param colorBackground colorBackground the color of marked areas in navigation bar If color
+	 *            is null, no results are displayed in the associated marker bar.
 	 * @param markerColor the color of the marker
 	 * @param icon the icon used to represent the cursor in the marker margin
 	 * @param isPreferred true indicates higher priority than all non-preferred MarkerSets
@@ -70,14 +71,15 @@ class PointMarkerSet extends MarkerSetImpl {
 	}
 
 	/**
-	 * @param navigationManager  manager for these point markers
+	 * @param navigationManager manager for these point markers
 	 * @param name the name for this point marker
 	 * @param desc the description associated with this point marker
 	 * @param priority to sort out what displays on top, higher is more likely to be on top
 	 * @param showMarkers true indicates to show area markers (on the left side of the browser.)
-	 * @param showNavigation true indicates to show area navigation markers (on the right side of the browser.)
-	 * @param colorBackground colorBackground the color of marked areas in navigation bar
-	 *              If color is null, no results are displayed in the associated marker bar.
+	 * @param showNavigation true indicates to show area navigation markers (on the right side of
+	 *            the browser.)
+	 * @param colorBackground colorBackground the color of marked areas in navigation bar If color
+	 *            is null, no results are displayed in the associated marker bar.
 	 * @param markerColor the color of the marker
 	 * @param icon the icon used to represent the cursor in the marker margin
 	 * @param program the program to which the markers apply
@@ -115,7 +117,6 @@ class PointMarkerSet extends MarkerSetImpl {
 		}
 
 		Address address = pixmap.getLayoutAddress(i);
-		Program program = mgr.getProgram();
 		MarkerLocation loc = new MarkerLocation(this, program, address, 0, yStart);
 		ImageIcon icon = markerDescriptor.getIcon(loc);
 		if (icon != null) {
