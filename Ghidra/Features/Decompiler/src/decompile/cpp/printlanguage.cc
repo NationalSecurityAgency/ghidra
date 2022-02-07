@@ -590,6 +590,7 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
 {
   const string &text( comm->getText() );
   const AddrSpace *spc = comm->getAddr().getSpace();
+  const string type = Comment::decodeCommentType(comm->getType());
   uintb off = comm->getAddr().getOffset();
   if (indent <0)
     indent = line_commentindent; // User specified default indent
@@ -598,7 +599,7 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
   // The comment delimeters should not be printed as
   // comment tags, so that they won't get filled
   emit->tagComment(commentstart.c_str(),EmitXml::comment_color,
-		    spc,off);
+		    spc,off, type.c_str());
   int4 pos = 0;
   while(pos < text.size()) {
     char tok = text[pos++];
@@ -626,12 +627,12 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
       }
       string sub = text.substr(pos-count,count);
       emit->tagComment(sub.c_str(),EmitXml::comment_color,
-			spc,off);
+			spc,off,type.c_str());
     }
   }
   if (commentend.size() != 0)
     emit->tagComment(commentend.c_str(),EmitXml::comment_color,
-		      spc,off);
+		      spc,off,type.c_str());
   emit->stopComment(id);
   comm->setEmitted(true);
 }
