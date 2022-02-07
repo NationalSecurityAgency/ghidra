@@ -645,10 +645,10 @@ void sign_extend(intb &val,int4 bit)
 void zero_extend(intb &val,int4 bit)
 
 {
-  intb mask = 0;
-  for (int4 i = 0; i <= bit; ++i)
-    mask |= (1ULL << i);
-  val &= mask;
+  uintb mask = 0;
+  mask = (~mask)<<bit;
+  mask <<= 1;
+  val &= (~mask);
 }
 
 /// Swap the least significant \b size bytes in \b val
