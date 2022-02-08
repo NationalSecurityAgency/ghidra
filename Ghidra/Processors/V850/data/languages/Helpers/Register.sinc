@@ -30,7 +30,7 @@ define register offset=0x0 size=0x8
   r0r1    r2sp    r4r5    r6r7    r8r9    
   r10r11  r12r13  r14r15  r16r17  r18r19
   r20r21  r22r23  r24r25  r26r27  r28r29  
-  _
+  eplp
 ];
 
 define register offset=0x100 size=0x4 [ PC ];     # offset = 0x100(256) = PreOffset+PreRegister*Size = 128+32*4 = 256
