@@ -186,8 +186,7 @@ public class BookmarkPlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Get rid of any resources this plugin is using
-	 * before the plugin is destroyed.
+	 * Get rid of any resources this plugin is using before the plugin is destroyed.
 	 */
 	@Override
 	public synchronized void dispose() {
@@ -276,6 +275,7 @@ public class BookmarkPlugin extends ProgramPlugin
 
 	/**
 	 * Get or create a bookmark navigator for the specified bookmark type
+	 * 
 	 * @param type the bookmark type
 	 * @return bookmark navigator
 	 */
@@ -432,9 +432,12 @@ public class BookmarkPlugin extends ProgramPlugin
 		bookmarkMgr = program.getBookmarkManager();
 	}
 
-	void showAddBookmarkDialog(Address location) {
+	void showAddBookmarkDialog(Address address, Program program) {
+		if (program != currentProgram) {
+			return;
+		}
 		Listing listing = currentProgram.getListing();
-		CodeUnit currCU = listing.getCodeUnitContaining(location);
+		CodeUnit currCU = listing.getCodeUnitContaining(address);
 		if (currCU == null) {
 			return;
 		}
@@ -446,8 +449,8 @@ public class BookmarkPlugin extends ProgramPlugin
 	/**
 	 * Called when a new bookmark is to be added; called from the add bookmark dialog
 	 * 
-	 * @param addr bookmark address.  If null a Note bookmark will set at the 
-	 * 		  start address of each range in the current selection
+	 * @param addr bookmark address. If null a Note bookmark will set at the start address of each
+	 *            range in the current selection
 	 * @param category bookmark category
 	 * @param comment comment text
 	 */
@@ -494,6 +497,9 @@ public class BookmarkPlugin extends ProgramPlugin
 			return null;
 		}
 		MarkerLocation loc = (MarkerLocation) contextObject;
+		if (loc.getProgram() != currentProgram) {
+			return null;
+		}
 		BookmarkManager mgr = currentProgram.getBookmarkManager();
 		Address address = loc.getAddr();
 		Bookmark[] bookmarks = mgr.getBookmarks(address);
@@ -518,12 +524,13 @@ public class BookmarkPlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Returns a list of actions to delete bookmarks that are in the code unit surrounding the 
-	 * given address.  The list of actions will not exceed <tt>maxActionsCount</tt>
-	 * @param  primaryAddress The address required to find the containing code unit.
-	 * @param  maxActionsCount The maximum number of actions to include in the returned list.
-	 * @return a list of actions to delete bookmarks that are in the code unit surrounding the 
-	 *         given address.
+	 * Returns a list of actions to delete bookmarks that are in the code unit surrounding the given
+	 * address. The list of actions will not exceed <tt>maxActionsCount</tt>
+	 * 
+	 * @param primaryAddress The address required to find the containing code unit.
+	 * @param maxActionsCount The maximum number of actions to include in the returned list.
+	 * @return a list of actions to delete bookmarks that are in the code unit surrounding the given
+	 *         address.
 	 */
 	private List<DockingActionIf> getActionsForCodeUnit(Address primaryAddress,
 			int maxActionsCount) {
@@ -543,14 +550,15 @@ public class BookmarkPlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Returns a list of actions to delete bookmarks that are in the code unit surrounding the 
-	 * given address <b>for the given <i>type</i> of bookmark</b>.
+	 * Returns a list of actions to delete bookmarks that are in the code unit surrounding the given
+	 * address <b>for the given <i>type</i> of bookmark</b>.
+	 * 
 	 * @param primaryAddress The address required to find the containing code unit.
 	 * @param type The bookmark type to retrieve.
-	 * @param navigator The BookmarkNavigator used to determine whether there are bookmarks 
-	 *        inside the code unit containing the given <tt>primaryAddress</tt>.
-	 * @return a list of actions to delete bookmarks that are in the code unit surrounding the 
-	 *         given address <b>for the given <i>type</i> of bookmark</b>.
+	 * @param navigator The BookmarkNavigator used to determine whether there are bookmarks inside
+	 *            the code unit containing the given <tt>primaryAddress</tt>.
+	 * @return a list of actions to delete bookmarks that are in the code unit surrounding the given
+	 *         address <b>for the given <i>type</i> of bookmark</b>.
 	 */
 	private List<DockingActionIf> getActionsForCodeUnitAndType(Address primaryAddress, String type,
 			BookmarkNavigator navigator) {
@@ -585,9 +593,10 @@ public class BookmarkPlugin extends ProgramPlugin
 	/**
 	 * Adds the actions in <tt>newActionList</tt> to <tt>actionList</tt> while the size of
 	 * <tt>actionList</tt> is less than the given {@link #MAX_DELETE_ACTIONS}.
+	 * 
 	 * @param actionList The list to add to
 	 * @param newActionList The list containing items to add
-	 * @param maxActionCount the maximum number of items that the actionList can contain 
+	 * @param maxActionCount the maximum number of items that the actionList can contain
 	 */
 	private void addActionsToList(List<DockingActionIf> actionList,
 			List<DockingActionIf> newActionList, int maxActionCount) {
