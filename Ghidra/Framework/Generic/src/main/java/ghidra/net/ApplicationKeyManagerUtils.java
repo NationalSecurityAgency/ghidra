@@ -162,7 +162,7 @@ public class ApplicationKeyManagerUtils {
 	public static boolean isMySignature(Principal[] authorities, byte[] token, byte[] signature)
 			throws NoSuchAlgorithmException, SignatureException, CertificateException {
 		SignedToken signedToken = getSignedToken(authorities, token);
-		return Arrays.equals(signature, signedToken.signature);
+		return MessageDigest.equals(signature, signedToken.signature);
 	}
 
 	/**
