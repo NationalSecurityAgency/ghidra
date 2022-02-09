@@ -149,14 +149,14 @@ public class MarkerOverviewProvider implements OverviewProvider {
 		}
 
 		private void doRefresh() {
-			if (program == null) {
-				return;
-			}
-
 			for (DockingAction action : actions) {
 				tool.removeAction(action);
 			}
 			actions.clear();
+
+			if (program == null || program.isClosed()) {
+				return;
+			}
 
 			List<MarkerSetImpl> list = markerManager.copyMarkerSets(program);
 

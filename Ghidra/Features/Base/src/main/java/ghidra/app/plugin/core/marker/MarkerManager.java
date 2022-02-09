@@ -189,6 +189,9 @@ public class MarkerManager implements MarkerService {
 
 		// per-program list
 		MarkerSetCacheEntry entry = markerSetCache.get(program);
+		if (entry == null) {
+			return;
+		}
 		entry.removeSet(markers);
 
 		// per-group list
@@ -301,7 +304,8 @@ public class MarkerManager implements MarkerService {
 	}
 
 	List<MarkerSetImpl> copyMarkerSets(Program program) {
-		return markerSetCache.get(program).copyList();
+		MarkerSetCacheEntry entry = markerSetCache.get(program);
+		return entry == null ? List.of() : entry.copyList();
 	}
 
 	/**
@@ -311,7 +315,10 @@ public class MarkerManager implements MarkerService {
 	 * @param p the program associated with the markers
 	 */
 	void markersChanged(Program p) {
-		markerSetCache.get(p).colorCache.clear();
+		MarkerSetCacheEntry entry = markerSetCache.get(p);
+		if (entry != null) {
+			entry.colorCache.clear();
+		}
 		updater.update();
 	}
 

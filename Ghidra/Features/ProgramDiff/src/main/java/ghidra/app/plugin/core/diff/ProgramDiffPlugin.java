@@ -1598,7 +1598,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			showSecondView();
 			AddressIndexMap indexMap = diffListingPanel.getAddressIndexMap();
 			fp.setBackgroundColorModel(
-				new MarkerServiceBackgroundColorModel(markerManager, indexMap));
+				new MarkerServiceBackgroundColorModel(markerManager, secondaryDiffProgram,
+					indexMap));
 		}
 		finally {
 			settingLocation = false;
