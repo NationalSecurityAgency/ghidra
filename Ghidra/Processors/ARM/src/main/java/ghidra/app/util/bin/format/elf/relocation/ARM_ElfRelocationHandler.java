@@ -573,9 +573,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 					addend = (oldValue << 21 >> 20); // extract addend and sign-extend with *2 factor
 				}
 				newValue = (int) (symbolValue + addend);
-
-				newValue -= (offset + 4);   // PC relative, PC will be 4 bytes past inst start
-
+				newValue -= offset;   // PC relative
 				newValue = (oldValue & 0x0000f800) | ((newValue >> 1) & 0x000007ff);
 				memory.setShort(relocationAddress, (short) newValue, instructionBigEndian);
 				break;
@@ -586,9 +584,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 					addend = (oldValue << 24 >> 23); // extract addend and sign-extend with *2 factor
 				}
 				newValue = (int) (symbolValue + addend);
-
-				newValue -= (offset + 4);   // PC relative, PC will be 4 bytes past inst start
-
+				newValue -= offset;   // PC relative
 				newValue = (oldValue & 0x0000ff00) | ((newValue >> 1) & 0x000000ff);
 				memory.setShort(relocationAddress, (short) newValue, instructionBigEndian);
 				break;
