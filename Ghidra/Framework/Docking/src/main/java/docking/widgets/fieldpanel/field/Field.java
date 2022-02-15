@@ -143,7 +143,7 @@ public interface Field {
 	 * the given data
 	 * @param row the text row
 	 * @param col the character position
-	 * @return tru if valid
+	 * @return true if valid
 	 */
 	public boolean isValid(int row, int col);
 

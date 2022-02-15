@@ -72,6 +72,7 @@ import sun.misc.SignalHandler;
  * event is processed using a {@link HandlerMap}.
  */
 public class GdbManagerImpl implements GdbManager {
+	private static final int TIMEOUT_SEC = 10;
 	private static final String GDB_IS_TERMINATING = "GDB is terminating";
 	public static final int MAX_CMD_LEN = 4094; // Account for longest possible line end
 
@@ -126,7 +127,7 @@ public class GdbManagerImpl implements GdbManager {
 			}
 			try {
 				String line;
-				while (isAlive() && null != (line = reader.readLine())) {
+				while (GdbManagerImpl.this.isAlive() && null != (line = reader.readLine())) {
 					String l = line;
 					if (interpreter == null) {
 						if (l.startsWith("=") || l.startsWith("~")) {
@@ -624,6 +625,16 @@ public class GdbManagerImpl implements GdbManager {
 		this.newLine = newLine;
 	}
 
+	protected void waitCheckExit(CompletableFuture<?> future)
+			throws InterruptedException, ExecutionException, TimeoutException, IOException {
+		CompletableFuture.anyOf(future, state.waitValue(GdbState.EXIT))
+				.get(TIMEOUT_SEC, TimeUnit.SECONDS);
+		if (state.get() == GdbState.EXIT) {
+			throw new IOException(
+				"GDB terminated early or could not be executed. Check your command line.");
+		}
+	}
+
 	@Override
 	public void start(String gdbCmd, String... args) throws IOException {
 		List<String> fullargs = new ArrayList<>();
@@ -642,15 +653,11 @@ public class GdbManagerImpl implements GdbManager {
 
 			iniThread.start();
 			try {
-				CompletableFuture.anyOf(iniThread.hasWriter, state.waitValue(GdbState.EXIT))
-						.get(10, TimeUnit.SECONDS);
+				waitCheckExit(iniThread.hasWriter);
 			}
 			catch (InterruptedException | ExecutionException | TimeoutException e) {
 				throw new IOException(
 					"Could not detect GDB's interpreter mode. Try " + gdbCmd + " -i mi2");
-			}
-			if (state.get() == GdbState.EXIT) {
-				throw new IOException("GDB terminated before first prompt");
 			}
 			switch (iniThread.interpreter) {
 				case CLI:
@@ -678,7 +685,7 @@ public class GdbManagerImpl implements GdbManager {
 					mi2Thread.setName("GDB Read MI2");
 					mi2Thread.start();
 					try {
-						mi2Thread.hasWriter.get(10, TimeUnit.SECONDS);
+						waitCheckExit(mi2Thread.hasWriter);
 					}
 					catch (InterruptedException | ExecutionException | TimeoutException e) {
 						throw new IOException(

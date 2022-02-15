@@ -484,9 +484,12 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	private class ToggleBreakpointsMarkerClickedListener implements MarkerClickedListener {
 		@Override
 		public void markerDoubleClicked(MarkerLocation location) {
-			doToggleBreakpointsAt(ToggleBreakpointAction.NAME,
+			ProgramLocationActionContext context =
 				new ProgramLocationActionContext(null, location.getProgram(),
-					new ProgramLocation(location.getProgram(), location.getAddr()), null, null));
+					new ProgramLocation(location.getProgram(), location.getAddr()), null, null);
+			if (contextCanManipulateBreakpoints(context)) {
+				doToggleBreakpointsAt(ToggleBreakpointAction.NAME, context);
+			}
 		}
 	}
 
@@ -895,8 +898,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		if (mappingService == null || modelService == null) {
 			return Set.of();
 		}
-		ProgramLocation loc = getLocationFromContext(context); // must be static location
-		if (loc == null) {
+		ProgramLocation loc = getLocationFromContext(context);
+		if (loc == null || loc.getProgram() instanceof TraceProgramView) {
 			return Set.of();
 		}
 		Set<TraceRecorder> result = new HashSet<>();

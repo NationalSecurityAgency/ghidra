@@ -260,7 +260,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	private void updateProviders() {
 		AddressIndexMap addressIndexMap = layoutModel.getAddressIndexMap();
 		for (OverviewProvider element : overviewProviders) {
-			element.setAddressIndexMap(addressIndexMap);
+			element.setProgram(getProgram(), addressIndexMap);
 		}
 		for (ChangeListener indexMapChangeListener : indexMapChangeListeners) {
 			indexMapChangeListener.stateChanged(null);
@@ -294,7 +294,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		else {
 			marginProviders.add(provider);
 		}
-		provider.setPixelMap(pixmap);
+		provider.setProgram(getProgram(), layoutModel.getAddressIndexMap(), pixmap);
 		buildPanels();
 	}
 
@@ -408,7 +408,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 */
 	public void addOverviewProvider(OverviewProvider provider) {
 		overviewProviders.add(provider);
-		provider.setAddressIndexMap(layoutModel.getAddressIndexMap());
+		provider.setProgram(getProgram(), layoutModel.getAddressIndexMap());
 		buildPanels();
 	}
 
@@ -474,9 +474,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	@Override
 	public void layoutsChanged(List<AnchoredLayout> layouts) {
-		this.pixmap = new VerticalPixelAddressMapImpl(layouts, layoutModel.getAddressIndexMap());
+		AddressIndexMap addrMap = layoutModel.getAddressIndexMap();
+		this.pixmap = new VerticalPixelAddressMapImpl(layouts, addrMap);
 		for (MarginProvider element : marginProviders) {
-			element.setPixelMap(pixmap);
+			element.setProgram(getProgram(), addrMap, pixmap);
 		}
 
 		for (AddressSetDisplayListener listener : displayListeners) {
@@ -1061,7 +1062,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 				}
 
 				Layout layout2 = layoutModel.getLayout(loc2.getIndex());
-				
+
 				if (fieldNum1 >= 0 && layout2 != null) {
 					BigInteger index2 = loc2.getIndex();
 					int fieldNum2 = layout.getEndRowFieldNum(loc2.getFieldNum());
@@ -1122,8 +1123,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Returns the currently selected text.   The value will only be non-null for selections within
-	 * a single field. 
+	 * Returns the currently selected text. The value will only be non-null for selections within a
+	 * single field.
+	 * 
 	 * @return the selected text or null
 	 */
 	public String getTextSelection() {

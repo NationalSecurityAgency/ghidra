@@ -40,14 +40,12 @@ public class MDVS2013TestConfiguration extends MDBaseTestConfiguration {
 	}
 
 	@Override
-	protected void doDemangleSymbol() throws Exception {
+	protected MDParsableItem doDemangleSymbol(MDMang mdmIn, String mangledIn) throws Exception {
 		try {
-			demangItem = mdm.demangle(mangled, false); // "false" is different
-			demangled = demangItem.toString();
+			return mdmIn.demangle(mangledIn, false); // "false" is different
 		}
 		catch (MDException e) {
-			demangItem = null;
-			demangled = "";
+			return null;
 		}
 	}
 }

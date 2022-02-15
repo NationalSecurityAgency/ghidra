@@ -25,28 +25,31 @@ import ghidra.util.task.TaskMonitor;
  * Each data type resides in a given a category.
  */
 public interface Category extends Comparable<Category> {
+
 	/**
 	 * Get the name of this category.
+	 * @return the name.
 	 */
 	public abstract String getName();
 
 	/**
 	 * Sets the name of this category.
 	 * @param name the new name for this category
-	 * @throws DuplicateNameException if another category exists in the same parent with the same name;
+	 * @throws DuplicateNameException if another category exists in the same parent with the same
+	 * name
 	 * @throws InvalidNameException if the name is not an acceptable name.
 	 */
 	public abstract void setName(String name) throws DuplicateNameException, InvalidNameException;
 
 	/**
 	 * Get all categories in this category.
-	 * @return zero-length array if there are no categories
+	 * @return zero-length array if there are no categories.
 	 */
 	public abstract Category[] getCategories();
 
 	/**
 	 * Get all data types in this category.
-	 * @return zero-length array if there are no data types
+	 * @return zero-length array if there are no data types.
 	 */
 	public abstract DataType[] getDataTypes();
 
@@ -55,11 +58,12 @@ public interface Category extends Comparable<Category> {
 	 * The base name of a name is the first part of the string up to where the first ".conflict"
 	 * occurs. In other words, finds all data types whose name matches the given name once
 	 * any conflict suffixes have been removed from both the given name and the data types
-	 * that are being scanned. 
-	 * @param name the name for which to get conflict related data types in this category. Note: the
-	 * name that is passed in will be normalized to its base name, so you may pass in names with .conflict
-	 * appended as a convenience.
-	 * @return a list of data types that have the same base name as the base name of the given name
+	 * that are being scanned.
+	 * @param name the name for which to get conflict related data types in this category. Note:
+	 * the name that is passed in will be normalized to its base name, so you may pass in names
+	 * with .conflict appended as a convenience.
+	 * @return a list of data types that have the same base name as the base name of the given
+	 * name.
 	 */
 	public abstract List<DataType> getDataTypesByBaseName(String name);
 
@@ -73,8 +77,8 @@ public interface Category extends Comparable<Category> {
 
 	/**
 	 * Get a category with the given name.
-	 * @param name the name of the category
-	 * @return null if there is no category by this name
+	 * @param name the name of the category.
+	 * @return null if there is no category by this name.
 	 */
 	public abstract Category getCategory(String name);
 
@@ -86,39 +90,41 @@ public interface Category extends Comparable<Category> {
 
 	/**
 	 * Get a data type with the given name.
-	 * @param name the name of the data type
-	 * @return null if there is no data type by this name
+	 * @param name the name of the data type.
+	 * @return null if there is no data type by this name.
 	 */
 	public abstract DataType getDataType(String name);
 
 	/**
-	 * Create a category with the given name; if category already exists, then
-	 * return that category.
-	 * @param name the category name
-	 * @throws InvalidNameException if name has invalid characters
+	 * Create a category with the given name; if category already exists, then return that
+	 * category.
+	 * @param name the category name.
+	 * @return the category.
+	 * @throws InvalidNameException if name has invalid characters.
 	 */
 	public abstract Category createCategory(String name) throws InvalidNameException;
 
 	/**
 	 * Remove the named category from this category.
-	 * @param name the name of the category to remove
-	 * @param monitor the task monitor
-	 * @return true if the category was removed
+	 * @param name the name of the category to remove.
+	 * @param monitor the task monitor.
+	 * @return true if the category was removed.
 	 */
 	public abstract boolean removeCategory(String name, TaskMonitor monitor);
 
 	/**
 	 * Remove the named category from this category, IFF it is empty.
-	 * @param name the name of the category to remove
-	 * @param monitor the task monitor
-	 * @return true if the category was removed
+	 * @param name the name of the category to remove.
+	 * @param monitor the task monitor.
+	 * @return true if the category was removed.
 	 */
 	public abstract boolean removeEmptyCategory(String name, TaskMonitor monitor);
 
 	/**
-	 * Move the given category to this category; category is removed from
-	 * its original parent category.
-	 * @param category the category to move
+	 * Move the given category to this category; category is removed from its original parent
+	 * category.
+	 * @param category the category to move.
+	 * @param monitor the monitor.
 	 * @throws DuplicateNameException if this category already contains a
 	 * category or data type with the same name as the category param.
 	 */
@@ -126,15 +132,18 @@ public interface Category extends Comparable<Category> {
 			throws DuplicateNameException;
 
 	/**
-	 * Make a new subcategory from the given category.
-	 * @param category the category to copy into this category
-	 * @return category that is added to this category
+	 * Make a new sub-category from the given category.
+	 * @param category the category to copy into this category.
+	 * @param handler the handler to call if there is a data type conflict.
+	 * @param monitor the monitor.
+	 * @return category that is added to this category.
 	 */
 	public abstract Category copyCategory(Category category, DataTypeConflictHandler handler,
 			TaskMonitor monitor);
 
 	/**
 	 * Return this category's parent; return null if this is the root category.
+	 * @return the category.
 	 */
 	public abstract Category getParent();
 
@@ -146,33 +155,36 @@ public interface Category extends Comparable<Category> {
 
 	/**
 	 * Get the fully qualified name for this category.
+	 * @return the name.
 	 */
 	public abstract String getCategoryPathName();
 
 	/**
 	 * Get the root category.
+	 * @return the category.
 	 */
 	public abstract Category getRoot();
 
 	/**
 	 * Get the data type manager associated with this category.
+	 * @return the manager.
 	 */
 	public abstract DataTypeManager getDataTypeManager();
 
 	/**
-	 * Move a data type into this category
+	 * Move a data type into this category.
 	 *
-	 * @param type data type to be moved
-	 * @param handler the handler to call if there is a data type conflict
-	 * @throws DataTypeDependencyException
+	 * @param type data type to be moved.
+	 * @param handler the handler to call if there is a data type conflict.
+	 * @throws DataTypeDependencyException if a disallowed dependency is created during the move.
 	 */
 	public abstract void moveDataType(DataType type, DataTypeConflictHandler handler)
 			throws DataTypeDependencyException;
 
 	/**
-	 * Remove a datatype from this category
+	 * Remove a datatype from this category.
 	 *
-	 * @param type data type to be removed
+	 * @param type data type to be removed.
 	 * @param monitor monitor of progress in case operation takes a long time.
 	 * @return true if the data type was found in this category and successfully removed.
 	 */
@@ -180,6 +192,7 @@ public interface Category extends Comparable<Category> {
 
 	/**
 	 * Get the ID for this category.
+	 * @return the ID.
 	 */
 	public long getID();
 }

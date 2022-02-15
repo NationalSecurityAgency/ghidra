@@ -148,6 +148,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new CutAction(plugin));
 		addLocalAction(new CopyAction(plugin));
 		addLocalAction(new PasteAction(plugin));
+		addLocalAction(new ReplaceDataTypeAction(plugin));
 		addLocalAction(new DeleteAction(plugin));
 		addLocalAction(new DeleteArchiveAction(plugin));
 		addLocalAction(new RenameAction(plugin));
@@ -181,8 +182,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new FindDataTypesBySizeAction(plugin, "2"));
 		addLocalAction(new FindStructuresByOffsetAction(plugin, "3"));
 		addLocalAction(new FindStructuresBySizeAction(plugin, "4"));
-		includeDataMembersInSearchAction =
-			new IncludeDataTypesInFilterAction(plugin, this, "5");
+		includeDataMembersInSearchAction = new IncludeDataTypesInFilterAction(plugin, this, "5");
 		addLocalAction(includeDataMembersInSearchAction);
 
 		addLocalAction(new ApplyFunctionDataTypesAction(plugin)); // Tree

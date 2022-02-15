@@ -15,20 +15,24 @@
  */
 package docking.widgets.fieldpanel.support;
 
-import ghidra.util.exception.AssertException;
-
 import java.math.BigInteger;
 
 import org.jdom.Element;
 
+import docking.widgets.fieldpanel.Layout;
+import ghidra.util.exception.AssertException;
+
 /**
- *  Class to a range consisting of a start position within a start row to an end position within an 
- *  end row (exclusive).  
+ *  A range consists of a start position within a start row to an end position within an end row
+ *  (exclusive).
  *  <p>
- *  Conceptually, this class can be thought of as a range of rows (defined by 
- *  <code>startIndex</code> and <code>endindex</code>) with sub-positions within those rows (defined by
- *  <code>startField</code> and <code>endField</code>). As an example, consider a text select that begins on
- *  some word in a row and ends on another word in a different row.  
+ *  Conceptually, this class can be thought of as a range of rows (defined by start and end
+ *  indexes) with sub-positions within those rows. As an example, consider a text selection that
+ *  begins on some word in a row and ends on another word in a different row.
+ * 
+ *  @see FieldSelection
+ *  @see FieldLocation
+ *  @see Layout
  */
 public class FieldRange implements Comparable<FieldRange> {
 	FieldLocation start;
@@ -71,9 +75,6 @@ public class FieldRange implements Comparable<FieldRange> {
 		return end;
 	}
 
-	/**
-	 * Return string representation for debugging purposes.
-	 */
 	@Override
 	public String toString() {
 		return "FieldRange: (" + start + " :: " + end + ")";
@@ -108,6 +109,7 @@ public class FieldRange implements Comparable<FieldRange> {
 		return start.hashCode() << 16 + end.hashCode();
 	}
 
+	@Override
 	public int compareTo(FieldRange o) {
 		int result = start.compareTo(o.start);
 		if (result == 0) {
@@ -190,7 +192,8 @@ public class FieldRange implements Comparable<FieldRange> {
 
 	public boolean containsEntirely(int index) {
 		if (start.getIndex().intValue() > index ||
-			((start.getIndex().intValue() == index) && (start.fieldNum != 0 || start.row != 0 || start.col != 0))) {
+			((start.getIndex().intValue() == index) &&
+				(start.fieldNum != 0 || start.row != 0 || start.col != 0))) {
 			return false;
 		}
 		if (end.getIndex().intValue() <= index) {

@@ -52,6 +52,8 @@ import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
 import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
+import ghidra.app.plugin.core.marker.MarkerMarginProvider;
+import ghidra.app.plugin.core.marker.MarkerOverviewProvider;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerListingService.LocationTrackingSpecChangeListener;
 import ghidra.app.util.viewer.format.FormatManager;
@@ -266,6 +268,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected final MultiBlendedListingBackgroundColorModel colorModel;
 	protected final MarkerSetChangeListener markerChangeListener = new MarkerSetChangeListener();
 	protected MarkerServiceBackgroundColorModel markerServiceColorModel;
+	protected MarkerMarginProvider markerMarginProvider;
+	protected MarkerOverviewProvider markerOverviewProvider;
 
 	private SuppressableCallback<ProgramLocation> cbGoTo = new SuppressableCallback<>();
 
@@ -500,6 +504,10 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	private void setMarkerService(MarkerService markerService) {
 		if (this.markerService != null) {
 			this.markerService.removeChangeListener(markerChangeListener);
+			removeMarginProvider(markerMarginProvider);
+			markerMarginProvider = null;
+			removeOverviewProvider(markerOverviewProvider);
+			markerOverviewProvider = null;
 		}
 		removeOldStaticTrackingMarker();
 		this.markerService = markerService;
@@ -509,6 +517,12 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		if (this.markerService != null && !isMainListing()) {
 			// NOTE: Connected provider marker listener is taken care of by CodeBrowserPlugin
 			this.markerService.addChangeListener(markerChangeListener);
+		}
+		if (this.markerService != null) {
+			markerMarginProvider = markerService.createMarginProvider();
+			addMarginProvider(markerMarginProvider);
+			markerOverviewProvider = markerService.createOverviewProvider();
+			addOverviewProvider(markerOverviewProvider);
 		}
 	}
 

@@ -100,7 +100,8 @@ public class MDEncodedNumber extends MDParsableItem {
 			}
 		}
 		else {
-			throw new MDException("Illegal character in MDEncodedNumber: " + dmang.peek());
+			throw new MDException("Illegal character at index " + dmang.getIndex() +
+				" in MDEncodedNumber: " + dmang.peek());
 		}
 	}
 }

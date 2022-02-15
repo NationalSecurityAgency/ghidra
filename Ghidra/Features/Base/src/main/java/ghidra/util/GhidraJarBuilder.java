@@ -663,9 +663,6 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		}
 
 		public void writeExtensionPointClassFile() throws IOException {
-			String s = "abc";
-			s.getBytes();
-
 			ZipEntry entry = new ZipEntry(ROOT_GHIDRA + "EXTENSION_POINT_CLASSES");
 
 			try {

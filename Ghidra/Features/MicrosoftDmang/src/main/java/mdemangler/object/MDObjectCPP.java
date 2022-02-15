@@ -17,6 +17,7 @@ package mdemangler.object;
 
 import ghidra.util.Msg;
 import mdemangler.*;
+import mdemangler.MDMang.ProcessingMode;
 import mdemangler.functiontype.MDFunctionType;
 import mdemangler.naming.*;
 import mdemangler.typeinfo.MDTypeInfo;
@@ -119,7 +120,13 @@ public class MDObjectCPP extends MDObject {
 		if (dmang.peek() != '?') {
 			throw new MDException("Invalid ObjectCPP");
 		}
-		dmang.increment();
+		if (!dmang.isProcessingModeActive(ProcessingMode.LLVM)) {
+			// If not LLVM mode, then the '?' seen above is valid as being part of this MDObjectCPP
+			// parsing, so we should consume it.  If, on the other hand, we are in LLVM mode, then
+			// this '?' is currently part of the possible nonstandard mangling forms that are
+			// output by LLVM mangling and they are consumed there.
+			dmang.increment();
+		}
 		if ((dmang.peek(0) == '?') && (dmang.peek(1) == '?')) { //??? prefix
 			embeddedObjectFlag = true;
 		}
@@ -250,7 +257,7 @@ public class MDObjectCPP extends MDObject {
 					break;
 				}
 				builder.append(ch);
-				dmang.next();
+				dmang.increment();
 			}
 			int end = dmang.getIndex();
 			if ((end - start) != 32 || ch != '@') {

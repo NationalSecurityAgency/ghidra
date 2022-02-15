@@ -585,8 +585,8 @@ public class DataTypeManagerHandler {
 				dataTypeManager.updateSourceArchiveName(existingDataTypeManager.getUniversalID(),
 					existingDataTypeManager.getName());
 
-				int existingTxID = existingDataTypeManager.startTransaction(
-					"Update Data Type Source Archive Name");
+				int existingTxID = existingDataTypeManager
+						.startTransaction("Update Data Type Source Archive Name");
 				try {
 					existingDataTypeManager.updateSourceArchiveName(
 						dataTypeManager.getUniversalID(), dataTypeManager.getName());
@@ -686,7 +686,7 @@ public class DataTypeManagerHandler {
 		Msg.info(this, "Closed archive: '" + archive.getName() + "'");
 	}
 
-	private Archive getArchive(DataTypeManager dtm) {
+	public Archive getArchive(DataTypeManager dtm) {
 		for (Archive archive : openArchives) {
 			DataTypeManager dataTypeManager = archive.getDataTypeManager();
 			if (dataTypeManager.equals(dtm)) {
@@ -814,43 +814,43 @@ public class DataTypeManagerHandler {
 
 	private void initializeFavorites() {
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(PointerDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(PointerDataType.dataType, null), true);
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(CharDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(CharDataType.dataType, null), true);
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(StringDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(StringDataType.dataType, null), true);
 		builtInDataTypesManager.setFavorite(
 			builtInDataTypesManager.resolve(TerminatedStringDataType.dataType, null), true);
 		builtInDataTypesManager.setFavorite(
 			builtInDataTypesManager.resolve(TerminatedUnicodeDataType.dataType, null), true);
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(FloatDataType.dataType, null), true);
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(DoubleDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(FloatDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(DoubleDataType.dataType, null), true);
 		builtInDataTypesManager.setFavorite(
 			builtInDataTypesManager.resolve(LongDoubleDataType.dataType, null), true);
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(IntegerDataType.dataType, null), true);
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(LongDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(IntegerDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(LongDataType.dataType, null), true);
 		builtInDataTypesManager.setFavorite(
 			builtInDataTypesManager.resolve(UnsignedIntegerDataType.dataType, null), true);
 		builtInDataTypesManager.setFavorite(
 			builtInDataTypesManager.resolve(UnsignedLongDataType.dataType, null), true);
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(ByteDataType.dataType, null), true);
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(WordDataType.dataType, null), true);
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(DWordDataType.dataType, null), true);
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(QWordDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(ByteDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(WordDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(DWordDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(QWordDataType.dataType, null), true);
 
 	}
 
@@ -900,7 +900,7 @@ public class DataTypeManagerHandler {
 		}
 		saveState.putStrings(RECENT_NAMES, getSaveableArchiveNames(recentMenuList));
 
-		// update the initialArchives list so that future checks on that list do not trigger a 
+		// update the initialArchives list so that future checks on that list do not trigger a
 		// state change
 		initiallyOpenedFileArchiveNames = getOpenFileArchiveNames(openArchives);
 	}
@@ -957,11 +957,11 @@ public class DataTypeManagerHandler {
 
 	/**
 	 * Determine if we can remember the specified project archive using a simple project path
-	 * (e.g., we can't remember specific versions). 
+	 * (e.g., we can't remember specific versions).
 	 * @param pa project archive
-	 * @param activeProjectOnly if true pa must be contained within the 
+	 * @param activeProjectOnly if true pa must be contained within the
 	 * active project to be remembered.
-	 * @return return project path which can be remembered or null 
+	 * @return return project path which can be remembered or null
 	 */
 	public String getProjectPathname(ProjectArchive pa, boolean activeProjectOnly) {
 		// Project archives are always opened by a user.
@@ -1227,7 +1227,7 @@ public class DataTypeManagerHandler {
 	}
 
 	/**
-	 * Signals to this manager to save the knowledge of all currently opened archives and to mark 
+	 * Signals to this manager to save the knowledge of all currently opened archives and to mark
 	 * the tool as dirty (changed) if the current open archives are not the same as those that
 	 * were initially opened.
 	 */
@@ -1428,8 +1428,8 @@ public class DataTypeManagerHandler {
 				new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, domainFileFilter);
 
 			dataTreeSaveDialog.addOkActionListener(listener);
-			dataTreeSaveDialog.setHelpLocation(
-				new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
+			dataTreeSaveDialog
+					.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
 		}
 		return dataTreeSaveDialog;
 	}
@@ -1614,8 +1614,8 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
-			if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE.equals(
-				file.getContentType())) {
+			if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE
+					.equals(file.getContentType())) {
 				return;
 			}
 			Iterator<Archive> archiveIter = openArchives.iterator();
@@ -1658,8 +1658,8 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void domainFileRenamed(DomainFile file, String oldName) {
-			if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE.equals(
-				file.getContentType())) {
+			if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE
+					.equals(file.getContentType())) {
 				return;
 			}
 			String newName = file.getName();
@@ -1726,7 +1726,7 @@ public class DataTypeManagerHandler {
 
 	/**
 	 * Provides an exception handler for a failed attempt to open an datatype archive file.
-	 * This method will display exception information to the user and/or log. 
+	 * This method will display exception information to the user and/or log.
 	 * @param plugin datatype manager plugin
 	 * @param archiveFile archive file resource being opened
 	 * @param t throwable

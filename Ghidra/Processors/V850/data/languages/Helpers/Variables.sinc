@@ -16,7 +16,7 @@ attach variables [ R0004x2 R1115x2 R1620x2 R2731x2 ]
   r0r1 	 _  r2sp    _  r4r5   _ r6r7   _  r8r9    _ 
   r10r11 _  r12r13  _  r14r15 _ r16r17 _  r18r19  _ 
   r20r21 _  r22r23  _  r24r25 _ r26r27 _  r28r29  _ 
-  _ 	 _ 
+  eplp 	 _ 
 ];
 
 attach variables [ SR0004 SR1115 ]

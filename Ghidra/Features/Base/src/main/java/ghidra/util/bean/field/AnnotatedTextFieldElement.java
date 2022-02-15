@@ -23,9 +23,9 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.util.ProgramLocation;
 
 /**
- * A subclass of {@link FieldElement} that allows for mouse handling callbacks via the 
+ * A subclass of {@link FieldElement} that allows for mouse handling callbacks via the
  * {@link #handleMouseClicked(Navigatable, ServiceProvider)} method.  This class
- * is based upon {@link Annotation} objects, which are elements that perform actions when the 
+ * is based upon {@link Annotation} objects, which are elements that perform actions when the
  * use clicks an instance of this class in the display.
  */
 final public class AnnotatedTextFieldElement extends AbstractTextFieldElement {
@@ -56,13 +56,23 @@ final public class AnnotatedTextFieldElement extends AbstractTextFieldElement {
 	 * Returns the original annotation text in the data model, which will differ from the display
 	 * text.
 	 * @return the original annotation text in the data model.
+	 * @see #getDisplayString()
 	 */
 	public String getRawText() {
 		return annotation.getAnnotationText();
 	}
 
 	/**
-	 * This method is designed to be called when a mouse click has occurred for a given 
+	 * Returns the display string of annotation
+	 * @return the display string
+	 * @see #getRawText()
+	 */
+	public String getDisplayString() {
+		return annotation.getDisplayString().getText();
+	}
+
+	/**
+	 * This method is designed to be called when a mouse click has occurred for a given
 	 * {@link ProgramLocation}.
 	 * 
 	 * @param sourceNavigatable The source Navigatable
