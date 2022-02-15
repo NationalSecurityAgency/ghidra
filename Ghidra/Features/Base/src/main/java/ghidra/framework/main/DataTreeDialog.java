@@ -144,8 +144,7 @@ public class DataTreeDialog extends DialogComponentProvider
 			okButton.setText("Save");
 			okButton.setMnemonic('S');
 		}
-
-		if (newType == CREATE) {
+		else if (newType == CREATE) {
 			okButton.setText("Create");
 			okButton.setMnemonic('C');
 		}
@@ -222,11 +221,15 @@ public class DataTreeDialog extends DialogComponentProvider
 		pendingNameText = null;
 		initializeSelectedFolder();
 
+		setFocusComponent(nameField);
 		if (type == OPEN) {
 			domainFolder = null;
 			nameField.setText(nameFieldText);
 			nameField.selectAll();
 			populateProjectModel();
+
+			// the name field is disabled; use the filter field
+			setFocusComponent(treePanel.getFilterField());
 		}
 		else if (type == SAVE) {
 			nameField.setText(nameFieldText);
@@ -237,6 +240,9 @@ public class DataTreeDialog extends DialogComponentProvider
 			nameField.setText(nameFieldText);
 			nameField.selectAll();
 			initializeSelectedFolder();
+		}
+		else { // CHOOSE_FOLDER
+			setFocusComponent(treePanel.getFilterField());
 		}
 
 		setOkEnabled(!nameFieldText.isEmpty());
