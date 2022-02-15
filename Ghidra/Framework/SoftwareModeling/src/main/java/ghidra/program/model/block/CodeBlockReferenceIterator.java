@@ -37,43 +37,43 @@ import util.CollectionUtils;
  */
 public interface CodeBlockReferenceIterator extends Iterable<CodeBlockReference> {
 
-    /**
-     * Return true if next() will return a CodeBlockReference.
-     * @return true if next() will return a CodeBlockReference.
-     * @throws CancelledException thrown if the operation is cancelled.
-     */
-    public boolean hasNext() throws CancelledException;
+	/**
+	 * Return true if next() will return a CodeBlockReference.
+	 * @return true if next() will return a CodeBlockReference.
+	 * @throws CancelledException thrown if the operation is cancelled.
+	 */
+	public boolean hasNext() throws CancelledException;
 
-    /**
-     * Return the next CodeBlockReference.
-     * @return the next CodeBlockReference.
-     * @throws CancelledException thrown if the operation is cancelled.
-     */
-    public CodeBlockReference next() throws CancelledException;
+	/**
+	 * Return the next CodeBlockReference.
+	 * @return the next CodeBlockReference.
+	 * @throws CancelledException thrown if the operation is cancelled.
+	 */
+	public CodeBlockReference next() throws CancelledException;
 
-    @Override
-    default Iterator<CodeBlockReference> iterator() {
-        return new Iterator<>() {
-            @Override
-            public boolean hasNext() {
-                try {
-                    return CodeBlockReferenceIterator.this.hasNext();
-                }
-                catch (CancelledException e) {
-                    return false;
-                }
-            }
+	@Override
+	default Iterator<CodeBlockReference> iterator() {
+		return new Iterator<>() {
+			@Override
+			public boolean hasNext() {
+				try {
+					return CodeBlockReferenceIterator.this.hasNext();
+				}
+				catch (CancelledException e) {
+					return false;
+				}
+			}
 
-            @Override
-            public CodeBlock next() {
-                try {
-                    return CodeBlockReferenceIterator.this.next();
-                }
-                catch (CancelledException e) {
-                    return null;
-                }
-            }
-        };
-    }
+			@Override
+			public CodeBlockReference next() {
+				try {
+					return CodeBlockReferenceIterator.this.next();
+				}
+				catch (CancelledException e) {
+					return null;
+				}
+			}
+		};
+	}
 }
 
