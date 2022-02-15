@@ -77,6 +77,11 @@ public class FunctionThunkSettingsDefinition implements BooleanSettingsDefinitio
 	}
 
 	@Override
+	public String getStorageKey() {
+		return THUNK;
+	}
+
+	@Override
 	public boolean hasValue(Settings settings) {
 		return settings.getValue(THUNK) != null;
 	}

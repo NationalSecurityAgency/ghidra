@@ -33,7 +33,7 @@ public enum PointerType {
 	/**
 	 * Pointer offset relative to program image base. 
 	 */
-	IBO(1),
+	IMAGE_BASE_RELATIVE(1),
 	/**
 	 * Pointer offset relative to pointer storage address.
 	 * NOTE: This type has limited usefulness since it can only be applied to

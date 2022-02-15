@@ -86,9 +86,6 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		DataType basedataType = dataType;
 		while (basedataType instanceof TypeDef) {
 			basedataType = ((TypeDef) basedataType).getDataType();
-			while (basedataType instanceof Pointer) {
-				basedataType = ((Pointer) basedataType).getDataType();
-			}
 		}
 		return basedataType;
 	}

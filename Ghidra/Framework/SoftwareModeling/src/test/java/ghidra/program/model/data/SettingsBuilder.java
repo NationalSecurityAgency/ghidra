@@ -17,8 +17,7 @@ package ghidra.program.model.data;
 
 import java.nio.charset.Charset;
 
-import ghidra.docking.settings.Settings;
-import ghidra.docking.settings.SettingsImpl;
+import ghidra.docking.settings.*;
 import ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER_ENUM;
 import ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION_ENUM;
 
@@ -34,6 +33,11 @@ public class SettingsBuilder implements Settings {
 	 */
 	public SettingsBuilder() {
 		// nada
+	}
+
+	@Override
+	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
+		return settings.isChangeAllowed(settingsDefinition);
 	}
 
 	/**

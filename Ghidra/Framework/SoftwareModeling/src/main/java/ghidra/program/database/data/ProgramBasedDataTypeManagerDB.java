@@ -20,11 +20,14 @@ import java.util.List;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.KeyRange;
-import ghidra.program.model.data.ProgramBasedDataTypeManager;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Data;
 import ghidra.util.Lock;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -91,22 +94,36 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 	abstract protected void dataSettingChanged(Address address);
 
 	@Override
-	public boolean setLongSettingsValue(Address dataAddr, String name, long value) {
-		return updateInstanceSettings(dataAddr, name, null, value);
+	public boolean isChangeAllowed(Data data,
+			SettingsDefinition settingsDefinition) {
+		if (settingsDefinition instanceof TypeDefSettingsDefinition) {
+			return false;
+		}
+		for (SettingsDefinition def : data.getDataType().getSettingsDefinitions()) {
+			if (def.equals(settingsDefinition)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
-	public boolean setStringSettingsValue(Address dataAddr, String name, String value) {
-		return updateInstanceSettings(dataAddr, name, value, -1);
+	public boolean setLongSettingsValue(Data data, String name, long value) {
+		return updateInstanceSettings(data, name, null, value);
 	}
 
 	@Override
-	public boolean setSettings(Address dataAddr, String name, Object value) {
+	public boolean setStringSettingsValue(Data data, String name, String value) {
+		return updateInstanceSettings(data, name, value, -1);
+	}
+
+	@Override
+	public boolean setSettings(Data data, String name, Object value) {
 		if (value instanceof String) {
-			return updateInstanceSettings(dataAddr, name, (String) value, -1);
+			return updateInstanceSettings(data, name, (String) value, -1);
 		}
 		else if (isAllowedNumberType(value)) {
-			return updateInstanceSettings(dataAddr, name, null, ((Number) value).longValue());
+			return updateInstanceSettings(data, name, null, ((Number) value).longValue());
 		}
 		throw new IllegalArgumentException(
 			"Unsupportd Settings Value: " + (value == null ? "null" : value.getClass().getName()));
@@ -129,8 +146,8 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 	}
 
 	@Override
-	public Long getLongSettingsValue(Address dataAddr, String name) {
-		SettingDB settings = getSettingDB(dataAddr, name);
+	public Long getLongSettingsValue(Data data, String name) {
+		SettingDB settings = getSettingDB(data, name);
 		if (settings != null) {
 			return settings.getLongValue();
 		}
@@ -138,8 +155,8 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 	}
 
 	@Override
-	public String getStringSettingsValue(Address dataAddr, String name) {
-		SettingDB settings = getSettingDB(dataAddr, name);
+	public String getStringSettingsValue(Data data, String name) {
+		SettingDB settings = getSettingDB(data, name);
 		if (settings != null) {
 			return settings.getStringValue();
 		}
@@ -147,21 +164,22 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 	}
 
 	@Override
-	public Object getSettings(Address dataAddr, String name) {
-		Object obj = getStringSettingsValue(dataAddr, name);
+	public Object getSettings(Data data, String name) {
+		Object obj = getStringSettingsValue(data, name);
 		if (obj != null) {
 			return obj;
 		}
-		return getLongSettingsValue(dataAddr, name);
+		return getLongSettingsValue(data, name);
 	}
 
 	@Override
-	public boolean clearSetting(Address dataAddr, String name) {
+	public boolean clearSetting(Data data, String name) {
 		if (instanceSettingsAdapter == null) {
 			throw new UnsupportedOperationException();
 		}
 		lock.acquire();
 		try {
+			Address dataAddr = getDataSettingsAddress(data);
 			instanceSettingsCache.remove(dataAddr, name);
 			long addr = addrMap.getKey(dataAddr, false);
 			if (instanceSettingsAdapter.removeSettingsRecord(addr, name)) {
@@ -180,7 +198,7 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 	}
 
 	@Override
-	public void clearAllSettings(Address dataAddr) {
+	public void clearAllSettings(Data data) {
 		if (instanceSettingsAdapter == null) {
 			throw new UnsupportedOperationException();
 		}
@@ -188,6 +206,7 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 		try {
 			instanceSettingsCache.clear();
 			boolean changed = false;
+			Address dataAddr = getDataSettingsAddress(data);
 			Field[] keys = instanceSettingsAdapter.getSettingsKeys(addrMap.getKey(dataAddr, false));
 			for (Field key : keys) {
 				instanceSettingsAdapter.removeSettingsRecord(key.getLongValue());
@@ -267,12 +286,13 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 	}
 
 	@Override
-	public String[] getInstanceSettingsNames(Address dataAddr) {
+	public String[] getInstanceSettingsNames(Data data) {
 		if (instanceSettingsAdapter == null) {
 			throw new UnsupportedOperationException();
 		}
 		lock.acquire();
 		try {
+			Address dataAddr = getDataSettingsAddress(data);
 			return instanceSettingsAdapter.getSettingsNames(addrMap.getKey(dataAddr, false));
 		}
 		catch (IOException e) {
@@ -285,11 +305,12 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 	}
 
 	@Override
-	public boolean isEmptySetting(Address dataAddr) {
+	public boolean isEmptySetting(Data data) {
 		if (instanceSettingsAdapter == null) {
 			throw new UnsupportedOperationException();
 		}
 		try {
+			Address dataAddr = getDataSettingsAddress(data);
 			return instanceSettingsAdapter
 					.getSettingsKeys(addrMap.getKey(dataAddr, false)).length == 0;
 		}
@@ -299,7 +320,7 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 		return true;
 	}
 
-	private boolean updateInstanceSettings(Address dataAddr, String name, String strValue,
+	private boolean updateInstanceSettings(Data data, String name, String strValue,
 			long longValue) {
 
 		boolean wasChanged = false;
@@ -309,6 +330,10 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 			if (instanceSettingsAdapter == null) {
 				throw new UnsupportedOperationException();
 			}
+			if (!checkSetting(data, name)) {
+				return false;
+			}
+			Address dataAddr = getDataSettingsAddress(data);
 			long addrKey = addrMap.getKey(dataAddr, true);
 			DBRecord rec =
 				instanceSettingsAdapter.updateSettingsRecord(addrKey, name, strValue, longValue);
@@ -330,12 +355,31 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 		return wasChanged;
 	}
 
-	private SettingDB getSettingDB(Address dataAddr, String name) {
+	private boolean checkSetting(Data data, String name) {
+		SettingsDefinition settingsDefinition = null;
+		for (SettingsDefinition def : data.getDataType().getSettingsDefinitions()) {
+			if (def.getStorageKey().equals(name)) {
+				settingsDefinition = def;
+				break;
+			}
+		}
+		if (settingsDefinition == null) {
+			Msg.warn(this, "Ignored unrecognized setting '" + name + "'");
+			return false;
+		}
+		if (settingsDefinition instanceof TypeDefSettingsDefinition) {
+			Msg.warn(this, "Ignored disallowed instance setting '" + name + "'");
+		}
+		return true;
+	}
+
+	private SettingDB getSettingDB(Data data, String name) {
 		lock.acquire();
 		try {
 			if (instanceSettingsAdapter == null) {
 				throw new UnsupportedOperationException();
 			}
+			Address dataAddr = getDataSettingsAddress(data);
 			SettingDB settings = instanceSettingsCache.get(dataAddr, name);
 			if (settings != null) {
 				return settings;
@@ -379,5 +423,16 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 			instanceSettingsCache.clear();
 			lock.release();
 		}
+	}
+
+	private static Address getDataSettingsAddress(Data data) {
+		Data parent = data.getParent();
+		if (parent != null) {
+			DataType dataType = parent.getDataType();
+			if (dataType instanceof Array) {
+				return getDataSettingsAddress(parent);
+			}
+		}
+		return data.getAddress();
 	}
 }

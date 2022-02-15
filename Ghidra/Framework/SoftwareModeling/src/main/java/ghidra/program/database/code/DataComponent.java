@@ -283,12 +283,4 @@ class DataComponent extends DataDB {
 		return super.getDefaultSettings();
 	}
 
-	@Override
-	protected Address getDataSettingsAddress() {
-		if (parent.getBaseDataType() instanceof Array) {
-			return parent.getDataSettingsAddress();
-		}
-		return address;
-	}
-
 }

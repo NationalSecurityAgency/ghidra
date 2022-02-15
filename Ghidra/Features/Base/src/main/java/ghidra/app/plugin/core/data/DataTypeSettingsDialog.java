@@ -63,6 +63,8 @@ public class DataTypeSettingsDialog extends AbstractSettingsDialog {
 		if (dtm instanceof DataTypeManagerDB) {
 			long id = dtm.getID(dt);
 			if (id > 0) {
+				// FIXME: this does not handle re-mapped BuiltIn datatypes
+				// since multiple instances may be defined
 				if (dt == dtm.getDataType(id)) {
 					return; // valid original instance
 				}

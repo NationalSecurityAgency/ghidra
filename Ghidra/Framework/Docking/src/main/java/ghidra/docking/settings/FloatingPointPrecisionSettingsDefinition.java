@@ -93,6 +93,11 @@ public class FloatingPointPrecisionSettingsDefinition implements EnumSettingsDef
 	}
 
 	@Override
+	public String getStorageKey() {
+		return PRECISION_DIGITS;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Selects the number of digits of precision to display";
 	}

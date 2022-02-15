@@ -18,6 +18,7 @@ package ghidra.program.model.data;
 import ghidra.docking.settings.*;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 
 /**
@@ -30,6 +31,7 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 
 	private DataType dataType;
 	private SettingsDefinition[] settingsDef;
+	private boolean isAutoNamed = false;
 	private boolean deleted = false;
 
 	/**
@@ -105,6 +107,20 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	}
 
 	@Override
+	public void enableAutoNaming() {
+		if (isAutoNamed) {
+			return;
+		}
+		isAutoNamed = true;
+		notifyNameChanged(name);
+	}
+
+	@Override
+	public boolean isAutoNamed() {
+		return isAutoNamed;
+	}
+
+	@Override
 	public String getDefaultLabelPrefix() {
 		return getName();
 	}
@@ -124,7 +140,10 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 		}
 		if (obj instanceof TypeDef) {
 			TypeDef td = (TypeDef) obj;
-			if (!DataTypeUtilities.equalsIgnoreConflict(name, td.getName())) {
+			if (isAutoNamed != td.isAutoNamed()) {
+				return false;
+			}
+			if (!isAutoNamed && !DataTypeUtilities.equalsIgnoreConflict(getName(), td.getName())) {
 				return false;
 			}
 			if (!hasSameTypeDefSettings(td)) {
@@ -175,23 +194,66 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 		return dataType.getValueClass(settings);
 	}
 
+	public static TypeDef clone(TypeDef typedef, DataTypeManager dtm) {
+		if (typedef.getDataTypeManager() == dtm) {
+			return typedef;
+		}
+		TypedefDataType newTypedef =
+			new TypedefDataType(typedef.getCategoryPath(), typedef.getName(), typedef.getDataType(),
+				typedef.getUniversalID(),
+				typedef.getSourceArchive(), typedef.getLastChangeTime(),
+				typedef.getLastChangeTimeInSourceArchive(), dtm);
+		copyTypeDefSettings(typedef, newTypedef, false);
+		newTypedef.isAutoNamed = typedef.isAutoNamed();
+		return newTypedef;
+	}
+
+	public static TypedefDataType copy(TypeDef typedef, DataTypeManager dtm) {
+		TypedefDataType newTypedef = new TypedefDataType(typedef.getCategoryPath(),
+			typedef.getName(), typedef.getDataType(), dtm);
+		copyTypeDefSettings(typedef, newTypedef, false);
+		newTypedef.isAutoNamed = typedef.isAutoNamed();
+		return newTypedef;
+	}
+
 	@Override
 	public TypedefDataType clone(DataTypeManager dtm) {
-		if (getDataTypeManager() == dtm) {
-			return this;
-		}
-		TypedefDataType typeDef =
-			new TypedefDataType(categoryPath, name, dataType, getUniversalID(),
-			getSourceArchive(), getLastChangeTime(), getLastChangeTimeInSourceArchive(), dtm);
-		copyTypeDefSettings(this, typeDef, false);
-		return typeDef;
+		return (TypedefDataType) clone(this, dtm);
 	}
 
 	@Override
 	public TypedefDataType copy(DataTypeManager dtm) {
-		TypedefDataType typeDef = new TypedefDataType(categoryPath, name, dataType, dtm);
-		copyTypeDefSettings(this, typeDef, false);
-		return typeDef;
+		return copy(this, dtm);
+	}
+
+	@Override
+	public String getName() {
+		if (isAutoNamed()) {
+			return generateTypedefName(this);
+		}
+		return super.getName();
+	}
+
+	@Override
+	public void setName(String name) throws InvalidNameException {
+		super.setName(name);
+		isAutoNamed = false;
+	}
+
+	@Override
+	public void setCategoryPath(CategoryPath path) {
+		if (isAutoNamed()) {
+			return; // ignore category change if auto-naming enabled
+		}
+		super.setCategoryPath(path);
+	}
+
+	@Override
+	public CategoryPath getCategoryPath() {
+		if (isAutoNamed()) {
+			return getDataType().getCategoryPath();
+		}
+		return super.getCategoryPath();
 	}
 
 	@Override
@@ -316,6 +378,9 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 
 	@Override
 	public String toString() {
+		if (isAutoNamed()) {
+			return getName();
+		}
 		return "typedef " + getName() + " " + dataType.getName();
 	}
 
@@ -351,9 +416,9 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	public static String generateTypedefName(TypeDef modelType) {
 
 		// Examples:
-		//   string *32 __attribute__((relative))
-		//   char *32 __attribute__((image-base-relative))
-		//   char *16 __attribute__((space(data)))
+		//   string *32 __((relative))
+		//   char *32 __((image-base-relative))
+		//   char *16 __((space(data)))
 
 		Settings settings = modelType.getDefaultSettings();
 		StringBuilder attributesBuf = new StringBuilder();
@@ -367,9 +432,11 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 			}
 		}
 		StringBuilder buf = new StringBuilder(modelType.getDataType().getName());
-		buf.append(" __attribute__((");
+		buf.append(' ');
+		buf.append(DataType.TYPEDEF_ATTRIBUTE_PREFIX);
 		buf.append(attributesBuf);
-		buf.append("))");
+		buf.append(DataType.TYPEDEF_ATTRIBUTE_SUFFIX);
 		return buf.toString();
 	}
+
 }

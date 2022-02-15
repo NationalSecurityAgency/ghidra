@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.*;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.InvalidNameException;
@@ -1433,7 +1434,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 					// NOTE: these are not viable settings but are intended to exercise all of them
 					Settings settings = td.getDefaultSettings();
 					PointerTypeSettingsDefinition.DEF.setType(settings,
-						PointerType.IBO);
+						PointerType.IMAGE_BASE_RELATIVE);
 					AddressSpaceSettingsDefinition.DEF.setValue(settings, "ROM");
 					ComponentOffsetSettingsDefinition.DEF.setValue(settings, 0x10);
 					OffsetMaskSettingsDefinition.DEF.setValue(settings, 0x1234);
@@ -1511,6 +1512,211 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 		assertEquals(0x10, ComponentOffsetSettingsDefinition.DEF.getValue(settings));
 		assertEquals(0x5678, OffsetMaskSettingsDefinition.DEF.getValue(settings));
 		assertEquals(4, OffsetShiftSettingsDefinition.DEF.getValue(settings));
+
+		checkConflictCount(0);
+	}
+
+	private static String formatAttributes(String attrs) {
+		StringBuilder buf = new StringBuilder(DataType.TYPEDEF_ATTRIBUTE_PREFIX);
+		buf.append(attrs);
+		buf.append(DataType.TYPEDEF_ATTRIBUTE_SUFFIX);
+		return buf.toString();
+	}
+
+	@Test
+	public void testTypeDefs11() throws Exception {
+
+		// Exercise pointer-typedef auto-naming with setting changes
+
+		mtf.initialize("notepad2", new OriginalProgramModifierListener() {
+
+			@Override
+			public void modifyOriginal(ProgramDB program) throws Exception {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					// must specify datatype manager when constructing to allow for settings to be made
+					Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
+					PointerTypedef td =
+						new PointerTypedef(null, foo, -1, dtm, PointerType.IMAGE_BASE_RELATIVE);
+					DataType dt = dtm.resolve(td, DataTypeConflictHandler.DEFAULT_HANDLER);
+					assertEquals("Foo * " + formatAttributes("image-base-relative"), dt.getName());
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/MISC"),
+						"Foo * " + formatAttributes("image-base-relative"));
+					assertNotNull(td);
+					td.setName("Bob_Ptr_Td");
+
+					Settings settings = td.getDefaultSettings();
+					PointerTypeSettingsDefinition.DEF.setType(settings,
+						PointerType.RELATIVE);
+
+					Structure st = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
+					st.setName("Bob");
+
+					commit = true;
+				}
+				catch (InvalidNameException | DuplicateNameException e) {
+					failWithException("unexpected", e);
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/MISC"),
+						"Foo * " + formatAttributes("image-base-relative"));
+					assertNotNull(td);
+
+					Settings settings = td.getDefaultSettings();
+					ComponentOffsetSettingsDefinition.DEF.setValue(settings, 0x123);
+
+					Structure st = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
+					st.setName("Bill");
+
+					commit = true;
+				}
+				catch (InvalidNameException | DuplicateNameException e) {
+					failWithException("unexpected", e);
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+		});
+		executeMerge();
+
+		chooseOption(DataTypeMergeManager.OPTION_MY); // choose Bill rename of Foo
+		chooseOption(DataTypeMergeManager.OPTION_LATEST); // choose RELATIVE setting and Bob_Ptr_Td rename
+
+		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+		TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/MISC"), "Bob_Ptr_Td");
+		assertNotNull(td);
+
+		DataType dt = DataTypeUtilities.getBaseDataType(td.getDataType());
+		assertTrue(dt instanceof Structure);
+		assertEquals("Bill", dt.getName());
+
+		Settings settings = td.getDefaultSettings();
+		assertEquals(
+			"Expected pointer-typedef type: relative",
+			PointerType.RELATIVE, PointerTypeSettingsDefinition.DEF.getType(settings));
+		assertFalse(
+			"Unexpected setting: " +
+				ComponentOffsetSettingsDefinition.DEF.getAttributeSpecification(settings),
+			ComponentOffsetSettingsDefinition.DEF.hasValue(settings));
+
+		checkConflictCount(0);
+	}
+
+	@Test
+	public void testTypeDefs12() throws Exception {
+
+		// Exercise pointer-typedef auto-naming with setting changes
+
+		mtf.initialize("notepad2", new OriginalProgramModifierListener() {
+
+			@Override
+			public void modifyOriginal(ProgramDB program) throws Exception {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					// must specify datatype manager when constructing to allow for settings to be made
+					Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
+					PointerTypedef td =
+						new PointerTypedef(null, foo, -1, dtm, PointerType.IMAGE_BASE_RELATIVE);
+					DataType dt = dtm.resolve(td, DataTypeConflictHandler.DEFAULT_HANDLER);
+					assertEquals("Foo * " + formatAttributes("image-base-relative"), dt.getName());
+					commit = true;
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/MISC"),
+						"Foo * " + formatAttributes("image-base-relative"));
+					assertNotNull(td);
+					td.setName("Bob_Ptr_Td");
+
+					Settings settings = td.getDefaultSettings();
+					PointerTypeSettingsDefinition.DEF.setType(settings,
+						PointerType.RELATIVE);
+
+					commit = true;
+				}
+				catch (InvalidNameException | DuplicateNameException e) {
+					failWithException("unexpected", e);
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				boolean commit = false;
+				DataTypeManager dtm = program.getDataTypeManager();
+				int transactionID = program.startTransaction("test");
+				try {
+					Structure st = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
+					st.setName("Bill");
+					commit = true;
+				}
+				catch (InvalidNameException | DuplicateNameException e) {
+					failWithException("unexpected", e);
+				}
+				finally {
+					program.endTransaction(transactionID, commit);
+				}
+			}
+		});
+		executeMerge(true);
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+		TypeDef td = (TypeDef) dtm.getDataType(new CategoryPath("/MISC"), "Bob_Ptr_Td");
+		assertNotNull(td);
+
+		DataType dt = DataTypeUtilities.getBaseDataType(td.getDataType());
+		assertTrue(dt instanceof Structure);
+		assertEquals("Bill", dt.getName());
+
+		Settings settings = td.getDefaultSettings();
+		assertEquals(
+			"Expected pointer-typedef type: relative",
+			PointerType.RELATIVE, PointerTypeSettingsDefinition.DEF.getType(settings));
+		assertFalse(
+			"Unexpected setting: " +
+				ComponentOffsetSettingsDefinition.DEF.getAttributeSpecification(settings),
+			ComponentOffsetSettingsDefinition.DEF.hasValue(settings));
 
 		checkConflictCount(0);
 	}

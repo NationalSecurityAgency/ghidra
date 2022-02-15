@@ -38,7 +38,6 @@ class PseudoDataComponent extends PseudoData {
 	private int indexInParent;
 	private int offset;
 	private int[] path;
-	private Settings defaultSettings;
 
 	PseudoDataComponent(Program program, Address address, PseudoData parent,
 			DataTypeComponent component, MemBuffer memBuffer)
@@ -171,60 +170,6 @@ class PseudoDataComponent extends PseudoData {
 	}
 
 	@Override
-	public Long getLong(String name) {
-		if (dataMgr == null) {
-			return null;
-		}
-		Long value = dataMgr.getLongSettingsValue(address, name);
-		if (value != null) {
-			return value;
-		}
-		if (component == null) {
-			return null;
-		}
-		if (defaultSettings == null) {
-			defaultSettings = component.getDefaultSettings();
-		}
-		return defaultSettings.getLong(name);
-	}
-
-	@Override
-	public String getString(String name) {
-		if (dataMgr == null) {
-			return null;
-		}
-		String value = dataMgr.getStringSettingsValue(address, name);
-		if (value != null) {
-			return value;
-		}
-		if (component == null) {
-			return null;
-		}
-		if (defaultSettings == null) {
-			defaultSettings = component.getDefaultSettings();
-		}
-		return defaultSettings.getString(name);
-	}
-
-	@Override
-	public Object getValue(String name) {
-		if (dataMgr == null) {
-			return null;
-		}
-		Object value = dataMgr.getSettings(address, name);
-		if (value != null) {
-			return value;
-		}
-		if (component == null) {
-			return null;
-		}
-		if (defaultSettings == null) {
-			defaultSettings = component.getDefaultSettings();
-		}
-		return defaultSettings.getValue(name);
-	}
-
-	@Override
 	public synchronized String getComment(int commentType) {
 		String cmt = super.getComment(commentType);
 		if (cmt == null && commentType == CodeUnit.EOL_COMMENT && component != null) {
@@ -238,7 +183,7 @@ class PseudoDataComponent extends PseudoData {
 		if (component != null) {
 			return component.getDefaultSettings();
 		}
-		return dataType.getDefaultSettings();
+		return super.getDefaultSettings();
 	}
 
 }

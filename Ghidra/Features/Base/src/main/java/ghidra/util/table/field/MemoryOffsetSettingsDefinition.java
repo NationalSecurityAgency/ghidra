@@ -92,6 +92,11 @@ public class MemoryOffsetSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getStorageKey() {
+		return MEMORY_OFFSET;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Selects the relative byte offset from which to display";
 	}

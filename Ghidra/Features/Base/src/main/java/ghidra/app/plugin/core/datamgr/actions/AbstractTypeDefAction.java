@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,17 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
-import ghidra.program.model.data.*;
-
 import java.awt.Component;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
+import ghidra.program.model.data.*;
 
 abstract class AbstractTypeDefAction extends DockingAction {
 
@@ -55,15 +55,27 @@ abstract class AbstractTypeDefAction extends DockingAction {
 			return null;
 		}
 
-		return createNewDataType(gTree, dataType, categoryPath, dataTypeManager, typeDefName);
+		if (StringUtils.isBlank(typeDefName)) {
+			// use auto-naming for pointer-typedef
+			if (dataType instanceof Pointer) {
+				// category ignored
+				TypeDef typedef = new PointerTypedef(null, (Pointer) dataType, dataTypeManager);
+				return createNewTypeDef(gTree, typedef, categoryPath, dataTypeManager);
+			}
+			// generate default typedef name
+			String baseName = getBaseName(dataType) + "Typedef";
+			typeDefName = dataTypeManager.getUniqueName(dataType.getCategoryPath(), baseName);
+		}
+
+		TypeDef typedef = new TypedefDataType(categoryPath, typeDefName, dataType);
+		return createNewTypeDef(gTree, typedef, categoryPath, dataTypeManager);
 	}
 
-	private DataType createNewDataType(Component parentComponent, DataType dataType,
-			CategoryPath categoryPath, DataTypeManager dataTypeManager, String name) {
+	private DataType createNewTypeDef(Component parentComponent, TypeDef typedef,
+			CategoryPath categoryPath, DataTypeManager dataTypeManager) {
 		DataType newdt = null;
 		int transactionID = dataTypeManager.startTransaction("Create Typedef");
 		try {
-			DataType typedef = new TypedefDataType(categoryPath, name, dataType);
 			newdt = dataTypeManager.addDataType(typedef, plugin.getConflictHandler());
 		}
 		finally {
@@ -71,5 +83,17 @@ abstract class AbstractTypeDefAction extends DockingAction {
 		}
 
 		return newdt;
+	}
+
+	protected static String getBaseName(DataType dt) {
+		if (dt instanceof Pointer) {
+			DataType dataType = ((Pointer) dt).getDataType();
+			if (dataType == null) {
+				// must be a generic pointer type
+				return dt.getName();
+			}
+			return getBaseName(dataType) + "Ptr";
+		}
+		return dt.getDisplayName();
 	}
 }

@@ -31,6 +31,7 @@ public class PointerTypeSettingsDefinition
 		"Specifies the pointer type which affects interpretation of offset";
 	private static final String DISPLAY_NAME = "Pointer Type";
 
+	// Choices correspond to the enumerated PointerType values
 	private static final String[] choices =
 		{ "default", "image-base-relative", "relative", "file-offset" };
 

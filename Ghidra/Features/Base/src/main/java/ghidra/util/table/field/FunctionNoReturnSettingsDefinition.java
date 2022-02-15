@@ -78,6 +78,11 @@ public class FunctionNoReturnSettingsDefinition implements BooleanSettingsDefini
 	}
 
 	@Override
+	public String getStorageKey() {
+		return NORETURN;
+	}
+
+	@Override
 	public boolean hasValue(Settings settings) {
 		return settings.getValue(NORETURN) != null;
 	}

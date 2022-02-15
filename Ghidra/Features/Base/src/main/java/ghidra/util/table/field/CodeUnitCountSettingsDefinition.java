@@ -91,6 +91,11 @@ public class CodeUnitCountSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getStorageKey() {
+		return CODE_UNIT_COUNT;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Selects the number of bytes to display";
 	}

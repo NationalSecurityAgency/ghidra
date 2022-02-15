@@ -142,11 +142,6 @@ public class TestDoubleDataTypeManager implements DataTypeManager {
 	}
 
 	@Override
-	public void dataTypeChanged(DataType dataType, boolean isAutoChange) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public void addDataTypeManagerListener(DataTypeManagerChangeListener l) {
 		throw new UnsupportedOperationException();
 	}

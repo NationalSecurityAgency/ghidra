@@ -23,6 +23,14 @@ package ghidra.docking.settings;
 public interface Settings {
 	
 	/**
+	 * Determine if a settings change corresponding to the specified 
+	 * settingsDefinition is permitted.
+	 * @param settingsDefinition settings definition
+	 * @return true if change permitted else false
+	 */
+	boolean isChangeAllowed(SettingsDefinition settingsDefinition);
+
+	/**
 	 * Gets the Long value associated with the given name
 	 * @param name the key used to retrieve a value
 	 * @return the Long value for a key

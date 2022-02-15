@@ -78,6 +78,11 @@ public class FunctionInlineSettingsDefinition implements BooleanSettingsDefiniti
 	}
 
 	@Override
+	public String getStorageKey() {
+		return INLINE;
+	}
+
+	@Override
 	public boolean hasValue(Settings settings) {
 		return settings.getValue(INLINE) != null;
 	}

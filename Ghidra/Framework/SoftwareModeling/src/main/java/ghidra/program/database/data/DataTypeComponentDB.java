@@ -18,8 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.DBRecord;
-import ghidra.docking.settings.Settings;
-import ghidra.docking.settings.SettingsImpl;
+import ghidra.docking.settings.*;
 import ghidra.program.model.data.*;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
@@ -431,6 +430,19 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			// to TypeDefSettingsDefinition established by the base datatype
 			// and does not consider DataTypeComponent default settings changes or other setting types.
 			dataMgr.dataTypeChanged(getParent(), false);
+		}
+
+		@Override
+		public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
+			if (settingsDefinition instanceof TypeDefSettingsDefinition) {
+				return false;
+			}
+			for (SettingsDefinition def : getDataType().getSettingsDefinitions()) {
+				if (def.equals(settingsDefinition)) {
+					return true;
+				}
+			}
+			return false;
 		}
 
 		@Override

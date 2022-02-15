@@ -88,6 +88,11 @@ public class MutabilitySettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getStorageKey() {
+		return MUTABILITY;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Selects the data mutability";
 	}

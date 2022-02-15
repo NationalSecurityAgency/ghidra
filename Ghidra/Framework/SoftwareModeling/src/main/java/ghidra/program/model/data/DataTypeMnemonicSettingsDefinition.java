@@ -89,6 +89,11 @@ public class DataTypeMnemonicSettingsDefinition implements EnumSettingsDefinitio
 	}
 
 	@Override
+	public String getStorageKey() {
+		return MNEMONIC;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Selects the data-type mnemonic style";
 	}

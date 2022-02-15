@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeDisplayOptions;
@@ -319,6 +320,11 @@ public class DataStub implements Data {
 	@Override
 	public BigInteger getBigInteger(int offset, int size, boolean signed)
 			throws MemoryAccessException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
 		throw new UnsupportedOperationException();
 	}
 

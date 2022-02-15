@@ -65,6 +65,7 @@ dependencies {
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	testImplementation project(path: ':Project', configuration: 'testArtifacts')
 	testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
+	testImplementation project(path: ':DB', configuration: 'testArtifacts')
 	
 	javacc 'net.java.dev.javacc:javacc:5.0'
 }

@@ -403,7 +403,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		try {
 			PointerType choice = PointerTypeSettingsDefinition.DEF.getType(settings);
-			if (choice == PointerType.IBO && mem != null) {
+			if (choice == PointerType.IMAGE_BASE_RELATIVE && mem != null) {
 				// must ignore AddressSpaceSettingsDefinition
 				Address imageBase = mem.getProgram().getImageBase();
 				targetSpace = imageBase.getAddressSpace();

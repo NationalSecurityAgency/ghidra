@@ -83,6 +83,11 @@ public class TerminatedSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getStorageKey() {
+		return TERMINATED;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Selects if the string is terminated or unterminated";
 	}

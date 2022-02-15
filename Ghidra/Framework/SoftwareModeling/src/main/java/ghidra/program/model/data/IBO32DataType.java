@@ -15,27 +15,43 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.docking.settings.Settings;
+import ghidra.util.classfinder.ClassTranslator;
+
 /**
  * <code>IBO32DataType</code> provides a Pointer-Typedef BuiltIn for
- * a 32-bit Image Base Offset Relative Pointer.
+ * a 32-bit Image Base Offset Relative Pointer.  This {@link TypeDef} implementation 
+ * specifies the {@link PointerType#IMAGE_BASE_RELATIVE} attribute/setting
+ * associated with a 32-bit {@link Pointer}.
+ * <br>
+ * This class replaces the use of the old <code>ImageBaseOffset32DataType</code>
+ * which did not implement the Pointer interface.  This is an alternative 
+ * {@link BuiltIn} implementation to using the more general {@link PointerTypedef}
+ * datatype with an unspecified referenced datatype.  {@link PointerTypedef} should 
+ * be used for other cases
+ * (see {@link #createIBO32PointerTypedef(DataType)}).
  */
-public class IBO32DataType extends AbstractPointerTypedefDataType {
+public class IBO32DataType extends AbstractPointerTypedefBuiltIn {
 
-	static final String NAME = "ibo32";
+	public static final IBO32DataType dataType = new IBO32DataType();
 
-// TODO: remove old ImageBaseOffset32DataType implementation and uncomment
-//	static {
-//		ClassTranslator.put("ghidra.program.model.data.ImageBaseOffset32",
-//			IBO32DataType.class.getName());
-//		ClassTranslator.put("ghidra.program.model.data.ImageBaseOffset32DataType",
-//			IBO32DataType.class.getName());
-//	}
+	static final String NAME = "ImageBaseOffset32";
+
+	private static TypeDefSettingsDefinition[] IBO_TYPEDEF_SETTINGS_DEFS =
+		{ PointerTypeSettingsDefinition.DEF };
+
+	static {
+		ClassTranslator.put("ghidra.program.model.data.ImageBaseOffset32",
+			IBO32DataType.class.getName());
+		ClassTranslator.put("ghidra.program.model.data.ImageBaseOffset32DataType",
+			IBO32DataType.class.getName());
+	}
 
 	/**
 	 * Constructs a 32-bit Image Base Offset relative pointer-typedef.
 	 */
 	public IBO32DataType() {
-		this(DataType.DEFAULT, null);
+		this(null);
 	}
 
 	/**
@@ -43,25 +59,9 @@ public class IBO32DataType extends AbstractPointerTypedefDataType {
 	 * @param dtm data-type manager whose data organization should be used
 	 */
 	public IBO32DataType(DataTypeManager dtm) {
-		this(DataType.DEFAULT, dtm);
-	}
-
-	/**
-	 * Constructs a 32-bit Image Base Offset relative pointer-typedef.
-	 * @param referencedDataType data type this pointer-typedef points to
-	 */
-	public IBO32DataType(DataType referencedDataType) {
-		this(referencedDataType, null);
-	}
-
-	/**
-	 * Constructs a 32-bit Image Base Offset relative pointer-typedef.
-	 * @param referencedDataType data type this pointer-typedef points to
-	 * @param dtm                data-type manager whose data organization should be used
-	 */
-	public IBO32DataType(DataType referencedDataType, DataTypeManager dtm) {
-		super(null, referencedDataType, 4, dtm);
-		PointerTypeSettingsDefinition.DEF.setType(getDefaultSettings(), PointerType.IBO);
+		super(NAME, null, 4, dtm);
+		PointerTypeSettingsDefinition.DEF.setType(getDefaultSettings(),
+			PointerType.IMAGE_BASE_RELATIVE);
 	}
 
 	@Override
@@ -74,18 +74,30 @@ public class IBO32DataType extends AbstractPointerTypedefDataType {
 		if (dataMgr == dtm) {
 			return this;
 		}
-		IBO32DataType td = new IBO32DataType(getReferencedDataType(), dtm);
-		TypedefDataType.copyTypeDefSettings(this, td, false);
-		return td;
+		return new IBO32DataType(dtm);
 	}
 
 	@Override
-	public String getName() {
-		DataType dt = getReferencedDataType();
-		if (dt == null || Undefined.isUndefined(dt) || (dt instanceof VoidDataType)) {
-			return NAME; // use simple ibo name
-		}
-		return super.getName(); // use generated named
+	public String getMnemonic(Settings settings) {
+		return "ibo32";
+	}
+
+	@Override
+	public TypeDefSettingsDefinition[] getBuiltInSettingsDefinitions() {
+		return IBO_TYPEDEF_SETTINGS_DEFS;
+	}
+
+	/**
+	 * Create a IBO32 {@link PointerTypedef} with auto-naming.  If needed, a name and category
+	 * may be assigned to the returned instance.  Unlike using an immutable {@link IBO32DataType} instance
+	 * the returned instance is mutable.
+	 * @param referencedDataType referenced datatype or null
+	 * @return new IBO32 pointer-typedef
+	 */
+	public static PointerTypedef createIBO32PointerTypedef(DataType referencedDataType) {
+		return new PointerTypedef(null, referencedDataType, 4,
+			referencedDataType != null ? referencedDataType.getDataTypeManager() : null,
+			PointerType.IMAGE_BASE_RELATIVE);
 	}
 
 }

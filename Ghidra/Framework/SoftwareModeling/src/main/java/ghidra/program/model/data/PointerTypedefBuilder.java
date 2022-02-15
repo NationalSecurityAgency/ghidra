@@ -20,6 +20,7 @@ import java.util.Objects;
 import ghidra.program.database.data.PointerTypedefInspector;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.symbol.OffsetReference;
+import ghidra.util.InvalidNameException;
 
 /**
  * <code>PointerTypedefBuilder</code> provides a builder for creating {@link Pointer} - {@link TypeDef}s.  
@@ -62,9 +63,10 @@ public class PointerTypedefBuilder {
 	 * upon the associated pointer type and the specified settings.
 	 * @param name typedef name
 	 * @return this builder
+	 * @throws InvalidNameException if name contains unsupported characters
 	 */
-	public PointerTypedefBuilder name(String name) {
-		typedef.setTypedefName(name);
+	public PointerTypedefBuilder name(String name) throws InvalidNameException {
+		typedef.setName(name);
 		return this;
 	}
 

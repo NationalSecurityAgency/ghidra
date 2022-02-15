@@ -581,8 +581,8 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		int addressSize = address.getSize();
 		if (addressSize == 64 && getIboIf64bit) {
-			ImageBaseOffset32DataType ibo32 =
-				new ImageBaseOffset32DataType(currentProgram.getDataTypeManager());
+			IBO32DataType ibo32 =
+				new IBO32DataType(currentProgram.getDataTypeManager());
 			int length = ibo32.getLength();
 			DumbMemBufferImpl compMemBuffer =
 				new DumbMemBufferImpl(currentProgram.getMemory(), address);

@@ -55,8 +55,8 @@ class SettingsDBAdapterV1 extends SettingsDBAdapter {
 	private Table settingsTable;
 	private Table settingsNameTable;
 
-	private HashMap<Short, String> nameIndexMap = new HashMap<>();
-	private HashMap<String, Short> nameStringMap = new HashMap<>();
+	private HashMap<Short, String> nameIndexMap;
+	private HashMap<String, Short> nameStringMap;
 
 	SettingsDBAdapterV1(String tableName, DBHandle handle, boolean create)
 			throws VersionException, IOException {

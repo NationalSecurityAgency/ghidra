@@ -129,6 +129,11 @@ public class CharsetSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getStorageKey() {
+		return CHARSET_SETTING_NAME;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Character set";
 	}

@@ -72,6 +72,11 @@ public class ByteCountSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getStorageKey() {
+		return BYTE_COUNT;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Selects the number of bytes to display";
 	}

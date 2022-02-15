@@ -114,6 +114,11 @@ public class IntegerSignednessFormattingModeSettingsDefinition implements EnumSe
 	}
 
 	@Override
+	public String getStorageKey() {
+		return SIGN_FORMAT;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Selects the display mode for signed values";
 	}

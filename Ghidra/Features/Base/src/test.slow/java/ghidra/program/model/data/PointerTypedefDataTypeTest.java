@@ -19,6 +19,8 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
+import ghidra.docking.settings.Settings;
+import ghidra.program.database.DatabaseObject;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.data.PointerTypedefInspector;
 import ghidra.program.model.address.AddressSpace;
@@ -52,7 +54,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		program = buildProgram("notepad");
 		dtm = program.getDataTypeManager();
 		builtInDtm = BuiltInDataTypeManager.getDataTypeManager();
-		
+
 		program.startTransaction("TEST");
 	}
 
@@ -63,75 +65,241 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	@Test
-	public void testIBOBuiltIn() throws Exception {
+	public void testBuiltInIBODataTypes() throws Exception {
 
 		DataType dt = builtInDtm.getDataType(CategoryPath.ROOT, IBO32DataType.NAME);
-		assertTrue(dt instanceof TypeDef);
-		assertFalse(dt instanceof BuiltIn); // transforms from BuiltIn to DataTypeDB
+		assertTrue(dt instanceof IBO32DataType);
 		assertEquals(IBO32DataType.NAME, dt.getName());
 		assertFalse(dt.hasLanguageDependantLength());
-		assertTrue(dt.isEquivalent(dtm.resolve(dt, null)));
-
-		dt = new IBO32DataType(CharDataType.dataType, dtm);
-		assertTrue(dt instanceof TypeDef);
-		assertTrue(dt instanceof BuiltIn);
-		assertEquals("char *32 __attribute__((image-base-relative))", dt.getName());
 		DataType dbDt = dtm.resolve(dt, null);
-		assertTrue(dbDt instanceof TypeDef);
-		assertFalse(dbDt instanceof BuiltIn); // transforms from BuiltIn to DataTypeDB
+		assertTrue(dbDt instanceof IBO32DataType);
 		assertTrue(dt.isEquivalent(dbDt));
+		assertEquals(dt.getName(), dbDt.getName());
 
 		dt = builtInDtm.getDataType(CategoryPath.ROOT, IBO64DataType.NAME);
-		assertTrue(dt instanceof TypeDef);
-		assertFalse(dt instanceof BuiltIn); // transforms from BuiltIn to DataTypeDB
+		assertTrue(dt instanceof IBO64DataType);
 		assertEquals(IBO64DataType.NAME, dt.getName());
 		assertFalse(dt.hasLanguageDependantLength());
-		assertTrue(dt.isEquivalent(dtm.resolve(dt, null)));
-
-		dt = new IBO64DataType(CharDataType.dataType, dtm);
-		assertTrue(dt instanceof TypeDef);
-		assertTrue(dt instanceof BuiltIn);
-		assertEquals("char *64 __attribute__((image-base-relative))", dt.getName());
 		dbDt = dtm.resolve(dt, null);
-		assertTrue(dbDt instanceof TypeDef);
-		assertFalse(dbDt instanceof BuiltIn); // transforms from BuiltIn to DataTypeDB
+		assertTrue(dbDt instanceof IBO64DataType);
 		assertTrue(dt.isEquivalent(dbDt));
+		assertEquals(dt.getName(), dbDt.getName());
 	}
 
 	@Test
 	public void testPointerTypedef() throws Exception {
 
-		DataType dt = new PointerTypedef(null, CharDataType.dataType, -1, dtm,
-			program.getAddressFactory().getRegisterSpace());
+		DataType dt = new PointerTypedef(null, CharDataType.dataType, -1, dtm, 0x8);
 		assertTrue(dt.hasLanguageDependantLength());
 		assertEquals(4, dt.getLength());
 		assertTrue(dt instanceof TypeDef);
-		assertTrue(dt instanceof BuiltIn);
-		assertEquals("char * __attribute__((space(register)))", dt.getName());
+		assertEquals("char * " + formatAttributes("offset(0x8)"), dt.getName());
 		DataType dbDt = dtm.resolve(dt, null);
 		assertTrue(dbDt instanceof TypeDef);
-		assertFalse(dbDt instanceof BuiltIn); // transforms from BuiltIn to DataTypeDB
+		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
 		assertTrue(dt.isEquivalent(dbDt));
+		assertEquals(dt.getName(), dbDt.getName());
 
 		AddressSpace space = PointerTypedefInspector.getPointerAddressSpace((TypeDef) dbDt,
 			program.getAddressFactory());
-		assertTrue(program.getAddressFactory().getRegisterSpace().equals(space));
+		assertNull(space);
 
 		dt = new PointerTypedef(null, CharDataType.dataType, -1, dtm,
 			PointerType.RELATIVE);
 		assertTrue(dt.hasLanguageDependantLength());
 		assertEquals(4, dt.getLength());
 		assertTrue(dt instanceof TypeDef);
-		assertTrue(dt instanceof BuiltIn);
-		assertEquals("char * __attribute__((relative))", dt.getName());
+		assertEquals("char * " + formatAttributes("relative"), dt.getName());
 		dbDt = dtm.resolve(dt, null);
 		assertTrue(dbDt instanceof TypeDef);
-		assertFalse(dbDt instanceof BuiltIn); // transforms from BuiltIn to DataTypeDB
+		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
 		assertTrue(dt.isEquivalent(dbDt));
+		assertEquals(dt.getName(), dbDt.getName());
 
 		assertEquals(PointerType.RELATIVE, PointerTypedefInspector.getPointerType((TypeDef) dbDt));
 
 	}
 
+	@Test
+	public void testPointerTypedefWithAddrSpace() throws Exception {
 
+		DataType dt = new PointerTypedef(null, CharDataType.dataType, -1, dtm,
+			program.getAddressFactory().getRegisterSpace());
+		assertFalse(dt.hasLanguageDependantLength());
+		assertEquals(2, dt.getLength());
+		assertTrue(dt instanceof TypeDef);
+		assertEquals("char *16 " + formatAttributes("space(register)"), dt.getName());
+		DataType dbDt = dtm.resolve(dt, null);
+		assertTrue(dbDt instanceof TypeDef);
+		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dt.isEquivalent(dbDt));
+		assertEquals(dt.getName(), dbDt.getName());
+
+		AddressSpace space = PointerTypedefInspector.getPointerAddressSpace((TypeDef) dbDt,
+			program.getAddressFactory());
+		assertTrue(program.getAddressFactory().getRegisterSpace().equals(space));
+
+		dt = new PointerTypedef(null, CharDataType.dataType, 4, dtm,
+			program.getAddressFactory().getRegisterSpace());
+		assertFalse(dt.hasLanguageDependantLength());
+		assertEquals(4, dt.getLength());
+		assertTrue(dt instanceof TypeDef);
+		assertEquals("char *32 " + formatAttributes("space(register)"), dt.getName());
+		dbDt = dtm.resolve(dt, null);
+		assertTrue(dbDt instanceof TypeDef);
+		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dt.isEquivalent(dbDt));
+		assertEquals(dt.getName(), dbDt.getName());
+
+		space = PointerTypedefInspector.getPointerAddressSpace((TypeDef) dbDt,
+			program.getAddressFactory());
+		assertTrue(program.getAddressFactory().getRegisterSpace().equals(space));
+	}
+
+	@Test
+	public void testPointerTypedefAutoNaming() throws Exception {
+
+		DataType st = dtm.resolve(new StructureDataType("foo", 10), null);
+
+		DataType dt = new PointerTypedef(null, st, -1, dtm,
+			program.getAddressFactory().getRegisterSpace());
+		assertFalse(dt.hasLanguageDependantLength());
+		assertEquals(2, dt.getLength());
+		assertTrue(dt instanceof TypeDef);
+		assertEquals("foo *16 " + formatAttributes("space(register)"), dt.getName());
+		DataType dbDt = dtm.resolve(dt, null);
+		assertTrue(dbDt instanceof TypeDef);
+		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dt.isEquivalent(dbDt));
+		assertEquals(dt.getName(), dbDt.getName());
+
+		st.setName("bob");
+
+		// auto-name should update
+		assertEquals("bob *16 " + formatAttributes("space(register)"), dbDt.getName());
+
+		Settings settings = dbDt.getDefaultSettings();
+
+		OffsetMaskSettingsDefinition.DEF.setValue(settings, 0x123456789abcdef0L);
+		assertEquals("bob *16 " + formatAttributes("space(register),mask(0x123456789abcdef0)"),
+			dbDt.getName());
+
+		ComponentOffsetSettingsDefinition.DEF.setValue(settings, 0x123);
+		assertEquals(
+			"bob *16 " + formatAttributes("space(register),mask(0x123456789abcdef0),offset(0x123)"),
+			dbDt.getName());
+
+		OffsetShiftSettingsDefinition.DEF.setValue(settings, 16);
+		assertEquals(
+			"bob *16 " + formatAttributes(
+				"space(register),mask(0x123456789abcdef0),shift(16),offset(0x123)"),
+			dbDt.getName());
+
+		PointerTypeSettingsDefinition.DEF.setType(settings, PointerType.IMAGE_BASE_RELATIVE);
+		assertEquals(
+			"bob *16 " + formatAttributes(
+				"image-base-relative,space(register),mask(0x123456789abcdef0),shift(16),offset(0x123)"),
+			dbDt.getName());
+
+		st.setName("bill");
+		assertEquals(
+			"bill *16 " + formatAttributes(
+				"image-base-relative,space(register),mask(0x123456789abcdef0),shift(16),offset(0x123)"),
+			dbDt.getName());
+
+		PointerTypeSettingsDefinition.DEF.clear(settings);
+		assertEquals(
+			"bill *16 " + formatAttributes(
+				"space(register),mask(0x123456789abcdef0),shift(16),offset(0x123)"),
+			dbDt.getName());
+
+		ComponentOffsetSettingsDefinition.DEF.clear(settings);
+		assertEquals(
+			"bill *16 " + formatAttributes("space(register),mask(0x123456789abcdef0),shift(16)"),
+			dbDt.getName());
+
+		// NOTE: Changing address space setting will not alter pointer size
+
+		AddressSpaceSettingsDefinition.DEF.clear(settings);
+		assertEquals(
+			"bill *16 " + formatAttributes("mask(0x123456789abcdef0),shift(16)"),
+			dbDt.getName());
+
+		OffsetShiftSettingsDefinition.DEF.clear(settings);
+		assertEquals(
+			"bill *16 " + formatAttributes("mask(0x123456789abcdef0)"),
+			dbDt.getName());
+
+	}
+
+	@Test
+	public void testPointerTypedefEquivalence() throws Exception {
+
+		DataType st = dtm.resolve(new StructureDataType("foo", 10), null);
+
+		TypeDef dt = new PointerTypedef(null, st, -1, dtm,
+			program.getAddressFactory().getRegisterSpace());
+		assertTrue(dt.isAutoNamed());
+		assertFalse(dt.hasLanguageDependantLength());
+		assertEquals(2, dt.getLength());
+		assertEquals("foo *16 " + formatAttributes("space(register)"), dt.getName());
+		TypeDef dbDt = (TypeDef) dtm.resolve(dt, null);
+		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dt.isEquivalent(dbDt));
+		assertEquals(dt.getName(), dbDt.getName());
+
+		dt = (TypeDef) dt.copy(dtm);
+		assertTrue(dbDt == dtm.resolve(dt, null)); // should resolve to same instance
+
+		dt = (TypeDef) dt.copy(dtm);
+		PointerTypeSettingsDefinition.DEF.setType(dt.getDefaultSettings(), PointerType.IMAGE_BASE_RELATIVE);
+		TypeDef dbDt2 = (TypeDef) dtm.resolve(dt, null);    // should resolve to new instance
+		assertTrue(dbDt != dbDt2);
+		assertEquals("foo *16 " + formatAttributes("image-base-relative,space(register)"),
+			dbDt2.getName());
+
+		PointerTypeSettingsDefinition.DEF.clear(dbDt2.getDefaultSettings());
+		assertEquals("foo *16 " + formatAttributes("space(register)") + DataType.CONFLICT_SUFFIX,
+			dbDt2.getName());
+
+	}
+
+	@Test
+	public void testPointerTypedefEquivalence2() throws Exception {
+
+		DataType st = dtm.resolve(new StructureDataType("foo", 10), null);
+
+		TypeDef dt = new PointerTypedef(null, st, -1, dtm,
+			program.getAddressFactory().getRegisterSpace());
+		assertTrue(dt.isAutoNamed());
+		assertFalse(dt.hasLanguageDependantLength());
+		assertEquals(2, dt.getLength());
+		assertEquals("foo *16 " + formatAttributes("space(register)"), dt.getName());
+		TypeDef dbDt = (TypeDef) dtm.resolve(dt, null);
+		assertTrue(dbDt instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dt.isEquivalent(dbDt));
+		assertEquals(dt.getName(), dbDt.getName());
+
+		TypeDef dt2 = new PointerTypedef("john", st, -1, dtm,
+			program.getAddressFactory().getRegisterSpace());
+		assertFalse(dt2.isAutoNamed());
+		assertFalse(dt2.hasLanguageDependantLength());
+		assertEquals(2, dt.getLength());
+		assertEquals("john", dt2.getName());
+		TypeDef dbDt2 = (TypeDef) dtm.resolve(dt2, null);
+		assertTrue(dbDt != dbDt2);
+		assertFalse(dbDt.isEquivalent(dbDt2));
+		assertFalse(dbDt2.isEquivalent(dbDt));
+		assertTrue(dbDt2 instanceof DatabaseObject); // transforms to TypedefDB
+		assertTrue(dt2.isEquivalent(dbDt2));
+		assertEquals(dt2.getName(), dbDt2.getName());
+
+	}
+
+	private static String formatAttributes(String attrs) {
+		StringBuilder buf = new StringBuilder(DataType.TYPEDEF_ATTRIBUTE_PREFIX);
+		buf.append(attrs);
+		buf.append(DataType.TYPEDEF_ATTRIBUTE_SUFFIX);
+		return buf.toString();
+	}
 }

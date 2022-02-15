@@ -374,16 +374,21 @@ class DataDB extends CodeUnitDB implements Data {
 	}
 
 	@Override
+	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
+		refreshIfNeeded();
+		return dataMgr.isChangeAllowed(this, settingsDefinition);
+	}
+
+	@Override
 	public void clearSetting(String name) {
 		refreshIfNeeded();
-		Address cuAddr = getDataSettingsAddress();
-		dataMgr.clearSetting(cuAddr, name);
+		dataMgr.clearSetting(this, name);
 	}
 
 	@Override
 	public Long getLong(String name) {
 		refreshIfNeeded();
-		Long value = dataMgr.getLongSettingsValue(getDataSettingsAddress(), name);
+		Long value = dataMgr.getLongSettingsValue(this, name);
 		if (value == null) {
 			value = getDefaultSettings().getLong(name);
 		}
@@ -393,13 +398,13 @@ class DataDB extends CodeUnitDB implements Data {
 	@Override
 	public String[] getNames() {
 		refreshIfNeeded();
-		return dataMgr.getInstanceSettingsNames(getDataSettingsAddress());
+		return dataMgr.getInstanceSettingsNames(this);
 	}
 
 	@Override
 	public String getString(String name) {
 		refreshIfNeeded();
-		String value = dataMgr.getStringSettingsValue(getDataSettingsAddress(), name);
+		String value = dataMgr.getStringSettingsValue(this, name);
 		if (value == null) {
 			value = getDefaultSettings().getString(name);
 		}
@@ -409,7 +414,7 @@ class DataDB extends CodeUnitDB implements Data {
 	@Override
 	public Object getValue(String name) {
 		refreshIfNeeded();
-		Object value = dataMgr.getSettings(getDataSettingsAddress(), name);
+		Object value = dataMgr.getSettings(this, name);
 		if (value == null) {
 			value = getDefaultSettings().getValue(name);
 		}
@@ -419,22 +424,19 @@ class DataDB extends CodeUnitDB implements Data {
 	@Override
 	public void setLong(String name, long value) {
 		refreshIfNeeded();
-		Address cuAddr = getDataSettingsAddress();
-		dataMgr.setLongSettingsValue(cuAddr, name, value);
+		dataMgr.setLongSettingsValue(this, name, value);
 	}
 
 	@Override
 	public void setString(String name, String value) {
 		refreshIfNeeded();
-		Address cuAddr = getDataSettingsAddress();
-		dataMgr.setStringSettingsValue(cuAddr, name, value);
+		dataMgr.setStringSettingsValue(this, name, value);
 	}
 
 	@Override
 	public void setValue(String name, Object value) {
 		refreshIfNeeded();
-		Address cuAddr = getDataSettingsAddress();
-		dataMgr.setSettings(cuAddr, name, value);
+		dataMgr.setSettings(this, name, value);
 	}
 
 	@Override
@@ -758,14 +760,13 @@ class DataDB extends CodeUnitDB implements Data {
 	@Override
 	public void clearAllSettings() {
 		refreshIfNeeded();
-		Address cuAddr = getDataSettingsAddress();
-		dataMgr.clearAllSettings(cuAddr);
+		dataMgr.clearAllSettings(this);
 	}
 
 	@Override
 	public boolean isEmpty() {
 		refreshIfNeeded();
-		return dataMgr.isEmptySetting(getDataSettingsAddress());
+		return dataMgr.isEmptySetting(this);
 	}
 
 	@Override
@@ -789,7 +790,4 @@ class DataDB extends CodeUnitDB implements Data {
 		return dataType.getDefaultSettings();
 	}
 
-	protected Address getDataSettingsAddress() {
-		return address;
-	}
 }

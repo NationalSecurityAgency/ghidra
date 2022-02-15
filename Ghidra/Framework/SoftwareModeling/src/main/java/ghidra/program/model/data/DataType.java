@@ -51,6 +51,9 @@ public interface DataType {
 
 	public final static String CONFLICT_SUFFIX = ".conflict";
 
+	public final static String TYPEDEF_ATTRIBUTE_PREFIX = "__((";
+	public final static String TYPEDEF_ATTRIBUTE_SUFFIX = "))";
+
 	static final long NO_SOURCE_SYNC_TIME = 0L;
 	static final long NO_LAST_CHANGE_TIME = 0L;
 

@@ -89,7 +89,8 @@ public abstract class AbstractDataType implements DataType {
 
 	@Override
 	public DataTypePath getDataTypePath() {
-		return new DataTypePath(categoryPath, name);
+		// use methods instead of fields since they mey be overriden
+		return new DataTypePath(getCategoryPath(), getName());
 	}
 
 	@Override

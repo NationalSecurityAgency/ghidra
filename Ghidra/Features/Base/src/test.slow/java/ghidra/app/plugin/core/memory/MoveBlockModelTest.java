@@ -25,6 +25,8 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.ProgramBasedDataTypeManager;
+import ghidra.program.model.data.StringDataType;
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -43,6 +45,10 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	private volatile boolean moveCompleted;
 	private volatile boolean success;
 	private volatile String errMsg;
+
+	// Suitable settings allowed for StringDataType data
+	private static String LONG_SETTING_NAME = "mutability";
+	private static String STRING_SETTING_NAME = "charset";
 
 	private Program buildProgram1(String programName) throws Exception {
 		ProgramBuilder builder = new ProgramBuilder(programName, ProgramBuilder._TOY);
@@ -80,11 +86,13 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.initialize(block);
 
 		int transactionID = x8051.startTransaction("Set settings");
+
 		ProgramBasedDataTypeManager dtm = x8051.getDataTypeManager();
 		for (int i = 0; i < 10; i++) {
 			Address a = getAddr(x8051, "BITS", i);
-			dtm.setStringSettingsValue(a, "color", "red" + i);
-			dtm.setLongSettingsValue(a, "someLongValue", i);
+			Data d = x8051.getListing().createData(a, StringDataType.dataType, 1);
+			dtm.setStringSettingsValue(d, STRING_SETTING_NAME, "red" + i);
+			dtm.setLongSettingsValue(d, LONG_SETTING_NAME, i);
 		}
 		x8051.endTransaction(transactionID, true);
 	}
@@ -198,11 +206,13 @@ public class MoveBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		ProgramBasedDataTypeManager dtm = x8051.getDataTypeManager();
 		for (int i = 0; i < 10; i++) {
 			Address a = getAddr(x8051, "CODE", 0x2000 + i);
+			Data d = x8051.getListing().getDataAt(a);
+			assertNotNull(d);
 
-			String s = dtm.getStringSettingsValue(a, "color");
+			String s = dtm.getStringSettingsValue(d, STRING_SETTING_NAME);
 			assertEquals("red" + i, s);
 
-			Long lvalue = dtm.getLongSettingsValue(a, "someLongValue");
+			Long lvalue = dtm.getLongSettingsValue(d, LONG_SETTING_NAME);
 			assertEquals(i, lvalue.longValue());
 		}
 	}

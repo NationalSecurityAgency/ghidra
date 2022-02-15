@@ -247,14 +247,6 @@ public interface DataTypeManager {
 	public Category getCategory(CategoryPath path);
 
 	/**
-	 * Notification when data type is changed.
-	 * @param dataType data type that is changed
-	 * @param isAutoChange true if change was an automatic change in response to
-	 * another datatype's change (e.g., size, alignment).
-	 */
-	public void dataTypeChanged(DataType dataType, boolean isAutoChange);
-
-	/**
 	 * Add a listener that is notified when the dataTypeManger changes.
 	 * @param l the listener
 	 */

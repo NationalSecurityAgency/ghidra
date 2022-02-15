@@ -65,31 +65,19 @@ public class SettingsImpl implements Settings, Serializable {
 	}
 
 	/**
-	 * Check for immutable settings and log error of modification not permitted
-	 * @param type setting type or null
-	 * @param name setting name or null
-	 * @return true if change permitted
+	 * Construct a new SettingsImpl object.  If settings object is specified this
+	 * settings will copy all name/value pairs and underlying defaults.
+	 * @param settings the settings object to copy
 	 */
-	private boolean checkSetting(String type, String name) {
-		if (immutable) {
-			String typeStr = "";
-			if (type != null) {
-				typeStr = type + " ";
+	public SettingsImpl(Settings settings) {
+		this();
+		if (settings != null) {
+			String[] names = settings.getNames();
+			for (int i = 0; i < names.length; i++) {
+				map.put(names[i], settings.getValue(names[i]));
 			}
-			String nameStr = ": " + name;
-			if (name == null) {
-				nameStr = "s";
-			}
-			Msg.warn(SettingsImpl.class,
-				"Ignored invalid attempt to modify immutable " + typeStr + "component setting" +
-					nameStr);
-			return false;
+			defaultSettings = settings.getDefaultSettings();
 		}
-		if (allowedSettingPredicate != null && !allowedSettingPredicate.apply(name)) {
-			Msg.warn(this, "Ignored disallowed setting '" + name + "'");
-			return false;
-		}
-		return true;
 	}
 
 	/**
@@ -113,20 +101,45 @@ public class SettingsImpl implements Settings, Serializable {
 		this.changeSourceObj = changeSourceObj;
 	}
 
-	/**
-	 * Construct a new SettingsImpl object.  If settings object is specified this
-	 * settings will copy all name/value pairs and underlying defaults.
-	 * @param settings the settings object to copy
-	 */
-	public SettingsImpl(Settings settings) {
-		this();
-		if (settings != null) {
-			String[] names = settings.getNames();
-			for (int i = 0; i < names.length; i++) {
-				map.put(names[i], settings.getValue(names[i]));
-			}
-			defaultSettings = settings.getDefaultSettings();
+	@Override
+	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
+		if (immutable) {
+			return false;
 		}
+		if (allowedSettingPredicate != null &&
+			!allowedSettingPredicate.apply(settingsDefinition.getStorageKey())) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Check for immutable settings and log error of modification not permitted
+	 * @param type setting type or null
+	 * @param name setting name or null
+	 * @return true if change permitted
+	 */
+	private boolean checkSetting(String type, String name) {
+		if (immutable) {
+			String typeStr = "";
+			if (type != null) {
+				typeStr = type + " ";
+			}
+			String nameStr = ": " + name;
+			if (name == null) {
+				nameStr = "s";
+			}
+			Msg.warn(SettingsImpl.class,
+				"Ignored invalid attempt to modify immutable " + typeStr + "component setting" +
+					nameStr);
+			return false;
+		}
+		if (name != null && allowedSettingPredicate != null &&
+			!allowedSettingPredicate.apply(name)) {
+			Msg.warn(this, "Ignored disallowed setting '" + name + "'");
+			return false;
+		}
+		return true;
 	}
 
 	@Override

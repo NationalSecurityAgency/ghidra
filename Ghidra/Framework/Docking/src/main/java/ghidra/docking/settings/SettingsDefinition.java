@@ -16,6 +16,7 @@
 package ghidra.docking.settings;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.Predicate;
 
 /**
@@ -26,8 +27,7 @@ public interface SettingsDefinition {
 
 	/**
 	 * Create a new list of {@link SettingsDefinition}s by concat'ing a base list with
-	 * a var-arg'ish additional list of setting defs.
-	 *
+	 * a var-arg'ish additional list of setting defs.  Any additional duplicates are discarded.
 	 * @param settings List of settings defs.
 	 * @param additional More settings defs to add
 	 * @return new array with all the settings defs joined together.
@@ -40,11 +40,14 @@ public interface SettingsDefinition {
 		if (settings == null) {
 			return additional;
 		}
-
-		SettingsDefinition[] result = new SettingsDefinition[settings.length + additional.length];
-		System.arraycopy(settings, 0, result, 0, settings.length);
-		System.arraycopy(additional, 0, result, settings.length, additional.length);
-		return result;
+		ArrayList<SettingsDefinition> list = new ArrayList<>();
+		list.addAll(Arrays.asList(settings));
+		for (SettingsDefinition def : additional) {
+			if (!list.contains(def)) {
+				list.add(def);
+			}
+		}
+		return list.toArray(new SettingsDefinition[list.size()]);
 	}
 
 	/**
@@ -81,10 +84,16 @@ public interface SettingsDefinition {
 	public String getValueString(Settings settings);
 
 	/**
-	 * Returns the name of this SettingsDefinition
+	 * Returns the display name of this SettingsDefinition
 	 * @return display name for setting
 	 */
 	public String getName();
+
+	/**
+	 * Get the {@link Settings} key which is used when storing a key/value entry.
+	 * @return settings storage key
+	 */
+	String getStorageKey();
 
 	/**
 	 * Returns a description of this settings definition

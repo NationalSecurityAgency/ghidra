@@ -17,8 +17,7 @@ package ghidra.program.database.data;
 
 import com.google.common.base.Predicate;
 
-import ghidra.docking.settings.Settings;
-import ghidra.docking.settings.SettingsImpl;
+import ghidra.docking.settings.*;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
@@ -78,6 +77,18 @@ class DataTypeSettingsDB implements Settings {
 		return wasLocked;
 	}
 
+	@Override
+	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
+		if (locked) {
+			return false;
+		}
+		if (allowedSettingPredicate != null &&
+			!allowedSettingPredicate.apply(settingsDefinition.getStorageKey())) {
+			return false;
+		}
+		return true;
+	}
+
 	/**
 	 * Set predicate for settings modification
 	 * @param allowedSettingPredicate callback for checking an allowed setting modification
@@ -107,7 +118,8 @@ class DataTypeSettingsDB implements Settings {
 					nameStr);
 			return false;
 		}
-		if (allowedSettingPredicate != null && !allowedSettingPredicate.apply(name)) {
+		if (name != null && allowedSettingPredicate != null &&
+			!allowedSettingPredicate.apply(name)) {
 			Msg.warn(this, "Ignored disallowed setting '" + name + "'");
 			return false;
 		}
@@ -118,7 +130,7 @@ class DataTypeSettingsDB implements Settings {
 		// NOTE: Merge currently only supports TypeDefDB default settings changes which correspond
 		// to TypeDefSettingsDefinition established by the base datatype
 		// and does not consider DataTypeComponent default settings changes or other setting types.
-		dataMgr.dataTypeChanged(dataType, false);
+		dataMgr.dataTypeSettingsChanged(dataType);
 	}
 
 	@Override

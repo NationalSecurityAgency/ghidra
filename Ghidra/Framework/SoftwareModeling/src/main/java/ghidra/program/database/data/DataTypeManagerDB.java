@@ -26,6 +26,8 @@ import db.*;
 import db.util.ErrorHandler;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
+import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.store.db.PackedDBHandle;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.graph.*;
@@ -63,8 +65,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * 
 	 * Due to the frequent use of read-only mode for certain archives, read-only 
 	 * mode must always be allowed when opening older versions.
-	 *             - version  1 - legacy prior to overall DTM versioning (not stored)
-	 * 12-Jan-2022 - version  2 - introduced DataTypeManager data map table and overall DTM version 
+	 *             - version  1 - Legacy prior to overall DTM versioning (not stored)
+	 * 12-Jan-2022 - version  2 - Introduced DataTypeManager data map table and overall DTM version.
+	 *                            Also added typedef flags and auto-naming support.
 	 */
 	static final int DB_VERSION = 2;
 
@@ -869,7 +872,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return name;
 	}
 
-	public String getUniqueName(CategoryPath path1, CategoryPath path2, String baseName) {
+	String getUniqueName(CategoryPath path1, CategoryPath path2, String baseName) {
 		int pos = baseName.lastIndexOf('_');
 		int oneUpNumber = 0;
 		String name = baseName;
@@ -893,6 +896,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public Category getCategory(CategoryPath path) {
+		if (path == null) {
+			return null;
+		}
 		if (path.equals(CategoryPath.ROOT)) {
 			return root;
 		}
@@ -2166,7 +2172,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public DataType getDataType(CategoryPath path, String name) {
-		if (path.equals(DataType.DEFAULT.getCategoryPath()) &&
+		if (CategoryPath.ROOT.equals(path) &&
 			name.equals(DataType.DEFAULT.getName())) {
 			return DataType.DEFAULT;
 		}
@@ -2279,16 +2285,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private DataType getBuiltInDataType(long dataTypeID, DBRecord record) {
 		lock.acquire();
 		try {
-			Long key = dataTypeID;
-			DataType dt = builtInMap.get(key);
-
+			DataType dt = builtInMap.get(dataTypeID);
 			if (dt != null) {
 				return dt;
 			}
 
 			if (record == null) {
 				record = builtinAdapter.getRecord(dataTypeID);
-
 				if (record == null) {
 					return null;
 				}
@@ -2301,7 +2304,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			String name = record.getString(BuiltinDBAdapter.BUILT_IN_NAME_COL);
 			try { // TODO: !! Can we look for alternate constructor which takes DTM argument
 				Class<?> c;
-
 				try {
 					c = Class.forName(classPath);
 				}
@@ -2322,18 +2324,41 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				BuiltInDataType bdt = (BuiltInDataType) c.getDeclaredConstructor().newInstance();
 				bdt.setName(name);
 				bdt.setCategoryPath(catPath);
-				bdt = (BuiltInDataType) bdt.clone(this);
-				if (allowsDefaultBuiltInSettings() && bdt.getSettingsDefinitions().length != 0) {
-					bdt.setDefaultSettings(new DataTypeSettingsDB(this, bdt, dataTypeID));
+
+				final BuiltInDataType builtInDt = (BuiltInDataType) bdt.clone(this);
+
+				// check for prior instantiation with different id
+				Long id = builtIn2IdMap.get(builtInDt);
+				if (id != null) {
+					DataType datatype = builtInMap.get(id);
+					if (datatype != null) {
+						builtInMap.put(dataTypeID, datatype);
+						return datatype;
+					}
 				}
-				dt = bdt;
+
+				if (allowsDefaultBuiltInSettings() &&
+					builtInDt.getSettingsDefinitions().length != 0) {
+					DataTypeSettingsDB settings =
+						new DataTypeSettingsDB(this, builtInDt, dataTypeID);
+					if (builtInDt instanceof TypeDef) {
+						// Copy default immutable builtin typedef settings
+						Settings typedefSettings = builtInDt.getDefaultSettings();
+						for (String n : typedefSettings.getNames()) {
+							settings.setValue(n, typedefSettings.getValue(n));
+						}
+					}
+					settings.setAllowedSettingPredicate(n -> isBuiltInSettingAllowed(builtInDt, n));
+					builtInDt.setDefaultSettings(settings);
+				}
+				dt = builtInDt;
 			}
 			catch (Exception e) {
 				Msg.error(this, e);
 				dt = new MissingBuiltInDataType(catPath, name, classPath, this);
 			}
-			builtInMap.put(key, dt);
-			builtIn2IdMap.put(dt, key);
+			builtInMap.put(dataTypeID, dt);
+			builtIn2IdMap.put(dt, dataTypeID);
 			return dt;
 		}
 		catch (IOException e) {
@@ -2343,6 +2368,18 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			lock.release();
 		}
 		return null;
+	}
+
+	private boolean isBuiltInSettingAllowed(BuiltInDataType bdt, String settingName) {
+		SettingsDefinition def = null;
+		for (SettingsDefinition sd : bdt.getSettingsDefinitions()) {
+			if (sd.getStorageKey().equals(settingName)) {
+				def = sd;
+				break;
+			}
+		}
+		// restrict to non-TypeDefSettingsDefinitions which are defined for the datatype
+		return def != null && !(def instanceof TypeDefSettingsDefinition);
 	}
 
 	private Enum getEnumDataType(long dataTypeID, DBRecord record) {
@@ -2526,6 +2563,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				int len = ptr.hasLanguageDependantLength() ? -1 : ptr.getLength();
 				newDataType = createPointer(ptr.getDataType(), cat, (byte) len, handler);
 			}
+			else if (dt instanceof BuiltInDataType) {
+				BuiltInDataType builtInDataType = (BuiltInDataType) dt;
+				newDataType = createBuiltIn(builtInDataType, cat);
+			}
 			else if (dt instanceof StructureInternal) {
 				StructureInternal structure = (StructureInternal) dt;
 				newDataType = createStructure(structure, name, cat, sourceArchiveIdValue,
@@ -2549,10 +2590,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				FunctionDefinition funDef = (FunctionDefinition) dt;
 				newDataType = createFunctionDefinition(funDef, name, cat, sourceArchiveIdValue,
 					id.getValue());
-			}
-			else if (dt instanceof BuiltInDataType) {
-				BuiltInDataType builtInDataType = (BuiltInDataType) dt;
-				newDataType = createBuiltIn(builtInDataType, cat);
 			}
 			else if (dt instanceof MissingBuiltInDataType) {
 				MissingBuiltInDataType missingBuiltInDataType = (MissingBuiltInDataType) dt;
@@ -2621,7 +2658,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			throw new IllegalArgumentException("Data type must have a valid name");
 		}
 		DataType dataType = resolve(typedef.getDataType(), getDependencyConflictHandler());
-		DBRecord record = typedefAdapter.createRecord(getID(dataType), name, cat.getID(),
+		boolean isAutoNamed = typedef.isAutoNamed();
+		short flags = 0;
+		if (isAutoNamed) {
+			flags = (short) TypedefDBAdapter.TYPEDEF_FLAG_AUTONAME;
+			cat = getCategory(dataType.getCategoryPath()); // force category
+		}
+		DBRecord record = typedefAdapter.createRecord(getID(dataType), name, flags, cat.getID(),
 			sourceArchiveIdValue, universalIdValue, typedef.getLastChangeTime());
 		TypedefDB typedefDB = new TypedefDB(this, dtCache, typedefAdapter, record);
 
@@ -2630,6 +2673,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		boolean wasLocked = settings.setLock(false);
 		TypedefDataType.copyTypeDefSettings(typedef, typedefDB, false);
 		settings.setLock(wasLocked);
+
+		typedefDB.updateAutoName(false);
 
 		dataType.addParent(typedefDB);
 		return typedefDB;
@@ -3047,8 +3092,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @param oldCatId the old category's record id
 	 */
 	void dataTypeCategoryPathChanged(DataTypeDB dt, CategoryPath oldPath, long oldCatId) {
-		if (!(dt instanceof Array) && !(dt instanceof Pointer)) {
-			try {
+
+		try {
+			if (!(dt instanceof Array) && !(dt instanceof Pointer)) {
 				for (Field arrayId : arrayAdapter.getRecordIdsInCategory(oldCatId)) {
 					long id = arrayId.getLongValue();
 					DBRecord rec = arrayAdapter.getRecord(id);
@@ -3062,9 +3108,17 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					ptr.updatePath(dt);
 				}
 			}
-			catch (IOException e) {
-				dbError(e);
+
+			// only affects those with auto-naming which must follow category change
+			for (Field ptrId : typedefAdapter.getRecordIdsInCategory(oldCatId)) {
+				long id = ptrId.getLongValue();
+				DBRecord rec = typedefAdapter.getRecord(id);
+				TypedefDB td = (TypedefDB) getDataType(id, rec);
+				td.updatePath(dt);
 			}
+		}
+		catch (IOException e) {
+			dbError(e);
 		}
 
 		dataTypeMoved(dt, new DataTypePath(oldPath, dt.getName()), dt.getDataTypePath());
@@ -3341,7 +3395,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return creatingDataType != 0;
 	}
 
-	@Override
+	/**
+	 * Notification when data type is changed.
+	 * @param dt data type that is changed
+	 * @param isAutoChange true if change was an automatic change in response to
+	 * another datatype's change (e.g., size, alignment).
+	 */
 	public void dataTypeChanged(DataType dt, boolean isAutoChange) {
 		if (dt instanceof Enum) {
 			enumValueMap = null;
@@ -3349,6 +3408,22 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (creatingDataType == 0) {
 			updateLastChangeTime();
 			setDirtyFlag(dt);
+		}
+		defaultListener.dataTypeChanged(this, dt.getDataTypePath());
+	}
+
+	/**
+	 * Notification when data type settings have changed.
+	 * @param dt data type that is changed
+	 */
+	public void dataTypeSettingsChanged(DataType dt) {
+		if (dt instanceof TypedefDB) {
+			TypedefDB td = (TypedefDB) dt;
+			td.updateAutoName(true);
+			if (creatingDataType == 0) {
+				td.setLastChangeTime(System.currentTimeMillis());
+				setDirtyFlag(dt);
+			}
 		}
 		defaultListener.dataTypeChanged(this, dt.getDataTypePath());
 	}

@@ -34,13 +34,6 @@ import ghidra.docking.settings.SettingsDefinition;
 public interface TypeDefSettingsDefinition extends SettingsDefinition {
 
 	/**
-	 * Get the storage key which should be used when storing a key/value 
-	 * map entry which corresponds to this settings definition.
-	 * @return settings storage key
-	 */
-	String getStorageKey();
-
-	/**
 	 * Get the {@link TypeDef} attribute specification for this setting and its
 	 * current value.
 	 * @param settings typedef settings

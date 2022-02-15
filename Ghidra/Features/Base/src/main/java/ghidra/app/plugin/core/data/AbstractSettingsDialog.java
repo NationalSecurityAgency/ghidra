@@ -67,7 +67,11 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 			Settings originalSettings) {
 		super(title, true, false, true, false);
 		this.settingsDefinitions = settingDefinitions;
-		settings = new SettingsImpl(originalSettings);
+		settings = new SettingsImpl(originalSettings) {
+			public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
+				return originalSettings.isChangeAllowed(settingsDefinition);
+			}
+		};
 		defaultSettings = settings.getDefaultSettings();
 		if (originalSettings != null && defaultSettings == null) {
 			// ensure we have defaults to facilitate revert to default
@@ -205,6 +209,17 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		scrollpane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
 		workPanel.add(scrollpane, BorderLayout.CENTER);
+
+		boolean hasImmutableSettings = false;
+		for (SettingsDefinition def : settingsDefinitions) {
+			if (!settings.isChangeAllowed(def)) {
+				hasImmutableSettings = true;
+				break;
+			}
+		}
+		if (hasImmutableSettings) {
+			workPanel.add(new JLabel("* Immutable setting"), BorderLayout.SOUTH);
+		}
 
 		return workPanel;
 	}
@@ -366,6 +381,10 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 			return definition.getName();
 		}
 
+		boolean isEditable() {
+			return settings.isChangeAllowed(definition);
+		}
+
 		Object getSettingsObject() {
 			if (definition instanceof EnumSettingsDefinition) {
 				StringChoices choices = getChoices((EnumSettingsDefinition) definition);
@@ -464,7 +483,11 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 		@Override
 		public boolean isCellEditable(int row, int col) {
-			return col != 0;
+			if (col == 0) {
+				return false;
+			}
+			SettingsRowObject rowObject = rows.get(row);
+			return rowObject.isEditable();
 		}
 
 		@Override
@@ -503,7 +526,11 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		public Object getColumnValueForRow(SettingsRowObject t, int columnIndex) {
 			switch (columnIndex) {
 				case 0:
-					return t.getName();
+					String name = t.getName();
+					if (!t.isEditable()) {
+						name += "*"; // append immutable indicator
+					}
+					return name;
 				case 1:
 					return t.getSettingsObject();
 				case 2:

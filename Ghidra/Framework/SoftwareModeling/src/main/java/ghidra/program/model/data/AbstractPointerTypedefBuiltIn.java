@@ -25,14 +25,10 @@ import ghidra.util.UniversalID;
 import ghidra.util.UniversalIdGenerator;
 
 /**
- * <code>AbstractPointerTypedefDataType</code> provides an abstract implementation for
- * a Pointer-Typedef BuiltIn datatype.
- * <br>
- * If a generated name is used the name will be locked-in once this datatype is resolved
- * and will not automatcally update if any subsequent changes are made to 
- * {@link TypeDefSettingsDefinition} settings or the name of the referenced datatype. 
+ * <code>AbstractPointerTypedefDataType</code> provides an abstract {@link BuiltIn} datatype 
+ * implementation for a pointer-typedef datatype.
  */
-public abstract class AbstractPointerTypedefDataType extends BuiltIn implements TypeDef {
+public abstract class AbstractPointerTypedefBuiltIn extends BuiltIn implements TypeDef {
 
 	private String typedefName;
 	private TypedefDataType modelTypedef;
@@ -47,12 +43,13 @@ public abstract class AbstractPointerTypedefDataType extends BuiltIn implements 
 	 * @param pointerSize pointer size in bytes or -1 for default pointer size
 	 * @param dtm data-type manager whose data organization should be used
 	 */
-	public AbstractPointerTypedefDataType(String name, DataType referencedDataType,
+	protected AbstractPointerTypedefBuiltIn(String name, DataType referencedDataType,
 			int pointerSize, DataTypeManager dtm) {
 		super(getCategoryPath(referencedDataType), getTempNameIfNeeded(name), dtm);
 		setTypedefName(name);
 		modelTypedef =
 			new TypedefDataType("TEMP", new PointerDataType(referencedDataType, pointerSize, dtm));
+		setDefaultSettings(modelTypedef.getDefaultSettings());
 	}
 
 	/**
@@ -63,13 +60,20 @@ public abstract class AbstractPointerTypedefDataType extends BuiltIn implements 
 	 * @param pointerDataType associated pointer datatype (required)
 	 * @param dtm data-type manager whose data organization should be used
 	 */
-	public AbstractPointerTypedefDataType(String name, Pointer pointerDataType,
+	protected AbstractPointerTypedefBuiltIn(String name, Pointer pointerDataType,
 			DataTypeManager dtm) {
 		super(pointerDataType.getCategoryPath(), getTempNameIfNeeded(name), dtm);
 		setTypedefName(name);
 		modelTypedef = new TypedefDataType("TEMP", pointerDataType.clone(dtm));
+		setDefaultSettings(modelTypedef.getDefaultSettings());
 	}
 
+	@Override
+	public void enableAutoNaming() {
+		typedefName = null;
+	}
+
+	@Override
 	public boolean isAutoNamed() {
 		return typedefName == null;
 	}
@@ -102,7 +106,7 @@ public abstract class AbstractPointerTypedefDataType extends BuiltIn implements 
 	}
 
 	void setTypedefName(String name) {
-		if (name != null) {
+		if (name != null && !DataUtilities.isValidDataTypeName(name)) {
 			throw new IllegalArgumentException("Invalid DataType name: " + name);
 		}
 		this.typedefName = name;
@@ -158,17 +162,7 @@ public abstract class AbstractPointerTypedefDataType extends BuiltIn implements 
 
 	@Override
 	public SettingsDefinition[] getBuiltInSettingsDefinitions() {
-		return getTypeDefSettingsDefinitions();
-	}
-
-	@Override
-	public TypeDefSettingsDefinition[] getTypeDefSettingsDefinitions() {
-		return modelTypedef.getTypeDefSettingsDefinitions();
-	}
-
-	@Override
-	public Settings getDefaultSettings() {
-		return modelTypedef.getDefaultSettings();
+		return modelTypedef.getSettingsDefinitions();
 	}
 
 	@Override
@@ -181,6 +175,11 @@ public abstract class AbstractPointerTypedefDataType extends BuiltIn implements 
 	public String toString() {
 		return getClass().getSimpleName() + ": typedef " + getName() + " " +
 			getDataType().getName();
+	}
+
+	@Override
+	public Class<?> getValueClass(Settings settings) {
+		return modelTypedef.getValueClass(settings);
 	}
 
 	@Override

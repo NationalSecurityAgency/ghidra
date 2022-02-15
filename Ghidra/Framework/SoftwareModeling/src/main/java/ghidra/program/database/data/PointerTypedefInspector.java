@@ -52,8 +52,8 @@ public class PointerTypedefInspector {
 	 * its default settings.
 	 * @param pointerTypeDef Pointer TypeDef
 	 * @param addrFactory target address factory
-	 * @return referenced address space or null if not applicable
-	 * or the space setting is not defined within the addrFactory.
+	 * @return referenced address space or null if not specified or address space
+	 * lookup fails.
 	 */
 	public static AddressSpace getPointerAddressSpace(TypeDef pointerTypeDef,
 			AddressFactory addrFactory) {

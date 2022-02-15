@@ -109,6 +109,11 @@ public class EndianSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getStorageKey() {
+		return ENDIAN_SETTING_NAME;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Selects the endianess of the data";
 	}

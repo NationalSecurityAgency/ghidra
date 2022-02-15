@@ -20,6 +20,7 @@ import java.util.Collection;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.TypeDefSettingsDefinition;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
@@ -67,6 +68,15 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 	}
 
 	DBTraceDataSettingsOperations getSettingsSpace(boolean createIfAbsent);
+
+	@Override
+	default boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
+		if (settingsDefinition instanceof TypeDefSettingsDefinition) {
+			return false;
+		}
+		// assume instance setting allowed if default setting allowed
+		return getDefaultSettings().isChangeAllowed(settingsDefinition);
+	}
 
 	@Override
 	default void setLong(String name, long value) {

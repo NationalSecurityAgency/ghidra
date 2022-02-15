@@ -15,7 +15,7 @@
  */
 package ghidra.app.cmd.data.exceptionhandling;
 
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getAlignedPack4Structure;
+import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.*;
 
 import ghidra.app.cmd.data.AbstractCreateDataTypeModel;
 import ghidra.app.cmd.data.EHDataTypeUtilities;
@@ -150,7 +150,7 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 		DataTypeManager dataTypeManager = getProgram().getDataTypeManager();
 		int intSize = new IntegerDataType(dataTypeManager).getLength();
 		int uintSize = new UnsignedIntegerDataType(dataTypeManager).getLength();
-		int ibo32Size = new ImageBaseOffset32DataType(dataTypeManager).getLength();
+		int ibo32Size = new IBO32DataType(dataTypeManager).getLength();
 		int defaultPointerSize = getDefaultPointerSize();
 		int size20;
 		int additional21;
@@ -316,7 +316,7 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 
 			/* comps[2] */
 			if (isRelative) {
-				compDt = new ImageBaseOffset32DataType(dataTypeManager);
+				compDt = new IBO32DataType(dataTypeManager);
 				struct.add(compDt, "dispUnwindMap", null);
 			}
 			else {
@@ -330,7 +330,7 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 
 			/* comps[4] */
 			if (isRelative) {
-				compDt = new ImageBaseOffset32DataType(dataTypeManager);
+				compDt = new IBO32DataType(dataTypeManager);
 				struct.add(compDt, "dispTryBlockMap", null);
 			}
 			else {
@@ -344,7 +344,7 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 
 			/* comps[6] */
 			if (isRelative) {
-				compDt = new ImageBaseOffset32DataType(dataTypeManager);
+				compDt = new IBO32DataType(dataTypeManager);
 				struct.add(compDt, "dispIPToStateMap", null);
 			}
 			else {
@@ -359,7 +359,7 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 
 			if (isV2 || isV3) {
 				if (isRelative) { /* comps[8] */
-					compDt = new ImageBaseOffset32DataType(dataTypeManager);
+					compDt = new IBO32DataType(dataTypeManager);
 					struct.add(compDt, "dispESTypeList", null);
 				}
 				else { /* comps[7] */

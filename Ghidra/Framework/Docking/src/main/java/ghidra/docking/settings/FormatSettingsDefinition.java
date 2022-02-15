@@ -115,6 +115,11 @@ public class FormatSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getStorageKey() {
+		return FORMAT;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Selects the display format";
 	}

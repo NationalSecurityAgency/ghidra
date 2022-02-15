@@ -27,6 +27,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.mem.Memory;
@@ -47,6 +48,10 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	private AddressSpace space;
 	private int transactionID;
 
+	// Suitable settings allowed for StringDataType data
+	private static String LONG_SETTING_NAME = "mutability";
+	private static String STRING_SETTING_NAME = "charset";
+
 	// NOTE: Datatypes must be resolved before settings may be changed
 	// with the exception of TypeDefDataType which does permit
 	// TypeDefSettingsDefinition settings defined by the base-datatype.
@@ -63,6 +68,16 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		listing = program.getListing();
 		transactionID = program.startTransaction("Test");
 		addBlock();
+		// pointer-typedef has the largest 
+//		System.out.println("Defined string settings:");
+//		for (SettingsDefinition def : StringDataType.dataType.getSettingsDefinitions()) {
+//			System.out.println(def.getStorageKey());
+//		}
+
+		for (int i = 0; i < 40; i++) {
+			DataUtilities.createData(program, addr(i), StringDataType.dataType, 1, false,
+				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+		}
 	}
 
 	@After
@@ -76,31 +91,33 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testSetDefaultSettings() throws Exception {
 
-		DataType dt = ByteDataType.dataType;
+		DataType dt = StringDataType.dataType;
 
 		Settings defaultSettings = dt.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
 
-		assertNull(defaultSettings.getString("color"));
-		assertNull(defaultSettings.getLong("someLongValue"));
+		// immutable warnings expected
+		defaultSettings.setString(STRING_SETTING_NAME, "red");
+		defaultSettings.setLong(LONG_SETTING_NAME, 10);
+
+		assertNull(defaultSettings.getString(STRING_SETTING_NAME));
+		assertNull(defaultSettings.getLong(LONG_SETTING_NAME));
 
 		// May modify byte default settings after resolve
 		dt = dataMgr.resolve(dt, null);
 
 		defaultSettings = dt.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
+		defaultSettings.setString(STRING_SETTING_NAME, "red");
+		defaultSettings.setLong(LONG_SETTING_NAME, 10);
 
-		assertEquals("red", defaultSettings.getString("color"));
-		Long lv = defaultSettings.getLong("someLongValue");
+		assertEquals("red", defaultSettings.getString(STRING_SETTING_NAME));
+		Long lv = defaultSettings.getLong(LONG_SETTING_NAME);
 		assertNotNull(lv);
 		assertEquals(10, lv.longValue());
 
-		defaultSettings.setValue("long", 10L);
-		Object obj = defaultSettings.getValue("long");
-		assertNotNull(obj);
-		assertEquals(10, ((Long) obj).longValue());
+		defaultSettings.setValue(LONG_SETTING_NAME, 20L);
+		Object obj = defaultSettings.getValue(LONG_SETTING_NAME);
+		assertTrue(obj instanceof Long);
+		assertEquals(20, ((Long) obj).longValue());
 	}
 
 	@Test
@@ -112,31 +129,32 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(0, ByteDataType.dataType.getTypeDefSettingsDefinitions().length);
 
 		Settings defaultSettings = typeDef.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
 
-		assertNull(defaultSettings.getString("color"));
-		assertNull(defaultSettings.getLong("someLongValue"));
+		// immutable warnings expected
+		FormatSettingsDefinition.DEF.setChoice(defaultSettings, FormatSettingsDefinition.CHAR);
+		EndianSettingsDefinition.DEF.setBigEndian(defaultSettings, false);
+		PaddingSettingsDefinition.DEF.setPadded(defaultSettings, true);
+
+		assertNull(defaultSettings.getLong("format"));
+		assertNull(defaultSettings.getLong("endian"));
+		assertNull(defaultSettings.getLong("padding"));
 
 		// May modify arbitrary typedef default settings after resolve
 		typeDef = (TypeDef) dataMgr.resolve(typeDef, null);
 
 		defaultSettings = typeDef.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
+		FormatSettingsDefinition.DEF.setChoice(defaultSettings, FormatSettingsDefinition.CHAR);
+		EndianSettingsDefinition.DEF.setBigEndian(defaultSettings, false);
+		PaddingSettingsDefinition.DEF.setPadded(defaultSettings, true);
 
-		assertEquals("red", defaultSettings.getString("color"));
-		Long lv = defaultSettings.getLong("someLongValue");
-		assertNotNull(lv);
-		assertEquals(10, lv.longValue());
-
-		defaultSettings.setValue("long", 10L);
-		Object obj = defaultSettings.getValue("long");
-		assertNotNull(obj);
-		assertEquals(10, ((Long) obj).longValue());
+		assertEquals(FormatSettingsDefinition.CHAR, defaultSettings.getLong("format").longValue());
+		assertEquals(EndianSettingsDefinition.LITTLE,
+			defaultSettings.getLong("endian").longValue());
+		assertEquals(PaddingSettingsDefinition.PADDED_VALUE,
+			defaultSettings.getLong("padded").longValue());
 
 		try {
-			defaultSettings.setValue("color", Color.RED);
+			defaultSettings.setValue("format", Color.RED);
 			Assert.fail("Should not be able to set arbitrary objects");
 		}
 		catch (IllegalArgumentException e) {
@@ -147,10 +165,10 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testIsEmpty() throws Exception {
 
-		DataType dt = dataMgr.resolve(ByteDataType.dataType, null);
-		Settings defaultSettings = dt.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
+		Data data = listing.getDataAt(addr(10));
+		Settings defaultSettings = data.getDataType().getDefaultSettings();
+		defaultSettings.setString(STRING_SETTING_NAME, "red");
+		defaultSettings.setLong(LONG_SETTING_NAME, 10);
 
 		assertTrue(!defaultSettings.isEmpty());
 
@@ -161,107 +179,99 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetNames() throws Exception {
 
-		DataType dt = dataMgr.resolve(ByteDataType.dataType, null);
+		DataType dt = dataMgr.resolve(StringDataType.dataType, null);
 		Settings defaultSettings = dt.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
-		defaultSettings.setString("endian", "big Endian");
+		defaultSettings.setString(STRING_SETTING_NAME, "red");
+		defaultSettings.setLong(LONG_SETTING_NAME, 10);
 
 		String[] names = defaultSettings.getNames();
-		assertEquals(3, names.length);
+		assertEquals(2, names.length);
 	}
 
 	@Test
 	public void testClearSetting() throws Exception {
 
-		DataType dt = dataMgr.resolve(ByteDataType.dataType, null);
+		DataType dt = dataMgr.resolve(StringDataType.dataType, null);
 		Settings defaultSettings = dt.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
+		defaultSettings.setString(STRING_SETTING_NAME, "red");
+		defaultSettings.setLong(LONG_SETTING_NAME, 10);
 
-		defaultSettings.clearSetting("color");
-		assertNull(defaultSettings.getString("color"));
+		defaultSettings.clearSetting(STRING_SETTING_NAME);
+		assertNull(defaultSettings.getString(STRING_SETTING_NAME));
 	}
 
 	@Test
 	public void testInstanceSettings() throws Exception {
 
-		listing.createData(addr(10), new ByteDataType(), 1);
-		Data data = listing.getDataAt(addr(10));
-		ByteDataType dt = (ByteDataType) data.getDataType();
+		Data data = DataUtilities.createData(program, addr(10), ByteDataType.dataType, 1, false,
+			ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+
+		DataType dt = data.getDataType();
 		Settings defaultSettings = dt.getDefaultSettings();
-		defaultSettings.setLong("format", FormatSettingsDefinition.CHAR);
-		defaultSettings.setLong("signed", 0);
-		defaultSettings.setLong("padded", 1);
+		FormatSettingsDefinition.DEF.setChoice(defaultSettings, FormatSettingsDefinition.CHAR);
+		EndianSettingsDefinition.DEF.setBigEndian(defaultSettings, false);
+		PaddingSettingsDefinition.DEF.setPadded(defaultSettings, true);
 
-		SettingsDefinition[] defs = dt.getSettingsDefinitions();
-		for (int i = 0; i < defs.length; i++) {
+		assertEquals(FormatSettingsDefinition.CHAR, data.getLong("format").longValue());
+		FormatSettingsDefinition.DEF.setChoice(data, FormatSettingsDefinition.DECIMAL);
+		assertEquals(FormatSettingsDefinition.DECIMAL, data.getLong("format").longValue());
 
-			if (defs[i] instanceof EnumSettingsDefinition) {
-				EnumSettingsDefinition enumDef = (EnumSettingsDefinition) defs[i];
-				int value = enumDef.getChoice(data);
-				enumDef.setChoice(data, value);
-				if (i == 0) {
-					assertEquals(FormatSettingsDefinition.CHAR, data.getLong("format").longValue());
-				}
-				else if (i == 1) {
-					assertEquals(0, data.getLong("signed").longValue());
-				}
-				else if (i == 2) {
-					assertEquals(1, data.getLong("padded").longValue());
-				}
+		assertEquals(EndianSettingsDefinition.LITTLE, data.getLong("endian").longValue());
+		EndianSettingsDefinition.DEF.setChoice(data, EndianSettingsDefinition.BIG);
+		assertEquals(EndianSettingsDefinition.BIG, data.getLong("endian").longValue());
 
-			}
-		}
+		assertEquals(PaddingSettingsDefinition.PADDED_VALUE, data.getLong("padded").longValue());
+		PaddingSettingsDefinition.DEF.setChoice(data, PaddingSettingsDefinition.UNPADDED_VALUE);
+		assertEquals(PaddingSettingsDefinition.UNPADDED_VALUE, data.getLong("padded").longValue());
+
+		FormatSettingsDefinition.DEF.setChoice(defaultSettings, FormatSettingsDefinition.HEX);
+		EndianSettingsDefinition.DEF.clear(defaultSettings);
+		PaddingSettingsDefinition.DEF.clear(defaultSettings);
+
+		assertEquals(FormatSettingsDefinition.DECIMAL, data.getLong("format").longValue());
+		assertEquals(EndianSettingsDefinition.BIG, data.getLong("endian").longValue());
+		assertEquals(PaddingSettingsDefinition.UNPADDED_VALUE, data.getLong("padded").longValue());
 	}
 
 	@Test
 	public void testGetInstanceNames() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
 		Data data = listing.getDataAt(addr(10));
-		data.setString("color", "red");
-		data.setLong("someLongValue", 10);
-		data.setString("endian", "big Endian");
+		data.setString(STRING_SETTING_NAME, "red");
+		data.setLong(LONG_SETTING_NAME, 10);
 
 		String[] names = data.getNames();
-		assertEquals(3, names.length);
+		assertEquals(2, names.length);
 	}
 
 	@Test
 	public void testClearInstanceSettings() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
 		Data data = listing.getDataAt(addr(10));
 
-		data.setString("color", "red");
-		data.setLong("someLongValue", 10);
+		data.setString(STRING_SETTING_NAME, "red");
+		data.setLong(LONG_SETTING_NAME, 10);
 
-		data.clearSetting("color");
-		assertNull(data.getString("color"));
+		data.clearSetting(STRING_SETTING_NAME);
+		assertNull(data.getString(STRING_SETTING_NAME));
 	}
 
 	@Test
 	public void testClearAllInstanceSettings() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
 		Data data = listing.getDataAt(addr(10));
 
-		data.setString("color", "red");
-		data.setLong("someLongValue", 10);
-		data.setString("endian", "big Endian");
+		data.setString(STRING_SETTING_NAME, "red");
+		data.setLong(LONG_SETTING_NAME, 10);
 
 		data.clearAllSettings();
-		assertNull(data.getString("color"));
-		assertNull(data.getLong("someLongValue"));
-		assertNull(data.getString("endian"));
+		assertNull(data.getString(STRING_SETTING_NAME));
+		assertNull(data.getLong(LONG_SETTING_NAME));
 	}
 
 	@Test
 	public void testIsEmptyInstanceSettings() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
 		Data data = listing.getDataAt(addr(10));
 
-		data.setString("color", "red");
-		data.setLong("someLongValue", 10);
-		data.setString("endian", "big Endian");
+		data.setString(STRING_SETTING_NAME, "red");
+		data.setLong(LONG_SETTING_NAME, 10);
 
 		assertTrue(!data.isEmpty());
 		data.clearAllSettings();
@@ -269,23 +279,29 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(data.isEmpty());
 	}
 
+	private Data getDataAt(long offset) {
+		Data data = listing.getDataAt(addr(offset));
+		assertNotNull("expected data at address 0x" + Long.toHexString(offset));
+		return data;
+	}
+
 	@Test
 	public void testMoveSettings() throws Exception {
 
 		for (int i = 0; i < 10; i++) {
-			Address a = addr(i);
-			dataMgr.setStringSettingsValue(a, "color", "red" + i);
-			dataMgr.setLongSettingsValue(a, "someLongValue", i);
+			Data d = getDataAt(i);
+			dataMgr.setStringSettingsValue(d, STRING_SETTING_NAME, "red" + i);
+			dataMgr.setLongSettingsValue(d, LONG_SETTING_NAME, i);
 		}
 		dataMgr.moveAddressRange(addr(0), addr(20), 10, TaskMonitor.DUMMY);
 		int j = 0;
 		for (int i = 20; i < 30; i++, j++) {
-			Address a = addr(i);
+			Data d = getDataAt(i);
 
-			String s = dataMgr.getStringSettingsValue(a, "color");
+			String s = dataMgr.getStringSettingsValue(d, STRING_SETTING_NAME);
 			assertEquals("red" + j, s);
 
-			Long lvalue = dataMgr.getLongSettingsValue(a, "someLongValue");
+			Long lvalue = dataMgr.getLongSettingsValue(d, LONG_SETTING_NAME);
 			assertEquals(j, lvalue.longValue());
 		}
 	}
@@ -294,9 +310,9 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testMoveSettings2() {
 
 		for (int i = 0; i < 10; i++) {
-			Address a = addr(i);
-			dataMgr.setStringSettingsValue(a, "color", "red" + i);
-			dataMgr.setLongSettingsValue(a, "someLongValue", i);
+			Data d = getDataAt(i);
+			dataMgr.setStringSettingsValue(d, STRING_SETTING_NAME, "red" + i);
+			dataMgr.setLongSettingsValue(d, LONG_SETTING_NAME, i);
 		}
 		try {
 			dataMgr.moveAddressRange(addr(0), addr(5), 10, TaskMonitor.DUMMY);
@@ -307,12 +323,12 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int j = 0;
 		for (int i = 5; i < 15; i++, j++) {
-			Address a = addr(i);
+			Data d = getDataAt(i);
 
-			String s = dataMgr.getStringSettingsValue(a, "color");
+			String s = dataMgr.getStringSettingsValue(d, STRING_SETTING_NAME);
 			assertEquals("red" + j, s);
 
-			Long lvalue = dataMgr.getLongSettingsValue(a, "someLongValue");
+			Long lvalue = dataMgr.getLongSettingsValue(d, LONG_SETTING_NAME);
 			assertEquals(j, lvalue.longValue());
 		}
 	}
@@ -322,9 +338,9 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int j = 20;
 		for (int i = 20; i < 30; i++, j++) {
-			Address a = addr(i);
-			dataMgr.setStringSettingsValue(a, "color", "red" + i);
-			dataMgr.setLongSettingsValue(a, "someLongValue", i);
+			Data d = getDataAt(i);
+			dataMgr.setStringSettingsValue(d, STRING_SETTING_NAME, "red" + i);
+			dataMgr.setLongSettingsValue(d, LONG_SETTING_NAME, i);
 		}
 		j = 20;
 		try {
@@ -334,12 +350,12 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 			Assert.fail("Unexpected cancelled exception");
 		}
 		for (int i = 5; i < 15; i++, j++) {
-			Address a = addr(i);
+			Data d = getDataAt(i);
 
-			String s = dataMgr.getStringSettingsValue(a, "color");
+			String s = dataMgr.getStringSettingsValue(d, STRING_SETTING_NAME);
 			assertEquals("red" + j, s);
 
-			Long lvalue = dataMgr.getLongSettingsValue(a, "someLongValue");
+			Long lvalue = dataMgr.getLongSettingsValue(d, LONG_SETTING_NAME);
 			assertEquals(j, lvalue.longValue());
 		}
 
@@ -378,8 +394,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		DataType byteDT = dataMgr.resolve(new ByteDataType(), null);
 		SettingsDefinition[] settingsDefinitions = byteDT.getSettingsDefinitions();
 		Settings settings = byteDT.getDefaultSettings();
-		settings.setLong("format", FormatSettingsDefinition.OCTAL);
-		settings.setString("color", "red");
+		FormatSettingsDefinition.DEF.setChoice(settings, FormatSettingsDefinition.OCTAL);
 
 		TypedefDataType tdt = new TypedefDataType("ByteTypedef", byteDT);
 		TypeDef td = (TypeDef) dataMgr.addDataType(tdt, null);
@@ -388,11 +403,18 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(sdefs.length >= settingsDefinitions.length);  // TypeDef may add some of its own
 
 		Settings defSettings = td.getDefaultSettings();
-		defSettings.setLong("someLongValue", 10);
+		assertEquals(FormatSettingsDefinition.OCTAL,
+			FormatSettingsDefinition.DEF.getChoice(defSettings));
 
-		assertEquals((long) FormatSettingsDefinition.OCTAL, defSettings.getValue("format")); // inherits from byteDt
-		assertEquals("red", defSettings.getValue("color")); // inherits from byteDt
-		assertEquals(10L, defSettings.getValue("someLongValue"));
+		FormatSettingsDefinition.DEF.setChoice(defSettings, FormatSettingsDefinition.DECIMAL);
+		assertEquals(FormatSettingsDefinition.DECIMAL,
+			FormatSettingsDefinition.DEF.getChoice(defSettings));
+
+		FormatSettingsDefinition.DEF.setChoice(settings, FormatSettingsDefinition.HEX);
+
+		assertEquals(FormatSettingsDefinition.DECIMAL,
+			FormatSettingsDefinition.DEF.getChoice(defSettings)); // unchanged
+
 	}
 
 	@Test
