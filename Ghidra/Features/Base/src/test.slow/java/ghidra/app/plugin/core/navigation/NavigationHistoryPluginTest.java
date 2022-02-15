@@ -37,7 +37,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.test.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for tool state history plugin.
@@ -87,7 +87,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 
 	@After
 	public void tearDown() throws Exception {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		env.dispose();
 	}
 
@@ -95,8 +95,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 	public void testPrevious() throws Exception {
 		// go to sscanf
 		QueryData queryData = new QueryData("sscanf", false);
-		goToService.goToQuery(program.getMinAddress(), queryData, null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+		goToService.goToQuery(program.getMinAddress(), queryData, null, TaskMonitor.DUMMY);
 
 		assertTrue(plugin.hasPrevious(navigatable));
 
@@ -119,30 +118,29 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 
 		performAction(prevAction, provider, true);
 		cb.updateNow();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(loc, cb.getCurrentLocation());
 		assertTrue(prevAction.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(nextAction.isEnabledForContext(provider.getActionContext(null)));
 
 		performAction(prevAction, provider, true);
 		cb.updateNow();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(program.getMinAddress(), cb.getCurrentAddress());
-		assertTrue(!prevAction.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(prevAction.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(nextAction.isEnabledForContext(provider.getActionContext(null)));
 	}
 
 	@Test
 	public void testNext() throws Exception {
 		QueryData queryData = new QueryData("sscanf", false);
-		goToService.goToQuery(program.getMinAddress(), queryData, null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+		goToService.goToQuery(program.getMinAddress(), queryData, null, TaskMonitor.DUMMY);
 
 		assertTrue(plugin.hasPrevious(navigatable));
 
 		assertNotNull(prevAction);
 		assertTrue(prevAction.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!nextAction.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(nextAction.isEnabledForContext(provider.getActionContext(null)));
 
 		ProgramLocation loc = cb.getCurrentLocation();
 		assertTrue(loc instanceof FunctionSignatureFieldLocation);
@@ -174,17 +172,17 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 
 		performAction(prevAction, provider, true);
 		cb.updateNow();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(opLoc, cb.getCurrentLocation());
 
 		performAction(prevAction, provider, true);
 		cb.updateNow();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(xrefLoc, cb.getCurrentLocation());
 
 		performAction(prevAction, provider, true);
 		cb.updateNow();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(loc, cb.getCurrentLocation());
 
 		assertTrue(prevAction.isEnabledForContext(provider.getActionContext(null)));
@@ -192,18 +190,18 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 
 		performAction(prevAction, provider, true);
 		cb.updateNow();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(program.getMinAddress(), cb.getCurrentAddress());
-		assertTrue(!prevAction.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(prevAction.isEnabledForContext(provider.getActionContext(null)));
 
 		performAction(nextAction, provider, true);
 		cb.updateNow();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(loc, cb.getCurrentLocation());
 
 		performAction(nextAction, provider, true);
 		cb.updateNow();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(xrefLoc, cb.getCurrentLocation());
 
 		assertTrue(prevAction.isEnabledForContext(provider.getActionContext(null)));
@@ -211,24 +209,23 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 
 		performAction(prevAction, provider, true);
 		performAction(prevAction, provider, true);
-		assertTrue(!prevAction.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(prevAction.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(nextAction.isEnabledForContext(provider.getActionContext(null)));
 
 		for (ProgramLocation element : locations) {
 			performAction(nextAction, provider, true);
 			cb.updateNow();
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			assertEquals(element, cb.getCurrentLocation());
 		}
-		assertTrue(!nextAction.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(nextAction.isEnabledForContext(provider.getActionContext(null)));
 	}
 
 	@Test
 	public void testNavigationInCodeBrowser() throws Exception {
 		QueryData queryData = new QueryData("sscanf", false);
 
-		goToService.goToQuery(program.getMinAddress(), queryData, null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+		goToService.goToQuery(program.getMinAddress(), queryData, null, TaskMonitor.DUMMY);
 
 		ProgramLocation loc = cb.getCurrentLocation();
 		assertTrue(loc instanceof FunctionSignatureFieldLocation);
@@ -279,8 +276,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 		DockingActionIf clearAction = getAction(nextPrevPlugin, "Clear History Buffer");
 
 		QueryData queryData = new QueryData("sscanf", false);
-		goToService.goToQuery(program.getMinAddress(), queryData, null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+		goToService.goToQuery(program.getMinAddress(), queryData, null, TaskMonitor.DUMMY);
 
 		ProgramLocation loc = cb.getCurrentLocation();
 
@@ -294,8 +290,8 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 		click(cb, 2);
 
 		performAction(clearAction, provider, true);
-		assertTrue(!plugin.hasNext(navigatable));
-		assertTrue(!plugin.hasPrevious(navigatable));
+		assertFalse(plugin.hasNext(navigatable));
+		assertFalse(plugin.hasPrevious(navigatable));
 	}
 
 	@Test
@@ -303,14 +299,13 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 		ProgramLocation initialLoc = cb.getCurrentLocation();
 
 		QueryData queryData = new QueryData("sscanf", false);
-		goToService.goToQuery(program.getMinAddress(), queryData, null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+		goToService.goToQuery(program.getMinAddress(), queryData, null, TaskMonitor.DUMMY);
 
 		assertTrue(plugin.hasPrevious(navigatable));
 
 		assertNotNull(prevAction);
 		assertTrue(prevAction.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!nextAction.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(nextAction.isEnabledForContext(provider.getActionContext(null)));
 
 		ProgramLocation loc = cb.getCurrentLocation();
 		assertTrue(loc instanceof FunctionSignatureFieldLocation);
@@ -347,10 +342,10 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 		for (int i = locations.length - 1; i >= 0; i--) {
 			performAction(prevAction, provider, true);
 			cb.updateNow();
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			assertEquals(locations[i], cb.getCurrentLocation());
 		}
-		assertTrue(!prevAction.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(prevAction.isEnabledForContext(provider.getActionContext(null)));
 	}
 
 	@Test
@@ -367,16 +362,17 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 
 			++count;
 
-			goToService.goTo(currentAddr, symbol.getAddress());
+			Address addr = currentAddr;
+			runSwing(() -> goToService.goTo(addr, symbol.getAddress()));
 			cb.updateNow();
 			currentAddr = symbol.getAddress();
 			if (count > NavigationHistoryPlugin.MAX_HISTORY_SIZE) {
 				for (int i = 0; i < NavigationHistoryPlugin.MAX_HISTORY_SIZE - 1; i++) {
 					assertTrue(plugin.hasPrevious(navigatable));
-					plugin.previous(navigatable);
+					runSwing(() -> plugin.previous(navigatable));
 					cb.updateNow();
 				}
-				assertTrue(!plugin.hasPrevious(navigatable));
+				assertFalse(plugin.hasPrevious(navigatable));
 				break;
 			}
 		}
@@ -396,7 +392,8 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 			}
 
 			++count;
-			goToService.goTo(currentAddr, symbol.getAddress());
+			Address addr = currentAddr;
+			runSwing(() -> goToService.goTo(addr, symbol.getAddress()));
 			cb.updateNow();
 			currentAddr = symbol.getAddress();
 			if (count > 2 * NavigationHistoryPlugin.MAX_HISTORY_SIZE) {
@@ -413,16 +410,16 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 
 		for (int i = 0; i < NavigationHistoryPlugin.MAX_HISTORY_SIZE - 1; i++) {
 			assertTrue(plugin.hasPrevious(navigatable));
-			plugin.previous(navigatable);
+			runSwing(() -> plugin.previous(navigatable));
 			cb.updateNow();
 		}
-		assertTrue(!plugin.hasPrevious(navigatable));
+		assertFalse(plugin.hasPrevious(navigatable));
 	}
 
 	@Test
 	public void testNextAfterUndoRedo() throws Exception {
 		//
-		// Note: the addresses used here are arbitrary, except that there is an undefined are 
+		// Note: the addresses used here are arbitrary, except that there is an undefined are
 		//       we can use to create data
 		//
 
@@ -448,7 +445,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 		ProgramLocation loc = cb.getCurrentLocation();
 		assertEquals(addr, loc.getAddress());
 
-		// do the next action and make sure it went to 1001020, which is 
+		// do the next action and make sure it went to 1001020, which is
 		// where we were before the undo
 		performAction(prevAction, provider, true);
 		cb.updateNow();
@@ -459,7 +456,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 		Address addr3 = getAddr(0x1001030);
 		goToService.goTo(addr3);
 
-		// do the redo and verify we are back to 1001020,  which is 
+		// do the redo and verify we are back to 1001020,  which is
 		// where we were when we did the undo
 		performAction(redoAction, provider, true);
 		cb.updateNow();
