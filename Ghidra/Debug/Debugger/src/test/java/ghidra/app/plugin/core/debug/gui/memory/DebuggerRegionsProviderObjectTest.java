@@ -17,11 +17,15 @@ package ghidra.app.plugin.core.debug.gui.memory;
 
 import java.io.IOException;
 
+import org.junit.experimental.categories.Category;
+
+import generic.test.category.NightlyCategory;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.util.database.UndoableTransaction;
 
+@Category(NightlyCategory.class)
 public class DebuggerRegionsProviderObjectTest extends DebuggerRegionsProviderTest {
 
 	protected SchemaContext ctx;
