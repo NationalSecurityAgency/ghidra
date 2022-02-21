@@ -2166,14 +2166,14 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 	Rd = Rd & clearMask;
 }
 
-:bfi^COND Rd,Rm,lsbImm,bitWidth	is $(AMODE) &  COND & c2127=0x3e & msbImm & Rd & Rm & lsbImm & bitWidth & c0406=1	{
+:bfi^COND Rd,Rm,lsbImm,bitWidth	is $(AMODE) &  COND & c2127=0x3e & Rd & Rm & lsbImm & bitWidth & c0406=1	{
 	build COND;
 	build lsbImm;
-	build msbImm;
 	build bitWidth;
-	clearMask:4 = (-1 << (msbImm + 1)) | (-1 >> (32 - lsbImm));
-	bits:4 = (Rm << lsbImm) & ~clearMask;
-	Rd = (Rd & clearMask) | bits;
+	vmask:4 = (1 << bitWidth) - 1;
+	clear:4 = ~(vmask << lsbImm);
+	bits:4 = (Rm & vmask) << lsbImm;
+	Rd = (Rd & clear) | bits;
 }
 
 @endif # VERSION_6T2
