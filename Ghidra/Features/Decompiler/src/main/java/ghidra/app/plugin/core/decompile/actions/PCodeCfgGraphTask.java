@@ -36,12 +36,16 @@ import ghidra.util.exception.GraphException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
-public class ASTGraphTask extends Task {
-	enum AstGraphSubType {
+/**
+ * Task to create a PCode control flow graph based on decompiler output
+ */
+public class PCodeCfgGraphTask extends Task {
+	enum PcodeGraphSubType {
 		CONTROL_FLOW_GRAPH("AST Control Flow"), DATA_FLOW_GRAPH("AST Data Flow");
+
 		private String name;
 
-		AstGraphSubType(String name) {
+		PcodeGraphSubType(String name) {
 			this.name = name;
 		}
 
@@ -57,13 +61,14 @@ public class ASTGraphTask extends Task {
 	private int codeLimitPerBlock;
 	private Address location;
 	private HighFunction hfunction;
-	private AstGraphSubType astGraphType;
+	private PcodeGraphSubType pcodeGraphType;
 
 	private int uniqueNum = 0;
 	private PluginTool tool;
 
-	public ASTGraphTask(GraphDisplayBroker graphService, boolean newGraph, int codeLimitPerBlock,
-			Address location, HighFunction hfunction, AstGraphSubType graphType, PluginTool tool) {
+	public PCodeCfgGraphTask(PluginTool tool, GraphDisplayBroker graphService, boolean newGraph,
+			int codeLimitPerBlock, Address location, HighFunction hfunction,
+			PcodeGraphSubType graphType) {
 		super("Graph " + graphType.getName(), true, false, true);
 
 		this.graphService = graphService;
@@ -71,19 +76,19 @@ public class ASTGraphTask extends Task {
 		this.codeLimitPerBlock = codeLimitPerBlock;
 		this.location = location;
 		this.hfunction = hfunction;
-		this.astGraphType = graphType;
+		this.pcodeGraphType = graphType;
 		this.tool = tool;
 	}
 
 	@Override
 	public void run(TaskMonitor monitor) {
-		GraphType graphType = new AstGraphType();
+		GraphType graphType = new PCodeCfgGraphType();
 
 		// get a new graph
-		AttributedGraph graph = new AttributedGraph(astGraphType.getName(), graphType);
+		AttributedGraph graph = new AttributedGraph("PCode Graph", graphType);
 		try {
 			monitor.setMessage("Computing Graph...");
-			if (astGraphType == AstGraphSubType.DATA_FLOW_GRAPH) {
+			if (pcodeGraphType == PcodeGraphSubType.DATA_FLOW_GRAPH) {
 				createDataFlowGraph(graph, monitor);
 			}
 			else {
@@ -93,8 +98,8 @@ public class ASTGraphTask extends Task {
 			GraphDisplay display =
 				graphService.getDefaultGraphDisplay(!newGraph, monitor);
 
-			ASTGraphDisplayListener displayListener =
-				new ASTGraphDisplayListener(tool, display, hfunction, astGraphType);
+			PCodeCfgDisplayListener displayListener =
+				new PCodeCfgDisplayListener(tool, display, hfunction, pcodeGraphType);
 			display.setGraphDisplayListener(displayListener);
 
 			monitor.setMessage("Obtaining handle to graph provider...");
@@ -106,10 +111,11 @@ public class ASTGraphTask extends Task {
 			monitor.setMessage("Rendering Graph...");
 
 			String description =
-				astGraphType == AstGraphSubType.DATA_FLOW_GRAPH ? "AST Data Flow" : "AST Control Flow";
+				pcodeGraphType == PcodeGraphSubType.DATA_FLOW_GRAPH ? "AST Data Flow"
+						: "AST Control Flow";
 			description = description + " for " + hfunction.getFunction().getName();
 			GraphDisplayOptions graphDisplayOptions =
-				new ProgramGraphDisplayOptions(new AstGraphType(), tool);
+				new ProgramGraphDisplayOptions(new PCodeCfgGraphType(), tool);
 			graphDisplayOptions.setVertexLabelOverrideAttributeKey(CODE_ATTRIBUTE);
 			display.setGraph(graph, graphDisplayOptions, description, false, monitor);
 			setGraphLocation(display, displayListener);
@@ -124,7 +130,7 @@ public class ASTGraphTask extends Task {
 
 	}
 
-	private void setGraphLocation(GraphDisplay display, ASTGraphDisplayListener displayListener) {
+	private void setGraphLocation(GraphDisplay display, PCodeCfgDisplayListener displayListener) {
 		if (location == null) {
 			return;
 		}

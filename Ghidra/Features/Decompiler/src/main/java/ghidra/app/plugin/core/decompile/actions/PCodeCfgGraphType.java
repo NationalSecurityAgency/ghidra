@@ -17,10 +17,10 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import ghidra.graph.ProgramGraphType;
 
-public class AstGraphType extends ProgramGraphType {
+public class PCodeCfgGraphType extends ProgramGraphType {
 
-	protected AstGraphType() {
-		super("AST", "Graph to show pcode for function");
+	protected PCodeCfgGraphType() {
+		super("Pcode", "Graph to show pcode for function");
 	}
 
 }
