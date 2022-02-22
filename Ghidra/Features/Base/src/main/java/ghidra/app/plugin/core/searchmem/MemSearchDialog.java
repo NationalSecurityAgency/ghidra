@@ -171,7 +171,7 @@ class MemSearchDialog extends DialogComponentProvider {
 		super.executeProgressTask(task, delay);
 	}
 
-	void updateSearchButtonEnablement() {
+	private void updateSearchButtonEnablement() {
 		nextButton.setEnabled(searchEnabled && !isSearching && hasValidSearchData);
 		previousButton.setEnabled(searchEnabled && !isSearching && hasValidSearchData &&
 			currentFormat.supportsBackwardsSearch());
@@ -376,7 +376,6 @@ class MemSearchDialog extends DialogComponentProvider {
 	private Container createSeparatorPanel() {
 		JPanel panel = new JPanel(new GridLayout(1, 1));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 10));
-
 		panel.add(new JSeparator(SwingConstants.VERTICAL));
 		return panel;
 	}
@@ -386,22 +385,14 @@ class MemSearchDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 10));
 		panel.add(createSeparatorPanel(), BorderLayout.WEST);
 		panel.add(buildAdvancedPanelContents());
-
 		return panel;
 	}
 
 	private Container buildAdvancedPanelContents() {
 		JPanel panel = new JPanel(new VerticalLayout(5));
-
-		// endieness
 		panel.add(buildEndienessPanel());
-
-		// defined/undefined data
 		panel.add(buildCodeUnitTypesPanel());
-
-		// alignment
 		panel.add(buildAlignmentPanel());
-
 		return panel;
 	}
 
@@ -574,7 +565,6 @@ class MemSearchDialog extends DialogComponentProvider {
 		optionsPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 20, 10));
 		optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
 		optionsPanel.add(northPanel);
-//		optionsPanel.add( southPanel );
 		optionsPanel.add(advancedButtonPanel);
 
 		return optionsPanel;
@@ -664,9 +654,6 @@ class MemSearchDialog extends DialogComponentProvider {
 		return false;
 	}
 
-	/* (non Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#getTaskScheduler()
-	 */
 	@Override
 	protected TaskScheduler getTaskScheduler() {
 		return super.getTaskScheduler();
@@ -813,16 +800,16 @@ class MemSearchDialog extends DialogComponentProvider {
 		}
 	}
 
-	public void setSearchEnabled(boolean b) {
+	void setSearchEnabled(boolean b) {
 		searchEnabled = b;
 	}
 
-	public void searchCompleted() {
+	void searchCompleted() {
 		isSearching = false;
 		updateSearchButtonEnablement();
 	}
 
-	public String getSearchText() {
+	String getSearchText() {
 		return valueComboBox.getText();
 	}
 
