@@ -2966,6 +2966,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (IY s< 0);
 	V_equals_0();
 }
+@endif
 
 @if defined(HCS12X)
 :EORY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF8); opr16a_16
@@ -5387,6 +5388,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IX, op1, result);
 	IX = result;
 }
+@endif
 
 @if defined(HCS12X)
 :SUBY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC0); iopr16i
