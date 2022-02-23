@@ -176,7 +176,8 @@ public final class GTableToCSV {
 
 		if (component instanceof JLabel) {
 			JLabel label = (JLabel) component;
-			return getTextForLabel(label);
+			String text = getTextForLabel(label);
+			if(!text.isEmpty()) return text;
 		}
 
 		String text = lookForTextInsideOfComponent(component);
