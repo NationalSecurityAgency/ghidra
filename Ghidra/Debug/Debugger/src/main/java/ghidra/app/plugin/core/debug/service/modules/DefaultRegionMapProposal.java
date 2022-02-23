@@ -94,6 +94,16 @@ public class DefaultRegionMapProposal
 		}
 
 		protected int computeOffsetScore() {
+			AddressSpace space1 = fromRange.getMinAddress().getAddressSpace();
+			AddressSpace space2 = fromBase.getAddressSpace();
+			if (!space1.equals(space2)) {
+				return 0;
+			}
+			AddressSpace space3 = toRange.getMinAddress().getAddressSpace();
+			AddressSpace space4 = toBase.getAddressSpace();
+			if (!space3.equals(space4)) {
+				return 0;
+			}
 			long fOff = fromRange.getMinAddress().subtract(fromBase);
 			long tOff = toRange.getMinAddress().subtract(toBase);
 			if (fOff == tOff) {
