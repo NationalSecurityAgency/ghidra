@@ -144,9 +144,6 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 			lineCount++;
 		}
 
-		append(fullHtml, truncatedHtml, lineCount, LENGTH_PREFIX, infoLine.getText());
-		append(fullHtml, truncatedHtml, lineCount, BR, BR);
-
 		// "<TT> displayName { "
 		String displayNameText = displayName.getText();
 		if (trim) {
@@ -155,15 +152,17 @@ public class EnumDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation {
 		displayNameText = HTMLUtilities.friendlyEncodeHTML(displayNameText);
 		displayNameText = wrapStringInColor(displayNameText, displayName.getTextColor());
 		//@formatter:off
-		append(fullHtml, truncatedHtml, lineCount, TT_OPEN,
+		append(fullHtml, truncatedHtml, lineCount++, TT_OPEN,
                                                    displayNameText,
                                                    TT_CLOSE,
-                                                   HTML_SPACE,
-                                                   "{",
-                                                   HTML_SPACE,
                                                    BR);
+		
+		// TODO: show alignment
+		append(fullHtml, truncatedHtml, lineCount++, INDENT_OPEN, LENGTH_PREFIX, infoLine.getText(), INDENT_CLOSE);
+		
+		append(fullHtml, truncatedHtml, lineCount++, "{", BR);
+		
 		//@formatter:on
-		lineCount++;
 
 		int length = bodyLines.size();
 		for (int i = 0; i < length; i++, lineCount++) {

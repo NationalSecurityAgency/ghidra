@@ -17,8 +17,6 @@ package ghidra.app.util.html;
 
 import java.awt.Color;
 
-import ghidra.util.exception.AssertException;
-
 public class EmptyVariableTextLine extends VariableTextLine implements PlaceHolderLine {
 
 	private int numberOfCharacters;
@@ -54,14 +52,9 @@ public class EmptyVariableTextLine extends VariableTextLine implements PlaceHold
 			(otherValidatableLine instanceof EmptyVariableTextLine)) {
 			return;
 		}
-		if (!(otherValidatableLine instanceof VariableTextLine)) {
-			throw new AssertException("VariableTextLine can only be matched against other " +
-				"VariableTextLine implementations.");
-		}
-		VariableTextLine otherLine = (VariableTextLine) otherValidatableLine;
 
 		// since we are the empty line, the other line is all a mismatch
-		otherLine.setAllColors(invalidColor);
+		otherValidatableLine.setTextColor(invalidColor);
 	}
 
 	@Override

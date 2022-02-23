@@ -813,19 +813,25 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 
 		List<ValidatableLine> h1 = td1.headerContent;
 		List<ValidatableLine> h2 = td2.headerContent;
-		Assert.assertNotEquals("TypeDef diff should have different headers", h1, h2);
+		Assert.assertNotEquals("Typedef diff should have different headers", h1, h2);
 
-		List<ValidatableLine> b1 = td1.bodyContent;
-		List<ValidatableLine> b2 = td2.bodyContent;
+//		List<ValidatableLine> b1 = td1.bodyContent;
+//		List<ValidatableLine> b2 = td2.bodyContent;
 
 		// crude, but effective
-		String s1 = b1.toString();
-		String s2 = b2.toString();
+		String s1 = h1.toString();
+		String s2 = h2.toString();
 
-		String size1 = s1.replaceAll(".*Size: (\\d+).*", "$1");
-		String size2 = s2.replaceAll(".*Size: (\\d+).*", "$1");
+		Pattern p = Pattern.compile(".*Length: (\\d+).*");
+		Matcher m1 = p.matcher(s1);
+		assertTrue("Typedef length not found", m1.find());
+		String size1 = m1.group(1);
 
-		Assert.assertNotEquals("TypeDef diff should have different Size values", size1, size2);
+		Matcher m2 = p.matcher(s2);
+		assertTrue("Typedef length not found", m2.find());
+		String size2 = m2.group(1);
+
+		Assert.assertNotEquals("Typedef diff should have different Length values", size1, size2);
 	}
 
 	private void assertTypeDefsSame(HTMLDataTypeRepresentation[] diff) {
