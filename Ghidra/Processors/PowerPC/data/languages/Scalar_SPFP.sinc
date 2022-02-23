@@ -141,7 +141,7 @@ define pcodeop ConvertFloatingPointFromUnsignedFraction;
 #define pcodeop FloatingPointCompareEqual;
 :efscmpeq CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2CE & BITS_21_22=0
 {
-  CRFD = A:4 f== B:4;
+  CRFD[2,1] = A:4 f== B:4;
 }
 
 # =================================================================
@@ -151,14 +151,14 @@ define pcodeop ConvertFloatingPointFromUnsignedFraction;
 #define pcodeop FloatingPointCompareGreaterThan;
 :efscmpgt CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2CC & BITS_21_22=0
 {
-  CRFD = A:4 f> B:4;
+  CRFD[2,1] = A:4 f> B:4;
 }
 
 # efscmplt CRFD,rA,rB        010 1100 1101
 #define pcodeop FloatingPointCompareLessThan;
 :efscmplt CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2CD & BITS_21_22=0
 {
-  CRFD = A:4 f< B:4;
+  CRFD[2,1] = A:4 f< B:4;
 }
 
 # efsctsf rT,rB        010 1101 0111
@@ -451,14 +451,14 @@ define pcodeop ConvertFloatingPointFromUnsignedFraction;
 #define pcodeop FloatingPointTestEqual;
 :efststeq CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2DE & BITS_21_22=0
 {
-  CRFD = A:4 f== B:4;
+  CRFD[2,1] = A:4 f== B:4;
 }
 
 # efststgt CRFD,rA,rB        010 1101 1100
 #define pcodeop FloatingPointTestGreaterThan;
 :efststgt CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2DC & BITS_21_22=0
 {
-  CRFD = A:4 f> B:4;
+  CRFD[2,1] = A:4 f> B:4;
 }
 
 # =================================================================
@@ -468,5 +468,5 @@ define pcodeop ConvertFloatingPointFromUnsignedFraction;
 #define pcodeop FloatingPointTestLessThan;
 :efststlt CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2DD & BITS_21_22=0
 {
-  CRFD = A:4 f< B:4;
+  CRFD[2,1] = A:4 f< B:4;
 }

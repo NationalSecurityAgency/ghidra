@@ -113,6 +113,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		treeContext = new DataTypesActionContext(provider, program, tree, null);
 
 		removeDistractingPlugins();
+
+		cutAction = getAction(plugin, "Copy");
+		pasteAction = getAction(plugin, "Paste");
 	}
 
 	private void removeDistractingPlugins() {
@@ -589,8 +592,6 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		selectNode(myStructNode);
 
 		DockingActionIf copyAction = getAction(plugin, "Copy");
-		cutAction = getAction(plugin, "Cut");
-		pasteAction = getAction(plugin, "Paste");
 
 		assertTrue(cutAction.isEnabledForContext(treeContext));
 		assertTrue(copyAction.isEnabledForContext(treeContext));
@@ -616,8 +617,6 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		selectNode(cat2Node);
 
 		DockingActionIf copyAction = getAction(plugin, "Copy");
-		cutAction = getAction(plugin, "Cut");
-		pasteAction = getAction(plugin, "Paste");
 
 		assertTrue(cutAction.isEnabledForContext(treeContext));
 		assertTrue(copyAction.isEnabledForContext(treeContext));

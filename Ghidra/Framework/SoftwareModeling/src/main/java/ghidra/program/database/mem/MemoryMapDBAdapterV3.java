@@ -32,30 +32,30 @@ import ghidra.util.exception.*;
  * This version introduces the concept of sub memory blocks and FileBytes
  */
 public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
-	public static final int V3_VERSION = 3;
-	public static final String TABLE_NAME = "Memory Blocks";
-	public static final String SUB_BLOCK_TABLE_NAME = "Sub Memory Blocks";
+	private static final int V3_VERSION = 3;
+	private static final String TABLE_NAME = "Memory Blocks";
+	private static final String SUB_BLOCK_TABLE_NAME = "Sub Memory Blocks";
 
-	public static final int V3_NAME_COL = 0;
-	public static final int V3_COMMENTS_COL = 1;
-	public static final int V3_SOURCE_COL = 2;
-	public static final int V3_PERMISSIONS_COL = 3;
-	public static final int V3_START_ADDR_COL = 4;
-	public static final int V3_LENGTH_COL = 5;
-	public static final int V3_SEGMENT_COL = 6;
+	static final int V3_NAME_COL = 0;
+	static final int V3_COMMENTS_COL = 1;
+	static final int V3_SOURCE_COL = 2;
+	static final int V3_PERMISSIONS_COL = 3;
+	static final int V3_START_ADDR_COL = 4;
+	static final int V3_LENGTH_COL = 5;
+	static final int V3_SEGMENT_COL = 6;
 
-	public static final int V3_SUB_PARENT_ID_COL = 0;
-	public static final int V3_SUB_TYPE_COL = 1;
-	public static final int V3_SUB_LENGTH_COL = 2;
-	public static final int V3_SUB_START_OFFSET_COL = 3;
-	public static final int V3_SUB_INT_DATA1_COL = 4;
-	public static final int V3_SUB_LONG_DATA2_COL = 5;
+	static final int V3_SUB_PARENT_ID_COL = 0;
+	static final int V3_SUB_TYPE_COL = 1;
+	static final int V3_SUB_LENGTH_COL = 2;
+	static final int V3_SUB_START_OFFSET_COL = 3;
+	static final int V3_SUB_INT_DATA1_COL = 4;
+	static final int V3_SUB_LONG_DATA2_COL = 5;
 
-	public static final byte V3_SUB_TYPE_BIT_MAPPED = 0;
-	public static final byte V3_SUB_TYPE_BYTE_MAPPED = 1;
-	public static final byte V3_SUB_TYPE_BUFFER = 2;
-	public static final byte V3_SUB_TYPE_UNITIALIZED = 3;
-	public static final byte V3_SUB_TYPE_FILE_BYTES = 4;
+	static final byte V3_SUB_TYPE_BIT_MAPPED = 0;
+	static final byte V3_SUB_TYPE_BYTE_MAPPED = 1;
+	static final byte V3_SUB_TYPE_BUFFER = 2;
+	static final byte V3_SUB_TYPE_UNITIALIZED = 3;
+	static final byte V3_SUB_TYPE_FILE_BYTES = 4;
 
 	static Schema V3_BLOCK_SCHEMA = new Schema(V3_VERSION, "Key",
 		new Field[] { StringField.INSTANCE, StringField.INSTANCE, StringField.INSTANCE,

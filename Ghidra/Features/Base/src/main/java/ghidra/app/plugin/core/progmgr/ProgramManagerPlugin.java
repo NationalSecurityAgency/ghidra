@@ -23,7 +23,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
@@ -138,17 +137,14 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	}
 
 	@Override
-	public Program openProgram(final URL ghidraURL, final int state) {
+	public Program openProgram(URL ghidraURL, int state) {
 		if (locked) {
 			Msg.showError(this, tool.getToolFrame(), "Open Program Failed",
 				"Program manager is locked and cannot open additional programs");
 			return null;
 		}
 
-		AtomicReference<Program> ref = new AtomicReference<>();
-		Runnable r = () -> ref.set(doOpenProgram(ghidraURL, state));
-		SystemUtilities.runSwingNow(r);
-		return ref.get();
+		return Swing.runNow(() -> doOpenProgram(ghidraURL, state));
 	}
 
 	private void messageBadProgramURL(URL ghidraURL) {
@@ -341,7 +337,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	public boolean closeOtherPrograms(boolean ignoreChanges) {
 		Program[] otherPrograms = programMgr.getOtherPrograms();
 		Runnable r = () -> doCloseAllPrograms(otherPrograms, ignoreChanges);
-		SystemUtilities.runSwingNow(r);
+		Swing.runNow(r);
 		return programMgr.isEmpty();
 	}
 
@@ -349,7 +345,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	public boolean closeAllPrograms(boolean ignoreChanges) {
 		Program[] openPrograms = programMgr.getAllPrograms();
 		Runnable r = () -> doCloseAllPrograms(openPrograms, ignoreChanges);
-		SystemUtilities.runSwingNow(r);
+		Swing.runNow(r);
 		return programMgr.isEmpty();
 	}
 
@@ -397,7 +393,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		}
 		Runnable r = () -> {
 			// Note: The tool.canCloseDomainObject() call must come before the
-			// programSaveMgr.canClose()call since plugins may save changes to the program
+			// programSaveMgr.canClose() call since plugins may save changes to the program
 			// so that they can close.
 			if (ignoreChanges || program.isClosed() || programMgr.isPersistent(program) ||
 				(tool.canCloseDomainObject(program) && programSaveMgr.canClose(program))) {
@@ -405,7 +401,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				contextChanged();
 			}
 		};
-		SystemUtilities.runSwingNow(r);
+		Swing.runNow(r);
 		return !programMgr.contains(program);
 	}
 
@@ -436,7 +432,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			programMgr.setCurrentProgram(p);
 			contextChanged();
 		};
-		SystemUtilities.runSwingNow(r);
+		Swing.runNow(r);
 	}
 
 	@Override
@@ -476,7 +472,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			}
 			contextChanged();
 		};
-		SystemUtilities.runSwingNow(r);
+		Swing.runNow(r);
 	}
 
 	@Override
@@ -506,13 +502,13 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 		int subMenuGroup = 1;
 
-		DockingAction openAction = new ActionBuilder("Open File", getName())
-				.menuPath(ToolConstants.MENU_FILE, "&Open...")
-				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroup++))
-				.keyBinding("ctrl O")
-				.enabledWhen(c -> !locked)
-				.onAction(c -> open())
-				.buildAndInstall(tool);
+		DockingAction openAction =
+			new ActionBuilder("Open File", getName()).menuPath(ToolConstants.MENU_FILE, "&Open...")
+					.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroup++))
+					.keyBinding("ctrl O")
+					.enabledWhen(c -> !locked)
+					.onAction(c -> open())
+					.buildAndInstall(tool);
 		openAction.addToWindowWhen(ProgramActionContext.class);
 
 		tool.addAction(new CloseProgramAction(this, OPEN_GROUP, subMenuGroup++));
@@ -522,7 +518,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				.enabled(false)
 				.withContext(ProgramActionContext.class)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.enabledWhen(c -> programMgr.hasProgram(c.getProgram()))
+				.enabledWhen(c -> programMgr.contains(c.getProgram()))
 				.onAction(c -> closeOtherPrograms(false))
 				.buildAndInstall(tool);
 

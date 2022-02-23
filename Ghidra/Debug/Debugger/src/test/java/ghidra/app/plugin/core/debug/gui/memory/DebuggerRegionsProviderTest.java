@@ -21,10 +21,12 @@ import java.util.*;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog.MemoryBlockRow;
@@ -41,6 +43,7 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.util.database.UndoableTransaction;
 
+@Category(NightlyCategory.class)
 public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	DebuggerRegionsProvider provider;
@@ -105,8 +108,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		traceManager.openTrace(tb.trace);
@@ -134,8 +136,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		waitForSwing();
@@ -152,8 +153,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		traceManager.openTrace(tb.trace);
@@ -222,8 +222,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		traceManager.openTrace(tb.trace);
@@ -338,8 +337,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		traceManager.openTrace(tb.trace);
@@ -371,8 +369,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		traceManager.openTrace(tb.trace);

@@ -23,12 +23,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
-import docking.ActionContext;
 import docking.action.DockingActionIf;
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneAutoReadMemorySpec;
@@ -36,6 +37,7 @@ import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyIntoProgramDialog.Ra
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
+import ghidra.app.services.ActionSource;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.target.TargetObject;
@@ -43,7 +45,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.model.DefaultTraceLocation;
@@ -51,6 +52,7 @@ import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.util.database.UndoableTransaction;
 
+@Category(NightlyCategory.class)
 public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	DebuggerCopyActionsPlugin copyActionsPlugin;
@@ -68,29 +70,20 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		listingProvider = waitForComponentProvider(DebuggerListingProvider.class);
 	}
 
-	protected void select(Address min, Address max) {
-		select(new ProgramSelection(min, max));
-	}
-
-	protected void select(AddressSetView set) {
-		select(new ProgramSelection(set));
-	}
-
-	protected void select(ProgramSelection sel) {
-		runSwing(() -> {
-			listingProvider.setSelection(sel);
-		});
-	}
-
 	protected void assertDisabled(DockingActionIf action) {
-		ActionContext context = listingProvider.getActionContext(null);
-		assertFalse(action.isEnabledForContext(context));
+		assertDisabled(listingProvider, action);
 	}
 
 	protected void performEnabledAction(DockingActionIf action) {
-		ActionContext context = listingProvider.getActionContext(null);
-		waitForCondition(() -> action.isEnabledForContext(context));
-		performAction(action, context, false);
+		performEnabledAction(listingProvider, action, false);
+	}
+
+	protected void select(Address min, Address max) {
+		select(listingProvider, min, max);
+	}
+
+	protected void select(AddressSetView set) {
+		select(listingProvider, set);
 	}
 
 	@Test
@@ -146,8 +139,8 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add blocks", true)) {
 			program.getMemory()
-					.createInitializedBlock(".text", tb.addr(stSpace, 0x00400000), 0x8000,
-						(byte) 0, monitor, false);
+					.createInitializedBlock(".text", tb.addr(stSpace, 0x00400000), 0x8000, (byte) 0,
+						monitor, false);
 			program.getMemory()
 					.createInitializedBlock(".text2", tb.addr(stSpace, 0x00408000), 0x8000,
 						(byte) 0, monitor, false);
@@ -155,8 +148,8 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			mm.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ,
+				TraceMemoryFlag.EXECUTE);
 			mm.putBytes(0, tb.addr(0x00401234), tb.buf(1, 2, 3, 4));
 
 			// This region should be excluded, since it cannot be mapped identically into 32-bits
@@ -173,9 +166,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.activateTrace(tb.trace);
 		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
-		select(tb.set(
-			tb.range(0x00400000, 0x0040ffff),
-			tb.range(0x7fff00400000L, 0x7fff0040ffffL),
+		select(tb.set(tb.range(0x00400000, 0x0040ffff), tb.range(0x7fff00400000L, 0x7fff0040ffffL),
 			tb.range(0xfffff000L, 0x100000fffL)));
 
 		performEnabledAction(copyActionsPlugin.actionCopyIntoCurrentProgram);
@@ -456,7 +447,8 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		mb.testModel.addModelListener(listener);
 
 		mb.createTestProcessesAndThreads();
-		modelService.recordTarget(mb.testProcess1, createTargetTraceMapper(mb.testProcess1));
+		modelService.recordTarget(mb.testProcess1, createTargetTraceMapper(mb.testProcess1),
+			ActionSource.AUTOMATIC);
 		mb.testProcess1.memory.addRegion(".text", mb.rng(0x55550000, 0x5555ffff), "rx");
 		mb.testProcess1.memory.setMemory(mb.addr(0x55550000), mb.arr(1, 2, 3, 4, 5, 6, 7, 8));
 		waitForPass(() -> {

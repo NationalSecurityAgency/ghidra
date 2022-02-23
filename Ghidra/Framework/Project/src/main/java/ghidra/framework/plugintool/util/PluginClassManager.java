@@ -139,9 +139,9 @@ public class PluginClassManager {
 
 	/**
 	 * Used to convert an old style tool XML file by adding in classes in the same packages as
-	 * those that were names specifically in the XML file
+	 * those that were named specifically in the XML file
 	 * @param classNames the list of classNames from from the old XML file
-	 * @return
+	 * @return the adjusted class names
 	 */
 	public List<String> fillInPackageClasses(List<String> classNames) {
 		Set<PluginPackage> packages = new HashSet<>();
@@ -222,30 +222,30 @@ public class PluginClassManager {
 		return list;
 	}
 
-	public List<PluginDescription> getReleasedPluginDescriptions(PluginPackage pluginPackage) {
+	public List<PluginDescription> getPluginDescriptions(PluginPackage pluginPackage) {
 		List<PluginDescription> list = packageMap.get(pluginPackage);
 		List<PluginDescription> stableList = new ArrayList<>();
 		for (PluginDescription pluginDescription : list) {
-			if (pluginDescription.getStatus() == PluginStatus.RELEASED) {
-				stableList.add(pluginDescription);
+			if (pluginDescription.getStatus() == PluginStatus.UNSTABLE ||
+				pluginDescription.getStatus() == PluginStatus.HIDDEN) {
+				continue;
 			}
+			stableList.add(pluginDescription);
 		}
 		return stableList;
 	}
 
-	public List<PluginDescription> getNonReleasedPluginDescriptions() {
+	public List<PluginDescription> getUnstablePluginDescriptions() {
 		List<PluginDescription> unstablePlugins = new ArrayList<>();
 		for (PluginDescription pluginDescription : pluginClassMap.values()) {
-			if (pluginDescription.getStatus() == PluginStatus.HIDDEN ||
-				pluginDescription.getStatus() == PluginStatus.RELEASED) {
-				continue;
+			if (pluginDescription.getStatus() == PluginStatus.UNSTABLE) {
+				unstablePlugins.add(pluginDescription);
 			}
-			unstablePlugins.add(pluginDescription);
 		}
 		return unstablePlugins;
 	}
 
-	public List<PluginDescription> getAllPluginDescriptions() {
+	public List<PluginDescription> getManagedPluginDescriptions() {
 		ArrayList<PluginDescription> nonHiddenPlugins = new ArrayList<>();
 		for (PluginDescription pluginDescription : pluginClassMap.values()) {
 			if (pluginDescription.getStatus() == PluginStatus.HIDDEN) {

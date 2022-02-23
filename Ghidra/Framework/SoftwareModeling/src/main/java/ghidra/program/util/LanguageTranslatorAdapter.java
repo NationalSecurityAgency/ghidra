@@ -679,4 +679,14 @@ class TemporaryCompilerSpec implements CompilerSpec {
 	public PcodeInjectLibrary getPcodeInjectLibrary() {
 		return newCompilerSpec.getPcodeInjectLibrary();
 	}
+
+	@Override
+	public void saveXml(StringBuilder buffer) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isEquivalent(CompilerSpec obj) {
+		return (this == obj);
+	}
 }

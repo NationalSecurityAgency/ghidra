@@ -258,6 +258,7 @@ protected:
   void fillinReadOnlyFromLoader(void);			///< Load info about read-only sections
   void initializeSegments();				///< Set up segment resolvers
   void cacheAddrSpaceProperties(void);			///< Calculate some frequently used space properties and cache them
+  void createModelAlias(const string &aliasName,const string &parentName);	///< Create name alias for a ProtoModel
 
   void parseProcessorConfig(DocumentStorage &store);	///< Apply processor specific configuration
   void parseCompilerConfig(DocumentStorage &store);	///< Apply compiler specific configuration

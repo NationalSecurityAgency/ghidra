@@ -204,11 +204,7 @@ public class DataTypeNode extends DataTypeTreeNode {
 
 	@Override
 	public boolean canPaste(List<GTreeNode> pastedNodes) {
-		if (pastedNodes.size() != 1) {
-			return false;
-		}
-		GTreeNode pastedNode = pastedNodes.get(0);
-		return pastedNode instanceof DataTypeNode;
+		return isModifiable();
 	}
 
 	@Override
@@ -252,7 +248,7 @@ public class DataTypeNode extends DataTypeTreeNode {
 
 	@Override
 	public String getDisplayText() {
-		// note: we have to check the name each time, as the optional underlying 
+		// note: we have to check the name each time, as the optional underlying
 		//       source archive may have changed.
 		String currentDisplayText = getCurrentDisplayText();
 		if (!displayText.equals(currentDisplayText)) {

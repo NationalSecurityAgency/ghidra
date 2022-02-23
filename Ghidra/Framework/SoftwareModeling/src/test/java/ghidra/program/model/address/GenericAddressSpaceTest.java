@@ -270,6 +270,246 @@ public class GenericAddressSpaceTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testAddNoWrapWith64bitAddrSpace() throws AddressOverflowException {
+		// Exercise the address space wrapping detection code's unsigned vs signed limits.
+		// Try max signed (63 bits) values for starting address and the displacement. 
+
+		AddressSpace sp1 = new GenericAddressSpace("AnotherSpace", 64, AddressSpace.TYPE_CODE, 1);
+
+		try {
+			sp1.addNoWrap(sp1.getMaxAddress(), 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		try {
+			sp1.addNoWrap(sp1.getMaxAddress(), Long.MAX_VALUE);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		try {
+			sp1.addNoWrap(sp1.getAddress(Long.MAX_VALUE).add(2), Long.MAX_VALUE);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+
+		assertEquals(sp1.getMaxAddress().subtract(1).getOffset(),
+			sp1.addNoWrap(sp1.getAddress(Long.MAX_VALUE), Long.MAX_VALUE).getOffset());
+		assertEquals(sp1.getMaxAddress().getOffset(),
+			sp1.addNoWrap(sp1.getAddress(Long.MAX_VALUE).add(1), Long.MAX_VALUE).getOffset());
+		assertEquals(sp1.getMaxAddress().getOffset(),
+			sp1.addNoWrap(sp1.getAddress(Long.MAX_VALUE).add(2), Long.MAX_VALUE - 1).getOffset());
+	}
+
+	@Test
+	public void testAddNoWrapWithSigned64bitAddrSpace() throws AddressOverflowException {
+		AddressSpace sp1 =
+			new GenericAddressSpace("AnotherSpace", 64, AddressSpace.TYPE_CONSTANT, 1);
+
+		assertEquals(Long.MAX_VALUE, sp1.getMaxAddress().getOffset());
+		try {
+			sp1.addNoWrap(sp1.getMaxAddress(), 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		try {
+			sp1.addNoWrap(sp1.getMaxAddress(), Long.MAX_VALUE);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+
+		assertEquals(Long.MIN_VALUE, sp1.getMinAddress().getOffset());
+		assertEquals(-1, sp1.addNoWrap(sp1.getMinAddress(), Long.MAX_VALUE).getOffset());
+		assertEquals(Long.MAX_VALUE, sp1.addNoWrap(sp1.getAddress(0), Long.MAX_VALUE).getOffset());
+		assertEquals(Long.MAX_VALUE - 1,
+			sp1.addNoWrap(sp1.getAddress(-1), Long.MAX_VALUE).getOffset());
+	}
+
+	@Test
+	public void testSubtractNoWrapWithSigned64bitAddrSpace() throws AddressOverflowException {
+		AddressSpace sp1 =
+			new GenericAddressSpace("AnotherSpace", 64, AddressSpace.TYPE_CONSTANT, 1);
+
+		try {
+			sp1.subtractNoWrap(sp1.getMinAddress(), 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		try {
+			sp1.subtractNoWrap(sp1.getMinAddress(), Long.MAX_VALUE);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		assertEquals(0, sp1.subtractNoWrap(sp1.getMaxAddress(), Long.MAX_VALUE).getOffset());
+		assertEquals(-1,
+			sp1.subtractNoWrap(sp1.getMaxAddress().subtract(1), Long.MAX_VALUE).getOffset());
+		assertEquals(Long.MIN_VALUE + 1,
+			sp1.subtractNoWrap(sp1.getAddress(0), Long.MAX_VALUE).getOffset());
+		assertEquals(Long.MIN_VALUE,
+			sp1.subtractNoWrap(sp1.getAddress(-1), Long.MAX_VALUE).getOffset());
+	}
+
+	@Test
+	public void testSubtractNoWrapWith64bitAddrSpace() throws AddressOverflowException {
+		// Exercise the address space wrapping detection code's unsigned vs signed limits.
+		// Try max signed (63 bits) & max unsigned values for starting address and the displacement
+		// and combine with the other 
+
+		AddressSpace sp1 = new GenericAddressSpace("AnotherSpace", 64, AddressSpace.TYPE_CODE, 1);
+
+		try {
+			sp1.subtractNoWrap(sp1.getMinAddress(), 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		try {
+			sp1.subtractNoWrap(sp1.getMinAddress(), Long.MAX_VALUE);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		assertEquals(0x8000000000000000L,
+			sp1.subtractNoWrap(sp1.getMaxAddress(), Long.MAX_VALUE).getOffset());
+		assertEquals(Long.MAX_VALUE,
+			sp1.subtractNoWrap(sp1.getMaxAddress().subtract(1), Long.MAX_VALUE).getOffset());
+	}
+
+	@Test
+	public void testAddNoWrapWithSmallAddrSpace() throws AddressOverflowException {
+		try {
+			space.addNoWrap(space.getMaxAddress(), 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		try {
+			space.addNoWrap(space.getMaxAddress(), Long.MAX_VALUE);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		assertEquals(Byte.MAX_VALUE,
+			space.addNoWrap(space.getMinAddress(), Byte.MAX_VALUE).getOffset());
+
+		assertEquals(0xff, space.addNoWrap(space.getMinAddress(), 0xff).getOffset());
+		try {
+			space.addNoWrap(space.getMinAddress(), 0xff + 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+	}
+
+	@Test
+	public void testAddNoWrapWithSmallSignedAddrSpace() throws AddressOverflowException {
+		space = new GenericAddressSpace("Test", 8, AddressSpace.TYPE_CONSTANT, 0);
+
+		try {
+			space.addNoWrap(space.getMaxAddress(), 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		try {
+			space.addNoWrap(space.getMaxAddress(), Long.MAX_VALUE);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		assertEquals(Byte.MAX_VALUE,
+			space.addNoWrap(space.getAddress(0), Byte.MAX_VALUE).getOffset());
+
+		assertEquals(Byte.MAX_VALUE, space.addNoWrap(space.getMinAddress(), 0xff).getOffset());
+		try {
+			space.addNoWrap(space.getMinAddress(), 0xff + 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+	}
+
+	@Test
+	public void testSubtractNoWrapWithSmallAddrSpace() throws AddressOverflowException {
+		try {
+			space.subtractNoWrap(space.getMinAddress(), 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		try {
+			space.subtractNoWrap(space.getMinAddress(), Long.MAX_VALUE);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		assertEquals(Byte.MAX_VALUE + 1,
+			space.subtractNoWrap(space.getMaxAddress(), Byte.MAX_VALUE).getOffset());
+
+		assertEquals(0, space.subtractNoWrap(space.getMaxAddress(), 0xff).getOffset());
+		try {
+			space.subtractNoWrap(space.getMaxAddress(), 0xff + 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+	}
+
+	@Test
+	public void testSubtractNoWrapWithSmallSignedAddrSpace() throws AddressOverflowException {
+		space = new GenericAddressSpace("Test", 8, AddressSpace.TYPE_CONSTANT, 0);
+
+		try {
+			space.subtractNoWrap(space.getMinAddress(), 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		try {
+			space.subtractNoWrap(space.getMinAddress(), Long.MAX_VALUE);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+		assertEquals(0, space.subtractNoWrap(space.getMaxAddress(), Byte.MAX_VALUE).getOffset());
+
+		assertEquals(Byte.MIN_VALUE, space.subtractNoWrap(space.getMaxAddress(), 0xff).getOffset());
+		try {
+			space.subtractNoWrap(space.getMaxAddress(), 0xff + 1);
+			fail("Should have generated AddressOverflowException");
+		}
+		catch (AddressOverflowException e) {
+			// good
+		}
+	}
+
+	@Test
 	public void testGetAddressableWordOffset() {
 		AddressSpace sp1 = new GenericAddressSpace("AnotherSpace", 64, AddressSpace.TYPE_CODE, 1);
 		AddressSpace sp2 =

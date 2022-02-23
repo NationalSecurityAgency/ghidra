@@ -355,7 +355,7 @@ public interface DebuggerStaticMappingService {
 	 * @param set the destination address set, from which we are mapping back
 	 * @return a map of source traces to corresponding computed source address ranges
 	 */
-	Map<TraceSnap, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
+	Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
 			AddressSetView set);
 
 	/**

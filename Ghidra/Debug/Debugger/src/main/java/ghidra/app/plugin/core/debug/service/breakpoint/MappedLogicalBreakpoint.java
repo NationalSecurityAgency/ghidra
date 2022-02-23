@@ -158,13 +158,23 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		}
 	}
 
-	@Override
-	public CompletableFuture<Void> enable() {
-		progBreak.enable();
+	public CompletableFuture<Void> enableForTraces() {
 		BreakpointActionSet actions = new BreakpointActionSet();
 		planEnable(actions, null);
 		return actions.execute();
 		// NOTE: Recorder will cause appropriate updates
+	}
+
+	public CompletableFuture<Void> enableWithName(String name) {
+		// TODO: Consider more fields than name in comment
+		progBreak.enableWithComment(name);
+		return enableForTraces();
+	}
+
+	@Override
+	public CompletableFuture<Void> enable() {
+		progBreak.enable();
+		return enableForTraces();
 	}
 
 	@Override
@@ -218,6 +228,16 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	@Override
 	public Bookmark getProgramBookmark() {
 		return progBreak.getBookmark();
+	}
+
+	@Override
+	public String getName() {
+		return progBreak.getName();
+	}
+
+	@Override
+	public void setName(String name) {
+		progBreak.setName(name);
 	}
 
 	@Override

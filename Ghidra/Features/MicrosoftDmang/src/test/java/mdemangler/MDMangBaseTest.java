@@ -16,6 +16,7 @@
 package mdemangler;
 
 import java.io.*;
+import java.util.Date;
 
 import org.junit.*;
 import org.junit.experimental.categories.Category;
@@ -104,6 +105,8 @@ public class MDMangBaseTest extends AbstractGenericTest {
 
 	protected boolean quiet = false;
 
+	private static long startTime = 0;
+
 	protected boolean beQuiet() {
 		return quiet || BATCH_MODE;
 		//return quiet;
@@ -139,6 +142,11 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		}
 	}
 
+	@BeforeClass
+	public static void startUp() {
+		startTime = (new Date()).getTime();
+	}
+
 	@AfterClass
 	public static void tearDown() throws Throwable {
 		if (testWriter == null) {
@@ -147,6 +155,9 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		testWriter.close();
 		Msg.info(MDMangBaseTest.class,
 			"Short test demangled results: " + testFile.getAbsolutePath());
+		long endTime = (new Date()).getTime();
+		Msg.info(MDMangBaseTest.class,
+			"MDMangBaseTest time: " + (endTime - startTime) / 1000.0 + " sec.");
 	}
 
 	@Rule
@@ -14487,24 +14498,87 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
-	//TODO: considering for Issue 1162
-	@Ignore
+	// real symbol (Issue #1162)
+	// Following the model of MSFT Guard output strings even though the mangled form does not
+	//  follow MSFT's scheme.  Change is that we are not outputting the extraneous tick as is seen
+	//  in the middle of `local static guard'{2}', and we are not increasing the string value
+	//  that is in braces by one from the coded "GuardNum" value.  Thus, we are outputting
+	//  `thread safe static guard{0}' for "?$TSS0@".  We can reconsider this later.
+	@Test
 	public void testThreadSafeStaticGuard_1() throws Exception {
 		mangled =
 			"?$TSS0@?1??GetCategoryMap@CDynamicRegistrationInfoSource@XPerfAddIn@@SAPEBU_ATL_CATMAP_ENTRY@ATL@@XZ@4HA";
-//		mangled =
-//			"?xTSS0@?1??GetCategoryMap@CDynamicRegistrationInfoSource@XPerfAddIn@@SAPEBU_ATL_CATMAP_ENTRY@ATL@@XZ@4HA";
-		//TODO: investigate and consider what we should have as outputs.
-		msTruth = "";
 		mdTruth =
-			"int `public: static struct ATL::_ATL_CATMAP_ENTRY const * __ptr64 __cdecl XPerfAddIn::CDynamicRegistrationInfoSource::GetCategoryMap(void)'::`2'::`thread safe local static guard'";
+			"int `public: static struct ATL::_ATL_CATMAP_ENTRY const * __ptr64 __cdecl XPerfAddIn::CDynamicRegistrationInfoSource::GetCategoryMap(void)'::`2'::`thread safe static guard{0}'";
+		//TODO: Create MDMangVS2015 Specialization for this problem and then remove "mstruth = mdtruth"
+		msTruth = mdTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testSimpleMainTemplateAsCounterpointToThreadSafeStaticGuard() throws Exception {
+		mangled = "?$TSS0@HH"; // Begins with same pattern as ThreadSafeStaticGuard
+		msTruth = "TSS0<int,int>";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Manufactured by modifying "??_B?1??name0@name1@name2@@KAHPEBGAEAG@Z@51" which is a
+	//  `local static guard'{2}'.  We eliminated the closing 51 that makes it an MDGuard typeinfo
+	//  with value of 2 (1+1).  We are also eliminating the extraneous middle closing tick (single
+	//  quote) that MSFT has in their output.  We are not incrementing the value of ManglingNumber
+	//  that we are putting in braces (unlike other MSFT guard numbers). Thus, we will output
+	//  `nonvisible static guard{1}' for "?$S1@".  We can reconsider this later.  We also tacked
+	//  on the "4HA" as is done for the `thread safe static guard' so that it is an "int".
+	// TODO: Watch for real symbol of this type "?$S1@".
+	@Test
+	public void testNonvisibleStaticGuard() throws Exception {
+		mangled = "?$S1@?1??name0@name1@name2@@KAHPEBGAEAG@Z@4HA";
+		mdTruth =
+			"int `protected: static int __cdecl name2::name1::name0(unsigned short const * __ptr64,unsigned short & __ptr64)'::`2'::`nonvisible static guard{1}'";
+		//TODO: Create MDMangVS2015 Specialization for this problem and then remove "mstruth = mdtruth"
+		msTruth = mdTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testSimpleMainTemplateAsCounterpointToNonvisibleStaticGuard() throws Exception {
+		mangled = "?$S1@HH"; // Begins with same pattern as ThreadSafeStaticGuard
+		msTruth = "S1<int,int>";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Manufactured by modifying "??_B?1??name0@name1@name2@@KAHPEBGAEAG@Z@51" which is a
+	//  `local static guard'{2}'.  We eliminated the closing 51 that makes it an MDGuard typeinfo
+	//  with value of 2 (1+1).  We are also eliminating the extraneous middle closing tick (single
+	//  quote) that MSFT has in their output.  We are not incrementing the value of "number"
+	//  that we are putting in braces (unlike other MSFT guard numbers). Thus, we will output
+	//  `reference temporary{1}'" for the "?$RT1@".  We can reconsider this later.  We also tacked
+	//  on the "4HA" as is done for the `thread safe static guard' so that it is an "int".
+	// TODO: Watch for real symbol of this type "?$RTnum@".
+	@Test
+	public void testReferenceTemporary() throws Exception {
+		mangled = "?$RT1@?1??name0@name1@name2@@KAHPEBGAEAG@Z@4HA";
+		mdTruth =
+			"int `protected: static int __cdecl name2::name1::name0(unsigned short const * __ptr64,unsigned short & __ptr64)'::`2'::`reference temporary{1}'";
+		//TODO: Create MDMangVS2015 Specialization for this problem and then remove "mstruth = mdtruth"
+		msTruth = mdTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testSimpleMainTemplateAsCounterpointToReferenceTemporary() throws Exception {
+		mangled = "?$RT1@HH"; // Begins with same pattern as ThreadSafeStaticGuard
+		msTruth = "RT1<int,int>";
+		mdTruth = msTruth;
 		demangleAndTest();
 	}
 
 	//Issue 1344: Long symbols get MD5-hashed.
 	// We have made up the output format.  Nothing is sacrosanct about this output.
 	@Test
-	public void testHashedSymbolComponentsLongerThan5096_1() throws Exception {
+	public void testHashedSymbolComponentsLongerThan4096_1() throws Exception {
 		mangled = "??@f4873c94f485cd6716c2319fc51ac714@";
 		msTruth = "";
 		mdTruth = "`f4873c94f485cd6716c2319fc51ac714'";
@@ -14514,7 +14588,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	//Issue 1344: Long symbols get MD5-hashed.
 	// We have made up the output format.  Nothing is sacrosanct about this output.
 	@Test
-	public void testHashedSymbolComponentsLongerThan5096_2() throws Exception {
+	public void testHashedSymbolComponentsLongerThan4096_2() throws Exception {
 		mangled = "?catch$0@?0???@f4873c94f485cd6716c2319fc51ac714@@4HA";
 		msTruth = "";
 		mdTruth = "int ``f4873c94f485cd6716c2319fc51ac714''::`1'::catch$0";

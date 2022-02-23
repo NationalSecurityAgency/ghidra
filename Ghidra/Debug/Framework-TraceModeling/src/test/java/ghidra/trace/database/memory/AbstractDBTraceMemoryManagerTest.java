@@ -709,6 +709,21 @@ public abstract class AbstractDBTraceMemoryManagerTest
 	}
 
 	@Test
+	public void testGetBytesCrossScratch() {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertEquals(4, memory.putBytes(Long.MIN_VALUE, b.addr(0x4000), buf(1, 2, 3, 4)));
+		}
+
+		ByteBuffer read = buf(-1, -1, -1, -1);
+		assertEquals(4, memory.getBytes(1, b.addr(0x4000), read));
+		assertArrayEquals(arr(-1, -1, -1, -1), read.array());
+
+		read.position(0);
+		assertEquals(4, memory.getBytes(-1, b.addr(0x4000), read));
+		assertArrayEquals(arr(1, 2, 3, 4), read.array());
+	}
+
+	@Test
 	public void testPutBytesPackGetBytes() {
 		try (UndoableTransaction tid = b.startTransaction()) {
 			assertEquals(4, memory.putBytes(3, b.addr(0x4000), buf(1, 2, 3, 4)));

@@ -113,6 +113,27 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			return location;
 		}
 
+		public String getName() {
+			// TODO: Be prepared to use JSON or something, if more fields are needed
+			Bookmark bookmark = getBookmark();
+			if (bookmark == null) {
+				return "";
+			}
+			return bookmark.getComment();
+		}
+
+		public void setName(String name) {
+			Bookmark bookmark = getBookmark();
+			if (bookmark == null) {
+				throw new IllegalStateException("Must save breakpoint to program before naming it");
+			}
+			try (UndoableTransaction tid =
+				UndoableTransaction.start(program, "Rename breakpoint", false)) {
+				bookmark.set(bookmark.getCategory(), name);
+				tid.commit();
+			}
+		}
+
 		public ProgramEnablement computeEnablement() {
 			if (eBookmark != null) {
 				return ProgramEnablement.ENABLED;
@@ -206,6 +227,11 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			return dBookmark;
 		}
 
+		protected String getComment() {
+			Bookmark bookmark = getBookmark();
+			return bookmark == null ? "" : bookmark.getComment();
+		}
+
 		public boolean isEnabled() {
 			return computeEnablement() == ProgramEnablement.ENABLED;
 		}
@@ -218,15 +244,13 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			return TraceBreakpointKindSet.encode(kinds) + ";" + Long.toUnsignedString(length);
 		}
 
-		public void enable() {
-			if (isEnabled()) {
-				return;
-			}
+		public void enableWithComment(String comment) {
 			try (UndoableTransaction tid =
 				UndoableTransaction.start(program, "Enable breakpoint", false)) {
 				BookmarkManager manager = program.getBookmarkManager();
 				String catStr = computeCategory();
-				manager.setBookmark(address, BREAKPOINT_ENABLED_BOOKMARK_TYPE, catStr, "");
+				manager.setBookmark(address, BREAKPOINT_ENABLED_BOOKMARK_TYPE, catStr,
+					comment);
 				manager.removeBookmarks(new AddressSet(address), BREAKPOINT_DISABLED_BOOKMARK_TYPE,
 					catStr, TaskMonitor.DUMMY);
 				tid.commit();
@@ -234,6 +258,13 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			catch (CancelledException e) {
 				throw new AssertionError(e);
 			}
+		}
+
+		public void enable() {
+			if (isEnabled()) {
+				return;
+			}
+			enableWithComment(getComment());
 		}
 
 		public void disable() {
@@ -244,7 +275,8 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 				UndoableTransaction.start(program, "Disable breakpoint", false)) {
 				BookmarkManager manager = program.getBookmarkManager();
 				String catStr = computeCategory();
-				manager.setBookmark(address, BREAKPOINT_DISABLED_BOOKMARK_TYPE, catStr, "");
+				manager.setBookmark(address, BREAKPOINT_DISABLED_BOOKMARK_TYPE, catStr,
+					getComment());
 				manager.removeBookmarks(new AddressSet(address), BREAKPOINT_ENABLED_BOOKMARK_TYPE,
 					catStr, TaskMonitor.DUMMY);
 				tid.commit();

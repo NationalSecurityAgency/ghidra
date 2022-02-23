@@ -13,10 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.model;
+import org.osgi.framework.BundleContext;
 
-public interface TraceSnap extends Comparable<TraceSnap> {
-	Trace getTrace();
+import ghidra.app.plugin.core.osgi.GhidraBundleActivator;
+import pdbquery.PdbFactory;
 
-	long getSnap();
+/**
+ * Activator class for the PdbQuery bundle of scripts.  On "stop," calls method to close all PDBs.
+ */
+public class PdbQueryActivator extends GhidraBundleActivator {
+	@Override
+	protected void start(BundleContext bc, Object api) {
+		// purposefully empty
+	}
+
+	@Override
+	protected void stop(BundleContext bc, Object api) {
+		PdbFactory.closeAllPdbs(null);
+	}
+
 }

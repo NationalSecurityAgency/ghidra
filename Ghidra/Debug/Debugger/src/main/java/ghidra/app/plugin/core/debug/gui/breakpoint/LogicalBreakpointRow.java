@@ -83,6 +83,18 @@ public class LogicalBreakpointRow {
 		}
 	}
 
+	public String getName() {
+		return lb.getName();
+	}
+
+	public void setName(String name) {
+		lb.setName(name);
+	}
+
+	public boolean isNamable() {
+		return lb.getProgramBookmark() != null;
+	}
+
 	public String getImageName() {
 		Program program = lb.getProgram();
 		if (program == null) {

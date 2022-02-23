@@ -25,6 +25,28 @@ public class DataTypeEncodeException extends UsrException {
 	private final Object value;
 	private final DataType dt;
 
+	private static String computeMessage(String message, Object value, DataType dt,
+			Throwable cause) {
+		if (cause != null) {
+			String encodeError = "while encoding '" + value + "' for " + dt.getDisplayName();
+			if (message != null) {
+				return cause.getMessage() + " (" + encodeError + ": " + message + ")";
+			}
+			else {
+				return cause.getMessage() + "(" + encodeError + ")";
+			}
+		}
+		else {
+			String encodeError = "Cannot encode '" + value + "' for " + dt.getDisplayName();
+			if (message != null) {
+				return encodeError + ": " + message;
+			}
+			else {
+				return encodeError;
+			}
+		}
+	}
+
 	/**
 	 * Constructor
 	 * 
@@ -45,8 +67,7 @@ public class DataTypeEncodeException extends UsrException {
 	 * @param cause the exception cause
 	 */
 	public DataTypeEncodeException(String message, Object value, DataType dt, Throwable cause) {
-		super("Cannot encode '" + value + "' for " + dt.getDisplayName() +
-			(message == null ? "" : ": " + message), cause);
+		super(computeMessage(message, value, dt, cause), cause);
 		this.value = value;
 		this.dt = dt;
 	}

@@ -36,13 +36,11 @@ import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotGenerator {
-	DebuggerLogicalBreakpointService breakpointService;
-	DebuggerBreakpointMarkerPlugin breakpointMarkerPlugin;
-	ProgramManager programManager;
+	private DebuggerLogicalBreakpointService breakpointService;
+	private DebuggerBreakpointMarkerPlugin breakpointMarkerPlugin;
+	private ProgramManager programManager;
 
-	CodeViewerProvider listing;
-
-	Program program;
+	private CodeViewerProvider listing;
 
 	protected static Address addr(Program program, long offset) {
 		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
@@ -70,7 +68,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 
 		Msg.debug(this, "Placing breakpoint");
 		breakpointService.placeBreakpointAt(program, addr(program, 0x00401c60), 1,
-			Set.of(TraceBreakpointKind.SW_EXECUTE));
+			Set.of(TraceBreakpointKind.SW_EXECUTE), "");
 
 		Msg.debug(this, "Disabling breakpoint");
 		LogicalBreakpoint lb = waitForValue(() -> Unique.assertAtMostOne(
@@ -79,7 +77,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 
 		Msg.debug(this, "Placing another");
 		breakpointService.placeBreakpointAt(program, addr(program, 0x00401c63), 1,
-			Set.of(TraceBreakpointKind.SW_EXECUTE));
+			Set.of(TraceBreakpointKind.SW_EXECUTE), "");
 
 		Msg.debug(this, "Saving program");
 		program.save("Placed breakpoints", TaskMonitor.DUMMY);
@@ -94,9 +92,13 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 
 	@Test
 	public void testCaptureDebuggerPlaceBreakpointDialog() throws Throwable {
-		listing.goTo(program, new ProgramLocation(program, addr(program, 0x00401c63)));
+		runSwing(
+			() -> listing.goTo(program, new ProgramLocation(program, addr(program, 0x00401c63))));
 		performAction(breakpointMarkerPlugin.actionSetSoftwareBreakpoint, false);
+		DebuggerPlaceBreakpointDialog dialog =
+			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
 
-		captureDialog(DebuggerPlaceBreakpointDialog.class);
+		dialog.setName("After setup");
+		captureDialog(dialog);
 	}
 }

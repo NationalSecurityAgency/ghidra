@@ -90,8 +90,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 				return;  // no need to log this - it's a valid condition
 			}
 
-			AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(prototypeProgram);
-			if (!setOptions(prototypeProgram, mgr)) {
+			if (!setOptions(prototypeProgram)) {
 				return;
 			}
 
@@ -169,7 +168,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 		return true;
 	}
 
-	private boolean setOptions(final Program program, AutoAnalysisManager mgr) {
+	private boolean setOptions(final Program program) {
 		AtomicBoolean analyze = new AtomicBoolean();
 		int id = program.startTransaction("analysis");
 		try {

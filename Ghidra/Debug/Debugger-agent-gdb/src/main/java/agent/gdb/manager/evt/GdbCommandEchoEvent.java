@@ -20,6 +20,7 @@ import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 /**
  * An "event" corresponding with GDB/MI commands
  * 
+ * <p>
  * If using a PTY configured with local echo, the manager needs to recognize and ignore the commands
  * it issued. GDB/MI makes them easy to distinguish, because they start with "-".
  */

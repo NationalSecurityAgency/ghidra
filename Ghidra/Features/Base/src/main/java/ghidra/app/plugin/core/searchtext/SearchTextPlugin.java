@@ -91,7 +91,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private static final ImageIcon searchIcon = ResourceManager.loadImage("images/searchm_obj.gif");
 
 	private static final String DESCRIPTION = "Search program text for string";
-	private final static int DEFAULT_SEARCH_LIMIT = 500;
 	private final static Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 
 	private boolean waitingForSearchAll;
@@ -442,9 +441,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		ToolOptions opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
 		HelpLocation loc = new HelpLocation(HelpTopics.SEARCH, "HighlightText");
 
-		opt.registerOption(GhidraOptions.OPTION_SEARCH_LIMIT, DEFAULT_SEARCH_LIMIT, loc,
-			"Max number of matches on a search that will be displayed.");
-
 		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_NAME, true, loc,
 			"Determines whether to highlight the matched string for a search in the listing.");
 		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME,
@@ -454,7 +450,8 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			PluginConstants.SEARCH_HIGHLIGHT_COLOR, loc,
 			"Color to use for highlighting when the match string occurs at the current address.");
 
-		searchLimit = opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, DEFAULT_SEARCH_LIMIT);
+		searchLimit =
+			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
 
 		doHighlight = opt.getBoolean(PluginConstants.SEARCH_HIGHLIGHT_NAME, true);
 		highlightColor = opt.getColor(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME,

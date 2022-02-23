@@ -19,6 +19,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.*;
@@ -45,14 +47,13 @@ public class FindAction extends AbstractDecompilerAction {
 		if (findDialog == null) {
 			findDialog =
 				new FindDialog("Decompiler Find Text", new DecompilerSearcher(decompilerPanel)) {
-				@Override
-				protected void dialogClosed() {
-					// clear the search results when the dialog is closed
-					decompilerPanel.setSearchResults(null);
-				}
-			};
-			findDialog
-					.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
+					@Override
+					protected void dialogClosed() {
+						// clear the search results when the dialog is closed
+						decompilerPanel.setSearchResults(null);
+					}
+				};
+			findDialog.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
 		}
 		return findDialog;
 	}
@@ -127,8 +128,15 @@ public class FindAction extends AbstractDecompilerAction {
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		DecompilerPanel decompilerPanel = context.getDecompilerPanel();
 		FindDialog dialog = getFindDialog(decompilerPanel);
-		String text = decompilerPanel.getHighlightedText();
-		if (text != null) {
+		String text = decompilerPanel.getSelectedText();
+		if (text == null) {
+			text = decompilerPanel.getHighlightedText();
+
+			// note: if we decide to grab the text under the cursor, then use
+			// text = decompilerPanel.getTextUnderCursor();
+		}
+
+		if (!StringUtils.isBlank(text)) {
 			dialog.setSearchText(text);
 		}
 

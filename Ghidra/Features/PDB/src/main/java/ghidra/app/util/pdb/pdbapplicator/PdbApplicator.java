@@ -18,6 +18,9 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
+import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
@@ -739,7 +742,8 @@ public class PdbApplicator {
 		int num = ipi.getTypeIndexMaxExclusive() - ipi.getTypeIndexMin();
 		monitor.initialize(num);
 		setMonitorMessage("PDB: Processing " + num + " item type components...");
-		for (int indexNumber = ipi.getTypeIndexMin(); indexNumber < num; indexNumber++) {
+		for (int indexNumber =
+			ipi.getTypeIndexMin(); indexNumber < ipi.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCanceled();
 			MsTypeApplier applier = getTypeApplier(RecordNumber.itemRecordNumber(indexNumber));
 			applier.apply();
@@ -1516,6 +1520,11 @@ public class PdbApplicator {
 	//==============================================================================================
 	Symbol createSymbol(Address address, String symbolPathString,
 			boolean forcePrimaryIfExistingIsMangled) {
+		return createSymbol(address, symbolPathString, forcePrimaryIfExistingIsMangled, null);
+	}
+
+	Symbol createSymbol(Address address, String symbolPathString,
+			boolean forcePrimaryIfExistingIsMangled, String plateAddition) {
 
 		// Must get existing info before creating new symbol, as we do not want "existing"
 		//  to include the new one
@@ -1548,7 +1557,28 @@ public class PdbApplicator {
 			setExistingPrimarySymbolInfo(address, primarySymbolInfo);
 		}
 
+		addToPlateUnique(address, plateAddition);
+
 		return newSymbol;
+	}
+
+	private boolean addToPlateUnique(Address address, String comment) {
+		if (StringUtils.isBlank(comment)) {
+			return false;
+		}
+		String plate = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		if (plate == null) {
+			plate = "";
+		}
+		else if (plate.contains(comment)) {
+			return true;
+		}
+		else if (!plate.endsWith("\n")) {
+			plate += '\n';
+		}
+		plate += comment;
+		SetCommentCmd.createComment(program, address, comment, CodeUnit.PLATE_COMMENT);
+		return true;
 	}
 
 	private static boolean isMangled(String name) {

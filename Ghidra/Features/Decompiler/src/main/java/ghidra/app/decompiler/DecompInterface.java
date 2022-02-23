@@ -86,7 +86,7 @@ public class DecompInterface {
 	// Last warning messages from the decompiler
 	// or other error message
 	protected String decompileMessage;
-	protected BasicCompilerSpec compilerSpec;
+	protected CompilerSpec compilerSpec;
 	protected DecompileProcess decompProcess;
 	protected DecompileCallback decompCallback;
 	private DecompileDebug debug;
@@ -221,7 +221,9 @@ public class DecompInterface {
 			(SleighLanguageDescription) pcodelanguage.getLanguageDescription();
 		ResourceFile pspecfile = sleighdescription.getSpecFile();
 		String pspecxml = fileToString(pspecfile);
-		String cspecxml = compilerSpec.getXMLString();
+		StringBuilder buffer = new StringBuilder();
+		compilerSpec.saveXml(buffer);
+		String cspecxml = buffer.toString();
 
 		decompCallback.setNativeMessage(null);
 		decompProcess.registerProgram(decompCallback, pspecxml, cspecxml, tspec, coretypes);
@@ -313,7 +315,7 @@ public class DecompInterface {
 				"Language has unsupported compiler spec: " + spec.getClass().getName();
 			return false;
 		}
-		compilerSpec = (BasicCompilerSpec) spec;
+		compilerSpec = spec;
 
 		dtmanage = new PcodeDataTypeManager(prog);
 		try {

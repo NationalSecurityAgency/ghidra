@@ -42,7 +42,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.AddressEvaluator;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.table.AddressArrayTableModel;
 import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.task.TaskMonitor;
@@ -71,13 +71,8 @@ public class GoToQuery {
 		this.plugin = plugin;
 		this.goToService = goToService;
 		this.navigationOptions = navigationOptions;
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
 
-		if (!opt.contains(GhidraOptions.OPTION_SEARCH_LIMIT)) {
-			opt.registerOption(GhidraOptions.OPTION_SEARCH_LIMIT,
-				PluginConstants.DEFAULT_SEARCH_LIMIT, null,
-				"The maximum number of search hits before stopping.");
-		}
+		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
 		this.maxHits =
 			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
 		this.fromAddress = fromAddr;
@@ -192,7 +187,7 @@ public class GoToQuery {
 			return;
 		}
 
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			model = new AddressArrayTableModel("Goto: ", plugin.getTool(), program, validAddresses,
 				monitor);
 			model.addInitialLoadListener(tableModelListener);
@@ -208,7 +203,7 @@ public class GoToQuery {
 			return;
 		}
 
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			model = new GoToQueryResultsTableModel(program, plugin.getTool(), locations, monitor);
 			model.addInitialLoadListener(tableModelListener);
 		});
@@ -219,7 +214,7 @@ public class GoToQuery {
 			return false;
 		}
 
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			model = new GoToQueryResultsTableModel(navigatable.getProgram(), queryData,
 				plugin.getTool(), maxHits, monitor);
 			model.addInitialLoadListener(tableModelListener);
@@ -342,7 +337,7 @@ public class GoToQuery {
 			return false;
 		}
 
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			Program program = navigatable.getProgram();
 			model = new GoToQueryResultsTableModel(program, cleanupQuery(program, queryData),
 				plugin.getTool(), maxHits, monitor);
@@ -496,7 +491,7 @@ public class GoToQuery {
 		Program program = navigatable.getProgram();
 		SymbolTable symTable = program.getSymbolTable();
 
-		List<Symbol> symbols = new ArrayList<Symbol>();
+		List<Symbol> symbols = new ArrayList<>();
 		SymbolIterator symbolIterator = symTable.getSymbols(queryData.getQueryString());
 		while (symbolIterator.hasNext()) {
 			Symbol symbol = symbolIterator.next();

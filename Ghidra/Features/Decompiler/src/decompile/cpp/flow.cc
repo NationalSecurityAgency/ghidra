@@ -755,6 +755,8 @@ void FlowInfo::generateOps(void)
   addrlist.push_back(data.getAddress());
   while(!addrlist.empty())	// Recovering as much as possible except jumptables
     fallthru();
+  if (hasInject())
+    injectPcode();
   do {
     bool collapsed_jumptable = false;
     while(!tablelist.empty()) {	// For each jumptable found

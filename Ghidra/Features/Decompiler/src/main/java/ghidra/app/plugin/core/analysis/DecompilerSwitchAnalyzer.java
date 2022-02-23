@@ -23,13 +23,13 @@ import generic.concurrent.*;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.cmd.function.DecompilerSwitchAnalysisCmd;
 import ghidra.app.decompiler.DecompileResults;
-import ghidra.app.decompiler.parallel.*;
+import ghidra.app.decompiler.parallel.DecompilerCallback;
+import ghidra.app.decompiler.parallel.ParallelDecompiler;
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
-import ghidra.program.model.block.BasicBlockModel;
-import ghidra.program.model.block.CodeBlock;
+import ghidra.program.model.block.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -135,8 +135,8 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		for (Function function : functions) {
 			funcSet.add(function.getBody());
 		}
-		AutoAnalysisManager.getAnalysisManager(program).scheduleOneTimeAnalysis(
-			new DecompilerSwitchAnalyzer(), funcSet);
+		AutoAnalysisManager.getAnalysisManager(program)
+				.scheduleOneTimeAnalysis(new DecompilerSwitchAnalyzer(), funcSet);
 		Msg.info(this, "hit non-returning function, restarting decompiler switch analyzer later");
 	}
 
@@ -320,9 +320,9 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		 */
 		private boolean handleSimpleBlock(Address location, TaskMonitor monitor)
 				throws CancelledException {
-			BasicBlockModel basicBlockModel = new BasicBlockModel(program);
+			SimpleBlockModel blockModel = new SimpleBlockModel(program);
 
-			return resolveComputableFlow(location, monitor, basicBlockModel);
+			return resolveComputableFlow(location, monitor, blockModel);
 		}
 
 		/**
@@ -332,14 +332,13 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		 * @return true if the flow could be easily resolved.
 		 */
 		private boolean resolveComputableFlow(Address location, TaskMonitor monitor,
-				BasicBlockModel basicBlockModel) throws CancelledException {
+				CodeBlockModel blockModel) throws CancelledException {
 
 			// get the basic block
 			//
 			// NOTE: Assumption, the decompiler won't get the switch if there is no guard
 
-			final CodeBlock jumpBlockAt =
-				basicBlockModel.getFirstCodeBlockContaining(location, monitor);
+			final CodeBlock jumpBlockAt = blockModel.getFirstCodeBlockContaining(location, monitor);
 			// If the jump target can has a computable target with only the instructions in the basic block it is found in
 			//  then it isn't a switch statment
 			//
@@ -371,8 +370,8 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 						BigInteger value = context.getValue(isaModeSwitchRegister, false);
 						if (value != null && program.getListing().getInstructionAt(addr) == null) {
 							try {
-								program.getProgramContext().setValue(isaModeRegister, addr, addr,
-									value);
+								program.getProgramContext()
+										.setValue(isaModeRegister, addr, addr, value);
 							}
 							catch (ContextChangeException e) {
 								// ignore

@@ -1560,7 +1560,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			long parentId, SymbolType symType) {
 
 		// create a label history record
-		if (symType == SymbolType.LABEL || symType == SymbolType.FUNCTION) {
+		if (!symbol.isDynamic() &&
+			(symType == SymbolType.LABEL || symType == SymbolType.FUNCTION)) {
 			createLabelHistoryRecord(addr, null, name, LabelHistory.REMOVE);
 		}
 

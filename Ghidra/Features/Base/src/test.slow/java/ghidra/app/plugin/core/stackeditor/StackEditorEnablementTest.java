@@ -48,8 +48,7 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 
 		// Check enablement.
 		for (CompositeEditorTableAction action : actions) {
-			if ((action instanceof CycleGroupAction) ||
-				(action instanceof HexNumbersAction)) {
+			if ((action instanceof CycleGroupAction) || (action instanceof HexNumbersAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -79,8 +78,7 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 
 		// Check enablement.
 		for (CompositeEditorTableAction action : actions) {
-			if ((action instanceof CycleGroupAction) ||
-				(action instanceof HexNumbersAction)) {
+			if ((action instanceof CycleGroupAction) || (action instanceof HexNumbersAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -125,8 +123,6 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 		assertTrue(model.isValidName());// name should be valid
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(0, model.getNumSelectedRows());
-//		assertTrue(!model.isLocked());
-//		assertTrue(!model.isLockable());
 		assertEquals(function.getName(), stackModel.getCompositeName());
 		assertEquals(stackModel.getTypeName(), "Stack");
 
@@ -141,8 +137,7 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 				boolean enabled = ((len <= numBytes) && ((favDt instanceof Pointer) || (len > 0)));
 				checkEnablement(action, enabled);
 			}
-			else if ((action instanceof CycleGroupAction) ||
-				(action instanceof HexNumbersAction) ||
+			else if ((action instanceof CycleGroupAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof ShowComponentPathAction) ||
 				(action instanceof EditFieldAction) || (action instanceof ClearAction) ||
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
@@ -159,12 +154,9 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 		numBytes = getModel().getMaxReplaceLength(5);
 		for (CompositeEditorTableAction action : actions) {
 			if (action instanceof FavoritesAction) {
-				FavoritesAction fav = (FavoritesAction) action;
-				DataType favDt = fav.getDataType();
 				checkEnablement(action, true);
 			}
-			else if ((action instanceof CycleGroupAction) ||
-				(action instanceof HexNumbersAction) ||
+			else if ((action instanceof CycleGroupAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof ShowComponentPathAction) ||
 				(action instanceof EditFieldAction) || (action instanceof ClearAction) ||
 				(action instanceof ArrayAction) || (action instanceof PointerAction)) {
@@ -191,8 +183,7 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 				boolean enabled = ((len <= numBytes) && ((favDt instanceof Pointer) || (len > 0)));
 				checkEnablement(action, enabled);
 			}
-			else if ((action instanceof CycleGroupAction) ||
-				(action instanceof HexNumbersAction) ||
+			else if ((action instanceof CycleGroupAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof ShowComponentPathAction) ||
 				(action instanceof EditFieldAction) || (action instanceof ClearAction) ||
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
@@ -221,8 +212,7 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 				boolean enabled = ((len <= numBytes) && ((favDt instanceof Pointer) || (len > 0)));
 				checkEnablement(action, enabled);
 			}
-			else if ((action instanceof CycleGroupAction) ||
-				(action instanceof HexNumbersAction) ||
+			else if ((action instanceof CycleGroupAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof ShowComponentPathAction) ||
 				(action instanceof EditFieldAction) || (action instanceof ClearAction) ||
 				(action instanceof ArrayAction) || (action instanceof PointerAction)) {
@@ -249,8 +239,7 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 				boolean enabled = ((len <= numBytes) && ((favDt instanceof Pointer) || (len > 0)));
 				checkEnablement(action, enabled);
 			}
-			else if ((action instanceof CycleGroupAction) ||
-				(action instanceof HexNumbersAction) ||
+			else if ((action instanceof CycleGroupAction) || (action instanceof HexNumbersAction) ||
 				(action instanceof ShowComponentPathAction) ||
 				(action instanceof EditFieldAction) || (action instanceof ClearAction) ||
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
@@ -270,9 +259,8 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 		// Check enablement on a contiguous multi-component selection.
 		runSwing(() -> model.setSelection(new int[] { 2, 3, 4 }));
 		for (CompositeEditorTableAction action : actions) {
-			if ((action instanceof CycleGroupAction) ||
-				(action instanceof HexNumbersAction) || (action instanceof PointerAction) ||
-				(action instanceof ClearAction)) {
+			if ((action instanceof CycleGroupAction) || (action instanceof HexNumbersAction) ||
+				(action instanceof PointerAction) || (action instanceof ClearAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -288,8 +276,8 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 		// Check enablement on a non-contiguous multi-component selection.
 		runSwing(() -> model.setSelection(new int[] { 2, 3, 6, 7 }));
 		for (CompositeEditorTableAction action : actions) {
-			if ((action instanceof CycleGroupAction) ||
-				(action instanceof HexNumbersAction) || (action instanceof ClearAction)) {
+			if ((action instanceof CycleGroupAction) || (action instanceof HexNumbersAction) ||
+				(action instanceof ClearAction)) {
 				checkEnablement(action, true);
 			}
 			else {

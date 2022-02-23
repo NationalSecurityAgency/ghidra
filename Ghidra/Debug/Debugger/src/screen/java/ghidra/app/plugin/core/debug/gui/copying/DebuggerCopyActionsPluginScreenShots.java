@@ -72,7 +72,7 @@ public class DebuggerCopyActionsPluginScreenShots extends GhidraScreenShotGenera
 		mb.createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			new TestDebuggerTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		tb = new ToyDBTraceBuilder(recorder.getTrace());
 	}
 

@@ -182,6 +182,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		}
 
 		// Process each PRELINK Mach-O
+		Collections.sort(prelinkMachoInfoList);
 		monitor.initialize(prelinkMachoInfoList.size());
 		for (int i = 0; i < prelinkMachoInfoList.size(); i++) {
 			PrelinkMachoInfo info = prelinkMachoInfoList.get(i);
@@ -192,7 +193,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 			info.processMemoryBlocks();
 			info.markupHeaders();
-			info.addToProgramTree(next);
+			info.addToProgramTree(next); // assumes list is sorted
 
 			monitor.incrementProgress(1);
 		}
@@ -533,7 +534,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	/**
 	 * Convenience class to store information we need about an individual PRELINK Mach-O.
 	 */
-	private class PrelinkMachoInfo {
+	private class PrelinkMachoInfo implements Comparable<PrelinkMachoInfo> {
 
 		private Address headerAddr;
 		private MachHeader header;
@@ -620,6 +621,11 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 					}
 				}
 			}
+		}
+
+		@Override
+		public int compareTo(PrelinkMachoInfo o) {
+			return headerAddr.compareTo(o.headerAddr);
 		}
 	}
 }

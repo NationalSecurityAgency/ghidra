@@ -31,10 +31,17 @@ public class MicrosoftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		"After a function is created, this analyzer will attempt to demangle " +
 			"the name and apply datatypes to parameters.";
 
-	private final static String OPTION_NAME_APPLY_SIGNATURE = "Apply Function Signatures";
+	public static final String OPTION_NAME_APPLY_SIGNATURE = "Apply Function Signatures";
 	private static final String OPTION_DESCRIPTION_APPLY_SIGNATURE =
 		"Apply any recovered function signature, in addition to the function name";
+
+	public static final String OPTION_NAME_APPLY_CALLING_CONVENTION =
+		"Apply Function Calling Conventions";
+	private static final String OPTION_DESCRIPTION_APPLY_CALLING_CONVENTION =
+		"Apply any recovered function signature calling convention";
+
 	private boolean applyFunctionSignature = true;
+	private boolean applyCallingConvention = true;
 	private MicrosoftDemangler demangler = new MicrosoftDemangler();
 
 	public MicrosoftDemanglerAnalyzer() {
@@ -51,12 +58,23 @@ public class MicrosoftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	public void registerOptions(Options options, Program program) {
 		options.registerOption(OPTION_NAME_APPLY_SIGNATURE, applyFunctionSignature, null,
 			OPTION_DESCRIPTION_APPLY_SIGNATURE);
+
+		options.registerOption(OPTION_NAME_APPLY_CALLING_CONVENTION, applyCallingConvention, null,
+			OPTION_DESCRIPTION_APPLY_CALLING_CONVENTION);
 	}
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
 		applyFunctionSignature =
 			options.getBoolean(OPTION_NAME_APPLY_SIGNATURE, applyFunctionSignature);
+	}
+
+	@Override
+	protected DemanglerOptions getOptions() {
+		DemanglerOptions options = new DemanglerOptions();
+		options.setApplySignature(applyFunctionSignature);
+		options.setApplyCallingConvention(applyCallingConvention);
+		return options;
 	}
 
 	@Override

@@ -28,6 +28,7 @@ set "SCRIPT_DIR=%~dp0"
 :: Loop through parameters (if there aren't any, just continue) and store
 ::   in params variable.
 
+setlocal EnableDelayedExpansion
 set params=
 
 :Loop
@@ -35,7 +36,6 @@ if "%~1" == "" goto cont
 
 :: If -import is found and Windows has not done proper wildcard expansion, force
 :: this to happen and save expansion to params variable.
-setlocal EnableDelayedExpansion
 if "%~1" == "-import" (	
 	set params=!params! -import
 	for %%f in ("%~2") DO (
@@ -45,11 +45,12 @@ if "%~1" == "-import" (
 ) else (
 	set params=!params! "%~1"
 )
-setlocal DisableDelayedExpansion
 
 shift
 goto Loop
 
 :cont
+
+setlocal DisableDelayedExpansion
 
 call "%SCRIPT_DIR%launch.bat" %LAUNCH_MODE% Ghidra-Headless "%MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%

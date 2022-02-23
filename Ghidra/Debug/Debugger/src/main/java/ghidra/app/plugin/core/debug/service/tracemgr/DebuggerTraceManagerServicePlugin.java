@@ -60,25 +60,16 @@ import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
 
-@PluginInfo(
-	shortDescription = "Debugger Trace View Management Plugin",
-	description = "Manages UI Components, Wrappers, Focus, etc.",
-	category = PluginCategoryNames.DEBUGGER,
-	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.RELEASED,
-	eventsProduced = {
-		TraceActivatedPluginEvent.class,
-	},
-	eventsConsumed = {
-		TraceActivatedPluginEvent.class,
-		TraceClosedPluginEvent.class,
-		ModelObjectFocusedPluginEvent.class,
-		TraceRecorderAdvancedPluginEvent.class,
-	},
-	servicesRequired = {},
-	servicesProvided = {
-		DebuggerTraceManagerService.class,
-	})
+@PluginInfo(shortDescription = "Debugger Trace View Management Plugin", description = "Manages UI Components, Wrappers, Focus, etc.", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsProduced = {
+	TraceActivatedPluginEvent.class,
+}, eventsConsumed = {
+	TraceActivatedPluginEvent.class,
+	TraceClosedPluginEvent.class,
+	ModelObjectFocusedPluginEvent.class,
+	TraceRecorderAdvancedPluginEvent.class,
+}, servicesRequired = {}, servicesProvided = {
+	DebuggerTraceManagerService.class,
+})
 public class DebuggerTraceManagerServicePlugin extends Plugin
 		implements DebuggerTraceManagerService {
 	private static final AutoConfigState.ClassHandler<DebuggerTraceManagerServicePlugin> CONFIG_STATE_HANDLER =
@@ -312,6 +303,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return traceChooserDialog;
 		}
 		DomainFileFilter filter = df -> Trace.class.isAssignableFrom(df.getDomainObjectClass());
+
+		// TODO regarding the hack note below, I believe this issue ahs been fixed, but not sure how to test
 		return traceChooserDialog =
 			new DataTreeDialog(null, OpenTraceAction.NAME, DataTreeDialog.OPEN, filter) {
 				{ // TODO/HACK: Why the NPE if I don't do this?
@@ -520,9 +513,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	protected void contextChanged() {
 		Trace trace = current.getTrace();
-		String name = trace == null ? "..." : trace.getName();
-		actionCloseTrace.getMenuBarData().setMenuItemName(CloseTraceAction.NAME_PREFIX + name);
-		actionSaveTrace.getMenuBarData().setMenuItemName(SaveTraceAction.NAME_PREFIX + name);
+		String itemName = trace == null ? "..." : trace.getName();
+		actionCloseTrace.getMenuBarData().setMenuItemName(CloseTraceAction.NAME_PREFIX + itemName);
+		actionSaveTrace.getMenuBarData().setMenuItemName(SaveTraceAction.NAME_PREFIX + itemName);
 		tool.contextChanged(null);
 	}
 

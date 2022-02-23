@@ -524,6 +524,21 @@
         <H2>Miscellaneous Actions</H2>
 
         <BLOCKQUOTE>
+        
+          <H3><A name="Copy"></A>Copy</H3>
+
+          <BLOCKQUOTE>
+            <P>The <I><B>Copy</B></I> action can be be used to 
+            <A href="data_type_manager_description.htm#CopyDataType">copy
+            selected data types</A> and/or 
+            <A href="data_type_manager_description.htm#CopyCategory">copy selected categories</A>.
+            The <I><B>Copy</B></I> action only primes the selected nodes to be copied. The
+            <I><B>Paste</B></I> action must be used to complete the copy. Any other
+            <I><B>Cut</B></I> or <I><B>Copy</B></I> action will cancel the previous<I><B>Copy
+            .</B></I><BR>
+            </P>
+          </BLOCKQUOTE>
+       
           <H3><A name="Cut"></A>Cut</H3>
 
           <BLOCKQUOTE>
@@ -538,27 +553,31 @@
             "data_type_manager_description.htm#ReplaceDataType">replace one data type for another</A>.</P>
           </BLOCKQUOTE>
 
-          <H3><A name="Copy"></A>Copy</H3>
+		 <H3><A name="Delete"></A>Delete</H3>
 
           <BLOCKQUOTE>
-            <P>The <I><B>Copy</B></I> action can be be used to 
-            <A href="data_type_manager_description.htm#CopyDataType">copy
-            selected data types</A> and/or 
-            <A href="data_type_manager_description.htm#CopyCategory">copy selected categories</A>.
-            The <I><B>Copy</B></I> action only primes the selected nodes to be copied. The
-            <I><B>Paste</B></I> action must be used to complete the copy. Any other
-            <I><B>Cut</B></I> or <I><B>Copy</B></I> action will cancel the previous<I><B>Copy
-            .</B></I><BR>
-            </P>
+            <P>The <I><B>Delete</B></I> action is used to 
+            <A href="data_type_manager_description.htm#DeleteDataType">delete data
+            types</A> and/or 
+            <A href="data_type_manager_description.htm#DeleteCategory">delete categories</A>. A confirmation dialog
+            will appear before actually deleting the selected data types and categories.</P>
           </BLOCKQUOTE>
+
 
           <H3><A name="Paste"></A>Paste</H3>
 
           <BLOCKQUOTE>
-            <P>The<I><B>Paste</B></I> action is used to complete a move or copy operation as
-            initiated by either the <I><B>Copy</B></I> or <I><B>Cut</B></I> action. The node that
-            is selected will be the destination for whatever nodes where selected when the
-            <I><B>Copy</B></I> or <I><B>Paste</B></I> was invoked.</P>
+            <P>The <I><B>Paste</B></I> action is used to complete a move or copy operation as
+            initiated by either the <I><B>Copy</B></I> or <I><B>Cut</B></I> action. The category 
+            node (or the parent category of a data type node) that is selected will be the 
+            destination for whatever nodes where selected when the <I><B>Copy</B></I> or 
+            <I><B>Paste</B></I> was invoked.  
+            </P>
+            
+            <P>Any conflicts encountered while pasting will be resolved according to the current
+            <A HREF="#conflict_mode">conflict resolution mode</A>.
+            </P>
+            
           </BLOCKQUOTE>
 
           <H3><A name="Rename"></A>Rename</H3>
@@ -571,26 +590,29 @@
             type</A>.</P>
           </BLOCKQUOTE>
 
-          <H3><A name="Delete"></A>Delete</H3>
+          
+          <H3><A name="Replace_Data_Type"></A>Replace Data Type...</H3>
 
           <BLOCKQUOTE>
-            <P>The <I><B>Delete</B></I> action is used to 
-            <A href="data_type_manager_description.htm#DeleteDataType">delete data
-            types</A> and/or 
-            <A href="data_type_manager_description.htm#DeleteCategory">delete categories</A>. A confirmation dialog
-            will appear before actually deleting the selected data types and categories.</P>
+            <P>The <I><B>Replace Data Type...</B></I> action is used to 
+            <A href="data_type_manager_description.htm#ReplaceDataType">replace</A> a
+            selected data type and all occurrences in the program.</P>
           </BLOCKQUOTE>
+          
+          
+        </BLOCKQUOTE>
 
-          <H3><A name="Collapse_All"></A>Collapse All</H3>
+
+	  <BLOCKQUOTE>
+
+		<H3><A name="Collapse_All"></A>Collapse All</H3>
 
           <BLOCKQUOTE>
             <P>To collapse all open nodes in a sub-tree, right-click on the root node of the
             sub-tree and select the <I><B>Collapse All</B></I> action. If this action is invoked
             via the local toolbar, then the entire tree is collapsed.</P>
           </BLOCKQUOTE>
-        </BLOCKQUOTE>
 
-        <BLOCKQUOTE>
           <H3><A name="Expand_All"></A>Expand All</H3>
         </BLOCKQUOTE>
 

@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.services.ActionSource;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetRegister;
 import ghidra.dbg.target.*;
@@ -63,8 +64,8 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 	protected DebuggerRegisterMapper getRegisterMapperBase() throws Throwable {
 		mb.testProcess1.regs.addRegistersFromLanguage(getSLEIGH_X86_64_LANGUAGE(), r -> true);
 
-		TraceRecorder recorder =
-			modelService.recordTarget(mb.testProcess1, new TestTargetMapper(mb.testProcess1));
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			new TestTargetMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		TraceThread thread1 = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		DebuggerRegisterMapper rm = waitForValue(() -> recorder.getRegisterMapper(thread1));
 		waitForValue(() -> rm.getTargetRegister("rax"));
@@ -75,8 +76,8 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 	protected DebuggerRegisterMapper getRegisterMapperSub() throws Throwable {
 		mb.testProcess1.regs.addRegistersFromLanguage(getSLEIGH_X86_LANGUAGE(), r -> true);
 
-		TraceRecorder recorder =
-			modelService.recordTarget(mb.testProcess1, new TestTargetMapper(mb.testProcess1));
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			new TestTargetMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		TraceThread thread1 = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		DebuggerRegisterMapper rm = waitForValue(() -> recorder.getRegisterMapper(thread1));
 		waitForValue(() -> rm.getTargetRegister("eax"));

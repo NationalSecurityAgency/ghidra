@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app;
+package agent.gdb.pty.windows;
 
-import ghidra.framework.plugintool.util.PluginPackage;
-import resources.ResourceManager;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-public class GraphPluginPackage extends PluginPackage {
+import agent.gdb.pty.PtyEndpoint;
 
-	public static final String NAME = "Graph";
+public class ConPtyEndpoint implements PtyEndpoint {
+	protected InputStream inputStream;
+	protected OutputStream outputStream;
 
-	public GraphPluginPackage() {
-		super(NAME, ResourceManager.loadImage("images/katomic.png"),
-			"Provides plugins that display information in graph form.", FEATURE_PRIORITY);
+	public ConPtyEndpoint(Handle writeHandle, Handle readHandle) {
+		this.inputStream = new HandleInputStream(readHandle);
+		this.outputStream = new HandleOutputStream(writeHandle);
+	}
+
+	@Override
+	public OutputStream getOutputStream() {
+		return outputStream;
+	}
+
+	@Override
+	public InputStream getInputStream() {
+		return inputStream;
 	}
 }

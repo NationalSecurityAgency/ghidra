@@ -494,48 +494,31 @@ public class ParamEntry {
 		parser.end(el);
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		ParamEntry op2 = (ParamEntry) obj;
-		if (!spaceid.equals(op2.spaceid) || addressbase != op2.addressbase) {
+	/**
+	 * Determine if this ParamEntry is equivalent to another instance
+	 * @param obj is the other instance
+	 * @return true if they are equivalent
+	 */
+	public boolean isEquivalent(ParamEntry obj) {
+		if (!spaceid.equals(obj.spaceid) || addressbase != obj.addressbase) {
 			return false;
 		}
-		if (size != op2.size || minsize != op2.minsize || alignment != op2.alignment) {
+		if (size != obj.size || minsize != obj.minsize || alignment != obj.alignment) {
 			return false;
 		}
-		if (type != op2.type || flags != op2.flags) {
+		if (type != obj.type || flags != obj.flags) {
 			return false;
 		}
-		if (numslots != op2.numslots) {
+		if (numslots != obj.numslots) {
 			return false;
 		}
-		if (group != op2.group || groupsize != op2.groupsize) {
+		if (group != obj.group || groupsize != obj.groupsize) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(joinrec, op2.joinrec)) {
+		if (!SystemUtilities.isArrayEqual(joinrec, obj.joinrec)) {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = spaceid.hashCode();
-		hash = 79 * hash + Long.hashCode(addressbase);
-		hash = 79 * hash + alignment;
-		hash = 79 * hash + flags;
-		hash = 79 * hash + group;
-		hash = 79 * hash + groupsize;
-		hash = 79 * hash + minsize;
-		hash = 79 * hash + numslots;
-		hash = 79 * hash + size;
-		hash = 79 * hash + type;
-		if (joinrec != null) {
-			for (Varnode vn : joinrec) {
-				hash = 79 * hash + vn.hashCode();
-			}
-		}
-		return hash;
 	}
 
 	/**

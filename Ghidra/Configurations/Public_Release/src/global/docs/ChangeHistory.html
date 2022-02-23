@@ -7,6 +7,50 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.1.2 Change History (January 2022)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Basic Infrastructure</I>. Upgraded Gson to 2.8.9. (GP-1632, Issue #3802)</li>
+    <li><I>Basic Infrastructure</I>. Upgraded log4j to 2.17.1. (GP-1641)</li>
+    <li><I>Build</I>. Increased minimum supported Gradle version from 6.4 to 6.8. (GP-1680)</li>
+    <li><I>Debugger:Emulator</I>. Emulator's PcodeStepper now displays the decoded instruction. (GP-1474)</li>
+    <li><I>Debugger:Watches</I>. Double-clicking a <B>pointer</B> value in the Watches window navigates to the pointer rather than its address. (GP-1469)</li>
+    <li><I>Listing</I>. Updated the Listing <B>Operands</B> field to support word-wrapping for enum data types. (GP-1665, Issue #3812)</li>
+    <li><I>Scripting</I>. Improved the RecoverClassesFromRTTIScript to create function definitions for multi-inheritance and single virtual inheritance classes in the correct ancestor class data type folders. (GP-1663)</li>
+    <li><I>Scripting</I>. Updated RecoverClassesFromRTTI script for GCC programs to only create <code>typeinfo</code> structures in non-executable memory. (GP-1686)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed another bug with recovering Objective-C method names. (GP-1642, Issue #3817)</li>
+    <li><I>Analysis</I>. Certain switch cases using the AARCH64 CSEL instruction will now recover correctly.  Previously internal CBRANCH instructions could cause switch flow recovery failure in the decompiler switch analyzer. (GP-1687)</li>
+    <li><I>Analysis</I>. Fixed unused Microsoft Demangler options. (GP-1688, Issue #3892)</li>
+    <li><I>Analysis</I>. (U) Reverted change (GP-1575) introduced with Ghidra 10.1 which improperly factored image-base into analysis of ELF LSDA Gcc exception records. (GP-1702)</li>
+    <li><I>Build</I>. Fixed <code>gradle buildGhidra</code> issue where a second build doesn't include all the files. This issue appears to be a bug introduced in Gradle 7. (GP-1648, Issue #3827)</li>
+    <li><I>Data Types</I>. Fixed display of multiple Enum values. (GP-1657, Issue #3810)</li>
+    <li><I>Debugger</I>. Now invalidating caches for dbgeng/dbgmodel in the GADP variants so the memory is not left stale. (GP-846)</li>
+    <li><I>Debugger</I>. Fixed exception when cancelling password entry for GDBOverSSH. (GP-1655, Issue #3578)</li>
+    <li><I>Debugger:Memory</I>. Fixed Debugger Memory background colors during emulation. (GP-1590)</li>
+    <li><I>Debugger:Trace</I>. Fixed issue where emulated state leaked into recorded state. (GP-1620)</li>
+    <li><I>Debugger:Trace</I>. Fixed NullPointerException when disassembling stale memory. (GP-1646)</li>
+    <li><I>Decompiler</I>. Fixed the Decompiler <B>Retype Field</B> action to not rename the field. (GP-1654, Issue #3783)</li>
+    <li><I>Decompiler</I>. Decompiler now recovers jump tables that use PIC mechanisms or other forms relying on injected p-code. (GP-1659)</li>
+    <li><I>Demangler</I>. Fixed demangling bug that produced incorrect types such as <code><B>unsigned_short</B></code>. (GP-1662)</li>
+    <li><I>GUI</I>. Fixed incorrect tool option reference in the <B>Create Table From Selection</B> action. (GP-1676, Issue #3858)</li>
+    <li><I>GUI</I>. Fixed the <B>Decompiler Find Text</B> dialog's auto-complete feature to not change the default text entry added to the dialog. (GP-1685, Issue #3890)</li>
+    <li><I>Importer:Mach-O</I>. Fixed an IllegalArgumentException that occurred when loading some kernelcache images. (GP-1675, Issue #2487)</li>
+    <li><I>Importer:PE</I>. Fixed an exception that occurred when re-parsing PE programs with a <code><B>.pdata</B></code> section from memory. (GP-1636, Issue #3347, #3800, #3805)</li>
+    <li><I>PDB</I>. Fixed incorrect bounds on item type iteration; one effect of the fix is that the user might notice more <code>unsupported PDB data type</code> messages in the log. (GP-1677)</li>
+    <li><I>Processors</I>. Fixed issue with Motorola 6809 immediate operands being set to zero. (GP-1611, Issue #2116, #3755)</li>
+    <li><I>Processors</I>. Corrected PowerPC <code>efscmp*</code> and <code>efstst*</code> instructions condition register usage. (GP-1639, Issue #2528)</li>
+    <li><I>Processors</I>. Fixed the target of <code>JUMP</code> and <code>JSR</code> for the 6809 to use [target] instead of jumping directly to target which incorrectly jumped to the address of the unique variable.  Also fixed a compile issue in the half-finished 6309 <code>EXG</code> and <code>TFR</code> instructions. (GP-1690, Issue #3825)</li>
+    <li><I>Scripting</I>. Fixed the ApplyClassFunctionDefinitionUpdatesScript and the ApplyClassFunctionSignatureUpdatesScript to work correctly with the recent RecoverClassesForRTTI changes to function definitions. (GP-1601)</li>
+    <li><I>Scripting</I>. Fixed bug in a class recovery helper class that was causing an exception in some cases when trying to replace a component in a structure. (GP-1670)</li>
+    <li><I>Scripting</I>. Removed a misplaced space character in the name passed to setLabel in RecoverClassesForRTTIScript. (GP-1671)</li>
+    <li><I>Sleigh</I>. Fixed bug that could cause erroneous decompilation of functions in overlays. (GP-1661, Issue #3828)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.1.1 Change History (December 2021)</H1>
 <blockquote><p><u>Improvements</u></p>
 <ul>
