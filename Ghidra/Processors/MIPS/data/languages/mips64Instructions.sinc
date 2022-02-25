@@ -128,7 +128,7 @@
         | (tmp3 << 24) | (tmp4 << 16) | (tmp1 << 8) | (tmp2);       
 }
 # 0111 1100 000t tttt dddd d001 0110 0100
-:dshd RD, RTsrc                 is$(AMODE) &  prime=0x1F & rs=0x0 & fct2=0x05 & fct=0x24 & RD & RTsrc {
+:dshd RD, RTsrc                 is $(AMODE) &  prime=0x1F & rs=0x0 & fct2=0x05 & fct=0x24 & RD & RTsrc {
     tmp1:8 = RTsrc & 0xffff;
     tmp2:8 = (RTsrc >> 16) & 0xffff;
     tmp3:8 = (RTsrc >> 32) & 0xffff;
