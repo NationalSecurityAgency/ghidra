@@ -1043,10 +1043,8 @@ cachetype: "both"		is op67=3							{ export 3:4; }
 :cinvp cachetype,(regan)	is opbig=0xf4 & cachetype & op5=0 & op34=2 & regan		unimpl
 :cinva cachetype		is opbig=0xf4 & cachetype & op5=0 & op34=3			unimpl
 
-@endif # MC68040
 
 
-@ifdef MC68040
 
 :cpushl cachetype,(regan)	is opbig=0xf4 & cachetype & op5=1 & op34=1 & regan		{pushInvalidateCaches(regan);}
 :cpushp cachetype,(regan)	is opbig=0xf4 & cachetype & op5=1 & op34=2 & regan		{pushInvalidateCaches(regan);}
@@ -1638,7 +1636,6 @@ FCmask: "#"^fcmask	is fcmask	{ export *[const]:1 fcmask; }
 #:pmove.l e2l,ACx	is ACx & opbig=0xf0 & op67=0 & $(CTL_ADDR_MODES); opx1315=0 & mregn=? & rwx=0 & fbit=0 & d8=0; e2l	[ savmod2=savmod1; regtsan=regtfan; ]  unimpl
 #:pmovefd.l e2l,ACx	is ACx & opbig=0xf0 & op67=0 & $(CTL_ADDR_MODES); opx1315=0 & mregn=? & rwx=0 & fbit=1 & d8=0; e2l	[ savmod2=savmod1; regtsan=regtfan; ]  unimpl
 
-@endif # MC68030
 
 #TODO: PMOVE PMMU Register - MC68851 only
 
@@ -1648,7 +1645,6 @@ FCmask: "#"^fcmask	is fcmask	{ export *[const]:1 fcmask; }
 
 #TODO: PScc PMMU Register - MC68851 only
 
-@ifdef MC68030
 
 ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 

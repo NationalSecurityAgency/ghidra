@@ -718,11 +718,9 @@ Addr32_64: [eiprel]						is mod=0 & r_m=5; simm32	[ eiprel=inst_next+simm32; ] {
 Addr32_64: [imm32]		is mod=0 & r_m=4; index=4 & base=5; imm32    { export *[const]:8 imm32; }
 Addr32_64: addr32		is addr32									 { tmp:8 = sext(addr32); export tmp; }
 	
-@endif
 
 # 64-bit addressing modes   (the offset portion)
 
-@ifdef IA64
 addr64: [Rmr64]							is mod=0 & Rmr64                                   { export Rmr64; }
 addr64: [Rmr64 + simm8_64]				is mod=1 & Rmr64; simm8_64                         { local tmp=Rmr64+simm8_64; export tmp; }
 addr64: [Rmr64 + simm32_64]				is mod=2 & Rmr64; simm32_64                        { local tmp=Rmr64+simm32_64; export tmp; }
@@ -928,9 +926,7 @@ moffs32: segWide^[imm32]  is addrsize=1 & highseg=1 & segWide & imm32   { tmp:$(
 @ifdef IA64
 moffs32: segWide^[imm64]  is addrsize=2 & segWide & imm64               { export *:4 imm64; }
 moffs32: segWide^[imm64]  is addrsize=2 & highseg=1 & segWide & imm64   { tmp:8 = segWide + imm64; export *:4 tmp; }
-@endif
 
-@ifdef IA64
 moffs64: segWide^[imm64]  is addrsize=2 & segWide & imm64               { export *:8 imm64; }
 moffs64: segWide^[imm64]  is addrsize=2 & highseg=1 & segWide & imm64   { tmp:8 = segWide + imm64; export *:8 tmp; }
 @endif
@@ -3419,9 +3415,7 @@ define pcodeop ptwrite;
 :RCR rm64,n1        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 & reg_opcode=3 ...   { local tmpCF=CF; OF=rm64 s< 0; CF=(rm64&1)!=0; rm64=(rm64>>1)|(zext(tmpCF)<<63); OF=OF^(rm64 s< 0); }
 :RCR rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=3 ...   { local cnt=CL&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp>>cnt)|(tmp<<(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
 :RCR rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=3 ... ; imm8 { local cnt=imm8&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp>>cnt)|(tmp<<(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
-@endif
 
-@ifdef IA64
 define pcodeop readfsbase;
 :RDFSBASE r32 is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0f; byte=0xae; reg_opcode=0 & r32 { r32 = readfsbase(); }
 :RDFSBASE r64 is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(PRE_F3) & byte=0x0f; byte=0xae; reg_opcode=0 & r64 { r64 = readfsbase(); }
@@ -3864,12 +3858,10 @@ define pcodeop invalidInstructionException;
 :VMSAVE EAX     is vexMode=0 & addrsize=1 & byte=0x0f; byte=0x01; byte=0xdb & EAX       { vmsave(EAX); }
 @ifdef IA64
 :VMSAVE RAX     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0x0f; byte=0x01; byte=0xdb & RAX       { vmsave(RAX); }
-@endif
 #
 
 #
 # Intel hardware assisted virtualization opcodes
-@ifdef IA64
 :INVEPT Reg64, m128  is $(LONGMODE_ON) & vexMode=0 & bit64=1 & $(PRE_66) & byte=0x0f; byte=0x38; byte=0x80; Reg64 ... & m128 { invept(Reg64, m128); }
 @endif
 :INVEPT Reg32, m128  is vexMode=0 & bit64=0 & $(PRE_66) & byte=0x0f; byte=0x38; byte=0x80; Reg32 ... & m128 { invept(Reg32, m128); }

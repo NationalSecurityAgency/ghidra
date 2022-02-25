@@ -46,9 +46,7 @@ define pcodeop vectorShiftRightWordUnsigned;
 {
     vectorShiftRightWordSigned(S,A,B);
 }
-@endif
 
-@ifndef IS_ISA
 :evsrwu S,A,B        is OP=4 & S & A & B & XOP_0_10=544
 {
     vectorShiftRightWordUnsigned(S,A,B);

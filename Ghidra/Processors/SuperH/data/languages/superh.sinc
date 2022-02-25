@@ -2207,10 +2207,8 @@ define pcodeop Sleep_Standby;
 
 # FTRC DRm, FPUL              1111mmm000111101 (long) DRm → FPUL
 
-@endif
 
 
-@if defined(FPU)
 
 #
 # FPU-related CPU Instructions

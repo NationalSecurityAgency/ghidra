@@ -972,9 +972,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADDX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9B); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -983,9 +981,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADDX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBB); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -994,9 +990,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADDX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAB); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -1005,9 +999,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADDY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xCB); iopr16i
 { 
 	op1:2 = iopr16i;
@@ -1016,9 +1008,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADDY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xDB); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -1027,9 +1017,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADDY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xFB); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -1038,9 +1026,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADDY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xEB); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -1049,9 +1035,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADED iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC3); iopr16i
 { 
 	op1:2 = iopr16i;
@@ -1060,9 +1044,7 @@ macro setCCRW( operand ) {
 	addition_flags2(D, op1, result);
 	D = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADED opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD3); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -1071,9 +1053,7 @@ macro setCCRW( operand ) {
 	addition_flags2(D, op1, result);
 	D = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADED opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF3); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -1082,9 +1062,7 @@ macro setCCRW( operand ) {
 	addition_flags2(D, op1, result);
 	D = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADED indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE3); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -1093,9 +1071,7 @@ macro setCCRW( operand ) {
 	addition_flags2(D, op1, result);
 	D = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADEX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x89); iopr16i
 { 
 	op1:2 = iopr16i;
@@ -1104,9 +1080,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADEX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x99); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -1115,9 +1089,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADEX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xb9); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -1126,9 +1098,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADEX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xa9); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -1137,9 +1107,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADEY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC9); iopr16i
 { 
 	op1:2 = iopr16i;
@@ -1148,9 +1116,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADEY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD9); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -1159,9 +1125,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADEY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF9); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -1170,9 +1134,7 @@ macro setCCRW( operand ) {
 	addition_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :ADEY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE9); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -1260,9 +1222,7 @@ macro setCCRW( operand ) {
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ANDX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x94); opr8a_16
 { 
 	IX = IX & opr8a_16;
@@ -1270,9 +1230,7 @@ macro setCCRW( operand ) {
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ANDX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB4); opr16a_16
 { 
 	IX = IX & opr16a_16;
@@ -1280,9 +1238,7 @@ macro setCCRW( operand ) {
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ANDX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA4); indexed2_5
 { 
 	IX = IX & indexed2_5;
@@ -1290,9 +1246,7 @@ macro setCCRW( operand ) {
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ANDY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC4); iopr16i
 { 
 	IY = IY & iopr16i;
@@ -1300,9 +1254,7 @@ macro setCCRW( operand ) {
 	$(Z) = (IY == 0);
 	$(N) = (IY s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ANDY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD4); opr8a_16
 { 
 	IY = IY & opr8a_16;
@@ -1310,9 +1262,7 @@ macro setCCRW( operand ) {
 	$(Z) = (IY == 0);
 	$(N) = (IY s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ANDY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF4); opr16a_16
 { 
 	IY = IY & opr16a_16;
@@ -1320,9 +1270,7 @@ macro setCCRW( operand ) {
 	$(Z) = (IY == 0);
 	$(N) = (IY s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ANDY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE4); indexed2_5
 { 
 	IY = IY & indexed2_5;
@@ -1392,9 +1340,7 @@ macro setCCRW( operand ) {
 	$(N) = (tmp s< 0);
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :ASLW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x68); indexed2_5 
 {
 	local tmp = indexed2_5;
@@ -1405,9 +1351,7 @@ macro setCCRW( operand ) {
 	$(N) = (tmp s< 0);
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :ASLX                    is XGATE=0 & Prefix18=1 & op8=0x48
 {
 	$(C) = IX[15,1];
@@ -1416,9 +1360,7 @@ macro setCCRW( operand ) {
 	$(N) = (IX s< 0);	
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :ASLY                    is XGATE=0 & Prefix18=1 & op8=0x58
 {
 	$(C) = IY[15,1];
@@ -1480,9 +1422,7 @@ macro setCCRW( operand ) {
 	$(N) = (tmp s< 0);	
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :ASRW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x67); indexed2_5 
 {
 	local tmp = indexed2_5;
@@ -1493,9 +1433,7 @@ macro setCCRW( operand ) {
 	$(N) = (tmp s< 0);	
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :ASRX                    is XGATE=0 & Prefix18=1 & op8=0x47 
 {
 	$(C) = IX[0,1];
@@ -1504,9 +1442,7 @@ macro setCCRW( operand ) {
 	$(N) = (IX s< 0);	
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :ASRY                    is XGATE=0 & Prefix18=1 & op8=0x57 
 {
 	$(C) = IY[0,1];
@@ -1661,9 +1597,7 @@ macro setCCRW( operand ) {
 	$(N) = (result s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :BITX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x95); opr8a_16
 {
 	local result = IX & opr8a_16;
@@ -1671,9 +1605,7 @@ macro setCCRW( operand ) {
 	$(N) = (result s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :BITX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB5); opr16a_16
 {
 	local result = IX & opr16a_16;
@@ -1681,9 +1613,7 @@ macro setCCRW( operand ) {
 	$(N) = (result s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :BITX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA5); indexed2_5
 {
 	local result = IX & indexed2_5;
@@ -1691,9 +1621,7 @@ macro setCCRW( operand ) {
 	$(N) = (result s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :BITY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC5); iopr16i
 {
 	local result = IY & iopr16i;
@@ -1701,9 +1629,7 @@ macro setCCRW( operand ) {
 	$(N) = (result s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :BITY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD5); opr8a_16
 {
 	local result = IY & opr8a_16;
@@ -1711,9 +1637,7 @@ macro setCCRW( operand ) {
 	$(N) = (result s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :BITY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF5); opr16a_16
 {
 	local result = IY & opr16a_16;
@@ -1721,9 +1645,7 @@ macro setCCRW( operand ) {
 	$(N) = (result s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :BITY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE5); indexed2_5
 {
 	local result = IY & indexed2_5;
@@ -1860,9 +1782,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(V) = 0;
 	opr8a_8 = op1 | msk8;
 }
-@endif
 
-@if defined(HCS12X)
 :BTAS  opr16a_8, msk8                 is XGATE=0 & Prefix18=1 & (op8=0x36); opr16a_8; msk8
 { 
 	op1:1 = opr16a_8;
@@ -1872,9 +1792,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	$(V) = 0;
 	opr16a_8 = op1 | msk8;
 }
-@endif
 
-@if defined(HCS12X)
 :BTAS  indexed1_3, msk8                 is XGATE=0 & Prefix18=1 & (op8=0x37); indexed1_3; msk8
 { 
 	op1:1 = indexed1_3;
@@ -2021,9 +1939,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	V_equals_0();
 	$(C) = 0;
 }
-@endif
 
-@if defined(HCS12X)
 :CLRW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x69); indexed2_5 
 {
 	indexed2_5 = 0;
@@ -2032,9 +1948,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	V_equals_0();
 	$(C) = 0;
 }
-@endif
 
-@if defined(HCS12X)
 :CLRX                    is XGATE=0 & Prefix18=1 & op8=0x87 
 {
 	IX = 0;
@@ -2043,9 +1957,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	V_equals_0();
 	$(C) = 0;
 }
-@endif
 
-@if defined(HCS12X)
 :CLRY                    is XGATE=0 & Prefix18=1 & op8=0xC7 
 {
 	IY = 0;
@@ -2189,9 +2101,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = 1;
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :COMW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x61); indexed2_5 
 {
 	local tmp = ~indexed2_5;
@@ -2201,9 +2111,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = 1;
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :COMX                    is XGATE=0 & Prefix18=1 & op8=0x41 
 {
 	IX = ~IX;
@@ -2212,9 +2120,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = 1;
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :COMY                    is XGATE=0 & Prefix18=1 & op8=0x51 
 {
 	IY = ~IY;
@@ -2275,9 +2181,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > D);
 	V_CMP_flag(D, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPED opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9C); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -2287,9 +2191,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > D);
 	V_CMP_flag(D, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPED opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBC); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -2299,9 +2201,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > D);
 	V_CMP_flag(D, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPED indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAC); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -2311,9 +2211,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > D);
 	V_CMP_flag(D, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPES iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8F); iopr16i
 { 
 	op1:2 = iopr16i;
@@ -2323,9 +2221,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > SP);
 	V_CMP_flag(SP, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPES opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9F); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -2335,9 +2231,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > SP);
 	V_CMP_flag(SP, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPES opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBF); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -2347,9 +2241,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > SP);
 	V_CMP_flag(SP, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPES indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAF); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -2359,9 +2251,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > SP);
 	V_CMP_flag(SP, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPEX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8E); iopr16i
 { 
 	op1:2 = iopr16i;
@@ -2371,9 +2261,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > IX);
 	V_CMP_flag(IX, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPEX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9E); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -2383,9 +2271,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > IX);
 	V_CMP_flag(IX, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPEX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBE); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -2395,9 +2281,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > IX);
 	V_CMP_flag(IX, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPEX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAE); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -2407,9 +2291,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > IX);
 	V_CMP_flag(IX, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPEY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8D); iopr16i
 { 
 	op1:2 = iopr16i;
@@ -2419,9 +2301,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > IY);
 	V_CMP_flag(IY, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPEY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9D); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -2431,9 +2311,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > IY);
 	V_CMP_flag(IY, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPEY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBD); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -2443,9 +2321,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > IY);
 	V_CMP_flag(IY, op1);
 }
-@endif
 
-@if defined(HCS12X)
 :CPEY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAD); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -2665,9 +2541,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (result s< 0);
 	V_DEC_flag2(tmp);
 }
-@endif
 
-@if defined(HCS12X)
 :DECW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x63); indexed2_5 
 {
 	local tmp = indexed2_5;
@@ -2677,9 +2551,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (result s< 0);
 	V_DEC_flag2(tmp);
 }
-@endif
 
-@if defined(HCS12X)
 :DECX                    is XGATE=0 & Prefix18=1 & op8=0x43 
 {
 	local tmp = IX;
@@ -2688,9 +2560,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (IX s< 0);
 	V_DEC_flag2(tmp);
 }
-@endif
 
-@if defined(HCS12X)
 :DECY                    is XGATE=0 & Prefix18=1 & op8=0x53 
 {
 	local tmp = IY;
@@ -2911,9 +2781,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (IX s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :EORX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x98); opr8a_16
 { 
 	local op1 = opr8a_16;
@@ -2922,9 +2790,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (IX s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :EORX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB8); opr16a_16
 { 
 	local op1 = opr16a_16;
@@ -2933,9 +2799,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (IX s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :EORX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA8); indexed2_5
 { 
 	local op1 = indexed2_5;
@@ -2944,9 +2808,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (IX s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :EORY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC8); iopr16i
 { 
 	local op1 = iopr16i;
@@ -2955,9 +2817,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (IY s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :EORY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD8); opr8a_16
 { 
 	local op1 = opr8a_16;
@@ -2966,9 +2826,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (IY s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :EORY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF8); opr16a_16
 { 
 	local op1 = opr16a_16;
@@ -2977,9 +2835,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (IY s< 0);
 	V_equals_0();
 }
-@endif
 
-@if defined(HCS12X)
 :EORY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE8); indexed2_5
 { 
 	local op1 = indexed2_5;
@@ -3472,9 +3328,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (result s< 0);
 	V_INC_flag2(tmp);
 }
-@endif
 
-@if defined(HCS12X)
 :INCW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x62); indexed2_5 
 {
 	tmp:2 = indexed2_5;
@@ -3484,9 +3338,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (result s< 0);
 	V_INC_flag2(tmp);
 }
-@endif
 
-@if defined(HCS12X)
 :INCX                    is XGATE=0 & Prefix18=1 & op8=0x42 
 {
 	local tmp = IX;
@@ -3495,9 +3347,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (IX s< 0);
 	V_INC_flag2(tmp);
 }
-@endif
 
-@if defined(HCS12X)
 :INCY                    is XGATE=0 & Prefix18=1 & op8=0x52 
 {
 	local tmp = IY;
@@ -3947,9 +3797,7 @@ define pcodeop LoadStack;
 	$(N) = (tmp s< 0);	
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :LSRW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x64); indexed2_5 
 {
 	local tmp = indexed2_5;
@@ -3960,9 +3808,7 @@ define pcodeop LoadStack;
 	$(N) = (tmp s< 0);	
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :LSRX                    is XGATE=0 & Prefix18=1 & op8=0x44 
 {
 	$(C) = IX[0,1];
@@ -3971,9 +3817,7 @@ define pcodeop LoadStack;
 	$(N) = (IX s< 0);	
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :LSRY                    is XGATE=0 & Prefix18=1 & op8=0x54 
 {
 	$(C) = IY[0,1];
@@ -4370,9 +4214,7 @@ define pcodeop LoadStack;
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ORX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9A); opr8a_16
 { 
 	IX = IX | opr8a_16;
@@ -4380,9 +4222,7 @@ define pcodeop LoadStack;
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ORX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBA); opr16a_16
 { 
 	IX = IX | opr16a_16;
@@ -4390,9 +4230,7 @@ define pcodeop LoadStack;
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ORX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAA); indexed2_5
 { 
 	IX = IX | indexed2_5;
@@ -4400,9 +4238,7 @@ define pcodeop LoadStack;
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ORY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xCA); iopr16i
 { 
 	IY = IY | iopr16i;
@@ -4410,9 +4246,7 @@ define pcodeop LoadStack;
 	$(Z) = (IY == 0);
 	$(N) = (IY s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ORY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xDA); opr8a_16
 { 
 	IY = IY | opr8a_16;
@@ -4420,9 +4254,7 @@ define pcodeop LoadStack;
 	$(Z) = (IY == 0);
 	$(N) = (IY s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ORY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xFA); opr16a_16
 { 
 	IY = IY | opr16a_16;
@@ -4430,9 +4262,7 @@ define pcodeop LoadStack;
 	$(Z) = (IY == 0);
 	$(N) = (IY s< 0);
 }
-@endif
 
-@if defined(HCS12X)
 :ORY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xEA); indexed2_5
 { 
 	IY = IY | indexed2_5;
@@ -4595,9 +4425,7 @@ define pcodeop LoadStack;
 	$(N) = (tmp s< 0);
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :ROLW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x65); indexed2_5 
 {
 	local tmp = indexed2_5;
@@ -4610,9 +4438,7 @@ define pcodeop LoadStack;
 	$(N) = (tmp s< 0);
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :ROLX                    is XGATE=0 & Prefix18=1 & op8=0x45
 {
 	local tmpC = $(C);
@@ -4623,9 +4449,7 @@ define pcodeop LoadStack;
 	$(N) = (IX s< 0);	
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :ROLY                    is XGATE=0 & Prefix18=1 & op8=0x55
 {
 	local tmpC = $(C);
@@ -4699,9 +4523,7 @@ define pcodeop LoadStack;
 	$(N) = (tmp s< 0);
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :RORW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x66); indexed2_5 
 {
 	local tmp = indexed2_5;
@@ -4714,9 +4536,7 @@ define pcodeop LoadStack;
 	$(N) = (tmp s< 0);
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :RORX                    is XGATE=0 & Prefix18=1 & op8=0x46
 {
 	local tmpC = $(C);
@@ -4727,9 +4547,7 @@ define pcodeop LoadStack;
 	$(N) = (IX s< 0);	
 	V_equals_N_xor_C();	
 }
-@endif
 
-@if defined(HCS12X)
 :RORY                    is XGATE=0 & Prefix18=1 & op8=0x56
 {
 	local tmpC = $(C);
@@ -4861,9 +4679,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(D, op1, result);
 	D = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SBED opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x93); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -4872,9 +4688,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(D, op1, result);
 	D = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SBED opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB3); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -4883,9 +4697,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(D, op1, result);
 	D = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SBED indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA3); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -4894,9 +4706,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(D, op1, result);
 	D = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SBEX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x82); iopr16i
 { 
 	op1:2 = iopr16i;
@@ -4905,9 +4715,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SBEX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x92); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -4916,9 +4724,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SBEX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB2); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -4927,9 +4733,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SBEX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA2); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -4938,9 +4742,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SBEY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC2); iopr16i
 { 
 	op1:2 = iopr16i;
@@ -4949,9 +4751,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SBEY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD2); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -4960,9 +4760,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SBEY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF2); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -4971,9 +4769,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SBEY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE2); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -5010,9 +4806,7 @@ define pcodeop LoadStack;
 {
 	D = sext( A );
 }
-@endif
 
-@if defined(HCS12X)
 :SEX  B, D          is XGATE=0 & Prefix18=0 & op8=0xB7;
 	(
 		( rows3_0=0xC & (                  columns7_4=0x1                                                                                                       ) ) 
@@ -5021,9 +4815,7 @@ define pcodeop LoadStack;
 {
 	D = sext( B );
 }
-@endif
 
-@if defined(HCS12X)
 :SEX  D, IX          is XGATE=0 & Prefix18=0 & op8=0xB7;
 	(
 		( rows3_0=0xD & (                                                                     columns7_4=0x4                                                    ) )  
@@ -5034,9 +4826,7 @@ define pcodeop LoadStack;
 	local tmp:4 = sext( D );
 	IX = tmp(2);
 }
-@endif
 
-@if defined(HCS12X)
 :SEX  D, IY          is XGATE=0 & Prefix18=0 & op8=0xB7;
 	(
 		( rows3_0=0xE & (                                                                     columns7_4=0x4                                                    ) )  
@@ -5355,9 +5145,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SUBX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x90); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -5366,9 +5154,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SUBX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB0); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -5377,9 +5163,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SUBX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA0); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -5388,9 +5172,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IX, op1, result);
 	IX = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SUBY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC0); iopr16i
 { 
 	op1:2 = iopr16i;
@@ -5399,9 +5181,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SUBY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD0); opr8a_16
 { 
 	op1:2 = opr8a_16;
@@ -5410,9 +5190,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SUBY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF0); opr16a_16
 { 
 	op1:2 = opr16a_16;
@@ -5421,9 +5199,7 @@ define pcodeop LoadStack;
 	subtraction_flags2(IY, op1, result);
 	IY = result;
 }
-@endif
 
-@if defined(HCS12X)
 :SUBY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE0); indexed2_5
 { 
 	op1:2 = indexed2_5;
@@ -5698,9 +5474,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 	$(C) = 0;	
 }
-@endif
 
-@if defined(HCS12X)
 :TSTW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE7); indexed2_5 
 {
 	op1:2 = indexed2_5;

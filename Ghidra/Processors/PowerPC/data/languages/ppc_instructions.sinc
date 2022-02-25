@@ -2392,9 +2392,7 @@ define pcodeop lswxOp;
         D = macchws(D, A, B);
         xer_mac_update(D, A, B);
 }
-@endif
 
-@ifndef NoLegacyIntegerMultiplyAccumulate
 #macchwso. r0,r0,r0	0x10 00 05 d9
 :macchwso. D,A,B	is OP=4 & D & A & B & OE=1 & XOP_1_9=236 & Rc=1
 {
@@ -2481,9 +2479,7 @@ define pcodeop lswxOp;
         D = machhw(D, A, B);
         xer_mac_update(D, A, B);
 }
-@endif
 
-@ifndef NoLegacyIntegerMultiplyAccumulate
 #machhwo. r0,r0,r0	0x10 00 04 59
 :machhwo. D,A,B		is OP=4 & D & A & B & OE=1 & XOP_1_9=44 & Rc=1
 {
@@ -2668,9 +2664,7 @@ define pcodeop lswxOp;
 {
         D = maclhwu(D, A, B);
 }
-@endif
 
-@ifndef NoLegacyIntegerMultiplyAccumulate
 #maclhwu. r0,r0,r0	0x10 00 03 19
 :maclhwu. D,A,B		is OP=4 & D & A & B & OE=0 & XOP_1_9=396 & Rc=1
 {
@@ -2765,9 +2759,7 @@ define pcodeop lswxOp;
 {
 		D = mullhwu(D, A, B);
 }
-@endif
 
-@ifndef NoLegacyIntegerMultiplyAccumulate
 #mullhwu. r0,r0,r0	0x10 00 03 11
 :mullhwu. D,A,B		is OP=4 & D & A & B & XOP_1_10=392 & Rc=1
 {

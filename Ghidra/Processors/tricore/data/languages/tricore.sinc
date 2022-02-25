@@ -646,9 +646,7 @@ macro load_lower_context(EA) {
       d6 = *[ram]:4 EA ; EA = EA + 4;
       d7 = *[ram]:4 EA ; EA = EA + 4;
 }
-@endif
 
-@if defined(TRICORE_VERBOSE)
 macro store_lower_context(EA) {
 	*[ram]:4 EA = PCXI; EA = EA + 4;
 	*[ram]:4 EA = a11; EA = EA + 4;
@@ -718,9 +716,7 @@ macro load_upper_context(EA) {
       EA = EA + 4;
       _restore_upper_context(EA);
 }
-@endif
 
-@if defined(TRICORE_VERBOSE)
 macro store_upper_context(EA) {
       *[ram]:4 EA = PCXI; EA = EA + 4;
       *[ram]:4 EA = PSW; EA = EA + 4;
@@ -1036,9 +1032,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	Rd0811 = d15 + Rd1215;
 	overflowflags(Rd0811);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ADD D[a], D[15], const4 (SRC)
 :add Rd0811,d15,const1215S is PCPMode=0 & Rd0811 & const1215S & d15 & op0007=0x92
 {
@@ -1095,9 +1089,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	Ra0811 = Ra0811 + Ra1215;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ADD.A A[a], const4 (SRC)
 :add.a Ra0811,const1215S is PCPMode=0 & Ra0811 & const1215S & op0007=0xb0
 {
@@ -1249,17 +1241,13 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	Ra0811 = Ra1215 + (d15 << const0607Z);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ADDSC.A A[c], A[b], D[a], n (RR)
 :addsc.a Ra2831,Ra1215,Rd0811,const1617Z is PCPMode=0 & Ra1215 & Rd0811 & op0007=0x1 ; Ra2831 & const1617Z & op1827=0x180
 {
 	Ra2831 = Ra1215 + (Rd0811 << const1617Z);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ADDSC.AT A[c], A[b], D[a] (RR)
 :addsc.at Ra2831,Ra1215,Rd0811 is PCPMode=0 & Ra1215 & Rd0811 & op0007=0x1 ; Ra2831 & op1627=0x620
 {
@@ -1291,9 +1279,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	Rd0811 = Rd0811 & Rd1215;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # AND D[15], const8 (SC)
 :and d15,const0815Z is PCPMode=0 & const0815Z & d15 & op0007=0x16
 {
@@ -1527,10 +1513,8 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	bmerge(Rd2831,Rd0811,Rd1215);
 @endif
 }
-@endif
 
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # BSPLIT E[c], D[a] (RR)
 :bsplit Re2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Re2831 & op1627=0x90
 {
@@ -1573,9 +1557,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	bsplit(Re2831,Rd0811);
 @endif
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # CACHEA.I A[b], off10 (BO) (Post-increment Addressing Mode)
 # CACHEA.I P[b] (BO) (Bit Reverse Addressing Mode)
 # CACHEA.I A[b], off10 (BO) (Pre-increment Addressing Mode)
@@ -1595,9 +1577,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	CircularAddressingMode(Rpe1215, Rpo1215, EA, off10);
 	cache_address_ivld(EA);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # CACHEA.W A[b], off10 (BO) (Post-increment Addressing Mode)
 # CACHEA.W P[b] (BO) (Bit-reverse Addressing Mode)
 # CACHEA.W A[b], off10 (BO) (Pre-increment Addressing Mode)
@@ -1617,9 +1597,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	CircularAddressingMode(Rpe1215, Rpo1215, EA, off10);
 	cache_address_wb(EA);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # CACHEA.WI A[b], off10 (BO)(Post-increment Addressing Mode)
 # CACHEA.WI P[b] (BO)(Bit-reverse Addressing Mode)
 # CACHEA.WI A[b], off10 (BO)(Pre-increment Addressing Mode)
@@ -1650,9 +1628,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	build BO;
 	cache_index_ivld(BO);
 }
-@endif
 
-@if defined(TRICORE_V2)
 # CACHEI.W A[b], off10 (BO)(Post-increment Addressing Mode)
 # CACHEI.W A[b], off10 (BO)(Pre-increment Addressing Mode)
 # CACHEI.W A[b], off10 (BO)(Base + Short Offset Addressing Mode)
@@ -1661,9 +1637,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	build BO;
 	cache_index_wb(BO);
 }
-@endif
 
-@if defined(TRICORE_V2)
 # CACHEI.WI A[b], off10 (BO)(Post-increment Addressing Mode)
 # CACHEI.WI A[b], off10 (BO)(Pre-increment Addressing Mode)
 # CACHEI.WI A[b], off10 (BO)(Base + Short Offset Addressing Mode)
@@ -1918,9 +1892,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	ternary(tmp, tmp == Reo0811, Ree0811, tmp);
 	*[ram]:4 BO = tmp;
 }
-@endif
 
-@if defined(TRICORE_V2)
 # CMPSWAP.W P[b], off10, E[a] (BO)(Circular Addressing Mode)
 #:cmpswap.w BO,Ree0811/Reo0811 is PCPMode=0 & ( Ree0811 & Reo0811 & op0007=0x69 ; op2227=0x13 ) & BO
 :cmpswap.w [Rpe1215/Rpo1215^"+c"^]off10,Ree0811/Reo0811 is PCPMode=0 & Ree0811 & Reo0811 & Rpe1215 & Rpo1215 & op0007=0x69 ; off10 & op2227=0x13
@@ -2098,9 +2070,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	ternary(Reo2831, (_eq | _gt) != 0, 0, remainder);
 	ternary(Ree2831, (_eq | _gt) != 0, 0, quotient);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT E[c], D[a], D[b] (RR)
 :dvinit Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x1a0
 {
@@ -2115,9 +2085,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.B E[c], D[a], D[b] (RR)
 :dvinit.b Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x5a0
 {
@@ -2131,9 +2099,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.BU E[c], D[a], D[b] (RR)
 :dvinit.bu Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x4a0
 {
@@ -2147,9 +2113,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.H E[c], D[a], D[b] (RR)
 :dvinit.h Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x3a0
 {
@@ -2164,9 +2128,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.HU E[c], D[a], D[b] (RR)
 :dvinit.hu Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x2a0
 {
@@ -2180,9 +2142,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.U E[c], D[a], D[b] (RR)
 :dvinit.u Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0xa0
 {
@@ -2196,9 +2156,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVSTEP E[c], E[d], D[b] (RRR)
 :dvstep Ree2831/Reo2831,Ree2427/Reo2427,Rd1215 is PCPMode=0 & Rd1215 & op0007=0x6b & op0811=0x0 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & op1623=0xf0
 {
@@ -2224,10 +2182,8 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	Reo2831 = remainder;
 	Ree2831 = dividend_quotient;
 }
-@endif
 
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVSTEP.U E[c], E[d], D[b] (RRR)
 :dvstep.u Ree2831/Reo2831,Ree2427/Reo2427,Rd1215 is PCPMode=0 & Rd1215 & op0007=0x6b & op0811=0x0 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & op1623=0xe0
 {
@@ -2410,9 +2366,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	a11 = inst_next;
 	call off24pc;
 }
-@endif
 
-@if defined(TRICORE_V2)
 # CALLA disp24 (B)
 :fcalla off24abs is PCPMode=0 & ( op0007=0xe1 ) ... & off24abs
 {
@@ -2422,9 +2376,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	a11 = inst_next;
 	call off24abs;
 }
-@endif
 
-@if defined(TRICORE_V2)
 # FCALLI A[a] (RR)
 :fcalli Ra0811 is PCPMode=0 & Ra0811 & op0007=0x2d & op1215=0x0 ; op1631=0x10
 {
@@ -2446,9 +2398,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	a10 = a10 + 4;
 	return [tmp];
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # FRET (SYS)
 :fret  is PCPMode=0 & op0007=0x0d & op0815=0x0 ; op1621=0x0 & op2227=0x3 & op2831=0x0
 {
@@ -2457,10 +2407,8 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	a10 = a10 + 4;
 	return [tmp];
 }
-@endif
 
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # FTOI D[c], D[a] (RR)
 :ftoi Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x101
 {
@@ -2468,9 +2416,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	#TODO  flags
 	Rd2831 = trunc(Rd0811);
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # FTOIZ D[c], D[a] (RR)
 :ftoiz Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x131
 {
@@ -2479,18 +2425,14 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	#TODO  round
 	Rd2831 = floor(trunc(Rd0811));
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # FTOQ31 D[c], D[a], D[b] (RR)
 :ftoq31 Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Rd2831 & op1627=0x111
 {
 	#TODO  float
 	#TODO  flags
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # FTOQ31Z D[c], D[a], D[b] (RR)
 :ftoq31z Rd2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Rd2831 & op1627=0x181
 {
@@ -2498,9 +2440,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	#TODO  flags
 	#TODO  round
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # FTOU D[c], D[a] (RR)
 :ftou Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x121
 {
@@ -2508,9 +2448,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	#TODO  flags
 	#TODO  unsigned
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # FTOUZ D[c], D[a] (RR)
 :ftouz Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x171
 {
@@ -2673,9 +2611,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	#TODO  flags
 	Rd2831 = int2float(Rd0811);
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # IXMAX E[c], E[d], D[b] (RRR)
 :ixmax Re2831,Re2427,Rd1215 is PCPMode=0 & Rd1215 & op0007=0x6b & op0811=0x0 ; Re2427 & Re2831 & op1623=0xa0
 {
@@ -2698,9 +2634,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	Re2831[32,16] = tmp2[16,16];
 	Re2831[16,16] = tmp[0,16] + 1;
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # IXMAX.U E[c], E[d], D[b] (RRR)
 :ixmax.u Re2831,Re2427,Rd1215 is PCPMode=0 & Rd1215 & op0007=0x6b & op0811=0x0 ; Re2427 & Re2831 & op1623=0xb0
 {
@@ -2723,9 +2657,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	Re2831[32,16] = tmp2[16,16];
 	Re2831[16,16] = tmp[0,16] + 1;
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # IXMIN E[c], E[d], D[b] (RRR)
 :ixmin Re2831,Re2427,Rd1215 is PCPMode=0 & Rd1215 & op0007=0x6b & op0811=0x0 ; Re2427 & Re2831 & op1623=0x80
 {
@@ -2748,9 +2680,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	Re2831[32,16] = tmp2[16,16];
 	Re2831[16,16] = tmp[0,16] + 1;
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # IXMIN.U E[c], E[d], D[b] (RRR)
 :ixmin.u Re2831,Re2427,Rd1215 is PCPMode=0 & Rd1215 & op0007=0x6b & op0811=0x0 ; Re2427 & Re2831 & op1623=0x90
 {
@@ -2801,9 +2731,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	if (d15 == Rd1215) goto off0811pc4z16;
 }
-@endif
 
-@if defined(TRICORE_V2)
 # JEQ D[15], const4, disp4 (SBC)
 :jeq d15,const1215S,off0811pc4z16 is PCPMode=0 & const1215S & d15 & off0811pc4z16 & op0007=0x9e
 {
@@ -2817,9 +2745,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	if (d15 == Rd1215) goto off0811pc4z;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # JEQ D[15], const4, disp4 (SBC)
 :jeq d15,const1215S,off0811pc4z is PCPMode=0 & const1215S & d15 & off0811pc4z & op0007=0x1e
 {
@@ -2893,9 +2819,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	tmp[0,1] = 0;
 	goto [tmp];
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # JI A[a] (RR)
 :ji Ra0811 is PCPMode=0 & Ra0811 & op0007=0x2d & op1215=0x0 ; op1631=0x30
 {
@@ -2927,9 +2851,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	if (Rd1215 s<= 0) goto off0811pc4z;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # JLI A[a] (RR)
 :jli Ra0811 is PCPMode=0 & Ra0811 & op0007=0x2d & op1215=0x0 ; op1631=0x20
 {
@@ -2977,9 +2899,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	if (d15 != Rd1215) goto off0811pc4z16;
 }
-@endif
 
-@if defined(TRICORE_V2)
 # JNE D[15], const4, disp4 (SBC)
 :jne d15,const1215S,off0811pc4z16 is PCPMode=0 & const1215S & d15 & off0811pc4z16 & op0007=0xde
 {
@@ -2993,9 +2913,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	if (d15 != Rd1215) goto off0811pc4z;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # JNE D[15], const4, disp4 (SBC)
 :jne d15,const1215S,off0811pc4z is PCPMode=0 & const1215S & d15 & off0811pc4z & op0007=0x5e
 {
@@ -3059,9 +2977,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	if (d15 != 0) goto off0815pc8s;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # JNZ D[b], disp4 (SBR)
 :jnz Rd1215,off0811pc4z is PCPMode=0 & Rd1215 & off0811pc4z & op0007=0xf6
 {
@@ -3150,27 +3066,21 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	build SC;
 	a15 = *[ram]:4 SC;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # LD.A A[c], A[15], off4 (SLRO)
 :ld.a Ra0811,SLRO is PCPMode=0 & Ra0811 & op0007=0xc8 & SLRO
 {
 	build SLRO;
 	Ra0811 = *[ram]:4 SLRO;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # LD.A A[15], A[b], off4 (SRO)
 :ld.a a15,SRO is PCPMode=0 & a15 & op0007=0xcc & SRO
 {
 	build SRO;
 	a15 = *[ram]:4 SRO;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # LD.A A[c], A[b] (SLR)(Post-increment Addressing Mode)
 # LD.A A[c], A[b] (SLR)
 :ld.a Ra0811,SLR is PCPMode=0 & Ra0811 & op0607=0x3 & SLR
@@ -3261,18 +3171,14 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	build SLR;
 	Rd0811 = zext(*[ram]:1 SLR);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # LD.BU D[15], A[b], off4 (SRO)
 :ld.bu d15,SRO is PCPMode=0 & d15 & op0007=0xc & SRO
 {
 	build SRO;
 	d15 = zext(*[ram]:1 SRO);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # LD.BU D[c], A[15], off4 (SLRO)
 :ld.bu Rd0811,SLRO is PCPMode=0 & Rd0811 & op0007=0x8 & SLRO
 {
@@ -3374,27 +3280,21 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	Re0811 = *[ram]:8 BO;
 	ReN0811 = *[ram]:8 BO+8;
 }
-@endif
 
-@if defined(TRICORE_V2)
 :ld.dd Re0811/ReN0811,BO is PCPMode=0 & ( Re0811 & ReN0811 & op0007=0x29 ; op1621=0x0 & op2227=0x09 & op2831=0x0 ) & BO
 {
 	build BO;
 	Re0811 = *[ram]:8 BO;
 	ReN0811 = *[ram]:8 BO+8;
 }
-@endif
 
-@if defined(TRICORE_V2)
 :ld.dd Re0811/ReN0811,BO is PCPMode=0 & ( Re0811 & ReN0811 & op0007=0x9 ; op2227=0x19 ) & BO
 {
 	build BO;
 	Re0811 = *[ram]:8 BO;
 	ReN0811 = *[ram]:8 BO+8;
 }
-@endif
 
-@if defined(TRICORE_V2)
 #:ld.dd Re0811/ReN0811,BO is PCPMode=0 & ( Re0811 & ReN0811 & op0007=0x29 ; op2227=0x19 ) & BO
 :ld.dd Re0811/ReN0811,[Rpe1215/Rpo1215^"+c"^]off10 is PCPMode=0 & Re0811 & ReN0811 & Rpe1215 & Rpo1215 & op0007=0x29 ; off10 & op2227=0x19
 {
@@ -3404,18 +3304,14 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	Re0811 = *[ram]:8 EA0;
 	ReN0811 = *[ram]:8 EA8;
 }
-@endif
 
-@if defined(TRICORE_V2)
 :ld.dd Re0811/ReN0811,BO is PCPMode=0 & ( Re0811 & ReN0811 & op0007=0x9 ; op2227=0x29 ) & BO
 {
 	build BO;
 	Re0811 = *[ram]:8 BO;
 	ReN0811 = *[ram]:8 BO+8;
 }
-@endif
 
-@if defined(TRICORE_V2)
 :ld.dd Re0811/ReN0811,BO is PCPMode=0 & ( Re0811 & ReN0811 & op0007=0x29 ; op1621=0x0 & op2227=0x29 & op2831=0x0 ) & BO
 {
 	build BO;
@@ -3432,18 +3328,14 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	build SLR;
 	Rd0811 = sext(*[ram]:2 SLR);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # LD.H D[15], A[b], off4 (SRO)
 :ld.h d15,SRO is PCPMode=0 & d15 & op0007=0x8c & SRO
 {
 	build SRO;
 	d15 = sext(*[ram]:2 SRO);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # LD.H D[c], A[15], off4 (SLRO)
 :ld.h Rd0811,SLRO is PCPMode=0 & Rd0811 & op0007=0x88 & SLRO
 {
@@ -3549,9 +3441,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	build SC;
 	d15 = *[ram]:4 SC;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # LD.W D[c], A[b] (SLR)
 # LD.W D[c], A[b] (SLR)(Post-increment Addressing Mode)
 :ld.w Rd0811,SLR is PCPMode=0 & Rd0811 & op0607=0x1 & SLR
@@ -3559,18 +3449,14 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	build SLR;
 	Rd0811 = *[ram]:4 SLR;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # LD.W D[15], A[b], off4 (SRO)
 :ld.w d15,SRO is PCPMode=0 & d15 & op0007=0x4c & SRO
 {
 	build SRO;
 	d15 = *[ram]:4 SRO;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # LD.W D[c], A[15], off4 (SLRO)
 :ld.w Rd0811,SLRO is PCPMode=0 & Rd0811 & op0007=0x48 & SLRO
 {
@@ -3826,9 +3712,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	Re2831 = Re2427 + sext(Rd0811 * const1220S);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD E[c], E[d], D[a], D[b] (RRR2)
 :madd Re2831,Re2427,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x3 ; Re2427 & Re2831 & op1623=0x6a
 {
@@ -3899,9 +3783,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :madd.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x19
 {
@@ -3914,9 +3796,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :madd.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x1a
 {
@@ -3929,9 +3809,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :madd.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x1b
 {
@@ -3944,9 +3822,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.Q D[c], D[d], D[a] U, D[b] U, n (RRR1)
 :madd.q Rd2831,Rd2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x4
 {
@@ -3955,9 +3831,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = Rd2427 + mres;
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.Q D[c], D[d], D[a], D[b] U, n (RRR1)
 :madd.q Rd2831,Rd2427,Rd0811,Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x0
 {
@@ -3966,9 +3840,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = Rd2427 + tmp[0,32];
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.Q D[c], D[d], D[a], D[b] L, n (RRR1)
 :madd.q Rd2831,Rd2427,Rd0811,Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x1
 {
@@ -3977,9 +3849,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = Rd2427 + tmp[0,32];
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.Q D[c], D[d], D[a], D[b], n (RRR1)
 :madd.q Rd2831,Rd2427,Rd0811,Rd1215,const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2
 {
@@ -3988,9 +3858,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = Rd2427 + tmp[0,32];
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.Q D[c], D[d], D[a] L, D[b] L, n (RRR1)
 :madd.q Rd2831,Rd2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x5
 {
@@ -3999,9 +3867,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = Rd2427 + mres;
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.Q E[c], E[d], D[a], D[b] U, n (RRR1)
 :madd.q Re2831,Re2427,Rd0811,Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Re2427 & Re2831 & const1617Z & op1823=0x18
 {
@@ -4009,9 +3875,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + (tmp << const1617Z);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.Q E[c], E[d], D[a], D[b] L, n (RRR1)
 :madd.q Re2831,Re2427,Rd0811,Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Re2427 & Re2831 & const1617Z & op1823=0x19
 {
@@ -4019,9 +3883,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + (tmp << const1617Z);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.Q E[c], E[d], D[a], D[b], n (RRR1)
 :madd.q Re2831,Re2427,Rd0811,Rd1215,const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Re2427 & Re2831 & const1617Z & op1823=0x1b
 {
@@ -4029,9 +3891,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + (tmp << const1617Z);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.Q E[c], E[d], D[a] U, D[b] U, n (RRR1)
 :madd.q Re2831,Re2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Re2427 & Re2831 & const1617Z & op1823=0x1c
 {
@@ -4040,9 +3900,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + sext(mres << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.Q E[c], E[d], D[a] L, D[b] L, n (RRR1)
 :madd.q Re2831,Re2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Re2427 & Re2831 & const1617Z & op1823=0x1d
 {
@@ -4051,27 +3909,21 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + (sext(mres) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.U E[c], E[d], D[a], const9 (RCR)
 :madd.u Re2831,Re2427,Rd0811,const1220Z is PCPMode=0 & ( Rd0811 & op0007=0x13 ; Re2427 & Re2831 & op2123=0x2 ) & const1220Z
 {
 	Re2831 = Re2427 + zext(Rd0811 * const1220Z);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADD.U E[c], E[d], D[a], D[b] (RRR2)
 :madd.u Re2831,Re2427,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x3 ; Re2427 & Re2831 & op1623=0x68
 {
 	Re2831 = Re2427 + zext(Rd0811 * Rd1215);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDM.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :maddm.h Re2831,Re2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Re2427 & Re2831 & const1617Z & op1823=0x1c
 {
@@ -4081,9 +3933,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + sext((mres1 + mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDM.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :maddm.h Re2831,Re2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Re2427 & Re2831 & const1617Z & op1823=0x1d
 {
@@ -4093,9 +3943,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + sext((mres1 + mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDM.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :maddm.h Re2831,Re2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Re2427 & Re2831 & const1617Z & op1823=0x1e
 {
@@ -4105,9 +3953,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + sext((mres1 + mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDM.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :maddm.h Re2831,Re2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Re2427 & Re2831 & const1617Z & op1823=0x1f
 {
@@ -4117,9 +3963,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + sext((mres1 + mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDMS.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :maddms.h Re2831,Re2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Re2427 & Re2831 & const1617Z & op1823=0x3c
 {
@@ -4130,9 +3974,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Re2831, result, 64);
 	overflowflagsd(result);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDMS.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :maddms.h Re2831,Re2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Re2427 & Re2831 & const1617Z & op1823=0x3d
 {
@@ -4143,9 +3985,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Re2831, result, 64);
 	overflowflagsd(result);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDMS.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :maddms.h Re2831,Re2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Re2427 & Re2831 & const1617Z & op1823=0x3e
 {
@@ -4156,9 +3996,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Re2831, result, 64);
 	overflowflagsd(result);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDMS.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :maddms.h Re2831,Re2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Re2427 & Re2831 & const1617Z & op1823=0x3f
 {
@@ -4169,9 +4007,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Re2831, result, 64);
 	overflowflagsd(result);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDR.H D[c], E[d], D[a], D[b] UL, n (RRR1)
 :maddr.h Rd2831,Ree2427/Reo2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2831 & Ree2427 & Reo2427 & const1617Z & op1823=0x1e
 {
@@ -4183,9 +4019,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDR.H D[c], D[d], D[a], D[b] UL, n (RRR1)
 :maddr.h Rd2831,Rd2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Rd2427 & Rd2831 & const1617Z & op1823=0xc
 {
@@ -4197,9 +4031,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDR.H D[c], D[d], D[a], D[b] LU, n (RRR1)
 :maddr.h Rd2831,Rd2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Rd2427 & Rd2831 & const1617Z & op1823=0xd
 {
@@ -4211,9 +4043,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDR.H D[c], D[d], D[a], D[b] LL, n (RRR1)
 :maddr.h Rd2831,Rd2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Rd2427 & Rd2831 & const1617Z & op1823=0xe
 {
@@ -4225,9 +4055,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDR.H D[c], D[d], D[a], D[b] UU, n (RRR1)
 :maddr.h Rd2831,Rd2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Rd2427 & Rd2831 & const1617Z & op1823=0xf
 {
@@ -4239,9 +4067,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDR.Q D[c], D[d], D[a] U, D[b] U, n (RRR1)
 :maddr.q Rd2831,Rd2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x6
 {
@@ -4251,9 +4077,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = zext(res[16,16]) << 16;
 	overflowflags(res);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDR.Q D[c], D[d], D[a] L, D[b] L, n (RRR1)
 :maddr.q Rd2831,Rd2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x7
 {
@@ -4263,9 +4087,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = zext(res[16,16]) << 16;
 	overflowflags(res);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDRS.H D[c], E[d], D[a], D[b] UL, n (RRR1)
 :maddrs.h Rd2831,Ree2427/Reo2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2831 & Ree2427 & Reo2427 & const1617Z & op1823=0x3e
 {
@@ -4279,9 +4101,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDRS.H D[c], D[d], D[a], D[b] UL, n (RRR1)
 :maddrs.h Rd2831,Rd2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2c
 {
@@ -4297,9 +4117,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDRS.H D[c], D[d], D[a], D[b] LU, n (RRR1)
 :maddrs.h Rd2831,Rd2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2d
 {
@@ -4315,9 +4133,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDRS.H D[c], D[d], D[a], D[b] LL, n (RRR1)
 :maddrs.h Rd2831,Rd2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2e
 {
@@ -4333,9 +4149,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDRS.H D[c], D[d], D[a], D[b] UU, n (RRR1)
 :maddrs.h Rd2831,Rd2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2f
 {
@@ -4351,9 +4165,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDRS.Q D[c], D[d], D[a] U, D[b] U, n (RRR1)
 :maddrs.q Rd2831,Rd2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x26
 {
@@ -4364,9 +4176,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res, res, 32);
 	Rd2831 = zext(res[16,16]) << 16;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDRS.Q D[c], D[d], D[a] L, D[b] L, n (RRR1)
 :maddrs.q Rd2831,Rd2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x27
 {
@@ -4403,9 +4213,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS E[c], E[d], D[a], D[b] (RRR2)
 :madds Re2831,Re2427,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x3 ; Re2427 & Re2831 & op1623=0xea
 {
@@ -4413,9 +4221,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :madds.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x38
 {
@@ -4428,9 +4234,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Ree2831, result0, 32);
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :madds.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x39
 {
@@ -4443,9 +4247,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Ree2831, result0, 32);
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :madds.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x3a
 {
@@ -4458,9 +4260,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Ree2831, result0, 32);
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :madds.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x83 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x3b
 {
@@ -4473,9 +4273,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Ree2831, result0, 32);
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.Q D[c], D[d], D[a] U, D[b] U, n (RRR1)
 :madds.q Rd2831,Rd2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x24
 {
@@ -4485,9 +4283,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.Q D[c], D[d], D[a], D[b] U, n (RRR1)
 :madds.q Rd2831,Rd2427,Rd0811,Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x20
 {
@@ -4497,9 +4293,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.Q D[c], D[d], D[a], D[b] L, n (RRR1)
 :madds.q Rd2831,Rd2427,Rd0811,Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x21
 {
@@ -4509,9 +4303,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.Q D[c], D[d], D[a], D[b], n (RRR1)
 :madds.q Rd2831,Rd2427,Rd0811,Rd1215,const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x22
 {
@@ -4521,9 +4313,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.Q D[c], D[d], D[a] L, D[b] L, n (RRR1)
 :madds.q Rd2831,Rd2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Rd2427 & Rd2831 & const1617Z & op1823=0x25
 {
@@ -4533,9 +4323,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.QE[c], E[d], D[a], D[b] U, n (RRR1)
 :madds.q Re2831,Re2427,Rd0811,Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Re2427 & Re2831 & const1617Z & op1823=0x38
 {
@@ -4544,9 +4332,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.Q E[c], E[d], D[a], D[b] L, n (RRR1)
 :madds.q Re2831,Re2427,Rd0811,Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Re2427 & Re2831 & const1617Z & op1823=0x39
 {
@@ -4555,9 +4341,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.Q E[c], E[d], D[a], D[b], n (RRR1)
 :madds.q Re2831,Re2427,Rd0811,Rd1215,const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Re2427 & Re2831 & const1617Z & op1823=0x3b
 {
@@ -4567,9 +4351,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.Q E[c], E[d], D[a] U, D[b] U, n (RRR1)
 :madds.q Re2831,Re2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Re2427 & Re2831 & const1617Z & op1823=0x3c
 {
@@ -4579,9 +4361,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.Q E[c], E[d], D[a] L, D[b] L, n (RRR1)
 :madds.q Re2831,Re2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x43 ; Re2427 & Re2831 & const1617Z & op1823=0x3d
 {
@@ -4617,9 +4397,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	suov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDS.U E[c], E[d], D[a], D[b] (RRR2)
 :madds.u Re2831,Re2427,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x3 ; Re2427 & Re2831 & op1623=0xe8
 {
@@ -4627,9 +4405,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(result);
 	suov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSU.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :maddsu.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x18
 {
@@ -4642,9 +4418,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSU.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :maddsu.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x19
 {
@@ -4657,9 +4431,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSU.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :maddsu.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x1a
 {
@@ -4672,9 +4444,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSU.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :maddsu.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x1b
 {
@@ -4687,9 +4457,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUM.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :maddsum.h Re2831,Re2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Re2427 & Re2831 & const1617Z & op1823=0x1c
 {
@@ -4699,9 +4467,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + sext((mres1 - mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUM.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :maddsum.h Re2831,Re2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Re2427 & Re2831 & const1617Z & op1823=0x1d
 {
@@ -4711,9 +4477,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + sext((mres1 - mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUM.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :maddsum.h Re2831,Re2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Re2427 & Re2831 & const1617Z & op1823=0x1e
 {
@@ -4723,9 +4487,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + sext((mres1 - mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUM.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :maddsum.h Re2831,Re2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Re2427 & Re2831 & const1617Z & op1823=0x1f
 {
@@ -4735,9 +4497,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 + sext((mres1 - mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUMS.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :maddsums.h Re2831,Re2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Re2427 & Re2831 & const1617Z & op1823=0x3c
 {
@@ -4748,9 +4508,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUMS.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :maddsums.h Re2831,Re2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Re2427 & Re2831 & const1617Z & op1823=0x3d
 {
@@ -4761,9 +4519,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUMS.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :maddsums.h Re2831,Re2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Re2427 & Re2831 & const1617Z & op1823=0x3e
 {
@@ -4774,9 +4530,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUMS.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :maddsums.h Re2831,Re2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Re2427 & Re2831 & const1617Z & op1823=0x3f
 {
@@ -4787,9 +4541,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUR.H D[c], D[d], D[a], D[b] UL, n (RRR1)
 :maddsur.h Rd2831,Rd2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xc
 {
@@ -4801,9 +4553,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUR.H D[c], D[d], D[a], D[b] LU, n (RRR1)
 :maddsur.h Rd2831,Rd2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xd
 {
@@ -4815,9 +4565,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUR.H D[c], D[d], D[a], D[b] LL, n (RRR1)
 :maddsur.h Rd2831,Rd2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xe
 {
@@ -4829,9 +4577,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUR.H D[c], D[d], D[a], D[b] UU, n (RRR1)
 :maddsur.h Rd2831,Rd2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xf
 {
@@ -4843,9 +4589,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSURS.H D[c], D[d], D[a], D[b] UL, n (RRR1)
 :maddsurs.h Rd2831,Rd2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2c
 {
@@ -4859,9 +4603,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSURS.H D[c], D[d], D[a], D[b] LU, n (RRR1)
 :maddsurs.h Rd2831,Rd2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2d
 {
@@ -4875,9 +4617,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSURS.H D[c], D[d], D[a], D[b] LL, n (RRR1)
 :maddsurs.h Rd2831,Rd2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2e
 {
@@ -4891,9 +4631,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSURS.H D[c], D[d], D[a], D[b] UU, n (RRR1)
 :maddsurs.h Rd2831,Rd2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2f
 {
@@ -4907,9 +4645,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUS.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :maddsus.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x38
 {
@@ -4922,9 +4658,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Ree2831, result0, 32);
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUS.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :maddsus.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x39
 {
@@ -4935,9 +4669,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Ree2831, Ree2427 - mres0, 32);
 	overflowflagsww(Reo2427 + mres1, Ree2427 - mres0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUS.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :maddsus.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x3a
 {
@@ -4950,9 +4682,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Ree2831, result0, 32);
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MADDSUS.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :maddsus.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xc3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x3b
 {
@@ -5170,17 +4900,13 @@ macro multiply_u_u(mres0, rega, regb, n) {
 {
 	Re2831 = sext(const1227S);
 }
-@endif
 
-@if defined(TRICORE_V2)
 # MOV E[c], D[b] (RR)
 :mov Re2831,Rd1215 is PCPMode=0 & Rd1215 & op0007=0xb & op0811=0 ; Re2831 & op1627=0x800
 {
 	Re2831 = sext(Rd1215);
 }
-@endif
 
-@if defined(TRICORE_V2)
 # MOV E[c], D[a], D[b] (RR)
 :mov Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Ree2831 & Reo2831 & op1627=0x810
 {
@@ -5198,9 +4924,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 {
 	Ra0811 = const1215Z;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MOV.A A[a], D[b] (SRR)
 :mov.a Ra0811,Rd1215 is PCPMode=0 & Ra0811 & Rd1215 & op0007=0x60
 {
@@ -5281,9 +5005,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 - sext(Rd0811 * const1220S);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB E[c], E[d], D[a], D[b] (RRR2)
 :msub Re2831,Re2427,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x23 ; Re2427 & Re2831 & op1623=0x6a
 {
@@ -5315,9 +5037,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :msub.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x19
 {
@@ -5330,9 +5050,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :msub.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x1a
 {
@@ -5345,9 +5063,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :msub.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x1b
 {
@@ -5360,9 +5076,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = result0;
 	overflowflagsww(result1, result0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.Q D[c], D[d], D[a] U, D[b] U, n (RRR1)
 :msub.q Rd2831,Rd2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x4
 {
@@ -5371,36 +5085,28 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = Rd2427 - mres;
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.Q D[c], D[d], D[a], D[b] U, n (RRR1)
 :msub.q Rd2831,Rd2427,Rd0811,Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x0
 {
 	Rd2831 = Rd2427 - (((Rd0811 * sext(Rd1215[16,16])) << const1617Z) s>> 16);
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.Q D[c], D[d], D[a], D[b] L, n (RRR1)
 :msub.q Rd2831,Rd2427,Rd0811,Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x1
 {
 	Rd2831 = Rd2427 - (((Rd0811 * sext(Rd1215[0,16])) << const1617Z) s>> 16);
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.Q D[c], D[d], D[a], D[b], n (RRR1)
 :msub.q Rd2831,Rd2427,Rd0811,Rd1215,const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2
 {
 	Rd2831 = Rd2427 - (((Rd0811 * Rd1215) << const1617Z) s>> 32);
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.Q D[c], D[d], D[a] L, D[b] L, n (RRR1)
 :msub.q Rd2831,Rd2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x5
 {
@@ -5409,36 +5115,28 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = Rd2427 - mres;
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.Q E[c], E[d], D[a], D[b] U, n (RRR1)
 :msub.q Re2831,Re2427,Rd0811,Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Re2427 & Re2831 & const1617Z & op1823=0x18
 {
 	Re2831 = Re2427 - sext((Rd0811 * sext(Rd1215[16,16])) << const1617Z);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.Q E[c], E[d], D[a], D[b] L, n (RRR1)
 :msub.q Re2831,Re2427,Rd0811,Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Re2427 & Re2831 & const1617Z & op1823=0x19
 {
 	Re2831 = Re2427 - sext((Rd0811 * sext(Rd1215[0,16])) << const1617Z);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.Q E[c], E[d], D[a], D[b], n (RRR1)
 :msub.q Re2831,Re2427,Rd0811,Rd1215,const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Re2427 & Re2831 & const1617Z & op1823=0x1b
 {
 	Re2831 = Re2427 - sext((Rd0811 * Rd1215) << const1617Z);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.Q E[c], E[d], D[a] U, D[b] U, n (RRR1)
 :msub.q Re2831,Re2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Re2427 & Re2831 & const1617Z & op1823=0x1c
 {
@@ -5447,9 +5145,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 - sext(mres << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # SUB.Q E[c], E[d], D[a] L, D[b] L, n (RRR1)
 :msub.q Re2831,Re2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Re2427 & Re2831 & const1617Z & op1823=0x1d
 {
@@ -5458,27 +5154,21 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 - sext(mres << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.U E[c], E[d], D[a], const9 (RCR)
 :msub.u Re2831,Re2427,Rd0811,const1220Z is PCPMode=0 & ( Rd0811 & op0007=0x33 ; Re2427 & Re2831 & op2123=0x2 ) & const1220Z
 {
 	Re2831 = Re2427 - zext(Rd0811 * const1220Z);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUB.U E[c], E[d], D[a], D[b] (RRR2)
 :msub.u Re2831,Re2427,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x23 ; Re2427 & Re2831 & op1623=0x68
 {
 	Re2831 = Re2427 - zext(Rd0811 * Rd1215);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBAD.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :msubad.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x18
 {
@@ -5491,9 +5181,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = res0;
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBAD.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :msubad.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x19
 {
@@ -5506,9 +5194,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = res0;
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBAD.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :msubad.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x1a
 {
@@ -5521,9 +5207,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = res0;
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBAD.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :msubad.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x1b
 {
@@ -5536,9 +5220,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = res0;
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADM.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :msubadm.h Re2831,Re2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Re2427 & Re2831 & const1617Z & op1823=0x1c
 {
@@ -5548,9 +5230,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 - sext((mres1 - mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADM.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :msubadm.h Re2831,Re2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Re2427 & Re2831 & const1617Z & op1823=0x1d
 {
@@ -5560,9 +5240,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 - sext((mres1 - mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADM.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :msubadm.h Re2831,Re2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Re2427 & Re2831 & const1617Z & op1823=0x1e
 {
@@ -5572,9 +5250,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 - sext((mres1 - mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADM.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :msubadm.h Re2831,Re2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Re2427 & Re2831 & const1617Z & op1823=0x1f
 {
@@ -5584,9 +5260,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Re2831 = Re2427 - sext((mres1 - mres0) << 16);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADMS.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :msubadms.h Re2831,Re2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Re2427 & Re2831 & const1617Z & op1823=0x3c
 {
@@ -5597,9 +5271,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADMS.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :msubadms.h Re2831,Re2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Re2427 & Re2831 & const1617Z & op1823=0x3d
 {
@@ -5610,9 +5282,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADMS.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :msubadms.h Re2831,Re2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Re2427 & Re2831 & const1617Z & op1823=0x3e
 {
@@ -5623,9 +5293,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADMS.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :msubadms.h Re2831,Re2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Re2427 & Re2831 & const1617Z & op1823=0x3f
 {
@@ -5636,9 +5304,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADR.H D[c], D[d], D[a], D[b] UL, n (RRR1)
 :msubadr.h Rd2831,Rd2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xc
 {
@@ -5650,9 +5316,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 :msubadr.h Rd2831,Rd2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xd
 {
 	local mres1:4;
@@ -5663,9 +5327,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADR.H D[c], D[d], D[a], D[b] LL, n (RRR1)
 :msubadr.h Rd2831,Rd2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xe
 {
@@ -5677,9 +5339,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADR.H D[c], D[d], D[a], D[b] UU, n (RRR1)
 :msubadr.h Rd2831,Rd2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xf
 {
@@ -5691,9 +5351,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 	overflowflagsww(res1, res0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADRS.H D[c], D[d], D[a], D[b] UL, n (RRR1)
 :msubadrs.h Rd2831,Rd2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2c
 {
@@ -5707,9 +5365,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADRS.H D[c], D[d], D[a], D[b] LU, n (RRR1)
 :msubadrs.h Rd2831,Rd2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2d
 {
@@ -5723,9 +5379,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADRS.H D[c], D[d], D[a], D[b] LL, n (RRR1)
 :msubadrs.h Rd2831,Rd2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2e
 {
@@ -5739,9 +5393,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADRS.H D[c], D[d], D[a], D[b] UU, n (RRR1)
 :msubadrs.h Rd2831,Rd2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2f
 {
@@ -5755,9 +5407,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADS.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :msubads.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x38
 {
@@ -5770,9 +5420,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Reo2831, res1, 32);
 	ssov(Ree2831, res0, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADS.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :msubads.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x39
 {
@@ -5785,9 +5433,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Reo2831, res1, 32);
 	ssov(Ree2831, res0, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADS.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :msubads.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x3a
 {
@@ -5800,9 +5446,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Reo2831, res1, 32);
 	ssov(Ree2831, res0, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBADS.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :msubads.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xe3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x3b
 {
@@ -5815,9 +5459,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Reo2831, res1, 32);
 	ssov(Ree2831, res0, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBM.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :msubm.h Re2831,Re2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Re2427 & Re2831 & const1617Z & op1823=0x1c
 {
@@ -5828,9 +5470,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(res);
 	Re2831 = res;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBM.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :msubm.h Re2831,Re2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Re2427 & Re2831 & const1617Z & op1823=0x1d
 {
@@ -5841,9 +5481,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(res);
 	Re2831 = res;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBM.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :msubm.h Re2831,Re2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Re2427 & Re2831 & const1617Z & op1823=0x1e
 {
@@ -5854,9 +5492,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(res);
 	Re2831 = res;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBM.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :msubm.h Re2831,Re2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Re2427 & Re2831 & const1617Z & op1823=0x1f
 {
@@ -5867,9 +5503,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(res);
 	Re2831 = res;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBMS.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :msubms.h Re2831,Re2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Re2427 & Re2831 & const1617Z & op1823=0x3c
 {
@@ -5880,9 +5514,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(res);
 	ssov(Re2427, res, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBMS.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :msubms.h Re2831,Re2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Re2427 & Re2831 & const1617Z & op1823=0x3d
 {
@@ -5893,9 +5525,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(res);
 	ssov(Re2427, res, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBMS.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :msubms.h Re2831,Re2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Re2427 & Re2831 & const1617Z & op1823=0x3e
 {
@@ -5906,9 +5536,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(res);
 	ssov(Re2427, res, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBMS.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :msubms.h Re2831,Re2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Re2427 & Re2831 & const1617Z & op1823=0x3f
 {
@@ -5919,9 +5547,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(res);
 	ssov(Re2427, res, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBR.H D[c], E[d], D[a], D[b] UL, n (RRR1)
 :msubr.h Rd2831,Ree2427/Reo2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2831 & Ree2427 & Reo2427 & const1617Z & op1823=0x1e
 {
@@ -5933,9 +5559,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsww(res1,res0);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBR.H D[c], D[d], D[a], D[b] UL, n (RRR1)
 :msubr.h Rd2831,Rd2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xc
 {
@@ -5947,9 +5571,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsww(res1,res0);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBR.H D[c], D[d], D[a], D[b] LU, n (RRR1)
 :msubr.h Rd2831,Rd2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xd
 {
@@ -5961,9 +5583,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsww(res1,res0);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBR.H D[c], D[d], D[a], D[b] LL, n (RRR1)
 :msubr.h Rd2831,Rd2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xe
 {
@@ -5975,9 +5595,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsww(res1,res0);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBR.H D[c], D[d], D[a], D[b] UU, n (RRR1)
 :msubr.h Rd2831,Rd2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Rd2427 & Rd2831 & const1617Z & op1823=0xf
 {
@@ -5989,9 +5607,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsww(res1,res0);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBR.Q D[c], D[d], D[a] U, D[b] U, n (RRR1)
 :msubr.q Rd2831,Rd2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x6
 {
@@ -6001,9 +5617,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(res);
 	Rd2831 = zext(res[16,16]) << 16;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBR.Q D[c], D[d], D[a] L, D[b] L, n (RRR1)
 :msubr.q Rd2831,Rd2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x7
 {
@@ -6013,9 +5627,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(res);
 	Rd2831 = zext(res[16,16]) << 16;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBRS.H D[c], E[d], D[a], D[b] UL, n (RRR1)
 :msubrs.h Rd2831,Ree2427/Reo2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2831 & Ree2427 & Reo2427 & const1617Z & op1823=0x3e
 {
@@ -6029,9 +5641,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBRS.H D[c], D[d], D[a], D[b] UL, n (RRR1)
 :msubrs.h Rd2831,Rd2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2c
 {
@@ -6045,9 +5655,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBRS.H D[c], D[d], D[a], D[b] LU, n (RRR1)
 :msubrs.h Rd2831,Rd2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2d
 {
@@ -6061,9 +5669,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBRS.H D[c], D[d], D[a], D[b] LL, n (RRR1)
 :msubrs.h Rd2831,Rd2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2e
 {
@@ -6077,9 +5683,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBRS.H D[c], D[d], D[a], D[b] UU, n (RRR1)
 :msubrs.h Rd2831,Rd2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Rd2427 & Rd2831 & const1617Z & op1823=0x2f
 {
@@ -6093,9 +5697,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res0, res0, 32);
 	Rd2831 = (zext(res1[16,16]) << 16) | zext(res0[16,16]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBRS.Q D[c], D[d], D[a] U, D[b] U, n (RRR1)
 :msubrs.q Rd2831,Rd2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x26
 {
@@ -6106,9 +5708,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(res, res, 32);
 	Rd2831 = zext(res[16,16]) << 16;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBRS.Q D[c], D[d], D[a] L, D[b] L, n (RRR1)
 :msubrs.q Rd2831,Rd2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x27
 {
@@ -6145,9 +5745,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS E[c], E[d], D[a], D[b] (RRR2)
 :msubs Re2831,Re2427,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x23 ; Re2427 & Re2831 & op1623=0xea
 {
@@ -6155,9 +5753,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.H E[c], E[d], D[a], D[b] UL, n (RRR1)
 :msubs.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x38
 {
@@ -6170,9 +5766,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Reo2831, res1, 32);
 	ssov(Ree2831, res0, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.H E[c], E[d], D[a], D[b] LU, n (RRR1)
 :msubs.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x39
 {
@@ -6185,9 +5779,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Reo2831, res1, 32);
 	ssov(Ree2831, res0, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.H E[c], E[d], D[a], D[b] LL, n (RRR1)
 :msubs.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x3a
 {
@@ -6200,9 +5792,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Reo2831, res1, 32);
 	ssov(Ree2831, res0, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.H E[c], E[d], D[a], D[b] UU, n (RRR1)
 :msubs.h Ree2831/Reo2831,Ree2427/Reo2427,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xa3 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & const1617Z & op1823=0x3b
 {
@@ -6215,9 +5805,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	ssov(Reo2831, res1, 32);
 	ssov(Ree2831, res0, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.Q D[c], D[d], D[a] U, D[b] U, n (RRR1)
 :msubs.q Rd2831,Rd2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x24
 {
@@ -6227,9 +5815,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(res);
 	ssov(Rd2831, res, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.Q D[c], D[d], D[a], D[b] U, n (RRR1)
 :msubs.q Rd2831,Rd2427,Rd0811,Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x20
 {
@@ -6237,9 +5823,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.Q D[c], D[d], D[a], D[b] L, n (RRR1)
 :msubs.q Rd2831,Rd2427,Rd0811,Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x21
 {
@@ -6247,9 +5831,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.Q D[c], D[d], D[a], D[b], n (RRR1)
 :msubs.q Rd2831,Rd2427,Rd0811,Rd1215,const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x22
 {
@@ -6257,9 +5839,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(result);
 	ssov(Rd2831, result, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.Q D[c], D[d], D[a] L, D[b] L, n (RRR1)
 :msubs.q Rd2831,Rd2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Rd2427 & Rd2831 & const1617Z & op1823=0x25
 {
@@ -6269,9 +5849,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(res);
 	ssov(Rd2831, res, 32);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.Q E[c], E[d], D[a], D[b] U, n (RRR1)
 :msubs.q Re2831,Re2427,Rd0811,Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Re2427 & Re2831 & const1617Z & op1823=0x38
 {
@@ -6279,9 +5857,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.Q E[c], E[d], D[a], D[b] L, n (RRR1)
 :msubs.q Re2831,Re2427,Rd0811,Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Re2427 & Re2831 & const1617Z & op1823=0x39
 {
@@ -6289,9 +5865,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.Q E[c], E[d], D[a], D[b], n (RRR1)
 :msubs.q Re2831,Re2427,Rd0811,Rd1215,const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Re2427 & Re2831 & const1617Z & op1823=0x3b
 {
@@ -6299,9 +5873,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.Q E[c], E[d], D[a] U, D[b] U, n (RRR1)
 :msubs.q Re2831,Re2427,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Re2427 & Re2831 & const1617Z & op1823=0x3c
 {
@@ -6311,9 +5883,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(res);
 	ssov(Re2831, res, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.Q E[c], E[d], D[a] L, D[b] L, n (RRR1)
 :msubs.q Re2831,Re2427,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x63 ; Re2427 & Re2831 & const1617Z & op1823=0x3d
 {
@@ -6349,9 +5919,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflagsd(result);
 	ssov(Re2831, result, 64);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MSUBS.U E[c], E[d], D[a], D[b] (RRR2)
 :msubs.u Re2831,Re2427,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x23 ; Re2427 & Re2831 & op1623=0xe8
 {
@@ -6395,18 +5963,14 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = Rd0811 * Rd1215;
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL E[c], D[a], const9 (RC)
 :mul Re2831,Rd0811,const1220S is PCPMode=0 & ( Rd0811 & op0007=0x53 ; Re2831 & op2127=0x3 ) & const1220S
 {
 	Re2831 = sext(Rd0811 * const1220S);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL E[c], D[a], D[b] (RR2)
 :mul Re2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x73 ; Re2831 & op1627=0x6a
 {
@@ -6436,9 +6000,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = mres0;
 	advoverflowflagsww(mres1, mres0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.H E[c], D[a], D[b] LU, n (RR1)
 :mul.h Ree2831/Reo2831,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Ree2831 & Reo2831 & const1617Z & op1827=0x19
 {
@@ -6449,9 +6011,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = mres0;
 	advoverflowflagsww(mres1, mres0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.H E[c], D[a], D[b] LL, n (RR1)
 :mul.h Ree2831/Reo2831,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Ree2831 & Reo2831 & const1617Z & op1827=0x1a
 {
@@ -6462,9 +6022,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = mres0;
 	advoverflowflagsww(mres1, mres0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.H E[c], D[a], D[b] UU, n (RR1)
 :mul.h Ree2831/Reo2831,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Ree2831 & Reo2831 & const1617Z & op1827=0x1b
 {
@@ -6475,36 +6033,28 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Ree2831 = mres0;
 	advoverflowflagsww(mres1, mres0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.Q D[c], D[a], D[b] U, n (RR1)
 :mul.q Rd2831,Rd0811,Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x93 ; Rd2831 & const1617Z & op1827=0x0
 {
 	Rd2831 = ((Rd0811 * sext(Rd1215[16,16])) << const1617Z) s>> 16;
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.Q D[c], D[a], D[b] L, n (RR1)
 :mul.q Rd2831,Rd0811,Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x93 ; Rd2831 & const1617Z & op1827=0x1
 {
 	Rd2831 = ((Rd0811 * sext(Rd1215[0,16])) << const1617Z) s>> 16;
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.Q D[c], D[a], D[b], n (RR1)
 :mul.q Rd2831,Rd0811,Rd1215,const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x93 ; Rd2831 & const1617Z & op1827=0x2
 {
 	Rd2831 = ((Rd0811 * Rd1215) << const1617Z) s>> 32;
 	overflowflags(Rd2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.Q D[c], D[a] U, D[b] U, n (RR1)
 :mul.q Rd2831,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x93 ; Rd2831 & const1617Z & op1827=0x4
 {
@@ -6513,9 +6063,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(mres);
 	Rd2831 = mres;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.Q D[c], D[a] L, D[b] L, n (RR1)
 :mul.q Rd2831,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x93 ; Rd2831 & const1617Z & op1827=0x5
 {
@@ -6524,54 +6072,42 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	overflowflags(mres);
 	Rd2831 = mres;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.Q E[c], D[a], D[b] U, n (RR1)
 :mul.q Re2831,Rd0811,Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x93 ; Re2831 & const1617Z & op1827=0x18
 {
 	Re2831 = sext(Rd0811 * sext(Rd1215[16,16])) << const1617Z;
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.Q E[c], D[a], D[b] L, n (RR1)
 :mul.q Re2831,Rd0811,Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x93 ; Re2831 & const1617Z & op1827=0x19
 {
 	Re2831 = sext(Rd0811 * sext(Rd1215[0,16])) << const1617Z;
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.Q E[c], D[a], D[b], n (RR1)
 :mul.q Re2831,Rd0811,Rd1215,const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x93 ; Re2831 & const1617Z & op1827=0x1b
 {
 	Re2831 = sext(Rd0811 * Rd1215) << const1617Z;
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.U E[c], D[a], const9 (RC)
 :mul.u Re2831,Rd0811,const1220Z is PCPMode=0 & ( Rd0811 & op0007=0x53 ; Re2831 & op2127=0x2 ) & const1220Z
 {
 	Re2831 = zext(Rd0811 * const1220Z);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MUL.U E[c], D[a], D[b] (RR2)
 :mul.u Re2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x73 ; Re2831 & op1627=0x68
 {
 	Re2831 = zext(Rd0811 * Rd1215);
 	overflowflagsd(Re2831);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MULM.H E[c], D[a], D[b] UL, n (RR1)
 :mulm.h Re2831,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Re2831 & const1617Z & op1827=0x1c
 {
@@ -6582,9 +6118,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	$(PSW_V) = 0;
 	$(PSW_AV) = 0;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MULM.H E[c], D[a], D[b] LU, n (RR1)
 :mulm.h Re2831,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Re2831 & const1617Z & op1827=0x1d
 {
@@ -6595,9 +6129,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	$(PSW_V) = 0;
 	$(PSW_AV) = 0;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MULM.H E[c], D[a], D[b] LL, n (RR1)
 :mulm.h Re2831,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Re2831 & const1617Z & op1827=0x1e
 {
@@ -6608,9 +6140,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	$(PSW_V) = 0;
 	$(PSW_AV) = 0;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MULM.H E[c], D[a], D[b] UU, n (RR1)
 :mulm.h Re2831,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Re2831 & const1617Z & op1827=0x1f
 {
@@ -6621,9 +6151,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	$(PSW_V) = 0;
 	$(PSW_AV) = 0;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MULR.H D[c], D[a], D[b] UL, n (RR1)
 :mulr.h Rd2831,Rd0811,Rd1215^"ul",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Rd2831 & const1617Z & op1827=0xc
 {
@@ -6636,9 +6164,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(mres1[16,16]) << 16) | zext(mres0[16,16]);
 	advoverflowflagsww(mres1, mres0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MULR.H D[c], D[a], D[b] LU, n (RR1)
 :mulr.h Rd2831,Rd0811,Rd1215^"lu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Rd2831 & const1617Z & op1827=0xd
 {
@@ -6651,9 +6177,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(mres1[16,16]) << 16) | zext(mres0[16,16]);
 	advoverflowflagsww(mres1, mres0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # # MULR.H D[c], D[a], D[b] LL, n (RR1)
 :mulr.h Rd2831,Rd0811,Rd1215^"ll",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Rd2831 & const1617Z & op1827=0xe
 {
@@ -6666,9 +6190,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(mres1[16,16]) << 16) | zext(mres0[16,16]);
 	advoverflowflagsww(mres1, mres0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MULR.H D[c], D[a], D[b] UU, n (RR1)
 :mulr.h Rd2831,Rd0811,Rd1215^"uu",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb3 ; Rd2831 & const1617Z & op1827=0xf
 {
@@ -6681,9 +6203,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = (zext(mres1[16,16]) << 16) | zext(mres0[16,16]);
 	advoverflowflagsww(mres1, mres0);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MULR.Q D[c], D[a] U, D[b] U, n (RR1)
 :mulr.q Rd2831,Rd0811^"u",Rd1215^"u",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x93 ; Rd2831 & const1617Z & op1827=0x6
 {
@@ -6693,9 +6213,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	Rd2831 = zext(res[16,16] << 16);
 	advoverflowflags(res);
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # MULR.Q D[c], D[a] L, D[b] L, n (RR1)
 :mulr.q Rd2831,Rd0811^"l",Rd1215^"l",const1617Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x93 ; Rd2831 & const1617Z & op1827=0x7
 {
@@ -6835,9 +6353,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 {
 	Rd0811 = Rd0811 | Rd1215;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # OR D[15], const8 (SC)
 :or d15,const0815Z is PCPMode=0 & const0815Z & d15 & op0007=0x96
 {
@@ -7056,9 +6572,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	#TODO  float
 	#TODO  flags
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # QSEED.F D[c], D[a] (RR)
 :qseed.f Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x191
 {
@@ -7160,9 +6674,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	restoreCallerState(FCX, LCX, PCXI);
 	return [tmp];
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # RFM (SYS)
 :rfm  is PCPMode=0 & op0007=0xd & op0815=0x0 ; op1631=0x140
 {
@@ -7643,27 +7155,21 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	build SC;
 	*[ram]:4 SC = a15;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ST.A A[b], off4, A[15] (SRO)
 :st.a SRO,a15 is PCPMode=0 & a15 & op0007=0xec & SRO
 {
 	build SRO;
 	*[ram]:4 SRO = a15;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ST.A A[15], off4, A[a] (SSRO)
 :st.a SSRO,Ra0811 is PCPMode=0 & Ra0811 & op0007=0xe8 & SSRO
 {
 	build SSRO;
 	*[ram]:4 SSRO = Ra0811;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ST.A A[b], A[a] (SSR)(Post-increment Addressing Mode)
 # ST.A A[b], A[a] (SSR)
 :st.a SSR,Ra0811 is PCPMode=0 & Ra0811 & op0607=0x3 & SSR
@@ -7714,18 +7220,14 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	build SSR;
 	*[ram]:1 SSR = Rd0811[0,8];
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ST.B A[15], off4, D[a] (SSRO)
 :st.b SSRO,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x28 & SSRO
 {
 	build SSRO;
 	*[ram]:1 SSRO = Rd0811[0,8];
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ST.B A[b], off4, D[15] (SRO)
 :st.b SRO,d15 is PCPMode=0 & d15 & op0007=0x2c & SRO
 {
@@ -7834,27 +7336,21 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	*[ram]:8 BO = Re0811;
 	*[ram]:8 BO+8 = ReN0811;
 }
-@endif
 
-@if defined(TRICORE_V2)
 :st.dd BO,Re0811/ReN0811 is PCPMode=0 & ( Re0811 & ReN0811 & op0007=0xa9 ; op1621=0x0 & op2227=0x09 & op2831=0x0 ) & BO
 {
 	build BO;
 	*[ram]:8 BO = Re0811;
 	*[ram]:8 BO+8 = ReN0811;
 }
-@endif
 
-@if defined(TRICORE_V2)
 :st.dd BO,Re0811/ReN0811 is PCPMode=0 & ( Re0811 & ReN0811 & op0007=0x89 ; op2227=0x19 ) & BO
 {
 	build BO;
 	*[ram]:8 BO = Re0811;
 	*[ram]:8 BO+8 = ReN0811;
 }
-@endif
 
-@if defined(TRICORE_V2)
 #:st.dd BO,Re0811/ReN0811 is PCPMode=0 & ( Re0811 & ReN0811 & op0007=0xa9 ; op2227=0x19 ) & BO
 :st.dd [Rpe1215/Rpo1215^"+c"^]off10,Re0811/ReN0811 is PCPMode=0 & Re0811 & ReN0811 & Rpe1215 & Rpo1215 & op0007=0xa9 ; off10 & op2227=0x19
 {
@@ -7864,18 +7360,14 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	*[ram]:8 EA0 = Re0811;
 	*[ram]:8 EA8 = ReN0811;
 }
-@endif
 
-@if defined(TRICORE_V2)
 :st.dd BO,Re0811/ReN0811 is PCPMode=0 & ( Re0811 & ReN0811 & op0007=0x89 ; op2227=0x29 ) & BO
 {
 	build BO;
 	*[ram]:8 BO = Re0811;
 	*[ram]:8 BO+8 = ReN0811;
 }
-@endif
 
-@if defined(TRICORE_V2)
 :st.dd BO,Re0811/ReN0811 is PCPMode=0 & ( Re0811 & ReN0811 & op0007=0xa9 ; op1621=0x0 & op2227=0x29 & op2831=0x0 ) & BO
 {
 	build BO;
@@ -7892,18 +7384,14 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	build SSR;
 	*[ram]:2 SSR = Rd0811[0,16];
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ST.H A[15], off4, D[a] (SSRO)
 :st.h SSRO,Rd0811 is PCPMode=0 & Rd0811 & op0007=0xa8 & SSRO
 {
 	build SSRO;
 	*[ram]:2 SSRO = Rd0811[0,16];
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ST.H A[b], off4, D[15] (SRO)
 :st.h SRO,d15 is PCPMode=0 & d15 & op0007=0xac & SRO
 {
@@ -7985,9 +7473,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	build SC;
 	*[ram]:4 SC = d15;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ST.W A[b], D[a] (SSR)
 # ST.W A[b], D[a] (SSR)(Post-increment Addressing Mode)
 :st.w SSR,Rd0811 is PCPMode=0 & Rd0811 & op0607=0x1 & SSR
@@ -7995,18 +7481,14 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	build SSR;
 	*[ram]:4 SSR = Rd0811;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ST.W A[15], off4, D[a] (SSRO)
 :st.w SSRO,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x68 & SSRO
 {
 	build SSRO;
 	*[ram]:4 SSRO = Rd0811;
 }
-@endif
 
-@if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # ST.W A[b], off4, D[15] (SRO)
 :st.w SRO,d15 is PCPMode=0 & d15 & op0007=0x6c & SRO
 {
@@ -8301,37 +7783,27 @@ macro multiply_u_u(mres0, rega, regb, n) {
 {
 	tlbdemap(Rd0811);
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 :tlbflush.a  is PCPMode=0 & op0007=0x75 & op0815=0x0 ; op1631=0x40
 {
 	tlbflusha();
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 :tlbflush.b  is PCPMode=0 & op0007=0x75 & op0815=0x0 ; op1631=0x50
 {
 	tlbflushb();
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 :tlbmap Re0811 is PCPMode=0 & Re0811 & op0007=0x75 & op1215=0x0 ; op1631=0x400
 {
 	tlbmap(Re0811);
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 :tlbprobe.a Rd0811 is PCPMode=0 & Rd0811 & op0007=0x75 & op1215=0x0 ; op1631=0x80
 {
 	tlbprobea(Rd0811);
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 :tlbprobe.i Rd0811 is PCPMode=0 & Rd0811 & op0007=0x75 & op1215=0x0 ; op1631=0x90
 {
 	tlbprobei(Rd0811);
@@ -8375,9 +7847,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	$(PSW_FX) = ($(PSW_FX) & ~Rd0811[10,1]) | (Rd0811[2,1] & Rd0811[10,1]);
 	$(PSW_RM) = ($(PSW_RM) & ~Rd0811[8,2]) | (Rd0811[0,2] & Rd0811[8,2]);
 }
-@endif
 
-@if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # UTOF D[c], D[a] (RR)
 :utof Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0x4b & op1215=0x0 ; Rd2831 & op1627=0x161
 {
@@ -8521,9 +7991,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 {
 	Re2831 = zext(Rd0811[24,8] << 56)|zext(Rd1215[24,8] << 48)|zext(Rd0811[8,8] << 40)|zext(Rd1215[8,8] << 32)|zext(Rd0811[16,8] << 24)|zext(Rd1215[16,8] << 16)|zext(Rd0811[0,8] << 8)|zext(Rd1215[0,8]);
 }
-@endif
 
-@if defined(TRICORE_V2)
 :xpose.h Re2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0xb ; Re2831 & op1627=0x820
 {
 	Re2831 = zext(Rd0811[16,16] << 48)|zext(Rd1215[16,16] << 32)|zext(Rd0811[0,16] << 16)|zext(Rd1215[0,16]);

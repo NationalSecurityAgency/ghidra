@@ -38,9 +38,7 @@
 	local tmp:$(XLEN) = crd + cimmI;
 	crd = sext(tmp:$(WXLEN));
 }
-@endif
 
-@if (ADDRSIZE == "64") || (ADDRSIZE == "128")
 # c.addw Cs,Ct 00009c21 0000fc63 SIMPLE (64, 0) 
 :c.addw cr0709s,cr0204s is cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x1 & cop1012=0x7
 {

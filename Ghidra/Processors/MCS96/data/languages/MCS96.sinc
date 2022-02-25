@@ -1325,9 +1325,7 @@ cc: "E"    is cond=15 { tmp:1 = ($(Z) == 1); export tmp; }
 	*[RAM]:2 tmp = wreg_tmp;
 }
 
-@endif
 
-@if defined(C196KC)
 :XCHB breg, baop8                   is op8=0x14 ; baop8; breg {
 	local tmp = breg;
 	breg = baop8;

@@ -874,12 +874,10 @@ shift4: rm, "asr #"^sftimm	is sftimm & sh=1 & rm
   local tmp1=(rm>>(sftimm-1))&1; shift_carry=tmp1(0); local tmp2=rm s>> sftimm; export tmp2;
 }
 
-@endif # VERSION_6
 
 #####################
 ######  ror1   ######
 #####################
-@if defined(VERSION_6)
 
 ror1: rm 		is c1011=0 & rm
 {
