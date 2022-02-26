@@ -28,20 +28,17 @@ import ghidra.util.task.TaskMonitor;
 public class GTableCSVTest {
 
 	@Test
-	public void testCSV_QuotesGetEscaped() {
+	public void testCsv_QuotesGetEscaped() {
 
-		AnyObjectTableModel<CSVRowObject> model =
-			new AnyObjectTableModel<>("MyModel", CSVRowObject.class,
+		AnyObjectTableModel<CsvRowObject> model =
+			new AnyObjectTableModel<>("MyModel", CsvRowObject.class,
 				"getName", "getDescription", "getNumber");
 
-		//@formatter:off
-		List<CSVRowObject> data = Arrays.asList(
-			new CSVRowObject("Bob", "Bobby", 11),
-			new CSVRowObject("Joan", "Joan has \"quoted\" text", 0),
-			new CSVRowObject("Sam", "\"Sam has a single quote text", 23),
-			new CSVRowObject("Time", "Tim is last", 33)
-		);
-		//@formatter:on
+		List<CsvRowObject> data = Arrays.asList(
+			new CsvRowObject("Bob", "Bobby", 11),
+			new CsvRowObject("Joan", "Joan has \"quoted\" text", 0),
+			new CsvRowObject("Sam", "\"Sam has a single quote text", 23),
+			new CsvRowObject("Time", "Tim is last", 33));
 		model.setModelData(data);
 
 		GTable table = new GTable(model);
@@ -50,24 +47,21 @@ public class GTableCSVTest {
 		PrintWriterSpy writer = new PrintWriterSpy();
 		GTableToCSV.writeCSV(writer, table, columns, TaskMonitor.DUMMY);
 
-		assertRowValues(data, writer);
+		assertCsvRowValues(data, writer);
 	}
 
 	@Test
-	public void testCSV_CommasGetEscaped() {
+	public void testCsv_CommasGetEscaped() {
 
-		AnyObjectTableModel<CSVRowObject> model =
-			new AnyObjectTableModel<>("MyModel", CSVRowObject.class,
+		AnyObjectTableModel<CsvRowObject> model =
+			new AnyObjectTableModel<>("MyModel", CsvRowObject.class,
 				"getName", "getDescription", "getNumber");
 
-		//@formatter:off
-		List<CSVRowObject> data = Arrays.asList(
-			new CSVRowObject("Bob", "Bobby", 11),
-			new CSVRowObject("Joan", "Joan has a comma, in her text", 0),
-			new CSVRowObject("Sam", ",Sam has a leading comma", 23),
-			new CSVRowObject("Time", "Tim is last", 33)
-		);
-		//@formatter:on
+		List<CsvRowObject> data = Arrays.asList(
+			new CsvRowObject("Bob", "Bobby", 11),
+			new CsvRowObject("Joan", "Joan has a comma, in her text", 0),
+			new CsvRowObject("Sam", ",Sam has a leading comma", 23),
+			new CsvRowObject("Time", "Tim is last", 33));
 		model.setModelData(data);
 
 		GTable table = new GTable(model);
@@ -76,16 +70,39 @@ public class GTableCSVTest {
 		PrintWriterSpy writer = new PrintWriterSpy();
 		GTableToCSV.writeCSV(writer, table, columns, TaskMonitor.DUMMY);
 
-		assertRowValues(data, writer);
+		assertCsvRowValues(data, writer);
 	}
 
-	private void assertRowValues(List<CSVRowObject> data, PrintWriterSpy writer) {
+	@Test
+	public void testCsv_BooleaValues() {
+
+		AnyObjectTableModel<BooleanCsvRowObject> model =
+			new AnyObjectTableModel<>("MyModel", BooleanCsvRowObject.class,
+				"getName", "isSelected");
+
+		List<BooleanCsvRowObject> data = Arrays.asList(
+			new BooleanCsvRowObject("Bob", true),
+			new BooleanCsvRowObject("Joan", false),
+			new BooleanCsvRowObject("Sam", false),
+			new BooleanCsvRowObject("Time", true));
+		model.setModelData(data);
+
+		GTable table = new GTable(model);
+		List<Integer> columns = new ArrayList<>();
+
+		PrintWriterSpy writer = new PrintWriterSpy();
+		GTableToCSV.writeCSV(writer, table, columns, TaskMonitor.DUMMY);
+
+		assertBooleanCsvRowValues(data, writer);
+	}
+
+	private void assertCsvRowValues(List<CsvRowObject> data, PrintWriterSpy writer) {
 
 		String results = writer.toString();
 		String[] lines = results.split("\n");
 		for (int i = 1; i < lines.length; i++) {
 			int index = i - 1; // the first line is the header
-			CSVRowObject row = data.get(index);
+			CsvRowObject row = data.get(index);
 			String line = lines[i];
 			String[] columns = line.split("(?<!\\\\),");
 
@@ -103,13 +120,32 @@ public class GTableCSVTest {
 		}
 	}
 
-	class CSVRowObject {
+	private void assertBooleanCsvRowValues(List<BooleanCsvRowObject> data, PrintWriterSpy writer) {
+
+		String results = writer.toString();
+		String[] lines = results.split("\n");
+		for (int i = 1; i < lines.length; i++) {
+			int index = i - 1; // the first line is the header
+			BooleanCsvRowObject row = data.get(index);
+			String line = lines[i];
+			String[] columns = line.split("(?<!\\\\),");
+
+			String name = columns[0].replaceAll("\\\\,", ",");
+			name = name.replaceAll("\\\\\"", "\"");
+			assertEquals("\"" + row.getName() + "\"", name);
+
+			String isSelected = columns[1];
+			assertEquals("\"" + row.isSelected() + "\"", isSelected);
+		}
+	}
+
+	class CsvRowObject {
 
 		private String name;
 		private String description;
 		private int number;
 
-		CSVRowObject(String name, String description, int number) {
+		CsvRowObject(String name, String description, int number) {
 			this.name = name;
 			this.description = description;
 			this.number = number;
@@ -125,6 +161,25 @@ public class GTableCSVTest {
 
 		public int getNumber() {
 			return number;
+		}
+	}
+
+	class BooleanCsvRowObject {
+
+		private String name;
+		private boolean isSelected;
+
+		BooleanCsvRowObject(String name, boolean isSelected) {
+			this.name = name;
+			this.isSelected = isSelected;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public boolean isSelected() {
+			return isSelected;
 		}
 	}
 
