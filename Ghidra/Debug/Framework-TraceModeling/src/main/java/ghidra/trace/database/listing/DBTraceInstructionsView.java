@@ -66,34 +66,9 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			this.conflictCodeUnit = conflictCodeUnit;
 		}
 
-		protected void doSetContexts(Range<Long> lifespan, Address min, Address max,
-				ProcessorContextView context) {
-			Language language = space.baseLanguage;
-			Register contextReg = language.getContextBaseRegister();
-			if (contextReg == null) {
-				return;
-			}
-			RegisterValue newValue = context.getRegisterValue(contextReg);
-			DBTraceRegisterContextManager ctxMgr = space.trace.getRegisterContextManager();
-			if (Objects.equals(ctxMgr.getDefaultValue(language, contextReg, min), newValue)) {
-				DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, false);
-				if (ctxSpace == null) {
-					return;
-				}
-				ctxSpace.setValue(language, null, lifespan, new AddressRangeImpl(min, max));
-				return;
-			}
-			DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, true);
-			// TODO: Do not save non-flowing context beyond???
-			ctxSpace.setValue(language, newValue, lifespan, new AddressRangeImpl(min, max));
-		}
-
 		protected Instruction doCreateInstruction(Range<Long> lifespan, Address address,
 				InstructionPrototype prototype, Instruction protoInstr) {
 			try {
-				doSetContexts(lifespan, address, address.addNoWrap(prototype.getLength() - 1),
-					protoInstr);
-
 				Instruction created = doCreate(lifespan, address, prototype, protoInstr);
 				// copy override settings to replacement instruction
 				if (protoInstr.isFallThroughOverridden()) {
@@ -183,6 +158,27 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		super(space, space.instructionMapSpace);
 	}
 
+	protected void doSetContexts(TraceAddressSnapRange tasr, Language language,
+			ProcessorContextView context) {
+		Register contextReg = language.getContextBaseRegister();
+		if (contextReg == null || contextReg == Register.NO_CONTEXT) {
+			return;
+		}
+		RegisterValue newValue = context.getRegisterValue(contextReg);
+		DBTraceRegisterContextManager ctxMgr = space.trace.getRegisterContextManager();
+		if (Objects.equals(ctxMgr.getDefaultValue(language, contextReg, tasr.getX1()), newValue)) {
+			DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, false);
+			if (ctxSpace == null) {
+				return;
+			}
+			ctxSpace.removeValue(language, contextReg, tasr.getLifespan(), tasr.getRange());
+			return;
+		}
+		DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, true);
+		// TODO: Do not save non-flowing context beyond???
+		ctxSpace.setValue(language, newValue, tasr.getLifespan(), tasr.getRange());
+	}
+
 	protected DBTraceInstruction doCreate(Range<Long> lifespan, Address address,
 			InstructionPrototype prototype, ProcessorContextView context)
 			throws CodeUnitInsertionException, AddressOverflowException {
@@ -213,6 +209,8 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			// TODO: Figure out the conflicting unit or snap boundary?
 			throw new CodeUnitInsertionException("Code units cannot overlap");
 		}
+
+		doSetContexts(tasr, prototype.getLanguage(), context);
 
 		DBTraceInstruction created = space.instructionMapSpace.put(tasr, null);
 		created.set(prototype, context);

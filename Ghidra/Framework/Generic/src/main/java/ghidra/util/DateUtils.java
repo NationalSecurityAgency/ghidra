@@ -217,9 +217,9 @@ public class DateUtils {
 	}
 
 	/**
-	 * Formats the given date into a string.   This is in contrast to 
+	 * Formats the given date into a string.   This is in contrast to
 	 * {@link #formatDateTimestamp(Date)}, which will also return the time portion of the date.
-	 * 
+	 *
 	 * @param date the date to format
 	 * @return the date string
 	 */
@@ -228,9 +228,9 @@ public class DateUtils {
 	}
 
 	/**
-	 * Formats the given date into a string that contains the date and time.  This is in 
+	 * Formats the given date into a string that contains the date and time.  This is in
 	 * contrast to {@link #formatDate(Date)}, which only returns a date string.
-	 * 
+	 *
 	 * @param date the date to format
 	 * @return the date and time string
 	 */
@@ -239,7 +239,7 @@ public class DateUtils {
 	}
 
 	/**
-	 * Returns the current local time zone time-of-day as simple time string. 
+	 * Returns the current local time zone time-of-day as simple time string.
 	 * See {@value #TIME_FORMAT_STRING}.
 	 *
 	 * @return current time-of-day a a string
@@ -248,7 +248,12 @@ public class DateUtils {
 		return TIME_FORMATTER.format(toLocalDate(new Date()));
 	}
 
-	private static LocalDateTime toLocalDate(Date d) {
+	/**
+	 * Converts the given Data to a LocalDate
+	 * @param d the date
+	 * @return the local date
+	 */
+	public static LocalDateTime toLocalDate(Date d) {
 		//@formatter:off
 		return Instant.ofEpochMilli(d.getTime())
 			       .atZone(ZoneId.systemDefault())
@@ -257,7 +262,12 @@ public class DateUtils {
 		//@formatter:on
 	}
 
-	private static Date toDate(LocalDate ld) {
+	/**
+	 * Converts the given LocalDate to a date
+	 * @param ld the local date
+	 * @return the date
+	 */
+	public static Date toDate(LocalDate ld) {
 		//@formatter:off
 		  return Date.from(ld.atStartOfDay()
 			  		 .atZone(ZoneId.systemDefault())
@@ -268,8 +278,8 @@ public class DateUtils {
 
 	/**
 	 * Returns a date for the given numeric values
-	 * 
-	 * @param year the year 
+	 *
+	 * @param year the year
 	 * @param month the month; 0-based
 	 * @param day the day of month; 1-based
 	 * @return the date
@@ -282,7 +292,7 @@ public class DateUtils {
 	/**
 	 * Returns all days between the two dates.  Returns 0 if the same date is passed for both
 	 * parameters.  The order of the dates does not matter.
-	 * 
+	 *
 	 * @param date1 the first date
 	 * @param date2 the second date
 	 * @return the number of days
@@ -292,9 +302,9 @@ public class DateUtils {
 	}
 
 	/**
-	 * Returns the <b>business days</b> between the two dates.  Returns 0 if the same date is 
+	 * Returns the <b>business days</b> between the two dates.  Returns 0 if the same date is
 	 * passed for both parameters.  The order of the dates does not matter.
-	 * 
+	 *
 	 * @param date1 the first date
 	 * @param date2 the second date
 	 * @return the number of days

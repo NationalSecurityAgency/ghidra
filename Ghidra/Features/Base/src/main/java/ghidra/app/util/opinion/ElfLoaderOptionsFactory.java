@@ -61,7 +61,7 @@ public class ElfLoaderOptionsFactory {
 		options.add(new Option(PERFORM_RELOCATIONS_NAME, PERFORM_RELOCATIONS_DEFAULT, Boolean.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-applyRelocations"));
 
-		ElfHeader elf = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider);
+		ElfHeader elf = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider, null);
 
 		long imageBase = elf.findImageBase();
 		if (imageBase == 0 && (elf.isRelocatable() || elf.isSharedObject())) {

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.util.graph.attributes;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 import ghidra.util.exception.NoValueException;
 import ghidra.util.graph.KeyIndexableSet;
 import ghidra.util.graph.KeyedObject;
-
-import java.util.Arrays;
-import java.util.Comparator;
 
 /** This class provides a storage mechanism for long-valued information about
  *  the elements of a KeyIndexableSet, e.g. the vertices of a DirectedGraph.
@@ -127,8 +126,9 @@ public class LongAttribute<T extends KeyedObject> extends Attribute<T> {
 						else if ((ko1.key() - ko2.key()) > 0) {
 							return +1;
 						}
-						else
+						else {
 							return 0;
+						}
 					}
 				}
 				catch (NoValueException exc2) {
@@ -148,8 +148,9 @@ public class LongAttribute<T extends KeyedObject> extends Attribute<T> {
 					else if ((ko1.key() - ko2.key()) > 0) {
 						return +1;
 					}
-					else
+					else {
 						return 0;
+					}
 				}
 			}
 		}

@@ -38,13 +38,13 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.model.util.PropertyMap;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.listing.UndefinedDBTraceData;
-import ghidra.trace.database.memory.DBTraceMemoryRegion;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.symbol.DBTraceFunctionSymbol;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.map.TracePropertyMap;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewListing;
 import ghidra.trace.model.symbol.TraceFunctionSymbol;
@@ -69,6 +69,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			DBTraceMemorySpace mem = trace.getMemoryManager().get(this, false);
 			if (mem == null) {
 				// TODO: 0-fill instead? Will need to check memory space bounds.
+				return 0;
 			}
 			return mem.getViewBytes(program.snap, address.add(addressOffset), buffer);
 		}
@@ -78,7 +79,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	protected final TraceCodeOperations codeOperations;
 
 	protected final DBTraceProgramViewRootModule rootModule;
-	protected final Map<DBTraceMemoryRegion, DBTraceProgramViewFragment> fragmentsByRegion =
+	protected final Map<TraceMemoryRegion, DBTraceProgramViewFragment> fragmentsByRegion =
 		new HashMap<>();
 
 	protected final Map<AddressSnap, UndefinedDBTraceData> undefinedCache =
@@ -415,25 +416,33 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 				forward)));
 	}
 
+	protected AddressSetView getCommentAddresses(int commentType, AddressSetView addrSet) {
+		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
+			s -> program.trace.getCommentAdapter()
+					.getAddressSetView(Range.singleton(s), e -> e.getType() == commentType)));
+	}
+
+	protected AddressSetView getCommentAddresses(AddressSetView addrSet) {
+		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
+			s -> program.trace.getCommentAdapter()
+					.getAddressSetView(Range.singleton(s))));
+	}
+
 	@Override
 	public CodeUnitIterator getCommentCodeUnitIterator(int commentType, AddressSetView addrSet) {
-		// TODO Auto-generated method stub
-		return null;
+		return new WrappingCodeUnitIterator(
+			getCodeUnitIterator(getCommentAddresses(commentType, addrSet), true));
 	}
 
 	@Override
 	public AddressIterator getCommentAddressIterator(int commentType, AddressSetView addrSet,
 			boolean forward) {
-		return new IntersectionAddressSetView(addrSet, program.viewport.unionedAddresses(
-			s -> program.trace.getCommentAdapter()
-					.getAddressSetView(Range.singleton(s), e -> e.getType() == commentType)))
-							.getAddresses(forward);
+		return getCommentAddresses(commentType, addrSet).getAddresses(forward);
 	}
 
 	@Override
 	public AddressIterator getCommentAddressIterator(AddressSetView addrSet, boolean forward) {
-		// TODO Auto-generated method stub
-		return null;
+		return getCommentAddresses(addrSet).getAddresses(forward);
 	}
 
 	@Override
@@ -770,7 +779,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, Address addr) {
-		DBTraceMemoryRegion region = program.memory.getTopRegion(
+		TraceMemoryRegion region = program.memory.getTopRegion(
 			s -> program.trace.getMemoryManager().getRegionContaining(s, addr));
 		if (region == null) {
 			return null;
@@ -789,7 +798,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public ProgramFragment getFragment(String treeName, String name) {
-		DBTraceMemoryRegion region = program.memory.getTopRegion(
+		TraceMemoryRegion region = program.memory.getTopRegion(
 			s -> program.trace.getMemoryManager().getLiveRegionByPath(s, name));
 		if (region == null) {
 			return null;

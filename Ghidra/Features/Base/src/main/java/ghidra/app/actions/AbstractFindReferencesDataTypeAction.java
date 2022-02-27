@@ -27,7 +27,6 @@ import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
 import ghidra.util.*;
 
@@ -56,7 +55,7 @@ public abstract class AbstractFindReferencesDataTypeAction extends DockingAction
 
 	protected abstract DataType getDataType(ActionContext context);
 
-	protected String getDataTypeField() {
+	protected String getDataTypeField(DataType baseDataType) {
 		// The base implementation only searches for references to the data type, not specific
 		// fields.  Subclasses can change this behavior
 		return null;
@@ -89,23 +88,8 @@ public abstract class AbstractFindReferencesDataTypeAction extends DockingAction
 
 		DataType dataType = getDataType(context);
 		DataType baseDataType = ReferenceUtils.getBaseDataType(dataType);
-		String field = getDataTypeField();
-
-		// sanity check - should not happen
-		if (field != null && !(baseDataType instanceof Composite)) {
-			Msg.error(this, "Somehow have a field without a Composite parent--searching " +
-				"only for the parent type '" + dataType + "'; field '" + field + "'");
-			Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(dataType));
-			return;
-		}
-
-		if (field == null) {
-			Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(dataType));
-		}
-		else {
-			Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(
-				(Composite) baseDataType, field));
-		}
+		String field = getDataTypeField(baseDataType);
+		Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(baseDataType, field));
 	}
 
 }

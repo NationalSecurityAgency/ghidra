@@ -496,15 +496,18 @@ public class GHelpBroker extends DefaultHelpBroker {
 		Rectangle relativeArea = SwingUtilities.convertRectangle(scrollPane, area, contentPane);
 		Shape star = new StarShape(relativeArea.getLocation());
 
-		lastAnimator =
+		Animator animator =
 			AnimationUtils.createPaintingAnimator(helpWindow, new LocationHintPainter(star));
-		lastAnimator.addTarget(new TimingTargetAdapter() {
+		if (animator == null) {
+			return;
+		}
 
+		lastAnimator = animator;
+		lastAnimator.addTarget(new TimingTargetAdapter() {
 			@Override
 			public void end() {
 				lastAnimator = null;
 			}
-
 		});
 	}
 

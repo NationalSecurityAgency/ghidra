@@ -71,7 +71,6 @@ src/main/resources/log4j-appender-logpanel.xml||GHIDRA||||END|
 src/main/resources/log4j-appender-rolling-file-scripts.xml||GHIDRA||||END|
 src/main/resources/log4j-appender-rolling-file.xml||GHIDRA||||END|
 src/main/resources/log4j-appender-test-console-with-links.xml||GHIDRA||||END|
-src/main/resources/log4j2.xml||GHIDRA||||END|
 src/test/resources/ddtest/B||GHIDRA||||END|
 src/test/resources/ddtest/a||GHIDRA||||END|
 src/test/resources/ddtest/c||GHIDRA||||END|

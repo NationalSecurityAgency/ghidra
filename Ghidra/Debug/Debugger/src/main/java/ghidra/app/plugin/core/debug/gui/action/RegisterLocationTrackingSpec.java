@@ -76,7 +76,7 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec {
 		// TODO: Action to select the address space
 		// Could use code unit, but that can't specify space, yet, either....
 		return computeDefaultAddressSpace(coordinates)
-				.getAddress(value.getUnsignedValue().longValue());
+				.getAddress(value.getUnsignedValue().longValue(), true);
 	}
 
 	@Override

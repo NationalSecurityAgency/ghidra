@@ -606,7 +606,7 @@ public class DbgManagerImpl implements DbgManager {
 		handlerMap.putVoid(DbgBreakpointDeletedEvent.class, this::processBreakpointDeleted);
 
 		statusMap.put(DbgBreakpointEvent.class, DebugStatus.BREAK);
-		statusMap.put(DbgExceptionEvent.class, DebugStatus.BREAK);
+		statusMap.put(DbgExceptionEvent.class, DebugStatus.NO_CHANGE);
 		statusMap.put(DbgProcessCreatedEvent.class, DebugStatus.BREAK);
 		statusMap.put(DbgStateChangedEvent.class, DebugStatus.NO_CHANGE);
 		statusMap.put(DbgStoppedEvent.class, DebugStatus.BREAK);
@@ -941,6 +941,8 @@ public class DbgManagerImpl implements DbgManager {
 					if (status.threadState.equals(ExecutionState.RUNNING)) {
 						//System.err.println("RUNNING " + id);
 						dbgState = DbgState.RUNNING;
+						// NB: Needed by GADP variants, but not IN-VM
+						getEventListeners().fire.memoryChanged(currentProcess, 0L, 0, evt.getCause());
 						processEvent(new DbgRunningEvent(eventThread.getId()));
 					}
 					if (!threads.containsValue(eventThread)) {

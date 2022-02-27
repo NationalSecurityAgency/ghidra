@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import java.util.*;
+
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
 
 import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
@@ -64,7 +65,7 @@ public class DWARFProgram implements Closeable {
 	 * for more info.
 	 * <p>
 	 * @param program {@link Program} to test
-	 * @return boolean true if program has DWARF info, false if not
+	 * @return boolean true if program probably has DWARF info, false if not
 	 */
 	public static boolean isDWARF(Program program) {
 		String format = Objects.requireNonNullElse(program.getExecutableFormat(), "");
@@ -78,6 +79,27 @@ public class DWARFProgram implements Closeable {
 				return DSymSectionProvider.getDSYMForProgram(program) != null;
 		}
 		return false;
+	}
+
+	/**
+	 * Returns true if the specified {@link Program program} has DWARF information.
+	 * <p>
+	 * This is similar to {@link #isDWARF(Program)}, but is a stronger check that is more
+	 * expensive as it could involve searching for external files.
+	 * <p>
+	 * 
+	 * @param program {@link Program} to test
+	 * @param monitor {@link TaskMonitor} that can be used to cancel
+	 * @return boolean true if the program has DWARF info, false if not
+	 */
+	public static boolean hasDWARFData(Program program, TaskMonitor monitor) {
+		if (!isDWARF(program)) {
+			return false;
+		}
+		try (DWARFSectionProvider dsp =
+			DWARFSectionProviderFactory.createSectionProviderFor(program, monitor)) {
+			return dsp != null;
+		}
 	}
 
 	private final Program program;
@@ -343,6 +365,26 @@ public class DWARFProgram implements Closeable {
 			}
 		}
 
+		if (name == null && diea.isStructureType()) {
+			String fingerprint = DWARFUtil.getStructLayoutFingerprint(diea);
+
+			// check to see if there are struct member defs that ref this anon type
+			// and build a name using the field names
+			List<DIEAggregate> referringMembers = (diea != null)
+					? diea.getProgram().getTypeReferers(diea, DWARFTag.DW_TAG_member)
+					: null;
+
+			String referringMemberNames = getReferringMemberFieldNames(referringMembers);
+			if (!referringMemberNames.isEmpty()) {
+				parentDNI = getName(referringMembers.get(0).getParent());
+				referringMemberNames = "_for_" + referringMemberNames;
+			}
+			name =
+				"anon_" + DWARFUtil.getContainerTypeName(diea) + "_" + fingerprint +
+					referringMemberNames;
+			return parentDNI.createChild(null, name, DWARFUtil.getSymbolTypeFromDIE(diea));
+		}
+
 		boolean isAnon = false;
 		if (name == null) {
 			switch (diea.getTag()) {
@@ -425,6 +467,36 @@ public class DWARFProgram implements Closeable {
 
 	}
 
+	private String getReferringMemberFieldNames(List<DIEAggregate> referringMembers) {
+		if (referringMembers == null || referringMembers.isEmpty()) {
+			return "";
+		}
+		DIEAggregate commonParent = referringMembers.get(0).getParent();
+		StringBuilder result = new StringBuilder();
+		for (DIEAggregate referringMember : referringMembers) {
+			if (commonParent != referringMember.getParent()) {
+				// if there is an inbound referring link that isn't from the same parent,
+				// abort
+				return "";
+			}
+			String memberName = referringMember.getName();
+			if (memberName == null) {
+				int positionInParent =
+					DWARFUtil.getMyPositionInParent(referringMember.getHeadFragment());
+				if (positionInParent == -1) {
+					continue;
+				}
+				DWARFNameInfo parentDNI = getName(commonParent);
+				memberName = parentDNI.getName() + "_" + Integer.toString(positionInParent);
+			}
+			if (result.length() > 0) {
+				result.append("_");
+			}
+			result.append(memberName);
+		}
+		return result.toString();
+	}	
+	
 	/**
 	 * Transform a string with a C++ template-like syntax into a hopefully shorter version that
 	 * uses a fixed-length hash of the original string.

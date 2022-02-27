@@ -30,7 +30,8 @@ package ghidra.util.graph;
  * 
  * 
  */
-public class SimpleWeightedDigraph extends WeightedDigraph{
+@Deprecated(forRemoval = true, since = "10.2") // This class is no longer used or tested.  Use GraphAlgorithms
+public class SimpleWeightedDigraph extends WeightedDigraph {
 	private final boolean allowLoops;
 
 	/**
@@ -51,9 +52,9 @@ public class SimpleWeightedDigraph extends WeightedDigraph{
 	 * DoubleAttribute vertexWeights = 
 	 * 		(DoubleAttribute)this.vertexAttributes().createAttribute("weight", AttributeManager.DOUBLE_TYPE);
 	 */
-	public SimpleWeightedDigraph(int vertexCapacity, int edgeCapacity, double defaultEdgeWeight, boolean loopsAllowed) 
-	{
-		super( vertexCapacity, edgeCapacity, defaultEdgeWeight );
+	public SimpleWeightedDigraph(int vertexCapacity, int edgeCapacity, double defaultEdgeWeight,
+			boolean loopsAllowed) {
+		super(vertexCapacity, edgeCapacity, defaultEdgeWeight);
 		allowLoops = loopsAllowed;
 	}
 
@@ -65,9 +66,8 @@ public class SimpleWeightedDigraph extends WeightedDigraph{
 	 * @param edgeCapacity
 	 * @param defaultEdgeWeight
 	 */
-	public SimpleWeightedDigraph(int vertexCapacity, int edgeCapacity, double defaultEdgeWeight) 
-	{
-		super( vertexCapacity, edgeCapacity, defaultEdgeWeight );
+	public SimpleWeightedDigraph(int vertexCapacity, int edgeCapacity, double defaultEdgeWeight) {
+		super(vertexCapacity, edgeCapacity, defaultEdgeWeight);
 		allowLoops = false;
 	}
 
@@ -79,9 +79,8 @@ public class SimpleWeightedDigraph extends WeightedDigraph{
 	 * @param vertexCapacity
 	 * @param edgeCapacity
 	 */
-	public SimpleWeightedDigraph(int vertexCapacity, int edgeCapacity) 
-	{
-		super( vertexCapacity, edgeCapacity, 1.0 );
+	public SimpleWeightedDigraph(int vertexCapacity, int edgeCapacity) {
+		super(vertexCapacity, edgeCapacity, 1.0);
 		allowLoops = false;
 	}
 
@@ -95,16 +94,17 @@ public class SimpleWeightedDigraph extends WeightedDigraph{
 	 * @return true if the edge was added sucessfully.
 	 */
 	@Override
-    public boolean add( Edge e )
-	{
-		if( !allowLoops && (e.from() == e.to()) ) return false;
-		Edge[] ft = this.getEdges( e.from() , e.to() );
-		if( ft.length == 0 )
-		{
-			return super.add( e );
+	public boolean add(Edge e) {
+		if (!allowLoops && (e.from() == e.to())) {
+			return false;
 		}
-		return this.setWeight( ft[0] , this.getWeight( ft[0] ) + this.getDefaultEdgeWeight() );
+		Edge[] ft = this.getEdges(e.from(), e.to());
+		if (ft.length == 0) {
+			return super.add(e);
+		}
+		return this.setWeight(ft[0], this.getWeight(ft[0]) + this.getDefaultEdgeWeight());
 	}
+
 	/** 
 	 * Add an edge with the the specified edge weight. 
 	 * 
@@ -116,44 +116,40 @@ public class SimpleWeightedDigraph extends WeightedDigraph{
 	 * @return true if the edge was added sucessfully.
 	 */
 	@Override
-    public boolean add( Edge e, double weight )
-	{
-		if( !allowLoops && (e.from() == e.to()) ) return false;
-		Edge[] ft = this.getEdges( e.from() , e.to() );
-		if( ft.length == 0 )
-		{
-			return super.add( e , weight);
-		}
-		return this.setWeight( ft[0] , this.getWeight( ft[0] ) + weight );
-	}
-	
-	@Override
-    public boolean remove( Edge e )
-	{
-		Edge[] ft = this.getEdges( e.from() , e.to() );
-		if( ft.length == 0 ) {
+	public boolean add(Edge e, double weight) {
+		if (!allowLoops && (e.from() == e.to())) {
 			return false;
 		}
-		return super.remove( ft[0] );		
+		Edge[] ft = this.getEdges(e.from(), e.to());
+		if (ft.length == 0) {
+			return super.add(e, weight);
+		}
+		return this.setWeight(ft[0], this.getWeight(ft[0]) + weight);
 	}
-		
-	
+
 	@Override
-    public double getWeight( Edge e )
-	{
-		Edge[] ft = this.getEdges( e.from() , e.to() );
-		if( ft.length == 0 ) {
+	public boolean remove(Edge e) {
+		Edge[] ft = this.getEdges(e.from(), e.to());
+		if (ft.length == 0) {
+			return false;
+		}
+		return super.remove(ft[0]);
+	}
+
+	@Override
+	public double getWeight(Edge e) {
+		Edge[] ft = this.getEdges(e.from(), e.to());
+		if (ft.length == 0) {
 			return 0.0;
 		}
-		return super.getWeight( ft[0] );		
+		return super.getWeight(ft[0]);
 	}
-	
-	
+
 	@Override
-    public DirectedGraph copy()
-	{
-		SimpleWeightedDigraph copy = new SimpleWeightedDigraph(this.numVertices(), this.numEdges(), this.getDefaultEdgeWeight(), allowLoops);
-		copyAll( copy );
+	public DirectedGraph copy() {
+		SimpleWeightedDigraph copy = new SimpleWeightedDigraph(this.numVertices(), this.numEdges(),
+			this.getDefaultEdgeWeight(), allowLoops);
+		copyAll(copy);
 		return copy;
 	}
 

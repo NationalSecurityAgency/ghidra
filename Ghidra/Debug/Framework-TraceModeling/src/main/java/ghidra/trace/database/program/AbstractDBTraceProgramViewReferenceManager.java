@@ -25,6 +25,7 @@ import javax.help.UnsupportedOperationException;
 
 import com.google.common.collect.Range;
 
+import generic.NestedIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Variable;
@@ -161,6 +162,15 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 	}
 
 	@Override
+	public void removeAllReferencesTo(Address toAddr) {
+		if (refs(false) == null) {
+			return;
+		}
+		refs.clearReferencesTo(Range.closed(program.snap, program.snap),
+			new AddressRangeImpl(toAddr, toAddr));
+	}
+
+	@Override
 	public Reference[] getReferencesTo(Variable var) {
 		return TODO();
 	}
@@ -231,13 +241,22 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 				: (r1, r2) -> -r1.getFromAddress().compareTo(r2.getFromAddress());
 	}
 
+	protected Iterator<Reference> getReferenceIteratorForSnap(long snap, Address startAddr) {
+		AddressIterator addresses =
+			refs.getReferenceSources(Range.singleton(snap)).getAddresses(startAddr, true);
+		return NestedIterator.start(addresses, a -> {
+			return refs.getReferencesFrom(snap, a).iterator();
+		});
+	}
+
 	@Override
 	public ReferenceIterator getReferenceIterator(Address startAddr) {
 		if (refs(false) == null) {
 			return new ReferenceIteratorAdapter(Collections.emptyIterator());
 		}
+		// TODO: This will fail to occlude on equal (src,dst,opIndex) keys
 		return new ReferenceIteratorAdapter(
-			program.viewport.mergedIterator(s -> refs.getReferencesFrom(s, startAddr).iterator(),
+			program.viewport.mergedIterator(s -> getReferenceIteratorForSnap(s, startAddr),
 				getReferenceFromComparator(true)));
 	}
 

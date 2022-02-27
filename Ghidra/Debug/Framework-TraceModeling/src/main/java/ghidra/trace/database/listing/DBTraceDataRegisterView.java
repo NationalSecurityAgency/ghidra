@@ -15,8 +15,8 @@
  */
 package ghidra.trace.database.listing;
 
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.listing.TraceDataRegisterView;
+import ghidra.trace.model.thread.TraceThread;
 
 public class DBTraceDataRegisterView extends DBTraceDataView implements TraceDataRegisterView {
 	public DBTraceDataRegisterView(DBTraceCodeSpace space) {
@@ -24,7 +24,7 @@ public class DBTraceDataRegisterView extends DBTraceDataView implements TraceDat
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return space.getThread();
 	}
 }

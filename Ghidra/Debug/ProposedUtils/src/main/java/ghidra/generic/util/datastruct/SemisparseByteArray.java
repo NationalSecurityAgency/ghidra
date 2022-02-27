@@ -137,32 +137,32 @@ public class SemisparseByteArray {
 	 * Enumerate the initialized ranges within the given range
 	 * 
 	 * <p>
-	 * The given range is interpreted as closed-open, i.e., [a, b).
+	 * The given range is interpreted as closed, i.e., [a, b].
 	 * 
 	 * @param a the lower-bound, inclusive, of the range
-	 * @param b the upper-bound, exclusive, of the range
+	 * @param b the upper-bound, inclusive, of the range
 	 * @return the set of initialized ranges
 	 */
 	public synchronized RangeSet<UnsignedLong> getInitialized(long a, long b) {
 		UnsignedLong ua = UnsignedLong.fromLongBits(a);
 		UnsignedLong ub = UnsignedLong.fromLongBits(b);
-		return ImmutableRangeSet.copyOf(defined.subRangeSet(Range.closedOpen(ua, ub)));
+		return ImmutableRangeSet.copyOf(defined.subRangeSet(Range.closed(ua, ub)));
 	}
 
 	/**
 	 * Check if a range is completely initialized
 	 * 
 	 * <p>
-	 * The given range is interpreted as closed-open, i.e., [a,b).
+	 * The given range is interpreted as closed, i.e., [a, b].
 	 * 
 	 * @param a the lower-bound, inclusive, of the range
-	 * @param b the upper-bound, exclusive, of the range
+	 * @param b the upper-bound, inclusive, of the range
 	 * @return true if all indices in the range are initialized, false otherwise
 	 */
 	public synchronized boolean isInitialized(long a, long b) {
 		UnsignedLong ua = UnsignedLong.fromLongBits(a);
 		UnsignedLong ub = UnsignedLong.fromLongBits(b);
-		return defined.encloses(Range.closedOpen(ua, ub));
+		return defined.encloses(Range.closed(ua, ub));
 	}
 
 	/**
@@ -179,16 +179,16 @@ public class SemisparseByteArray {
 	 * Enumerate the uninitialized ranges within the given range
 	 * 
 	 * <p>
-	 * The given range is interpreted as closed-open, i.e., [a, b).
+	 * The given range is interpreted as closed, i.e., [a, b].
 	 * 
 	 * @param a the lower-bound, inclusive, of the range
-	 * @param b the upper-bound, exclusive, of the range
+	 * @param b the upper-bound, inclusive, of the range
 	 * @return the set of uninitialized ranges
 	 */
 	public synchronized RangeSet<UnsignedLong> getUninitialized(long a, long b) {
 		UnsignedLong ua = UnsignedLong.fromLongBits(a);
 		UnsignedLong ub = UnsignedLong.fromLongBits(b);
-		return ImmutableRangeSet.copyOf(defined.complement().subRangeSet(Range.closedOpen(ua, ub)));
+		return ImmutableRangeSet.copyOf(defined.complement().subRangeSet(Range.closed(ua, ub)));
 	}
 
 	/**
@@ -212,12 +212,23 @@ public class SemisparseByteArray {
 	 */
 	public synchronized void putData(final long loc, final byte[] data, final int offset,
 			final int length) {
+		if (length == 0) {
+			return;
+		}
 		if (length < 0) {
 			throw new IllegalArgumentException("length: " + length);
 		}
+		if (Long.compareUnsigned(loc + length - 1, loc) < 0) {
+			throw new IndexOutOfBoundsException("given offset and length would exceed ULONG_MAX");
+		}
 		UnsignedLong uLoc = UnsignedLong.fromLongBits(loc);
 		UnsignedLong uEnd = UnsignedLong.fromLongBits(loc + length);
-		defined.add(Range.closedOpen(uLoc, uEnd));
+		if (uEnd.longValue() == 0) {
+			defined.add(Range.closed(uLoc, UnsignedLong.MAX_VALUE));
+		}
+		else {
+			defined.add(Range.closedOpen(uLoc, uEnd));
+		}
 
 		// Write out portion of first block (could be full block)
 		long blockNum = Long.divideUnsigned(loc, BLOCK_SIZE);
@@ -253,6 +264,12 @@ public class SemisparseByteArray {
 			return 0;
 		}
 		UnsignedLong diff = rng.upperEndpoint().minus(uLoc);
+		if (diff.longValue() == -1) {
+			return Integer.MAX_VALUE;
+		}
+		if (rng.upperBoundType() == BoundType.CLOSED) {
+			diff = diff.plus(UnsignedLong.ONE);
+		}
 		if (diff.compareTo(UnsignedLong.valueOf(Integer.MAX_VALUE)) >= 0) {
 			return Integer.MAX_VALUE;
 		}

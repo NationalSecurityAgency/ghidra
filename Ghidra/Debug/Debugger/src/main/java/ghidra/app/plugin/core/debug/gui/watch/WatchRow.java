@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.debug.gui.watch;
 
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -33,14 +32,15 @@ import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
-import ghidra.util.database.UndoableTransaction;
 
 public class WatchRow {
 	public static final int TRUNCATE_BYTES_LENGTH = 64;
@@ -64,6 +64,7 @@ public class WatchRow {
 	private byte[] value;
 	private byte[] prevValue; // Value at previous coordinates
 	private String valueString;
+	private Object valueObj;
 	private Throwable error = null;
 
 	public WatchRow(DebuggerWatchesProvider provider, String expression) {
@@ -77,6 +78,7 @@ public class WatchRow {
 		reads = null;
 		value = null;
 		valueString = null;
+		valueObj = null;
 	}
 
 	protected void recompile() {
@@ -125,19 +127,28 @@ public class WatchRow {
 			address = valueWithAddress.getRight();
 			reads = executorWithAddress.getReads();
 
-			valueString = parseAsDataType();
+			valueObj = parseAsDataTypeObj();
+			valueString = parseAsDataTypeStr();
 		}
 		catch (Exception e) {
 			error = e;
 		}
 	}
 
-	protected String parseAsDataType() {
+	protected String parseAsDataTypeStr() {
 		if (dataType == null || value == null) {
 			return "";
 		}
 		MemBuffer buffer = new ByteMemBufferImpl(address, value, language.isBigEndian());
 		return dataType.getRepresentation(buffer, SettingsImpl.NO_SETTINGS, value.length);
+	}
+	
+	protected Object parseAsDataTypeObj() {
+		if (dataType == null || value == null) {
+			return null;
+		}
+		MemBuffer buffer = new ByteMemBufferImpl(address, value, language.isBigEndian());
+		return dataType.getValue(buffer, SettingsImpl.NO_SETTINGS, value.length);
 	}
 
 	public static class ReadDepsTraceBytesPcodeExecutorState
@@ -299,7 +310,8 @@ public class WatchRow {
 	public void setDataType(DataType dataType) {
 		this.typePath = dataType == null ? null : dataType.getPathName();
 		this.dataType = dataType;
-		valueString = parseAsDataType();
+		valueString = parseAsDataTypeStr();
+		valueObj = parseAsDataTypeObj();
 		provider.contextChanged();
 	}
 
@@ -357,6 +369,10 @@ public class WatchRow {
 		return valueString;
 	}
 
+	public Object getValueObj() {
+		return valueObj;
+	}
+	
 	public boolean isValueEditable() {
 		return address != null && provider.isEditsEnabled();
 	}
@@ -415,7 +431,7 @@ public class WatchRow {
 			return;
 		}
 
-		try (UndoableTransaction tid =
+		/*try (UndoableTransaction tid =
 			UndoableTransaction.start(trace, "Write watch at " + address, true)) {
 			final TraceMemorySpace space;
 			if (address.isRegisterAddress()) {
@@ -427,7 +443,27 @@ public class WatchRow {
 				space = trace.getMemoryManager().getMemorySpace(address.getAddressSpace(), true);
 			}
 			space.putBytes(coordinates.getViewSnap(), address, ByteBuffer.wrap(bytes));
+		}*/
+		TraceSchedule time =
+			coordinates.getTime().patched(coordinates.getThread(), generateSleigh(bytes));
+		provider.goToTime(time);
+	}
+
+	protected String generateSleigh(byte[] bytes) {
+		BigInteger value = Utils.bytesToBigInteger(bytes, bytes.length,
+			trace.getBaseLanguage().isBigEndian(), false);
+		if (address.isMemoryAddress()) {
+			AddressSpace space = address.getAddressSpace();
+			return String.format("*[%s]:%d 0x%s:%d=0x%s",
+				space.getName(), bytes.length,
+				address.getOffsetAsBigInteger().toString(16), space.getPointerSize(),
+				value.toString(16));
 		}
+		Register register = trace.getBaseLanguage().getRegister(address, bytes.length);
+		if (register == null) {
+			throw new AssertionError("Can only modify memory or register");
+		}
+		return String.format("%s=0x%s", register, value.toString(16));
 	}
 
 	public int getValueLength() {

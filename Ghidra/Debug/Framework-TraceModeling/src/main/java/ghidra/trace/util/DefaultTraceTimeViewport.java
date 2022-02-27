@@ -29,6 +29,7 @@ import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.*;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.ClosedException;
@@ -147,6 +148,9 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	@Override
 	public <T> boolean isCompletelyVisible(AddressRange range, Range<Long> lifespan, T object,
 			Occlusion<T> occlusion) {
+		if (range == null) {
+			return false;
+		}
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
 				for (Range<Long> rng : ordered) {

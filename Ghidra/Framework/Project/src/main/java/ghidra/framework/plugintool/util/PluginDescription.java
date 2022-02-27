@@ -67,7 +67,7 @@ public class PluginDescription implements Comparable<PluginDescription> {
 	private final List<Class<? extends PluginEvent>> eventsConsumed;
 	private final List<Class<? extends PluginEvent>> eventsProduced;
 
-	private PluginDescription(Class<? extends Plugin> pluginClass, String pluginPackageName,
+	PluginDescription(Class<? extends Plugin> pluginClass, String pluginPackageName,
 			String category, String shortDescription, String description, PluginStatus status,
 			boolean isSlowInstallation, List<Class<?>> servicesRequired,
 			List<Class<?>> servicesProvided, List<Class<? extends PluginEvent>> eventsConsumed,
@@ -94,7 +94,7 @@ public class PluginDescription implements Comparable<PluginDescription> {
 
 	/**
 	 * Returns true if this plugin requires a noticeable amount of time to load when installed.
-	 * @return
+	 * @return true if this plugin requires a noticeable amount of time to load when installed.
 	 */
 	public boolean isSlowInstallation() {
 		return isSlowInstallation;
@@ -141,6 +141,7 @@ public class PluginDescription implements Comparable<PluginDescription> {
 
 	/**
 	 * Return the name of the plugin.
+	 * @return the name of the plugin.
 	 */
 	public String getName() {
 		return name;
@@ -186,6 +187,7 @@ public class PluginDescription implements Comparable<PluginDescription> {
 
 	/**
 	 * Returns the development status of the plugin.
+	 * @return the status.
 	 */
 	public PluginStatus getStatus() {
 		return status;
@@ -253,9 +255,9 @@ public class PluginDescription implements Comparable<PluginDescription> {
 		return name.compareTo(other.name);
 	}
 
-	//-------------------------------------------------------------------------------------
-	// static methods that we don't care about
-	//-------------------------------------------------------------------------------------
+//==================================================================================================
+// static methods that will eventually be removed as old client plugins have been updated
+//==================================================================================================
 
 	/**
 	 * Constructs a new PluginDescription for the given plugin class.

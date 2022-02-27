@@ -1016,6 +1016,17 @@ this problem is to install <i>haveged</i> (HArdware Volatile Entropy Gathering a
 Expansion Daemon) which will satisfy the entropy demand needed by /dev/random.
 </P>
 
+<br>
+<a name="macDiskAccess"><h3><u>Mac OS - Service fails to start</u></h3></a>
+<P>
+The installed service may fail to start with Mac OS Majave (10.14) and later due
+to changes in the Mac OS system protection feature.  When the service fails to start it does not
+provide any error or logging to help determine the cause.  Although granting <i>Full Disk Access</i> 
+to <i>Java</i> can be a workaround, this is rather drastic and is not considered desirable 
+since it will allow any Java application to run as root.  For this reason, installation
+of the Ghidra Server as a service on Mac OS is discouraged.
+</P>
+
 (<a href="#top">Back to Top</a>)
 <div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
 

@@ -22,7 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 import docking.widgets.fieldpanel.support.Highlight;
 import ghidra.app.util.viewer.field.*;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.Composite;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.util.datastruct.Accumulator;
@@ -30,8 +29,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A data type location descriptor that allows you to represent a location for a member field of
- * a composite.
+ * A data type location descriptor that allows you to represent a location for a member field of a
+ * data type, such as a composite or an enum
  */
 public class GenericCompositeDataTypeLocationDescriptor extends GenericDataTypeLocationDescriptor {
 
@@ -50,9 +49,7 @@ public class GenericCompositeDataTypeLocationDescriptor extends GenericDataTypeL
 	@Override
 	protected void doGetReferences(Accumulator<LocationReference> accumulator, TaskMonitor monitor)
 			throws CancelledException {
-
-		Composite currentDataType = (Composite) getDataType();
-		ReferenceUtils.findDataTypeReferences(accumulator, currentDataType, fieldName, program,
+		ReferenceUtils.findDataTypeReferences(accumulator, getDataType(), fieldName, program,
 			useDynamicSearching, monitor);
 	}
 
@@ -102,13 +99,13 @@ public class GenericCompositeDataTypeLocationDescriptor extends GenericDataTypeL
 			// the parent's name and not the field's name.
 		}
 		else if (LabelFieldFactory.class.isAssignableFrom(fieldFactoryClass)) {
-			// It would be nice to highlight the label that points into data structures.  
+			// It would be nice to highlight the label that points into data structures.
 			// However, the label is on the parent address, which is not in our list of matches
-			// when we are offcut.  Further, using the program to lookup each address that 
+			// when we are offcut.  Further, using the program to lookup each address that
 			// comes in to see if it is our paren't address seems too expensive, as highlighting
 			// code is called for every paint operation.
 			//
-			// We could add the parent match to the list of known addresses and then use that 
+			// We could add the parent match to the list of known addresses and then use that
 			// to lookup in real-time later.  To do this we would need the current list of
 			// reference addresses and a new list of parent data addresses.  That seems a bit
 			// involved just for highlighting a label.

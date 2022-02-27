@@ -72,7 +72,7 @@ public abstract class AbstractModelForDbgengFrameActivationTest
 		String line = waitOn(interpreter.executeCapture(".frame")).trim();
 		assertFalse(line.contains("\n"));
 		int frameId = Integer.parseInt(line.split("\\s+")[0], 16);
-		int expId = Integer.decode(getStackPattern().matchIndices(expected.getPath()).get(2));
+		int expId = Integer.decode(getStackPattern().matchKeys(expected.getPath()).get(2));
 		assertEquals(expId, frameId);
 	}
 

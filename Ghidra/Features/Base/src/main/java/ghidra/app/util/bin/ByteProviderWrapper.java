@@ -24,10 +24,11 @@ import ghidra.formats.gfilesystem.FSRL;
  * A {@link ByteProvider} constrained to a sub-section of an existing {@link ByteProvider}.
  */
 public class ByteProviderWrapper implements ByteProvider {
-	private ByteProvider provider;
-	private long subOffset;
-	private long subLength;
-	private FSRL fsrl;
+
+	protected final ByteProvider provider;
+	protected final long subOffset;
+	protected final long subLength;
+	protected final FSRL fsrl;
 
 	/**
 	 * Creates a wrapper around a {@link ByteProvider} that contains the same bytes as the specified
@@ -114,11 +115,20 @@ public class ByteProviderWrapper implements ByteProvider {
 
 	@Override
 	public byte readByte(long index) throws IOException {
+		if (index < 0 || index >= subLength) {
+			throw new IOException("Invalid index: " + index);
+		}
 		return provider.readByte(subOffset + index);
 	}
 
 	@Override
 	public byte[] readBytes(long index, long length) throws IOException {
+		if (index < 0 || index >= subLength) {
+			throw new IOException("Invalid index: " + index);
+		}
+		if (index + length > subLength) {
+			throw new IOException("Unable to read past EOF: " + index + ", " + length);
+		}
 		return provider.readBytes(subOffset + index, length);
 	}
 }

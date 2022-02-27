@@ -68,7 +68,7 @@ public class DataTypeReference {
 			fieldNameText +
 			"\tfunction: " + function.getName() + "\n" +
 			"\taddress: " + address + "\n" +
-			"\tcontext: " + context + "\n" +
+			"\tcontext: " + context.getPlainText() + "\n" +
 		"}";
 		//@formatter:on
 	}

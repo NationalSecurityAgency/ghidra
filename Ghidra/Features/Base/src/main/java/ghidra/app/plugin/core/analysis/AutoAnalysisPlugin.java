@@ -63,21 +63,15 @@ import ghidra.util.task.TaskLauncher;
 public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerListener {
 
 	private static final String SHOW_ANALYSIS_OPTIONS = "Show Analysis Options";
-
 	private static final String ANALYZE_GROUP_NAME = "Analyze";
 
 	private DockingAction autoAnalyzeAction;
-	private DockingAction analyzeAllAction;
 
 	private HelpLocation helpLocation;
 
 	private List<Analyzer> analyzers = new ArrayList<>();
 	private List<OneShotAnalyzerAction> oneShotActions = new ArrayList<>();
 
-	/**
-	 * Creates a new instance of the plugin giving it the tool that it will work
-	 * in.
-	 */
 	public AutoAnalysisPlugin(PluginTool tool) {
 		super(tool);
 
@@ -125,8 +119,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 					.onAction(this::analyzeCallback)
 					.buildAndInstall(tool);
 
-		analyzeAllAction =
-			new ActionBuilder("Analyze All Open", getName())
+		new ActionBuilder("Analyze All Open", getName())
 					.supportsDefaultToolContext(true)
 					.menuPath("&Analysis", "Analyze All &Open...")
 					.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
@@ -206,30 +199,17 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		analysisMgr.reAnalyzeAll(selection);
 	}
 
-	/**
-	 * Get the description of this plugin.
-	 */
 	public static String getDescription() {
 		return "Provides coordination and a service for All Auto Analysis tasks";
 	}
 
-	/**
-	 * Get the descriptive name.
-	 */
 	public static String getDescriptiveName() {
 		return "AutoAnalysisManager";
 	}
 
-	/**
-	 * Get the category.
-	 */
 	public static String getCategory() {
 		return "Analysis";
 	}
-
-	/***************************************************************************
-	 * Implementation of AutoAnalysis Service
-	 */
 
 	protected void programClosed(Program program) {
 
@@ -276,9 +256,10 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 	private void programActivated(final Program program) {
 
-		program.getOptions(StoredAnalyzerTimes.OPTIONS_LIST).registerOption(
-			StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
-			"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
+		program.getOptions(StoredAnalyzerTimes.OPTIONS_LIST)
+				.registerOption(
+					StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
+					"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
 
 		// invokeLater() to ensure that all other plugins have been notified of the program
 		// activated.  This makes sure plugins like the Listing have opened and painted the 

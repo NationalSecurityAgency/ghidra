@@ -55,7 +55,9 @@ public interface LldbModelTargetModule extends LldbModelTargetObject, TargetModu
 				Address min = space.getAddress(base);
 				Address max = min.add(sz - 1);
 				AddressRange range = new AddressRangeImpl(min, max);
-				map.put(RANGE_ATTRIBUTE_NAME, range);
+				if (range != null) {
+					map.put(RANGE_ATTRIBUTE_NAME, range);
+				}
 
 				String oldval = (String) getCachedAttribute(DISPLAY_ATTRIBUTE_NAME);
 				map.put(MODULE_NAME_ATTRIBUTE_NAME, namestr);

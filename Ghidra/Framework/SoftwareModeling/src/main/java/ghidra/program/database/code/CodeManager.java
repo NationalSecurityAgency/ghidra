@@ -15,8 +15,9 @@
  */
 package ghidra.program.database.code;
 
-import java.io.IOException;
 import java.util.*;
+
+import java.io.IOException;
 
 import db.*;
 import db.util.ErrorHandler;
@@ -472,11 +473,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 					if (prototype.hasDelaySlots()) {
 						// perform bounds check on entire delay slot instruction group
 						try {
-							endAddr =
-								startAddr
-										.addNoWrap(prototype.getFallThroughOffset(
-											protoInstr.getInstructionContext()))
-										.previous();
+							int fallThruOffset =
+								prototype.getFallThroughOffset(protoInstr.getInstructionContext());
+							endAddr = startAddr.addNoWrap(fallThruOffset - 1);
 						}
 						catch (AddressOverflowException e) {
 							break;
@@ -556,10 +555,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 					InstructionPrototype prototype = lastInstruction.getPrototype();
 					if (prototype.hasDelaySlots()) {
 						try {
-							maxAddr = lastInstruction.getAddress()
-									.addNoWrap(prototype.getFallThroughOffset(
-										lastInstruction.getInstructionContext()))
-									.previous();
+							int fallThruOffset = prototype
+									.getFallThroughOffset(lastInstruction.getInstructionContext());
+							maxAddr = lastInstruction.getAddress().addNoWrap(fallThruOffset - 1);
 						}
 						catch (AddressOverflowException e) {
 							// ignore

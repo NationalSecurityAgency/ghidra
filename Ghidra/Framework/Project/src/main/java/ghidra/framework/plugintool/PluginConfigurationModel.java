@@ -17,63 +17,54 @@ package ghidra.framework.plugintool;
 
 import java.util.*;
 
-import javax.swing.Icon;
-import javax.swing.event.ChangeListener;
-
-import docking.action.DockingActionIf;
-import docking.actions.KeyBindingUtils;
 import ghidra.framework.plugintool.util.*;
 import ghidra.util.Msg;
-import resources.ResourceManager;
+import utility.function.Callback;
+import utility.function.Dummy;
 
 public class PluginConfigurationModel {
-	private static Icon EXPERIMENTAL_ICON =
-		ResourceManager.loadImage("images/applications-science.png");
-	private final ChangeListener listener;
-	private final PluginTool tool;
-	private PluginClassManager pluginClassManager;
+
+	private final PluginInstaller pluginInstaller;
+	private PluginPackagingProvider pluginPackagingProvider;
+	private Callback listener = Callback.dummy();
 	private Map<PluginDescription, Plugin> loadedPluginMap = new HashMap<>();
 	private Set<PluginDescription> pluginsWithDependenciesSet = new HashSet<>();
 	private List<PluginDescription> unStablePluginDescriptions;
 	private PluginPackage unstablePackage;
 
 	public PluginConfigurationModel(PluginTool tool) {
-		this(tool, e -> {
-			// dummy listener
-		});
+		this(new DefaultPluginInstaller(tool),
+			new DeafultPluginPackagingProvider(tool.getPluginClassManager()));
 	}
 
-	public PluginConfigurationModel(PluginTool tool, ChangeListener listener) {
-		this.tool = tool;
-		this.listener = listener;
-		pluginClassManager = tool.getPluginClassManager();
+	public PluginConfigurationModel(PluginInstaller pluginInstaller,
+			PluginPackagingProvider pluginPackagingProvider) {
+
+		this.pluginInstaller = pluginInstaller;
+		this.pluginPackagingProvider = pluginPackagingProvider;
 		initLoadedPlugins();
-		unStablePluginDescriptions = pluginClassManager.getNonReleasedPluginDescriptions();
-		if (!unStablePluginDescriptions.isEmpty()) {
-			unstablePackage = new PluginPackage("Experimental", EXPERIMENTAL_ICON,
-				"This package contains plugins that are not fully tested and/or documented." +
-					"You must add these plugins individually.  Adding these plugins could cause the tool" +
-					" to become unstable.",
-				Integer.MAX_VALUE) {
-				@Override
-				public boolean isfullyAddable() {
-					return false;
-				}
-			};
-		}
+
+		unstablePackage = pluginPackagingProvider.getUnstablePluginPackage();
+		unStablePluginDescriptions = pluginPackagingProvider.getUnstablePluginDescriptions();
+	}
+
+	public void setChangeCallback(Callback listener) {
+		this.listener = Dummy.ifNull(listener);
 	}
 
 	public List<PluginPackage> getPluginPackages() {
-		List<PluginPackage> pluginPackages = pluginClassManager.getPluginPackages();
+		List<PluginPackage> pluginPackages = pluginPackagingProvider.getPluginPackages();
 		List<PluginPackage> packagesWithStablePlugins = new ArrayList<>();
 		for (PluginPackage pluginPackage : pluginPackages) {
-			if (pluginClassManager.getReleasedPluginDescriptions(pluginPackage).size() > 0) {
+			if (pluginPackagingProvider.getPluginDescriptions(pluginPackage).size() > 0) {
 				packagesWithStablePlugins.add(pluginPackage);
 			}
 		}
-		if (unstablePackage != null) {
+
+		if (!unStablePluginDescriptions.isEmpty()) {
 			packagesWithStablePlugins.add(unstablePackage);
 		}
+
 		return packagesWithStablePlugins;
 	}
 
@@ -81,17 +72,17 @@ public class PluginConfigurationModel {
 		if (pluginPackage == unstablePackage) {
 			return unStablePluginDescriptions;
 		}
-		return pluginClassManager.getReleasedPluginDescriptions(pluginPackage);
+		return pluginPackagingProvider.getPluginDescriptions(pluginPackage);
 	}
 
 	/**
-	 * Gets the loaded plugins from the tool and populates the loadedPluginMap and the 
-	 * pluginsWithDependenciesSet. 
+	 * Gets the loaded plugins from the tool and populates the loadedPluginMap and the
+	 * pluginsWithDependenciesSet.
 	 */
 	private void initLoadedPlugins() {
 		loadedPluginMap.clear();
 		pluginsWithDependenciesSet.clear();
-		List<Plugin> list = tool.getManagedPlugins();
+		List<Plugin> list = pluginInstaller.getManagedPlugins();
 		for (Plugin plugin : list) {
 			loadedPluginMap.put(getPluginDescription(plugin), plugin);
 			findDependencies(plugin, list);
@@ -104,8 +95,7 @@ public class PluginConfigurationModel {
 	 * @param plugins the list of all loaded plugins.
 	 */
 	private void findDependencies(Plugin plugin, List<Plugin> plugins) {
-		for (int i = 0; i < plugins.size(); i++) {
-			Plugin p = plugins.get(i);
+		for (Plugin p : plugins) {
 			if (p.dependsUpon(plugin)) {
 				pluginsWithDependenciesSet.add(getPluginDescription(plugin));
 			}
@@ -114,7 +104,7 @@ public class PluginConfigurationModel {
 
 	private PluginDescription getPluginDescription(Plugin plugin) {
 		String className = plugin.getClass().getName();
-		return pluginClassManager.getPluginDescription(className);
+		return pluginPackagingProvider.getPluginDescription(className);
 	}
 
 	public boolean isLoaded(PluginDescription pluginDescription) {
@@ -145,13 +135,14 @@ public class PluginConfigurationModel {
 
 	public void addPlugin(PluginDescription pluginDescription) {
 		try {
-			tool.addPlugin(pluginDescription.getPluginClass().getName());
+			String name = pluginDescription.getPluginClass().getName();
+			pluginInstaller.addPlugins(Arrays.asList(name));
 		}
 		catch (PluginException e) {
 			Msg.showError(this, null, "Error Loading Plugin", e.getMessage(), e);
 		}
 		initLoadedPlugins();
-		listener.stateChanged(null);
+		listener.call();
 	}
 
 	public void removeAllPlugins(PluginPackage pluginPackage) {
@@ -162,37 +153,55 @@ public class PluginConfigurationModel {
 				loadedPlugins.add(loadedPluginMap.get(pluginDescription));
 			}
 		}
-		tool.removePlugins(loadedPlugins.toArray(new Plugin[loadedPlugins.size()]));
+		pluginInstaller.removePlugins(loadedPlugins);
 		initLoadedPlugins();
-		listener.stateChanged(null);
+		listener.call();
 	}
 
-	public void addAllPlugins(PluginPackage pluginPackage) {
-		List<PluginDescription> pluginDescriptions = getPluginDescriptions(pluginPackage);
+	public void addSupportedPlugins(PluginPackage pluginPackage) {
 
+		PluginStatus activationLevel = pluginPackage.getActivationLevel();
+		List<PluginDescription> pluginDescriptions = getPluginDescriptions(pluginPackage);
 		List<String> pluginClasseNames = new ArrayList<>();
 		for (PluginDescription pluginDescription : pluginDescriptions) {
+
+			PluginStatus status = pluginDescription.getStatus();
+			if (status.compareTo(activationLevel) > 0) {
+				continue; // status is not good enough to be activated (e.g., UNSTABLE)
+			}
+
 			if (!isLoaded(pluginDescription)) {
 				pluginClasseNames.add(pluginDescription.getPluginClass().getName());
 			}
 		}
 		try {
-			tool.addPlugins(pluginClasseNames.toArray(new String[pluginClasseNames.size()]));
+			pluginInstaller.addPlugins(pluginClasseNames);
 		}
 		catch (PluginException e) {
 			Msg.showError(this, null, "Error Loading Plugin(s) ", e.getMessage(), e);
 		}
 		initLoadedPlugins();
-		listener.stateChanged(null);
+		listener.call();
+	}
+
+	public boolean hasOnlyUnstablePlugins(PluginPackage pluginPackage) {
+		List<PluginDescription> pluginDescriptions = getPluginDescriptions(pluginPackage);
+		for (PluginDescription pluginDescription : pluginDescriptions) {
+			PluginStatus status = pluginDescription.getStatus();
+			if (status.compareTo(PluginStatus.UNSTABLE) < 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public void removePlugin(PluginDescription pluginDescription) {
 		Plugin plugin = loadedPluginMap.get(pluginDescription);
 		if (plugin != null) {
-			tool.removePlugins(new Plugin[] { plugin });
+			pluginInstaller.removePlugins(Arrays.asList(plugin));
 		}
 		initLoadedPlugins();
-		listener.stateChanged(null);
+		listener.call();
 	}
 
 	/**
@@ -207,28 +216,15 @@ public class PluginConfigurationModel {
 	}
 
 	/**
-	 * Returns all of the actions loaded by the Plugin represented by the given PluginDescription.
-	 * An empty list will be returned if no actions are loaded or if the plugin has not been 
-	 * loaded.
-	 * @param pluginDescription The description for which to find loaded actions.
-	 * @return all of the actions loaded by the Plugin represented by the given PluginDescription.
-	 */
-	public Set<DockingActionIf> getActionsForPlugin(PluginDescription pluginDescription) {
-		if (!isLoaded(pluginDescription)) {
-			return Collections.emptySet();
-		}
-
-		return KeyBindingUtils.getKeyBindingActionsForOwner(tool, pluginDescription.getName());
-	}
-
-	/**
-	 * Return the names of the plugins that are dependent on some service
-	 * that the plugin corresponding to the given PluginDescription provides.
+	 * Return the descriptions of the plugins that are dependent on some service that the plugin
+	 * corresponding to the given PluginDescription provides.
+	 *
 	 * @param pd PluginDescription of the plugin
+	 * @return the descriptions
 	 */
 	public List<PluginDescription> getDependencies(PluginDescription pd) {
 		Plugin plugin = loadedPluginMap.get(pd);
-		return (plugin != null) ? getDependencies(plugin, tool.getManagedPlugins())
+		return (plugin != null) ? getDependencies(plugin, pluginInstaller.getManagedPlugins())
 				: Collections.emptyList();
 	}
 
@@ -236,8 +232,7 @@ public class PluginConfigurationModel {
 		HashSet<PluginDescription> set = new HashSet<>();
 
 		// find out all plugins that depend on this plugin
-		for (int i = 0; i < plugins.size(); i++) {
-			Plugin p = plugins.get(i);
+		for (Plugin p : plugins) {
 			if (p.dependsUpon(plugin)) {
 				set.add(p.getPluginDescription());
 			}
@@ -246,7 +241,6 @@ public class PluginConfigurationModel {
 	}
 
 	public List<PluginDescription> getAllPluginDescriptions() {
-		return pluginClassManager.getAllPluginDescriptions();
+		return pluginPackagingProvider.getPluginDescriptions();
 	}
-
 }

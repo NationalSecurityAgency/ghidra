@@ -284,6 +284,9 @@ public interface DebugClient extends DebugClientReentrant {
 	}
 
 	public static String getModelKey(Object modelObject) {
+		if (modelObject == null) {
+			return null;
+		}
 		return modelObject.getClass() + ":" + getId(modelObject);
 	}
 

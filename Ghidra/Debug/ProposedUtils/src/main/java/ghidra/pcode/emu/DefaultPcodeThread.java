@@ -171,7 +171,8 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void overrideCounter(Address counter) {
 		setCounter(counter);
-		state.setVar(pc, arithmetic.fromConst(counter.getOffset(), pc.getMinimumByteSize()));
+		state.setVar(pc,
+			arithmetic.fromConst(counter.getAddressableWordOffset(), pc.getMinimumByteSize()));
 	}
 
 	@Override
@@ -211,7 +212,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void reInitialize() {
 		long offset = arithmetic.toConcrete(state.getVar(pc)).longValue();
-		setCounter(language.getDefaultSpace().getAddress(offset));
+		setCounter(language.getDefaultSpace().getAddress(offset, true));
 
 		if (contextreg != Register.NO_CONTEXT) {
 			try {
@@ -258,7 +259,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	}
 
 	protected void beginInstructionOrInject() {
-		PcodeProgram inj = injects.get(counter);
+		PcodeProgram inj = getInject(counter);
 		if (inj != null) {
 			instruction = null;
 			frame = executor.begin(inj);
@@ -283,11 +284,17 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		}
 		postExecuteInstruction();
 		frame = null;
+		instruction = null;
 	}
 
 	@Override
 	public PcodeFrame getFrame() {
 		return frame;
+	}
+
+	@Override
+	public Instruction getInstruction() {
+		return instruction;
 	}
 
 	protected void assertCompletedInstruction() {

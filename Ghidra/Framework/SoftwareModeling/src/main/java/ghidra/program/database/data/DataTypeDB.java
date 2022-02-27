@@ -17,8 +17,7 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.Collection;
 
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
@@ -452,10 +451,8 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	}
 
 	@Override
-	public DataType[] getParents() {
-		List<DataType> parents = dataMgr.getParentDataTypes(key);
-		DataType[] array = new DataType[parents.size()];
-		return parents.toArray(array);
+	public Collection<DataType> getParents() {
+		return dataMgr.getParentDataTypes(key);
 	}
 
 	@Override

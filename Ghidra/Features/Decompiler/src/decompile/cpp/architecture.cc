@@ -644,9 +644,9 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
   translate = newtrans;
   modifySpaces(newtrans);	// Give architecture chance to modify spaces, before copying
   copySpaces(newtrans);
-  insertSpace( new FspecSpace(this,translate,"fspec",numSpaces()));
-  insertSpace( new IopSpace(this,translate,"iop",numSpaces()));
-  insertSpace( new JoinSpace(this,translate,"join",numSpaces()));
+  insertSpace( new FspecSpace(this,translate,numSpaces()));
+  insertSpace( new IopSpace(this,translate,numSpaces()));
+  insertSpace( new JoinSpace(this,translate,numSpaces()));
   userops.initialize(this);
   if (translate->getAlignment() <= 8)
     min_funcsymbol_size = translate->getAlignment();
@@ -747,6 +747,7 @@ void Architecture::parseDynamicRule(const Element *el)
 /// This handles the \<prototype> and \<resolveprototype> tags. It builds the
 /// ProtoModel object based on the tag and makes it available generally to the decompiler.
 /// \param el is the XML tag element
+/// \return the new ProtoModel object
 ProtoModel *Architecture::parseProto(const Element *el)
 
 {
@@ -843,7 +844,7 @@ void Architecture::addOtherSpace(void)
 
 {
   Scope *scope = symboltab->getGlobalScope();
-  AddrSpace *otherSpace = getSpaceByName("OTHER");
+  AddrSpace *otherSpace = getSpaceByName(OtherSpace::NAME);
   symboltab->addRange(scope,otherSpace,0,otherSpace->getHighest());
   if (otherSpace->isOverlayBase()) {
     int4 num = numSpaces();
@@ -1100,6 +1101,26 @@ void Architecture::parseAggressiveTrim(const Element *el)
   }
 }
 
+/// Clone the named ProtoModel, attaching it to another name.
+/// \param aliasName is the new name to assign
+/// \param parentName is the name of the parent model
+void Architecture::createModelAlias(const string &aliasName,const string &parentName)
+
+{
+  map<string,ProtoModel *>::const_iterator iter = protoModels.find(parentName);
+  if (iter == protoModels.end())
+    throw LowlevelError("Requesting non-existent prototype model: "+parentName);
+  ProtoModel *model = (*iter).second;
+  if (model->isMerged())
+    throw LowlevelError("Cannot make alias of merged model: "+parentName);
+  if (model->getAliasParent() != (const ProtoModel *)0)
+    throw LowlevelError("Cannot make alias of an alias: "+parentName);
+  iter = protoModels.find(aliasName);
+  if (iter != protoModels.end())
+    throw LowlevelError("Duplicate ProtoModel name: "+aliasName);
+  protoModels[aliasName] = new ProtoModel(aliasName,*model);
+}
+
 /// This looks for the \<processor_spec> tag and and sets configuration
 /// parameters based on it.
 /// \param store is the document store holding the tag
@@ -1215,6 +1236,12 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
       parseDeadcodeDelay(*iter);
     else if (elname == "inferptrbounds")
       parseInferPtrBounds(*iter);
+    else if (elname == "modelalias") {
+      const Element *el = *iter;
+      string aliasName = el->getAttributeValue("name");
+      string parentName = el->getAttributeValue("parent");
+      createModelAlias(aliasName, parentName);
+    }
   }
 
   el = store.getTag("specextensions");		// Look for any user-defined configuration document
@@ -1224,7 +1251,7 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
       const string &elname( (*iter)->getName() );
       if (elname == "prototype")
         parseProto(*iter);
-     else if (elname == "callfixup") {
+      else if (elname == "callfixup") {
         pcodeinjectlib->restoreXmlInject(archid+" : compiler spec", (*iter)->getAttributeValue("name"),
 					 InjectPayload::CALLFIXUP_TYPE, *iter);
       }
@@ -1253,8 +1280,7 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
   // We must have a __thiscall calling convention
   map<string,ProtoModel *>::iterator miter = protoModels.find("__thiscall");
   if (miter == protoModels.end()) { // If __thiscall doesn't exist we clone it off of the default
-    ProtoModel *thismodel = new ProtoModel("__thiscall",*defaultfp);
-    protoModels["__thiscall"] = thismodel;
+    createModelAlias("__thiscall",defaultfp->getName());
   }
   userops.setDefaults(this);
   initializeSegments();

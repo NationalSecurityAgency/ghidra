@@ -121,7 +121,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace = recorder.getTrace();
 
 		addLiveMemoryAndBreakpoint(mb.testProcess1, recorder);
@@ -145,7 +145,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace = recorder.getTrace();
 
 		addLiveMemoryAndBreakpoint(mb.testProcess1, recorder);
@@ -210,7 +210,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace = recorder.getTrace();
 		createProgramFromTrace(trace);
 		intoProject(trace);
@@ -254,6 +254,29 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		lb.enableForTrace(trace);
 
 		waitForPass(() -> assertEquals(Enablement.ENABLED, row.getEnablement()));
+	}
+
+	@Test
+	public void testRenameStaticViaTable() throws Exception {
+		createProgram();
+		programManager.openProgram(program);
+		addStaticMemoryAndBreakpoint();
+		waitForDomainObject(program);
+
+		LogicalBreakpointRow row =
+			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
+		assertEquals("", row.getName());
+
+		row.setName("Test name");
+		waitForDomainObject(program);
+
+		assertEquals("Test name", row.getName());
+
+		// Check that name persists, since bookmark is swapped
+		row.setEnabled(false);
+		waitForDomainObject(program);
+
+		assertEquals("Test name", row.getName());
 	}
 
 	// TODO: Test a scenario where one spec manifests two breaks, select both, and perform actions
@@ -471,7 +494,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace = recorder.getTrace();
 		createProgramFromTrace(trace);
 		intoProject(trace);
@@ -512,12 +535,15 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	public void testActionFilters() throws Exception {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
+
 		TraceRecorder recorder1 = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace1 = recorder1.getTrace();
+
 		TraceRecorder recorder3 = modelService.recordTarget(mb.testProcess3,
-			new TestDebuggerTargetTraceMapper(mb.testProcess3));
+			createTargetTraceMapper(mb.testProcess3), ActionSource.AUTOMATIC);
 		Trace trace3 = recorder3.getTrace();
+
 		createProgramFromTrace(trace1);
 		intoProject(trace1);
 		intoProject(trace3);

@@ -158,9 +158,8 @@ public class BinaryReader {
 	 * the underlying byte provider is valid.
 	 * @param index the index in the byte provider
 	 * @return returns true if the specified index is valid
-	 * @exception IOException if an I/O error occurs
 	 */
-	public boolean isValidIndex(int index) throws IOException {
+	public boolean isValidIndex(int index) {
 		return provider.isValidIndex(index & Conv.INT_MASK);
 	}
 
@@ -169,9 +168,8 @@ public class BinaryReader {
 	 * the underlying byte provider is valid.
 	 * @param index the index in the byte provider
 	 * @return returns true if the specified index is valid
-	 * @exception IOException if an I/O error occurs
 	 */
-	public boolean isValidIndex(long index) throws IOException {
+	public boolean isValidIndex(long index) {
 		return provider.isValidIndex(index);
 	}
 

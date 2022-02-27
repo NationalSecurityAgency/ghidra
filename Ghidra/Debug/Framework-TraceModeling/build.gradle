@@ -25,6 +25,7 @@ dependencies {
 	api project(':Generic')
 	api project(':SoftwareModeling')
 	api project(':ProposedUtils')
+	api project(':Framework-Debugging')
 	annotationProcessor project(':AnnotationValidator')
 
 	testImplementation project(':Base')

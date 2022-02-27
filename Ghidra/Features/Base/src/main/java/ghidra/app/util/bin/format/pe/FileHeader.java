@@ -413,7 +413,7 @@ public class FileHeader implements StructConverter {
 
 		long oldIndex = reader.getPointerIndex();
 
-		int start = irfeHeader.getPointerToRawData();
+		int start = ntHeader.rvaToPointer(irfeHeader.getVirtualAddress());
 		reader.setPointerIndex(start);
 
 		ImageRuntimeFunctionEntries entries =
@@ -431,6 +431,9 @@ public class FileHeader implements StructConverter {
 		long oldIndex = reader.getPointerIndex();
 
 		int tmpIndex = getPointerToSymbolTable();
+		if (tmpIndex == 0) {
+			return;
+		}
 		if (!ntHeader.checkRVA(tmpIndex)) {
 			Msg.error(this, "Invalid file index " + Integer.toHexString(tmpIndex));
 			return;

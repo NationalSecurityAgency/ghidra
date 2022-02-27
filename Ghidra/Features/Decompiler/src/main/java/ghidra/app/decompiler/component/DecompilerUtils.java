@@ -31,7 +31,7 @@ public class DecompilerUtils {
 
 	/**
 	 * If the token refers to an individual Varnode, return it. Otherwise return null
-	 * 
+	 *
 	 * @param token the token to check
 	 * @return the Varnode or null otherwise
 	 */
@@ -215,9 +215,9 @@ public class DecompilerUtils {
 	}
 
 	/**
-	 * Returns the function represented by the given token.  This will be either the 
+	 * Returns the function represented by the given token.  This will be either the
 	 * decompiled function or a function referenced within the decompiled function.
-	 * 
+	 *
 	 * @param program the program
 	 * @param token the token
 	 * @return the function
@@ -270,10 +270,10 @@ public class DecompilerUtils {
 
 	/**
 	 * Similar to {@link #getTokens(ClangNode, AddressSetView)}, but uses the tokens from
-	 * the given view fields.  Sometimes the tokens in the model (represented by the 
-	 * {@link ClangNode}) are different than the fields in the view (such as when a list of 
+	 * the given view fields.  Sometimes the tokens in the model (represented by the
+	 * {@link ClangNode}) are different than the fields in the view (such as when a list of
 	 * comment tokens are condensed into a single comment token).
-	 * 
+	 *
 	 * @param fields the fields to check
 	 * @param address the address each returned token must match
 	 * @return the matching tokens
@@ -354,8 +354,7 @@ public class DecompilerUtils {
 	public static AddressSet findClosestAddressSet(Program program, AddressSpace functionSpace,
 			List<ClangToken> tokenList) {
 		AddressSet addressSet = new AddressSet();
-		for (int i = 0; i < tokenList.size(); ++i) {
-			ClangToken tok = tokenList.get(i);
+		for (ClangToken tok : tokenList) {
 			addTokenAddressRangeToSet(addressSet, tok, functionSpace);
 		}
 
@@ -574,33 +573,39 @@ public class DecompilerUtils {
 		}
 
 		Stack<ClangSyntaxToken> braceStack = new Stack<>();
-		for (int i = 0; i < list.size(); ++i) {
-			ClangToken token = (ClangToken) list.get(i);
-			if (token instanceof ClangSyntaxToken) {
-				ClangSyntaxToken syntaxToken = (ClangSyntaxToken) token;
+		for (ClangNode element : list) {
+			ClangToken token = (ClangToken) element;
+			if (!(token instanceof ClangSyntaxToken)) {
+				continue;
+			}
 
-				if (startToken == syntaxToken) {
-					// found our starting token, take the current value on the stack
-					ClangSyntaxToken matchingBrace = braceStack.pop();
-					return matchingBrace;
-				}
-
-				if (!isBrace(syntaxToken)) {
-					continue;
-				}
+			ClangSyntaxToken syntaxToken = (ClangSyntaxToken) token;
+			if (startToken == syntaxToken) {
 
 				if (braceStack.isEmpty()) {
-					braceStack.push(syntaxToken);
-					continue;
+					return null; // this can happen if the start token has a bad parent values
 				}
 
-				ClangSyntaxToken lastToken = braceStack.peek();
-				if (isMatchingBrace(lastToken, syntaxToken)) {
-					braceStack.pop();
-				}
-				else {
-					braceStack.push(syntaxToken);
-				}
+				// found our starting token, take the current value on the stack
+				ClangSyntaxToken matchingBrace = braceStack.pop();
+				return matchingBrace;
+			}
+
+			if (!isBrace(syntaxToken)) {
+				continue;
+			}
+
+			if (braceStack.isEmpty()) {
+				braceStack.push(syntaxToken);
+				continue;
+			}
+
+			ClangSyntaxToken lastToken = braceStack.peek();
+			if (isMatchingBrace(lastToken, syntaxToken)) {
+				braceStack.pop();
+			}
+			else {
+				braceStack.push(syntaxToken);
 			}
 		}
 		return null;
@@ -637,7 +642,7 @@ public class DecompilerUtils {
 	 * sequence of tokens that are part of the comment and group them into a single
 	 * ClangCommentToken.  This makes post processing on the full comment string easier.
 	 * A single comment string can contain white space that manifests as ClangSyntaxTokens
-	 * with white space as text. 
+	 * with white space as text.
 	 * @param alltoks is the token stream
 	 * @param i is the position of the initial comment token
 	 * @param first is the initial comment token
@@ -736,7 +741,7 @@ public class DecompilerUtils {
 
 	/**
 	 * Returns the data type for the given context if the context pertains to a data type
-	 * 
+	 *
 	 * @param context the context
 	 * @return the data type or null
 	 */

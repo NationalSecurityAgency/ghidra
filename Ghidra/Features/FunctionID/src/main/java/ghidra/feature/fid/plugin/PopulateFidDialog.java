@@ -171,6 +171,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		browseButton.addActionListener(e -> {
 			SelectLanguageDialog selectLanguageDialog =
 				new SelectLanguageDialog("Select Language", "Ok");
+			selectLanguageDialog.show();
 			LanguageCompilerSpecPair selectedLanguage = selectLanguageDialog.getSelectedLanguage();
 			if (selectedLanguage != null) {
 				languageIdField.setText(selectedLanguage.languageID.toString());

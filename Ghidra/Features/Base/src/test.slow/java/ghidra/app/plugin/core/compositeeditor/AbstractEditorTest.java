@@ -21,7 +21,6 @@ import java.awt.*;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -39,7 +38,6 @@ import docking.widgets.fieldpanel.support.FieldSelection;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
 import ghidra.app.plugin.core.stackeditor.StackEditorModel;
-import ghidra.app.plugin.core.stackeditor.StackFrameDataType;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.model.*;
@@ -48,7 +46,6 @@ import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
-import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
@@ -155,9 +152,6 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 
 		closeAllWindows();
 
-		// this is an attempt to prevent stack traces when take down the environment out from
-		// under Swing
-
 		if (model != null) {
 			model = null;
 		}
@@ -191,25 +185,6 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 			dtmName = dtm.getName();
 		}
 		return compositeDataType.getDisplayName() + " (" + dtmName + ")";
-	}
-
-	@SuppressWarnings("unused")
-	private String getName(Composite composite) {
-		if (composite instanceof Structure) {
-			return "Structure Editor";
-		}
-		else if (composite instanceof Union) {
-			return "Union Editor";
-		}
-		else if (composite instanceof Enum) {
-			return "Enum Editor";
-		}
-		else if (composite instanceof StackFrameDataType) {
-			return "Stack Editor";
-		}
-		else {
-			return "Composite Data Type Editor";
-		}
 	}
 
 	protected CycleGroupAction getCycleGroup(DataType dt) {
@@ -272,7 +247,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	private String arrayToString(int[] values) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		for (int value : values) {
 			buf.append(Integer.toString(value) + ", ");
 		}
@@ -301,7 +276,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 			if (componentProvider instanceof DataTypeChooserDialog) {
 				// we must make a selection
 				Object treePanel = getInstanceField("treePanel", componentProvider);
-				final JTree tree = (JTree) getInstanceField("tree", treePanel);
+				JTree tree = (JTree) getInstanceField("tree", treePanel);
 				DefaultMutableTreeNode root = (DefaultMutableTreeNode) tree.getModel().getRoot();
 				DefaultMutableTreeNode matchingNode = findFirstLeafNode(root);
 				TreePath treePath = (TreePath) invokeInstanceMethod("getTreePath", matchingNode);
@@ -455,7 +430,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 
 	/**
 	 * Types the indicated string
-	 * 
+	 *
 	 * <br>Note: Handles upper and lowercase alphabetic characters,
 	 * numeric characters, and other standard keyboard characters that are
 	 * printable characters. It also handles '\n', '\t', and '\b'.
@@ -593,7 +568,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	@SuppressWarnings("unchecked")
 	private void removeTableCellEditorsFocusLostListener() {
 
-		// 
+		//
 		// Note: black magic code to disable focusLost from cancelling the current editor session
 		//
 
@@ -813,12 +788,11 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected void checkEnablement(CompositeEditorTableAction action, boolean expectedEnablement) {
-		AtomicBoolean result = new AtomicBoolean();
-		runSwing(() -> result.set(action.isEnabledForContext(provider.getActionContext(null))));
-		boolean actionEnablement = result.get();
-		assertEquals(action.getName() + " is unexpectedly " +
-			(actionEnablement ? "enabled" : "disabled") + ".", expectedEnablement,
-			actionEnablement);
+		boolean isEnabled =
+			runSwing(() -> action.isEnabledForContext(provider.getActionContext(null)));
+		assertEquals(
+			action.getName() + " is unexpectedly " + (isEnabled ? "enabled" : "disabled") + ".",
+			expectedEnablement, isEnabled);
 	}
 
 	protected void assertIsPackingEnabled(boolean aligned) {

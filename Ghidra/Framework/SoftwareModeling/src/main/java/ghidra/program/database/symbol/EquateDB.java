@@ -66,9 +66,6 @@ public class EquateDB extends DatabaseObject implements Equate {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Equate#addReference(ghidra.program.model.address.Address, int)
-	 */
 	@Override
 	public void addReference(Address refAddr, int opIndex) {
 		checkDeleted();
@@ -95,9 +92,6 @@ public class EquateDB extends DatabaseObject implements Equate {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Equate#addReference(long, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public void addReference(long dynamicHash, Address refAddr) {
 		checkDeleted();
@@ -145,9 +139,6 @@ public class EquateDB extends DatabaseObject implements Equate {
 		return opIndex;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Equate#getName()
-	 */
 	@Override
 	public String getName() {
 		checkIsValid();
@@ -178,9 +169,6 @@ public class EquateDB extends DatabaseObject implements Equate {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Equate#getReferenceCount()
-	 */
 	@Override
 	public int getReferenceCount() {
 		checkIsValid();
@@ -193,9 +181,6 @@ public class EquateDB extends DatabaseObject implements Equate {
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Equate#getReferences()
-	 */
 	@Override
 	public EquateReference[] getReferences() {
 		checkIsValid();
@@ -208,9 +193,6 @@ public class EquateDB extends DatabaseObject implements Equate {
 		return new EquateReference[0];
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Equate#getReferences(Address)
-	 */
 	@Override
 	public List<EquateReference> getReferences(Address refAddr) {
 		Lock lock = equateMgr.getLock();
@@ -229,27 +211,18 @@ public class EquateDB extends DatabaseObject implements Equate {
 		return new ArrayList<>();
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Equate#getValue()
-	 */
 	@Override
 	public long getValue() {
 		checkIsValid();
 		return record.getLongValue(EquateDBAdapter.VALUE_COL);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Equate#getDisplayValue()
-	 */
 	@Override
 	public String getDisplayValue() {
 		long val = getValue();
 		return ((val < 0) ? "-" : "") + "0x" + Long.toHexString(Math.abs(val));
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Equate#removeReference(ghidra.program.model.address.Address, int)
-	 */
 	@Override
 	public void removeReference(Address refAddr, int opIndex) {
 		checkDeleted();
@@ -261,9 +234,6 @@ public class EquateDB extends DatabaseObject implements Equate {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Equate#removeReference(long, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public void removeReference(long dynamicHash, Address refAddr) {
 		checkDeleted();
@@ -275,9 +245,6 @@ public class EquateDB extends DatabaseObject implements Equate {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Equate#renameEquate(java.lang.String)
-	 */
 	@Override
 	public void renameEquate(String newName) throws DuplicateNameException, InvalidInputException {
 		Lock lock = equateMgr.getLock();
@@ -294,6 +261,7 @@ public class EquateDB extends DatabaseObject implements Equate {
 				throw new DuplicateNameException("Equate named " + newName + " already exists");
 			}
 			catch (NotFoundException e) {
+				// this is expected, since an existing name will be an unwanted duplicate
 			}
 			catch (IOException e) {
 				equateMgr.dbError(e);
@@ -333,10 +301,6 @@ public class EquateDB extends DatabaseObject implements Equate {
 		return getName().startsWith(EquateManager.DATATYPE_TAG);
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Object#equals(Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 
@@ -350,26 +314,19 @@ public class EquateDB extends DatabaseObject implements Equate {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Equate eq = (Equate) obj;
 
+		Equate eq = (Equate) obj;
 		if (getValue() != eq.getValue()) {
 			return false;
 		}
 		return getName().equals(eq.getName());
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return getName().hashCode();
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return getDisplayName();

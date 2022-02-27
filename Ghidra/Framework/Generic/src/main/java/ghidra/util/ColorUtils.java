@@ -168,7 +168,12 @@ public class ColorUtils {
 	 * @return the new color
 	 */
 	public static Color blend(Color c1, Color c2, float ratio) {
-
+		if (c1 == null) {
+			return c2;
+		}
+		if (c2 == null) {
+			return c1;
+		}
 		float rgb1[] = new float[3];
 		float rgb2[] = new float[3];
 		c1.getColorComponents(rgb1);

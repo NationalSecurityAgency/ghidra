@@ -136,8 +136,7 @@ public class GTableColumnModel
 	}
 
 	private int findVisibleInsertionIndex(TableColumn column) {
-		int completeIndex = visibleColumns.indexOf(column);
-
+		int completeIndex = completeList.indexOf(column);
 		int size = visibleColumns.size();
 		for (int i = completeIndex + 1; i < size; i++) {
 			TableColumn nextColumn = completeList.get(i);
@@ -483,6 +482,10 @@ public class GTableColumnModel
 		columnModelState.saveState();
 	}
 
+	void forceSaveState() {
+		columnModelState.forceSaveState();
+	}
+
 	void restoreState() {
 		columnModelState.restoreState();
 	}
@@ -626,5 +629,4 @@ public class GTableColumnModel
 	public void restoreFromXML(Element element) {
 		columnModelState.restoreFromXML(element);
 	}
-
 }

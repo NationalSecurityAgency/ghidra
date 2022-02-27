@@ -362,6 +362,10 @@ public class ProjectDataTreePanel extends JPanel {
 		tree.setFilterVisible(enabled);
 	}
 
+	public Component getFilterField() {
+		return tree.getFilterField();
+	}
+
 	public String[] getExpandedPathsByNodeName() {
 		List<TreePath> expandedPaths = tree.getExpandedPaths(root);
 		if (expandedPaths == null || expandedPaths.size() == 0) {

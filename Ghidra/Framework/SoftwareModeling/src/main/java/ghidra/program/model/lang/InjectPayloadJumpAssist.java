@@ -45,4 +45,16 @@ public class InjectPayloadJumpAssist extends InjectPayloadSleigh {
 		}
 		super.restoreXml(parser, language);
 	}
+
+	@Override
+	public boolean isEquivalent(InjectPayload obj) {
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		InjectPayloadJumpAssist op2 = (InjectPayloadJumpAssist) obj;
+		if (!baseName.equals(op2.baseName)) {
+			return false;
+		}
+		return super.isEquivalent(obj);
+	}
 }

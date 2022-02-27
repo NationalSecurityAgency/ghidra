@@ -49,6 +49,7 @@ public class VariableSymbolDB extends SymbolDB {
 	 * @param symbolMgr the symbol manager
 	 * @param cache symbol object cache
 	 * @param type the symbol type.
+	 * @param variableMgr variable storage manager
 	 * @param address the address of the symbol (stack address)
 	 * @param record the record for the symbol
 	 */
@@ -194,6 +195,7 @@ public class VariableSymbolDB extends SymbolDB {
 	 */
 	@Override
 	public boolean isValidParent(Namespace parent) {
+		// symbol is locked to single function and can't be moved
 		return getFunction() == parent;
 	}
 

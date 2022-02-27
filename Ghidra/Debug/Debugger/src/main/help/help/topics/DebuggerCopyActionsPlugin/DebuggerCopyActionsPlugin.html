@@ -1,0 +1,178 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Copy Actions</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Copy Actions</H1>
+
+    <P>In the course of debugging, the user may want to capture certain state and annotations from
+    the dynamic context into the static. This might include the contents of the stack, the heap, or
+    example data stored in uninitialized memory. The copy actions allow for the easy movement of
+    data and annotations from traces into programs. The actions are all accessed via the <SPAN
+    class="menu">Debugger</SPAN> menu.</P>
+
+    <H2>Actions</H2>
+
+    <H3><A name="copy_into_current"></A>Copy Into Current Program</H3>
+
+    <P>This action requires a selection of memory in a dynamic view. It copies selected contents
+    from the current trace (at the current time) into the current program. The <A href=
+    "#dialog">Copy Dialog</A> is presented with the current program set as the destination.</P>
+
+    <H3><A name="copy_into_new"></A>Copy Into New Program</H3>
+
+    <P>This action requires a selection of memory in a dynamic view. It copies selected contents
+    from the current trace (at the current time) into a new program. The <A href="#dialog">Copy
+    Dialog</A> is presented with <B>&lt;New Program&gt;</B> set as the destination.</P>
+
+    <H3><A name="export_view"></A>Export Trace View</H3>
+
+    <P>This action is available whenever a trace is open. The <A href=
+    "help/topics/ExporterPlugin/exporter.htm#Exporter_Dialog">Export Dialog</A> is presented for
+    the current trace at the current time. This provides a mechanism for capturing a particular
+    point in time from a trace to a file. The exported image can be analyzed in Ghidra or another
+    tool.</P>
+
+    <H2><A name="dialog"></A>Copy Dialog</H2>
+
+    <P>The <B>Copy Into...</B> actions both present the same dialog: (The <B>Export Trace View</B>
+    action uses a different dialog.)</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" src=
+          "images/DebuggerCopyIntoProgramDialog.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>The dialog consists of several options, followed by a table that displays the proposed
+    ranges to copy. For selected ranges not contained in the destination program's memory, new
+    blocks are proposed. The source selection is always broken apart by regions defined in the
+    trace's memory manager.</P>
+
+    <H3>Options</H3>
+
+    <UL>
+      <LI>The <B>Destination</B> drop down allows the choice of an alternative destination. All
+      open programs, <B>&lt;New Program&gt;</B>, and <B>&lt;Temporary Program&gt;</B> are available
+      for selection. Modifying this option will reset the proposal. Choosing <B>&lt;New
+      Program&gt;</B> will prompt for a new destination program upon a successful copy. Choosing
+      <B>&lt;Temporary Program&gt;</B> will create a temporary, read-only program. The temporary
+      program can still be saved later.</LI>
+
+      <LI>The <B>Read live</B> checkbox includes the <A href=
+      "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#read_memory">Read Memory</A>
+      action in the copy process. This is only available when the trace is live and at the present.
+      This assures that bytes copied into the destination program are actually the bytes from the
+      live target, not just a stale cache or default zeros. <B>Note:</B> The copy operation will
+      proceed even if the read-live-memory step fails, or only partially succeeds. Include <A href=
+      "#state">State</A> if you need to know which bytes are up to date in the destination
+      program.</LI>
+
+      <LI>The <B>Relocate</B> checkbox enables the use of <A href=
+      "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static
+      Mappings</A> when determining the destination addresses. This is only available for existing
+      programs, and will only operate on portions of the source trace that are mapped to the
+      destination program. Modifying this option will reset the proposal.</LI>
+
+      <LI>The <B><A name="use_overlays"></A>Use overlays</B> checkbox causes the dialog to propose
+      overlay blocks for destination ranges that already exist in the program's memory. When
+      unchecked, ranges are broken apart so that portions already in the destination memory map
+      will not modify the map. Portions not already in the memory map will generate new blocks.
+      When checked, destination ranges are not broken apart. If any portion already exists in the
+      destination memory map, the entire range will generate an overlay block. Modifying this
+      option will reset the proposal.</LI>
+
+      <LI>The <B>Include</B> checkboxes determine which contents are transferred from the current
+      trace view into the destination. The <B>Select All</B> and <B>Select None</B> buttons do as
+      they say. <B>Note:</B> Even if no items are selected, the destination blocks will be created,
+      if the dialog is confirmed.</LI>
+
+        <UL>
+          <LI><B>Bookmarks</B> copies bookmarks contained in the selection.</LI>
+
+          <LI><B>Breakpoints</B> copies breakpoints contained in the selection. <B>Note:</B> Since
+          programs do not support breakpoints, bookmarks are used instead. They are the same type
+          and category as those used by the <A href=
+          "help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html">Breakpoints</A>
+          window.</LI>
+
+          <LI><B>Bytes</B> copies the actual memory contents of the selection. <B>Note:</B> When
+          copying into an uninitialized block, the entire block becomes initialized, i.e., all
+          <CODE>??</CODE>s become <CODE>00</CODE>s; however, only the selected ranges are actually
+          copied in.</LI>
+
+          <LI><B>Comments</B> copies all comments contained in the selection.</LI>
+
+          <LI><B>Data</B> copies all (non-dynamic) data annotations contained in the selection. It
+          is only available when the source and destination agree on data organization.</LI>
+
+          <LI><B>Dynamic Data</B> copies all data annotations for dynamic data types. This item
+          requires <B>Bytes</B> to also be copied, since the properties (particularly length) of
+          each unit may depend on the memory contents. It is only available when the source and
+          destination agree on data organization.</LI>
+
+          <LI><B>Instructions</B> copies all disassembled instructions in the selection. This item
+          requires <B>Bytes</B> to also be copied, since instructions depend on the memory
+          contents. It is only available when the source and destination have identical
+          languages.</LI>
+
+          <LI><B>Labels</B> copies all labels contained in the selection.</LI>
+
+          <LI><B>References</B> copies all memory references where both the "from" and "to"
+          addresses are contained in the selection.</LI>
+
+          <LI><B><A name="state"></A>State</B> copies the memory states (stale, error, known) of
+          the selection. <B>Note:</B> Since programs do not support memory state, the program's
+          color map is used instead.</LI>
+        </UL>
+    </UL>
+
+    <H3>Table Columns</H3>
+
+    <P>The table displays the proposal and allows for some adjustments. It has the following
+    columns:</P>
+
+    <UL>
+      <LI>Remove - a button to remove the selected range from the proposal. If applicable, the
+      destination block will no longer be created.</LI>
+
+      <LI>Region - the name of the source memory region of the trace.</LI>
+
+      <LI>Modules - the names of modules that touch the source range.</LI>
+
+      <LI>Sections - the names of sections that touch the source range.</LI>
+
+      <LI>SrcMin - the minimum address in the source range.</LI>
+
+      <LI>SrcMax - the maximum address in the source range.</LI>
+
+      <LI>Block - the name of the destination memory block of the program. If the block already
+      exists, the name is displayed with an asterisk. The block will not be created, but contents
+      will still be copied into it. If the block does not already exist, the name can be changed by
+      editing this cell.</LI>
+
+      <LI>Overlay - indicates whether or not a created block will be an overlay block. This cannot
+      be modified. See <A href="#use_overlays">Use overlays</A> above.</LI>
+
+      <LI>DstMin - the minimum address in the destination range.</LI>
+
+      <LI>DstMax - the maximum address in the destination range.</LI>
+    </UL>
+
+    <P>The <B>Copy</B> button confirms the dialog and copies <EM>all proposed ranges</EM> in the
+    table. If successful, the dialog is closed. The <B>Cancel</B> button dismisses the dialog
+    without performing any operation. The <B>Reset</B> button resets the proposal, in case entries
+    were accidentally removed or modified.</P>
+  </BODY>
+</HTML>

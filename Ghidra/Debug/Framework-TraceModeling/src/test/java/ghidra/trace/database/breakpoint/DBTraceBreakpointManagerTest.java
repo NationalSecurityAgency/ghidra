@@ -55,31 +55,34 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	@Test
 	public void testAddBreakpoint() throws Exception {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			breakpointManager.addBreakpoint("Breaks[0]", Range.closed(0L, 10L), b.addr(0x00400000),
+			breakpointManager.addBreakpoint("Breakpoints[0]", Range.closed(0L, 10L),
+				b.addr(0x00400000),
 				Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE), true, "main");
 		}
 
 		try (UndoableTransaction tid = b.startTransaction()) {
-			breakpointManager.addBreakpoint("Breaks[0]", Range.closed(0L, 10L),
+			breakpointManager.addBreakpoint("Breakpoints[0]", Range.closed(0L, 10L),
 				b.range(0x00400000, 0x00400003), Set.of(), Set.of(), false, "duplicate");
 		}
 		catch (DuplicateNameException e) {
 			// pass
 		}
 
-		assertEquals(1, breakpointManager.getBreakpointsByPath("Breaks[0]").size());
+		assertEquals(1, breakpointManager.getBreakpointsByPath("Breakpoints[0]").size());
 	}
 
 	protected void addBreakpoints() throws Exception {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			thread = b.getOrAddThread("Thread1", 0);
-			breakMain = breakpointManager.addBreakpoint("Breaks[0]", Range.closed(0L, 10L),
+			thread = b.getOrAddThread("Threads[1]", 0);
+			// NB. threads parameter is deprecated by object mode.
+			// For table mode, ensure the answer is the same as object mode
+			breakMain = breakpointManager.addBreakpoint("Breakpoints[0]", Range.closed(0L, 10L),
 				b.addr(0x00400000),
-				Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE), true, "main");
-			breakVarA = breakpointManager.addBreakpoint("Breaks[1]", Range.closed(0L, 10L),
+				Set.of(thread), Set.of(TraceBreakpointKind.SW_EXECUTE), true, "main");
+			breakVarA = breakpointManager.addBreakpoint("Breakpoints[1]", Range.closed(0L, 10L),
 				b.range(0x00600010, 0x00600013),
-				Set.of(), Set.of(TraceBreakpointKind.WRITE), false, "varA");
-			breakVarB = breakpointManager.addBreakpoint("Breaks[1]", Range.closed(11L, 20L),
+				Set.of(thread), Set.of(TraceBreakpointKind.WRITE), false, "varA");
+			breakVarB = breakpointManager.addBreakpoint("Breakpoints[1]", Range.closed(11L, 20L),
 				b.range(0x00600020, 0x00600023),
 				Set.of(thread), Set.of(TraceBreakpointKind.WRITE), false, "varB");
 		}
@@ -96,16 +99,16 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	public void testBreakpointsByPath() throws Exception {
 		addBreakpoints();
 		assertEquals(Set.of(breakMain),
-			Set.copyOf(breakpointManager.getBreakpointsByPath("Breaks[0]")));
+			Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[0]")));
 		assertEquals(Set.of(breakVarA, breakVarB),
-			Set.copyOf(breakpointManager.getBreakpointsByPath("Breaks[1]")));
+			Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[1]")));
 	}
 
 	@Test
 	public void testBreakpointPlacedByPath() throws Exception {
 		addBreakpoints();
-		assertEquals(breakVarA, breakpointManager.getPlacedBreakpointByPath(0, "Breaks[1]"));
-		assertEquals(breakVarB, breakpointManager.getPlacedBreakpointByPath(11, "Breaks[1]"));
+		assertEquals(breakVarA, breakpointManager.getPlacedBreakpointByPath(0, "Breakpoints[1]"));
+		assertEquals(breakVarB, breakpointManager.getPlacedBreakpointByPath(11, "Breakpoints[1]"));
 	}
 
 	@Test
@@ -140,13 +143,13 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	@Test
 	public void testGetPath() throws Exception {
 		addBreakpoints();
-		assertEquals("Breaks[0]", breakMain.getPath());
+		assertEquals("Breakpoints[0]", breakMain.getPath());
 	}
 
 	@Test
 	public void testSetGetName() throws Exception {
 		addBreakpoints();
-		assertEquals("Breaks[0]", breakMain.getName());
+		assertEquals("Breakpoints[0]", breakMain.getName());
 		try (UndoableTransaction tid = b.startTransaction()) {
 			breakMain.setName("bpt 0");
 			assertEquals("bpt 0", breakMain.getName());
@@ -157,7 +160,8 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	@Test
 	public void testGetThreads() throws Exception {
 		addBreakpoints();
-		assertEquals(Set.of(), Set.copyOf(breakMain.getThreads()));
+		assertEquals(Set.of(thread), Set.copyOf(breakMain.getThreads()));
+		assertEquals(Set.of(thread), Set.copyOf(breakVarA.getThreads()));
 		assertEquals(Set.of(thread), Set.copyOf(breakVarB.getThreads()));
 	}
 
@@ -207,27 +211,27 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 			assertSame(disMain, sameDis);
 		}
 
-		assertTrue(breakMain.isEnabled());
+		assertTrue(breakMain.isEnabled(0));
 		assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(breakMain.getKinds()));
 
-		assertFalse(disMain.isEnabled());
+		assertFalse(disMain.isEnabled(6));
 		assertEquals(Set.of(TraceBreakpointKind.HW_EXECUTE), Set.copyOf(disMain.getKinds()));
 	}
 
 	@Test
 	public void testSetIsEnabled() throws Exception {
 		addBreakpoints();
-		assertTrue(breakMain.isEnabled());
+		assertTrue(breakMain.isEnabled(0));
 		try (UndoableTransaction tid = b.startTransaction()) {
 			breakMain.setEnabled(false);
-			assertFalse(breakMain.isEnabled());
+			assertFalse(breakMain.isEnabled(0));
 		}
-		assertFalse(breakMain.isEnabled());
+		assertFalse(breakMain.isEnabled(0));
 		try (UndoableTransaction tid = b.startTransaction()) {
 			breakMain.setEnabled(true);
-			assertTrue(breakMain.isEnabled());
+			assertTrue(breakMain.isEnabled(0));
 		}
-		assertTrue(breakMain.isEnabled());
+		assertTrue(breakMain.isEnabled(0));
 	}
 
 	@Test
@@ -256,11 +260,13 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	public void testDelete() throws Exception {
 		addBreakpoints();
 		assertEquals(Set.of(breakMain),
-			Set.copyOf(breakpointManager.getBreakpointsByPath("Breaks[0]")));
+			Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[0]")));
 		try (UndoableTransaction tid = b.startTransaction()) {
 			breakMain.delete();
-			assertEquals(Set.of(), Set.copyOf(breakpointManager.getBreakpointsByPath("Breaks[0]")));
+			assertEquals(Set.of(),
+				Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[0]")));
 		}
-		assertEquals(Set.of(), Set.copyOf(breakpointManager.getBreakpointsByPath("Breaks[0]")));
+		assertEquals(Set.of(),
+			Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[0]")));
 	}
 }

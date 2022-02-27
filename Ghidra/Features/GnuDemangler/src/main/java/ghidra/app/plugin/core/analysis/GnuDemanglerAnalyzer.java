@@ -26,6 +26,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import ghidra.util.SystemUtilities;
 
 /**
  * A version of the demangler analyzer to handle GNU GCC symbols
@@ -47,6 +48,11 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	private static final String OPTION_DESCRIPTION_APPLY_SIGNATURE =
 		"Apply any recovered function signature, in addition to the function name";
 
+	private static final String OPTION_NAME_APPLY_CALLING_CONVENTION =
+		"Apply Function Calling Conventions";
+	private static final String OPTION_DESCRIPTION_APPLY_CALLING_CONVENTION =
+		"Apply any recovered function signature calling convention";
+
 	static final String OPTION_NAME_USE_DEPRECATED_DEMANGLER = "Use Deprecated Demangler";
 	private static final String OPTION_DESCRIPTION_DEPRECATED_DEMANGLER =
 		"Signals to use the deprecated demangler when the modern demangler cannot demangle a " +
@@ -56,7 +62,8 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	private static final String OPTION_DESCRIPTION_DEMANGLER_FORMAT =
 		"The demangling format to use";
 
-	private boolean doSignatureEnabled = true;
+	private boolean applyFunctionSignature = true;
+	private boolean applyCallingConvention = true;
 	private boolean demangleOnlyKnownPatterns = false;
 	private GnuDemanglerFormat demanglerFormat = GnuDemanglerFormat.AUTO;
 	private boolean useDeprecatedDemangler = false;
@@ -75,28 +82,43 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	@Override
 	public void registerOptions(Options options, Program program) {
-		BooleanEditor editor = new BooleanEditor();
-		editor.setValue(Boolean.valueOf(useDeprecatedDemangler));
-		FormatEditor formatEditor = new FormatEditor(demanglerFormat, editor);
-		editor.addPropertyChangeListener(formatEditor);
 
 		HelpLocation help = new HelpLocation("AutoAnalysisPlugin", "Demangler_Analyzer");
-		options.registerOption(OPTION_NAME_APPLY_SIGNATURE, doSignatureEnabled, help,
+		options.registerOption(OPTION_NAME_APPLY_SIGNATURE, applyFunctionSignature, help,
 			OPTION_DESCRIPTION_APPLY_SIGNATURE);
+
+		options.registerOption(OPTION_NAME_APPLY_CALLING_CONVENTION, applyCallingConvention, help,
+			OPTION_DESCRIPTION_APPLY_CALLING_CONVENTION);
 
 		options.registerOption(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns,
 			help, OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
 
-		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, OptionType.BOOLEAN_TYPE,
-			useDeprecatedDemangler, help, OPTION_DESCRIPTION_DEPRECATED_DEMANGLER, editor);
+		BooleanEditor deprecatedEditor = null;
+		FormatEditor formatEditor = null;
+		if (!SystemUtilities.isInHeadlessMode()) {
+			// Only add the custom options editor when not headless.   The custom editor allows
+			// the list of choices presented to the user to change depending on the state of the
+			// useDeprecatedDemangler flag.
+			deprecatedEditor = new BooleanEditor();
+			deprecatedEditor.setValue(Boolean.valueOf(useDeprecatedDemangler));
+			formatEditor = new FormatEditor(demanglerFormat, deprecatedEditor);
+			deprecatedEditor.addPropertyChangeListener(formatEditor);
+		}
 
-		options.registerOption(OPTION_NAME_DEMANGLER_FORMAT, OptionType.ENUM_TYPE, demanglerFormat,
-			help, OPTION_DESCRIPTION_DEMANGLER_FORMAT, formatEditor);
+		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, OptionType.BOOLEAN_TYPE,
+			useDeprecatedDemangler, help, OPTION_DESCRIPTION_DEPRECATED_DEMANGLER,
+			deprecatedEditor);
+
+		options.registerOption(OPTION_NAME_DEMANGLER_FORMAT, OptionType.ENUM_TYPE,
+			demanglerFormat, help, OPTION_DESCRIPTION_DEMANGLER_FORMAT, formatEditor);
 	}
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
-		doSignatureEnabled = options.getBoolean(OPTION_NAME_APPLY_SIGNATURE, doSignatureEnabled);
+		applyFunctionSignature =
+			options.getBoolean(OPTION_NAME_APPLY_SIGNATURE, applyFunctionSignature);
+		applyCallingConvention =
+			options.getBoolean(OPTION_NAME_APPLY_CALLING_CONVENTION, applyCallingConvention);
 		demangleOnlyKnownPatterns =
 			options.getBoolean(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns);
 		demanglerFormat = options.getEnum(OPTION_NAME_DEMANGLER_FORMAT, GnuDemanglerFormat.AUTO);
@@ -109,7 +131,8 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		GnuDemanglerOptions options =
 			new GnuDemanglerOptions(demanglerFormat, useDeprecatedDemangler);
 		options.setDoDisassembly(true);
-		options.setApplySignature(doSignatureEnabled);
+		options.setApplySignature(applyFunctionSignature);
+		options.setApplyCallingConvention(applyCallingConvention);
 		options.setDemangleOnlyKnownPatterns(demangleOnlyKnownPatterns);
 		return options;
 	}

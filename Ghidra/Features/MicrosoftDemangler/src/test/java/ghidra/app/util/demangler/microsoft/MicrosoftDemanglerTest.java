@@ -24,6 +24,7 @@ import generic.test.AbstractGenericTest;
 import ghidra.app.util.demangler.*;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.test.ToyProgramBuilder;
@@ -38,6 +39,31 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		ToyProgramBuilder builder = new ToyProgramBuilder("test", true);
 		builder.createMemory(".text", "0x01001000", 0x100);
 		program = builder.getProgram();
+	}
+
+	@Test
+	public void testUnsignedShortParameter() throws Exception {
+
+		String mangled = "?InvokeHelperV@COleDispatchDriver@@QAEXJGGPAXPBEPAD@Z";
+
+		MicrosoftDemangler demangler = new MicrosoftDemangler();
+		DemangledObject demangledObject = demangler.demangle(mangled);
+
+		int txID = program.startTransaction("Test");
+
+		SymbolTable st = program.getSymbolTable();
+		st.createLabel(addr("01001000"), mangled, SourceType.ANALYSIS);
+
+		DemanglerOptions options = new DemanglerOptions();
+		demangledObject.applyTo(program, addr("01001000"), options, TaskMonitor.DUMMY);
+		program.endTransaction(txID, true);
+
+		FunctionManager fm = program.getFunctionManager();
+		Function function = fm.getFunctionAt(addr("01001000"));
+		Parameter[] parameters = function.getParameters();
+
+		// this was broken at one point, returning 'unsigned_short'
+		assertEquals("ushort", parameters[2].getDataType().getName());
 	}
 
 	@Test
@@ -72,9 +98,8 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		String mangled = "??_R0?AVCBob@@@8~";
 
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
-		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled);
+			demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -88,9 +113,8 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		String mangled = "?BobsStuffIO@344GPAUHINSTANCE__@@U_COMMPROP@@*E";
 
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
-		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled);
+			demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -104,9 +128,8 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		String mangled = "?BobsStuffIO@344GPAUHINSTANCE__@@U_COMMPROP@@-W";
 
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
-		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled);
+			demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -120,9 +143,8 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		String mangled = "?BobsStuffIO@344GPAUHINSTANCE__@@U_COMMPROP@@?W";
 
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
-		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled);
+			demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -136,9 +158,8 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		String mangled = "?BobsStuffIO@344GPAUHINSTANCE__@@U_COMMPROP@@~W";
 
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
-		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled);
+			demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -152,9 +173,8 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		String mangled = "?BobsStuffIO@344GPAUHINSTANCE__@@U_COMMPROP@@%W";
 
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
-		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled);
+			demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -168,9 +188,8 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		String mangled = "?BobsStuffIO@344GPAUHINSTANCE__@@U_COMMPROP@@`W";
 
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
-		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled);
+			demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -184,9 +203,8 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		String mangled = "?BobsStuffIO@344GPAUHINSTANCE__@@U_COMMPROP@@+W";
 
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
-		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled);
+			demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected
@@ -200,9 +218,8 @@ public class MicrosoftDemanglerTest extends AbstractGenericTest {
 		String mangled = "?BobsStuffIO@344GPAUHINSTANCE__@@U_COMMPROP@@/W";
 
 		MicrosoftDemangler demangler = new MicrosoftDemangler();
-		DemangledObject demangledObj = null;
 		try {
-			demangledObj = demangler.demangle(mangled);
+			demangler.demangle(mangled);
 		}
 		catch (DemangledException e) {
 			// Expected

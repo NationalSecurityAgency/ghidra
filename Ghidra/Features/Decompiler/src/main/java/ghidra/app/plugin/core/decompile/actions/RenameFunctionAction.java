@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.decompile.actions;
 
 import java.awt.event.KeyEvent;
+import java.util.Objects;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
@@ -23,12 +24,14 @@ import ghidra.app.decompiler.ClangFuncNameToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.util.AddEditDialog;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunctionShellSymbol;
 import ghidra.program.model.pcode.HighSymbol;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
 
@@ -41,6 +44,7 @@ public class RenameFunctionAction extends AbstractDecompilerAction {
 		setPopupMenuData(new MenuData(new String[] { "Rename Function" }, "Decompile"));
 	}
 
+	@Override
 	protected Function getFunction(DecompilerActionContext context) {
 		Program program = context.getProgram();
 		ClangToken tokenAtCursor = context.getTokenAtCursor();
@@ -68,6 +72,18 @@ public class RenameFunctionAction extends AbstractDecompilerAction {
 		Program program = context.getProgram();
 		Function function = getFunction(context);
 		AddEditDialog dialog = new AddEditDialog("Edit Function Name", context.getTool());
-		dialog.editLabel(function.getSymbol(), program);
+		Symbol symbol = function.getSymbol();
+		String originalName = symbol.getName();
+		dialog.editLabel(symbol, program);
+
+		String currentName = symbol.getName();
+		if (Objects.equals(originalName, currentName)) {
+			return; // no change
+		}
+
+		DecompilerProvider provider = context.getComponentProvider();
+		ClangToken tokenAtCursor = context.getTokenAtCursor();
+		provider.tokenRenamed(tokenAtCursor, currentName);
+
 	}
 }

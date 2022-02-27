@@ -72,6 +72,8 @@ public interface TraceReferenceOperations {
 
 	Collection<? extends TraceReference> getReferencesTo(long snap, Address toAddress);
 
+	void clearReferencesTo(Range<Long> span, AddressRange range);
+
 	/**
 	 * TODO: Document me
 	 * 

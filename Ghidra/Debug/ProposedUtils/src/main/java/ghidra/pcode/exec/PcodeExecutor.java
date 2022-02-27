@@ -122,10 +122,22 @@ public class PcodeExecutor<T> {
 		}
 	}
 
+	protected void badOp(PcodeOp op) {
+		switch (op.getOpcode()) {
+			case PcodeOp.UNIMPLEMENTED:
+				throw new LowlevelError(
+					"Encountered an unimplemented instruction at " + op.getSeqnum().getTarget());
+			default:
+				throw new LowlevelError(
+					"Unsupported p-code op at " + op.getSeqnum().getTarget() + ": " + op);
+		}
+	}
+
 	public void stepOp(PcodeOp op, PcodeFrame frame, SleighUseropLibrary<T> library) {
 		OpBehavior b = OpBehaviorFactory.getOpBehavior(op.getOpcode());
 		if (b == null) {
-			throw new LowlevelError("Unsupported pcode op" + op);
+			badOp(op);
+			return;
 		}
 		if (b instanceof UnaryOpBehavior) {
 			executeUnaryOp(op, (UnaryOpBehavior) b);
@@ -164,7 +176,8 @@ public class PcodeExecutor<T> {
 				executeReturn(op, frame);
 				return;
 			default:
-				throw new LowlevelError("Unsupported op " + op);
+				badOp(op);
+				return;
 		}
 	}
 
@@ -266,7 +279,7 @@ public class PcodeExecutor<T> {
 		branchToOffset(offset, frame);
 
 		long concrete = arithmetic.toConcrete(offset).longValue();
-		Address target = op.getSeqnum().getTarget().getNewAddress(concrete);
+		Address target = op.getSeqnum().getTarget().getNewAddress(concrete, true);
 		branchToAddress(target);
 	}
 

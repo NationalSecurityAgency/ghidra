@@ -57,7 +57,7 @@ public abstract class AbstractModelForLldbFrameActivationTest
 
 	protected void activateViaInterpreter(TargetObject obj, TargetInterpreter interpreter)
 			throws Throwable {
-		String index = getStackPattern().matchIndices(obj.getPath()).get(3);
+		String index = getStackPattern().matchKeys(obj.getPath()).get(3);
 		waitOn(interpreter.execute("frame select " + index));
 	}
 
@@ -70,7 +70,7 @@ public abstract class AbstractModelForLldbFrameActivationTest
 		assertFalse(line.contains("\n"));
 		String id = getIdFromCapture(line);
 		int frameId = Integer.parseInt(id, 10);
-		int expId = Integer.decode(getStackPattern().matchIndices(expected.getPath()).get(3));
+		int expId = Integer.decode(getStackPattern().matchKeys(expected.getPath()).get(3));
 		assertEquals(expId, frameId);
 	}
 

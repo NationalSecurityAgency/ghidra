@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,33 +19,33 @@ import java.io.PrintStream;
 
 import org.jdom.Element;
 
-import ghidra.pcodeCPort.error.*;
-import ghidra.pcodeCPort.translate.*;
-
-
+import ghidra.pcodeCPort.error.LowlevelError;
+import ghidra.pcodeCPort.translate.Translate;
+import ghidra.program.model.lang.SpaceNames;
 
 public class ConstantSpace extends AddrSpace {
-	public ConstantSpace( Translate t, String nm, int ind ) {
-		super( t, spacetype.IPTR_CONSTANT, nm, 8, 1, ind, 0, 0 );
-		clearFlags( heritaged | big_endian );
-		setFlags( big_endian );
+	public ConstantSpace(Translate t) {
+		super(t, spacetype.IPTR_CONSTANT, SpaceNames.CONSTANT_SPACE_NAME, 8, 1,
+			SpaceNames.CONSTANT_SPACE_INDEX, 0, 0);
+		clearFlags(heritaged | big_endian);
+		setFlags(big_endian);
 	}
 
 	@Override
-    public int printRaw( PrintStream s, long offset ) {
-		s.append( "0x" );
-		s.append( Long.toHexString( offset) );
+	public int printRaw(PrintStream s, long offset) {
+		s.append("0x");
+		s.append(Long.toHexString(offset));
 		return getTrans().getDefaultSize();
 	}
 
 	@Override
-    public void saveXml( PrintStream s ) {
-		throw new LowlevelError( "Should never save the constant space as XML" );
+	public void saveXml(PrintStream s) {
+		throw new LowlevelError("Should never save the constant space as XML");
 	}
 
 	@Override
-    public void restoreXml( Element el ) {
-		throw new LowlevelError( "Should never restore the constant space from XML" );
+	public void restoreXml(Element el) {
+		throw new LowlevelError("Should never restore the constant space from XML");
 	}
 
 }

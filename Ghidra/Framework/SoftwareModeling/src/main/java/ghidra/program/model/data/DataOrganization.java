@@ -172,4 +172,69 @@ public interface DataOrganization {
 //	 * @return the aligned offset for the data type
 //	 */
 //	int getAlignmentOffset(int minimumOffset, DataType dataType, int dtSize);
+
+	/**
+	 * Determine if this DataOrganization is equivalent to another specific instance
+	 * @param obj is the other instance
+	 * @return true if they are equivalent
+	 */
+	public default boolean isEquivalent(DataOrganization obj) {
+		if (getAbsoluteMaxAlignment() != obj.getAbsoluteMaxAlignment()) {
+			return false;
+		}
+		if (isBigEndian() != obj.isBigEndian()) {
+			return false;
+		}
+		if (!getBitFieldPacking().isEquivalent(obj.getBitFieldPacking())) {
+			return false;
+		}
+		if (getCharSize() != obj.getCharSize() || getWideCharSize() != obj.getWideCharSize()) {
+			return false;
+		}
+		if (getDefaultAlignment() != obj.getDefaultAlignment()) {
+			return false;
+		}
+		if (getDefaultPointerAlignment() != obj.getDefaultPointerAlignment()) {
+			return false;
+		}
+		if (getDoubleSize() != obj.getDoubleSize() || getFloatSize() != obj.getFloatSize()) {
+			return false;
+		}
+		if (getIntegerSize() != obj.getIntegerSize() ||
+			getLongLongSize() != obj.getLongLongSize()) {
+			return false;
+		}
+		if (getShortSize() != obj.getShortSize()) {
+			return false;
+		}
+		if (getLongSize() != obj.getLongSize() || getLongDoubleSize() != obj.getLongDoubleSize()) {
+			return false;
+		}
+		if (isSignedChar() != obj.isSignedChar()) {
+			return false;
+		}
+		if (getMachineAlignment() != obj.getMachineAlignment()) {
+			return false;
+		}
+		if (getPointerSize() != obj.getPointerSize() ||
+			getPointerShift() != obj.getPointerShift()) {
+			return false;
+		}
+		int[] keys = getSizes();
+		int[] op2keys = obj.getSizes();
+		if (keys.length != op2keys.length) {
+			return false;
+		}
+		try {
+			for (int k : keys) {
+				if (getSizeAlignment(k) != obj.getSizeAlignment(k)) {
+					return false;
+				}
+			}
+		}
+		catch (NoValueException ex) {
+			return false;
+		}
+		return true;
+	}
 }

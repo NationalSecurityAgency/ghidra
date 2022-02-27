@@ -15,8 +15,7 @@
  */
 package docking.widgets;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -190,7 +189,7 @@ public class OptionDialog extends DialogComponentProvider {
 	 * @param icon allows the user to specify the icon to be used.  If non-null,
 	 *     this will override the messageType.
 	 * @param addCancel true means add a Cancel button
-	 * @param defaultButtonName The default button name	
+	 * @param defaultButtonName The default button name
 	 */
 	protected OptionDialog(String title, String message, String option1, String option2,
 			int messageType, Icon icon, boolean addCancel, String defaultButtonName) {
@@ -280,7 +279,7 @@ public class OptionDialog extends DialogComponentProvider {
 	private JPanel buildRememberOptionChoicePanel(DialogRememberOption rememberOptionChoice) {
 		if (rememberOptionChoice == null) {
 			this.rememberOption = new DoNothingDialogRememberOption();
-			rememberOptionCheckBox = new GCheckBox(); // to prevent null checks, create dummy checkbox
+			rememberOptionCheckBox = new GCheckBox(); // dummy checkbox to prevent null checks
 			return null;
 		}
 		this.rememberOption = rememberOptionChoice;
@@ -293,11 +292,26 @@ public class OptionDialog extends DialogComponentProvider {
 	}
 
 	private JPanel buildMessagePanel(String message, int messageType, Icon icon) {
+
+		this.dialogMessage = message;
+
 		JPanel panel = new JPanel(new BorderLayout());
 		JPanel textPanel = createTextPanel(message);
 		textPanel.setMaximumSize(textPanel.getPreferredSize());
-		panel.add(new GIconLabel((icon == null) ? getIconForMessageType(messageType) : icon),
-			BorderLayout.WEST);
+
+		// we override preferred size here to compensate for html text that is being clipped on
+		// some operating systems
+		Icon messageIcon = (icon == null) ? getIconForMessageType(messageType) : icon;
+		JLabel label = new GIconLabel(messageIcon) {
+			@Override
+			public Dimension getPreferredSize() {
+				Dimension ps = super.getPreferredSize();
+				ps.height += 10;
+				return ps;
+			}
+		};
+		
+		panel.add(label, BorderLayout.WEST);
 		panel.add(textPanel, BorderLayout.CENTER);
 		return panel;
 	}
@@ -374,18 +388,28 @@ public class OptionDialog extends DialogComponentProvider {
 
 	protected JPanel createTextPanel(String message) {
 
-		this.dialogMessage = message;
-		if (HTMLUtilities.isHTML(dialogMessage)) {
-			JLabel messageLabel = new GHtmlLabel(dialogMessage);
-			messageLabel.setName(MESSAGE_COMPONENT_NAME);
-			JPanel panel = new JPanel(new BorderLayout());
-			panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-			panel.add(messageLabel);
-			return panel;
+		if (!HTMLUtilities.isHTML(dialogMessage)) {
+			MultiLineLabel label = new MultiLineLabel(dialogMessage);
+			label.setName(MESSAGE_COMPONENT_NAME);
+			return label;
 		}
-		MultiLineLabel label = new MultiLineLabel(dialogMessage);
+
+		// we override preferred size here to compensate for html text that is being clipped on
+		// some operating systems
+		JLabel label = new GHtmlLabel(dialogMessage) {
+			@Override
+			public Dimension getPreferredSize() {
+				Dimension ps = super.getPreferredSize();
+				ps.height += 10;
+				return ps;
+			}
+		};
 		label.setName(MESSAGE_COMPONENT_NAME);
-		return label;
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		panel.add(label, BorderLayout.CENTER);
+		return panel;
+
 	}
 
 	/**

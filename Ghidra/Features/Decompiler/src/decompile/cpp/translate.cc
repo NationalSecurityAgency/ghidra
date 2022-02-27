@@ -229,7 +229,7 @@ void AddrSpaceManager::restoreXmlSpaces(const Element *el,const Translate *trans
 
 {
   // The first space should always be the constant space
-  insertSpace(new ConstantSpace(this,trans,"const",AddrSpace::constant_space_index));
+  insertSpace(new ConstantSpace(this,trans));
 
   string defname(el->getAttributeValue("defaultspace"));
   const List &list(el->getChildren());
@@ -302,14 +302,14 @@ void AddrSpaceManager::insertSpace(AddrSpace *spc)
   bool duplicateId = false;
   switch(spc->getType()) {
   case IPTR_CONSTANT:
-    if (spc->getName() != "const")
+    if (spc->getName() != ConstantSpace::NAME)
       nameTypeMismatch = true;
-    if (spc->index != AddrSpace::constant_space_index)
+    if (spc->index != ConstantSpace::INDEX)
       throw LowlevelError("const space must be assigned index 0");
     constantspace = spc;
     break;
   case IPTR_INTERNAL:
-    if (spc->getName() != "unique")
+    if (spc->getName() != UniqueSpace::NAME)
       nameTypeMismatch = true;
     if (uniqspace != (AddrSpace *)0)
       duplicateName = true;
@@ -323,7 +323,7 @@ void AddrSpaceManager::insertSpace(AddrSpace *spc)
     fspecspace = spc;
     break;
   case IPTR_JOIN:
-    if (spc->getName() != "join")
+    if (spc->getName() != JoinSpace::NAME)
       nameTypeMismatch = true;
     if (joinspace != (AddrSpace *)0)
       duplicateName = true;
@@ -349,7 +349,7 @@ void AddrSpaceManager::insertSpace(AddrSpace *spc)
       ospc->getBaseSpace()->setFlags(AddrSpace::overlaybase); // Mark the base as being overlayed
     }
     else if (spc->isOtherSpace()) {
-      if (spc->index != AddrSpace::other_space_index)
+      if (spc->index != OtherSpace::INDEX)
         throw LowlevelError("OTHER space must be assigned index 1");
     }
     break;

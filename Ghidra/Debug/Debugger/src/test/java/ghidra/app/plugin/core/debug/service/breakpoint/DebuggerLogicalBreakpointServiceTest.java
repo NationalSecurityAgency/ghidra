@@ -74,7 +74,8 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 
 		@Override
 		public synchronized void breakpointUpdated(LogicalBreakpoint lb) {
-			Msg.debug(this, "LogicalBreakpoint updated: " + lb);
+			Msg.debug(this,
+				"LogicalBreakpoint updated: (" + System.identityHashCode(lb) + ")" + lb);
 			assertTrue(current.contains(lb));
 		}
 
@@ -165,12 +166,12 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 
 	public void startRecorder1() throws Throwable {
 		recorder1 = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 	}
 
 	public void startRecorder3() throws Throwable {
 		recorder3 = modelService.recordTarget(mb.testProcess3,
-			new TestDebuggerTargetTraceMapper(mb.testProcess3));
+			createTargetTraceMapper(mb.testProcess3), ActionSource.AUTOMATIC);
 	}
 
 	@After
@@ -570,7 +571,9 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		traceManager.openTrace(trace);
 		waitForSwing();
 
-		assertLogicalBreakpointForLoneAccessBreakpoint(trace);
+		waitForPass(() -> {
+			assertLogicalBreakpointForLoneAccessBreakpoint(trace);
+		});
 	}
 
 	@Test

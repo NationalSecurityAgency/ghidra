@@ -99,11 +99,9 @@ public class DBTraceBreakpointSpace implements DBTraceSpaceBased {
 			for (TraceThread t : threads) {
 				threadManager.assertIsMine(t);
 			}
-			@SuppressWarnings({ "rawtypes", "unchecked" }) // checked by above assertIsMine
-			Collection<DBTraceThread> dbThreads = (Collection) threads;
 			DBTraceBreakpoint breakpoint =
 				breakpointMapSpace.put(new ImmutableTraceAddressSnapRange(range, lifespan), null);
-			breakpoint.set(path, path, dbThreads, kinds, enabled, comment);
+			breakpoint.set(path, path, threads, kinds, enabled, comment);
 			trace.setChanged(
 				new TraceChangeRecord<>(TraceBreakpointChangeType.ADDED, this, breakpoint));
 			return breakpoint;

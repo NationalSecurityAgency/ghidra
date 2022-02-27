@@ -24,7 +24,6 @@ public interface DebuggerAutoReadMemoryAction extends AutoReadMemoryAction {
 	static MultiStateActionBuilder<AutoReadMemorySpec> builder(Plugin owner) {
 		MultiStateActionBuilder<AutoReadMemorySpec> builder = AutoReadMemoryAction.builder(owner);
 		builder.toolBarGroup(NAME);
-		builder.performActionOnButtonClick(true);
 		for (AutoReadMemorySpec spec : AutoReadMemorySpec.allSpecs().values()) {
 			builder.addState(spec.getMenuName(), spec.getMenuIcon(), spec);
 		}

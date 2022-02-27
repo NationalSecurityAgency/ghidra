@@ -18,13 +18,13 @@ package ghidra.file.formats.ios.dyldcache;
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
-import ghidra.app.util.bin.format.macho.dyld.DyldCacheImageInfo;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheImage;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.DyldCacheUtils;
+import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
@@ -35,8 +35,9 @@ import ghidra.util.task.TaskMonitor;
 @FileSystemInfo(type = "dyldcachev1", description = "iOS DYLD Cache Version 1", factory = GFileSystemBaseFactory.class)
 public class DyldCacheFileSystem extends GFileSystemBase {
 
-	private DyldCacheHeader header;
-	private Map<GFile, DyldCacheImageInfo> map = new HashMap<>();
+	private SplitDyldCache splitDyldCache;
+	private Map<GFile, Long> addrMap = new HashMap<>();
+	private Map<GFile, Integer> indexMap = new HashMap<>();
 
 	public DyldCacheFileSystem(String fileSystemName, ByteProvider provider) {
 		super(fileSystemName, provider);
@@ -44,20 +45,24 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 
 	@Override
 	public void close() throws IOException {
-		map.clear();
+		addrMap.clear();
+		indexMap.clear();
+		splitDyldCache.close();
 		super.close();
 	}
 
 	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
-		DyldCacheImageInfo data = map.get(file);
-		if (data == null) {
+		Long addr = addrMap.get(file);
+		if (addr == null) {
 			return null;
 		}
-		long machHeaderStartIndexInProvider = data.getAddress() - header.getBaseAddress();
+		int index = indexMap.get(file);
+		long machHeaderStartIndexInProvider =
+			addr - splitDyldCache.getDyldCacheHeader(index).getBaseAddress();
 		try {
-			return DyldCacheDylibExtractor.extractDylib(machHeaderStartIndexInProvider, provider,
-				file.getFSRL(), monitor);
+			return DyldCacheDylibExtractor.extractDylib(machHeaderStartIndexInProvider,
+				splitDyldCache, index, file.getFSRL(), monitor);
 		}
 		catch (MachException e) {
 			throw new IOException("Invalid Mach-O header detected at 0x" +
@@ -65,49 +70,11 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 		}
 	}
 
-/*
-// TODO: support GFileSystemProgramProvider interface?
-// Below is commented out implementation of getProgram(), that was present as a comment
-// in the previous code, but formatted here so it can be read.
-// This needs to be researched and the junit test needs to adjusted to test this.
-	@Override
-	public Program getProgram(GFile file, LanguageService languageService, TaskMonitor monitor,
-			Object consumer) throws Exception {
-		DyldArchitecture architecture = header.getArchitecture();
-		LanguageCompilerSpecPair lcs = architecture.getLanguageCompilerSpecPair(languageService);
-		DyldCacheData dyldCacheData = map.get(file);
-		long machHeaderStartIndexInProvider =
-			dyldCacheData.getLibraryOffset() - header.getBaseAddress();
-		ByteProvider wrapper =
-			new ByteProviderWrapper(provider, machHeaderStartIndexInProvider, file.getLength());
-		MachHeader machHeader =
-			MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, wrapper);
-		Program program =
-			new ProgramDB(file.getName(), lcs.getLanguage(), lcs.getCompilerSpec(), consumer);
-		int id = program.startTransaction(getName());
-		boolean success = false;
-		try {
-			MachoLoader loader = new MachoLoader();
-			loader.load(machHeader, program, new MessageLog(), monitor);
-			program.setExecutableFormat(MachoLoader.MACH_O_NAME);
-			program.setExecutablePath(file.getAbsolutePath());
-			success = true;
-		}
-		finally {
-			program.endTransaction(id, success);
-			if (!success) {
-				program.release(consumer);
-			}
-		}
-		return program;
-	}
-*/
-
 	@Override
 	public List<GFile> getListing(GFile directory) throws IOException {
 		if (directory == null || directory.equals(root)) {
 			List<GFile> roots = new ArrayList<>();
-			for (GFile file : map.keySet()) {
+			for (GFile file : addrMap.keySet()) {
 				if (file.getParentFile() == root || file.getParentFile().equals(root)) {
 					roots.add(file);
 				}
@@ -115,7 +82,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 			return roots;
 		}
 		List<GFile> tmp = new ArrayList<>();
-		for (GFile file : map.keySet()) {
+		for (GFile file : addrMap.keySet()) {
 			if (file.getParentFile() == null) {
 				continue;
 			}
@@ -133,41 +100,37 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 
 	@Override
 	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
+		MessageLog log = new MessageLog();
 		monitor.setMessage("Opening DYLD cache...");
-
-		BinaryReader reader = new BinaryReader(provider, true);
-
-		header = new DyldCacheHeader(reader);
-		header.parseFromFile(false, new MessageLog(), monitor);
-
-		List<DyldCacheImageInfo> dataList = header.getImageInfos();
-
-		monitor.initialize(dataList.size());
-
-		for (DyldCacheImageInfo data : dataList) {
-
-			if (monitor.isCancelled()) {
-				break;
+		
+		splitDyldCache = new SplitDyldCache(provider, false, true, log, monitor);
+		for (int i = 0; i < splitDyldCache.size(); i++) {
+			DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
+			monitor.setMessage("Find files...");
+			List<DyldCacheImage> mappedImages = header.getMappedImages();
+			monitor.initialize(mappedImages.size());
+			for (DyldCacheImage mappedImage : mappedImages) {
+				GFileImpl file =
+					GFileImpl.fromPathString(this, root, mappedImage.getPath(), null, false, -1);
+				storeFile(file, mappedImage.getAddress(), i);
+				monitor.checkCanceled();
+				monitor.incrementProgress(1);
 			}
-
-			monitor.incrementProgress(1);
-
-			GFileImpl file = GFileImpl.fromPathString(this, root, data.getPath(), null, false, -1);
-			storeFile(file, data);
 		}
 	}
 
-	private void storeFile(GFile file, DyldCacheImageInfo data) {
+	private void storeFile(GFile file, Long addr, Integer index) {
 		if (file == null) {
 			return;
 		}
 		if (file.equals(root)) {
 			return;
 		}
-		if (!map.containsKey(file) || map.get(file) == null) {
-			map.put(file, data);
+		if (!addrMap.containsKey(file) || addrMap.get(file) == null) {
+			addrMap.put(file, addr);
+			indexMap.put(file, index);
 		}
 		GFile parentFile = file.getParentFile();
-		storeFile(parentFile, null);
+		storeFile(parentFile, null, null);
 	}
 }

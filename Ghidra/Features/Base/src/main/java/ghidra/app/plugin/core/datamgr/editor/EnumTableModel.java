@@ -237,10 +237,6 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 		initialize();
 	}
 
-	/**
-	 * Add a new enum entry that has default values.
-	 * @return the new value
-	 */
 	int addEntry(int afterRow) {
 		Long value = findNextValue(afterRow);
 		String name = getUniqueName();

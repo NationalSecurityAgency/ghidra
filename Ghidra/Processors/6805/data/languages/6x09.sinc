@@ -229,7 +229,7 @@ EA: "["addr"]" is imm8=0x9F; simm16 [ addr = inst_next; ]
 PAGE2: is op=0x10 { } # PAGE2 opcode prefix (0x10)
 PAGE3: is op=0x11 { } # PAGE3 opcode prefix (0x11)
 
-IMMED1: "#"imm8  is imm8  { tmp:1 = imm8; export tmp; }
+IMMED1: "#"imm8  is imm8  { export *[const]:1 imm8; }
 
 REL:  addr    is simm8  [ addr = inst_next + simm8;  ]   { export *:2 addr; } 
 REL2: addr    is simm16 [ addr = inst_next + simm16; ]   { export *:2 addr; } 
@@ -237,7 +237,7 @@ REL2: addr    is simm16 [ addr = inst_next + simm16; ]   { export *:2 addr; }
 # 1-byte operand, immediate/direct/indexed/extended addressing mode
 OP1: "#"imm8    is op45=0; imm8
 {
-    export imm8;
+    export *[const]:1 imm8;
 }
 OP1: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
 {
@@ -257,7 +257,7 @@ OP1: imm16    is op45=3; imm16
 # 2-byte operand, direct/indexed/extended addressing mode
 OP2: "#"imm16    is (op47=8 | op47=0xC); imm16
 {
-    export imm16;
+    export *[const]:2 imm16;
 }
 OP2: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
 {
@@ -698,7 +698,8 @@ macro PushEntireState()
  
 :JMP OP2    is (op=0x0E | op=0x6E | op=0x7E) ... & OP2
 {
-        goto OP2;
+        local target = OP2;
+        goto [target];
 }
 
 :CLRA    is op=0x4F 
@@ -944,7 +945,7 @@ macro PushEntireState()
         $(I) = 1;
         $(F) = 1;
         tmp:2 = $(SWI_VECTOR);
-        call[tmp];
+        call [tmp];
 }
 
 ################################################################
@@ -1101,7 +1102,8 @@ macro PushEntireState()
 {
         local addr:2 = inst_next;
         Push2(S, addr);
-        call OP2;
+        local target = OP2;
+        call [target];
 }
 
 :STD OP2    is (op=0xDD | op=0xED | op=0xFD) ... & OP2
@@ -1216,7 +1218,7 @@ macro PushEntireState()
 {
         PushEntireState();
         tmp:2 = $(SWI2_VECTOR);
-        call[tmp];
+        call [tmp];
 }
 
 :CMPD OP2    is PAGE2; (op=0x83 | op=0x93 | op=0xA3 | op=0xB3) ... & OP2
@@ -1257,7 +1259,7 @@ macro PushEntireState()
 {
         PushEntireState();
         tmp:2 = $(SWI3_VECTOR);
-        call[tmp];
+        call [tmp];
 }
 
 :CMPU OP2    is PAGE3; (op=0x83 | op=0x93 | op=0xA3 | op=0xB3) ... & OP2

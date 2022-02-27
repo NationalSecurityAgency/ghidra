@@ -23,16 +23,16 @@ import java.util.concurrent.locks.ReadWriteLock;
 import com.google.common.collect.Range;
 
 import db.DBHandle;
+import ghidra.dbg.target.TargetModule;
+import ghidra.dbg.target.TargetSection;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace.TraceModuleChangeType;
-import ghidra.trace.model.modules.TraceModuleManager;
-import ghidra.trace.model.modules.TraceSection;
+import ghidra.trace.model.modules.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
@@ -64,9 +64,9 @@ public class DBTraceModuleManager
 		throw new UnsupportedOperationException();
 	}
 
-	protected void checkModulePathConflicts(DBTraceModule ignore, String modulePath,
+	protected void checkModulePathConflicts(TraceModule ignore, String modulePath,
 			Range<Long> moduleLifespan) throws DuplicateNameException {
-		for (DBTraceModule pc : doGetModulesByPath(modulePath)) {
+		for (TraceModule pc : doGetModulesByPath(modulePath)) {
 			if (pc == ignore) {
 				continue;
 			}
@@ -80,12 +80,17 @@ public class DBTraceModuleManager
 
 	protected void checkSectionPathConflicts(DBTraceSection ignore, String sectionPath,
 			Range<Long> moduleLifespan) throws DuplicateNameException {
-		Collection<? extends DBTraceSection> pathConflicts = doGetSectionsByPath(sectionPath);
-		for (DBTraceSection pc : pathConflicts) {
+		Collection<? extends TraceSection> pathConflicts = doGetSectionsByPath(sectionPath);
+		for (TraceSection pc : pathConflicts) {
 			if (pc == ignore) {
 				continue;
 			}
-			if (!DBTraceUtils.intersect(pc.getLifespan(), moduleLifespan)) {
+			/**
+			 * TODO: Certainly, any two sections at the same path will belong to the same module and
+			 * so have the same lifespan, no? I suppose this logic is only true in objects mode...,
+			 * and there, the logic is performed by the value key duplicate check.
+			 */
+			if (!DBTraceUtils.intersect(pc.getModule().getLifespan(), moduleLifespan)) {
 				continue;
 			}
 			throw new DuplicateNameException("Section with path '" + sectionPath +
@@ -94,31 +99,41 @@ public class DBTraceModuleManager
 	}
 
 	@Override
-	public DBTraceModule addModule(String modulePath, String moduleName, AddressRange range,
+	public TraceModule addModule(String modulePath, String moduleName, AddressRange range,
 			Range<Long> lifespan) throws DuplicateNameException {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			return doAddModule(modulePath, moduleName, range, lifespan);
 		}
 	}
 
-	protected DBTraceModule doAddModule(String modulePath, String moduleName, AddressRange range,
+	protected TraceModule doAddModule(String modulePath, String moduleName, AddressRange range,
 			Range<Long> lifespan) throws DuplicateNameException {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager().addModule(modulePath, moduleName, lifespan, range);
+		}
 		checkModulePathConflicts(null, modulePath, lifespan);
 		return delegateWrite(range.getAddressSpace(),
 			m -> m.doAddModule(modulePath, moduleName, range, lifespan));
 	}
 
-	protected Collection<? extends DBTraceModule> doGetModulesByPath(String modulePath) {
+	protected Collection<? extends TraceModule> doGetModulesByPath(String modulePath) {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager().getObjectsByPath(modulePath, TraceObjectModule.class);
+		}
 		return delegateCollection(memSpaces.values(), m -> m.doGetModulesByPath(modulePath));
 	}
 
 	@Override
-	public Collection<? extends DBTraceModule> getModulesByPath(String modulePath) {
+	public Collection<? extends TraceModule> getModulesByPath(String modulePath) {
 		return Collections.unmodifiableCollection(doGetModulesByPath(modulePath));
 	}
 
 	@Override
-	public DBTraceModule getLoadedModuleByPath(long snap, String modulePath) {
+	public TraceModule getLoadedModuleByPath(long snap, String modulePath) {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager()
+					.getObjectByPath(snap, modulePath, TraceObjectModule.class);
+		}
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			return doGetModulesByPath(modulePath)
 					.stream()
@@ -129,24 +144,40 @@ public class DBTraceModuleManager
 	}
 
 	@Override
-	public Collection<? extends DBTraceModule> getAllModules() {
+	public Collection<? extends TraceModule> getAllModules() {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager().getAllObjects(TraceObjectModule.class);
+		}
 		return delegateCollection(memSpaces.values(), m -> m.getAllModules());
 	}
 
 	@Override
-	public Collection<? extends DBTraceModule> getLoadedModules(long snap) {
+	public Collection<? extends TraceModule> getLoadedModules(long snap) {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager().getObjectsAtSnap(snap, TraceObjectModule.class);
+		}
 		return delegateCollection(memSpaces.values(), m -> m.getLoadedModules(snap));
 	}
 
 	@Override
-	public Collection<? extends DBTraceModule> getModulesAt(long snap, Address address) {
+	public Collection<? extends TraceModule> getModulesAt(long snap, Address address) {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager()
+					.getObjectsContaining(snap, address, TargetModule.RANGE_ATTRIBUTE_NAME,
+						TraceObjectModule.class);
+		}
 		return delegateRead(address.getAddressSpace(),
 			m -> m.getModulesAt(snap, address), Set.of());
 	}
 
 	@Override
-	public Collection<? extends DBTraceModule> getModulesIntersecting(Range<Long> lifespan,
+	public Collection<? extends TraceModule> getModulesIntersecting(Range<Long> lifespan,
 			AddressRange range) {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager()
+					.getObjectsIntersecting(lifespan, range, TargetModule.RANGE_ATTRIBUTE_NAME,
+						TraceObjectModule.class);
+		}
 		return delegateRead(range.getAddressSpace(),
 			m -> m.getModulesIntersecting(lifespan, range), Set.of());
 	}
@@ -157,14 +188,24 @@ public class DBTraceModuleManager
 	}
 
 	@Override
-	public Collection<? extends DBTraceSection> getSectionsAt(long snap, Address address) {
+	public Collection<? extends TraceSection> getSectionsAt(long snap, Address address) {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager()
+					.getObjectsContaining(snap, address, TargetSection.RANGE_ATTRIBUTE_NAME,
+						TraceObjectSection.class);
+		}
 		return delegateRead(address.getAddressSpace(),
 			m -> m.getSectionsAt(snap, address), Set.of());
 	}
 
 	@Override
-	public Collection<? extends DBTraceSection> getSectionsIntersecting(Range<Long> lifespan,
+	public Collection<? extends TraceSection> getSectionsIntersecting(Range<Long> lifespan,
 			AddressRange range) {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager()
+					.getObjectsIntersecting(lifespan, range, TargetSection.RANGE_ATTRIBUTE_NAME,
+						TraceObjectSection.class);
+		}
 		return delegateRead(range.getAddressSpace(),
 			m -> m.getSectionsIntersecting(lifespan, range), Set.of());
 	}
@@ -186,7 +227,7 @@ public class DBTraceModuleManager
 	}
 
 	@Override
-	protected DBTraceModuleSpace createRegisterSpace(AddressSpace space, DBTraceThread thread,
+	protected DBTraceModuleSpace createRegisterSpace(AddressSpace space, TraceThread thread,
 			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		throw new AssertionError();
 	}
@@ -204,7 +245,10 @@ public class DBTraceModuleManager
 	}
 
 	@Override
-	public Collection<? extends DBTraceSection> getAllSections() {
+	public Collection<? extends TraceSection> getAllSections() {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager().getAllObjects(TraceObjectSection.class);
+		}
 		return delegateCollection(memSpaces.values(), m -> m.getAllSections());
 	}
 
@@ -212,12 +256,15 @@ public class DBTraceModuleManager
 		return delegateCollection(memSpaces.values(), m -> m.doGetSectionsByModuleId(key));
 	}
 
-	protected Collection<? extends DBTraceSection> doGetSectionsByPath(String sectionPath) {
+	protected Collection<? extends TraceSection> doGetSectionsByPath(String sectionPath) {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager().getObjectsByPath(sectionPath, TraceObjectSection.class);
+		}
 		return delegateCollection(memSpaces.values(), m -> m.doGetSectionsByPath(sectionPath));
 	}
 
 	@Override
-	public Collection<? extends DBTraceSection> getSectionsByPath(String sectionPath) {
+	public Collection<? extends TraceSection> getSectionsByPath(String sectionPath) {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			return Collections.unmodifiableCollection(doGetSectionsByPath(sectionPath));
 		}
@@ -225,10 +272,14 @@ public class DBTraceModuleManager
 
 	@Override
 	public TraceSection getLoadedSectionByPath(long snap, String sectionPath) {
+		if (trace.getObjectManager().hasSchema()) {
+			return trace.getObjectManager()
+					.getObjectByPath(snap, sectionPath, TraceObjectSection.class);
+		}
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			return doGetSectionsByPath(sectionPath)
 					.stream()
-					.filter(s -> s.getLifespan().contains(snap))
+					.filter(s -> s.getModule().getLifespan().contains(snap))
 					.findAny()
 					.orElse(null);
 		}

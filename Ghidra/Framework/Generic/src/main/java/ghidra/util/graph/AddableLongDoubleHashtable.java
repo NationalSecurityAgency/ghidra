@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +24,7 @@ import ghidra.util.exception.NoValueException;
 * to the value stored with the key rather than replacing the value.
 * 
 */
+@Deprecated(forRemoval = true, since = "10.2")
 public class AddableLongDoubleHashtable extends LongDoubleHashtable {
 	public AddableLongDoubleHashtable() {
 		super();

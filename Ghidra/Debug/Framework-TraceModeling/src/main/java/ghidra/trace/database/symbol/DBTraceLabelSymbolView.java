@@ -19,7 +19,6 @@ import com.google.common.collect.Range;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.TraceLabelSymbolView;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
@@ -46,13 +45,12 @@ public class DBTraceLabelSymbolView
 		}
 		DBTraceSymbolManager.assertValidName(name);
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			DBTraceThread dbThread =
-				thread == null ? null : manager.trace.getThreadManager().assertIsMine(thread);
+			manager.trace.getThreadManager().assertIsMine(thread);
 			DBTraceNamespaceSymbol dbnsParent = manager.assertIsMine((Namespace) parent);
-			manager.assertValidThreadAddress(dbThread, address);
+			manager.assertValidThreadAddress(thread, address);
 			DBTraceLabelSymbol label = store.create();
-			label.set(lifespan, dbThread, address, name, dbnsParent, source);
-			manager.putID(lifespan, dbThread, address, label.getID());
+			label.set(lifespan, thread, address, name, dbnsParent, source);
+			manager.putID(lifespan, thread, address, label.getID());
 
 			cacheForAt.notifyNewEntry(lifespan, address, label);
 

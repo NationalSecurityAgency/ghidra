@@ -210,8 +210,8 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		}
 
 		@Override
-		public java.util.List<LogTableColumns> defaultSortOrder() {
-			return java.util.List.of(LogTableColumns.ACTIONS, LogTableColumns.TIME);
+		public List<LogTableColumns> defaultSortOrder() {
+			return List.of(LogTableColumns.ACTIONS, LogTableColumns.TIME);
 		}
 	}
 

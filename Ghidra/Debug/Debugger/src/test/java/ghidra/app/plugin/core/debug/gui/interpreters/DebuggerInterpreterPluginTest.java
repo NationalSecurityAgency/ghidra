@@ -24,13 +24,16 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.interpreter.InterpreterComponentProvider;
 import ghidra.dbg.model.TestTargetInterpreter.ExecuteCall;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
 
+@Category(NightlyCategory.class)
 public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerGUITest
 		implements DebuggerModelTestUtils {
 	private DebuggerInterpreterPlugin interpreterPlugin;
@@ -124,8 +127,7 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 		InterpreterComponentProvider interpreter =
 			waitForComponentProvider(InterpreterComponentProvider.class);
 
-		mb.testModel.session.changeAttributes(List.of(
-			"Interpreter" //
+		mb.testModel.session.changeAttributes(List.of("Interpreter" //
 		), Map.of(), "Invalidate interpreter");
 		waitForSwing();
 
@@ -142,8 +144,7 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 			waitForComponentProvider(InterpreterComponentProvider.class);
 		conn.setPinned(true);
 
-		mb.testModel.session.changeAttributes(List.of(
-			"Interpreter" //
+		mb.testModel.session.changeAttributes(List.of("Interpreter" //
 		), Map.of(), "Invalidate interpreter");
 		waitForSwing();
 

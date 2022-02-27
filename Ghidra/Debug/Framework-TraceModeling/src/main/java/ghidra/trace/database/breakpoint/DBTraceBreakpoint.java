@@ -26,7 +26,6 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
@@ -128,7 +127,7 @@ public class DBTraceBreakpoint
 		return this;
 	}
 
-	public void set(String path, String name, Collection<DBTraceThread> threads,
+	public void set(String path, String name, Collection<TraceThread> threads,
 			Collection<TraceBreakpointKind> kinds, boolean enabled, String comment) {
 		// TODO: Check that the threads exist and that each's lifespan covers the breakpoint's
 		// TODO: This would require additional validation any time those are updated
@@ -140,7 +139,7 @@ public class DBTraceBreakpoint
 		}
 		this.threadKeys = new long[threads.size()];
 		int i = 0;
-		for (DBTraceThread t : threads) {
+		for (TraceThread t : threads) {
 			this.threadKeys[i++] = t.getKey();
 		}
 		this.flagsByte = 0;
@@ -386,7 +385,8 @@ public class DBTraceBreakpoint
 	}
 
 	@Override
-	public boolean isEnabled() {
+	public boolean isEnabled(long snap) {
+		// NB. Only object mode support per-snap enablement
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			return enabled;
 		}

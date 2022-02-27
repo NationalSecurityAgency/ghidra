@@ -18,6 +18,7 @@ package ghidra.framework.data;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -29,10 +30,8 @@ import ghidra.util.Lock;
 import ghidra.util.classfinder.ClassSearcher;
 
 /**
- * An abstract class that provides default behavior for
- * DomainObject(s), specifically it handles listeners and
- * change status; the derived class must provide the
- * getDescription() method.
+ * An abstract class that provides default behavior for DomainObject(s), specifically it handles
+ * listeners and change status; the derived class must provide the getDescription() method.
  */
 public abstract class DomainObjectAdapter implements DomainObject {
 
@@ -56,7 +55,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		new ConcurrentHashMap<EventQueueID, DomainObjectChangeSupport>();
 	private volatile boolean eventsEnabled = true;
 	private Set<DomainObjectClosedListener> closeListeners =
-		new HashSet<DomainObjectClosedListener>();
+		new CopyOnWriteArraySet<DomainObjectClosedListener>();
 
 	private ArrayList<Object> consumers;
 	protected Map<String, String> metadata = new LinkedHashMap<String, String>();
@@ -72,12 +71,12 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	private long modificationNumber = 1;
 
 	/**
-	 * Construct a new DomainObjectAdapter. 
-	 * If construction of this object fails, be sure to release with consumer.
+	 * Construct a new DomainObjectAdapter. If construction of this object fails, be sure to release
+	 * with consumer.
+	 * 
 	 * @param name name of the object
-	 * @param timeInterval the time (in milliseconds) to wait before the
-	 * event queue is flushed.  If a new event comes in before the time expires,
-	 * the timer is reset.
+	 * @param timeInterval the time (in milliseconds) to wait before the event queue is flushed. If
+	 *            a new event comes in before the time expires, the timer is reset.
 	 * @param bufsize initial size of event buffer
 	 * @param consumer the object that created this domain object
 	 */
@@ -125,8 +124,9 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	}
 
 	/**
-	 * Returns the hidden user-filesystem associated with 
-	 * this objects domain file, or null if unknown.
+	 * Returns the hidden user-filesystem associated with this objects domain file, or null if
+	 * unknown.
+	 * 
 	 * @return user data file system
 	 */
 	protected FileSystem getAssociatedUserFilesystem() {
@@ -250,6 +250,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	/**
 	 * Return "changed" status
+	 * 
 	 * @return true if this object has changed
 	 */
 	public boolean getChangeStatus() {
@@ -316,9 +317,10 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	public abstract String getDescription();
 
 	/**
-	  * Fires the specified event.
-	  * @param ev event to fire
-	  */
+	 * Fires the specified event.
+	 * 
+	 * @param ev event to fire
+	 */
 	public void fireEvent(DomainObjectChangeRecord ev) {
 		modificationNumber++;
 		if (eventsEnabled) {
@@ -428,6 +430,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	/**
 	 * Set default content type
+	 * 
 	 * @param doClass default domain object implementation
 	 */
 	public static synchronized void setDefaultContentClass(Class<?> doClass) {
@@ -447,6 +450,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	/**
 	 * Get the ContentHandler associated with the specified content-type.
+	 * 
 	 * @param contentType domain object content type
 	 * @return content handler
 	 */
@@ -461,6 +465,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	/**
 	 * Get the ContentHandler associated with the specified domain object
+	 * 
 	 * @param dobj domain object
 	 * @return content handler
 	 */

@@ -35,7 +35,6 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Abstract
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.map.TraceAddressSnapRangePropertyMap;
@@ -89,7 +88,7 @@ public class DBTraceAddressSnapRangePropertyMap<T, DR extends AbstractDBTraceAdd
 
 	@Override
 	protected DBTraceAddressSnapRangePropertyMapRegisterSpace<T, DR> createRegisterSpace(
-			AddressSpace space, DBTraceThread thread, DBTraceSpaceEntry ent)
+			AddressSpace space, TraceThread thread, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
 		return new DBTraceAddressSnapRangePropertyMapRegisterSpace<>(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),

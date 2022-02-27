@@ -103,6 +103,15 @@ public abstract class PluginPackage implements ExtensionPoint, Comparable<Plugin
 		return description;
 	}
 
+	/**
+	 * The minimum level required to activate plugins when the entire package is activated by the
+	 * user.
+	 * @return the minimum level
+	 */
+	public PluginStatus getActivationLevel() {
+		return PluginStatus.RELEASED;
+	}
+
 	@Override
 	public int compareTo(PluginPackage other) {
 		if (priority == other.priority) {
@@ -111,7 +120,8 @@ public abstract class PluginPackage implements ExtensionPoint, Comparable<Plugin
 		return priority - other.priority;
 	}
 
-	public boolean isfullyAddable() {
-		return true;
+	@Override
+	public String toString() {
+		return name;
 	}
 }

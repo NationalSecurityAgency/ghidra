@@ -18,16 +18,20 @@
 // desired class in the listing then run the script. For each function definition in the given class 
 // that differs from the associated function signature in the listing, the script will update the 
 // listing function signatures of any related virtual functions belonging to parent and children 
-// classes. It will also update related data types including function definitions and vftable structures.
+// classes. 
 // Note: The script will not work if the vftable structures were not originally applied to 
 // the vftables using the RecoverClassesFromRTTIScript. 
 // At some point, the Ghidra API will be updated to do this automatically instead of needing the 
-// script to do so. 
+// script to do so. For now, to make it a bit easier, you can use the below listed key binding
+// or menupath if you have the "In Tool" checkbox checked for this script in the script manager.
 //@category C++
+//@menupath Scripts.ApplyClassFunctionDefinitions
+//@keybinding shift D
 
+import java.util.ArrayList;
 import java.util.List;
 
-import classrecovery.RecoveredClassUtils;
+import classrecovery.RecoveredClassHelper;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.data.FunctionDefinition;
 import ghidra.program.model.data.Structure;
@@ -44,17 +48,17 @@ public class ApplyClassFunctionDefinitionUpdatesScript extends GhidraScript {
 			return;
 		}
 
-		RecoveredClassUtils classUtils = new RecoveredClassUtils(currentProgram, currentLocation,
+		RecoveredClassHelper classHelper = new RecoveredClassHelper(currentProgram, currentLocation,
 			state.getTool(), this, false, false, false, false, monitor);
 
-		Namespace classNamespace = classUtils.getClassNamespace(currentAddress);
+		Namespace classNamespace = classHelper.getClassNamespace(currentAddress);
 		if (classNamespace == null) {
 			println(
 				"Either cannot retrieve class namespace or cursor is not in a member of a class namepace");
 			return;
 		}
 
-		List<Symbol> classVftableSymbols = classUtils.getClassVftableSymbols(classNamespace);
+		List<Symbol> classVftableSymbols = classHelper.getClassVftableSymbols(classNamespace);
 		if (classVftableSymbols.isEmpty()) {
 			println("There are no vftables in this class");
 			return;
@@ -63,41 +67,54 @@ public class ApplyClassFunctionDefinitionUpdatesScript extends GhidraScript {
 		println(
 			"Applying differing function definitions for class " + classNamespace.getName(true));
 
-		List<Object> changedItems =
-			classUtils.applyNewFunctionDefinitions(classNamespace, classVftableSymbols);
+		List<FunctionDefinition> classFunctionDefinitions =
+			classHelper.getClassFunctionDefinitions(classNamespace);
+		if (classFunctionDefinitions.isEmpty()) {
+			println("Class " + classNamespace.getName() + " has no function definitions to apply.");
+			return;
+		}
+		List<Object> changedItems = new ArrayList<Object>();
 
-		if (changedItems.isEmpty()) {
-			println("No differences found for class " + classNamespace.getName(true) +
-				" between the vftable listing function signatures and their associated data type manager function definition data types");
+		for (FunctionDefinition functionDef : classFunctionDefinitions) {
+			monitor.checkCanceled();
+
+			List<Object> newChangedItems = classHelper.applyNewFunctionDefinition(functionDef);
+
+			changedItems = classHelper.updateList(changedItems, newChangedItems);
+
+		}
+
+		if (changedItems == null) {
+			println("Class " + classNamespace.getName() + " has no function definitions to apply.");
 			return;
 		}
 
-		List<Structure> structuresOnList = classUtils.getStructuresOnList(changedItems);
-		List<FunctionDefinition> functionDefinitionsOnList =
-			classUtils.getFunctionDefinitionsOnList(changedItems);
-		List<Function> functionsOnList = classUtils.getFunctionsOnList(changedItems);
-
-		println();
-		println("Updated structures:");
-		for (Structure structure : structuresOnList) {
-			monitor.checkCanceled();
-			println(structure.getPathName());
+		if (changedItems.isEmpty()) {
+			println("No differences found for class " + classNamespace.getName(true) +
+				" between its function definition data types and the associated function signatures in the listing.");
+			return;
 		}
 
-		println();
-		println("Updated function definitions:");
-		for (FunctionDefinition functionDef : functionDefinitionsOnList) {
-			monitor.checkCanceled();
-			println(functionDef.getPathName());
+		List<Structure> structuresOnList = classHelper.getStructuresOnList(changedItems);
+		List<Function> functionsOnList = classHelper.getFunctionsOnList(changedItems);
+
+		if (!structuresOnList.isEmpty()) {
+			println();
+			println("Updated structures:");
+			for (Structure structure : structuresOnList) {
+				monitor.checkCanceled();
+				println(structure.getPathName());
+			}
 		}
 
-		println();
-		println("Updated functions:");
-		for (Function function : functionsOnList) {
-			monitor.checkCanceled();
-			println(function.getEntryPoint().toString());
+		if (!functionsOnList.isEmpty()) {
+			println();
+			println("Updated functions:");
+			for (Function function : functionsOnList) {
+				monitor.checkCanceled();
+				println(function.getEntryPoint().toString());
+			}
 		}
-
 	}
 
 }

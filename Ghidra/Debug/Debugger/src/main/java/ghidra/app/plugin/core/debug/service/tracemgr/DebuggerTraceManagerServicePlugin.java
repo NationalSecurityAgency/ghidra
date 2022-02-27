@@ -53,32 +53,23 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
 
-@PluginInfo(
-	shortDescription = "Debugger Trace View Management Plugin",
-	description = "Manages UI Components, Wrappers, Focus, etc.",
-	category = PluginCategoryNames.DEBUGGER,
-	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.RELEASED,
-	eventsProduced = {
-		TraceActivatedPluginEvent.class,
-	},
-	eventsConsumed = {
-		TraceActivatedPluginEvent.class,
-		TraceClosedPluginEvent.class,
-		ModelObjectFocusedPluginEvent.class,
-		TraceRecorderAdvancedPluginEvent.class,
-	},
-	servicesRequired = {},
-	servicesProvided = {
-		DebuggerTraceManagerService.class,
-	})
+@PluginInfo(shortDescription = "Debugger Trace View Management Plugin", description = "Manages UI Components, Wrappers, Focus, etc.", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsProduced = {
+	TraceActivatedPluginEvent.class,
+}, eventsConsumed = {
+	TraceActivatedPluginEvent.class,
+	TraceClosedPluginEvent.class,
+	ModelObjectFocusedPluginEvent.class,
+	TraceRecorderAdvancedPluginEvent.class,
+}, servicesRequired = {}, servicesProvided = {
+	DebuggerTraceManagerService.class,
+})
 public class DebuggerTraceManagerServicePlugin extends Plugin
 		implements DebuggerTraceManagerService {
 	private static final AutoConfigState.ClassHandler<DebuggerTraceManagerServicePlugin> CONFIG_STATE_HANDLER =
@@ -312,6 +303,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return traceChooserDialog;
 		}
 		DomainFileFilter filter = df -> Trace.class.isAssignableFrom(df.getDomainObjectClass());
+
+		// TODO regarding the hack note below, I believe this issue ahs been fixed, but not sure how to test
 		return traceChooserDialog =
 			new DataTreeDialog(null, OpenTraceAction.NAME, DataTreeDialog.OPEN, filter) {
 				{ // TODO/HACK: Why the NPE if I don't do this?
@@ -520,9 +513,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	protected void contextChanged() {
 		Trace trace = current.getTrace();
-		String name = trace == null ? "..." : trace.getName();
-		actionCloseTrace.getMenuBarData().setMenuItemName(CloseTraceAction.NAME_PREFIX + name);
-		actionSaveTrace.getMenuBarData().setMenuItemName(SaveTraceAction.NAME_PREFIX + name);
+		String itemName = trace == null ? "..." : trace.getName();
+		actionCloseTrace.getMenuBarData().setMenuItemName(CloseTraceAction.NAME_PREFIX + itemName);
+		actionSaveTrace.getMenuBarData().setMenuItemName(SaveTraceAction.NAME_PREFIX + itemName);
 		tool.contextChanged(null);
 	}
 
@@ -661,40 +654,39 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return current.getFrame();
 	}
 
+	@Override
+	public CompletableFuture<Long> materialize(DebuggerCoordinates coordinates) {
+		if (coordinates.getTime().isSnapOnly()) {
+			return CompletableFuture.completedFuture(coordinates.getSnap());
+		}
+		Collection<? extends TraceSnapshot> suitable = coordinates.getTrace()
+				.getTimeManager()
+				.getSnapshotsWithSchedule(coordinates.getTime());
+		if (!suitable.isEmpty()) {
+			TraceSnapshot found = suitable.iterator().next();
+			return CompletableFuture.completedFuture(found.getKey());
+		}
+		if (emulationService == null) {
+			throw new IllegalStateException(
+				"Cannot navigate to coordinates with execution schedules, " +
+					"because the emulation service is not available.");
+		}
+		return emulationService.backgroundEmulate(coordinates.getTrace(), coordinates.getTime());
+	}
+
 	protected void prepareViewAndFireEvent(DebuggerCoordinates coordinates) {
 		TraceVariableSnapProgramView varView = (TraceVariableSnapProgramView) coordinates.getView();
 		if (varView == null) { // Should only happen with NOWHERE
 			fireLocationEvent(coordinates);
+			return;
 		}
-		else if (coordinates.getTime().isSnapOnly()) {
-			varView.setSnap(coordinates.getSnap());
+		materialize(coordinates).thenAcceptAsync(snap -> {
+			if (!coordinates.equals(current)) {
+				return; // We navigated elsewhere before emulation completed
+			}
+			varView.setSnap(snap);
 			fireLocationEvent(coordinates);
-		}
-		else {
-			Collection<? extends TraceSnapshot> suitable = coordinates.getTrace()
-					.getTimeManager()
-					.getSnapshotsWithSchedule(coordinates.getTime());
-			if (!suitable.isEmpty()) {
-				TraceSnapshot found = suitable.iterator().next();
-				varView.setSnap(found.getKey());
-				fireLocationEvent(coordinates);
-				return;
-			}
-			if (emulationService == null) {
-				throw new IllegalStateException(
-					"Cannot navigate to coordinates with execution schedules, " +
-						"because the emulation service is not available.");
-			}
-			CompletableFuture<Long> bg =
-				emulationService.backgroundEmulate(coordinates.getTrace(), coordinates.getTime());
-			bg.thenAccept(emuSnap -> Swing.runLater(() -> {
-				if (!coordinates.equals(current)) {
-					return; // We navigated elsewhere before emulation completed
-				}
-				varView.setSnap(emuSnap);
-				fireLocationEvent(coordinates);
-			}));
-		}
+		}, AsyncUtils.SWING_EXECUTOR);
 	}
 
 	protected void fireLocationEvent(DebuggerCoordinates coordinates) {
@@ -888,6 +880,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 						future.completeExceptionally(e);
 					}
 				}
+
 			});
 		}
 		return future;

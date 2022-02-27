@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +21,16 @@ package ghidra.framework.options;
  * editors that can paint and edit a group of interrelated options.
  */
 public interface CustomOptionsEditor {
-    
-    /**
-     * Gets the names of the options that this editor is editing. 
-     * @return the names of the options that this editor is editing.
-     */
-    public String[] getOptionNames();
-    
-    /**
-     * Gets the descriptions of the options that this editor is editing.
-     * @return the descriptions of the options that this editor is editing.
-     */
-    public String[] getOptionDescriptions();
+
+	/**
+	 * Gets the names of the options that this editor is editing. 
+	 * @return the names of the options that this editor is editing; may not be null.
+	 */
+	public String[] getOptionNames();
+
+	/**
+	 * Gets the descriptions of the options that this editor is editing.
+	 * @return the descriptions of the options that this editor is editing; may be null.
+	 */
+	public String[] getOptionDescriptions();
 }

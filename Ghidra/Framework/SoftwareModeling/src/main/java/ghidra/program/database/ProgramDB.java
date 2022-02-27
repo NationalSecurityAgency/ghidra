@@ -840,13 +840,15 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			((ProgramDBChangeSet) changeSet).dataTypeChanged(dataTypeID);
 		}
 		changed = true;
-		fireEvent(new ProgramChangeRecord(type, null, null, null, oldValue, newValue));
 		try {
-			managers[SYMBOL_MGR].invalidateCache(true);
+			managers[SYMBOL_MGR].invalidateCache(true); // needed for function variable/param invalidation
+			managers[FUNCTION_MGR].invalidateCache(true); // needed for auto-param invalidation
+			managers[CODE_MGR].invalidateCache(true); // needed for data invalidation
 		}
 		catch (IOException e) {
 			dbError(e);
 		}
+		fireEvent(new ProgramChangeRecord(type, null, null, null, oldValue, newValue));
 	}
 
 	/**

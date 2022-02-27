@@ -64,6 +64,19 @@ public class ConstructTpl {
 	}
 
 	/**
+	 * Manually build a constructor template from pieces.  This is used to translate from the
+	 * internal SLEIGH compiler pcodeCPort.semantics.ConstructTpl
+	 * @param opvec is the list of p-code op templates making up the constructor
+	 * @param res is the result handle template for the constructor
+	 * @param nmLabels is the number of labels int the template
+	 */
+	public ConstructTpl(OpTpl[] opvec, HandleTpl res, int nmLabels) {
+		vec = opvec;
+		result = res;
+		numlabels = nmLabels;
+	}
+
+	/**
 	 * @return the number of labels needing resolution in this template
 	 */
 	public int getNumLabels() {

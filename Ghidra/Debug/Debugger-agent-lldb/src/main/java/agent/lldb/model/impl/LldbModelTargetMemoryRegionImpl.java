@@ -59,17 +59,20 @@ public class LldbModelTargetMemoryRegionImpl extends LldbModelTargetObjectImpl
 
 		this.changeAttributes(List.of(), List.of(), Map.of( //
 			MEMORY_ATTRIBUTE_NAME, memory, //
-			RANGE_ATTRIBUTE_NAME, range = doGetRange(region), //
 			READABLE_ATTRIBUTE_NAME, region.IsReadable(), //
 			WRITABLE_ATTRIBUTE_NAME, region.IsWritable(), //
 			EXECUTABLE_ATTRIBUTE_NAME, region.IsExecutable() //
 		), "Initialized");
 
-		this.changeAttributes(List.of(), List.of(), Map.of( //
-			"RegionBase", range.getMinAddress(), //
-			"RegionEnd", range.getMaxAddress(), //
-			"RegionSize", Long.toHexString(range.getMaxAddress().subtract(range.getMinAddress()) + 1) //
-		), "Initialized");
+		range = doGetRange(region);
+		if (range != null) {
+			this.changeAttributes(List.of(), List.of(), Map.of( //
+				RANGE_ATTRIBUTE_NAME, range, //
+				"RegionBase", range.getMinAddress(), //
+				"RegionEnd", range.getMaxAddress(), //
+				"RegionSize", Long.toHexString(range.getMaxAddress().subtract(range.getMinAddress()) + 1) //
+			), "Initialized");
+		}
 	}
 
 	@Override

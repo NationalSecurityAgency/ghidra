@@ -26,6 +26,7 @@ dependencies {
 	api project(':Framework-AsyncComm')
 	api project(':Framework-Debugging')
 	api project(':Debugger-gadp')
+	api project(':Debugger-swig-lldb')
 
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
@@ -70,14 +71,6 @@ task nodepJar(type: Jar) {
 	}
 
 	from(zipTree(jar.archivePath))
-}
-
-// Include llvm patch and SWIG files
-rootProject.assembleDistribution {
-	from (this.project.projectDir.toString()) {
-		include "src/llvm/**"
-		into {getZipPath(this.project) + "/data/"}
-	}
 }
 
 task executableJar {

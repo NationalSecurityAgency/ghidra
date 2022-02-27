@@ -36,7 +36,7 @@
     limitation is that you cannot use snapshots to display different points in time for the same
     trace.</P>
 
-    <P>Because not all memory is captured, some background coloring is used to indicate the state
+    <P>Because not all memory is recorded, some background coloring is used to indicate the state
     of attempted memory reads. Regardless of state, the most-recent contents, as recorded in the
     trace, are displayed in the window, defaulting to 00. "Stale" memory, that is ranges of memory
     which have not been read at the current time, are displayed with a darker background. Where
@@ -55,6 +55,12 @@
 
     <P>The memory window provides a variety of actions, some for managing and configuring windows,
     and others for capturing memory from a target.</P>
+
+    <H3><A name="new_memory"></A>New Memory View</H3>
+
+    <P>This action is always available in the <SPAN class="menu">Window &rarr; Debugger</SPAN>
+    menu. It creates a new memory window with the same configuration as the primary memory window.
+    It is equivalent to "snapshotting" the primary memory window.</P>
 
     <H3><A name="follows_thread"></A>Follows Selected Thread</H3>
 
@@ -103,33 +109,32 @@
       </TBODY>
     </TABLE>
 
-    <H3><A name="capture_memory"></A>Capture Memory</H3>
+    <H3><A name="read_memory"></A>Read Memory</H3>
 
     <P>This action is available when the current trace is "at the present" with a live target, and
-    there is a selection of addresses in the memory window. It will instruct the recorder to
-    capture the contents of memory for the selected range(s). Typically, the viewable addresses are
-    automatically captured &mdash; see the Auto-Read action.</P>
+    there is a selection of addresses in the memory window. It will instruct the recorder to read
+    and record the contents of memory for the selected range(s). Typically, the viewable addresses
+    are automatically read &mdash; see the Auto-Read action.</P>
 
     <H3><A name="auto_memory"></A>Auto-Read Memory</H3>
 
     <P>This action is always available on all memory windows. It configures whether or not the
-    memory range(s) displayed in the window are automatically captured. Like the Capture Memory
-    action, capture can only occur when the current trace is "at the present" with a live target.
-    It occurs when the user scrolls the window, or when the window is otherwise navigated to a new
-    location. Note that other components may capture memory, regardless of this windows's
-    configuration. For example, the recorder typically captures the page of memory pointed to by
-    the program counter. In other words, this action <EM>cannot</EM> "disable all memory captures."
-    The options are pluggable, but currently consist of:</P>
+    memory range(s) displayed in the window are automatically read and recorded. Like the Read
+    Memory action, it is only permitted when the current trace is "at the present" with a live
+    target. It occurs when the user scrolls the window, or when the window is otherwise navigated
+    to a new location. Note that other components may read memory, regardless of this windows's
+    configuration. For example, the recorder typically reads the page of memory pointed to by the
+    program counter. In other words, this action <EM>cannot</EM> "disable all memory reads." The
+    options are pluggable, but currently consist of:</P>
 
     <UL>
-      <LI>Do Not Read Memory - disables automatic memory capture <EM>for this window
-      only</EM>.</LI>
+      <LI>Do Not Read Memory - disables automatic memory reads <EM>for this window only</EM>.</LI>
 
       <LI>Read Visible Memory - automatically reads stale ranges that enter this window's
       view.</LI>
 
       <LI>Read Visible Memory, RO Once - (default) behaves like Read Visible Memory, except it will
-      neglect to capture read-only ranges that have been captured previously.</LI>
+      neglect read-only ranges that have been read previously.</LI>
     </UL>
 
     <H3><A name="Byte_Viewer_Options"></A>Byte Viewer Options</H3>

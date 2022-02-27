@@ -97,7 +97,7 @@ protected:
   virtual int4 allocateInject(const string &sourceName,const string &name,int4 type);
   virtual void registerInject(int4 injectid);
 public:
-  PcodeInjectLibrarySleigh(Architecture *g,uintb tmpbase);
+  PcodeInjectLibrarySleigh(Architecture *g);
   virtual void restoreDebug(const Element *el);
   virtual int4 manualCallFixup(const string &name,const string &snippetstring);
   virtual int4 manualCallOtherFixup(const string &name,const string &outname,const vector<string> &inname,

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,8 @@
  */
 package ghidra.util.constraint;
 
+import java.util.Objects;
+
 import generic.constraint.ConstraintData;
 import ghidra.program.model.listing.Program;
 import ghidra.util.SystemUtilities;
@@ -26,8 +27,8 @@ public class PropertyConstraint extends ProgramConstraint {
 		super("property");
 	}
 
-	private String name;				// name of the program property to constrain
-	private String value;			// value the property should take
+	private String name; // name of the program property to constrain
+	private String value; // value the property should take
 
 	@Override
 	public boolean isSatisfied(Program program) {
@@ -39,6 +40,11 @@ public class PropertyConstraint extends ProgramConstraint {
 	public void loadConstraintData(ConstraintData data) {
 		name = data.getString("name");
 		value = data.getString("value");
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(name, value);
 	}
 
 	@Override
@@ -54,5 +60,4 @@ public class PropertyConstraint extends ProgramConstraint {
 	public String getDescription() {
 		return "property " + name + " = " + value;
 	}
-
 }

@@ -36,6 +36,7 @@ import ghidra.program.model.pcode.AddressXML;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
@@ -48,14 +49,6 @@ import ghidra.xml.*;
  */
 public class BasicCompilerSpec implements CompilerSpec {
 
-	public static final String STACK_SPACE_NAME = "stack";
-	public static final String JOIN_SPACE_NAME = "join";
-	public static final String OTHER_SPACE_NAME = "OTHER";
-
-	//must match AddrSpace enum (see space.hh)
-	public static final int CONSTANT_SPACE_INDEX = 0;
-	public static final int OTHER_SPACE_INDEX = 1;
-
 	private final CompilerSpecDescription description;
 	private String sourceName;
 	private final SleighLanguage language;
@@ -66,7 +59,6 @@ public class BasicCompilerSpec implements CompilerSpec {
 	protected PrototypeModel evalCalledModel;		// Default model used to evaluate a called function
 	protected PrototypeModel[] allmodels;			// All models
 	protected PrototypeModel[] models;				// All models excluding merge models
-	private boolean copiedThisModel;				// true if __thiscall is copied from default model
 	private Register stackPointer;		// Register holding the stack pointer
 	private AddressSpace stackSpace;
 	private AddressSpace stackBaseSpace;
@@ -96,9 +88,11 @@ public class BasicCompilerSpec implements CompilerSpec {
 	 * @throws XmlParseException for badly formed XML
 	 * @throws SAXException for syntax errors in the XML
 	 * @throws IOException for errors accessing the stream
+	 * @throws DuplicateNameException if there exists more than one PrototypeModel with the same name
 	 */
 	public BasicCompilerSpec(CompilerSpecDescription description, SleighLanguage language,
-			InputStream stream) throws XmlParseException, SAXException, IOException {
+			InputStream stream)
+			throws XmlParseException, SAXException, IOException, DuplicateNameException {
 		this.description = description;
 		this.language = language;
 		buildInjectLibrary();
@@ -148,7 +142,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 				}
 			}
 		}
-		catch (IOException | SAXException | XmlParseException e) {
+		catch (IOException | SAXException | XmlParseException | DuplicateNameException e) {
 			parseException = e;
 		}
 
@@ -175,7 +169,6 @@ public class BasicCompilerSpec implements CompilerSpec {
 		evalCalledModel = op2.evalCalledModel;
 		defaultModel = op2.defaultModel;
 		allmodels = op2.allmodels;
-		copiedThisModel = op2.copiedThisModel;
 		globalSet = op2.globalSet;		// May need to clone if \<global> tag becomes user extendable
 		joinSpace = op2.joinSpace;		// AddressSpace is immutable
 		models = op2.models;
@@ -227,7 +220,8 @@ public class BasicCompilerSpec implements CompilerSpec {
 		return errHandler;
 	}
 
-	private void initialize(String srcName, XmlPullParser parser) throws XmlParseException {
+	private void initialize(String srcName, XmlPullParser parser)
+			throws XmlParseException, DuplicateNameException {
 		this.sourceName = srcName;
 		spaceBases = null;
 		extraRanges = null;
@@ -244,7 +238,6 @@ public class BasicCompilerSpec implements CompilerSpec {
 		funcPtrAlign = 0;
 		deadCodeDelay = null;
 		inferPtrBounds = null;
-		copiedThisModel = false;
 
 		restoreXml(parser);
 	}
@@ -286,38 +279,6 @@ public class BasicCompilerSpec implements CompilerSpec {
 				pcodeInject.registerInject(payload);
 			}
 		}
-	}
-
-	private void addThisCallConventionIfMissing(List<PrototypeModel> modelList,
-			String defaultName) {
-		if (defaultName == null) {
-			return;
-		}
-		boolean foundThisCall = false;
-		PrototypeModel defModel = null;
-		for (PrototypeModel model : modelList) {
-			if (CALLING_CONVENTION_thiscall.equals(model.name)) {
-				foundThisCall = true;
-			}
-			if (defaultName.equals(model.name)) {
-				defModel = model;
-			}
-		}
-		if (defModel != null && !foundThisCall) {
-			PrototypeModel thisModel = new PrototypeModel(CALLING_CONVENTION_thiscall, defModel);
-			modelList.add(thisModel);
-			copiedThisModel = true;
-		}
-	}
-
-	/**
-	 * Convenience method to marshal this entire object, via saveXml, into a String object.
-	 * @return a String containing this entire spec as an XML document.
-	 */
-	public String getXMLString() {
-		StringBuilder buffer = new StringBuilder();
-		saveXml(buffer);
-		return buffer.toString();
 	}
 
 	@Override
@@ -426,21 +387,21 @@ public class BasicCompilerSpec implements CompilerSpec {
 	@Override
 	public AddressSpace getAddressSpace(String spaceName) {
 		AddressSpace space;
-		if (STACK_SPACE_NAME.equals(spaceName)) {
+		if (SpaceNames.STACK_SPACE_NAME.equals(spaceName)) {
 			space = stackSpace;
 		}
-		else if (JOIN_SPACE_NAME.equals(spaceName)) {
+		else if (SpaceNames.JOIN_SPACE_NAME.equals(spaceName)) {
 			if (joinSpace == null) {
 				// This is a special address space that is only used internally to represent bonded registers
-				joinSpace =
-					new GenericAddressSpace(JOIN_SPACE_NAME, 64, AddressSpace.TYPE_JOIN, 10);
+				joinSpace = new GenericAddressSpace(SpaceNames.JOIN_SPACE_NAME, 64,
+					AddressSpace.TYPE_JOIN, 10);
 			}
 			space = joinSpace;
 		}
 		else {
 			space = language.getAddressFactory().getAddressSpace(spaceName);
 		}
-		if (spaceName.equals(OTHER_SPACE_NAME)) {
+		if (spaceName.equals(SpaceNames.OTHER_SPACE_NAME)) {
 			space = AddressSpace.OTHER_SPACE;
 		}
 		if (space == null) {
@@ -485,21 +446,28 @@ public class BasicCompilerSpec implements CompilerSpec {
 
 	/**
 	 * Establish cross referencing to prototype models.
-	 * All xrefs are regenerated from a single complete list of PrototypeModels
+	 * All xrefs are regenerated from a single complete list of PrototypeModels.
+	 * If there are PrototypeModels with duplicate names, return an example name.
+	 * Return null otherwise
 	 * 
 	 * @param modelList is the complete list of models
 	 * @param defaultName is the name to use for the default model (or null)
 	 * @param evalCurrent is the name to use for evaluating the current function (or null)
 	 * @param evalCalled is the name to use for evaluating called functions (or null)
+	 * @return a PrototypeModel name that was duplicated or null
 	 */
-	protected void modelXrefs(List<PrototypeModel> modelList, String defaultName,
+	protected String modelXrefs(List<PrototypeModel> modelList, String defaultName,
 			String evalCurrent, String evalCalled) {
+		String foundDuplicate = null;
 		buildModelArrays(modelList);
 		callingConventionMap = new HashMap<>();
 		for (PrototypeModel model : models) {
 			String name = model.getName();
 			if (name != null) {
-				callingConventionMap.put(name, model);
+				PrototypeModel previous = callingConventionMap.put(name, model);
+				if (previous != null) {
+					foundDuplicate = name;
+				}
 			}
 		}
 
@@ -518,13 +486,10 @@ public class BasicCompilerSpec implements CompilerSpec {
 				evalCalledModel = evalmodel;
 			}
 		}
+		return foundDuplicate;
 	}
 
-	/**
-	 * Marshal this entire specification to an XML stream.  An XML document is written with
-	 * root tag \<compiler_spec>.
-	 * @param buffer is the XML stream
-	 */
+	@Override
 	public void saveXml(StringBuilder buffer) {
 		buffer.append("<compiler_spec>\n");
 		saveProperties(buffer);
@@ -560,10 +525,6 @@ public class BasicCompilerSpec implements CompilerSpec {
 			if (model == defaultModel) {
 				continue;		// Already emitted
 			}
-			if (copiedThisModel && model.hasThisPointer() &&
-				model.name.equals(CALLING_CONVENTION_thiscall)) {
-				continue;		// Don't need to emit the copy
-			}
 			model.saveXml(buffer, pcodeInject);
 		}
 		if (evalCurrentModel != null && evalCurrentModel != defaultModel) {
@@ -593,10 +554,12 @@ public class BasicCompilerSpec implements CompilerSpec {
 	 * Initialize this object from an XML stream.  A single \<compiler_spec> tag is expected.
 	 * @param parser is the XML stream
 	 * @throws XmlParseException for badly formed XML
+	 * @throws DuplicateNameException if we parse more than one PrototypeModel with the same name
 	 */
-	private void restoreXml(XmlPullParser parser) throws XmlParseException {
+	private void restoreXml(XmlPullParser parser) throws XmlParseException, DuplicateNameException {
 		List<PrototypeModel> modelList = new ArrayList<>();
 		boolean seenDefault = false;
+		boolean seenThisCall = false;
 		String defaultName = null;
 		String evalCurrentPrototype = null;
 		String evalCalledPrototype = null;
@@ -639,11 +602,27 @@ public class BasicCompilerSpec implements CompilerSpec {
 					defaultName = model.name;
 					seenDefault = true;
 				}
+				if (model.getName().equals(CALLING_CONVENTION_thiscall)) {
+					seenThisCall = true;
+				}
 			}
 			else if (name.equals("prototype")) {
 				PrototypeModel model = addPrototypeModel(modelList, parser);
 				if (defaultName == null) {
 					defaultName = model.name;
+				}
+				if (model.getName().equals(CALLING_CONVENTION_thiscall)) {
+					seenThisCall = true;
+				}
+			}
+			else if (name.equals("modelalias")) {
+				XmlElement el = parser.start();
+				String aliasName = el.getAttribute("name");
+				String parentName = el.getAttribute("parent");
+				parser.end(el);
+				createModelAlias(aliasName, parentName, modelList);
+				if (aliasName.equals(CALLING_CONVENTION_thiscall)) {
+					seenThisCall = true;
 				}
 			}
 			else if (name.equals("resolveprototype")) {
@@ -701,12 +680,18 @@ public class BasicCompilerSpec implements CompilerSpec {
 		parser.end();
 
 		if (stackPointer == null) {
-			stackSpace = new GenericAddressSpace(STACK_SPACE_NAME,
+			stackSpace = new GenericAddressSpace(SpaceNames.STACK_SPACE_NAME,
 				language.getDefaultSpace().getSize(),
 				language.getDefaultSpace().getAddressableUnitSize(), AddressSpace.TYPE_STACK, 0);
 		}
-		addThisCallConventionIfMissing(modelList, defaultName);
-		modelXrefs(modelList, defaultName, evalCurrentPrototype, evalCalledPrototype);
+		if (!seenThisCall) {
+			createModelAlias(CALLING_CONVENTION_thiscall, defaultName, modelList);
+		}
+		String dupName =
+			modelXrefs(modelList, defaultName, evalCurrentPrototype, evalCalledPrototype);
+		if (dupName != null) {
+			throw new DuplicateNameException("Multiple prototype models with the name: " + dupName);
+		}
 	}
 
 	private void saveProperties(StringBuilder buffer) {
@@ -979,7 +964,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 			throw new SleighException("Undefined base stack space: " + baseSpaceName);
 		}
 		int stackSpaceSize = Math.min(stackPointer.getBitLength(), stackBaseSpace.getSize());
-		stackSpace = new GenericAddressSpace(STACK_SPACE_NAME, stackSpaceSize,
+		stackSpace = new GenericAddressSpace(SpaceNames.STACK_SPACE_NAME, stackSpaceSize,
 			stackBaseSpace.getAddressableUnitSize(), AddressSpace.TYPE_STACK, 0);
 		String reverseJustifyStr = el.getAttribute("reversejustify");
 		if (reverseJustifyStr != null) {
@@ -1016,6 +1001,35 @@ public class BasicCompilerSpec implements CompilerSpec {
 //            return defaultValue;
 //        }
 //	}
+
+	/**
+	 * Clone the named PrototypeModel, attaching it to another name.
+	 * @param aliasName is the new name
+	 * @param parentName is the name of the PrototypeModel to clone
+	 * @param modelList is the container
+	 * @throws XmlParseException if the parent model cannot be established
+	 */
+	private void createModelAlias(String aliasName, String parentName,
+			List<PrototypeModel> modelList) throws XmlParseException {
+		PrototypeModel parentModel = null;
+		for (PrototypeModel model : modelList) {
+			if (parentName.equals(model.getName())) {
+				parentModel = model;
+				break;
+			}
+		}
+		if (parentModel == null) {
+			throw new XmlParseException("Parent for model alias does not exist: " + parentName);
+		}
+		if (parentModel.isMerged()) {
+			throw new XmlParseException("Cannot make alias of merged model: " + parentName);
+		}
+		if (parentModel.getAliasParent() != null) {
+			throw new XmlParseException("Cannot make alias of an alias: " + parentName);
+		}
+		PrototypeModel newModel = new PrototypeModel(aliasName, parentModel);
+		modelList.add(newModel);
+	}
 
 	private PrototypeModel addPrototypeModel(List<PrototypeModel> modelList, XmlPullParser parser)
 			throws XmlParseException {
@@ -1133,111 +1147,114 @@ public class BasicCompilerSpec implements CompilerSpec {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		BasicCompilerSpec op2 = (BasicCompilerSpec) obj;
-		if (aggressiveTrim != op2.aggressiveTrim || copiedThisModel != op2.copiedThisModel) {
+	public boolean isEquivalent(CompilerSpec obj) {
+		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		if (!dataOrganization.equals(op2.dataOrganization)) {
+		BasicCompilerSpec other = (BasicCompilerSpec) obj;
+		if (aggressiveTrim != other.aggressiveTrim) {
 			return false;
 		}
-		if (!ctxsetting.equals(op2.ctxsetting)) {
+		if (!dataOrganization.isEquivalent(other.dataOrganization)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(deadCodeDelay, op2.deadCodeDelay)) {
+		if (ctxsetting.size() != other.ctxsetting.size()) {
+			return false;
+		}
+		for (int i = 0; i < ctxsetting.size(); ++i) {
+			if (!ctxsetting.get(i).isEquivalent(other.ctxsetting.get(i))) {
+				return false;
+			}
+		}
+		if (!SystemUtilities.isEqual(deadCodeDelay, other.deadCodeDelay)) {
 			return false;
 		}
 		if (defaultModel != null) {
-			if (op2.defaultModel == null) {
+			if (other.defaultModel == null) {
 				return false;
 			}
-			if (!defaultModel.name.equals(op2.defaultModel.name)) {
+			if (!defaultModel.name.equals(other.defaultModel.name)) {
 				return false;
 			}
 		}
-		else if (op2.defaultModel != null) {
+		else if (other.defaultModel != null) {
 			return false;
 		}
 		if (evalCalledModel != null) {
-			if (op2.evalCalledModel == null) {
+			if (other.evalCalledModel == null) {
 				return false;
 			}
-			if (!evalCalledModel.name.equals(op2.evalCalledModel.name)) {
+			if (!evalCalledModel.name.equals(other.evalCalledModel.name)) {
 				return false;
 			}
 		}
-		else if (op2.evalCalledModel != null) {
+		else if (other.evalCalledModel != null) {
 			return false;
 		}
 		if (evalCurrentModel != null) {
-			if (op2.evalCurrentModel == null) {
+			if (other.evalCurrentModel == null) {
 				return false;
 			}
-			if (!evalCurrentModel.name.equals(op2.evalCurrentModel.name)) {
+			if (!evalCurrentModel.name.equals(other.evalCurrentModel.name)) {
 				return false;
 			}
 		}
-		else if (op2.evalCurrentModel != null) {
+		else if (other.evalCurrentModel != null) {
 			return false;
 		}
-		if (allmodels.length != op2.allmodels.length) {
+		if (allmodels.length != other.allmodels.length) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(allmodels, op2.allmodels)) {
+		for (int i = 0; i < allmodels.length; ++i) {
+			if (!allmodels[i].isEquivalent(other.allmodels[i])) {
+				return false;
+			}
+		}
+		if (!SystemUtilities.isEqual(extraRanges, other.extraRanges)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(extraRanges, op2.extraRanges)) {
+		if (funcPtrAlign != other.funcPtrAlign) {
 			return false;
 		}
-		if (funcPtrAlign != op2.funcPtrAlign) {
+		if (!globalSet.equals(other.globalSet)) {
 			return false;
 		}
-		if (!globalSet.equals(op2.globalSet)) {
+		if (!SystemUtilities.isEqual(inferPtrBounds, other.inferPtrBounds)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(inferPtrBounds, op2.inferPtrBounds)) {
+		if (!SystemUtilities.isEqual(noHighPtr, other.noHighPtr)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(noHighPtr, op2.noHighPtr)) {
+		if (!pcodeInject.isEquivalent(other.pcodeInject)) {
 			return false;
 		}
-		if (!pcodeInject.equals(op2.pcodeInject)) {
+		if (!SystemUtilities.isEqual(preferSplit, other.preferSplit)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(preferSplit, op2.preferSplit)) {
+		if (!properties.equals(other.properties)) {
 			return false;
 		}
-		if (!properties.equals(op2.properties)) {
+		if (!SystemUtilities.isEqual(readOnlySet, other.readOnlySet)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(readOnlySet, op2.readOnlySet)) {
+		if (!SystemUtilities.isEqual(returnAddress, other.returnAddress)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(returnAddress, op2.returnAddress)) {
+		if (reverseJustifyStack != other.reverseJustifyStack) {
 			return false;
 		}
-		if (reverseJustifyStack != op2.reverseJustifyStack) {
+		if (!SystemUtilities.isEqual(spaceBases, other.spaceBases)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(spaceBases, op2.spaceBases)) {
+		if (!SystemUtilities.isEqual(stackBaseSpace, other.stackBaseSpace)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(stackBaseSpace, op2.stackBaseSpace)) {
+		if (stackGrowsNegative != other.stackGrowsNegative) {
 			return false;
 		}
-		if (stackGrowsNegative != op2.stackGrowsNegative) {
-			return false;
-		}
-		if (!SystemUtilities.isEqual(stackPointer, op2.stackPointer)) {
+		if (!SystemUtilities.isEqual(stackPointer, other.stackPointer)) {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = language.getLanguageID().hashCode();
-		hash = 79 * description.getCompilerSpecID().hashCode() + hash;
-		return hash;
 	}
 }

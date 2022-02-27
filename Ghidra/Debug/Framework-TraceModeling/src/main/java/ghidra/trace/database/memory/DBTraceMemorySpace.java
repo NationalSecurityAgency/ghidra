@@ -33,16 +33,17 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.database.DBTraceUtils.AddressRangeMapSetter;
 import ghidra.trace.database.DBTraceUtils.OffsetSnap;
 import ghidra.trace.database.listing.DBTraceCodeSpace;
 import ghidra.trace.database.map.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceViewportSpanIterator;
 import ghidra.util.*;
@@ -85,7 +86,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 	protected final DBCachedObjectStore<DBTraceMemoryBufferEntry> bufferStore;
 	protected final DBCachedObjectStore<DBTraceMemoryBlockEntry> blockStore;
 	protected final DBCachedObjectIndex<OffsetSnap, DBTraceMemoryBlockEntry> blocksByOffset;
-	protected final Map<OffsetSnap, DBTraceMemoryBlockEntry> blockCache = CacheBuilder
+	protected final Map<OffsetSnap, DBTraceMemoryBlockEntry> blockCacheMostRecent = CacheBuilder
 			.newBuilder()
 			.removalListener(this::blockCacheEntryRemoved)
 			.maximumSize(10)
@@ -161,7 +162,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			DBTraceMemoryRegion region =
 				regionMapSpace.put(new ImmutableTraceAddressSnapRange(range, lifespan), null);
 			region.set(path, path, flags);
-			trace.updateViewsAddBlock(region);
+			trace.updateViewsAddRegionBlock(region);
 			trace.setChanged(
 				new TraceChangeRecord<>(TraceMemoryRegionChangeType.ADDED, this, region));
 			return region;
@@ -244,7 +245,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			regionMapSpace.deleteData(region);
 			regionCache.remove(region);
-			trace.updateViewsDeleteBlock(region);
+			trace.updateViewsDeleteRegionBlock(region);
 			trace.setChanged(
 				new TraceChangeRecord<>(TraceMemoryRegionChangeType.DELETED, this, region));
 		}
@@ -261,7 +262,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return null;
 	}
 
@@ -274,55 +275,42 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		if (state == null) {
 			throw new NullPointerException();
 		}
-		// Go one out to find abutting ranges, too.
-		Address prev = start.previous();
-		if (prev == null) {
-			prev = start;
-		}
-		Address next = end.next();
-		if (next == null) {
-			next = end;
-		}
-		Map<TraceAddressSnapRange, TraceMemoryState> toPut = new HashMap<>();
-		for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : stateMapSpace.reduce(
-			TraceAddressSnapRangeQuery.intersecting(prev, next, snap, snap)).entries()) {
-			// NOTE: Entries are in no particular order
-			AddressRange range = entry.getKey().getRange();
-			boolean precedesMin = range.getMinAddress().compareTo(start) < 0;
-			boolean procedesMax = range.getMaxAddress().compareTo(end) > 0;
-			boolean sameState = entry.getValue() == state;
-			if (precedesMin && procedesMax && sameState) {
-				return; // The value in this range is already the desired state
+
+		new AddressRangeMapSetter<Entry<TraceAddressSnapRange, TraceMemoryState>, TraceMemoryState>() {
+			@Override
+			protected AddressRange getRange(Entry<TraceAddressSnapRange, TraceMemoryState> entry) {
+				return entry.getKey().getRange();
 			}
-			stateMapSpace.remove(entry);
-			if (precedesMin) {
-				if (sameState) {
-					start = range.getMinAddress();
-				}
-				else {
-					toPut.put(
-						new ImmutableTraceAddressSnapRange(range.getMinAddress(), prev, snap, snap),
-						entry.getValue());
-				}
+
+			@Override
+			protected TraceMemoryState getValue(
+					Entry<TraceAddressSnapRange, TraceMemoryState> entry) {
+				return entry.getValue();
 			}
-			if (procedesMax) {
-				if (sameState) {
-					end = range.getMaxAddress();
-				}
-				else {
-					toPut.put(
-						new ImmutableTraceAddressSnapRange(next, range.getMaxAddress(), snap, snap),
-						entry.getValue());
-				}
+
+			@Override
+			protected void remove(Entry<TraceAddressSnapRange, TraceMemoryState> entry) {
+				stateMapSpace.remove(entry);
 			}
-		}
-		if (state != TraceMemoryState.UNKNOWN) {
-			stateMapSpace.put(start, end, snap, state);
-		}
-		assert toPut.size() <= 2;
-		for (Entry<TraceAddressSnapRange, TraceMemoryState> ent : toPut.entrySet()) {
-			stateMapSpace.put(ent.getKey(), ent.getValue());
-		}
+
+			@Override
+			protected Iterable<Entry<TraceAddressSnapRange, TraceMemoryState>> getIntersecting(
+					Address lower, Address upper) {
+				return stateMapSpace
+						.reduce(TraceAddressSnapRangeQuery.intersecting(lower, upper, snap, snap))
+						.entries();
+			}
+
+			@Override
+			protected Entry<TraceAddressSnapRange, TraceMemoryState> put(AddressRange range,
+					TraceMemoryState value) {
+				if (value != TraceMemoryState.UNKNOWN) {
+					stateMapSpace.put(new ImmutableTraceAddressSnapRange(range, snap), value);
+				}
+				return null; // Don't need to return it
+			}
+		}.set(start, end, state);
+
 		trace.setChanged(new TraceChangeRecord<>(TraceMemoryStateChangeType.CHANGED, this,
 			new ImmutableTraceAddressSnapRange(start, end, snap, snap), state));
 	}
@@ -452,9 +440,8 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			while (!remains.isEmpty()) {
 				AddressRange range = remains.getFirstRange();
 				remains.delete(range);
-				for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : stateMapSpace.reduce(
-					TraceAddressSnapRangeQuery.intersecting(range.getMinAddress(),
-						range.getMaxAddress(), snap, snap)).entries()) {
+				for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : doGetStates(snap,
+					range)) {
 					AddressRange foundRange = entry.getKey().getRange();
 					remains.delete(foundRange);
 					if (predicate.test(entry.getValue())) {
@@ -466,11 +453,21 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		}
 	}
 
+	protected Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> doGetStates(long snap,
+			AddressRange range) {
+		// TODO: A better way to handle memory-mapped registers?
+		if (getAddressSpace().isRegisterSpace() && !range.getAddressSpace().isRegisterSpace()) {
+			return trace.getMemoryManager().getStates(snap, range);
+		}
+		return stateMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range.getMinAddress(),
+			range.getMaxAddress(), snap, snap)).entries();
+	}
+
 	@Override
 	public Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStates(long snap,
 			AddressRange range) {
-		return stateMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range.getMinAddress(),
-			range.getMaxAddress(), snap, snap)).entries();
+		assertInSpace(range);
+		return doGetStates(snap, range);
 	}
 
 	@Override
@@ -486,7 +483,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		if (!inclusive) {
 			loc = new OffsetSnap(loc.offset, loc.snap - 1);
 		}
-		ent = blockCache.get(loc);
+		ent = blockCacheMostRecent.get(loc);
 		if (ent != null) {
 			return ent;
 		}
@@ -495,13 +492,26 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			return null;
 		}
 		ent = it.next();
-		if (ent.getOffset() != loc.offset) {
+		if (ent.getOffset() != loc.offset || ent.isScratch() != loc.isScratch()) {
 			return null;
 		}
-		blockCache.put(loc, ent);
+		blockCacheMostRecent.put(loc, ent);
 		return ent;
 	}
 
+	/**
+	 * Locate the soonest block entry for the given offset-snap pair
+	 * 
+	 * <p>
+	 * To qualify, the entry must have a snap greater than (or optionally equal to) that given and
+	 * an offset exactly equal to that given. That is, it is the earliest in time, but most follow
+	 * the given snap. Additionally, if the given snap is in scratch space, the found entry must
+	 * also be in scratch space.
+	 * 
+	 * @param loc the offset-snap pair
+	 * @param inclusive true to allow equal snap
+	 * @return the found entry, or null
+	 */
 	protected DBTraceMemoryBlockEntry findSoonestBlockEntry(OffsetSnap loc, boolean inclusive) {
 		Iterator<DBTraceMemoryBlockEntry> it;
 		if (inclusive) {
@@ -515,7 +525,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			return null;
 		}
 		DBTraceMemoryBlockEntry next = it.next();
-		if (next.getOffset() != loc.offset) {
+		if (next.getOffset() != loc.offset || next.isScratch() != loc.isScratch()) {
 			return null;
 		}
 		return next;
@@ -544,19 +554,19 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			}
 			ent = ent.copy(loc);
 			ent.setBytes(buf, dstOffset, maxLen);
-			blockCache.put(loc, ent);
 			return;
 		}
-		// (1) or (2a)
+		// (1) or (2b)
 		ent = blockStore.create();
 		ent.setLoc(loc);
+		blockCacheMostRecent.clear();
+		blockCacheMostRecent.put(loc, ent);
 		if (ent.cmpBytes(buf, dstOffset, maxLen) == 0) {
 			// Keep the entry, but don't allocate storage in a buffer
 			buf.position(buf.position() + maxLen);
 			return;
 		}
 		ent.setBytes(buf, dstOffset, maxLen);
-		blockCache.put(loc, ent);
 	}
 
 	protected static class OutSnap {
@@ -571,13 +581,14 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			OutSnap lastSnap, Set<TraceAddressSnapRange> changed) throws IOException {
 		// NOTE: Do not leave the buffer advanced from here
 		int pos = buf.position();
+		// exclusive?
 		Iterator<DBTraceMemoryBlockEntry> it =
-			blocksByOffset.tail(new OffsetSnap(loc.offset, loc.snap + 1), true).values().iterator(); // exclusive
+			blocksByOffset.tail(new OffsetSnap(loc.offset, loc.snap + 1), true).values().iterator();
 		AddressSet remaining = new AddressSet(space.getAddress(loc.offset + dstOffset),
 			space.getAddress(loc.offset + dstOffset + maxLen - 1));
 		while (it.hasNext()) {
 			DBTraceMemoryBlockEntry next = it.next();
-			if (next.getOffset() != loc.offset) {
+			if (next.getOffset() != loc.offset || next.isScratch() != loc.isScratch()) {
 				break;
 			}
 			AddressSetView withState =
@@ -875,6 +886,46 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		return false;
 	}
 
+	@Override
+	public Long getSnapOfMostRecentChangeToBlock(long snap, Address address) {
+		assertInSpace(address);
+		try (LockHold hold = LockHold.lock(lock.readLock())) {
+			long offset = address.getOffset();
+			long roundOffset = offset & BLOCK_MASK;
+			OffsetSnap loc = new OffsetSnap(roundOffset, snap);
+			DBTraceMemoryBlockEntry ent = findMostRecentBlockEntry(loc, true);
+			if (ent == null) {
+				return null;
+			}
+			return ent.getSnap();
+		}
+	}
+
+	@Override
+	public int getBlockSize() {
+		return BLOCK_SIZE;
+	}
+
+	protected boolean isCross(long lower, long upper) {
+		return lower < 0 && upper >= 0;
+	}
+
+	/**
+	 * Determine the truncation snap if the given span and range include byte changes
+	 * 
+	 * <p>
+	 * Code units do not understand or accommodate changes in time, so the underlying bytes of the
+	 * unit must be the same throughout its lifespan. Typically, units are placed with a desired
+	 * creation snap, and then its life is extended into the future opportunistically. Thus, when
+	 * truncating, we desire to keep the start snap, then search for the soonest byte change within
+	 * the desired lifespan. Furthermore, we generally don't permit a unit to exist in both record
+	 * and scratch spaces, i.e., it cannot span both the -1 and 0 snaps.
+	 * 
+	 * @param span the desired lifespan
+	 * @param range the address range covered
+	 * @return the first snap that should be excluded, or {@link Long#MIN_VALUE} to indicate no
+	 *         change.
+	 */
 	public long getFirstChange(Range<Long> span, AddressRange range) {
 		assertInSpace(range);
 		long lower = DBTraceUtils.lowerEndpoint(span);
@@ -882,21 +933,24 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		if (lower == upper) {
 			return Long.MIN_VALUE;
 		}
-		Range<Long> fwdOne = DBTraceUtils.toRange(lower + 1, upper);
+		boolean cross = isCross(lower, upper);
+		if (cross && lower == -1) {
+			return 0; // Avoid reversal of range end points. 
+		}
+		Range<Long> fwdOne = DBTraceUtils.toRange(lower + 1, cross ? -1 : upper);
 		ByteBuffer buf1 = ByteBuffer.allocate(BLOCK_SIZE);
 		ByteBuffer buf2 = ByteBuffer.allocate(BLOCK_SIZE);
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			for (TraceAddressSnapRange tasr : stateMapSpace.reduce(
 				TraceAddressSnapRangeQuery.intersecting(range, fwdOne)
-						.starting(
-							Rectangle2DDirection.BOTTOMMOST))
+						.starting(Rectangle2DDirection.BOTTOMMOST))
 					.orderedKeys()) {
 				AddressRange toExamine = range.intersect(tasr.getRange());
 				if (doCheckBytesChanged(tasr.getY1(), toExamine, buf1, buf2)) {
 					return tasr.getY1();
 				}
 			}
-			return Long.MIN_VALUE;
+			return cross ? 0 : Long.MIN_VALUE;
 		}
 		catch (IOException e) {
 			blockStore.dbError(e);
@@ -919,7 +973,8 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			getBytes(snap, start, oldBytes);
 			// New in the sense that they're about to replace the old bytes
 			ByteBuffer newBytes = ByteBuffer.allocate(len);
-			if (snap != 0) {
+			// NB. Don't want to wrap to Long.MAX_VALUE, but also don't want to read from scratch
+			if (snap != 0 && snap != Long.MIN_VALUE) {
 				getBytes(snap - 1, start, newBytes);
 				newBytes.flip();
 			}
@@ -974,7 +1029,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			stateMapSpace.invalidateCache();
 			bufferStore.invalidateCache();
 			blockStore.invalidateCache();
-			blockCache.clear();
+			blockCacheMostRecent.clear();
 		}
 	}
 }

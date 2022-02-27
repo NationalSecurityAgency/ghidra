@@ -30,15 +30,16 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
+import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
-import ghidra.app.plugin.core.debug.gui.modules.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModuleMapProposalDialog.ModuleMapTableColumns;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionMapProposalDialog.SectionMapTableColumns;
 import ghidra.app.services.DebuggerListingService;
-import ghidra.app.services.DebuggerStaticMappingService.ModuleMapEntry;
-import ghidra.app.services.DebuggerStaticMappingService.SectionMapEntry;
+import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.app.services.SectionMapProposal.SectionMapEntry;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.attributes.TargetPrimitiveDataType.DefaultTargetPrimitiveDataType;
 import ghidra.dbg.attributes.TargetPrimitiveDataType.PrimitiveKind;
@@ -46,7 +47,6 @@ import ghidra.dbg.model.TestTargetModule;
 import ghidra.dbg.model.TestTargetTypedefDataType;
 import ghidra.dbg.util.TargetDataTypeConverter;
 import ghidra.framework.main.DataTreeDialog;
-import ghidra.framework.store.LockException;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.address.AddressSet;
@@ -100,7 +100,8 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 					else {
 						throw new AssertionError();
 					}
-					manager.addRegion(module.getName() + ":" + section.getName(),
+					manager.addRegion(
+						"Processes[1].Memory[" + module.getName() + ":" + section.getName() + "]",
 						module.getLifespan(), section.getRange(), flags);
 				}
 			}
@@ -110,23 +111,23 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	protected void addModules() throws Exception {
 		TraceModuleManager manager = tb.trace.getModuleManager();
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			modExe = manager.addLoadedModule("first_proc", "first_proc",
+			modExe = manager.addLoadedModule("Processes[1].Modules[first_proc]", "first_proc",
 				tb.range(0x55550000, 0x5575007f), 0);
-			secExeText =
-				modExe.addSection("first_proc[.text]", ".text", tb.range(0x55550000, 0x555500ff));
-			secExeData =
-				modExe.addSection("first_proc[.data]", ".data", tb.range(0x55750000, 0x5575007f));
+			secExeText = modExe.addSection("Processes[1].Modules[first_proc].Sections[.text]",
+				".text", tb.range(0x55550000, 0x555500ff));
+			secExeData = modExe.addSection("Processes[1].Modules[first_proc].Sections[.data]",
+				".data", tb.range(0x55750000, 0x5575007f));
 
-			modLib = manager.addLoadedModule("some_lib", "some_lib",
+			modLib = manager.addLoadedModule("Processes[1].Modules[some_lib]", "some_lib",
 				tb.range(0x7f000000, 0x7f10003f), 0);
-			secLibText =
-				modLib.addSection("some_lib[.text]", ".text", tb.range(0x7f000000, 0x7f0003ff));
-			secLibData =
-				modLib.addSection("some_lib[.data]", ".data", tb.range(0x7f100000, 0x7f10003f));
+			secLibText = modLib.addSection("Processes[1].Modules[some_lib].Sections[.text]",
+				".text", tb.range(0x7f000000, 0x7f0003ff));
+			secLibData = modLib.addSection("Processes[1].Modules[some_lib].Sections[.data]",
+				".data", tb.range(0x7f100000, 0x7f10003f));
 		}
 	}
 
-	protected MemoryBlock addBlock() throws LockException, DuplicateNameException,
+	protected MemoryBlock addBlock() throws Exception,
 			MemoryConflictException, AddressOverflowException, CancelledException {
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
 			return program.getMemory()
@@ -144,8 +145,10 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	protected void assertProviderPopulated() {
-		List<ModuleRow> modulesDisplayed = modulesProvider.moduleTableModel.getModelData();
-		// I should be able to assume this is sorted by base address
+		List<ModuleRow> modulesDisplayed =
+			new ArrayList<>(modulesProvider.moduleTableModel.getModelData());
+		modulesDisplayed.sort(Comparator.comparing(r -> r.getBase()));
+		// I should be able to assume this is sorted by base address. It's the default sort column.
 		assertEquals(2, modulesDisplayed.size());
 
 		ModuleRow execRow = modulesDisplayed.get(0);
@@ -156,7 +159,9 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		ModuleRow libRow = modulesDisplayed.get(1);
 		assertEquals(tb.addr(0x7f000000), libRow.getBase());
 
-		List<SectionRow> sectionsDisplayed = modulesProvider.sectionTableModel.getModelData();
+		List<SectionRow> sectionsDisplayed =
+			new ArrayList<>(modulesProvider.sectionTableModel.getModelData());
+		sectionsDisplayed.sort(Comparator.comparing(r -> r.getStart()));
 		assertEquals(4, sectionsDisplayed.size());
 
 		SectionRow execTextRow = sectionsDisplayed.get(0);
@@ -232,13 +237,13 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		DebuggerSectionMapProposalDialog propDialog =
 			waitForDialogComponent(DebuggerSectionMapProposalDialog.class);
-		clickTableCell(propDialog.table, 0, SectionMapTableColumns.CHOOSE.ordinal(), 1);
+		clickTableCell(propDialog.getTable(), 0, SectionMapTableColumns.CHOOSE.ordinal(), 1);
 
 		DebuggerBlockChooserDialog blockDialog =
 			waitForDialogComponent(DebuggerBlockChooserDialog.class);
 
-		assertEquals(1, blockDialog.tableModel.getRowCount());
-		MemoryBlockRow row = blockDialog.tableModel.getModelData().get(0);
+		assertEquals(1, blockDialog.getTableModel().getRowCount());
+		MemoryBlockRow row = blockDialog.getTableModel().getModelData().get(0);
 		assertEquals(program, row.getProgram());
 		assertEquals(block, row.getBlock());
 		// NOTE: Other getters should be tested in a separate MemoryBlockRowTest
@@ -261,13 +266,17 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		}
 		waitForDomainObject(tb.trace);
 
-		List<ModuleRow> modulesDisplayed = modulesProvider.moduleTableModel.getModelData();
+		List<ModuleRow> modulesDisplayed =
+			new ArrayList<>(modulesProvider.moduleTableModel.getModelData());
+		modulesDisplayed.sort(Comparator.comparing(r -> r.getBase()));
 		assertEquals(1, modulesDisplayed.size());
 
 		ModuleRow libRow = modulesDisplayed.get(0);
 		assertEquals("some_lib", libRow.getName());
 
-		List<SectionRow> sectionsDisplayed = modulesProvider.sectionTableModel.getModelData();
+		List<SectionRow> sectionsDisplayed =
+			new ArrayList<>(modulesProvider.sectionTableModel.getModelData());
+		sectionsDisplayed.sort(Comparator.comparing(r -> r.getStart()));
 		assertEquals(2, sectionsDisplayed.size());
 
 		SectionRow libTextRow = sectionsDisplayed.get(0);
@@ -399,19 +408,19 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		DebuggerModuleMapProposalDialog propDialog =
 			waitForDialogComponent(DebuggerModuleMapProposalDialog.class);
 
-		List<ModuleMapEntry> proposal = propDialog.tableModel.getModelData();
+		List<ModuleMapEntry> proposal = propDialog.getTableModel().getModelData();
 		ModuleMapEntry entry = Unique.assertOne(proposal);
 		assertEquals(modExe, entry.getModule());
-		assertEquals(program, entry.getProgram());
+		assertEquals(program, entry.getToProgram());
 
-		clickTableCell(propDialog.table, 0, ModuleMapTableColumns.CHOOSE.ordinal(), 1);
+		clickTableCell(propDialog.getTable(), 0, ModuleMapTableColumns.CHOOSE.ordinal(), 1);
 
 		DataTreeDialog programDialog = waitForDialogComponent(DataTreeDialog.class);
 		assertEquals(program.getDomainFile(), programDialog.getDomainFile());
 
 		pressButtonByText(programDialog, "OK", true);
 
-		assertEquals(program, entry.getProgram());
+		assertEquals(program, entry.getToProgram());
 		// TODO: Test the changed case
 
 		Collection<? extends TraceStaticMapping> mappings =
@@ -428,6 +437,9 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(0x1000, sm.getLength()); // Block is 0x1000 in length
 		assertEquals(tb.addr(0x55550000), sm.getMinTraceAddress());
 	}
+
+	// TODO: testActionMapModulesTo
+	// TODO: testActionMapModuleTo
 
 	@Test
 	public void testActionMapSections() throws Exception {
@@ -461,16 +473,16 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		DebuggerSectionMapProposalDialog propDialog =
 			waitForDialogComponent(DebuggerSectionMapProposalDialog.class);
 
-		List<SectionMapEntry> proposal = propDialog.tableModel.getModelData();
+		List<SectionMapEntry> proposal = propDialog.getTableModel().getModelData();
 		SectionMapEntry entry = Unique.assertOne(proposal);
 		assertEquals(secExeText, entry.getSection());
 		assertEquals(block, entry.getBlock());
 
-		clickTableCell(propDialog.table, 0, SectionMapTableColumns.CHOOSE.ordinal(), 1);
+		clickTableCell(propDialog.getTable(), 0, SectionMapTableColumns.CHOOSE.ordinal(), 1);
 
 		DebuggerBlockChooserDialog blockDialog =
 			waitForDialogComponent(DebuggerBlockChooserDialog.class);
-		MemoryBlockRow row = Unique.assertOne(blockDialog.tableModel.getModelData());
+		MemoryBlockRow row = Unique.assertOne(blockDialog.getTableModel().getModelData());
 		assertEquals(block, row.getBlock());
 
 		pressButtonByText(blockDialog, "OK", true);
@@ -491,6 +503,9 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(0x100, sm.getLength()); // Section is 0x100, though block is 0x1000 long
 		assertEquals(tb.addr(0x55550000), sm.getMinTraceAddress());
 	}
+
+	// TODO: testActionMapSectionsTo
+	// TODO: testActionMapSectionTo
 
 	@Test
 	public void testActionSelectAddresses() throws Exception {
@@ -537,13 +552,15 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		// TODO: A region should not be required first. Just to get a memMapper?
-		mb.testProcess1.addRegion("first_proc:.text", mb.rng(0x55550000, 0x555500ff), "rx");
+		mb.testProcess1.addRegion("Memory[first_proc:.text]", mb.rng(0x55550000, 0x555500ff),
+			"rx");
 		TestTargetModule module =
-			mb.testProcess1.modules.addModule("first_proc", mb.rng(0x55550000, 0x555500ff));
+			mb.testProcess1.modules.addModule("Modules[first_proc]",
+				mb.rng(0x55550000, 0x555500ff));
 		// NOTE: A section should not be required at this point.
 		TestTargetTypedefDataType typedef = module.types.addTypedefDataType("myInt",
 			new DefaultTargetPrimitiveDataType(PrimitiveKind.SINT, 4));
@@ -571,7 +588,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			conv.convertTargetDataType(typedef).get(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS);
 		// TODO: Some heuristic or convention to extract the module name, if applicable
 		waitForPass(() -> {
-			DataType actType = dtm.getDataType("/Processes[1].Modules[first_proc].Types/myInt");
+			DataType actType = dtm.getDataType("/Modules[first_proc].Types/myInt");
 			assertTypeEquals(expType, actType);
 		});
 
@@ -590,11 +607,12 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		// TODO: A region should not be required first. Just to get a memMapper?
-		mb.testProcess1.addRegion("first_proc:.text", mb.rng(0x55550000, 0x555500ff), "rx");
+		mb.testProcess1.addRegion("first_proc:.text", mb.rng(0x55550000, 0x555500ff),
+			"rx");
 		TestTargetModule module =
 			mb.testProcess1.modules.addModule("first_proc", mb.rng(0x55550000, 0x555500ff));
 		// NOTE: A section should not be required at this point.

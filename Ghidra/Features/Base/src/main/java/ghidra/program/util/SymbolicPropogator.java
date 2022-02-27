@@ -778,6 +778,9 @@ public class SymbolicPropogator {
 			Msg.info(this, minInstrAddress + "   " + instruction);
 		}
 
+		// callfixup injection targets that have already been used
+		HashSet<Address> previousInjectionTarget = new HashSet<>();
+
 		int mustClearAllUntil_PcodeIndex = -1;
 		// flag won't get set until there is something to clear
 		boolean mustClearAll = false;
@@ -941,12 +944,17 @@ public class SymbolicPropogator {
 								}
 							}
 							// check for pcode replacement - callfixup
-							PcodeOp[] injectionPcode = checkForCallFixup(prog, func, instruction);
-							if (injectionPcode != null && injectionPcode.length > 0) {
-								ops = injectPcode(ops, pcodeIndex, injectionPcode);
-								pcodeIndex = -1;
-								injected = true;
-								continue;
+							//   don't re-inject to the same site.
+							if (!previousInjectionTarget.contains(target)) {
+								PcodeOp[] injectionPcode =
+									checkForCallFixup(prog, func, instruction);
+								if (injectionPcode != null && injectionPcode.length > 0) {
+									previousInjectionTarget.add(target);
+									ops = injectPcode(ops, pcodeIndex, injectionPcode);
+									pcodeIndex = -1;
+									injected = true;
+									continue;
+								}
 							}
 						}
 
@@ -1045,7 +1053,7 @@ public class SymbolicPropogator {
 								// if internal flow joins back together, just skip over effect
 								// Warning this is arbitrary choice of one branch over the other....!!!
 								// look at pcode up to destination, if all non flow or internal, just skip
-								int sequenceOffset = (int) in[0].getOffset();
+								int sequenceOffset = pcodeIndex + (int) in[0].getOffset();
 								int i = pcodeIndex + 1;
 								for (; i < sequenceOffset; i++) {
 									if (isBranch(ops[i])) {
@@ -1053,12 +1061,6 @@ public class SymbolicPropogator {
 									}
 								}
 								if (i == sequenceOffset) {
-									if (fallThru != null) {
-										// we don't know what will happen from here on, but anything before should in theory propagate
-										vContext.propogateResults(true);
-										vContext.mergeToFutureFlowState(minInstrAddress,
-											instruction.getFallThrough());
-									}
 									// everything that is in the cache from here on should be cleared
 									mustClearAllUntil_PcodeIndex = sequenceOffset;
 									break;

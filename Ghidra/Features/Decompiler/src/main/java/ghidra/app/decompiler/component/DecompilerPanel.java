@@ -149,8 +149,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		return highlightController.getSecondaryHighlightColors();
 	}
 
-	public boolean hasSecondaryHighlights() {
-		return highlightController.hasSecondaryHighlights();
+	public boolean hasSecondaryHighlights(Function function) {
+		return highlightController.hasSecondaryHighlights(function);
 	}
 
 	public boolean hasSecondaryHighlight(ClangToken token) {
@@ -166,14 +166,14 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	private Set<ClangDecompilerHighlighter> getSecondaryHighlihgtersByFunction(Function function) {
-		return highlightController.getSecondaryHighlightersByFunction(function);
+		return highlightController.getSecondaryHighlighters(function);
 	}
 
 	/**
 	 * Removes all secondary highlights for the current function
+	 * @param function the function containing the secondary highlights
 	 */
-	public void removeSecondaryHighlights() {
-		Function function = controller.getFunction();
+	public void removeSecondaryHighlights(Function function) {
 		highlightController.removeSecondaryHighlights(function);
 	}
 
@@ -259,10 +259,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		highlightController.addPrimaryHighlights(root, ops, hlColor);
 	}
 
-	public String getHighlightedText() {
-		return highlightController.getPrimaryHighlightedText();
-	}
-
 	public void setHighlightController(ClangHighlightController highlightController) {
 		if (this.highlightController != null) {
 			this.highlightController.removeListener(this);
@@ -283,9 +279,14 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	/**
-	 * This is function is used to alert the panel that a token was renamed.
-	 * If the token that is being renamed had a secondary highlight, we must re-apply the highlight
-	 * to the new token.
+	 * This function is used to alert the panel that a token was renamed. If the token being renamed
+	 * had a secondary highlight, we must re-apply the highlight to the new token.
+	 * 
+	 * <p>This is not needed for highlighter service highlights, since they get called again to
+	 * re-apply highlights.  It is up to that highlighter to determine if highlighting still applies
+	 * to the new token name.  Alternatively, for secondary highlights, we know the user chose the
+	 * highlight based upon name.  Thus, when the name changes, we need to take action to update
+	 * the secondary highlight.
 	 * 
 	 * @param token the token being renamed
 	 * @param newName the new name of the token
@@ -307,9 +308,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private void cloneGlobalHighlighters(DecompilerPanel sourcePanel) {
 
-		Set<ClangDecompilerHighlighter> allHighlighters =
+		Set<ClangDecompilerHighlighter> globalHighlighters =
 			sourcePanel.highlightController.getGlobalHighlighters();
-		for (ClangDecompilerHighlighter otherHighlighter : allHighlighters) {
+		for (ClangDecompilerHighlighter otherHighlighter : globalHighlighters) {
 
 			ClangDecompilerHighlighter newHighlighter = otherHighlighter.clone(this);
 			highlightersById.put(newHighlighter.getId(), newHighlighter);
@@ -411,18 +412,19 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		currentSearchLocation = null;
 
 		reapplySecondaryHighlights();
-		reapplyHighlighterHighlights();
+		reapplyGlobalHighlights();
 	}
 
-	private void reapplyHighlighterHighlights() {
+	private void reapplyGlobalHighlights() {
 
 		Function function = decompileData.getFunction();
 		if (function == null) {
 			return;
 		}
 
-		Collection<ClangDecompilerHighlighter> values = highlightersById.values();
-		for (ClangDecompilerHighlighter highlighter : values) {
+		Set<ClangDecompilerHighlighter> globalHighlighters =
+			highlightController.getGlobalHighlighters();
+		for (ClangDecompilerHighlighter highlighter : globalHighlighters) {
 			highlighter.clearHighlights();
 			highlighter.applyHighlights();
 		}
@@ -692,6 +694,11 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		highlightersById.clear();
 	}
 
+	public FontMetrics getFontMetrics() {
+		Font font = options.getDefaultFont();
+		return super.getFontMetrics(font);
+	}
+
 	private FontMetrics getFontMetrics(DecompileOptions decompileOptions) {
 		Font font = decompileOptions.getDefaultFont();
 		return getFontMetrics(font);
@@ -750,7 +757,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			tryGoToVarnode((ClangVariableToken) token, newWindow);
 		}
 		else if (token instanceof ClangCommentToken) {
-			tryGoToComment(location, event, textField, token, newWindow);
+			tryGoToComment(location, event, textField, newWindow);
 		}
 		else if (token instanceof ClangSyntaxToken) {
 			tryGoToSyntaxToken((ClangSyntaxToken) token);
@@ -758,10 +765,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	private void tryGoToComment(FieldLocation location, MouseEvent event, ClangTextField textField,
-			ClangToken token, boolean newWindow) {
+			boolean newWindow) {
 
-		// special cases
-		// -comments: these no longer use tokens for each item, but are one composite field
+		// comments may use annotations; tell the annotation it was clicked
 		FieldElement clickedElement = textField.getClickedObject(location);
 		if (clickedElement instanceof AnnotatedTextFieldElement) {
 			AnnotatedTextFieldElement annotation = (AnnotatedTextFieldElement) clickedElement;
@@ -769,7 +775,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return;
 		}
 
-		String text = clickedElement.getText();
+		String text = textField.getText();
 		String word = StringUtilities.findWord(text, location.col);
 		tryGoToScalar(word, newWindow);
 	}
@@ -873,7 +879,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				Address addr = space.getAddress(NumericUtilities.parseHexLong(offsetStr), true);
 				controller.goToAddress(addr, newWindow);
 			}
-			catch (Exception e) {
+			catch (AddressOutOfBoundsException e) {
 				// give-up
 			}
 			return;
@@ -882,7 +888,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			long value = NumericUtilities.parseHexLong(text);
 			controller.goToScalar(value, newWindow);
 		}
-		catch (Exception e) {
+		catch (NumberFormatException e) {
 			return; // give up
 		}
 	}
@@ -1011,6 +1017,49 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		return SPECIAL_COLOR_DEF;
 	}
 
+	public String getHighlightedText() {
+		ClangToken token = highlightController.getHighlightedToken();
+		if (token == null) {
+			return null;
+		}
+		if (token instanceof ClangCommentToken) {
+			return null; // comments are not single words that get highlighted
+		}
+		return token.getText();
+	}
+
+	public String getTextUnderCursor() {
+
+		FieldLocation location = fieldPanel.getCursorLocation();
+		ClangTextField textField = (ClangTextField) fieldPanel.getCurrentField();
+		if (textField == null) {
+			return null;
+		}
+
+		ClangToken token = textField.getToken(location);
+		if (!(token instanceof ClangCommentToken)) {
+			return token.getText(); // non-comment tokens are not multi-word; use the token's text
+		}
+
+		FieldElement clickedElement = textField.getClickedObject(location);
+		if (clickedElement instanceof AnnotatedTextFieldElement) {
+			AnnotatedTextFieldElement annotation = (AnnotatedTextFieldElement) clickedElement;
+			return annotation.getDisplayString();
+		}
+
+		String text = textField.getText();
+		return StringUtilities.findWord(text, location.col);
+	}
+
+	public String getSelectedText() {
+		FieldSelection selection = fieldPanel.getSelection();
+		if (selection.isEmpty()) {
+			return null;
+		}
+
+		return FieldSelectionHelper.getFieldSelectionText(selection, fieldPanel);
+	}
+
 	public FieldLocation getCursorPosition() {
 		return fieldPanel.getCursorLocation();
 	}
@@ -1039,15 +1088,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return tokens.get(0);
 		}
 		return null;
-	}
-
-	public String getTextSelection() {
-		FieldSelection selection = fieldPanel.getSelection();
-		if (selection.isEmpty()) {
-			return null;
-		}
-
-		return FieldSelectionHelper.getFieldSelectionText(selection, fieldPanel);
 	}
 
 	public ClangToken getTokenAtCursor() {

@@ -24,7 +24,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.Msg;
 import ghidra.util.exception.*;
 
 /**
@@ -264,7 +263,7 @@ public class ElfRelocationContext {
 			}
 		}
 		catch (DuplicateNameException | NotEmptyException | NotFoundException e) {
-			Msg.error(this, "Failed to reconcile extended EXTERNAL block fragment");
+			loadHelper.log("Failed to reconcile extended EXTERNAL block fragment");
 		}
 	}
 

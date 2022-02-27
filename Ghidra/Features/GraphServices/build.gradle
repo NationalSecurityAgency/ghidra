@@ -35,14 +35,6 @@ dependencies {
 	// not using jgrapht-io code that depends on antlr, so exclude antlr
 	api ("org.jgrapht:jgrapht-io:1.5.1") { exclude group: "org.antlr", module: "antlr4-runtime" }
 	
-	runtimeOnly "org.slf4j:slf4j-api:1.7.25"
-	
-	// use this if you want no slf4j log messages
-	runtimeOnly "org.slf4j:slf4j-nop:1.7.25"
-	
-	// use this if you want slf4j log messages sent to log4j
-	//	runtimeOnly "org.apache.logging.log4j:log4j-slf4j-impl:2.12.1" 
-	
 	runtimeOnly "org.jheaps:jheaps:0.13"
       
 	helpPath project(path: ":Base", configuration: 'helpPath')

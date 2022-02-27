@@ -114,11 +114,8 @@ public class DmgClientFileSystemFactory implements
 			decryptedProvider = provider;
 		}
 
-		File decryptedDmgFile = File.createTempFile("ghidra_decrypted_dmg_file",
-			Long.toString(System.currentTimeMillis()));
-		monitor.setMessage("Copying DMG container to temp file");
-		monitor.initialize(decryptedProvider.length());
-		FSUtilities.copyByteProviderToFile(decryptedProvider, decryptedDmgFile, monitor);
+		File decryptedDmgFile = fsService.createPlaintextTempFile(decryptedProvider,
+			"ghidra_decrypted_dmg_file", monitor);
 
 		DmgClientFileSystem fs =
 			new DmgClientFileSystem(decryptedDmgFile, true, targetFSRL, fsService);
