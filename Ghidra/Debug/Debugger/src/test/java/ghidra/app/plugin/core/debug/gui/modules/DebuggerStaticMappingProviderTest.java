@@ -23,10 +23,12 @@ import java.util.*;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
@@ -41,6 +43,7 @@ import ghidra.trace.model.modules.TraceStaticMappingManager;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
+@Category(NightlyCategory.class)
 public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected DebuggerStaticMappingPlugin mappingsPlugin;
 	protected DebuggerStaticMappingProvider mappingsProvider;

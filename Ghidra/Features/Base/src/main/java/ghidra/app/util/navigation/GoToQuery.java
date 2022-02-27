@@ -42,7 +42,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.AddressEvaluator;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.table.AddressArrayTableModel;
 import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.task.TaskMonitor;
@@ -187,7 +187,7 @@ public class GoToQuery {
 			return;
 		}
 
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			model = new AddressArrayTableModel("Goto: ", plugin.getTool(), program, validAddresses,
 				monitor);
 			model.addInitialLoadListener(tableModelListener);
@@ -203,7 +203,7 @@ public class GoToQuery {
 			return;
 		}
 
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			model = new GoToQueryResultsTableModel(program, plugin.getTool(), locations, monitor);
 			model.addInitialLoadListener(tableModelListener);
 		});
@@ -214,7 +214,7 @@ public class GoToQuery {
 			return false;
 		}
 
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			model = new GoToQueryResultsTableModel(navigatable.getProgram(), queryData,
 				plugin.getTool(), maxHits, monitor);
 			model.addInitialLoadListener(tableModelListener);
@@ -337,7 +337,7 @@ public class GoToQuery {
 			return false;
 		}
 
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
 			Program program = navigatable.getProgram();
 			model = new GoToQueryResultsTableModel(program, cleanupQuery(program, queryData),
 				plugin.getTool(), maxHits, monitor);
