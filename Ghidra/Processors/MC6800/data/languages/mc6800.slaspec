@@ -57,7 +57,7 @@ REL:  addr    is simm8  [ addr = inst_next + simm8;  ]   { export *:2 addr; }
 OP1: "#"imm8    is addrMode=0; imm8
 {
 	# For some reason this needs explicit sizing, or the p-code
-	# ends up picking up a zero value for all #imm8 operands. 
+	# ends up picking up a zero value for all #imm8 operands.
 	local tmp:1 = imm8;
     export tmp;
 }
@@ -198,7 +198,7 @@ macro clear(op)
     $(V) = 0;
     op = 0;
     $(Z) = 1;
-    $(N) = 0;	
+    $(N) = 0;
 }
 
 macro addition(reg, op)
