@@ -1,4 +1,4 @@
-# sleigh specification file for Motorola 6800/6802/6805/6808
+# sleigh specification file for Motorola 6800/6802/6808
 
 define endian=big;
 define alignment=1;

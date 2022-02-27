@@ -14,7 +14,7 @@
         <pentry minsize="1" maxsize="1">
           <register name="B"/>
         </pentry>
-        <pentry minsize="2" maxsize="2">
+        <pentry minsize="1" maxsize="2">
           <register name="X"/>
         </pentry>
       </input>
