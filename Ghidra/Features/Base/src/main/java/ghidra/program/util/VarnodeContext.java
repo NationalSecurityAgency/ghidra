@@ -716,6 +716,9 @@ public class VarnodeContext implements ProcessorContext {
 			result = null;
 		}
 		if (out.isUnique()) {
+			if (mustClear) {
+				result = null;
+			}
 			tempUniqueVals.put(out, result);
 		}
 		else {
@@ -866,7 +869,7 @@ public class VarnodeContext implements ProcessorContext {
 				continue;
 			}
 			BigInteger rbval = rval.getUnsignedValue();
-			if (bval.equals(rbval)) {
+			if (bval == null || bval.equals(rbval)) {
 				lastSetAddr = address;
 				break;
 			}

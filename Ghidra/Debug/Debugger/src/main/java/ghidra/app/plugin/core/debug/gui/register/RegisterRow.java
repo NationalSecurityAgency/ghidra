@@ -62,7 +62,7 @@ public class RegisterRow {
 	}
 
 	public boolean isValueEditable() {
-		return provider.canWriteTargetRegister(register);
+		return provider.canWriteRegister(register);
 	}
 
 	public void setValue(BigInteger value) {

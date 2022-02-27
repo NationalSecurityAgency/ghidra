@@ -63,6 +63,7 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	@Override
 	public void setVar(AddressSpace space, long offset, int size, boolean truncateAddressableUnit,
 			T val) {
+		checkRange(space, offset, size);
 		if (space.isConstantSpace()) {
 			throw new IllegalArgumentException("Cannot write to constant space");
 		}
@@ -82,6 +83,7 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 
 	@Override
 	public T getVar(AddressSpace space, long offset, int size, boolean truncateAddressableUnit) {
+		checkRange(space, offset, size);
 		if (space.isConstantSpace()) {
 			return arithmetic.fromConst(offset, size);
 		}

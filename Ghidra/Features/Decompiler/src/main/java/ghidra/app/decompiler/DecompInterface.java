@@ -25,6 +25,7 @@ import java.io.*;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.processors.sleigh.UniqueLayout;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.lang.*;
@@ -85,7 +86,7 @@ public class DecompInterface {
 	// Last warning messages from the decompiler
 	// or other error message
 	protected String decompileMessage;
-	protected BasicCompilerSpec compilerSpec;
+	protected CompilerSpec compilerSpec;
 	protected DecompileProcess decompProcess;
 	protected DecompileCallback decompCallback;
 	private DecompileDebug debug;
@@ -212,9 +213,7 @@ public class DecompInterface {
 			DecompileProcessFactory.release(decompProcess);
 			decompProcess = DecompileProcessFactory.get();
 		}
-		// use static uniqueBase since we don't know how many dynamically generated 
-		// variables Ghidra may add to the language/compile-spec uniqueBase
-		long uniqueBase = 0x10000000;
+		long uniqueBase = UniqueLayout.SLEIGH_BASE.getOffset(pcodelanguage);
 		String tspec =
 			pcodelanguage.buildTranslatorTag(program.getAddressFactory(), uniqueBase, null);
 		String coretypes = dtmanage.buildCoreTypes();
@@ -222,7 +221,9 @@ public class DecompInterface {
 			(SleighLanguageDescription) pcodelanguage.getLanguageDescription();
 		ResourceFile pspecfile = sleighdescription.getSpecFile();
 		String pspecxml = fileToString(pspecfile);
-		String cspecxml = compilerSpec.getXMLString();
+		StringBuilder buffer = new StringBuilder();
+		compilerSpec.saveXml(buffer);
+		String cspecxml = buffer.toString();
 
 		decompCallback.setNativeMessage(null);
 		decompProcess.registerProgram(decompCallback, pspecxml, cspecxml, tspec, coretypes);
@@ -314,7 +315,7 @@ public class DecompInterface {
 				"Language has unsupported compiler spec: " + spec.getClass().getName();
 			return false;
 		}
-		compilerSpec = (BasicCompilerSpec) spec;
+		compilerSpec = spec;
 
 		dtmanage = new PcodeDataTypeManager(prog);
 		try {

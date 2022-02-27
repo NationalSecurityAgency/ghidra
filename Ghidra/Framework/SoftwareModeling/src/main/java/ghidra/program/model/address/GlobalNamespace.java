@@ -33,8 +33,8 @@ public class GlobalNamespace implements Namespace {
 	 */
 	public static final String GLOBAL_NAMESPACE_NAME = "Global";
 
-	private Memory memory;
-	private Symbol globalSymbol;
+	final Memory memory;
+	final Symbol globalSymbol;
 
 	/**
 	 * Constructs a new GlobalNamespace

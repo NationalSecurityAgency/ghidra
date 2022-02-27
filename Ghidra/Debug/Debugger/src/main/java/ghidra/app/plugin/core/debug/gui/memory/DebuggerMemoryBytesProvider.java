@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.ActionContext;
 import docking.action.*;
 import docking.menu.MultiStateDockingAction;
+import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.plugin.core.byteviewer.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
@@ -148,7 +149,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	protected DockingAction actionGoTo;
 	protected FollowsCurrentThreadAction actionFollowsCurrentThread;
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoReadMemory;
-	protected DockingAction actionCaptureSelectedMemory;
+	protected DockingAction actionReadSelectedMemory;
 	protected MultiStateDockingAction<LocationTrackingSpec> actionTrackLocation;
 
 	protected ForMemoryBytesGoToTrait goToTrait;
@@ -217,6 +218,11 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		return super.getByteViewerPanel();
 	}
 
+	@Override
+	protected void addToToolbar() {
+		// Prevent this from being added to the toolbar
+	}
+
 	/**
 	 * Deal with the fact that initialization order is hard to control
 	 */
@@ -257,7 +263,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		actionGoTo = goToTrait.installAction();
 		actionTrackLocation = trackingTrait.installAction();
 		actionAutoReadMemory = readsMemTrait.installAutoReadAction();
-		actionCaptureSelectedMemory = readsMemTrait.installCaptureSelectedAction();
+		actionReadSelectedMemory = readsMemTrait.installReadSelectedAction();
 	}
 
 	@Override
@@ -363,6 +369,11 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		return trackingTrait.getSpec();
 	}
 
+	@Override
+	public boolean isConnected() {
+		return false;
+	}
+
 	public boolean isMainViewer() {
 		return isMainViewer;
 	}
@@ -417,13 +428,16 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	@Override
 	public void cloneWindow() {
 		final DebuggerMemoryBytesProvider newProvider = myPlugin.createNewDisconnectedProvider();
-		SaveState saveState = new SaveState();
+		final ViewerPosition vp = panel.getViewerPosition();
+		final SaveState saveState = new SaveState();
 		writeConfigState(saveState);
-		newProvider.readConfigState(saveState);
+		Swing.runLater(() -> {
+			newProvider.readConfigState(saveState);
 
-		newProvider.goToCoordinates(current);
-		newProvider.setLocation(currentLocation);
-		newProvider.panel.setViewerPosition(panel.getViewerPosition());
+			newProvider.goToCoordinates(current);
+			newProvider.setLocation(currentLocation);
+			newProvider.panel.setViewerPosition(vp);
+		});
 	}
 
 	@Override

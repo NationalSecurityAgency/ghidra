@@ -326,6 +326,9 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 					allCharWidths, monitor);
 			}
 		}
+		catch (CancelledException e) {
+			throw e;
+		}
 		catch (IOException e) {
 			String msg =
 				"Error accessing string model file: " + trigramFile + ": " + e.getMessage();

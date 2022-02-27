@@ -105,6 +105,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridx = 3;
 		gbc.gridwidth = 1;
 		useOldFileIDCheckBox = new GCheckBox("  Use Old File ID");
+		useOldFileIDCheckBox.setSelected(true);
 		filePanel.add(useOldFileIDCheckBox, gbc);
 	}
 

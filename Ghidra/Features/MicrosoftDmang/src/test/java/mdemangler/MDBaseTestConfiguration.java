@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,7 @@
  */
 package mdemangler;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.rules.TestName;
 
@@ -87,7 +86,8 @@ public class MDBaseTestConfiguration {
 		}
 
 		// Meant to be overridden, as needed by extended classes
-		doDemangleSymbol();
+		demangItem = doDemangleSymbol(mdm, mangled);
+		demangled = (demangItem == null) ? "" : demangItem.toString();
 
 		doBasicTestsAndOutput();
 
@@ -192,14 +192,12 @@ public class MDBaseTestConfiguration {
 	}
 
 	// Meant to be overridden, as needed by extended classes
-	protected void doDemangleSymbol() throws Exception {
+	protected MDParsableItem doDemangleSymbol(MDMang mdmIn, String mangledIn) throws Exception {
 		try {
-			demangItem = mdm.demangle(mangled, true);
-			demangled = demangItem.toString();
+			return mdmIn.demangle(mangledIn, true);
 		}
 		catch (MDException e) {
-			demangItem = null;
-			demangled = "";
+			return null;
 		}
 	}
 

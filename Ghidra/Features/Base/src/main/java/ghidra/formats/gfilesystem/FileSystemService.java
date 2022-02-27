@@ -15,8 +15,9 @@
  */
 package ghidra.formats.gfilesystem;
 
-import java.io.*;
 import java.util.List;
+
+import java.io.*;
 
 import ghidra.app.util.bin.*;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
@@ -536,6 +537,57 @@ public class FileSystemService {
 		FSRL resultFSRL = FSRLRoot.makeRoot("tmp")
 				.withPathMD5(FSUtilities.appendPath("/", name), tempFileCacheEntry.getMD5());
 		return tempFileCacheEntry.asByteProvider(resultFSRL);
+	}
+
+	/**
+	 * Converts a {@link ByteProvider} to the underlying File that contains the contents of
+	 * the ByteProvider.
+	 * <p>
+	 * Returns {@code null} if the underlying file is not available.
+	 * 
+	 * @param provider {@link ByteProvider}
+	 * @return a java {@link File} that is providing the bytes of the specified ByteProvider,
+	 * or null if there is no available file
+	 */
+	public File getFileIfAvailable(ByteProvider provider) {
+		// reach into the inner details of the ByteProviders that we know about and
+		// know could contain a real File
+		if (provider instanceof RefdByteProvider) {
+			provider = ((RefdByteProvider) provider).getWrappedByteProvider();
+		}
+		if (provider instanceof FileByteProvider || provider instanceof RandomAccessByteProvider) {
+			return provider.getFile();
+		}
+
+		return null;
+	}
+
+	/**
+	 * Exports the bytes in a {@link ByteProvider} into normal {@link File} that can be
+	 * used as the caller wishes.
+	 * <p>
+	 * This method is labeled as 'plaintext' to differentiate it from the standard obfuscated 
+	 * temp files that are produced by this service.
+	 *  
+	 * @param provider {@link ByteProvider} that will be written to a temp file
+	 * @param filenamePrefix filename prefix of the newly created File 
+	 * @param monitor {@link TaskMonitor} 
+	 * @return temporary {@link File} 
+	 * @throws IOException if error copying data or if cancelled
+	 */
+	public File createPlaintextTempFile(ByteProvider provider, String filenamePrefix,
+			TaskMonitor monitor) throws IOException {
+		File tmpFile =
+			File.createTempFile(filenamePrefix, Long.toString(System.currentTimeMillis()));
+		monitor.setMessage("Copying " + provider.getName() + " to temp file");
+		monitor.initialize(provider.length());
+		try {
+			FSUtilities.copyByteProviderToFile(provider, tmpFile, monitor);
+		}
+		catch (CancelledException e) {
+			throw new IOException("Copy was cancelled: " + provider.getName());
+		}
+		return tmpFile;
 	}
 
 	/**

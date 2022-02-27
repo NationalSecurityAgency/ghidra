@@ -16,8 +16,7 @@
 package ghidra.pcode.exec.trace;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import com.google.common.collect.*;
 import com.google.common.primitives.UnsignedLong;
@@ -27,8 +26,9 @@ import ghidra.pcode.exec.AbstractLongOffsetPcodeExecutorState;
 import ghidra.pcode.exec.BytesPcodeArithmetic;
 import ghidra.pcode.exec.trace.TraceCachedWriteBytesPcodeExecutorState.CachedSpace;
 import ghidra.pcode.utils.Utils;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.Memory;
 import ghidra.trace.model.Trace;
@@ -36,6 +36,7 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.MemBufferAdapter;
 import ghidra.util.MathUtilities;
+import ghidra.util.Msg;
 
 /**
  * A state which reads bytes from a trace, but caches writes internally.
@@ -99,20 +100,23 @@ public class TraceCachedWriteBytesPcodeExecutorState
 	protected static class CachedSpace {
 		protected final SemisparseByteArray cache = new SemisparseByteArray();
 		protected final RangeSet<UnsignedLong> written = TreeRangeSet.create();
+		protected final Language language; // For logging diagnostic
 		protected final AddressSpace space;
 		protected final TraceMemorySpace source;
 		protected final long snap;
 
-		public CachedSpace(AddressSpace space, TraceMemorySpace source, long snap) {
+		public CachedSpace(Language language, AddressSpace space, TraceMemorySpace source,
+				long snap) {
+			this.language = language;
 			this.space = space;
 			this.source = source;
 			this.snap = snap;
 		}
 
-		public void write(long offset, byte[] val) {
-			cache.putData(offset, val);
+		public void write(long offset, byte[] buffer, int srcOffset, int length) {
+			cache.putData(offset, buffer, srcOffset, length);
 			UnsignedLong uLoc = UnsignedLong.fromLongBits(offset);
-			UnsignedLong uEnd = UnsignedLong.fromLongBits(offset + val.length);
+			UnsignedLong uEnd = UnsignedLong.fromLongBits(offset + length);
 			written.add(Range.closedOpen(uLoc, uEnd));
 		}
 
@@ -150,12 +154,70 @@ public class TraceCachedWriteBytesPcodeExecutorState
 			return data;
 		}
 
+		protected AddressRange addrRng(Range<UnsignedLong> rng) {
+			Address start = space.getAddress(lower(rng));
+			Address end = space.getAddress(upper(rng));
+			return new AddressRangeImpl(start, end);
+		}
+
+		protected AddressSet addrSet(RangeSet<UnsignedLong> set) {
+			AddressSet result = new AddressSet();
+			for (Range<UnsignedLong> rng : set.asRanges()) {
+				result.add(addrRng(rng));
+			}
+			return result;
+		}
+
+		protected Set<Register> getRegs(AddressSet set) {
+			Set<Register> regs = new TreeSet<>();
+			for (AddressRange rng : set) {
+				Register r = language.getRegister(rng.getMinAddress(), (int) rng.getLength());
+				if (r != null) {
+					regs.add(r);
+				}
+				else {
+					regs.addAll(Arrays.asList(language.getRegisters(rng.getMinAddress())));
+				}
+			}
+			return regs;
+		}
+
+		protected void warnState(AddressSet set, String message) {
+			Set<Register> regs = getRegs(set);
+			if (regs.isEmpty()) {
+				Msg.warn(this, message + ": " + set);
+			}
+			else {
+				Msg.warn(this, message + ": " + set + " (registers " + regs + ")");
+			}
+		}
+
+		protected void warnUninit(RangeSet<UnsignedLong> uninit) {
+			AddressSet uninitialized = addrSet(uninit);
+			Set<Register> regs = getRegs(uninitialized);
+			if (regs.isEmpty()) {
+				Msg.warn(this, "Emulator read from uninitialized state: " + uninit);
+			}
+			Msg.warn(this, "Emulator read from uninitialized state: " + uninit +
+				" (includes registers: " + regs + ")");
+		}
+
+		protected void warnUnknown(AddressSet unknown) {
+			Set<Register> regs = getRegs(unknown);
+			Msg.warn(this, "Emulator state initialized from UNKNOWN: " + unknown +
+				"(includes registers: " + regs + ")");
+		}
+
 		public byte[] read(long offset, int size) {
 			if (source != null) {
 				// TODO: Warn or bail when reading UNKNOWN bytes
 				// NOTE: Read without regard to gaps
 				// NOTE: Cannot write those gaps, though!!!
-				readUninitializedFromSource(cache.getUninitialized(offset, offset + size));
+				readUninitializedFromSource(cache.getUninitialized(offset, offset + size - 1));
+			}
+			RangeSet<UnsignedLong> stillUninit = cache.getUninitialized(offset, offset + size - 1);
+			if (!stillUninit.isEmpty()) {
+				warnUninit(stillUninit);
 			}
 			return readCached(offset, size);
 		}
@@ -236,7 +298,7 @@ public class TraceCachedWriteBytesPcodeExecutorState
 	}
 
 	protected CachedSpace newSpace(AddressSpace space, TraceMemorySpace source, long snap) {
-		return new CachedSpace(space, source, snap);
+		return new CachedSpace(language, space, source, snap);
 	}
 
 	@Override
@@ -251,7 +313,7 @@ public class TraceCachedWriteBytesPcodeExecutorState
 	@Override
 	protected void setInSpace(CachedSpace space, long offset, int size, byte[] val) {
 		assert size == val.length;
-		space.write(offset, val);
+		space.write(offset, val, 0, val.length);
 	}
 
 	@Override

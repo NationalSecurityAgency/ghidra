@@ -15,8 +15,6 @@
  */
 package ghidra.trace.database.program;
 
-import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.database.DBTrace;
@@ -35,13 +33,6 @@ public class DBTraceVariableSnapProgramView extends DBTraceProgramView
 
 	public DBTraceVariableSnapProgramView(DBTrace trace, long snap, CompilerSpec compilerSpec) {
 		super(trace, snap, compilerSpec);
-	}
-
-	/**
-	 * Fires object-restored event on this view and all associated register views.
-	 */
-	protected void fireObjectRestored() {
-		fireEventAllViews(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
 	}
 
 	@Override

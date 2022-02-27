@@ -69,7 +69,7 @@ import ghidra.util.task.*;
  * an alternate method for getting actions to appear in the popup context menu (see
  * {@link #addPopupActionProvider(PopupActionProvider)}).   The popup listener mechanism is generally not
  * needed and should only be used in special circumstances (see {@link PopupActionProvider}).
- * 
+ *
  * <p>The PluginTool also manages tasks that run in the background, and options used by the plugins.
  *
  */
@@ -137,7 +137,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 		boolean hasErrors = restoreFromXml(template.getToolElement());
 		if (!hasErrors) {
-			configChangedFlag = false;
+			setConfigChanged(false);
 		}
 		optionsMgr.validateOptions();
 	}
@@ -807,8 +807,26 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @throws PluginException if a plugin could not be constructed, or
 	 * there was problem executing its init() method, or if a plugin of this
 	 * class already exists in the tool
+	 * @deprecated use {@link #addPlugins(List)}
 	 */
+	@Deprecated(since = "10.2", forRemoval = true)
 	public void addPlugins(String[] classNames) throws PluginException {
+		try {
+			pluginMgr.addPlugins(Arrays.asList(classNames));
+		}
+		finally {
+			setConfigChanged(true);
+		}
+	}
+
+	/**
+	 * Add plugins to the tool.
+	 * @param classNames array of plugin class names
+	 * @throws PluginException if a plugin could not be constructed, or
+	 * there was problem executing its init() method, or if a plugin of this
+	 * class already exists in the tool
+	 */
+	public void addPlugins(List<String> classNames) throws PluginException {
 		try {
 			pluginMgr.addPlugins(classNames);
 		}
@@ -822,15 +840,28 @@ public abstract class PluginTool extends AbstractDockingTool {
 		setConfigChanged(true);
 	}
 
-	public boolean hasUnsavedData() {
-		return pluginMgr.hasUnsavedData();
+	/**
+	 * Remove the array of plugins from the tool.
+	 * @param plugins array of plugins to remove
+	 * @deprecated use {@link #removePlugins(List)}
+	 */
+	@Deprecated(since = "10.2", forRemoval = true)
+	public void removePlugins(Plugin[] plugins) {
+		SystemUtilities.runSwingNow(() -> {
+			try {
+				pluginMgr.removePlugins(Arrays.asList(plugins));
+			}
+			finally {
+				setConfigChanged(true);
+			}
+		});
 	}
 
 	/**
 	 * Remove the array of plugins from the tool.
 	 * @param plugins array of plugins to remove
 	 */
-	public void removePlugins(Plugin[] plugins) {
+	public void removePlugins(List<Plugin> plugins) {
 		SystemUtilities.runSwingNow(() -> {
 			try {
 				pluginMgr.removePlugins(plugins);
@@ -839,6 +870,10 @@ public abstract class PluginTool extends AbstractDockingTool {
 				setConfigChanged(true);
 			}
 		});
+	}
+
+	public boolean hasUnsavedData() {
+		return pluginMgr.hasUnsavedData();
 	}
 
 	/**
@@ -960,8 +995,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 		saveAsAction.setMenuBarData(menuData);
 
 		saveAsAction.setEnabled(true);
-		saveAsAction.setHelpLocation(
-			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tool_Changes"));
+		saveAsAction
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tool_Changes"));
 
 		addAction(saveAction);
 		addAction(saveAsAction);
@@ -986,8 +1021,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 			new String[] { ToolConstants.MENU_FILE, exportPullright, "Export Tool..." });
 		menuData.setMenuSubGroup(Integer.toString(subGroup++));
 		exportToolAction.setMenuBarData(menuData);
-		exportToolAction.setHelpLocation(
-			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
+		exportToolAction
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
 		addAction(exportToolAction);
 
 		DockingAction exportDefautToolAction =
@@ -1095,7 +1130,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	public boolean shouldSave() {
-		return configChangedFlag; // ignore the window layout changes
+		return hasConfigChanged(); // ignore the window layout changes
 	}
 
 	/**
@@ -1106,28 +1141,26 @@ public abstract class PluginTool extends AbstractDockingTool {
 		if (toolServices.canAutoSave(this)) {
 			saveTool();
 		}
-		else {
-			if (configChangedFlag) {
-				int result = OptionDialog.showOptionDialog(getToolFrame(), SAVE_DIALOG_TITLE,
-					"This tool has changed.  There are/were multiple instances of this tool\n" +
-						"running and Ghidra cannot determine if this tool instance should\n" +
-						"automatically be saved.  Do you want to save the configuration of this tool\n" +
-						"instance?",
-					"Save", "Save As...", "Don't Save", OptionDialog.WARNING_MESSAGE);
-				if (result == OptionDialog.CANCEL_OPTION) {
-					return false;
-				}
-				if (result == OptionDialog.OPTION_ONE) {
-					saveTool();
-				}
-				else if (result == OptionDialog.OPTION_TWO) {
-					boolean didSave = saveToolAs();
-					if (!didSave) {
-						return doSaveTool();
-					}
-				}
-				// option 3 is don't save; just exit
+		else if (hasConfigChanged()) {
+			int result = OptionDialog.showOptionDialog(getToolFrame(), SAVE_DIALOG_TITLE,
+				"This tool has changed.  There are/were multiple instances of this tool\n" +
+					"running and Ghidra cannot determine if this tool instance should\n" +
+					"automatically be saved.  Do you want to save the configuration of this tool\n" +
+					"instance?",
+				"Save", "Save As...", "Don't Save", OptionDialog.WARNING_MESSAGE);
+			if (result == OptionDialog.CANCEL_OPTION) {
+				return false;
 			}
+			if (result == OptionDialog.OPTION_ONE) {
+				saveTool();
+			}
+			else if (result == OptionDialog.OPTION_TWO) {
+				boolean didSave = saveToolAs();
+				if (!didSave) {
+					return doSaveTool();
+				}
+			}
+			// option 3 is don't save; just exit
 		}
 		return true;
 	}
@@ -1137,7 +1170,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * <br>Note: This forces plugins to terminate any tasks they have running and
 	 * apply any unsaved data to domain objects or files. If they can't do
 	 * this or the user cancels then this returns false.
-	 * 
+	 *
 	 * @param isExiting whether the tool is exiting
 	 * @return false if this tool has tasks in progress or can't be closed
 	 * since the user has unfinished/unsaved changes.
@@ -1172,7 +1205,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * <br>Note: This forces plugins to terminate any tasks they have running for the
 	 * indicated domain object and apply any unsaved data to the domain object. If they can't do
 	 * this or the user cancels then this returns false.
-	 * 
+	 *
 	 * @param domainObject the domain object to check
 	 * @return false any of the plugins reports that the domain object
 	 * should not be closed
@@ -1363,7 +1396,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * time the dialog is shown.
 	 *
 	 * @param dialogComponent the DialogComponentProvider object to be shown in a dialog.
-	 * 
+	 *
 	 * @deprecated dialogs are now always shown over the active window when possible
 	 */
 	@Deprecated

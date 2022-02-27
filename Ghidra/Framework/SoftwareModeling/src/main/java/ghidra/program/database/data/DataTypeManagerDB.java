@@ -1350,8 +1350,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private void replaceUsesInOtherDataTypes(DataType existingDt, DataType newDt) {
 		if (existingDt instanceof DataTypeDB) {
-			DataType[] dts = existingDt.getParents();
-			for (DataType dt : dts) {
+			for (DataType dt : existingDt.getParents()) {
 				dt.dataTypeReplaced(existingDt, newDt);
 			}
 		}
@@ -3482,12 +3481,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	List<DataType> getParentDataTypes(long childID) {
+	List<DataType> getParentDataTypes(long dataTypeId) {
 		lock.acquire();
 		try {
-			long[] ids = parentChildAdapter.getParentIds(childID);
+			Set<Long> parentIds = parentChildAdapter.getParentIds(dataTypeId);
+			// NOTE: Use of Set for containing datatypes is avoided due to the excessive
+			// overhead of DataType.equals
 			List<DataType> dts = new ArrayList<>();
-			for (long id : ids) {
+			for (long id : parentIds) {
 				DataType dt = getDataType(id);
 				if (dt == null) {
 					// cleanup invalid records for missing parent
@@ -3498,7 +3499,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 			}
 			return dts;
-
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -3507,6 +3507,52 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			lock.release();
 		}
 		return null;
+	}
+
+	/**
+	 * NOTE: method use should be avoided since use of a Set for containing
+	 * datatypes can cause use of DataType.equals method which should
+	 * be avoided for performance reasons.
+	 * @param dataTypeId id of datatype whose parents should be found
+	 * @return set of known parent datatypes
+	 */
+	@Deprecated
+	Set<DataType> getParentDataTypeSet(long dataTypeId) {
+		lock.acquire();
+		try {
+			Set<Long> parentIds = parentChildAdapter.getParentIds(dataTypeId);
+			Set<DataType> dts = new HashSet<>();
+			for (long id : parentIds) {
+				DataType dt = getDataType(id);
+				if (dt == null) {
+					// cleanup invalid records for missing parent
+					attemptRecordRemovalForParent(id);
+				}
+				else {
+					dts.add(dt);
+				}
+			}
+			return dts;
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return null;
+	}
+
+	@Override
+	public Set<DataType> getDataTypesContaining(DataType dataType) {
+		if (dataType instanceof DataTypeDB) {
+			DataTypeDB dataTypeDb = (DataTypeDB) dataType;
+			if (dataTypeDb.getDataTypeManager() != this) {
+				return Set.of();
+			}
+			return getParentDataTypeSet(dataTypeDb.getKey());
+		}
+		return Set.of();
 	}
 
 	private void attemptRecordRemovalForParent(long parentKey) throws IOException {
@@ -3519,24 +3565,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		finally {
 			lock.release();
 		}
-	}
-
-	@Override
-	public Set<DataType> getDataTypesContaining(DataType dataType) {
-		Set<DataType> set = new HashSet<>();
-		if (dataType instanceof DataTypeDB) {
-			long dataTypeID = ((DataTypeDB) dataType).getKey();
-			try {
-				long[] ids = parentChildAdapter.getParentIds(dataTypeID);
-				for (long id : ids) {
-					set.add(getDataType(id));
-				}
-			}
-			catch (IOException e) {
-				dbError(e);
-			}
-		}
-		return set;
 	}
 
 	@Override

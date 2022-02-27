@@ -26,7 +26,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
-import ghidra.util.SystemUtilities;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
@@ -395,16 +394,29 @@ public class InjectPayloadSleigh implements InjectPayload {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean isEquivalent(InjectPayload obj) {
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
 		InjectPayloadSleigh op2 = (InjectPayloadSleigh) obj;
 		if (!name.equals(op2.name)) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(inputlist, op2.inputlist)) {
+		if (inputlist.length != op2.inputlist.length) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(output, op2.output)) {
+		for (int i = 0; i < inputlist.length; ++i) {
+			if (!inputlist[i].isEquivalent(op2.inputlist[i])) {
+				return false;
+			}
+		}
+		if (output.length != op2.output.length) {
 			return false;
+		}
+		for (int i = 0; i < output.length; ++i) {
+			if (!output[i].isEquivalent(op2.output[i])) {
+				return false;
+			}
 		}
 		if (incidentalCopy != op2.incidentalCopy) {
 			return false;
@@ -421,22 +433,6 @@ public class InjectPayloadSleigh implements InjectPayload {
 		}
 		// We are NOT checking parseString and pcodeTemplate
 		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = (incidentalCopy ? 1 : 13);
-		hash = 79 * hash + name.hashCode();
-		hash = 79 * hash + type;
-		hash = 79 * hash + subType;
-		hash = 79 * hash + paramShift;
-		for (InjectParameter param : inputlist) {
-			hash = 79 * hash + param.hashCode();
-		}
-		for (InjectParameter param : output) {
-			hash = 79 * hash + param.hashCode();
-		}
-		return hash;
 	}
 
 	/**

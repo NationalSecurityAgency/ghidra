@@ -46,7 +46,6 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.symbol.DBTraceReferenceManager;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.AddressSnap;
 import ghidra.trace.model.DefaultAddressSnap;
@@ -222,7 +221,7 @@ public class DBTraceCodeManager
 
 	// Internal
 	public UndefinedDBTraceData doCreateUndefinedUnit(long snap, Address address,
-			DBTraceThread thread, int frameLevel) {
+			TraceThread thread, int frameLevel) {
 		return undefinedCache.computeIfAbsent(new DefaultAddressSnap(address, snap),
 			ot -> new UndefinedDBTraceData(trace, snap, address, thread, frameLevel));
 	}
@@ -279,7 +278,7 @@ public class DBTraceCodeManager
 	}
 
 	@Override
-	protected DBTraceCodeRegisterSpace createRegisterSpace(AddressSpace space, DBTraceThread thread,
+	protected DBTraceCodeRegisterSpace createRegisterSpace(AddressSpace space, TraceThread thread,
 			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceCodeRegisterSpace(this, dbh, space, ent, thread);
 	}

@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.gui.memory;
 import java.awt.BorderLayout;
 import java.awt.event.*;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,17 +35,21 @@ import docking.action.*;
 import docking.widgets.table.CustomToStringCellRenderer;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractSelectAddressesAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.SelectRowsAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider;
+import ghidra.app.plugin.core.debug.service.modules.MapRegionsBackgroundCommand;
 import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
-import ghidra.app.services.DebuggerListingService;
-import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.app.services.*;
+import ghidra.app.services.RegionMapProposal.RegionMapEntry;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
@@ -52,6 +57,7 @@ import ghidra.trace.model.Trace.TraceMemoryRegionChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.util.Msg;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -213,9 +219,13 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	private final DebuggerRegionsPlugin plugin;
 
 	@AutoServiceConsumed
-	private DebuggerListingService listingService;
+	private DebuggerStaticMappingService staticMappingService;
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
+	@AutoServiceConsumed
+	private DebuggerListingService listingService;
+	@AutoServiceConsumed
+	ProgramManager programManager;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -229,10 +239,21 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 	private final JPanel mainPanel = new JPanel(new BorderLayout());
 
+	// TODO: Lazy construction of these dialogs?
+	private final DebuggerBlockChooserDialog blockChooserDialog;
+	private final DebuggerRegionMapProposalDialog regionProposalDialog;
+
 	private DebuggerRegionActionContext myActionContext;
+	private Program currentProgram;
+	private ProgramLocation currentLocation;
+
+	DockingAction actionMapRegions;
+	DockingAction actionMapRegionTo;
+	DockingAction actionMapRegionsTo;
 
 	SelectAddressesAction actionSelectAddresses;
 	DockingAction actionSelectRows;
+	ToggleDockingAction actionForceFullView;
 
 	public DebuggerRegionsProvider(DebuggerRegionsPlugin plugin) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_REGIONS, plugin.getName(),
@@ -246,6 +267,9 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		buildMainPanel();
 
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
+
+		blockChooserDialog = new DebuggerBlockChooserDialog();
+		regionProposalDialog = new DebuggerRegionMapProposalDialog(this);
 
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 		setVisible(true);
@@ -335,12 +359,122 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	}
 
 	protected void createActions() {
+		actionMapRegions = MapRegionsAction.builder(plugin)
+				.withContext(DebuggerRegionActionContext.class)
+				.enabledWhen(this::isContextNonEmpty)
+				.popupWhen(this::isContextNonEmpty)
+				.onAction(this::activatedMapRegions)
+				.buildAndInstallLocal(this);
+		actionMapRegionTo = MapRegionToAction.builder(plugin)
+				.withContext(DebuggerRegionActionContext.class)
+				.enabledWhen(ctx -> currentProgram != null && ctx.getSelectedRegions().size() == 1)
+				.popupWhen(ctx -> currentProgram != null && ctx.getSelectedRegions().size() == 1)
+				.onAction(this::activatedMapRegionTo)
+				.buildAndInstallLocal(this);
+		actionMapRegionsTo = MapRegionsToAction.builder(plugin)
+				.withContext(DebuggerRegionActionContext.class)
+				.enabledWhen(ctx -> currentProgram != null && isContextNonEmpty(ctx))
+				.popupWhen(ctx -> currentProgram != null && isContextNonEmpty(ctx))
+				.onAction(this::activatedMapRegionsTo)
+				.buildAndInstallLocal(this);
 		actionSelectAddresses = new SelectAddressesAction();
 		actionSelectRows = SelectRowsAction.builder(plugin)
 				.description("Select regions by trace selection")
 				.enabledWhen(ctx -> currentTrace != null)
 				.onAction(this::activatedSelectCurrent)
 				.buildAndInstallLocal(this);
+		actionForceFullView = ForceFullViewAction.builder(plugin)
+				.enabledWhen(ctx -> currentTrace != null)
+				.onAction(this::activatedForceFullView)
+				.buildAndInstallLocal(this);
+		contextChanged();
+	}
+
+	private boolean isContextNonEmpty(DebuggerRegionActionContext ctx) {
+		return !ctx.getSelectedRegions().isEmpty();
+	}
+
+	private static Set<TraceMemoryRegion> getSelectedRegions(DebuggerRegionActionContext ctx) {
+		if (ctx == null) {
+			return null;
+		}
+		return ctx.getSelectedRegions()
+				.stream()
+				.map(r -> r.getRegion())
+				.collect(Collectors.toSet());
+	}
+
+	private void activatedMapRegions(DebuggerRegionActionContext ignored) {
+		mapRegions(getSelectedRegions(myActionContext));
+	}
+
+	private void activatedMapRegionsTo(DebuggerRegionActionContext ignored) {
+		Set<TraceMemoryRegion> sel = getSelectedRegions(myActionContext);
+		if (sel == null || sel.isEmpty()) {
+			return;
+		}
+		mapRegionsTo(sel);
+	}
+
+	private void activatedMapRegionTo(DebuggerRegionActionContext ignored) {
+		Set<TraceMemoryRegion> sel = getSelectedRegions(myActionContext);
+		if (sel == null || sel.size() != 1) {
+			return;
+		}
+		mapRegionTo(sel.iterator().next());
+	}
+
+	protected void promptRegionProposal(Collection<RegionMapEntry> proposal) {
+		if (proposal.isEmpty()) {
+			Msg.showInfo(this, getComponent(), "Map Regions",
+				"Could not formulate a propsal for any selection region." +
+					" You may need to import and/or open the destination images first.");
+			return;
+		}
+		Collection<RegionMapEntry> adjusted =
+			regionProposalDialog.adjustCollection(getTool(), proposal);
+		if (adjusted == null || staticMappingService == null) {
+			return;
+		}
+		tool.executeBackgroundCommand(
+			new MapRegionsBackgroundCommand(staticMappingService, adjusted), currentTrace);
+	}
+
+	protected void mapRegions(Set<TraceMemoryRegion> regions) {
+		if (staticMappingService == null) {
+			return;
+		}
+		Map<?, RegionMapProposal> map = staticMappingService.proposeRegionMaps(regions,
+			List.of(programManager.getAllOpenPrograms()));
+		Collection<RegionMapEntry> proposal = MapProposal.flatten(map.values());
+		promptRegionProposal(proposal);
+	}
+
+	protected void mapRegionsTo(Set<TraceMemoryRegion> regions) {
+		if (staticMappingService == null) {
+			return;
+		}
+		Program program = currentProgram;
+		if (program == null) {
+			return;
+		}
+		RegionMapProposal map = staticMappingService.proposeRegionMap(regions, program);
+		Collection<RegionMapEntry> proposal = map.computeMap().values();
+		promptRegionProposal(proposal);
+	}
+
+	protected void mapRegionTo(TraceMemoryRegion region) {
+		if (staticMappingService == null) {
+			return;
+		}
+		ProgramLocation location = currentLocation;
+		MemoryBlock block = computeBlock(location);
+		if (block == null) {
+			return;
+		}
+		RegionMapProposal map =
+			staticMappingService.proposeRegionMap(region, location.getProgram(), block);
+		promptRegionProposal(map.computeMap().values());
 	}
 
 	private void activatedSelectCurrent(ActionContext ignored) {
@@ -371,6 +505,15 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	private void activatedForceFullView(ActionContext ignored) {
+		if (currentTrace == null) {
+			return;
+		}
+		currentTrace.getProgramView()
+				.getMemory()
+				.setForceFullView(actionForceFullView.isSelected());
+	}
+
 	public void setSelectedRegions(Set<TraceMemoryRegion> sel) {
 		DebuggerResources.setSelectedRows(sel, regionTableModel::getRow, regionTable,
 			regionTableModel, regionFilterPanel);
@@ -385,6 +528,34 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		return mainPanel;
 	}
 
+	public void setProgram(Program program) {
+		currentProgram = program;
+		String name = (program == null ? "..." : program.getName());
+		actionMapRegionTo.getPopupMenuData().setMenuItemName(MapRegionToAction.NAME_PREFIX + name);
+		actionMapRegionsTo.getPopupMenuData()
+				.setMenuItemName(MapRegionsToAction.NAME_PREFIX + name);
+	}
+
+	public static MemoryBlock computeBlock(ProgramLocation location) {
+		return DebuggerModulesProvider.computeBlock(location);
+	}
+
+	public static String computeBlockName(ProgramLocation location) {
+		return DebuggerModulesProvider.computeBlockName(location);
+	}
+
+	public void setLocation(ProgramLocation location) {
+		currentLocation = location;
+		String name = MapRegionToAction.NAME_PREFIX + computeBlockName(location);
+		actionMapRegionTo.getPopupMenuData().setMenuItemName(name);
+	}
+
+	public void programClosed(Program program) {
+		if (currentProgram == program) {
+			currentProgram = null;
+		}
+	}
+
 	public void setTrace(Trace trace) {
 		if (currentTrace == trace) {
 			return;
@@ -394,6 +565,16 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		addNewListeners();
 		loadRegions();
 		contextChanged();
+	}
+
+	@Override
+	public void contextChanged() {
+		super.contextChanged();
+		if (currentTrace != null) {
+			actionForceFullView.setSelected(currentTrace.getProgramView()
+					.getMemory()
+					.isForceFullView());
+		}
 	}
 
 	private void removeOldListeners() {
@@ -408,5 +589,15 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			return;
 		}
 		currentTrace.addListener(regionsListener);
+	}
+
+	public Entry<Program, MemoryBlock> askBlock(TraceMemoryRegion region, Program program,
+			MemoryBlock block) {
+		if (programManager == null) {
+			Msg.warn(this, "No program manager!");
+			return null;
+		}
+		return blockChooserDialog.chooseBlock(getTool(), region,
+			List.of(programManager.getAllOpenPrograms()));
 	}
 }

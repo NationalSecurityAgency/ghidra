@@ -24,6 +24,10 @@ import ghidra.trace.util.TraceTimeViewport;
  * View of a trace at a particular time, as a program
  */
 public interface TraceProgramView extends Program {
+
+	@Override
+	TraceProgramViewMemory getMemory();
+
 	/**
 	 * Get the trace this view presents
 	 * 
@@ -46,7 +50,7 @@ public interface TraceProgramView extends Program {
 	TraceTimeViewport getViewport();
 
 	/**
-	 * Get the latest snap
+	 * Get the trace's latest snap
 	 * 
 	 * @return the maximum snap
 	 */

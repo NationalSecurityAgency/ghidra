@@ -16,6 +16,7 @@
 package mdemangler.naming;
 
 import mdemangler.*;
+import mdemangler.MDMang.ProcessingMode;
 import mdemangler.datatype.MDDataTypeParser;
 import mdemangler.object.MDObjectCPP;
 
@@ -117,6 +118,15 @@ public class MDSpecialName extends MDParsableItem {
 
 	@Override
 	protected void parseInternal() throws MDException {
+		if (dmang.isProcessingModeActive(ProcessingMode.LLVM)) {
+			parseLLVM();
+		}
+		else {
+			parseDefaultStandard();
+		}
+	}
+
+	protected void parseDefaultStandard() throws MDException {
 		isQualified = true;
 		switch (dmang.getAndIncrement()) {
 			case '0':
@@ -650,7 +660,7 @@ public class MDSpecialName extends MDParsableItem {
 								dmang.parseInfoPop();
 								break;
 							case 'J':
-								dmang.parseInfoPush(3, "thread guard");
+								dmang.parseInfoPush(3, "local static thread guard");
 								name = "`local static thread guard'";
 								dmang.parseInfoPop();
 								break;
@@ -688,6 +698,69 @@ public class MDSpecialName extends MDParsableItem {
 				break;
 		}
 	}
+
+	// Seemingly LLVM-specific.  Breaks the "norm" of MSFT model we have been following.
+	// The output format is our creation (trying to follow MSFT convention).
+	// The "?$" prefix on these are templates in MSFT's reserved space and could collide
+	// the a template symbol under the MSFT scheme.  Maybe LLVM will eventually fix these???
+	// I could be wrong in that MSFT also honors this scheme, but it seems whacked in that it
+	// doesn't conform to the rest of their scheme.
+	// Following the model of MSFT Guard output strings even though the mangled form does not
+	//  follow MSFT's scheme.  Change is that we are not outputting the extraneous tick as is seen
+	//  in the middle of `local static guard'{2}', but we are still increasing the string value
+	//  that is in braces by one from the coded value.  Thus, we are outputting
+	//  `thread safe static guard{1}' for "?$TSS0@".  We can reconsider this later.
+	public void parseLLVM() throws MDException {
+		if (dmang.positionStartsWith("?$TSS")) {
+			dmang.parseInfoPush(0, "thread safe static guard");
+			dmang.increment("?$TSS".length());
+			String guardNumberString = getNumberString();
+			dmang.parseInfoPop();
+			name = "`thread safe static guard{" + guardNumberString + "}'";
+		}
+		else if (dmang.positionStartsWith("?$S1@")) {
+			// The '1' in "?$S1" is currently hard-coded in the LLVM code, but I believe we
+			// should still enclose it in braces... subject to change.
+			dmang.parseInfoPush(0, "nonvisible static guard");
+			dmang.increment("?$S1@".length());
+			name = "`nonvisible static guard{1}'";
+			dmang.parseInfoPop();
+		}
+		else if (dmang.positionStartsWith("?$RT")) {
+			dmang.parseInfoPush(0, "reference temporary");
+			dmang.increment("?$RT".length());
+			String manglingNumberString = getNumberString();
+			dmang.parseInfoPop();
+			name = "`reference temporary{" + manglingNumberString + "}'";
+		}
+		else {
+			throw new MDException("Could not match NonStandard Special Name");
+		}
+	}
+
+	/**
+	 * Get Number (it is output as Number << '@' where Number is an unsigned int, so we are
+	 *  capturing it as a string of digits, terminated with an '@' character.
+	 *  Built for what seems to be LLVM-specific mangling.  Does not follow MSFT model.
+	 * @return a the Number represented by a String (decimal).
+	 * @throws MDException Upon invalid character sequence or out of characters.
+	 */
+	private String getNumberString() throws MDException {
+		char ch;
+		StringBuilder builder = new StringBuilder();
+		dmang.parseInfoPush(0, "Number");
+		while ((ch = dmang.peek()) != '@') {
+			if (!Character.isDigit(ch)) { // includes end of string (MDMang.DONE)
+				throw new MDException("Illegal character in Number: " + ch);
+			}
+			builder.append(ch);
+			dmang.next();
+		}
+		dmang.next(); // '@'
+		dmang.parseInfoPop();
+		return builder.toString();
+	}
+
 }
 
 /******************************************************************************/

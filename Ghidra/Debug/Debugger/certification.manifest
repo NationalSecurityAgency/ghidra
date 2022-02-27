@@ -41,6 +41,8 @@ src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-enable-al
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-make-effective.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerConsolePlugin/images/DebuggerConsolePlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerCopyActionsPlugin/DebuggerCopyActionsPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerCopyActionsPlugin/images/DebuggerCopyIntoProgramDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerEmulationServicePlugin/DebuggerEmulationServicePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerInterpreterPlugin/DebuggerInterpreterPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html||GHIDRA||||END|
@@ -95,6 +97,7 @@ src/main/help/help/topics/DebuggerObjectsPlugin/images/stop.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerPcodeStepperPlugin/images/DebuggerPcodeStepperPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerRegionsPlugin/DebuggerRegionsPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerRegionsPlugin/images/DebuggerRegionMapProposalDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerRegionsPlugin/images/DebuggerRegionsPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerRegistersPlugin/images/DebuggerAvailableRegistersDialog.png||GHIDRA||||END|
@@ -117,6 +120,9 @@ src/main/help/help/topics/DebuggerThreadsPlugin/images/stepinto.png||GHIDRA||||E
 src/main/help/help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTimePlugin/images/DebuggerTimePlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTraceViewDiffPlugin/DebuggerTraceViewDiffPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTraceViewDiffPlugin/images/DebuggerTimeSelectionDialog.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerTraceViewDiffPlugin/images/DebuggerTraceViewDiffPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerWatchesPlugin/images/DebuggerWatchesPlugin.png||GHIDRA||||END|
 src/main/resources/defaultTools/Debugger.tool||GHIDRA||||END|
@@ -182,6 +188,7 @@ src/main/resources/images/stop.png||GHIDRA||||END|
 src/main/resources/images/sync_enabled.png||GHIDRA||||END|
 src/main/resources/images/system-switch-user.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/table.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/table_relationship.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/text-xml.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/thread.png||GHIDRA||||END|
 src/main/resources/images/time.png||FAMFAMFAM Icons - CC 2.5||||END|

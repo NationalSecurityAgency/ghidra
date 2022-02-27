@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
 
 /**
@@ -24,7 +23,7 @@ import ghidra.program.model.data.DataType;
 public interface FindAppliedDataTypesService {
 
 	/**
-	 * Tells this service to find all places where the given datatype is defined <b>and</b> will
+	 * Tells this service to find all places where the given datatype is applied <b>and</b> will
 	 * display the results of the search.
 	 * 
 	 * @param dataType The datatype which to base the search upon.
@@ -32,11 +31,11 @@ public interface FindAppliedDataTypesService {
 	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType);
 
 	/**
-	 * Tells this service to find all places where the given datatype is defined <b>and</b> will
+	 * Tells this service to find all places where the given datatype is applied <b>and</b> will
 	 * display the results of the search.
 	 * 
 	 * @param dataType The datatype which to base the search upon.
 	 * @param fieldName the sub-field for which to search
 	 */
-	public void findAndDisplayAppliedDataTypeAddresses(Composite dataType, String fieldName);
+	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType, String fieldName);
 }

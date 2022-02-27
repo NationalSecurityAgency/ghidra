@@ -31,6 +31,7 @@ dependencies {
 	api project(':ProposedUtils')
 
 	helpPath project(path: ':Base', configuration: 'helpPath')
+	helpPath project(path: ':ProgramDiff', configuration: 'helpPath')
 
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')

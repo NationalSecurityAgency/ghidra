@@ -29,14 +29,14 @@ import utility.function.Callback;
  */
 public class AlgorithmSteppingTaskMonitor extends TaskMonitorAdapter {
 
-	private Set<Callback> stepLisetners = new HashSet<>();
+	private Set<Callback> stepListeners = new HashSet<>();
 
 	public AlgorithmSteppingTaskMonitor() {
 		setCancelEnabled(true);
 	}
 
 	public void addStepListener(Callback c) {
-		stepLisetners.add(c);
+		stepListeners.add(c);
 	}
 
 	@Override
@@ -84,6 +84,6 @@ public class AlgorithmSteppingTaskMonitor extends TaskMonitorAdapter {
 	}
 
 	protected void notifyStepReady() {
-		stepLisetners.forEach(l -> l.call());
+		stepListeners.forEach(l -> l.call());
 	}
 }

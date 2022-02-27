@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.program.model.lang.SpaceNames;
 
 public class AddressMapImplTest extends AbstractGenericTest {
 	AddressSpace sp8;
@@ -49,7 +50,8 @@ public class AddressMapImplTest extends AbstractGenericTest {
 		segSpace2 = new SegmentedAddressSpace("SegSpaceTwo", 4);
 
 		regSpace = new GenericAddressSpace("Register", 32, AddressSpace.TYPE_REGISTER, 0);
-		stackSpace = new GenericAddressSpace("stack", 32, AddressSpace.TYPE_STACK, 0);
+		stackSpace =
+			new GenericAddressSpace(SpaceNames.STACK_SPACE_NAME, 32, AddressSpace.TYPE_STACK, 0);
 
 		map = new AddressMapImpl();
 

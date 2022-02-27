@@ -41,10 +41,10 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.language.*;
-import ghidra.trace.database.stack.DBTraceStack;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.listing.*;
+import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
@@ -198,6 +198,24 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			TraceInstruction i4000 =
 				b.addInstruction(0, b.addr(0x4000), b.language, b.buf(0xf4, 0));
 			assertEquals(Range.closed(0L, 9L), i4000.getLifespan());
+		}
+	}
+
+	@Test
+	public void testAddInstructionInScratch() throws CodeUnitInsertionException {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.trace.getMemoryManager().putBytes(-5L, b.addr(0x4001), b.buf(0xaa));
+			TraceInstruction i4000 =
+				b.addInstruction(-10, b.addr(0x4000), b.language, b.buf(0xf4, 0));
+			assertEquals(Range.closed(-10L, -6L), i4000.getLifespan());
+
+			TraceInstruction i4004 =
+				b.addInstruction(-1, b.addr(0x4004), b.language, b.buf(0xf4, 0));
+			assertEquals(Range.closed(-1L, -1L), i4004.getLifespan());
+
+			TraceInstruction i4008 =
+				b.addInstruction(-10, b.addr(0x4008), b.language, b.buf(0xf4, 0));
+			assertEquals(Range.closed(-10L, -1L), i4008.getLifespan());
 		}
 	}
 
@@ -1253,7 +1271,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testRegisterSpace() throws Exception {
-		DBTraceThread thread;
+		TraceThread thread;
 		DBTraceCodeRegisterSpace regCode;
 		TraceData dR4;
 
@@ -1277,7 +1295,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData dR5;
 
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceStack stack = b.trace.getStackManager().getStack(thread, 0, true);
+			TraceStack stack = b.trace.getStackManager().getStack(thread, 0, true);
 			stack.setDepth(2, true);
 			assertEquals(regCode, manager.getCodeRegisterSpace(stack.getFrame(0, false), false));
 			frameCode = manager.getCodeRegisterSpace(stack.getFrame(1, false), true);
@@ -1733,7 +1751,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		try (UndoableTransaction tid = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4004), b.language, b.buf(0xf4, 0));
 
-			DBTraceThread thread = b.getOrAddThread("Thread 1", 0);
+			TraceThread thread = b.getOrAddThread("Thread 1", 0);
 			DBTraceCodeRegisterSpace regCode = manager.getCodeRegisterSpace(thread, true);
 			regCode.definedData()
 					.create(Range.atLeast(0L), b.language.getRegister("r4"),
@@ -1747,7 +1765,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			DBTraceCodeManager manager = b.trace.getCodeManager();
 
 			// No transaction, so it had better exist
-			DBTraceThread thread = b.getOrAddThread("Thread 1", 0);
+			TraceThread thread = b.getOrAddThread("Thread 1", 0);
 			List<TraceCodeUnit> units = new ArrayList<>();
 			for (TraceCodeUnit u : manager.definedUnits().get(0, true)) {
 				units.add(u);
@@ -1781,7 +1799,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		try (UndoableTransaction tid = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4004), b.language, b.buf(0xf4, 0));
 
-			DBTraceThread thread = b.getOrAddThread("Thread 1", 0);
+			TraceThread thread = b.getOrAddThread("Thread 1", 0);
 			DBTraceCodeRegisterSpace regCode = manager.getCodeRegisterSpace(thread, true);
 			regCode.definedData()
 					.create(Range.atLeast(0L), b.language.getRegister("r4"),
@@ -1796,7 +1814,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		b.trace.redo();
 
 		// No transaction, so it had better exist
-		DBTraceThread thread = b.getOrAddThread("Thread 1", 0);
+		TraceThread thread = b.getOrAddThread("Thread 1", 0);
 		List<TraceCodeUnit> units = new ArrayList<>();
 		for (TraceCodeUnit u : manager.definedUnits().get(0, true)) {
 			units.add(u);

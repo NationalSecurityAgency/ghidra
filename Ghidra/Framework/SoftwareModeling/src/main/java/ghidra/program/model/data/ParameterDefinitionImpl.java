@@ -61,7 +61,7 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 	 * <ul>
 	 * <li>Function definition datatype</li>
 	 * <li>An unsized/zero-element array</li>
-	 * </ul>  
+	 * </ul>
 	 * @param dataType datatype to be checked.  If null specified the DEFAULT datatype will be returned.
 	 * @param dtMgr target datatype manager (null permitted which will adopt default data organization)
 	 * @param voidOK true if checking return datatype and void is allow, else false.
@@ -159,7 +159,7 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 
 	@Override
 	public String toString() {
-		return dataType.getName() + " " + name;
+		return dataType.getName() + " " + (name == null ? "" : name);
 	}
 
 }

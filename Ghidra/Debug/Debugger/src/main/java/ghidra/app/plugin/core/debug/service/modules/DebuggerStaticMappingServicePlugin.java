@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.service.modules;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
@@ -34,23 +32,21 @@ import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.utils.*;
 import ghidra.app.services.*;
+import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.app.services.RegionMapProposal.RegionMapEntry;
+import ghidra.app.services.SectionMapProposal.SectionMapEntry;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
-import ghidra.framework.data.OpenedDomainFile;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.framework.store.FileSystem;
 import ghidra.generic.util.datastruct.TreeValueSortedMap;
 import ghidra.generic.util.datastruct.ValueSortedMap;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.ExternalManager;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceStaticMappingChangeType;
 import ghidra.trace.model.memory.TraceMemoryRegion;
@@ -60,7 +56,6 @@ import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 @PluginInfo(
@@ -85,205 +80,11 @@ import ghidra.util.task.TaskMonitor;
 public class DebuggerStaticMappingServicePlugin extends Plugin
 		implements DebuggerStaticMappingService, DomainFolderChangeAdapter {
 
-	protected static class PluginModuleMapProposal implements ModuleMapProposal {
-		private final TraceModule module;
-		private final Program program;
-
-		private final NavigableMap<Long, RegionMatcher> matchers = new TreeMap<>();
-		private Address imageBase;
-		private Address moduleBase;
-		private long imageSize;
-		private AddressRange moduleRange; // TODO: This is now in the trace schema. Use it.
-
-		public PluginModuleMapProposal(TraceModule module, Program program) {
-			this.module = module;
-			this.program = program;
-			processProgram();
-			processModule();
-		}
-
-		@Override
-		public TraceModule getModule() {
-			return module;
-		}
-
-		@Override
-		public Program getProgram() {
-			return program;
-		}
-
-		private RegionMatcher getMatcher(long baseOffset) {
-			return matchers.computeIfAbsent(baseOffset, RegionMatcher::new);
-		}
-
-		private void processProgram() {
-			imageBase = program.getImageBase();
-			imageSize = ModuleMapEntry.computeImageSize(program);
-			// TODO: How to handle Harvard architectures?
-			for (MemoryBlock block : program.getMemory().getBlocks()) {
-				if (!ModuleMapEntry.includeBlock(program, block)) {
-					continue;
-				}
-				getMatcher(block.getStart().subtract(imageBase)).block = block;
-			}
-		}
-
-		/**
-		 * Must be called after processProgram, so that image size is known
-		 */
-		private void processModule() {
-			moduleBase = module.getBase();
-			try {
-				moduleRange = new AddressRangeImpl(moduleBase, imageSize);
-			}
-			catch (AddressOverflowException e) {
-				return; // Just score it as having no matches?
-			}
-			for (TraceMemoryRegion region : module.getTrace()
-					.getMemoryManager()
-					.getRegionsIntersecting(module.getLifespan(), moduleRange)) {
-				getMatcher(region.getMinAddress().subtract(moduleBase)).region = region;
-			}
-		}
-
-		@Override
-		public double computeScore() {
-			return ((double) matchers.values()
-					.stream()
-					.reduce(0, (s, m) -> s + m.score(), Integer::sum)) /
-				matchers.size();
-		}
-
-		@Override
-		public Map<TraceModule, ModuleMapEntry> computeMap() {
-			return Map.of(module, new ModuleMapEntry(module, program, moduleRange));
-		}
-	}
-
-	protected static class RegionMatcher {
-		private MemoryBlock block;
-		private TraceMemoryRegion region;
-
-		public RegionMatcher(long baseOffset) {
-		}
-
-		private int score() {
-			if (block == null || region == null) {
-				return 0; // Unmatched
-			}
-			int score = 3; // For the matching offset
-			if (block.getSize() == region.getLength()) {
-				score += 10;
-			}
-			return score;
-		}
-	}
-
-	protected static class PluginSectionMapProposal implements SectionMapProposal {
-		private final TraceModule module;
-		private final Program program;
-		private final Map<String, SectionMatcher> matchers = new LinkedHashMap<>();
-
-		public PluginSectionMapProposal(TraceModule module, Program program) {
-			this.module = module;
-			this.program = program;
-			processModule();
-			processProgram();
-		}
-
-		public PluginSectionMapProposal(TraceSection section, Program program, MemoryBlock block) {
-			this.module = section.getModule();
-			this.program = program;
-			processSection(section);
-			processBlock(block);
-		}
-
-		@Override
-		public TraceModule getModule() {
-			return module;
-		}
-
-		@Override
-		public Program getProgram() {
-			return program;
-		}
-
-		private void processSection(TraceSection section) {
-			matchers.put(section.getName(), new SectionMatcher(section));
-		}
-
-		private void processBlock(MemoryBlock block) {
-			SectionMatcher m =
-				matchers.computeIfAbsent(block.getName(), n -> new SectionMatcher(null));
-			m.block = block;
-		}
-
-		private void processModule() {
-			for (TraceSection section : module.getSections()) {
-				processSection(section);
-			}
-		}
-
-		private void processProgram() {
-			for (MemoryBlock block : program.getMemory().getBlocks()) {
-				processBlock(block);
-			}
-		}
-
-		@Override
-		public double computeScore() {
-			return ((double) matchers.values()
-					.stream()
-					.reduce(0, (s, m) -> s + m.score(), Integer::sum)) /
-				matchers.size();
-		}
-
-		@Override
-		public Map<TraceSection, SectionMapEntry> computeMap() {
-			return matchers.values()
-					.stream()
-					.filter(m -> m.section != null && m.block != null)
-					.collect(Collectors.toMap(m -> m.section,
-						m -> new SectionMapEntry(m.section, program, m.block)));
-		}
-
-		@Override
-		public MemoryBlock getDestination(TraceSection section) {
-			SectionMatcher m = matchers.get(section.getName());
-			return m == null ? null : m.block;
-		}
-	}
-
-	protected static class SectionMatcher {
-		private final TraceSection section;
-		private MemoryBlock block;
-
-		public SectionMatcher(TraceSection section) {
-			this.section = section;
-		}
-
-		public int score() {
-			if (section == null || block == null) {
-				return 0; // Unmatched
-			}
-			int score = 3; // For the matching name
-			if (section.getRange().getLength() == block.getSize()) {
-				score += 10;
-			}
-			if ((section.getStart().getOffset() & 0xfff) == (block.getStart().getOffset() &
-				0xfff)) {
-				score += 20;
-			}
-			return score;
-		}
-	}
-
 	protected class MappingEntry {
 		private final TraceStaticMapping mapping;
 
 		private Program program;
 		private AddressRange staticRange;
-		private Long shift; // from static image to trace
 
 		public MappingEntry(TraceStaticMapping mapping) {
 			this.mapping = mapping;
@@ -309,8 +110,6 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				Address minAddr = opened.getAddressFactory().getAddress(mapping.getStaticAddress());
 				Address maxAddr = addOrMax(minAddr, mapping.getLength() - 1);
 				this.staticRange = new AddressRangeImpl(minAddr, maxAddr);
-				this.shift = mapping.getMinTraceAddress().getOffset() -
-					staticRange.getMinAddress().getOffset();
 				return true;
 			}
 			return false;
@@ -320,7 +119,6 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			if (this.program == closed) {
 				this.program = null;
 				this.staticRange = null;
-				this.shift = null;
 				return true;
 			}
 			return false;
@@ -337,8 +135,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			return staticRange.getMinAddress();
 		}
 
-		public TraceSnap getTraceSnap() {
-			return new DefaultTraceSnap(mapping.getTrace(), mapping.getStartSnap());
+		public TraceSpan getTraceSpan() {
+			return new DefaultTraceSpan(mapping.getTrace(), mapping.getLifespan());
 		}
 
 		public TraceAddressSnapRange getTraceAddressSnapRange() {
@@ -413,11 +211,6 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			Address min = mapProgramAddressToTrace(part.getMinAddress());
 			Address max = mapProgramAddressToTrace(part.getMaxAddress());
 			return new AddressRangeImpl(min, max);
-		}
-
-		public Program openStaticProgram() {
-			return ProgramURLUtils.openHackedUpGhidraURL(programManager, tool.getProject(),
-				mapping.getStaticProgramURL(), ProgramManager.OPEN_VISIBLE);
 		}
 
 		public boolean isStaticProgramOpen() {
@@ -565,7 +358,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 
 		protected void collectOpenMappedPrograms(AddressRange rng, Range<Long> span,
-				Map<Program, ShiftAndAddressSetView> result) {
+				Map<Program, Collection<MappedAddressRange>> result) {
 			TraceAddressSnapRange tatr = new ImmutableTraceAddressSnapRange(rng, span);
 			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
 				MappingEntry me = out.getValue();
@@ -575,47 +368,38 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				if (!out.getKey().intersects(tatr)) {
 					continue;
 				}
-
-				ShiftAndAddressSetView set = result.computeIfAbsent(me.program,
-					p -> new ShiftAndAddressSetView(-me.shift, new AddressSet()));
-				((AddressSet) set.getAddressSetView()).add(me.mapTraceRangeToProgram(rng));
+				AddressRange srcRng = out.getKey().getRange().intersect(rng);
+				AddressRange dstRng = me.mapTraceRangeToProgram(rng);
+				result.computeIfAbsent(me.program, p -> new TreeSet<>())
+						.add(new MappedAddressRange(srcRng, dstRng));
 			}
 		}
 
-		public Map<Program, ShiftAndAddressSetView> getOpenMappedViews(AddressSetView set,
+		public Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(AddressSetView set,
 				Range<Long> span) {
-			Map<Program, ShiftAndAddressSetView> result = new HashMap<>();
+			Map<Program, Collection<MappedAddressRange>> result = new HashMap<>();
 			for (AddressRange rng : set) {
 				collectOpenMappedPrograms(rng, span, result);
 			}
 			return Collections.unmodifiableMap(result);
 		}
 
-		protected void openAndCollectPrograms(AddressRange rng, Range<Long> span,
-				Set<Program> result, Set<Exception> failures) {
+		protected void collectMappedProgramURLsInView(AddressRange rng, Range<Long> span,
+				Set<URL> result) {
 			TraceAddressSnapRange tatr = new ImmutableTraceAddressSnapRange(rng, span);
 			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
 				if (!out.getKey().intersects(tatr)) {
 					continue;
 				}
 				MappingEntry me = out.getValue();
-				try {
-					result.add(me.openStaticProgram());
-				}
-				catch (Exception e) {
-					if (failures == null) {
-						throw e;
-					}
-					failures.add(e);
-				}
+				result.add(me.getStaticProgramURL());
 			}
 		}
 
-		public Set<Program> openMappedProgramsInView(AddressSetView set, Range<Long> span,
-				Set<Exception> failures) {
-			Set<Program> result = new HashSet<>();
+		public Set<URL> getMappedProgramURLsInView(AddressSetView set, Range<Long> span) {
+			Set<URL> result = new HashSet<>();
 			for (AddressRange rng : set) {
-				openAndCollectPrograms(rng, span, result, failures);
+				collectMappedProgramURLsInView(rng, span, result);
 			}
 			return Collections.unmodifiableSet(result);
 		}
@@ -715,7 +499,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 
 		protected void collectOpenMappedViews(AddressRange rng,
-				Map<TraceSnap, ShiftAndAddressSetView> result) {
+				Map<TraceSpan, Collection<MappedAddressRange>> result) {
 			for (Entry<MappingEntry, Address> inPreceeding : inbound.headMapByValue(
 				rng.getMaxAddress(), true).entrySet()) {
 				Address start = inPreceeding.getValue();
@@ -726,14 +510,17 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				if (!me.isInProgramRange(rng)) {
 					continue;
 				}
-				ShiftAndAddressSetView set = result.computeIfAbsent(me.getTraceSnap(),
-					p -> new ShiftAndAddressSetView(me.shift, new AddressSet()));
-				((AddressSet) set.getAddressSetView()).add(me.mapProgramRangeToTrace(rng));
+
+				AddressRange srcRange = me.staticRange.intersect(rng);
+				AddressRange dstRange = me.mapProgramRangeToTrace(rng);
+				result.computeIfAbsent(me.getTraceSpan(), p -> new TreeSet<>())
+						.add(new MappedAddressRange(srcRange, dstRange));
 			}
 		}
 
-		public Map<TraceSnap, ShiftAndAddressSetView> getOpenMappedViews(AddressSetView set) {
-			Map<TraceSnap, ShiftAndAddressSetView> result = new HashMap<>();
+		public Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(
+				AddressSetView set) {
+			Map<TraceSpan, Collection<MappedAddressRange>> result = new HashMap<>();
 			for (AddressRange rng : set) {
 				collectOpenMappedViews(rng, result);
 			}
@@ -937,184 +724,75 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	@Override
 	public void addMapping(TraceLocation from, ProgramLocation to, long length,
 			boolean truncateExisting) throws TraceConflictedMappingException {
-		Program tp = to.getProgram();
-		if (tp instanceof TraceProgramView) {
-			throw new IllegalArgumentException(
-				"Mapping destination cannot be a " + TraceProgramView.class.getSimpleName());
+		try (UndoableTransaction tid =
+			UndoableTransaction.start(from.getTrace(), "Add mapping", true)) {
+			DebuggerStaticMappingUtils.addMapping(from, to, length, truncateExisting);
 		}
-		TraceStaticMappingManager manager = from.getTrace().getStaticMappingManager();
-		URL toURL = ProgramURLUtils.getUrlFromProgram(tp);
-		if (toURL == null) {
-			noProject();
-		}
-		Address fromAddress = from.getAddress();
-		Address toAddress = to.getByteAddress();
-		long maxFromLengthMinus1 =
-			fromAddress.getAddressSpace().getMaxAddress().subtract(fromAddress);
-		long maxToLengthMinus1 =
-			toAddress.getAddressSpace().getMaxAddress().subtract(toAddress);
-		if (Long.compareUnsigned(length - 1, maxFromLengthMinus1) > 0) {
-			throw new IllegalArgumentException("Length would cause address overflow in trace");
-		}
-		if (Long.compareUnsigned(length - 1, maxToLengthMinus1) > 0) {
-			throw new IllegalArgumentException("Length would cause address overflow in program");
-		}
-		Address end = fromAddress.addWrap(length - 1);
-		// Also check end in the destination
-		AddressRangeImpl range = new AddressRangeImpl(fromAddress, end);
-		Range<Long> fromLifespan = from.getLifespan();
-		if (truncateExisting) {
-			long truncEnd = DBTraceUtils.lowerEndpoint(fromLifespan) - 1;
-			for (TraceStaticMapping existing : List
-					.copyOf(manager.findAllOverlapping(range, fromLifespan))) {
-				existing.delete();
-				if (fromLifespan.hasLowerBound() &&
-					Long.compare(existing.getStartSnap(), truncEnd) <= 0) {
-					manager.add(existing.getTraceAddressRange(),
-						Range.closed(existing.getStartSnap(), truncEnd),
-						existing.getStaticProgramURL(), existing.getStaticAddress());
-				}
-			}
-		}
-		manager.add(range, fromLifespan, toURL, toAddress.toString(true));
 	}
 
-	static protected AddressRange clippedRange(Trace trace, String spaceName, long min,
-			long max) {
-		AddressSpace space = trace.getBaseAddressFactory().getAddressSpace(spaceName);
-		if (space == null) {
-			return null;
+	@Override
+	public void addMapping(MapEntry<?, ?> entry, boolean truncateExisting)
+			throws TraceConflictedMappingException {
+		try (UndoableTransaction tid =
+			UndoableTransaction.start(entry.getFromTrace(), "Add mapping", true)) {
+			DebuggerStaticMappingUtils.addMapping(entry, truncateExisting);
 		}
-		Address spaceMax = space.getMaxAddress();
-		if (Long.compareUnsigned(min, spaceMax.getOffset()) > 0) {
-			return null;
+	}
+
+	@Override
+	public void addMappings(Collection<? extends MapEntry<?, ?>> entries, TaskMonitor monitor,
+			boolean truncateExisting, String description) throws CancelledException {
+		Map<Trace, List<MapEntry<?, ?>>> byTrace =
+			entries.stream().collect(Collectors.groupingBy(ent -> ent.getFromTrace()));
+		for (Map.Entry<Trace, List<MapEntry<?, ?>>> ent : byTrace.entrySet()) {
+			Trace trace = ent.getKey();
+			try (UndoableTransaction tid =
+				UndoableTransaction.start(trace, description, true)) {
+				doAddMappings(trace, ent.getValue(), monitor, truncateExisting);
+			}
 		}
-		if (Long.compareUnsigned(max, spaceMax.getOffset()) > 0) {
-			return new AddressRangeImpl(space.getAddress(min), spaceMax);
+	}
+
+	protected static void doAddMappings(Trace trace, Collection<MapEntry<?, ?>> entries,
+			TaskMonitor monitor, boolean truncateExisting) throws CancelledException {
+		for (MapEntry<?, ?> ent : entries) {
+			monitor.checkCanceled();
+			try {
+				DebuggerStaticMappingUtils.addMapping(ent, truncateExisting);
+			}
+			catch (Exception e) {
+				Msg.error(DebuggerStaticMappingService.class,
+					"Could not add mapping " + ent + ": " + e.getMessage());
+			}
 		}
-		return new AddressRangeImpl(space.getAddress(min), space.getAddress(max));
 	}
 
 	@Override
 	public void addIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
 			boolean truncateExisting) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(from, "Add identity mappings", false)) {
-			doAddIdentityMapping(from, toProgram, lifespan, truncateExisting);
-			tid.commit();
+			UndoableTransaction.start(from, "Add identity mappings", true)) {
+			DebuggerStaticMappingUtils.addIdentityMapping(from, toProgram, lifespan,
+				truncateExisting);
 		}
-	}
-
-	protected void doAddIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
-			boolean truncateExisting) {
-		Map<String, Address> mins = new HashMap<>();
-		Map<String, Address> maxs = new HashMap<>();
-		for (AddressRange range : toProgram.getMemory().getAddressRanges()) {
-			mins.compute(range.getAddressSpace().getName(), (n, min) -> {
-				Address can = range.getMinAddress();
-				if (min == null || can.compareTo(min) < 0) {
-					return can;
-				}
-				return min;
-			});
-			maxs.compute(range.getAddressSpace().getName(), (n, max) -> {
-				Address can = range.getMaxAddress();
-				if (max == null || can.compareTo(max) > 0) {
-					return can;
-				}
-				return max;
-			});
-		}
-		for (String name : mins.keySet()) {
-			AddressRange range = clippedRange(from, name, mins.get(name).getOffset(),
-				maxs.get(name).getOffset());
-			if (range == null) {
-				continue;
-			}
-			try {
-				addMapping(new DefaultTraceLocation(from, null, lifespan, range.getMinAddress()),
-					new ProgramLocation(toProgram, mins.get(name)), range.getLength(),
-					truncateExisting);
-			}
-			catch (TraceConflictedMappingException e) {
-				Msg.error(this, "Could not add identity mapping " + range + ": " + e.getMessage());
-			}
-		}
-	}
-
-	@Override
-	public void addModuleMapping(TraceModule from, long length, Program toProgram,
-			boolean truncateExisting) throws TraceConflictedMappingException {
-		TraceLocation fromLoc =
-			new DefaultTraceLocation(from.getTrace(), null, from.getLifespan(), from.getBase());
-		ProgramLocation toLoc = new ProgramLocation(toProgram, toProgram.getImageBase());
-		addMapping(fromLoc, toLoc, length, truncateExisting);
 	}
 
 	@Override
 	public void addModuleMappings(Collection<ModuleMapEntry> entries, TaskMonitor monitor,
 			boolean truncateExisting) throws CancelledException {
-		Map<Trace, Set<ModuleMapEntry>> byTrace = new LinkedHashMap<>();
-		for (ModuleMapEntry ent : entries) {
-			Set<ModuleMapEntry> subCol =
-				byTrace.computeIfAbsent(ent.getModule().getTrace(), t -> new LinkedHashSet<>());
-			subCol.add(ent);
-		}
-		for (Map.Entry<Trace, Set<ModuleMapEntry>> ent : byTrace.entrySet()) {
-			Trace trace = ent.getKey();
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(trace, "Add module mappings", false)) {
-				doAddModuleMappings(trace, ent.getValue(), monitor, truncateExisting);
-				tid.commit();
-			}
-		}
-	}
-
-	protected void doAddModuleMappings(Trace trace, Collection<ModuleMapEntry> entries,
-			TaskMonitor monitor, boolean truncateExisting) throws CancelledException {
-		for (ModuleMapEntry ent : entries) {
-			monitor.checkCanceled();
-			try {
-				DebuggerStaticMappingUtils.addModuleMapping(ent.getModule(),
-					ent.getModuleRange().getLength(), ent.getProgram(), truncateExisting);
-			}
-			catch (Exception e) {
-				Msg.error(this, "Could not add mapping " + ent + ": " + e.getMessage());
-			}
-		}
+		addMappings(entries, monitor, truncateExisting, "Add module mappings");
 	}
 
 	@Override
-	public void addSectionMappings(Collection<SectionMapEntry> entries,
-			TaskMonitor monitor, boolean truncateExisting) throws CancelledException {
-		Map<Trace, Set<SectionMapEntry>> byTrace = new LinkedHashMap<>();
-		for (SectionMapEntry ent : entries) {
-			Set<SectionMapEntry> subCol =
-				byTrace.computeIfAbsent(ent.getSection().getTrace(), t -> new LinkedHashSet<>());
-			subCol.add(ent);
-		}
-		for (Map.Entry<Trace, Set<SectionMapEntry>> ent : byTrace.entrySet()) {
-			Trace trace = ent.getKey();
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(trace, "Add section mappings", false)) {
-				doAddSectionMappings(trace, ent.getValue(), monitor, truncateExisting);
-				tid.commit();
-			}
-		}
+	public void addSectionMappings(Collection<SectionMapEntry> entries, TaskMonitor monitor,
+			boolean truncateExisting) throws CancelledException {
+		addMappings(entries, monitor, truncateExisting, "Add sections mappings");
 	}
 
-	protected void doAddSectionMappings(Trace trace, Collection<SectionMapEntry> entries,
-			TaskMonitor monitor, boolean truncateExisting) throws CancelledException {
-		for (SectionMapEntry ent : entries) {
-			monitor.checkCanceled();
-			try {
-				DebuggerStaticMappingUtils.addSectionMapping(ent.getSection(), ent.getProgram(),
-					ent.getBlock(), truncateExisting);
-			}
-			catch (Exception e) {
-				Msg.error(this, "Could not add mapping " + ent + ": " + e.getMessage());
-			}
-		}
+	@Override
+	public void addRegionMappings(Collection<RegionMapEntry> entries, TaskMonitor monitor,
+			boolean truncateExisting) throws CancelledException {
+		addMappings(entries, monitor, truncateExisting, "Add regions mappings");
 	}
 
 	protected <T> T noTraceInfo() {
@@ -1155,20 +833,24 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 	@Override
 	public Set<Program> getOpenMappedProgramsAtSnap(Trace trace, long snap) {
-		InfoPerTrace info = requireTrackedInfo(trace);
-		if (info == null) {
-			return null;
+		synchronized (lock) {
+			InfoPerTrace info = requireTrackedInfo(trace);
+			if (info == null) {
+				return null;
+			}
+			return info.getOpenMappedProgramsAtSnap(snap);
 		}
-		return info.getOpenMappedProgramsAtSnap(snap);
 	}
 
 	@Override
 	public ProgramLocation getOpenMappedLocation(TraceLocation loc) {
-		InfoPerTrace info = requireTrackedInfo(loc.getTrace());
-		if (info == null) {
-			return null;
+		synchronized (lock) {
+			InfoPerTrace info = requireTrackedInfo(loc.getTrace());
+			if (info == null) {
+				return null;
+			}
+			return info.getOpenMappedLocations(loc.getAddress(), loc.getLifespan());
 		}
-		return info.getOpenMappedLocations(loc.getAddress(), loc.getLifespan());
 	}
 
 	protected long getNonScratchSnap(TraceProgramView view) {
@@ -1177,309 +859,187 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 	@Override
 	public ProgramLocation getStaticLocationFromDynamic(ProgramLocation loc) {
-		loc = ProgramLocationUtils.fixLocation(loc, true);
-		TraceProgramView view = (TraceProgramView) loc.getProgram();
-		Trace trace = view.getTrace();
-		TraceLocation tloc = new DefaultTraceLocation(trace, null,
-			Range.singleton(getNonScratchSnap(view)), loc.getByteAddress());
-		ProgramLocation mapped = getOpenMappedLocation(tloc);
-		if (mapped == null) {
-			return null;
+		synchronized (lock) {
+			loc = ProgramLocationUtils.fixLocation(loc, true);
+			TraceProgramView view = (TraceProgramView) loc.getProgram();
+			Trace trace = view.getTrace();
+			TraceLocation tloc = new DefaultTraceLocation(trace, null,
+				Range.singleton(getNonScratchSnap(view)), loc.getByteAddress());
+			ProgramLocation mapped = getOpenMappedLocation(tloc);
+			if (mapped == null) {
+				return null;
+			}
+			return ProgramLocationUtils.replaceAddress(loc, mapped.getProgram(),
+				mapped.getByteAddress());
 		}
-		return ProgramLocationUtils.replaceAddress(loc, mapped.getProgram(),
-			mapped.getByteAddress());
 	}
 
 	@Override
 	public Set<TraceLocation> getOpenMappedLocations(ProgramLocation loc) {
-		InfoPerProgram info = requireTrackedInfo(loc.getProgram());
-		if (info == null) {
-			return null;
+		synchronized (lock) {
+			InfoPerProgram info = requireTrackedInfo(loc.getProgram());
+			if (info == null) {
+				return null;
+			}
+			return info.getOpenMappedTraceLocations(loc.getByteAddress());
 		}
-		return info.getOpenMappedTraceLocations(loc.getByteAddress());
 	}
 
 	@Override
 	public TraceLocation getOpenMappedLocation(Trace trace, ProgramLocation loc, long snap) {
-		InfoPerProgram info = requireTrackedInfo(loc.getProgram());
-		if (info == null) {
-			return null;
+		synchronized (lock) {
+			InfoPerProgram info = requireTrackedInfo(loc.getProgram());
+			if (info == null) {
+				return null;
+			}
+			return info.getOpenMappedTraceLocation(trace, loc.getByteAddress(), snap);
 		}
-		return info.getOpenMappedTraceLocation(trace, loc.getByteAddress(), snap);
 	}
 
 	@Override
 	public ProgramLocation getDynamicLocationFromStatic(TraceProgramView view,
 			ProgramLocation loc) {
-		TraceLocation tloc = getOpenMappedLocation(view.getTrace(), loc, getNonScratchSnap(view));
-		if (tloc == null) {
-			return null;
+		synchronized (lock) {
+			TraceLocation tloc =
+				getOpenMappedLocation(view.getTrace(), loc, getNonScratchSnap(view));
+			if (tloc == null) {
+				return null;
+			}
+			return ProgramLocationUtils.replaceAddress(loc, view, tloc.getAddress());
 		}
-		return ProgramLocationUtils.replaceAddress(loc, view, tloc.getAddress());
 	}
 
 	@Override
-	public Map<Program, ShiftAndAddressSetView> getOpenMappedViews(Trace trace,
-			AddressSetView set,
-			long snap) {
-		InfoPerTrace info = requireTrackedInfo(trace);
-		if (info == null) {
-			return null;
+	public Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(Trace trace,
+			AddressSetView set, long snap) {
+		synchronized (lock) {
+			InfoPerTrace info = requireTrackedInfo(trace);
+			if (info == null) {
+				return null;
+			}
+			return info.getOpenMappedViews(set, Range.singleton(snap));
 		}
-		return info.getOpenMappedViews(set, Range.singleton(snap));
 	}
 
 	@Override
-	public Map<TraceSnap, ShiftAndAddressSetView> getOpenMappedViews(Program program,
+	public Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
 			AddressSetView set) {
-		InfoPerProgram info = requireTrackedInfo(program);
-		if (info == null) {
-			return null;
+		synchronized (lock) {
+			InfoPerProgram info = requireTrackedInfo(program);
+			if (info == null) {
+				return null;
+			}
+			return info.getOpenMappedViews(set);
 		}
-		return info.getOpenMappedViews(set);
 	}
 
 	@Override
 	public Set<Program> openMappedProgramsInView(Trace trace, AddressSetView set, long snap,
 			Set<Exception> failures) {
-		InfoPerTrace info = requireTrackedInfo(trace);
-		if (info == null) {
-			return null;
-		}
-		return info.openMappedProgramsInView(set, Range.singleton(snap), failures);
-	}
-
-	protected String normalizePath(String path) {
-		path = path.replace('\\', FileSystem.SEPARATOR_CHAR);
-		while (path.startsWith(FileSystem.SEPARATOR)) {
-			path = path.substring(1);
-		}
-		return path;
-	}
-
-	protected DomainFile resolve(DomainFolder folder, String path) {
-		StringBuilder fullPath = new StringBuilder(folder.getPathname());
-		if (!fullPath.toString().endsWith(FileSystem.SEPARATOR)) {
-			// Only root should end with /, anyway
-			fullPath.append(FileSystem.SEPARATOR_CHAR);
-		}
-		fullPath.append(path);
-		return folder.getProjectData().getFile(fullPath.toString());
-	}
-
-	public Set<DomainFile> doFindPrograms(String modulePath, DomainFolder folder) {
-		// TODO: If not found, consider filenames with space + extra info
-		while (folder != null) {
-			DomainFile found = resolve(folder, modulePath);
-			if (found != null) {
-				return Set.of(found);
+		Set<URL> urls;
+		synchronized (lock) {
+			InfoPerTrace info = requireTrackedInfo(trace);
+			if (info == null) {
+				return null;
 			}
-			folder = folder.getParent();
+			urls = info.getMappedProgramURLsInView(set, Range.singleton(snap));
 		}
-		return Set.of();
+		Set<Program> result = new HashSet<>();
+		for (URL url : urls) {
+			try {
+				Program program = ProgramURLUtils.openHackedUpGhidraURL(programManager,
+					tool.getProject(), url, ProgramManager.OPEN_VISIBLE);
+				result.add(program);
+			}
+			catch (Exception e) {
+				if (failures == null) {
+					throw e;
+				}
+				failures.add(e);
+			}
+		}
+		return result;
 	}
 
-	public Set<DomainFile> doFindProgramsByPathOrName(String modulePath, DomainFolder folder) {
-		Set<DomainFile> found = doFindPrograms(modulePath, folder);
-		if (!found.isEmpty()) {
-			return found;
+	protected Collection<? extends Program> orderCurrentFirst(
+			Collection<? extends Program> programs) {
+		if (programManager == null) {
+			return programs;
 		}
-		int idx = modulePath.lastIndexOf(FileSystem.SEPARATOR);
-		if (idx == -1) {
-			return Set.of();
+		Program currentProgram = programManager.getCurrentProgram();
+		if (!programs.contains(currentProgram)) {
+			return programs;
 		}
-		found = doFindPrograms(modulePath.substring(idx + 1), folder);
-		if (!found.isEmpty()) {
-			return found;
-		}
-		return Set.of();
-	}
-
-	public Set<DomainFile> doFindProgramsByPathOrName(String modulePath, Project project) {
-		return doFindProgramsByPathOrName(modulePath, project.getProjectData().getRootFolder());
+		Set<Program> reordered = new LinkedHashSet<>(programs.size());
+		reordered.add(currentProgram);
+		reordered.addAll(programs);
+		return reordered;
 	}
 
 	@Override
 	public Set<DomainFile> findProbableModulePrograms(TraceModule module) {
-		// TODO: Consider folders containing existing mapping destinations
-		DomainFile df = module.getTrace().getDomainFile();
-		String modulePath = normalizePath(module.getName());
-		if (df == null) {
-			return doFindProgramsByPathOrName(modulePath, tool.getProject());
-		}
-		DomainFolder parent = df.getParent();
-		if (parent == null) {
-			return doFindProgramsByPathOrName(modulePath, tool.getProject());
-		}
-		return doFindProgramsByPathOrName(modulePath, parent);
-	}
-
-	protected void doCollectLibraries(ProjectData project, Program cur, Set<Program> col,
-			TaskMonitor monitor) throws CancelledException {
-		if (!col.add(cur)) {
-			return;
-		}
-		ExternalManager externs = cur.getExternalManager();
-		for (String extName : externs.getExternalLibraryNames()) {
-			monitor.checkCanceled();
-			Library lib = externs.getExternalLibrary(extName);
-			String libPath = lib.getAssociatedProgramPath();
-			if (libPath == null) {
-				continue;
-			}
-			DomainFile libFile = project.getFile(libPath);
-			if (libFile == null) {
-				Msg.info(this, "Referenced external program not found: " + libPath);
-				continue;
-			}
-			try (OpenedDomainFile<Program> program =
-				OpenedDomainFile.open(Program.class, libFile, monitor)) {
-				doCollectLibraries(project, program.content, col, monitor);
-			}
-			catch (ClassCastException e) {
-				Msg.info(this,
-					"Referenced external program is not a program: " + libPath + " is " +
-						libFile.getDomainObjectClass());
-				continue;
-			}
-			catch (VersionException | CancelledException | IOException e) {
-				Msg.info(this, "Referenced external program could not be opened: " + e);
-				continue;
-			}
-		}
+		return DebuggerStaticMappingUtils.findProbableModulePrograms(module, tool.getProject());
 	}
 
 	@Override
-	public Set<Program> collectLibraries(Program seed, TaskMonitor monitor)
-			throws CancelledException {
-		Set<Program> result = new LinkedHashSet<>();
-		doCollectLibraries(seed.getDomainFile().getParent().getProjectData(), seed, result,
-			monitor);
-		return result;
+	public ModuleMapProposal proposeModuleMap(TraceModule module, Program program) {
+		return DebuggerStaticMappingProposals.proposeModuleMap(module, program);
 	}
 
 	@Override
-	public PluginModuleMapProposal proposeModuleMap(TraceModule module, Program program) {
-		return new PluginModuleMapProposal(module, program);
-	}
-
-	@Override
-	public PluginModuleMapProposal proposeModuleMap(TraceModule module,
+	public ModuleMapProposal proposeModuleMap(TraceModule module,
 			Collection<? extends Program> programs) {
-		double bestScore = -1;
-		PluginModuleMapProposal bestMap = null;
-		for (Program program : programs) {
-			PluginModuleMapProposal map = proposeModuleMap(module, program);
-			double score = map.computeScore();
-			if (score == bestScore && programManager != null) {
-				// Prefer the current program in ties
-				if (programManager.getCurrentProgram() == program) {
-					bestMap = map;
-				}
-			}
-			if (score > bestScore) {
-				bestScore = score;
-				bestMap = map;
-			}
-		}
-		return bestMap;
+		return DebuggerStaticMappingProposals.proposeModuleMap(module, orderCurrentFirst(programs));
 	}
 
 	@Override
 	public Map<TraceModule, ModuleMapProposal> proposeModuleMaps(
 			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
-		Map<TraceModule, ModuleMapProposal> result = new LinkedHashMap<>();
-		for (TraceModule module : modules) {
-			String moduleName = getLastLower(module.getName());
-			Set<Program> probable = programs.stream()
-					.filter(p -> namesContain(p, moduleName))
-					.collect(Collectors.toSet());
-			PluginModuleMapProposal map = proposeModuleMap(module, probable);
-			if (map == null) {
-				continue;
-			}
-			result.put(module, map);
-		}
-		return result;
+		return DebuggerStaticMappingProposals.proposeModuleMaps(modules,
+			orderCurrentFirst(programs));
 	}
 
 	@Override
-	public PluginSectionMapProposal proposeSectionMap(TraceSection section, Program program,
+	public SectionMapProposal proposeSectionMap(TraceSection section, Program program,
 			MemoryBlock block) {
-		return new PluginSectionMapProposal(section, program, block);
+		return DebuggerStaticMappingProposals.proposeSectionMap(section, program, block);
 	}
 
 	@Override
-	public PluginSectionMapProposal proposeSectionMap(TraceModule module, Program program) {
-		return new PluginSectionMapProposal(module, program);
+	public SectionMapProposal proposeSectionMap(TraceModule module, Program program) {
+		return DebuggerStaticMappingProposals.proposeSectionMap(module, program);
 	}
 
 	@Override
-	public PluginSectionMapProposal proposeSectionMap(TraceModule module,
+	public SectionMapProposal proposeSectionMap(TraceModule module,
 			Collection<? extends Program> programs) {
-		double bestScore = -1;
-		PluginSectionMapProposal bestMap = null;
-		for (Program program : programs) {
-			PluginSectionMapProposal map = proposeSectionMap(module, program);
-			double score = map.computeScore();
-			if (score > bestScore) {
-				bestScore = score;
-				bestMap = map;
-			}
-		}
-		return bestMap;
-	}
-
-	protected static String getLastLower(String path) {
-		return new File(path).getName().toLowerCase();
-	}
-
-	/**
-	 * Check if either the program's name, its executable path, or its domain file name contains the
-	 * given module name
-	 * 
-	 * @param program the program whose names to check
-	 * @param moduleLowerName the module name to check for in lower case
-	 * @return true if matched, false if not
-	 */
-	protected boolean namesContain(Program program, String moduleLowerName) {
-		DomainFile df = program.getDomainFile();
-		if (df == null || df.getProjectLocator() == null) {
-			return false;
-		}
-		String programName = getLastLower(program.getName());
-		if (programName.contains(moduleLowerName)) {
-			return true;
-		}
-		String exePath = program.getExecutablePath();
-		if (exePath != null) {
-			String execName = getLastLower(exePath);
-			if (execName.contains(moduleLowerName)) {
-				return true;
-			}
-		}
-		String fileName = df.getName().toLowerCase();
-		if (fileName.contains(moduleLowerName)) {
-			return true;
-		}
-		return false;
+		return DebuggerStaticMappingProposals.proposeSectionMap(module,
+			orderCurrentFirst(programs));
 	}
 
 	@Override
 	public Map<TraceModule, SectionMapProposal> proposeSectionMaps(
 			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
-		Map<TraceModule, SectionMapProposal> result = new LinkedHashMap<>();
-		for (TraceModule module : modules) {
-			String moduleName = getLastLower(module.getName());
-			Set<Program> probable = programs.stream()
-					.filter(p -> namesContain(p, moduleName))
-					.collect(Collectors.toSet());
-			PluginSectionMapProposal map = proposeSectionMap(module, probable);
-			if (map == null) {
-				continue;
-			}
-			result.put(module, map);
-		}
-		return result;
+		return DebuggerStaticMappingProposals.proposeSectionMaps(modules,
+			orderCurrentFirst(programs));
+	}
+
+	@Override
+	public RegionMapProposal proposeRegionMap(TraceMemoryRegion region, Program program,
+			MemoryBlock block) {
+		return DebuggerStaticMappingProposals.proposeRegionMap(region, program, block);
+	}
+
+	@Override
+	public RegionMapProposal proposeRegionMap(Collection<? extends TraceMemoryRegion> regions,
+			Program program) {
+		return DebuggerStaticMappingProposals.proposeRegionMap(regions, program);
+	}
+
+	@Override
+	public Map<Collection<TraceMemoryRegion>, RegionMapProposal> proposeRegionMaps(
+			Collection<? extends TraceMemoryRegion> regions,
+			Collection<? extends Program> programs) {
+		return DebuggerStaticMappingProposals.proposeRegionMaps(regions, programs);
 	}
 }

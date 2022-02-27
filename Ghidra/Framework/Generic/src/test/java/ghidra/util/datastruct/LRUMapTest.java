@@ -29,10 +29,6 @@ public class LRUMapTest extends AbstractGenericTest {
 
 	private LRUMap<String, String> map;
 
-	public LRUMapTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		int size = 3;
@@ -45,7 +41,7 @@ public class LRUMapTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testMultiplePointsDoesntIncreaseSize() {
+	public void testMultiplePutsDoesntIncreaseSize() {
 		map = new LRUMap<String, String>(3);
 
 		map.put("key1", "value1");

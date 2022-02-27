@@ -41,13 +41,37 @@ import agent.lldb.model.iface1.*;
 import ghidra.async.*;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.HandlerMap;
+import ghidra.framework.OperatingSystem;
+import ghidra.framework.Platform;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 
 public class LldbManagerImpl implements LldbManager {
 
-	private String LldbSrvTransport;
+	static {
+		String libPath = System.getProperty("java.library.path");
+		try {
+			String lldb = "lldb";
+			if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS) {
+				lldb = "lib" + lldb;  // Wow, sigh
+			}
+			System.loadLibrary(lldb);
+		}
+		catch (UnsatisfiedLinkError ule) {
+			Msg.error(LldbManagerImpl.class, "java.library.path => " + libPath);
+			Msg.error(LldbManagerImpl.class,
+				"liblldb not found - add relevant java.library.path to support/launch.properties");
+		}
+		try {
+			System.loadLibrary("lldb-java");
+		}
+		catch (UnsatisfiedLinkError ule) {
+			Msg.error(LldbManagerImpl.class, "java.library.path => " + libPath);
+			Msg.error(LldbManagerImpl.class,
+				"liblldb-java not found - add relevant java.library.path to support/launch.properties");
+		}
+	}
 
 	public DebugStatus status;
 
@@ -118,6 +142,9 @@ public class LldbManagerImpl implements LldbManager {
 			if (map == null) {
 				map = new HashMap<>();
 				threads.put(DebugClient.getId(process), map);
+			}
+			if (thread == null) {
+				return;
 			}
 			String id = DebugClient.getId(thread);
 			SBThread pred = map.get(id);
@@ -703,6 +730,9 @@ public class LldbManagerImpl implements LldbManager {
 		addSessionIfAbsent(eventSession);
 		addProcessIfAbsent(eventSession, eventProcess);
 		addThreadIfAbsent(eventProcess, eventThread);
+		//SBStream s = new SBStream();
+		//event.GetDescription(s);
+		//System.err.println(s.GetData());
 		client.translateAndFireEvent(event);
 	}
 
@@ -1013,7 +1043,9 @@ public class LldbManagerImpl implements LldbManager {
 		if (status.equals(DebugStatus.NO_DEBUGGEE)) {
 			waiting = false;
 			if (state.equals(StateType.eStateExited)) {
-				processEvent(new LldbRunningEvent(DebugClient.getId(eventThread)));
+				if (eventThread != null) {
+					processEvent(new LldbRunningEvent(DebugClient.getId(eventThread)));
+				}
 				processEvent(new LldbProcessExitedEvent(0));
 				processEvent(new LldbSessionExitedEvent(DebugClient.getId(currentSession), 0));
 			}
@@ -1499,14 +1531,12 @@ public class LldbManagerImpl implements LldbManager {
 	}
 
 	public SBThread getCurrentThread() {
-		if (!currentThread.IsValid()) {
+		if (currentThread != null && !currentThread.IsValid()) {
 			currentProcess = currentSession.GetProcess();
 			for (int i = 0; i < currentProcess.GetNumThreads(); i++) {
 				SBThread thread = currentProcess.GetThreadAtIndex(i);
-				System.err.println(thread + ":" + thread.IsValid());
 			}
 			currentThread = SBThread.GetThreadFromEvent(currentEvent);
-			System.err.println(currentThread.IsValid());
 		}
 		return currentThread != null ? currentThread : eventThread;
 	}

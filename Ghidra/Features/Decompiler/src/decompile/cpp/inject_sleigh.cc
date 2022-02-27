@@ -278,8 +278,8 @@ void InjectPayloadDynamic::inject(InjectContext &context,PcodeEmit &emit) const
     emit.restoreXmlOp(*iter,glb->translate);
 }
 
-PcodeInjectLibrarySleigh::PcodeInjectLibrarySleigh(Architecture *g,uintb tmpbase)
-  : PcodeInjectLibrary(g,tmpbase)
+PcodeInjectLibrarySleigh::PcodeInjectLibrarySleigh(Architecture *g)
+  : PcodeInjectLibrary(g,g->translate->getUniqueStart(Translate::INJECT))
 {
   slgh = (const SleighBase *)g->translate;
   contextCache.glb = g;

@@ -20,7 +20,6 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.DataType;
-import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
 public class ElfStringTable implements ElfFileSection {
@@ -87,7 +86,7 @@ public class ElfStringTable implements ElfFileSection {
 			return reader.readAsciiString(fileOffset + stringOffset);
 		}
 		catch (IOException e) {
-			Msg.error(this,
+			header.logError(
 				"Failed to read Elf String at offset 0x" + Long.toHexString(stringOffset) +
 					" within String Table at offset 0x" + Long.toHexString(fileOffset));
 		}

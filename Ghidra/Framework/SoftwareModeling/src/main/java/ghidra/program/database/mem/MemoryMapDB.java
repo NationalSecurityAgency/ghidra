@@ -75,6 +75,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Constructs a new MemoryMapDB
+	 * 
 	 * @param handle the open database handle.
 	 * @param addrMap the address map.
 	 * @param openMode the open mode for the program.
@@ -146,14 +147,16 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Update the <code>allInitializedAddrSet</code> and <code>initializedLoadedAddrSet</code>
-	 * with relevant initialized addresses from the specified memory block.  If block is not 
-	 * a mapped-block and it may be a source to existing mapped-blocks then 
-	 * <code>scanAllMappedBlocksIfNeeded</code> should be passed as <code>true</code> unless
-	 * all mapped blocks will be processed separately.
+	 * Update the <code>allInitializedAddrSet</code> and <code>initializedLoadedAddrSet</code> with
+	 * relevant initialized addresses from the specified memory block. If block is not a
+	 * mapped-block and it may be a source to existing mapped-blocks then
+	 * <code>scanAllMappedBlocksIfNeeded</code> should be passed as <code>true</code> unless all
+	 * mapped blocks will be processed separately.
+	 * 
 	 * @param block memory block
-	 * @param scanAllMappedBlocksIfNeeded if true and block is initialized and not a mapped block all
-	 * mapped blocks will be processed for possible introduction of newly initialized mapped regions. 
+	 * @param scanAllMappedBlocksIfNeeded if true and block is initialized and not a mapped block
+	 *            all mapped blocks will be processed for possible introduction of newly initialized
+	 *            mapped regions.
 	 */
 	private void addBlockAddresses(MemoryBlockDB block, boolean scanAllMappedBlocksIfNeeded) {
 		AddressSet blockSet = new AddressSet(block.getStart(), block.getEnd());
@@ -193,11 +196,12 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Update initialized address set for those mapped blocks which map onto the 
-	 * specified block which has just completed a transition of its' initialized state.
+	 * Update initialized address set for those mapped blocks which map onto the specified block
+	 * which has just completed a transition of its' initialized state.
+	 * 
 	 * @param block block whose initialized state has changed
-	 * @param isInitialized true if block transitioned from uninitialized to initialized,
-	 * else transition is from initialized to uninitialized.
+	 * @param isInitialized true if block transitioned from uninitialized to initialized, else
+	 *            transition is from initialized to uninitialized.
 	 */
 	private void updateMappedAddresses(MemoryBlockDB block, boolean isInitialized) {
 
@@ -285,6 +289,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Returns the address factory for the program.
+	 * 
 	 * @return program address factory
 	 */
 	AddressFactory getAddressFactory() {
@@ -293,6 +298,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Returns the AddressMap from the program.
+	 * 
 	 * @return program address map
 	 */
 	AddressMapDB getAddressMap() {
@@ -331,7 +337,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				throw new MemoryAccessException(block.getName() + " does not contain range " +
 					start.toString(true) + "-" + endAddr);
 			}
-			
+
 			if (block.isMapped()) {
 				checkMemoryWriteMappedBlock(block, start, endAddr);
 			}
@@ -368,7 +374,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			mappedEndAddress =
 				byteMappingScheme.getMappedSourceAddress(mappedRangeMinAddr, endOffset);
 		}
-		
+
 		for (MemoryBlockDB b : getBlocks(mappedStartAddress, mappedEndAddress)) {
 			Address minAddr = Address.min(b.getEnd(), mappedEndAddress);
 			Address maxAddr = Address.max(b.getStart(), mappedStartAddress);
@@ -381,9 +387,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			throws MemoryAccessException {
 		// TODO: could contain uninitialized region which is illegal to write to although block.isInitialized
 		// may not be of much help since it reflects the first sub-block only - seems like mixing is a bad idea
-		
+
 		checkRangeForInstructions(start, endAddr);
-		
+
 		// Check all mapped-block address ranges which map onto the range to be modified
 		Collection<MemoryBlockDB> mappedBlocks = nonMappedBlock.getMappedBlocks();
 		if (mappedBlocks != null) {
@@ -480,8 +486,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Two blocks have been joined producing newBlock.  The block which was
-	 * eliminated can be identified using the oldBlockStartAddr.
+	 * Two blocks have been joined producing newBlock. The block which was eliminated can be
+	 * identified using the oldBlockStartAddr.
+	 * 
 	 * @param newBlock new joined memory block
 	 * @param oldBlockStartAddr original start address of affected block
 	 */
@@ -798,6 +805,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Check new block name for validity
+	 * 
 	 * @param name new block name
 	 * @throws IllegalArgumentException if invalid block name specified
 	 */
@@ -1246,25 +1254,19 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Tests if the memory contains a sequence of contiguous bytes that match the
-	 * given byte array at all bit positions where the mask contains an "on" bit.
-	 * The test will be something like
+	 * Tests if the memory contains a sequence of contiguous bytes that match the given byte array
+	 * at all bit positions where the mask contains an "on" bit. The test will be something like
 	 *
-	 * for(int i=0;i<bytes.length;i++) {
-	 *     if (bytes[i] != memory.getByte(addr+i) &amp; masks[i]) {
-	 *         return false;
-	 *     }
-	 * }
-	 * return false;
+	 * for(int i=0;i<bytes.length;i++) { if (bytes[i] != memory.getByte(addr+i) &amp; masks[i]) {
+	 * return false; } } return false;
 	 *
 	 * @param addr The beginning address in memory to test against.
 	 * @param bytes the array of bytes to test for.
 	 * @param masks the array of masks. (One for each byte in the byte array)
 	 * @param forward if true, the matching is going forward, otherwise backward
 	 *
-	 * @return 1 if there is a match
-	 *         0 if there is no match
-	 *        -i if no match is found, this is the number of bytes that can be safely skipped
+	 * @return 1 if there is a match 0 if there is no match -i if no match is found, this is the
+	 *         number of bytes that can be safely skipped
 	 */
 	private int match(Address addr, byte[] bytes, byte[] masks, byte[] data, boolean forward) {
 		try {
@@ -1645,10 +1647,11 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 					throw new MemoryAccessException(
 						"Address " + addr.toString(true) + " does not exist in memory");
 				}
-				n -= block.getSize() - addr.subtract(block.getStart());
-				if (n <= 0) {
+				long advanced = block.getSize() - addr.subtract(block.getStart());
+				if (advanced >= n) {
 					break;
 				}
+				n -= advanced;
 				try {
 					addr = block.getEnd().addNoWrap(1);
 				}
@@ -1879,8 +1882,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Tests if the given addressSpace (overlay space) is used by any blocks.  If not, it
-	 * removes the space.
+	 * Tests if the given addressSpace (overlay space) is used by any blocks. If not, it removes the
+	 * space.
+	 * 
 	 * @param addressSpace overlay address space to be removed
 	 */
 	private void checkRemoveAddressSpace(AddressSpace addressSpace) {
@@ -1930,8 +1934,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Gets the intersected set of addresses between a mapped memory block, and some other
-	 * address set.
+	 * Gets the intersected set of addresses between a mapped memory block, and some other address
+	 * set.
 	 *
 	 * @param mappedBlock The mapped memory block to use in the intersection.
 	 * @param set Some other address set to use in the intersection.
@@ -1954,9 +1958,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Converts the given address range back from the source range back to the mapped range.
-	 * NOTE: It is important that the specified mappedSourceRange is restricted to the 
-	 * mapped source area of the specified mappedBlock.
+	 * Converts the given address range back from the source range back to the mapped range. NOTE:
+	 * It is important that the specified mappedSourceRange is restricted to the mapped source area
+	 * of the specified mappedBlock.
+	 * 
 	 * @param mappedBlock mapped memory block
 	 * @param mappedSourceRange source range which maps into mappedBlock.
 	 * @return mapped range or null if source range not mapped to block
@@ -2225,9 +2230,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Returns a list of all memory blocks that contain any addresses in the given range
+	 * 
 	 * @param start the start address
 	 * @param end the end address
-	 * @return  a list of all memory blocks that contain any addresses in the given range
+	 * @return a list of all memory blocks that contain any addresses in the given range
 	 */
 	List<MemoryBlockDB> getBlocks(Address start, Address end) {
 		List<MemoryBlockDB> list = new ArrayList<>();

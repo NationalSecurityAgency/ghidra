@@ -17,6 +17,7 @@ package agent.gdb.pty.ssh;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 
 import javax.swing.JOptionPane;
 
@@ -28,7 +29,8 @@ import com.jcraft.jsch.ConfigRepository.Config;
 import agent.gdb.pty.PtyFactory;
 import docking.DockingWindowManager;
 import docking.widgets.PasswordDialog;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.StringUtilities;
 
 public class GhidraSshPtyFactory implements PtyFactory {
 	private static final String TITLE = "GDB via SSH";
@@ -209,6 +211,10 @@ public class GhidraSshPtyFactory implements PtyFactory {
 			return session;
 		}
 		catch (JSchException e) {
+			if (e.getMessage().equals("Auth cancel")) {
+				Msg.error(this, "SSH connection canceled");
+				throw new CancellationException("SSH connection canceled");
+			}
 			Msg.error(this, "SSH connection error");
 			throw new IOException("SSH connection error", e);
 		}

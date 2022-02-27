@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.debug.service.emulation;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.EnumSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,8 +40,7 @@ import ghidra.trace.model.modules.TraceConflictedMappingException;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.util.ComparatorMath;
-import ghidra.util.DifferenceAddressSetView;
+import ghidra.util.*;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -117,6 +115,18 @@ public enum ProgramEmulationUtils {
 		return result;
 	}
 
+	static class Extrema {
+		Address min = null;
+		Address max = null;
+
+		void consider(AddressRange range) {
+			min = min == null ? range.getMinAddress()
+					: ComparatorMath.cmin(min, range.getMinAddress());
+			max = max == null ? range.getMaxAddress()
+					: ComparatorMath.cmax(max, range.getMaxAddress());
+		}
+	}
+
 	/**
 	 * Create regions for each block in a program, without relocation, and map the program in
 	 * 
@@ -134,8 +144,7 @@ public enum ProgramEmulationUtils {
 	 */
 	public static void loadExecutable(TraceSnapshot snapshot, Program program) {
 		Trace trace = snapshot.getTrace();
-		Address min = null;
-		Address max = null;
+		Map<AddressSpace, Extrema> extremaBySpace = new HashMap<>();
 		try {
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
 				if (!block.isLoaded()) {
@@ -145,10 +154,8 @@ public enum ProgramEmulationUtils {
 					continue;
 				}
 				AddressRange range = new AddressRangeImpl(block.getStart(), block.getEnd());
-				min = min == null ? range.getMinAddress()
-						: ComparatorMath.cmin(min, range.getMinAddress());
-				max = max == null ? range.getMaxAddress()
-						: ComparatorMath.cmax(max, range.getMaxAddress());
+				extremaBySpace.computeIfAbsent(range.getAddressSpace(), s -> new Extrema())
+						.consider(range);
 				String modName = getModuleName(program);
 
 				// TODO: Do I populate modules, since the mapping will already be done?
@@ -157,10 +164,13 @@ public enum ProgramEmulationUtils {
 				trace.getMemoryManager()
 						.createRegion(path, snapshot.getKey(), range, getRegionFlags(block));
 			}
-			DebuggerStaticMappingUtils.addMapping(
-				new DefaultTraceLocation(trace, null, Range.atLeast(snapshot.getKey()), min),
-				new ProgramLocation(program, min),
-				max.subtract(min), false);
+			for (Extrema extrema : extremaBySpace.values()) {
+				DebuggerStaticMappingUtils.addMapping(
+					new DefaultTraceLocation(trace, null, Range.atLeast(snapshot.getKey()),
+						extrema.min),
+					new ProgramLocation(program, extrema.min),
+					extrema.max.subtract(extrema.min), false);
+			}
 		}
 		catch (TraceOverlappedRegionException | DuplicateNameException
 				| TraceConflictedMappingException e) {
@@ -214,7 +224,7 @@ public enum ProgramEmulationUtils {
 					.map(Register::getBaseRegister)
 					.collect(Collectors.toSet())) {
 				RegisterValue rv = ctx.getRegisterValue(reg, programPc);
-				if (!rv.hasAnyValue()) {
+				if (rv == null || !rv.hasAnyValue()) {
 					continue;
 				}
 				// Set all the mask bits
@@ -222,14 +232,15 @@ public enum ProgramEmulationUtils {
 			}
 		}
 		space.setValue(snap, new RegisterValue(trace.getBaseLanguage().getProgramCounter(),
-			tracePc.getOffsetAsBigInteger()));
+			NumericUtilities.unsignedLongToBigInteger(tracePc.getAddressableWordOffset())));
 		if (stack != null) {
 			CompilerSpec cSpec = trace.getBaseCompilerSpec();
 			Address sp = cSpec.stackGrowsNegative()
 					? stack.getMaxAddress()
 					: stack.getMinAddress();
 			space.setValue(snap,
-				new RegisterValue(cSpec.getStackPointer(), sp.getOffsetAsBigInteger()));
+				new RegisterValue(cSpec.getStackPointer(),
+					NumericUtilities.unsignedLongToBigInteger(sp.getAddressableWordOffset())));
 		}
 	}
 

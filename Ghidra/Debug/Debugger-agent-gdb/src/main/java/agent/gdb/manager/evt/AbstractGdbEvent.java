@@ -16,7 +16,6 @@
 package agent.gdb.manager.evt;
 
 import agent.gdb.manager.GdbCause;
-import agent.gdb.manager.GdbCause.Causes;
 import agent.gdb.manager.GdbState;
 import agent.gdb.manager.impl.GdbEvent;
 import agent.gdb.manager.impl.GdbPendingCommand;

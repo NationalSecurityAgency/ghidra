@@ -95,6 +95,6 @@ class DataAction extends ListingContextAction {
 
 	@Override
 	public void actionPerformed(ListingActionContext context) {
-		plugin.createData(dataType, context, true);
+		plugin.createData(dataType, context, true, true);
 	}
 }

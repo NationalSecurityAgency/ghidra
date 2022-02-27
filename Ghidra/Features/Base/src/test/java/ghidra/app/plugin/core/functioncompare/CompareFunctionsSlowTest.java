@@ -27,7 +27,7 @@ import org.junit.*;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
-import docking.widgets.dialogs.TableChooserDialog;
+import docking.widgets.dialogs.TableSelectionDialog;
 import docking.widgets.table.GFilterTable;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;
@@ -43,7 +43,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 
 /**
- * Tests for the {@link FunctionComparisonPlugin function comparison plugin} 
+ * Tests for the {@link FunctionComparisonPlugin function comparison plugin}
  * that involve the GUI
  */
 public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTest {
@@ -169,34 +169,35 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 		clickComponentProvider(provider);
 
 		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
-		performAction(openTableAction, false);
+		performAction(openTableAction, provider, false);
 
 		Window selectWindow = waitForWindowByTitleContaining("Select Functions");
 		assertNotNull(selectWindow);
 		selectWindow.setVisible(false);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testAddFunctionToExistingCompare() {
 		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo);
 		provider = compareFunctions(functions);
 
-		// Must do this or there will be no "active" provider in the actions
-		// initiated below
+		// Must do this or there will be no "active" provider in the actions initiated below
 		clickComponentProvider(provider);
 
 		assertEquals(provider.getModel().getSourceFunctions().size(), 1);
 		assertTrue(provider.getModel().getSourceFunctions().contains(foo));
 
 		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
-		performAction(openTableAction, false);
+		performAction(openTableAction, provider, false);
 
-		TableChooserDialog<FunctionTableModel> chooser =
-			waitForDialogComponent(TableChooserDialog.class);
+		@SuppressWarnings("unchecked")
+		TableSelectionDialog<FunctionTableModel> chooser =
+			waitForDialogComponent(TableSelectionDialog.class);
+		@SuppressWarnings("unchecked")
 		GFilterTable<FunctionRowObject> table =
 			(GFilterTable<FunctionRowObject>) getInstanceField("gFilterTable", chooser);
-		assertEquals(table.getModel().getRowCount(), 2);
+
+		waitForCondition(() -> table.getModel().getRowCount() == 2);
 		clickTableCell(table.getTable(), 1, 0, 1);
 
 		pressButtonByText(chooser, "OK");
@@ -246,7 +247,7 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.setProperty(Program.DATE_CREATED, new Date(100000000)); // arbitrary, but consistent
 
-		// functions 
+		// functions
 		DataType dt = new ByteDataType();
 		Parameter p = new ParameterImpl(null, dt, builder.getProgram());
 		foo = builder.createEmptyFunction("Foo", "10018cf", 10, null, p);
@@ -264,7 +265,7 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.setProperty(Program.DATE_CREATED, new Date(100000000)); // arbitrary, but consistent
 
-		// functions 
+		// functions
 		DataType dt = new ByteDataType();
 		Parameter p = new ParameterImpl(null, dt, builder.getProgram());
 		bar = builder.createEmptyFunction("Bar", "10018cf", 10, null, p);

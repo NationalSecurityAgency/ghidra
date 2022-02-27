@@ -16,6 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.util.Set;
 
 import db.DBHandle;
 import ghidra.util.exception.VersionException;
@@ -43,8 +44,8 @@ class ParentChildDBAdapterNoTable extends ParentChildAdapter {
 	}
 
 	@Override
-	long[] getParentIds(long childID) throws IOException {
-		return new long[0];
+	Set<Long> getParentIds(long childID) throws IOException {
+		return Set.of();
 	}
 
 	@Override

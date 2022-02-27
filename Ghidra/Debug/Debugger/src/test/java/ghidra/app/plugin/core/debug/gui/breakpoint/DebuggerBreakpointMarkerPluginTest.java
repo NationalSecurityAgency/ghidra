@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.breakpoint;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -137,7 +138,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace = recorder.getTrace();
 		createProgramFromTrace(trace);
 		intoProject(trace);
@@ -507,6 +508,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		performAction(action, staticCtx(addr(program, 0x0400321)), false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
+		dialog.setName("Test name");
 		dialog.okCallback();
 
 		waitForPass(() -> {
@@ -514,6 +516,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 				breakpointService.getBreakpointsAt(program, addr(program, 0x00400321)));
 			assertEquals(expectedKinds, lb.getKinds());
 			assertEquals(Enablement.ENABLED, lb.computeEnablement());
+			assertEquals("Test name", lb.getName());
 		});
 	}
 

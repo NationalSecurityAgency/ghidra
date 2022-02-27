@@ -28,7 +28,6 @@ import javax.swing.table.TableModel;
 
 import org.jdom.Element;
 
-import docking.ActionContext;
 import docking.DockingWindowManager;
 import docking.help.HelpService;
 import docking.menu.*;
@@ -413,12 +412,12 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 				}
 
 				@Override
-				protected void doActionPerformed(ActionContext context) {
+				protected void actionPerformed() {
 					showFilterDialog(tableModel);
 				}
 
 			};
-		columnFilterAction.setPerformActionOnPrimaryButtonClick(true);
+
 		HelpLocation helpLocation = new HelpLocation("Trees", "Column_Filters");
 		columnFilterAction.setHelpLocation(helpLocation);
 

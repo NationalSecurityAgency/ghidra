@@ -68,7 +68,7 @@ public class GlobalSymbol implements Symbol {
 
 	@Override
 	public Program getProgram() {
-		return null;
+		return globalNamespace.memory.getProgram();
 	}
 
 	@Override

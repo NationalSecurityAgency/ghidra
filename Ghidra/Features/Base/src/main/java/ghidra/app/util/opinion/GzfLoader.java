@@ -15,8 +15,9 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.*;
 import java.util.*;
+
+import java.io.*;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -35,6 +36,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 /**
  * Loads a packed Ghidra program.
@@ -105,32 +107,44 @@ public class GzfLoader implements Loader {
 			throws IOException, CancelledException, VersionException, LanguageNotFoundException {
 		DomainObject dobj;
 		File file = provider.getFile();
-		PackedDatabase packedDatabase = PackedDatabase.getPackedDatabase(file, true, monitor);
-		boolean success = false;
-		DBHandle dbh = null;
+		File tmpFile = null;
+		if (file == null) {
+			file = tmpFile = createTmpFile(provider, monitor);
+		}
+
 		try {
-			if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(
-				packedDatabase.getContentType())) {
-				throw new IOException("File imported is not a Program: " + programName);
+			PackedDatabase packedDatabase = PackedDatabase.getPackedDatabase(file, true, monitor);
+			boolean success = false;
+			DBHandle dbh = null;
+			try {
+				if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(
+					packedDatabase.getContentType())) {
+					throw new IOException("File imported is not a Program: " + programName);
+				}
+
+				monitor.setMessage("Restoring " + provider.getName());
+
+				dbh = packedDatabase.open(monitor);
+				dobj = new ProgramDB(dbh, DBConstants.UPGRADE, monitor, consumer);
+				success = true;
 			}
-
-			monitor.setMessage("Restoring " + file.getName());
-
-			dbh = packedDatabase.open(monitor);
-			dobj = new ProgramDB(dbh, DBConstants.UPGRADE, monitor, consumer);
-			success = true;
+			finally {
+				if (!success) {
+					if (dbh != null) {
+						dbh.close(); // also disposes packed database object
+					}
+					else {
+						packedDatabase.dispose();
+					}
+				}
+			}
+			return dobj;
 		}
 		finally {
-			if (!success) {
-				if (dbh != null) {
-					dbh.close(); // also disposes packed database object
-				}
-				else {
-					packedDatabase.dispose();
-				}
+			if (tmpFile != null) {
+				tmpFile.delete();
 			}
 		}
-		return dobj;
 	}
 
 	@Override
@@ -160,12 +174,33 @@ public class GzfLoader implements Loader {
 			throws InvalidNameException, CancelledException, IOException {
 
 		File file = provider.getFile();
+		File tmpFile = null;
+		if (file == null) {
+			file = tmpFile = createTmpFile(provider, monitor);
+		}
 		DomainFolder folder = programFolder;
 
-		monitor.setMessage("Restoring " + file.getName());
+		monitor.setMessage("Restoring " + provider.getName());
 
-		DomainFile df = folder.createFile(programName, file, monitor);
-		return df;
+		try {
+			DomainFile df = folder.createFile(programName, file, monitor);
+			return df;
+		}
+		finally {
+			if (tmpFile != null) {
+				tmpFile.delete();
+			}
+		}
+	}
+
+	private static File createTmpFile(ByteProvider provider, TaskMonitor monitor)
+			throws IOException {
+		File tmpFile = File.createTempFile("ghidra_gzf_loader", null);
+		try (InputStream is = provider.getInputStream(0);
+				FileOutputStream fos = new FileOutputStream(tmpFile)) {
+			FileUtilities.copyStreamToStream(is, fos, monitor);
+		}
+		return tmpFile;
 	}
 
 	private static boolean isGzfFile(ByteProvider provider) {

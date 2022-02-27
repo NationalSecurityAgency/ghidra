@@ -31,8 +31,8 @@ import ghidra.trace.database.DBTraceContentHandler;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.DefaultTraceTimeViewport;
 import ghidra.trace.util.TraceTimeViewport;
 import ghidra.util.Msg;
@@ -241,6 +241,10 @@ public class DebuggerCoordinates {
 		return all(trace, recorder, thread, view, newTime, frame);
 	}
 
+	public DebuggerCoordinates withView(TraceProgramView newView) {
+		return all(trace, recorder, thread, newView, time, frame);
+	}
+
 	public TraceSchedule getTime() {
 		return time;
 	}
@@ -259,8 +263,10 @@ public class DebuggerCoordinates {
 		Collection<? extends TraceSnapshot> snapshots =
 			trace.getTimeManager().getSnapshotsWithSchedule(time);
 		if (snapshots.isEmpty()) {
-			Msg.warn(this, "Seems the emulation service did not create the requested snapshot");
-			return viewSnap = time.getSnap();
+			Msg.warn(this,
+				"Seems the emulation service did not create the requested snapshot, yet");
+			// NB. Don't cache viewSnap. Maybe next time, we'll get it.
+			return time.getSnap();
 		}
 		return viewSnap = snapshots.iterator().next().getKey();
 	}

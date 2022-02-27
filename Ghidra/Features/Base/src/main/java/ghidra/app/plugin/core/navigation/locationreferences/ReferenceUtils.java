@@ -31,7 +31,6 @@ import ghidra.program.util.*;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.*;
-import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -210,11 +209,6 @@ public final class ReferenceUtils {
 		// Note: none of the params can be null, but this one gets used much later, so check now
 		Objects.requireNonNull(dataType, () -> "Data Type cannot be null");
 
-		// sanity check
-		if (fieldName != null && !(dataType instanceof Composite)) {
-			throw new IllegalArgumentException("Can only search for a field with a Composite type");
-		}
-
 		if (monitor == null) {
 			monitor = TaskMonitor.DUMMY;
 		}
@@ -283,12 +277,6 @@ public final class ReferenceUtils {
 			accumulator.add(locationReference);
 		};
 
-		if (fieldName != null && !(dataType instanceof Composite)) {
-			throw new AssertException(
-				"Must have a Composite data type to perform a field search.  Found " + dataType +
-					"; field '" + fieldName + "'");
-		}
-
 		if (finders.isEmpty()) {
 			Msg.debug(ReferenceUtils.class, "Unable to find any implementations of " +
 				DataTypeReferenceFinder.class.getSimpleName());
@@ -300,7 +288,7 @@ public final class ReferenceUtils {
 				finder.findReferences(program, dataType, callback, monitor);
 			}
 			else {
-				finder.findReferences(program, (Composite) dataType, fieldName, callback, monitor);
+				finder.findReferences(program, dataType, fieldName, callback, monitor);
 			}
 		}
 	}

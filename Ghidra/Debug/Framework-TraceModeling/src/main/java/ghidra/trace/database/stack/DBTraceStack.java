@@ -22,7 +22,6 @@ import java.util.*;
 
 import db.BinaryField;
 import db.DBRecord;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
@@ -109,7 +108,7 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 
 	private final DBTraceStackManager manager;
 
-	private DBTraceThread thread;
+	private TraceThread thread;
 	private final List<DBTraceStackFrame> frames = new ArrayList<>();
 
 	public DBTraceStack(DBTraceStackManager manager, DBCachedObjectStore<?> store,
@@ -135,7 +134,7 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 		}
 	}
 
-	void set(DBTraceThread thread, long snap) {
+	void set(TraceThread thread, long snap) {
 		this.thread = thread;
 		threadSnap.threadKey = thread.getKey();
 		threadSnap.snap = snap;
@@ -169,7 +168,7 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 		update(FRAMES_COLUMN);
 	}
 
-	protected void doUpdateFrameDepths(int start, int end) {
+	protected void doUpdateFrameLevels(int start, int end) {
 		for (int i = start; i < end; i++) {
 			frames.get(i).setLevel(i);
 		}
@@ -177,13 +176,13 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 
 	@Override
 	public void setDepth(int depth, boolean atInner) {
-		//System.err.println("setDepth(threadKey=" + thread.getKey() + "snap=" + getSnap() +
-		//	",depth=" + depth + ",inner=" + atInner + ");");
-		int curDepth = frameKeys == null ? 0 : frameKeys.length;
-		if (depth == curDepth) {
-			return;
-		}
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
+			//System.err.println("setDepth(threadKey=" + thread.getKey() + "snap=" + getSnap() +
+			//	",depth=" + depth + ",inner=" + atInner + ");");
+			int curDepth = frameKeys == null ? 0 : frameKeys.length;
+			if (depth == curDepth) {
+				return;
+			}
 			if (depth < curDepth) {
 				List<DBTraceStackFrame> toRemove =
 					atInner ? frames.subList(0, curDepth - depth)
@@ -193,7 +192,7 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 				}
 				toRemove.clear();
 				if (atInner) {
-					doUpdateFrameDepths(0, frames.size());
+					doUpdateFrameLevels(0, frames.size());
 				}
 			}
 			else {
@@ -204,11 +203,11 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 				}
 				if (atInner) {
 					frames.addAll(0, toAdd);
-					doUpdateFrameDepths(0, frames.size());
+					doUpdateFrameLevels(0, frames.size());
 				}
 				else {
 					frames.addAll(toAdd);
-					doUpdateFrameDepths(frames.size() - toAdd.size(), frames.size());
+					doUpdateFrameLevels(frames.size() - toAdd.size(), frames.size());
 				}
 			}
 			doUpdateFrameKeys();

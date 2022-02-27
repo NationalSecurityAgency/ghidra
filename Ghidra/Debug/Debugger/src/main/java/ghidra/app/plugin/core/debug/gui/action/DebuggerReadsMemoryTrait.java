@@ -27,7 +27,7 @@ import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractCaptureSelectedMemoryAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractReadSelectedMemoryAction;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
 import ghidra.app.services.TraceRecorder;
@@ -49,10 +49,10 @@ public abstract class DebuggerReadsMemoryTrait {
 	protected static final AutoConfigState.ClassHandler<DebuggerReadsMemoryTrait> CONFIG_STATE_HANDLER =
 		AutoConfigState.wireHandler(DebuggerReadsMemoryTrait.class, MethodHandles.lookup());
 
-	protected class CaptureSelectedMemoryAction extends AbstractCaptureSelectedMemoryAction {
+	protected class ReadSelectedMemoryAction extends AbstractReadSelectedMemoryAction {
 		public static final String GROUP = DebuggerResources.GROUP_GENERAL;
 
-		public CaptureSelectedMemoryAction() {
+		public ReadSelectedMemoryAction() {
 			super(plugin);
 			setToolBarData(new ToolBarData(ICON, GROUP));
 			setEnabled(false);
@@ -89,14 +89,14 @@ public abstract class DebuggerReadsMemoryTrait {
 		}
 	}
 
-	protected class ForCaptureTraceListener extends TraceDomainObjectListener {
-		public ForCaptureTraceListener() {
+	protected class ForReadsTraceListener extends TraceDomainObjectListener {
+		public ForReadsTraceListener() {
 			listenFor(TraceSnapshotChangeType.ADDED, this::snapshotAdded);
 			listenFor(TraceMemoryStateChangeType.CHANGED, this::memStateChanged);
 		}
 
 		private void snapshotAdded(TraceSnapshot snapshot) {
-			actionCaptureSelected.updateEnabled(null);
+			actionReadSelected.updateEnabled(null);
 		}
 
 		private void memStateChanged(TraceAddressSnapRange range, TraceMemoryState oldIsNull,
@@ -120,7 +120,7 @@ public abstract class DebuggerReadsMemoryTrait {
 		@Override
 		public void processMemoryAccessibilityChanged(TraceRecorder recorder) {
 			Swing.runIfSwingOrRunLater(() -> {
-				actionCaptureSelected.updateEnabled(null);
+				actionReadSelected.updateEnabled(null);
 			});
 		}
 	}
@@ -137,7 +137,7 @@ public abstract class DebuggerReadsMemoryTrait {
 	}
 
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoRead;
-	protected CaptureSelectedMemoryAction actionCaptureSelected;
+	protected ReadSelectedMemoryAction actionReadSelected;
 
 	private final AutoReadMemorySpec defaultAutoSpec =
 		AutoReadMemorySpec.fromConfigName(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
@@ -149,8 +149,8 @@ public abstract class DebuggerReadsMemoryTrait {
 	protected final Plugin plugin;
 	protected final ComponentProvider provider;
 
-	protected final ForCaptureTraceListener traceListener =
-		new ForCaptureTraceListener();
+	protected final ForReadsTraceListener traceListener =
+		new ForReadsTraceListener();
 	protected final ForAccessRecorderListener recorderListener = new ForAccessRecorderListener();
 	protected final ForVisibilityListener displayListener = new ForVisibilityListener();
 
@@ -257,10 +257,10 @@ public abstract class DebuggerReadsMemoryTrait {
 		}
 	}
 
-	public DockingAction installCaptureSelectedAction() {
-		actionCaptureSelected = new CaptureSelectedMemoryAction();
-		provider.addLocalAction(actionCaptureSelected);
-		return actionCaptureSelected;
+	public DockingAction installReadSelectedAction() {
+		actionReadSelected = new ReadSelectedMemoryAction();
+		provider.addLocalAction(actionReadSelected);
+		return actionReadSelected;
 	}
 
 	public AddressSetDisplayListener getDisplayListener() {
@@ -283,6 +283,11 @@ public abstract class DebuggerReadsMemoryTrait {
 
 	public AutoReadMemorySpec getAutoSpec() {
 		return autoSpec;
+	}
+
+	/* testing */
+	public AddressSetView getVisible() {
+		return visible;
 	}
 
 	protected abstract AddressSetView getSelection();

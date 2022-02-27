@@ -43,10 +43,9 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 	private final MouseEvent originalMouseEvent;
 	private final GraphViewer<V, E> viewer;
 
-	// TODO make these private if the subclass goes away
-	protected final V vertex;
+	private final V vertex;
 	private MouseEvent translatedMouseEvent;
-	protected Component mousedDestinationComponent;
+	private Component mousedDestinationComponent;
 
 	public VertexMouseInfo(MouseEvent originalMouseEvent, V vertex, Point2D vertexBasedClickPoint,
 			GraphViewer<V, E> viewer) {

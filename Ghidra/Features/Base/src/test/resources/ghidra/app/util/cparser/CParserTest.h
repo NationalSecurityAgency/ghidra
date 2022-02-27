@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * EXCLUDE: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +17,7 @@
 /** Test parsing header file for CParser.  Most of the file is just checked to make sure it gets through parsing.
  ** Some data types are checked.  More checking of the parsed information would be beneficial at some point.
  **/
+ 
 
 /**
  ** use of long as an attribute
@@ -229,6 +229,8 @@ __checkint(int val, int* err) {
         if (val < (-2147483647-1) || val > 2147483647) {
                 *err |= OVR_ERR;
         }
+        
+        val = 8 * sizeof(val);
 
         return (int32_t) val;
 }
@@ -339,6 +341,22 @@ typedef struct sigevent
   } sigevent_t;
 
 
+/*
+ * Complicated sizeof array size
+ */
+typedef struct
+{
+    unsigned long int val[(1024 / (8 * sizeof (unsigned long int)))];
+} sizeof_t;
+
+
+typedef unsigned long int __cpu_mask;
+
+typedef struct
+{
+  __cpu_mask __bits[1024 / (8 * (int) sizeof (__cpu_mask))];
+  char       szUrl[(2048 + 32 + sizeof("://"))] ;
+} cpu_set_t;
 
 
  void __mem_func (void *, char **, int ***, long (*) (size_t),
@@ -389,7 +407,7 @@ struct sockaddr_in
     struct in_addr sin_addr;
 
 
-    unsigned char sin_zero[sizeof (struct bob) -
+    unsigned char sin_zero[3 * sizeof (struct bob) -
 			   (sizeof (unsigned short int)) -
 			   sizeof (int) -
 			   sizeof (struct bob)];

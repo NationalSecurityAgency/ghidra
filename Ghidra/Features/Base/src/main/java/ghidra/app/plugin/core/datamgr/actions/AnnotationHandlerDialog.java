@@ -19,7 +19,6 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import java.util.Vector;
 
 import javax.swing.JPanel;
 
@@ -39,28 +38,28 @@ class AnnotationHandlerDialog extends DialogComponentProvider {
 	private AnnotationHandler handler;
 
 	private boolean success;
-		
+
 	AnnotationHandlerDialog(List<AnnotationHandler> handlerList) {
 		super("Export Format");
 		this.handlerList = handlerList;
-			
+
 		addWorkPanel(create());
 		addOKButton();
 		addCancelButton();
 		setOkEnabled(true);
 		setHelpLocation(new HelpLocation(HelpTopics.DATA_MANAGER, "Export_To"));
-        setRememberSize( false );
+		setRememberSize(false);
 
 	}
-	
+
 	@Override
-    protected void cancelCallback() {
+	protected void cancelCallback() {
 		close();
 	}
 
 	@Override
-    protected void okCallback() {
-		Object [] objs = handlerComboBox.getSelectedObjects();
+	protected void okCallback() {
+		Object[] objs = handlerComboBox.getSelectedObjects();
 		if (objs != null && objs.length > 0) {
 			handler = (AnnotationHandler) objs[0];
 		}
@@ -70,9 +69,10 @@ class AnnotationHandlerDialog extends DialogComponentProvider {
 
 	JPanel create() {
 		JPanel outerPanel = new JPanel(new BorderLayout());
-		
-		handlerComboBox = new GhidraComboBox<>(new Vector<AnnotationHandler>(handlerList));
+
+		handlerComboBox = new GhidraComboBox<>(handlerList);
 		handlerComboBox.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent evt) {
 				okCallback();
 			}
@@ -80,8 +80,12 @@ class AnnotationHandlerDialog extends DialogComponentProvider {
 		outerPanel.add(handlerComboBox, BorderLayout.NORTH);
 		return outerPanel;
 	}
-	
-	public AnnotationHandler getHandler() { return handler; }
-	
-	public boolean wasSuccessful()        { return success; }
+
+	public AnnotationHandler getHandler() {
+		return handler;
+	}
+
+	public boolean wasSuccessful() {
+		return success;
+	}
 }

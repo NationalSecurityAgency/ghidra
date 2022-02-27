@@ -17,31 +17,73 @@ package ghidra.app.plugin.core.debug.gui.memory;
 
 import static org.junit.Assert.*;
 
-import java.util.Set;
+import java.util.*;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
+import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
+import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionMapProposalDialog.RegionMapTableColumns;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsProvider.RegionTableColumns;
+import ghidra.app.services.RegionMapProposal.RegionMapEntry;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.util.database.UndoableTransaction;
 
+@Category(NightlyCategory.class)
 public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	DebuggerRegionsProvider provider;
+
+	protected TraceMemoryRegion regionExeText;
+	protected TraceMemoryRegion regionExeData;
+	protected TraceMemoryRegion regionLibText;
+	protected TraceMemoryRegion regionLibData;
+
+	protected MemoryBlock blockExeText;
+	protected MemoryBlock blockExeData;
 
 	@Before
 	public void setUpRegionsTest() throws Exception {
 		addPlugin(tool, DebuggerRegionsPlugin.class);
 		provider = waitForComponentProvider(DebuggerRegionsProvider.class);
+	}
+
+	protected void addRegions() throws Exception {
+		TraceMemoryManager mm = tb.trace.getMemoryManager();
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			regionExeText = mm.createRegion("Memory[/bin/echo 0x55550000]", 0,
+				tb.range(0x55550000, 0x555500ff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			regionExeData = mm.createRegion("Memory[/bin/echo 0x55750000]", 0,
+				tb.range(0x55750000, 0x5575007f), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
+			regionLibText = mm.createRegion("Memory[/lib/libc.so 0x7f000000]", 0,
+				tb.range(0x7f000000, 0x7f0003ff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			regionLibData = mm.createRegion("Memory[/lib/libc.so 0x7f100000]", 0,
+				tb.range(0x7f100000, 0x7f10003f), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
+		}
+	}
+
+	protected void addBlocks() throws Exception {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+			Memory mem = program.getMemory();
+			blockExeText = mem.createInitializedBlock(".text", tb.addr(0x00400000), 0x100, (byte) 0,
+				monitor, false);
+			blockExeData = mem.createInitializedBlock(".data", tb.addr(0x00600000), 0x80, (byte) 0,
+				monitor, false);
+		}
 	}
 
 	@Test
@@ -65,8 +107,8 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("bin:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		traceManager.openTrace(tb.trace);
@@ -75,7 +117,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		RegionRow row = Unique.assertOne(provider.regionTableModel.getModelData());
 		assertEquals(region, row.getRegion());
-		assertEquals("bin:.text", row.getName());
+		assertEquals("Memory[bin:.text]", row.getName());
 		assertEquals(tb.addr(0x00400000), row.getMinAddress());
 		assertEquals(tb.addr(0x0040ffff), row.getMaxAddress());
 		assertEquals(tb.range(0x00400000, 0x0040ffff), row.getRange());
@@ -93,8 +135,8 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("bin:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		waitForSwing();
@@ -110,8 +152,8 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("bin:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		traceManager.openTrace(tb.trace);
@@ -135,7 +177,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("bin:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Memory[bin:.text]", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
@@ -158,7 +200,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("bin:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Memory[bin:.text]", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			waitForDomainObject(tb.trace);
@@ -179,8 +221,8 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("bin:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		traceManager.openTrace(tb.trace);
@@ -199,6 +241,92 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
+	public void testActionMapRegions() throws Exception {
+		assertFalse(provider.actionMapRegions.isEnabled());
+
+		createAndOpenTrace();
+		createAndOpenProgramFromTrace();
+		intoProject(tb.trace);
+		intoProject(program);
+
+		addRegions();
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		// Still
+		assertFalse(provider.actionMapRegions.isEnabled());
+
+		addBlocks();
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name", true)) {
+			program.setName("echo");
+		}
+		waitForDomainObject(program);
+		waitForPass(() -> assertEquals(4, provider.regionTable.getRowCount()));
+
+		// NB. Feature works "best" when all regions of modules are selected
+		// TODO: Test cases where feature works "worst"?
+		provider.setSelectedRegions(Set.of(regionExeText, regionExeData));
+		waitForSwing();
+		assertTrue(provider.actionMapRegions.isEnabled());
+
+		performAction(provider.actionMapRegions, false);
+
+		DebuggerRegionMapProposalDialog propDialog =
+			waitForDialogComponent(DebuggerRegionMapProposalDialog.class);
+
+		List<RegionMapEntry> proposal = new ArrayList<>(propDialog.getTableModel().getModelData());
+		assertEquals(2, proposal.size());
+		RegionMapEntry entry;
+
+		// Table sorts by name by default.
+		// Names are file name followed by min address, so .text is first.
+		entry = proposal.get(0);
+		assertEquals(regionExeText, entry.getRegion());
+		assertEquals(blockExeText, entry.getBlock());
+		entry = proposal.get(1);
+		assertEquals(regionExeData, entry.getRegion());
+		assertEquals(blockExeData, entry.getBlock());
+
+		clickTableCell(propDialog.getTable(), 0, RegionMapTableColumns.CHOOSE.ordinal(), 1);
+
+		DebuggerBlockChooserDialog blockDialog =
+			waitForDialogComponent(DebuggerBlockChooserDialog.class);
+		MemoryBlockRow row = blockDialog.getTableFilterPanel().getSelectedItem();
+		assertEquals(blockExeText, row.getBlock());
+
+		pressButtonByText(blockDialog, "OK", true);
+		assertEquals(blockExeData, entry.getBlock()); // Unchanged
+		// TODO: Test the changed case
+
+		Collection<? extends TraceStaticMapping> mappings =
+			tb.trace.getStaticMappingManager().getAllEntries();
+		assertEquals(0, mappings.size());
+
+		pressButtonByText(propDialog, "OK", true);
+		waitForDomainObject(tb.trace);
+		assertEquals(2, mappings.size());
+		Iterator<? extends TraceStaticMapping> mit = mappings.iterator();
+		TraceStaticMapping sm;
+
+		sm = mit.next();
+		assertEquals(Range.atLeast(0L), sm.getLifespan());
+		assertEquals("ram:00400000", sm.getStaticAddress());
+		assertEquals(0x100, sm.getLength());
+		assertEquals(tb.addr(0x55550000), sm.getMinTraceAddress());
+
+		sm = mit.next();
+		assertEquals(Range.atLeast(0L), sm.getLifespan());
+		assertEquals("ram:00600000", sm.getStaticAddress());
+		assertEquals(0x80, sm.getLength());
+		assertEquals(tb.addr(0x55750000), sm.getMinTraceAddress());
+
+		assertFalse(mit.hasNext());
+	}
+
+	// TODO: testActionMapRegionsTo
+	// TODO: testActionMapRegionTo
+
+	@Test
 	public void testActionSelectAddresses() throws Exception {
 		addPlugin(tool, DebuggerListingPlugin.class);
 		DebuggerListingProvider listing = waitForComponentProvider(DebuggerListingProvider.class);
@@ -208,8 +336,8 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("bin:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		traceManager.openTrace(tb.trace);
@@ -240,8 +368,8 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("bin:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
 		traceManager.openTrace(tb.trace);

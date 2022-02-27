@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +22,19 @@ import java.util.ConcurrentModificationException;
  *
  * 
  */
+@Deprecated(since = "10.2")
 public interface GraphIterator<T extends KeyedObject> {
 
 	/** Return true if the iterator has more elements */
 	public boolean hasNext();
-	
+
 	/** Returns next element in the iteration. 
 	 * @throws ConcurrentModificationException if the backing set
 	 * has been modified since the iterator was created.
 	 */
 	public T next() throws ConcurrentModificationException;
-	
+
 	/** Removes the object from the backing set safely */
-	public boolean remove(); 
+	public boolean remove();
 
 }

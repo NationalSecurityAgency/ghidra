@@ -43,7 +43,6 @@ import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.plugin.debug.DbViewerPlugin;
 import ghidra.app.plugin.debug.EventDisplayPlugin;
 import ghidra.app.plugin.prototype.debug.ScreenshotPlugin;
-import ghidra.framework.model.ToolChest;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginDescription;
@@ -60,7 +59,7 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private TestEnv env;
 	private PluginTool tool;
-	private ManagePluginsDialog provider;
+	private ManagePluginsDialog managePluginsDialog;
 	private PluginConfigurationModel pluginModel;
 	private String descrText;
 	private PluginManagerComponent pluginManagerComponent;
@@ -89,19 +88,17 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 	@After
 	public void tearDown() throws Exception {
 		tool.setConfigChanged(false);
-		ToolChest tc = tool.getProject().getLocalToolChest();
-		tc.remove("MyTestTool");
-		runSwing(() -> provider.close());
-		closeAllWindowsAndFrames();
+		runSwing(() -> managePluginsDialog.close());
+		closeAllWindows();
 		env.dispose();
 	}
 
 	@Test
 	public void testActionEnablement() {
-		performAction(provider.getSaveAction(), true);
+		performAction(managePluginsDialog.getSaveAction(), true);
 
-		assertTrue(!provider.getSaveAction().isEnabled());
-		assertTrue(provider.getSaveAsAction().isEnabled());
+		assertFalse(managePluginsDialog.getSaveAction().isEnabled());
+		assertTrue(managePluginsDialog.getSaveAsAction().isEnabled());
 	}
 
 	@Test
@@ -114,11 +111,11 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 		PluginDescription eventDisplay =
 			PluginDescription.getPluginDescription(EventDisplayPlugin.class);
 
-		assertTrue(!pluginModel.isLoaded(dBViewer));
-		assertTrue(!pluginModel.isLoaded(screenshot));
-		assertTrue(!pluginModel.isLoaded(eventDisplay));
+		assertFalse(pluginModel.isLoaded(dBViewer));
+		assertFalse(pluginModel.isLoaded(screenshot));
+		assertFalse(pluginModel.isLoaded(eventDisplay));
 
-		executeOnSwingWithoutBlocking(() -> pluginModel.addAllPlugins(pluginPackage));
+		executeOnSwingWithoutBlocking(() -> pluginModel.addSupportedPlugins(pluginPackage));
 
 		assertTrue(pluginModel.isLoaded(dBViewer));
 		assertTrue(pluginModel.isLoaded(screenshot));
@@ -126,9 +123,9 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		executeOnSwingWithoutBlocking(() -> pluginModel.removeAllPlugins(pluginPackage));
 
-		assertTrue(!pluginModel.isLoaded(dBViewer));
-		assertTrue(!pluginModel.isLoaded(screenshot));
-		assertTrue(!pluginModel.isLoaded(eventDisplay));
+		assertFalse(pluginModel.isLoaded(dBViewer));
+		assertFalse(pluginModel.isLoaded(screenshot));
+		assertFalse(pluginModel.isLoaded(eventDisplay));
 
 	}
 
@@ -147,7 +144,7 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForTasks();
 
 		assertTrue(tool.hasConfigChanged());
-		assertTrue(provider.getSaveAction().isEnabled());
+		assertTrue(managePluginsDialog.getSaveAction().isEnabled());
 		assertTrue(
 			pluginModel.isLoaded(PluginDescription.getPluginDescription(AboutProgramPlugin.class)));
 	}
@@ -158,9 +155,9 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 		SwingUtilities.invokeLater(() -> pluginManagerComponent.manageAllPlugins());
 		pluginModel.removePlugin(PluginDescription.getPluginDescription(EquateTablePlugin.class));
 		assertTrue(tool.hasConfigChanged());
-		assertTrue(provider.getSaveAction().isEnabled());
-		assertTrue(!pluginModel.isLoaded(
-			PluginDescription.getPluginDescription(AboutProgramPlugin.class)));
+		assertTrue(managePluginsDialog.getSaveAction().isEnabled());
+		assertFalse(
+			pluginModel.isLoaded(PluginDescription.getPluginDescription(AboutProgramPlugin.class)));
 
 	}
 
@@ -238,14 +235,14 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSaveChanges() throws Exception {
 		tool.setConfigChanged(true);
 		assertTrue(tool.hasConfigChanged());
-		performAction(provider.getSaveAction(), true);
-		assertTrue(!tool.hasConfigChanged());
+		performAction(managePluginsDialog.getSaveAction(), true);
+		assertFalse(tool.hasConfigChanged());
 	}
 
 	@Test
 	public void testSaveAs() throws Exception {
 		// verify the Save tool config dialog is displayed.
-		performAction(provider.getSaveAsAction(), false);
+		performAction(managePluginsDialog.getSaveAsAction(), false);
 		waitForSwing();
 		SaveToolConfigDialog d = waitForDialogComponent(SaveToolConfigDialog.class);
 		assertNotNull(d);
@@ -259,12 +256,13 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 		DockingActionIf action = getAction(tool, ToolConstants.TOOL_OWNER, "Configure Tool");
 		performAction(action, true);
 		waitForSwing();
-		provider = tool.getManagePluginsDialog();
-		pluginManagerComponent = (PluginManagerComponent) getInstanceField("comp", provider);
+		managePluginsDialog = tool.getManagePluginsDialog();
+		pluginManagerComponent =
+			(PluginManagerComponent) getInstanceField("pluginComponent", managePluginsDialog);
 
 		executeOnSwingWithoutBlocking(() -> pluginManagerComponent.manageAllPlugins());
 		installerProvider = waitForDialogComponent(PluginInstallerDialog.class);
 
-		pluginModel = installerProvider.getModel();
+		pluginModel = managePluginsDialog.getPluginConfigurationModel();
 	}
 }

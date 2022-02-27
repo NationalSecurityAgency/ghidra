@@ -52,8 +52,10 @@ import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
 import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
-import ghidra.app.plugin.core.exporter.ExporterDialog;
+import ghidra.app.plugin.core.marker.MarkerMarginProvider;
+import ghidra.app.plugin.core.marker.MarkerOverviewProvider;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerListingService.LocationTrackingSpecChangeListener;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.framework.model.DomainFile;
@@ -72,9 +74,9 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.program.TraceVariableSnapProgramView;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.Swing;
+import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.util.*;
+import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.*;
@@ -185,6 +187,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 
 		@Override
+		protected void specChanged(LocationTrackingSpec spec) {
+			trackingSpecChangeListeners.fire.locationTrackingSpecChanged(spec);
+		}
+
+		@Override
 		protected void locationTracked() {
 			doGoToTracked();
 		}
@@ -239,8 +246,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected SyncToStaticListingAction actionSyncToStaticListing;
 	protected FollowsCurrentThreadAction actionFollowsCurrentThread;
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoReadMemory;
-	protected DockingAction actionCaptureSelectedMemory;
-	protected DockingAction actionExportView;
+	protected DockingAction actionReadSelectedMemory;
 	protected DockingAction actionOpenProgram;
 	protected MultiStateDockingAction<LocationTrackingSpec> actionTrackLocation;
 
@@ -250,15 +256,20 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected boolean followsCurrentThread = true;
 	// TODO: followsCurrentSnap?
 
-	protected DebuggerGoToTrait goToTrait;
-	protected ForListingTrackingTrait trackingTrait;
-	protected ForListingReadsMemoryTrait readsMemTrait;
+	protected final DebuggerGoToTrait goToTrait;
+	protected final ForListingTrackingTrait trackingTrait;
+	protected final ForListingReadsMemoryTrait readsMemTrait;
+
+	protected final ListenerSet<LocationTrackingSpecChangeListener> trackingSpecChangeListeners =
+		new ListenerSet<>(LocationTrackingSpecChangeListener.class);
 
 	protected final DebuggerLocationLabel locationLabel = new DebuggerLocationLabel();
 
 	protected final MultiBlendedListingBackgroundColorModel colorModel;
 	protected final MarkerSetChangeListener markerChangeListener = new MarkerSetChangeListener();
 	protected MarkerServiceBackgroundColorModel markerServiceColorModel;
+	protected MarkerMarginProvider markerMarginProvider;
+	protected MarkerOverviewProvider markerOverviewProvider;
 
 	private SuppressableCallback<ProgramLocation> cbGoTo = new SuppressableCallback<>();
 
@@ -278,10 +289,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		readsMemTrait = new ForListingReadsMemoryTrait();
 
 		ListingPanel listingPanel = getListingPanel();
-		colorModel = new MultiBlendedListingBackgroundColorModel();
+		colorModel = plugin.createListingBackgroundColorModel(listingPanel);
 		colorModel.addModel(trackingTrait.createListingBackgroundColorModel(listingPanel));
-		colorModel.addModel(new MemoryStateListingBackgroundColorModel(plugin, listingPanel));
-		colorModel.addModel(new CursorBackgroundColorModel(plugin, listingPanel));
 		listingPanel.setBackgroundColorModel(colorModel);
 
 		autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
@@ -495,17 +504,25 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	private void setMarkerService(MarkerService markerService) {
 		if (this.markerService != null) {
 			this.markerService.removeChangeListener(markerChangeListener);
+			removeMarginProvider(markerMarginProvider);
+			markerMarginProvider = null;
+			removeOverviewProvider(markerOverviewProvider);
+			markerOverviewProvider = null;
 		}
-		this.markerService = markerService;
-		updateMarkerServiceColorModel();
-
 		removeOldStaticTrackingMarker();
 		this.markerService = markerService;
 		createNewStaticTrackingMarker();
+		updateMarkerServiceColorModel();
 
 		if (this.markerService != null && !isMainListing()) {
 			// NOTE: Connected provider marker listener is taken care of by CodeBrowserPlugin
 			this.markerService.addChangeListener(markerChangeListener);
+		}
+		if (this.markerService != null) {
+			markerMarginProvider = markerService.createMarginProvider();
+			addMarginProvider(markerMarginProvider);
+			markerOverviewProvider = markerService.createOverviewProvider();
+			addOverviewProvider(markerOverviewProvider);
 		}
 	}
 
@@ -597,6 +614,38 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		setSubTitle(computeSubTitle());
 	}
 
+	@Override
+	protected String computePanelTitle(Program panelProgram) {
+		if (!(panelProgram instanceof TraceProgramView)) {
+			// really shouldn't happen anyway...
+			return super.computePanelTitle(panelProgram);
+		}
+		TraceProgramView view = (TraceProgramView) panelProgram;
+		TraceSnapshot snapshot =
+			view.getTrace().getTimeManager().getSnapshot(view.getSnap(), false);
+		if (snapshot == null) {
+			return Long.toString(view.getSnap());
+		}
+		String description = snapshot.getDescription();
+		String schedule = snapshot.getScheduleString();
+		if (description == null) {
+			description = "";
+		}
+		if (schedule == null) {
+			schedule = "";
+		}
+		if (!description.isBlank() && !schedule.isBlank()) {
+			return description + " (" + schedule + ")";
+		}
+		if (!description.isBlank()) {
+			return description;
+		}
+		if (!schedule.isBlank()) {
+			return schedule;
+		}
+		return DateUtils.formatDateTimestamp(new Date(snapshot.getRealTime()));
+	}
+
 	protected void createActions() {
 		if (isMainListing()) {
 			actionSyncToStaticListing = new SyncToStaticListingAction();
@@ -608,12 +657,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		actionGoTo = goToTrait.installAction();
 		actionTrackLocation = trackingTrait.installAction();
 		actionAutoReadMemory = readsMemTrait.installAutoReadAction();
-		actionCaptureSelectedMemory = readsMemTrait.installCaptureSelectedAction();
-
-		actionExportView = ExportTraceViewAction.builder(plugin)
-				.enabledWhen(ctx -> current.getView() != null)
-				.onAction(this::activatedExportView)
-				.buildAndInstallLocal(this);
+		actionReadSelectedMemory = readsMemTrait.installReadSelectedAction();
 
 		actionOpenProgram = OpenProgramAction.builder(plugin)
 				.withContext(DebuggerOpenProgramActionContext.class)
@@ -621,20 +665,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				.build();
 
 		contextChanged();
-	}
-
-	private void activatedExportView(ActionContext context) {
-		if (current.getView() == null) {
-			return;
-		}
-		// Avoid odd race conditions by fixing the snap
-		TraceProgramView fixed = current.getView() instanceof TraceVariableSnapProgramView
-				? current.getTrace().getFixedProgramView(current.getSnap())
-				: current.getView();
-
-		ExporterDialog dialog =
-			new ExporterDialog(tool, fixed.getDomainFile(), fixed, getSelection());
-		tool.showDialog(dialog);
 	}
 
 	private void activatedOpenProgram(DebuggerOpenProgramActionContext context) {
@@ -864,6 +894,14 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		return trackingTrait.getSpec();
 	}
 
+	public void addTrackingSpecChangeListener(LocationTrackingSpecChangeListener listener) {
+		trackingSpecChangeListeners.add(listener);
+	}
+
+	public void removeTrackingSpecChangeListener(LocationTrackingSpecChangeListener listener) {
+		trackingSpecChangeListeners.remove(listener);
+	}
+
 	public void setSyncToStaticListing(boolean sync) {
 		if (!isMainListing()) {
 			throw new IllegalStateException(
@@ -1010,7 +1048,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	public void cloneWindow() {
 		final DebuggerListingProvider newProvider = plugin.createNewDisconnectedProvider();
 		final ViewerPosition vp = getListingPanel().getFieldPanel().getViewerPosition();
+		final SaveState saveState = new SaveState();
+		writeConfigState(saveState);
 		Swing.runLater(() -> {
+			newProvider.readConfigState(saveState);
+
 			newProvider.goToCoordinates(current);
 			newProvider.getListingPanel()
 					.getFieldPanel()

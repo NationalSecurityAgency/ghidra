@@ -149,6 +149,12 @@ public class TableColumnModelState implements SortListener {
 		}
 	}
 
+	// used only in special circumstances to force a save
+	void forceSaveState() {
+		doSaveState(saveToXML());
+		saveUpdateManager.stop();
+	}
+
 	private void doSaveState() {
 		if (restoreUpdateManager.isBusy()) {
 
@@ -182,11 +188,14 @@ public class TableColumnModelState implements SortListener {
 
 		List<TableColumn> columnList = columnModel.getAllColumns();
 		for (TableColumn column : columnList) {
+
+			String columnName = getColumnName(column);
+			String width = Integer.toString(column.getWidth());
+			boolean visible = columnModel.isVisible(column);
 			Element columnElement = new Element(XML_COLUMN);
-			columnElement.setAttribute(XML_COLUMN_NAME, getColumnName(column));
-			columnElement.setAttribute(XML_COLUMN_WIDTH, Integer.toString(column.getWidth()));
-			columnElement.setAttribute(XML_COLUMN_VISIBLE,
-				Boolean.toString(columnModel.isVisible(column)));
+			columnElement.setAttribute(XML_COLUMN_NAME, columnName);
+			columnElement.setAttribute(XML_COLUMN_WIDTH, width);
+			columnElement.setAttribute(XML_COLUMN_VISIBLE, Boolean.toString(visible));
 			saveColumnSettings(columnElement, column);
 			xmlElement.addContent(columnElement);
 		}
@@ -347,8 +356,10 @@ public class TableColumnModelState implements SortListener {
 			List<Settings> settingsList = new ArrayList<>();
 
 			for (Object object : children) {
+
 				Element element = (Element) object;
 				String columnName = element.getAttributeValue(XML_COLUMN_NAME);
+
 				TableColumn column = getColumn(columnName, oldCompleteList);
 				if (column == null) {
 					setDefaultColumnsVisible();

@@ -151,7 +151,7 @@ if "%DEBUG%"=="y" (
 		set DEBUG_ADDRESS=127.0.0.1:18001
 	)
 		
-	set VMARG_LIST=!VMARG_LIST! -Dlog4j.configuration="!DEBUG_LOG4J!"	
+	set VMARG_LIST=!VMARG_LIST! -Dlog4j.configurationFile="!DEBUG_LOG4J!"	
 	set VMARG_LIST=!VMARG_LIST! -agentlib:jdwp=transport=dt_socket,server=y,suspend=!SUSPEND!,address=!DEBUG_ADDRESS!
 	goto continue3
 )

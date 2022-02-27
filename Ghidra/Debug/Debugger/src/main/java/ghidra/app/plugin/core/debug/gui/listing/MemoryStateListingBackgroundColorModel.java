@@ -25,6 +25,7 @@ import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.annotation.AutoOptionConsumed;
+import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.TraceAddressSnapRange;
@@ -47,7 +48,7 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
 
-	public MemoryStateListingBackgroundColorModel(DebuggerListingPlugin plugin,
+	public MemoryStateListingBackgroundColorModel(Plugin plugin,
 			ListingPanel listingPanel) {
 		autoOptionsWiring = AutoOptions.wireOptions(plugin, this);
 		modelDataChanged(listingPanel);

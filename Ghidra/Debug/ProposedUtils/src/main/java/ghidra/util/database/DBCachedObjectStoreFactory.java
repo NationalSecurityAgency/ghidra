@@ -18,8 +18,13 @@ package ghidra.util.database;
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
+import java.nio.*;
+import java.nio.charset.*;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import db.*;
 import ghidra.util.Msg;
@@ -402,6 +407,283 @@ public class DBCachedObjectStoreFactory {
 			else {
 				setValue(obj, consts[b & 0xff]);
 			}
+		}
+	}
+
+	public interface PrimitiveCodec<T> {
+		byte getSelector();
+
+		T decode(ByteBuffer buffer);
+
+		void encode(ByteBuffer buffer, T value);
+
+		Class<T> getValueClass();
+
+		abstract class AbstractPrimitiveCodec<T> implements PrimitiveCodec<T> {
+			static byte nextSelector = 0;
+			protected final byte selector = nextSelector++;
+			protected final Class<T> valueClass;
+
+			public AbstractPrimitiveCodec(Class<T> valueClass) {
+				this.valueClass = valueClass;
+			}
+
+			@Override
+			public byte getSelector() {
+				return selector;
+			}
+
+			@Override
+			public Class<T> getValueClass() {
+				return valueClass;
+			}
+		}
+
+		class SimplePrimitiveCodec<T> extends AbstractPrimitiveCodec<T> {
+			protected final Function<ByteBuffer, T> decode;
+			protected final BiConsumer<ByteBuffer, T> encode;
+
+			public SimplePrimitiveCodec(Class<T> valueClass, Function<ByteBuffer, T> decode,
+					BiConsumer<ByteBuffer, T> encode) {
+				super(valueClass);
+				this.decode = decode;
+				this.encode = encode;
+			}
+
+			@Override
+			public T decode(ByteBuffer buffer) {
+				return decode.apply(buffer);
+			}
+
+			@Override
+			public void encode(ByteBuffer buffer, T value) {
+				encode.accept(buffer, value);
+			}
+		}
+
+		class ArrayPrimitiveCodec<E, T> extends AbstractPrimitiveCodec<T> {
+			protected final PrimitiveCodec<E> elemCodec;
+			protected final Class<E> elemClass;
+
+			public <P> ArrayPrimitiveCodec(Class<T> valueClass, PrimitiveCodec<E> elemCodec) {
+				super(valueClass);
+				assert valueClass.isArray();
+				this.elemCodec = elemCodec;
+				this.elemClass = elemCodec.getValueClass();
+			}
+
+			@Override
+			public T decode(ByteBuffer buffer) {
+				List<E> result = new ArrayList<>();
+				while (buffer.hasRemaining()) {
+					result.add(elemCodec.decode(buffer));
+				}
+				int size = result.size();
+				Object arr = Array.newInstance(valueClass.getComponentType(), size);
+				for (int i = 0; i < size; i++) {
+					Array.set(arr, i, result.get(i));
+				}
+				return valueClass.cast(arr);
+			}
+
+			@Override
+			public void encode(ByteBuffer buffer, T value) {
+				int len = Array.getLength(value);
+				for (int i = 0; i < len; i++) {
+					elemCodec.encode(buffer, elemClass.cast(Array.get(value, i)));
+				}
+			}
+		}
+
+		class ArrayObjectCodec<E> extends ArrayPrimitiveCodec<E, E[]> {
+			@SuppressWarnings("unchecked")
+			public ArrayObjectCodec(PrimitiveCodec<E> elemCodec) {
+				super((Class<E[]>) Array.newInstance(elemCodec.getValueClass(), 0).getClass(),
+					elemCodec);
+			}
+		}
+
+		class LengthBoundCodec<T> extends AbstractPrimitiveCodec<T> {
+			protected final PrimitiveCodec<T> unbounded;
+
+			public LengthBoundCodec(PrimitiveCodec<T> unbounded) {
+				super(unbounded.getValueClass());
+				this.unbounded = unbounded;
+			}
+
+			@Override
+			public T decode(ByteBuffer buffer) {
+				int length = buffer.getInt();
+				int oldLimit = buffer.limit();
+				try {
+					buffer.limit(buffer.position() + length);
+					return unbounded.decode(buffer);
+				}
+				finally {
+					buffer.limit(oldLimit);
+				}
+			}
+
+			@Override
+			public void encode(ByteBuffer buffer, T value) {
+				int lenPos = buffer.position();
+				buffer.putInt(0);
+				int startPos = buffer.position();
+				unbounded.encode(buffer, value);
+				int endPos = buffer.position();
+				buffer.putInt(lenPos, endPos - startPos);
+			}
+		}
+
+		PrimitiveCodec<Boolean> BOOL = new SimplePrimitiveCodec<>(Boolean.class,
+			buf -> buf.get() != 0, (buf, b) -> buf.put((byte) (b ? 1 : 0)));
+		PrimitiveCodec<Byte> BYTE =
+			new SimplePrimitiveCodec<>(Byte.class, ByteBuffer::get, ByteBuffer::put);
+		PrimitiveCodec<Character> CHAR =
+			new SimplePrimitiveCodec<>(Character.class, ByteBuffer::getChar, ByteBuffer::putChar);
+		PrimitiveCodec<Short> SHORT =
+			new SimplePrimitiveCodec<>(Short.class, ByteBuffer::getShort, ByteBuffer::putShort);
+		PrimitiveCodec<Integer> INT =
+			new SimplePrimitiveCodec<>(Integer.class, ByteBuffer::getInt, ByteBuffer::putInt);
+		PrimitiveCodec<Long> LONG =
+			new SimplePrimitiveCodec<>(Long.class, ByteBuffer::getLong, ByteBuffer::putLong);
+		PrimitiveCodec<String> STRING = new AbstractPrimitiveCodec<>(String.class) {
+			final Charset cs = Charset.forName("UTF-8");
+
+			@Override
+			public String decode(ByteBuffer buffer) {
+				CharsetDecoder dec = cs.newDecoder();
+				try {
+					CharBuffer cb = dec.decode(buffer);
+					return cb.toString();
+				}
+				catch (CharacterCodingException e) {
+					throw new AssertionError(e);
+				}
+			}
+
+			@Override
+			public void encode(ByteBuffer buffer, String value) {
+				CharsetEncoder enc = cs.newEncoder();
+				enc.encode(CharBuffer.wrap(value), buffer, true);
+			}
+		};
+		PrimitiveCodec<boolean[]> BOOL_ARR = new ArrayPrimitiveCodec<>(boolean[].class, BOOL);
+		PrimitiveCodec<byte[]> BYTE_ARR = new AbstractPrimitiveCodec<>(byte[].class) {
+			@Override
+			public byte[] decode(ByteBuffer buffer) {
+				byte[] result = new byte[buffer.remaining()];
+				buffer.get(result);
+				return result;
+			}
+
+			@Override
+			public void encode(ByteBuffer buffer, byte[] value) {
+				buffer.put(value);
+			}
+		};
+		PrimitiveCodec<char[]> CHAR_ARR = new ArrayPrimitiveCodec<>(char[].class, CHAR);
+		PrimitiveCodec<short[]> SHORT_ARR = new ArrayPrimitiveCodec<>(short[].class, SHORT);
+		PrimitiveCodec<int[]> INT_ARR = new ArrayPrimitiveCodec<>(int[].class, INT);
+		PrimitiveCodec<long[]> LONG_ARR = new ArrayPrimitiveCodec<>(long[].class, LONG);
+		PrimitiveCodec<String[]> STRING_ARR =
+			new ArrayObjectCodec<>(new LengthBoundCodec<>(STRING));
+
+		Map<Byte, PrimitiveCodec<?>> CODECS_BY_SELECTOR = Stream
+				.of(BOOL, BYTE, CHAR, SHORT, INT, LONG, STRING, BOOL_ARR, BYTE_ARR, CHAR_ARR,
+					SHORT_ARR, INT_ARR, LONG_ARR, STRING_ARR)
+				.collect(Collectors.toMap(c -> c.getSelector(), c -> c));
+		Map<Class<?>, PrimitiveCodec<?>> CODECS_BY_CLASS = CODECS_BY_SELECTOR.values()
+				.stream()
+				.collect(Collectors.toMap(c -> c.getValueClass(), c -> c));
+
+		@SuppressWarnings("unchecked")
+		static <T> PrimitiveCodec<T> getCodec(Class<T> cls) {
+			return (PrimitiveCodec<T>) Objects.requireNonNull(CODECS_BY_CLASS.get(cls),
+				"No variant codec for class " + cls);
+		}
+
+		static PrimitiveCodec<?> getCodec(byte sel) {
+			return Objects.requireNonNull(CODECS_BY_SELECTOR.get(sel),
+				"No variant codec with selector " + sel);
+		}
+	}
+
+	public static abstract class AbstractVariantDBFieldCodec<OT extends DBAnnotatedObject>
+			extends AbstractDBFieldCodec<Object, OT, BinaryField> {
+		public AbstractVariantDBFieldCodec(Class<OT> objectType, Field field, int column) {
+			super(Object.class, objectType, BinaryField.class, field, column);
+		}
+
+		protected abstract PrimitiveCodec<?> getPrimitiveCodec(Class<?> cls);
+
+		protected abstract PrimitiveCodec<?> getPrimitiveCodec(OT obj, byte sel);
+
+		protected byte[] encode(Object value) {
+			if (value == null) {
+				return null;
+			}
+			@SuppressWarnings("unchecked")
+			PrimitiveCodec<Object> codec =
+				(PrimitiveCodec<Object>) getPrimitiveCodec(value.getClass());
+			ByteBuffer buf = ByteBuffer.allocate(1024);
+			while (true) {
+				try {
+					buf.clear();
+					buf.put(codec.getSelector());
+					codec.encode(buf, value);
+					buf.flip();
+					byte[] result = new byte[buf.remaining()];
+					buf.get(result);
+					return result;
+				}
+				catch (BufferOverflowException e) {
+					buf = ByteBuffer.allocate(buf.capacity() * 2);
+				}
+			}
+		}
+
+		protected Object decode(OT obj, byte[] enc) {
+			if (enc == null) {
+				return null;
+			}
+			ByteBuffer buf = ByteBuffer.wrap(enc);
+			PrimitiveCodec<?> codec = getPrimitiveCodec(obj, buf.get());
+			return codec.decode(buf);
+		}
+
+		@Override
+		public void store(Object value, BinaryField f) {
+			f.setBinaryData(encode(value));
+		}
+
+		@Override
+		protected void doStore(OT obj, DBRecord record)
+				throws IllegalArgumentException, IllegalAccessException {
+			record.setBinaryData(column, encode(getValue(obj)));
+		}
+
+		@Override
+		protected void doLoad(OT obj, DBRecord record)
+				throws IllegalArgumentException, IllegalAccessException {
+			setValue(obj, decode(obj, record.getBinaryData(column)));
+		}
+	}
+
+	public static class VariantDBFieldCodec<OT extends DBAnnotatedObject>
+			extends AbstractVariantDBFieldCodec<OT> {
+		public VariantDBFieldCodec(Class<OT> objectType, Field field, int column) {
+			super(objectType, field, column);
+		}
+
+		@Override
+		protected PrimitiveCodec<?> getPrimitiveCodec(Class<?> cls) {
+			return PrimitiveCodec.getCodec(cls);
+		}
+
+		@Override
+		protected PrimitiveCodec<?> getPrimitiveCodec(OT obj, byte sel) {
+			return PrimitiveCodec.getCodec(sel);
 		}
 	}
 

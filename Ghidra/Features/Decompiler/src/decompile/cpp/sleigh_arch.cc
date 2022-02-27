@@ -161,7 +161,7 @@ PcodeInjectLibrary *SleighArchitecture::buildPcodeInjectLibrary(void)
 { // Build the pcode injector based on sleigh
   PcodeInjectLibrary *res;
 
-  res = new PcodeInjectLibrarySleigh(this,translate->getUniqueBase());
+  res = new PcodeInjectLibrarySleigh(this);
   return res;
 }
 

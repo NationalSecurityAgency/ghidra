@@ -18,6 +18,7 @@
 //Works for both Microsoft and Gnu mangled symbols
 //@category Symbol
 
+import docking.*;
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.context.ProgramSymbolActionContext;
 import ghidra.app.script.GhidraScript;
@@ -26,7 +27,6 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.*;
-import docking.*;
 
 public class DemangleSymbolScript extends GhidraScript {
 
@@ -101,10 +101,10 @@ public class DemangleSymbolScript extends GhidraScript {
 		DemanglerCmd cmd = new DemanglerCmd(address, name);
 		boolean success = cmd.applyTo(currentProgram, monitor);
 		if (success) {
-			println("Successfully demangled!\n" + name + '\n' + cmd.getResult());
+			println("Successfully demangled\n" + name + '\n' + cmd.getResult());
 		}
 		else {
-			println(cmd.getStatusMsg());
+			println("Failed to demangle\n" + name + '\n' + cmd.getStatusMsg());
 		}
 	}
 }

@@ -70,7 +70,7 @@ import ghidra.util.task.TaskMonitor;
 //@formatter:on
 public class FidDebugPlugin extends ProgramPlugin implements ChangeListener {
 
-	private static final String FUNCTION_ID_DEBUG_NAME = "Function ID Debug";
+	static final String FUNCTION_ID_NAME = "Function ID";
 	private static final String MENU_GROUP_2 = "group2";
 
 	private FidService service;
@@ -132,21 +132,19 @@ public class FidDebugPlugin extends ProgramPlugin implements ChangeListener {
 			}
 		};
 		action.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_TOOLS, FidPluginPackage.NAME, "Debug Search Window" },
+			new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Debug Search Window" },
 			null, MENU_GROUP_2, MenuData.NO_MNEMONIC, "7"));
 		action.setDescription("Open a window to search the FID DBs in debug mode");
-		action.setHelpLocation(
-			new HelpLocation(FidPlugin.FID_HELP, "FunctionIDDebug"));
+		action.setHelpLocation(new HelpLocation(FidPlugin.FID_HELP, "FunctionIDDebug"));
 		tool.addAction(action);
 
 		action = new HashAction(this);
 		action.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_TOOLS, FidPluginPackage.NAME,
+			new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME,
 				"Debug Search Window (Current Function)" },
 			null, MENU_GROUP_2, MenuData.NO_MNEMONIC, "1"));
 		action.setDescription("FidHashes the current function for debug purposes");
-		action.setHelpLocation(
-			new HelpLocation(FidPlugin.FID_HELP, "FunctionIDDebug"));
+		action.setHelpLocation(new HelpLocation(FidPlugin.FID_HELP, "FunctionIDDebug"));
 		tool.addAction(action);
 
 		createRawFileAction = new DockingAction("raw file", getName()) {
@@ -155,13 +153,15 @@ public class FidDebugPlugin extends ProgramPlugin implements ChangeListener {
 				createRawFile();
 			}
 		};
-		createRawFileAction.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_TOOLS, FidPluginPackage.NAME,
-				"Create Read-only Database" }, null, MENU_GROUP_2, MenuData.NO_MNEMONIC, "1"));
+		createRawFileAction
+				.setMenuBarData(new MenuData(
+					new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME,
+						"Create Read-only Database" },
+					null, MENU_GROUP_2, MenuData.NO_MNEMONIC, "1"));
 		createRawFileAction.setDescription(
 			"Creates a raw read-only database suitable for distribution in the installation directory");
-		createRawFileAction.setHelpLocation(
-			new HelpLocation(FidPlugin.FID_HELP, "FunctionIDDebug"));
+		createRawFileAction
+				.setHelpLocation(new HelpLocation(FidPlugin.FID_HELP, "FunctionIDDebug"));
 
 		tool.addAction(createRawFileAction);
 	}
@@ -222,8 +222,8 @@ public class FidDebugPlugin extends ProgramPlugin implements ChangeListener {
 					List<FidDbViewerProvider> componentProviders =
 						tool.getWindowManager().getComponentProviders(FidDbViewerProvider.class);
 					for (ComponentProvider comp : componentProviders) {
-						if (((FidDbViewerProvider) comp).fidDB.getPath().equals(
-							fidFile.getPath())) {
+						if (((FidDbViewerProvider) comp).fidDB.getPath()
+								.equals(fidFile.getPath())) {
 							tool.getWindowManager().showComponent(comp, true);
 							return;
 						}
@@ -239,12 +239,11 @@ public class FidDebugPlugin extends ProgramPlugin implements ChangeListener {
 				}
 			};
 			action.setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_TOOLS,
-				FidPluginPackage.NAME, "Table Viewer", fidFile.getName() }, null, MENU_GROUP_2,
+				FUNCTION_ID_NAME, "Table Viewer", fidFile.getName() }, null, MENU_GROUP_2,
 				MenuData.NO_MNEMONIC, "6"));
 			action.setDescription(
 				"Opens new DB Table Viewer to browse the database in " + fidFile.getName());
-			action.setHelpLocation(
-				new HelpLocation(FidPlugin.FID_HELP, "FunctionIDPlugin"));
+			action.setHelpLocation(new HelpLocation(FidPlugin.FID_HELP, "FunctionIDPlugin"));
 			action.setEnabled(true);
 			if (tool != null) {
 				tool.addAction(action);
@@ -253,8 +252,7 @@ public class FidDebugPlugin extends ProgramPlugin implements ChangeListener {
 		}
 		// make these appear at the bottom of the Fid Menu.
 		tool.setMenuGroup(
-			new String[] { ToolConstants.MENU_TOOLS, FidPluginPackage.NAME, "Table Viewer" },
-			"zzz");
+			new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Table Viewer" }, "zzz");
 
 	}
 

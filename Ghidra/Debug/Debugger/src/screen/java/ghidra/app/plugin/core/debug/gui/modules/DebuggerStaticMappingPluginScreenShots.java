@@ -22,10 +22,8 @@ import org.junit.*;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
-import ghidra.app.services.DebuggerStaticMappingService.ModuleMapEntry;
-import ghidra.app.services.DebuggerStaticMappingService.ModuleMapProposal;
-import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.app.services.ProgramManager;
+import ghidra.app.services.*;
+import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
@@ -130,7 +128,7 @@ public class DebuggerStaticMappingPluginScreenShots extends GhidraScreenShotGene
 			Map<TraceModule, ModuleMapProposal> proposal =
 				mappingService.proposeModuleMaps(tb.trace.getModuleManager().getAllModules(),
 					List.of(programManager.getAllOpenPrograms()));
-			Collection<ModuleMapEntry> entries = ModuleMapProposal.flatten(proposal.values());
+			Collection<ModuleMapEntry> entries = MapProposal.flatten(proposal.values());
 			mappingService.addModuleMappings(entries, TaskMonitor.DUMMY, false);
 		}
 

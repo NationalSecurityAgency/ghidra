@@ -79,4 +79,11 @@ public interface ParamList {
 	public boolean possibleParamWithSlot(Address loc, int size, WithSlotRec res);
 
 	public boolean isThisBeforeRetPointer();
+
+	/**
+	 * Determine if this ParmList is equivalent to another instance
+	 * @param obj is the other instance
+	 * @return true if they are equivalent
+	 */
+	public boolean isEquivalent(ParamList obj);
 }

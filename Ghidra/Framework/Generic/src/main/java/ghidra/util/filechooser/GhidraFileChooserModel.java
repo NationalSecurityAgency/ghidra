@@ -49,11 +49,15 @@ public interface GhidraFileChooserModel {
 
 	/**
 	 * Returns the root drives/directories.
+	 * <p>
 	 * On windows, "C:\", "D:\", etc.
+	 * <p>
 	 * On linux, "/".
+	 * 
+	 * @param forceUpdate if true, request a fresh listing, if false allow a cached result 
 	 * @return the root drives
 	 */
-	public File[] getRoots();
+	public File[] getRoots(boolean forceUpdate);
 
 	/**
 	 * Returns an array of the files that 

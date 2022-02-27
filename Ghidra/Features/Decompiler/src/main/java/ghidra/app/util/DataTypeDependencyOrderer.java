@@ -192,8 +192,9 @@ public class DataTypeDependencyOrderer {
 				res.append(
 					"Ordered Dependents: " + dt.getName() + " " + dt.getClass().getName() + "\n");
 			}
+			res.append("\n");
 		}
-		res.append("\n");
+
 		if (!whoDependsOnMe.isEmpty()) {
 			for (Entry entry : whoDependsOnMe.keySet()) {
 				res.append("WhoDependsOnMe Me: " + entry.dataType.getName() + " " +
@@ -203,8 +204,8 @@ public class DataTypeDependencyOrderer {
 						dentry.dataType.getClass().getName() + "\n");
 				}
 			}
+			res.append("\n");
 		}
-		res.append("\n");
 		if (!whoIDependOn.isEmpty()) {
 			for (Entry entry : whoIDependOn.keySet()) {
 				res.append("WhoIDependOn I: " + entry.dataType.getName() + " " +

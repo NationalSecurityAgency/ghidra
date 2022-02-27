@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 import java.awt.BorderLayout;
 import java.awt.event.*;
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.function.*;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
@@ -60,32 +59,44 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 	protected enum LogicalBreakpointTableColumns
 		implements EnumeratedTableColumn<LogicalBreakpointTableColumns, LogicalBreakpointRow> {
-		ENABLED("", Enablement.class, LogicalBreakpointRow::getEnablement, LogicalBreakpointRow::setEnablement, true),
-		IMAGE("Image", String.class, LogicalBreakpointRow::getImageName, true),
+		ENABLED("", Enablement.class, LogicalBreakpointRow::getEnablement, //
+				LogicalBreakpointRow::setEnablement, true),
+		NAME("Name", String.class, LogicalBreakpointRow::getName, LogicalBreakpointRow::setName, //
+				LogicalBreakpointRow::isNamable, true),
 		ADDRESS("Address", Address.class, LogicalBreakpointRow::getAddress, true),
+		IMAGE("Image", String.class, LogicalBreakpointRow::getImageName, true),
 		LENGTH("Length", Long.class, LogicalBreakpointRow::getLength, true),
 		KINDS("Kinds", String.class, LogicalBreakpointRow::getKinds, true),
 		LOCATIONS("Locations", Integer.class, LogicalBreakpointRow::getLocationCount, true);
 
 		private final String header;
+		private final Class<?> cls;
 		private final Function<LogicalBreakpointRow, ?> getter;
 		private final BiConsumer<LogicalBreakpointRow, Object> setter;
+		private final Predicate<LogicalBreakpointRow> editable;
 		private final boolean sortable;
-		private final Class<?> cls;
 
 		<T> LogicalBreakpointTableColumns(String header, Class<T> cls,
 				Function<LogicalBreakpointRow, T> getter, boolean sortable) {
-			this(header, cls, getter, null, sortable);
+			this(header, cls, getter, null, null, sortable);
+		}
+
+		<T> LogicalBreakpointTableColumns(String header, Class<T> cls,
+				Function<LogicalBreakpointRow, T> getter,
+				BiConsumer<LogicalBreakpointRow, T> setter, boolean sortable) {
+			this(header, cls, getter, setter, null, sortable);
 		}
 
 		@SuppressWarnings("unchecked")
 		<T> LogicalBreakpointTableColumns(String header, Class<T> cls,
 				Function<LogicalBreakpointRow, T> getter,
-				BiConsumer<LogicalBreakpointRow, T> setter, boolean sortable) {
+				BiConsumer<LogicalBreakpointRow, T> setter,
+				Predicate<LogicalBreakpointRow> editable, boolean sortable) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<LogicalBreakpointRow, Object>) setter;
+			this.editable = editable;
 			this.sortable = sortable;
 		}
 
@@ -106,7 +117,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		@Override
 		public boolean isEditable(LogicalBreakpointRow row) {
-			return setter != null;
+			return setter != null && (editable == null || editable.test(row));
 		}
 
 		@Override
@@ -961,10 +972,16 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			new DebuggerBreakpointEnablementTableCellEditor(breakpointFilterPanel));
 		bptEnCol.setMaxWidth(24);
 		bptEnCol.setMinWidth(24);
+		TableColumn bptNameCol =
+			bptColModel.getColumn(LogicalBreakpointTableColumns.NAME.ordinal());
+		bptNameCol.setPreferredWidth(150);
 		TableColumn bptAddrCol =
 			bptColModel.getColumn(LogicalBreakpointTableColumns.ADDRESS.ordinal());
 		bptAddrCol.setPreferredWidth(150);
 		bptAddrCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
+		TableColumn bptImgCol =
+			bptColModel.getColumn(LogicalBreakpointTableColumns.IMAGE.ordinal());
+		bptImgCol.setPreferredWidth(100);
 		TableColumn lenCol = bptColModel.getColumn(LogicalBreakpointTableColumns.LENGTH.ordinal());
 		lenCol.setPreferredWidth(60);
 		lenCol.setCellRenderer(CustomToStringCellRenderer.MONO_ULONG_HEX);

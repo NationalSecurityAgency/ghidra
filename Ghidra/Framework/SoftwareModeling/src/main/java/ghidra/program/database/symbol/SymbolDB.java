@@ -570,9 +570,13 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 			checkDeleted();
 			checkEditOK();
 
+			SymbolType type = getSymbolType();
+
+			symbolMgr.checkValidNamespaceArgument(newNamespace);
+
 			source = validateNameSource(newName, source);
 
-			symbolMgr.validateSource(newName, getAddress(), getSymbolType(), source);
+			symbolMgr.validateSource(newName, getAddress(), type, source);
 
 			Namespace oldNamespace = getParentNamespace();
 			boolean namespaceChange = !oldNamespace.equals(newNamespace);
@@ -604,8 +608,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				}
 
 				if (checkForDuplicates) {
-					symbolMgr.checkDuplicateSymbolName(address, newName, newNamespace,
-						getSymbolType());
+					symbolMgr.checkDuplicateSymbolName(address, newName, newNamespace, type);
 				}
 			}
 
@@ -631,9 +634,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 					symbolMgr.symbolNamespaceChanged(this, oldNamespace);
 				}
 				if (nameChange) {
-					SymbolType symbolType = getSymbolType();
 					if (isExternal() &&
-						(symbolType == SymbolType.FUNCTION || symbolType == SymbolType.LABEL)) {
+						(type == SymbolType.FUNCTION || type == SymbolType.LABEL)) {
 						ExternalManagerDB externalManager = symbolMgr.getExternalManager();
 						ExternalLocationDB externalLocation =
 							(ExternalLocationDB) externalManager.getExternalLocation(this);
@@ -649,6 +651,11 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 								s.getName());
 						}
 					}
+				}
+				
+				if (type == SymbolType.NAMESPACE || type == SymbolType.CLASS) {
+					// function class structure path change may impact auto-params
+					symbolMgr.getProgram().getFunctionManager().invalidateCache(true);
 				}
 			}
 			else {
@@ -855,15 +862,6 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 	}
 
-	protected void removeAllReferencesTo() {
-		ReferenceManager refMgr = symbolMgr.getReferenceManager();
-		ReferenceIterator it = refMgr.getReferencesTo(address);
-		while (it.hasNext()) {
-			Reference ref = it.next();
-			refMgr.delete(ref);
-		}
-	}
-
 	public long getDataTypeId() {
 		lock.acquire();
 		try {
@@ -1013,7 +1011,9 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	@Override
-	public abstract boolean isValidParent(Namespace parent);
+	public boolean isValidParent(Namespace parent) {
+		return symbolMgr.isMyNamespace(parent);
+	}
 
 	/**
 	 * Change the record and key associated with this symbol

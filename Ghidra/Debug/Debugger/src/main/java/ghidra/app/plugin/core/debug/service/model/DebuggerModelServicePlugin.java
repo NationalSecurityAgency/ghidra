@@ -314,8 +314,8 @@ public class DebuggerModelServicePlugin extends Plugin
 	}
 
 	@Override
-	public TraceRecorder recordTarget(TargetObject target, DebuggerTargetTraceMapper mapper)
-			throws IOException {
+	public TraceRecorder recordTarget(TargetObject target, DebuggerTargetTraceMapper mapper,
+			ActionSource source) throws IOException {
 		TraceRecorder recorder;
 		// Cannot use computeIfAbsent here
 		// Entry must be present before listeners invoked
@@ -328,7 +328,12 @@ public class DebuggerModelServicePlugin extends Plugin
 			recorder = doBeginRecording(target, mapper);
 			recorder.addListener(listenerOnRecorders);
 			recorder.init().exceptionally(e -> {
-				Msg.showError(this, null, "Record Trace", "Error initializing recorder", e);
+				if (source == ActionSource.MANUAL) {
+					Msg.showError(this, null, "Record Trace", "Error initializing recorder", e);
+				}
+				else {
+					Msg.error(this, "Error initializing recorder", e);
+				}
 				return null;
 			});
 			recordersByTarget.put(target, recorder);
@@ -356,7 +361,7 @@ public class DebuggerModelServicePlugin extends Plugin
 			throw new NoSuchElementException("No mapper for target: " + target);
 		}
 		try {
-			return recordTarget(target, mapper);
+			return recordTarget(target, mapper, ActionSource.AUTOMATIC);
 		}
 		catch (IOException e) {
 			throw new AssertionError("Could not record target: " + target, e);
@@ -383,7 +388,7 @@ public class DebuggerModelServicePlugin extends Plugin
 		assert selected != null;
 		DebuggerTargetTraceMapper mapper = selected.take();
 		try {
-			return recordTarget(target, mapper);
+			return recordTarget(target, mapper, ActionSource.MANUAL);
 		}
 		catch (IOException e) {
 			throw new AssertionError("Could not record target: " + target, e);
@@ -494,7 +499,7 @@ public class DebuggerModelServicePlugin extends Plugin
 	public TraceRecorder recordTargetAndActivateTrace(TargetObject target,
 			DebuggerTargetTraceMapper mapper, DebuggerTraceManagerService traceManager)
 			throws IOException {
-		TraceRecorder recorder = recordTarget(target, mapper);
+		TraceRecorder recorder = recordTarget(target, mapper, ActionSource.AUTOMATIC);
 		if (traceManager != null) {
 			Trace trace = recorder.getTrace();
 			traceManager.openTrace(trace);

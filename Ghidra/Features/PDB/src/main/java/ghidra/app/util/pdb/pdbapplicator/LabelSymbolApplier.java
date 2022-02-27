@@ -69,7 +69,7 @@ public class LabelSymbolApplier extends MsSymbolApplier {
 				name = NamespaceUtils.getNamespaceQualifiedName(f, name, true);
 			}
 		}
-		applicator.createSymbol(symbolAddress, symbol.getName(), false);
+		applicator.createSymbol(symbolAddress, name, false);
 	}
 
 	@Override

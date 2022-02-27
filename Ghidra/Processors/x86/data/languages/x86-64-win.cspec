@@ -158,6 +158,7 @@
       <range space="stack" first="8" last="39"/>
     </localrange>
   </prototype>
+  <modelalias name="__cdecl" parent="__fastcall"/>
   <callfixup name="alloca_probe">
     <target name="_alloca_probe"/>
     <target name="_alloca_probe2"/>

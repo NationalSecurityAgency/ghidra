@@ -16,6 +16,8 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import db.*;
 import ghidra.util.exception.VersionException;
@@ -73,12 +75,12 @@ class ParentChildDBAdapterV0 extends ParentChildAdapter {
 	}
 
 	@Override
-	long[] getParentIds(long childID) throws IOException {
+	Set<Long> getParentIds(long childID) throws IOException {
 		Field[] ids = table.findRecords(new LongField(childID), CHILD_COL);
-		long[] parentIds = new long[ids.length];
+		Set<Long> parentIds = new HashSet<>(ids.length);
 		for (int i = 0; i < ids.length; i++) {
 			DBRecord rec = table.getRecord(ids[i]);
-			parentIds[i] = rec.getLongValue(PARENT_COL);
+			parentIds.add(rec.getLongValue(PARENT_COL));
 		}
 		return parentIds;
 	}

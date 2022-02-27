@@ -33,10 +33,10 @@ import ghidra.util.task.TaskMonitor;
 public interface DataTypeReferenceFinder extends ExtensionPoint {
 
 	/**
-	 * Finds references in the current program in a manner appropriate with the given 
+	 * Finds references in the current program in a manner appropriate with the given
 	 * implementation.
 	 * <p>
-	 * Note that this operation is multi-threaded and that results will be delivered as they 
+	 * Note that this operation is multi-threaded and that results will be delivered as they
 	 * are found via the <code>callback</code>.
 	 * 
 	 * @param program the program to search
@@ -53,16 +53,16 @@ public interface DataTypeReferenceFinder extends ExtensionPoint {
 	 * Finds references in the current program to specific field of the given {@link Composite} type
 	 * in a manner appropriate with the given implementation.
 	 * <p>
-	 * Note that this operation is multi-threaded and that results will be delivered as they 
+	 * Note that this operation is multi-threaded and that results will be delivered as they
 	 * are found via the <code>callback</code>.
 	 * 
 	 * @param program the program to search
-	 * @param composite the type containing the field for which to search
+	 * @param dataType the type containing the field for which to search
 	 * @param fieldName the name of the composite's field for which to search
 	 * @param callback the callback to be called when a reference is found
 	 * @param monitor the monitor that allows for progress and cancellation
 	 * @throws CancelledException if the operation was cancelled
 	 */
-	public void findReferences(Program program, Composite composite, String fieldName,
+	public void findReferences(Program program, DataType dataType, String fieldName,
 			Consumer<DataTypeReference> callback, TaskMonitor monitor) throws CancelledException;
 }

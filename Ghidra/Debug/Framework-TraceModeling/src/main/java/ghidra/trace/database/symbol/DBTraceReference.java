@@ -25,10 +25,10 @@ import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.symbol.DBTraceReferenceSpace.DBTraceReferenceEntry;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace.TraceReferenceChangeType;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.*;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 
@@ -44,7 +44,7 @@ public class DBTraceReference implements TraceReference {
 		return ent.space.trace;
 	}
 
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return ent.space.getThread();
 	}
 

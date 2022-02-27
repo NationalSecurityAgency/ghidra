@@ -120,6 +120,16 @@ public class VariableAccessDR extends DecompilerReference {
 		}
 
 		if (potentialField == null) {
+
+			// check for the case where we have not been passed a 'potential field', but the given
+			// 'var' is itself the field we seek, such as in an if statement like this:
+			// 		if (color == RED)
+			// where 'RED' is the variable we are checking
+			String name = var.getName();
+			if (fieldName.equals(name)) {
+				return var;
+			}
+
 			return null; // we seek a field, but there is none
 		}
 
@@ -268,7 +278,7 @@ public class VariableAccessDR extends DecompilerReference {
 
 		//@formatter:off
 		return "{\n" +
-			"\tline " + getContext() + ",\n" +
+			"\tline " + getContext().getPlainText() + ",\n" +
 			"\tfunction: " + getFunction() + "\n" +
 			"\tvariable: " + StringUtilities.toStringWithIndent(variable) + ",\n" +
 			"\tdata type: " + getDataType() + ",\n"+

@@ -103,7 +103,10 @@ public class InjectPayloadSegment extends InjectPayloadSleigh {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean isEquivalent(InjectPayload obj) {
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
 		InjectPayloadSegment op2 = (InjectPayloadSegment) obj;
 		if (constResolveOffset != op2.constResolveOffset) {
 			return false;
@@ -120,18 +123,6 @@ public class InjectPayloadSegment extends InjectPayloadSleigh {
 		if (supportsFarPointer != op2.supportsFarPointer) {
 			return false;
 		}
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = space.hashCode();
-		if (constResolveSpace != null) {
-			hash = 79 * hash + constResolveSpace.hashCode();
-		}
-		hash = 79 * hash + Long.hashCode(constResolveOffset);
-		hash = 79 * hash + constResolveSize;
-		hash = 79 * hash + (supportsFarPointer ? 1 : 13);
-		return hash;
+		return super.isEquivalent(obj);
 	}
 }

@@ -32,6 +32,7 @@ import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.impl.cmd.*;
 import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import ghidra.async.AsyncLazyValue;
+import ghidra.async.AsyncUtils;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
@@ -90,7 +91,7 @@ public class GdbInferiorImpl implements GdbInferior {
 		this.pid = g.getPid();
 		this.exitCode = g.getExitCode();
 		this.executable = g.getExecutable();
-		
+
 		// Because we're only called to resync, we should synth started, if needed
 		if (oldPid == null && pid != null) {
 			manager.fireInferiorStarted(this, Causes.UNCLAIMED, "resyncInferiorStarted");
@@ -232,10 +233,17 @@ public class GdbInferiorImpl implements GdbInferior {
 	@Override
 	public CompletableFuture<Map<String, GdbModule>> listModules() {
 		// "nosections" is an unlikely section name. Goal is to exclude section lines.
-		// TODO: See how this behaves on other GDB versions.
-		return consoleCapture("maintenance info sections ALLOBJ nosections",
-			CompletesWithRunning.CANNOT)
-					.thenApply(this::parseModuleNames);
+		// TODO: Would be nice to save this switch, or better, choose at start based on version
+		CompletableFuture<String> future =
+			consoleCapture("maintenance info sections ALLOBJ nosections",
+				CompletesWithRunning.CANNOT);
+		return future.thenCompose(output -> {
+			if (output.split("\n").length <= 1) {
+				return consoleCapture("maintenance info sections -all-objects nosections")
+						.thenApply(out2 -> parseModuleNames(out2, true));
+			}
+			return CompletableFuture.completedFuture(parseModuleNames(output, false));
+		});
 	}
 
 	protected CompletableFuture<Void> loadSections() {
@@ -243,8 +251,16 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	protected CompletableFuture<Void> doLoadSections() {
-		return consoleCapture("maintenance info sections ALLOBJ", CompletesWithRunning.CANNOT)
-				.thenAccept(this::parseAndUpdateAllModuleSections);
+		CompletableFuture<String> future =
+			consoleCapture("maintenance info sections ALLOBJ", CompletesWithRunning.CANNOT);
+		return future.thenCompose(output -> {
+			if (output.split("\n").length <= 1) {
+				return consoleCapture("maintenance info sections -all-objects")
+						.thenAccept(out2 -> parseAndUpdateAllModuleSections(out2, true));
+			}
+			parseAndUpdateAllModuleSections(output, false);
+			return AsyncUtils.NIL;
+		});
 	}
 
 	protected GdbModuleImpl resyncCreateModule(String name) {
@@ -277,16 +293,36 @@ public class GdbInferiorImpl implements GdbInferior {
 		}
 	}
 
-	protected void parseAndUpdateAllModuleSections(String out) {
+	protected String nameFromLine(String line, boolean v11) {
+		if (v11) {
+			Matcher nameMatcher = GdbModuleImpl.V11_FILE_LINE_PATTERN.matcher(line);
+			if (!nameMatcher.matches()) {
+				return null;
+			}
+			String name = nameMatcher.group("name");
+			if (name.startsWith(GdbModuleImpl.GNU_DEBUGDATA_PREFIX)) {
+				return null;
+			}
+			return name;
+		}
+		else {
+			Matcher nameMatcher = GdbModuleImpl.OBJECT_FILE_LINE_PATTERN.matcher(line);
+			if (!nameMatcher.matches()) {
+				return null;
+			}
+			return nameMatcher.group("name");
+		}
+	}
+
+	protected void parseAndUpdateAllModuleSections(String out, boolean v11) {
 		Set<String> namesSeen = new HashSet<>();
 		GdbModuleImpl curModule = null;
 		for (String line : out.split("\n")) {
-			Matcher nameMatcher = GdbModuleImpl.OBJECT_FILE_LINE_PATTERN.matcher(line);
-			if (nameMatcher.matches()) {
+			String name = nameFromLine(line, v11);
+			if (name != null) {
 				if (curModule != null) {
 					curModule.loadSections.provide().complete(null);
 				}
-				String name = nameMatcher.group("name");
 				namesSeen.add(name);
 				curModule = modules.computeIfAbsent(name, this::resyncCreateModule);
 				// NOTE: This will usurp the module's lazy loader, but we're about to
@@ -307,12 +343,11 @@ public class GdbInferiorImpl implements GdbInferior {
 		resyncRetainModules(namesSeen);
 	}
 
-	protected Map<String, GdbModule> parseModuleNames(String out) {
+	protected Map<String, GdbModule> parseModuleNames(String out, boolean v11) {
 		Set<String> namesSeen = new HashSet<>();
 		for (String line : out.split("\n")) {
-			Matcher nameMatcher = GdbModuleImpl.OBJECT_FILE_LINE_PATTERN.matcher(line);
-			if (nameMatcher.matches()) {
-				String name = nameMatcher.group("name");
+			String name = nameFromLine(line, v11);
+			if (name != null) {
 				namesSeen.add(name);
 				modules.computeIfAbsent(name, this::resyncCreateModule);
 			}

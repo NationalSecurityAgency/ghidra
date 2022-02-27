@@ -216,10 +216,11 @@ public interface DebuggerLogicalBreakpointService {
 	 * @param address the address in the image
 	 * @param length size of the breakpoint, may be ignored by debugger
 	 * @param kinds the kinds of breakpoint
+	 * @param name a name for the breakpoint. For no name, use the empty string
 	 * @return a future which completes when all relevant breakpoints have been placed
 	 */
 	CompletableFuture<Void> placeBreakpointAt(Program program, Address address, long length,
-			Collection<TraceBreakpointKind> kinds);
+			Collection<TraceBreakpointKind> kinds, String name);
 
 	/**
 	 * Create an enabled breakpoint at the given trace location only.
@@ -250,15 +251,17 @@ public interface DebuggerLogicalBreakpointService {
 	 * If the given location refers to a static image, this behaves as in
 	 * {@link #placeBreakpointAt(Program, Address, TraceBreakpointKind)}. If it refers to a trace
 	 * view, this behaves as in {@link #placeBreakpointAt(Trace, Address, TraceBreakpointKind)},
-	 * ignoring the view's current snapshot in favor of the present.
+	 * ignoring the view's current snapshot in favor of the present. The name is only saved for a
+	 * program breakpoint.
 	 * 
 	 * @param loc the location
 	 * @param length size of the breakpoint, may be ignored by debugger
 	 * @param kinds the kinds of breakpoint
+	 * @param name an optional name for the breakpoint (null becomes the empty string)
 	 * @return a future which completes when the breakpoints have been placed
 	 */
 	CompletableFuture<Void> placeBreakpointAt(ProgramLocation loc, long length,
-			Collection<TraceBreakpointKind> kinds);
+			Collection<TraceBreakpointKind> kinds, String name);
 
 	/**
 	 * Enable a collection of logical breakpoints on target, if applicable

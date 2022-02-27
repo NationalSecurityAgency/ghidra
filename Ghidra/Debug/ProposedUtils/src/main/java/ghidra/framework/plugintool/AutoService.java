@@ -75,14 +75,16 @@ public interface AutoService {
 		}
 	}
 
-	public static Wiring wireServicesConsumed(Plugin plugin, Object receiver) {
-		// TODO: Validate against PluginInfo?
-
+	public static Wiring wireServicesConsumed(PluginTool tool, Object receiver) {
 		AutoServiceListener<Object> listener = new AutoServiceListener<>(receiver);
-		PluginTool tool = plugin.getTool();
 		tool.addServiceListener(listener);
 		listener.notifyCurrentServices(tool);
 
 		return new WiringImpl(listener);
+	}
+
+	public static Wiring wireServicesConsumed(Plugin plugin, Object receiver) {
+		// TODO: Validate against PluginInfo?
+		return wireServicesConsumed(plugin.getTool(), receiver);
 	}
 }

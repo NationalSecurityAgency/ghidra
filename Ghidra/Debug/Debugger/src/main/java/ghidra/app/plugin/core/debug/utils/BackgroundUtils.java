@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.utils;
 
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
 
@@ -24,8 +25,8 @@ import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.UndoableDomainObject;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.task.CancelledListener;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.*;
 
 public enum BackgroundUtils {
 	;
@@ -81,5 +82,60 @@ public enum BackgroundUtils {
 			new AsyncBackgroundCommand<>(name, hasProgress, canCancel, isModal, futureProducer);
 		tool.executeBackgroundCommand(cmd, obj);
 		return cmd;
+	}
+
+	public static class PluginToolExecutorService extends AbstractExecutorService {
+		private final PluginTool tool;
+		private String name;
+		private boolean canCancel;
+		private boolean hasProgress;
+		private boolean isModal;
+		private final int delay;
+
+		public PluginToolExecutorService(PluginTool tool, String name, boolean canCancel,
+				boolean hasProgress, boolean isModal, int delay) {
+			this.tool = tool;
+			this.name = name;
+			this.canCancel = canCancel;
+			this.hasProgress = hasProgress;
+			this.isModal = isModal;
+			this.delay = delay;
+		}
+
+		@Override
+		public void shutdown() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public List<Runnable> shutdownNow() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isShutdown() {
+			return false;
+		}
+
+		@Override
+		public boolean isTerminated() {
+			return false;
+		}
+
+		@Override
+		public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void execute(Runnable command) {
+			Task task = new Task(name, canCancel, hasProgress, isModal) {
+				@Override
+				public void run(TaskMonitor monitor) throws CancelledException {
+					command.run();
+				}
+			};
+			tool.execute(task, delay);
+		}
 	}
 }

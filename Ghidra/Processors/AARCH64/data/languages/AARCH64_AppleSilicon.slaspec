@@ -1,0 +1,6 @@
+
+@define DATA_ENDIAN "little"
+
+@include "AARCH64instructions.sinc"
+@include "AARCH64_AMXext.sinc"
+

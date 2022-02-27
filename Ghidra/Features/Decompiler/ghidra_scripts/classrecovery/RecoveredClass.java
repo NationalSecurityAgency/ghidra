@@ -95,7 +95,6 @@ public class RecoveredClass {
 	private static final int NONE = -1;
 
 	TaskMonitor monitor = TaskMonitor.DUMMY;
-	EditStructureUtils structUtils;
 
 
 	RecoveredClass(String name, CategoryPath classPath, Namespace classNamespace,
@@ -105,7 +104,6 @@ public class RecoveredClass {
 		this.classNamespace = classNamespace;
 		this.dataTypeManager = dataTypeManager;
 
-		this.structUtils = new EditStructureUtils();
 	}
 
 	public String getName() {
@@ -531,11 +529,11 @@ public class RecoveredClass {
 			// if the new component is a non-empty structure, check to see if the current
 			// structure has undefined or equivalent components and replace with new struct if so
 			if (newComponentDataType instanceof Structure) {
-				if (structUtils.hasReplaceableComponentsAtOffset(computedClassStructure,
+				if (EditStructureUtils.hasReplaceableComponentsAtOffset(computedClassStructure,
 					offset, (Structure) newComponentDataType, monitor)) {
 
 					boolean successfulClear =
-						structUtils.clearLengthAtOffset(computedClassStructure, offset,
+						EditStructureUtils.clearLengthAtOffset(computedClassStructure, offset,
 							length, monitor);
 
 					if (successfulClear) {
@@ -547,13 +545,14 @@ public class RecoveredClass {
 			}
 
 			// if current component is undefined size 1 and new component is not undefined size 1
-			// then replace it
-			if (structUtils.isUndefined1(currentComponentDataType) &&
-				!structUtils.isUndefined1(newComponentDataType)) {
-				if (structUtils.hasEnoughUndefinedsOfAnyLengthAtOffset(computedClassStructure,
+			// and there are enough undefineds for it to fit, then replace it
+			if (EditStructureUtils.isUndefined1(currentComponentDataType) &&
+				!EditStructureUtils.isUndefined1(newComponentDataType)) {
+				if (EditStructureUtils.hasEnoughUndefinedsOfAnyLengthAtOffset(
+					computedClassStructure,
 					offset, length, monitor)) {
 					boolean successfulClear =
-						structUtils.clearLengthAtOffset(computedClassStructure, offset,
+						EditStructureUtils.clearLengthAtOffset(computedClassStructure, offset,
 							length, monitor);
 
 					if (successfulClear) {
@@ -567,13 +566,14 @@ public class RecoveredClass {
 			// if new component is not an undefined data type and the current componenent(s)
 			// that make up new component length are all undefineds then clear and replace
 			// the current component(s) with the new one
-			if (structUtils.isUndefined(currentComponentDataType) &&
-				!structUtils.isUndefined(newComponentDataType)) {
+			if (Undefined.isUndefined(currentComponentDataType) &&
+				!Undefined.isUndefined(newComponentDataType)) {
 
-				if (structUtils.hasEnoughUndefinedsOfAnyLengthAtOffset(computedClassStructure,
+				if (EditStructureUtils.hasEnoughUndefinedsOfAnyLengthAtOffset(
+					computedClassStructure,
 					offset, length, monitor)) {
 					boolean successfulClear =
-						structUtils.clearLengthAtOffset(computedClassStructure, offset,
+						EditStructureUtils.clearLengthAtOffset(computedClassStructure, offset,
 							length, monitor);
 
 					if (successfulClear) {
@@ -601,7 +601,7 @@ public class RecoveredClass {
 				continue;
 			}
 
-			if (structUtils.isUndefined1(dataType)) {
+			if (EditStructureUtils.isUndefined1(dataType)) {
 				dataType = new Undefined1DataType();
 				DataTypeComponent component =
 					computedClassStructure.getComponentAt(offset.intValue());

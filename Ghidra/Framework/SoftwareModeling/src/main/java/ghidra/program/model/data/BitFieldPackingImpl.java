@@ -118,24 +118,4 @@ public class BitFieldPackingImpl implements BitFieldPacking {
 		}
 		parser.end();
 	}
-
-	@Override
-	public boolean equals(Object obj) {
-		BitFieldPackingImpl op2 = (BitFieldPackingImpl) obj;
-		if (typeAlignmentEnabled != op2.typeAlignmentEnabled) {
-			return false;
-		}
-		if (useMSConvention != op2.useMSConvention) {
-			return false;
-		}
-		if (zeroLengthBoundary != op2.zeroLengthBoundary) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		return (typeAlignmentEnabled ? 1 : 13) + (useMSConvention ? 5 : 27) + zeroLengthBoundary;
-	}
 }

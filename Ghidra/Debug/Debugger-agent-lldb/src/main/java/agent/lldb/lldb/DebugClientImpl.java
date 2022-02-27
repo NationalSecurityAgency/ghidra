@@ -15,6 +15,7 @@
  */
 package agent.lldb.lldb;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -22,8 +23,6 @@ import SWIG.*;
 import agent.lldb.manager.LldbEvent;
 import agent.lldb.manager.LldbManager;
 import agent.lldb.manager.evt.*;
-import ghidra.framework.OperatingSystem;
-import ghidra.framework.Platform;
 import ghidra.util.Msg;
 
 public class DebugClientImpl implements DebugClient {
@@ -41,18 +40,6 @@ public class DebugClientImpl implements DebugClient {
 
 	@Override
 	public DebugClient createClient() {
-		try {
-			if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.LINUX) {
-				System.load("/usr/lib/liblldb.so");
-			} else if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.MAC_OS_X) {
-				System.load("/usr/lib/liblldb.dylib");				
-			} else if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS) {
-				System.load("/usr/lib/liblldb.dll");				
-			}
-		}
-		catch (UnsatisfiedLinkError ex) {
-			Msg.error(this, "LLDB libraries not found for "+Platform.CURRENT_PLATFORM.getOperatingSystem());
-		}
 		SBError error = SBDebugger.InitializeWithErrorHandling();
 		if (!error.Success()) {
 			SBStream stream = new SBStream();
@@ -171,7 +158,8 @@ public class DebugClientImpl implements DebugClient {
 	public SBProcess createProcess(DebugServerId si, String fileName,
 			List<String> args, List<String> envp, List<String> pathsIO,
 			String workingDir, long createFlags, boolean stopAtEntry) {
-		session = connectSession(fileName);
+		File f = new File(fileName);  //hack to avoid /C:/
+		session = connectSession(f.getAbsolutePath());
 
 		String[] argArr = args.toArray(new String[args.size()]);
 		// null for envp means use the default environment

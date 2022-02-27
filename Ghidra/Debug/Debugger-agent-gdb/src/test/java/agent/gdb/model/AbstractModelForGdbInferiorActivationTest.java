@@ -62,7 +62,7 @@ public abstract class AbstractModelForGdbInferiorActivationTest
 	@Override
 	protected void activateViaInterpreter(TargetObject obj, TargetInterpreter interpreter)
 			throws Throwable {
-		String index = Unique.assertOne(INF_PATTERN.matchIndices(obj.getPath()));
+		String index = Unique.assertOne(INF_PATTERN.matchKeys(obj.getPath()));
 		waitOn(interpreter.execute("inferior " + index));
 	}
 

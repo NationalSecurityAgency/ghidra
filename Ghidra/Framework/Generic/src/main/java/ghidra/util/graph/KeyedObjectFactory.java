@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +15,6 @@
  */
 package ghidra.util.graph;
 
-
 /** The KeyedObjectFactory class is responsible for ensuring that no two
     vertices or edges have the same keys. One and only one instance of the 
     KeyedObjectFactory may exist. In addition to ensuring that all vertices 
@@ -27,30 +25,26 @@ package ghidra.util.graph;
     to a specific object since in theory there can be a one-to-many 
     correspondence.
 */
-public class KeyedObjectFactory
-{
-  private long keyCounter = 0;
+@Deprecated(since = "10.2")
+public class KeyedObjectFactory {
+	private long keyCounter = 0;
 
-
-  private KeyedObjectFactory()
-  {
-      //now is just a counter
-  }
+	private KeyedObjectFactory() {
+		//now is just a counter
+	}
 
 	/** The singleton instance of KeyedObjectFactory. */
-  static public KeyedObjectFactory instance_ = new KeyedObjectFactory();
+	static public KeyedObjectFactory instance_ = new KeyedObjectFactory();
 
-  /** Returns singleton instance of KeyedObjectFactory. */
-  static public KeyedObjectFactory getInstance()
-  {
-      return instance_;
-  }
+	/** Returns singleton instance of KeyedObjectFactory. */
+	static public KeyedObjectFactory getInstance() {
+		return instance_;
+	}
 
-  /** Gets returns the next available key. The keys are given out based on a
-   *  one up counter. */
-  synchronized long getNextAvailableKey()
-  {
-     return keyCounter++;
-  }
+	/** Gets returns the next available key. The keys are given out based on a
+	 *  one up counter. */
+	synchronized long getNextAvailableKey() {
+		return keyCounter++;
+	}
 
 }

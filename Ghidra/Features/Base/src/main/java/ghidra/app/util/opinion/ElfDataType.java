@@ -56,8 +56,8 @@ public class ElfDataType extends FactoryStructureDataType {
 
 	        ByteArrayProvider bap = new ByteArrayProvider(bytes);
 
-	        ElfHeader elf = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, bap);
-	        elf.parse();
+			ElfHeader elf = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, bap, null);
+			elf.parse();
 
 	        struct.add(elf.toDataType());
 		}

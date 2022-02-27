@@ -15,11 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.awt.Color;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -27,24 +26,25 @@ import java.util.Arrays;
 import java.util.Set;
 
 import org.junit.*;
+import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractFollowsCurrentThreadAction;
-import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToDialog;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.BoundAction;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.LogRow;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
-import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
 import ghidra.framework.model.*;
 import ghidra.plugin.importer.ImporterPlugin;
@@ -55,11 +55,11 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
-import ghidra.trace.database.stack.DBTraceStack;
 import ghidra.trace.database.stack.DBTraceStackManager;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
+import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.database.UndoableTransaction;
@@ -67,28 +67,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
+@Category(NightlyCategory.class)
 public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
-	static LocationTrackingSpec getLocationTrackingSpec(String name) {
-		return LocationTrackingSpec.fromConfigName(name);
-	}
-
-	static AutoReadMemorySpec getAutoReadMemorySpec(String name) {
-		return AutoReadMemorySpec.fromConfigName(name);
-	}
-
-	final LocationTrackingSpec trackNone =
-		getLocationTrackingSpec(NoneLocationTrackingSpec.CONFIG_NAME);
-	final LocationTrackingSpec trackPc =
-		getLocationTrackingSpec(PCLocationTrackingSpec.CONFIG_NAME);
-	final LocationTrackingSpec trackSp =
-		getLocationTrackingSpec(SPLocationTrackingSpec.CONFIG_NAME);
-
-	final AutoReadMemorySpec readNone =
-		getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);
-	final AutoReadMemorySpec readVisible =
-		getAutoReadMemorySpec(VisibleAutoReadMemorySpec.CONFIG_NAME);
-	final AutoReadMemorySpec readVisROOnce =
-		getAutoReadMemorySpec(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
 
 	protected DebuggerListingPlugin listingPlugin;
 	protected DebuggerListingProvider listingProvider;
@@ -110,12 +90,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	protected void goToDyn(ProgramLocation location) {
-		waitForPass(() -> {
-			runSwing(() -> listingProvider.goTo(location.getProgram(), location));
-			ProgramLocation confirm = listingProvider.getLocation();
-			assertNotNull(confirm);
-			assertEquals(location.getAddress(), confirm.getAddress());
-		});
+		goTo(listingProvider.getListingPanel(), location);
 	}
 
 	protected static byte[] incBlock() {
@@ -261,8 +236,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		TraceThread thread1;
 		TraceThread thread2;
-		DebuggerListingProvider extraProvider = SwingExecutorService.INSTANCE.submit(
-			() -> listingPlugin.createListingIfMissing(trackPc, true)).get();
+		DebuggerListingProvider extraProvider = SwingExecutorService.INSTANCE
+				.submit(() -> listingPlugin.createListingIfMissing(trackPc, true))
+				.get();
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
@@ -329,8 +305,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
-	public void testFollowsCurrentTraceOnTraceChangeWithoutRegisterTracking()
-			throws Exception {
+	public void testFollowsCurrentTraceOnTraceChangeWithoutRegisterTracking() throws Exception {
 		listingProvider.setTrackingSpec(trackNone);
 		try ( //
 				ToyDBTraceBuilder b1 =
@@ -386,8 +361,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
-	public void testFollowsCurrentThreadOnThreadChangeWithoutRegisterTracking()
-			throws Exception {
+	public void testFollowsCurrentThreadOnThreadChangeWithoutRegisterTracking() throws Exception {
 		listingProvider.setTrackingSpec(trackNone);
 		try ( //
 				ToyDBTraceBuilder b1 =
@@ -572,32 +546,6 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(ss.getAddress(0x00601234), loc.getAddress());
 	}
 
-	protected void assertListingBackgroundAt(Color expected, ListingPanel panel,
-			Address addr, int yAdjust) throws AWTException, InterruptedException {
-		ProgramLocation oneBack = new ProgramLocation(panel.getProgram(), addr.previous());
-		runSwing(() -> panel.goTo(addr));
-		runSwing(() -> panel.goTo(oneBack, false));
-		waitForPass(() -> {
-			Rectangle r = panel.getBounds();
-			// Capture off screen, so that focus/stacking doesn't matter
-			BufferedImage image = new BufferedImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
-			Graphics g = image.getGraphics();
-			try {
-				runSwing(() -> panel.paint(g));
-			}
-			finally {
-				g.dispose();
-			}
-			Point locP = panel.getLocationOnScreen();
-			Point locFP = panel.getLocationOnScreen();
-			locFP.translate(-locP.x, -locP.y);
-			Rectangle cursor = panel.getCursorBounds();
-			Color actual = new Color(image.getRGB(locFP.x + cursor.x - 1,
-				locFP.y + cursor.y + cursor.height * 3 / 2 + yAdjust));
-			assertEquals(expected, actual);
-		});
-	}
-
 	@Test
 	public void testDynamicListingMarksTrackedRegister() throws Exception {
 		createAndOpenTrace();
@@ -670,8 +618,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// While we're here, ensure static view didn't track anywhere
 		assertEquals(cur, codeViewer.getCurrentLocation().getAddress());
-		assertListingBackgroundAt(Color.WHITE,
-			codeViewer.getListingPanel(), ss.getAddress(0x00601234), 0);
+		assertListingBackgroundAt(Color.WHITE, codeViewer.getListingPanel(),
+			ss.getAddress(0x00601234), 0);
 	}
 
 	@Test
@@ -686,7 +634,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
@@ -757,8 +705,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		assertListingBackgroundAt(DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE,
 			listingProvider.getListingPanel(), tb.addr(0x00401233), 0);
-		assertListingBackgroundAt(Color.WHITE,
-			listingProvider.getListingPanel(), tb.addr(0x00401234), 0);
+		assertListingBackgroundAt(Color.WHITE, listingProvider.getListingPanel(),
+			tb.addr(0x00401234), 0);
 		assertListingBackgroundAt(DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR,
 			listingProvider.getListingPanel(), tb.addr(0x00401235), 0);
 	}
@@ -771,8 +719,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(traceManager.getCurrentView(), listingProvider.getProgram());
 		assertEquals("(nowhere)", listingProvider.locationLabel.getText());
 
-		DebuggerListingProvider extraProvider = runSwing(
-			() -> listingPlugin.createListingIfMissing(trackNone, false));
+		DebuggerListingProvider extraProvider =
+			runSwing(() -> listingPlugin.createListingIfMissing(trackNone, false));
 		waitForSwing();
 		assertEquals(traceManager.getCurrentView(), extraProvider.getProgram());
 		assertEquals("(nowhere)", extraProvider.locationLabel.getText());
@@ -819,18 +767,18 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		assertTrue(listingProvider.actionGoTo.isEnabled());
 		performAction(listingProvider.actionGoTo, false);
-		DebuggerGoToDialog dialog = waitForDialogComponent(DebuggerGoToDialog.class);
+		DebuggerGoToDialog dialog1 = waitForDialogComponent(DebuggerGoToDialog.class);
 
-		dialog.setExpression("r0");
-		dialog.okCallback();
+		dialog1.setExpression("r0");
+		runSwing(() -> dialog1.okCallback());
 
 		waitForPass(
 			() -> assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress()));
 
 		performAction(listingProvider.actionGoTo, false);
-		dialog = waitForDialogComponent(DebuggerGoToDialog.class);
-		dialog.setExpression("*:4 r0");
-		dialog.okCallback();
+		DebuggerGoToDialog dialog2 = waitForDialogComponent(DebuggerGoToDialog.class);
+		dialog2.setExpression("*:4 r0");
+		runSwing(() -> dialog2.okCallback());
 
 		waitForPass(
 			() -> assertEquals(tb.addr(0x00404321), listingProvider.getLocation().getAddress()));
@@ -898,8 +846,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
 			program.getMemory()
-					.createInitializedBlock(
-						".text", ss.getAddress(0x00600000), 0x10000, (byte) 0, monitor, false);
+					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
+						monitor, false);
 		}
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
@@ -959,8 +907,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateThread(thread1);
 
 		// NOTE: Action does not exist for main dynamic listing
-		DebuggerListingProvider extraProvider = runSwing(
-			() -> listingPlugin.createListingIfMissing(trackNone, true));
+		DebuggerListingProvider extraProvider =
+			runSwing(() -> listingPlugin.createListingIfMissing(trackNone, true));
 		waitForSwing();
 		assertTrue(extraProvider.actionFollowsCurrentThread.isEnabled());
 		assertTrue(extraProvider.actionFollowsCurrentThread.isSelected());
@@ -983,11 +931,11 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	@Ignore("TODO") // Needs attention, but low priority
-	public void testActionCaptureSelectedMemory() throws Exception {
+	public void testActionReadSelectedMemory() throws Exception {
 		byte[] data = incBlock();
 		byte[] zero = new byte[data.length];
 		ByteBuffer buf = ByteBuffer.allocate(data.length);
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 		listingProvider.setAutoReadMemorySpec(readNone);
 
 		// To verify enabled requires live target
@@ -1002,19 +950,19 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 		// Still
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		listingProvider.setSelection(sel);
 		waitForSwing();
 		// Still
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		// Now, simulate the sequence that typically enables the action
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x555500ff), "rx");
@@ -1024,12 +972,12 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// NOTE: recordTargetContainerAndOpenTrace has already activated the trace
 		// Action is still disabled, because it requires a selection
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		listingProvider.setSelection(sel);
 		waitForSwing();
 		// Now, it should be enabled
-		assertTrue(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertTrue(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		// First check nothing captured yet
 		buf.clear();
@@ -1038,7 +986,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertArrayEquals(zero, buf.array());
 
 		// Verify that the action performs the expected task
-		performAction(listingProvider.actionCaptureSelectedMemory);
+		performAction(listingProvider.actionReadSelectedMemory);
 		waitForBusyTool(tool);
 		waitForDomainObject(trace);
 
@@ -1053,28 +1001,28 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// Verify that setting the memory inaccessible disables the action
 		mb.testProcess1.memory.setAccessible(false);
-		waitForPass(() -> assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled()));
+		waitForPass(() -> assertFalse(listingProvider.actionReadSelectedMemory.isEnabled()));
 
 		// Verify that setting it accessible re-enables it (assuming we still have selection)
 		mb.testProcess1.memory.setAccessible(true);
-		waitForPass(() -> assertTrue(listingProvider.actionCaptureSelectedMemory.isEnabled()));
+		waitForPass(() -> assertTrue(listingProvider.actionReadSelectedMemory.isEnabled()));
 
 		// Verify that moving into the past disables the action
 		TraceSnapshot forced = recorder.forceSnapshot();
 		waitForSwing(); // UI Wants to sync with new snap. Wait....
 		traceManager.activateSnap(forced.getKey() - 1);
 		waitForSwing();
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		// Verify that advancing to the present enables the action (assuming a selection)
 		traceManager.activateSnap(forced.getKey());
 		waitForSwing();
-		assertTrue(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertTrue(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		// Verify that stopping the recording disables the action
 		recorder.stopRecording();
 		waitForSwing();
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		// TODO: When resume recording is implemented, verify action is enabled with selection
 	}
@@ -1086,8 +1034,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(readVisROOnce, listingProvider.getAutoReadMemorySpec());
 		assertEquals(readVisROOnce, listingProvider.actionAutoReadMemory.getCurrentUserData());
 
-		listingProvider.actionAutoReadMemory
-				.setCurrentActionStateByUserData(readNone);
+		listingProvider.actionAutoReadMemory.setCurrentActionStateByUserData(readNone);
 		waitForSwing();
 		assertEquals(readNone, listingProvider.getAutoReadMemorySpec());
 		assertEquals(readNone, listingProvider.actionAutoReadMemory.getCurrentUserData());
@@ -1115,8 +1062,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 
 			TraceModule bin = tb.trace.getModuleManager()
-					.addLoadedModule("/bin/bash", "/bin/bash",
-						tb.range(0x00400000, 0x0041ffff), 0);
+					.addLoadedModule("/bin/bash", "/bin/bash", tb.range(0x00400000, 0x0041ffff), 0);
 			bin.addSection("bash[.text]", tb.range(0x00400000, 0x0040ffff));
 
 			traceManager.activateTrace(tb.trace);
@@ -1146,8 +1092,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 
 			tb.trace.getModuleManager()
-					.addLoadedModule("/bin/bash", "/bin/bash",
-						tb.range(0x00400000, 0x0041ffff), 0);
+					.addLoadedModule("/bin/bash", "/bin/bash", tb.range(0x00400000, 0x0041ffff), 0);
 
 			traceManager.activateTrace(tb.trace);
 		}
@@ -1182,8 +1127,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceModule modExe;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			modExe = tb.trace.getModuleManager()
-					.addModule("modExe", "modExe",
-						tb.range(0x55550000, 0x555501ff), Range.atLeast(0L));
+					.addModule("modExe", "modExe", tb.range(0x55550000, 0x555501ff),
+						Range.atLeast(0L));
 		}
 		waitForDomainObject(tb.trace);
 		waitForPass(() -> assertEquals("modExe", listingProvider.locationLabel.getText()));
@@ -1193,6 +1138,48 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		}
 		waitForDomainObject(tb.trace);
 		waitForPass(() -> assertEquals("modExe:.text", listingProvider.locationLabel.getText()));
+	}
+
+	@Test
+	public void testActivateTraceChangeLanguage() throws Exception {
+		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
+
+		createSnaplessTrace("x86:LE:64:default");
+
+		try (ToyDBTraceBuilder tb2 =
+			new ToyDBTraceBuilder("dynamic2-" + name.getMethodName(), "dsPIC33F:LE:24:default")) {
+
+			TraceThread thread1;
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				tb.trace.getTimeManager().createSnapshot("First");
+				tb.trace.getMemoryManager()
+						.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
+							TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+				thread1 = tb.getOrAddThread("Thread1", 0);
+				tb.exec(0, 0, thread1, java.util.List.of("RIP = 0x00400000;"));
+			}
+
+			TraceThread thread2;
+			try (UndoableTransaction tid = tb2.startTransaction()) {
+				tb2.trace.getTimeManager().createSnapshot("First");
+				tb2.trace.getMemoryManager()
+						.createRegion(".text", 0, tb2.range(0x200, 0x3ff), TraceMemoryFlag.READ,
+							TraceMemoryFlag.EXECUTE);
+				thread2 = tb2.getOrAddThread("Thread2", 0);
+				tb2.exec(0, 0, thread2, java.util.List.of("PC = 0x100;"));
+			}
+
+			traceManager.openTrace(tb.trace);
+			traceManager.openTrace(tb2.trace);
+
+			traceManager.activateThread(thread1);
+			waitForSwing();
+
+			traceManager.activateThread(thread2);
+			waitForSwing();
+
+			assertFalse(listingProvider.locationLabel.getText().startsWith("(error)"));
+		}
 	}
 
 	@Test
@@ -1266,7 +1253,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
 			DBTraceStackManager sm = tb.trace.getStackManager();
-			DBTraceStack stack = sm.getStack(thread, 0, true);
+			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00401234));
 			stack.getFrame(1, true).setProgramCounter(tb.addr(0x00404321));
 		}
@@ -1328,7 +1315,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 
 			DBTraceStackManager sm = tb.trace.getStackManager();
-			DBTraceStack stack = sm.getStack(thread, 0, true);
+			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, true);
 		}
 		waitForDomainObject(tb.trace);
@@ -1358,7 +1345,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			mm.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
-			DBTraceStack stack = sm.getStack(thread, 0, true);
+			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00401234));
 		}
 		waitForDomainObject(tb.trace);
@@ -1368,7 +1355,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			DBTraceStack stack = sm.getStack(thread, 0, true);
+			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00404321));
 		}
 		waitForDomainObject(tb.trace);

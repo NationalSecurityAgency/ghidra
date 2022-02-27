@@ -17,9 +17,8 @@ package generic.timer;
 
 import static org.junit.Assert.*;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BooleanSupplier;
+import java.util.concurrent.atomic.*;
+import java.util.function.*;
 
 import org.junit.Test;
 
@@ -48,6 +47,33 @@ public class ExpiringSwingTimerTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testGet() {
+
+		String expectedResult = "Test result";
+		int waitCount = 2;
+		AtomicInteger counter = new AtomicInteger();
+		Supplier<String> supplier = () -> {
+			if (counter.incrementAndGet() > waitCount) {
+				return expectedResult;
+			}
+			return null;
+		};
+
+		AtomicReference<String> result = new AtomicReference<>();
+		AtomicInteger runCount = new AtomicInteger();
+		Consumer<String> consumer = s -> {
+			runCount.incrementAndGet();
+			result.set(s);
+		};
+		ExpiringSwingTimer.get(supplier, 10000, consumer);
+
+		waitFor(() -> runCount.get() > 0);
+		assertEquals("", expectedResult, result.get());
+		assertTrue("Timer did not wait for the condition to be true", counter.get() > waitCount);
+		assertEquals("Client code was run more than once", 1, runCount.get());
+	}
+
+	@Test
 	public void testRunWhenReady_Timeout() {
 
 		BooleanSupplier isReady = () -> {
@@ -57,6 +83,22 @@ public class ExpiringSwingTimerTest extends AbstractGenericTest {
 		AtomicBoolean didRun = new AtomicBoolean();
 		Runnable r = () -> didRun.set(true);
 		ExpiringSwingTimer timer = ExpiringSwingTimer.runWhen(isReady, 500, r);
+
+		waitFor(() -> !timer.isRunning());
+
+		assertFalse(didRun.get());
+	}
+
+	@Test
+	public void testGet_Timeout() {
+
+		Supplier<String> supplier = () -> {
+			return null;
+		};
+
+		AtomicBoolean didRun = new AtomicBoolean();
+		Consumer<String> consumer = s -> didRun.set(true);
+		ExpiringSwingTimer timer = ExpiringSwingTimer.get(supplier, 500, consumer);
 
 		waitFor(() -> !timer.isRunning());
 

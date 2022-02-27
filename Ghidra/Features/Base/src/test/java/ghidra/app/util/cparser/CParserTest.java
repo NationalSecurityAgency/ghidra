@@ -429,5 +429,23 @@ public class CParserTest extends AbstractGenericTest {
 		assertTrue(a.isZeroLength());
 		assertTrue(a.getDataType() instanceof UnsignedLongDataType);
 		assertEquals(4, a.getElementLength());
+
+		dt = dtMgr.getDataType(new CategoryPath("/"), "sizeof_t");
+		assertTrue(dt instanceof Structure);
+		sdt = (Structure) dt;
+		DataTypeComponent cdt = sdt.getComponent(0);
+		assertTrue(cdt.getDataType() instanceof Array);
+		assertEquals("Array field defined with sizeof typedef", 128, cdt.getLength());
+
+		dt = dtMgr.getDataType(new CategoryPath("/"), "cpu_set_t");
+		assertTrue(dt instanceof Structure);
+		sdt = (Structure) dt;
+		cdt = sdt.getComponent(0);
+		assertTrue(cdt.getDataType() instanceof Array);
+		assertEquals("Array field defined with sizeof typedef", 128, cdt.getLength());
+		cdt = sdt.getComponent(1);
+		assertTrue(cdt.getDataType() instanceof Array);
+		assertEquals("Array field defined with sizeof typedef", 2084, cdt.getLength());
+
 	}
 }

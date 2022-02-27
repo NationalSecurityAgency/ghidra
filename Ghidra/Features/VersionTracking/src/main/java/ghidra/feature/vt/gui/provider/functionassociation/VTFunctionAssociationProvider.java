@@ -15,12 +15,8 @@
  */
 package ghidra.feature.vt.gui.provider.functionassociation;
 
-import static ghidra.feature.vt.api.impl.VTChangeManager.DOCR_VT_ASSOCIATION_STATUS_CHANGED;
-import static ghidra.feature.vt.api.impl.VTChangeManager.DOCR_VT_MATCH_ADDED;
-import static ghidra.feature.vt.api.impl.VTChangeManager.DOCR_VT_MATCH_DELETED;
-import static ghidra.feature.vt.gui.provider.functionassociation.FilterSettings.SHOW_ALL;
-import static ghidra.feature.vt.gui.provider.functionassociation.FilterSettings.SHOW_UNACCEPTED;
-import static ghidra.feature.vt.gui.provider.functionassociation.FilterSettings.SHOW_UNMATCHED;
+import static ghidra.feature.vt.api.impl.VTChangeManager.*;
+import static ghidra.feature.vt.gui.provider.functionassociation.FilterSettings.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -156,6 +152,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 					destinationFunctionsModel.setFilterSettings(filterSettings);
 				}
 			};
+
 		filterAction.setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Functions_Filter"));
 
 		Icon allFunctionsIcon = ResourceManager.loadImage("images/function.png");

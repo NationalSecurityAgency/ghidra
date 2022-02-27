@@ -250,7 +250,6 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 				.enabledWhen(ctx -> currentProgram != null)
 				.onAction(this::debugProgramButtonActivated)
 				.onActionStateChanged(this::debugProgramStateActivated)
-				.performActionOnButtonClick(true)
 				.addState(DUMMY_LAUNCH_STATE)
 				.buildAndInstall(tool);
 		actionDisconnectAll = DisconnectAllAction.builder(this, delegate)
@@ -383,7 +382,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		List<DebuggerProgramLaunchOffer> offers = program == null ? List.of()
 				: getProgramLaunchOffers(program).collect(Collectors.toList());
 		List<ActionState<DebuggerProgramLaunchOffer>> states = offers.stream()
-				.map(o -> new ActionState<DebuggerProgramLaunchOffer>(o.getButtonTitle(),
+				.map(o -> new ActionState<>(o.getButtonTitle(),
 					o.getIcon(), o))
 				.collect(Collectors.toList());
 		if (!states.isEmpty()) {
@@ -508,9 +507,9 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	}
 
 	@Override
-	public TraceRecorder recordTarget(TargetObject target, DebuggerTargetTraceMapper mapper)
-			throws IOException {
-		return delegate.recordTarget(target, mapper);
+	public TraceRecorder recordTarget(TargetObject target, DebuggerTargetTraceMapper mapper,
+			ActionSource source) throws IOException {
+		return delegate.recordTarget(target, mapper, source);
 	}
 
 	@Override

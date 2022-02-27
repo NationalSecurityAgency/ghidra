@@ -29,6 +29,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
@@ -346,6 +347,9 @@ public class DemangledFunction extends DemangledObject {
 	 * This method assumes preconditions test has been run.
 	 */
 	private boolean shouldDisassemble(Program program, Address address, DemanglerOptions options) {
+		if (!address.isMemoryAddress() || MemoryBlock.isExternalBlockAddress(address, program)) {
+			return false;
+		}
 		CodeUnit codeUnit = program.getListing().getCodeUnitAt(address);
 		return (codeUnit instanceof Data); // preconditions check guarantees data is undefined data.
 	}
@@ -383,9 +387,7 @@ public class DemangledFunction extends DemangledObject {
 		// sure that the context is correctly set before that happens.  Also, be sure to apply
 		// the function to the correct address.
 
-		//TODO revisit this in terms of external block addresses. Also shoul this check
-		// be moved into the PsuedoDisassembler???
-		if (!address.isExternalAddress()) {
+		if (address.isMemoryAddress()) {
 			address = PseudoDisassembler.setTargeContextForDisassembly(program, address);
 		}
 
@@ -432,7 +434,8 @@ public class DemangledFunction extends DemangledObject {
 			return true;
 		}
 
-		Structure classStructure = maybeUpdateCallingConventionAndCreateClass(program, function);
+		Structure classStructure =
+			maybeUpdateCallingConventionAndCreateClass(program, function, options);
 
 		FunctionDefinitionDataType signature = new FunctionDefinitionDataType(function, true);
 
@@ -596,9 +599,9 @@ public class DemangledFunction extends DemangledObject {
 	}
 
 	private Structure maybeUpdateCallingConventionAndCreateClass(Program program,
-			Function function) {
+			Function function, DemanglerOptions options) {
 
-		String convention = validateCallingConvention(program, function);
+		String convention = validateCallingConvention(program, function, options);
 		if (convention == null) {
 			if (!isThisCall(function)) {
 				return null;
@@ -617,7 +620,12 @@ public class DemangledFunction extends DemangledObject {
 		return null;
 	}
 
-	private String validateCallingConvention(Program program, Function function) {
+	private String validateCallingConvention(Program program, Function function,
+			DemanglerOptions options) {
+
+		if (!options.applyCallingConvention()) {
+			return null;
+		}
 
 		if (callingConvention == null) {
 			return null;

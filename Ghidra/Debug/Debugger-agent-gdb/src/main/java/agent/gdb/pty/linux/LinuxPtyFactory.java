@@ -28,6 +28,6 @@ public class LinuxPtyFactory implements PtyFactory {
 
 	@Override
 	public String getDescription() {
-		return "local";
+		return "local (Linux)";
 	}
 }

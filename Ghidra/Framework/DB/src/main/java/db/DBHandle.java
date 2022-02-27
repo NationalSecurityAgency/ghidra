@@ -914,10 +914,10 @@ public class DBHandle {
 	 */
 	public synchronized Table createTable(String name, Schema schema, int[] indexedColumns)
 			throws IOException {
-
 		if (tables.containsKey(name)) {
 			throw new IOException("Table already exists");
 		}
+		checkTransaction();
 		Table table = new Table(this, masterTable.createTableRecord(name, schema, -1));
 		tables.put(name, table);
 		if (indexedColumns != null) {
@@ -964,6 +964,7 @@ public class DBHandle {
 		if (table == null) {
 			return;
 		}
+		checkTransaction();
 		int[] indexedColumns = table.getIndexedColumns();
 		for (int indexedColumn : indexedColumns) {
 			table.removeIndex(indexedColumn);

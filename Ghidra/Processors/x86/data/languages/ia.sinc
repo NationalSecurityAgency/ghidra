@@ -4123,6 +4123,7 @@ define pcodeop fcos;
 :FIDIVR spec_m16    is vexMode=0 & byte=0xDE; reg_opcode=7 ... & spec_m16            { ST0 = int2float(spec_m16) f/ ST0; }      
 
 :FFREE freg         is vexMode=0 & byte=0xDD; frow=12 & fpage=0 & freg          { }  # Set freg to invalid value
+:FFREEP freg        is vexMode=0 & byte=0xDF; frow=12 & fpage=0 & freg          { fpop(); }  # FFREE and pop
                                                                   
 :FICOM spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=2 ... & spec_m16            { local tmp = int2float(spec_m16); fcom(tmp); }          
 :FICOM spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=2 ... & spec_m32            { local tmp = int2float(spec_m32); fcom(tmp); }          
@@ -4291,7 +4292,7 @@ define pcodeop fsin;
 
 :FST spec_m32   is vexMode=0 & byte=0xD9; (mod != 0b11 & reg_opcode=2) ... & spec_m32            { spec_m32 = float2float(ST0); }     
 :FST spec_m64   is vexMode=0 & byte=0xDD; reg_opcode=2 ... & spec_m64            { spec_m64 = float2float(ST0); }     
-:FST freg       is vexMode=0 & byte=0xDD; frow=13 & fpage=0 & freg          { ST0 = freg; }             
+:FST freg       is vexMode=0 & byte=0xDD; frow=13 & fpage=0 & freg          { freg = ST0; }             
 :FSTP spec_m32  is vexMode=0 & byte=0xD9; (mod != 0b11 & reg_opcode=3) ... & spec_m32            { spec_m32 = float2float(ST0); fpop(); } 
 :FSTP spec_m64  is vexMode=0 & byte=0xDD; reg_opcode=3 ... & spec_m64            { spec_m64 = float2float(ST0); fpop(); } 
 :FSTP spec_m80  is vexMode=0 & byte=0xDB; reg_opcode=7 ... & spec_m80            { fpopv(spec_m80); }             

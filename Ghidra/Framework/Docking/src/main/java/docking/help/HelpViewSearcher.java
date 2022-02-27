@@ -200,12 +200,12 @@ class HelpViewSearcher {
 	private JEditorPane getHTMLEditorPane(JHelpContentViewer contentViewer) {
 		//
 		// Intimate Knowledge - construction of the viewer:
-		// 
+		//
 		// -BorderLayout
 		// -JScrollPane
 		// 		-Viewport
 		//      	-JHEditorPane extends JEditorPane
-		// 				
+		//
 		//
 		Component[] components = contentViewer.getComponents();
 		JScrollPane scrollPane = (JScrollPane) components[0];
@@ -218,12 +218,12 @@ class HelpViewSearcher {
 	}
 
 	private void clearHighlights() {
-		((TextHelpModel) helpModel).setHighlights(new DefaultHighlight[0]);
+		((TextHelpModel) helpModel).removeAllHighlights();
 	}
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class FindDialogAction extends AbstractAction {
 

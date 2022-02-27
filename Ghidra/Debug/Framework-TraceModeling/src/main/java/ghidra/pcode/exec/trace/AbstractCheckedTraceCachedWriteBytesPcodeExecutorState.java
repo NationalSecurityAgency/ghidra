@@ -15,11 +15,11 @@
  */
 package ghidra.pcode.exec.trace;
 
-import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.common.primitives.UnsignedLong;
 
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
@@ -28,27 +28,15 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorState
 		extends TraceCachedWriteBytesPcodeExecutorState {
 
 	protected class CheckedCachedSpace extends CachedSpace {
-		public CheckedCachedSpace(AddressSpace space, TraceMemorySpace source, long snap) {
-			super(space, source, snap);
-		}
-
-		protected AddressRange addrRng(Range<UnsignedLong> rng) {
-			Address start = space.getAddress(lower(rng));
-			Address end = space.getAddress(upper(rng));
-			return new AddressRangeImpl(start, end);
-		}
-
-		protected AddressSet addrSet(RangeSet<UnsignedLong> set) {
-			AddressSet result = new AddressSet();
-			for (Range<UnsignedLong> rng : set.asRanges()) {
-				result.add(addrRng(rng));
-			}
-			return result;
+		public CheckedCachedSpace(Language language, AddressSpace space, TraceMemorySpace source,
+				long snap) {
+			super(language, space, source, snap);
 		}
 
 		@Override
 		public byte[] read(long offset, int size) {
-			RangeSet<UnsignedLong> uninitialized = cache.getUninitialized(offset, offset + size);
+			RangeSet<UnsignedLong> uninitialized =
+				cache.getUninitialized(offset, offset + size - 1);
 
 			if (!uninitialized.isEmpty()) {
 				size = checkUninitialized(source, space.getAddress(offset), size,
@@ -68,7 +56,7 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorState
 
 	@Override
 	protected CachedSpace newSpace(AddressSpace space, TraceMemorySpace source, long snap) {
-		return new CheckedCachedSpace(space, source, snap);
+		return new CheckedCachedSpace(language, space, source, snap);
 	}
 
 	protected abstract int checkUninitialized(TraceMemorySpace source, Address start, int size,

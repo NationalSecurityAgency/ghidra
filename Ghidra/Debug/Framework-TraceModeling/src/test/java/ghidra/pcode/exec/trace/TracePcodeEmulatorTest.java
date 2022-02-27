@@ -33,6 +33,7 @@ import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -45,6 +46,12 @@ import ghidra.util.NumericUtilities;
 import ghidra.util.database.UndoableTransaction;
 
 public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTest {
+
+	public TraceThread initTrace(ToyDBTraceBuilder tb, List<String> stateInit,
+			List<String> assembly) throws Throwable {
+		return initTrace(tb, tb.range(0x00400000, 0x0040ffff), tb.range(0x00100000, 0x0010ffff),
+			stateInit, assembly);
+	}
 
 	/**
 	 * Build a trace with a program ready for emulation
@@ -64,21 +71,19 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	 * @return a new trace thread, whose register state is initialized as specified
 	 * @throws Throwable if anything goes wrong
 	 */
-	public TraceThread initTrace(ToyDBTraceBuilder tb, List<String> stateInit,
-			List<String> assembly) throws Throwable {
+	public TraceThread initTrace(ToyDBTraceBuilder tb, AddressRange text, AddressRange stack,
+			List<String> stateInit, List<String> assembly) throws Throwable {
 		TraceMemoryManager mm = tb.trace.getMemoryManager();
 		TraceThread thread;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Thread1", 0);
-			mm.addRegion("Regions[bin:.text]",
-				Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Regions[bin:.text]", Range.atLeast(0L), text,
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			mm.addRegion("Regions[stack1]",
-				Range.atLeast(0L), tb.range(0x00100000, 0x0010ffff),
+			mm.addRegion("Regions[stack1]", Range.atLeast(0L), stack,
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			Iterator<Instruction> block = assembly.isEmpty() ? Collections.emptyIterator()
-					: asm.assemble(tb.addr(0x00400000), assembly.toArray(String[]::new));
+					: asm.assemble(text.getMinAddress(), assembly.toArray(String[]::new));
 			Instruction last = null;
 			while (block.hasNext()) {
 				last = block.next();
@@ -900,4 +905,145 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				TraceSleighUtils.evaluate("RCX", tb.trace, 1, thread, 0));
 		}
 	}
+
+	/**
+	 * Test the read max boundary case
+	 * 
+	 * <p>
+	 * This happens very easily when RBP is uninitialized, as code commonly uses negative offsets
+	 * from RBP. The range will have upper endpoint {@code ULONG_MAX+1}, non-inclusive, which would
+	 * crash, instead requiring some special logic.
+	 */
+	@Test
+	public void testMOV_EAX_dword_RBPm4() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;",
+					"RSP = 0x00110000;",
+					"*:4 (0:8-4) = 0x12345678;"),
+				List.of(
+					"MOV EAX, dword ptr [RBP + -0x4]"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				emu.writeDown(tb.trace, 1, 1, false);
+			}
+
+			assertEquals(BigInteger.valueOf(0x12345678),
+				TraceSleighUtils.evaluate("EAX", tb.trace, 1, thread, 0));
+		}
+	}
+
+	/**
+	 * Test the read wrap-around case for x86_64
+	 * 
+	 * <p>
+	 * This tests a rare (I hope) case where a read would wrap around the address space: 2 bytes
+	 * including the max address, and 2 bytes at the min address. I imagine the behavior here varies
+	 * by architecture? TODO: For now, I think it's acceptable just to throw an exception, but in
+	 * reality, we should probably handle it and allow some mechanism for architectures to forbid
+	 * it, if that's in fact what they do.
+	 */
+	@Test(expected = PcodeExecutionException.class)
+	public void testMOV_EAX_dword_RBPm2_x64() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;",
+					"RSP = 0x00110000;"),
+				List.of(
+					"MOV EAX, dword ptr [RBP + -0x2]"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+		}
+	}
+
+	/**
+	 * Test the read wrap-around case for x86 (32)
+	 * 
+	 * <p>
+	 * This test ensures the rule applies for spaces smaller than 64 bits
+	 */
+	@Test(expected = PcodeExecutionException.class)
+	public void testMOV_EAX_dword_EBPm2_x86() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:32:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"EIP = 0x00400000;",
+					"ESP = 0x00110000;"),
+				List.of(
+					"MOV EAX, dword ptr [EBP + -0x2]"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+		}
+	}
+
+	/**
+	 * Test that unimplemented instructions (as opposed to instructions with no semantics) result in
+	 * an interrupt.
+	 */
+	@Test(expected = PcodeExecutionException.class)
+	public void testUNIMPL() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "Toy:BE:64:default")) {
+			assertEquals(Register.NO_CONTEXT, tb.language.getContextBaseRegister());
+
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"pc = 0x00400000;",
+					"sp = 0x00110000;"),
+				List.of(
+					"unimpl"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+		}
+	}
+
+	@Test
+	public void testMov_w_mW1_W0() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "dsPIC33F:LE:24:default")) {
+			Address textStart = tb.language.getDefaultSpace().getAddress(0x000100, true);
+			// TODO: Where is the stack typically on this arch?
+			Address stackStart = tb.language.getDefaultDataSpace().getAddress(0, true);
+			TraceThread thread = initTrace(tb,
+				new AddressRangeImpl(textStart, 0x200),
+				new AddressRangeImpl(stackStart, 1),
+				List.of(
+					"PC = 0x000100;",
+					"W1 = 0x0800;",
+					"*[ram]:2 0x000800:3 = 0x1234;"),
+				List.of(
+					"mov.w [W1], W0"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			//emuThread.overrideContextWithDefault(); // default context is null?
+			emuThread.stepInstruction();
+
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				emu.writeDown(tb.trace, 1, 1, false);
+			}
+
+			assertEquals(BigInteger.valueOf(0x000102),
+				TraceSleighUtils.evaluate("PC", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x1234),
+				TraceSleighUtils.evaluate("W0", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x0800),
+				TraceSleighUtils.evaluate("W1", tb.trace, 1, thread, 0));
+		}
+	}
+
 }

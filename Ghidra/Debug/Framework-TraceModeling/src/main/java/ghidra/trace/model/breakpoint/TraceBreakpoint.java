@@ -23,14 +23,14 @@ import com.google.common.collect.Range;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceObject;
+import ghidra.trace.model.TraceUniqueObject;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A breakpoint in a trace
  */
-public interface TraceBreakpoint extends TraceObject {
+public interface TraceBreakpoint extends TraceUniqueObject {
 
 	/**
 	 * Get the trace containing this breakpoint
@@ -162,11 +162,11 @@ public interface TraceBreakpoint extends TraceObject {
 	void setEnabled(boolean enabled);
 
 	/**
-	 * Check whether this breakpoint is enabled or disabled
+	 * Check whether this breakpoint is enabled or disabled at the given snap
 	 * 
 	 * @return true if enabled, false if disabled
 	 */
-	boolean isEnabled();
+	boolean isEnabled(long snap);
 
 	/**
 	 * Set the kinds included in this breakpoint

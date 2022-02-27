@@ -38,6 +38,8 @@ public class HorizontalRuleAction extends DockingAction {
 		super("HorizontalRuleAction: " + ++idCount, owner, false);
 		setEnabled(false);
 
+		markHelpUnnecessary();
+
 		// The menu name is both names, one over the other, in a small, light grayish font.
 		setMenuBarData(new MenuData(new String[] { "<HTML><CENTER><FONT SIZE=2 COLOR=SILVER>" +
 			fixupFirstAmp(

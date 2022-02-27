@@ -19,20 +19,14 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import org.jdom.JDOMException;
-import org.xml.sax.*;
-
-import ghidra.app.plugin.processors.sleigh.SleighException;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.app.plugin.processors.sleigh.template.*;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slgh_compile.PcodeParser;
+import ghidra.app.plugin.processors.sleigh.*;
+import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
 import ghidra.program.model.lang.InjectPayload.InjectParameter;
 import ghidra.program.model.listing.Program;
 import ghidra.sleigh.grammar.Location;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
-import ghidra.xml.*;
+import ghidra.xml.XmlParseException;
+import ghidra.xml.XmlPullParser;
 
 public class PcodeInjectLibrary {
 	protected SleighLanguage language;
@@ -47,7 +41,7 @@ public class PcodeInjectLibrary {
 
 	public PcodeInjectLibrary(SleighLanguage l) {
 		language = l;
-		uniqueBase = language.getUniqueBase();
+		uniqueBase = UniqueLayout.INJECT.getOffset(l);
 		callFixupMap = new TreeMap<>();
 		callOtherFixupMap = new TreeMap<>();
 		callOtherOverride = null;
@@ -168,90 +162,21 @@ public class PcodeInjectLibrary {
 			return;			// Dynamic p-code generation, or already parsed
 		}
 
-		String translateSpec = language.buildTranslatorTag(language.getAddressFactory(), uniqueBase,
-			language.getSymbolTable());
-
-		try {
-			PcodeParser parser = new PcodeParser(translateSpec);
-			Location loc = new Location(sourceName, 1);
-			InjectParameter[] input = payload.getInput();
-			for (InjectParameter element : input) {
-				parser.addOperand(loc, element.getName(), element.getIndex());
-			}
-			InjectParameter[] output = payload.getOutput();
-			for (InjectParameter element : output) {
-				parser.addOperand(loc, element.getName(), element.getIndex());
-			}
-			String constructTplXml =
-				PcodeParser.stringifyTemplate(parser.compilePcode(pcodeText, sourceName, 1));
-			if (constructTplXml == null) {
-				throw new SleighException("pcode compile failed " + sourceName);
-			}
-			final SAXParseException[] exception = new SAXParseException[1];
-			XmlPullParser xmlParser =
-				XmlPullParserFactory.create(constructTplXml, sourceName, new ErrorHandler() {
-					@Override
-					public void warning(SAXParseException e) throws SAXException {
-						Msg.warn(this, e.getMessage());
-					}
-
-					@Override
-					public void fatalError(SAXParseException e) throws SAXException {
-						exception[0] = e;
-					}
-
-					@Override
-					public void error(SAXParseException e) throws SAXException {
-						exception[0] = e;
-					}
-				}, false);
-
-			ConstructTpl constructTpl = new ConstructTpl();
-			constructTpl.restoreXml(xmlParser, language.getAddressFactory());
-			if (exception[0] != null) {
-				throw new SleighException("pcode compiler returned invalid xml " + sourceName,
-					exception[0]);
-			}
-			OpTpl[] opTemplates = constructTpl.getOpVec();
-			adjustUniqueBase(opTemplates);
-
-			payloadSleigh.setTemplate(constructTpl);
+		PcodeParser parser = new PcodeParser(language, uniqueBase);
+		Location loc = new Location(sourceName, 1);
+		InjectParameter[] input = payload.getInput();
+		for (InjectParameter element : input) {
+			parser.addOperand(loc, element.getName(), element.getIndex());
 		}
-		catch (UnknownInstructionException e) {
-			throw new SleighException("compiled pcode contains invalid opcode " + sourceName, e);
+		InjectParameter[] output = payload.getOutput();
+		for (InjectParameter element : output) {
+			parser.addOperand(loc, element.getName(), element.getIndex());
 		}
-		catch (JDOMException e) {
-			throw new SleighException(
-				"pcode compile failed due to invalid translator tag " + sourceName, e);
-		}
-		catch (SAXException e) {
-			throw new SleighException("pcode compiler returned invalid xml " + sourceName, e);
-		}
-	}
+		ConstructTpl constructTpl = parser.compilePcode(pcodeText, sourceName, 1);
 
-	//changed to protected for PcodeInjectLibraryJava
-	protected void adjustUniqueBase(OpTpl[] opTemplates) {
-		for (OpTpl opt : opTemplates) {
-			VarnodeTpl out = opt.getOutput();
-			if (out != null) {
-				adjustUniqueBase(out);
-			}
-			for (VarnodeTpl in : opt.getInput()) {
-				adjustUniqueBase(in);
-			}
-		}
-	}
+		uniqueBase = parser.getNextTempOffset();
 
-	private void adjustUniqueBase(VarnodeTpl v) {
-		ConstTpl space = v.getSpace();
-		if (!space.isUniqueSpace()) {
-			return;
-		}
-		ConstTpl c = v.getOffset();
-		long offset = c.getReal();
-		if (offset >= uniqueBase) {
-			uniqueBase = offset + SleighBase.MAX_UNIQUE_SIZE;
-		}
+		payloadSleigh.setTemplate(constructTpl);
 	}
 
 	/**
@@ -497,59 +422,93 @@ public class PcodeInjectLibrary {
 		return uniqueBase;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		PcodeInjectLibrary op2 = (PcodeInjectLibrary) obj;
+	/**
+	 * Compare that this and the other library contain all equivalent payloads
+	 * @param obj is the other library
+	 * @return true if all payloads are equivalent
+	 */
+	public boolean isEquivalent(PcodeInjectLibrary obj) {
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
 		// Cannot compare uniqueBase as one side may not have parsed p-code
 //		if (uniqueBase != op2.uniqueBase) {
 //			return false;
 //		}
-		if (!callFixupMap.equals(op2.callFixupMap)) {
+		if (callFixupMap.size() != obj.callFixupMap.size()) {
 			return false;
 		}
-		if (!callMechFixupMap.equals(op2.callMechFixupMap)) {
+		for (Entry<String, InjectPayload> entry : callFixupMap.entrySet()) {
+			InjectPayload op2payload = obj.callFixupMap.get(entry.getKey());
+			if (!entry.getValue().isEquivalent(op2payload)) {
+				return false;
+			}
+		}
+		if (callMechFixupMap.size() != obj.callMechFixupMap.size()) {
 			return false;
 		}
-		if (!callOtherFixupMap.equals(op2.callOtherFixupMap)) {
+		for (Entry<String, InjectPayload> entry : callMechFixupMap.entrySet()) {
+			InjectPayload op2payload = obj.callMechFixupMap.get(entry.getKey());
+			if (!entry.getValue().isEquivalent(op2payload)) {
+				return false;
+			}
+		}
+		if (callOtherFixupMap.size() != obj.callOtherFixupMap.size()) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(callOtherOverride, op2.callOtherOverride)) {
+		for (Entry<String, InjectPayload> entry : callOtherFixupMap.entrySet()) {
+			InjectPayload op2payload = obj.callOtherFixupMap.get(entry.getKey());
+			if (entry.getValue() != null && op2payload != null) {
+				if (!entry.getValue().isEquivalent(op2payload)) {
+					return false;
+				}
+			}
+			else if (entry.getValue() != null || op2payload != null) {
+				return false;
+			}
+		}
+		if (callOtherOverride != null && obj.callOtherOverride != null) {
+			if (callOtherOverride.length != obj.callOtherOverride.length) {
+				return false;
+			}
+			for (int i = 0; i < callOtherOverride.length; ++i) {
+				if (!callOtherOverride[i].isEquivalent(obj.callOtherOverride[i])) {
+					return false;
+				}
+			}
+		}
+		else if (callOtherOverride == null && obj.callOtherOverride == null) {
+			// continue
+		}
+		else {
 			return false;
 		}
-		if (!exePcodeMap.equals(op2.exePcodeMap)) {
+
+		if (exePcodeMap.size() != obj.exePcodeMap.size()) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(programPayload, op2.programPayload)) {
+		for (Entry<String, InjectPayload> entry : exePcodeMap.entrySet()) {
+			InjectPayload op2payload = obj.exePcodeMap.get(entry.getKey());
+			if (!entry.getValue().isEquivalent(op2payload)) {
+				return false;
+			}
+		}
+		if (programPayload != null && obj.programPayload != null) {
+			if (programPayload.length != obj.programPayload.length) {
+				return false;
+			}
+			for (int i = 0; i < programPayload.length; ++i) {
+				if (!programPayload[i].isEquivalent(obj.programPayload[i])) {
+					return false;
+				}
+			}
+		}
+		else if (programPayload == null && obj.programPayload == null) {
+			// continue
+		}
+		else {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = 111;
-		for (InjectPayload payload : callFixupMap.values()) {
-			hash = 79 * hash + payload.hashCode();
-		}
-		for (InjectPayload payload : callMechFixupMap.values()) {
-			hash = 79 * hash + payload.hashCode();
-		}
-		for (InjectPayload payload : callOtherFixupMap.values()) {
-			hash = 79 * hash + payload.hashCode();
-		}
-		for (InjectPayload payload : exePcodeMap.values()) {
-			hash = 79 * hash + payload.hashCode();
-		}
-		if (programPayload != null) {
-			for (InjectPayloadSleigh payload : programPayload) {
-				hash = 79 * hash + payload.hashCode();
-			}
-		}
-		if (callOtherOverride != null) {
-			for (InjectPayload payload : callOtherOverride) {
-				hash = 79 * hash + payload.hashCode();
-			}
-		}
-		return hash;
 	}
 }

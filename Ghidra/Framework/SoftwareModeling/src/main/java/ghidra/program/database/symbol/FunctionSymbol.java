@@ -20,7 +20,6 @@ import java.util.List;
 
 import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
@@ -91,9 +90,6 @@ public class FunctionSymbol extends SymbolDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#delete()
-	 */
 	@Override
 	public boolean delete() {
 		lock.acquire();
@@ -120,7 +116,8 @@ public class FunctionSymbol extends SymbolDB {
 					boolean restored = createLabelForDeletedFunctionName(address, symName, extData,
 						namespace, source, pinned);
 					if (!restored && isExternal()) {
-						removeAllReferencesTo();
+						// remove all associated external references if label not restored
+						symbolMgr.getReferenceManager().removeAllReferencesTo(getAddress());
 					}
 				}
 				return true;
@@ -138,33 +135,21 @@ public class FunctionSymbol extends SymbolDB {
 	 */
 	private boolean createLabelForDeletedFunctionName(Address entryPoint, String symName,
 			String stringData, Namespace namespace, SourceType source, boolean pinned) {
-		if (isExternal()) {
-			SymbolDB parent = (SymbolDB) namespace.getSymbol();
-			if (parent.isDeleting()) {
-				return false; // don't recreate external
-			}
+
+		Symbol parentSymbol = namespace.getSymbol();
+		if ((parentSymbol instanceof SymbolDB) && ((SymbolDB) parentSymbol).isDeleting()) {
+			// do not replace function with label if parent namespace is getting removed
+			return false;
 		}
+
 		try {
-			SymbolDB newSym;
-			try {
-				newSym = symbolMgr.createSpecialSymbol(entryPoint, symName, namespace,
-					SymbolType.LABEL, null, null, stringData, source);
-				if (pinned) {
-					newSym.setPinned(true);
-				}
-			}
-			catch (InvalidInputException e) {
-				ProgramDB program = symbolMgr.getProgram();
-				newSym = (SymbolDB) symbolMgr.createLabel(entryPoint, symName,
-					program.getGlobalNamespace(), source);
-			}
-			newSym.setSymbolStringData(stringData);
+			Symbol newSym =
+				symbolMgr.createCodeSymbol(entryPoint, symName, namespace, source, stringData);
 			newSym.setPrimary();
+			if (pinned) {
+				newSym.setPinned(true);
+			}
 			return true;
-		}
-		catch (DuplicateNameException e) {
-			// This should't happen.
-			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 		}
 		catch (InvalidInputException e) {
 			// This shouldn't happen.
@@ -173,17 +158,11 @@ public class FunctionSymbol extends SymbolDB {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getObject()
-	 */
 	@Override
 	public Object getObject() {
 		return functionMgr.getFunction(key);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return true;
@@ -204,9 +183,6 @@ public class FunctionSymbol extends SymbolDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#getProgramLocation()
-	 */
 	@Override
 	public ProgramLocation getProgramLocation() {
 		lock.acquire();
@@ -224,13 +200,10 @@ public class FunctionSymbol extends SymbolDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.Symbol#isValidParent(ghidra.program.model.symbol.Namespace)
-	 */
 	@Override
 	public boolean isValidParent(Namespace parent) {
-		return SymbolType.FUNCTION.isValidParent(symbolMgr.getProgram(), parent, address,
-			isExternal());
+		return super.isValidParent(parent) && SymbolType.FUNCTION
+				.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
 	}
 
 	@Override

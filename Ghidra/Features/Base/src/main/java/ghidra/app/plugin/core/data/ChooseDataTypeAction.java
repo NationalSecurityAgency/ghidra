@@ -57,7 +57,7 @@ public class ChooseDataTypeAction extends DockingAction {
 		ListingActionContext listingContext = (ListingActionContext) context.getContextObject();
 		DataType dataType = getDataType(listingContext);
 		if (dataType != null) {
-			plugin.createData(dataType, listingContext, true);
+			plugin.createData(dataType, listingContext, false, true);
 		}
 	}
 
