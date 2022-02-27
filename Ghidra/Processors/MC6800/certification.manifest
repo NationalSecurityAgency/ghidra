@@ -1,0 +1,7 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+data/languages/mc6800.cspec||GHIDRA||||END|
+data/languages/mc6800.ldefs||GHIDRA||||END|
+data/languages/mc6800.pspec||GHIDRA||||END|
+data/languages/mc6800.sinc||GHIDRA||||END|
+data/languages/mc6800.slaspec||GHIDRA||||END|

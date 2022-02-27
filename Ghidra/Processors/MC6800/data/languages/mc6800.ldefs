@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="MC6800"
+            endian="big"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="mc6800.sla"
+            processorspec="mc6800.pspec"
+            id="6800:BE:16:default">
+    <description>MC6800 Microprocessor</description>
+    <compiler name="default" spec="6800.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="6800"/>
+  	<external_name tool="IDA-PRO" name="6808"/>
+  </language>
+</language_definitions>
