@@ -777,7 +777,9 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			int offset = (int) rng.getMinAddress().subtract(toRead.getMinAddress());
 			int length = (int) rng.getLength();
 			buf.limit(pos + offset + length);
-			buf.position(pos + offset);
+			while (buf.position() < pos + offset) {
+				buf.put((byte) 0); // fill gaps with 0
+			}
 			int read = getBytes(ent.getValue(), rng.getMinAddress(), buf);
 			if (read < length) {
 				break;
@@ -785,7 +787,9 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		}
 		// We "got it all", even if there were gaps in "KNOWN"
 		buf.limit(lim);
-		buf.position(pos + len);
+		while (buf.position() < pos + len) {
+			buf.put((byte) 0); // fill final gap with 0
+		}
 		return len;
 	}
 
