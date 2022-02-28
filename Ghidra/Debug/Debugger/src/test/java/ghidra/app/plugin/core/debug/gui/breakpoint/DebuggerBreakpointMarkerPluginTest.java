@@ -499,6 +499,20 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 			dynamicCtx(trace, addr(trace, 0x55550123)), true);
 
 		waitForPass(() -> assertEquals(Enablement.ENABLED, lb.computeEnablementForTrace(trace)));
+
+		lb.disable();
+		waitForPass(() -> assertEquals(Enablement.DISABLED, lb.computeEnablementForTrace(trace)));
+
+		performAction(breakpointMarkerPlugin.actionToggleBreakpoint,
+			dynamicCtx(trace, addr(trace, 0x55550123)), true);
+
+		waitForPass(
+			() -> assertEquals(Enablement.ENABLED_DISABLED, lb.computeEnablementForTrace(trace)));
+
+		performAction(breakpointMarkerPlugin.actionToggleBreakpoint,
+			dynamicCtx(trace, addr(trace, 0x55550123)), true);
+
+		waitForPass(() -> assertEquals(Enablement.DISABLED, lb.computeEnablementForTrace(trace)));
 	}
 
 	protected void testActionSetBreakpointProgram(DockingAction action,
