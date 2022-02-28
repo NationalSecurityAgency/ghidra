@@ -100,22 +100,20 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	protected final Trace trace;
-	protected final TraceTimeManager timeManager;
 	/**
-	 * NB: This is the syncing object for the viewport. If there's even a chance an operation may
-	 * need the DB's lock, esp., considering user callbacks, then it must <em>first</em> acquire the
-	 * DB lock.
+	 * NB: This is also the syncing object for the viewport. If there's even a chance an operation
+	 * may need the DB's lock, esp., considering user callbacks, then it must <em>first</em> acquire
+	 * the DB lock.
 	 */
-	protected final List<Range<Long>> ordered = new ArrayList<>();
+	protected final List<Range<Long>> ordered = new ArrayList<>(List.of(Range.singleton(0L)));
 	protected final RangeSet<Long> spanSet = TreeRangeSet.create();
 	protected final ForSnapshotsListener listener = new ForSnapshotsListener();
 	protected final ListenerSet<Runnable> changeListeners = new ListenerSet<>(Runnable.class);
 
-	protected long snap;
+	protected long snap = 0;
 
 	public DefaultTraceTimeViewport(Trace trace) {
 		this.trace = trace;
-		this.timeManager = trace.getTimeManager();
 		trace.addCloseListener(listener);
 		trace.addListener(listener);
 	}
@@ -263,7 +261,7 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 		RangeSet<Long> spanSet = TreeRangeSet.create();
 		List<Range<Long>> ordered = new ArrayList<>();
 		try (LockHold hold = trace.lockRead()) {
-			collectForkRanges(timeManager, snap, spanSet, ordered);
+			collectForkRanges(trace.getTimeManager(), snap, spanSet, ordered);
 		}
 		synchronized (this.ordered) {
 			this.spanSet.clear();
@@ -276,6 +274,9 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	public void setSnap(long snap) {
+		if (this.snap == snap) {
+			return;
+		}
 		this.snap = snap;
 		refreshSnapRanges();
 	}
@@ -323,6 +324,19 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	public boolean isForked() {
 		synchronized (ordered) {
 			return ordered.size() > 1;
+		}
+	}
+
+	public List<Range<Long>> getOrderedSpans() {
+		synchronized (ordered) {
+			return List.copyOf(ordered);
+		}
+	}
+
+	public List<Range<Long>> getOrderedSpans(long snap) {
+		synchronized (ordered) {
+			setSnap(snap);
+			return getOrderedSpans();
 		}
 	}
 
