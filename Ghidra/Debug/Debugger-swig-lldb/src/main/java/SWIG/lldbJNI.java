@@ -720,6 +720,7 @@ public class lldbJNI {
   public final static native boolean SBData_GetDescription(long jarg1, SBData jarg1_, long jarg2, SBStream jarg2_, java.math.BigInteger jarg3);
   public final static native long SBData_ReadRawData(long jarg1, SBData jarg1_, long jarg2, SBError jarg2_, java.math.BigInteger jarg3, long jarg4, long jarg5);
   public final static native void SBData_SetData(long jarg1, SBData jarg1_, long jarg2, SBError jarg2_, long jarg3, long jarg4, int jarg5, short jarg6);
+  public final static native void SBData_SetDataWithOwnership(long jarg1, SBData jarg1_, long jarg2, SBError jarg2_, long jarg3, long jarg4, int jarg5, short jarg6);
   public final static native boolean SBData_Append(long jarg1, SBData jarg1_, long jarg2, SBData jarg2_);
   public final static native long SBData_CreateDataFromCString(int jarg1, long jarg2, String jarg3);
   public final static native long SBData_CreateDataFromUInt64Array(int jarg1, long jarg2, long jarg3, long jarg4);
@@ -753,6 +754,7 @@ public class lldbJNI {
   public final static native long SBDebugger_GetInputFileHandle(long jarg1, SBDebugger jarg1_);
   public final static native long SBDebugger_GetOutputFileHandle(long jarg1, SBDebugger jarg1_);
   public final static native long SBDebugger_GetErrorFileHandle(long jarg1, SBDebugger jarg1_);
+  public final static native long SBDebugger_SetInputString(long jarg1, SBDebugger jarg1_, String jarg2);
   public final static native long SBDebugger_SetInputFile__SWIG_0(long jarg1, SBDebugger jarg1_, long jarg2, SBFile jarg2_);
   public final static native long SBDebugger_SetOutputFile__SWIG_0(long jarg1, SBDebugger jarg1_, long jarg2, SBFile jarg2_);
   public final static native long SBDebugger_SetErrorFile__SWIG_0(long jarg1, SBDebugger jarg1_, long jarg2, SBFile jarg2_);
@@ -1222,6 +1224,7 @@ public class lldbJNI {
   public final static native void delete_SBModule(long jarg1);
   public final static native boolean SBModule_IsValid(long jarg1, SBModule jarg1_);
   public final static native void SBModule_Clear(long jarg1, SBModule jarg1_);
+  public final static native boolean SBModule_IsFileBacked(long jarg1, SBModule jarg1_);
   public final static native long SBModule_GetFileSpec(long jarg1, SBModule jarg1_);
   public final static native long SBModule_GetPlatformFileSpec(long jarg1, SBModule jarg1_);
   public final static native boolean SBModule_SetPlatformFileSpec(long jarg1, SBModule jarg1_, long jarg2, SBFileSpec jarg2_);
@@ -1340,6 +1343,7 @@ public class lldbJNI {
   public final static native long SBPlatform_GetOSMajorVersion(long jarg1, SBPlatform jarg1_);
   public final static native long SBPlatform_GetOSMinorVersion(long jarg1, SBPlatform jarg1_);
   public final static native long SBPlatform_GetOSUpdateVersion(long jarg1, SBPlatform jarg1_);
+  public final static native void SBPlatform_SetSDKRoot(long jarg1, SBPlatform jarg1_, String jarg2);
   public final static native long SBPlatform_Get(long jarg1, SBPlatform jarg1_, long jarg2, SBFileSpec jarg2_, long jarg3, SBFileSpec jarg3_);
   public final static native long SBPlatform_Put(long jarg1, SBPlatform jarg1_, long jarg2, SBFileSpec jarg2_, long jarg3, SBFileSpec jarg3_);
   public final static native long SBPlatform_Install(long jarg1, SBPlatform jarg1_, long jarg2, SBFileSpec jarg2_, long jarg3, SBFileSpec jarg3_);
@@ -1645,6 +1649,7 @@ public class lldbJNI {
   public final static native String SBTarget_GetTriple(long jarg1, SBTarget jarg1_);
   public final static native long SBTarget_GetDataByteSize(long jarg1, SBTarget jarg1_);
   public final static native long SBTarget_GetCodeByteSize(long jarg1, SBTarget jarg1_);
+  public final static native long SBTarget_GetMaximumNumberOfChildrenToDisplay(long jarg1, SBTarget jarg1_);
   public final static native long SBTarget_SetSectionLoadAddress(long jarg1, SBTarget jarg1_, long jarg2, SBSection jarg2_, java.math.BigInteger jarg3);
   public final static native long SBTarget_ClearSectionLoadAddress(long jarg1, SBTarget jarg1_, long jarg2, SBSection jarg2_);
   public final static native long SBTarget_SetModuleLoadAddress(long jarg1, SBTarget jarg1_, long jarg2, SBModule jarg2_, long jarg3);
@@ -1808,6 +1813,7 @@ public class lldbJNI {
   public final static native long SBThread_GetCurrentException(long jarg1, SBThread jarg1_);
   public final static native long SBThread_GetCurrentExceptionBacktrace(long jarg1, SBThread jarg1_);
   public final static native boolean SBThread_SafeToCallFunctions(long jarg1, SBThread jarg1_);
+  public final static native long SBThread_GetSiginfo(long jarg1, SBThread jarg1_);
   public final static native String SBThread___str__(long jarg1, SBThread jarg1_);
   public final static native long new_SBThreadCollection__SWIG_0();
   public final static native long new_SBThreadCollection__SWIG_1(long jarg1, SBThreadCollection jarg1_);
@@ -2168,6 +2174,7 @@ public class lldbJNI {
   public final static native long SBValue_GetPointeeData__SWIG_2(long jarg1, SBValue jarg1_);
   public final static native long SBValue_GetData(long jarg1, SBValue jarg1_);
   public final static native boolean SBValue_SetData(long jarg1, SBValue jarg1_, long jarg2, SBData jarg2_, long jarg3, SBError jarg3_);
+  public final static native long SBValue_Clone(long jarg1, SBValue jarg1_, String jarg2);
   public final static native java.math.BigInteger SBValue_GetLoadAddress(long jarg1, SBValue jarg1_);
   public final static native long SBValue_GetAddress(long jarg1, SBValue jarg1_);
   public final static native long SBValue_Persist(long jarg1, SBValue jarg1_);
