@@ -111,6 +111,10 @@ public class SBPlatform {
     return lldbJNI.SBPlatform_GetOSUpdateVersion(swigCPtr, this);
   }
 
+  public void SetSDKRoot(String sysroot) {
+    lldbJNI.SBPlatform_SetSDKRoot(swigCPtr, this, sysroot);
+  }
+
   public SBError Get(SBFileSpec src, SBFileSpec dst) {
     return new SBError(lldbJNI.SBPlatform_Get(swigCPtr, this, SBFileSpec.getCPtr(src), src, SBFileSpec.getCPtr(dst), dst), true);
   }
