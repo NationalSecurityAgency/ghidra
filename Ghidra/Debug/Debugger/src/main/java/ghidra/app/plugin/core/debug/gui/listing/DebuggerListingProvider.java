@@ -825,6 +825,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		if (loc == null) { // Redundant?
 			return;
 		}
+		if (mappingService == null) { 
+			return;
+		}
 		ProgramLocation mapped = mappingService.getStaticLocationFromDynamic(loc);
 		if (mapped != null) {
 			// No need to import what is already mapped and open

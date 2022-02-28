@@ -94,10 +94,14 @@ public class DefaultRegionMapProposal
 		}
 
 		protected int computeOffsetScore() {
-			long fOff = fromRange.getMinAddress().subtract(fromBase);
-			long tOff = toRange.getMinAddress().subtract(toBase);
-			if (fOff == tOff) {
-				return 10;
+			try {
+				long fOff = fromRange.getMinAddress().subtract(fromBase);
+				long tOff = toRange.getMinAddress().subtract(toBase);
+				if (fOff == tOff) {
+					return 10;
+				}
+			} catch (IllegalArgumentException e) {
+				// fell-through
 			}
 			return 0;
 		}
