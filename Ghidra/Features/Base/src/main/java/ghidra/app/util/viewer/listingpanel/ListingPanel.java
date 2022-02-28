@@ -833,6 +833,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			layeredColorModel = null;
 		}
 		else {
+			colorModel.modelDataChanged(this);
 			layeredColorModel = new LayeredColorModel(colorModel, propertyBasedColorModel);
 			fieldPanel.setBackgroundColorModel(layeredColorModel);
 		}
@@ -1126,6 +1127,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	/**
 	 * Returns the currently selected text. The value will only be non-null for selections within a
 	 * single field.
+	 * 
 	 * @return the selected text or null
 	 */
 	public String getTextSelection() {
