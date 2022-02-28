@@ -55,7 +55,7 @@ public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegratio
 	}
 
 	@Test
-	public void testAddGuestLangauge() throws LanguageNotFoundException {
+	public void testAddGuestLanguage() throws LanguageNotFoundException {
 		try (UndoableTransaction tid = b.startTransaction()) {
 			assertEquals(0, manager.languageStore.getRecordCount());
 			manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));

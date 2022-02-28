@@ -214,7 +214,7 @@ public class OldLanguageFactory {
 		LanguageService languageService = DefaultLanguageService.getLanguageService();
 		if (lang instanceof OldLanguage) {
 			throw new LanguageNotFoundException(
-				"Can't create an Old Langauge file from an OldLanguage");
+				"Can't create an Old Language file from an OldLanguage");
 		}
 		LanguageDescription languageDescription =
 			languageService.getLanguageDescription(lang.getLanguageID());

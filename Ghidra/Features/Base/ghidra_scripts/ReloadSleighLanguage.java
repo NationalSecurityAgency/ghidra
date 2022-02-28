@@ -21,7 +21,7 @@ import ghidra.util.Msg;
 
 import java.io.IOException;
 
-public class ReloadSleighLangauge extends GhidraScript {
+public class ReloadSleighLanguage extends GhidraScript {
 
 	@Override
 	public void run() throws Exception {
