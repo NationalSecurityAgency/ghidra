@@ -174,6 +174,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		if (program == null) {
 			return false;
 		}
+
 		searchAgainAction.setEnabled(true);
 
 		if (localSearchInfo.isSearchAll()) {
@@ -363,6 +364,11 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 				setNavigatable(context.getNavigatable());
 				performSearch(searchInfo);
 			}
+
+			@Override
+			protected boolean isEnabledForContext(NavigatableActionContext context) {
+				return searchInfo != null && super.isEnabledForContext(context);
+			}
 		};
 		searchAgainAction
 				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, searchAgainAction.getName()));
@@ -501,7 +507,6 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			TableService tableService) {
 
 		String searchString = searchDialog.getSearchText();
-
 		String title = "Search Memory - \"" + searchString + "\"";
 		String type = "Search";
 		if (navigatable.supportsMarkers()) {
@@ -556,7 +561,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 // Inner Classes
 //==================================================================================================
 
-	class TableLoadingListener implements ThreadedTableModelListener {
+	private class TableLoadingListener implements ThreadedTableModelListener {
 
 		private ThreadedTableModel<MemSearchResult, ?> model;
 
