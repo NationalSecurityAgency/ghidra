@@ -135,7 +135,10 @@ public abstract class AnnotatedSleighUseropLibrary<T> implements SleighUseropLib
 		Class<T> opType = getOperandType();
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		Class<? extends AnnotatedSleighUseropLibrary<T>> cls = (Class) this.getClass();
-		Set<Method> methods = CACHE_BY_CLASS.computeIfAbsent(cls, __ -> collectDefinitions(cls));
+		Set<Method> methods;
+		synchronized (CACHE_BY_CLASS) {
+			methods = CACHE_BY_CLASS.computeIfAbsent(cls, __ -> collectDefinitions(cls));
+		}
 		for (Method m : methods) {
 			ops.put(m.getName(), new AnnotatedSleighUseropDefinition<>(this, opType, lookup, m));
 		}
