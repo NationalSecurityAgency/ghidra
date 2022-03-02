@@ -1,11 +1,13 @@
-# sleigh specification file for Motorola 6809/Hitachi 6309
+# sleigh specification file for Hitachi 6301
 
 define endian=big;
 define alignment=1;
 
-@define SWI3_VECTOR "0xFFF2"
-@define SWI2_VECTOR "0xFFF4"
-@define FIRQ_VECTOR "0xFFF6"
+@define TRAP_VECTOR "0xFFEE"
+@define SCI_VECTOR "0xFFF2"
+@define TOF_VECTOR "0xFFF2"
+@define OCF_VECTOR "0xFFF4"
+@define ICF_VECTOR "0xFFF6"
 @define IRQ_VECTOR  "0xFFF8"
 @define SWI_VECTOR  "0xFFFA"
 @define NMI_VECTOR  "0xFFFC"
@@ -14,34 +16,20 @@ define alignment=1;
 define space RAM     type=ram_space      size=2  default;
 define space register type=register_space size=1;
 
-@ifdef H6309
-# 8-bit registers A, B, E, F, MD
-define register offset=0 size=1 [ A B E F MD ];
-# 16-bit registers D, W
-define register offset=0 size=2 [ D W ];
-# 16-bit register V
-define register offset=12 size=2 [ V ];
-# 32-bit register Q
-define register offset=0 size=4 [ Q ];
-@else
 # 8-bit registers A, B
 define register offset=0 size=1 [ A B ];
+
 # 16-bit register D
 define register offset=0 size=2 [ D ];
-@endif
 
-# 8-bit condition code register, direct page register
-define register offset=8 size=1 [ CC DP ];
+# 8-bit condition code register
+define register offset=8 size=1 [ CC ];
+
 # 16-bit registers:
 #    PC: Program counter
 #    S:  Stack pointer
-#    U:  alternate stack pointer/index register
-#    X,Y: index register
-define register offset=16 size=2 [ PC X Y U S ];
-
-# Pseudo registers used for EXG instruction.
-define register offset=32 size=2 [ exg16_r0           exg16_r1          ];
-define register offset=32 size=1 [ exg8h_r0 exg8l_r0  exg8h_r1 exg8l_r1 ];
+#    X: index register
+define register offset=16 size=2 [ PC X S ];
 
 # define status bits: (See also 8051/z80).
 @define C "CC[0,1]" # C: Carry (or borrow) flag
@@ -50,226 +38,70 @@ define register offset=32 size=1 [ exg8h_r0 exg8l_r0  exg8h_r1 exg8l_r1 ];
 @define N "CC[3,1]" # N: Negative result (twos complement)
 @define I "CC[4,1]" # I: IRQ interrupt masked
 @define H "CC[5,1]" # H: Half carry flag
-@define F "CC[6,1]" # F: FIRQ interrupt masked
-@define E "CC[7,1]" # E: Entire register state stacked
 
+#TOKENS
 define token opbyte (8)
     op        = (0,7)
-    op45      = (4,5)
     op47      = (4,7)
 ;
 
 define token data8 (8)
     imm8      = (0,7)
     simm8     = (0,7) signed
-    simm5     = (0,4) signed
-    idxMode   = (0,4)
-    noOffset5 = (7,7)
-    idxReg    = (5,6)
-    imm80     = (0,0)
-    imm81     = (1,1)
-    imm82     = (2,2)
-    imm83     = (3,3)
-    imm84     = (4,4)
-    imm85     = (5,5)
-    imm86     = (6,6)
-    imm87     = (7,7)
-    reg0_exg  = (4,7)
-    reg1_exg  = (0,3)
 ;
 
 define token data (16)
     imm16   = (0,15)
-    simm16  = (0,15) signed
 ;
-
-attach variables [ idxReg ] [ X Y U S ];
-
-EA: simm5,idxReg    is simm5 & idxReg & noOffset5=0
-{
-     local offs:1 = simm5;
-     local addr:2 = idxReg + sext(offs);
-     export addr; 
-}
-EA: ","idxReg    is idxReg & noOffset5=1 & idxMode=4 # no offset
-{
-     local addr:2 = idxReg;
-     export addr; 
-}
-EA: simm8,idxReg    is idxReg & noOffset5=1 & idxMode=8; simm8 # 8-bit offset
-{
-     local addr:2 = idxReg + simm8;
-     export addr; 
-}
-EA: simm16,idxReg    is idxReg & noOffset5=1 & idxMode=9; simm16 # 16-bit offset
-{
-     local addr:2 = idxReg + simm16;
-     export addr; 
-}
-EA: "B,"idxReg    is idxReg & noOffset5=1 & idxMode=5 # B,R
-{
-     local addr:2 = idxReg + sext(B);
-     export addr; 
-}
-EA: "A,"idxReg    is idxReg & noOffset5=1 & idxMode=6 # A,R
-{
-     local addr:2 = idxReg + sext(A);
-     export addr; 
-}
-EA: D,idxReg    is D & idxReg & noOffset5=1 & idxMode=11 # D,R
-{
-     local addr:2 = idxReg + D;
-     export addr; 
-}
-EA: ","idxReg"+"    is idxReg & noOffset5=1 & idxMode=0 # ,R+
-{
-     addr:2 = idxReg;
-     idxReg = idxReg + 1;
-     export addr;
-}
-EA: ","idxReg"++"    is idxReg & noOffset5=1 & idxMode=1 # ,R++
-{
-     local addr:2 = idxReg;
-     idxReg = idxReg + 2;
-     export addr;
-}
-EA: ",-"idxReg    is idxReg & noOffset5=1 & idxMode=2 # ,-R
-{
-     idxReg = idxReg - 1;
-     local addr:2 = idxReg;
-     export addr;
-}
-EA: ",--"idxReg    is idxReg & noOffset5=1 & idxMode=3 # ,--R
-{
-     idxReg = idxReg - 2;
-     local addr:2 = idxReg;
-     export addr;
-}
-EA: addr",PCR" is noOffset5=1 & idxMode=12; simm8 [ addr = inst_next + simm8; ] 
-{
-     export addr; 
-}
-EA: addr",PCR" is noOffset5=1 & idxMode=13; simm16 [ addr = inst_next + simm16; ] 
-{
-     export addr; 
-}
-EA: "[,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=20
-{
-     local addr:2 = *:2 idxReg;
-     export addr; 
-}
-EA: "["simm8,idxReg"]"    is idxReg & noOffset5=1 & idxMode=24; simm8
-{
-     local offs:1 = simm8;
-     local addr:2 = idxReg + sext(offs);
-     addr = *:2 addr;
-     export addr; 
-}
-EA: "["simm16,idxReg"]"    is idxReg & noOffset5=1 & idxMode=25; simm16
-{
-     local addr:2 = idxReg + simm16;
-     addr = *:2 addr;
-     export addr; 
-}
-EA: "[B,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=21
-{
-     local addr:2 = idxReg + sext(B);
-     addr = *:2 addr;
-     export addr; 
-}
-EA: "[A,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=22
-{
-     local addr:2 = idxReg + sext(A);
-     addr = *:2 addr;
-     export addr; 
-}
-EA: "["D,idxReg"]"    is D & idxReg & noOffset5=1 & idxMode=27
-{
-     local addr:2 = idxReg + D;
-     addr = *:2 addr;
-     export addr; 
-}
-EA: "[,"idxReg"++]"    is idxReg & noOffset5=1 & idxMode=17
-{
-     local addr:2 = idxReg;
-     addr = *:2 addr;
-     idxReg = idxReg + 2;
-     export addr;
-}
-EA: "[,--"idxReg"]"    is idxReg & noOffset5=1 & idxMode=19
-{
-     idxReg = idxReg - 2;
-     local addr:2 = idxReg;
-     addr = *:2 addr;
-     export addr;
-}
-EA: "["addr",PCR]" is noOffset5=1 & idxMode=28; simm8 [ addr = inst_next + simm8; ] 
-{
-     local eaddr:2 = inst_next + simm8;
-     eaddr = *:2 eaddr;
-     export eaddr; 
-}
-EA: "["addr",PCR]" is noOffset5=1 & idxMode=29; simm16 [ addr = inst_next + simm16; ] 
-{
-     local eaddr:2 = inst_next + simm16;
-     eaddr = *:2 eaddr;
-     export eaddr; 
-}
-EA: "["imm16"]" is imm8=0x9F; imm16
-{
-     export *:2 imm16;
-}
 
 ################################################################
 # Constructors
 ################################################################
-
-PAGE2: is op=0x10 { } # PAGE2 opcode prefix (0x10)
-PAGE3: is op=0x11 { } # PAGE3 opcode prefix (0x11)
-
-IMMED1: "#"imm8  is imm8  { export *[const]:1 imm8; }
-
 REL:  addr    is simm8  [ addr = inst_next + simm8;  ]   { export *:2 addr; } 
-REL2: addr    is simm16 [ addr = inst_next + simm16; ]   { export *:2 addr; } 
+DIRECT: imm8	is imm8	{ export *:1 imm8; }
 
 # 1-byte operand, immediate/direct/indexed/extended addressing mode
-OP1: "#"imm8    is op45=0; imm8
+OP1: "#"imm8    is (op47=0x8 | op47=0xC); imm8
 {
-    export *[const]:1 imm8;
+    export imm8;
 }
-OP1: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
+
+OP1: "<"imm8    is (op47=0x9 | op47=0xD); imm8
 {
-    local tmp:2 = (zext(DP) << 8) + imm8;
-    export *:1 tmp;
+    export imm8;
 }
-OP1: EA    is op45=2; EA
-{
-    local tmp:2 = EA;
-    export *:1 tmp;
+
+OP1: imm8,X   	is (op47=0x6 | op47=0xA | op47=0xE) & X; imm8  	
+{ 
+	tmp:2 = X + imm8;
+	export *:1 tmp; 
 }
-OP1: imm16    is op45=3; imm16
+
+OP1: imm16		is (op47=0x7 | op47=0xB | op47=0xF); imm16
 {
     export *:1 imm16;
 }
 
-# 2-byte operand, direct/indexed/extended addressing mode
-OP2: "#"imm16    is (op47=8 | op47=0xC); imm16
+# 2-byte operand, immediate/direct/indexed/extended addressing mode
+OP2: "#"imm16    is (op47=0x8 | op47=0xC); imm16
 {
-    export *[const]:2 imm16;
+    export imm16;
 }
-OP2: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
+
+OP2: "<"imm8    is (op47=0x9 | op47=0xD); imm8
 {
-    local tmp:2 = (zext(DP) << 8) + imm8;
-    export *:2 tmp;
+    export imm8;
 }
-OP2: EA       is (op47=3 | op47=6 | op47=0xA | op47=0xE); EA
-{
-    local tmp:2 = EA;
-    export *:2 tmp;
+
+OP2: imm8,X   	is (op47=0x6 | op47=0xA | op47=0xE) & X; imm8  	
+{ 
+	tmp:2 = X + imm8;
+	export *:2 tmp; 
 }
-OP2: imm16      is (op47=7 | op47=0xB | op47=0xF); imm16
-{
-    export *:2 imm16;
+
+OP2: imm16		is (op47=0x7 | op47=0xB | op47=0xF); imm16
+{ 
+	export *:2 imm16; 
 }
 
 ################################################################
@@ -311,7 +143,7 @@ macro complement(op)
 
 macro logicalShiftRight(op)
 {
-        $(C) = op & 1;
+		$(C) = ((op & 1) != 0);
         op = op >> 1;
         $(Z) = (op == 0);
         $(N) = 0;
@@ -344,10 +176,10 @@ macro arithmeticShiftRight(op)
 
 macro logicalShiftLeft(op)
 {
-        $(C) = (op >> 7);
+        $(C) = ((op >> 7) != 0);
         op = op << 1;
         $(Z) = (op == 0);
-        $(N) = (op >> 7);
+        $(N) = ((op >> 7) != 0);
 }
 
 macro increment(op)
@@ -390,7 +222,7 @@ macro addition(reg, op)
 
 macro additionWithCarry(reg, op)
 {
-        local carryIn = zext($(C));
+        local carryIn = $(C);
         local mask = 0x0F; # Low nibble mask
         local tmpResult = reg + op;
 
@@ -413,7 +245,7 @@ macro subtraction(reg, op)
 
 macro subtractionWithCarry(reg, op)
 {
-        local carryIn = zext($(C));
+        local carryIn = $(C);
         local tmpResult = reg - op;
 
         $(C) = (reg < op) || (tmpResult < carryIn);
@@ -504,31 +336,12 @@ macro Pull2(reg, op)
         reg = reg + 1;
 }
 
-macro PushUYXDpD()
-{
-        Push2(S, U);
-        Push2(S, Y);
-        Push2(S, X);
-        Push1(S, DP);
-        Push2(S, D);
-}
-
-macro PullDDpXYU()
-{
-        Pull2(S, D);
-        Pull1(S, DP);
-        Pull2(S, X);
-        Pull2(S, Y);
-        Pull2(S, U);
-}
-
 macro PushEntireState()
 {
         local tmp:2 = inst_next;
-
-        $(E) = 1;
         Push2(S, tmp); # return PC address
-        PushUYXDpD();
+        Push2(S, X);
+        Push2(S, D);
         Push1(S, CC);
 }
 
@@ -537,26 +350,21 @@ macro PushEntireState()
 ################################################################
 
 ################################################################
-# Opcode 0x00 - 0x0F, relative addressing
+#?# Opcode 0x00 - 0x0F, relative addressing
 # Opcode 0x40 - 0x4F, register A addressing
 # Opcode 0x50 - 0x5F, register B addressing
 # Opcode 0x60 - 0x6F, indexed addressing
 # Opcode 0x70 - 0x7F, extended addressing
 ################################################################
 
-:NEGA    is op=0x40
+:NEGA	is op=0x40
 {
-        negate(A);
+		negate(A);
 }
 
 :NEGB 	is op=0x50
 {
         negate(B);
-}
-
-:NEG OP1    is (op=0x00 | op=0x60 | op=0x70) ... & OP1
-{
-        negate(OP1);
 }
 
 :COMA 	is op=0x43
@@ -569,11 +377,6 @@ macro PushEntireState()
         complement(B);
 }
 
-:COM OP1    is (op=0x03 | op=0x63 | op=0x73) ... & OP1
-{
-        complement(OP1);
-}
-
 :LSRA 	is op=0x44
 {
         logicalShiftRight(A);
@@ -582,11 +385,6 @@ macro PushEntireState()
 :LSRB 	is op=0x54
 {
         logicalShiftRight(B);
-}
-
-:LSR OP1    is (op=0x04 | op=0x64 | op=0x74) ... & OP1
-{
-        logicalShiftRight(OP1);
 }
 
 :RORA 	is op=0x46
@@ -599,11 +397,6 @@ macro PushEntireState()
         rotateRightWithCarry(B);
 }
 
-:ROR OP1    is (op=0x06 | op=0x66 | op=0x76) ... & OP1
-{
-        rotateRightWithCarry(OP1);
-}
-
 :ASRA 	is op=0x47
 {
         arithmeticShiftRight(A);
@@ -614,129 +407,284 @@ macro PushEntireState()
         arithmeticShiftRight(B);
 }
 
-:ASR OP1    is (op=0x07 | op=0x67 | op=0x77) ... & OP1
-{
-        arithmeticShiftRight(OP1);
-}
-
-:LSLA 	is op=0x48
+:ASLA 	is op=0x48
 {
         logicalShiftLeft(A);
 }
 
-:LSLB 	is op=0x58
+:ASLB 	is op=0x58
 {
         logicalShiftLeft(B);
-}
-
-:LSL OP1    is (op=0x08 | op=0x68 | op=0x78) ... & OP1
-{
-        logicalShiftLeft(OP1);
 }
 
 :ROLA    is op=0x49 
 {
         rotateLeftWithCarry(A);
 }
- 
+
 :ROLB    is op=0x59 
 {
         rotateLeftWithCarry(B);
-}
- 
-:ROL OP1    is (op=0x09 | op=0x69 | op=0x79) ... & OP1
-{
-        rotateLeftWithCarry(OP1);
 }
  
 :DECA    is op=0x4A 
 {
         decrement(A);
 }
- 
+
 :DECB    is op=0x5A 
 {
         decrement(B);
 }
- 
-:DEC OP1    is (op=0x0A | op=0x6A | op=0x7A) ... & OP1
-{
-        decrement(OP1);
-}
- 
+
 :INCA    is op=0x4C 
 {
         increment(A);
 }
- 
+
 :INCB    is op=0x5C 
 {
         increment(B);
 }
- 
-:INC OP1    is (op=0x0C | op=0x6C | op=0x7C) ... & OP1
-{
-        increment(OP1);
-}
- 
+
 :TSTA    is op=0x4D 
 {
         test(A);
 }
- 
+
 :TSTB    is op=0x5D 
 {
         test(B);
-}
- 
-:TST OP1    is (op=0x0D | op=0x6D | op=0x7D) ... & OP1
-{
-        test(OP1);
-}
- 
-:JMP OP2    is (op=0x0E | op=0x6E | op=0x7E) ... & OP2
-{
-        local target = OP2;
-        goto [target];
 }
 
 :CLRA    is op=0x4F 
 {
         clear(A);
 }
- 
+
 :CLRB    is op=0x5F 
 {
         clear(B);
 }
+
+:NEG OP1    is (op=0x60 | op=0x70) ... & OP1
+{
+        negate(OP1);
+}
+
+:COM OP1    is (op=0x63 | op=0x73) ... & OP1
+{
+        complement(OP1);
+}
+
+:LSR OP1    is (op=0x64 | op=0x74) ... & OP1
+{
+        logicalShiftRight(OP1);
+}
+
+:ROR OP1    is (op=0x66 | op=0x76) ... & OP1
+{
+        rotateRightWithCarry(OP1);
+}
+
+:ASR OP1    is (op=0x67 | op=0x77) ... & OP1
+{
+        arithmeticShiftRight(OP1);
+}
+
+:ASL OP1    is (op=0x68 | op=0x78) ... & OP1
+{
+        logicalShiftLeft(OP1);
+}
+
+:ROL OP1    is (op=0x69 | op=0x79) ... & OP1
+{
+        rotateLeftWithCarry(OP1);
+}
+
+:DEC OP1    is (op=0x6A | op=0x7A) ... & OP1
+{
+        decrement(OP1);
+}
+
+:INC OP1    is (op=0x6C | op=0x7C) ... & OP1
+{
+        increment(OP1);
+}
  
-:CLR OP1    is (op=0x0F | op=0x6F | op=0x7F) ... & OP1
+:TST OP1    is (op=0x6D | op=0x7D) ... & OP1
+{
+        test(OP1);
+}
+ 
+:CLR OP1    is (op=0x6F | op=0x7F) ... & OP1
 {
         clear(OP1);
 }
- 
+
+:AIM "#"imm8,1: DIRECT	is op=0x71; imm8; DIRECT
+{
+		logicalAnd(DIRECT, imm8);
+}
+
+:AIM "#"imm8,DIRECT,X	is op=0x61 & X; imm8; DIRECT
+{
+		local temp = X + zext(DIRECT); 
+		logicalAnd(temp, imm8);
+}
+
+:OIM "#"imm8,DIRECT	is op=0x72; imm8; DIRECT
+{
+		logicalOr(DIRECT, imm8);
+}
+
+:OIM "#"imm8,DIRECT,X	is op=0x62 & X; imm8; DIRECT
+{
+		local temp = X + zext(DIRECT); 
+		logicalOr(temp, imm8);
+}
+
+:EIM "#"imm8,DIRECT	is op=0x75; imm8; DIRECT
+{
+		logicalExclusiveOr(DIRECT, imm8);
+}
+
+:EIM "#"imm8,DIRECT,X	is op=0x65 & X; imm8; DIRECT
+{
+		local temp = X + zext(DIRECT); 
+		logicalExclusiveOr(temp, imm8);
+}
+
+:TIM "#"imm8,DIRECT	is op=0x7B; imm8; DIRECT
+{
+        setNZFlags(DIRECT & imm8);
+        $(V) = 0;
+}
+
+:TIM "#"imm8,DIRECT,X	is op=0x6B & X; imm8; DIRECT
+{
+		local temp = X + zext(DIRECT); 
+        setNZFlags(temp & imm8);
+        $(V) = 0;
+}
+
+:JMP OP2    is (op=0x6E | op=0x7E) ... & OP2
+{
+        goto OP2;
+}
+
 ################################################################
 # Opcode 0x10 - 0x1F, misc. addressing
 ################################################################
 
-:NOP    is op=0x12
+:NOP    is op=0x01
 {
+		goto inst_next;
 }
 
-:SYNC    is op=0x13
+:LSRD 	is op=0x04
 {
+		logicalShiftRight(D);
+        $(V) = ($(N) != $(C));
 }
 
-:LBRA REL2    is op=0x16; REL2
+:ASLD	is op=0x05
 {
-        goto REL2;
+        logicalShiftLeft(D);
+        $(V) = ($(N) != $(C));
 }
 
-:LBSR REL2    is op=0x17; REL2 
+:TAP    is op=0x06 
 {
-        local tmp:2 = inst_next;
-        Push2(S, tmp);
-        call REL2;
+		CC = A;
+}
+
+:TPA    is op=0x07 
+{
+		A = CC;
+}
+
+:INX    is op=0x08 
+{
+        increment(X);
+}
+
+:DEX    is op=0x09 
+{
+        decrement(X);
+}
+
+:CLV	is op=0x0A 
+{
+        $(V) = 0;
+}
+
+:SEV	is op=0x0B 
+{
+        $(V) = 1;
+}
+
+:CLC	is op=0x0C 
+{
+        $(C) = 0;
+}
+
+:SEC	is op=0x0D 
+{
+        $(C) = 1;
+}
+
+:CLI	is op=0x0E 
+{
+        $(I) = 0;
+}
+
+:SEI	is op=0x0F 
+{
+        $(I) = 1;
+}
+
+:SBA	is op=0x10
+{
+        subtraction(A, B);
+}
+
+:CBA	is op=0x11
+{
+		compare(A, B);
+}
+
+#undocumented opcodes: ref https://github.com/rasky/mame-rr/blob/master/mame-rr/src/emu/cpu/m6800/6800dasm.c
+:ASX1	is op=0x12
+{
+		X = X + zext(*:1 X);
+}
+
+#undocumented opcodes: ref https://github.com/rasky/mame-rr/blob/master/mame-rr/src/emu/cpu/m6800/6800dasm.c
+:ASX2	is op=0x13
+{
+		X = X + *:2 X;
+}
+
+:TAB	is op=0x16
+{
+		B = A;
+		setNZFlags(B);
+		$(V) = 0;
+}
+
+:TBA	is op=0x17
+{
+		A = B;
+		setNZFlags(A);
+		$(V) = 0;
+}
+
+:XGDX	is op=0x18
+{
+		local temp:2 = D;
+		D = X;
+		X = temp;
 }
 
 :DAA    is op=0x19
@@ -771,19 +719,12 @@ macro PushEntireState()
            setNZFlags(A);
 }
 
-:ORCC IMMED1    is op=0x1A; IMMED1
-{
-    CC = CC | IMMED1;
-}
+:SLP	is op=0x1A unimpl
 
-:ANDCC IMMED1    is op=0x1C; IMMED1
+:ABA    is op=0x1B
 {
-    CC = CC & IMMED1;
-}
-
-:SEX    is op=0x1D
-{
-    D = sext(B);
+        setHFlag(A, B);
+        addition(A, B);
 }
 
 ################################################################
@@ -797,6 +738,7 @@ macro PushEntireState()
 
 :BRN REL    is op=0x21; REL
 {
+		goto inst_next;
 }
 
 :BHI REL    is op=0x22; REL
@@ -811,14 +753,10 @@ macro PushEntireState()
         if (tmp) goto REL;
 }
 
-#:BHS REL    is op=0x24; REL # See BCC
-
 :BCC REL	is op=0x24; REL
 {
         if ($(C) == 0) goto REL;
 }
-
-#:BLO REL    is op=0x25; REL # see BCS
 
 :BCS REL    is op=0x25; REL
 {
@@ -881,24 +819,49 @@ macro PushEntireState()
 # Opcode 0x30 - 0x3F, misc. addressing
 ################################################################
 
-:LEAX EA    is op=0x30; EA
+:TSX    is op=0x30 
 {
-        X = EA;
+		X = S + 1;
 }
 
-:LEAY EA    is op=0x31; EA
+:INS	is op=0x31 
 {
-        Y = EA;
+        increment(S);
 }
 
-:LEAS EA    is op=0x32; EA
+:PULA	is op=0x32
 {
-        S = EA;
+		Pull1(S, A);
 }
 
-:LEAU EA    is op=0x33; EA
+:PULB	is op=0x33
 {
-        U = EA;
+		Pull1(S, B);
+}
+
+:DES    is op=0x34 
+{
+        decrement(S);
+}
+
+:TXS    is op=0x35 
+{
+		S = X - 1;
+}
+
+:PSHA	is op=0x36
+{
+		Push1(S, A);
+}
+
+:PSHB	is op=0x37
+{
+		Push1(S, B);
+}
+
+:PULX	is op=0x38
+{
+		Pull2(S, X);
 }
 
 :RTS    is op=0x39
@@ -917,17 +880,15 @@ macro PushEntireState()
 {
         local addr:2;
         Pull1(S, CC);
-        if ($(E)==0) goto <nextRTI>;
-            PullDDpXYU();
-        <nextRTI>
+        Pull2(S, D);
+        Pull2(S, X);
         Pull2(S, addr);
         return [addr];
 }
 
-:CWAI IMMED1    is op=0x3C; IMMED1
+:PSHX	is op=0x3C
 {
-        CC = CC & IMMED1;
-        PushEntireState();
+		Push2(S, X);
 }
 
 :MUL    is op=0x3D
@@ -937,13 +898,17 @@ macro PushEntireState()
         $(C) = B >> 7;
 }
 
+:WAI	is op=0x3E
+{
+		$(I) = 0;
+}
+
 :SWI    is op=0x3F
 {
         PushEntireState();
         $(I) = 1;
-        $(F) = 1;
         tmp:2 = $(SWI_VECTOR);
-        call [tmp];
+        call[tmp];
 }
 
 ################################################################
@@ -1079,7 +1044,7 @@ macro PushEntireState()
         addition(B, OP1);
 }
 
-:CMPX OP2    is (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
+:CPX OP2    is (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
 {
         compare(X, OP2);
 }
@@ -1100,8 +1065,7 @@ macro PushEntireState()
 {
         local addr:2 = inst_next;
         Push2(S, addr);
-        local target = OP2;
-        call [target];
+        call OP2;
 }
 
 :STD OP2    is (op=0xDD | op=0xED | op=0xFD) ... & OP2
@@ -1109,164 +1073,22 @@ macro PushEntireState()
         storeRegister(D, OP2);
 }
 
-:LDX OP2    is (op=0x8E | op=0x9E | op=0xAE | op=0xBE) ... & OP2
-{
-        loadRegister(X, OP2);
-}
-
-:LDU OP2    is (op=0xCE | op=0xDE | op=0xEE | op=0xFE) ... & OP2
-{
-        loadRegister(U, OP2);
-}
-
-:STX OP2    is (op=0x9F | op=0xAF | op=0xBF) ... & OP2
-{
-        storeRegister(X, OP2);
-}
-
-:STU OP2    is (op=0xDF | op=0xEF | op=0xFF) ... & OP2
-{
-        storeRegister(X, OP2);
-}
-
-################################################################
-# Page 2 Opcodes (prefix 0x10)
-################################################################
-:LBRN REL2    is PAGE2; op=0x21; REL2
-{
-}
-
-:LBHI REL2    is PAGE2; op=0x22; REL2
-{
-        local tmp = $(C) + $(Z);
-        if (tmp == 0) goto REL2;
-}
-
-:LBLS REL2    is PAGE2; op=0x23; REL2
-{
-        local tmp = $(C) + $(Z);
-        if (tmp) goto REL2;
-}
-
-:LBCC REL2    is PAGE2; op=0x24; REL2
-{
-        if ($(C) == 0) goto REL2;
-}
-
-#:LBLO REL2    is PAGE2; op=0x25; REL2 # see LBCS
-
-:LBCS REL2    is PAGE2; op=0x25; REL2
-{
-        if ($(C)) goto REL2;
-}
-
-:LBNE REL2     is PAGE2; op=0x26; REL2
-{
-        if ($(Z) == 0) goto REL2;
-}
-
-:LBEQ REL2    is PAGE2; op=0x27; REL2
-{
-        if ($(Z)) goto REL2;
-}
-
-:LBVC REL2    is PAGE2; op=0x28; REL2
-{
-        if ($(V) == 0) goto REL2;
-}
-
-:LBVS REL2    is PAGE2; op=0x29; REL2
-{
-        if ($(V)) goto REL2;
-}
-
-:LBPL REL2    is PAGE2; op=0x2A; REL2
-{
-        if ($(N) == 0) goto REL2;
-}
-
-:LBMI REL2    is PAGE2; op=0x2B; REL2
-{
-        if ($(N)) goto REL2;
-}
-
-:LBGE REL2    is PAGE2; op=0x2C; REL2
-{
-        if ($(N) == $(V)) goto REL2;
-}
-
-:LBLT REL2    is PAGE2; op=0x2D; REL2
-{
-        local tmp = $(C) ^ $(Z);
-        if (tmp) goto REL2;
-}
-
-:LBGT REL2    is PAGE2; op=0x2E; REL2
-{
-        if (($(N) == $(V)) & $(C)) goto REL2;
-}
-
-:LBLE REL2     is PAGE2; op=0x2F; REL2
-{
-        local tmp = $(N) ^ $(V);
-        if (tmp | $(Z)) goto REL2;
-}
-
-:SWI2    is PAGE2; op=0x3F
-{
-        PushEntireState();
-        tmp:2 = $(SWI2_VECTOR);
-        call [tmp];
-}
-
-:CMPD OP2    is PAGE2; (op=0x83 | op=0x93 | op=0xA3 | op=0xB3) ... & OP2
-{
-        compare(D, OP2);
-}
-
-:CMPY OP2    is PAGE2; (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
-{
-        compare(Y, OP2);
-}
-
-:LDY OP2    is PAGE2; (op=0x8E | op=0x9E | op=0xAE | op=0xBE) ... & OP2
-{
-        loadRegister(Y, OP2);
-}
-
-:STY OP2    is PAGE2; (op=0x9F | op=0xAF | op=0xBF) ... & OP2
-{
-        storeRegister(Y, OP2);
-}
-
-:LDS OP2    is PAGE2; (op=0xCE | op=0xDE | op=0xEE | op=0xFE) ... & OP2
+:LDS OP2    is (op=0x8E | op=0x9E | op=0xAE | op=0xBE) ... & OP2
 {
         loadRegister(S, OP2);
 }
 
-:STS OP2    is PAGE2; (op=0xDF | op=0xEF | op=0xFF) ... & OP2
+:LDX OP2    is (op=0xCE | op=0xDE | op=0xEE | op=0xFE) ... & OP2
+{
+        loadRegister(X, OP2);
+}
+
+:STS OP2    is (op=0x9F | op=0xAF | op=0xBF) ... & OP2
 {
         storeRegister(S, OP2);
 }
 
-################################################################
-# Page 3 Opcodes (prefix 0x11)
-################################################################
-
-:SWI3    is PAGE3; op=0x3F
+:STX OP2    is (op=0xDF | op=0xEF | op=0xFF) ... & OP2
 {
-        PushEntireState();
-        tmp:2 = $(SWI3_VECTOR);
-        call [tmp];
+        storeRegister(X, OP2);
 }
-
-:CMPU OP2    is PAGE3; (op=0x83 | op=0x93 | op=0xA3 | op=0xB3) ... & OP2
-{
-        compare(U, OP2);
-}
-
-:CMPS OP2    is PAGE3; (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
-{
-        compare(S, OP2);
-}
-

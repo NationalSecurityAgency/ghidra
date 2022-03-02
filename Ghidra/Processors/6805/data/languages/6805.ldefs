@@ -30,4 +30,15 @@
     <compiler name="default" spec="6809.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="6809"/>
   </language>
+  <language processor="6301"
+            endian="big"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="6301.sla"
+            processorspec="6301.pspec"
+            id="6301:BE:16:default">
+    <description>HD6301 Microprocessor</description>
+    <compiler name="default" spec="6301.cspec" id="default"/>
+  </language>  
 </language_definitions>
