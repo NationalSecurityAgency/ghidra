@@ -90,16 +90,18 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
 		traceManager.activateTime(schedule1);
-
-		DebuggerTracePcodeEmulator emu =
-			waitForValue(() -> emuService.getCachedEmulator(tb.trace, schedule1));
-		assertNotNull(emu);
+		waitForPass(() -> assertEquals(schedule1, pcodeProvider.current.getTime()));
 
 		// P-code step to decode already done. One for each op. One to retire.
 		TraceSchedule schedule2 =
 			schedule1.steppedPcodeForward(thread, imm1234.getPcode().length + 1);
-		PcodeThread<byte[]> et = emu.getThread(thread.getPath(), false);
 		traceManager.activateTime(schedule2);
+		waitForPass(() -> assertEquals(schedule2, pcodeProvider.current.getTime()));
+
+		DebuggerTracePcodeEmulator emu =
+			waitForValue(() -> emuService.getCachedEmulator(tb.trace, schedule2));
+		assertNotNull(emu);
+		PcodeThread<byte[]> et = emu.getThread(thread.getPath(), false);
 		waitForPass(() -> assertNull(et.getFrame()));
 
 		/**
@@ -110,13 +112,13 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		 */
 		emu.addBreakpoint(imm2045.getAddress(), "1:1");
 
-		// Just one to decode is necessary
+		// Just one p-code step to decode
 		TraceSchedule schedule3 = schedule2.steppedPcodeForward(thread, 1);
 		traceManager.activateTime(schedule3);
 		waitForPass(() -> assertEquals(schedule3, pcodeProvider.current.getTime()));
 
-		assertTrue(pcodeProvider.pcodeTableModel.getModelData()
+		waitForPass(() -> assertTrue(pcodeProvider.pcodeTableModel.getModelData()
 				.stream()
-				.anyMatch(r -> r.getCode().contains("emu_swi")));
+				.anyMatch(r -> r.getCode().contains("emu_swi"))));
 	}
 }
