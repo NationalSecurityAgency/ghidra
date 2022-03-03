@@ -221,7 +221,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	}
 
 	private String generateSubTitle() {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		buffer.append("(");
 		buffer.append(programName);
 		buffer.append(") ");
@@ -264,16 +264,15 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		if (navigatable != null) {
 			navigatable.removeNavigatableListener(this);
 		}
+
 		tool.removeComponentProvider(this);
 		tableServicePlugin.remove(this);
-		model.dispose();
+
 		if (markerSet != null) {
 			markerSet.clearAll();
 			markerService.removeMarker(markerSet, program);
 		}
-		tableServicePlugin = null;
 
-		threadedPanel.dispose();
 		tableFilterPanel.dispose();
 	}
 
