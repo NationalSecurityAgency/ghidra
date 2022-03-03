@@ -577,7 +577,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		Integer originalPriority = activeTask.taskPriority;
 		activeTask.taskPriority = limitPriority;
 		try {
-			yield(limitPriority, monitor);
+			this.yield(limitPriority, monitor);
 		}
 		finally {
 			activeTask.taskPriority = originalPriority;
@@ -652,7 +652,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 			//    Thinking was that if some analysis causes disassembly to occur,
 			//    then that disassembly and it's analysis will keep other analysis out of trouble.
 			//    However for single threaded, this might not be worthwhile in the long run.
-			yield(activeTask.taskPriority, monitor);
+			this.yield(activeTask.taskPriority, monitor);
 		}
 		else if (analysisThread != null || !isEnabled) {
 			// this could be a sub-thread of a task, don't yield, or flush domain objects
