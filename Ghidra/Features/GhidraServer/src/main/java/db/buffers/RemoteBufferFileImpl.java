@@ -46,6 +46,7 @@ public class RemoteBufferFileImpl extends UnicastRemoteObject
 	protected final String associatedFilePath;
 
 	private LocalBufferFile bufferFile;
+	private boolean disposed = false;
 	private String clientHost;
 
 	/**
@@ -198,8 +199,9 @@ public class RemoteBufferFileImpl extends UnicastRemoteObject
 	 * Dispose associated buffer file and unexport this instance.
 	 */
 	@Override
-	public void dispose() {
-		if (bufferFile != null) {
+	public synchronized void dispose() {
+		// must handle concurrent invocations
+		if (!disposed) {
 			try {
 				unexportObject(this, true);
 			}
@@ -209,7 +211,7 @@ public class RemoteBufferFileImpl extends UnicastRemoteObject
 			removeOwnerInstance(this);
 			removePathInstance(this);
 			bufferFile.dispose();
-			bufferFile = null;
+			disposed = true;
 		}
 	}
 

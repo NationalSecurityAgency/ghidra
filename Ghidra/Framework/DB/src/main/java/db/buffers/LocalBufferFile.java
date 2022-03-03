@@ -280,17 +280,11 @@ public class LocalBufferFile implements BufferFile {
 		return file;
 	}
 
-	/*
-	 * @see ghidra.framework.store.buffers.BufferFile#isReadOnly()
-	 */
 	@Override
 	public boolean isReadOnly() {
 		return readOnly;
 	}
 
-	/*
-	 * @see ghidra.framework.store.buffers.BufferFile#getParameter(java.lang.String)
-	 */
 	@Override
 	public int getParameter(String name) throws NoSuchElementException {
 		Object obj = userParms.get(name);
@@ -300,25 +294,16 @@ public class LocalBufferFile implements BufferFile {
 		return ((Integer) obj).intValue();
 	}
 
-	/*
-	 * @see ghidra.framework.store.buffers.BufferFile#setParameter(java.lang.String, int)
-	 */
 	@Override
 	public void setParameter(String name, int value) {
 		userParms.put(name, new Integer(value));
 	}
 
-	/*
-	 * @see ghidra.framework.store.buffers.BufferFile#clearParameters()
-	 */
 	@Override
 	public void clearParameters() {
 		userParms.clear();
 	}
 
-	/*
-	 * @see ghidra.framework.store.buffers.BufferFile#getParameterNames()
-	 */
 	@Override
 	public String[] getParameterNames() {
 		ArrayList<String> list = new ArrayList<>();
@@ -331,17 +316,11 @@ public class LocalBufferFile implements BufferFile {
 		return names;
 	}
 
-	/*
-	 * @see ghidra.framework.store.buffers.BufferFile#getFreeIndexes()
-	 */
 	@Override
 	public int[] getFreeIndexes() {
 		return freeIndexes.clone();
 	}
 
-	/*
-	 * @see ghidra.framework.store.buffers.BufferFile#setFreeIndexes(int[])
-	 */
 	@Override
 	public void setFreeIndexes(int[] indexes) {
 		freeIndexes = indexes.clone();
@@ -644,9 +623,6 @@ public class LocalBufferFile implements BufferFile {
 		return new BufferFileBlock(blockIndex, bytes);
 	}
 
-	/*
-	 * @see db.buffers.BufferFile#get(db.buffers.DataBuffer, int)
-	 */
 	@Override
 	public synchronized DataBuffer get(DataBuffer buf, int index) throws IOException {
 
@@ -686,9 +662,6 @@ public class LocalBufferFile implements BufferFile {
 		return buf;
 	}
 
-	/*
-	 * @see db.buffers.BufferFile#put(db.buffers.DataBuffer, int)
-	 */
 	@Override
 	public synchronized void put(DataBuffer buf, int index) throws IOException {
 
@@ -731,17 +704,11 @@ public class LocalBufferFile implements BufferFile {
 		}
 	}
 
-	/*
-	 * @see db.buffers.BufferFile#getBufferSize()
-	 */
 	@Override
 	public int getBufferSize() {
 		return bufferSize;
 	}
 
-	/*
-	 * @see db.buffers.BufferFile#getIndexCount()
-	 */
 	@Override
 	public int getIndexCount() {
 		return bufferCount;
@@ -793,9 +760,6 @@ public class LocalBufferFile implements BufferFile {
 		return true;
 	}
 
-	/*
-	 * @see db.buffers.BufferFile#dispose()
-	 */
 	@Override
 	public void dispose() {
 		try {
@@ -823,18 +787,6 @@ public class LocalBufferFile implements BufferFile {
 		}
 	}
 
-	/*
-	 * @see java.lang.Object#finalize()
-	 */
-	@Override
-	protected void finalize() throws Throwable {
-		dispose();
-		super.finalize();
-	}
-
-	/*
-	 * @see db.buffers.BufferFile#setReadOnly()
-	 */
 	@Override
 	public synchronized boolean setReadOnly() throws IOException {
 
@@ -863,9 +815,6 @@ public class LocalBufferFile implements BufferFile {
 		return raf == null;
 	}
 
-	/*
-	 * @see db.buffers.BufferFile#close()
-	 */
 	@Override
 	public synchronized void close() throws IOException {
 		if (raf == null) {
@@ -902,9 +851,6 @@ public class LocalBufferFile implements BufferFile {
 		}
 	}
 
-	/*
-	 * @see db.buffers.BufferFile#delete()
-	 */
 	@Override
 	public synchronized boolean delete() {
 
