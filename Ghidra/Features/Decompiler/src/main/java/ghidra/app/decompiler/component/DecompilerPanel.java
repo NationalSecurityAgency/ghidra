@@ -838,6 +838,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		repaint();
 	}
 
+	public FieldBasedSearchLocation getSearchResults() {
+		return (FieldBasedSearchLocation) currentSearchLocation;
+	}
+
 //==================================================================================================
 // End Search Methods
 //==================================================================================================
