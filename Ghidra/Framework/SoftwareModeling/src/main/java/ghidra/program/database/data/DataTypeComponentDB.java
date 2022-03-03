@@ -208,15 +208,9 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 
 	@Override
 	public void setComment(String comment) {
-		try {
-			if (record != null) {
-				record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, comment);
-				adapter.updateRecord(record);
-				dataMgr.dataTypeChanged(getParent(), false);
-			}
-		}
-		catch (IOException e) {
-			dataMgr.dbError(e);
+		if (record != null) {
+			record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, comment);
+			updateRecord(true);
 		}
 	}
 
@@ -233,26 +227,19 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 
 	@Override
 	public void setFieldName(String name) throws DuplicateNameException {
-		try {
-			if (record != null) {
-				if (name != null) {
-					name = name.trim();
-					if (name.length() == 0 || name.equals(getDefaultFieldName())) {
-						name = null;
-					}
-					else {
-						checkDuplicateName(name);
-					}
+		if (record != null) {
+			if (name != null) {
+				name = name.trim();
+				if (name.length() == 0 || name.equals(getDefaultFieldName())) {
+					name = null;
 				}
-				record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
-				adapter.updateRecord(record);
-				dataMgr.dataTypeChanged(getParent(), false);
+				else {
+					checkDuplicateName(name);
+				}
 			}
+			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
+			updateRecord(true);
 		}
-		catch (IOException e) {
-			dataMgr.dbError(e);
-		}
-
 	}
 
 	private void checkDuplicateName(String name) throws DuplicateNameException {
@@ -351,7 +338,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			record.setIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL, ordinal);
 			record.setIntValue(ComponentDBAdapter.COMPONENT_OFFSET_COL, offset);
 			record.setIntValue(ComponentDBAdapter.COMPONENT_SIZE_COL, length);
-			updateRecord();
+			updateRecord(false);
 		}
 	}
 
@@ -361,7 +348,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			record.setIntValue(ComponentDBAdapter.COMPONENT_OFFSET_COL, offset);
 		}
 		if (updateRecord) {
-			updateRecord();
+			updateRecord(false);
 		}
 	}
 
@@ -371,7 +358,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			record.setIntValue(ComponentDBAdapter.COMPONENT_ORDINAL_COL, ordinal);
 		}
 		if (updateRecord) {
-			updateRecord();
+			updateRecord(false);
 		}
 	}
 
@@ -385,14 +372,23 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			record.setIntValue(ComponentDBAdapter.COMPONENT_SIZE_COL, length);
 		}
 		if (updateRecord) {
-			updateRecord();
+			updateRecord(false);
 		}
 	}
 
-	void updateRecord() {
+	/**
+	 * Update component record and option update composite last modified time.
+	 * @param setLastChangeTime if true update composite last modified time and
+	 * invoke dataTypeChanged for composite, else update component record only.
+	 */
+	void updateRecord(boolean setLastChangeTime) {
 		if (record != null) {
 			try {
 				adapter.updateRecord(record);
+				if (setLastChangeTime) {
+					long timeNow = System.currentTimeMillis();
+					parent.setLastChangeTime(timeNow);
+				}
 			}
 			catch (IOException e) {
 				dataMgr.dbError(e);
@@ -410,7 +406,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		if (record != null) {
 			record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL,
 				dataMgr.getResolvedID(newDt));
-			updateRecord();
+			updateRecord(false);
 		}
 	}
 
