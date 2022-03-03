@@ -1740,14 +1740,13 @@ class StructureDB extends CompositeDB implements StructureInternal {
 					}
 					if (length < dtcLen) {
 						dtc.setLength(length, true);
-						shiftOffsets(i + 1, dtcLen - length, 0);
+						shiftOffsets(i + 1, dtcLen - length, 0); // updates structure record and last modified time
 						changed = true;
 					}
 					else if (length > dtcLen) {
-						int consumed = consumeBytesAfter(i, length - dtcLen);
+						int consumed = consumeBytesAfter(i, length - dtcLen); // updates component record
 						if (consumed > 0) {
-							dtc.updateRecord();
-							shiftOffsets(i + 1, -consumed, 0);
+							shiftOffsets(i + 1, -consumed, 0); // updates structure record and last modified time
 							changed = true;
 						}
 					}
@@ -1803,14 +1802,13 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				}
 				else if (length < dtcLen) {
 					dtc.setLength(length, true);
-					shiftOffsets(i + 1, dtcLen - length, 0);
+					shiftOffsets(i + 1, dtcLen - length, 0); // updates structure record and last modified time
 					didChange = true;
 				}
 				else if (length > dtcLen) {
-					int consumed = consumeBytesAfter(i, length - dtcLen);
+					int consumed = consumeBytesAfter(i, length - dtcLen); // updates component record
 					if (consumed > 0) {
-						dtc.updateRecord();
-						shiftOffsets(i + 1, -consumed, 0);
+						shiftOffsets(i + 1, -consumed, 0); // updates structure record and last modified time
 						didChange = true;
 					}
 				}
@@ -1902,7 +1900,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	/**
-	 *
+	 * Adjust length of specified component (by index) by consuming available undefined
+	 * bytes upto the specified number of bytes (numBytes).  The associated component record will
+	 * be updated without adjusting structure last modified or providing notification.
 	 * @param definedComponentIndex the index of the defined component that is consuming the bytes.
 	 * @param numBytes the number of undefined bytes to consume
 	 * @return the number of bytes actually consumed
@@ -1963,7 +1963,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	protected void shiftOffset(DataTypeComponentDB dtc, int deltaOrdinal, int deltaOffset) {
 		dtc.setOffset(dtc.getOffset() + deltaOffset, false);
 		dtc.setOrdinal(dtc.getOrdinal() + deltaOrdinal, false);
-		dtc.updateRecord();
+		dtc.updateRecord(false);
 	}
 
 	/**
