@@ -514,6 +514,24 @@ public class SpecExtension {
 	}
 
 	/**
+	 * Clear all spec extension options for the given program.
+	 * This is intended for internal use.  ProgramDB.installExtensions() must be called at
+	 * some later time to see the effect.
+	 * @param program is the given Program
+	 * @param monitor is a monitor for the operation
+	 * @throws CancelledException if something externally cancels the operation
+	 */
+	protected static void clearAllExtensions(Program program, TaskMonitor monitor)
+			throws CancelledException {
+		Options specOptions = program.getOptions(SpecExtension.SPEC_EXTENSION);
+		List<String> optionNames = specOptions.getOptionNames();
+		for (String name : optionNames) {
+			monitor.checkCanceled();
+			specOptions.removeOption(name);
+		}
+	}
+
+	/**
 	 * Check that the proposed callfixup extension does not collide with built-in fixups
 	 * @param doc is info about the proposed extension
 	 * @throws SleighException is there is a collision
