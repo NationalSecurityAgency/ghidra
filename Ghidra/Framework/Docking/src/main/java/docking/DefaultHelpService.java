@@ -40,6 +40,11 @@ public class DefaultHelpService implements HelpService {
 	}
 
 	@Override
+	public void showHelp(HelpLocation location) {
+		// no-op
+	}
+
+	@Override
 	public void excludeFromHelp(Object helpObject) {
 		// no-op
 	}
