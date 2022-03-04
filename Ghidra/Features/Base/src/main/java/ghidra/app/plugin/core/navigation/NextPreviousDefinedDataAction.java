@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,17 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.*;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 public class NextPreviousDefinedDataAction extends AbstractNextPreviousAction {
@@ -52,34 +50,71 @@ public class NextPreviousDefinedDataAction extends AbstractNextPreviousAction {
 			InputEvent.ALT_DOWN_MASK);
 	}
 
-	/**
-	 * Find the beginning of the next instruction range
-	 */
 	@Override
 	protected Address getNextAddress(TaskMonitor monitor, Program program, Address address)
 			throws CancelledException {
+
+		if (isInverted) {
+			return getNextNonDataAddress(monitor, program, address);
+		}
+
 		if (isDefinedDataAt(program, address)) {
-			// on an instruction, we have to find a non-instruction before finding the next instruction
+			// on a data, find a non-data before finding the next data
 			address = getAddressOfNextPreviousNonDefinedData(monitor, program, address, true);
 		}
 
 		// we know address is not an instruction at this point
-
 		return getAddressOfNextDataAfter(program, address);
+	}
+
+	private Address getNextNonDataAddress(TaskMonitor monitor, Program program, Address address)
+			throws CancelledException {
+
+		//
+		// Assumptions:
+		// -if on a data, find the next instruction or undefined
+		// -if not on a data, find the next data, then find the next instruction or undefined after
+		//  that (this mimics the non-inverted case)
+		//
+		if (!isDefinedDataAt(program, address)) {
+			address = getAddressOfNextDataAfter(program, address);
+		}
+
+		return getAddressOfNextPreviousNonDefinedData(monitor, program, address, true);
 	}
 
 	@Override
 	protected Address getPreviousAddress(TaskMonitor monitor, Program program, Address address)
 			throws CancelledException {
 
+		if (isInverted) {
+			return getPreviousNonDataAddress(monitor, program, address);
+		}
+
 		if (isDefinedDataAt(program, address)) {
-			// on an instruction, we have to find a non-instruction before finding the previous instruction
+			// on an data, find a non-data before finding the previous data
 			address = getAddressOfNextPreviousNonDefinedData(monitor, program, address, false);
 		}
 
 		// we know address is not at an instruction at this point
 
 		return getAddressOfPreviousDataBefore(program, address);
+	}
+
+	private Address getPreviousNonDataAddress(TaskMonitor monitor, Program program,
+			Address address) throws CancelledException {
+
+		//
+		// Assumptions:
+		// -if on an data, find the previous instruction or undefined
+		// -if not on a data, find the previous data, then find the previous instruction or 
+		//  undefined before that (this mimics the non-inverted case)
+		//
+		if (!isDefinedDataAt(program, address)) {
+			address = getAddressOfPreviousDataBefore(program, address);
+		}
+
+		return getAddressOfNextPreviousNonDefinedData(monitor, program, address, false);
 	}
 
 	private boolean isDefinedDataAt(Program program, Address address) {

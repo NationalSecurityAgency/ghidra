@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +15,19 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressIterator;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.*;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressIterator;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 public class NextPreviousLabelAction extends AbstractNextPreviousAction {
@@ -59,6 +56,10 @@ public class NextPreviousLabelAction extends AbstractNextPreviousAction {
 	protected Address getNextAddress(TaskMonitor monitor, Program program, Address address)
 			throws CancelledException {
 
+		if (isInverted) {
+			return getNextNonLabel(monitor, program, address);
+		}
+
 		address = getAddressOfNextCodeUnit(program, address);
 		return getAddressOfNextPreviousLabel(program, address, true);
 	}
@@ -67,8 +68,69 @@ public class NextPreviousLabelAction extends AbstractNextPreviousAction {
 	protected Address getPreviousAddress(TaskMonitor monitor, Program program, Address address)
 			throws CancelledException {
 
+		if (isInverted) {
+			return getPreviousNonLabel(monitor, program, address);
+		}
+
 		address = getAddressOfPreviousCodeUnit(program, address);
 		return getAddressOfNextPreviousLabel(program, address, false);
+	}
+
+	private Address getNextNonLabel(TaskMonitor monitor, Program program, Address address)
+			throws CancelledException {
+
+		//
+		// Assumptions:
+		// -if on a label, find the next non-label code unit
+		// -if not on a label, find the next label, then find the next non-label code unit after 
+		//  that (this mimics the non-inverted case)
+		//
+		if (!hasLabelAt(program, address)) {
+			address = getAddressOfNextPreviousLabel(program, address, true);
+		}
+
+		return getAddressOfNextPreviousNonLabel(monitor, program, address, true);
+	}
+
+	private Address getPreviousNonLabel(TaskMonitor monitor, Program program, Address address)
+			throws CancelledException {
+
+		//
+		// Assumptions:
+		// -if on a label, find the previous non-label code unit
+		// -if not on a label, find the previous label, then find the previous non-label code unit
+		//  before that (this mimics the non-inverted case)
+		//
+		if (!hasLabelAt(program, address)) {
+			address = getAddressOfNextPreviousLabel(program, address, false);
+		}
+
+		return getAddressOfNextPreviousNonLabel(monitor, program, address, false);
+	}
+
+	private Address getAddressOfNextPreviousNonLabel(TaskMonitor monitor, Program program,
+			Address address, boolean forward) throws CancelledException {
+
+		if (address == null) {
+			return null;
+		}
+
+		SymbolTable symbolTable = program.getSymbolTable();
+		CodeUnitIterator codeUnits = program.getListing().getCodeUnits(address, forward);
+		while (codeUnits.hasNext()) {
+			monitor.checkCanceled();
+			CodeUnit codeUnit = codeUnits.next();
+			Address minAddress = codeUnit.getMinAddress();
+			if (symbolTable.getPrimarySymbol(minAddress) == null) {
+				return minAddress;
+			}
+		}
+		return null;
+	}
+
+	private boolean hasLabelAt(Program program, Address address) {
+		SymbolTable symbolTable = program.getSymbolTable();
+		return symbolTable.getPrimarySymbol(address) != null;
 	}
 
 	private Address getAddressOfNextCodeUnit(Program program, Address address) {
@@ -87,7 +149,8 @@ public class NextPreviousLabelAction extends AbstractNextPreviousAction {
 		return cu.getAddress();
 	}
 
-	private Address getAddressOfNextPreviousLabel(Program program, Address address, boolean forward) {
+	private Address getAddressOfNextPreviousLabel(Program program, Address address,
+			boolean forward) {
 
 		if (address == null) {
 			return null;
@@ -95,7 +158,6 @@ public class NextPreviousLabelAction extends AbstractNextPreviousAction {
 
 		Address nextDefinedLableAddress = getNextDefinedLableAddress(program, address, forward);
 		Address nextReferenceToAddress = getNextReferenceToAddress(program, address, forward);
-
 		if (nextDefinedLableAddress == null) {
 			return nextReferenceToAddress;
 		}
@@ -104,11 +166,9 @@ public class NextPreviousLabelAction extends AbstractNextPreviousAction {
 		}
 
 		int compare = nextDefinedLableAddress.compareTo(nextReferenceToAddress);
-
 		if (forward) {
 			return compare <= 0 ? nextDefinedLableAddress : nextReferenceToAddress;
 		}
-
 		return compare >= 0 ? nextDefinedLableAddress : nextReferenceToAddress;
 
 	}

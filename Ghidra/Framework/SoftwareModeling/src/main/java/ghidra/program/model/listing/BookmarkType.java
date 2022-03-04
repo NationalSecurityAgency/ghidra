@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,38 +29,43 @@ public interface BookmarkType {
 	public static final String ERROR = "Error";
 	public static final String WARNING = "Warning";
 	public static final String ANALYSIS = "Analysis";
-	public static final String ALL_TYPES = "All Bookmark Types";
 
 	/**
-	 * Returns the type as a string
+	 * Returns the type as a string.
+	 * @return the type as a string.
 	 */
-	String getTypeString();
+	public String getTypeString();
 
 	/**
 	 * Returns Icon associated with this type or null if one has not been 
 	 * set by a plugin.
+	 * @return the icon.
 	 */
-	ImageIcon getIcon();
+	public ImageIcon getIcon();
 
 	/**
 	 * Returns marker color associated with this type or null if one has not been 
 	 * set by a plugin.
+	 * @return the color.
 	 */
-	Color getMarkerColor();
+	public Color getMarkerColor();
 
 	/**
 	 * Returns marker priority associated with this type or -1 if one has not been 
 	 * set by a plugin.
+	 * @return the priority.
 	 */
-	int getMarkerPriority();
+	public int getMarkerPriority();
 
 	/**
-	 * Returns true if there is at least one bookmark defined for this type
+	 * Returns true if there is at least one bookmark defined for this type.
+	 * @return true if there is at least one bookmark defined for this type.
 	 */
-	boolean hasBookmarks();
+	public boolean hasBookmarks();
 
 	/**
 	 * Returns the id associated with this bookmark type.
+	 * @return the id associated with this bookmark type.
 	 */
-	int getTypeId();
+	public int getTypeId();
 }

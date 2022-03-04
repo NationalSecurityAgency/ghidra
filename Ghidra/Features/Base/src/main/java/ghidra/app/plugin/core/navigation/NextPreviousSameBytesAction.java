@@ -15,17 +15,6 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Iterator;
@@ -33,22 +22,35 @@ import java.util.Iterator;
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
-public class NextPreviousDifferentByteAction extends AbstractNextPreviousAction {
+/**
+ * Navigates to the same byte pattern value under the current code unit.  When negated, the search
+ * will only consider a single byte, as it seems more useful to be able to skip runs of a 
+ * particular byte.
+ */
+public class NextPreviousSameBytesAction extends AbstractNextPreviousAction {
 
-	public NextPreviousDifferentByteAction(PluginTool tool, String owner, String subGroup) {
-		super(tool, "Next Different Byte Value", owner, subGroup);
-	}
+	private static final Icon ICON = ResourceManager.loadImage("images/V.png");
 
-	@Override
-	protected String getNavigationTypeName() {
-		return "Different Byte Value";
+	NextPreviousSameBytesAction(PluginTool tool, String owner, String subGroup) {
+		super(tool, "Next Matching Byte Values", owner, subGroup);
 	}
 
 	@Override
 	protected Icon getIcon() {
-		return ResourceManager.loadImage("images/V_slash.png");
+		return ICON;
 	}
 
 	@Override
@@ -57,12 +59,23 @@ public class NextPreviousDifferentByteAction extends AbstractNextPreviousAction 
 			InputEvent.ALT_DOWN_MASK);
 	}
 
-	/**
-	 * Find the beginning of the next instruction range
-	 */
+	@Override
+	protected String getNavigationTypeName() {
+		return "Same Bytes Value";
+	}
+
+	@Override
+	protected String getInvertedNavigationTypeName() {
+		return "Different Bytes Value";
+	}
+
 	@Override
 	protected Address getNextAddress(TaskMonitor monitor, Program program, Address address)
 			throws CancelledException {
+
+		if (isInverted) {
+			return getNextPreviousDifferentByteValueAddress(monitor, program, address, true);
+		}
 
 		return getNextPreviousAddress(monitor, program, address, true);
 	}
@@ -71,12 +84,15 @@ public class NextPreviousDifferentByteAction extends AbstractNextPreviousAction 
 	protected Address getPreviousAddress(TaskMonitor monitor, Program program, Address address)
 			throws CancelledException {
 
+		if (isInverted) {
+			return getNextPreviousDifferentByteValueAddress(monitor, program, address, false);
+		}
+
 		return getNextPreviousAddress(monitor, program, address, false);
 	}
 
-	protected Address getNextPreviousAddress(TaskMonitor monitor, Program program, Address address,
-			boolean forward) throws CancelledException {
-
+	private Address getNextPreviousDifferentByteValueAddress(TaskMonitor monitor, Program program,
+			Address address, boolean forward) throws CancelledException {
 		byte value = 0;
 		try {
 			value = program.getMemory().getByte(address);
@@ -112,6 +128,55 @@ public class NextPreviousDifferentByteAction extends AbstractNextPreviousAction 
 			}
 		}
 		return null;
+	}
+
+	private Address getNextPreviousAddress(TaskMonitor monitor, Program program,
+			Address address, boolean forward) {
+
+		Address startAddress;
+		byte[] bytes;
+		CodeUnit cu = program.getListing().getCodeUnitContaining(address);
+		if (cu != null) {
+			try {
+				bytes = cu.getBytes();
+			}
+			catch (MemoryAccessException e) {
+				Msg.debug(this, "Exception getting code unit bytes at " + cu.getAddress(), e);
+				return null; // not sure if this can happen
+			}
+
+			startAddress = forward ? cu.getMaxAddress().next() : cu.getMinAddress().previous();
+		}
+		else {
+			try {
+				Memory memory = program.getMemory();
+				bytes = new byte[] { memory.getByte(address) };
+			}
+			catch (MemoryAccessException e) {
+				Msg.debug(this, "Exception getting code unit bytes at " + address, e);
+				return null; // not sure if this can happen
+			}
+
+			startAddress = forward ? address.next() : address.previous();
+		}
+
+		return getNextPreviousSameBytes(monitor, program, startAddress, bytes, forward);
+	}
+
+	private Address getNextPreviousSameBytes(TaskMonitor monitor, Program program,
+			Address startAddress, byte[] bytes, boolean forward) {
+		Memory memory = program.getMemory();
+		byte[] mask = null; // null signals to use a full mask
+		AddressSetView addresses = memory.getAllInitializedAddressSet();
+		if (startAddress == null) {
+			return null;
+		}
+
+		Address endAddress =
+			forward ? addresses.getMaxAddress() : addresses.getMinAddress().previous();
+		Address matchAddress = memory.findBytes(startAddress, endAddress, bytes,
+			mask, forward, monitor);
+		return matchAddress;
 	}
 
 	private CodeUnit getNextPreviousCodeUnit(Program program, Address address, boolean forward) {
