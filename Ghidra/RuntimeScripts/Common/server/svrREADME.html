@@ -320,6 +320,17 @@ eliminate SSH based authentication for the corresponding user.  When creating th
 owner with full access and any SSH public keys readable by the process owner.  Changes to the SSH 
 public key files may be made without restarting the Ghidra Server.
 </P>
+<P>Each user may generate a suitable SSH key pair with the <typewriter>ssh-keygen</typewriter> command issued from a
+shell prompt.  A PEM formatted RSA key-pair should be generated using the following command options:
+</P>
+<PRE>
+   ssh-keygen -m pem -t rsa -b 2048
+</PRE>
+<P>NOTE: Ghidra Server authentication does not currently support the OPENSSH key format which may be the default 
+<typewriter>ssh-keygen</typewriter> format (<typewriter>-m</typewriter> option) on some systems such as Ubuntu.  
+In addition, other key types (<typewriter>-t</typewriter> option) such as <i>ecdsa</i> and <i>ed25519</i> 
+are not currently supported.
+</P>
 
 (<a href="#top">Back to Top</a>)
 <div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>

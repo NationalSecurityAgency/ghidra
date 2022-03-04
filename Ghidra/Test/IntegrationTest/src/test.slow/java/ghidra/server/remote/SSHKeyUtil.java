@@ -16,21 +16,22 @@
 package ghidra.server.remote;
 
 import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
 import java.security.*;
 import java.security.interfaces.*;
 import java.util.Base64;
 
-import ch.ethz.ssh2.packets.TypesWriter;
+import org.bouncycastle.util.Strings;
 
 public class SSHKeyUtil {
 
 	/**
-	 * Generate private/public SSH keys for test purposes using RSA algorithm.
+	 * Generate private/public SSH RSA keys for test purposes using RSA algorithm.
 	 * @return kay pair array suitable for writing to SSH private and public 
-	 * key files ([0] corresponds to private key, [1] corresponds to public key)
-	 * @throws NoSuchAlgorithmException
+	 * key files ([0] corresponds to private key PEM file, [1] corresponds to public key file)
+	 * @throws NoSuchAlgorithmException failed to instantiate RSA key pair generator
 	 */
-	public static String[] generateSSHKeys() throws NoSuchAlgorithmException {
+	public static String[] generateSSHRSAKeys() throws NoSuchAlgorithmException {
 
 		KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
 		generator.initialize(2048);
@@ -84,19 +85,64 @@ public class SSHKeyUtil {
 		out.writeBytes(data);
 	}
 
-	private static String getRSAPublicKey(KeyPair rsaKeyPair) {
-		String keyAlgorithm = "ssh-rsa";
-		RSAPublicKey rsaPublicKey = (RSAPublicKey) rsaKeyPair.getPublic();
-		TypesWriter w = new TypesWriter();
-		w.writeString(keyAlgorithm);
-		w.writeMPInt(rsaPublicKey.getPublicExponent());
-		w.writeMPInt(rsaPublicKey.getModulus());
+	/**
+	 * Write UInt32 to an SSH-encoded buffer.
+	 * (modeled after org.bouncycastle.crypto.util.SSHBuilder.u32(int))
+	 * @param value integer value
+	 * @param out data output stream
+	 */
+	private static void sshBuilderWriteUInt32(int value, ByteArrayOutputStream out) {
+		byte[] tmp = new byte[4];
+		tmp[0] = (byte) ((value >>> 24) & 0xff);
+		tmp[1] = (byte) ((value >>> 16) & 0xff);
+		tmp[2] = (byte) ((value >>> 8) & 0xff);
+		tmp[3] = (byte) (value & 0xff);
+		out.writeBytes(tmp);
+	}
 
-		byte[] bytesOut = w.getBytes();
+	/**
+	 * Write string to an SSH-encoded buffer.
+	 * (modeled after org.bouncycastle.crypto.util.SSHBuilder.writeString(String)
+	 * @param str string data
+	 * @param out data output stream
+	 */
+	private static void sshBuilderWriteString(String str, ByteArrayOutputStream out) {
+		byte[] data = Strings.toByteArray(str);
+		sshBuilderWriteUInt32(data.length, out);
+		out.writeBytes(data);
+	}
+
+	/**
+	 * Generate SSH RSA public key file content
+	 * @param rsaKeyPair SSH public/private key pair
+	 * @return SSH public key file content string
+	 */
+	private static String getRSAPublicKey(KeyPair rsaKeyPair) {
+
+		RSAPublicKey rsaPublicKey = (RSAPublicKey) rsaKeyPair.getPublic();
+		String keyAlgorithm = "ssh-rsa";
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		sshBuilderWriteString(keyAlgorithm, out);
+		BigInteger e = rsaPublicKey.getPublicExponent();
+		byte[] data = e.toByteArray();
+		sshBuilderWriteUInt32(data.length, out);
+		out.writeBytes(data);
+		BigInteger m = rsaPublicKey.getModulus();
+		data = m.toByteArray();
+		sshBuilderWriteUInt32(data.length, out);
+		out.writeBytes(data);
+		byte[] bytesOut = out.toByteArray();
+
 		String publicKeyEncoded = new String(Base64.getEncoder().encodeToString(bytesOut));
 		return keyAlgorithm + " " + publicKeyEncoded + " test\n";
 	}
 
+	/**
+	 * Generate SSH RSA private key file content in PEM format
+	 * @param rsaKeyPair SSH public/private key pair
+	 * @return SSH private key file content string in PEM format
+	 */
 	private static String getRSAPrivateKey(KeyPair rsaKeyPair) {
 		RSAPrivateKey privateKey = (RSAPrivateKey) rsaKeyPair.getPrivate();
 		RSAPrivateCrtKey privateCrtKey = (RSAPrivateCrtKey) privateKey;

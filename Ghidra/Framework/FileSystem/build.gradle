@@ -26,7 +26,5 @@ dependencies {
 	api project(':Generic')
 	api project(':DB')
 	api project(':Docking')
-	api "ch.ethz.ganymed:ganymed-ssh2:262@jar"
-	
 }
 
