@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  <default_symbols>
+    <symbol name="IRQ_VECTOR" address="0xFFF8" entry="true" type="code_ptr"/>
+    <symbol name="SWI_VECTOR" address="0xFFFA" entry="true" type="code_ptr"/>
+    <symbol name="NMI_VECTOR" address="0xFFFC" entry="true" type="code_ptr"/>
+    <symbol name="RST_VECTOR" address="0xFFFE" entry="true" type="code_ptr"/>
+  </default_symbols>
+</processor_spec>
