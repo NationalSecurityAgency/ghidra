@@ -281,25 +281,30 @@ class TypePointer : public Datatype {
 protected:
   friend class TypeFactory;
   Datatype *ptrto;		///< Type being pointed to
+  AddrSpace *spaceid;		///< If non-null, the address space \b this is intented to point into
   uint4 wordsize;               ///< What size unit does the pointer address
   void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this pointer data-type from an XML element
   void calcSubmeta(void);	///< Calculate specific submeta for \b this pointer
   /// Internal constructor for use with restoreXml
-  TypePointer(void) : Datatype(0,TYPE_PTR) { ptrto = (Datatype *)0; wordsize=1; }
+  TypePointer(void) : Datatype(0,TYPE_PTR) { ptrto = (Datatype *)0; wordsize=1; spaceid=(AddrSpace *)0; }
 public:
   /// Construct from another TypePointer
-  TypePointer(const TypePointer &op) : Datatype(op) { ptrto = op.ptrto; wordsize=op.wordsize; }
+  TypePointer(const TypePointer &op) : Datatype(op) { ptrto = op.ptrto; wordsize=op.wordsize; spaceid=op.spaceid; }
   /// Construct from a size, pointed-to type, and wordsize
   TypePointer(int4 s,Datatype *pt,uint4 ws) : Datatype(s,TYPE_PTR) {
-    ptrto = pt; flags = ptrto->getInheritable(); wordsize=ws; calcSubmeta(); }
+    ptrto = pt; flags = ptrto->getInheritable(); wordsize=ws; spaceid=(AddrSpace *)0; calcSubmeta(); }
+  /// Construct from a pointed-to type and an address space attribute
+  TypePointer(Datatype *pt,AddrSpace *spc) : Datatype(spc->getAddrSize(), TYPE_PTR) {
+    ptrto = pt; flags = ptrto->getInheritable(); spaceid=spc; wordsize=spc->getWordSize(); calcSubmeta(); }
   Datatype *getPtrTo(void) const { return ptrto; }	///< Get the pointed-to Datatype
-  uint4 getWordSize(void) const { return wordsize; }	///< Get the wordsize of the pointer
+  uint4 getWordSize(void) const { return wordsize; }	///< Get the size of the addressable unit being pointed to
+  AddrSpace *getSpace(void) const { return spaceid; }	///< Get any address space associated with \b this pointer
   virtual void printRaw(ostream &s) const;
   virtual int4 numDepend(void) const { return 1; }
   virtual Datatype *getDepend(int4 index) const { return ptrto; }
   virtual void printNameBase(ostream &s) const { s << 'p'; ptrto->printNameBase(s); }
-  virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
-  virtual int4 compareDependency(const Datatype &op) const; // For tree structure
+  virtual int4 compare(const Datatype &op,int4 level) const;
+  virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePointer(*this); }
   virtual void saveXml(ostream &s) const;
   virtual TypePointer *downChain(uintb &off,TypePointer *&par,uintb &parOff,bool allowArrayWrap,TypeFactory &typegrp);
@@ -597,6 +602,7 @@ public:
   Datatype *getTypedef(Datatype *ct,const string &name,uint8 id);	///< Create a new \e typedef data-type
   TypePointerRel *getTypePointerRel(TypePointer *parentPtr,Datatype *ptrTo,int4 off);	///< Get pointer offset relative to a container
   TypePointerRel *getTypePointerRel(int4 sz,Datatype *parent,Datatype *ptrTo,int4 ws,int4 off,const string &nm);
+  TypePointer *getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc,const string &nm);
   void destroyType(Datatype *ct);				///< Remove a data-type from \b this
   Datatype *concretize(Datatype *ct);				///< Convert given data-type to concrete form
   void dependentOrder(vector<Datatype *> &deporder) const;	///< Place all data-types in dependency order
