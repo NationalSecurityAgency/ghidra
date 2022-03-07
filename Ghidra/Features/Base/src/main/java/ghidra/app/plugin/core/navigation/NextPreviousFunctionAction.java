@@ -25,6 +25,7 @@ import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.FunctionSignatureFieldLocation;
 import ghidra.util.exception.CancelledException;
@@ -53,15 +54,19 @@ public class NextPreviousFunctionAction extends AbstractNextPreviousAction {
 		return "Function";
 	}
 
-	/**
-	 * Find the beginning of the next instruction range
-	 * @throws CancelledException 
-	 */
+	@Override
+	protected String getInvertedNavigationTypeName() {
+		return "Instruction Not In a Function";
+	}
+
 	@Override
 	protected Address getNextAddress(TaskMonitor monitor, Program program, Address address)
 			throws CancelledException {
 
-		Function nextFunction = getNextFunction(program, address, true);
+		if (isInverted) {
+			return getNextNonFunctionAddress(monitor, program, address);
+		}
+		Function nextFunction = getNextFunctionNotAtAddress(program, address, true);
 		return nextFunction == null ? null : nextFunction.getEntryPoint();
 	}
 
@@ -69,13 +74,66 @@ public class NextPreviousFunctionAction extends AbstractNextPreviousAction {
 	protected Address getPreviousAddress(TaskMonitor monitor, Program program, Address address)
 			throws CancelledException {
 
+		if (isInverted) {
+			return getPreviousNonFunctionAddress(monitor, program, address);
+		}
+
 		Function function = program.getListing().getFunctionContaining(address);
 		if (isInsideFunctionNotAtEntry(function, address)) {
 			return function.getEntryPoint();
 		}
 
-		Function nextFunction = getNextFunction(program, address, false);
+		Function nextFunction = getNextFunctionNotAtAddress(program, address, false);
 		return nextFunction == null ? null : nextFunction.getEntryPoint();
+	}
+
+	private Address getNextNonFunctionAddress(TaskMonitor monitor, Program program,
+			Address address) throws CancelledException {
+
+		Function function = program.getListing().getFunctionContaining(address);
+		if (function == null) {
+			function = getNextFunction(program, address, true);
+		}
+		if (function == null) {
+			return null;
+		}
+
+		return findNextInstructionAddressNotInFunction(monitor, program, function, true);
+	}
+
+	private Address findNextInstructionAddressNotInFunction(TaskMonitor monitor, Program program,
+			Function startFunction, boolean isForward) throws CancelledException {
+		Function function = startFunction;
+		AddressSetView body = function.getBody();
+		Address address = startFunction.getEntryPoint();
+		InstructionIterator it = program.getListing().getInstructions(address, isForward);
+		while (it.hasNext()) {
+			monitor.checkCanceled();
+			Instruction instruction = it.next();
+			Address instructionAddress = instruction.getMinAddress();
+			if (!body.contains(instructionAddress)) {
+				function = program.getListing().getFunctionContaining(instructionAddress);
+				if (function == null) {
+					return instructionAddress;
+				}
+				body = function.getBody();
+			}
+		}
+		return null;
+	}
+
+	private Address getPreviousNonFunctionAddress(TaskMonitor monitor, Program program,
+			Address address) throws CancelledException {
+
+		Function function = program.getListing().getFunctionContaining(address);
+		if (function == null) {
+			function = getNextFunction(program, address, false);
+		}
+		if (function == null) {
+			return null;
+		}
+
+		return findNextInstructionAddressNotInFunction(monitor, program, function, false);
 	}
 
 	private boolean isInsideFunctionNotAtEntry(Function function, Address address) {
@@ -86,6 +144,15 @@ public class NextPreviousFunctionAction extends AbstractNextPreviousAction {
 	}
 
 	private Function getNextFunction(Program program, Address address, boolean forward) {
+		FunctionIterator functionIterator = program.getListing().getFunctions(address, forward);
+		if (!functionIterator.hasNext()) {
+			return null;
+		}
+		return functionIterator.next();
+	}
+
+	private Function getNextFunctionNotAtAddress(Program program, Address address,
+			boolean forward) {
 		FunctionIterator functionIterator = program.getListing().getFunctions(address, forward);
 		if (!functionIterator.hasNext()) {
 			return null;
@@ -102,6 +169,11 @@ public class NextPreviousFunctionAction extends AbstractNextPreviousAction {
 
 	@Override
 	protected void gotoAddress(GoToService service, Navigatable navigatable, Address address) {
+		if (isInverted) {
+			service.goTo(navigatable, address);
+			return;
+		}
+
 		Program program = navigatable.getProgram();
 		Function function = program.getListing().getFunctionAt(address);
 		FunctionSignatureFieldLocation location = new FunctionSignatureFieldLocation(program,

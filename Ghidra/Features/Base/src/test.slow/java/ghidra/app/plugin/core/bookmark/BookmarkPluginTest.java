@@ -659,7 +659,9 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		BookmarkManager bm = program.getBookmarkManager();
 		tx(program, () -> {
-			bm.removeBookmarks(BookmarkType.ALL_TYPES);
+			bm.removeBookmarks("Type1");
+			bm.removeBookmarks("Type2");
+			bm.removeBookmarks("Type3");
 		});
 
 		list = getBookmarks(program.getBookmarkManager());
