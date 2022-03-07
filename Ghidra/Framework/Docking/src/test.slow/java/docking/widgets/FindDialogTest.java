@@ -21,7 +21,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import ghidra.util.Swing;
 
 public class FindDialogTest {
 
@@ -32,8 +32,8 @@ public class FindDialogTest {
 		findDialog.setHistory(List.of("search1"));
 
 		String searchText = "search"; // a prefix of an existing history entry
-		findDialog.setSearchText(searchText);
-		assertEquals(searchText, AbstractGenericTest.runSwing(() -> findDialog.getSearchText()));
+		Swing.runNow(() -> findDialog.setSearchText(searchText));
+		assertEquals(searchText, Swing.runNow(() -> findDialog.getSearchText()));
 	}
 
 	private class DummySearcher implements FindDialogSearcher {
