@@ -41,7 +41,9 @@ from os.path import expanduser
 
 def getYaraRulePath():
   fileChooser = GhidraFileChooser(None);
-  fileChooser.addFileFilter(ExtensionFileFilter.forExtensions("YARA files", "yar"));
+  fileChooser.addFileFilter(ExtensionFileFilter.forExtensions("YARA files", "yara"));
+  fileChooser.addFileFilter(ExtensionFileFilter.forExtensions("YARA files", "yar")); 
+  fileChooser.setCurrentDirectory(None);
   homeDirectory = File(expanduser("~"));
   fileChooser.setCurrentDirectory(homeDirectory);
   fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
