@@ -800,8 +800,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	}
 
 	// this is a callback from the action--we need this to prevent callbacks, as the other
-	// version of this method will try to get the method, which will lazily created it, which
-	// will trigger a callback...
+	// version of this method will update the action, which would trigger a callback
 	public void setIncludeDataTypeMembersInFilterCallback(boolean newValue) {
 		includeDataMembersInFilter = newValue;
 		archiveGTree.setIncludeDataTypeMembersInSearch(includeDataMembersInFilter);
@@ -817,6 +816,14 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		if (selected != includeDataMembersInFilter) {
 			action.setSelected(includeDataMembersInFilter);
 		}
+	}
+
+	public void setFilteringArrays(boolean b) {
+		archiveGTree.enableArrayFilter(b);
+	}
+
+	public void setFilteringPointers(boolean b) {
+		archiveGTree.enablePointerFilter(b);
 	}
 
 	boolean includeDataMembersInSearch() {

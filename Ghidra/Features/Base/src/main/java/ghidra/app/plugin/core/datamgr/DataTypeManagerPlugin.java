@@ -362,7 +362,12 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	public DataTypesProvider createProvider() {
-		return new DataTypesProvider(this, SEACH_PROVIDER_NAME);
+
+		DataTypesProvider newProvider = new DataTypesProvider(this, SEACH_PROVIDER_NAME);
+		newProvider.setIncludeDataTypeMembersInFilter(provider.includeDataMembersInSearch());
+		newProvider.setFilteringArrays(provider.isFilteringArrays());
+		newProvider.setFilteringPointers(provider.isFilteringPointers());
+		return newProvider;
 	}
 
 	public void closeProvider(DataTypesProvider providerToClose) {
@@ -623,10 +628,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	@Override
 	public void setRecentlyUsed(DataType dt) {
 		dataTypeManagerHandler.setRecentlyUsedDataType(dt);
-	}
-
-	public boolean includeDataMembersInSearch() {
-		return provider.includeDataMembersInSearch();
 	}
 
 	@Override

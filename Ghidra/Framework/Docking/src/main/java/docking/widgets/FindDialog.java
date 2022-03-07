@@ -136,6 +136,14 @@ public class FindDialog extends DialogComponentProvider {
 		textField.setText("");
 	}
 
+	public void next() {
+		doSearch(true);
+	}
+
+	public void previous() {
+		doSearch(false);
+	}
+
 	private void doSearch(boolean forward) {
 
 		if (!nextButton.isEnabled()) {
