@@ -473,7 +473,7 @@ public class DecompileCallback {
 			if (error != null && addr.equals(error.getInstructionAddress())) {
 				throw new UnknownInstructionException(error.getConflictMessage());
 			}
-			if (MemoryBlock.isExternalBlockAddress(addr, program)) {
+			if (program.getMemory().isExternalBlockAddress(addr)) {
 				throw new UnknownInstructionException(
 					"Unable to disassemble EXTERNAL block location: " + addr);
 			}

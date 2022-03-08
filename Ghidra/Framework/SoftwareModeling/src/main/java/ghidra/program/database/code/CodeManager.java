@@ -2115,8 +2115,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			long pointerComponentOffset =
 				PointerTypedefInspector.getPointerComponentOffset((TypeDef) dataType);
 			if (pointerComponentOffset != 0) {
-				refManager.addOffsetMemReference(data.getMinAddress(), toAddr,
-					pointerComponentOffset, RefType.DATA, SourceType.DEFAULT, 0);
+				refManager.addOffsetMemReference(data.getMinAddress(),
+					toAddr.subtractWrap(pointerComponentOffset), true, pointerComponentOffset,
+					RefType.DATA, SourceType.DEFAULT, 0);
 				return;
 			}
 		}

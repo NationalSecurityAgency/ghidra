@@ -27,6 +27,7 @@ import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
@@ -41,11 +42,13 @@ import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpace
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.model.Trace.TraceReferenceChangeType;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.symbol.TraceReferenceSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
+import ghidra.util.Msg;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
@@ -69,13 +72,19 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		OFFSET {
 			@Override
 			protected DBTraceReference construct(DBTraceReferenceEntry ent) {
-				return new DBTraceOffsetReference(ent);
+				return new DBTraceOffsetReference(ent, false);
 			}
 		},
 		SHIFT {
 			@Override
 			protected DBTraceReference construct(DBTraceReferenceEntry ent) {
 				return new DBTraceShiftedReference(ent);
+			}
+		},
+		OFFSET_EXTERNAL { // Offset Reference into EXTERNAL memory block region
+			@Override
+			protected DBTraceReference construct(DBTraceReferenceEntry ent) {
+				return new DBTraceOffsetReference(ent, true);
 			}
 		};
 
@@ -411,7 +420,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		// TODO: Reference (from, to, opIndex) must be unique!
 		if (reference.isOffsetReference()) {
 			OffsetReference oRef = (OffsetReference) reference;
-			return addOffsetReference(lifespan, oRef.getFromAddress(), oRef.getToAddress(),
+			return addOffsetReference(lifespan, oRef.getFromAddress(), oRef.getBaseAddress(), true,
 				oRef.getOffset(), oRef.getReferenceType(), oRef.getSource(),
 				oRef.getOperandIndex());
 		}
@@ -461,18 +470,61 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		}
 	}
 
+	private boolean isExternalBlockAddress(Range<Long> lifespan, Address addr) {
+		// TODO: Verify that this works for emulation
+		TraceMemoryRegion region =
+			trace.getMemoryManager().getRegionContaining(lifespan.lowerEndpoint(), addr);
+		return region != null && MemoryBlock.EXTERNAL_BLOCK_NAME.equals(region.getName());
+	}
+
 	@Override
 	public DBTraceOffsetReference addOffsetReference(Range<Long> lifespan, Address fromAddress,
-			Address toAddress, long offset, RefType refType, SourceType source, int operandIndex) {
+			Address toAddress, boolean toAddrIsBase, long offset, RefType refType,
+			SourceType source, int operandIndex) {
 		if (operandIndex < -1) {
 			throw new IllegalArgumentException("operandIndex");
 		}
+
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+
+			// Handle EXTERNAL Block offset-reference transformation
+			TypeEnum type = TypeEnum.OFFSET;
+			boolean isExternalBlockRef = isExternalBlockAddress(lifespan, toAddress);
+			boolean badOffsetReference = false;
+			if (isExternalBlockRef) {
+				type = TypeEnum.OFFSET_EXTERNAL;
+				if (!toAddrIsBase) {
+					Address baseAddr = toAddress.subtractWrap(offset);
+					if (isExternalBlockAddress(lifespan, baseAddr)) {
+						toAddress = baseAddr;
+						toAddrIsBase = true;
+					}
+					else {
+						// assume unintentional reference into EXTERNAL block
+						isExternalBlockRef = false;
+						type = TypeEnum.OFFSET;
+						badOffsetReference = true;
+					}
+				}
+			}
+			else if (toAddrIsBase) {
+				toAddress = toAddress.addWrap(offset);
+				toAddrIsBase = false;
+				if (isExternalBlockAddress(lifespan, toAddress)) {
+					badOffsetReference = true;
+				}
+			}
+			
+			if (badOffsetReference) {
+				Msg.warn(this, "Offset Reference from " + fromAddress +
+					" produces bad Xref into EXTERNAL block");
+			}
+			
 			makeWay(lifespan, fromAddress, toAddress, operandIndex);
 
 			DBTraceReferenceEntry entry = referenceMapSpace.put(fromAddress, lifespan, null);
-			entry.set(toAddress, -1, refType, operandIndex, offset, false, TypeEnum.OFFSET, source);
-			DBTraceOffsetReference ref = new DBTraceOffsetReference(entry);
+			entry.set(toAddress, -1, refType, operandIndex, offset, false, type, source);
+			DBTraceOffsetReference ref = new DBTraceOffsetReference(entry, isExternalBlockRef);
 			entry.ref = ref;
 			manager.doAddXRef(entry);
 			return ref;
