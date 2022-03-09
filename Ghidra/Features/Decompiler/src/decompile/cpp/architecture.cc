@@ -763,8 +763,9 @@ ProtoModel *Architecture::parseProto(const Element *el)
   
   ProtoModel *other = protoModels[res->getName()];
   if (other != (ProtoModel *)0) {
+    string errMsg = "Duplicate ProtoModel name: " + res->getName();
     delete res;
-    throw LowlevelError("Duplicate ProtoModel name: "+res->getName());
+    throw LowlevelError(errMsg);
   }
   protoModels[res->getName()] = res;
   return res;

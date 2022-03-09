@@ -365,16 +365,18 @@ void AddrSpaceManager::insertSpace(AddrSpace *spc)
   }
 
   if (nameTypeMismatch || duplicateName || duplicateId) {
+    string errMsg = "Space " + spc->getName();
+    if (nameTypeMismatch)
+      errMsg = errMsg + " was initialized with wrong type";
+    if (duplicateName)
+      errMsg = errMsg + " was initialized more than once";
+    if (duplicateId)
+      errMsg = errMsg + " was assigned as id duplicating: "+baselist[spc->index]->getName();
     if (spc->refcount == 0)
       delete spc;
     spc = (AddrSpace *)0;
+    throw LowlevelError(errMsg);
   }
-  if (nameTypeMismatch)
-    throw LowlevelError("Space "+spc->getName()+" was initialized with wrong type");
-  if (duplicateName)
-    throw LowlevelError("Space "+spc->getName()+" was initialized more than once");
-  if (duplicateId)
-    throw LowlevelError("Space "+spc->getName()+" was assigned as id duplicating: "+baselist[spc->index]->getName());
   baselist[spc->index] = spc;
   spc->refcount += 1;
   assignShortcut(spc);
