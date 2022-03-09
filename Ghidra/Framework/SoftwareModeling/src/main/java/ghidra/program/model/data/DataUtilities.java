@@ -101,6 +101,13 @@ public final class DataUtilities {
 		if (Undefined.isUndefined(dt)) {
 			return true;
 		}
+		if (dt instanceof TypeDef) {
+			TypeDef td = (TypeDef) dt;
+			if (!td.isAutoNamed()) {
+				return false;
+			}
+			dt = td.getDataType();
+		}
 		if (dt instanceof Pointer) {
 			Pointer p = (Pointer) dt;
 			dt = p.getDataType();
