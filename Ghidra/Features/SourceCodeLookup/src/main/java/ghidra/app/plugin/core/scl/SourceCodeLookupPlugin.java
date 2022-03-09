@@ -140,12 +140,11 @@ public class SourceCodeLookupPlugin extends ProgramPlugin {
 				Msg.debug(this, reply);
 				tool.setStatusInfo(reply);
 
-				if (symbolText.startsWith("_")) {
-					symbolText = symbolText.substring(1);
-				}
-				else {
+				if (!symbolText.startsWith("_")) {
 					break;
 				}
+				
+				symbolText = symbolText.substring(1);
 			}
 			catch (IOException e) {
 				// shouldn't happen
