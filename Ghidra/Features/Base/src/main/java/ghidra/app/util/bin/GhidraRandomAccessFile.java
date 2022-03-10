@@ -306,7 +306,7 @@ public class GhidraRandomAccessFile implements AutoCloseable {
 
 	private void swapInLast() throws IOException {
 		checkOpen();
-		if (buffer == EMPTY) {
+		if (buffer.length == 0) {
 			return;
 		}
 		// swap em and return
