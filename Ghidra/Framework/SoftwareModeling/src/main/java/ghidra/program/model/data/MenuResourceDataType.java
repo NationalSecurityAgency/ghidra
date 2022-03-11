@@ -155,7 +155,7 @@ public class MenuResourceDataType extends DynamicDataType {
 			int tempOffset, short mtOption) {
 
 		//If it is a popup there is only an option field, no ID field
-		if (mtOption == MF_POPUP) {
+		if ((mtOption & MF_POPUP) == MF_POPUP) {
 			tempOffset =
 				addComp(WordDataType.dataType, 2, "mtOption", memBuffer.getAddress(), comps,
 					tempOffset);
