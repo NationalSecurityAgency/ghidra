@@ -647,7 +647,7 @@ public class ResourceDataDirectory extends DataDirectory {
 
 			short menuItemOption = 0;
 			Stack<Short> parentItemOptions = new Stack<>();
-			parentItemOptions.push((short)0);
+			parentItemOptions.push((short) 0);
 
 			int numComponents = data.getNumComponents();
 			for (int i = 0; i < numComponents; i++) {
@@ -679,7 +679,8 @@ public class ResourceDataDirectory extends DataDirectory {
 					int depth = parentItemOptions.size() - 1;
 					if (depth == 0) {
 						comment.append("\n");
-					} else {
+					}
+					else {
 						comment.append(" ".repeat(2 * depth));
 					}
 
@@ -696,7 +697,8 @@ public class ResourceDataDirectory extends DataDirectory {
 					if ((menuItemOption & MF_POPUP) == MF_POPUP) {
 						// Increase the current depth
 						parentItemOptions.push(menuItemOption);
-					} else if ((menuItemOption & MF_END) == MF_END) {
+					}
+					else if ((menuItemOption & MF_END) == MF_END) {
 						// Decrease the current depth until we have found a parent menu item that isn't the last item in its parent
 						short parentOptions = parentItemOptions.pop();
 						while ((parentOptions & MF_END) == MF_END) {

@@ -15,9 +15,7 @@
  */
 package ghidra.program.model.data;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.Address;
@@ -92,7 +90,8 @@ public class MenuResourceDataType extends DynamicDataType {
 				if ((option & MF_POPUP) == MF_POPUP) {
 					// Increase the depth
 					parentItemOptions.push(option);
-				} else if ((option & MF_END) == MF_END) {
+				}
+				else if ((option & MF_END) == MF_END) {
 					// Decrease the depth until we have found a parent menu item that isn't also the last item
 					short parentOptions = parentItemOptions.pop();
 					while ((parentOptions & MF_END) == MF_END) {
