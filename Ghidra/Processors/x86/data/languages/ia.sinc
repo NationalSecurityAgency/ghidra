@@ -8611,13 +8611,19 @@ define pcodeop pcmpgtq;
 :PCMPGTQ XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x37; XmmReg ... & m128 { XmmReg = pcmpgtq(XmmReg, m128); }
 :PCMPGTQ XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x37; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = pcmpgtq(XmmReg1, XmmReg2); }
 
-define pcodeop popcnt;
-:POPCNT Reg16, rm16      is vexMode=0 & opsize=0 & $(PRE_F3) &            byte=0x0F; byte=0xB8; Reg16 ... & rm16 { Reg16 = popcnt(rm16); }
-:POPCNT Reg32, rm32      is vexMode=0 & opsize=1 & $(PRE_F3) &            byte=0x0F; byte=0xB8; Reg32 ... & check_Reg32_dest ... & rm32 { Reg32 = popcnt(rm32); build check_Reg32_dest; }
+macro popcountflags(src){
+	OF = 0:1;
+	SF = 0:1;
+	AF = 0:1;
+	CF = 0:1;
+	PF = 0:1;
+	ZF = (src == 0);
+}
+:POPCNT Reg16, rm16      is vexMode=0 & opsize=0 & $(PRE_F3) &            byte=0x0F; byte=0xB8; Reg16 ... & rm16 { popcountflags(rm16); Reg16 = popcount(rm16); }
+:POPCNT Reg32, rm32      is vexMode=0 & opsize=1 & $(PRE_F3) &            byte=0x0F; byte=0xB8; Reg32 ... & check_Reg32_dest ... & rm32 { popcountflags(rm32); Reg32 = popcount(rm32); build check_Reg32_dest; }
 @ifdef IA64
-:POPCNT Reg64, rm64      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0xB8; Reg64 ... & rm64 { Reg64 = popcnt(rm64); }
+:POPCNT Reg64, rm64      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0xB8; Reg64 ... & rm64 { popcountflags(rm64); Reg64 = popcount(rm64); }
 @endif
-
 
 ####
 #### AESNI instructions
