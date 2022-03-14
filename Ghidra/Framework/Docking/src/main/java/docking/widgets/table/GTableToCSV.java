@@ -77,7 +77,7 @@ public final class GTableToCSV {
 	private static List<TableColumn> getVisibleColumnsInOrder(JTable table, TaskMonitor monitor) {
 
 		TableColumnModel columnModel = table.getColumnModel();
-		List<TableColumn> columns = new ArrayList<TableColumn>();
+		List<TableColumn> columns = new ArrayList<>();
 		for (int columnIndex = 0; columnIndex < table.getColumnCount(); ++columnIndex) {
 			if (monitor.isCancelled()) {
 				break;
@@ -92,7 +92,7 @@ public final class GTableToCSV {
 			List<Integer> columnIndices) {
 
 		TableColumnModel columnModel = table.getColumnModel();
-		List<TableColumn> columns = new ArrayList<TableColumn>();
+		List<TableColumn> columns = new ArrayList<>();
 		for (Integer index : columnIndices) {
 			TableColumn column = columnModel.getColumn(index);
 			columns.add(column);
@@ -163,7 +163,7 @@ public final class GTableToCSV {
 	}
 
 	/**
-	 * Attempts to get the text value for the cell so that the data will match what the user sees. 
+	 * Attempts to get the text value for the cell so that the data will match what the user sees.
 	 */
 	private static String getTableCellValue(JTable table, TableModel model, int row, int column) {
 		TableCellRenderer renderer = table.getCellRenderer(row, column);
@@ -173,6 +173,10 @@ public final class GTableToCSV {
 		Object value = model.getValueAt(row, modelIndex);
 		Component component =
 			renderer.getTableCellRendererComponent(table, value, false, false, row, column);
+
+		if (isCheckBox(component)) {
+			return getCheckBoxValue(component);
+		}
 
 		if (component instanceof JLabel) {
 			JLabel label = (JLabel) component;
@@ -187,7 +191,27 @@ public final class GTableToCSV {
 		return value == null ? "" : value.toString();
 	}
 
+	private static boolean isCheckBox(Component component) {
+		return component instanceof JCheckBox || component instanceof GBooleanCellRenderer;
+	}
+
+	private static String getCheckBoxValue(Component component) {
+
+		if (component instanceof JCheckBox) {
+			JCheckBox cb = (JCheckBox) component;
+			return Boolean.toString(cb.isSelected());
+		}
+
+		if (component instanceof GBooleanCellRenderer) {
+			GBooleanCellRenderer renderer = (GBooleanCellRenderer) component;
+			return Boolean.toString(renderer.isSelected());
+		}
+
+		return "";
+	}
+
 	private static String getTextForLabel(JLabel label) {
+
 		String text = label.getText();
 		if (text != null) {
 			return text;
@@ -334,7 +358,7 @@ public final class GTableToCSV {
 		private final GTable table;
 
 		private File file;
-		private List<Integer> columns = new ArrayList<Integer>();
+		private List<Integer> columns = new ArrayList<>();
 
 		ConvertTask(File file, GTable table) {
 			super(GTableToCSV.TITLE, true, true, true);

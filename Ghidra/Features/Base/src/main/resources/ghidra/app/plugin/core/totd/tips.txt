@@ -15,7 +15,7 @@ The Program Tree is an organizational view of the program that is initialized wi
 The Program Tree allows a program to be organized into a hierarchy of folders and fragments. You can have multiple Program Trees.
 You can add memory overlays to your program using the Memory Map dialog.
 Did you know that you can create and edit structures from the Decompiler?
-Did you know that you can apply the local variables, parameters, and return values that the Decompiler figures out? Just right click on them and choose Apply Locals or Apply Params/Return to get them all for a particular function. You can also run the Decompiler Parameter ID analysis option to apply the Decompiler parameters when the program is initially being analyzed or choose Analyis-One Shot->Decompiler Parameter ID to do it after analysis.
+Did you know that you can apply the local variables, parameters, and return values that the Decompiler figures out? Just right click on them and choose Apply Locals or Apply Params/Return to get them all for a particular function. You can also run the Decompiler Parameter ID analysis option to apply the Decompiler parameters when the program is initially being analyzed or choose Analysis-One Shot->Decompiler Parameter ID to do it after analysis.
 Did you know that you can run various analyzers separately and after the initial analysis run? See Analysis->One Shot for a list of them. 
 
 Did you know that you can right-click on the marker margin to learn the meaning of each color.

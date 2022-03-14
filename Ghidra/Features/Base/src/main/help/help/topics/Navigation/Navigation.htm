@@ -415,6 +415,15 @@
         <P>Alternatively, holding the <b>SHIFT</b> key when clicking a navigation button will 
         temporarily invert the direction of the search.</P>
       </BLOCKQUOTE>
+      
+      <H3><A name="Invert_Search_Logic"></A>Invert Search Logic</H3>
+
+      <BLOCKQUOTE>
+        <P>The <IMG src="images/dialog-cancel.png" alt="down_arrow" border="0"> icon indicates the 
+        search logic will be inverted / negated.  The exact meaning of this depends upon the type
+        of search performed, as described below.
+      </BLOCKQUOTE>
+      
 
       <H3><A name="Next_Instruction"></A>Navigate to Instruction</H3>
 
@@ -422,6 +431,12 @@
         <P>To move the cursor to the next instruction click on the Navigate by Instruction icon,
         <IMG src="images/I.gif" alt="I" border="0">. This icon is disabled when no more
         instructions exist in the current search direction.</P>
+        
+      <P>When inverted, this task, if on an instruction, will attempt to navigate to
+         the next data or undefined data.  If not on an instruction, then this task
+         will find the next instruction and then find the data or undefined data after that.
+        </P>
+        
       </BLOCKQUOTE>
 
       <H3><A name="Next_Data"></A>Navigate to Data</H3>
@@ -430,6 +445,12 @@
         <P>To move the cursor to the next data code unit, click on the Navigate by Data icon, <IMG
         src="images/D.gif" alt="D" border="0">. This icon is disabled when no more data code units
         exist in the current search direction.</P>
+        
+         <P>When inverted, this task, if on a data code unit, will attempt to navigate to
+         the next instruction or undefined data.  If not on a data, then this task
+         will find the next defined data and then find the instruction or undefined data after that.
+        </P>
+        
       </BLOCKQUOTE>
 
       <H3><A name="Next_Undefined"></A>Navigate to Undefined</H3>
@@ -438,14 +459,25 @@
         <P>To move the cursor to the next undefined code unit, click on the Navigate by Data icon,
         <IMG src="images/U.gif" alt="U" border="0">. This icon is disabled when no more undefined
         code units exist in the current search direction.</P>
+        
+         <P>When inverted, this task, if on an undefined code unit, will attempt to navigate to
+         the next instruction or data.  If not on an undefined, then this task
+         will find the next undefined and then find the instruction or data after that.
+        </P>
+        
       </BLOCKQUOTE>
 
 	  <H3><A name="Next_Label"></A>Navigate to Label</H3>
 
       <BLOCKQUOTE>
         <P>To move the cursor to the next Label, click on the Navigate by Label icon,
-        <IMG src="images/L.gif" alt="L" border="0">. This icon is disabled when no more labels
-         exist in the current search direction.</P>
+        <IMG src="images/L.gif" alt="L" border="0">.</P>
+         
+         <P>When inverted, this task, if on an address with a label, will attempt to navigate to
+         the next code unit without a label.  If not on an address with a label, then this task
+         will find the next label and then find the next code unit after that without a label.
+        </P>
+         
       </BLOCKQUOTE>
 
       <H3><A name="Next_Function"></A>Navigate to Function</H3>
@@ -455,37 +487,49 @@
         next function in the current direction.  If inside a function and the direction is towards 
         lower addresses, then this action will go to the current function's entry point.</P>
 
+		<P>When inverted, this task (<IMG src="images/notF.gif" alt="F">) will attempt to
+      	the navigate to the next instruction block not contained in a function. 
+      	This can be useful when manually creating functions and
+      	stepping over them to identify potential function candidates.</P>
+        </P>
+
       </BLOCKQUOTE>
 
-      <H3><A name="Next_Non_Function"></A>Navigate to Non-Function</H3>
 
+     <H3><A name="Next_Matching_Byte_Values"></A>Navigate to Matching Byte Values</H3>
 
-      <P style="margin-left: 40px;">This task (<IMG src="images/notF.gif" alt="F">) will attempt to
-      the navigate to the next instruction block not contained in a function.&nbsp; 
-      This can be useful when manually creating functions and
-      stepping over them to identify potential function candidates.&nbsp;</P>
-
-     <H3><A name="Next_Different_Byte_Value"></A>Navigate to Different Byte Value</H3>
-
-
-      <P style="margin-left: 40px;">This task (<IMG src="images/V_slash.png" alt="V">) will attempt to
+	  <BLOCKQUOTE>
+	  
+	  <P>This task  (<IMG src="images/V.png" alt="V">) will attempt to navigate to the next matching
+	  byte pattern of the code unit under the cursor.
+	  </P>
+	  
+      <P>When inverted, this task will attempt to
       the navigate to the first code-unit where the byte value is different from the byte value
-      of the first byte of the current code unit.&nbsp; This can be useful when trying to navigate 
-      past a series of 0s or FFs;</P>
+      of the first byte of the current code unit. This can be useful when trying to navigate 
+      past a series of 0s or FFs</P>
+      
+      </BLOCKQUOTE>
       
       <H3><A name="Next_Bookmark"></A>Navigate to Bookmark</H3>
 
       <BLOCKQUOTE>
         <P>To move the cursor to the next bookmark, click on the Navigate by Bookmark icon, 
-        <IMG src="images/B.gif" alt="B" border="0">. This icon is disabled when no more bookmarks 
-        exist in the current search direction. You may use the pull-down menu to choose a specific 
-        type of bookmark (<IMG src="images/applications-system.png" alt="B" border="0">,  
+        <IMG src="images/B.gif" alt="B" border="0">. You may use the pull-down menu to choose a 
+        specific type of bookmark (<IMG src="images/applications-system.png" alt="B" border="0">,  
         <IMG src="images/edit-delete.png" alt="B" border="0">, 
         <IMG src="images/information.png" alt="B" border="0">,
         <IMG src="images/notes.gif" alt="B" border="0">,
         <IMG src="images/warning.png" alt="B" border="0">,
         <IMG src="images/unknown.gif" alt="B" border="0">)
         to navigate to as opposed to all types. </P>
+        
+        <P>When inverted, this task will attempt to navigate to then next address with a bookmark
+        different than what is selected in the pull-down menu of the icon.  If the 'all bookmarks'
+        state is selected, then this task will simply navigate to the next address that has no 
+        bookmark.
+        </P>
+        
       </BLOCKQUOTE>
       
 

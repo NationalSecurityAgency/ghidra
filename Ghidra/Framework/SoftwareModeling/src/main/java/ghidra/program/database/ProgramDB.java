@@ -2053,6 +2053,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			setEventsEnabled(false);
 			try {
 				boolean redisassemblyRequired = true;
+				LanguageID oldLanguageId = languageID;
 				int oldLanguageVersion = languageVersion;
 				int oldLanguageMinorVersion = languageMinorVersion;
 				if (translator != null) {
@@ -2081,6 +2082,12 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				if (newCompilerSpecID != null) {
 					compilerSpec = ProgramCompilerSpec.getProgramCompilerSpec(this,
 						language.getCompilerSpecByID(newCompilerSpecID));
+					if (!oldLanguageId.equals(languageID) ||
+						!compilerSpecID.equals(newCompilerSpecID)) {
+						if (compilerSpec instanceof ProgramCompilerSpec) {
+							((ProgramCompilerSpec) compilerSpec).resetProgramOptions(monitor);
+						}
+					}
 				}
 				compilerSpecID = compilerSpec.getCompilerSpecID();
 				languageVersion = language.getVersion();

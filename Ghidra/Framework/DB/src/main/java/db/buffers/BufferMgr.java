@@ -287,7 +287,7 @@ public class BufferMgr {
 				}
 				for (BufferMgr bufferMgr : instanceList) {
 					try {
-						bufferMgr.dispose();
+						bufferMgr.dispose(true);
 					}
 					catch (Throwable t) {
 						// Ignore errors
@@ -384,7 +384,7 @@ public class BufferMgr {
 	public void dispose() {
 		dispose(false);
 	}
-
+	
 	/**
 	 * Dispose of all buffer manager resources including any source
 	 * buffer file.
@@ -1559,10 +1559,12 @@ public class BufferMgr {
 	 * @throws IOException if IO error occurs
 	 */
 	public LocalBufferFile getRecoveryChangeSetFile() throws IOException {
-		if (recoveryMgr != null) {
-			return recoveryMgr.getRecoveryChangeSetFile();
+		synchronized (snapshotLock) {
+			if (recoveryMgr != null) {
+				return recoveryMgr.getRecoveryChangeSetFile();
+			}
+			return null;
 		}
-		return null;
 	}
 
 	/**

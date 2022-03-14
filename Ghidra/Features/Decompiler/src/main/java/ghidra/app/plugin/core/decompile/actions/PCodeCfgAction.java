@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import static ghidra.app.plugin.core.decompile.actions.ASTGraphTask.AstGraphSubType.*;
+import static ghidra.app.plugin.core.decompile.actions.PCodeCfgGraphTask.PcodeGraphSubType.*;
 
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
@@ -28,12 +28,13 @@ import ghidra.program.model.pcode.HighFunction;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskLauncher;
-public class GraphASTControlFlowAction extends AbstractDecompilerAction {
 
-	public GraphASTControlFlowAction() {
-		super("Graph AST Control Flow");
-		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarGraph"));
-		setMenuBarData(new MenuData(new String[] { "Graph AST Control Flow" }, "graph"));
+public class PCodeCfgAction extends AbstractDecompilerAction {
+
+	public PCodeCfgAction() {
+		super("Graph PCode Control Flow");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ControlFlowGraph"));
+		setMenuBarData(new MenuData(new String[] { "Graph Control Flow" }, "graph"));
 	}
 
 	@Override
@@ -57,8 +58,9 @@ public class GraphASTControlFlowAction extends AbstractDecompilerAction {
 		int codeLimitPerBlock = options.getInt("Max Code Lines Displayed", 10);
 		HighFunction highFunction = context.getHighFunction();
 		Address locationAddr = context.getLocation().getAddress();
-		ASTGraphTask task = new ASTGraphTask(service, !reuseGraph, codeLimitPerBlock, locationAddr,
-			highFunction, CONTROL_FLOW_GRAPH, tool);
+		PCodeCfgGraphTask task =
+			new PCodeCfgGraphTask(tool, service, !reuseGraph, codeLimitPerBlock,
+				locationAddr, highFunction, CONTROL_FLOW_GRAPH);
 		new TaskLauncher(task, tool.getToolFrame());
 	}
 

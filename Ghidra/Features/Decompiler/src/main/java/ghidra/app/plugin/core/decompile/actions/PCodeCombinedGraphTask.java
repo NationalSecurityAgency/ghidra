@@ -13,16 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Decompile the function at the cursor, then build data-flow graph (AST) with flow edges
-//@category PCode
+package ghidra.app.plugin.core.decompile.actions;
 
 import java.util.*;
 
+import ghidra.app.services.GraphDisplayBroker;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.pcode.*;
 import ghidra.service.graph.AttributedEdge;
 import ghidra.service.graph.AttributedVertex;
 
-public class GraphASTAndFlow extends GraphAST {
+/**
+ * Task to create a combined PCode control flow and data flow graph based on decompiler output
+ */
+public class PCodeCombinedGraphTask extends PCodeDfgGraphTask {
+
+	public PCodeCombinedGraphTask(PluginTool tool, GraphDisplayBroker graphService,
+			HighFunction hfunction) {
+		super(tool, graphService, hfunction);
+	}
 
 	@Override
 	protected void buildGraph() {
@@ -77,7 +86,7 @@ public class GraphASTAndFlow extends GraphAST {
 				}
 				if (prev != null && map.containsKey(prev) && map.containsKey(next)) {
 					AttributedEdge edge = createEdge(map.get(prev), map.get(next));
-					edge.setEdgeType(WITHIN_BLOCK);
+					edge.setEdgeType(PCodeDfgGraphType.WITHIN_BLOCK);
 				}
 				prev = next;
 			}
@@ -92,7 +101,7 @@ public class GraphASTAndFlow extends GraphAST {
 				PcodeBlock in = block.getIn(i);
 				if (last.containsKey(in)) {
 					AttributedEdge edge = createEdge(last.get(in), first.get(block));
-					edge.setEdgeType(BETWEEN_BLOCK);
+					edge.setEdgeType(PCodeDfgGraphType.BETWEEN_BLOCKS);
 				}
 			}
 		}

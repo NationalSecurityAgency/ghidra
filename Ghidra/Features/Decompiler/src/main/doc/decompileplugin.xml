@@ -3872,14 +3872,26 @@
   </para>
 </sect2>
 
-<sect2 id="ToolBarGraph">
-  <title>Graph AST Control Flow</title>
+<sect2 id="DataFlowGraph">
+  <title>Graph Data Flow</title>
   <para>
     This action is located in the drop-down menu on the right side of the Decompiler
     window tool/title bar.
   </para>
   <para>
-    Generate a control-flow graph based upon the results in the active Decompiler window,
+    Generate a data flow graph based upon the results in the active Decompiler window,
+    and render it using the current Graph Service.
+  </para>
+</sect2>
+
+<sect2 id="ControlFlowGraph">
+  <title>Graph Control Flow</title>
+  <para>
+    This action is located in the drop-down menu on the right side of the Decompiler
+    window tool/title bar.
+  </para>
+  <para>
+    Generate a control flow graph based upon the results in the active Decompiler window,
     and render it using the current Graph Service.
   </para>
 </sect2>

@@ -7671,6 +7671,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	build SSR;
 	*[ram]:4 SSR = Ra0811;
 }
+@endif
 
 # ST.A A[b], off10, A[a] (BO)(Post-increment Addressing Mode)
 # ST.A P[b], A[a] (BO)(Bit-reverse Addressing Mode)

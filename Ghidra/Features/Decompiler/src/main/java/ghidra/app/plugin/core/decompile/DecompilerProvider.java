@@ -63,7 +63,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private static final ImageIcon C_SOURCE_ICON =
 		ResourceManager.loadImage("images/decompileFunction.gif");
 
-	private DockingAction graphASTControlFlowAction;
+	private DockingAction pcodeGraphAction;
+	private DockingAction astGraphAction;
 
 	private final DecompilePlugin plugin;
 	private ClipboardService clipboardService;
@@ -1023,21 +1024,26 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	private void graphServiceRemoved() {
-		if (graphASTControlFlowAction == null) {
+		if (pcodeGraphAction == null) {
 			return;
 		}
 		if (tool.getService(GraphDisplayBroker.class) == null) {
-			tool.removeAction(graphASTControlFlowAction);
-			graphASTControlFlowAction.dispose();
-			graphASTControlFlowAction = null;
+			tool.removeAction(pcodeGraphAction);
+			tool.removeAction(astGraphAction);
+			astGraphAction.dispose();
+			pcodeGraphAction.dispose();
+			pcodeGraphAction = null;
+			astGraphAction = null;
 		}
 	}
 
 	private void graphServiceAdded() {
 		GraphDisplayBroker service = tool.getService(GraphDisplayBroker.class);
 		if (service != null && service.getDefaultGraphDisplayProvider() != null) {
-			graphASTControlFlowAction = new GraphASTControlFlowAction();
-			addLocalAction(graphASTControlFlowAction);
+			pcodeGraphAction = new PCodeCfgAction();
+			addLocalAction(pcodeGraphAction);
+			astGraphAction = new PCodeDfgAction();
+			addLocalAction(astGraphAction);
 		}
 	}
 

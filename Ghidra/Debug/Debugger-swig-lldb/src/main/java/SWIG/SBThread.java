@@ -299,6 +299,10 @@ public class SBThread {
     return lldbJNI.SBThread_SafeToCallFunctions(swigCPtr, this);
   }
 
+  public SBValue GetSiginfo() {
+    return new SBValue(lldbJNI.SBThread_GetSiginfo(swigCPtr, this), true);
+  }
+
   public String __str__() {
     return lldbJNI.SBThread___str__(swigCPtr, this);
   }

@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
-import static ghidra.app.plugin.core.decompile.actions.ASTGraphTask.AstGraphSubType.*;
+import static ghidra.app.plugin.core.decompile.actions.PCodeCfgGraphTask.PcodeGraphSubType.*;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.decompile.actions.ASTGraphTask.AstGraphSubType;
+import ghidra.app.plugin.core.decompile.actions.PCodeCfgGraphTask.PcodeGraphSubType;
 import ghidra.app.plugin.core.graph.AddressBasedGraphDisplayListener;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -31,12 +31,12 @@ import ghidra.util.exception.AssertException;
 /**
  * Listener for when an AST graph's nodes are selected.
  */
-public class ASTGraphDisplayListener extends AddressBasedGraphDisplayListener {
+public class PCodeCfgDisplayListener extends AddressBasedGraphDisplayListener {
 	private HighFunction hfunction;
-	private AstGraphSubType graphType;
+	private PcodeGraphSubType graphType;
 
-	ASTGraphDisplayListener(PluginTool tool, GraphDisplay display, HighFunction hfunction,
-			AstGraphSubType graphType) {
+	PCodeCfgDisplayListener(PluginTool tool, GraphDisplay display, HighFunction hfunction,
+			PcodeGraphSubType graphType) {
 		super(tool, hfunction.getFunction().getProgram(), display);
 		this.hfunction = hfunction;
 		this.graphType = graphType;
@@ -117,7 +117,7 @@ public class ASTGraphDisplayListener extends AddressBasedGraphDisplayListener {
 
 	@Override
 	public GraphDisplayListener cloneWith(GraphDisplay display) {
-		return new ASTGraphDisplayListener(tool, graphDisplay, hfunction, graphType);
+		return new PCodeCfgDisplayListener(tool, graphDisplay, hfunction, graphType);
 	}
 
 }

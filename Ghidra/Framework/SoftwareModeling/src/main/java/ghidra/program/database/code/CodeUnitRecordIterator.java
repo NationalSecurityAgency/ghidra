@@ -21,7 +21,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 
 /**
- * Combines an Instruction iterator and Data iterator into a codeunit iterator
+ * Combines an Instruction iterator and Data iterator into a code unit iterator
  */
 
 class CodeUnitRecordIterator implements CodeUnitIterator {
@@ -38,7 +38,7 @@ class CodeUnitRecordIterator implements CodeUnitIterator {
 
 	/**
 	 * Constructs a new CodeUnitRecordIterator
-	 * @param codeMgr the code managaer
+	 * @param codeMgr the code manager
 	 * @param instIt the instruction iterator
 	 * @param dataIt the data iterator
 	 * @param set the address set (required)
@@ -57,17 +57,11 @@ class CodeUnitRecordIterator implements CodeUnitIterator {
 
 	}
 
-	/**
-	 * @see java.util.Iterator#remove()
-	 */
 	@Override
 	public void remove() {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnitIterator#hasNext()
-	 */
 	@Override
 	public boolean hasNext() {
 		if (nextCu == null) {
@@ -76,9 +70,6 @@ class CodeUnitRecordIterator implements CodeUnitIterator {
 		return nextCu != null;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnitIterator#next()
-	 */
 	@Override
 	public CodeUnit next() {
 		if (hasNext()) {

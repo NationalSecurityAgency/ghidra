@@ -62,7 +62,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	private LiveMemoryHandler liveMemory;
 
 	// lazy hashmap of block names to blocks, must be reloaded if blocks are removed or added
-	private HashMap<String, MemoryBlock> nameBlockMap = new HashMap<String, MemoryBlock>();
+	private HashMap<String, MemoryBlock> nameBlockMap = new HashMap<>();
 	private final static MemoryBlock NoBlock = new MemoryBlockStub();  // placeholder for no block, not given out
 
 	Lock lock;
@@ -1257,8 +1257,13 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	 * Tests if the memory contains a sequence of contiguous bytes that match the given byte array
 	 * at all bit positions where the mask contains an "on" bit. The test will be something like
 	 *
-	 * for(int i=0;i<bytes.length;i++) { if (bytes[i] != memory.getByte(addr+i) &amp; masks[i]) {
-	 * return false; } } return false;
+	 * <PRE>
+	 *  for(int i = 0; i &lt; bytes.length; i++) {
+	 *     if (bytes[i] != memory.getByte(addr+i) &amp; masks[i]) {
+	 *         return false;
+	 *     }
+	 * }
+	 * </PRE>
 	 *
 	 * @param addr The beginning address in memory to test against.
 	 * @param bytes the array of bytes to test for.

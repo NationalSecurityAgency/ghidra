@@ -13,9 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
-apply from: "$rootProject.projectDir/gradle/processorProject.gradle"
-apply plugin: 'eclipse'
 
-eclipse.project.name = 'Processors 6805'
+//Decompile the function at the cursor, then build data flow graph for the current address
+//@category PCode
+import ghidra.app.plugin.core.decompile.actions.PCodeDfgGraphTask;
+import ghidra.app.plugin.core.decompile.actions.SelectedPCodeDfgGraphTask;
+import ghidra.app.services.GraphDisplayBroker;
 
+public class GraphSelectedASTScript extends GraphASTScript {
+	protected PCodeDfgGraphTask createTask(GraphDisplayBroker graphDisplayBroker) {
+		return new SelectedPCodeDfgGraphTask(state.getTool(), graphDisplayBroker, high,
+			currentAddress);
+	}
+}

@@ -115,7 +115,6 @@ public final class LoadCommandTypes {
 			}
 			case LC_CODE_SIGNATURE:
 			case LC_SEGMENT_SPLIT_INFO:
-			case LC_FUNCTION_STARTS:
 			case LC_DATA_IN_CODE:
 			case LC_OPTIMIZATION_HINT:
 			case LC_DYLIB_CODE_SIGN_DRS: {
@@ -138,6 +137,9 @@ public final class LoadCommandTypes {
 			case LC_VERSION_MIN_TVOS:
 			case LC_VERSION_MIN_WATCHOS: {
 				return VersionMinCommand.createVersionMinCommand(reader);
+			}
+			case LC_FUNCTION_STARTS: {
+				return FunctionStartsCommand.createFunctionStartsCommand(reader);
 			}
 			case LC_MAIN: {
 				return EntryPointCommand.createEntryPointCommand(reader);

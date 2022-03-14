@@ -63,6 +63,10 @@ public class SBModule {
     lldbJNI.SBModule_Clear(swigCPtr, this);
   }
 
+  public boolean IsFileBacked() {
+    return lldbJNI.SBModule_IsFileBacked(swigCPtr, this);
+  }
+
   public SBFileSpec GetFileSpec() {
     return new SBFileSpec(lldbJNI.SBModule_GetFileSpec(swigCPtr, this), true);
   }

@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Decompile the function at the cursor, then build data-flow graph (AST) for the current address
+//Decompile the function at the cursor, then build data-flow graph (AST) with flow edges
 //@category PCode
 
-import java.util.Iterator;
+import ghidra.app.plugin.core.decompile.actions.PCodeCombinedGraphTask;
+import ghidra.app.plugin.core.decompile.actions.PCodeDfgGraphTask;
+import ghidra.app.services.GraphDisplayBroker;
 
-import ghidra.program.model.pcode.PcodeOpAST;
+public class GraphASTAndFlowScript extends GraphASTScript {
 
-public class GraphSelectedAST extends GraphAST {
-	
-	protected Iterator<PcodeOpAST> getPcodeOpIterator() {
-		Iterator<PcodeOpAST> opiter = high.getPcodeOps(this.currentAddress);
-		return opiter;
+	protected PCodeDfgGraphTask createTask(GraphDisplayBroker graphDisplayBroker) {
+		return new PCodeCombinedGraphTask(state.getTool(), graphDisplayBroker, high);
 	}
-  
 }
