@@ -24,9 +24,16 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 
-@TargetObjectSchemaInfo(name = "Module", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
-		@TargetAttributeType(name = "Symbols", type = DbgModelTargetSymbolContainerImpl.class, required = true, fixed = true),
+@TargetObjectSchemaInfo(
+	name = "Module",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(
+			name = "Symbols",
+			type = DbgModelTargetSymbolContainerImpl.class,
+			required = true,
+			fixed = true),
 		@TargetAttributeType(name = "BaseAddress", type = Address.class),
 		@TargetAttributeType(name = "ImageName", type = String.class),
 		@TargetAttributeType(name = "TimeStamp", type = Integer.class),

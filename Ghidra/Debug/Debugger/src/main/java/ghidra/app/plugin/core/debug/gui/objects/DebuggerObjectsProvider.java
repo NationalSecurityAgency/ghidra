@@ -1515,11 +1515,27 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public void performSetBreakpoint(ActionContext context) {
+		setText(context);
 		performAction(context, false, TargetBreakpointSpecContainer.class, container -> {
 			breakpointDialog.setContainer(container);
 			tool.showDialog(breakpointDialog);
 			return AsyncUtils.NIL;
 		}, "Couldn't set breakpoint");
+	}
+
+	private void setText(ActionContext context) {
+		breakpointDialog.setText("");
+		TargetObject obj = getObjectFromContext(context);
+		Object key = obj.getCachedAttribute(TargetBreakpointSpec.KEY_ATTRIBUTE_NAME);
+		if (key != null) {
+			breakpointDialog.setText(key.toString());
+		}
+		else {
+			if (obj instanceof DummyTargetObject) {
+				DummyTargetObject dto = (DummyTargetObject) obj;
+				breakpointDialog.setText(dto.getValue().toString());
+			}
+		}
 	}
 
 	public void performToggle(ActionContext context) {
