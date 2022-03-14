@@ -55,7 +55,7 @@ public class DebuggerGoToDialog extends DialogComponentProvider {
 				"Note that constants and memory derefs must have a resolved size, e.g.:" +
 				"<ul>" +
 				"<li><code>0x00401234:4</code></li>" +
-				"<li><code>*:4 EAX</code></li>" +
+				"<li><code>*:8 RAX</code> for memory at *RAX (but <code>RAX</code> for memory at RAX)</li>" +
 				"</ul></html>");
 		help.getMaximumSize().width = 400;
 		panel.add(help, BorderLayout.NORTH);
