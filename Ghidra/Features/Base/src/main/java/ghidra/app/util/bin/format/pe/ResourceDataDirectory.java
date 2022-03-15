@@ -638,17 +638,18 @@ public class ResourceDataDirectory extends DataDirectory {
 	private String setExtraCommentForMenuResource(Data data) throws MemoryAccessException {
 
 		short MF_POPUP = 0x0010;
-		short LAST = 0x0090;
+		short MF_END = 0x0080;
 
 		DumbMemBufferImpl buffer = new DumbMemBufferImpl(data.getMemory(), data.getAddress());
 
 		StringBuilder comment = new StringBuilder();
 		if (data.getBaseDataType().getName().equals("MenuResource")) {
 
-			//get first structure
+			short menuItemOption = 0;
+			Stack<Short> parentItemOptions = new Stack<>();
+			parentItemOptions.push((short) 0);
 
 			int numComponents = data.getNumComponents();
-			boolean topLevel = false;
 			for (int i = 0; i < numComponents; i++) {
 				DataType dt = data.getComponent(i).getBaseDataType();
 				int offset = data.getComponent(i).getRootOffset();
@@ -667,26 +668,20 @@ public class ResourceDataDirectory extends DataDirectory {
 
 				}
 				if (dt.getName().equals("word")) {
-					short option = buffer.getShort(offset);
+					menuItemOption = buffer.getShort(offset);
 
-					if (option == MF_POPUP) {
-						topLevel = true; //this type has no mtID to skip
-					}
-					else if (option == LAST) {
-						topLevel = true;
-						i++; //skip the mtID
-					}
-					else {
-						topLevel = false;
+					if ((menuItemOption & MF_POPUP) == 0) {
 						i++; //skip the mtID
 					}
 				}
+
 				if (dt.getName().equals("unicode")) {
-					if (topLevel) {
+					int depth = parentItemOptions.size() - 1;
+					if (depth == 0) {
 						comment.append("\n");
 					}
 					else {
-						comment.append("  ");
+						comment.append(" ".repeat(2 * depth));
 					}
 
 					String menuString = fixupStringRepForDisplay(
@@ -698,6 +693,19 @@ public class ResourceDataDirectory extends DataDirectory {
 					else {
 						comment.append(menuString + "\n");
 					}
+
+					if ((menuItemOption & MF_POPUP) == MF_POPUP) {
+						// Increase the current depth
+						parentItemOptions.push(menuItemOption);
+					}
+					else if ((menuItemOption & MF_END) == MF_END) {
+						// Decrease the current depth until we have found a parent menu item that isn't the last item in its parent
+						short parentOptions = parentItemOptions.pop();
+						while ((parentOptions & MF_END) == MF_END) {
+							parentOptions = parentItemOptions.pop();
+						}
+					}
+
 				}
 
 			}

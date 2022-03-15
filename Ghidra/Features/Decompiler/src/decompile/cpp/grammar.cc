@@ -2064,6 +2064,9 @@ GrammarToken::GrammarToken(void)
 {
   type = 0;
   value.integer = 0;
+  lineno = -1;
+  colno = -1;
+  filenum = -1;
 }
 
 GrammarLexer::GrammarLexer(int4 maxbuffer)
@@ -2617,6 +2620,9 @@ CParse::CParse(Architecture *g,int4 maxbuf)
 {
   glb = g;
   firsttoken = -1;
+  lineno = -1;
+  colno = -1;
+  filenum = -1;
   lastdecls = (vector<TypeDeclarator *> *)0;
   keywords["typedef"] = f_typedef;
   keywords["extern"] = f_extern;
