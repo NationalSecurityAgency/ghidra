@@ -360,7 +360,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		private final ActionState<T> actionState;
 
 		private ActionStateToggleAction(ActionState<T> actionState, boolean isSelected) {
-			super(actionState.getName(), "multiStateAction");
+			super(actionState.getName(), "MultiStateAction");
 
 			this.actionState = actionState;
 
@@ -370,6 +370,11 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 			HelpLocation helpLocation = actionState.getHelpLocation();
 			if (helpLocation != null) {
 				setHelpLocation(helpLocation);
+			}
+			else {
+				HelpLocation parentHelp =
+					Help.getHelpService().getHelpLocation(MultiStateDockingAction.this);
+				setHelpLocation(parentHelp);
 			}
 		}
 
