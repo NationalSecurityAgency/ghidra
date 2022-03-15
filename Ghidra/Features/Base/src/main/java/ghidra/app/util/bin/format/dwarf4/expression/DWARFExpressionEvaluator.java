@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.dwarf4.expression;
 import static ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionOpCodes.*;
 
 import java.util.ArrayDeque;
+import java.util.Objects;
 
 import ghidra.app.util.bin.format.dwarf4.DWARFCompilationUnit;
 import ghidra.app.util.bin.format.dwarf4.DebugInfoEntry;
@@ -102,7 +103,8 @@ public class DWARFExpressionEvaluator {
 		this.pointerSize = pointerSize;
 		this.isLittleEndian = isLittleEndian;
 		this.dwarfFormat = dwarfFormat;
-		this.registerMappings = registerMappings;
+		this.registerMappings =
+			Objects.requireNonNullElse(registerMappings, DWARFRegisterMappings.DUMMY);
 	}
 
 	public void setFrameBase(long fb) {
