@@ -57,14 +57,13 @@ public class ImageIconWrapper extends ImageIcon implements FileBasedIcon {
 	 * @param imageName image reference name
 	 */
 	public ImageIconWrapper(byte[] imageBytes, String imageName) {
-		if (imageBytes == null) {
-			throw new NullPointerException("Cannot create an ImageIconWrapper from a null URL");
-		}
+		this.imageBytes = Objects.requireNonNull(imageBytes,
+			"Cannot create an ImageIconWrapper from a null bytes");
+		this.imageName = imageName;
+
 		if (imageBytes.length == 0) {
 			throw new IllegalArgumentException("Cannot create an image from 0 bytes");
 		}
-		this.imageBytes = imageBytes;
-		this.imageName = imageName;
 	}
 
 	/**
@@ -84,7 +83,8 @@ public class ImageIconWrapper extends ImageIcon implements FileBasedIcon {
 	 * @param icon the icon
 	 */
 	public ImageIconWrapper(Icon icon) {
-		this.baseIcon = icon;
+		this.baseIcon =
+			Objects.requireNonNull(icon, "Cannot create an ImageIconWrapper from a null icon");
 	}
 
 	/**
