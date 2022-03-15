@@ -30,14 +30,27 @@ public class GraphPath<V> {
 	private Set<V> pathSet = new HashSet<>();
 	private List<V> pathList = new ArrayList<>();
 
+	/**
+	 * Default constructor.
+	 */
 	public GraphPath() {
-		// default constructor
 	}
 
+	/**
+	 * Constructor with a vertex.
+	 *
+	 * @param v being the first vertex of the newly initialized GraphPath object
+	 */
 	public GraphPath(V v) {
 		add(v);
 	}
 
+	/**
+	 * Creates a new GraphPath object by performing a deep copy
+	 * on another GraphPath object.
+	 *
+	 * @return the new deepcopy of the original GraphPath object
+	 */
 	public GraphPath<V> copy() {
 		GraphPath<V> newPath = new GraphPath<>();
 		newPath.pathList.addAll(pathList);
@@ -45,6 +58,13 @@ public class GraphPath<V> {
 		return newPath;
 	}
 
+	/**
+	 * Check if a GraphPath starts with another Graphpath.
+	 *
+	 * @param otherPath is the other GraphPath for which we are checking if the current
+	 * GraphPart starts with it.
+	 * @return true if the current GraphPath starts with otherPath, false otherwise
+	 */
 	public boolean startsWith(GraphPath<V> otherPath) {
 		if (size() < otherPath.size()) {
 			return false;
@@ -58,6 +78,15 @@ public class GraphPath<V> {
 		return true;
 	}
 
+	/**
+	 * Return the first few nodes that two GraphPaths have in common.
+	 * For example if you have a-b-c-d-e-f and a-b-c-d-k-l-z, the common
+	 * start path will be a-b-c-d. If there is no common start path, an
+	 * empty GraphPath object is returned.
+	 *
+	 * @param other being the other GraphPath to get the common start path of
+	 * @return a new GraphPath object containing the common start path vertices
+	 */
 	public GraphPath<V> getCommonStartPath(GraphPath<V> other) {
 		int n = Math.min(size(), other.size());
 		for (int i = 0; i < n; i++) {
@@ -68,31 +97,68 @@ public class GraphPath<V> {
 		return subPath(0, n);
 	}
 
+	/**
+	 * Return the size of the GraphPath.
+	 *
+	 * @return size of the GraphPath
+	 */
 	public int size() {
 		return pathList.size();
 	}
 
+	/**
+	 * Check if vertex v is in the pathSet of the GraphPath.
+	 *
+	 * @return true if vertex v is in the pathSet of the GraphPath
+	 */
 	public boolean contains(V v) {
 		return pathSet.contains(v);
 	}
 
+	/**
+	 * Add a vertex to the GraphPath.
+	 *
+	 * @param v being the new vertex
+	 */
 	public void add(V v) {
 		pathSet.add(v);
 		pathList.add(v);
 	}
 
+	/**
+	 * Get last vertex of GraphPath.
+	 *
+	 * @return last vertex of GraphPath
+	 */
 	public V getLast() {
 		return pathList.get(pathList.size() - 1);
 	}
 
+	/**
+	 * Get the depth of the vertex that is specified by the parameter.
+	 *
+	 * @param v being the vertex which its depth we want
+	 * @return the depth of the vertex
+	 */
 	public int depth(V v) {
 		return pathList.indexOf(v);
 	}
 
+	/**
+	 * Get vertex that is specified by the parameter.
+	 *
+	 * @param depth being the vertex we want to get
+	 * @return the vertex
+	 */
 	public V get(int depth) {
 		return pathList.get(depth);
 	}
 
+	/**
+	 * Remove the last vertex of the GraphPath.
+	 *
+	 * @return the removed vertex
+	 */
 	public V removeLast() {
 		V v = pathList.remove(pathList.size() - 1);
 		pathSet.remove(v);
@@ -100,11 +166,10 @@ public class GraphPath<V> {
 	}
 
 	/**
-	 * Returns all entries that are before the given vertex in this path.  The results will
-	 * include the vertex. 
+	 * Return a set with with all of the predecessors of the vertex in the GraphPath.
 	 * 
-	 * @param v the vertex
-	 * @return the predecessors
+	 * @param v being the vertex we want to get the predecessors of
+	 * @return the predecessors of the vertex as a set, return empty set if there are none
 	 */
 	public Set<V> getPredecessors(V v) {
 		Set<V> set = new HashSet<>();
@@ -118,11 +183,10 @@ public class GraphPath<V> {
 	}
 
 	/**
-	 * Returns all entries that are later in this path than the given vertex.  The results will
-	 * include the vertex.
-	 * 
-	 * @param v the vertex
-	 * @return the successors
+	 * Return a set with with all of the successors of the vertex in the GraphPath.
+	 *
+	 * @param v being the vertex we want to get the successors of
+	 * @return the successors of the vertex as a set, return empty set if there are none
 	 */
 	public Set<V> getSuccessors(V v) {
 		Set<V> set = new HashSet<>();
@@ -136,11 +200,24 @@ public class GraphPath<V> {
 		return set;
 	}
 
+	/**
+	 * Defaut toString method to get a string representation of the GraphPath
+	 *
+	 * @return a string representation of the GraphPath
+	 */
 	@Override
 	public String toString() {
 		return pathList.toString();
 	}
 
+	/**
+	 * Get a part of the whole graphPath, similar to substring with strings.
+	 *
+	 * @param start is the start of the subpart of the GraphPath
+	 * @param end is the end of the subpart of the GraphPath
+	 * @return a new GraphPath which is a subPath of the original GraphPath from
+	 * start to end
+	 */
 	public GraphPath<V> subPath(int start, int end) {
 		GraphPath<V> subPath = new GraphPath<>();
 		subPath.pathList = new ArrayList<>(pathList.subList(start, end));
