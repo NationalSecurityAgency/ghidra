@@ -39,15 +39,14 @@ public class GraphPath<V> {
 	/**
 	 * Constructor with a vertex.
 	 *
-	 * @param v being the first vertex of the newly initialized GraphPath object
+	 * @param v the first vertex of the newly initialized GraphPath object
 	 */
 	public GraphPath(V v) {
 		add(v);
 	}
 
 	/**
-	 * Creates a new GraphPath object by performing a deep copy
-	 * on another GraphPath object.
+	 * Creates a new GraphPath object by performing a shallow copy on another GraphPath object.
 	 *
 	 * @return the new deepcopy of the original GraphPath object
 	 */
@@ -61,8 +60,8 @@ public class GraphPath<V> {
 	/**
 	 * Check if a GraphPath starts with another Graphpath.
 	 *
-	 * @param otherPath is the other GraphPath for which we are checking if the current
-	 * GraphPart starts with it.
+	 * @param otherPath the other GraphPath for which we are checking if the current GraphPath
+	 * starts with it.
 	 * @return true if the current GraphPath starts with otherPath, false otherwise
 	 */
 	public boolean startsWith(GraphPath<V> otherPath) {
@@ -79,12 +78,11 @@ public class GraphPath<V> {
 	}
 
 	/**
-	 * Return the first few nodes that two GraphPaths have in common.
-	 * For example if you have a-b-c-d-e-f and a-b-c-d-k-l-z, the common
-	 * start path will be a-b-c-d. If there is no common start path, an
-	 * empty GraphPath object is returned.
+	 * Return all vertices that two GraphPaths have in common. For example if you have
+	 * a-b-c-d-e-f and a-b-c-d-k-l-z, the common start path will be a-b-c-d. If there is no common
+	 * start path, an empty GraphPath object is returned.
 	 *
-	 * @param other being the other GraphPath to get the common start path of
+	 * @param other the other GraphPath to get the common start path of
 	 * @return a new GraphPath object containing the common start path vertices
 	 */
 	public GraphPath<V> getCommonStartPath(GraphPath<V> other) {
@@ -107,7 +105,7 @@ public class GraphPath<V> {
 	}
 
 	/**
-	 * Check if vertex v is in the pathSet of the GraphPath.
+	 * Check if vertex v is in the GraphPath.
 	 *
 	 * @return true if vertex v is in the pathSet of the GraphPath
 	 */
@@ -118,7 +116,7 @@ public class GraphPath<V> {
 	/**
 	 * Add a vertex to the GraphPath.
 	 *
-	 * @param v being the new vertex
+	 * @param v the new vertex
 	 */
 	public void add(V v) {
 		pathSet.add(v);
@@ -137,7 +135,7 @@ public class GraphPath<V> {
 	/**
 	 * Get the depth of the vertex that is specified by the parameter.
 	 *
-	 * @param v being the vertex which its depth we want
+	 * @param v the vertex for which we get the depth
 	 * @return the depth of the vertex
 	 */
 	public int depth(V v) {
@@ -147,7 +145,7 @@ public class GraphPath<V> {
 	/**
 	 * Get vertex that is specified by the parameter.
 	 *
-	 * @param depth being the vertex we want to get
+	 * @param depth of the vertex to retrieve
 	 * @return the vertex
 	 */
 	public V get(int depth) {
@@ -166,9 +164,9 @@ public class GraphPath<V> {
 	}
 
 	/**
-	 * Return a set with with all of the predecessors of the vertex in the GraphPath.
+	 * Return a set with all of the predecessors of the vertex in the GraphPath.
 	 * 
-	 * @param v being the vertex we want to get the predecessors of
+	 * @param v the vertex we want to get the predecessors of
 	 * @return the predecessors of the vertex as a set, return empty set if there are none
 	 */
 	public Set<V> getPredecessors(V v) {
@@ -183,9 +181,9 @@ public class GraphPath<V> {
 	}
 
 	/**
-	 * Return a set with with all of the successors of the vertex in the GraphPath.
+	 * Return a set with all of the successors of the vertex in the GraphPath.
 	 *
-	 * @param v being the vertex we want to get the successors of
+	 * @param v the vertex we want to get the successors of
 	 * @return the successors of the vertex as a set, return empty set if there are none
 	 */
 	public Set<V> getSuccessors(V v) {
@@ -200,23 +198,17 @@ public class GraphPath<V> {
 		return set;
 	}
 
-	/**
-	 * Defaut toString method to get a string representation of the GraphPath
-	 *
-	 * @return a string representation of the GraphPath
-	 */
 	@Override
 	public String toString() {
 		return pathList.toString();
 	}
 
 	/**
-	 * Get a part of the whole graphPath, similar to substring with strings.
+	 * Get a part of the whole GraphPath, similar to substring with strings.
 	 *
-	 * @param start is the start of the subpart of the GraphPath
-	 * @param end is the end of the subpart of the GraphPath
-	 * @return a new GraphPath which is a subPath of the original GraphPath from
-	 * start to end
+	 * @param start the start of the subpart of the GraphPath
+	 * @param end the end of the subpart of the GraphPath
+	 * @return a new GraphPath which is a subPath of the original GraphPath from start to end
 	 */
 	public GraphPath<V> subPath(int start, int end) {
 		GraphPath<V> subPath = new GraphPath<>();
