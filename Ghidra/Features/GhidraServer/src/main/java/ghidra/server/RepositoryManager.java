@@ -31,7 +31,8 @@ import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.server.remote.RepositoryServerHandleImpl;
 import ghidra.util.NamingUtilities;
 import ghidra.util.StringUtilities;
-import ghidra.util.exception.*;
+import ghidra.util.exception.DuplicateFileException;
+import ghidra.util.exception.UserAccessException;
 import utilities.util.FileUtilities;
 
 /**
@@ -43,6 +44,7 @@ public class RepositoryManager {
 	private static Map<Thread, String> clientNameMap = new WeakHashMap<>();
 
 	private File rootDirFile;
+	private CommandWatcher commandWatcher;
 	private HashMap<String, Repository> repositoryMap; // maps name to Repository
 	private ArrayList<RepositoryServerHandleImpl> handleList = new ArrayList<>();
 	private UserManager userMgr;
@@ -92,6 +94,7 @@ public class RepositoryManager {
 	 * Dispose this repository manager and all repository instances
 	 */
 	public synchronized void dispose() {
+		commandWatcher.dispose();
 		Iterator<Repository> iter = repositoryMap.values().iterator();
 		while (iter.hasNext()) {
 			Repository rep = iter.next();
@@ -101,6 +104,7 @@ public class RepositoryManager {
 
 	/**
 	 * Return repositories root directory
+	 * @return server root directory
 	 */
 	File getRootDir() {
 		return rootDirFile;
@@ -111,14 +115,14 @@ public class RepositoryManager {
 	 * @param currentUser user creating the repository
 	 * @param name name of the repository
 	 * @return a new Repository
-	 * @throws DuplicateNameException if another repository exists with the
+	 * @throws DuplicateFileException if another repository exists with the
 	 * given name
 	 * @throws UserAccessException if the user does not exist in
 	 * the list of known users for this manager
 	 * @throws IOException if there was an error creating the repository
 	 */
 	public synchronized Repository createRepository(String currentUser, String name)
-			throws IOException {
+			throws IOException, DuplicateFileException {
 
 		if (isAnonymousUser(currentUser)) {
 			throw new UserAccessException("Anonymous user not permitted to create repository");
@@ -179,7 +183,7 @@ public class RepositoryManager {
 	 * Delete a specified repository.
 	 * @param currentUser current user
 	 * @param name repository name
-	 * @throws IOException
+	 * @throws IOException if error occurs while removing repository
 	 */
 	public synchronized void deleteRepository(String currentUser, String name) throws IOException {
 
@@ -229,6 +233,13 @@ public class RepositoryManager {
 		return list.toArray(names);
 	}
 
+	private synchronized String[] getRepositoryNames() {
+		Set<String> nameSet = repositoryMap.keySet();
+		String[] names = nameSet.toArray(new String[nameSet.size()]);
+		Arrays.sort(names);
+		return names;
+	}
+
 	/**
 	 * Get all defined users. If currentUser is an
 	 * Anonymous user an empty array will be returned.
@@ -236,17 +247,11 @@ public class RepositoryManager {
 	 * @return array of users known to this manager or empty array if 
 	 * we should not reveal to currentUser.
 	 */
-	public synchronized String[] getAllUsers(String currentUser) throws IOException {
+	public synchronized String[] getAllUsers(String currentUser) {
 		if (isAnonymousUser(currentUser)) {
 			return new String[0];
 		}
-		try {
-			return userMgr.getUsers();
-		}
-		catch (IOException e) {
-			log.error("Error while accessing user list: " + e.getMessage());
-			throw new IOException("Failed to read user list");
-		}
+		return userMgr.getUsers();
 	}
 
 	public UserManager getUserManager() {
@@ -256,7 +261,7 @@ public class RepositoryManager {
 	/**
 	 * Verify that the specified currentUser is a known user
 	 * @param currentUser current user
-	 * @throws UserAccessException
+	 * @throws UserAccessException specified user is not valid
 	 */
 	private void validateUser(String currentUser) throws UserAccessException {
 		if (!userMgr.isValidUser(currentUser)) {
@@ -266,7 +271,7 @@ public class RepositoryManager {
 
 	/**
 	 * Scan for existing repositories and build repositoryMap.
-	 * @throws IOException
+	 * @throws IOException if error occurs accessing or writing to server storage directory
 	 */
 	private void initialize() throws IOException {
 
@@ -301,7 +306,22 @@ public class RepositoryManager {
 			}
 		}
 
-		userMgr.updateUserList(true);
+		// Start command queue watcher
+		commandWatcher = new CommandWatcher(this);
+		Thread t = new Thread(commandWatcher, "Server Command Watcher");
+		t.start();
+
+		processCommandQueue(); // process any old commands
+	}
+
+	/**
+	 * Refresh the server's user list and process any pending UserAdmin commands.
+	 * @throws IOException if error occurs processing command files
+	 */
+	synchronized void processCommandQueue() throws IOException {
+		userMgr.readUserListIfNeeded();
+		userMgr.clearExpiredPasswords();
+		CommandProcessor.processCommands(this);
 	}
 
 	static String getElapsedTimeSince(long t) {
@@ -445,44 +465,84 @@ public class RepositoryManager {
 	 * Print to stdout the set of repository names defined within the specified repositories root.
 	 * This is intended to be used with the svrAdmin console command
 	 * @param repositoriesRootDir repositories root directory
-	 * @param includeUserAccessDetails
+	 * @param includeUserAccessDetails if true additional user access details will displayed 
+	 * for each repository
 	 */
 	static void listRepositories(File repositoriesRootDir, boolean includeUserAccessDetails) {
 		String[] names = RepositoryManager.getRepositoryNames(repositoriesRootDir);
 		System.out.println("\nRepositories:");
 		if (names.length == 0) {
 			System.out.println("   <No repositories have been created>");
+			return;
 		}
-		else {
-			for (String name : names) {
-				File repoDir = new File(repositoriesRootDir, NamingUtilities.mangle(name));
-				String rootPath = repoDir.getAbsolutePath();
-				boolean isIndexed = IndexedLocalFileSystem.isIndexed(rootPath);
-				String type;
-				if (isIndexed || IndexedLocalFileSystem.hasIndexedStructure(rootPath)) {
-					type = "Indexed Filesystem";
-					try {
-						int indexVersion = IndexedLocalFileSystem.readIndexVersion(rootPath);
-						if (indexVersion == IndexedLocalFileSystem.LATEST_INDEX_VERSION) {
-							type = null;
-						}
-						else {
-							type += " (V" + indexVersion + ")";
-						}
+
+		for (String name : names) {
+			File repoDir = new File(repositoriesRootDir, NamingUtilities.mangle(name));
+			String rootPath = repoDir.getAbsolutePath();
+			boolean isIndexed = IndexedLocalFileSystem.isIndexed(rootPath);
+			String type;
+			if (isIndexed || IndexedLocalFileSystem.hasIndexedStructure(rootPath)) {
+				type = "Indexed Filesystem";
+				try {
+					int indexVersion = IndexedLocalFileSystem.readIndexVersion(rootPath);
+					if (indexVersion == IndexedLocalFileSystem.LATEST_INDEX_VERSION) {
+						type = null;
 					}
-					catch (IOException e) {
-						type += "(unknown)";
+					else {
+						type += " (V" + indexVersion + ")";
 					}
 				}
-				else {
-					type = "Mangled Filesystem";
+				catch (IOException e) {
+					type += "(unknown)";
 				}
+			}
+			else {
+				type = "Mangled Filesystem";
+			}
 
-				System.out.println("  " + name + (type == null ? "" : (" - uses " + type)));
+			System.out.println("  " + name + (type == null ? "" : (" - uses " + type)));
 
-				if (includeUserAccessDetails) {
-					Repository.listUserPermissions(repoDir, "    ");
+			if (includeUserAccessDetails) {
+				System.out.print(Repository.getFormattedUserPermissions(repoDir, "    "));
+			}
+		}
+	}
+
+	/**
+	 * Print to stdout the repository access permissions for the specified set of users.
+	 * This is intended to be used with the svrAdmin console command
+	 * @param repositoriesRootDir repositories root directory
+	 * @param usernameSet set of users whose details should be displayed
+	 */
+	static void listRepositories(File repositoriesRootDir, Set<String> usernameSet) {
+		String[] names = RepositoryManager.getRepositoryNames(repositoriesRootDir);
+		if (names.length == 0) {
+			System.out.println("   <No repositories have been created>");
+			return;
+		}
+
+		boolean outputHeader = true;
+		for (String name : names) {
+			File repoDir = new File(repositoriesRootDir, NamingUtilities.mangle(name));
+
+			String formattedAccessList =
+				Repository.getFormattedUserPermissions(repoDir, "    ", usernameSet);
+			if (formattedAccessList != null) {
+				if (outputHeader) {
+					System.out.println("\nRepositories:");
+					outputHeader = false;
 				}
+				System.out.println("  " + name);
+				System.out.print(formattedAccessList);
+			}
+		}
+
+		if (outputHeader) {
+			System.out.println("No repository access found for user(s):");
+			String[] userNames = usernameSet.toArray(new String[usernameSet.size()]);
+			Arrays.sort(userNames);
+			for (String n : userNames) {
+				System.out.println("    " + n);
 			}
 		}
 	}
@@ -501,6 +561,17 @@ public class RepositoryManager {
 		}
 		if (count == 0) {
 			System.out.println("All repositories are already indexed");
+		}
+	}
+
+	/**
+	 * Callback when user removed from server.  Remove user from all repository access lists.
+	 * @param username user name
+	 * @throws IOException if error occured while updating repository access lists.
+	 */
+	void userRemoved(String username) throws IOException {
+		for (String repName : getRepositoryNames()) {
+			getRepository(repName).removeUser(username);
 		}
 	}
 
