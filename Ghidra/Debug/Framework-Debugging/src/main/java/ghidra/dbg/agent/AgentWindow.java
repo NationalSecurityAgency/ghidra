@@ -53,7 +53,7 @@ public class AgentWindow extends JFrame implements WindowListener, LogListener {
 		setMinimumSize(new Dimension(400, 300));
 		setVisible(true);
 
-		System.setProperty("log4j.configuration", "agent.log4j.xml");
+		System.setProperty("log4j.configurationFile", "agent.log4j.xml");
 		LoggingInitialization.initializeLoggingSystem();
 		LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
 		Configuration config = ctx.getConfiguration();
