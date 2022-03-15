@@ -122,7 +122,7 @@ public class Rtti1Model extends AbstractCreateRttiDataModel {
 		// First component is either a direct reference or an image base offset.
 		Address rtti0Address = getReferencedAddress(program, startAddress);
 		if (rtti0Address == null) {
-			invalid(); // throws Exception
+			invalid("Invalid TypeDescriptor reference (pTypeDescriptor)."); // throws Exception
 		}
 		rtti0Model = new TypeDescriptorModel(program, rtti0Address, validationOptions);
 		if (validateReferredToData) {

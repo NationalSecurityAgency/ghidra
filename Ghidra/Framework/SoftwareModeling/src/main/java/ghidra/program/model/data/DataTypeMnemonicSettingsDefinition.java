@@ -41,7 +41,9 @@ public class DataTypeMnemonicSettingsDefinition implements EnumSettingsDefinitio
 	/**
 	 * Returns the format based on the specified settings
 	 * @param settings the instance settings.
-	 * @return the format value (HEX, DECIMAL, BINARY, OCTAL, CHAR)
+	 * @return the mnemonic style (DEFAULT, ASSEMBLY, CSPEC).  
+	 * The ASSEMBLY style is returned if no setting has been made.
+	 * The DEFAULT style corresponds to the use of {@link DataType#getName()}.
 	 */
 	public int getMnemonicStyle(Settings settings) {
 		if (settings == null) {

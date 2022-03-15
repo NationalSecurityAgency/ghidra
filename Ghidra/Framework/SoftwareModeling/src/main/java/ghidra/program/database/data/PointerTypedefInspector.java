@@ -15,8 +15,8 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.docking.settings.Settings;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 
 /**
@@ -60,12 +60,21 @@ public class PointerTypedefInspector {
 		if (!pointerTypeDef.isPointer()) {
 			return null;
 		}
+		Settings settings = pointerTypeDef.getDefaultSettings();
 		String spaceName =
-			AddressSpaceSettingsDefinition.DEF.getValue(pointerTypeDef.getDefaultSettings());
+			AddressSpaceSettingsDefinition.DEF.getValue(settings);
 		if (spaceName == null) {
 			return null;
 		}
-		return addrFactory.getAddressSpace(spaceName);
+		AddressSpace addressSpace = addrFactory.getAddressSpace(spaceName);
+		if (addressSpace instanceof SegmentedAddressSpace) {
+			// Other settings do not apply when SegmentedAddressSpace is used
+			// see PointerDataType.getAddressValue(MemBuffer, int, Settings)
+			return addressSpace;
+		}
+		// Address space setting ignored if Pointer Type has been specified
+		PointerType choice = PointerTypeSettingsDefinition.DEF.getType(settings);
+		return choice == PointerType.DEFAULT ? addressSpace : null;
 	}
 
 	/**

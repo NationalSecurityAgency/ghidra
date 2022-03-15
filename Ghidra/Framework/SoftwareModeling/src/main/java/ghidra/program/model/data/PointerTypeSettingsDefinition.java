@@ -43,7 +43,8 @@ public class PointerTypeSettingsDefinition
 	/**
 	 * Returns the format based on the specified settings
 	 * @param settings the instance settings or null for default value.
-	 * @return the format value (HEX, DECIMAL, BINARY, OCTAL, CHAR)
+	 * @return the {@link PointerType}.  {@link PointerType#DEFAULT} will be returned
+	 * if no setting has been made.
 	 */
 	public PointerType getType(Settings settings) {
 		if (settings == null) {

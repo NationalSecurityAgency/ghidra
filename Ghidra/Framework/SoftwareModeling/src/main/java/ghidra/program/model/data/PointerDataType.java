@@ -368,6 +368,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			Program program = mem.getProgram();
 			String spaceName = AddressSpaceSettingsDefinition.DEF.getValue(settings);
 			if (spaceName != null) {
+				// this space may be ignored if pointer type specified
 				targetSpace = program.getAddressFactory().getAddressSpace(spaceName);
 			}
 		}
@@ -377,12 +378,13 @@ public class PointerDataType extends BuiltIn implements Pointer {
 		}
 
 		if (targetSpace instanceof SegmentedAddressSpace) {
-			// ignore other settings
+			// ignore other settings with SegmentedAddressSpace use
 			return getAddressValue(buf, size, targetSpace);
 		}
 
 		Long offset = getStoredOffset(buf, size);
 		if (offset == null) {
+			// Insufficient bytes
 			return null;
 		}
 
@@ -403,7 +405,13 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		try {
 			PointerType choice = PointerTypeSettingsDefinition.DEF.getType(settings);
+			// Address space setting ignored if Pointer Type has been specified
 			if (choice == PointerType.IMAGE_BASE_RELATIVE && mem != null) {
+				if (addrOffset == 0) {
+					// Done for consistency with old ImageBaseOffsetDataType.
+					// A 0 relative offset is considerd invalid (NaP)
+					return null;
+				}
 				// must ignore AddressSpaceSettingsDefinition
 				Address imageBase = mem.getProgram().getImageBase();
 				targetSpace = imageBase.getAddressSpace();
@@ -464,10 +472,16 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return null;
 		}
 
+		Long offset = getStoredOffset(buf, size);
+		if (offset == null) {
+			// Insufficient bytes
+			return null;
+		}
+
 		if (targetSpace instanceof SegmentedAddressSpace) {
 			try {
 				// NOTE: conversion assumes a little-endian space
-				return getSegmentedAddressValue(buf, size);
+				return getSegmentedAddressValue(buf, size, offset);
 			}
 			catch (AddressOutOfBoundsException e) {
 				// offset too large
@@ -482,14 +496,13 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return null;
 		}
 
-		Long offset = getStoredOffset(buf, size);
-		if (offset != null) {
-			try {
-				return targetSpace.getAddress(offset, true);
-			}
-			catch (AddressOutOfBoundsException e) {
-				// offset too large
-			}
+
+
+		try {
+			return targetSpace.getAddress(offset, true);
+		}
+		catch (AddressOutOfBoundsException e) {
+			// offset too large
 		}
 		return null;
 	}
@@ -503,27 +516,20 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * @return address value returned as segmented Address object or null for
 	 *         unsupported pointer length or meory access error occurs.
 	 */
-	private static Address getSegmentedAddressValue(MemBuffer buf, int dataLen) {
+	private static Address getSegmentedAddressValue(MemBuffer buf, int dataLen, long storedOffset) {
 		SegmentedAddress a = (SegmentedAddress) buf.getAddress();
 		int segment = a.getSegment();
-		int offset = 0;
-		try {
-			switch (dataLen) {
-				case 2: // near pointer
-					offset = buf.getUnsignedShort(0);
-					break;
-				case 4: // far pointer
-					long value = buf.getUnsignedInt(0);
-					segment = (int) (value >> 16);
-					offset = (int) (value & 0xffff);
-					break;
-				default:
-					return null;
-			}
-
-		}
-		catch (MemoryAccessException e) {
-			return null;
+		int offset;
+		switch (dataLen) {
+			case 2: // near pointer
+				offset = (int) (storedOffset & 0xffff);
+				break;
+			case 4: // far pointer
+				segment = (int) ((storedOffset >> 16) & 0xffff);
+				offset = (int) (storedOffset & 0xffff);
+				break;
+			default:
+				return null;
 		}
 		SegmentedAddressSpace space = (SegmentedAddressSpace) a.getAddressSpace();
 		SegmentedAddress addr = space.getAddress(segment, offset);

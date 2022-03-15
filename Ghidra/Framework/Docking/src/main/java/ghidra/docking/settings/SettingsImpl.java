@@ -241,6 +241,9 @@ public class SettingsImpl implements Settings, Serializable {
 
 	@Override
 	public void clearAllSettings() {
+		if (map.isEmpty()) {
+			return;
+		}
 		if (checkSetting(null, null)) {
 			map.clear();
 			changed();
