@@ -8071,7 +8071,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to add class vftable pointers to the given class structure
+	 * Method to add/overwrite class vftable pointers to the given class structure
 	 * @param classStructureDataType the class structure data type
 	 * @param recoveredClass the given recovered class
 	 * @param vfPointerDataTypes the map of addresses/vftables, a null should be passed to indicate
@@ -8092,7 +8092,7 @@ public class RecoveredClassHelper {
 			return classStructureDataType;
 		}
 
-		// If the map is not empty, the class structure will contain incomplete information so 
+		// If the map is not complete, the class structure will contain incomplete information so 
 		// put out a debug message to indicate this issue
 		if (!isClassOffsetToVftableMapComplete(recoveredClass)) {
 			Msg.debug(this,
@@ -8111,13 +8111,17 @@ public class RecoveredClassHelper {
 
 			DataType classVftablePointer = vfPointerDataTypes.get(vftableAddress);
 
-			boolean addedVftablePointer = false;
+			if (classVftablePointer == null) {
+				continue;
+			}
+
 
 			// loop until the vftable pointer is added
-			// if component at offset is not a structure, replace with vftablePtr
-			// if component at offset is a structure, replace with components then loop
-			// until finally component is not a structure and can be replaced
-			while (!addedVftablePointer) {
+			// if there is room and the component offset is not a structure, replace with vftablePtr
+			// otherwise, within the range from top of containing component to the end of where the
+			// vftable it to replace, clear component(s) or replace structure(s) with internal
+			// components and loop until can replace with the vftable pointer
+			while (true) {
 
 				monitor.checkCanceled();
 
@@ -8126,69 +8130,84 @@ public class RecoveredClassHelper {
 					EditStructureUtils.addDataTypeToStructure(classStructureDataType, vftableOffset,
 						classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
 				if (addedToStructure) {
-					addedVftablePointer = true;
-					continue;
+					break;
 				}
 
-				// if already has a base class vftable pointer replace with main class vftablePtr
-				// get the item at that location
-				// if offset is in the middle, get the top of the component
+				// if the component at the offset is the start of the component, and the component
+				// isn't a structure and if the component is big enough to be replaced, or there 
+				// are enough undefined that can be replaced then replace
+				DataTypeComponent componentAt =
+					classStructureDataType.getComponentAt(vftableOffset);
+
+				if (componentAt != null && !(componentAt.getDataType() instanceof Structure) &&
+					(componentAt.getLength() >= classVftablePointer.getLength() ||
+						EditStructureUtils.hasEnoughUndefinedsOfAnyLengthAtOffset(
+							classStructureDataType, vftableOffset, classVftablePointer.getLength(),
+							monitor))) {
+
+					EditStructureUtils.clearLengthAtOffset(classStructureDataType, vftableOffset,
+						classVftablePointer.getLength(), monitor);
+					classStructureDataType.replaceAtOffset(vftableOffset, classVftablePointer,
+						classVftablePointer.getLength(), CLASS_VTABLE_PTR_FIELD_EXT, "");
+					break;
+				}
+
+				// otherwise if in middle of a containing dt then loop until all structs in 
+				// range are expanded and other items are cleared
 				DataTypeComponent currentComponent =
 					classStructureDataType.getComponentContaining(vftableOffset);
 
-				int componentOffset = currentComponent.getOffset();
+				int currentOffset = currentComponent.getOffset();
+				int endOffset = vftableOffset + classVftablePointer.getLength();
+				while (currentComponent != null && currentOffset < endOffset) {
 
-				if (currentComponent.getFieldName().endsWith(CLASS_VTABLE_PTR_FIELD_EXT)) {
-					classStructureDataType.replaceAtOffset(vftableOffset, classVftablePointer,
-						classVftablePointer.getLength(), CLASS_VTABLE_PTR_FIELD_EXT, "");
-					addedVftablePointer = true;
-					continue;
-				}
-
-				// if the current component isn't a structure just replace it with the
-				// vftable pointer
-				if (!(currentComponent.getDataType() instanceof Structure)) {
-					classStructureDataType.replaceAtOffset(vftableOffset, classVftablePointer,
-						classVftablePointer.getLength(), CLASS_VTABLE_PTR_FIELD_EXT, "");
-					addedVftablePointer = true;
-					continue;
-				}
-
-				// if there is a structure at the offset, replace it with its pieces then 
-				// loop again to try to place vftable pointer over either empty bytes or 
-				// base vftableptr
-				DataType currentDT = currentComponent.getDataType();
-				Structure internalStruct = (Structure) currentDT;
-
-				DataTypeComponent[] components = internalStruct.getComponents();
-
-				// if there is an empty structure at the offset, clear it which will replace
-				// it with an undefined data type of size 1
-				if (components.length == 0) {
-					classStructureDataType.clearAtOffset(componentOffset);
-					continue;
-				}
-				// if non-empty, replace the structure with its components
-				for (DataTypeComponent component : components) {
-
-					int innerOffset = component.getOffset();
-
-					int replaceOffset = component.getOffset() + componentOffset;
-					if (classStructureDataType.getLength() <= replaceOffset) {
-						Msg.debug(this,
-							classStructureDataType.getName() + " trying to place component " +
-								component.getFieldName() + " at offset " + component.getOffset());
+					int nextOffset = currentComponent.getEndOffset() + 1;
+					// if there is a structure at the offset, replace it with its pieces 
+					if (currentComponent.getDataType() instanceof Structure) {
+						DataType currentDT = currentComponent.getDataType();
+						Structure internalStruct = (Structure) currentDT;
+						expandInternalStructure(classStructureDataType, internalStruct,
+							currentOffset);
 					}
-
-					// add indiv components of internal structure to the outer structure
-					classStructureDataType.replaceAtOffset(componentOffset + innerOffset,
-						component.getDataType(), component.getLength(), component.getFieldName(),
-						"");
+					// if not a structure then clear it
+					else {
+						classStructureDataType.clearAtOffset(currentOffset);
+					}
+					currentOffset = nextOffset;
+					currentComponent = classStructureDataType.getComponentAt(currentOffset);
 				}
-
 			}
 		}
 		return classStructureDataType;
+	}
+
+	/**
+	 * Method to replace an internal structure into individual parts within the containing structure
+	 * @param structure the containing structure
+	 * @param internalStruct the internal structure
+	 * @param offset the offset of the internal structure
+	 */
+	private void expandInternalStructure(Structure structure, Structure internalStruct,
+			int offset) {
+
+		DataTypeComponent[] components = internalStruct.getComponents();
+
+		// if there is an empty structure at the offset, clear it which will replace
+		// it with an undefined data type of size 1
+		if (components.length == 0) {
+			structure.clearAtOffset(offset);
+			return;
+		}
+		// if non-empty, replace the structure with its components
+		for (DataTypeComponent component : components) {
+
+			int innerOffset = component.getOffset();
+
+			// add indiv components of internal structure to the outer structure
+			structure.replaceAtOffset(offset + innerOffset, component.getDataType(),
+				component.getLength(), component.getFieldName(), "");
+		}
+		return;
 	}
 
 	/**
