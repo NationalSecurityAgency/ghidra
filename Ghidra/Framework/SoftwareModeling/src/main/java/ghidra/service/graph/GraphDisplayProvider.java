@@ -15,6 +15,8 @@
  */
 package ghidra.service.graph;
 
+import java.util.List;
+
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
@@ -38,11 +40,28 @@ public interface GraphDisplayProvider extends ExtensionPoint {
 	 * 
 	 * @param reuseGraph if true, this provider will attempt to re-use an existing GraphDisplay
 	 * @param monitor the {@link TaskMonitor} that can be used to monitor and cancel the operation
-	 * @return A GraphDisplay that can be used to display (or otherwise consume - e.g. export) the graph
+	 * @return an object that can be used to display or otherwise consume (e.g., export) the graph
 	 * @throws GraphException thrown if there is a problem creating a GraphDisplay
 	 */
-	public GraphDisplay getGraphDisplay(boolean reuseGraph,	TaskMonitor monitor) throws GraphException;
+	public GraphDisplay getGraphDisplay(boolean reuseGraph, TaskMonitor monitor)
+			throws GraphException;
 
+	/**
+	 * Returns the active graph display or null if there is no active graph display.  If only one
+	 * graph is displayed, then that graph will be returned.  If multiple graphs are being
+	 * displayed, then the most recently shown graph will be displayed, regardless of whether that
+	 * is the active graph in terms of user interaction.
+	 * 
+	 * @return the active graph display or null if there is no active graph display.
+	 */
+	public GraphDisplay getActiveGraphDisplay();
+
+	/**
+	 * Returns all known graph displays.  Typically they will be ordered by use, most recently
+	 * first.
+	 * @return the displays
+	 */
+	public List<GraphDisplay> getAllGraphDisplays();
 
 	/**
 	 * Provides an opportunity for this provider to register and read tool options

@@ -15,6 +15,9 @@
  */
 package ghidra.graph.export;
 
+import java.util.Collections;
+import java.util.List;
+
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.GraphDisplay;
@@ -28,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
  * {@link GraphDisplay} is mostly just a placeholder for executing the export function.  By
  * hijacking the {@link GraphDisplayProvider} and {@link GraphDisplay} interfaces for exporting,
  * all graph generating operations can be exported instead of being displayed without changing
- * the graph generation code.    
+ * the graph generation code.
  */
 public class ExportAttributedGraphDisplayProvider implements GraphDisplayProvider {
 
@@ -51,8 +54,17 @@ public class ExportAttributedGraphDisplayProvider implements GraphDisplayProvide
 	@Override
 	public GraphDisplay getGraphDisplay(boolean reuseGraph,
 			TaskMonitor monitor) {
-
 		return new ExportAttributedGraphDisplay(this);
+	}
+
+	@Override
+	public GraphDisplay getActiveGraphDisplay() {
+		return null; // one-time graph; no active graph
+	}
+
+	@Override
+	public List<GraphDisplay> getAllGraphDisplays() {
+		return Collections.emptyList(); // one-time graph; no active displays
 	}
 
 	@Override

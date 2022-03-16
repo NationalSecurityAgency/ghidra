@@ -42,7 +42,7 @@ public interface GraphDisplayBroker {
 
 	/**
 	 * Adds a listener for notification when the set of graph display providers change or the currently
-	 * active graph display provider changes 
+	 * active graph display provider changes
 	 * @param listener the listener to be notified
 	 */
 	public void addGraphDisplayBrokerListener(GraphDisplayBrokerListener listener);
@@ -54,7 +54,9 @@ public interface GraphDisplayBroker {
 	public void removeGraphDisplayBrokerLisetener(GraphDisplayBrokerListener listener);
 
 	/**
-	 * A convenience method for getting a {@link GraphDisplay} from the currently active provider
+	 * A convenience method for getting a {@link GraphDisplay} from the currently active provider.
+	 * This method is intended to be used to display a new graph.
+	 * 
 	 * @param reuseGraph if true, the provider will attempt to re-use a current graph display
 	 * @param monitor the {@link TaskMonitor} that can be used to cancel the operation
 	 * @return a {@link GraphDisplay} object to sends graphs to be displayed or exported.
