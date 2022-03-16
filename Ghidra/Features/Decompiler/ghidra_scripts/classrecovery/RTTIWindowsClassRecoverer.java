@@ -1333,6 +1333,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		findRealVBaseFunctions(recoveredClasses);
 
+		// make constructors and destructors _thiscalls 
+		makeConstructorsAndDestructorsThiscalls(recoveredClasses);
+
 	}
 
 	/**
