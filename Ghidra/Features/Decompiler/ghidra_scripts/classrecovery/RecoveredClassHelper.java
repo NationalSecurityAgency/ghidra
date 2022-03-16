@@ -33,6 +33,7 @@ import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.mem.MemoryBlock;
@@ -110,8 +111,9 @@ public class RecoveredClassHelper {
 	List<Function> allDestructors = new ArrayList<Function>();
 	List<Function> allInlinedConstructors = new ArrayList<Function>();
 	List<Function> allInlinedDestructors = new ArrayList<Function>();
+	List<Function> nonClassInlines = new ArrayList<Function>();
 
-	List<Namespace> badFIDNamespaces = new ArrayList<Namespace>();
+	Set<Namespace> badFIDNamespaces = new HashSet<Namespace>();
 	List<Structure> badFIDStructures = new ArrayList<Structure>();
 
 	List<Function> badFIDFunctions = new ArrayList<Function>();
@@ -1950,10 +1952,7 @@ public class RecoveredClassHelper {
 		if (recoveredClass.getOrderToVftableMap().size() == 0) {
 			createVftableOrderMapping(recoveredClass);
 		}
-
-		// If not already, make function a thiscall
-		extendedFlatAPI.makeFunctionThiscall(constructorFunction);
-
+		
 		recoveredClass.addConstructor(constructorFunction);
 		addToAllConstructors(constructorFunction);
 	}
@@ -1969,9 +1968,6 @@ public class RecoveredClassHelper {
 			Function inlinedConstructorFunction)
 			throws InvalidInputException, DuplicateNameException {
 
-		//If not already, make function a thiscall
-		extendedFlatAPI.makeFunctionThiscall(inlinedConstructorFunction);
-
 		recoveredClass.addInlinedConstructor(inlinedConstructorFunction);
 		addToAllInlinedConstructors(inlinedConstructorFunction);
 	}
@@ -1985,9 +1981,6 @@ public class RecoveredClassHelper {
 	 */
 	public void addDestructorToClass(RecoveredClass recoveredClass, Function destructorFunction)
 			throws InvalidInputException, DuplicateNameException {
-
-		//If not already, make function a thiscall
-		extendedFlatAPI.makeFunctionThiscall(destructorFunction);
 
 		recoveredClass.addDestructor(destructorFunction);
 		addToAllDestructors(destructorFunction);
@@ -2003,9 +1996,6 @@ public class RecoveredClassHelper {
 	public void addInlinedDestructorToClass(RecoveredClass recoveredClass,
 			Function inlinedDestructorFunction)
 			throws InvalidInputException, DuplicateNameException {
-
-		//If not already, make function a thiscall
-		extendedFlatAPI.makeFunctionThiscall(inlinedDestructorFunction);
 
 		recoveredClass.addInlinedDestructor(inlinedDestructorFunction);
 		addToAllInlinedDestructors(inlinedDestructorFunction);
@@ -2255,14 +2245,14 @@ public class RecoveredClassHelper {
 	public void makeFunctionThiscall(Function function)
 			throws InvalidInputException, DuplicateNameException {
 
-		if (function.getCallingConventionName().equals("__thiscall")) {
+		if (function.getCallingConventionName().equals(CompilerSpec.CALLING_CONVENTION_thiscall)) {
 			return;
 		}
 
 		ReturnParameterImpl returnType =
 			new ReturnParameterImpl(function.getSignature().getReturnType(), program);
 
-		function.updateFunction("__thiscall", returnType,
+		function.updateFunction(CompilerSpec.CALLING_CONVENTION_thiscall, returnType,
 			FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, function.getSignatureSource(),
 			function.getParameters());
 	}
@@ -3145,11 +3135,10 @@ public class RecoveredClassHelper {
 						notInFunctionVftableRefs.add(addr);
 					}
 					else {
-						boolean functionCreated =
-							extendedFlatAPI.createFunction(prog, addr);
-						if (!functionCreated) {
-							notInFunctionVftableRefs.add(addr);
-						}
+						boolean functionCreated = extendedFlatAPI.createFunction(program, addr);
+							if (!functionCreated) {
+								notInFunctionVftableRefs.add(addr);
+							}
 					}
 				}
 			}
@@ -3806,11 +3795,13 @@ public class RecoveredClassHelper {
 		if (bookmarkComment.contains("Single Match")) {
 
 			Symbol symbol = symbolTable.getPrimarySymbol(functionAddress);
+
 			if (symbol != null && symbol.getSource() == SourceType.ANALYSIS &&
 				!symbol.getName().equals(name) && !symbol.getParentNamespace().equals(namespace)) {
 				// add to list of bad namespaces to be cleaned up later 
-				if (!badFIDNamespaces.contains(symbol.getParentNamespace())) {
-					badFIDNamespaces.add(symbol.getParentNamespace());
+				Namespace parentNamespace = symbol.getParentNamespace();
+				if (!parentNamespace.isGlobal()) {
+					badFIDNamespaces.add(parentNamespace);
 				}
 				extendedFlatAPI.addUniqueStringToPlateComment(functionAddress,
 					"***** Removed Bad FID Symbol *****");
@@ -4425,6 +4416,11 @@ public class RecoveredClassHelper {
 		while (badNamespaceIterator.hasNext()) {
 			monitor.checkCanceled();
 			Namespace badNamespace = badNamespaceIterator.next();
+
+			// global namespace shouldn't be on list but check anyway
+			if (badNamespace.isGlobal()) {
+				continue;
+			}
 
 			// delete empty namespace and parent namespaces
 			if (!extendedFlatAPI.hasSymbolsInNamespace(badNamespace)) {
@@ -5965,6 +5961,7 @@ public class RecoveredClassHelper {
 
 							// remove from the allConstructors too
 							addInlinedConstructorToClass(recoveredClass, constructor);
+							nonClassInlines.add(constructor);
 							constructorIterator.remove();
 							removeFromAllConstructors(constructor);
 
@@ -6964,6 +6961,40 @@ public class RecoveredClassHelper {
 			}
 
 		}
+	}
+
+	public void makeConstructorsAndDestructorsThiscalls(List<RecoveredClass> recoveredClasses)
+			throws CancelledException, InvalidInputException, DuplicateNameException {
+
+		if (recoveredClasses.isEmpty()) {
+			return;
+		}
+
+		List<Function> allConstructorDestructorFunctions = new ArrayList<Function>();
+
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+
+			monitor.checkCanceled();
+
+			allConstructorDestructorFunctions.addAll(recoveredClass.getConstructorList());
+			allConstructorDestructorFunctions.addAll(recoveredClass.getDestructorList());
+			allConstructorDestructorFunctions.addAll(recoveredClass.getInlinedConstructorList());
+			allConstructorDestructorFunctions.addAll(recoveredClass.getInlinedDestructorList());
+		}
+
+		if (allConstructorDestructorFunctions.isEmpty()) {
+			return;
+		}
+
+		// remove the inlines that are not in their expected class -- still want the inline
+		// comments later in processing but don't make them this calls
+		allConstructorDestructorFunctions.removeAll(nonClassInlines);
+
+		for (Function function : allConstructorDestructorFunctions) {
+			monitor.checkCanceled();
+			makeFunctionThiscall(function);
+		}
+
 	}
 
 	/**

@@ -323,6 +323,7 @@ public class GraphClassesScript extends GhidraScript {
 				.defaultVertexColor(WebColors.PURPLE)
 				.defaultEdgeColor(WebColors.PURPLE)
 				.defaultLayoutAlgorithm("Compact Hierarchical")
+				.maxNodeCount(1000)
 				.build();
 
 		display.setGraph(graph, graphOptions,
