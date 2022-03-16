@@ -1820,6 +1820,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		//	findRealVBaseFunctions(recoveredClasses);
 
+		// make constructors and destructors this calls
+		makeConstructorsAndDestructorsThiscalls(recoveredClasses);
+
 	}
 
 	private StructureDataType createClassTypeInfoStructure() {

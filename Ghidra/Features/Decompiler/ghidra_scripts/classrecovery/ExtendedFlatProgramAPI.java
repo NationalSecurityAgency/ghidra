@@ -27,11 +27,9 @@ import ghidra.program.model.block.CodeBlock;
 import ghidra.program.model.block.IsolatedEntrySubModel;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.listing.Function.FunctionUpdateType;
-import ghidra.program.model.mem.DumbMemBufferImpl;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class ExtendedFlatProgramAPI extends FlatProgramAPI {
@@ -279,34 +277,9 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to determine if the given instruction is a terminating instruction (it return, ...)
-	 * @param instruction the given instruction
-	 * @return true if the given instruction is a terminating instruction, false otherwise
-	 */
-	public boolean isTerminatingInstruction(Instruction instruction) {
-
-		FlowType flowType = instruction.getFlowType();
-		FlowType overrideType =
-			FlowOverride.getModifiedFlowType(flowType, instruction.getFlowOverride());
-
-		if (flowType.isTerminal() || overrideType.isTerminal()) {
-			return true;
-		}
-		Function functionContaining = getFunctionContaining(instruction.getAddress());
-		if (functionContaining != null) {
-			if (functionContaining.isThunk() && flowType.isJump()) {
-				return true;
-			}
-			if (flowType.isJump()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Method to create the first function after the last terminating function before the given address
-	 * @param address the given addres
+	 * Method to create the first function after the last terminating function before the given 
+	 * address which is in the middle of undefined bytes
+	 * @param address the given address
 	 * @param expectedFiller the expected filler byte value
 	 * @return the created function or null if not created
 	 */
@@ -314,12 +287,33 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		PseudoDisassembler pseudoDisassembler = new PseudoDisassembler(currentProgram);
 
+		// skip any undefineds and get the defined instruction before the given address
 		Instruction instructionBefore = getInstructionBefore(address);
 
-		if (instructionBefore == null || !isTerminatingInstruction(instructionBefore)) {
+		if (instructionBefore == null) {
 			return null;
 		}
 
+		Address instBeforeAddr = instructionBefore.getAddress();
+
+		Memory memory = currentProgram.getMemory();
+		if (!memory.getBlock(address).equals(memory.getBlock(instBeforeAddr))) {
+			return null;
+		}
+
+		// set some arbritrary limit on how far back to go
+		if (address.subtract(instBeforeAddr) > 2000) {
+			return null;
+		}
+
+		// if the instruction before all the undefines bytes doesn't indicate that it is the end 
+		// of a function or an end of a range of a function then return
+		FlowType flowType = instructionBefore.getFlowType();
+		if (!flowType.isTerminal() && !flowType.isJump()) {
+			return null;
+		}
+
+		//get the last address in the instruction
 		Address maxAddress = instructionBefore.getMaxAddress();
 		int maxLen = (int) (address.getOffset() - maxAddress.getOffset());
 		if (maxLen <= 0) {
@@ -328,6 +322,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		int offset = 1;
 
+		// skip the filler
 		Byte filler;
 		try {
 			filler = getByte(maxAddress.add(offset));
@@ -345,6 +340,8 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		Address functionStart = maxAddress.add(offset);
 
+		// check to see if the address after the instruction and filler is the start of a valid 
+		// subroutine
 		if (!pseudoDisassembler.isValidSubroutine(functionStart, true)) {
 			return null;
 		}
@@ -352,6 +349,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 			disassemble(functionStart);
 		}
 
+		// if so, create a function there
 		Function function = createFunction(functionStart, null);
 
 		return function;
@@ -451,7 +449,6 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		Byte filler = determineFillerByte();
 		if (filler == null) {
-			//	println("Can't determine filler byte so cannot create undefined functions");
 			return;
 		}
 
@@ -469,7 +466,6 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 			Function newFunction = createFunctionBefore(address, filler);
 			if (newFunction == null) {
-				//println("Can't find function containing " + address.toString());
 				continue;
 			}
 
@@ -542,27 +538,6 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		return subroutineAddresses;
 	}
 
-	/**
-	 * Method to make the given function a thiscall
-	 * @param function the given function
-	 * @throws InvalidInputException if issues setting return type
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 */
-	public void makeFunctionThiscall(Function function)
-			throws InvalidInputException, DuplicateNameException {
-
-		if (function.getCallingConventionName().equals("__thiscall")) {
-			return;
-		}
-
-		// FIXME: if you pass a Function arg you should use its program not currentProgram
-		ReturnParameterImpl returnType =
-			new ReturnParameterImpl(function.getSignature().getReturnType(), currentProgram);
-
-		function.updateFunction("__thiscall", returnType,
-			FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, function.getSignatureSource(),
-			function.getParameters());
-	}
 
 	/**
 	 * Method to get a list of symbols either matching exactly (if exact flag is true) or containing (if exact flag is false) the given symbol name
@@ -1009,7 +984,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to add the given comment to an existing plate comment unless it already exists in the comment
+	 * Method to add the given string to a plate comment unless the string already exists in it. 
 	 * @param address the given address
 	 * @param comment the comment to add to the plate comment at the given address
 	 */
@@ -1018,6 +993,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		String plateComment = getPlateComment(address);
 
 		if (plateComment == null) {
+			setPlateComment(address, comment);
 			return;
 		}
 
