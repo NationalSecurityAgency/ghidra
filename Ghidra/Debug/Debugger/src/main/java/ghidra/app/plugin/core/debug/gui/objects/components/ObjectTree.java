@@ -426,6 +426,10 @@ public class ObjectTree implements ObjectPane {
 				Long lval = (Long) value;
 				addr = selectedObject.getModel().getAddress("ram", lval);
 			}
+			if (value instanceof String) {
+				String sval = (String) value;
+				addr = stringToAddress(selectedObject, addr, sval);
+			}
 			if (modelService != null && addr != null) {
 				TraceRecorder recorder = modelService.getRecorderForSuccessor(selectedObject);
 				DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
@@ -433,5 +437,25 @@ public class ObjectTree implements ObjectPane {
 				listingService.goTo(traceAddr, true);
 			}
 		}
+	}
+
+	private Address stringToAddress(TargetObject selectedObject, Address addr, String sval) {
+		try {
+			Long lval = Long.decode(sval);
+			addr = selectedObject.getModel().getAddress("ram", lval);
+		}
+		catch (NumberFormatException nfe) {
+			// IGNORE
+		}
+		if (addr == null) {
+			try {
+				Long lval = Long.decode("0x" + sval);
+				addr = selectedObject.getModel().getAddress("ram", lval);
+			}
+			catch (NumberFormatException nfe) {
+				// IGNORE
+			}
+		}
+		return addr;
 	}
 }

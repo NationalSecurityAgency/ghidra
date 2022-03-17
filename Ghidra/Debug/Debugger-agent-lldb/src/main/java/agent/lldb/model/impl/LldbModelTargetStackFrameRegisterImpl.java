@@ -25,7 +25,6 @@ import agent.lldb.model.iface2.LldbModelTargetStackFrameRegister;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.ConversionUtils;
 import ghidra.dbg.util.PathUtils;
-import ghidra.program.model.address.AddressSpace;
 
 @TargetObjectSchemaInfo(
 	name = "RegisterValue",
@@ -105,15 +104,13 @@ public class LldbModelTargetStackFrameRegisterImpl
 		}
 		BigInteger val = new BigInteger(value, 16);
 		byte[] bytes = ConversionUtils.bigIntegerToBytes((int) getRegister().GetByteSize(), val);
-		AddressSpace space = getModel().getAddressSpace("ram");
 		changeAttributes(List.of(), Map.of( //
 			VALUE_ATTRIBUTE_NAME, value //
 		), "Refreshed");
 		if (val.longValue() != 0) {
 			String newval = getDescription(0);
 			changeAttributes(List.of(), Map.of( //
-				DISPLAY_ATTRIBUTE_NAME, newval, //
-				"Address", space.getAddress(val.longValue()) //
+				DISPLAY_ATTRIBUTE_NAME, newval //
 			), "Refreshed");
 			setModified(!value.equals(oldValue));
 		}

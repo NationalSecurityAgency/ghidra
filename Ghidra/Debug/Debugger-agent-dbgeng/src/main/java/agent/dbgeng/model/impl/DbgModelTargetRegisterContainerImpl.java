@@ -30,7 +30,6 @@ import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.ConversionUtils;
-import ghidra.program.model.address.AddressSpace;
 
 @TargetObjectSchemaInfo(
 	name = "RegisterContainer",
@@ -105,7 +104,6 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 	@Override
 	public CompletableFuture<? extends Map<String, byte[]>> readRegistersNamed(
 			Collection<String> names) {
-		AddressSpace space = getModel().getAddressSpace("ram");
 		return model.gateFuture(thread.listRegisters().thenCompose(regs -> {
 			if (regs.size() != registersByName.size() || getCachedElements().isEmpty()) {
 				return requestElements(false);
@@ -138,8 +136,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 				if (value.longValue() != 0) {
 					String newval = reg.getName() + " : " + value.toString(16);
 					reg.changeAttributes(List.of(), Map.of( //
-						DISPLAY_ATTRIBUTE_NAME, newval, //
-						"Address", space.getAddress(value.longValue()) //
+						DISPLAY_ATTRIBUTE_NAME, newval //
 					), "Refreshed");
 					reg.setModified(!value.toString(16).equals(oldval));
 				}

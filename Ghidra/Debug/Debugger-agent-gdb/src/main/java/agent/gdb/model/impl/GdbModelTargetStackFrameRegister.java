@@ -25,15 +25,12 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
 
 @TargetObjectSchemaInfo(
 	name = "RegisterValue",
 	elements = {
 		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(name = "Address", type = Address.class),
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetStackFrameRegister
 		extends DefaultTargetObject<TargetObject, GdbModelTargetStackFrameRegisterContainer>
@@ -85,12 +82,10 @@ public class GdbModelTargetStackFrameRegister
 		boolean modified = (bigval.longValue() != 0 && value.equals(oldval));
 
 		String newval = getName() + " : " + value;
-		AddressSpace space = getModel().getAddressSpace("ram");
 		changeAttributes(List.of(), Map.of( //
 			VALUE_ATTRIBUTE_NAME, value, //
 			DISPLAY_ATTRIBUTE_NAME, newval, //
-			MODIFIED_ATTRIBUTE_NAME, modified, //
-			"Address", space.getAddress(bigval.longValue()) //
+			MODIFIED_ATTRIBUTE_NAME, modified //
 		), "Value Updated");
 	}
 

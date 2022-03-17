@@ -24,7 +24,6 @@ import agent.dbgeng.model.iface2.DbgModelTargetRegisterContainerAndBank;
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
-import ghidra.program.model.address.Address;
 
 @TargetObjectSchemaInfo(
 	name = "RegisterDescriptor",
@@ -34,7 +33,6 @@ import ghidra.program.model.address.Address;
 		@TargetAttributeType(
 			name = TargetRegister.CONTAINER_ATTRIBUTE_NAME,
 			type = DbgModelTargetRegisterContainerImpl.class),
-		@TargetAttributeType(name = "Address", type = Address.class),
 		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetRegisterImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetRegister {

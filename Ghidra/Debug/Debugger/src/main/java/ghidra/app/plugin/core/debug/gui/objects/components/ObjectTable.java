@@ -296,6 +296,10 @@ public class ObjectTable<R> implements ObjectPane {
 				Long lval = (Long) value;
 				addr = container.getTargetObject().getModel().getAddress("ram", lval);
 			}
+			if (value instanceof String) {
+				String sval = (String) value;
+				addr = stringToAddress(container.getTargetObject(), addr, sval);
+			}
 			if (modelService != null) {
 				TraceRecorder recorder =
 					modelService.getRecorderForSuccessor(container.getTargetObject());
@@ -306,4 +310,23 @@ public class ObjectTable<R> implements ObjectPane {
 		}
 	}
 
+	private Address stringToAddress(TargetObject selectedObject, Address addr, String sval) {
+		try {
+			Long lval = Long.decode(sval);
+			addr = selectedObject.getModel().getAddress("ram", lval);
+		}
+		catch (NumberFormatException nfe) {
+			// IGNORE
+		}
+		if (addr == null) {
+			try {
+				Long lval = Long.decode("0x" + sval);
+				addr = selectedObject.getModel().getAddress("ram", lval);
+			}
+			catch (NumberFormatException nfe) {
+				// IGNORE
+			}
+		}
+		return addr;
+	}
 }
