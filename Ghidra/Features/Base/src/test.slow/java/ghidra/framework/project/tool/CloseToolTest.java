@@ -43,7 +43,6 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Before
 	public void setUp() throws Exception {
-
 		env = new TestEnv();
 	}
 
@@ -62,7 +61,6 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(tool.getToolFrame());
 		closeTool(tool);
 		assertNull("Tool did not close after task", tool.getToolFrame());
-
 	}
 
 	@Test
@@ -185,8 +183,8 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 //==================================================================================================
-// Inner Classes	
-//==================================================================================================	
+// Inner Classes
+//==================================================================================================
 
 	private class ControllableBackgroundCommand extends BackgroundCommand {
 
