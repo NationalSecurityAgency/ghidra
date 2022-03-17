@@ -35,15 +35,11 @@ import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.support.GTreeSelectionListener;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
-import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
-import ghidra.app.services.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.target.TargetAccessConditioned;
 import ghidra.dbg.target.TargetObject;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.util.*;
 import ghidra.util.task.SwingUpdateManager;
 import resources.ResourceManager;
@@ -63,16 +59,10 @@ public class ObjectTree implements ObjectPane {
 	private SwingUpdateManager restoreTreeStateManager =
 		new SwingUpdateManager(this::restoreTreeState);
 
-	private DebuggerListingService listingService;
-	private DebuggerModelService modelService;
-
 	public ObjectTree(ObjectContainer container) {
 		this.root = new ObjectNode(this, null, container);
 		addToMap(null, container, root);
 		this.tree = new GTree(root);
-
-		this.listingService = container.getProvider().getListingService();
-		this.modelService = container.getProvider().getModelService();
 
 		tree.addGTreeSelectionListener(new GTreeSelectionListener() {
 			@Override
@@ -165,7 +155,12 @@ public class ObjectTree implements ObjectPane {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 2) {
-					navigateToSelectedObject();
+					TargetObject selectedObject = getSelectedObject();
+					if (selectedObject != null) {
+						Object value =
+							selectedObject.getCachedAttribute(TargetObject.VALUE_ATTRIBUTE_NAME);
+						container.getProvider().navigateToSelectedObject(selectedObject, value);
+					}
 				}
 			}
 		});
@@ -407,55 +402,4 @@ public class ObjectTree implements ObjectPane {
 		nodeMap.remove(path(node.getContainer()));
 	}
 
-	protected void navigateToSelectedObject() {
-		if (listingService != null) {
-			TargetObject selectedObject = getSelectedObject();
-			if (selectedObject == null) {
-				return;
-			}
-			Object value = selectedObject.getCachedAttribute(TargetObject.VALUE_ATTRIBUTE_NAME);
-			Address addr = null;
-			if (value instanceof Address) {
-				addr = (Address) value;
-			}
-			if (value instanceof AddressRangeImpl) {
-				AddressRangeImpl range = (AddressRangeImpl) value;
-				addr = range.getMinAddress();
-			}
-			if (value instanceof Long) {
-				Long lval = (Long) value;
-				addr = selectedObject.getModel().getAddress("ram", lval);
-			}
-			if (value instanceof String) {
-				String sval = (String) value;
-				addr = stringToAddress(selectedObject, addr, sval);
-			}
-			if (modelService != null && addr != null) {
-				TraceRecorder recorder = modelService.getRecorderForSuccessor(selectedObject);
-				DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
-				Address traceAddr = memoryMapper.targetToTrace(addr);
-				listingService.goTo(traceAddr, true);
-			}
-		}
-	}
-
-	private Address stringToAddress(TargetObject selectedObject, Address addr, String sval) {
-		try {
-			Long lval = Long.decode(sval);
-			addr = selectedObject.getModel().getAddress("ram", lval);
-		}
-		catch (NumberFormatException nfe) {
-			// IGNORE
-		}
-		if (addr == null) {
-			try {
-				Long lval = Long.decode("0x" + sval);
-				addr = selectedObject.getModel().getAddress("ram", lval);
-			}
-			catch (NumberFormatException nfe) {
-				// IGNORE
-			}
-		}
-		return addr;
-	}
 }
