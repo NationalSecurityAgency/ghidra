@@ -94,8 +94,6 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	private void showProgramTree() {
-
-		ProgramTreePlugin ptree = env.getPlugin(ProgramTreePlugin.class);
 		programTreeProvider = (ComponentProvider) getInstanceField("viewProvider", pt);
 		tool.showComponentProvider(programTreeProvider, true);
 	}
@@ -219,7 +217,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 	@Test
 	public void testSelectWithView() throws Exception {
 		AddressSet rsrcSet = new AddressSet(addr("0100a000"), addr("0100f3ff"));
-		JTree tree = findComponent(tool.getToolFrame(), JTree.class);
+		JTree tree = waitFor(() -> findComponent(tool.getToolFrame(), JTree.class));
 
 		// Replace view with .rsrc
 		selectTreeNodeByText(tree, ".rsrc", true);
@@ -396,9 +394,6 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		}, wait);
 	}
 
-	/**
-	 * @param instructionSet
-	 */
 	private void checkForInstructions(ProgramSelection instructionSet) {
 		Listing listing = program.getListing();
 		AddressIterator iter = instructionSet.getAddresses(true);
@@ -409,9 +404,6 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		}
 	}
 
-	/**
-	 * @param dataSet
-	 */
 	private void checkForDefinedData(ProgramSelection dataSet) {
 		Listing listing = program.getListing();
 		AddressIterator iter = dataSet.getAddresses(true);
@@ -422,9 +414,6 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		}
 	}
 
-	/**
-	 * @param undefinedSet
-	 */
 	private void checkForUndefined(ProgramSelection undefinedSet) {
 		Listing listing = program.getListing();
 		AddressIterator iter = undefinedSet.getAddresses(true);

@@ -60,10 +60,11 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 			return visibleGraph;
 		}
 
-		DefaultGraphDisplay display =
-			Swing.runNow(() -> new DefaultGraphDisplay(this, displayCounter++));
-		displays.add(display);
-		return display;
+		return Swing.runNow(() -> {
+			DefaultGraphDisplay display = new DefaultGraphDisplay(this, displayCounter++);
+			displays.add(display);
+			return display;
+		});
 	}
 
 	@Override
@@ -76,10 +77,11 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 
 	@Override
 	public List<GraphDisplay> getAllGraphDisplays() {
-		return displays.stream()
-				.filter(d -> d.getComponent().isShowing())
-				.sorted((d1, d2) -> -(d1.getId() - d2.getId())) // largest/newest IDs come first
-				.collect(Collectors.toList());
+		return Swing.runNow(() -> {
+			return displays.stream()
+					.sorted((d1, d2) -> -(d1.getId() - d2.getId())) // largest/newest IDs come first
+					.collect(Collectors.toList());
+		});
 	}
 
 	@Override

@@ -97,7 +97,8 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 
 		Program program = builder.getProgram();
 		Navigatable navigatable = null;
-		dialog = new TableChooserDialog(tool, executor, program, "Dialog Title", navigatable);
+		runSwing(() -> dialog =
+			new TableChooserDialog(tool, executor, program, "Dialog Title", navigatable));
 
 		testAction = new TestAction();
 		dialog.addAction(testAction);

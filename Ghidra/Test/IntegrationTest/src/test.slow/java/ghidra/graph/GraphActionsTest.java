@@ -416,30 +416,30 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetActiveGraph() throws Exception {
-	
+
 		GraphDisplayBroker broker = tool.getService(GraphDisplayBroker.class);
 		GraphDisplayProvider service = broker.getGraphDisplayProvider("Default Graph Display");
 		GraphDisplay firstDisplay = service.getActiveGraphDisplay();
 		assertNotNull(firstDisplay);
-	
+
 		showGraph();
 		GraphDisplay secondDisplay = service.getActiveGraphDisplay();
 		assertNotNull(secondDisplay);
 		assertNotSame(firstDisplay, secondDisplay);
-	
+
 		showGraph();
 		GraphDisplay thirdDisplay = service.getActiveGraphDisplay();
 		assertNotNull(thirdDisplay);
 		assertNotSame(firstDisplay, thirdDisplay);
 		assertNotSame(secondDisplay, thirdDisplay);
-	
+
 		close(thirdDisplay);
 		close(firstDisplay);
-	
+
 		GraphDisplay activeDisplay = service.getActiveGraphDisplay();
 		assertNotNull(activeDisplay);
 		assertSame(secondDisplay, activeDisplay);
-	
+
 		close(secondDisplay);
 		activeDisplay = service.getActiveGraphDisplay();
 		assertNull(activeDisplay);
