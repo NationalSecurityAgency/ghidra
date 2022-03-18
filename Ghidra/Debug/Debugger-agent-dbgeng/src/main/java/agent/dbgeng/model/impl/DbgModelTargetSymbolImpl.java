@@ -35,7 +35,7 @@ import ghidra.program.model.address.Address;
 			type = DbgModelTargetSymbolContainerImpl.class),
 		@TargetAttributeType(name = TargetObject.VALUE_ATTRIBUTE_NAME, type = Address.class),
 		@TargetAttributeType(name = TargetSymbol.SIZE_ATTRIBUTE_NAME, type = long.class),
-		@TargetAttributeType(name = TargetBreakpointSpec.KEY_ATTRIBUTE_NAME, type = String.class),
+		@TargetAttributeType(name = TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME, type = String.class),
 		@TargetAttributeType(name = "Name", type = String.class),
 		@TargetAttributeType(name = "Size", type = long.class),
 		@TargetAttributeType(name = "TypeId", type = int.class),
@@ -71,7 +71,7 @@ public class DbgModelTargetSymbolImpl extends DbgModelTargetObjectImpl
 			NAMESPACE_ATTRIBUTE_NAME, symbols, //
 			VALUE_ATTRIBUTE_NAME, value, //
 			SIZE_ATTRIBUTE_NAME, size, //
-			TargetBreakpointSpec.KEY_ATTRIBUTE_NAME, //
+			TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME, //
 			   moduleName + "!" + symbol.getName(), //
 			"Name", symbol.getName(), //
 			"Size", size, //

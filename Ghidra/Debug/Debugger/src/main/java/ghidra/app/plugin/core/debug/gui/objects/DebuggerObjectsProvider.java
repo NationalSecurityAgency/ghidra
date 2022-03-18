@@ -1526,7 +1526,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private void setText(ActionContext context) {
 		breakpointDialog.setText("");
 		TargetObject obj = getObjectFromContext(context);
-		Object key = obj.getCachedAttribute(TargetBreakpointSpec.KEY_ATTRIBUTE_NAME);
+		Object key = obj.getCachedAttribute(TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME);
 		if (key != null) {
 			breakpointDialog.setText(key.toString());
 		}

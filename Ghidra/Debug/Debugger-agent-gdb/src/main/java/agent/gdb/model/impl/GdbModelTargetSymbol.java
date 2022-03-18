@@ -30,7 +30,7 @@ import ghidra.program.model.address.Address;
 	elements = {
 		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(name = TargetBreakpointSpec.KEY_ATTRIBUTE_NAME, type = String.class),
+		@TargetAttributeType(name = TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME, type = String.class),
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetSymbol extends
 		DefaultTargetObject<TargetObject, GdbModelTargetSymbolContainer> implements TargetSymbol {
@@ -59,7 +59,7 @@ public class GdbModelTargetSymbol extends
 			VALUE_ATTRIBUTE_NAME, value,
 			SIZE_ATTRIBUTE_NAME, size,
 			DISPLAY_ATTRIBUTE_NAME, symbol.getName(),
-			TargetBreakpointSpec.KEY_ATTRIBUTE_NAME, symbol.getName()),
+			TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME, symbol.getName()),
 			"Initialized");
 	}
 
