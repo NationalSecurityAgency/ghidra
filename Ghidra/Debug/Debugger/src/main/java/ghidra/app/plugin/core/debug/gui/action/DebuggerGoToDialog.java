@@ -52,7 +52,8 @@ public class DebuggerGoToDialog extends DialogComponentProvider {
 		panel.setBorder(new EmptyBorder(16, 16, 16, 16));
 		JLabel help = new JLabel(
 			"<html>Enter any sleigh expression to evaluate against the current thread.<br/>" +
-				"Note that constants and memory derefs must have a resolved size. Examples:" +
+				"Note that constants and memory derefs must have a resolved size.<br/>" +
+				"Examples:<br/>" +
 				"<ul>" +
 				"<li>To go to a constant address: <code>0x00401234:4</code></li>" +
 				"<li>To go to the address in a register: <code>RAX</code></li>" +
