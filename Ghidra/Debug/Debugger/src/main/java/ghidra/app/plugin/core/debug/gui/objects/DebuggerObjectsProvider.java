@@ -1563,11 +1563,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public void performNavigate(ActionContext context) {
 		performAction(context, false, TargetObject.class, t -> {
 			if (t != null) {
-				Object value = t.getCachedAttribute(TargetObject.VALUE_ATTRIBUTE_NAME);
-				navigateToSelectedObject(t, value);
+				navigateToSelectedObject(t, null);
 			}
 			return AsyncUtils.NIL;
-		}, "Couldn't toggle");
+		}, "Couldn't navigate");
 	}
 
 	public void initiateConsole(ActionContext context) {
@@ -1865,30 +1864,51 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		return listener.queue.in;
 	}
 
-	public void navigateToSelectedObject(TargetObject selectedObject, Object value) {
-		if (listingService != null && value != null) {
-			Address addr = null;
-			if (value instanceof Address) {
-				addr = (Address) value;
+	public void navigateToSelectedObject(TargetObject object, Object value) {
+		if (listingService == null || listingService == null) {
+			return;
+		}
+		if (value == null) {
+			value =
+				object.getCachedAttribute(TargetBreakpointLocation.ADDRESS_ATTRIBUTE_NAME);
+		}
+		if (value == null) {
+			value = object.getCachedAttribute(TargetObject.PREFIX_INVISIBLE + "range");
+		}
+		if (value == null) {
+			value = object.getCachedAttribute(TargetObject.VALUE_ATTRIBUTE_NAME);
+		}
+		if (value == null) {
+			return;
+		}
+
+		Address addr = null;
+		if (value instanceof Address) {
+			addr = (Address) value;
+		}
+		else if (value instanceof AddressRangeImpl) {
+			AddressRangeImpl range = (AddressRangeImpl) value;
+			addr = range.getMinAddress();
+		}
+		else if (value instanceof Long) {
+			Long lval = (Long) value;
+			addr = object.getModel().getAddress("ram", lval);
+		}
+		else if (value instanceof String) {
+			String sval = (String) value;
+			addr = stringToAddress(object, addr, sval);
+		}
+		if (addr != null) {
+			TraceRecorder recorder = modelService.getRecorderForSuccessor(object);
+			if (recorder == null) {
+				recorder = modelService.getRecorder(currentTrace);
+				if (recorder == null) {
+					return;
+				}
 			}
-			if (value instanceof AddressRangeImpl) {
-				AddressRangeImpl range = (AddressRangeImpl) value;
-				addr = range.getMinAddress();
-			}
-			if (value instanceof Long) {
-				Long lval = (Long) value;
-				addr = selectedObject.getModel().getAddress("ram", lval);
-			}
-			if (value instanceof String) {
-				String sval = (String) value;
-				addr = stringToAddress(selectedObject, addr, sval);
-			}
-			if (modelService != null && addr != null) {
-				TraceRecorder recorder = modelService.getRecorderForSuccessor(selectedObject);
-				DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
-				Address traceAddr = memoryMapper.targetToTrace(addr);
-				listingService.goTo(traceAddr, true);
-			}
+			DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
+			Address traceAddr = memoryMapper.targetToTrace(addr);
+			listingService.goTo(traceAddr, true);
 		}
 	}
 

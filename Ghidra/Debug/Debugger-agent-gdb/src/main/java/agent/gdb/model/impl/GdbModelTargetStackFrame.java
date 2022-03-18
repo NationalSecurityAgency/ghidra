@@ -28,14 +28,12 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
 
 @TargetObjectSchemaInfo(
 	name = "StackFrame",
 	elements = {
 		@TargetElementType(type = Void.class) },
 	attributes = {
-		@TargetAttributeType(name = "Address", type = Address.class),
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, GdbModelTargetStack>
 		implements TargetStackFrame, GdbModelSelectableObject {
@@ -101,14 +99,13 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 		this.func = frame.getFunction();
 		// TODO: module? "from"
 
-		AddressSpace space = getModel().getAddressSpace("ram");
 		changeAttributes(List.of(), List.of( //
 			registers //
 		), Map.of( //
 			PC_ATTRIBUTE_NAME, pc, //
 			FUNC_ATTRIBUTE_NAME, func, //
 			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame), //
-			"Address", space.getAddress(frame.getAddress().longValue()) //
+			VALUE_ATTRIBUTE_NAME, pc //
 		), "Refreshed");
 	}
 

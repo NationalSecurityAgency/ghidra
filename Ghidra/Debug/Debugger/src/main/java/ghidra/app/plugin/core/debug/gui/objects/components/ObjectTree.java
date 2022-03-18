@@ -157,9 +157,7 @@ public class ObjectTree implements ObjectPane {
 				if (e.getClickCount() == 2) {
 					TargetObject selectedObject = getSelectedObject();
 					if (selectedObject != null) {
-						Object value =
-							selectedObject.getCachedAttribute(TargetObject.VALUE_ATTRIBUTE_NAME);
-						container.getProvider().navigateToSelectedObject(selectedObject, value);
+						container.getProvider().navigateToSelectedObject(selectedObject, null);
 					}
 				}
 			}
