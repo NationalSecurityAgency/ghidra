@@ -29,7 +29,8 @@ public class ObjectiveC2_MethodList extends ObjectiveC_MethodList {
 	private int entsizeAndFlags;
 	private int count;
 
-	public ObjectiveC2_MethodList(ObjectiveC2_State state, BinaryReader reader, ObjectiveC_MethodType methodType) throws IOException {
+	public ObjectiveC2_MethodList(ObjectiveC2_State state, BinaryReader reader,
+			ObjectiveC_MethodType methodType) throws IOException {
 		super(state, reader, NAME);
 
 		if (_index == 0) {
@@ -37,13 +38,17 @@ public class ObjectiveC2_MethodList extends ObjectiveC_MethodList {
 		}
 
 		entsizeAndFlags = reader.readNextInt();
-		count   = reader.readNextInt();
+		count = reader.readNextInt();
 
-		boolean isSmallList = (entsizeAndFlags & 0x80000000) != 0;
+		boolean isSmallList = isSmallMethods();
 
-		for (int i = 0 ; i < count ; ++i) {
-			methods.add( new ObjectiveC2_Method(state, reader, methodType, isSmallList) );
+		for (int i = 0; i < count; ++i) {
+			methods.add(new ObjectiveC2_Method(state, reader, methodType, isSmallList));
 		}
+	}
+
+	protected boolean isSmallMethods() {
+		return (entsizeAndFlags & 0x80000000) != 0;
 	}
 
 	public long getEntsizeAndFlags() {
@@ -57,19 +62,21 @@ public class ObjectiveC2_MethodList extends ObjectiveC_MethodList {
 	public static DataType toGenericDataType() throws DuplicateNameException {
 		Structure struct = new StructureDataType(NAME, 0);
 		struct.add(DWORD, "entsizeAndFlags", null);
-		struct.add(DWORD,   "count", null);
+		struct.add(DWORD, "count", null);
 		struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
 		return struct;
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure struct = new StructureDataType(NAME+'_'+count+'_', 0);
+		Structure struct =
+			new StructureDataType(NAME + (isSmallMethods() ? "_small" : "") + '_' + count + '_', 0);
 
 		struct.add(DWORD, "entsizeAndFlags", null);
-		struct.add(DWORD,   "count", null);
+		struct.add(DWORD, "count", null);
 
-		for (int i = 0 ; i < methods.size() ; ++i) {
-			struct.add(methods.get(i).toDataType(), "method"+i, null);
+		for (int i = 0; i < methods.size(); ++i) {
+			struct.add(methods.get(i).toDataType(), "method" + i, null);
 		}
 
 		struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
