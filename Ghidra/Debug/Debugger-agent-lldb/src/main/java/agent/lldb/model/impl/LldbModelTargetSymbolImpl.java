@@ -21,11 +21,8 @@ import java.util.Map;
 import SWIG.*;
 import agent.lldb.model.iface2.LldbModelTargetSession;
 import agent.lldb.model.iface2.LldbModelTargetSymbol;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetSymbol;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 
@@ -39,6 +36,7 @@ import ghidra.program.model.address.Address;
 			type = LldbModelTargetSymbolContainerImpl.class),
 		@TargetAttributeType(name = TargetObject.VALUE_ATTRIBUTE_NAME, type = Address.class),
 		@TargetAttributeType(name = TargetSymbol.SIZE_ATTRIBUTE_NAME, type = long.class),
+		@TargetAttributeType(name = TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME, type = String.class),
 		@TargetAttributeType(name = "Name", type = String.class),
 		@TargetAttributeType(name = "Size", type = long.class),
 		@TargetAttributeType(name = "TypeId", type = int.class),
@@ -76,7 +74,8 @@ public class LldbModelTargetSymbolImpl extends LldbModelTargetObjectImpl
 			DISPLAY_ATTRIBUTE_NAME, getDescription(0), //
 			NAMESPACE_ATTRIBUTE_NAME, symbols, //
 			VALUE_ATTRIBUTE_NAME, value, //
-			SIZE_ATTRIBUTE_NAME, size //
+			SIZE_ATTRIBUTE_NAME, size, //
+			TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME, getDescription(0) //
 		/*
 		"Name", symbol.getName(), //
 		"Size", size, //
