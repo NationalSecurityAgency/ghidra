@@ -78,14 +78,14 @@ public class FridaEng {
 	 * @return a pointer to the device manager
 	 */
 	public static FridaDebugger init() {
-		FridaNative.INSTANCE.frida_init();
-		return new FridaDebugger(FridaNative.INSTANCE.frida_device_manager_new());
+		FridaNative.INSTANCE.GH_frida_init();
+		return new FridaDebugger(FridaNative.INSTANCE.GH_frida_device_manager_new());
 	}
 	
 	public static FridaTarget createTarget(FridaDebugger d) {
 		Pointer deviceManager = d.getPointer();
 		FridaError err = new FridaError();
-		Pointer localDevice = FridaNative.INSTANCE.frida_device_manager_find_device_by_type_sync(deviceManager, new NativeLong(0), new NativeLong(10), null, err.error);
+		Pointer localDevice = FridaNative.INSTANCE.GH_frida_device_manager_find_device_by_type_sync(deviceManager, new NativeLong(0), new NativeLong(10), null, err.error);
 		if (localDevice == null) {
 			Msg.error(d, err);
 			return null;
@@ -96,16 +96,16 @@ public class FridaEng {
 	public static List<FridaTarget> enumerateDevices(FridaDebugger d) {
 		Pointer deviceManager = d.getPointer();
 		FridaError err = new FridaError();
-		Pointer deviceList = FridaNative.INSTANCE.frida_device_manager_enumerate_devices_sync(deviceManager, null, err.error);
+		Pointer deviceList = FridaNative.INSTANCE.GH_frida_device_manager_enumerate_devices_sync(deviceManager, null, err.error);
 		if (deviceList == null) {
 			Msg.error(d, err);
 			return null;
 		}
-		Integer numDevices = FridaNative.INSTANCE.frida_device_list_size(deviceList);
+		Integer numDevices = FridaNative.INSTANCE.GH_frida_device_list_size(deviceList);
 		List<FridaTarget> targetList = new ArrayList<>(numDevices);
 		for (int i = 0; i != numDevices; i++) {
-			Pointer device = FridaNative.INSTANCE.frida_device_list_get(deviceList, i);
-		    String name = FridaNative.INSTANCE.frida_device_get_name(device);
+			Pointer device = FridaNative.INSTANCE.GH_frida_device_list_get(deviceList, i);
+		    String name = FridaNative.INSTANCE.GH_frida_device_get_name(device);
 		    FridaTarget t = new FridaTarget(device);
 		    t.setName(name);
 		    targetList.add(t);
@@ -116,17 +116,17 @@ public class FridaEng {
 	public static List<FridaProcess> enumerateProcesses(FridaTarget t) {
 		Pointer device = t.getPointer();
 		FridaError err = new FridaError();
-		Pointer list = FridaNative.INSTANCE.frida_device_enumerate_processes_sync(device, null, null, err.error);
+		Pointer list = FridaNative.INSTANCE.GH_frida_device_enumerate_processes_sync(device, null, null, err.error);
 		if (list == null) {
 			Msg.error(t, err);
 			return null;
 		}
-		Integer numProcesses = FridaNative.INSTANCE.frida_process_list_size(list);
+		Integer numProcesses = FridaNative.INSTANCE.GH_frida_process_list_size(list);
 		List<FridaProcess> processList = new ArrayList<>(numProcesses);
 		for (int i = 0; i != numProcesses; i++) {
-			Pointer process = FridaNative.INSTANCE.frida_process_list_get(list, i);
-		    NativeLong pid = FridaNative.INSTANCE.frida_process_get_pid(process);
-		    String name = FridaNative.INSTANCE.frida_process_get_name(process);
+			Pointer process = FridaNative.INSTANCE.GH_frida_process_list_get(list, i);
+		    NativeLong pid = FridaNative.INSTANCE.GH_frida_process_get_pid(process);
+		    String name = FridaNative.INSTANCE.GH_frida_process_get_name(process);
 		    FridaProcess p = new FridaProcess(process, pid);
 		    p.setName(name);
 		    processList.add(p);
@@ -137,18 +137,18 @@ public class FridaEng {
 	public static List<FridaProcess> enumerateApplications(FridaTarget t) {
 		Pointer device = t.getPointer();
 		FridaError err = new FridaError();
-		Pointer list = FridaNative.INSTANCE.frida_device_enumerate_applications_sync(device, null, null, err.error);
+		Pointer list = FridaNative.INSTANCE.GH_frida_device_enumerate_applications_sync(device, null, null, err.error);
 		if (list == null) {
 			Msg.error(t, err);
 			return null;
 		}
-		Integer numApplications = FridaNative.INSTANCE.frida_process_list_size(list);
+		Integer numApplications = FridaNative.INSTANCE.GH_frida_process_list_size(list);
 		List<FridaProcess> processList = new ArrayList<>(numApplications);
 		for (int i = 0; i != numApplications; i++) {
-			Pointer application = FridaNative.INSTANCE.frida_application_list_get(list, i);
-		    NativeLong pid = FridaNative.INSTANCE.frida_application_get_pid(application);
-		    String name = FridaNative.INSTANCE.frida_application_get_name(application);
-		    String identifier = FridaNative.INSTANCE.frida_application_get_identifier(application);
+			Pointer application = FridaNative.INSTANCE.GH_frida_application_list_get(list, i);
+		    NativeLong pid = FridaNative.INSTANCE.GH_frida_application_get_pid(application);
+		    String name = FridaNative.INSTANCE.GH_frida_application_get_name(application);
+		    String identifier = FridaNative.INSTANCE.GH_frida_application_get_identifier(application);
 		    FridaProcess p = new FridaProcess(application, pid);
 		    p.setName(name);
 		    p.setIdentifier(identifier);
@@ -160,12 +160,12 @@ public class FridaEng {
 	public static FridaSession attach(FridaTarget t, NativeLong pid, FridaError err) {
 		Pointer localDevice = t.getPointer();
 		FridaNative.GError.ByReference ref = new FridaNative.GError.ByReference();
-		Pointer session = FridaNative.INSTANCE.frida_device_attach_sync(localDevice, pid, FridaEng.FRIDA_REALM_NATIVE, null, ref);
+		Pointer session = FridaNative.INSTANCE.GH_frida_device_attach_sync(localDevice, pid, FridaEng.FRIDA_REALM_NATIVE, null, ref);
 		if (session == null) {
 			Msg.error(t, ref);			
 			return null;
 		}
-		Pointer process = FridaNative.INSTANCE.frida_device_get_process_by_pid_sync(localDevice, pid, null, null, err.error);
+		Pointer process = FridaNative.INSTANCE.GH_frida_device_get_process_by_pid_sync(localDevice, pid, null, null, err.error);
 		if (process == null) {
 			Msg.error(t, err);			
 			return null;
@@ -180,7 +180,7 @@ public class FridaEng {
 
 	public static FridaSession spawn(FridaTarget t, String fileName, FridaError err) {
 		Pointer localDevice = t.getPointer();
-		NativeLong pid = FridaNative.INSTANCE.frida_device_spawn_sync(localDevice, fileName, FridaEng.FRIDA_REALM_NATIVE, null, err.error);
+		NativeLong pid = FridaNative.INSTANCE.GH_frida_device_spawn_sync(localDevice, fileName, FridaEng.FRIDA_REALM_NATIVE, null, err.error);
 		if (!err.success()) {
 			Msg.error(t, err);			
 			return null;
@@ -190,7 +190,7 @@ public class FridaEng {
 
 	public static void resume(FridaTarget t, NativeLong pid, FridaError err) {
 		Pointer localDevice = t.getPointer();
-		FridaNative.INSTANCE.frida_device_resume_sync(localDevice, pid, null, err.error);
+		FridaNative.INSTANCE.GH_frida_device_resume_sync(localDevice, pid, null, err.error);
 		if (!err.success()) {
 			Msg.error(t, err);			
 		}
@@ -198,7 +198,7 @@ public class FridaEng {
 
 	public static void kill(FridaTarget t, NativeLong pid, FridaError err) {
 		Pointer localDevice = t.getPointer();
-		FridaNative.INSTANCE.frida_device_kill_sync(localDevice, pid, null, err.error);
+		FridaNative.INSTANCE.GH_frida_device_kill_sync(localDevice, pid, null, err.error);
 		if (!err.success()) {
 			Msg.error(t, err);			
 		}
@@ -206,7 +206,7 @@ public class FridaEng {
 
 	public static void detach(FridaSession s, FridaError err) {
 		Pointer session = s.getPointer();
-		FridaNative.INSTANCE.frida_session_detach_sync(session, null, err.error);
+		FridaNative.INSTANCE.GH_frida_session_detach_sync(session, null, err.error);
 		if (!err.success()) {
 			Msg.error(s, err);			
 		}
@@ -214,7 +214,7 @@ public class FridaEng {
 
 	public static void resume(FridaSession s, FridaError err) {
 		Pointer session = s.getPointer();
-		FridaNative.INSTANCE.frida_session_resume_sync(session, null, err.error);
+		FridaNative.INSTANCE.GH_frida_session_resume_sync(session, null, err.error);
 		if (!err.success()) {
 			Msg.error(s, err);			
 		}
@@ -223,33 +223,18 @@ public class FridaEng {
 
 	public static NativeLong connectSignal(FridaScript s, String signal, FridaNative.MessageCallback cb, Pointer userData) {
 		Pointer script = s.getPointer();
-		try {
-			return FridaNative.INSTANCE._frida_g_signal_connect_data(script, signal, cb, userData, null, new NativeLong(0));
-		} catch (UnsatisfiedLinkError e) { 
-			/* IGNORE */ 
-		}
-		try {
-			return FridaNative.INSTANCE.g_signal_connect_data(script, signal, cb, userData, null, new NativeLong(0));
-		} catch (UnsatisfiedLinkError e) { /* IGNORE */ }
-		return new NativeLong(-1);
+		return FridaNative.INSTANCE.GH_g_signal_connect_data(script, signal, cb, userData, null, new NativeLong(0));
 	}
 	
 	public static void disconnectSignal(FridaScript s, NativeLong signal) {
 		Pointer script = s.getPointer();
-		try {
-			FridaNative.INSTANCE._frida_g_signal_handler_disconnect(script, signal);
-			return;
-		} catch (UnsatisfiedLinkError e) { /* IGNORE */ }
-		try {
-			FridaNative.INSTANCE.g_signal_handler_disconnect(script, signal);
-			return;
-		} catch (UnsatisfiedLinkError e) { /* IGNORE */ }
+		FridaNative.INSTANCE.GH_g_signal_handler_disconnect(script, signal);
 	}
 
 	public static NativeLong createSignal(String signal) {
-		return FridaNative.INSTANCE.g_signal_new(
+		return FridaNative.INSTANCE.GH_g_signal_new(
 			signal, 
-			FridaNative.INSTANCE.frida_bus_session_get_type(), 	// type_from_class
+			FridaNative.INSTANCE.GH_frida_bus_session_get_type(), 	// type_from_class
 			new NativeLong(2), 		// G_SIGNAL_RUN_LAST
 			new NativeLong(0), 		// class_ofset
 			null, 					// accumulator
@@ -263,11 +248,11 @@ public class FridaEng {
 
 	public static void emitSignal(FridaSession s, String signal) {
 		Pointer script = s.getPointer();
-		FridaNative.INSTANCE.g_signal_emit_by_name(script, signal);
+		FridaNative.INSTANCE.GH_g_signal_emit_by_name(script, signal);
 	}
 
 	public static NativeLong getBusType() {
-		return FridaNative.INSTANCE.frida_bus_session_get_type();
+		return FridaNative.INSTANCE.GH_frida_bus_session_get_type();
 	}
 
 
@@ -279,7 +264,7 @@ public class FridaEng {
 		}
 		Pointer session = s.getPointer();
 		FridaError err = new FridaError();
-		Pointer script = FridaNative.INSTANCE.frida_session_create_script_sync(session, commands, options, null, err.error);
+		Pointer script = FridaNative.INSTANCE.GH_frida_session_create_script_sync(session, commands, options, null, err.error);
 		if (script == null) {
 			Msg.error(s, "Unable to create script: " + commands);
 			return null;
@@ -289,14 +274,14 @@ public class FridaEng {
 
 	public static void unref(FridaScript s) {
 		Pointer script = s.getPointer();
-		FridaNative.INSTANCE.frida_unref(script);
+		FridaNative.INSTANCE.GH_frida_unref(script);
 	}
 
 
 	public static void loadScript(FridaScript s) {
 		Pointer script = s.getPointer();
 		FridaError err = new FridaError();
-		FridaNative.INSTANCE.frida_script_load_sync(script, null, err.error);
+		FridaNative.INSTANCE.GH_frida_script_load_sync(script, null, err.error);
 		if (!err.success()) {
 			Msg.error(s, err);
 		}
@@ -305,23 +290,23 @@ public class FridaEng {
 	public static void unloadScript(FridaScript s) {
 		Pointer script = s.getPointer();
 		FridaError err = new FridaError();
-		FridaNative.INSTANCE.frida_script_unload_sync(script, null, err.error);
+		FridaNative.INSTANCE.GH_frida_script_unload_sync(script, null, err.error);
 		if (!err.success()) {
 			Msg.error(s, err);
 		}
 	}
 
 	public static Pointer createOptions(String name) {
-		Pointer options = FridaNative.INSTANCE.frida_script_options_new();
-		FridaNative.INSTANCE.frida_script_options_set_name(options, name);
-		FridaNative.INSTANCE.frida_script_options_set_runtime(options, new NativeLong(0L));
+		Pointer options = FridaNative.INSTANCE.GH_frida_script_options_new();
+		FridaNative.INSTANCE.GH_frida_script_options_set_name(options, name);
+		FridaNative.INSTANCE.GH_frida_script_options_set_runtime(options, new NativeLong(0L));
 		return options;
 	}
 
 	public static void enableDebugger(FridaSession s, NativeLong port) {
 		Pointer session = s.getPointer();
 		FridaError err = new FridaError();
-		FridaNative.INSTANCE.frida_session_enable_debugger_sync(session, port, null, err.error);
+		FridaNative.INSTANCE.GH_frida_session_enable_debugger_sync(session, port, null, err.error);
 		if (!err.success()) {
 			Msg.error(s, err);
 		}

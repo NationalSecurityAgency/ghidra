@@ -88,6 +88,11 @@ public abstract class AbstractModelForFridaRootAttacherTest
 	public void testAttachByPidThenResumeInterrupt() throws Throwable {
 	}
 
+	@Ignore
+	@Test
+	public void testAttachByPidThenKill() throws Throwable {
+	}
+	
 	@Override
 	protected void runTestKill(DebuggerTestSpecimen specimen)
 			throws Throwable {

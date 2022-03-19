@@ -1,15 +1,16 @@
 Random Notes on the Implementation of Debugger-agent-frida
 
 - Building libfrida-core.so:
-	You can download libfrida-core.a for Frida by grabbing the latest frida-core-devkit for your OS from https://github.com/frida/frida/releases or by downloading the Frida source and running:
+	You can download libfrida-core.a for Frida by grabbing the latest frida-core-devkit for your OS from 
+		https://github.com/frida/frida/releases 
+    or by downloading the Frida source and running:
+		python3 devkit.py frida-core linux-x86_64 DEVKIT
+	from the "releng" directory. 
 	
-	python3 devkit.py frida-core linux-x86_64 DEVKIT
-	
-from the "releng" directory. Ghidra needs a dynamically-loadable version of this which you can generate by something like:
+Ghidra needs a dynamically-loadable version of libfrida-core.a which you can generate by something like:
 
-	ar -x libfrida-core.a
-	rm meson-generated_.._.._.._gum_gumenumtypes.c.o
-	g++ -shared -o libfrida-core.so *.o  -ldl -lm -latomic -lrt -lpthread -lresolv -pthread -fuse-ld=gold -Wl,--export-dynamic,--icf=all,--gc-sections,-z,noexecstack -static-libgcc -ffunction-sections -fPIC -fdata-sections -m64 -Os -pipe -g3 -lstdc++
+	cp ghidra_wrapper.c into the directory with libfrida-core.a and frida-core.h (distro or DEVKIT)
+	g++ -shared ghidra_wrapper.c ./libfrida-core.a -o libfrida-core.so
 
 Libfrida-core.so should then be added to the jna.library.path or put someplace like /usr/lib/x86_64-linux-gnu, where it will get picked up by Native.load().
 

@@ -318,6 +318,9 @@ public interface FridaClient extends FridaClientReentrant {
 	}
 
 	public static TargetExecutionState convertState(FridaState state) {
+		if (state == null) {
+			return TargetExecutionState.STOPPED;
+		}
 		switch (state) {
 			case FRIDA_THREAD_RUNNING:	
 				return TargetExecutionState.RUNNING;

@@ -60,7 +60,7 @@ public class FridaModelTargetRegisterImpl
 	}
 
 	public String getDescription(int level) {
-		return getValue();
+		return getName() + " : " + getValue();
 	}
 
 	@Override
