@@ -20,22 +20,14 @@ import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.io.PrintWriter;
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.tree.TreePath;
 
 import org.apache.commons.collections4.map.LinkedMap;
@@ -43,10 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
 import docking.WindowPosition;
-import docking.action.DockingAction;
-import docking.action.DockingActionIf;
-import docking.action.MenuData;
-import docking.action.ToggleDockingAction;
+import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
 import docking.widgets.OptionDialog;
@@ -56,115 +45,37 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractAttachAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractConsoleAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractDetachAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractInterruptAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractKillAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractLaunchAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractQuickLaunchAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractRecordAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractRefreshAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractResumeAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractSetBreakpointAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractStepFinishAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractStepIntoAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractStepLastAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractStepOverAction;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractToggleAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.DisplayAsGraphAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.DisplayAsTableAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.DisplayAsTreeAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.DisplayAsXMLAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.DisplayFilteredGraphAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.DisplayFilteredTableAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.DisplayFilteredTreeAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.DisplayFilteredXMLAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.DisplayMethodsAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.ExportAsFactsAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.ExportAsXMLAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.ImportFromFactsAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.ImportFromXMLAction;
-import ghidra.app.plugin.core.debug.gui.objects.actions.OpenWinDbgTraceAction;
-import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerAttachDialog;
-import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerBreakpointDialog;
-import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
-import ghidra.app.plugin.core.debug.gui.objects.components.DummyTargetObject;
-import ghidra.app.plugin.core.debug.gui.objects.components.ObjectAttributeColumn;
-import ghidra.app.plugin.core.debug.gui.objects.components.ObjectAttributeRow;
-import ghidra.app.plugin.core.debug.gui.objects.components.ObjectElementColumn;
-import ghidra.app.plugin.core.debug.gui.objects.components.ObjectElementRow;
-import ghidra.app.plugin.core.debug.gui.objects.components.ObjectEnumeratedColumnTableModel;
-import ghidra.app.plugin.core.debug.gui.objects.components.ObjectNode;
-import ghidra.app.plugin.core.debug.gui.objects.components.ObjectPane;
-import ghidra.app.plugin.core.debug.gui.objects.components.ObjectTable;
-import ghidra.app.plugin.core.debug.gui.objects.components.ObjectTree;
-import ghidra.app.script.GhidraScript;
-import ghidra.app.script.GhidraScriptProvider;
-import ghidra.app.script.GhidraScriptUtil;
-import ghidra.app.script.GhidraState;
-import ghidra.app.services.ConsoleService;
-import ghidra.app.services.DebuggerListingService;
-import ghidra.app.services.DebuggerModelService;
-import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.app.services.GraphDisplayBroker;
-import ghidra.app.services.TraceRecorder;
-import ghidra.async.AsyncFence;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
-import ghidra.dbg.AnnotatedDebuggerAttributeListener;
-import ghidra.dbg.DebugModelConventions;
-import ghidra.dbg.DebuggerModelListener;
-import ghidra.dbg.DebuggerObjectModel;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.gui.objects.actions.*;
+import ghidra.app.plugin.core.debug.gui.objects.components.*;
+import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
+import ghidra.app.script.*;
+import ghidra.app.services.*;
+import ghidra.async.*;
+import ghidra.dbg.*;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
-import ghidra.dbg.target.TargetAccessConditioned;
-import ghidra.dbg.target.TargetAttachable;
-import ghidra.dbg.target.TargetAttacher;
-import ghidra.dbg.target.TargetBreakpointSpecContainer;
-import ghidra.dbg.target.TargetConfigurable;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetConsole.Channel;
-import ghidra.dbg.target.TargetDetachable;
-import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetFocusScope;
-import ghidra.dbg.target.TargetInterpreter;
-import ghidra.dbg.target.TargetInterruptible;
-import ghidra.dbg.target.TargetKillable;
-import ghidra.dbg.target.TargetLauncher;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
-import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetProcess;
-import ghidra.dbg.target.TargetResumable;
-import ghidra.dbg.target.TargetSteppable;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
-import ghidra.dbg.target.TargetTogglable;
 import ghidra.dbg.util.DebuggerCallbackReorderer;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.model.Project;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.options.annotation.AutoOptionConsumed;
-import ghidra.framework.options.annotation.AutoOptionDefined;
-import ghidra.framework.options.annotation.HelpInfo;
-import ghidra.framework.plugintool.AutoConfigState;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.options.annotation.*;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
-import ghidra.util.Swing;
+import ghidra.util.*;
 import ghidra.util.datastruct.PrivatelyQueuedListener;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.TaskMonitor;
@@ -1384,6 +1295,21 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.buildAndInstallLocal(this);
 		
 		groupTargetIndex++;
+		
+		new ActionBuilder("GoTo", plugin.getName())
+			.keyBinding("G")
+			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.popupMenuPath("&GoTo")
+			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.helpLocation(AbstractToggleAction.help(plugin))
+			.enabledWhen(ctx -> isInstance(ctx, TargetObject.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetObject.class))
+			.onAction(ctx -> performNavigate(ctx))
+			.enabled(false)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
+
 	
 		displayAsTreeAction = new DisplayAsTreeAction(tool, plugin.getName(), this);
 		displayAsTableAction = new DisplayAsTableAction(tool, plugin.getName(), this);
@@ -1763,6 +1689,15 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}, "Couldn't configure one or more options");
 	}
 
+	public void performNavigate(ActionContext context) {
+		performAction(context, false, TargetObject.class, t -> {
+			if (t != null) {
+				navigateToSelectedObject(t, null);
+			}
+			return AsyncUtils.NIL;
+		}, "Couldn't navigate");
+	}
+
 	public void initiateConsole(ActionContext context) {
 		performAction(context, false, TargetInterpreter.class, interpreter -> {
 			getPlugin().showConsole(interpreter);
@@ -2078,4 +2013,68 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		return listener.queue.in;
 	}
 
+	public void navigateToSelectedObject(TargetObject object, Object value) {
+		if (listingService == null || listingService == null) {
+			return;
+		}
+		if (value == null) {
+			value =
+				object.getCachedAttribute(TargetBreakpointLocation.ADDRESS_ATTRIBUTE_NAME);
+		}
+		if (value == null) {
+			value = object.getCachedAttribute(TargetObject.PREFIX_INVISIBLE + "range");
+		}
+		if (value == null) {
+			value = object.getCachedAttribute(TargetObject.VALUE_ATTRIBUTE_NAME);
+		}
+		if (value == null) {
+			return;
+		}
+
+		Address addr = null;
+		if (value instanceof Address) {
+			addr = (Address) value;
+		}
+		else if (value instanceof AddressRangeImpl) {
+			AddressRangeImpl range = (AddressRangeImpl) value;
+			addr = range.getMinAddress();
+		}
+		else if (value instanceof Long) {
+			Long lval = (Long) value;
+			addr = object.getModel().getAddress("ram", lval);
+		}
+		else if (value instanceof String) {
+			String sval = (String) value;
+			addr = stringToAddress(object, addr, sval);
+		}
+		if (addr != null) {
+			TraceRecorder recorder = modelService.getRecorderForSuccessor(object);
+			if (recorder == null) {
+				recorder = modelService.getRecorder(currentTrace);
+				if (recorder == null) {
+					return;
+				}
+			}
+			DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
+			Address traceAddr = memoryMapper.targetToTrace(addr);
+			listingService.goTo(traceAddr, true);
+		}
+	}
+
+	private Address stringToAddress(TargetObject selectedObject, Address addr, String sval) {
+		Integer base = 16;
+		if (selectedObject instanceof TargetConfigurable) {
+			TargetConfigurable configurable = (TargetConfigurable) selectedObject;
+			base =
+				(Integer) configurable.getCachedAttribute(TargetConfigurable.BASE_ATTRIBUTE_NAME);
+		}
+		try {
+			Long lval = Long.parseLong(sval, base);
+			addr = selectedObject.getModel().getAddress("ram", lval);
+		}
+		catch (NumberFormatException nfe) {
+			// IGNORE
+		}
+		return addr;
+	}
 }

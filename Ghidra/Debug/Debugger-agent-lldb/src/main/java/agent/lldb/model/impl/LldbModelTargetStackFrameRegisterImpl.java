@@ -60,6 +60,7 @@ public class LldbModelTargetStackFrameRegisterImpl
 		), "Initialized");
 	}
 
+	@Override
 	public String getDescription(int level) {
 		SBStream stream = new SBStream();
 		SBValue val = (SBValue) getModelObject();
@@ -89,6 +90,7 @@ public class LldbModelTargetStackFrameRegisterImpl
 		return (SBValue) getModelObject();
 	}
 
+	@Override
 	public byte[] getBytes() {
 		String oldValue = value;
 		value = getValue();
@@ -115,6 +117,7 @@ public class LldbModelTargetStackFrameRegisterImpl
 		return bytes;
 	}
 
+	@Override
 	public String getDisplay() {
 		return getValue() == null ? getName() : getName() + " : " + getValue();
 	}

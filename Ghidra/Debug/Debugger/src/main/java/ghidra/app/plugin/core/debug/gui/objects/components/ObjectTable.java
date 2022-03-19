@@ -27,11 +27,7 @@ import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.EnumeratedColumnTableModel;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
-import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
-import ghidra.app.services.*;
 import ghidra.dbg.target.TargetObject;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.util.Swing;
 import ghidra.util.table.GhidraTable;
 import resources.ResourceManager;
@@ -45,8 +41,6 @@ public class ObjectTable<R> implements ObjectPane {
 	private AbstractSortedTableModel<R> model;
 	private GhidraTable table;
 	private JScrollPane component;
-	private DebuggerListingService listingService;
-	private DebuggerModelService modelService;
 
 	public ObjectTable(ObjectContainer container, Class<R> clazz,
 			AbstractSortedTableModel<R> model) {
@@ -55,8 +49,6 @@ public class ObjectTable<R> implements ObjectPane {
 		this.container = container;
 		this.clazz = clazz;
 		this.model = model;
-		this.listingService = container.getProvider().getListingService();
-		this.modelService = container.getProvider().getModelService();
 
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
@@ -72,7 +64,11 @@ public class ObjectTable<R> implements ObjectPane {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 2) {
-					navigateToSelectedObject();
+					int selectedRow = table.getSelectedRow();
+					int selectedColumn = table.getSelectedColumn();
+					Object value = table.getValueAt(selectedRow, selectedColumn);
+					container.getProvider()
+							.navigateToSelectedObject(container.getTargetObject(), value);
 				}
 			}
 		});
@@ -277,33 +273,6 @@ public class ObjectTable<R> implements ObjectPane {
 	@Override
 	public void setRoot(ObjectContainer container, TargetObject targetObject) {
 		container.setTargetObject(targetObject);
-	}
-
-	protected void navigateToSelectedObject() {
-		if (listingService != null) {
-			int selectedRow = table.getSelectedRow();
-			int selectedColumn = table.getSelectedColumn();
-			Object value = table.getValueAt(selectedRow, selectedColumn);
-			Address addr = null;
-			if (value instanceof Address) {
-				addr = (Address) value;
-			}
-			if (value instanceof AddressRangeImpl) {
-				AddressRangeImpl range = (AddressRangeImpl) value;
-				addr = range.getMinAddress();
-			}
-			if (value instanceof Long) {
-				Long lval = (Long) value;
-				addr = container.getTargetObject().getModel().getAddress("ram", lval);
-			}
-			if (modelService != null) {
-				TraceRecorder recorder =
-					modelService.getRecorderForSuccessor(container.getTargetObject());
-				DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
-				Address traceAddr = memoryMapper.targetToTrace(addr);
-				listingService.goTo(traceAddr, true);
-			}
-		}
 	}
 
 }
