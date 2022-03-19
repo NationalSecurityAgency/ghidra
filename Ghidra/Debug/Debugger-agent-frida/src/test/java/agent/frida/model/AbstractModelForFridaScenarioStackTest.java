@@ -21,6 +21,13 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Map.Entry;
+
+import org.junit.Ignore;
+import org.junit.Test;
+
+import agent.frida.model.iface2.FridaModelTargetProcess;
+import agent.frida.model.impl.FridaModelTargetThreadContainerImpl;
+
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -51,9 +58,12 @@ public abstract class AbstractModelForFridaScenarioStackTest
 
 	@Override
 	protected FridaLinuxSpecimen getSpecimen() {
-		return FridaLinuxSpecimen.STACK;
+		return FridaLinuxSpecimen.SPIN_STRIPPED;
 	}
 
+	@Override
+	//@Ignore // Fails for distributed version
+	@Test
 	public void testScenario() throws Throwable {
 		DebuggerTestSpecimen specimen = getSpecimen();
 		m.build();
@@ -70,6 +80,11 @@ public abstract class AbstractModelForFridaScenarioStackTest
 			new AsyncState(m.suitable(TargetExecutionStateful.class, process.getPath()));
 
 		assertTrue(state.get().isAlive());
+
+		FridaModelTargetProcess fproc = (FridaModelTargetProcess) process;
+		waitOn(fproc.resume());
+		FridaModelTargetThreadContainerImpl threads = (FridaModelTargetThreadContainerImpl) fproc.getCachedAttribute("Threads");
+		waitOn(threads.fetchElements());
 
 		TargetStack stack = findStack(process.getPath());
 		PathMatcher matcher = stack.getSchema().searchFor(TargetStackFrame.class, true);

@@ -15,43 +15,25 @@
  */
 package agent.frida.model;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.NavigableMap;
-import java.util.TreeMap;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import agent.frida.manager.FridaEventsListenerAdapter;
 import agent.frida.model.iface2.FridaModelTargetProcess;
 import agent.frida.model.iface2.FridaModelTargetSymbol;
-import agent.frida.model.impl.FridaModelTargetMemoryContainerImpl;
-import agent.frida.model.impl.FridaModelTargetThreadContainerImpl;
-import agent.frida.model.impl.FridaModelTargetThreadImpl;
-import agent.frida.model.methods.FridaModelTargetFunctionInterceptorImpl;
-import agent.frida.model.methods.FridaModelTargetMemoryScanImpl;
-import agent.frida.model.methods.FridaModelTargetMemoryWatchImpl;
-import agent.frida.model.methods.FridaModelTargetThreadStalkImpl;
+import agent.frida.model.impl.*;
+import agent.frida.model.methods.*;
 import generic.jar.ResourceFile;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebugModelConventions.AsyncState;
-import ghidra.dbg.target.TargetExecutionStateful;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetKillable;
-import ghidra.dbg.target.TargetLauncher;
-import ghidra.dbg.target.TargetModule;
-import ghidra.dbg.target.TargetModuleContainer;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetProcess;
-import ghidra.dbg.target.TargetResumable;
-import ghidra.dbg.target.TargetSymbol;
-import ghidra.dbg.target.TargetSymbolNamespace;
 import ghidra.dbg.test.AbstractDebuggerModelTest;
 import ghidra.dbg.test.RequiresLaunchSpecimen;
 import ghidra.dbg.util.PathUtils;
@@ -167,6 +149,7 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		runTestKill(specimen);
 	}
 	
+	@Ignore
 	@Test
 	public void testWatch() throws Throwable {
 		assumeTrue(m.hasKillableProcesses());
@@ -187,8 +170,8 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		Address address = symbolsByKey.get("overwrite").getValue();
 		map.put("Address", address.toString());
 		map.put("Size", 1L);
-		ResourceFile installationDirectory = Application.getInstallationDirectory();
-		map.put("OnAccess", installationDirectory + "/ghidra/Ghidra/Debug/Debugger-agent-frida/data/scripts/onAccess.js");
+		ResourceFile script = Application.getModuleDataFile("/scripts/onAccess.js");
+		map.put("OnAccess", script.getAbsolutePath());
 		watch.invoke(map);
 		runTestResume(specimen);
 		
@@ -217,8 +200,8 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		FridaModelTargetSymbol symbol = (FridaModelTargetSymbol) symbolsByKey.get("break_here");
 		FridaModelTargetFunctionInterceptorImpl intercept = 
 				(FridaModelTargetFunctionInterceptorImpl) symbol.getCachedAttribute("intercept");
-		ResourceFile installationDirectory = Application.getInstallationDirectory();
-		map.put("OnEnter", installationDirectory + "/ghidra/Ghidra/Debug/Debugger-agent-frida/data/scripts/onEnter.js");
+		ResourceFile script = Application.getModuleDataFile("/scripts/onEnter.js");
+		map.put("OnEnter", script.getAbsolutePath());
 		map.put("OnLeave", "");
 		intercept.invoke(map);
 		runTestResume(specimen);
@@ -240,17 +223,18 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		TargetProcess process = runTestLaunch(specimen, launcher);
 		
 		FridaModelTargetProcess fproc = (FridaModelTargetProcess) process;
+		waitOn(fproc.resume());
 		ConsoleEventListener listener = new ConsoleEventListener(":1");
 		fproc.getManager().addEventsListener(listener);
 		FridaModelTargetThreadContainerImpl threads = (FridaModelTargetThreadContainerImpl) fproc.getCachedAttribute("Threads");
-		Map<String, TargetObject> elements = threads.getCachedElements();
+		Map<String, TargetObject> elements = (Map<String, TargetObject>) waitOn(threads.fetchElements());
 		FridaModelTargetThreadImpl thread = (FridaModelTargetThreadImpl) elements.values().iterator().next();
 		
 		Map<String, Object> map = new HashMap<>();
 		FridaModelTargetThreadStalkImpl stalk = 
 				(FridaModelTargetThreadStalkImpl) thread.getCachedAttribute("stalk");
-		ResourceFile installationDirectory = Application.getInstallationDirectory();
-		map.put("OnCallSummary", installationDirectory + "/ghidra/Ghidra/Debug/Debugger-agent-frida/data/scripts/onCallSummary.js");
+		ResourceFile script = Application.getModuleDataFile("/scripts/onCallSummary.js");
+		map.put("OnCallSummary", script.getAbsolutePath());
 		map.put("EventCall", true);
 		map.put("EventRet", false);
 		map.put("EventExec", false);
@@ -258,8 +242,7 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		map.put("EventCompile", false);
 		map.put("OnReceive", "");
 		stalk.invoke(map);
-		runTestResume(specimen);
-		Thread.sleep(1000);		
+		//runTestResume(specimen);
 		
 		waitForCondition(() -> {
 			return listener.foundMatch();

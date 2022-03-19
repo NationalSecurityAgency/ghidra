@@ -110,7 +110,7 @@ public enum FridaLinuxSpecimen implements DebuggerTestSpecimen, DebuggerModelTes
 		String expected = getCommandLine();
 		TargetObject session = process.getParent().getParent();
 		Collection<TargetModule> modules =
-			test.m.findAll(TargetModule.class, session.getPath(), true).values();
+			test.m.findAll(TargetModule.class, session.getPath(), false).values();
 		return modules.stream()
 				.anyMatch(m -> expected.contains(m.getShortDisplay()));
 	}

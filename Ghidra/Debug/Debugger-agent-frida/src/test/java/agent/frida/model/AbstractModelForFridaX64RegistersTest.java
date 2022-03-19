@@ -29,10 +29,11 @@ import java.util.Map.Entry;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetRegister;
-import ghidra.dbg.target.TargetRegisterBank;
-import ghidra.dbg.target.TargetRegisterContainer;
+import agent.frida.model.iface2.FridaModelTargetProcess;
+import agent.frida.model.iface2.FridaModelTargetThreadContainer;
+import agent.frida.model.impl.FridaModelTargetThreadContainerImpl;
+import ghidra.dbg.agent.DefaultTargetModelRoot;
+import ghidra.dbg.target.*;
 import ghidra.dbg.test.AbstractDebuggerModelRegistersTest;
 import ghidra.dbg.test.AbstractDebuggerModelTest;
 import ghidra.dbg.test.ProvidesTargetViaLaunchSpecimen;
@@ -67,8 +68,19 @@ public abstract class AbstractModelForFridaX64RegistersTest
 
 	@Override
 	public DebuggerTestSpecimen getLaunchSpecimen() {
-		return FridaLinuxSpecimen.PRINT;
+		return FridaLinuxSpecimen.SPIN_STRIPPED;
 	}
+	
+	@Override
+	protected TargetObject maybeSubstituteThread(TargetObject target) throws Throwable {
+		FridaModelTargetProcess fproc = (FridaModelTargetProcess) target;
+		waitOn(fproc.resume());
+		FridaModelTargetThreadContainerImpl threads = (FridaModelTargetThreadContainerImpl) fproc.getCachedAttribute("Threads");
+		waitOn(threads.fetchElements());
+		TargetThread thread = findAnyThread(target.getPath());
+		return thread == null ? target : thread;
+	}
+
 
 	@Override
 	@Test
@@ -166,4 +178,5 @@ public abstract class AbstractModelForFridaX64RegistersTest
 		assertEquals("Not all registers were read, or extras were read", write.keySet(),
 			read.keySet());
 	}
+	
 }
