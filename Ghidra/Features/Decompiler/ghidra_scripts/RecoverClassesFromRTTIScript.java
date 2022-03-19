@@ -69,6 +69,7 @@ import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProvid
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProviderFactory;
 import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.ElfLoader;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -574,8 +575,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	 */
 	private boolean isGcc() {
 
-		boolean isELF = currentProgram.getExecutableFormat().contains("ELF");
-		if (!isELF) {
+		if (!ElfLoader.ELF_NAME.equals(currentProgram.getExecutableFormat())) {
 			return false;
 		}
 
@@ -591,10 +591,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			return false;
 		}
 
-		if (!commentBlock.isLoaded()) {
+		if (!commentBlock.isInitialized()) {
 			return false;
 		}
-
 
 		// check memory bytes in block for GCC: bytes
 		byte[] gccBytes = { (byte) 0x47, (byte) 0x43, (byte) 0x43, (byte) 0x3a };
