@@ -2996,7 +2996,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			if (type != ElfSectionHeaderConstants.SHT_NULL &&
 				(includeOtherBlocks || elfSectionToLoad.isAlloc())) {
 				long fileOffset = elfSectionToLoad.getOffset();
-				if (fileOffset < 0 || fileOffset >= fileBytes.getSize()) {
+				if (type != ElfSectionHeaderConstants.SHT_NOBITS &&
+					(fileOffset < 0 || fileOffset >= fileBytes.getSize())) {
 					log("Skipping section [" + elfSectionToLoad.getNameAsString() +
 						"] with invalid file offset");
 					continue;
