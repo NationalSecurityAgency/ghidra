@@ -361,6 +361,10 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 			case MIPS_ElfRelocationConstants.R_MICROMIPS_LO16:
 			case MIPS_ElfRelocationConstants.R_MICROMIPS_HI0_LO16:
 
+				if (mipsRelocationContext.extractAddend()) {
+					addend = (short) (oldValue & 0xffff);  // 16-bit sign extended
+				}
+
 				processHI16Relocations(mipsRelocationContext, relocType, elfSymbol, (int) addend);
 
 				processGOT16Relocations(mipsRelocationContext, relocType, elfSymbol, (int) addend);
@@ -386,7 +390,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				else {
 					value = (int) symbolValue;
 				}
-				value += mipsRelocationContext.extractAddend() ? (oldValue & 0xffff) : addend;
+				value += addend;
 
 				newValue = (oldValue & ~0xffff) | (value & 0xffff);
 				writeNewValue = true;
@@ -665,9 +669,9 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 					if (block != null) {
 						if (MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName())) {
 
-							success =
-								mipsRelocationContext.getLoadHelper().createExternalFunctionLinkage(
-									symbolName, symAddr, null) != null;
+							success = mipsRelocationContext.getLoadHelper()
+									.createExternalFunctionLinkage(symbolName, symAddr,
+										null) != null;
 
 							if (success) {
 								// Inject appropriate JAL instruction
