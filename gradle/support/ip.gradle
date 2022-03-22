@@ -96,9 +96,9 @@ def Map<String, String> getModuleManifestIp(Project project) {
  *********************************************************************************/
 def checkExternalLibsInMap(Map<String, String> map, Project project) {
 	if (project.plugins.withType(JavaPlugin)) {
-		List<String> libs = getExternalRuntimeDependencies(project)
-		libs.each { lib ->
-			String libName = new File(lib).getName()  // get just the filename without the path
+		def libs = getExternalRuntimeDependencies(project)
+		libs.each { path, dep ->
+			String libName = new File(path).getName()  // get just the filename without the path
 			String relativePath = "lib/"+libName;
 			assert map.containsKey(relativePath) : "No License specified for external library: "+relativePath+ " in module "+project.projectDir
 		}
