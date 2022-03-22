@@ -50,11 +50,16 @@ public class DbgListMemoryRegionsCommand extends AbstractDbgCommand<List<DbgModu
 			}
 			manager.addMemory(region);
 		}
+		List<Long> toRemove = new ArrayList<>();
 		for (Entry<Long, DbgModuleMemory> entry : memory.entrySet()) {
 			if (memoryRegions.contains(entry.getValue())) {
 				continue; // Do nothing, we're in sync
 			}
-			manager.removeMemory(entry.getKey());
+			toRemove.add(entry.getKey());
+			//manager.removeMemory(entry.getKey());
+		}
+		for (Long key : toRemove) {
+			manager.removeMemory(key);
 		}
 		return memoryRegions;
 	}
