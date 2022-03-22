@@ -226,7 +226,43 @@ task zipJavadocs(type: Zip) {
 	description "Zips javadocs for Ghidra api.  [gradle/root/distribution.gradle]"
 }
 
+/******************************************************************************************
+ * TASK generateSoftwareBillOfMaterials
+ *
+ * Summary: Creates a file that lists the libraries used by each module.  
+ ******************************************************************************************/
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 
+task generateSoftwareBillOfMaterials {
+
+	doFirst {
+		// Create an SBOM map for each project.
+		// TODO: Write each SBOM to its project directory and use it as a replacement for 
+		// the Module.manifest.
+		def projectSboms = []
+		subprojects { p ->
+			p.plugins.withType(JavaPlugin) {
+				projectSboms << generateSoftwareBillOfMaterials(p)
+			}
+		}
+
+		// Generate aggregated SBOM file for all of Ghidra
+		def sbom = ["bomFormat" : "CycloneDX", "specVersion" : "1.4", "version" : 1]
+		sbom.components = []
+		projectSboms.each { projectSbom ->
+			sbom.components += projectSbom.components
+		}
+		
+		// Write SBOM to JSON file
+		def buildDir = file("$buildDir")
+		if (!buildDir.exists()) {
+			buildDir.mkdirs()
+		}
+		def sbomFile = file("$buildDir/bom.json")
+		sbomFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(sbom)))
+	}
+}
 
 /**********************************************************************************************
  *
@@ -239,6 +275,8 @@ task assembleDistribution (type: Copy) {
 	// Not sure why this is necessary, but without it, gradle thinks this task is "up to date"
 	// every other time it is run even though in both cases the output directory has been removed
 	outputs.upToDateWhen {false}
+	
+	dependsOn generateSoftwareBillOfMaterials
 
 	group 'private'
 	description "Copies core files/folders to the distribution location."
@@ -358,6 +396,13 @@ task assembleDistribution (type: Copy) {
 		include "settings.gradle"
 		into "Ghidra"
 	}
+	
+	/////////////////////////////////////
+	// Software Bill of Materials (SBOM)
+	/////////////////////////////////////
+	from (ROOT_PROJECT_DIR + "/build") {
+		include "bom.json"
+	}
 
 }
 
@@ -428,6 +473,13 @@ task createExternalExtensions(type: Copy) {
 			
 }
 
+/*********************************************************************************
+ * Update sla file timestamps to current time plus timeOffsetMinutes value.
+ * 
+ * distributionDirectoryPath - Contains files/folders used by gradle zip task.
+ * timeOffsetMinutes - Number of minutes to increase sla file timestamp.
+ * 
+**********************************************************************************/
 import groovy.io.FileType
 import java.nio.file.Path
 import java.nio.file.Files
@@ -436,13 +488,6 @@ import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 import java.time.ZoneId
 
-/*********************************************************************************
- * Update sla file timestamps to current time plus timeOffsetMinutes value.
- * 
- * distributionDirectoryPath - Contains files/folders used by gradle zip task.
- * timeOffsetMinutes - Number of minutes to increase sla file timestamp.
- * 
-**********************************************************************************/
 def updateSlaFilesTimestamp(String distributionDirectoryPath, int timeOffsetMinutes) {
 	logger.debug("updateSlaFilesTimestamp: distributionDirectoryPath = '$distributionDirectoryPath' and timeOffsetMinutes = '$timeOffsetMinutes',")
 
