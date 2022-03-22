@@ -33,7 +33,6 @@ public interface DbgModelTargetProcess extends //
 		DbgModelTargetAccessConditioned, //
 		DbgModelTargetAttacher, //
 		DbgModelTargetAttachable, //
-		DbgModelTargetLauncher, //
 		DbgModelTargetDeletable, //
 		DbgModelTargetDetachable, //
 		DbgModelTargetKillable, //
