@@ -1438,21 +1438,15 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public void performLaunch(ActionContext context) {
 		performAction(context, true, TargetLauncher.class, launcher -> {
-			if (currentProgram != null) {
-				// TODO: A generic or pluggable way of deriving the default arguments
-				String path = currentProgram.getExecutablePath();
-				String cmdlineArgs = launchDialog.getMemorizedArgument(
-					TargetCmdLineLauncher.CMDLINE_ARGS_NAME, String.class);
-				if (path != null) {
-					if (cmdlineArgs == null) {
-						launchDialog.setMemorizedArgument(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
-							String.class, path);
-					}
-					else if (!cmdlineArgs.startsWith(path)) {
-						launchDialog.setMemorizedArgument(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
-							String.class, path);
-					}
-				}
+			String argsKey = TargetCmdLineLauncher.CMDLINE_ARGS_NAME;
+			// TODO: A generic or pluggable way of deriving the default arguments
+			String path = (currentProgram != null) ? currentProgram.getExecutablePath() : null;
+			launchDialog.setCurrentContext(path);
+			String cmdlineArgs = launchDialog.getMemorizedArgument(argsKey, String.class);
+			if (cmdlineArgs == null) {
+				cmdlineArgs = path;
+				launchDialog.setMemorizedArgument(argsKey, String.class,
+					cmdlineArgs);
 			}
 			Map<String, ?> args = launchDialog.promptArguments(launcher.getParameters());
 			if (args == null) {
