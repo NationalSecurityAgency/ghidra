@@ -39,7 +39,8 @@ import ghidra.framework.Application;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
-import ghidra.util.task.*;
+import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Hosts the embedded OSGi framework and manages {@link GhidraBundle}s.
@@ -261,7 +262,7 @@ public class BundleHost {
 	}
 
 	Bundle installFromPath(Path p) throws GhidraBundleException {
-		return installFromLoc("file://" + p.toAbsolutePath().normalize().toString());
+		return installFromLoc(p.toUri().toString());
 	}
 
 	/**
