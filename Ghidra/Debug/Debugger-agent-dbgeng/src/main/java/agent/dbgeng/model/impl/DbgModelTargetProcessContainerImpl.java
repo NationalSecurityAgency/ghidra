@@ -105,7 +105,7 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		}
 		DbgModelTargetMemoryContainer memory = process.getMemory();
 		if (memory != null) {
-			memory.requestElements(false);
+			memory.requestElements(true);
 		}
 	}
 
