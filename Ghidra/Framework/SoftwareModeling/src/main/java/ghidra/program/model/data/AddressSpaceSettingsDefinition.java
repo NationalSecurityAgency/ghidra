@@ -15,10 +15,14 @@
  */
 package ghidra.program.model.data;
 
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.StringSettingsDefinition;
+import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.address.AddressSpace;
 
 public class AddressSpaceSettingsDefinition
 		implements StringSettingsDefinition, TypeDefSettingsDefinition {
@@ -101,4 +105,30 @@ public class AddressSpaceSettingsDefinition
 		}
 		return null;
 	}
+
+	@Override
+	public String[] getSuggestedValues(Settings settings) {
+		return settings.getSuggestedValues(this);
+	}
+
+	@Override
+	public boolean supportsSuggestedValues() {
+		return true;
+	}
+
+	@Override
+	public boolean addPreferredValues(Object settingsOwner, Set<String> set) {
+		if (settingsOwner instanceof ProgramBasedDataTypeManager) {
+			ProgramBasedDataTypeManager dtm = (ProgramBasedDataTypeManager) settingsOwner;
+			AddressFactory addressFactory = dtm.getProgram().getAddressFactory();
+			for (AddressSpace space : addressFactory.getAllAddressSpaces()) {
+				if (space.isLoadedMemorySpace()) {
+					set.add(space.getName());
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
 }

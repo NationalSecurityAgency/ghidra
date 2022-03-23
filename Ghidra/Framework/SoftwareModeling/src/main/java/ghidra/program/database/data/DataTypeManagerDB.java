@@ -26,8 +26,7 @@ import db.*;
 import db.util.ErrorHandler;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
-import ghidra.docking.settings.Settings;
-import ghidra.docking.settings.SettingsDefinition;
+import ghidra.docking.settings.*;
 import ghidra.framework.store.db.PackedDBHandle;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.graph.*;
@@ -121,6 +120,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private SettingsCache<Long> settingsCache = new SettingsCache<>(200);
 	private List<DataType> sortedDataTypes;
 	private Map<Long, Set<String>> enumValueMap;
+	private Map<String, Set<String>> suggestedSettingsValuesMap = new HashMap<>();
 
 	private List<InvalidatedListener> invalidatedListeners = new ArrayList<>();
 	protected DataTypeManagerChangeListenerHandler defaultListener =
@@ -678,6 +678,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			if (rec != null) {
 				SettingDB setting = new SettingDB(rec, settingsAdapter.getSettingName(rec));
 				settingsCache.put(dataTypeId, name, setting);
+				if (strValue != null) {
+					Set<String> suggestions = suggestedSettingsValuesMap.get(name);
+					if (suggestions != null) {
+						// only cache suggestion if suggestions previously requested
+						suggestions.add(strValue);
+					}
+				}
 				return true;
 			}
 			return false;
@@ -689,6 +696,39 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			lock.release();
 		}
 		return false;
+	}
+
+	private Set<String> generateSuggestions(StringSettingsDefinition settingsDefinition) {
+		Set<String> set = new TreeSet<>();
+		try {
+			settingsAdapter.addAllValues(settingsDefinition.getStorageKey(), set);
+			settingsDefinition.addPreferredValues(this, set);
+		}
+		catch (IOException e) {
+			errHandler.dbError(e);
+		}
+		return set;
+	}
+
+	/**
+	 * Get suggested setting values for a specified settingsDefinition
+	 * @param settingsDefinition string settings definition
+	 * @return suggested values or empty array if none
+	 */
+	String[] getSuggestedValues(StringSettingsDefinition settingsDefinition) {
+		lock.acquire();
+		try {
+			Set<String> set = suggestedSettingsValuesMap
+					.computeIfAbsent(settingsDefinition.getStorageKey(),
+						n -> generateSuggestions(settingsDefinition));
+			if (set.isEmpty()) {
+				return Settings.EMPTY_STRING_ARRAY;
+			}
+			return set.toArray(new String[set.size()]);
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	/**
@@ -3200,7 +3240,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			fireInvalidated();
 			updateFavorites();
 			idsToDataTypeMap.clear();
-
+			suggestedSettingsValuesMap.clear();
 		}
 		finally {
 			lock.release();

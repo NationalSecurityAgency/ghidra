@@ -89,6 +89,11 @@ class DataTypeSettingsDB implements Settings {
 		return true;
 	}
 
+	@Override
+	public String[] getSuggestedValues(StringSettingsDefinition settingsDefinition) {
+		return dataMgr.getSuggestedValues(settingsDefinition);
+	}
+
 	/**
 	 * Set predicate for settings modification
 	 * @param allowedSettingPredicate callback for checking an allowed setting modification

@@ -33,6 +33,7 @@ public class DataSettingsDialog extends AbstractSettingsDialog {
 	private ProgramSelection selection; // Only set for data selection mode
 	private Data data; // null for selection use
 	private Program program;
+	private Settings sampleSelectionSettings; // used to obtain suggested string values for selection case
 
 	/**
 	 * Construct for data instance settings based upon selection
@@ -332,6 +333,27 @@ public class DataSettingsDialog extends AbstractSettingsDialog {
 				throw new AssertException();
 			}
 		}
+	}
+
+	@Override
+	String[] getSuggestedValues(StringSettingsDefinition settingsDefinition) {
+		if (!settingsDefinition.supportsSuggestedValues()) {
+			return null;
+		}
+		if (data != null) {
+			return settingsDefinition.getSuggestedValues(data);
+		}
+		if (sampleSelectionSettings == null) {
+			DataIterator definedData = program.getListing().getDefinedData(selection, true);
+			while (definedData.hasNext()) {
+				sampleSelectionSettings = definedData.next();
+				break;
+			}
+			if (sampleSelectionSettings == null) {
+				return null;
+			}
+		}
+		return settingsDefinition.getSuggestedValues(sampleSelectionSettings);
 	}
 
 	protected void applySettings() throws CancelledException {

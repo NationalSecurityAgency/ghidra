@@ -16,6 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.util.Set;
 
 import db.*;
 import ghidra.program.database.map.AddressMap;
@@ -288,6 +289,14 @@ abstract class SettingsDBAdapter {
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract String[] getSettingsNames(long associationId) throws IOException;
+
+	/**
+	 * Add all values stored for the specified setting name to the specified set.
+	 * @param name setting name
+	 * @param set value set
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	abstract void addAllValues(String name, Set<String> set) throws IOException;
 
 	/**
 	 * Get the setting name which corresponds to the specified record.

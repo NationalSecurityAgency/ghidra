@@ -22,6 +22,8 @@ package ghidra.docking.settings;
  */
 public interface Settings {
 	
+	static final String[] EMPTY_STRING_ARRAY = new String[0];
+
 	/**
 	 * Determine if a settings change corresponding to the specified 
 	 * settingsDefinition is permitted.
@@ -29,6 +31,15 @@ public interface Settings {
 	 * @return true if change permitted else false
 	 */
 	boolean isChangeAllowed(SettingsDefinition settingsDefinition);
+
+	/**
+	 * Get an array of suggested values for the specified string settings definition.
+	 * @param settingsDefinition string settings definition
+	 * @return suggested values array (may be empty)
+	 */
+	default String[] getSuggestedValues(StringSettingsDefinition settingsDefinition) {
+		return EMPTY_STRING_ARRAY;
+	}
 
 	/**
 	 * Gets the Long value associated with the given name

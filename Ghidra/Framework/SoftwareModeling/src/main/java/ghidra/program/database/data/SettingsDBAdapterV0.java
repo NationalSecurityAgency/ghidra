@@ -16,8 +16,9 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import db.*;
 import ghidra.util.ReadOnlyException;
@@ -108,6 +109,20 @@ class SettingsDBAdapterV0 extends SettingsDBAdapter {
 		}
 		String[] names = new String[list.size()];
 		return list.toArray(names);
+	}
+
+	@Override
+	void addAllValues(String name, Set<String> set) throws IOException {
+		RecordIterator recIter = settingsTable.iterator();
+		while (recIter.hasNext()) {
+			DBRecord rec = recIter.next();
+			if (name.equals(rec.getString(V0_SETTINGS_NAME_COL))) {
+				String s = rec.getString(V0_SETTINGS_STRING_VALUE_COL);
+				if (!StringUtils.isBlank(s)) {
+					set.add(s);
+				}
+			}
+		}
 	}
 
 	@Override

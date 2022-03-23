@@ -249,6 +249,13 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 	}
 
 	/**
+	 * Get suggested string setting values from the original settings container.
+	 * @param settingsDefinition string settings definition
+	 * @return suggested string value (may be empty array or null)
+	 */
+	abstract String[] getSuggestedValues(StringSettingsDefinition settingsDefinition);
+
+	/**
 	 * Apply changes to settings.  This method must be ov
 	 * @throws CancelledException thrown if apply operation cancelled
 	 */
@@ -404,9 +411,9 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 			else if (definition instanceof StringSettingsDefinition) {
 				StringSettingsDefinition def = (StringSettingsDefinition) definition;
 				if (defaultSettings == null && !def.hasValue(settings)) {
-					return new StringWrapper(null); // show blank value
+					return new StringWrapper(def, null); // show blank value
 				}
-				return new StringWrapper(def.getValue(settings));
+				return new StringWrapper(def, def.getValue(settings));
 			}
 			return "<Unsupported>";
 		}
@@ -636,15 +643,25 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 	private class StringWrapper {
 
+		final StringSettingsDefinition settingsDefinition;
 		final String value; // may be null
 
-		StringWrapper(String value) {
+		StringWrapper(StringSettingsDefinition settingsDefinition, String value) {
 			this.value = value;
+			this.settingsDefinition = settingsDefinition;
 		}
 
 		@Override
 		public String toString() {
 			return value == null ? "" : value;
+		}
+
+		StringChoices getStringChoices() {
+			String[] suggestedValues = getSuggestedValues(settingsDefinition);
+			if (suggestedValues == null) {
+				return null;
+			}
+			return suggestedValues.length == 0 ? null : new StringChoices(suggestedValues);
 		}
 	}
 
@@ -654,6 +671,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		final static int BOOLEAN = 1;
 		final static int NUMBER = 2;
 		final static int STRING = 3;
+		final static int STRING_WITH_SUGGESTIONS = 4;
 
 		private int mode;
 		private GComboBox<String> comboBox = new GComboBox<>();
@@ -681,6 +699,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 				case NUMBER:
 					return getNumber();
 				case STRING:
+				case STRING_WITH_SUGGESTIONS:
 					return getString();
 			}
 			throw new AssertException();
@@ -709,6 +728,9 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		}
 
 		private String getString() {
+			if (mode == STRING_WITH_SUGGESTIONS) {
+				return comboBox.getEditor().getItem().toString();
+			}
 			String value = textField.getText().trim();
 			return value.length() == 0 ? null : value;
 		}
@@ -726,8 +748,14 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 				return intTextField.getComponent();
 			}
 			if (value instanceof StringWrapper) {
-				initTextField(((StringWrapper) value).value);
-				return textField;
+				StringWrapper strWrapper = (StringWrapper) value;
+				StringChoices strWithChoices = strWrapper.getStringChoices();
+				if (strWithChoices == null) {
+					initTextField(strWrapper.value);
+					return textField;
+				}
+				initEditableComboBox(strWithChoices, strWrapper.value);
+				return comboBox;
 			}
 			throw new AssertException(
 				"SettingsEditor: " + value.getClass().getName() + " not supported");
@@ -736,11 +764,23 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		private void initComboBox(StringChoices enuum) {
 			mode = ENUM;
 			comboBox.removeAllItems();
+			comboBox.setEditable(false);
 			String[] items = enuum.getValues();
 			for (String item : items) {
 				comboBox.addItem(item);
 			}
 			comboBox.setSelectedIndex(enuum.getSelectedValueIndex());
+		}
+
+		private void initEditableComboBox(StringChoices strChoices, String value) {
+			mode = STRING_WITH_SUGGESTIONS;
+			comboBox.removeAllItems();
+			comboBox.setEditable(true);
+			String[] items = strChoices.getValues();
+			for (String item : items) {
+				comboBox.addItem(item);
+			}
+			comboBox.getEditor().setItem(value);
 		}
 
 		private void initIntField(Number value) {

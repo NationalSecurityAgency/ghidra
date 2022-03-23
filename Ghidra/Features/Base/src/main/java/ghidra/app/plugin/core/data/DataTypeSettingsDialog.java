@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.data;
 
-import ghidra.docking.settings.Settings;
-import ghidra.docking.settings.SettingsDefinition;
+import ghidra.docking.settings.*;
 import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
@@ -133,20 +132,29 @@ public class DataTypeSettingsDialog extends AbstractSettingsDialog {
 		return dt;
 	}
 
+	private Settings getOriginalSettings() {
+		if (dtc != null) {
+			return dtc.getDefaultSettings();
+		}
+		return dataType.getDefaultSettings();
+	}
+
+	@Override
+	String[] getSuggestedValues(StringSettingsDefinition settingsDefinition) {
+		if (settingsDefinition.supportsSuggestedValues()) {
+			return settingsDefinition.getSuggestedValues(getOriginalSettings());
+		}
+		return null;
+	}
+
 	protected void applySettings() {
 		DataTypeManager dtm = dataType.getDataTypeManager();
 		int txId = dtm.startTransaction(getTitle());
 		try {
-			Settings origDefSettings = null;
-			if (dtc != null) {
-				origDefSettings = dtc.getDefaultSettings();
-			}
-			else {
-				origDefSettings = dataType.getDefaultSettings();
-			}
+			Settings originalSettings = getOriginalSettings();
 			Settings modifiedSettings = getSettings();
 			for (SettingsDefinition settingsDef : getSettingsDefinitions()) {
-				settingsDef.copySetting(modifiedSettings, origDefSettings);
+				settingsDef.copySetting(modifiedSettings, originalSettings);
 			}
 		}
 		finally {

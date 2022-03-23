@@ -16,6 +16,7 @@
 package ghidra.docking.settings;
 
 import java.util.Objects;
+import java.util.Set;
 
 public interface StringSettingsDefinition extends SettingsDefinition {
 
@@ -42,5 +43,37 @@ public interface StringSettingsDefinition extends SettingsDefinition {
 	@Override
 	public default boolean hasSameValue(Settings settings1, Settings settings2) {
 		return Objects.equals(getValue(settings1), getValue(settings2));
+	}
+
+	/**
+	 * Get suggested setting values
+	 * @param settings settings object
+	 * @return suggested settings or null if none or unsupported;
+	 */
+	public default String[] getSuggestedValues(Settings settings) {
+		return null;
+	}
+
+	/**
+	 * Determine if this settings definition supports suggested values.
+	 * See {@link #getSuggestedValues(Settings)}.
+	 * @return true if suggested values are supported, else false.
+	 */
+	public default boolean supportsSuggestedValues() {
+		return false;
+	}
+
+	/**
+	 * Add preferred setting values to the specified set as obtained from the specified
+	 * settingsOwner.
+	 * @param settingsOwner settings owner from which a definition may query preferred values.
+	 * Supported values are specific to this settings definition.  An unsupported settingsOwner
+	 * will return false.
+	 * @param set value set to which values should be added
+	 * @return true if settingsOwner is supported and set updated, else false.
+	 */
+	public default boolean addPreferredValues(Object settingsOwner, Set<String> set) {
+		// TODO: improve specification of settingsOwner
+		return false;
 	}
 }

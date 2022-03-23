@@ -18,6 +18,8 @@ package ghidra.program.database.data;
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -148,6 +150,24 @@ class SettingsDBAdapterV1 extends SettingsDBAdapter {
 		return list.toArray(names);
 	}
 
+	@Override
+	void addAllValues(String name, Set<String> set) throws IOException {
+		short nameIndex = getNameIndex(name);
+		if (nameIndex < MIN_NAME_INDEX) {
+			return; // no such name defined
+		}
+		RecordIterator recIter = settingsTable.iterator();
+		while (recIter.hasNext()) {
+			DBRecord rec = recIter.next();
+			if (nameIndex == rec.getShortValue(V1_SETTINGS_NAME_INDEX_COL)) {
+				String s = rec.getString(V1_SETTINGS_STRING_VALUE_COL);
+				if (!StringUtils.isBlank(s)) {
+					set.add(s);
+				}
+			}
+		}
+	}
+
 	private void initNameMaps() throws IOException {
 		if (nameIndexMap != null) {
 			return;
@@ -249,6 +269,8 @@ class SettingsDBAdapterV1 extends SettingsDBAdapter {
 	@Override
 	DBRecord updateSettingsRecord(long associationId, String name, String strValue, long longValue)
 			throws IOException {
+
+		strValue = StringUtils.isBlank(strValue) ? null : strValue.trim();
 
 		DBRecord record = getSettingsRecord(associationId, name);
 		if (record == null) {
