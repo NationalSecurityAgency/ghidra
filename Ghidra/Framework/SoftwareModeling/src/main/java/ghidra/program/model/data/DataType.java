@@ -21,6 +21,7 @@ import java.util.Collection;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.DuplicateNameException;
@@ -281,10 +282,11 @@ public interface DataType {
 	public URL getDocs();
 
 	/**
-	 * Get the data in the form of the appropriate Object for this DataType.
+	 * Get the interpretted data value in the form of the appropriate Object for this DataType.
+	 * This method must return a value consistent with {@link #getValueClass(Settings)}.
 	 * <p>
-	 * For instance if the datatype is an AddressDT, return an Address object. a Byte, return a
-	 * Scalar* (maybe this should be a Byte) a Float, return a Float
+	 * For instance, if this datatype is a {@link Pointer} an Address object or null should be returned. 
+	 * A Byte, returns a {@link Scalar} object.     
 	 *
 	 * @param buf the data buffer.
 	 * @param settings the settings to use.
@@ -328,7 +330,8 @@ public interface DataType {
 			throws DataTypeEncodeException;
 
 	/**
-	 * Get the Class of the value to be returned by this datatype.
+	 * Get the Class of the value Object to be returned by this datatype 
+	 * (see {@link #getValue(MemBuffer, Settings, int)}).
 	 * 
 	 * @param settings the relevant settings to use or null for default.
 	 * @return Class of the value to be returned by this datatype or null if it can vary or is

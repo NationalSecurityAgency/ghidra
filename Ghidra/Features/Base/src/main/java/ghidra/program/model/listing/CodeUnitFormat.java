@@ -1077,12 +1077,27 @@ public class CodeUnitFormat {
 				representationList.setHasError(true);
 			}
 		}
-		representationList.add(dataType.getRepresentation(data, data, length));
+
 		representationList.setPrimaryReferenceHidden(ref != null);
+
 		if (data.isDefined() && dataValue == null) {
+			DataType baseDt = dataType;
+			if (baseDt instanceof TypeDef) {
+				baseDt = ((TypeDef) dataType).getBaseDataType();
+			}
+			if (baseDt instanceof Pointer) {
+				// Render pointer error
+				PointerDataType.getAddressValue(data, baseDt.getLength(), data,
+					m -> representationList.add(m));
+			}
 			representationList.setHasError(true);
 		}
-		else if ((dataValue instanceof Address) && ref == null &&
+
+		if (representationList.isEmpty()) {
+			representationList.add(dataType.getRepresentation(data, data, length));
+		}
+
+		if ((dataValue instanceof Address) && ref == null &&
 			data.getProgram().getMemory().getBlock((Address) dataValue) == null) {
 			representationList.setHasError(true);
 		}

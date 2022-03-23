@@ -109,6 +109,25 @@ class DataTypeSettingsDB implements Settings {
 	 * @return true if change permitted
 	 */
 	private boolean checkSetting(String type, String name) {
+		if (!checkImmutableSetting(type, name)) {
+			return false;
+		}
+		if (name != null && allowedSettingPredicate != null &&
+			!allowedSettingPredicate.apply(name)) {
+			Msg.warn(this, "Ignored disallowed setting '" + name + "'");
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Check for immutable settings and log error of modification not permitted.
+	 * Does not check for other setting restrictions.
+	 * @param type setting type or null
+	 * @param name setting name or null
+	 * @return true if change permitted
+	 */
+	private boolean checkImmutableSetting(String type, String name) {
 		if (locked) {
 			String typeStr = "";
 			if (type != null) {
@@ -121,11 +140,6 @@ class DataTypeSettingsDB implements Settings {
 			Msg.warn(SettingsImpl.class,
 				"Ignored invalid attempt to modify immutable " + typeStr + "component setting" +
 					nameStr);
-			return false;
-		}
-		if (name != null && allowedSettingPredicate != null &&
-			!allowedSettingPredicate.apply(name)) {
-			Msg.warn(this, "Ignored disallowed setting '" + name + "'");
 			return false;
 		}
 		return true;
@@ -205,14 +219,14 @@ class DataTypeSettingsDB implements Settings {
 
 	@Override
 	public void clearSetting(String name) {
-		if (checkSetting(null, name) && dataMgr.clearSetting(dataTypeID, name)) {
+		if (checkImmutableSetting(null, name) && dataMgr.clearSetting(dataTypeID, name)) {
 			settingsChanged();
 		}
 	}
 
 	@Override
 	public void clearAllSettings() {
-		if (checkSetting(null, null) && dataMgr.clearAllSettings(dataTypeID)) {
+		if (checkImmutableSetting(null, null) && dataMgr.clearAllSettings(dataTypeID)) {
 			settingsChanged();
 		}
 	}

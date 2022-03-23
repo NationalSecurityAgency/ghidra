@@ -122,6 +122,9 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 
 	@Override
 	public String getDefaultLabelPrefix() {
+		if (isAutoNamed()) {
+			return getDataType().getDefaultLabelPrefix();
+		}
 		return getName();
 	}
 

@@ -120,7 +120,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private SettingsCache<Long> settingsCache = new SettingsCache<>(200);
 	private List<DataType> sortedDataTypes;
 	private Map<Long, Set<String>> enumValueMap;
-	private Map<String, Set<String>> suggestedSettingsValuesMap = new HashMap<>();
+	private Map<String, Set<String>> previouslyUsedSettingsValuesMap = new HashMap<>();
 
 	private List<InvalidatedListener> invalidatedListeners = new ArrayList<>();
 	protected DataTypeManagerChangeListenerHandler defaultListener =
@@ -679,7 +679,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				SettingDB setting = new SettingDB(rec, settingsAdapter.getSettingName(rec));
 				settingsCache.put(dataTypeId, name, setting);
 				if (strValue != null) {
-					Set<String> suggestions = suggestedSettingsValuesMap.get(name);
+					Set<String> suggestions = previouslyUsedSettingsValuesMap.get(name);
 					if (suggestions != null) {
 						// only cache suggestion if suggestions previously requested
 						suggestions.add(strValue);
@@ -702,7 +702,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		Set<String> set = new TreeSet<>();
 		try {
 			settingsAdapter.addAllValues(settingsDefinition.getStorageKey(), set);
-			settingsDefinition.addPreferredValues(this, set);
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -716,11 +715,17 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @return suggested values or empty array if none
 	 */
 	String[] getSuggestedValues(StringSettingsDefinition settingsDefinition) {
+		if (!settingsDefinition.supportsSuggestedValues()) {
+			return Settings.EMPTY_STRING_ARRAY;
+		}
 		lock.acquire();
 		try {
-			Set<String> set = suggestedSettingsValuesMap
+			Set<String> previouslyUsedSet = previouslyUsedSettingsValuesMap
 					.computeIfAbsent(settingsDefinition.getStorageKey(),
 						n -> generateSuggestions(settingsDefinition));
+			// Last-minute additions are not cached since suggested values may change
+			Set<String> set = new TreeSet<>(previouslyUsedSet); // copy before updating
+			settingsDefinition.addPreferredValues(this, set);
 			if (set.isEmpty()) {
 				return Settings.EMPTY_STRING_ARRAY;
 			}
@@ -3240,7 +3245,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			fireInvalidated();
 			updateFavorites();
 			idsToDataTypeMap.clear();
-			suggestedSettingsValuesMap.clear();
 		}
 		finally {
 			lock.release();

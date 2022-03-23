@@ -27,6 +27,7 @@ import javax.swing.table.TableCellEditor;
 
 import docking.DialogComponentProvider;
 import docking.widgets.combobox.GComboBox;
+import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.StringChoices;
 import docking.widgets.table.*;
 import docking.widgets.textfield.IntegerTextField;
@@ -232,6 +233,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
+		settingsTable.editingStopped(null);
 		apply();
 		close();
 		dispose();
@@ -548,6 +550,9 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 		@Override
 		public void setValueAt(Object value, int row, int col) {
+			if (settings == null) {
+				return; // dialog has been disposed
+			}
 			SettingsRowObject rowObject = rows.get(row);
 			switch (col) {
 				case 1:
@@ -665,6 +670,12 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		}
 	}
 
+	class StringSettingsComboBox extends GComboBox<String> {
+		StringSettingsComboBox() {
+			super();
+		}
+	}
+
 	class SettingsEditor extends AbstractCellEditor implements TableCellEditor {
 
 		final static int ENUM = 0;
@@ -674,18 +685,19 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		final static int STRING_WITH_SUGGESTIONS = 4;
 
 		private int mode;
-		private GComboBox<String> comboBox = new GComboBox<>();
+		private GhidraComboBox<String> comboBox = new GhidraComboBox<>();
 		private IntegerTextField intTextField = new IntegerTextField();
 		private JTextField textField = new JTextField();
 
 		private SettingsRowObject rowobject;
 
 		SettingsEditor() {
-			comboBox.addItemListener(e -> fireEditingStopped());
+			comboBox.setEnterKeyForwarding(false);
+			comboBox.addActionListener(e -> fireEditingStopped());
 			intTextField.addChangeListener(e -> updateHexMode());
 		}
 
-		GComboBox<String> getComboBox() {
+		GhidraComboBox<String> getComboBox() {
 			return comboBox; // used for testing
 		}
 		

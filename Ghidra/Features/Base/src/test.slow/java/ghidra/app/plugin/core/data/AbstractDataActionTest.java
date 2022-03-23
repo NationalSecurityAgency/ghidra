@@ -29,7 +29,7 @@ import org.junit.*;
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.action.MenuData;
-import docking.widgets.combobox.GComboBox;
+import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.StringChoices;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
@@ -309,7 +309,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		assertTrue("Editor type is not correct", activeEditor instanceof SettingsEditor);
 
 		SettingsEditor settingsEditor = (SettingsEditor) activeEditor;
-		GComboBox<String> combo = settingsEditor.getComboBox();
+		GhidraComboBox<String> combo = settingsEditor.getComboBox();
 
 		int index = runSwing(() -> {
 			int n = combo.getItemCount();

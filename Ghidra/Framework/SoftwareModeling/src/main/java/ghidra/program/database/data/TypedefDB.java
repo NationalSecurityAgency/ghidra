@@ -415,6 +415,9 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public String getDefaultLabelPrefix() {
+		if (isAutoNamed()) {
+			return getDataType().getDefaultLabelPrefix();
+		}
 		return getName();
 	}
 

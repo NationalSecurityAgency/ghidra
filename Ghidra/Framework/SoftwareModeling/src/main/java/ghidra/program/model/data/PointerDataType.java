@@ -16,6 +16,7 @@
 package ghidra.program.model.data;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.data.DataTypeUtilities;
@@ -24,6 +25,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.DataConverter;
+import ghidra.util.StringUtilities;
 
 /**
  * Basic implementation for a pointer dataType
@@ -37,6 +39,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	public static final String POINTER_NAME = "pointer";
 	public static final String POINTER_LABEL_PREFIX = "PTR";
 	public static final String POINTER_LOOP_LABEL_PREFIX = "PTR_LOOP";
+	public static final String NOT_A_POINTER = "NaP";
 
 	// NOTE: order dictates auto-name attribute ordering (order should not be changed)
 	private static TypeDefSettingsDefinition[] POINTER_TYPEDEF_SETTINGS_DEFS =
@@ -345,14 +348,16 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	/**
 	 * Generate an address value based upon bytes stored at the specified buf
-	 * location.  The following settings, if specified, may influence the generated address:
+	 * location.  Interpretation of settings may depend on access to a {@link Memory} 
+	 * object associated with the specified {@link MemBuffer} buf.
+	 * <BR>
+	 * The following pointer-typedef settings are supported:
 	 * <ul>
 	 * <li>{@link AddressSpaceSettingsDefinition}</li>
+	 * <li>{@link OffsetMaskSettingsDefinition}</li>
 	 * <li>{@link OffsetShiftSettingsDefinition}</li>
+	 * <li>{@link PointerTypeSettingsDefinition}</li>
 	 * </ul>
-	 * The default address space will be the same as the buffer's associated memory address.
-	 * Interpretation of settings may depend on access to a {@link Memory} object associated
-	 * with the specified {@link MemBuffer} buf.
 	 * 
 	 * @param buf memory buffer positioned to stored pointer
 	 * @param size pointer size in bytes
@@ -360,31 +365,40 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * @return address value or null if unusable buf or data 
 	 */
 	public static Address getAddressValue(MemBuffer buf, int size, Settings settings) {
+		return getAddressValue(buf, size, settings, msg -> {
+			/* ignore */});
+	}
 
+	/**
+	 * Generate an address value based upon bytes stored at the specified buf
+	 * location.  Interpretation of settings may depend on access to a {@link Memory} 
+	 * object associated with the specified {@link MemBuffer} buf.
+	 * <BR>
+	 * The following pointer-typedef settings are supported:
+	 * <ul>
+	 * <li>{@link AddressSpaceSettingsDefinition}</li>
+	 * <li>{@link OffsetMaskSettingsDefinition}</li>
+	 * <li>{@link OffsetShiftSettingsDefinition}</li>
+	 * <li>{@link PointerTypeSettingsDefinition}</li>
+	 * </ul>
+	 * 
+	 * @param buf memory buffer positioned to stored pointer
+	 * @param size pointer size in bytes
+	 * @param settings settings which may influence address generation
+	 * @param errorHandler if null returned an error may be conveyed to this errorHandler
+	 * @return address value or null if unusable buf or data 
+	 */
+	public static Address getAddressValue(MemBuffer buf, int size, Settings settings,
+			Consumer<String> errorHandler) {
+
+		String spaceName = AddressSpaceSettingsDefinition.DEF.getValue(settings);
 		AddressSpace targetSpace = null;
 
 		Memory mem = buf.getMemory();
-		if (mem != null) {
-			Program program = mem.getProgram();
-			String spaceName = AddressSpaceSettingsDefinition.DEF.getValue(settings);
-			if (spaceName != null) {
-				// this space may be ignored if pointer type specified
-				targetSpace = program.getAddressFactory().getAddressSpace(spaceName);
-			}
-		}
-		if (targetSpace == null) {
-			// default to address space associated with mem buffer
-			targetSpace = buf.getAddress().getAddressSpace();
-		}
-
-		if (targetSpace instanceof SegmentedAddressSpace) {
-			// ignore other settings with SegmentedAddressSpace use
-			return getAddressValue(buf, size, targetSpace);
-		}
 
 		Long offset = getStoredOffset(buf, size);
 		if (offset == null) {
-			// Insufficient bytes
+			errorHandler.accept("Insufficient data");
 			return null;
 		}
 
@@ -397,7 +411,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		int shift = (int) OffsetShiftSettingsDefinition.DEF.getValue(settings);
 		if (shift < 0) {
-			addrOffset >>= -shift;
+			addrOffset >>>= -shift; // avoid sign-extension
 		}
 		else {
 			addrOffset <<= shift;
@@ -405,40 +419,101 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		try {
 			PointerType choice = PointerTypeSettingsDefinition.DEF.getType(settings);
+			if (choice != PointerType.DEFAULT && spaceName != null) {
+				errorHandler.accept("Address Space and Pointer Type settings conflict");
+				return null;
+			}
 			// Address space setting ignored if Pointer Type has been specified
-			if (choice == PointerType.IMAGE_BASE_RELATIVE && mem != null) {
+			if (choice == PointerType.IMAGE_BASE_RELATIVE) {
 				if (addrOffset == 0) {
 					// Done for consistency with old ImageBaseOffsetDataType.
 					// A 0 relative offset is considerd invalid (NaP)
-					return null;
+					return null; // NaP without error
+				}
+				if (mem == null) {
+					errorHandler.accept("Memory not specified");
 				}
 				// must ignore AddressSpaceSettingsDefinition
 				Address imageBase = mem.getProgram().getImageBase();
 				targetSpace = imageBase.getAddressSpace();
-				return imageBase.add(addrOffset * targetSpace.getAddressableUnitSize());
+				return imageBase.addWrap(addrOffset * targetSpace.getAddressableUnitSize());
 			}
 			else if (choice == PointerType.RELATIVE) {
 				// must ignore AddressSpaceSettingsDefinition
 				Address base = buf.getAddress();
 				targetSpace = base.getAddressSpace();
-				return base.add(addrOffset * targetSpace.getAddressableUnitSize());
+				return base.addWrap(addrOffset * targetSpace.getAddressableUnitSize());
 			}
-			if (choice == PointerType.FILE_OFFSET) {
-				if (mem != null) {
+			else if (choice == PointerType.FILE_OFFSET) {
+				if (mem == null) {
+					errorHandler.accept("Memory not specified");
+				}
+				else if (mem.getAllFileBytes().size() == 0) {
+					errorHandler.accept("No File bytes used");
+				}
+				else {
 					List<Address> addressList = mem.locateAddressesForFileOffset(addrOffset);
 					if (addressList.size() == 1) {
 						return addressList.get(0);
 					}
+					if (addressList.size() > 1) {
+						errorHandler.accept(
+							"Non-unique File offset mapping: 0x" + Long.toHexString(addrOffset));
+					}
+					else {
+						errorHandler.accept(
+							"File offset mapping not found: 0x" + Long.toHexString(addrOffset));
+					}
 				}
 				return null;
+			}
+			else if (choice != PointerType.DEFAULT) {
+				errorHandler.accept("Unsupported pointer type: " + choice.toString());
+				return null;
+			}
+
+			if (spaceName != null) {
+				if (mem == null) {
+					errorHandler.accept("Memory not specified");
+					return null;
+				}
+				Program program = mem.getProgram();
+				targetSpace = program.getAddressFactory().getAddressSpace(spaceName);
+				if (targetSpace == null) {
+					errorHandler.accept(
+						"Address space not defined: " + spaceName + ":" + formatOffset(addrOffset));
+					return null;
+				}
+			}
+			if (targetSpace == null) {
+				targetSpace = buf.getAddress().getAddressSpace();
+			}
+
+			if (targetSpace instanceof SegmentedAddressSpace) {
+				if (size != 2 && size != 4) {
+					errorHandler.accept("Unsupported segmented address size: " + size);
+					return null;
+				}
+				if (mask != 0 || shift != 0) {
+					errorHandler.accept("Unsupported mask/shift setting for segmented address");
+					return null;
+				}
+				return getSegmentedAddressValue(buf, size, addrOffset);
 			}
 
 			return targetSpace.getAddress(addrOffset, true);
 		}
-		catch (AddressOutOfBoundsException e) {
-			// offset too large
+		catch (IllegalArgumentException | AddressOutOfBoundsException e) {
+			errorHandler.accept(e.toString());
 		}
 		return null;
+	}
+
+	private static String formatOffset(long offset) {
+		String offsetStr = Long.toHexString(offset);
+		int len = offsetStr.length();
+		len = len - (len % 4) + 4; // multiple of 4-digits
+		return StringUtilities.pad(offsetStr, '0', len);
 	}
 
 	/**
@@ -554,7 +629,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		Address addr = (Address) getValue(buf, settings, len);
 		if (addr == null) { // could not create address, so return "Not a pointer (NaP)"
-			return "NaP";
+			return NOT_A_POINTER;
 		}
 		return addr.toString();
 	}

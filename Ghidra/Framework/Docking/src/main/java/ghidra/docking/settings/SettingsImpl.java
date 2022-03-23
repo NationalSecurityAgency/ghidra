@@ -114,12 +114,31 @@ public class SettingsImpl implements Settings, Serializable {
 	}
 
 	/**
-	 * Check for immutable settings and log error of modification not permitted
+	 * Check for immutable or restricted settings and log error of modification not permitted
 	 * @param type setting type or null
 	 * @param name setting name or null
 	 * @return true if change permitted
 	 */
 	private boolean checkSetting(String type, String name) {
+		if (!checkImmutableSetting(type, name)) {
+			return false;
+		}
+		if (name != null && allowedSettingPredicate != null &&
+			!allowedSettingPredicate.apply(name)) {
+			Msg.warn(this, "Ignored disallowed setting '" + name + "'");
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Check for immutable settings and log error of modification not permitted.
+	 * Does not check for other setting restrictions.
+	 * @param type setting type or null
+	 * @param name setting name or null
+	 * @return true if change permitted
+	 */
+	private boolean checkImmutableSetting(String type, String name) {
 		if (immutable) {
 			String typeStr = "";
 			if (type != null) {
@@ -132,11 +151,6 @@ public class SettingsImpl implements Settings, Serializable {
 			Msg.warn(SettingsImpl.class,
 				"Ignored invalid attempt to modify immutable " + typeStr + "component setting" +
 					nameStr);
-			return false;
-		}
-		if (name != null && allowedSettingPredicate != null &&
-			!allowedSettingPredicate.apply(name)) {
-			Msg.warn(this, "Ignored disallowed setting '" + name + "'");
 			return false;
 		}
 		return true;
@@ -190,7 +204,7 @@ public class SettingsImpl implements Settings, Serializable {
 
 	@Override
 	public void clearSetting(String name) {
-		if (checkSetting(null, name)) {
+		if (checkImmutableSetting(null, name)) {
 			map.remove(name);
 			changed();
 		}
@@ -244,7 +258,7 @@ public class SettingsImpl implements Settings, Serializable {
 		if (map.isEmpty()) {
 			return;
 		}
-		if (checkSetting(null, null)) {
+		if (checkImmutableSetting(null, null)) {
 			map.clear();
 			changed();
 		}

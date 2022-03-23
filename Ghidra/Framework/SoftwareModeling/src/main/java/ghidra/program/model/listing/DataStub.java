@@ -294,7 +294,7 @@ public class DataStub implements Data {
 
 	@Override
 	public Memory getMemory() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
