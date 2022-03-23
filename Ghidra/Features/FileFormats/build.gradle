@@ -60,10 +60,10 @@ dependencies {
 // at the top of ghidra.file.formats.sevenzip.SevenZipCustomInitializer.
 // This gradle task can be removed when SevenZipCustomInitializer is no longer needed.
 String getSevenZipJarPath() {
-    def libs = getExternalRuntimeDependencies(project);
-    for (String path : libs.keySet()) {
-        if (path.contains("sevenzipjbinding-all-platforms")) {
-            return path;
+    List<String> libs = getExternalRuntimeDependencies(project);
+    for(String lib: libs) {
+        if (lib.contains("sevenzipjbinding-all-platforms")) {
+            return lib;
         }
     }
     return null

@@ -196,28 +196,28 @@ def getCurrentDateTimeLong() {
 }
 
 /*********************************************************************************
- * Returns a map of all the external library paths declared as dependencies for the 
- *         given project, mapped to their respective ExternalDependency objects.
+ * Returns a list of all the external library paths declared as dependencies for the 
+ *         given project  
  *
  *********************************************************************************/
-Map<String, ExternalDependency> getExternalRuntimeDependencies(Project project) {
-	def map = [:]
+List<String> getExternalRuntimeDependencies(Project project) {
+	List<String> list = new ArrayList<String>()
 
 	if (project.configurations.find { it.name == 'api' }) {
-		map.putAll(getExternalRuntimeDependencies(project, project.configurations.api));
+		list.addAll(getExternalRuntimeDependencies(project, project.configurations.api));
 	}
 	if (project.configurations.find { it.name == 'implementation' }) {
-		map.putAll(getExternalRuntimeDependencies(project, project.configurations.implementation));
+		list.addAll(getExternalRuntimeDependencies(project, project.configurations.implementation));
 	}
 	if (project.configurations.find { it.name == 'runtimeOnly' }) {
-		map.putAll(getExternalRuntimeDependencies(project, project.configurations.runtimeOnly));
+		list.addAll(getExternalRuntimeDependencies(project, project.configurations.runtimeOnly));
 	}
 
-	return map
+	return list
 }
 
-Map<String, ExternalDependency> getExternalRuntimeDependencies(Project project, Configuration configuration) {
-	def map = [:]
+List<String> getExternalRuntimeDependencies(Project project, Configuration configuration) {
+	List<String> list = new ArrayList<>();
 	configuration.dependencies.each { dep ->
 
 		// if the dependency is an external jar
@@ -248,11 +248,11 @@ Map<String, ExternalDependency> getExternalRuntimeDependencies(Project project, 
 			}
 			// if we found the path, then add it to the list
 			if (depPath) {
-				map.put(depPath, dep)
+				list.add(depPath)
 			}
 		}	
 	}
-	return map;
+	return list;
 }
 
 
@@ -275,10 +275,10 @@ String generateLibraryDependencyMapping() {
 	libsFile.withWriter { out ->
 		subprojects { p ->
 			p.plugins.withType(JavaPlugin) {
-				def libs = getExternalRuntimeDependencies(p);
+				List<String> libs = getExternalRuntimeDependencies(p);
 				if (libs != null) {
 					out.println "Module: $p.name"
-					libs.each { path, dep ->
+					libs.each { path ->
 						out.println "\t$path"
 					}
 				}
@@ -286,82 +286,6 @@ String generateLibraryDependencyMapping() {
 		}
 	}
 	return libsFile.absolutePath
-}
-
-/******************************************************************************************
- * 
- * Generates a hash of the given file with the given hash algorithm.
- *
- ******************************************************************************************/
-import java.security.DigestInputStream
-import java.security.MessageDigest
-
-String generateHash(File file, String alg) {
-   file.withInputStream {
-      new DigestInputStream(it, MessageDigest.getInstance(alg)).withStream {
-         it.eachByte {}
-         it.messageDigest.digest().encodeHex() as String
-      }
-   }
-}
-
-/******************************************************************************************
- * 
- * Creates a CycloneDX Software Bill of Materials (SBOM) for the given project and
- * returns it as a map. 
- *
- ******************************************************************************************/
-def generateSoftwareBillOfMaterials(Project p) {
-
-	// Get license info from the Module.manifest file (if it exists)
-	def licenses = [:]
-	def manifestFile = file("${p.projectDir}/Module.manifest")
-	if (manifestFile.exists()) {
-		manifestFile.readLines().each { line ->
-			line = line.trim()
-			if (line.startsWith("MODULE FILE LICENSE:")) {
-				// Expected line: "MODULE FILE LICENSE: relative_path/to/jar License Type"
-				def value = line.substring("MODULE FILE LICENSE:".length()).trim()
-				def libAndLicense = value.split(" ", 2)
-				if (libAndLicense.size() != 2) {
-					throw new GradleException("Error parsing " + manifestFile + ":\n\t" + line)
-				}
-				def libPath = libAndLicense[0].trim()
-				def libName = libPath.substring(libPath.lastIndexOf("/") + 1)
-				def license = libAndLicense[1].trim()
-				licenses[libName] = license
-			}
-		}
-	}
-
-	// SBOM header
-	def sbom = ["bomFormat" : "CycloneDX", "specVersion" : "1.4", "version" : 1]
-
-	// SBOM components
-	sbom.components = []
-	getExternalRuntimeDependencies(p).each { path, dep ->
-		def f = file(path)
-		def component = [:]
-		component.type = "library"
-		component.group = dep.group ?: ""
-		component.name = dep.name
-		component.version = dep.version ?: ""
-		component.properties = [["ghidra-module" : p.name]]
-		if (dep.group && dep.version) {
-			component.purl = "pkg:maven/${dep.group}/${dep.name}@${dep.version}"
-		}
-		component.hashes = []
-		["MD5", "SHA-1"].each { alg ->
-			component.hashes << ["alg" : alg, "content" : generateHash(f, alg)]
-		}
-		def license = licenses[f.name]
-		if (license) {
-			component.licenses = [["license" : ["name" : license]]]
-		}
-		sbom.components << component
-	}
-	
-	return sbom
 }
 
 task allSleighCompile {
