@@ -48,7 +48,7 @@ public class GraphPath<V> {
 	/**
 	 * Creates a new GraphPath object by performing a shallow copy on another GraphPath object.
 	 *
-	 * @return the new deepcopy of the original GraphPath object
+	 * @return the new shallow copy of the original GraphPath object
 	 */
 	public GraphPath<V> copy() {
 		GraphPath<V> newPath = new GraphPath<>();
@@ -107,7 +107,7 @@ public class GraphPath<V> {
 	/**
 	 * Check if vertex v is in the GraphPath.
 	 *
-	 * @return true if vertex v is in the pathSet of the GraphPath
+	 * @return true if vertex v is in this GraphPath
 	 */
 	public boolean contains(V v) {
 		return pathSet.contains(v);
