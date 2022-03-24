@@ -105,7 +105,7 @@ public class VTFunctionReferenceCorrelator_ELF_Test extends AbstractVTCorrelator
 		List<VTMatchSet> exactMatchSets = session.getMatchSets();
 		for (VTMatchSet ms : exactMatchSets) {
 			String corrName = ms.getProgramCorrelatorInfo().getName();
-			if (corrName == exactSymbolNameCorrelator) {
+			if (corrName.equals(exactSymbolNameCorrelator)) {
 				ApplyMatchTask task =
 					new ApplyMatchTask(controller, (List<VTMatch>) ms.getMatches());
 				runTask(task);
