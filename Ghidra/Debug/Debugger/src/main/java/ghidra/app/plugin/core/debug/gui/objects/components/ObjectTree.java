@@ -105,7 +105,13 @@ public class ObjectTree implements ObjectPane {
 					}
 				}
 				currentSelectionPaths = selectionPaths;
-				currentExpandedPaths = tree.getExpandedPaths();
+				List<TreePath> paths = tree.getExpandedPaths();
+				if (currentExpandedPaths == null) {
+					currentExpandedPaths = paths;
+				}
+				else if (paths != null && (paths.size() >= currentExpandedPaths.size())) {
+					currentExpandedPaths = paths;
+				}
 				currentViewPosition = tree.getViewPosition();
 				restoreTreeStateManager.updateLater();
 			}
@@ -133,6 +139,7 @@ public class ObjectTree implements ObjectPane {
 					if (!node.isExpanded()) {
 						//currentExpandedPaths = tree.getExpandedPaths();
 						node.markExpanded();
+						currentExpandedPaths = tree.getExpandedPaths();
 					}
 				}
 			}
@@ -146,6 +153,7 @@ public class ObjectTree implements ObjectPane {
 					if (node.isExpanded()) {
 						//currentExpandedPaths = tree.getExpandedPaths();
 						node.markCollapsed();
+						currentExpandedPaths = tree.getExpandedPaths();
 					}
 				}
 			}
