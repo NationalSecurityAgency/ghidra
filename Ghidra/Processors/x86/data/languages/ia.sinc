@@ -1067,6 +1067,8 @@ repetail:   is repprefx=0 & repneprefx=0           { }
 
 # Some macros
 
+@include "macros.sinc"
+
 macro ptr2(r,x) {
   r = zext(x);
 }
