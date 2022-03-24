@@ -18,11 +18,95 @@ package ghidra.pcode.exec;
 import java.util.List;
 import java.util.Map;
 
+import ghidra.app.plugin.processors.sleigh.template.OpTpl;
+import ghidra.app.util.pcode.AbstractAppender;
+import ghidra.app.util.pcode.AbstractPcodeFormatter;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.pcode.PcodeOp;
 
 public class PcodeFrame {
+	protected class MyAppender extends AbstractAppender<String> {
+		protected final StringBuffer buf = new StringBuffer();
+		protected boolean isLineLabel = false;
+		protected int i = 0;
+
+		public MyAppender(Language language) {
+			super(language, true);
+			buf.append("<p-code frame: index=" + index);
+			if (branched != -1) {
+				buf.append(" branched=" + branched);
+			}
+			buf.append(" {\n");
+		}
+
+		@Override
+		protected void appendString(String string) {
+			buf.append(string);
+		}
+
+		@Override
+		public void appendLineLabel(long label) {
+			buf.append("  " + stringifyLineLabel(label));
+		}
+
+		@Override
+		public void appendIndent() {
+			if (isLineLabel) {
+				buf.append("    ");
+			}
+			if (i == branched) {
+				buf.append(" *> ");
+			}
+			else if (i == index) {
+				buf.append(" -> ");
+			}
+			else {
+				buf.append("    ");
+			}
+		}
+
+		protected void endLine() {
+			if (!isLineLabel) {
+				i++;
+			}
+			buf.append("\n");
+		}
+
+		@Override
+		protected String stringifyUseropUnchecked(Language language, int id) {
+			String name = super.stringifyUseropUnchecked(language, id);
+			if (name != null) {
+				return name;
+			}
+			return useropNames.get(id);
+		}
+
+		@Override
+		public String finish() {
+			if (index == code.size()) {
+				buf.append(" *> fall-through\n");
+			}
+			buf.append("}>");
+			return buf.toString();
+		}
+	}
+
+	protected class MyFormatter extends AbstractPcodeFormatter<String, MyAppender> {
+		@Override
+		protected MyAppender createAppender(Language language, boolean indent) {
+			return new MyAppender(language);
+		}
+
+		@Override
+		protected FormatResult formatOpTemplate(MyAppender appender, OpTpl op) {
+			appender.isLineLabel = isLineLabel(op);
+			FormatResult result = super.formatOpTemplate(appender, op);
+			appender.endLine();
+			return result;
+		}
+	}
+
 	private final Language language;
 	private final List<PcodeOp> code;
 	private final Map<Integer, String> useropNames;
@@ -51,32 +135,7 @@ public class PcodeFrame {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder("<p-code frame: index=");
-		sb.append(index);
-		if (branched != -1) {
-			sb.append(" branched=" + branched);
-		}
-		sb.append(" {");
-		for (int i = 0; i < code.size(); i++) {
-			sb.append("\n");
-			if (i == branched) {
-				sb.append(" *>");
-			}
-			else if (i == index) {
-				sb.append(" ->");
-			}
-			else {
-				sb.append("   ");
-			}
-			PcodeOp op = code.get(i);
-			sb.append(
-				op.getSeqnum() + ": " + PcodeProgram.opToString(language, op, false, useropNames));
-		}
-		if (index == code.size()) {
-			sb.append("\n *> fall-through");
-		}
-		sb.append("\n}>");
-		return sb.toString();
+		return new MyFormatter().formatOps(language, code);
 	}
 
 	public int index() {

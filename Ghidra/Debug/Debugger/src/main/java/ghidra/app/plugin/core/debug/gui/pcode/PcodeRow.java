@@ -22,5 +22,7 @@ public interface PcodeRow {
 
 	String getCode();
 
+	boolean isNext();
+
 	PcodeOp getOp();
 }
