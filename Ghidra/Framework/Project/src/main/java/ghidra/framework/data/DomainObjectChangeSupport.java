@@ -39,12 +39,12 @@ class DomainObjectChangeSupport {
 
 	/**
 	 * Constructs a new DomainObjectChangeSupport object.
+	 * 
 	 * @param src The object to be put as the src for all events generated.
-	 * @param timeInterval The time (in milliseconds) this object will wait before
-	 * 		  flushing its event buffer.  If a new event comes in before the time expires,
-	 * 		  the timer is reset.
-	 * @param lock the lock used to verify that calls to {@link #flush()} are not performed 
-	 *        while a lock is held; this is the lock to guard the DB
+	 * @param timeInterval The time (in milliseconds) this object will wait before flushing its
+	 *            event buffer. If a new event comes in before the time expires, the timer is reset.
+	 * @param lock the lock used to verify that calls to {@link #flush()} are not performed while a
+	 *            lock is held; this is the lock to guard the DB
 	 */
 	DomainObjectChangeSupport(DomainObject src, int timeInterval, int bufsize, Lock lock) {
 
@@ -64,11 +64,15 @@ class DomainObjectChangeSupport {
 
 		// Capture the pending event to send to the existing listeners.  This prevents the new
 		// listener from getting events registered before the listener was added.
-		DomainObjectChangedEvent pendingEvent = convertEventQueueRecordsToEvent();
-		List<DomainObjectListener> previousListeners = atomicAddListener(listener);
+		DomainObjectChangedEvent pendingEvent;
+		List<DomainObjectListener> previousListeners;
+		synchronized (src) {
+			pendingEvent = convertEventQueueRecordsToEvent();
+			previousListeners = atomicAddListener(listener);
+		}
 
 		/*
-		 * Do later so that we do not get this deadlock:
+		 * Do outside the synchronized block, so that we do not get this deadlock:
 		 * 	   Thread1 has Domain Lock -> wants AWT lock
 		 *     Swing has AWT lock -> wants Domain lock
 		 */
@@ -77,7 +81,9 @@ class DomainObjectChangeSupport {
 	}
 
 	void removeListener(DomainObjectListener listener) {
-		listeners.remove(listener);
+		synchronized (src) {
+			listeners.remove(listener);
+		}
 	}
 
 	private void sendEventNow() {
