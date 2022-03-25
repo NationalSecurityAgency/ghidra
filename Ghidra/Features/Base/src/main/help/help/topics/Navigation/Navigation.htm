@@ -39,14 +39,15 @@
 
         <LI>The <I>Go To</I> dialog will be displayed, as shown below:</LI>
 
-        <LI>Enter either an <A href="#gotoaddress">address</A>, <A href="#gotolabel">label</A>, or
-        <A href="#gotoexpression">expression</A> as specified below and press "OK"</LI>
+        <LI>Enter either an <A href="#GoTo_Address">address</A>, <A href="#GoTo_Label">label</A>,
+        <A href="#GoTo_Expression">expression</A>, or <A href="#GoTo_File_Offset">file offset</A> 
+        as specified below and press "OK"</LI>
 
-        <LI>If the address, lable, or expression is valid, the Code Browser will be repositioned to
-        that location and the dialog will be dismissed</LI>
+        <LI>If the address, label, expression, or file offset is valid, the Code Browser will be 
+        repositioned to that location and the dialog will be dismissed</LI>
 
-        <LI>If the address, label, or expression is not valid, the dialog will display an error
-        message</LI>
+        <LI>If the address, label, expression, or file offset is not valid, the dialog will display 
+        an error message</LI>
       </OL>
     </BLOCKQUOTE>
 
@@ -56,7 +57,7 @@
           <TD width="100%">
             <P align="center"><IMG alt="" src="images/GoToDialog.png"></P>
 
-            <P align="center"><I><FONT size="3">Go To Address, Label, or Expression
+            <P align="center"><I><FONT size="3">Go To Address, Label, Expression, or File Offset
             Dialag</FONT></I></P>
           </TD>
         </TR>
@@ -67,7 +68,7 @@
       <BR>
        
 
-      <H3><A name="gotoaddress"></A>Go To Address</H3>
+      <H3><A name="GoTo_Address"></A>Go To Address</H3>
 
       <BLOCKQUOTE>
         <P>Enter an address into the text area of the dialog. The value entered will be assumed to
@@ -181,7 +182,7 @@
       </TBODY>
     </TABLE>
 
-      <H3><A name="gotolabel"></A>Go To Label</H3>
+      <H3><A name="GoTo_Label"></A>Go To Label</H3>
 
       <BLOCKQUOTE>
         <P>Enter the name of an existing label into the text area of the dialog.&nbsp;</P>
@@ -215,15 +216,33 @@
         </BLOCKQUOTE>
         
       </BLOCKQUOTE>
+      
+      <H3><A name="GoTo_File_Offset"></A>Go To File Offset<BR>
+      </H3>
+      
+      <BLOCKQUOTE>
+        <P>Enter <B>file:</B> followed by a file offset of the program's source file bytes (at
+        time of import) into the text area of the dialog.  The file offset entered will be assumed 
+        to be in decimal, unless it is preceeded by <B>0x</B>. That is, "file:0x1000" and 
+        "file:1000" are different values.</P>
 
-      <H3><A name="gotoexpression"></A>Go To Expression<BR>
+        <P><I><IMG src="../../shared/note.png" border="0">Ghidra does not support storing source 
+        file bytes for all file formats. Searching for a file offset in these programs will always 
+        yield no results.</I></P>
+        
+        <P><I><IMG src="../../shared/note.png" border="0">When the program has multiple file byte
+        sources and the destination address is ambiguous, a query results dialog will be displayed.
+        </I></P>
+      </BLOCKQUOTE>
+
+      <H3><A name="GoTo_Expression"></A>Go To Expression<BR>
       </H3>
 
 	      <BLOCKQUOTE>
 	        <P>Enter an arithmetic expression that can include addresses, symbols, or can be relative
 	        to the current location. All numbers are assumed to be hexadecimal. Supported operator are
 	        "+ - * / &lt;&lt; &gt;&gt;".&nbsp; Also, parentheses are supported to control order of
-	        expresion evaluation.<BR>
+	        expression evaluation.<BR>
 	         For example:<BR>
 	        </P>
 
@@ -247,7 +266,7 @@
 				<TR>
 					<TD><B>0x100000+(2*10)</B>
 					</TD>
-					<TD>Posiitons the cursor at address 0x100020
+					<TD>Positions the cursor at address 0x100020
 					</TD>					
 				</TR>
 				<TR>
