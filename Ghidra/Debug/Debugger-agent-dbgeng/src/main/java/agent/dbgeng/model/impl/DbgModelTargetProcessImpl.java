@@ -258,4 +258,13 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 			DISPLAY_ATTRIBUTE_NAME, getDisplay()//
 		), "Started");
 	}
+
+	@Override
+	public CompletableFuture<Void> resync(boolean refreshAttributes, boolean refreshElements) {
+		if (memory != null) {
+			memory.requestElements(true);
+		}
+		return super.resync(refreshAttributes, refreshElements);
+	}
+
 }

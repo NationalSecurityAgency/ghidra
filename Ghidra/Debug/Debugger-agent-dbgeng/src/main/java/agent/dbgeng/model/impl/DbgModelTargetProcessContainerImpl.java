@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.manager.*;
+import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.iface1.DbgModelTargetConfigurable;
 import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
@@ -93,6 +94,16 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		DbgModelTargetProcess process = getTargetProcess(proc);
 		if (process != null) {
 			process.getThreads().threadExited(threadId);
+		}
+	}
+
+	@Override
+	public void breakpointHit(DbgBreakpointInfo info, DbgCause cause) {
+		DbgProcess proc = info.getProc();
+		DbgModelTargetProcess process = getTargetProcess(proc);
+		DbgModelTargetMemoryContainer memory = process.getMemory();
+		if (memory != null) {
+			memory.requestElements(true);
 		}
 	}
 
