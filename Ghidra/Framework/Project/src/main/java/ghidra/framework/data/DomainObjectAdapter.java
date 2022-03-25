@@ -261,7 +261,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	 * @see ghidra.framework.model.DomainObject#addListener(ghidra.framework.model.DomainObjectListener)
 	 */
 	@Override
-	public synchronized void addListener(DomainObjectListener l) {
+	public void addListener(DomainObjectListener l) {
 		docs.addListener(l);
 	}
 
@@ -269,7 +269,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	 * @see ghidra.framework.model.DomainObject#removeListener(ghidra.framework.model.DomainObjectListener)
 	 */
 	@Override
-	public synchronized void removeListener(DomainObjectListener l) {
+	public void removeListener(DomainObjectListener l) {
 		docs.removeListener(l);
 	}
 
