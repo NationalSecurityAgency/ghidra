@@ -188,6 +188,10 @@ public abstract class DecompilerVariable {
 		return text;
 	}
 
+	public int getOffset() {
+		return Integer.MIN_VALUE; // subclasses can override
+	}
+
 	@Override
 	public String toString() {
 		String castString = casts.isEmpty() ? "" : "\tcasts: " + casts + ",\n";

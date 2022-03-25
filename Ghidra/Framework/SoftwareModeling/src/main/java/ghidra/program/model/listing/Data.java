@@ -38,10 +38,10 @@ public interface Data extends CodeUnit, Settings {
 
 	/**
 	 * Get the class used to express the value of this data.
-	 * 
+	 *
 	 * <p>NOTE: This determination is made based upon data type and settings only and does not
 	 * examine memory bytes which are used to construct the data value object.
-	 * 
+	 *
 	 * @return value class or null if a consistent class is not utilized.
 	 */
 	public Class<?> getValueClass();
@@ -216,7 +216,7 @@ public interface Data extends CodeUnit, Settings {
 	 * Return the first immediate child component that contains the byte at the given offset.  It
 	 * is important to note that with certain datatypes there may be more than one component
 	 * containing the specified offset (see {@link #getComponentsContaining(int)}).
-	 * 
+	 *
 	 * @param offset the amount to add to this data items address to get the address of the
 	 * requested data item.
 	 * @return first data component containing offset or null
@@ -227,10 +227,10 @@ public interface Data extends CodeUnit, Settings {
 	public Data getComponentAt(int offset);
 
 	/**
-	 * RReturn the first immediate child component that contains the byte at the given offset.  It
+	 * Return the first immediate child component that contains the byte at the given offset.  It
 	 * is important to note that with certain datatypes there may be more than one component
 	 * containing the specified offset (see {@link #getComponentsContaining(int)}).
-	 * 
+	 *
 	 * @param offset the amount to add to this data items address to get the
 	 * @return first data component containing offset or null address of the requested data item.
 	 */

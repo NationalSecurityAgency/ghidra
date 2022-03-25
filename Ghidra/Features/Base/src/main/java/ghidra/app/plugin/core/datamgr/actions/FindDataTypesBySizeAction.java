@@ -53,8 +53,8 @@ public class FindDataTypesBySizeAction extends DockingAction {
 	@Override
 	public void actionPerformed(ActionContext context) {
 
-		NumberRangeInputDialog inputDialog =
-			new NumberRangeInputDialog(getName(), "Size(s)");
+		NumberRangeInputDialog inputDialog = new NumberRangeInputDialog(getName(), "Size(s)");
+		inputDialog.setHelpLocation(getHelpLocation());
 		if (!inputDialog.show()) {
 			return;
 		}

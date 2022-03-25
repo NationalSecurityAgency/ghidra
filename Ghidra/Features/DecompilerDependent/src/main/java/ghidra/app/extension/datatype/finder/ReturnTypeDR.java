@@ -20,6 +20,7 @@ import java.util.List;
 import ghidra.app.decompiler.ClangLine;
 import ghidra.app.decompiler.ClangTypeToken;
 import ghidra.app.services.DataTypeReference;
+import ghidra.app.services.FieldMatcher;
 import ghidra.program.model.data.DataType;
 
 public class ReturnTypeDR extends DecompilerReference {
@@ -29,11 +30,11 @@ public class ReturnTypeDR extends DecompilerReference {
 	}
 
 	@Override
-	public void accumulateMatches(DataType dt, String fieldName, List<DataTypeReference> results) {
+	public void accumulateMatches(DataType dt, FieldMatcher fieldMatcher,
+			List<DataTypeReference> results) {
 
-		if (fieldName != null) {
-			// Return Types do not have any field usage
-			return;
+		if (!fieldMatcher.isIgnored()) {
+			return; // Return Types do not have any field usage
 		}
 
 		DataType myDt = getDataType();

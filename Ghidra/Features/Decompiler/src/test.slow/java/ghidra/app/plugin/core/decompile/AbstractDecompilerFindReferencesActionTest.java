@@ -31,8 +31,7 @@ import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.decompile.actions.FindReferencesToSymbolAction;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesProvider;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
-import ghidra.app.services.DataTypeReference;
-import ghidra.app.services.DataTypeReferenceFinder;
+import ghidra.app.services.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -170,6 +169,19 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 				Consumer<DataTypeReference> callback, TaskMonitor monitor) {
 
 			compositeFieldReferencesCallCount.incrementAndGet();
+		}
+
+		@Mock
+		public void findReferences(Program p, FieldMatcher fieldMatcher,
+				Consumer<DataTypeReference> callback, TaskMonitor monitor) {
+
+			if (fieldMatcher.isIgnored()) {
+				// an empty field matcher signals a data type search
+				dataTypeReferencesCallCount.incrementAndGet();
+			}
+			else {
+				compositeFieldReferencesCallCount.incrementAndGet();
+			}
 		}
 
 		public int getFindDataTypeReferencesCallCount() {
