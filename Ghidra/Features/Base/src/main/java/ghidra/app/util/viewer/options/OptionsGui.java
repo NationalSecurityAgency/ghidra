@@ -92,6 +92,8 @@ public class OptionsGui extends JPanel {
 	public static final ScreenElement MNEMONIC_OVERRIDE =
 		new ScreenElement("Mnemonic, Override", new Color(255, 0, 204));
 	public static final ScreenElement MNEMONIC = new ScreenElement("Mnemonic", DARK_BLUE);
+	public static final ScreenElement UNIMPL =
+		new ScreenElement("Unimplemented Mnemonic", Color.RED);
 	public static final ScreenElement FLOW_ARROW_NON_ACTIVE =
 		new ScreenElement("Flow Arrow, Not Active", new Color(160, 160, 160));
 	public static final ScreenElement FLOW_ARROW_ACTIVE =
@@ -122,14 +124,23 @@ public class OptionsGui extends JPanel {
 	public static final ScreenElement XREF_OTHER = new ScreenElement("XRef Other", Color.BLACK);
 	public static final ScreenElement REGISTERS = new ScreenElement("Registers", YELLOW_ORANGE);
 	public static final ScreenElement UNDERLINE = new ScreenElement("Underline", PALE_BLUE);
+	public static final ScreenElement PCODE_LINE_LABEL =
+		new ScreenElement("P-code Line Label", Color.BLUE);
+	public static final ScreenElement PCODE_ADDR_SPACE =
+		new ScreenElement("P-code Address Space", Color.BLUE);
+	public static final ScreenElement PCODE_RAW_VARNODE =
+		new ScreenElement("P-code Raw Varnode", Color.BLUE);
+	public static final ScreenElement PCODE_USEROP =
+		new ScreenElement("P-code Userop", Color.BLUE);
 
 	static ScreenElement[] elements = { ADDRESS, BACKGROUND, BAD_REF_ADDR, BYTES, COMMENT_AUTO,
 		COMMENT_EOL, COMMENT_PLATE, COMMENT_POST, COMMENT_PRE, COMMENT_REPEATABLE,
 		COMMENT_REF_REPEAT, CONSTANT, ENTRY_POINT, EXT_REF_RESOLVED, FIELD_NAME, FLOW_ARROW_ACTIVE,
 		FLOW_ARROW_NON_ACTIVE, FUN_CALL_FIXUP, FUN_NAME, FUN_PARAMS, FUN_AUTO_PARAMS, FUN_RET_TYPE,
 		FUN_TAG, LABELS_LOCAL, LABELS_NON_PRIMARY, LABELS_PRIMARY, LABELS_UNREFD, MNEMONIC,
-		MNEMONIC_OVERRIDE, PARAMETER_CUSTOM, PARAMETER_DYNAMIC, REGISTERS, SEPARATOR, UNDERLINE,
-		VARIABLE, VERSION_TRAK, XREF, XREF_OFFCUT, XREF_READ, XREF_WRITE, XREF_OTHER };
+		MNEMONIC_OVERRIDE, PARAMETER_CUSTOM, PARAMETER_DYNAMIC, PCODE_LINE_LABEL, PCODE_ADDR_SPACE,
+		PCODE_RAW_VARNODE, PCODE_USEROP, REGISTERS, SEPARATOR, UNDERLINE, UNIMPL, VARIABLE,
+		VERSION_TRAK, XREF, XREF_OFFCUT, XREF_READ, XREF_WRITE, XREF_OTHER };
 
 	private Map<Integer, FontMetrics> metricsMap = new HashMap<>();
 
@@ -154,6 +165,7 @@ public class OptionsGui extends JPanel {
 
 	/**
 	 * Constructor
+	 * 
 	 * @param font the base font for the fields.
 	 * @param listener the listener to be notified when options change.
 	 */
@@ -237,6 +249,7 @@ public class OptionsGui extends JPanel {
 
 	/**
 	 * callback for when the selected display field changes.
+	 * 
 	 * @param index the index in the JList of the selected field.
 	 */
 	private void setSelectedIndex(int index) {
@@ -344,7 +357,8 @@ public class OptionsGui extends JPanel {
 		fontNameField.setRenderer(new FontRenderer());
 		panel1.add(fontNameField);
 
-		fontSizeField = new GComboBox<>(IntStream.rangeClosed(6, 32).boxed().toArray(Integer[]::new));
+		fontSizeField =
+			new GComboBox<>(IntStream.rangeClosed(6, 32).boxed().toArray(Integer[]::new));
 		fontSizeField.setBackground(Color.white);
 		panel1.add(fontSizeField);
 		panel.add(panel1, BorderLayout.NORTH);
@@ -733,7 +747,7 @@ public class OptionsGui extends JPanel {
 	}
 
 	private FontMetrics getMetrics(int style) {
-		Integer i = new Integer(style);
+		Integer i = style;
 		FontMetrics fm = metricsMap.get(i);
 		if (fm == null) {
 			if (style == -1) {
@@ -759,6 +773,7 @@ public class OptionsGui extends JPanel {
 
 	/**
 	 * This listener will be notified when changes are made that need to be applied.
+	 * 
 	 * @param listener The listener to be notified.
 	 */
 	void setOptionsPropertyChangeListener(PropertyChangeListener listener) {
@@ -874,6 +889,7 @@ public class OptionsGui extends JPanel {
 
 		/**
 		 * Constructor
+		 * 
 		 * @param size the number of fields in the layout
 		 */
 		LayoutBuilder(int size) {

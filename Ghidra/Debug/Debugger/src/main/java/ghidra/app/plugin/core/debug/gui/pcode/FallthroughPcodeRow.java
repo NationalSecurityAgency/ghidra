@@ -35,6 +35,11 @@ public class FallthroughPcodeRow implements PcodeRow {
 	}
 
 	@Override
+	public boolean isNext() {
+		return true;
+	}
+
+	@Override
 	public PcodeOp getOp() {
 		return null;
 	}

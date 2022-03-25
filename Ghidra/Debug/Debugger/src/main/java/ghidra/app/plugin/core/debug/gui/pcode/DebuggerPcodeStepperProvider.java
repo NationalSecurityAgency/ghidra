@@ -39,8 +39,11 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.pcode.UniqueRow.RefType;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerTracePcodeEmulator;
+import ghidra.app.plugin.processors.sleigh.template.OpTpl;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.app.util.pcode.AbstractAppender;
+import ghidra.app.util.pcode.AbstractPcodeFormatter;
 import ghidra.async.SwingExecutorService;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
 import ghidra.docking.settings.Settings;
@@ -52,8 +55,10 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.pcode.exec.PcodeFrame;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
@@ -70,11 +75,30 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	private static final FontRenderContext METRIC_FRC =
 		new FontRenderContext(new AffineTransform(), false, false);
 	private static final String BACKGROUND_COLOR = "Background Color";
+
 	private static final String ADDRESS_COLOR = "Address Color";
-	private static final String CONSTANT_COLOR = "Constant Color";
 	private static final String REGISTERS_COLOR = "Registers Color";
+	private static final String CONSTANT_COLOR = "Constant Color";
 	private static final String LABELS_LOCAL_COLOR = "Labels, Local Color";
 	private static final String MNEMONIC_COLOR = "Mnemonic Color";
+	private static final String UNIMPL_COLOR = "Unimplemented Mnemonic Color";
+	private static final String SEPARATOR_COLOR = "Separator Color";
+	private static final String LINE_LABEL_COLOR = "P-code Line Label Color";
+	private static final String SPACE_COLOR = "P-code Address Space Color";
+	private static final String RAW_COLOR = "P-code Raw Varnode Color";
+	private static final String USEROP_COLOR = "P-code Userop Color";
+
+	private static final String SPAN_ADDRESS = "addr";
+	private static final String SPAN_REGISTER = "reg";
+	private static final String SPAN_SCALAR = "scalar";
+	private static final String SPAN_LOCAL = "loc";
+	private static final String SPAN_MNEMONIC = "op";
+	private static final String SPAN_UNIMPL = "unimpl";
+	private static final String SPAN_SEPARATOR = "sep";
+	private static final String SPAN_LINE_LABEL = "lab";
+	private static final String SPAN_SPACE = "space";
+	private static final String SPAN_RAW = "raw";
+	private static final String SPAN_USEROP = "usr";
 
 	protected static final Comparator<Varnode> UNIQUE_COMPARATOR = (u1, u2) -> {
 		assert u1.isUnique() && u2.isUnique();
@@ -217,9 +241,9 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
 			setForeground(pcodeTable.getForeground());
-			boolean isCurrent = counter == data.getRowModelIndex();
+			PcodeRow row = (PcodeRow) data.getRowObject();
 			if (data.isSelected()) {
-				if (isCurrent) {
+				if (row.isNext()) {
 					Color blend = ColorUtils.blend(counterColor, cursorColor, 0.5f);
 					if (blend != null) {
 						setBackground(blend);
@@ -227,7 +251,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 				}
 				// else background is already set. Leave it alone
 			}
-			else if (isCurrent) {
+			else if (row.isNext()) {
 				setBackground(counterColor);
 			}
 			else {
@@ -299,6 +323,156 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	protected static String htmlSpan(String cls, String display) {
+		return String.format("<span class=\"%s\">%s</span>", cls,
+			HTMLUtilities.escapeHTML(display));
+	}
+
+	class ToPcodeRowsAppender extends AbstractAppender<List<PcodeRow>> {
+		private final List<PcodeRow> rows = new ArrayList<>();
+		private final PcodeFrame frame;
+		private StringBuilder html;
+		private PcodeOp op;
+		private boolean isNext;
+
+		public ToPcodeRowsAppender(Language language, boolean indent, PcodeFrame frame) {
+			super(language, indent);
+			this.frame = frame;
+		}
+
+		void startRow(PcodeOp op, boolean isNext) {
+			this.op = op;
+			this.isNext = isNext;
+			html = new StringBuilder("<html>");
+		}
+
+		void endRow() {
+			html.append("</html>");
+			rows.add(new OpPcodeRow(language, op, isNext, html.toString()));
+		}
+
+		@Override
+		public void appendAddressWordOffcut(long wordOffset, long offcut) {
+			html.append(htmlSpan(SPAN_ADDRESS, stringifyWordOffcut(wordOffset, offcut)));
+		}
+
+		@Override
+		public void appendCharacter(char c) {
+			if (c == '=') {
+				html.append(htmlSpan(SPAN_SEPARATOR, " = "));
+			}
+			else {
+				html.append(htmlSpan(SPAN_SEPARATOR, Character.toString(c)));
+			}
+		}
+
+		@Override
+		public void appendIndent() {
+			html.append("&nbsp;&nbsp;");
+		}
+
+		@Override
+		public void appendLabel(String label) {
+			html.append(htmlSpan(SPAN_LOCAL, label));
+		}
+
+		@Override
+		public void appendLineLabelRef(long label) {
+			html.append(htmlSpan(SPAN_LINE_LABEL, stringifyLineLabel(label)));
+		}
+
+		@Override
+		public void appendMnemonic(int opcode) {
+			String style = opcode == PcodeOp.UNIMPLEMENTED ? SPAN_UNIMPL : SPAN_MNEMONIC;
+			html.append(htmlSpan(style, stringifyOpMnemonic(opcode)));
+		}
+
+		@Override
+		public void appendRawVarnode(AddressSpace space, long offset, long size) {
+			html.append(htmlSpan(SPAN_RAW, stringifyRawVarnode(space, offset, size)));
+		}
+
+		@Override
+		public void appendRegister(Register register) {
+			html.append(htmlSpan(SPAN_REGISTER, stringifyRegister(register)));
+		}
+
+		@Override
+		public void appendScalar(long value) {
+			html.append(htmlSpan(SPAN_SCALAR, stringifyScalarValue(value)));
+		}
+
+		@Override
+		public void appendSpace(AddressSpace space) {
+			html.append(htmlSpan(SPAN_SPACE, stringifySpace(space)));
+		}
+
+		@Override
+		public void appendUnique(long offset) {
+			html.append(htmlSpan(SPAN_LOCAL, stringifyUnique(offset)));
+		}
+
+		@Override
+		public void appendUserop(int id) {
+			html.append(htmlSpan(SPAN_USEROP, stringifyUserop(language, id)));
+		}
+
+		@Override
+		protected String stringifyUseropUnchecked(Language language, int id) {
+			String name = super.stringifyUseropUnchecked(language, id);
+			if (name != null) {
+				return name;
+			}
+			return frame.getUseropName(id);
+		}
+
+		@Override
+		public List<PcodeRow> finish() {
+			return rows;
+		}
+	}
+
+	class PcodeRowHtmlFormatter
+			extends AbstractPcodeFormatter<List<PcodeRow>, ToPcodeRowsAppender> {
+
+		private final Language language;
+		private final PcodeFrame frame;
+		private int index;
+		private int nextRowIndex;
+
+		public PcodeRowHtmlFormatter(Language language, PcodeFrame frame) {
+			this.language = language;
+			this.frame = frame;
+		}
+
+		List<PcodeRow> getRows() {
+			return formatOps(language, frame.getCode());
+		}
+
+		@Override
+		protected ToPcodeRowsAppender createAppender(Language language, boolean indent) {
+			return new ToPcodeRowsAppender(language, indent, frame);
+		}
+
+		@Override
+		public FormatResult formatOpTemplate(ToPcodeRowsAppender appender, OpTpl template) {
+			if (isLineLabel(template)) {
+				appender.startRow(null, false);
+			}
+			else {
+				PcodeOp op = frame.getCode().get(index++);
+				boolean isNext = op.getSeqnum().getTime() == frame.index();
+				if (isNext) {
+					nextRowIndex = appender.rows.size();
+				}
+				appender.startRow(op, isNext);
+			}
+			FormatResult result = super.formatOpTemplate(appender, template);
+			appender.endRow();
+			return result;
+		}
+	}
+
 	protected static String createColoredStyle(String cls, Color color) {
 		if (color == null) {
 			return "";
@@ -323,7 +497,6 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	DebuggerCoordinates previous = DebuggerCoordinates.NOWHERE;
-	int counter;
 
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
@@ -340,11 +513,18 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	private Color backgroundColor;
 	private Color cursorColor;
+
 	private Color addressColor;
-	private Color constantColor;
 	private Color registerColor;
-	private Color uniqueColor;
-	private Color opColor;
+	private Color scalarColor;
+	private Color localColor;
+	private Color mnemonicColor;
+	private Color unimplColor;
+	private Color separatorColor;
+	private Color lineLabelColor;
+	private Color spaceColor;
+	private Color rawColor;
+	private Color useropColor;
 
 	@SuppressWarnings("unused")
 	private AutoOptions.Wiring autoOptionsWiring;
@@ -420,14 +600,6 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	@AutoOptionConsumed(
 		category = GhidraOptions.CATEGORY_BROWSER_DISPLAY,
-		name = CONSTANT_COLOR)
-	private void setConstantColor(Color constantColor) {
-		this.constantColor = constantColor;
-		recomputeStyle();
-	}
-
-	@AutoOptionConsumed(
-		category = GhidraOptions.CATEGORY_BROWSER_DISPLAY,
 		name = REGISTERS_COLOR)
 	private void setRegisterColor(Color registerColor) {
 		this.registerColor = registerColor;
@@ -436,27 +608,89 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	@AutoOptionConsumed(
 		category = GhidraOptions.CATEGORY_BROWSER_DISPLAY,
+		name = CONSTANT_COLOR)
+	private void setScalarColor(Color scalarColor) {
+		this.scalarColor = scalarColor;
+		recomputeStyle();
+	}
+
+	@AutoOptionConsumed(
+		category = GhidraOptions.CATEGORY_BROWSER_DISPLAY,
 		name = LABELS_LOCAL_COLOR)
-	private void setUniqueColor(Color uniqueColor) {
-		this.uniqueColor = uniqueColor;
+	private void setLocalColor(Color localColor) {
+		this.localColor = localColor;
 		recomputeStyle();
 	}
 
 	@AutoOptionConsumed(
 		category = GhidraOptions.CATEGORY_BROWSER_DISPLAY,
 		name = MNEMONIC_COLOR)
-	private void setOpColor(Color opColor) {
-		this.opColor = opColor;
+	private void setMnemonicColor(Color mnemonicColor) {
+		this.mnemonicColor = mnemonicColor;
+		recomputeStyle();
+	}
+
+	@AutoOptionConsumed(
+		category = GhidraOptions.CATEGORY_BROWSER_DISPLAY,
+		name = UNIMPL_COLOR)
+	private void setUnimplColor(Color unimplColor) {
+		this.unimplColor = unimplColor;
+		recomputeStyle();
+	}
+
+	@AutoOptionConsumed(
+		category = GhidraOptions.CATEGORY_BROWSER_DISPLAY,
+		name = SEPARATOR_COLOR)
+	private void setSeparatorColor(Color separatorColor) {
+		this.separatorColor = separatorColor;
+		recomputeStyle();
+	}
+
+	@AutoOptionConsumed(
+		category = GhidraOptions.CATEGORY_BROWSER_DISPLAY,
+		name = LINE_LABEL_COLOR)
+	private void setLineLabelColor(Color lineLabelColor) {
+		this.lineLabelColor = lineLabelColor;
+		recomputeStyle();
+	}
+
+	@AutoOptionConsumed(
+		category = GhidraOptions.CATEGORY_BROWSER_DISPLAY,
+		name = SPACE_COLOR)
+	private void setSpaceColor(Color spaceColor) {
+		this.spaceColor = spaceColor;
+		recomputeStyle();
+	}
+
+	@AutoOptionConsumed(
+		category = GhidraOptions.CATEGORY_BROWSER_DISPLAY,
+		name = RAW_COLOR)
+	private void setRawColor(Color rawColor) {
+		this.rawColor = rawColor;
+		recomputeStyle();
+	}
+
+	@AutoOptionConsumed(
+		category = GhidraOptions.CATEGORY_BROWSER_DISPLAY,
+		name = USEROP_COLOR)
+	private void setUseropColor(Color useropColor) {
+		this.useropColor = useropColor;
 		recomputeStyle();
 	}
 
 	protected void recomputeStyle() {
 		StringBuilder sb = new StringBuilder("<html><head><style>");
-		sb.append(createColoredStyle("address", addressColor));
-		sb.append(createColoredStyle("constant", constantColor));
-		sb.append(createColoredStyle("register", registerColor));
-		sb.append(createColoredStyle("unique", uniqueColor));
-		sb.append(createColoredStyle("op", opColor));
+		sb.append(createColoredStyle(SPAN_ADDRESS, addressColor));
+		sb.append(createColoredStyle(SPAN_REGISTER, registerColor));
+		sb.append(createColoredStyle(SPAN_SCALAR, scalarColor));
+		sb.append(createColoredStyle(SPAN_LOCAL, localColor));
+		sb.append(createColoredStyle(SPAN_MNEMONIC, mnemonicColor));
+		sb.append(createColoredStyle(SPAN_UNIMPL, unimplColor));
+		sb.append(createColoredStyle(SPAN_SEPARATOR, separatorColor));
+		sb.append(createColoredStyle(SPAN_LINE_LABEL, lineLabelColor));
+		sb.append(createColoredStyle(SPAN_SPACE, spaceColor));
+		sb.append(createColoredStyle(SPAN_RAW, rawColor));
+		sb.append(createColoredStyle(SPAN_USEROP, useropColor));
 		sb.append("</style></head>"); // NB. </html> should already be at end
 		style = sb.toString();
 		pcodeTableModel.fireTableDataChanged();
@@ -577,7 +811,6 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	}
 
 	protected void populateSingleton(PcodeRow row) {
-		counter = 0;
 		pcodeTableModel.clear();
 		pcodeTableModel.add(row);
 		uniqueTableModel.clear();
@@ -590,26 +823,20 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	protected void populatePcode(PcodeFrame frame) {
 		Language language = current.getTrace().getBaseLanguage();
-		int index = frame.index();
-		List<PcodeRow> toAdd = frame.getCode()
-				.stream()
-				.map(op -> new OpPcodeRow(language, op, index == op.getSeqnum().getTime(),
-					frame.getUseropNames()))
-				.collect(Collectors.toCollection(ArrayList::new));
+
+		PcodeRowHtmlFormatter formatter = new PcodeRowHtmlFormatter(language, frame);
+		List<PcodeRow> toAdd = formatter.getRows();
+
 		if (frame.isBranch()) {
-			counter = toAdd.size();
-			toAdd.add(new BranchPcodeRow(counter, frame.getBranched()));
+			toAdd.add(new BranchPcodeRow(frame.getCode().size(), frame.getBranched()));
 		}
 		else if (frame.isFallThrough()) {
-			counter = toAdd.size();
-			toAdd.add(new FallthroughPcodeRow(counter));
-		}
-		else {
-			counter = index;
+			toAdd.add(new FallthroughPcodeRow(frame.getCode().size()));
 		}
 		pcodeTableModel.clear();
 		pcodeTableModel.addAll(toAdd);
-		pcodeTable.getSelectionModel().setSelectionInterval(counter, counter);
+		pcodeTable.getSelectionModel()
+				.setSelectionInterval(formatter.nextRowIndex, formatter.nextRowIndex);
 		pcodeTable.scrollToSelectedRow();
 	}
 

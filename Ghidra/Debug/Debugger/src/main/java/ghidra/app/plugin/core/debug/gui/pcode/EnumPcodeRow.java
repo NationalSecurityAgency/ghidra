@@ -37,6 +37,11 @@ public enum EnumPcodeRow implements PcodeRow {
 	}
 
 	@Override
+	public boolean isNext() {
+		return true;
+	}
+
+	@Override
 	public PcodeOp getOp() {
 		return null;
 	}
