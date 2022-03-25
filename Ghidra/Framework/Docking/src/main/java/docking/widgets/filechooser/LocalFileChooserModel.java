@@ -98,9 +98,6 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 		return desktop.isDirectory() ? desktop : null;
 	}
 
-	/**
-	 * @see ghidra.util.filechooser.GhidraFileChooserModel#getRoots()
-	 */
 	@Override
 	public File[] getRoots(boolean forceUpdate) {
 		if (roots.length == 0 || forceUpdate) {
