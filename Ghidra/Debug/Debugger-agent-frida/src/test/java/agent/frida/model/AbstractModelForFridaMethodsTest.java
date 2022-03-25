@@ -49,17 +49,21 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 	public FridaLinuxSpecimen getLaunchSpecimen() {
 		return FridaLinuxSpecimen.PRINT;
 	}
+
 	public FridaLinuxSpecimen getPrintSpecimen() {
 		return FridaLinuxSpecimen.PRINT;
 	}
+
 	public FridaLinuxSpecimen getStackSpecimen() {
 		return FridaLinuxSpecimen.STACK;
 	}
+
 	public FridaLinuxSpecimen getSpinSpecimen() {
 		return FridaLinuxSpecimen.SPIN_STRIPPED;
 	}
 
-	protected TargetProcess runTestLaunch(DebuggerTestSpecimen specimen, TargetLauncher launcher) throws Throwable {
+	protected TargetProcess runTestLaunch(DebuggerTestSpecimen specimen, TargetLauncher launcher)
+			throws Throwable {
 		waitAcc(launcher);
 		waitOn(launcher.launch(specimen.getLauncherArgs()));
 
@@ -67,7 +71,8 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		TargetObject session = process.getParent().getParent();
 		TargetModuleContainer modules = m.find(TargetModuleContainer.class, session.getPath());
 		TargetModule binMod = (TargetModule) waitOn(m.getAddedWaiter()
-				.wait(PathUtils.index(modules.getPath(), ((FridaLinuxSpecimen)specimen).getShortName())));
+				.wait(PathUtils.index(modules.getPath(),
+					((FridaLinuxSpecimen) specimen).getShortName())));
 
 		// NB. this heuristic assumes all function bodies are contiguous in memory
 		TargetSymbolNamespace symbols = m.find(TargetSymbolNamespace.class, binMod.getPath());
@@ -75,10 +80,10 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		for (Entry<String, ? extends TargetObject> entry : waitOn(symbols.fetchElements())
 				.entrySet()) {
 			symbolsByKey.put(entry.getKey(), entry.getValue().as(TargetSymbol.class));
-		}	
-		
+		}
+
 		return process;
-}
+	}
 
 	protected void runTestResume(DebuggerTestSpecimen specimen) throws Throwable {
 		TargetProcess process = retryForProcessRunning(specimen, this);
@@ -91,13 +96,13 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		retryVoid(() -> assertTrue(DebugModelConventions.isProcessAlive(process)),
 			List.of(AssertionError.class));
 	}
-	
+
 	protected void runTestKill(DebuggerTestSpecimen specimen) throws Throwable {
 		TargetProcess process = retryForProcessRunning(specimen, this);
 		TargetKillable killable = m.suitable(TargetKillable.class, process.getPath());
 		waitOn(killable.kill());
 	}
-	
+
 	protected void runTestLaunchThenResume(TargetLauncher launcher) throws Throwable {
 		DebuggerTestSpecimen specimen = getPrintSpecimen();
 		assertNull(getProcessRunning(specimen, this));
@@ -118,6 +123,7 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		runTestKill(specimen);
 	}
 
+	@Ignore
 	@Test
 	public void testScan() throws Throwable {
 		assumeTrue(m.hasKillableProcesses());
@@ -127,13 +133,15 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		DebuggerTestSpecimen specimen = getPrintSpecimen();
 		assertNull(getProcessRunning(specimen, this));
 		TargetProcess process = runTestLaunch(specimen, launcher);
-		
+
 		FridaModelTargetProcess fproc = (FridaModelTargetProcess) process;
 		ConsoleEventListener listener = new ConsoleEventListener("Found match at");
 		fproc.getManager().addEventsListener(listener);
 
-		FridaModelTargetMemoryContainerImpl memory = (FridaModelTargetMemoryContainerImpl) fproc.getCachedAttribute("Memory");
-		FridaModelTargetMemoryScanImpl scan = (FridaModelTargetMemoryScanImpl) memory.getCachedAttribute("scan");
+		FridaModelTargetMemoryContainerImpl memory =
+			(FridaModelTargetMemoryContainerImpl) fproc.getCachedAttribute("Memory");
+		FridaModelTargetMemoryScanImpl scan =
+			(FridaModelTargetMemoryScanImpl) memory.getCachedAttribute("scan");
 		Map<String, Object> map = new HashMap<>();
 		Address address = symbolsByKey.get("overwrite").getValue();
 		map.put("Address", address.toString());
@@ -141,14 +149,14 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		map.put("Pattern", "48 65 6C 6C 6F");
 		map.put("Stop", true);
 		scan.invoke(map);
-		
+
 		waitForCondition(() -> {
 			return listener.foundMatch();
 		}, "Console output timed out");
 		assertTrue(listener.getMatchingOutput().contains(address.toString()));
 		runTestKill(specimen);
 	}
-	
+
 	@Ignore
 	@Test
 	public void testWatch() throws Throwable {
@@ -159,13 +167,15 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		DebuggerTestSpecimen specimen = getPrintSpecimen();
 		assertNull(getProcessRunning(specimen, this));
 		TargetProcess process = runTestLaunch(specimen, launcher);
-		
+
 		FridaModelTargetProcess fproc = (FridaModelTargetProcess) process;
 		ConsoleEventListener listener = new ConsoleEventListener("read");
 		fproc.getManager().addEventsListener(listener);
 
-		FridaModelTargetMemoryContainerImpl memory = (FridaModelTargetMemoryContainerImpl) fproc.getCachedAttribute("Memory");
-		FridaModelTargetMemoryWatchImpl watch = (FridaModelTargetMemoryWatchImpl) memory.getCachedAttribute("watch");
+		FridaModelTargetMemoryContainerImpl memory =
+			(FridaModelTargetMemoryContainerImpl) fproc.getCachedAttribute("Memory");
+		FridaModelTargetMemoryWatchImpl watch =
+			(FridaModelTargetMemoryWatchImpl) memory.getCachedAttribute("watch");
 		Map<String, Object> map = new HashMap<>();
 		Address address = symbolsByKey.get("overwrite").getValue();
 		map.put("Address", address.toString());
@@ -174,14 +184,14 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		map.put("OnAccess", script.getAbsolutePath());
 		watch.invoke(map);
 		runTestResume(specimen);
-		
+
 		waitForCondition(() -> {
 			return listener.foundMatch();
 		}, "Console output timed out");
 		assertTrue(listener.getMatchingOutput().contains(address.toString()));
 		runTestKill(specimen);
 	}
-	
+
 	@Test
 	public void testInterceptor() throws Throwable {
 		assumeTrue(m.hasKillableProcesses());
@@ -191,27 +201,27 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		DebuggerTestSpecimen specimen = getStackSpecimen();
 		assertNull(getProcessRunning(specimen, this));
 		TargetProcess process = runTestLaunch(specimen, launcher);
-		
+
 		FridaModelTargetProcess fproc = (FridaModelTargetProcess) process;
 		ConsoleEventListener listener = new ConsoleEventListener("entering");
 		fproc.getManager().addEventsListener(listener);
 
 		Map<String, Object> map = new HashMap<>();
 		FridaModelTargetSymbol symbol = (FridaModelTargetSymbol) symbolsByKey.get("break_here");
-		FridaModelTargetFunctionInterceptorImpl intercept = 
-				(FridaModelTargetFunctionInterceptorImpl) symbol.getCachedAttribute("intercept");
+		FridaModelTargetFunctionInterceptorImpl intercept =
+			(FridaModelTargetFunctionInterceptorImpl) symbol.getCachedAttribute("intercept");
 		ResourceFile script = Application.getModuleDataFile("/scripts/onEnter.js");
 		map.put("OnEnter", script.getAbsolutePath());
 		map.put("OnLeave", "");
 		intercept.invoke(map);
 		runTestResume(specimen);
-		
+
 		waitForCondition(() -> {
 			return listener.foundMatch();
 		}, "Console output timed out");
 		runTestKill(specimen);
 	}
-	
+
 	@Test
 	public void testStalker() throws Throwable {
 		assumeTrue(m.hasKillableProcesses());
@@ -221,18 +231,21 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		DebuggerTestSpecimen specimen = getSpinSpecimen();
 		assertNull(getProcessRunning(specimen, this));
 		TargetProcess process = runTestLaunch(specimen, launcher);
-		
+
 		FridaModelTargetProcess fproc = (FridaModelTargetProcess) process;
 		waitOn(fproc.resume());
 		ConsoleEventListener listener = new ConsoleEventListener(":1");
 		fproc.getManager().addEventsListener(listener);
-		FridaModelTargetThreadContainerImpl threads = (FridaModelTargetThreadContainerImpl) fproc.getCachedAttribute("Threads");
-		Map<String, TargetObject> elements = (Map<String, TargetObject>) waitOn(threads.fetchElements());
-		FridaModelTargetThreadImpl thread = (FridaModelTargetThreadImpl) elements.values().iterator().next();
-		
+		FridaModelTargetThreadContainerImpl threads =
+			(FridaModelTargetThreadContainerImpl) fproc.getCachedAttribute("Threads");
+		Map<String, TargetObject> elements =
+			(Map<String, TargetObject>) waitOn(threads.fetchElements());
+		FridaModelTargetThreadImpl thread =
+			(FridaModelTargetThreadImpl) elements.values().iterator().next();
+
 		Map<String, Object> map = new HashMap<>();
-		FridaModelTargetThreadStalkImpl stalk = 
-				(FridaModelTargetThreadStalkImpl) thread.getCachedAttribute("stalk");
+		FridaModelTargetThreadStalkImpl stalk =
+			(FridaModelTargetThreadStalkImpl) thread.getCachedAttribute("stalk");
 		ResourceFile script = Application.getModuleDataFile("/scripts/onCallSummary.js");
 		map.put("OnCallSummary", script.getAbsolutePath());
 		map.put("EventCall", true);
@@ -243,19 +256,19 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		map.put("OnReceive", "");
 		stalk.invoke(map);
 		//runTestResume(specimen);
-		
+
 		waitForCondition(() -> {
 			return listener.foundMatch();
 		}, "Console output timed out");
 		runTestKill(specimen);
 	}
-	
+
 	private class ConsoleEventListener implements FridaEventsListenerAdapter {
-		
+
 		private String match;
 		private boolean foundMatch = false;
-		private String matchingOutput; 
-		
+		private String matchingOutput;
+
 		public ConsoleEventListener(String match) {
 			this.match = match;
 		}
@@ -267,10 +280,11 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 				matchingOutput = output;
 			}
 		}
-		
+
 		public boolean foundMatch() {
 			return foundMatch;
 		}
+
 		public String getMatchingOutput() {
 			return matchingOutput;
 		}
