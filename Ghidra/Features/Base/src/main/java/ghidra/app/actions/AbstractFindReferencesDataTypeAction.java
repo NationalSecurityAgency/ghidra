@@ -25,9 +25,10 @@ import docking.DockingUtils;
 import docking.action.*;
 import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
+import ghidra.app.services.FieldMatcher;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 import ghidra.util.*;
 
 public abstract class AbstractFindReferencesDataTypeAction extends DockingAction {
@@ -89,7 +90,40 @@ public abstract class AbstractFindReferencesDataTypeAction extends DockingAction
 		DataType dataType = getDataType(context);
 		DataType baseDataType = ReferenceUtils.getBaseDataType(dataType);
 		String field = getDataTypeField(baseDataType);
-		Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(baseDataType, field));
+		Swing.runLater(() -> doFindDataTypeUsage(service, baseDataType, field));
 	}
 
+	private void doFindDataTypeUsage(FindAppliedDataTypesService service, DataType dt,
+			String field) {
+
+		if (field == null) {
+			// no field specified; search for all uses of the given type
+			service.findAndDisplayAppliedDataTypeAddresses(dt);
+			return;
+		}
+
+		if (dt instanceof Structure) {
+			Integer offset = getOffsetForDeafaultFieldName((Structure) dt, field);
+			if (offset != null) {
+				// The user has picked a field by it's default name.  In this case we need to
+				// search by offset to ensure we find code that does not use the default name.
+				FieldMatcher fieldMatcher = new FieldMatcher(dt, offset);
+				service.findAndDisplayAppliedDataTypeAddresses(dt, fieldMatcher);
+				return;
+			}
+		}
+
+		service.findAndDisplayAppliedDataTypeAddresses(dt, field);
+	}
+
+	private Integer getOffsetForDeafaultFieldName(Structure structure, String fieldName) {
+		DataTypeComponent[] components = structure.getComponents();
+		for (DataTypeComponent dtc : components) {
+			String defaultName = dtc.getDefaultFieldName();
+			if (fieldName.equals(defaultName)) {
+				return dtc.getOffset();
+			}
+		}
+		return null;
+	}
 }

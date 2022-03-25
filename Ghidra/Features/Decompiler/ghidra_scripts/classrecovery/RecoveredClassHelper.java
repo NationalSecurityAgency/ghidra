@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
+//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS.
 package classrecovery;
 
 import java.util.*;
@@ -162,8 +162,8 @@ public class RecoveredClassHelper {
 
 		extendedFlatAPI = new ExtendedFlatProgramAPI(program, monitor);
 
-		this.classDataTypesCategoryPath =
-			extendedFlatAPI.createDataTypeCategoryPath(CategoryPath.ROOT, DTM_CLASS_DATA_FOLDER_NAME);
+		this.classDataTypesCategoryPath = extendedFlatAPI
+				.createDataTypeCategoryPath(CategoryPath.ROOT, DTM_CLASS_DATA_FOLDER_NAME);
 
 		this.createBookmarks = createBookmarks;
 		this.useShortTemplates = useShortTemplates;
@@ -246,8 +246,8 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to add function to map of class it is contained in some functions are in 
-	 * multiple classes becuase they have references to multiple class vtables either 
+	 * Method to add function to map of class it is contained in some functions are in
+	 * multiple classes becuase they have references to multiple class vtables either
 	 * because they have an inlined parent
 	 * @param functions the given list of functions
 	 * @param recoveredClass the given class
@@ -286,7 +286,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to find all the vftables in the program 
+	 * Method to find all the vftables in the program
 	 * @return list of all vftable symbols
 	 * @throws CancelledException when cancelled
 	 */
@@ -368,9 +368,9 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to create a map with keyset containing all constructor/destructor functions in the 
-	 * given list of classes and associated mapping to list of refAddrPairs for called 
-	 * constructor/destructor functions  
+	 * Method to create a map with keyset containing all constructor/destructor functions in the
+	 * given list of classes and associated mapping to list of refAddrPairs for called
+	 * constructor/destructor functions
 	 * @param recoveredClasses the list of classes
 	 * @throws CancelledException if cancelled
 	 */
@@ -414,13 +414,12 @@ public class RecoveredClassHelper {
 				calledFunction = thunkFunction;
 			}
 			// if thunk, need to use the thunked function to see if it is on list of cds
-			// but always need to use the actual called function to get reference address 
+			// but always need to use the actual called function to get reference address
 			// need to used the thunked function on the hashmap
 			if (allConstructorsAndDestructors.contains(calledFunction)) {
 				// get list of refs to this function from the calling function
-				List<Address> referencesToFunctionBFromFunctionA =
-					extendedFlatAPI.getReferencesToFunctionBFromFunctionA(function,
-						referencedFunction);
+				List<Address> referencesToFunctionBFromFunctionA = extendedFlatAPI
+						.getReferencesToFunctionBFromFunctionA(function, referencedFunction);
 				// add them to list of ref address pairs
 				Iterator<Address> iterator = referencesToFunctionBFromFunctionA.iterator();
 				while (iterator.hasNext()) {
@@ -560,8 +559,8 @@ public class RecoveredClassHelper {
 	 * @return the reference to the class vftable in the given function or null if there isn't one
 	 * @throws CancelledException if cancelled
 	 */
-	public Address getFirstClassVftableReference(RecoveredClass recoveredClass,
-			Function function) throws CancelledException {
+	public Address getFirstClassVftableReference(RecoveredClass recoveredClass, Function function)
+			throws CancelledException {
 
 		List<Address> vftableReferenceList = functionToVftableRefsMap.get(function);
 
@@ -595,11 +594,11 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to get a sorted list of both vftable and call refs to ancestor classes of the given 
+	 * Method to get a sorted list of both vftable and call refs to ancestor classes of the given
 	 * class in the given function
 	 * @param function the given function
 	 * @param recoveredClass the given class
-	 * @return a sorted list of both vftable and call refs to ancestor classes of the given 
+	 * @return a sorted list of both vftable and call refs to ancestor classes of the given
 	 * class in the given function
 	 * @throws CancelledException if cancelled
 	 */
@@ -610,7 +609,7 @@ public class RecoveredClassHelper {
 		Map<Address, RecoveredClass> referenceToClassMapForFunction =
 			getReferenceToClassMap(recoveredClass, function);
 
-		// get a list of all ancestor classes referenced in the map 
+		// get a list of all ancestor classes referenced in the map
 		List<RecoveredClass> classHierarchy = recoveredClass.getClassHierarchy();
 
 		// make a list of all related class references
@@ -632,7 +631,7 @@ public class RecoveredClassHelper {
 
 	/**
 	 * Method to create a map of all references to classes in the given function. Classes are, for this purpose, referenced if they
-	 * a vftable belonging to a class is referenced or if a constructor/destructor function from a class is called 
+	 * a vftable belonging to a class is referenced or if a constructor/destructor function from a class is called
 	 * @param recoveredClass the given class
 	 * @param function the given function
 	 * @return Map of Address references to Class object for the given function
@@ -719,7 +718,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Get the list of resolved functions that had multiple FID possibilities before but could 
+	 * Get the list of resolved functions that had multiple FID possibilities before but could
 	 * be resolved to the correct name.
 	 * @return the list of resolved FID functions
 	 */
@@ -853,7 +852,7 @@ public class RecoveredClassHelper {
 	/**
 	 * Method to get a list of addresses that are references from the given address
 	 * @param address the given address
-	 * @return a list of addresses that are references from the given address 
+	 * @return a list of addresses that are references from the given address
 	 */
 	private List<Address> getReferenceFromAddresses(Address address) {
 
@@ -871,9 +870,9 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Retrieve the first stored vftable from the pcodeOps in the list 
+	 * Retrieve the first stored vftable from the pcodeOps in the list
 	 * @param storedPcodeOps list of offset/PcodeOp pairs
-	 * @return first referenced vftable address 
+	 * @return first referenced vftable address
 	 * @throws CancelledException if cancelled
 	 */
 	public Address getStoredVftableAddress(List<OffsetPcodeOpPair> storedPcodeOps)
@@ -921,7 +920,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to retrieve a list of vftable symbols, from the given list of vftables, in the given 
+	 * Method to retrieve a list of vftable symbols, from the given list of vftables, in the given
 	 * namespace
 	 * @param vftableSymbols the list of all vftable symbols
 	 * @param namespace the given namespace
@@ -985,7 +984,7 @@ public class RecoveredClassHelper {
 	/**
 	 * Method to determine if the given function is an inlined destructor or indeterminate in any class
 	 * @param function the given function
-	 * @return true if the given function is an inlined function in any class, false if it is not an 
+	 * @return true if the given function is an inlined function in any class, false if it is not an
 	 * inlined function in any class
 	 * @throws CancelledException if cancelled
 	 */
@@ -1043,7 +1042,7 @@ public class RecoveredClassHelper {
 		Namespace originalNamespace = function.getParentNamespace();
 
 		// temporarily remove class data type or other empty structures from return and params
-		// so they do not skew the structure contents from FillOutStructureCmd 
+		// so they do not skew the structure contents from FillOutStructureCmd
 		temporarilyReplaceEmptyStructures(function, recoveredClass.getClassNamespace());
 
 		// create maps and updates class member data information using structure and pcode info  returned
@@ -1100,9 +1099,10 @@ public class RecoveredClassHelper {
 		if (!vftableClass.equals(recoveredClass)) {
 
 			if (DEBUG) {
-				Msg.debug(this, "updating struct for " + recoveredClass.getName() +
-					" but first vftable in function " + function.getEntryPoint().toString() +
-					" is in class " + vftableClass.getName());
+				Msg.debug(this,
+					"updating struct for " + recoveredClass.getName() +
+						" but first vftable in function " + function.getEntryPoint().toString() +
+						" is in class " + vftableClass.getName());
 			}
 
 			return;
@@ -1123,7 +1123,7 @@ public class RecoveredClassHelper {
 	public void getStructureFromDecompilerPcode(RecoveredClass recoveredClass, Function function,
 			Address firstVftableReference) throws CancelledException {
 
-		// get the decompiler highFunction 
+		// get the decompiler highFunction
 		HighFunction highFunction = decompilerUtils.getHighFunction(function);
 
 		if (highFunction == null) {
@@ -1133,7 +1133,7 @@ public class RecoveredClassHelper {
 
 		List<HighVariable> highVariables = new ArrayList<HighVariable>();
 
-		// if there are params add the first or the "this" param to the list to be checked first 
+		// if there are params add the first or the "this" param to the list to be checked first
 		// It is the most likely to store the vftablePtr
 		if (highFunction.getFunctionPrototype().getNumParams() > 0) {
 
@@ -1145,8 +1145,8 @@ public class RecoveredClassHelper {
 		}
 
 		// add the other high variables that store vftable pointer
-		highVariables.addAll(
-			getVariableThatStoresVftablePointer(highFunction, firstVftableReference));
+		highVariables
+				.addAll(getVariableThatStoresVftablePointer(highFunction, firstVftableReference));
 		Iterator<HighVariable> highVariableIterator = highVariables.iterator();
 
 		Address vftableAddress = null;
@@ -1194,7 +1194,7 @@ public class RecoveredClassHelper {
 
 	/**
 	 * Method to determine which variable in the decompiler stores the vftable address
-	 * @param highFunction the decompiler high function 
+	 * @param highFunction the decompiler high function
 	 * @param vftableReference the address that points to a vftable
 	 * @return the list of variables in the given function that store the vftable address
 	 * @throws CancelledException if cancelled
@@ -1262,7 +1262,8 @@ public class RecoveredClassHelper {
 				continue;
 			}
 
-			PointerDataType ptrUndefined = extendedFlatAPI.createPointerToUndefinedDataType(dataType);
+			PointerDataType ptrUndefined =
+				extendedFlatAPI.createPointerToUndefinedDataType(dataType);
 			if (ptrUndefined != null) {
 				function.getParameter(i).setDataType(ptrUndefined, SourceType.ANALYSIS);
 			}
@@ -1282,7 +1283,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to determine if the given possible ancestor is an ancestor of any of the listed classes 
+	 * Method to determine if the given possible ancestor is an ancestor of any of the listed classes
 	 * @param recoveredClasses List of classes
 	 * @param possibleAncestor possible ancestor of one of the listed classes
 	 * @return true if ancestor of one of the listed classes, false otherwise
@@ -1356,7 +1357,7 @@ public class RecoveredClassHelper {
 	/**
 	 * Method to get the listing address that the given PcodeOp is associated with
 	 * @param pcodeOp the given PcodeOp
-	 * @return the address the given PcodeOp is associated with 
+	 * @return the address the given PcodeOp is associated with
 	 */
 	public Address getTargetAddressFromPcodeOp(PcodeOp pcodeOp) {
 		return pcodeOp.getSeqnum().getTarget();
@@ -1364,12 +1365,7 @@ public class RecoveredClassHelper {
 
 	public Function getCalledFunctionFromCallPcodeOp(PcodeOp calledPcodeOp) {
 
-		Function calledFunction =
-			api.getFunctionAt(calledPcodeOp.getInput(0).getAddress());
-		if (calledFunction == null) {
-			return null;
-		}
-
+		Function calledFunction = api.getFunctionAt(calledPcodeOp.getInput(0).getAddress());
 		return calledFunction;
 	}
 
@@ -1709,7 +1705,7 @@ public class RecoveredClassHelper {
 	 * Method to retrieve a single common function on both lists
 	 * @param list1 first list of functions
 	 * @param list2 second list of functions
-	 * @return single function if there is one function on both lists, null if there are none or 
+	 * @return single function if there is one function on both lists, null if there are none or
 	 * more than one
 	 */
 	public Function getFunctionOnBothLists(List<Function> list1, List<Function> list2) {
@@ -1770,7 +1766,8 @@ public class RecoveredClassHelper {
 			ReferenceAddressPair refAddrPair = iterator.next();
 			Address sourceAddr = refAddrPair.getSource();
 			if (sourceAddr.compareTo(maxVftableReference) > 0) {
-				Function calledFunction = extendedFlatAPI.getFunctionAt(refAddrPair.getDestination());
+				Function calledFunction =
+					extendedFlatAPI.getFunctionAt(refAddrPair.getDestination());
 				if (calledFunction != null) {
 					possibleParentDestructors.add(calledFunction);
 				}
@@ -1821,7 +1818,7 @@ public class RecoveredClassHelper {
 			List<Function> possibleParentConstructors =
 				getPossibleParentConstructors(constDestFunction);
 
-			// remove any known destructors since they can't also be constructors - rarely these 
+			// remove any known destructors since they can't also be constructors - rarely these
 			// show up on possible const list
 			possibleParentConstructors.removeAll(parentDestructors);
 
@@ -1834,18 +1831,18 @@ public class RecoveredClassHelper {
 				continue;
 			}
 
-			// based on call order get possible parent destructors for the given function 
+			// based on call order get possible parent destructors for the given function
 			List<Function> possibleParentDestructors =
 				getPossibleParentDestructors(constDestFunction);
 
-			// remove any known constructors since they can't also be destructors - rarely these 
+			// remove any known constructors since they can't also be destructors - rarely these
 			// show up on possible dest list
 			possibleParentDestructors.removeAll(parentConstructors);
 
 			Function parentDestructor =
 				getFunctionOnBothLists(possibleParentDestructors, parentConstDestFunctions);
 
-			// another sanity check - make sure child function isn't a known constructor			
+			// another sanity check - make sure child function isn't a known constructor
 			if (parentDestructor != null && !childConstructors.contains(constDestFunction)) {
 				childParentDestructorMap.put(constDestFunction, parentDestructor);
 				continue;
@@ -1866,7 +1863,7 @@ public class RecoveredClassHelper {
 			}
 		}
 
-		// once all checks pass, add both the child and parent constructors to their class 
+		// once all checks pass, add both the child and parent constructors to their class
 		// constructor list and remove from the indeterminate lists
 		// the addConstructor method processes the offsets and types for the initialized class data
 		Iterator<Function> childConstructorIterator = constructorKeySet.iterator();
@@ -1896,8 +1893,8 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to retrieve all types of class destructors including normal destructors, non-this 
-	 * destructors and inline destructors(does not include deleting destructors since they are 
+	 * Method to retrieve all types of class destructors including normal destructors, non-this
+	 * destructors and inline destructors(does not include deleting destructors since they are
 	 * really a vfunction)
 	 * @param recoveredClass the given class
 	 * @return the list of all destructors for the given class
@@ -1913,7 +1910,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to retrieve all types of class constructors including normal constructors and inline 
+	 * Method to retrieve all types of class constructors including normal constructors and inline
 	 * constructors
 	 * @param recoveredClass the given class
 	 * @return the list of all constructors for the given class
@@ -1952,7 +1949,7 @@ public class RecoveredClassHelper {
 		if (recoveredClass.getOrderToVftableMap().size() == 0) {
 			createVftableOrderMapping(recoveredClass);
 		}
-		
+
 		recoveredClass.addConstructor(constructorFunction);
 		addToAllConstructors(constructorFunction);
 	}
@@ -1962,7 +1959,7 @@ public class RecoveredClassHelper {
 	 * @param recoveredClass given class
 	 * @param inlinedConstructorFunction given function
 	 * @throws InvalidInputException if issues setting return type
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace 
+	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 */
 	public void addInlinedConstructorToClass(RecoveredClass recoveredClass,
 			Function inlinedConstructorFunction)
@@ -1977,7 +1974,7 @@ public class RecoveredClassHelper {
 	 * @param recoveredClass given class
 	 * @param destructorFunction given destructor function
 	 * @throws InvalidInputException if issues setting return type
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace 
+	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 */
 	public void addDestructorToClass(RecoveredClass recoveredClass, Function destructorFunction)
 			throws InvalidInputException, DuplicateNameException {
@@ -2061,7 +2058,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param referenceToClassMap map of references to the class that contains the referenced function
 	 * @param referencesToConstructors list of addresses referring to constructors
 	 * @throws CancelledException if cancelled
@@ -2080,7 +2077,8 @@ public class RecoveredClassHelper {
 			Address constructorReference = constructorIterator.next();
 			RecoveredClass recoveredClass = referenceToClassMap.get(constructorReference);
 
-			Function constructor = extendedFlatAPI.getReferencedFunction(constructorReference, true);
+			Function constructor =
+				extendedFlatAPI.getReferencedFunction(constructorReference, true);
 
 			if (recoveredClass.getIndeterminateList().contains(constructor)) {
 				addConstructorToClass(recoveredClass, constructor);
@@ -2223,8 +2221,8 @@ public class RecoveredClassHelper {
 	/**
 	 * Method to get the address that references the first vftable in the given function
 	 * @param function the given function
-	 * @return the address in the given function that references the first referenced vftable or 
-	 * null if no vftable is referenced in the given function 
+	 * @return the address in the given function that references the first referenced vftable or
+	 * null if no vftable is referenced in the given function
 	 */
 	public Address getFirstVftableReferenceInFunction(Function function) {
 
@@ -2388,7 +2386,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to get the total number of deleting destructors in the given list of classes 
+	 * Method to get the total number of deleting destructors in the given list of classes
 	 * @param recoveredClasses the list of classes
 	 * @return the total number of deleting destructors in the given list of classes
 	 * @throws CancelledException if cancelled
@@ -2409,7 +2407,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to retrieve the total number of clone functions assigned to all the classes 
+	 * Method to retrieve the total number of clone functions assigned to all the classes
 	 * @param recoveredClasses List of classes
 	 * @return total number of clone functions assigned to classes
 	 * @throws CancelledException if cancelled
@@ -2479,10 +2477,10 @@ public class RecoveredClassHelper {
 
 	/**
 	 * Method to get a list of functions from the list of classes that could not be determined whether they
-	 * were constructors or destructors 
+	 * were constructors or destructors
 	 * @param recoveredClasses the list of classes
 	 * @return list of functions from the list of classes that could not be determined whether they
-	 * were constructors or destructors 
+	 * were constructors or destructors
 	 * @throws CancelledException if cancelled
 	 */
 	public List<Function> getRemainingIndeterminates(List<RecoveredClass> recoveredClasses)
@@ -2506,7 +2504,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param referenceToClassMap map from reference to class the referenced function is in
 	 * @param referencesToDestructors list of addresses referring to destructors
 	 * @throws CancelledException if cancelled
@@ -2584,10 +2582,10 @@ public class RecoveredClassHelper {
 	/**
 	 * Method to determine if a class's identified vbase_destructor is valid or not
 	 * If the class has both a vbase destructor and a regular destructor and the class has
-	 * a non-virtual ancestor, and either the class is the lowest child or has a child with a 
+	 * a non-virtual ancestor, and either the class is the lowest child or has a child with a
 	 * vbase_destructor then it is a valid vbase_destructor. Otherwise, it isn't.
 	 * @param recoveredClass the given class object
-	 * @return true if class has a vbase destructor, false if not 
+	 * @return true if class has a vbase destructor, false if not
 	 */
 	private boolean hasVbaseDestructor(RecoveredClass recoveredClass) throws CancelledException {
 		Function vBaseDestructor = recoveredClass.getVBaseDestructor();
@@ -2613,10 +2611,10 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to determine if the given class has a child class with both a vbase destructor and a 
+	 * Method to determine if the given class has a child class with both a vbase destructor and a
 	 * regular destructor
 	 * @param recoveredClass the given class
-	 * @return true if the given class has a child class with both a vbase destructor and a regular 
+	 * @return true if the given class has a child class with both a vbase destructor and a regular
 	 * destructor, false otherwise
 	 * @throws CancelledException if cancelled
 	 */
@@ -2650,8 +2648,8 @@ public class RecoveredClassHelper {
 		String className = namespace.getName();
 		String classNameWithNamespace = namespace.getName(true);
 
-		CategoryPath classPath = extendedFlatAPI.createDataTypeCategoryPath(classDataTypesCategoryPath,
-			classNameWithNamespace);
+		CategoryPath classPath = extendedFlatAPI
+				.createDataTypeCategoryPath(classDataTypesCategoryPath, classNameWithNamespace);
 
 		RecoveredClass newClass =
 			new RecoveredClass(className, classPath, namespace, dataTypeManager);
@@ -2672,7 +2670,7 @@ public class RecoveredClassHelper {
 	 * 5. add mapping from vftableAddress to class
 	 * 6. add list of const/dest functions to RecoveredClass object
 	 * 7. update list of all const/dest functions in currenetProgram
-	 * 8. set RecoveredClass indeterminate list to const/dest list 
+	 * 8. set RecoveredClass indeterminate list to const/dest list
 	 * 9. update list of all indeterminate const/dest
 	 * @param vftableSymbolList List of vftable symbols
 	 * @param allowNullFunctionPtrs if true, allow existance of null pointers in vftable
@@ -2714,7 +2712,7 @@ public class RecoveredClassHelper {
 			}
 
 			// Check to see if already have an existing RecoveredClass object for the
-			// class associated with the current vftable. 
+			// class associated with the current vftable.
 			RecoveredClass recoveredClass = getClass(vftableNamespace);
 
 			if (recoveredClass == null) {
@@ -2758,7 +2756,7 @@ public class RecoveredClassHelper {
 			recoveredClass.addIndeterminateConstructorOrDestructorList(
 				possibleConstructorDestructorsForThisClass);
 
-			// Add them to the list of all constructors and destructors in program			
+			// Add them to the list of all constructors and destructors in program
 			updateAllConstructorsAndDestructorsList(possibleConstructorDestructorsForThisClass);
 
 		} // end of looping over vfTables
@@ -2806,7 +2804,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to promote the namespace is a class namespace. 
+	 * Method to promote the namespace is a class namespace.
 	 * @return true if namespace is (now) a class namespace or false if it could not be promoted.
 	 */
 	private Namespace promoteToClassNamespace(Namespace namespace) {
@@ -3014,8 +3012,8 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to find references to vftables that are not in functions, either in undefined areas or 
-	 * instructions that are not in functions. 
+	 * Method to find references to vftables that are not in functions, either in undefined areas or
+	 * instructions that are not in functions.
 	 * @param vftableSymbols List of vftable symbols
 	 * @return List of addresses where vftables are referenced but are not in a function
 	 * @throws CancelledException when cancelled
@@ -3096,10 +3094,10 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to add a search pattern, to the searcher, for the set of bytes representing a vftable 
+	 * Method to add a search pattern, to the searcher, for the set of bytes representing a vftable
 	 * address
 	 * @param searcher the MemoryBytePatternSearcher
-	 * @param notInFunctionVftableRefs a list addresses of vftable references that are not contained 
+	 * @param notInFunctionVftableRefs a list addresses of vftable references that are not contained
 	 * in a function
 	 * @param newFunctions a list of newly created functions that reference the given vftable address
 	 * @param vftableAddress the given vftable address
@@ -3135,10 +3133,11 @@ public class RecoveredClassHelper {
 						notInFunctionVftableRefs.add(addr);
 					}
 					else {
-						boolean functionCreated = extendedFlatAPI.createFunction(program, addr);
-							if (!functionCreated) {
-								notInFunctionVftableRefs.add(addr);
-							}
+						boolean functionCreated = extendedFlatAPI.createFunction(prog, addr);
+						if (!functionCreated) {
+							notInFunctionVftableRefs.add(addr);
+						}
+
 					}
 				}
 			}
@@ -3157,7 +3156,7 @@ public class RecoveredClassHelper {
 	 * Method to create a string buffer containing class parents in the correct order. The format
 	 * of the parent string is of the format "class <class_name> : <parent1_spec> : <parent2_spec> ...
 	 * where parentN_spec = "virtual (only if inherited virtually) <parentN_name>"
-	 * Examples: 
+	 * Examples:
 	 * The class Pet with no parents would be "class Pet"
 	 * The class Cat with non-virtual parent Pet would be "class Cat : Pet"
 	 * The class A with virtual parent B and non-virtual parent C would be "class A : virtual B : C"
@@ -3215,9 +3214,8 @@ public class RecoveredClassHelper {
 		List<RecoveredClass> parentClasses = recoveredClass.getClassHierarchy();
 
 		if (parentClasses.isEmpty()) {
-			throw new Exception(
-				recoveredClass.getClassNamespace().getName(true) +
-					" should not have an empty class hierarchy");
+			throw new Exception(recoveredClass.getClassNamespace().getName(true) +
+				" should not have an empty class hierarchy");
 		}
 
 		// if size one it only includes self
@@ -3294,7 +3292,7 @@ public class RecoveredClassHelper {
 			// listing has void too, otherwise, leave it as is, probably a void
 			String returnType = getReturnTypeFromDecompiler(constructorFunction);
 
-			// Set error bookmark, add error message, and  get the listing return type if the 
+			// Set error bookmark, add error message, and  get the listing return type if the
 			// decompiler return type is null
 			if (returnType == null) {
 
@@ -3303,8 +3301,9 @@ public class RecoveredClassHelper {
 
 				Msg.debug(this, msg1 + " at " + constructorFunction.getEntryPoint() + msg2);
 
-				program.getBookmarkManager().setBookmark(constructorFunction.getEntryPoint(),
-					BookmarkType.ERROR, "Decompiler Error", msg1 + msg2);
+				program.getBookmarkManager()
+						.setBookmark(constructorFunction.getEntryPoint(), BookmarkType.ERROR,
+							"Decompiler Error", msg1 + msg2);
 
 				// get the return type from the listing and in some cases it will
 				// indicate the correct type to help determine the below type to add
@@ -3404,8 +3403,7 @@ public class RecoveredClassHelper {
 	 * @throws Exception when cancelled
 	 */
 	public void addVbaseDestructorsToClassNamespace(RecoveredClass recoveredClass,
-			Structure classStruct)
-			throws Exception {
+			Structure classStruct) throws Exception {
 
 		Namespace classNamespace = recoveredClass.getClassNamespace();
 
@@ -3561,7 +3559,7 @@ public class RecoveredClassHelper {
 				if (!isReplaceableType(function.getEntryPoint(), baseDataType)) {
 					return;
 				}
-				// create copy of existing one 
+				// create copy of existing one
 				DataType baseDataTypeCopy = baseDataType.copy(dataTypeManager);
 
 				renameDataType(baseDataTypeCopy, baseDataType.getName() + "_REPLACED");
@@ -3619,23 +3617,23 @@ public class RecoveredClassHelper {
 			return true;
 		}
 
-		// test to see if the data type is an empty structure with "PlaceHolder Class Structure" in 
-		// the description 
+		// test to see if the data type is an empty structure with "PlaceHolder Class Structure" in
+		// the description
 		Structure structure = (Structure) dataType;
 		if (structure.isNotYetDefined() &&
 			structure.getDescription().equals("PlaceHolder Class Structure")) {
 			return true;
 		}
 
-		if (program.getBookmarkManager().getBookmark(address, BookmarkType.ANALYSIS,
-			"Function ID Analyzer") != null) {
+		if (program.getBookmarkManager()
+				.getBookmark(address, BookmarkType.ANALYSIS, "Function ID Analyzer") != null) {
 			return true;
 		}
 		return false;
 	}
 
 	/**
-	 * Method to remove existing class structures from the data type manager that were replaced by 
+	 * Method to remove existing class structures from the data type manager that were replaced by
 	 * newly created class structures and that have the "_REPLACED" suffix on them
 	 * @param recoveredClasses list of given recovered classes
 	 * @param removeNonEmpty if true, remove not only the empty replaced class structures but
@@ -3652,10 +3650,10 @@ public class RecoveredClassHelper {
 		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
 
-			// first get the new class structure and verify it exists - don't remove others if 
+			// first get the new class structure and verify it exists - don't remove others if
 			// new one doesn't exist
-			DataType classStructureDataType = dataTypeManager.getDataType(
-				recoveredClass.getClassPath(), recoveredClass.getName());
+			DataType classStructureDataType = dataTypeManager
+					.getDataType(recoveredClass.getClassPath(), recoveredClass.getName());
 			if (classStructureDataType == null) {
 				continue;
 			}
@@ -3798,7 +3796,8 @@ public class RecoveredClassHelper {
 
 			if (symbol != null && symbol.getSource() == SourceType.ANALYSIS &&
 				!symbol.getName().equals(name) && !symbol.getParentNamespace().equals(namespace)) {
-				// add to list of bad namespaces to be cleaned up later 
+
+				// add to list of bad namespaces to be cleaned up later
 				Namespace parentNamespace = symbol.getParentNamespace();
 				if (!parentNamespace.isGlobal()) {
 					badFIDNamespaces.add(parentNamespace);
@@ -3816,7 +3815,7 @@ public class RecoveredClassHelper {
 			}
 			return;
 		}
-		// FID with multiple matches - either all FID_conflicts or one common name 
+		// FID with multiple matches - either all FID_conflicts or one common name
 		// since no good namespace all need to be removed but if there is a good base name
 		// add FID
 		if (bookmarkComment.contains("Multiple Matches")) {
@@ -3863,7 +3862,7 @@ public class RecoveredClassHelper {
 			throws CancelledException, InvalidInputException, DuplicateNameException,
 			CircularDependencyException {
 
-		// find bad structure parameter data types 
+		// find bad structure parameter data types
 		List<Structure> badStructureDataTypes = findBadParameterDataTypes(function, namespace);
 
 		// find bad structure return data types
@@ -3877,7 +3876,7 @@ public class RecoveredClassHelper {
 		if (badStructureDataTypes.size() > 0) {
 			// find all functions that call this function and do the same
 			fixBadSignatures(function, badStructureDataTypes);
-			// add all the new bad dts to the list of bad ones 
+			// add all the new bad dts to the list of bad ones
 			Iterator<Structure> badStructuresIterator = badStructureDataTypes.iterator();
 			while (badStructuresIterator.hasNext()) {
 				monitor.checkCanceled();
@@ -3940,7 +3939,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to find and add to permanent removal list any incorrect empty structure params 
+	 * Method to find and add to permanent removal list any incorrect empty structure params
 	 * @param function the function to check for bad params
 	 * @param namespace the correct parent namespace of function
 	 * @throws CancelledException when cancelled
@@ -3968,7 +3967,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to replace the given bad structure data types with undefined data types of same size 
+	 * Method to replace the given bad structure data types with undefined data types of same size
 	 * for the given functions parameters
 	 * @param function the function to fix
 	 * @param badStructureDataTypes the list of bad structure data types to replace if found
@@ -4031,8 +4030,8 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to fix a bad return type if it is one of the bad structure data types on the given 
-	 * list. The list was previously generated from functions that had incorrect FID signatures 
+	 * Method to fix a bad return type if it is one of the bad structure data types on the given
+	 * list. The list was previously generated from functions that had incorrect FID signatures
 	 * placed on them that this script recognized and corrected.
 	 * @param function the given function
 	 * @param badStructureDataTypes a list of bad structure data types
@@ -4148,12 +4147,12 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to determine if the given constructor function calls any non-parent constructors 
+	 * Method to determine if the given constructor function calls any non-parent constructors
 	 * before the vftable refererence
 	 * @param recoveredClass the given class
 	 * @param constructor the given constructor function
-	 * @param vftableReference the address of the reference to the class vftable 
-	 * @return true if the given constructor function calls any non-parent constructors before the 
+	 * @param vftableReference the address of the reference to the class vftable
+	 * @return true if the given constructor function calls any non-parent constructors before the
 	 * vftable refererence, false otherwise
 	 * @throws CancelledException if cancelled
 	 */
@@ -4180,7 +4179,7 @@ public class RecoveredClassHelper {
 				return false;
 			}
 
-			// if call is before vtable and is not an inherited constructor and not the operator_new 
+			// if call is before vtable and is not an inherited constructor and not the operator_new
 			// then return true
 			Address calledAddress = refPair.getDestination();
 			Function calledFunction = api.getFunctionAt(calledAddress);
@@ -4206,7 +4205,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to find class clone functions 
+	 * Method to find class clone functions
 	 * @param recoveredClasses List of RecoveredClass objects
 	 * @throws CancelledException when script is cancelled
 	 * @throws Exception if issues making label
@@ -4222,8 +4221,7 @@ public class RecoveredClassHelper {
 
 			RecoveredClass recoveredClass = recoveredClassIterator.next();
 
-			List<Function> allOtherConstructors =
-				new ArrayList<Function>(getAllConstructors());
+			List<Function> allOtherConstructors = new ArrayList<Function>(getAllConstructors());
 			allOtherConstructors.removeAll(recoveredClass.getConstructorList());
 
 			// iterate through the vtable functions
@@ -4406,7 +4404,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to remove the empty namespaces and unreferenced empty class structures that 
+	 * Method to remove the empty namespaces and unreferenced empty class structures that
 	 *  that were incorrectly applied by FID
 	 * @throws CancelledException when script is cancelled
 	 */
@@ -4454,7 +4452,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to remove the incorrectly applied and unreferenced empty structures that are not used 
+	 * Method to remove the incorrectly applied and unreferenced empty structures that are not used
 	 * @throws CancelledException when script is cancelled
 	 */
 	private void removeEmptyStructures() throws CancelledException {
@@ -4464,10 +4462,15 @@ public class RecoveredClassHelper {
 
 			monitor.checkCanceled();
 
-			Structure badStructure = badStructureIterator.next();
 			// if not used by anything remove it
+			Structure badStructure = badStructureIterator.next();
 			ListAccumulator<LocationReference> accumulator = new ListAccumulator<>();
-			ReferenceUtils.findDataTypeReferences(accumulator, badStructure, null, program, true,
+
+			// TODO Discovering types can be very slow for large binaries.  Discovering types
+			// should not be needed.   Passing false here will still find all applied uses of the
+			// given structure.
+			boolean discoverTypes = true;
+			ReferenceUtils.findDataTypeReferences(accumulator, badStructure, program, discoverTypes,
 				monitor);
 
 			List<LocationReference> referenceList = accumulator.asList();
@@ -4508,7 +4511,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to create empty vftable structures before class struct is created so that 
+	 * Method to create empty vftable structures before class struct is created so that
 	 * they can be added to the class structure. Afterwords, they are filled in with pointers
 	 * to vftable functions
 	 * @param recoveredClass the given class
@@ -4631,9 +4634,10 @@ public class RecoveredClassHelper {
 	 * @throws Exception if other exception
 	 */
 	public void fillInAndApplyVftableStructAndNameVfunctions(RecoveredClass recoveredClass,
-			Map<Address, DataType> vftableToStructureMap, Structure classStruct) throws CancelledException, Exception {
+			Map<Address, DataType> vftableToStructureMap, Structure classStruct)
+			throws CancelledException, Exception {
 
-		//create function definition for each virtual function and put in vftable structure and 
+		//create function definition for each virtual function and put in vftable structure and
 		// data subfolder
 		CategoryPath classPath = recoveredClass.getClassPath();
 
@@ -4660,7 +4664,6 @@ public class RecoveredClassHelper {
 				nameVfunctions(recoveredClass, vftableAddress, vftableStructureName);
 			}
 
-
 			List<Function> vFunctions = recoveredClass.getVirtualFunctions(vftableAddress);
 			int vfunctionNumber = 1;
 			Iterator<Function> vfIterator = vFunctions.iterator();
@@ -4683,7 +4686,6 @@ public class RecoveredClassHelper {
 					replaceClassStructure(vfunction, recoveredClass.getName(), classStruct);
 				}
 
-
 				String forClassSuffix = getForClassSuffix(vftableStructureName);
 				String functionDefName = vfunction.getName();
 				int indexOfSuffix = functionDefName.indexOf(forClassSuffix);
@@ -4695,9 +4697,8 @@ public class RecoveredClassHelper {
 				}
 
 				// get the classPath of highest level parent with vfAddress in their vftable
-				classPath =
-					getCategoryPathForFunctionSignature(vfunction, functionDefName, recoveredClass,
-						vftableAddress);
+				classPath = getCategoryPathForFunctionSignature(vfunction, functionDefName,
+					recoveredClass, vftableAddress);
 
 				Symbol vfunctionSymbol = symbolTable.getPrimarySymbol(vfunction.getEntryPoint());
 				Namespace parentNamespace = vfunctionSymbol.getParentNamespace();
@@ -4790,7 +4791,7 @@ public class RecoveredClassHelper {
 			vftableStruct = (Structure) dataTypeManager.addDataType(vftableStruct,
 				DataTypeConflictHandler.DEFAULT_HANDLER);
 
-			// clear the array or unprocessed structure at the current vftable location and 
+			// clear the array or unprocessed structure at the current vftable location and
 			// apply the structure. It has to be one or the other and the correct length
 			// because of the check at the beginning of the script that checked for either
 			// array or structure of pointers and got size from them initially
@@ -5030,7 +5031,7 @@ public class RecoveredClassHelper {
 		}
 
 		// else class has normal single inheritance so just search for the matching function definition
-		// in one of the class's ancestors and return the ancestor class it is found in or if not found, 
+		// in one of the class's ancestors and return the ancestor class it is found in or if not found,
 		// return the current class
 		List<RecoveredClass> classHierarchy = recoveredClass.getClassHierarchy();
 
@@ -5038,7 +5039,7 @@ public class RecoveredClassHelper {
 		// to search only the ancestors
 		Iterator<RecoveredClass> classHierarchyIterator = classHierarchy.listIterator(1);
 
-		// TODO: eventually use the function definition to do an equivalence check amongst 
+		// TODO: eventually use the function definition to do an equivalence check amongst
 		// possible same-name vfunctions to make sure getting the correct one
 		// in this case need to update the below check in dtMan to look through the .conflicts
 //		FunctionDefinition functionDataType = new FunctionDefinitionDataType(vfunction, true);
@@ -5070,7 +5071,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param functionDefDataType the function definition
 	 * @param classPath the given data type manager classPath
 	 * @return pointer to function signature data type
@@ -5085,7 +5086,7 @@ public class RecoveredClassHelper {
 
 		PointerDataType functionPointerDataType;
 
-		// If the given function definition doesn't exist in this folder make a new one and 
+		// If the given function definition doesn't exist in this folder make a new one and
 		// make a pointer to it
 		if (existingDataType == null) {
 			functionDefDataType.setCategoryPath(classPath);
@@ -5098,6 +5099,7 @@ public class RecoveredClassHelper {
 		return functionPointerDataType;
 
 	}
+
 	/**
 	 * Method to add precomment inside functions containing inlined constructors at approximate
 	 * address of start of inlined function
@@ -5154,7 +5156,8 @@ public class RecoveredClassHelper {
 		while (inlinedDestructorIterator.hasNext()) {
 			monitor.checkCanceled();
 			Function destructorFunction = inlinedDestructorIterator.next();
-			Address classVftableRef = getFirstClassVftableReference(recoveredClass, destructorFunction);
+			Address classVftableRef =
+				getFirstClassVftableReference(recoveredClass, destructorFunction);
 
 			if (classVftableRef == null) {
 				continue;
@@ -5320,8 +5323,7 @@ public class RecoveredClassHelper {
 						extendedFlatAPI.getCalledFunctionByCallOrder(deletingDestructor, 1);
 					if (firstCalledFunction == null ||
 						!recoveredClass.getConstructorOrDestructorFunctions()
-								.contains(
-									firstCalledFunction)) {
+								.contains(firstCalledFunction)) {
 						return null;
 					}
 
@@ -5361,7 +5363,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param recoveredClass the given class
 	 * @param virtualFunction the given virtual function
 	 * @param operatorDeleteFunction the operator delete function
@@ -5425,7 +5427,8 @@ public class RecoveredClassHelper {
 				continue;
 			}
 
-			Function referencedFunction = extendedFlatAPI.getReferencedFunction(codeUnitAddress, true);
+			Function referencedFunction =
+				extendedFlatAPI.getReferencedFunction(codeUnitAddress, true);
 			if (referencedFunction == null) {
 				continue;
 			}
@@ -5456,12 +5459,10 @@ public class RecoveredClassHelper {
 				if (parentDestructorClasses.size() == 1) {
 					if (!parentDestructorClasses.get(0)
 							.getDestructorList()
-							.contains(
-								parentDestructor)) {
+							.contains(parentDestructor)) {
 						addDestructorToClass(parentDestructorClasses.get(0), parentDestructor);
 						parentDestructorClasses.get(0)
-								.removeIndeterminateConstructorOrDestructor(
-									parentDestructor);
+								.removeIndeterminateConstructorOrDestructor(parentDestructor);
 					}
 				}
 				// if more than one parent class for this function then let either inline or multi-class
@@ -5484,10 +5485,10 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to remove functions from the class constructor/destructor lists (and the overall list) 
-	 * that are not self-contained constructor/destructor functions. Add them to the list of 
+	 * Method to remove functions from the class constructor/destructor lists (and the overall list)
+	 * that are not self-contained constructor/destructor functions. Add them to the list of
 	 * functions that contain inlined constructors or destructors.
-	 * NOTE: this must be called after the global const/dest list is created but before 
+	 * NOTE: this must be called after the global const/dest list is created but before
 	 * functions get added to the other class lists
 	 * @param recoveredClasses list of classes to process
 	 * @throws CancelledException if cancelled
@@ -5526,8 +5527,8 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to add the structure components from the given structureToAdd from the given starting 
-	 * offset to the given ending offset of the  to the given structure at the given offset 
+	 * Method to add the structure components from the given structureToAdd from the given starting
+	 * offset to the given ending offset of the  to the given structure at the given offset
 	 * @param structure the structure to add to
 	 * @param structureToAdd the structure to add a subset of components from to the given structure
 	 * @param startOffset the starting offset of where to start adding in the container structure
@@ -5538,7 +5539,7 @@ public class RecoveredClassHelper {
 	public boolean addIndividualComponentsToStructure(Structure structure, Structure structureToAdd,
 			int startOffset, int dataLength) throws CancelledException {
 
-		// this check does not allow growing of structure. It only allows adding to the structure if 
+		// this check does not allow growing of structure. It only allows adding to the structure if
 		// the block of components to add will fit at the given offset
 		if (!EditStructureUtils.canAdd(structure, startOffset, dataLength, false, monitor)) {
 			return false;
@@ -5548,7 +5549,7 @@ public class RecoveredClassHelper {
 
 			monitor.checkCanceled();
 
-			// only copy the components up to the given total dataLength to copy 
+			// only copy the components up to the given total dataLength to copy
 			if ((dataTypeComponent.getOffset() + dataTypeComponent.getLength()) > dataLength) {
 				break;
 			}
@@ -5559,7 +5560,6 @@ public class RecoveredClassHelper {
 		}
 		return true;
 	}
-
 
 	/**
 	 * Method to add alignment to the given length based on the default program address size
@@ -5613,12 +5613,10 @@ public class RecoveredClassHelper {
 		List<Structure> virtualParentClassStructures =
 			getVirtualParentClassStructures(recoveredClass);
 
-		// if there are no virtual parents there will be no internal data		
+		// if there are no virtual parents there will be no internal data
 		if (virtualParentClassStructures.size() == 0) {
 			return NONE;
 		}
-
-
 
 		DataTypeComponent[] definedComponents = structure.getDefinedComponents();
 
@@ -5654,13 +5652,13 @@ public class RecoveredClassHelper {
 			}
 
 			// if the current offset is differnet than the next offset then it is after the gap
-			// of undefineds and we have found the offset we need to return	
+			// of undefineds and we have found the offset we need to return
 			if (currentOffset != nextOffset) {
 				return currentOffset;
 			}
 
-			// if the currentOffset equals what we calculated as the next offset then the 
-			// current data is contiguous to the last data so no undefineds between them and 
+			// if the currentOffset equals what we calculated as the next offset then the
+			// current data is contiguous to the last data so no undefineds between them and
 			// can continue looking for the gap of undefines
 
 			nextOffset = currentOffset + dataTypeComponent.getLength();
@@ -5781,8 +5779,7 @@ public class RecoveredClassHelper {
 
 		if (recoveredClass.getClassOffsetToVftableMap()
 				.values()
-				.containsAll(
-					recoveredClass.getVftableAddresses())) {
+				.containsAll(recoveredClass.getVftableAddresses())) {
 			return true;
 		}
 		return false;
@@ -5818,7 +5815,7 @@ public class RecoveredClassHelper {
 					continue;
 				}
 
-				// get first called function and verify is not a c/d function in current class or 
+				// get first called function and verify is not a c/d function in current class or
 				// any class get second called function and verify it is operator delete
 				Function firstCalledFunction =
 					extendedFlatAPI.getCalledFunctionByCallOrder(vFunction, 1);
@@ -5826,8 +5823,7 @@ public class RecoveredClassHelper {
 					extendedFlatAPI.getCalledFunctionByCallOrder(vFunction, 2);
 				if (firstCalledFunction != null && secondCalledFunction != null &&
 					!recoveredClass.getConstructorOrDestructorFunctions()
-							.contains(
-								firstCalledFunction) &&
+							.contains(firstCalledFunction) &&
 					secondCalledFunction.equals(operator_delete) &&
 					!getAllConstructorsAndDestructors().contains(vFunction)) {
 					recoveredClass.addDeletingDestructor(vFunction);
@@ -5910,7 +5906,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to determine if the vftable reference(s) in a constructor are not in the first code 
+	 * Method to determine if the vftable reference(s) in a constructor are not in the first code
 	 * block for constructors that have more than one block
 	 * @param recoveredClasses List of RecoveredClass objects
 	 * @throws CancelledException when cancelled
@@ -5950,9 +5946,9 @@ public class RecoveredClassHelper {
 						continue;
 					}
 
-					// if the first vftable reference is not in the first code block and the 
-					// constructor calls any non-inherited constructors before the vtable reference, 
-					// the constructor function is really another function with the constructor 
+					// if the first vftable reference is not in the first code block and the
+					// constructor calls any non-inherited constructors before the vtable reference,
+					// the constructor function is really another function with the constructor
 					// function inlined in it
 
 					if (firstVftableReferenceAddress.compareTo(firstEndOfBlock) > 0) {
@@ -6002,8 +5998,8 @@ public class RecoveredClassHelper {
 
 	/**
 	 * Method to run the FillOutStructureCmd and return a FillOutStructureCmd object when
-	 * a high variable used to run the cmd is found that stores the given firstVftableReference 
-	 * address.  
+	 * a high variable used to run the cmd is found that stores the given firstVftableReference
+	 * address.
 	 * @param function the given function
 	 * @param firstVftableReference the first vftableReference in the given function
 	 * @return FillOutStructureCmd for the highVariable that stores the firstVftableReference address
@@ -6019,7 +6015,7 @@ public class RecoveredClassHelper {
 			return null;
 		}
 
-		// get the decompiler highFunction 
+		// get the decompiler highFunction
 		HighFunction highFunction = decompilerUtils.getHighFunction(function);
 
 		if (highFunction == null) {
@@ -6028,7 +6024,7 @@ public class RecoveredClassHelper {
 
 		List<HighVariable> highVariables = new ArrayList<HighVariable>();
 
-		// if there are params add the first or the "this" param to the list to be checked first 
+		// if there are params add the first or the "this" param to the list to be checked first
 		// It is the most likely to store the vftablePtr
 		if (highFunction.getFunctionPrototype().getNumParams() > 0) {
 
@@ -6040,8 +6036,8 @@ public class RecoveredClassHelper {
 		}
 
 		// add the other high variables that store vftable pointer
-		highVariables.addAll(
-			getVariableThatStoresVftablePointer(highFunction, firstVftableReference));
+		highVariables
+				.addAll(getVariableThatStoresVftablePointer(highFunction, firstVftableReference));
 
 		Iterator<HighVariable> highVariableIterator = highVariables.iterator();
 
@@ -6070,10 +6066,10 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to figure out the indetermined inlined functions from each class as either combination 
-	 * constructor/inlined constructor or destrucor/inlined destructor. The method first uses any 
-	 * known called constructors or destructors to help determine which type then calls a method to 
-	 * determine, using vftable order, which class contains the constructor/destructor and which 
+	 * Method to figure out the indetermined inlined functions from each class as either combination
+	 * constructor/inlined constructor or destrucor/inlined destructor. The method first uses any
+	 * known called constructors or destructors to help determine which type then calls a method to
+	 * determine, using vftable order, which class contains the constructor/destructor and which
 	 * contains the inlined constructor/destructor.
 	 * @param recoveredClasses List of classes
 	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
@@ -6100,7 +6096,7 @@ public class RecoveredClassHelper {
 
 				Function inlineFunction = inlineIterator.next();
 
-				// get the addresses in the function that refer to classes either by 
+				// get the addresses in the function that refer to classes either by
 				// referencing a vftable in a class or by calling a function in a class
 				// TODO: add the atexit refs and then check them - make a map of atexit call to class map if not already
 				Map<Address, RecoveredClass> referenceToClassMap =
@@ -6108,7 +6104,7 @@ public class RecoveredClassHelper {
 				List<Address> referencesToFunctions =
 					extendedFlatAPI.getReferencesToFunctions(referenceToClassMap);
 
-				// if some of the references are to functions figure out if they are 
+				// if some of the references are to functions figure out if they are
 				// constructors destructors or add them to list of indetermined
 				boolean isConstructor = false;
 				boolean isDestructor = false;
@@ -6159,7 +6155,7 @@ public class RecoveredClassHelper {
 				else {
 
 					// otherwise, use pcode info to figure out if inlined constructor or destructor
-					//If not already, make function a this call	
+					//If not already, make function a this call
 					makeFunctionThiscall(inlineFunction);
 
 					List<OffsetPcodeOpPair> loads = getLoadPcodeOpPairs(inlineFunction);
@@ -6214,7 +6210,7 @@ public class RecoveredClassHelper {
 							referenceToIndeterminates);
 						continue;
 					}
-					// make the other referenced indeterminate c/d functions destructors 
+					// make the other referenced indeterminate c/d functions destructors
 					if (isConstructor == false && isDestructor == true) {
 						createListedDestructorFunctions(referenceToClassMap,
 							referenceToIndeterminates);
@@ -6227,7 +6223,6 @@ public class RecoveredClassHelper {
 
 		}
 	}
-
 
 	/**
 	 * Method to retrieve the offset of the class data in the given structure
@@ -6422,7 +6417,7 @@ public class RecoveredClassHelper {
 				}
 			}
 
-			// get the decompiler highFunction 
+			// get the decompiler highFunction
 			HighFunction highFunction = decompilerUtils.getHighFunction(function);
 
 			if (highFunction == null) {
@@ -6504,7 +6499,8 @@ public class RecoveredClassHelper {
 				Address vftableAddress = vftableIterator.next();
 
 				// this gets the first function pointer in the vftable
-				Function firstVirtualFunction = extendedFlatAPI.getReferencedFunction(vftableAddress);
+				Function firstVirtualFunction =
+					extendedFlatAPI.getReferencedFunction(vftableAddress);
 				processDeletingDestructor(recoveredClass, firstVirtualFunction);
 			}
 		}
@@ -6514,7 +6510,7 @@ public class RecoveredClassHelper {
 	 * Find more deleting destructors by looking at other vfunctions to see if they call
 	 * their own cd and also call operator_delete
 	 * @param recoveredClasses List of RecoveredClass objects
-	 * @throws CancelledException when script cancelled 
+	 * @throws CancelledException when script cancelled
 	 * @throws InvalidInputException if issues setting return type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws Exception if issues making label
@@ -6550,7 +6546,8 @@ public class RecoveredClassHelper {
 				monitor.checkCanceled();
 				Address vftableAddress = vftableAddressIterator.next();
 
-				Function firstVirtualFunction = extendedFlatAPI.getReferencedFunction(vftableAddress);
+				Function firstVirtualFunction =
+					extendedFlatAPI.getReferencedFunction(vftableAddress);
 				List<Function> virtualFunctions =
 					recoveredClass.getVirtualFunctions(vftableAddress);
 
@@ -6582,9 +6579,9 @@ public class RecoveredClassHelper {
 	 *   3. do not reference a vftable but call own destructor (call func on own c/d list) which
 	 *       means it is just a deleting destructor for class but has no inlined destructor
 	 * @param recoveredClass the given class
-	 * @param firstVftableFunction the first vftableFunction a class vftable 
+	 * @param firstVftableFunction the first vftableFunction a class vftable
 	 * @throws CancelledException if cancelled
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace 
+	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if issues setting return type
 	 */
 	private void processDeletingDestructor(RecoveredClass recoveredClass,
@@ -6592,7 +6589,7 @@ public class RecoveredClassHelper {
 			throws CancelledException, DuplicateNameException, InvalidInputException {
 
 		// if the first function on the vftable IS ALSO on the class constructor/destructor list
-		// then it is a deleting destructor with and inline destructor and we need to 
+		// then it is a deleting destructor with and inline destructor and we need to
 		// determine if the inline is the class or parent/grandparent class destructor
 		if (getAllConstructorsAndDestructors().contains(firstVftableFunction)) {
 
@@ -6709,9 +6706,9 @@ public class RecoveredClassHelper {
 
 	/**
 	 * Use known ancestor class constructors and destructors to help classify indeterminate ones
-	 * by who they call, ie constructors call parent (or grandparent) constructors and destructors 
-	 * call parent (or grandparent) destructors so use this to help figure out if the given class's 
-	 * indeterminate functions are constructors or destructors. 
+	 * by who they call, ie constructors call parent (or grandparent) constructors and destructors
+	 * call parent (or grandparent) destructors so use this to help figure out if the given class's
+	 * indeterminate functions are constructors or destructors.
 	 * @param recoveredClasses List of class objects
 	 * @throws CancelledException if cancelled
 	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
@@ -6779,10 +6776,10 @@ public class RecoveredClassHelper {
 
 	/**
 	 * Method to classify indeterminate inline functions as either constructors or destructors
-	 * using called ancestor information (may call parent or higher ancestor) or might be the same 
-	 * as a descendant constructor/destructor (ie a parent or ancestor is inlined into an 
-	 * indeterminate function so the same function is on both the parent inline list and the 
-	 * descendant regular list. 
+	 * using called ancestor information (may call parent or higher ancestor) or might be the same
+	 * as a descendant constructor/destructor (ie a parent or ancestor is inlined into an
+	 * indeterminate function so the same function is on both the parent inline list and the
+	 * descendant regular list.
 	 * @param recoveredClasses list of classes
 	 * @throws CancelledException if cancelled
 	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
@@ -6814,7 +6811,7 @@ public class RecoveredClassHelper {
 				monitor.checkCanceled();
 				Function indeterminateFunction = indeterminateIterator.next();
 
-				// get the addresses in the function that refer to classes either by 
+				// get the addresses in the function that refer to classes either by
 				// referencing a vftable in a class or by calling a function in a class
 				Map<Address, RecoveredClass> referenceToClassMap =
 					getReferenceToClassMap(recoveredClass, indeterminateFunction);
@@ -6874,8 +6871,8 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to find destructors using functions called by atexit. If they are on the list of 
-	 * indeterminate constructors or destructors and are called by atexit, then they are a 
+	 * Method to find destructors using functions called by atexit. If they are on the list of
+	 * indeterminate constructors or destructors and are called by atexit, then they are a
 	 * destructor.
 	 * @param recoveredClasses list of classes
 	 * @throws CancelledException if cancelled
@@ -6937,7 +6934,7 @@ public class RecoveredClassHelper {
 
 	/**
 	 * Figure out which of the destructors that do not reference vftable are vbase destructors and
-	 * which are destructors. 
+	 * which are destructors.
 	 * @param recoveredClasses List of RecoveredClass objects
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if error setting return type
@@ -7054,7 +7051,7 @@ public class RecoveredClassHelper {
 			String fieldName = new String();
 			String comment = null;
 
-			// if the computed class struct has field name (ie from pdb) use it otherwise create one 
+			// if the computed class struct has field name (ie from pdb) use it otherwise create one
 			if (definedComponent.getFieldName() == null) {
 				fieldName = "offset_" + extendedFlatAPI.toHexString(offset, false, true);
 			}
@@ -7077,9 +7074,8 @@ public class RecoveredClassHelper {
 		return classDataStructure;
 	}
 
-
 	/**
-	 * Method to find the purecall function. 
+	 * Method to find the purecall function.
 	 * @param recoveredClasses List of RecoveredClass objects
 	 * @throws CancelledException when cancelled
 	 * @throws Exception when issue making label
@@ -7128,7 +7124,7 @@ public class RecoveredClassHelper {
 				if (possiblePureCall == null) {
 					possiblePureCall = sameFunction;
 				}
-				// if they ever don't match return 
+				// if they ever don't match return
 				else if (!possiblePureCall.equals(sameFunction)) {
 					if (DEBUG) {
 						Msg.debug(this, "Could not identify pure call. ");
@@ -7192,12 +7188,11 @@ public class RecoveredClassHelper {
 		return listOfUniqueAddresses;
 	}
 
-
 	/**
 	 * Method to apply the function signature of the given function, if different, to the corresponding
 	 * function definition and call the method to update related structure fields and functions
 	 * @param vfunction the given function
-	 * @param vftableAddress the vftable address of a vftable containing the function 
+	 * @param vftableAddress the vftable address of a vftable containing the function
 	 * @return a list of changed items
 	 * @throws CancelledException if cancelled
 	 * @throws DuplicateNameException if duplicate name exception while making changes
@@ -7272,7 +7267,7 @@ public class RecoveredClassHelper {
 	private DataTypeComponent getVfunctionComponent(Data vftableData, Function vfunction)
 			throws CancelledException {
 
-		// get the Structure data type from the given Data 
+		// get the Structure data type from the given Data
 		Structure vfunctionStructure = getStructureFromData(vftableData);
 		if (vfunctionStructure == null) {
 			throw new IllegalArgumentException(
@@ -7298,10 +7293,10 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Return a list of data items that have labels containing "vftable" and refer to the given 
+	 * Return a list of data items that have labels containing "vftable" and refer to the given
 	 * function
 	 * @param function the given function
-	 * @return a list of vftable data addresses that contain references to the given function and 
+	 * @return a list of vftable data addresses that contain references to the given function and
 	 * have label containing text "vftable"
 	 * @throws CancelledException if cancelled
 	 */
@@ -7368,19 +7363,17 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 */
 	private List<Object> updateCorrespondingFunctionDefinition(Function vfunction,
-			DataTypeComponent structureComponent)
-			throws DuplicateNameException, DataTypeDependencyException, InvalidInputException,
-			CancelledException {
+			DataTypeComponent structureComponent) throws DuplicateNameException,
+			DataTypeDependencyException, InvalidInputException, CancelledException {
 
 		List<Object> changedItems = new ArrayList<Object>();
 
-		// skip purecalls - do not want to update function defs or other related sigs 
+		// skip purecalls - do not want to update function defs or other related sigs
 		if (vfunction.getName().contains("purecall")) {
 			return null;
 		}
 
 		FunctionSignature listingFunctionSignature = vfunction.getSignature(true);
-
 
 		FunctionDefinition componentFunctionDefinition =
 			getComponentFunctionDefinition(structureComponent);
@@ -7429,7 +7422,6 @@ public class RecoveredClassHelper {
 		return componentFunctionDefinition;
 	}
 
-
 	/**
 	 * Method to edit the function definition pointed to by the given structure component with any
 	 * differences in the given function definition
@@ -7439,7 +7431,6 @@ public class RecoveredClassHelper {
 	 */
 	private FunctionDefinition editFunctionDefinition(DataTypeComponent structureComponent,
 			FunctionDefinition newFunctionDefinition) {
-
 
 		DataType componentDataType = structureComponent.getDataType();
 		if (!(componentDataType instanceof Pointer)) {
@@ -7474,7 +7465,6 @@ public class RecoveredClassHelper {
 		return null;
 	}
 
-
 	/**
 	 * Method to update the given function definition with the new function definition
 	 * @param functionDefinition the given function definition
@@ -7502,7 +7492,7 @@ public class RecoveredClassHelper {
 
 		// only update if there are differences and the func sigs have same length
 		// if they don't have same length then something was possibly overridden in a child and
-		// it needs to stay the same as it was except the name 
+		// it needs to stay the same as it was except the name
 		if (!currentArgs.equals(changedArgs) && (currentArgs.length == changedArgs.length)) {
 			ParameterDefinition[] newArgs = new ParameterDefinition[currentArgs.length];
 			for (int i = 0; i < currentArgs.length; i++) {
@@ -7531,7 +7521,6 @@ public class RecoveredClassHelper {
 		return null;
 
 	}
-
 
 	public List<Structure> getClassStructures() throws CancelledException {
 
@@ -7629,22 +7618,20 @@ public class RecoveredClassHelper {
 		return functions;
 	}
 
-
-
 	/**
 	 * Method to apply the given function definition to the corresponding function signatures that
-	 * do not match and also update the vftable structure fields to have the correct name if 
+	 * do not match and also update the vftable structure fields to have the correct name if
 	 * different from the changed one.
 	 * @param functionDefinition the new function definition to apply
-	 * @return a list of items changed 
+	 * @return a list of items changed
 	 * @throws CancelledException if cancelled
 	 * @throws DuplicateNameException if any changes cause duplicate name exceptions
 	 * @throws DataTypeDependencyException if any changes cause data type dependency issues
 	 * @throws InvalidInputException if there are invalid inputs when performing changes
 	 */
 	public List<Object> applyNewFunctionDefinition(FunctionDefinition functionDefinition)
-			throws CancelledException, DuplicateNameException,
-			DataTypeDependencyException, InvalidInputException {
+			throws CancelledException, DuplicateNameException, DataTypeDependencyException,
+			InvalidInputException {
 
 		List<Object> changedItems = new ArrayList<Object>();
 
@@ -7739,12 +7726,12 @@ public class RecoveredClassHelper {
 			if (component.getDataType().equals(pointerToVfunction)) {
 				return i;
 			}
-	}
+		}
 		return vfunctionIndex;
 	}
 
 	/**
-	 * Method to get the data type in the same folder as the given data type that is the pointer to 
+	 * Method to get the data type in the same folder as the given data type that is the pointer to
 	 * the given data type. This is getting an existing pointer not trying to create a new one.
 	 * @param dataType the given data type
 	 * @return the existing pointer data type to the given data type in the same class dt folder
@@ -7845,7 +7832,7 @@ public class RecoveredClassHelper {
 
 		String classNameWithNamespace = classNamespace.getName(true);
 
-		// Create Data Type Manager Category for given class		
+		// Create Data Type Manager Category for given class
 		CategoryPath classPath = extendedFlatAPI
 				.createDataTypeCategoryPath(classDataTypesCategoryPath, classNameWithNamespace);
 
@@ -7853,8 +7840,8 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to get the class Namespace corresponding to the given data type. NOTE: The data type 
-	 * must be in the DTM_CLASS_DATA_FOLDER_NAME folder in the data type manager. 
+	 * Method to get the class Namespace corresponding to the given data type. NOTE: The data type
+	 * must be in the DTM_CLASS_DATA_FOLDER_NAME folder in the data type manager.
 	 * @param dataType the given data type
 	 * @return the class Namespace corresponding to the given data type
 	 * @throws CancelledException if cancelled
@@ -7905,9 +7892,9 @@ public class RecoveredClassHelper {
 	 * @throws CancelledException if cancelled
 	 */
 	private Object updateListingVfunctionSignature(Data listingVftable,
-			DataTypeComponent structureComponent,
-			Address vftableAddress) throws DuplicateNameException, DataTypeDependencyException,
-			InvalidInputException, CancelledException {
+			DataTypeComponent structureComponent, Address vftableAddress)
+			throws DuplicateNameException, DataTypeDependencyException, InvalidInputException,
+			CancelledException {
 
 		int numVfunctions = listingVftable.getNumComponents();
 
@@ -7966,7 +7953,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to update the given function's signature with the given function definition 
+	 * Method to update the given function's signature with the given function definition
 	 * @param function the given function
 	 * @param newFunctionDefinition the new function definition
 	 * @return true if the update worked, false otherwise
@@ -7999,7 +7986,7 @@ public class RecoveredClassHelper {
 
 	/**
 	 * Method to compare the given FunctionDefinition data type with the given FunctionSignature to
-	 * see if they are equivalent (ie same name, same return type, same param types, same param names, 
+	 * see if they are equivalent (ie same name, same return type, same param types, same param names,
 	 * same calling convention, same hasVarArgs flag ...
 	 * @param definition the given FunctionDefinition data type
 	 * @param signature the given FunctionSignature
@@ -8031,8 +8018,7 @@ public class RecoveredClassHelper {
 	}
 
 	private List<Object> updateComponentFieldName(DataTypeComponent structureComponent,
-			FunctionDefinition newFunctionSignature)
-			throws DuplicateNameException {
+			FunctionDefinition newFunctionSignature) throws DuplicateNameException {
 
 		List<Object> changedItems = new ArrayList<Object>();
 		if (!structureComponent.getFieldName().equals(newFunctionSignature.getName())) {
@@ -8044,8 +8030,7 @@ public class RecoveredClassHelper {
 		return changedItems;
 	}
 
-	public List<Symbol> getClassVftableSymbols(Namespace classNamespace)
-			throws CancelledException {
+	public List<Symbol> getClassVftableSymbols(Namespace classNamespace) throws CancelledException {
 
 		List<Symbol> vftableSymbols = new ArrayList<Symbol>();
 
@@ -8123,15 +8108,15 @@ public class RecoveredClassHelper {
 			return classStructureDataType;
 		}
 
-		// If the map is not complete, the class structure will contain incomplete information so 
+		// If the map is not complete, the class structure will contain incomplete information so
 		// put out a debug message to indicate this issue
 		if (!isClassOffsetToVftableMapComplete(recoveredClass)) {
 			Msg.debug(this,
 				"class vftable offset map for " + recoveredClass.getName() + " is not complete");
 		}
 
-		// iterate over the set of offsets to vftables and either add to undefined area or overwrite 
-		// the parent class structures with the class vftable pointer then replace the rest of the 
+		// iterate over the set of offsets to vftables and either add to undefined area or overwrite
+		// the parent class structures with the class vftable pointer then replace the rest of the
 		// parent structure with its internal components
 		for (Integer offset : classVftableOffsets) {
 			monitor.checkCanceled();
@@ -8145,7 +8130,6 @@ public class RecoveredClassHelper {
 			if (classVftablePointer == null) {
 				continue;
 			}
-
 
 			// loop until the vftable pointer is added
 			// if there is room and the component offset is not a structure, replace with vftablePtr
@@ -8165,7 +8149,7 @@ public class RecoveredClassHelper {
 				}
 
 				// if the component at the offset is the start of the component, and the component
-				// isn't a structure and if the component is big enough to be replaced, or there 
+				// isn't a structure and if the component is big enough to be replaced, or there
 				// are enough undefined that can be replaced then replace
 				DataTypeComponent componentAt =
 					classStructureDataType.getComponentAt(vftableOffset);
@@ -8183,7 +8167,7 @@ public class RecoveredClassHelper {
 					break;
 				}
 
-				// otherwise if in middle of a containing dt then loop until all structs in 
+				// otherwise if in middle of a containing dt then loop until all structs in
 				// range are expanded and other items are cleared
 				DataTypeComponent currentComponent =
 					classStructureDataType.getComponentContaining(vftableOffset);
@@ -8193,7 +8177,7 @@ public class RecoveredClassHelper {
 				while (currentComponent != null && currentOffset < endOffset) {
 
 					int nextOffset = currentComponent.getEndOffset() + 1;
-					// if there is a structure at the offset, replace it with its pieces 
+					// if there is a structure at the offset, replace it with its pieces
 					if (currentComponent.getDataType() instanceof Structure) {
 						DataType currentDT = currentComponent.getDataType();
 						Structure internalStruct = (Structure) currentDT;
@@ -8260,7 +8244,7 @@ public class RecoveredClassHelper {
 
 			DataType vbaseStructPointer = dataTypeManager.getPointer(vbtableStructure);
 
-			// if it fits at offset or is at the end and class structure can be grown, 
+			// if it fits at offset or is at the end and class structure can be grown,
 			// copy the whole baseClass structure to the class Structure at the given offset
 			boolean addedToStructure = EditStructureUtils.addDataTypeToStructure(
 				classStructureDataType, vbtableOffset, vbaseStructPointer, VBTABLE_PTR, monitor);

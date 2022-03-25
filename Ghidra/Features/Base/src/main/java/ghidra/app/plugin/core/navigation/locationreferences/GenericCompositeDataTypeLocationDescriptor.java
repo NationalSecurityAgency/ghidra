@@ -20,6 +20,7 @@ import java.awt.Color;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.support.Highlight;
+import ghidra.app.services.FieldMatcher;
 import ghidra.app.util.viewer.field.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Data;
@@ -34,34 +35,39 @@ import ghidra.util.task.TaskMonitor;
  */
 public class GenericCompositeDataTypeLocationDescriptor extends GenericDataTypeLocationDescriptor {
 
-	private String typeAndFieldName;
-	private String fieldName;
+	// this is either "Foo.bar" or "Foo offset 1"
+	private String typeDisplayString;
+	private FieldMatcher fieldMatcher;
 
 	public GenericCompositeDataTypeLocationDescriptor(
 			GenericCompositeDataTypeProgramLocation location, Program program) {
 		super(location, program, location.getDataType());
 
-		this.fieldName = location.getFieldName();
-		this.typeAndFieldName = getDataTypeName() + '.' + fieldName;
+		this.fieldMatcher = location.getFieldMatcher();
+		this.typeDisplayString = fieldMatcher.getDisplayText();
 		label = generateLabel();
 	}
 
 	@Override
 	protected void doGetReferences(Accumulator<LocationReference> accumulator, TaskMonitor monitor)
 			throws CancelledException {
-		ReferenceUtils.findDataTypeReferences(accumulator, getDataType(), fieldName, program,
+		ReferenceUtils.findDataTypeFieldReferences(accumulator, fieldMatcher, program,
 			useDynamicSearching, monitor);
 	}
 
 	@Override
 	public String getTypeName() {
-		return super.getTypeName() + "." + fieldName;
+		// not sure why this code was doing this and not using our variable; oversight?
+		// return super.getTypeName() + "." + fieldName;
+		return typeDisplayString;
 	}
 
 	// implemented to ignore the location being provided, since this is a 'dummy' type class
 	@Override
 	protected String generateLabel() {
-		return "\"" + originalDataType.getName() + "." + fieldName + "\" (DataType)";
+		// changed this; keep old code around in case an edge case appears
+		// return "\"" + originalDataType.getName() + "." + fieldName + "\" (DataType)";
+		return "\"" + typeDisplayString + "\" (DataType)";
 	}
 
 	// Overridden to perform a simple check against data types, since the program locations are
@@ -79,7 +85,7 @@ public class GenericCompositeDataTypeLocationDescriptor extends GenericDataTypeL
 		GenericCompositeDataTypeLocationDescriptor otherDescriptor =
 			(GenericCompositeDataTypeLocationDescriptor) obj;
 		return getDataType().equals(otherDescriptor.getDataType()) &&
-			fieldName.equals(otherDescriptor.fieldName);
+			fieldMatcher.equals(otherDescriptor.fieldMatcher);
 	}
 
 	@Override
@@ -113,14 +119,15 @@ public class GenericCompositeDataTypeLocationDescriptor extends GenericDataTypeL
 		else if (OperandFieldFactory.class.isAssignableFrom(fieldFactoryClass)) {
 
 			// Not sure how to get the correct part of the text.  This is a hack for now.
-			int offset = StringUtils.indexOfIgnoreCase(text, typeAndFieldName, 0);
+			int offset = StringUtils.indexOfIgnoreCase(text, typeDisplayString, 0);
 			if (offset != -1) {
-				return new Highlight[] {
-					new Highlight(offset, offset + typeAndFieldName.length() - 1, highlightColor) };
+				return new Highlight[] { new Highlight(offset,
+					offset + typeDisplayString.length() - 1, highlightColor) };
 			}
 		}
 		else if (FieldNameFieldFactory.class.isAssignableFrom(fieldFactoryClass)) {
 
+			String fieldName = fieldMatcher.getFieldName();
 			if (text.equalsIgnoreCase(fieldName)) {
 				return new Highlight[] { new Highlight(0, text.length(), highlightColor) };
 			}

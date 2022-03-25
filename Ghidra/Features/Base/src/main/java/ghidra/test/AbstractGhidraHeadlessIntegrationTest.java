@@ -48,8 +48,7 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.exception.RollbackException;
 import junit.framework.AssertionFailedError;
 import utility.application.ApplicationLayout;
-import utility.function.ExceptionalCallback;
-import utility.function.ExceptionalFunction;
+import utility.function.*;
 
 public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDockingTest {
 
@@ -68,8 +67,6 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	private static Language Z80_LANGUAGE;
 
 	public AbstractGhidraHeadlessIntegrationTest() {
-		super();
-
 		// Ensure that all error messages do NOT use a gui popup, and instead are routed to the
 		// console.
 		setErrorGUIEnabled(false);
@@ -167,7 +164,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Run a command against the specified program within a transaction.
 	 * The transaction will be committed unless the command throws a RollbackException.
-	 * 
+	 *
 	 * @param program the program
 	 * @param cmd the command to apply
 	 * @return result of command applyTo method
@@ -199,7 +196,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
 	 * logic.
-	 * 
+	 *
 	 * @param p the program
 	 * @param c the code to execute
 	 * @see #modifyProgram(Program, ExceptionalCallback)
@@ -224,9 +221,39 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
+	 * logic and returning a result.
+	 * @param <T> the return type
+	 * @param <E> the exception type
+	 * @param p the program
+	 * @param s the code to execute
+	 * @return the supplier's return value
+	 * @see #modifyProgram(Program, ExceptionalCallback)
+	 * @see #modifyProgram(Program, ExceptionalFunction)
+	 */
+	public static <T, E extends Exception> T tx(Program p, ExceptionalSupplier<T, E> s) {
+		int txId = p.startTransaction("Test - Function in Transaction");
+		boolean commit = true;
+		try {
+			T t = s.get();
+			p.flushEvents();
+			waitForSwing();
+			return t;
+		}
+		catch (Exception e) {
+			commit = false;
+			failWithException("Exception modifying program '" + p.getName() + "'", e);
+		}
+		finally {
+			p.endTransaction(txId, commit);
+		}
+		return null;
+	}
+
+	/**
+	 * Provides a convenient method for modifying the current program, handling the transaction
 	 * logic.   This method is calls {@link #tx(Program, ExceptionalCallback)}, but helps with
 	 * semantics.
-	 * 
+	 *
 	 * @param p the program
 	 * @param c the code to execute
 	 * @see #modifyProgram(Program, ExceptionalFunction)
@@ -238,7 +265,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
 	 * logic and returning a new item as a result
-	 * 
+	 *
 	 * @param program the program
 	 * @param f the function for modifying the program and creating the desired result
 	 * @return the result
@@ -439,7 +466,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Returns the global symbol with the given name if and only if it is the only
 	 * global symbol with that name.
-	 * 
+	 *
 	 * @param program the program to search.
 	 * @param name the name of the global symbol to find.
 	 * @return  the global symbol with the given name if and only if it is the only one.
@@ -451,7 +478,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Returns the symbol in the given namespace with the given name if and only if it is the only
 	 * symbol in that namespace with that name.
-	 * 
+	 *
 	 * @param program the program to search.
 	 * @param name the name of the symbol to find.
 	 * @param namespace the parent namespace; may be null
@@ -468,14 +495,14 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * A convenience method that allows you to open the given program in a default tool,
 	 * navigating to the given address.
-	 * 
+	 *
 	 * <P>Note: this is a blocking operation.  Your test will not proceed while this method is
 	 * sleeping.
-	 * 
+	 *
 	 * <P><B>Do not leave this call in your test when committing changes.</B>
 	 * @param p the program
 	 * @param address the address
-	 * 
+	 *
 	 * @throws Exception if there is an issue create a {@link TestEnv}
 	 */
 	public void debugProgramInTool(Program p, String address) throws Exception {
@@ -512,7 +539,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Waits for a launched script to complete by using the given listener.
-	 * 
+	 *
 	 * @param listener the listener used to track script progress
 	 * @param timeoutMS the max time to wait; failing if exceeded
 	 */
@@ -534,7 +561,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Replaces the given implementations of the provided service class with the given class.
-	 * 
+	 *
 	 * @param tool the tool whose services to update (optional)
 	 * @param service the service to override
 	 * @param replacement the new version of the service
