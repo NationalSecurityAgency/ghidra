@@ -1,0 +1,1586 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- See Relax specification: Ghidra/Framework/SoftwareModeling/data/languages/compiler_spec.rxg -->
+
+<compiler_spec>
+   <data_organization>
+    <char_type signed="true" />
+    <char_size value="1" />
+    <short_size value="2" />
+    <pointer_size value="4"/>
+    <integer_size value = "4"/>
+    <float_size value="4" />
+    <long_size value="4" />
+    <double_size value="8" />
+  </data_organization>
+  <global>
+    <range space="global"/>
+    <range space="table"/>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="SP" space="ram" growth="positive"/>
+  <default_proto>
+    <prototype name="__wasm" extrapop="0" stackshift="0">
+      <input>
+        <!-- With the positive stack direction, Ghidra will allocate
+        starting at the highest addresses in any <addr> pentry, which is
+        not what we want. Instead, fall back to manually specifying the
+        registers in the correct order. -->
+        <pentry minsize="1" maxsize="8">
+          <register name="i0q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i1q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i2q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i3q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i4q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i5q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i6q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i7q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i8q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i9q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i10q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i11q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i12q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i13q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i14q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i15q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i16q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i17q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i18q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i19q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i20q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i21q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i22q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i23q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i24q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i25q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i26q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i27q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i28q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i29q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i30q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i31q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i32q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i33q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i34q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i35q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i36q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i37q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i38q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i39q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i40q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i41q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i42q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i43q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i44q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i45q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i46q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i47q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i48q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i49q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i50q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i51q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i52q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i53q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i54q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i55q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i56q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i57q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i58q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i59q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i60q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i61q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i62q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i63q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i64q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i65q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i66q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i67q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i68q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i69q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i70q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i71q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i72q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i73q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i74q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i75q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i76q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i77q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i78q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i79q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i80q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i81q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i82q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i83q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i84q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i85q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i86q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i87q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i88q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i89q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i90q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i91q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i92q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i93q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i94q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i95q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i96q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i97q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i98q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i99q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i100q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i101q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i102q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i103q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i104q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i105q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i106q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i107q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i108q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i109q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i110q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i111q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i112q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i113q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i114q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i115q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i116q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i117q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i118q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i119q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i120q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i121q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i122q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i123q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i124q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i125q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i126q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i127q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i128q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i129q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i130q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i131q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i132q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i133q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i134q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i135q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i136q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i137q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i138q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i139q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i140q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i141q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i142q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i143q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i144q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i145q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i146q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i147q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i148q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i149q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i150q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i151q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i152q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i153q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i154q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i155q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i156q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i157q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i158q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i159q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i160q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i161q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i162q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i163q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i164q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i165q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i166q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i167q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i168q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i169q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i170q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i171q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i172q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i173q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i174q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i175q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i176q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i177q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i178q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i179q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i180q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i181q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i182q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i183q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i184q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i185q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i186q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i187q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i188q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i189q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i190q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i191q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i192q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i193q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i194q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i195q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i196q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i197q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i198q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i199q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i200q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i201q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i202q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i203q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i204q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i205q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i206q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i207q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i208q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i209q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i210q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i211q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i212q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i213q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i214q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i215q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i216q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i217q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i218q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i219q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i220q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i221q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i222q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i223q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i224q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i225q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i226q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i227q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i228q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i229q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i230q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i231q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i232q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i233q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i234q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i235q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i236q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i237q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i238q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i239q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i240q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i241q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i242q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i243q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i244q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i245q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i246q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i247q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i248q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i249q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i250q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i251q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i252q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i253q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i254q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="i255q"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="8">
+          <register name="o0q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o1q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o2q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o3q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o4q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o5q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o6q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o7q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o8q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o9q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o10q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o11q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o12q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o13q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o14q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o15q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o16q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o17q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o18q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o19q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o20q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o21q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o22q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o23q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o24q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o25q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o26q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o27q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o28q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o29q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o30q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o31q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o32q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o33q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o34q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o35q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o36q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o37q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o38q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o39q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o40q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o41q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o42q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o43q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o44q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o45q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o46q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o47q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o48q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o49q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o50q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o51q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o52q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o53q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o54q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o55q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o56q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o57q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o58q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o59q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o60q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o61q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o62q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o63q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o64q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o65q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o66q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o67q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o68q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o69q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o70q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o71q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o72q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o73q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o74q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o75q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o76q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o77q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o78q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o79q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o80q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o81q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o82q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o83q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o84q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o85q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o86q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o87q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o88q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o89q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o90q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o91q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o92q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o93q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o94q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o95q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o96q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o97q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o98q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o99q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o100q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o101q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o102q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o103q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o104q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o105q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o106q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o107q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o108q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o109q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o110q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o111q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o112q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o113q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o114q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o115q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o116q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o117q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o118q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o119q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o120q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o121q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o122q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o123q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o124q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o125q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o126q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o127q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o128q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o129q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o130q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o131q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o132q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o133q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o134q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o135q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o136q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o137q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o138q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o139q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o140q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o141q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o142q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o143q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o144q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o145q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o146q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o147q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o148q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o149q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o150q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o151q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o152q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o153q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o154q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o155q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o156q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o157q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o158q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o159q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o160q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o161q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o162q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o163q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o164q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o165q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o166q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o167q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o168q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o169q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o170q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o171q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o172q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o173q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o174q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o175q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o176q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o177q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o178q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o179q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o180q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o181q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o182q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o183q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o184q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o185q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o186q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o187q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o188q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o189q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o190q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o191q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o192q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o193q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o194q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o195q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o196q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o197q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o198q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o199q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o200q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o201q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o202q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o203q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o204q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o205q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o206q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o207q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o208q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o209q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o210q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o211q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o212q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o213q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o214q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o215q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o216q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o217q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o218q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o219q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o220q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o221q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o222q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o223q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o224q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o225q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o226q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o227q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o228q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o229q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o230q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o231q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o232q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o233q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o234q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o235q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o236q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o237q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o238q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o239q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o240q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o241q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o242q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o243q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o244q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o245q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o246q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o247q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o248q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o249q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o250q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o251q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o252q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o253q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o254q"/>
+        </pentry>
+        <pentry minsize="1" maxsize="8">
+          <register name="o255q"/>
+        </pentry>
+      </output>
+      <unaffected>
+        <varnode space="register" offset="0x10000000" size="0x10000000"/>
+        <varnode space="register" offset="0x50000000" size="0x10000000"/>
+        <register name="SP"/>
+      </unaffected>
+      <pcode inject="uponentry" dynamic="true" />
+    </prototype>
+  </default_proto>
+  <callotherfixup targetop="popCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
+  <callotherfixup targetop="pushCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
+</compiler_spec>
