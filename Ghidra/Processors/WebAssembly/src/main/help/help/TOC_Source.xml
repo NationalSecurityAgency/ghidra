@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+
+<tocroot>
+  <tocref id="Appendix">
+    <tocdef id="WebAssembly" text="WebAssembly" target="help/topics/WebAssembly/help.html" />
+  </tocref>
+</tocroot>
