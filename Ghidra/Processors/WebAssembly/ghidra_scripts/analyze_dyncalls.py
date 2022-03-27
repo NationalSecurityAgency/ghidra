@@ -42,7 +42,7 @@ def getConst(inst):
     return inst.getOpObjects(0)[0].value
 
 def getTableFunction(offset):
-    funcAddr = getLong(tablespace.getAddress(offset * 8)) & 0xffffffff
+    funcAddr = getInt(tablespace.getAddress(offset * 4)) & 0xffffffff
     return getFunctionAt(progspace.getAddress(funcAddr))
 
 def analyzeDyncall(function, calltype=None):
