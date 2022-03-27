@@ -76,7 +76,7 @@ define pcodeop memory_fill;
 
 @define SYMBOL tableref
 @define DEST_EXPR "(1<<32) * "
-@define EXPORT_EXPR "export *[table]:8 dest;"
+@define EXPORT_EXPR "export *[table]:4 dest;"
 @include "Leb128_u32.sinc"
 
 sp0_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + ctx_sp - 0;] {
@@ -247,23 +247,23 @@ macro doBranch(br_target) {
 }
 :call_indirect "type="^typeidx tableref is opc=0x11; typeidx; tableref; sp1_32; ctx_is_directive=0 {
 	nop();
-	addr:8 = &tableref + sext(sp1_32) * 8;
-	val:8 = *[table] addr;
+	addr:8 = &tableref + zext(sp1_32) * 4;
+	val:4 = *[table] addr;
 	popCallOther(&i0);
 	call [val];
 	pushCallOther(&o0);
 }
 
 ## Reference Instructions
-:ref.null reftype is opc=0xd0; reftype; sp0_64; ctx_is_directive=0 {
-	sp0_64 = 0;
+:ref.null reftype is opc=0xd0; reftype; sp0_32; ctx_is_directive=0 {
+	sp0_32 = 0;
 }
-:ref.is_null is opc=0xd1; sp1_32; sp1_64; ctx_is_directive=0 {
-	res:4 = zext(sp1_64 == 0);
+:ref.is_null is opc=0xd1; sp1_32; ctx_is_directive=0 {
+	res:4 = zext(sp1_32 == 0);
 	sp1_32 = res;
 }
-:ref.func br_target is opc=0xd2; funcidx; br_target; sp0_64; ctx_is_directive=0 {
-	sp0_64 = &br_target;
+:ref.func br_target is opc=0xd2; funcidx; br_target; sp0_32; ctx_is_directive=0 {
+	sp0_32 = &br_target;
 }
 
 ## Parametric Instructions
@@ -290,17 +290,17 @@ macro select64(sp1_32, sp2_64, sp3_64) {
 
 # In the current version of Wasm, only one type index is permitted in select t*.
 # This is functionally identical to regular select.
-:select is opc=0x1c; opc2=0x01; valtype; sp1_32; sp2_64; sp3_64; ctx_is_directive=0 {
-	# i64, f64, funcref, externref
+:select valtype is opc=0x1c; opc2=0x01; valtype; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
+	# i32, f32, funcref, externref
+	select32(sp1_32, sp2_32, sp3_32);
+}
+:select 0x7e is opc=0x1c; opc2=0x01; valtype=0x7e; sp1_32; sp2_64; sp3_64; ctx_is_directive=0 {
+	# i64
 	select64(sp1_32, sp2_64, sp3_64);
 }
-:select 0x7f is opc=0x1c; opc2=0x01; valtype=0x7f; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
-	# i32
-	select32(sp1_32, sp2_32, sp3_32);
-}
-:select 0x7d is opc=0x1c; opc2=0x01; valtype=0x7d; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
-	# f32
-	select32(sp1_32, sp2_32, sp3_32);
+:select 0x7c is opc=0x1c; opc2=0x01; valtype=0x7c; sp1_32; sp2_64; sp3_64; ctx_is_directive=0 {
+	# f64
+	select64(sp1_32, sp2_64, sp3_64);
 }
 
 ## Variable Instructions
@@ -346,14 +346,14 @@ macro select64(sp1_32, sp2_64, sp3_64) {
 }
 
 ## Table Instructions
-:table.get tableref is opc=0x25; tableref; sp1_32; sp1_64; ctx_is_directive=0 {
-	addr:8 = &tableref + sext(sp1_32) * 8;
-	sp1_64 = *[table] addr;
+:table.get tableref is opc=0x25; tableref; sp1_32; ctx_is_directive=0 {
+	addr:8 = &tableref + zext(sp1_32) * 4;
+	sp1_32 = *[table] addr;
 }
 
-:table.set tableref is opc=0x26; tableref; sp1_64; sp2_32; ctx_is_directive=0 {
-	addr:8 = &tableref + sext(sp2_32) * 8;
-	*[table] addr = sp1_64;
+:table.set tableref is opc=0x26; tableref; sp1_32; sp2_32; ctx_is_directive=0 {
+	addr:8 = &tableref + zext(sp2_32) * 4;
+	*[table] addr = sp1_32;
 }
 
 :table.init elemidx tableidx is opc=0xfc; opc2=0x0c; elemidx; tableidx; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
@@ -376,8 +376,8 @@ macro select64(sp1_32, sp2_64, sp3_64) {
 	sp0_32 = table_size(tableidx:4);
 }
 
-:table.fill tableidx is opc=0xfc; opc2=0x11; tableidx; sp1_32; sp2_64; sp3_32; ctx_is_directive=0 {
-	table_fill(tableidx:4, sp1_32, sp2_64, sp3_32);
+:table.fill tableidx is opc=0xfc; opc2=0x11; tableidx; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
+	table_fill(tableidx:4, sp1_32, sp2_32, sp3_32);
 }
 
 

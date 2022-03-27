@@ -132,7 +132,7 @@ public class WasmFunctionAnalysis {
 		 */
 		public void setIsOp64(Program program, Address address, ValType type) {
 			int value;
-			if (type == null || type == ValType.i32 || type == ValType.f32) {
+			if (type == null || type.getSize() == 4) {
 				/* 32-bit operand */
 				value = 0;
 			} else {

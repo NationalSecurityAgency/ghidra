@@ -123,7 +123,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 	}
 
 	public static Address getTableAddress(Program program, int tableidx, long itemIndex) {
-		return program.getAddressFactory().getAddressSpace("table").getAddress((((long) tableidx) << 32) + (itemIndex * 8));
+		return program.getAddressFactory().getAddressSpace("table").getAddress((((long) tableidx) << 32) + (itemIndex * 4));
 	}
 
 	public static Address getMemoryAddress(Program program, int memidx, long offset) {
@@ -341,7 +341,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 			block.setExecute(false);
 			createData(program, program.getListing(), dataStart, dataType);
 		} catch (Exception e) {
-			Msg.error(WasmLoader.class, "Failed to create global block " + globalidx + " at " + dataStart);
+			Msg.error(WasmLoader.class, "Failed to create global block " + globalidx + " at " + dataStart, e);
 		}
 	}
 	// #endregion

@@ -127,7 +127,7 @@ public final class ConstantExpression implements StructConverter {
 
 	/**
 	 * Return the bytes that correspond to the value produced, i.e. 4 bytes for
-	 * i32.const, 8 bytes for ref.null, etc. Return null if the initializer cannot
+	 * i32.const, 8 bytes for f64.const, etc. Return null if the initializer cannot
 	 * be determined (e.g. global) This needs a reference to the module so that
 	 * function references can be resolved to their static addresses.
 	 */
@@ -138,13 +138,13 @@ public final class ConstantExpression implements StructConverter {
 		case I64_CONST:
 			return longToBytes(((LEB128) value).asLong());
 		case REF_FUNC:
-			return longToBytes(WasmLoader.getFunctionAddressOffset(module, (int) ((LEB128) value).asLong()));
+			return intToBytes((int) WasmLoader.getFunctionAddressOffset(module, (int) ((LEB128) value).asLong()));
 		case F32_CONST:
 		case F64_CONST:
 			return (byte[]) value;
 		case REF_NULL_FUNCREF:
 		case REF_NULL_EXTERNREF:
-			return new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+			return new byte[] { 0, 0, 0, 0 };
 		case GLOBAL_GET:
 			return null;
 		default:
