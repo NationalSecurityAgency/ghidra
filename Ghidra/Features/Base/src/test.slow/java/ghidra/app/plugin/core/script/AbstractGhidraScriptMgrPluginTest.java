@@ -1018,9 +1018,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	protected String getConsoleText() {
 		// let the update manager have a chance to run
 		waitForSwing();
-		final String[] container = new String[1];
-		runSwing(() -> container[0] = consoleTextPane.getText());
-		return container[0];
+		return runSwing(() -> consoleTextPane.getText());
 	}
 
 	protected void chooseJavaProvider() throws InterruptedException, InvocationTargetException {

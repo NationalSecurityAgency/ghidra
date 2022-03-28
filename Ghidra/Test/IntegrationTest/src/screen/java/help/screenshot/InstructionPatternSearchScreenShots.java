@@ -58,7 +58,8 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DialogComponentProvider dialog = getDialog();
 		JButton manualEntryButton =
-			(JButton) AbstractGenericTest.findComponentByName(dialog.getComponent(), "manual entry");
+			(JButton) AbstractGenericTest.findComponentByName(dialog.getComponent(),
+				"manual entry");
 		pressButton(manualEntryButton);
 
 		InsertBytesWidget comp = waitForDialogComponent(InsertBytesWidget.class);
@@ -120,7 +121,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 		waitForSwing();
 
 		Component previewTable =
-			this.findChildWithType(this.getDialog().getComponent(), PreviewTablePanel.class, null);
+			findComponent(this.getDialog().getComponent(), PreviewTablePanel.class);
 
 		captureComponent(previewTable);
 	}
@@ -140,7 +141,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 		waitForSwing();
 
 		Component controlPanel =
-			this.findChildWithType(this.getDialog().getComponent(), ControlPanel.class, null);
+			findComponent(this.getDialog().getComponent(), ControlPanel.class);
 
 		captureComponent(controlPanel);
 	}
@@ -161,7 +162,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 		waitForSwing();
 
 		Component instructionTable =
-			this.findChildWithType(this.getDialog().getComponent(), InstructionTable.class, null);
+			findComponent(this.getDialog().getComponent(), InstructionTable.class);
 
 		InstructionTable instrTable = (InstructionTable) instructionTable;
 		captureComponent(instrTable.getToolbar());
@@ -183,7 +184,7 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 		waitForSwing();
 
 		Component previewTable =
-			this.findChildWithType(this.getDialog().getComponent(), PreviewTable.class, null);
+			findComponent(this.getDialog().getComponent(), PreviewTable.class);
 
 		PreviewTable prevTable = (PreviewTable) previewTable;
 		captureComponent(prevTable.getToolbar());
@@ -209,7 +210,8 @@ public class InstructionPatternSearchScreenShots extends AbstractSearchScreenSho
 
 		DialogComponentProvider dialog = getDialog();
 		JButton searchButton =
-			(JButton) AbstractGenericTest.findAbstractButtonByText(dialog.getComponent(), "Search All");
+			(JButton) AbstractGenericTest.findAbstractButtonByText(dialog.getComponent(),
+				"Search All");
 		pressButton(searchButton);
 
 		waitForComponentProvider(TableComponentProvider.class);
