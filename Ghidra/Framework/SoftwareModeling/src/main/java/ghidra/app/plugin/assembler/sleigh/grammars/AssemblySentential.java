@@ -16,8 +16,9 @@
 package ghidra.app.plugin.assembler.sleigh.grammars;
 
 import java.util.*;
-
-import org.apache.commons.collections4.list.AbstractListDecorator;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import ghidra.app.plugin.assembler.sleigh.symbol.*;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseToken;
@@ -25,29 +26,29 @@ import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseToken;
 /**
  * A "string" of symbols
  * 
- * To avoid overloading the word "String", we call this a "sentential". Technically, to be a
+ * <p>
+ * To avoid overloading the word "string", we call this a "sentential". Technically, to be a
  * "sentential" in the classic sense, it must be a possible element in the derivation of a sentence
  * in the grammar starting with the start symbol. We ignore that if only for the sake of naming.
  * 
  * @param <NT> the type of non-terminals
  */
-public class AssemblySentential<NT extends AssemblyNonTerminal> extends
-		AbstractListDecorator<AssemblySymbol> implements Comparable<AssemblySentential<NT>> {
+public class AssemblySentential<NT extends AssemblyNonTerminal>
+		implements Comparable<AssemblySentential<NT>>, Iterable<AssemblySymbol> {
 	private List<AssemblySymbol> symbols;
+	private final List<AssemblySymbol> unmodifiableSymbols;
 	private boolean finished = false;
 	public static final AssemblyStringTerminal WHITE_SPACE = new WhiteSpace();
+	private static final Pattern PAT_COMMA_WS = Pattern.compile(",\\s+");
 
 	/**
 	 * Construct a string from the given list of symbols
+	 * 
 	 * @param symbols
 	 */
 	public AssemblySentential(List<? extends AssemblySymbol> symbols) {
 		this.symbols = new ArrayList<>(symbols);
-	}
-
-	@Override
-	protected List<AssemblySymbol> decorated() {
-		return symbols;
+		this.unmodifiableSymbols = Collections.unmodifiableList(symbols);
 	}
 
 	/**
@@ -58,19 +59,22 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 	 */
 	public AssemblySentential() {
 		this.symbols = new ArrayList<>();
+		this.unmodifiableSymbols = Collections.unmodifiableList(symbols);
 	}
 
 	/**
 	 * Construct a string from any number of symbols
+	 * 
 	 * @param syms
 	 */
 	public AssemblySentential(AssemblySymbol... syms) {
 		this.symbols = Arrays.asList(syms);
+		this.unmodifiableSymbols = Collections.unmodifiableList(symbols);
 	}
 
 	@Override
 	public String toString() {
-		if (symbols.size() == 0) {
+		if (symbols.isEmpty()) {
 			return "e";
 		}
 		Iterator<? extends AssemblySymbol> symIt = symbols.iterator();
@@ -117,6 +121,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 	/**
 	 * A "whitespace" terminal
 	 * 
+	 * <p>
 	 * This terminal represents "optional" whitespace. "Optional" because in certain circumstances,
 	 * whitespace is not actually required, i.e., before or after a special character.
 	 */
@@ -132,7 +137,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 
 		@Override
 		public Collection<AssemblyParseToken> match(String buffer, int pos, AssemblyGrammar grammar,
-				Map<String, Long> labels) {
+				AssemblyNumericSymbols symbols) {
 			if (buffer.length() == 0) {
 				return Collections.singleton(new WhiteSpaceParseToken(grammar, this, ""));
 			}
@@ -158,7 +163,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 		}
 
 		@Override
-		public Collection<String> getSuggestions(String got, Map<String, Long> labels) {
+		public Collection<String> getSuggestions(String got, AssemblyNumericSymbols symbols) {
 			return Collections.singleton(" ");
 		}
 	}
@@ -175,6 +180,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 	/**
 	 * The token consumed by a whitespace terminal when it anticipates the end of input
 	 * 
+	 * <p>
 	 * "Expected" tokens given by a parse machine when this is the last token it has consumed are
 	 * not valid suggestions. The machine should instead suggest a whitespace character.
 	 */
@@ -185,7 +191,18 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 	}
 
 	/**
-	 * Add "optional" whitespace, if not already preceded by whitespace
+	 * Add a symbol to the right of this sentential
+	 * 
+	 * @param symbol the symbol to add
+	 * @return true
+	 */
+	public boolean addSymbol(AssemblySymbol symbol) {
+		return symbols.add(symbol);
+	}
+
+	/**
+	 * Add optional whitespace, if not already preceded by whitespace
+	 * 
 	 * @return true if whitespace was added
 	 */
 	public boolean addWS() {
@@ -193,7 +210,95 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 		if (last != null) {
 			return false;
 		}
-		return add(WHITE_SPACE);
+		return addSymbol(WHITE_SPACE);
+	}
+
+	/**
+	 * Add a comma followed by optional whitespace.
+	 */
+	public void addCommaWS() {
+		addSymbol(new AssemblyStringTerminal(","));
+		addWS();
+	}
+
+	/**
+	 * Add a syntactic terminal element, but with consideration for optional whitespace surrounding
+	 * special characters
+	 * 
+	 * @param str the expected terminal
+	 */
+	public void addSeparatorPart(String str) {
+		String tstr = str.trim();
+		if (tstr.equals("")) {
+			addWS();
+			return;
+		}
+		char first = tstr.charAt(0);
+		if (!str.startsWith(tstr)) {
+			addWS();
+		}
+		if (!Character.isLetterOrDigit(first)) {
+			addWS();
+		}
+		addSymbol(new AssemblyStringTerminal(tstr));
+		char last = tstr.charAt(tstr.length() - 1);
+		if (!str.endsWith(tstr)) {
+			addWS();
+		}
+		if (!Character.isLetterOrDigit(last)) {
+			addWS();
+		}
+	}
+
+	/**
+	 * Get the symbols in this sentential
+	 * 
+	 * @return the symbols;
+	 */
+	public List<AssemblySymbol> getSymbols() {
+		return unmodifiableSymbols;
+	}
+
+	public AssemblySymbol getSymbol(int pos) {
+		return symbols.get(pos);
+	}
+
+	/**
+	 * Split the given string into pieces matched by the pattern, and the pieces between
+	 * 
+	 * <p>
+	 * This invokes the given callbacks as the string is processed from left to right.
+	 * 
+	 * @param str the string to split
+	 * @param pat the pattern to match
+	 * @param matched the callback for matched portions
+	 * @param unmatched the callback for unmatched portions
+	 */
+	private static void forMatchUnmatch(String str, Pattern pat, Consumer<String> matched,
+			Consumer<String> unmatched) {
+		int startU = 0;
+		Matcher mat = pat.matcher(str);
+		while (mat.find()) {
+			if (startU < mat.start()) {
+				unmatched.accept(str.substring(startU, mat.start()));
+			}
+			matched.accept(mat.group());
+			startU = mat.end();
+		}
+		if (startU < str.length()) {
+			unmatched.accept(str.substring(startU));
+		}
+	}
+
+	/**
+	 * Add a syntactic terminal element, but considering that commas contained within may be
+	 * followed by optional whitespace
+	 * 
+	 * @param str the expected terminal
+	 */
+	public void addSeparators(String str) {
+		// NB. When displaying print pieces, the disassembler replaces all ",\\s+" with ","
+		forMatchUnmatch(str, PAT_COMMA_WS, matched -> addCommaWS(), this::addSeparatorPart);
 	}
 
 	// If the right-most symbol is whitespace, return it
@@ -209,18 +314,31 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 	}
 
 	/**
-	 * Trim leading and trailing whitespace, and make the string immutable
+	 * Trim leading and trailing whitespace, and make the sentential immutable
 	 */
 	public void finish() {
 		if (finished) {
 			return;
 		}
-		symbols = Collections.unmodifiableList(symbols);
+		symbols = unmodifiableSymbols;
 		finished = true;
 	}
 
 	@Override
-	public AssemblySentential<NT> subList(int fromIndex, int toIndex) {
+	public Iterator<AssemblySymbol> iterator() {
+		return unmodifiableSymbols.iterator();
+	}
+
+	public AssemblySentential<NT> sub(int fromIndex, int toIndex) {
 		return new AssemblySentential<>(symbols.subList(fromIndex, toIndex));
+	}
+
+	/**
+	 * Get the number of symbols, including whitespace, in this sentential
+	 * 
+	 * @return the number of symbols
+	 */
+	public int size() {
+		return symbols.size();
 	}
 }

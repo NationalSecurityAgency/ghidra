@@ -615,7 +615,7 @@ public class AssemblyDualTextField {
 	 * strings have a long common prefix. Third, instructions having the same encoded length as
 	 * the existing one are preferred. Last, the shortest instructions are preferred.
 	 */
-	protected int computePreference(AssemblyResolvedConstructor rc, Instruction existing) {
+	protected int computePreference(AssemblyResolvedPatterns rc, Instruction existing) {
 		if (existing == null) {
 			return 0;
 		}
@@ -671,7 +671,7 @@ public class AssemblyDualTextField {
 						//result.add(new AssemblyError("", ar.toString()));
 						continue;
 					}
-					AssemblyResolvedConstructor rc = (AssemblyResolvedConstructor) ar;
+					AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) ar;
 					for (byte[] ins : rc.possibleInsVals(ctx)) {
 						result.add(new AssemblyInstruction(text, Arrays.copyOf(ins, ins.length),
 							computePreference(rc, existing)));

@@ -20,8 +20,7 @@ import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
-import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyProduction;
+import ghidra.app.plugin.assembler.sleigh.grammars.*;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyConstructorSemantic;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNonTerminal;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblySymbol;
@@ -38,6 +37,7 @@ public class AssemblyParseBranch extends AssemblyParseTreeNode
 
 	/**
 	 * Construct a branch from the given grammar and production
+	 * 
 	 * @param grammar the grammar containing the production
 	 * @param prod the production applied to create this branch
 	 */
@@ -70,12 +70,14 @@ public class AssemblyParseBranch extends AssemblyParseTreeNode
 
 	/**
 	 * Prepend a child to this branch
-	 * @param child the child
 	 * 
+	 * <p>
 	 * Because LR parsers produce rightmost derivations, they necessarily populate the branches
 	 * right to left. During reduction, each child is popped from the stack, traversing them in
-	 * reverse order. This method prepends children so that when reduction is complete, the
-	 * children are aligned to the corresponding symbols from the RHS of the production.
+	 * reverse order. This method prepends children so that when reduction is complete, the children
+	 * are aligned to the corresponding symbols from the RHS of the production.
+	 * 
+	 * @param child the child
 	 */
 	public void addChild(AssemblyParseTreeNode child) {
 		assert expects().equals(child.getSym());
@@ -86,22 +88,26 @@ public class AssemblyParseBranch extends AssemblyParseTreeNode
 	/**
 	 * See what symbol is expected next
 	 * 
+	 * <p>
 	 * The child added next must be associated with the token expected next.
+	 * 
 	 * @return the symbol
 	 */
 	protected AssemblySymbol expects() {
 		if (!isComplete()) {
-			return prod.get(prod.size() - substs.size() - 1);
+			AssemblySentential<?> rhs = prod.getRHS();
+			return rhs.getSymbol(rhs.size() - substs.size() - 1);
 		}
 		return null;
 	}
 
 	/**
 	 * Check if the branch is full
-	 * @return true if every symbol on the RHS has a corresonding child
+	 * 
+	 * @return true if every symbol on the RHS has a corresponding child
 	 */
 	protected boolean isComplete() {
-		return prod.size() == substs.size();
+		return prod.getRHS().size() == substs.size();
 	}
 
 	@Override
@@ -129,6 +135,7 @@ public class AssemblyParseBranch extends AssemblyParseTreeNode
 
 	/**
 	 * Get the production applied to create this branch
+	 * 
 	 * @return
 	 */
 	public AssemblyProduction getProduction() {
@@ -137,6 +144,7 @@ public class AssemblyParseBranch extends AssemblyParseTreeNode
 
 	/**
 	 * Get the list of children, indexed by corresponding symbol from the RHS
+	 * 
 	 * @return
 	 */
 	public List<AssemblyParseTreeNode> getSubstitutions() {
@@ -150,6 +158,7 @@ public class AssemblyParseBranch extends AssemblyParseTreeNode
 
 	/**
 	 * Get the <em>i</em>th child, corresponding to the <em>i</em>th symbol from the RHS
+	 * 
 	 * @param i the position
 	 * @return the child
 	 */

@@ -20,7 +20,7 @@ import org.junit.Test;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.util.Msg;
 
-public class x86AVX2AssemblyTest extends AbstractAssemblyTest {
+public class x64AVX2AssemblyTest extends AbstractAssemblyTest {
 	@Override
 	protected LanguageID getLanguageID() {
 		return new LanguageID("x86:LE:64:default");
@@ -35,5 +35,10 @@ public class x86AVX2AssemblyTest extends AbstractAssemblyTest {
 			Msg.warn(this, "Swapping to test case with [I+R] form");
 			assertOneCompatRestExact("VMOVSS dword ptr [-0x4 + RBP],XMM0", "c5:fa:11:45:fc");
 		}
+	}
+
+	@Test
+	public void testAssemble_VPSHUFD_YMM0_YMM0_0xd8() {
+		assertOneCompatRestExact("VPSHUFD YMM0,YMM0,0xd8", "c5:fd:70:c0:d8");
 	}
 }

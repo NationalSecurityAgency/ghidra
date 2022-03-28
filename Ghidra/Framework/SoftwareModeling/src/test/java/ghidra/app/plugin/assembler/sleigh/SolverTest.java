@@ -17,7 +17,6 @@ package ghidra.app.plugin.assembler.sleigh;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -32,13 +31,12 @@ import ghidra.app.plugin.languages.sleigh.SleighLanguages;
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
-import ghidra.app.plugin.processors.sleigh.symbol.*;
+import ghidra.app.plugin.processors.sleigh.symbol.SubtableSymbol;
 import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
 import ghidra.app.plugin.processors.sleigh.template.HandleTpl;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.program.model.lang.LanguageID;
-import ghidra.program.model.scalar.Scalar;
 import ghidra.util.Msg;
 import ghidra.xml.XmlPullParser;
 import ghidra.xml.XmlPullParserFactory;
@@ -180,8 +178,8 @@ public class SolverTest {
 		RecursiveDescentSolver solver = RecursiveDescentSolver.getSolver();
 		AssemblyResolution res =
 			solver.solve(exp, MaskedLong.fromLong(0x78), Collections.emptyMap(),
-				Collections.emptyMap(), AssemblyResolution.nop("NOP", null), "Test");
-		AssemblyResolution e = AssemblyResolvedConstructor.fromString("ins:X7:X8", "Test", null);
+				AssemblyResolution.nop("NOP"), "Test");
+		AssemblyResolution e = AssemblyResolvedPatterns.fromString("ins:X7:X8", "Test", null);
 		assertEquals(e, res);
 	}
 
@@ -257,103 +255,6 @@ public class SolverTest {
 		ConstructTpl ctpl = ct.getTempl();
 		HandleTpl htpl = ctpl.getResult();
 		assertEquals(16, htpl.getSize());
-	}
-
-	public void testExperimentGetOperandExportSize1() throws Exception {
-		if (!Application.isInitialized()) {
-			Application.initializeApplication(new GhidraApplicationLayout(),
-				new ApplicationConfiguration());
-		}
-		SleighLanguageProvider provider = new SleighLanguageProvider();
-		SleighLanguage lang =
-			(SleighLanguage) provider.getLanguage(new LanguageID("AARCH64:BE:64:v8A"));
-		AtomicReference<Constructor> consref = new AtomicReference<>();
-		SleighLanguages.traverseConstructors(lang, new ConstructorEntryVisitor() {
-			@Override
-			public int visit(SubtableSymbol subtable, DisjointPattern pattern, Constructor cons) {
-				if ("Imm_logical_imm32_operand".equals(subtable.getName())) {
-					if ("ins:SS:C[00xx]:[x0xx]X:XX:XX".equals(pattern.toString())) {
-						consref.set(cons);
-						return FINISHED;
-					}
-				}
-				return CONTINUE;
-			}
-		});
-		Constructor ct = consref.get();
-		ConstructState st = new ConstructState(null) {
-			@Override
-			public Constructor getConstructor() {
-				return ct;
-			}
-		};
-		int num = ct.getNumOperands();
-		for (int i = 0; i < num; i++) {
-			ConstructState sub = new ConstructState(st);
-			st.addSubState(sub);
-		}
-		SleighParserContext ctx = new SleighParserContext(null, null, null, null);
-
-		ParserWalker walker = new ParserWalker(ctx);
-
-		walker.subTreeState(st);
-		while (walker.isState()) {
-			assert ct == walker.getConstructor();
-			int oper = walker.getOperand();
-			int numoper = ct.getNumOperands();
-			while (oper < numoper) {
-				OperandSymbol sym = ct.getOperand(oper);
-				walker.pushOperand(oper);
-				TripleSymbol triple = sym.getDefiningSymbol();
-				if (triple != null) {
-					if (triple instanceof SubtableSymbol) {
-						break;
-					}
-					FixedHandle handle = walker.getParentHandle();
-					triple.getFixedHandle(handle, walker);
-				}
-				else { // Must be an expression
-						//PatternExpression patexp = sym.getDefiningExpression();
-						//long res = patexp.getValue(walker);
-					FixedHandle hand = walker.getParentHandle();
-					hand.space = lang.getAddressFactory().getConstantSpace();
-					hand.offset_space = null;
-					hand.offset_offset = 0x1010101010101010L;
-					hand.size = 0;
-				}
-				walker.popOperand();
-				oper++;
-			}
-			if (oper >= numoper) {
-				ConstructTpl templ = ct.getTempl();
-				if (templ != null) {
-					HandleTpl res = templ.getResult();
-					if (res != null) {
-						res.fix(walker.getParentHandle(), walker);
-					}
-					else {
-						walker.getParentHandle().setInvalid();
-					}
-				}
-				walker.popOperand();
-			}
-		}
-
-		walker.subTreeState(st);
-
-		walker.subTreeState(st);
-		ArrayList<Object> list = new ArrayList<>();
-		ct.printList(walker, list);
-		for (Object obj : list) {
-			if (obj instanceof Character) {
-				System.out.print(obj);
-			}
-			else if (obj instanceof FixedHandle) {
-				FixedHandle handle = (FixedHandle) obj;
-				System.out.println(
-					new Scalar(8 * handle.size, handle.offset_offset) + "(" + handle.size + ")");
-			}
-		}
 	}
 
 	@Test

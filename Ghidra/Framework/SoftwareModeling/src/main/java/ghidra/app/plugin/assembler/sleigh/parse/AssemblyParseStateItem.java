@@ -24,6 +24,7 @@ import ghidra.app.plugin.assembler.sleigh.symbol.AssemblySymbol;
 /**
  * An item in the state of an LR(0) parser
  * 
+ * <p>
  * An item is a production with a dot indicating a position while parsing
  */
 public class AssemblyParseStateItem implements Comparable<AssemblyParseStateItem> {
@@ -32,6 +33,7 @@ public class AssemblyParseStateItem implements Comparable<AssemblyParseStateItem
 
 	/**
 	 * Construct a new item starting at the far left of the given production
+	 * 
 	 * @param prod the production
 	 */
 	public AssemblyParseStateItem(AssemblyProduction prod) {
@@ -41,19 +43,21 @@ public class AssemblyParseStateItem implements Comparable<AssemblyParseStateItem
 	/**
 	 * Construct a new item starting immediately before the symbol at the given position in the
 	 * given production
+	 * 
 	 * @param prod the production
 	 * @param pos the position of the dot
 	 */
 	public AssemblyParseStateItem(AssemblyProduction prod, int pos) {
 		this.prod = prod;
 		this.pos = pos;
-		if (pos > prod.size()) {
+		if (pos > prod.getRHS().size()) {
 			throw new AssertionError("INTERNAL: Attempt to advance beyond end of RHS");
 		}
 	}
 
 	/**
 	 * Advance the dot by one position, producing a new item
+	 * 
 	 * @return the new item
 	 */
 	public AssemblyParseStateItem read() {
@@ -63,20 +67,24 @@ public class AssemblyParseStateItem implements Comparable<AssemblyParseStateItem
 	/**
 	 * Get the symbol immediately to the right of the dot
 	 * 
+	 * <p>
 	 * This is the symbol which must be matched to advance the dot.
+	 * 
 	 * @return the symbol, or null if the item is completed, i.e., the dot is at the far right
 	 */
 	public AssemblySymbol getNext() {
 		if (completed()) {
 			return null;
 		}
-		return prod.get(pos);
+		return prod.getRHS().getSymbol(pos);
 	}
 
 	/**
 	 * "Fill" one step out to close a state containing this item
 	 * 
+	 * <p>
 	 * To compute the full closure, you must continue stepping out until no new items are generated
+	 * 
 	 * @param grammar the grammar containing the production
 	 * @return a subset of items in the closure of a state containing this item
 	 */
@@ -137,8 +145,9 @@ public class AssemblyParseStateItem implements Comparable<AssemblyParseStateItem
 
 	@Override
 	public String toString() {
-		AssemblySentential<?> prec = prod.subList(0, pos);
-		AssemblySentential<?> proc = prod.subList(pos, prod.size());
+		AssemblySentential<?> rhs = prod.getRHS();
+		AssemblySentential<?> prec = rhs.sub(0, pos);
+		AssemblySentential<?> proc = rhs.sub(pos, rhs.size());
 		StringBuilder sb = new StringBuilder(prod.getIndex() + ". " + prod.getLHS() + " => ");
 		if (prec.size() != 0) {
 			sb.append(prec + " ");
@@ -153,18 +162,22 @@ public class AssemblyParseStateItem implements Comparable<AssemblyParseStateItem
 	/**
 	 * Check if this item is completed
 	 * 
+	 * <p>
 	 * The item is completed if all symbols have been matched, i.e., the dot is at the far right of
 	 * the production.
+	 * 
 	 * @return true iff the item is completed
 	 */
 	public boolean completed() {
-		return (pos == prod.size());
+		return (pos == prod.getRHS().size());
 	}
 
 	/**
 	 * Get the position of the dot
 	 * 
+	 * <p>
 	 * The position is the number of symbols to the left of the dot.
+	 * 
 	 * @return
 	 */
 	public int getPos() {
@@ -173,6 +186,7 @@ public class AssemblyParseStateItem implements Comparable<AssemblyParseStateItem
 
 	/**
 	 * Get the production associated with this item
+	 * 
 	 * @return the production
 	 */
 	public AssemblyProduction getProduction() {

@@ -19,12 +19,12 @@ import java.util.Map;
 import java.util.Set;
 
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedConstructor;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
 import ghidra.app.plugin.processors.sleigh.expression.MultExpression;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
 /**
- * Solves expressions of the form A * B
+ * Solves expressions of the form {@code A * B}
  */
 public class MultExpressionSolver extends AbstractBinaryExpressionSolver<MultExpression> {
 
@@ -103,25 +103,24 @@ public class MultExpressionSolver extends AbstractBinaryExpressionSolver<MultExp
 	}
 
 	protected AssemblyResolution tryRep(PatternExpression lexp, MaskedLong rval, MaskedLong repGoal,
-			MaskedLong goal, Map<String, Long> vals, Map<Integer, Object> res,
-			AssemblyResolvedConstructor cur, Set<SolverHint> hints, String description)
-			throws NeedsBackfillException {
+			MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description) throws NeedsBackfillException {
 		MaskedLong lval = repGoal.divideUnsigned(rval);
 		if (lval.multiply(rval).agrees(goal)) {
-			return solver.solve(lexp, lval, vals, res, cur, hints, description);
+			return solver.solve(lexp, lval, vals, cur, hints, description);
 		}
 		return null;
 	}
 
 	@Override
 	protected AssemblyResolution solveLeftSide(PatternExpression lexp, MaskedLong rval,
-			MaskedLong goal, Map<String, Long> vals, Map<Integer, Object> res,
-			AssemblyResolvedConstructor cur, Set<SolverHint> hints, String description)
+			MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description)
 			throws NeedsBackfillException, SolverException {
 		// Try the usual case first
 		ResultTracker tracker = new ResultTracker();
 		AssemblyResolution sol = tracker.trySolverFunc(() -> {
-			return super.solveLeftSide(lexp, rval, goal, vals, res, cur, hints, description);
+			return super.solveLeftSide(lexp, rval, goal, vals, cur, hints, description);
 		});
 		if (sol != null) {
 			return sol;
@@ -151,8 +150,8 @@ public class MultExpressionSolver extends AbstractBinaryExpressionSolver<MultExp
 			if (reps > 0) {
 				MaskedLong repRightGoal = MaskedLong.fromMaskAndValue(repMsk, repVal);
 				sol = tracker.trySolverFunc(() -> {
-					return tryRep(lexp, rval, repRightGoal, goal, vals, res, cur,
-						hintsWithRepetition, description);
+					return tryRep(lexp, rval, repRightGoal, goal, vals, cur, hintsWithRepetition,
+						description);
 				});
 				if (sol != null) {
 					return sol;
@@ -169,8 +168,8 @@ public class MultExpressionSolver extends AbstractBinaryExpressionSolver<MultExp
 				repMsk = -1L >>> i;
 				MaskedLong repLeftGoal = MaskedLong.fromMaskAndValue(repMsk, repVal);
 				sol = tracker.trySolverFunc(() -> {
-					return tryRep(lexp, rval, repLeftGoal, goal, vals, res, cur,
-						hintsWithRepetition, description);
+					return tryRep(lexp, rval, repLeftGoal, goal, vals, cur, hintsWithRepetition,
+						description);
 				});
 				if (sol != null) {
 					return sol;
@@ -182,10 +181,10 @@ public class MultExpressionSolver extends AbstractBinaryExpressionSolver<MultExp
 
 	@Override
 	protected AssemblyResolution solveRightSide(PatternExpression rexp, MaskedLong lval,
-			MaskedLong goal, Map<String, Long> vals, Map<Integer, Object> res,
-			AssemblyResolvedConstructor cur, Set<SolverHint> hints, String description)
+			MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description)
 			throws NeedsBackfillException, SolverException {
-		return solveLeftSide(rexp, lval, goal, vals, res, cur, hints, description);
+		return solveLeftSide(rexp, lval, goal, vals, cur, hints, description);
 	}
 
 	@Override

@@ -32,13 +32,15 @@ public class AssemblyParseTransitionTable {
 
 	/**
 	 * Put an entry into the state machine
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> Generally, if this returns non-null, something is probably wrong with your LR(0)
+	 * machine generator
+	 * 
 	 * @param fromState the source state
 	 * @param next the symbol that is matched
 	 * @param newState the destination state
 	 * @return the previous value for newState
-	 * 
-	 * NOTE: Generally, if this return non-null, something is probably wrong with your LR(0)
-	 *       machine generator
 	 */
 	public Integer put(int fromState, AssemblySymbol next, int newState) {
 		return map.put(new TableEntryKey(fromState, next), newState);
@@ -46,6 +48,7 @@ public class AssemblyParseTransitionTable {
 
 	/**
 	 * Get an entry from the state machine
+	 * 
 	 * @param fromState the source state
 	 * @param next the symbol that has been matched
 	 * @return the destination state
@@ -56,6 +59,7 @@ public class AssemblyParseTransitionTable {
 
 	/**
 	 * Traverse every entry in the table, invoking {@link Consumer#accept(Object)} on each
+	 * 
 	 * @param consumer the callback
 	 */
 	public void forEach(Consumer<TableEntry<Integer>> consumer) {

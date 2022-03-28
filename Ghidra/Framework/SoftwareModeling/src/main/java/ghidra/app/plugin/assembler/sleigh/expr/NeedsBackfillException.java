@@ -18,13 +18,15 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 /**
  * An exception to indicate that the solution of an expression is not yet known
  * 
+ * <p>
  * Furthermore, it cannot be determined whether or not the expression is even solvable. When this
- * exception is thrown, a backfill record is placed on the encoded resolution indicating that
+ * exception is thrown, a backfill record is placed on the encoded resolution indicating that the
  * resolver must attempt to solve the expression again, once the encoding is otherwise complete.
  * This is needed, most notably, when an encoding depends on the address of the <em>next</em>
  * instruction, because the length of the current instruction is not known until resolution has
  * finished.
  * 
+ * <p>
  * Backfill becomes a possibility when an expression depends on a symbol that is not (yet) defined.
  * Thus, as a matter of good record keeping, the exception takes the name of the missing symbol.
  */
@@ -33,6 +35,7 @@ public class NeedsBackfillException extends SolverException {
 
 	/**
 	 * Construct a backfill exception, resulting from the given missing symbol name
+	 * 
 	 * @param symbol the missing symbol name
 	 */
 	public NeedsBackfillException(String symbol) {
@@ -42,6 +45,7 @@ public class NeedsBackfillException extends SolverException {
 
 	/**
 	 * Retrieve the missing symbol name from the original solution attempt
+	 * 
 	 * @return the missing symbol name
 	 */
 	public String getSymbol() {

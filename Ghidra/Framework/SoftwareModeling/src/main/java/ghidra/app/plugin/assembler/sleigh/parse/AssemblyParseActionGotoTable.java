@@ -30,11 +30,11 @@ import ghidra.generic.util.datastruct.TreeSetValuedTreeMap;
 /**
  * The Action/Goto table for a LALR(1) parser
  * 
+ * <p>
  * This table is unconventional in that it permits a single cell to be populated by more than one
- * action. Typically, such a situation would indicate an ambiguity, or the need for a longer
- * look-ahead value. Because we do not presume to control the grammar (which was automatically
- * derived from another source), the parsing algorithm will simply branch, eventually trying both
- * options.
+ * action. Typically, such a situation would indicate ambiguity, or the need for a longer look-ahead
+ * value. Because we do not presume to control the grammar (which was automatically derived from
+ * another source), the parsing algorithm will simply branch, eventually trying both options.
  */
 public class AssemblyParseActionGotoTable {
 	// A map representing the actual (sparse) table
@@ -45,6 +45,7 @@ public class AssemblyParseActionGotoTable {
 
 	/**
 	 * Add an action entry to the given cell
+	 * 
 	 * @param fromState the state (row) in the table
 	 * @param next the symbol (column) in the table
 	 * @param action the entry to add to the cell
@@ -59,6 +60,7 @@ public class AssemblyParseActionGotoTable {
 
 	/**
 	 * Add a SHIFT (S<i>n</i>) entry to the given cell
+	 * 
 	 * @param fromState the state (row) in the table
 	 * @param next the symbol (column) in the table
 	 * @param newState the state (<i>n</i>) after the shift is applied
@@ -70,6 +72,7 @@ public class AssemblyParseActionGotoTable {
 
 	/**
 	 * Add a REDUCE (R<i>n</i>) entry to the given cell
+	 * 
 	 * @param fromState the state (row) in the table
 	 * @param next the symbol (column) in the table
 	 * @param prod the production (having index <i>n</i>) associated with the reduction
@@ -81,6 +84,7 @@ public class AssemblyParseActionGotoTable {
 
 	/**
 	 * Add a GOTO entry to the given cell
+	 * 
 	 * @param fromState the state (row) in the table
 	 * @param next the symbol (column) in the table
 	 * @param newState the target state
@@ -92,6 +96,7 @@ public class AssemblyParseActionGotoTable {
 
 	/**
 	 * Add an ACCEPT entry for the given state at the end of input
+	 * 
 	 * @param fromState the state (row) in the table
 	 * @return true, if the state does not already accept on end of input
 	 */
@@ -101,6 +106,7 @@ public class AssemblyParseActionGotoTable {
 
 	/**
 	 * Get the terminals that are expected, i.e., have entries for the given state
+	 * 
 	 * @param fromState the state (row) in the table
 	 * @return the collection of populated columns (terminals) for the given state
 	 */
@@ -110,6 +116,7 @@ public class AssemblyParseActionGotoTable {
 
 	/**
 	 * Get all entries in a given cell
+	 * 
 	 * @param fromState the state (row) in the table
 	 * @param next the symbol (column) in the table
 	 * @return all action entries in the given cell

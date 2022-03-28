@@ -19,12 +19,12 @@ import java.util.Map;
 import java.util.Set;
 
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedConstructor;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
 import ghidra.app.plugin.processors.sleigh.expression.BinaryExpression;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
 /**
- * A solver that handles expressions of the form A [OP] B
+ * A solver that handles expressions of the form {@code A [OP] B}
  *
  * @param <T> the type of expression solved (the operator)
  */
@@ -37,10 +37,10 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 
 	@Override
 	public AssemblyResolution solve(T exp, MaskedLong goal, Map<String, Long> vals,
-			Map<Integer, Object> res, AssemblyResolvedConstructor cur, Set<SolverHint> hints,
-			String description) throws NeedsBackfillException {
-		MaskedLong lval = solver.getValue(exp.getLeft(), vals, res, cur);
-		MaskedLong rval = solver.getValue(exp.getRight(), vals, res, cur);
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException {
+		MaskedLong lval = solver.getValue(exp.getLeft(), vals, cur);
+		MaskedLong rval = solver.getValue(exp.getRight(), vals, cur);
 
 		if (lval != null && !lval.isFullyDefined()) {
 			if (!lval.isFullyUndefined()) {
@@ -61,23 +61,23 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 				return ConstantValueSolver.checkConstAgrees(cval, goal, description);
 			}
 			else if (lval != null) {
-				return solveRightSide(exp.getRight(), lval, goal, vals, res, cur, hints,
+				return solveRightSide(exp.getRight(), lval, goal, vals, cur, hints,
 					description);
 			}
 			else if (rval != null) {
-				return solveLeftSide(exp.getLeft(), rval, goal, vals, res, cur, hints, description);
+				return solveLeftSide(exp.getLeft(), rval, goal, vals, cur, hints, description);
 			}
 			else {
 				// Each solver may provide a strategy for solving expression where both sides are
 				// variable, e.g., two fields being concatenated via OR.
-				return solveTwoSided(exp, goal, vals, res, cur, hints, description);
+				return solveTwoSided(exp, goal, vals, cur, hints, description);
 			}
 		}
 		catch (NeedsBackfillException e) {
 			throw e;
 		}
 		catch (SolverException e) {
-			return AssemblyResolution.error(e.getMessage(), description, null);
+			return AssemblyResolution.error(e.getMessage(), description);
 		}
 		catch (AssertionError e) {
 			dbg.println("While solving: " + exp + " (" + description + ")");
@@ -86,30 +86,30 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 	}
 
 	protected AssemblyResolution solveLeftSide(PatternExpression lexp, MaskedLong rval,
-			MaskedLong goal, Map<String, Long> vals, Map<Integer, Object> res,
-			AssemblyResolvedConstructor cur, Set<SolverHint> hints, String description)
+			MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description)
 			throws NeedsBackfillException, SolverException {
-		return solver.solve(lexp, computeLeft(rval, goal), vals, res, cur, hints, description);
+		return solver.solve(lexp, computeLeft(rval, goal), vals, cur, hints, description);
 	}
 
 	protected AssemblyResolution solveRightSide(PatternExpression rexp, MaskedLong lval,
-			MaskedLong goal, Map<String, Long> vals, Map<Integer, Object> res,
-			AssemblyResolvedConstructor cur, Set<SolverHint> hints, String description)
+			MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description)
 			throws NeedsBackfillException, SolverException {
-		return solver.solve(rexp, computeRight(lval, goal), vals, res, cur, hints, description);
+		return solver.solve(rexp, computeRight(lval, goal), vals, cur, hints, description);
 	}
 
 	protected AssemblyResolution solveTwoSided(T exp, MaskedLong goal, Map<String, Long> vals,
-			Map<Integer, Object> res, AssemblyResolvedConstructor cur, Set<SolverHint> hints,
-			String description) throws NeedsBackfillException, SolverException {
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException, SolverException {
 		throw new NeedsBackfillException("_two_sided_");
 	}
 
 	@Override
-	public MaskedLong getValue(T exp, Map<String, Long> vals, Map<Integer, Object> res,
-			AssemblyResolvedConstructor cur) throws NeedsBackfillException {
-		MaskedLong lval = solver.getValue(exp.getLeft(), vals, res, cur);
-		MaskedLong rval = solver.getValue(exp.getRight(), vals, res, cur);
+	public MaskedLong getValue(T exp, Map<String, Long> vals, AssemblyResolvedPatterns cur)
+			throws NeedsBackfillException {
+		MaskedLong lval = solver.getValue(exp.getLeft(), vals, cur);
+		MaskedLong rval = solver.getValue(exp.getRight(), vals, cur);
 		if (lval != null && rval != null) {
 			MaskedLong cval = compute(lval, rval);
 			return cval;
@@ -130,7 +130,9 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 	/**
 	 * Compute the right-hand-side value given that the result and the left are known
 	 * 
-	 * NOTE: Assumes commutativity by default
+	 * <p>
+	 * <b>NOTE:</b> Assumes commutativity by default
+	 * 
 	 * @param lval the left-hand-side value
 	 * @param goal the result
 	 * @return the right-hand-side value solution
@@ -150,16 +152,17 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 	public abstract MaskedLong compute(MaskedLong lval, MaskedLong rval);
 
 	@Override
-	public int getInstructionLength(T exp, Map<Integer, Object> res) {
-		int ll = solver.getInstructionLength(exp.getLeft(), res);
-		int lr = solver.getInstructionLength(exp.getRight(), res);
+	public int getInstructionLength(T exp) {
+		int ll = solver.getInstructionLength(exp.getLeft());
+		int lr = solver.getInstructionLength(exp.getRight());
 		return Math.max(ll, lr);
 	}
 
 	@Override
-	public MaskedLong valueForResolution(T exp, AssemblyResolvedConstructor rc) {
-		MaskedLong lval = solver.valueForResolution(exp.getLeft(), rc);
-		MaskedLong rval = solver.valueForResolution(exp.getRight(), rc);
+	public MaskedLong valueForResolution(T exp, Map<String, Long> vals,
+			AssemblyResolvedPatterns rc) {
+		MaskedLong lval = solver.valueForResolution(exp.getLeft(), vals, rc);
+		MaskedLong rval = solver.valueForResolution(exp.getRight(), vals, rc);
 		return compute(lval, rval);
 	}
 }

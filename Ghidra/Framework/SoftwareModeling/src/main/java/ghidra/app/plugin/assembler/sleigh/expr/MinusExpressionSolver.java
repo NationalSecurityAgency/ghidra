@@ -18,7 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import ghidra.app.plugin.processors.sleigh.expression.MinusExpression;
 
 /**
- * Solves expressions of the form -A
+ * Solves expressions of the form {@code -A}
  */
 public class MinusExpressionSolver extends AbstractUnaryExpressionSolver<MinusExpression> {
 
