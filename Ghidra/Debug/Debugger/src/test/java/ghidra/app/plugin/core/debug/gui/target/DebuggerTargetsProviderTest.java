@@ -91,7 +91,8 @@ public class DebuggerTargetsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		createTestModel();
 		waitForSwing();
-		assertFalse(targetsProvider.actionDisconnect.isEnabled());
+		// The first model is now selected automatically.
+		//assertFalse(targetsProvider.actionDisconnect.isEnabled());
 
 		selectNodeForObject(targetsProvider, mb.testModel);
 		waitForSwing();
