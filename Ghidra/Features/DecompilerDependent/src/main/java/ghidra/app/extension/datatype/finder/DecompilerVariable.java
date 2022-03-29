@@ -15,8 +15,7 @@
  */
 package ghidra.app.extension.datatype.finder;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.decompiler.*;
 import ghidra.program.model.address.Address;
@@ -173,6 +172,10 @@ public abstract class DecompilerVariable {
 				return entry;
 			}
 
+			if (parent instanceof ClangTokenGroup) {
+				return getAddressFromParent((ClangTokenGroup) parent, variable);
+			}
+
 			Address parentAddress = parent.getMinAddress();
 			if (parentAddress != null) {
 				return parentAddress;
@@ -181,6 +184,24 @@ public abstract class DecompilerVariable {
 		}
 
 		return null;
+	}
+
+	private Address getAddressFromParent(ClangTokenGroup parent, ClangToken child) {
+
+		// get as close as possible to the given token without going over
+		Address bestAddress = parent.getMinAddress();
+		Iterator<ClangNode> iterator = parent.iterator();
+		while (iterator.hasNext()) {
+			ClangNode node = iterator.next();
+			if (child.equals(node)) {
+				break;
+			}
+			Address nextAddress = node.getMinAddress();
+			if (nextAddress != null) {
+				bestAddress = nextAddress;
+			}
+		}
+		return bestAddress;
 	}
 
 	public String getName() {
