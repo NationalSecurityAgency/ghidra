@@ -61,7 +61,6 @@ import wasm.format.WasmHeader;
 import wasm.format.WasmModule;
 import wasm.format.sections.WasmNameSection;
 import wasm.format.sections.WasmSection;
-import wasm.format.sections.WasmSection.WasmSectionId;
 import wasm.format.sections.WasmUnknownCustomSection;
 import wasm.format.sections.structures.WasmCodeEntry;
 import wasm.format.sections.structures.WasmDataSegment;
@@ -77,6 +76,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 
 	public final static String WEBASSEMBLY = "WebAssembly";
 
+	public final static long IMPORT_BASE = 0x7f000000L;
 	public final static long CODE_BASE = 0x80000000L;
 
 	@Override
@@ -102,7 +102,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 	public static long getFunctionAddressOffset(WasmModule module, int funcidx) {
 		List<WasmImportEntry> imports = module.getImports(WasmExternalKind.EXT_FUNCTION);
 		if (funcidx < imports.size()) {
-			return CODE_BASE + imports.get(funcidx).getEntryOffset();
+			return IMPORT_BASE + funcidx * 4;
 		} else {
 			WasmCodeEntry codeEntry = module.getNonImportedFunctions().get(funcidx - imports.size());
 			return CODE_BASE + codeEntry.getOffset();
@@ -112,7 +112,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 	public static long getFunctionSize(WasmModule module, int funcidx) {
 		List<WasmImportEntry> imports = module.getImports(WasmExternalKind.EXT_FUNCTION);
 		if (funcidx < imports.size()) {
-			return imports.get(funcidx).getEntrySize();
+			return 4;
 		} else {
 			WasmCodeEntry codeEntry = module.getNonImportedFunctions().get(funcidx - imports.size());
 			return codeEntry.getCodeSize();
@@ -138,6 +138,10 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 
 	public static Address getGlobalAddress(AddressFactory addressFactory, int globalidx) {
 		return addressFactory.getAddressSpace("global").getAddress(((long) globalidx) * 8);
+	}
+
+	public static Address getModuleAddress(AddressFactory addressFactory) {
+		return getCodeAddress(addressFactory, 0);
 	}
 
 	private static Address getCodeAddress(AddressFactory addressFactory, long fileOffset) {
@@ -264,11 +268,11 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private static MemoryBlock createModuleBlock(Program program, FileBytes fileBytes) throws Exception {
-		Address start = AddressSpace.OTHER_SPACE.getAddress(0L);
+		Address start = getCodeAddress(program.getAddressFactory(), 0);
 		MemoryBlock block = program.getMemory().createInitializedBlock(".module", start, fileBytes, 0, fileBytes.getSize(), false);
 		block.setRead(true);
 		block.setWrite(false);
-		block.setExecute(false);
+		block.setExecute(true);
 		block.setSourceName("Wasm Module");
 		block.setComment("The full file contents of the Wasm module");
 		return block;
@@ -283,18 +287,6 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 			block.setComment("NOTE: This block is artificial and is used to represent imported functions");
 		} catch (Exception e) {
 			Msg.error(WasmLoader.class, "Failed to create imported function block at " + startAddress, e);
-		}
-	}
-
-	private static void createFunctionCodeBlock(Program program, FileBytes fileBytes, long fileOffset, Address startAddress, long length) {
-		try {
-			MemoryBlock block = program.getMemory().createInitializedBlock(".function", startAddress, fileBytes, fileOffset, length, false);
-			block.setRead(true);
-			block.setWrite(false);
-			block.setExecute(true);
-			block.setSourceName("Wasm Function");
-		} catch (Exception e) {
-			Msg.error(WasmLoader.class, "Failed to create function block at " + startAddress, e);
 		}
 	}
 
@@ -374,19 +366,8 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 		List<WasmCodeEntry> codeEntries = module.getNonImportedFunctions();
 		int numFunctions = imports.size() + codeEntries.size();
 
-		/*
-		 * Create two memory blocks to hold the imported and non-imported functions.
-		 * While it would be cleaner (in memory) to load each function into its own
-		 * block, this can cause massive slowdowns for files with many functions.
-		 */
-		WasmSection importSection = module.getSection(WasmSectionId.SEC_IMPORT);
-		if (importSection != null) {
-			createImportStubBlock(program, getCodeAddress(program.getAddressFactory(), importSection.getSectionOffset()), importSection.getSectionSize());
-		}
-		WasmSection codeSection = module.getSection(WasmSectionId.SEC_CODE);
-		if (codeSection != null) {
-			long codeOffset = codeSection.getSectionOffset();
-			createFunctionCodeBlock(program, fileBytes, codeOffset, getCodeAddress(program.getAddressFactory(), codeOffset), codeSection.getSectionSize());
+		if (imports.size() > 0) {
+			createImportStubBlock(program, getFunctionAddress(program.getAddressFactory(), module, 0), imports.size() * 4);
 		}
 
 		monitor.initialize(numFunctions);
