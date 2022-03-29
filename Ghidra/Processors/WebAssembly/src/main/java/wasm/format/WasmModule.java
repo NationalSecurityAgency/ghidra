@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 import ghidra.app.util.bin.BinaryReader;
-import wasm.format.WasmEnums.ValType;
 import wasm.format.WasmEnums.WasmExternalKind;
 import wasm.format.sections.WasmCodeSection;
 import wasm.format.sections.WasmCustomSection;
@@ -40,11 +39,11 @@ import wasm.format.sections.WasmSection.WasmSectionId;
 import wasm.format.sections.WasmStartSection;
 import wasm.format.sections.WasmTableSection;
 import wasm.format.sections.WasmTypeSection;
+import wasm.format.sections.structures.WasmCodeEntry;
 import wasm.format.sections.structures.WasmDataSegment;
 import wasm.format.sections.structures.WasmElementSegment;
 import wasm.format.sections.structures.WasmExportEntry;
 import wasm.format.sections.structures.WasmFuncType;
-import wasm.format.sections.structures.WasmCodeEntry;
 import wasm.format.sections.structures.WasmGlobalEntry;
 import wasm.format.sections.structures.WasmGlobalType;
 import wasm.format.sections.structures.WasmImportEntry;
@@ -238,12 +237,13 @@ public class WasmModule {
 		return getType(getFunctionSection().getTypeIdx(funcidx - imports.size()));
 	}
 
-	public ValType[] getFunctionLocals(int funcidx) {
+	public WasmCodeEntry getFunctionCode(int funcidx) {
 		List<WasmImportEntry> imports = getImports(WasmExternalKind.EXT_FUNCTION);
 		if (funcidx < imports.size()) {
 			return null;
+		} else {
+			return getNonImportedFunctions().get(funcidx - imports.size());
 		}
-		return getNonImportedFunctions().get(funcidx - imports.size()).getLocals();
 	}
 
 	public WasmGlobalType getGlobalType(int globalidx) {

@@ -20,8 +20,8 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Program;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
 import wasm.format.WasmModule;
@@ -44,8 +44,8 @@ public class WasmGlobalEntry implements StructConverter {
 		return expr.asBytes(module);
 	}
 
-	public Address asAddress(Program program, WasmModule module) {
-		return expr.asAddress(program, module);
+	public Address asAddress(AddressFactory addressFactory, WasmModule module) {
+		return expr.asAddress(addressFactory, module);
 	}
 
 	public Long asGlobalGet() {

@@ -38,14 +38,19 @@ public class InjectPayloadWasmPush extends InjectPayloadCallother {
 
 	@Override
 	public PcodeOp[] getPcode(Program program, InjectContext con) {
-		PcodeOpEmitter ops = new PcodeOpEmitter(program, con.baseAddr);
+		PcodeOpEmitter ops = new PcodeOpEmitter(program.getLanguage(), con.baseAddr);
 
 		long regoffset = con.inputlist.get(0).getOffset();
 		Address baseAddress = program.getAddressFactory().getAddressSpace("register").getAddress(regoffset);
 
 		WasmAnalysis state = WasmAnalysis.getState(program);
-		WasmFunctionAnalysis funcAnalysis = state.getFunctionAnalysis(
-				program.getFunctionManager().getFunctionContaining(con.baseAddr));
+		WasmFunctionAnalysis funcAnalysis;
+		try {
+			funcAnalysis = state.getFunctionAnalysis(
+					program.getFunctionManager().getFunctionContaining(con.baseAddr).getEntryPoint());
+		} catch (Exception e) {
+			return ops.getPcodeOps();
+		}
 		if (funcAnalysis == null) {
 			return ops.getPcodeOps();
 		}

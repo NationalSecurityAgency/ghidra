@@ -21,7 +21,7 @@ import ghidra.program.model.lang.InjectPayloadSleigh;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeOp;
 import wasm.analysis.WasmAnalysis;
-import wasm.analysis.WasmFunctionAnalysis;
+import wasm.analysis.WasmFuncSignature;
 import wasm.format.WasmEnums.ValType;
 
 /**
@@ -36,19 +36,19 @@ public class InjectPayloadWasmEntry extends InjectPayloadSleigh {
 
 	@Override
 	public PcodeOp[] getPcode(Program program, InjectContext con) {
-		PcodeOpEmitter ops = new PcodeOpEmitter(program, con.baseAddr);
+		PcodeOpEmitter ops = new PcodeOpEmitter(program.getLanguage(), con.baseAddr);
 
 		WasmAnalysis state = WasmAnalysis.getState(program);
-		WasmFunctionAnalysis funcAnalysis = state.getFunctionAnalysis(
-				program.getFunctionManager().getFunctionContaining(con.baseAddr));
-		if (funcAnalysis == null) {
+		Address funcBase = program.getFunctionManager().getFunctionContaining(con.baseAddr).getEntryPoint();
+		WasmFuncSignature sig = state.getFunctionByAddress(funcBase);
+		if (sig == null || sig.isImport()) {
 			return ops.getPcodeOps();
 		}
 
 		Address inputBase = program.getRegister("i0").getAddress();
 		Address localsBase = program.getRegister("l0").getAddress();
-		ValType[] params = funcAnalysis.getSignature().getParams();
-		ValType[] locals = funcAnalysis.getSignature().getLocals();
+		ValType[] params = sig.getParams();
+		ValType[] locals = sig.getLocals();
 		for (int i = 0; i < params.length; i++) {
 			ops.emitCopy(inputBase.add(i * 8L), localsBase.add(i * 8L), params[i].getSize());
 		}

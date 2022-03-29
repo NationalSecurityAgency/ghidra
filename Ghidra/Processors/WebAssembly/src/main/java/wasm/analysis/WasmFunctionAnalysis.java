@@ -94,10 +94,8 @@ public class WasmFunctionAnalysis {
 
 		private Map<Address, BigInteger> contextValues = new HashMap<>();
 
-		private void setRegister(Program program, Address address, RegisterDefinition reg, long value) {
+		private void setRegister(Address address, RegisterDefinition reg, long value) {
 			if (!contextValues.containsKey(address)) {
-				if (program.getListing().getInstructionContaining(address) != null)
-					return;
 				contextValues.put(address, BigInteger.ZERO);
 			}
 
@@ -112,6 +110,9 @@ public class WasmFunctionAnalysis {
 			Register contextRegister = context.getBaseContextRegister();
 			for (Map.Entry<Address, BigInteger> entry : contextValues.entrySet()) {
 				Address address = entry.getKey();
+				if (program.getListing().getInstructionContaining(address) != null)
+					continue;
+
 				RegisterValue value = new RegisterValue(contextRegister, entry.getValue());
 				try {
 					context.setRegisterValue(address, address, value);
@@ -122,15 +123,15 @@ public class WasmFunctionAnalysis {
 			contextValues.clear();
 		}
 
-		public void setIsReturn(Program program, Address address, int value) {
-			setRegister(program, address, REG_IS_RETURN, value);
+		public void setIsReturn(Address address, int value) {
+			setRegister(address, REG_IS_RETURN, value);
 		}
 
 		/**
 		 * Set whether the instruction takes a 64-bit stack operand. This currently
 		 * affects local.*, global.* and select instructions.
 		 */
-		public void setIsOp64(Program program, Address address, ValType type) {
+		public void setIsOp64(Address address, ValType type) {
 			int value;
 			if (type == null || type.getSize() == 4) {
 				/* 32-bit operand */
@@ -139,37 +140,37 @@ public class WasmFunctionAnalysis {
 				/* 64-bit operand */
 				value = 1;
 			}
-			setRegister(program, address, REG_IS_OP64, value);
+			setRegister(address, REG_IS_OP64, value);
 		}
 
 		/** Mark this global.* instruction as operating on the C stack pointer. */
-		public void setIsGlobalSp(Program program, Address address, boolean value) {
-			setRegister(program, address, REG_IS_GLOBAL_SP, value ? 1 : 0);
+		public void setIsGlobalSp(Address address, boolean value) {
+			setRegister(address, REG_IS_GLOBAL_SP, value ? 1 : 0);
 		}
 
 		/** Set the address that this instruction branches to. */
-		public void setBranchTarget(Program program, Address address, Address target) {
-			setRegister(program, address, REG_BR_TARGET, target.getOffset());
+		public void setBranchTarget(Address address, Address target) {
+			setRegister(address, REG_BR_TARGET, target.getOffset());
 		}
 
 		/**
 		 * Set the virtual stack pointer. Our SLEIGH converts stack operations into
 		 * register operations by using the stack pointer to index a register file.
 		 */
-		public void setStackPointer(Program program, Address address, long value) {
-			setRegister(program, address, REG_SP, value);
+		public void setStackPointer(Address address, long value) {
+			setRegister(address, REG_SP, value);
 		}
 
 		/* Number of locals table entries */
-		public void setLocalsDeclaration(Program program, Address address) {
-			setRegister(program, address, REG_IS_DIRECTIVE, 1);
-			setRegister(program, address, REG_DIRECTIVE_TYPE, DIRECTIVE_LOCALS);
+		public void setLocalsDeclaration(Address address) {
+			setRegister(address, REG_IS_DIRECTIVE, 1);
+			setRegister(address, REG_DIRECTIVE_TYPE, DIRECTIVE_LOCALS);
 		}
 
 		/* One entry in the function locals table */
-		public void setLocalDeclaration(Program program, Address address) {
-			setRegister(program, address, REG_IS_DIRECTIVE, 1);
-			setRegister(program, address, REG_DIRECTIVE_TYPE, DIRECTIVE_LOCAL);
+		public void setLocalDeclaration(Address address) {
+			setRegister(address, REG_IS_DIRECTIVE, 1);
+			setRegister(address, REG_DIRECTIVE_TYPE, DIRECTIVE_LOCAL);
 		}
 
 		/**
@@ -177,13 +178,13 @@ public class WasmFunctionAnalysis {
 		 * break out case statements individually in order to provide each one with a
 		 * unique branch target.
 		 */
-		public void setBrTableCase(Program program, Address address, int index) {
-			setRegister(program, address, REG_IS_DIRECTIVE, 1);
+		public void setBrTableCase(Address address, int index) {
+			setRegister(address, REG_IS_DIRECTIVE, 1);
 			if (index == -1) {
-				setRegister(program, address, REG_DIRECTIVE_TYPE, DIRECTIVE_DEFAULT);
+				setRegister(address, REG_DIRECTIVE_TYPE, DIRECTIVE_DEFAULT);
 			} else {
-				setRegister(program, address, REG_DIRECTIVE_TYPE, DIRECTIVE_CASE);
-				setRegister(program, address, REG_CASE_INDEX, index);
+				setRegister(address, REG_DIRECTIVE_TYPE, DIRECTIVE_CASE);
+				setRegister(address, REG_CASE_INDEX, index);
 			}
 		}
 	}
@@ -192,14 +193,13 @@ public class WasmFunctionAnalysis {
 		ValType[] params;
 		ValType[] returns;
 
-		public BlockType(Program program, WasmFuncSignature func) {
+		public BlockType(WasmFuncSignature func) {
 			/* A function's parameters are in local variables rather than the stack */
 			params = new ValType[0];
 			returns = func.getReturns();
 		}
 
-		public BlockType(Program program, long blocktype) {
-			WasmAnalysis analysis = WasmAnalysis.getState(program);
+		public BlockType(WasmAnalysis analysis, long blocktype) {
 			if (blocktype == -0x40) {
 				params = new ValType[0];
 				returns = new ValType[0];
@@ -231,14 +231,14 @@ public class WasmFunctionAnalysis {
 		boolean unreachable = false;
 		boolean hasElse = false;
 
-		public ControlFrame(Program program, Address address, BlockType blockType) {
+		public ControlFrame(Address address, BlockType blockType) {
 			this.startAddress = address;
 			this.blockKind = BlockKind.FUNCTION;
 			this.blockType = blockType;
 			this.initialStack = new ArrayList<>();
 		}
 
-		public ControlFrame(Program program, Address address, BlockKind blockKind, BlockType blockType, List<ValType> stack) {
+		public ControlFrame(Address address, BlockKind blockKind, BlockType blockType, List<ValType> stack) {
 			this.startAddress = address;
 			this.blockKind = blockKind;
 			this.blockType = blockType;
@@ -263,21 +263,21 @@ public class WasmFunctionAnalysis {
 		 * @param address
 		 *            Address of the branch instruction
 		 */
-		public void addBranch(Program program, Address address) {
+		public void addBranch(Address address) {
 			branchAddresses.add(address);
 		}
 
-		public void setElse(Program program, Address address) {
+		public void setElse(Address address) {
 			hasElse = true;
 			if (blockKind != BlockKind.IF) {
 				throw new ValidationException(address, "else without corresponding if");
 			}
-			contextreg.setBranchTarget(program, startAddress, address.add(1));
+			contextreg.setBranchTarget(startAddress, address.add(1));
 		}
 
-		public void setEnd(Program program, Address address) {
+		public void setEnd(Address address) {
 			if (blockKind == BlockKind.IF && !hasElse) {
-				contextreg.setBranchTarget(program, startAddress, address);
+				contextreg.setBranchTarget(startAddress, address);
 			}
 
 			Address branchTarget;
@@ -287,7 +287,7 @@ public class WasmFunctionAnalysis {
 				branchTarget = address;
 			}
 			for (Address branch : branchAddresses) {
-				contextreg.setBranchTarget(program, branch, branchTarget);
+				contextreg.setBranchTarget(branch, branchTarget);
 			}
 		}
 
@@ -345,7 +345,7 @@ public class WasmFunctionAnalysis {
 	 * saved to the program context, which would save us from having to re-analyze
 	 * functions when reopening the DB.
 	 */
-	private void setStackEffect(Program program, Address address, int popHeight, ValType[] toPop, int pushHeight, ValType[] toPush) {
+	private void setStackEffect(Address address, int popHeight, ValType[] toPop, int pushHeight, ValType[] toPush) {
 		stackEffects.put(address, new StackEffect(popHeight, toPop, pushHeight, toPush));
 	}
 
@@ -442,23 +442,23 @@ public class WasmFunctionAnalysis {
 	// #endregion
 
 	// #region Common instruction code
-	private void branchToBlock(Program program, Address instAddress, long labelidx) {
+	private void branchToBlock(Address instAddress, long labelidx) {
 		ControlFrame block = getBlock(instAddress, labelidx);
 		ValType[] arguments = block.getBranchArguments();
 		popValues(instAddress, arguments);
-		setStackEffect(program, instAddress, valueStack.size(), arguments, block.initialStack.size(), arguments);
-		block.addBranch(program, instAddress);
+		setStackEffect(instAddress, valueStack.size(), arguments, block.initialStack.size(), arguments);
+		block.addBranch(instAddress);
 		pushValues(instAddress, arguments);
 	}
 
-	private void memoryLoad(Program program, BinaryReader reader, Address instAddress, ValType destType) throws IOException {
+	private void memoryLoad(BinaryReader reader, Address instAddress, ValType destType) throws IOException {
 		readLeb128(reader); /* align */
 		readLeb128(reader); /* offset */
 		popValue(instAddress, ValType.i32);
 		pushValue(instAddress, destType);
 	}
 
-	private void memoryStore(Program program, BinaryReader reader, Address instAddress, ValType destType) throws IOException {
+	private void memoryStore(BinaryReader reader, Address instAddress, ValType destType) throws IOException {
 		readLeb128(reader); /* align */
 		readLeb128(reader); /* offset */
 		popValue(instAddress, destType);
@@ -478,8 +478,8 @@ public class WasmFunctionAnalysis {
 
 	// #endregion
 
-	private void analyzeOpcode(Program program, Address instAddress, BinaryReader reader) throws IOException {
-		contextreg.setStackPointer(program, instAddress, 8 * valueStack.size());
+	private void analyzeOpcode(WasmAnalysis analysis, Address instAddress, BinaryReader reader) throws IOException {
+		contextreg.setStackPointer(instAddress, 8 * valueStack.size());
 		int opcode = reader.readNextUnsignedByte();
 		switch (opcode) {
 		case 0x00: /* unreachable */
@@ -489,22 +489,22 @@ public class WasmFunctionAnalysis {
 			break;
 
 		case 0x02: /* block bt */ {
-			BlockType blocktype = new BlockType(program, readSignedLeb128(reader));
+			BlockType blocktype = new BlockType(analysis, readSignedLeb128(reader));
 			popValues(instAddress, blocktype.params);
-			pushBlock(instAddress, this.new ControlFrame(program, instAddress, BlockKind.BLOCK, blocktype, valueStack));
+			pushBlock(instAddress, this.new ControlFrame(instAddress, BlockKind.BLOCK, blocktype, valueStack));
 			break;
 		}
 		case 0x03: /* loop bt */ {
-			BlockType blocktype = new BlockType(program, readSignedLeb128(reader));
+			BlockType blocktype = new BlockType(analysis, readSignedLeb128(reader));
 			popValues(instAddress, blocktype.params);
-			pushBlock(instAddress, this.new ControlFrame(program, instAddress, BlockKind.LOOP, blocktype, valueStack));
+			pushBlock(instAddress, this.new ControlFrame(instAddress, BlockKind.LOOP, blocktype, valueStack));
 			break;
 		}
 		case 0x04: /* if bt */ {
-			BlockType blocktype = new BlockType(program, readSignedLeb128(reader));
+			BlockType blocktype = new BlockType(analysis, readSignedLeb128(reader));
 			popValue(instAddress, ValType.i32);
 			popValues(instAddress, blocktype.params);
-			pushBlock(instAddress, this.new ControlFrame(program, instAddress, BlockKind.IF, blocktype, valueStack));
+			pushBlock(instAddress, this.new ControlFrame(instAddress, BlockKind.IF, blocktype, valueStack));
 			break;
 		}
 		case 0x05: /* else */ {
@@ -517,8 +517,8 @@ public class WasmFunctionAnalysis {
 			 * The else instruction itself serves as a branch to the end of the block. The
 			 * branch from the if instruction will go to the instruction after the else.
 			 */
-			block.addBranch(program, instAddress);
-			block.setElse(program, instAddress);
+			block.addBranch(instAddress);
+			block.setElse(instAddress);
 
 			block.unreachable = false;
 			pushBlock(instAddress, block);
@@ -527,25 +527,25 @@ public class WasmFunctionAnalysis {
 		case 0x0B: /* end */ {
 			ControlFrame block = popBlock(instAddress);
 			// this stack effect will only be used by the final end
-			setStackEffect(program, instAddress, valueStack.size(), block.blockType.returns, 0, null);
+			setStackEffect(instAddress, valueStack.size(), block.blockType.returns, 0, null);
 			pushValues(instAddress, block.blockType.returns);
-			block.setEnd(program, instAddress);
+			block.setEnd(instAddress);
 			if (controlStack.isEmpty()) {
-				contextreg.setIsReturn(program, instAddress, 1);
+				contextreg.setIsReturn(instAddress, 1);
 			}
 			break;
 		}
 
 		case 0x0C: /* br l */ {
 			long labelidx = readLeb128(reader);
-			branchToBlock(program, instAddress, labelidx);
+			branchToBlock(instAddress, labelidx);
 			markUnreachable(instAddress);
 			break;
 		}
 		case 0x0D: /* br_if l */ {
 			long labelidx = readLeb128(reader);
 			popValue(instAddress, ValType.i32);
-			branchToBlock(program, instAddress, labelidx);
+			branchToBlock(instAddress, labelidx);
 			break;
 		}
 		case 0x0E: /* br_table l* l */ {
@@ -553,35 +553,33 @@ public class WasmFunctionAnalysis {
 			popValue(instAddress, ValType.i32);
 			for (int i = 0; i < count + 1; i++) {
 				Address caseAddress = func.getStartAddr().add(reader.getPointerIndex());
-				contextreg.setBrTableCase(program, caseAddress, (i < count) ? i : -1);
+				contextreg.setBrTableCase(caseAddress, (i < count) ? i : -1);
 				long labelidx = readLeb128(reader);
-				branchToBlock(program, caseAddress, labelidx);
+				branchToBlock(caseAddress, labelidx);
 			}
 			markUnreachable(instAddress);
 			break;
 		}
 		case 0x0F: /* return */ {
 			popValues(instAddress, func.getReturns());
-			setStackEffect(program, instAddress, valueStack.size(), func.getReturns(), 0, null);
+			setStackEffect(instAddress, valueStack.size(), func.getReturns(), 0, null);
 			markUnreachable(instAddress);
 			break;
 		}
 		case 0x10: /* call x */ {
 			long funcidx = readLeb128(reader);
-			WasmAnalysis analysis = WasmAnalysis.getState(program);
 			WasmFuncSignature targetFunc = analysis.getFunction((int) funcidx);
 			ValType[] params = targetFunc.getParams();
 			ValType[] returns = targetFunc.getReturns();
 			popValues(instAddress, params);
-			setStackEffect(program, instAddress, valueStack.size(), params, valueStack.size(), returns);
-			contextreg.setBranchTarget(program, instAddress, targetFunc.getStartAddr());
+			setStackEffect(instAddress, valueStack.size(), params, valueStack.size(), returns);
+			contextreg.setBranchTarget(instAddress, targetFunc.getStartAddr());
 			pushValues(instAddress, returns);
 			break;
 		}
 		case 0x11: /* call_indirect x y */ {
 			long typeidx = readLeb128(reader);
 			long tableidx = readLeb128(reader);
-			WasmAnalysis analysis = WasmAnalysis.getState(program);
 			if (analysis.getTableType((int) tableidx) != ValType.funcref) {
 				throw new ValidationException(instAddress, "call_indirect does not reference a function table");
 			}
@@ -591,7 +589,7 @@ public class WasmFunctionAnalysis {
 			ValType[] params = type.getParamTypes();
 			ValType[] returns = type.getReturnTypes();
 			popValues(instAddress, params);
-			setStackEffect(program, instAddress, valueStack.size(), params, valueStack.size(), returns);
+			setStackEffect(instAddress, valueStack.size(), params, valueStack.size(), returns);
 			pushValues(instAddress, returns);
 			break;
 		}
@@ -608,7 +606,7 @@ public class WasmFunctionAnalysis {
 				throw new ValidationException(instAddress, "inconsistent types in select");
 			}
 			ValType resultType = (t1 != null) ? t1 : t2;
-			contextreg.setIsOp64(program, instAddress, resultType);
+			contextreg.setIsOp64(instAddress, resultType);
 			pushValue(instAddress, resultType);
 			break;
 		}
@@ -628,37 +626,37 @@ public class WasmFunctionAnalysis {
 		case 0x20: /* local.get x */ {
 			long localidx = readLeb128(reader);
 			ValType type = func.getLocals()[(int) localidx];
-			contextreg.setIsOp64(program, instAddress, type);
+			contextreg.setIsOp64(instAddress, type);
 			pushValue(instAddress, type);
 			break;
 		}
 		case 0x21: /* local.set x */ {
 			long localidx = readLeb128(reader);
 			ValType type = func.getLocals()[(int) localidx];
-			contextreg.setIsOp64(program, instAddress, type);
+			contextreg.setIsOp64(instAddress, type);
 			popValue(instAddress, type);
 			break;
 		}
 		case 0x22: /* local.tee x */ {
 			long localidx = readLeb128(reader);
 			ValType type = func.getLocals()[(int) localidx];
-			contextreg.setIsOp64(program, instAddress, type);
+			contextreg.setIsOp64(instAddress, type);
 			popValue(instAddress, type);
 			pushValue(instAddress, type);
 			break;
 		}
 		case 0x23: /* global.get x */ {
 			long globalidx = readLeb128(reader);
-			ValType type = WasmAnalysis.getState(program).getGlobalType((int) globalidx);
-			contextreg.setIsOp64(program, instAddress, type);
+			ValType type = analysis.getGlobalType((int) globalidx);
+			contextreg.setIsOp64(instAddress, type);
 			globalGetSets.put(instAddress, globalidx);
 			pushValue(instAddress, type);
 			break;
 		}
 		case 0x24: /* global.set x */ {
 			long globalidx = readLeb128(reader);
-			ValType type = WasmAnalysis.getState(program).getGlobalType((int) globalidx);
-			contextreg.setIsOp64(program, instAddress, type);
+			ValType type = analysis.getGlobalType((int) globalidx);
+			contextreg.setIsOp64(instAddress, type);
 			globalGetSets.put(instAddress, globalidx);
 			popValue(instAddress, type);
 			break;
@@ -666,7 +664,6 @@ public class WasmFunctionAnalysis {
 
 		case 0x25: /* table.get x */ {
 			long tableidx = readLeb128(reader);
-			WasmAnalysis analysis = WasmAnalysis.getState(program);
 			ValType type = analysis.getTableType((int) tableidx);
 			popValue(instAddress, ValType.i32);
 			pushValue(instAddress, type);
@@ -674,7 +671,6 @@ public class WasmFunctionAnalysis {
 		}
 		case 0x26: /* table.set x */ {
 			long tableidx = readLeb128(reader);
-			WasmAnalysis analysis = WasmAnalysis.getState(program);
 			ValType type = analysis.getTableType((int) tableidx);
 			popValue(instAddress, type);
 			popValue(instAddress, ValType.i32);
@@ -686,7 +682,7 @@ public class WasmFunctionAnalysis {
 		case 0x2D: /* i32.load8_u memarg */
 		case 0x2E: /* i32.load16_s memarg */
 		case 0x2F: /* i32.load16_u memarg */
-			memoryLoad(program, reader, instAddress, ValType.i32);
+			memoryLoad(reader, instAddress, ValType.i32);
 			break;
 		case 0x29: /* i64.load memarg */
 		case 0x30: /* i64.load8_s memarg */
@@ -695,31 +691,31 @@ public class WasmFunctionAnalysis {
 		case 0x33: /* i64.load16_u memarg */
 		case 0x34: /* i64.load32_s memarg */
 		case 0x35: /* i64.load32_u memarg */
-			memoryLoad(program, reader, instAddress, ValType.i64);
+			memoryLoad(reader, instAddress, ValType.i64);
 			break;
 		case 0x2A: /* f32.load memarg */
-			memoryLoad(program, reader, instAddress, ValType.f32);
+			memoryLoad(reader, instAddress, ValType.f32);
 			break;
 		case 0x2B: /* f64.load memarg */
-			memoryLoad(program, reader, instAddress, ValType.f64);
+			memoryLoad(reader, instAddress, ValType.f64);
 			break;
 
 		case 0x36: /* i32.store memarg */
 		case 0x3A: /* i32.store8 memarg */
 		case 0x3B: /* i32.store16 memarg */
-			memoryStore(program, reader, instAddress, ValType.i32);
+			memoryStore(reader, instAddress, ValType.i32);
 			break;
 		case 0x37: /* i64.store memarg */
 		case 0x3C: /* i64.store8 memarg */
 		case 0x3D: /* i64.store16 memarg */
 		case 0x3E: /* i64.store32 memarg */
-			memoryStore(program, reader, instAddress, ValType.i64);
+			memoryStore(reader, instAddress, ValType.i64);
 			break;
 		case 0x38: /* f32.store memarg */
-			memoryStore(program, reader, instAddress, ValType.f32);
+			memoryStore(reader, instAddress, ValType.f32);
 			break;
 		case 0x39: /* f64.store memarg */
-			memoryStore(program, reader, instAddress, ValType.f64);
+			memoryStore(reader, instAddress, ValType.f64);
 			break;
 
 		case 0x3F: /* memory.size */ {
@@ -959,9 +955,8 @@ public class WasmFunctionAnalysis {
 			break;
 		case 0xD2: /* ref.func x */ {
 			long funcidx = readLeb128(reader);
-			WasmAnalysis analysis = WasmAnalysis.getState(program);
 			WasmFuncSignature targetFunc = analysis.getFunction((int) funcidx);
-			contextreg.setBranchTarget(program, instAddress, targetFunc.getStartAddr());
+			contextreg.setBranchTarget(instAddress, targetFunc.getStartAddr());
 			pushValue(instAddress, ValType.funcref);
 			break;
 		}
@@ -1061,7 +1056,7 @@ public class WasmFunctionAnalysis {
 		}
 	}
 
-	public void analyzeFunction(Program program, BinaryReader reader) throws IOException {
+	public void analyzeFunction(WasmAnalysis analysis, BinaryReader reader) throws IOException {
 		Address startAddress = func.getStartAddr();
 		long functionLength = func.getEndAddr().subtract(func.getStartAddr());
 
@@ -1069,27 +1064,27 @@ public class WasmFunctionAnalysis {
 		Address instAddress;
 
 		instAddress = startAddress.add(reader.getPointerIndex());
-		contextreg.setLocalsDeclaration(program, instAddress);
+		contextreg.setLocalsDeclaration(instAddress);
 		long count = readLeb128(reader);
 		for (int i = 0; i < count; i++) {
 			instAddress = startAddress.add(reader.getPointerIndex());
-			contextreg.setLocalDeclaration(program, instAddress);
+			contextreg.setLocalDeclaration(instAddress);
 			readLeb128(reader); /* count */
 			readLeb128(reader); /* type */
 		}
 
 		instAddress = startAddress.add(reader.getPointerIndex());
-		pushBlock(instAddress, new ControlFrame(program, instAddress, new BlockType(program, func)));
+		pushBlock(instAddress, new ControlFrame(instAddress, new BlockType(func)));
 		while (reader.getPointerIndex() <= functionLength) {
 			instAddress = startAddress.add(reader.getPointerIndex());
-			analyzeOpcode(program, instAddress, reader);
+			analyzeOpcode(analysis, instAddress, reader);
 		}
 	}
 
 	public void applyContext(Program program, int cStackGlobal) {
 		for (Map.Entry<Address, Long> entry : globalGetSets.entrySet()) {
 			if (entry.getValue() == cStackGlobal) {
-				contextreg.setIsGlobalSp(program, entry.getKey(), entry.getValue() == cStackGlobal);
+				contextreg.setIsGlobalSp(entry.getKey(), entry.getValue() == cStackGlobal);
 			}
 		}
 		contextreg.commitContext(program);

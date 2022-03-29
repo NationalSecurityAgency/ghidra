@@ -26,10 +26,10 @@ import wasm.analysis.WasmFunctionAnalysis.StackEffect;
 import wasm.format.WasmEnums.ValType;
 
 /**
- * Handle variable-length pops from the stack to registers.
- * We use this to handle branches (popping block arguments to temporary registers),
- * function calls (popping function arguments to input registers),
- * and function return (popping return values to output registers).
+ * Handle variable-length pops from the stack to registers. We use this to
+ * handle branches (popping block arguments to temporary registers), function
+ * calls (popping function arguments to input registers), and function return
+ * (popping return values to output registers).
  */
 public class InjectPayloadWasmPop extends InjectPayloadCallother {
 
@@ -39,14 +39,19 @@ public class InjectPayloadWasmPop extends InjectPayloadCallother {
 
 	@Override
 	public PcodeOp[] getPcode(Program program, InjectContext con) {
-		PcodeOpEmitter ops = new PcodeOpEmitter(program, con.baseAddr);
+		PcodeOpEmitter ops = new PcodeOpEmitter(program.getLanguage(), con.baseAddr);
 
 		long regoffset = con.inputlist.get(0).getOffset();
 		Address baseAddress = program.getAddressFactory().getAddressSpace("register").getAddress(regoffset);
 
 		WasmAnalysis state = WasmAnalysis.getState(program);
-		WasmFunctionAnalysis funcAnalysis = state.getFunctionAnalysis(
-				program.getFunctionManager().getFunctionContaining(con.baseAddr));
+		WasmFunctionAnalysis funcAnalysis;
+		try {
+			funcAnalysis = state.getFunctionAnalysis(
+					program.getFunctionManager().getFunctionContaining(con.baseAddr).getEntryPoint());
+		} catch (Exception e) {
+			return ops.getPcodeOps();
+		}
 		if (funcAnalysis == null) {
 			return ops.getPcodeOps();
 		}

@@ -30,6 +30,7 @@ import ghidra.app.util.opinion.AbstractLibrarySupportLoader;
 import ghidra.app.util.opinion.LoadSpec;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.ArrayDataType;
@@ -62,10 +63,10 @@ import wasm.format.sections.WasmNameSection;
 import wasm.format.sections.WasmSection;
 import wasm.format.sections.WasmSection.WasmSectionId;
 import wasm.format.sections.WasmUnknownCustomSection;
+import wasm.format.sections.structures.WasmCodeEntry;
 import wasm.format.sections.structures.WasmDataSegment;
 import wasm.format.sections.structures.WasmElementSegment;
 import wasm.format.sections.structures.WasmExportEntry;
-import wasm.format.sections.structures.WasmCodeEntry;
 import wasm.format.sections.structures.WasmGlobalEntry;
 import wasm.format.sections.structures.WasmGlobalType;
 import wasm.format.sections.structures.WasmImportEntry;
@@ -108,7 +109,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	public static long getFunctionSize(Program program, WasmModule module, int funcidx) {
+	public static long getFunctionSize(WasmModule module, int funcidx) {
 		List<WasmImportEntry> imports = module.getImports(WasmExternalKind.EXT_FUNCTION);
 		if (funcidx < imports.size()) {
 			return imports.get(funcidx).getEntrySize();
@@ -118,29 +119,29 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	public static Address getFunctionAddress(Program program, WasmModule module, int funcidx) {
-		return program.getAddressFactory().getAddressSpace("ram").getAddress(getFunctionAddressOffset(module, funcidx));
+	public static Address getFunctionAddress(AddressFactory addressFactory, WasmModule module, int funcidx) {
+		return addressFactory.getAddressSpace("ram").getAddress(getFunctionAddressOffset(module, funcidx));
 	}
 
-	public static Address getTableAddress(Program program, int tableidx, long itemIndex) {
-		return program.getAddressFactory().getAddressSpace("table").getAddress((((long) tableidx) << 32) + (itemIndex * 4));
+	public static Address getTableAddress(AddressFactory addressFactory, int tableidx, long itemIndex) {
+		return addressFactory.getAddressSpace("table").getAddress((((long) tableidx) << 32) + (itemIndex * 4));
 	}
 
-	public static Address getMemoryAddress(Program program, int memidx, long offset) {
+	public static Address getMemoryAddress(AddressFactory addressFactory, int memidx, long offset) {
 		if (memidx != 0) {
 			/* only handle memory 0 for now */
 			throw new IllegalArgumentException("non-zero memidx is not supported");
 		}
 
-		return program.getAddressFactory().getAddressSpace("ram").getAddress(offset);
+		return addressFactory.getAddressSpace("ram").getAddress(offset);
 	}
 
-	public static Address getGlobalAddress(Program program, int globalidx) {
-		return program.getAddressFactory().getAddressSpace("global").getAddress(((long) globalidx) * 8);
+	public static Address getGlobalAddress(AddressFactory addressFactory, int globalidx) {
+		return addressFactory.getAddressSpace("global").getAddress(((long) globalidx) * 8);
 	}
 
-	private static Address getCodeAddress(Program program, long fileOffset) {
-		return program.getAddressFactory().getAddressSpace("ram").getAddress(CODE_BASE + fileOffset);
+	private static Address getCodeAddress(AddressFactory addressFactory, long fileOffset) {
+		return addressFactory.getAddressSpace("ram").getAddress(CODE_BASE + fileOffset);
 	}
 	// #endregion
 
@@ -192,7 +193,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 		return globalNamespace;
 	}
 
-	private static String getObjectName(Program program, WasmModule module, WasmExternalKind objectKind, int objidx) {
+	private static String getObjectName(WasmModule module, WasmExternalKind objectKind, int objidx) {
 		List<WasmImportEntry> imports = module.getImports(objectKind);
 		if (objidx < imports.size()) {
 			return imports.get(objidx).getName();
@@ -208,7 +209,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 		return getObjectNamespace(program, module, WasmExternalKind.EXT_FUNCTION, funcidx);
 	}
 
-	public static String getFunctionName(Program program, WasmModule module, int funcidx) {
+	public static String getFunctionName(WasmModule module, int funcidx) {
 		String name;
 		WasmNameSection nameSection = module.getNameSection();
 		if (nameSection != null) {
@@ -217,7 +218,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 				return name;
 			}
 		}
-		name = getObjectName(program, module, WasmExternalKind.EXT_FUNCTION, funcidx);
+		name = getObjectName(module, WasmExternalKind.EXT_FUNCTION, funcidx);
 		if (name != null) {
 			return name;
 		}
@@ -237,7 +238,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 				return name;
 			}
 		}
-		name = getObjectName(program, module, WasmExternalKind.EXT_GLOBAL, globalidx);
+		name = getObjectName(module, WasmExternalKind.EXT_GLOBAL, globalidx);
 		if (name != null) {
 			return name;
 		}
@@ -299,7 +300,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 
 	private static void createTableBlock(Program program, DataType elementDataType, long numElements, int tableidx, TaskMonitor monitor) {
 		long byteSize = elementDataType.getLength() * numElements;
-		Address dataStart = getTableAddress(program, tableidx, 0);
+		Address dataStart = getTableAddress(program.getAddressFactory(), tableidx, 0);
 		try {
 			MemoryBlock block = program.getMemory().createInitializedBlock(".table" + tableidx, dataStart, byteSize, (byte) 0xff, monitor, false);
 			block.setRead(true);
@@ -314,7 +315,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private static void createMemoryBlock(Program program, int memidx, long length, TaskMonitor monitor) {
-		Address dataStart = getMemoryAddress(program, memidx, 0);
+		Address dataStart = getMemoryAddress(program.getAddressFactory(), memidx, 0);
 		try {
 			MemoryBlock block = program.getMemory().createInitializedBlock(".memory" + memidx, dataStart, length, (byte) 0x00, monitor, false);
 			block.setRead(true);
@@ -327,7 +328,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private static void createGlobalBlock(Program program, DataType dataType, byte[] initBytes, int globalidx, int mutability, TaskMonitor monitor) {
-		Address dataStart = getGlobalAddress(program, globalidx);
+		Address dataStart = getGlobalAddress(program.getAddressFactory(), globalidx);
 		try {
 			MemoryBlock block;
 			if (initBytes == null) {
@@ -380,12 +381,12 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 		 */
 		WasmSection importSection = module.getSection(WasmSectionId.SEC_IMPORT);
 		if (importSection != null) {
-			createImportStubBlock(program, getCodeAddress(program, importSection.getSectionOffset()), importSection.getSectionSize());
+			createImportStubBlock(program, getCodeAddress(program.getAddressFactory(), importSection.getSectionOffset()), importSection.getSectionSize());
 		}
 		WasmSection codeSection = module.getSection(WasmSectionId.SEC_CODE);
 		if (codeSection != null) {
 			long codeOffset = codeSection.getSectionOffset();
-			createFunctionCodeBlock(program, fileBytes, codeOffset, getCodeAddress(program, codeOffset), codeSection.getSectionSize());
+			createFunctionCodeBlock(program, fileBytes, codeOffset, getCodeAddress(program.getAddressFactory(), codeOffset), codeSection.getSectionSize());
 		}
 
 		monitor.initialize(numFunctions);
@@ -395,9 +396,9 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 			}
 			monitor.incrementProgress(1);
 
-			Address startAddress = getFunctionAddress(program, module, funcidx);
-			long functionLength = getFunctionSize(program, module, funcidx);
-			String functionName = getFunctionName(program, module, funcidx);
+			Address startAddress = getFunctionAddress(program.getAddressFactory(), module, funcidx);
+			long functionLength = getFunctionSize(module, funcidx);
+			String functionName = getFunctionName(module, funcidx);
 			Namespace functionNamespace = getFunctionNamespace(program, module, funcidx);
 
 			try {
@@ -458,12 +459,12 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 		if (initBytes == null)
 			return;
 
-		program.getMemory().setBytes(getTableAddress(program, tableidx, offset), initBytes);
+		program.getMemory().setBytes(getTableAddress(program.getAddressFactory(), tableidx, offset), initBytes);
 
-		Address[] refs = elemSegment.getAddresses(program, module);
+		Address[] refs = elemSegment.getAddresses(program.getAddressFactory(), module);
 		for (int i = 0; i < refs.length; i++) {
 			if (refs[i] != null) {
-				Address elementAddr = getTableAddress(program, tableidx, offset + i);
+				Address elementAddr = getTableAddress(program.getAddressFactory(), tableidx, offset + i);
 				program.getReferenceManager().removeAllReferencesFrom(elementAddr);
 				program.getReferenceManager().addMemoryReference(elementAddr, refs[i], RefType.DATA, SourceType.IMPORTED, 0);
 			}
@@ -538,7 +539,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 	 */
 	public static void loadDataToMemory(Program program, WasmModule module, int dataidx, int memidx, long offset, TaskMonitor monitor) throws Exception {
 		WasmDataSegment dataSegment = module.getDataSegments().get(dataidx);
-		Address memStart = getMemoryAddress(program, memidx, offset);
+		Address memStart = getMemoryAddress(program.getAddressFactory(), memidx, offset);
 		program.getMemory().setBytes(memStart, dataSegment.getData());
 	}
 
@@ -569,7 +570,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 			try {
 				loadDataToMemory(program, module, dataidx, memidx, offset, monitor);
 			} catch (Exception e) {
-				Address memStart = getMemoryAddress(program, memidx, offset);
+				Address memStart = getMemoryAddress(program.getAddressFactory(), memidx, offset);
 				Msg.error(this, "Failed to initialize memory " + memidx + " with data segment " + dataidx + " at " + memStart, e);
 			}
 		}
@@ -601,13 +602,13 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 				WasmGlobalEntry entry = globals.get(globalidx - imports.size());
 				globalType = entry.getGlobalType();
 				initBytes = entry.asBytes(module);
-				initRef = entry.asAddress(program, module);
+				initRef = entry.asAddress(program.getAddressFactory(), module);
 				initGlobal = entry.asGlobalGet();
 			}
 
 			createGlobalBlock(program, globalType.getType().asDataType(), initBytes, globalidx, globalType.getMutability(), monitor);
 
-			Address dataStart = getGlobalAddress(program, globalidx);
+			Address dataStart = getGlobalAddress(program.getAddressFactory(), globalidx);
 			Namespace namespace = getGlobalNamespace(program, module, globalidx);
 			String name = getGlobalName(program, module, globalidx);
 			try {
@@ -628,7 +629,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 				} else if (!currentComment.isEmpty()) {
 					currentComment += "\n";
 				}
-				Address otherAddress = getGlobalAddress(program, (int) (long) initGlobal);
+				Address otherAddress = getGlobalAddress(program.getAddressFactory(), (int) (long) initGlobal);
 				program.getListing().setComment(dataStart, commentType, currentComment + "Initializer: {@symbol " + otherAddress + "}");
 			}
 		}
