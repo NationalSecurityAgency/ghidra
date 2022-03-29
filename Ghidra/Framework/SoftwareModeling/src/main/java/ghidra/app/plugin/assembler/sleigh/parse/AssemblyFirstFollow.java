@@ -28,6 +28,7 @@ import ghidra.generic.util.datastruct.TreeSetValuedTreeMap;
 /**
  * A class to compute the first and follow of every non-terminal in a grammar
  * 
+ * <p>
  * See Alfred V. Aho, Monica S. Lam, Ravi Sethi, Jeffrey D. Ullman, <i>Compilers: Principles,
  * Techniques, &amp; Tools</i>. Bostom, MA: Pearson, 2007, pp. 220-2.
  */
@@ -43,6 +44,7 @@ public class AssemblyFirstFollow {
 
 	/**
 	 * Compute the first and follow sets for every non-terminal in the given grammar
+	 * 
 	 * @param grammar the grammar
 	 */
 	public AssemblyFirstFollow(AbstractAssemblyGrammar<?, ?> grammar) {
@@ -61,7 +63,7 @@ public class AssemblyFirstFollow {
 		while (changed) {
 			changed = false;
 			for (AbstractAssemblyProduction<?> prod : grammar) {
-				if (nullable.containsAll(prod)) {
+				if (nullable.containsAll(prod.getRHS().getSymbols())) {
 					changed |= nullable.add(prod.getLHS());
 				}
 			}
@@ -81,7 +83,7 @@ public class AssemblyFirstFollow {
 			// Add the first of all each symbol
 			// Terminate after a terminal or non-nullable symbol
 			for (AbstractAssemblyProduction<?> prod : grammar) {
-				for (AssemblySymbol sym : prod) {
+				for (AssemblySymbol sym : prod.getRHS()) {
 					if (sym instanceof AssemblyNonTerminal) {
 						AssemblyNonTerminal nt = (AssemblyNonTerminal) sym;
 						changed |= first.putAll(prod.getLHS(), first.get(nt));
@@ -116,13 +118,13 @@ public class AssemblyFirstFollow {
 			// Finish the subwalk after a terminal or non-nullable symbol
 			// If you hit the end, add follow(LHS) to follow the current symbol
 			for (AbstractAssemblyProduction<?> prod : grammar) {
-				nextX: for (int i = 0; i < prod.size(); i++) {
-					AssemblySymbol px = prod.get(i);
+				nextX: for (int i = 0; i < prod.getRHS().size(); i++) {
+					AssemblySymbol px = prod.getRHS().getSymbol(i);
 					if (px instanceof AssemblyNonTerminal) {
 						AssemblyNonTerminal X = (AssemblyNonTerminal) px;
 						int j;
-						for (j = i + 1; j < prod.size(); j++) {
-							AssemblySymbol B = prod.get(j);
+						for (j = i + 1; j < prod.getRHS().size(); j++) {
+							AssemblySymbol B = prod.getRHS().getSymbol(j);
 							if (B instanceof AssemblyNonTerminal) {
 								AssemblyNonTerminal nt = (AssemblyNonTerminal) B;
 								changed |= follow.putAll(X, first.get(nt));
@@ -149,7 +151,9 @@ public class AssemblyFirstFollow {
 	/**
 	 * Get the nullable set
 	 * 
+	 * <p>
 	 * That is the set of all non-terminals, which through some derivation, can produce epsilon.
+	 * 
 	 * @return the set
 	 */
 	public Collection<AssemblyNonTerminal> getNullable() {
@@ -159,8 +163,10 @@ public class AssemblyFirstFollow {
 	/**
 	 * Get the first set for a given non-terminal
 	 * 
+	 * <p>
 	 * That is the set of all terminals, which through some derivation from the given non-terminal,
 	 * can appear first in a sentential form.
+	 * 
 	 * @param nt the non-terminal
 	 * @return the set
 	 */
@@ -171,8 +177,10 @@ public class AssemblyFirstFollow {
 	/**
 	 * Get the follow set for a given non-terminal
 	 * 
+	 * <p>
 	 * That is the set of all terminals, which through some derivation from the start symbol, can
 	 * appear immediately after the given non-terminal in a sentential form.
+	 * 
 	 * @param nt the non-terminal
 	 * @return the set
 	 */
@@ -182,6 +190,7 @@ public class AssemblyFirstFollow {
 
 	/**
 	 * For debugging, print out the computed sets to the given stream
+	 * 
 	 * @param out the stream
 	 */
 	public void print(PrintStream out) {

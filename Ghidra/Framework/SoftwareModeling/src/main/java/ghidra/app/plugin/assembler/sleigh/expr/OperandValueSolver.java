@@ -28,6 +28,7 @@ import ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol;
 /**
  * Solves expressions of an operand value
  * 
+ * <p>
  * These are a sort of named sub-expression, but they may also specify a shift in encoding.
  */
 public class OperandValueSolver extends AbstractExpressionSolver<OperandValue> {
@@ -39,12 +40,13 @@ public class OperandValueSolver extends AbstractExpressionSolver<OperandValue> {
 	/**
 	 * Obtains the "defining expression"
 	 * 
+	 * <p>
 	 * This is either the symbols assigned defining expression, or the expression associated with
 	 * its defining symbol.
 	 * 
 	 * @return the defining expression, or null if neither is available
 	 */
-	protected PatternExpression getDefiningExpression(OperandSymbol sym) {
+	public static PatternExpression getDefiningExpression(OperandSymbol sym) {
 		PatternExpression patexp = sym.getDefiningExpression();
 		if (patexp != null) {
 			return patexp;
@@ -59,62 +61,63 @@ public class OperandValueSolver extends AbstractExpressionSolver<OperandValue> {
 
 	@Override
 	public AssemblyResolution solve(OperandValue ov, MaskedLong goal, Map<String, Long> vals,
-			Map<Integer, Object> res, AssemblyResolvedConstructor cur, Set<SolverHint> hints,
-			String description) throws NeedsBackfillException {
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException {
 		Constructor cons = ov.getConstructor();
 		OperandSymbol sym = cons.getOperand(ov.getIndex());
 		PatternExpression patexp = getDefiningExpression(sym);
 		if (patexp == null) {
 			if (goal.equals(MaskedLong.ZERO)) {
-				return AssemblyResolution.nop(description, null);
+				return AssemblyResolution.nop(description, null, null);
 			}
 			return AssemblyResolution.error("Operand " + sym.getName() +
-				" is undefined and does not agree with child requirements", description, null);
+				" is undefined and does not agree with child requirements", description);
 		}
-		AssemblyResolution result = solver.solve(patexp, goal, vals, res, cur, hints, description);
+		AssemblyResolution result = solver.solve(patexp, goal, vals, cur, hints, description);
 		if (result.isError()) {
 			AssemblyResolvedError err = (AssemblyResolvedError) result;
 			return AssemblyResolution.error(err.getError(),
 				"Solution to " + sym.getName() + " := " + goal + " = " + patexp,
-				List.of(result));
+				List.of(result), null);
 		}
 		// TODO: Shifting here seems like a hack to me.
 		// I assume this only comes at the top of an expression
-		AssemblyResolvedConstructor con = (AssemblyResolvedConstructor) result;
-		int shamt = AssemblyTreeResolver.computeOffset(sym, cons, res);
+		AssemblyResolvedPatterns con = (AssemblyResolvedPatterns) result;
+		int shamt = AssemblyTreeResolver.computeOffset(sym, cons);
 		return con.shift(shamt);
 	}
 
 	@Override
-	public MaskedLong getValue(OperandValue ov, Map<String, Long> vals, Map<Integer, Object> res,
-			AssemblyResolvedConstructor cur) throws NeedsBackfillException {
+	public MaskedLong getValue(OperandValue ov, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur) throws NeedsBackfillException {
 		Constructor cons = ov.getConstructor();
 		OperandSymbol sym = cons.getOperand(ov.getIndex());
 		PatternExpression patexp = getDefiningExpression(sym);
 		if (patexp == null) {
 			return MaskedLong.ZERO;
 		}
-		int shamt = AssemblyTreeResolver.computeOffset(sym, cons, res);
+		int shamt = AssemblyTreeResolver.computeOffset(sym, cons);
 		cur = cur == null ? null : cur.truncate(shamt);
-		MaskedLong result = solver.getValue(patexp, vals, res, cur);
+		MaskedLong result = solver.getValue(patexp, vals, cur);
 		return result;
 	}
 
 	@Override
-	public int getInstructionLength(OperandValue ov, Map<Integer, Object> res) {
+	public int getInstructionLength(OperandValue ov) {
 		Constructor cons = ov.getConstructor();
 		OperandSymbol sym = cons.getOperand(ov.getIndex());
 		PatternExpression patexp = sym.getDefiningExpression();
 		if (patexp == null) {
 			return 0;
 		}
-		int length = solver.getInstructionLength(patexp, res);
-		int shamt = AssemblyTreeResolver.computeOffset(sym, cons, res);
+		int length = solver.getInstructionLength(patexp);
+		int shamt = AssemblyTreeResolver.computeOffset(sym, cons);
 		return length + shamt;
 	}
 
 	@Override
-	public MaskedLong valueForResolution(OperandValue ov, AssemblyResolvedConstructor rc) {
+	public MaskedLong valueForResolution(OperandValue ov, Map<String, Long> vals,
+			AssemblyResolvedPatterns rc) {
 		Constructor cons = ov.getConstructor();
 		OperandSymbol sym = cons.getOperand(ov.getIndex());
 		PatternExpression patexp = sym.getDefiningExpression();
@@ -135,7 +138,7 @@ public class OperandValueSolver extends AbstractExpressionSolver<OperandValue> {
 		// Since I'm using this just for context, ignore shifting for now.
 		//int shamt = AssemblyTreeResolver.computeOffset(sym, cons, rc.children);
 		// Children would be null here, anyway.
-		return solver.valueForResolution(patexp, rc);
+		return solver.valueForResolution(patexp, vals, rc);
 		// NOTE: To be paranoid, I could check for the existence of TokenField in the expression
 		// And also check if a shift would be performed.
 	}

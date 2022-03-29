@@ -16,7 +16,6 @@
 package ghidra.app.plugin.assembler.sleigh.symbol;
 
 import java.util.Collection;
-import java.util.Map;
 
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseToken;
@@ -24,13 +23,16 @@ import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseToken;
 /**
  * The type of terminal for an assembly grammar
  * 
+ * <p>
  * Unlike classical parsing, each terminal provides its own tokenizer. If multiple tokenizers yield
  * a token, the parser branches, possibly creating multiple, ambiguous trees.
+ * 
  * @see AssemblyGrammar
  */
 public abstract class AssemblyTerminal extends AssemblySymbol {
 	/**
 	 * Construct a terminal having the give name
+	 * 
 	 * @param name
 	 */
 	public AssemblyTerminal(String name) {
@@ -39,20 +41,22 @@ public abstract class AssemblyTerminal extends AssemblySymbol {
 
 	/**
 	 * Attempt to match a token from the input buffer starting at a given position
+	 * 
 	 * @param buffer the input buffer
 	 * @param pos the cursor position in the buffer
 	 * @param grammar the grammar containing this terminal
-	 * @param labels the program labels, if applicable
+	 * @param symbols symbols from the program, suitable for use as numeric terminals
 	 * @return the matched token, or null
 	 */
 	public abstract Collection<? extends AssemblyParseToken> match(String buffer, int pos,
-			AssemblyGrammar grammar, Map<String, Long> labels);
+			AssemblyGrammar grammar, AssemblyNumericSymbols symbols);
 
 	/**
 	 * Provide a collection of strings that this terminal would have accepted
+	 * 
 	 * @param got the remaining contents of the input buffer
 	 * @param labels the program labels, if applicable
 	 * @return a, possibly empty, collection of suggestions
 	 */
-	public abstract Collection<String> getSuggestions(String got, Map<String, Long> labels);
+	public abstract Collection<String> getSuggestions(String got, AssemblyNumericSymbols symbols);
 }

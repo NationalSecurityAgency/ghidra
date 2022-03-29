@@ -33,11 +33,13 @@ import ghidra.graph.algo.DijkstraShortestPathsAlgorithm;
 /**
  * A graph of possible context changes via the application of various constructors
  * 
+ * <p>
  * This is used primarily to find optimal paths for the application of recursive rules, i.e., those
  * of the form I =&gt; I. These cannot be resolved without some form of semantic analysis. The most
- * notable disadvantage to all of this is that you no longer get all of the possible assemblies,
- * but only those with the fewest rule applications.
+ * notable disadvantage to all of this is that you no longer get all of the possible assemblies, but
+ * only those with the fewest rule applications.
  * 
+ * <p>
  * Conceivably, this may also be used to prune some possibilities during semantic resolution of a
  * parse tree. Even better, it may be possible to derive a grammar which accounts for the context
  * changes already; however, it's unclear how many rules this will generate, and consequently, how
@@ -58,12 +60,15 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 	/**
 	 * Build the context change graph for a given language and grammar
 	 * 
+	 * <p>
 	 * The grammar must have been constructed from the given language. The language is used just to
 	 * obtain the most common default context.
 	 * 
+	 * <p>
 	 * At the moment, this graph only expands the recursive rules at the root constructor table,
 	 * i.e., "instruction". Thus, the assembler will not be able to process any language that has
-	 * <i>purely</i>-recursive rules at subconstructors.
+	 * <i>purely</i>-recursive rules at sub-constructors.
+	 * 
 	 * @param lang the language
 	 * @param grammar the grammar derived from the given language
 	 */
@@ -89,17 +94,16 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 	}
 
 	/**
-	 * Compute the optimal, i.e., fewest, sequences of applications to resolve a given context to
-	 * the language's default context.
+	 * Compute the optimal, i.e., shortest, sequences of applications to resolve a given context to
+	 * another, often the language's default context.
 	 * 
 	 * @param src presumably, the language's default context
 	 * @param srcTable the name of the SLEIGH constructor table, presumably "instruction"
 	 * @param dst the context block being resolved
 	 * @param dstTable the name of the SLEIGH constructor table being resolved
-	 * @return a collection of sequences of constructor applications from {@code src} to
-	 *         {@code dst}
+	 * @return a collection of sequences of constructor applications from {@code src} to {@code dst}
 	 * 
-	 * NOTE: For assembly, the sequences will need to be applied right-to-left.
+	 *         NOTE: For assembly, the sequences will need to be applied right-to-left.
 	 */
 	public Collection<Deque<AssemblyConstructorSemantic>> computeOptimalApplications(
 			AssemblyPatternBlock src, String srcTable, AssemblyPatternBlock dst, String dstTable) {
@@ -140,6 +144,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 	/**
 	 * Gather all the semantics that can be used as state transitions
 	 * 
+	 * <p>
 	 * Currently, only semantics from {@code :^instruction} constructors are taken.
 	 */
 	protected void gatherSemantics() {
@@ -156,14 +161,16 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 	/**
 	 * A vertex in a context transition graph
 	 * 
-	 * Each vertex consists of a context block and a (sub)table name
+	 * <p>
+	 * Each vertex consists of a context block and a (sub-)table name
 	 */
 	protected static class Vertex implements Comparable<Vertex> {
 		protected final AssemblyPatternBlock context;
 		protected final String subtable;
 
 		/**
-		 * Construct a new vertex with the given block and subtable name
+		 * Construct a new vertex with the given block and sub-table name
+		 * 
 		 * @param context the context
 		 * @param subtable the name
 		 */
@@ -175,10 +182,12 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 		/**
 		 * Check if this and another vertex "agree"
 		 * 
-		 * This doesn't mean they're equal, but that they share a subtable, and the defined bits of
-		 * their context blocks agree.
+		 * <p>
+		 * This does not mean they are equal, but that they share a sub-table, and the defined bits
+		 * of their context blocks agree.
+		 * 
 		 * @param that the other vertex
-		 * @return true iff they share subtables and defined bits
+		 * @return true iff they share sub-tables and defined bits
 		 */
 		public boolean matches(Vertex that) {
 			if (!this.subtable.equals(that.subtable)) {
@@ -233,10 +242,10 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 	/**
 	 * A transition in a context transition graph
 	 * 
+	 * <p>
 	 * A transition consists of the constructor whose context changes were applied. The operand
-	 * index is included for reference and debugging. If we ever need to process rules with
-	 * multiple subconstructors, the operand index explains the subtable name of the destination
-	 * vertex.
+	 * index is included for reference and debugging. If we ever need to process rules with multiple
+	 * sub-constructors, the operand index explains the sub-table name of the destination vertex.
 	 */
 	protected static class Edge implements GEdge<Vertex>, Comparable<Edge> {
 		protected final AssemblyConstructorSemantic sem;
@@ -247,6 +256,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 
 		/**
 		 * Construct a new transition associated with the given constructor and operand index
+		 * 
 		 * @param sem the constructor semantic
 		 * @param op the operand index
 		 */
@@ -332,7 +342,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 		cachedVertices.add(from);
 		Set<Edge> result = new HashSet<>();
 		for (AssemblyConstructorSemantic sem : semantics.get(from.subtable)) {
-			for (AssemblyResolvedConstructor rc : sem.patterns) {
+			for (AssemblyResolvedPatterns rc : sem.patterns) {
 				AssemblyPatternBlock pattern = rc.ctx;
 				AssemblyPatternBlock outer = from.context.combine(pattern);
 				if (outer == null) {
@@ -342,9 +352,9 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 					continue;
 				}
 
-				AssemblyResolvedConstructor orc =
-					AssemblyResolution.contextOnly(outer, "For context transition", null);
-				AssemblyResolvedConstructor irc = sem.applyForward(orc);
+				AssemblyResolvedPatterns orc =
+					AssemblyResolution.contextOnly(outer, "For context transition");
+				AssemblyResolvedPatterns irc = sem.applyContextChangesForward(Map.of(), orc);
 				AssemblyPatternBlock inner = irc.getContext();
 
 				Constructor ct = sem.getConstructor();
@@ -377,6 +387,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 	/**
 	 * This operation is not supported.
 	 * 
+	 * <p>
 	 * I could implement this using the cached edges, but that may not be semantically, what a path
 	 * computation algorithm actually requires. Instead, I will assume the algorithm only explores
 	 * the graph in the same direction as its edges. If not, I will hear about it quickly.

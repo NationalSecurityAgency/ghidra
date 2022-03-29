@@ -45,6 +45,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Create a masked value from a mask and a long
 	 * 
+	 * <p>
 	 * Any positions in {@code msk} set to 0 create an {@code x} in the corresponding position of
 	 * the result. Otherwise, the position takes the corresponding bit from {@code val}.
 	 * 
@@ -92,6 +93,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Get the mask as a long
 	 * 
+	 * <p>
 	 * Positions with a defined bit are {@code 1}; positions with an undefined bit are {@code 0}.
 	 * 
 	 * @return the mask as a long
@@ -126,6 +128,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Apply an additional mask to this masked long
 	 * 
+	 * <p>
 	 * Any {@code 0} bit in {@code msk} will result in an undefined bit in the result. {@code 1}
 	 * bits result in a copy of the corresponding bit in the result.
 	 * 
@@ -139,6 +142,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Sign extend the masked value, according to its mask, to a full long
 	 * 
+	 * <p>
 	 * The leftmost defined bit is taken as the sign bit, and extended to the left.
 	 * 
 	 * @return the sign-extended masked long
@@ -151,6 +155,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Zero extend the masked value, according to its mask, to a full long
 	 * 
+	 * <p>
 	 * All bits to the left of the leftmost defined bit are set to 0.
 	 * 
 	 * @return the zero-extended masked long
@@ -199,6 +204,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Combine this and another masked long into one, by taking defined bits from either
 	 * 
+	 * <p>
 	 * If this masked long agrees with the other, then the two are combined. For each bit position
 	 * in the result, the defined bit from either corresponding position is taken. If neither is
 	 * defined, then the position is undefined in the result. If both are defined, they must agree.
@@ -217,6 +223,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Shift {@code size} bits @{code n) positions circularly in a given direction
 	 *
+	 * <p>
 	 * The shifted bits are the least significant {@code size} bits. The remaining bits are
 	 * unaffected.
 	 * 
@@ -247,6 +254,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Shift {@code size} bits @{code n) positions circularly in a given direction
 	 *
+	 * <p>
 	 * The shifted bits are the least significant {@code size} bits. The remaining bits are
 	 * unaffected.
 	 * 
@@ -265,6 +273,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Shift the bits @{code n} positions left
 	 * 
+	 * <p>
 	 * This implements both a signed and unsigned shift.
 	 * 
 	 * @param n the number of positions.
@@ -282,6 +291,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Shift the bits {@code n} positions left
 	 * 
+	 * <p>
 	 * This implements both a signed and unsigned shift.
 	 * 
 	 * @param n the number of positions.
@@ -297,6 +307,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Invert a left shift of {@code n} positions, that is shift right
 	 * 
+	 * <p>
 	 * This is different from a normal shift right, in that it inserts unknowns at the left. The
 	 * normal right shift inserts zeros or sign bits. Additionally, if any ones would fall off the
 	 * right, the inversion is undefined.
@@ -319,6 +330,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Invert a left shift of {@code n} positions, that is shift right
 	 * 
+	 * <p>
 	 * This is different from a normal shift right, in that it inserts unknowns at the left. The
 	 * normal right shift inserts zeros or sign bits. Additionally, if any ones would fall off the
 	 * right, the inversion is undefined.
@@ -337,6 +349,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Shift the bits arithmetically {@code n} positions right
 	 * 
+	 * <p>
 	 * This implements a signed shift.
 	 * 
 	 * @param n the number of positions.
@@ -352,6 +365,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Shift the bits arithmetically {@code n} positions right
 	 * 
+	 * <p>
 	 * This implements a signed shift.
 	 * 
 	 * @param n the number of positions.
@@ -367,6 +381,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Invert an arithmetic right shift of {@code n} positions, that is shift left
 	 * 
+	 * <p>
 	 * This is different from a normal shift left, in that it inserts unknowns at the right. The
 	 * normal left shift inserts zeros. Additionally, all bits that fall off the left must match the
 	 * resulting sign bit, or else the inversion is undefined.
@@ -400,6 +415,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Invert an arithmetic right shift of {@code n} positions, that is shift left
 	 * 
+	 * <p>
 	 * This is different from a normal shift left, in that it inserts unknowns at the right. The
 	 * normal left shift inserts zeros. Additionally, all bits that fall off the left must match the
 	 * resulting sign bit, or else the inversion is undefined.
@@ -418,6 +434,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Shift the bits logically {@code n} positions right
 	 * 
+	 * <p>
 	 * This implements an unsigned shift.
 	 * 
 	 * @param n the number of positions.
@@ -435,6 +452,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Shift the bits logically {@code n} positions right
 	 * 
+	 * <p>
 	 * This implements an unsigned shift.
 	 * 
 	 * @param n the number of positions.
@@ -451,6 +469,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Shift the bits positionally {@code n} positions right
 	 * 
+	 * <p>
 	 * This fills the left with unknown bits
 	 * 
 	 * @param n
@@ -463,6 +482,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Invert a logical right shift of {@code n} positions, that is shift left
 	 * 
+	 * <p>
 	 * This is different from a normal shift left, in that it inserts unknowns at the right. The
 	 * normal left shift inserts zeros. Additionally, if any ones would fall off the left, the
 	 * inversion is undefined.
@@ -486,6 +506,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Invert a logical right shift of {@code n} positions, that is shift left
 	 * 
+	 * <p>
 	 * This is different from a normal shift left, in that it inserts unknowns at the right. The
 	 * normal left shift inserts zeros. Additionally, if any ones would fall off the left, the
 	 * inversion is undefined.
@@ -504,6 +525,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Reverse the least significant {@code n} bytes
 	 * 
+	 * <p>
 	 * This interprets the bits as an {@code n}-byte value and changes the endianness. Any bits
 	 * outside of the interpretation are truncated, i.e., become unknown.
 	 * 
@@ -517,16 +539,17 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Compute the bitwise AND of this and another masked long
 	 * 
+	 * <p>
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>{@literal
+	 * <pre>
 	 *   0 x 1 <= A (this)
 	 * 0 0 0 0
 	 * x 0 x x
 	 * 1 0 x 1
 	 * ^
 	 * B (that)
-	 * }</pre>
+	 * </pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -547,18 +570,19 @@ public class MaskedLong implements Comparable<MaskedLong> {
 
 	/**
 	 * Solves the expression {@code A & B = C, for B, given C and A}
+	 * 
 	 * <p>
 	 * To handle unknown bits, the solution is derived from the following truth table, where
 	 * {@code *} indicates no solution:
 	 * 
-	 * <pre>{@literal
+	 * <pre>
 	 *   0 x 1 <= A (that)
 	 * 0 x x 0
 	 * x x x x
 	 * 1 * 1 1
 	 * ^
 	 * B (this)
-	 * }</pre>
+	 * </pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -587,16 +611,17 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Compute the bitwise OR of this and another masked long
 	 * 
+	 * <p>
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>{@literal
+	 * <pre>
 	 *   0 x 1 <= A (this)
 	 * 0 0 x 1
 	 * x x x 1
 	 * 1 1 1 1
 	 * ^
 	 * B (that)
-	 * }</pre>
+	 * </pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -620,17 +645,18 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Solves the expression A | B = C, for B, given C and A
 	 * 
+	 * <p>
 	 * To handle unknown bits, the solution is derived from the following truth table, where
 	 * {@code *} indicates no solution:
 	 * 
-	 * <pre>{@literal
+	 * <pre>
 	 *   0 x 1 <= A (that)
 	 * 0 0 0 *
 	 * x x x x
 	 * 1 1 x x
 	 * ^
 	 * B (this)
-	 * }</pre>
+	 * </pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -658,16 +684,17 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Compute the bitwise XOR of this and another masked long
 	 * 
+	 * <p>
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>{@literal
+	 * <pre>
 	 *   0 x 1 <= A (this)
 	 * 0 0 x 1
 	 * x x x x
 	 * 1 1 x 0
 	 * ^
 	 * B (that)
-	 * }</pre>
+	 * </pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -696,12 +723,13 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Compute the bitwise NOT
 	 * 
+	 * <p>
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>{@literal
+	 * <pre>
 	 * 0 x 1 <= A (this)
 	 * 1 x 0
-	 * }</pre>
+	 * </pre>
 	 * 
 	 * @return the result.
 	 */
@@ -769,7 +797,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 		if (lmv == 2 || rmv == 2) {
 			return 2;
 		}
-		else if (lmv == 3 || rmv == 3) {
+		else if (lmv == 3 && rmv == 3) {
 			return 3;
 		}
 		return 0;
@@ -893,6 +921,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Compute the arithmetic quotient as a solution to unsigned multiplication
 	 * 
+	 * <p>
 	 * This is slightly different than {@link #divideUnsigned(MaskedLong)} in its treatment of
 	 * unknowns.
 	 * 
@@ -924,6 +953,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Checks if this and another masked long agree
 	 * 
+	 * <p>
 	 * Two masked longs agree iff their corresponding defined bit positions are equal. Where either
 	 * or both positions are undefined, no check is applied. In the case that both masked longs are
 	 * fully-defined, this is the same as an equality check on the values.
@@ -942,6 +972,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Checks if this and a long agree
 	 * 
+	 * <p>
 	 * The masked long agrees with the given long iff the masked long's defined bit positions agree
 	 * with the corresponding bit positions in the given long. Where there are undefined bits, no
 	 * check is applied. In the case that the masked long is fully-defined, this is the same as an
@@ -978,10 +1009,12 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Check if the masked value falls within a given range
 	 * 
+	 * <p>
 	 * The range is defined by a maximum and a signedness. The maximum must be one less than a
 	 * positive power of 2. In other words, it defines a maximum number of bits, including the sign
 	 * bit if applicable.
 	 * 
+	 * <p>
 	 * The defined bits of this masked long are then checked to fall in the given range. The
 	 * effective value is derived by sign/zero extending the value according to its mask. In
 	 * general, if any {@code 1} bits exist outside of the given max, the value is rejected, unless
@@ -1013,6 +1046,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * "Compare" two masked longs
 	 * 
+	 * <p>
 	 * This is not meant to reflect a numerical comparison. Rather, this is just to impose an
 	 * ordering for the sake of storing these in sorted collections.
 	 */
@@ -1038,6 +1072,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	/**
 	 * Check for equality
 	 * 
+	 * <p>
 	 * This will only return true if the other object is a masked long, even if this one is
 	 * fully-defined, and the value is equal to a given long (or {@link Long}). The other masked
 	 * long must have the same mask and value to be considered equal. For other sorts of "equality"

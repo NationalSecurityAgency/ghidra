@@ -21,7 +21,7 @@ package ghidra.app.plugin.processors.sleigh;
 
 import java.util.*;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedConstructor;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger.SleighDebugMode;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.app.plugin.processors.sleigh.symbol.*;
@@ -40,10 +40,9 @@ import ghidra.util.exception.NotYetImplementedException;
 /**
  * 
  *
- * The InstructionPrototype for sleigh languages.
- * The prototype is unique up to the tree of Constructors.
- * Variations in the bit pattern that none of the Constructor
- * mask/values care about get lumped under the same prototype
+ * The InstructionPrototype for sleigh languages. The prototype is unique up to the tree of
+ * Constructors. Variations in the bit pattern that none of the Constructor mask/values care about
+ * get lumped under the same prototype
  */
 public class SleighInstructionPrototype implements InstructionPrototype {
 	// Flowflags for resolving flowType
@@ -126,9 +125,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Cache the Constructor state which represents the base
-	 * mnemonic, and the operands to that mnemonic
-	 * Cache the operand states for each operand in printing order
+	 * Cache the Constructor state which represents the base mnemonic, and the operands to that
+	 * mnemonic Cache the operand states for each operand in printing order
 	 */
 	private void cacheMnemonicState() {
 		mnemonicState = rootState;
@@ -191,8 +189,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Walk the pcode templates in the order they would be emitted.
-	 * Collect flowFlags FlowRecords
+	 * Walk the pcode templates in the order they would be emitted. Collect flowFlags FlowRecords
+	 * 
 	 * @param walker the pcode template walker
 	 */
 	public static FlowSummary walkTemplates(OpTplWalker walker) {
@@ -286,8 +284,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Walk the Constructor tree gathering ConstructStates which are flow destinations (flowStateList)
-	 * flowFlags and delayslot directives
+	 * Walk the Constructor tree gathering ConstructStates which are flow destinations
+	 * (flowStateList) flowFlags and delayslot directives
 	 */
 	private void cacheTreeInfo() {
 		OpTplWalker walker = new OpTplWalker(rootState, -1);
@@ -631,7 +629,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Gather all the flow records (perhaps across multiple InstructionPrototypes via crossbuilds) and convert to Addresses
+	 * Gather all the flow records (perhaps across multiple InstructionPrototypes via crossbuilds)
+	 * and convert to Addresses
+	 * 
 	 * @param res is the resulting flow Addresses
 	 * @param parsecontext is the parsing context for the current instruction
 	 * @param context is the context for the particular address so crossbuilds can be resolved
@@ -1458,9 +1458,11 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Reconstruct the ParserContext's internal packed context array and its list of global ContextSet directives
-	 * by walking a previously resolved ConstructState tree
-	 * @param protoContext is the SleighParserContext containing the tree and holding the context results
+	 * Reconstruct the ParserContext's internal packed context array and its list of global
+	 * ContextSet directives by walking a previously resolved ConstructState tree
+	 * 
+	 * @param protoContext is the SleighParserContext containing the tree and holding the context
+	 *            results
 	 * @param debug
 	 * @throws MemoryAccessException
 	 */
@@ -1589,7 +1591,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 		return newContext;
 	}
 
-	ConstructState getRootState() {
+	public ConstructState getRootState() {
 		return rootState;
 	}
 
@@ -1607,7 +1609,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	 * encoding
 	 * 
 	 * This includes braces to describe the tree structure
-	 * @see AssemblyResolvedConstructor#dumpConstructorTree()
+	 * 
+	 * @see AssemblyResolvedPatterns#dumpConstructorTree()
 	 * @return the constructor tree
 	 */
 	public String dumpConstructorTree() {

@@ -63,7 +63,7 @@ public class AssemblyThrasherDevScript extends GhidraScript {
 		}
 
 		@Override
-		public AssemblyResolvedConstructor select(AssemblyResolutionResults rr,
+		public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
 				AssemblyPatternBlock ctx) throws AssemblySemanticException {
 			StringBuilder sb = new StringBuilder();
 			boolean gotOne = false;
@@ -72,7 +72,7 @@ public class AssemblyThrasherDevScript extends GhidraScript {
 				if (ar.isError()) {
 					continue;
 				}
-				AssemblyResolvedConstructor can = (AssemblyResolvedConstructor) ar;
+				AssemblyResolvedPatterns can = (AssemblyResolvedPatterns) ar;
 				if (can.getContext().combine(ctx) == null) {
 					continue;
 				}

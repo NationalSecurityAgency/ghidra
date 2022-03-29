@@ -15,24 +15,27 @@
  */
 package ghidra.app.plugin.assembler.sleigh.sem;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
+import ghidra.app.plugin.processors.sleigh.Constructor;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
 
 /**
  * The (often intermediate) result of assembly
  * 
- * These may represent a successful construction ({@link AssemblyResolvedConstructor}, a future
- * field ({@link AssemblyResolvedBackfill}), or an error ({@link AssemblyResolvedError}).
+ * <p>
+ * These may represent a successful construction ({@link AssemblyResolvedPatterns}, a future field
+ * ({@link AssemblyResolvedBackfill}), or an error ({@link AssemblyResolvedError}).
  * 
+ * <p>
  * This class also provides the static factory methods for constructing any of its subclasses.
  */
 public abstract class AssemblyResolution implements Comparable<AssemblyResolution> {
 	protected final String description;
-	protected final List<? extends AssemblyResolution> children;
+	protected final List<AssemblyResolution> children;
+	protected final AssemblyResolution right;
 
 	private boolean hashed = false;
 	private int hash;
@@ -50,12 +53,15 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 
 	/**
 	 * Construct a resolution
+	 * 
 	 * @param description a textual description used as part of {@link #toString()}
 	 * @param children for record keeping, any children used in constructing this resolution
 	 */
-	AssemblyResolution(String description, List<? extends AssemblyResolution> children) {
+	AssemblyResolution(String description, List<? extends AssemblyResolution> children,
+			AssemblyResolution right) {
 		this.description = description;
-		this.children = children == null ? List.of() : children;
+		this.children = children == null ? List.of() : Collections.unmodifiableList(children);
+		this.right = right;
 	}
 
 	/* ********************************************************************************************
@@ -65,61 +71,69 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	/**
 	 * Build the result of successfully resolving a SLEIGH constructor
 	 * 
-	 * NOTE: This is not used strictly for resolved SLEIGH constructors. It may also be used to
-	 * store intermediates, e.g., encoded operands, during constructor resolution.
+	 * <p>
+	 * <b>NOTE:</b> This is not used strictly for resolved SLEIGH constructors. It may also be used
+	 * to store intermediates, e.g., encoded operands, during constructor resolution.
+	 * 
 	 * @param ins the instruction pattern block
 	 * @param ctx the context pattern block
 	 * @param description a description of the resolution
-	 * @param sel the children selected to resolve this constructor, or null
+	 * @param cons the constructor, or null
+	 * @param children the children of this constructor, or null
 	 * @return the new resolution
 	 */
-	public static AssemblyResolvedConstructor resolved(AssemblyPatternBlock ins,
-			AssemblyPatternBlock ctx, String description,
-			List<? extends AssemblyResolution> sel) {
-		return new AssemblyResolvedConstructor(description, sel, ins, ctx, null, null);
+	public static AssemblyResolvedPatterns resolved(AssemblyPatternBlock ins,
+			AssemblyPatternBlock ctx, String description, Constructor cons,
+			List<? extends AssemblyResolution> children, AssemblyResolution right) {
+		return new AssemblyResolvedPatterns(description, cons, children, right, ins, ctx, null,
+			null);
 	}
 
 	/**
 	 * Build an instruction-only successful resolution result
+	 * 
 	 * @see #resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, List)
 	 * @param ins the instruction pattern block
 	 * @param description a description of the resolution
 	 * @param children the children selected to resolve this constructor, or null
 	 * @return the new resolution
 	 */
-	public static AssemblyResolvedConstructor instrOnly(AssemblyPatternBlock ins,
-			String description, List<AssemblyResolution> children) {
-		return resolved(ins, AssemblyPatternBlock.nop(), description, children);
+	public static AssemblyResolvedPatterns instrOnly(AssemblyPatternBlock ins,
+			String description) {
+		return resolved(ins, AssemblyPatternBlock.nop(), description, null, null, null);
 	}
 
 	/**
 	 * Build a context-only successful resolution result
+	 * 
 	 * @see #resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, List)
 	 * @param ctx the context pattern block
 	 * @param description a description of the resolution
 	 * @param children the children selected to resolve this constructor, or null
 	 * @return the new resolution
 	 */
-	public static AssemblyResolvedConstructor contextOnly(AssemblyPatternBlock ctx,
-			String description, List<AssemblyResolution> children) {
-		return resolved(AssemblyPatternBlock.nop(), ctx, description, children);
+	public static AssemblyResolvedPatterns contextOnly(AssemblyPatternBlock ctx,
+			String description) {
+		return resolved(AssemblyPatternBlock.nop(), ctx, description, null, null, null);
 	}
 
 	/**
 	 * Build a successful resolution result from a SLEIGH constructor's patterns
+	 * 
 	 * @param pat the constructor's pattern
 	 * @param description a description of the resolution
 	 * @return the new resolution
 	 */
-	public static AssemblyResolvedConstructor fromPattern(DisjointPattern pat, int minLen,
-			String description) {
+	public static AssemblyResolvedPatterns fromPattern(DisjointPattern pat, int minLen,
+			String description, Constructor cons) {
 		AssemblyPatternBlock ins = AssemblyPatternBlock.fromPattern(pat, minLen, false);
 		AssemblyPatternBlock ctx = AssemblyPatternBlock.fromPattern(pat, 0, true);
-		return resolved(ins, ctx, description, null);
+		return resolved(ins, ctx, description, cons, null, null);
 	}
 
 	/**
 	 * Build a backfill record to attach to a successful resolution result
+	 * 
 	 * @param exp the expression depending on a missing symbol
 	 * @param goal the desired value of the expression
 	 * @param res the resolution result for child constructors
@@ -128,41 +142,69 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 * @return the new record
 	 */
 	public static AssemblyResolvedBackfill backfill(PatternExpression exp, MaskedLong goal,
-			Map<Integer, Object> res, int inslen, String description) {
-		return new AssemblyResolvedBackfill(description, exp, goal, res, inslen, 0);
+			int inslen, String description) {
+		return new AssemblyResolvedBackfill(description, exp, goal, inslen, 0);
 	}
 
 	/**
 	 * Obtain a new "blank" resolved SLEIGH constructor record
+	 * 
 	 * @param description a description of the resolution
-	 * @param sel any children that will be involved in populating this record
+	 * @param children any children that will be involved in populating this record
 	 * @return the new resolution
 	 */
-	public static AssemblyResolvedConstructor nop(String description,
-			List<? extends AssemblyResolution> sel) {
-		return resolved(AssemblyPatternBlock.nop(), AssemblyPatternBlock.nop(), description, sel);
+	public static AssemblyResolvedPatterns nop(String description,
+			List<? extends AssemblyResolution> children, AssemblyResolution right) {
+		return resolved(AssemblyPatternBlock.nop(), AssemblyPatternBlock.nop(), description, null,
+			children, right);
+	}
+
+	/**
+	 * Obtain a new "blank" resolved SLEIGH constructor record
+	 * 
+	 * @param description a description of the resolution
+	 * @param chilren any children that will be involved in populating this record
+	 * @return the new resolution
+	 */
+	public static AssemblyResolvedPatterns nop(String description) {
+		return resolved(AssemblyPatternBlock.nop(), AssemblyPatternBlock.nop(), description, null,
+			null, null);
 	}
 
 	/**
 	 * Build an error resolution record
+	 * 
 	 * @param error a description of the error
 	 * @param description a description of what the resolver was doing when the error ocurred
 	 * @param children any children involved in generating the error
 	 * @return the new resolution
 	 */
 	public static AssemblyResolvedError error(String error, String description,
-			List<? extends AssemblyResolution> children) {
-		return new AssemblyResolvedError(description, children, error);
+			List<? extends AssemblyResolution> children, AssemblyResolution right) {
+		return new AssemblyResolvedError(description, children, right, error);
+	}
+
+	/**
+	 * Build an error resolution record
+	 * 
+	 * @param error a description of the error
+	 * @param description a description of what the resolver was doing when the error occurred
+	 * @param children any children involved in generating the error
+	 * @return the new resolution
+	 */
+	public static AssemblyResolvedError error(String error, String description) {
+		return new AssemblyResolvedError(description, null, null, error);
 	}
 
 	/**
 	 * Build an error resolution record, based on an intermediate SLEIGH constructor record
+	 * 
 	 * @param error a description of the error
 	 * @param res the constructor record that was being populated when the error ocurred
 	 * @return the new error resolution
 	 */
-	public static AssemblyResolution error(String error, AssemblyResolvedConstructor res) {
-		return error(error, res.description, res.children);
+	public static AssemblyResolution error(String error, AssemblyResolvedPatterns res) {
+		return error(error, res.description, res.children, res.right);
 	}
 
 	/* ********************************************************************************************
@@ -171,18 +213,21 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 
 	/**
 	 * Check if this record describes an error
+	 * 
 	 * @return true if the record is an error
 	 */
 	public abstract boolean isError();
 
 	/**
 	 * Check if this record describes a backfill
+	 * 
 	 * @return true if the record is a backfill
 	 */
 	public abstract boolean isBackfill();
 
 	/**
 	 * Display the resolution result in one line (omitting child details)
+	 * 
 	 * @return the display description
 	 */
 	protected abstract String lineToString();
@@ -191,11 +236,27 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 * Misc
 	 */
 
+	protected List<AssemblyResolution> getAllRight() {
+		List<AssemblyResolution> result = new ArrayList<>();
+		collectAllRight(result);
+		return result;
+	}
+
+	protected void collectAllRight(Collection<AssemblyResolution> into) {
+		into.add(this);
+		if (right == null) {
+			return;
+		}
+		right.collectAllRight(into);
+	}
+
 	/**
 	 * Get the child portion of {@link #toString()}
 	 * 
+	 * <p>
 	 * If a subclass has another, possible additional, notion of children that it would like to
 	 * include in {@link #toString()}, it must override this method.
+	 * 
 	 * @see #hasChildren()
 	 * @param indent the current indentation
 	 * @return the indented description for each child on its own line
@@ -210,6 +271,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 
 	/**
 	 * Used only by parents: get a multi-line description of this record, indented
+	 * 
 	 * @param indent the current indentation
 	 * @return the indented description
 	 */
@@ -241,9 +303,11 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	/**
 	 * Check if this record has children
 	 * 
+	 * <p>
 	 * If a subclass has another, possibly additional, notion of children that it would like to
 	 * include in {@link #toString()}, it must override this method to return true when such
 	 * children are present.
+	 * 
 	 * @see #childrenToString(String)
 	 * @return true if this record has children
 	 */
@@ -256,4 +320,36 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 		}
 		return true;
 	}
+
+	/**
+	 * Shift the resolution's instruction pattern to the right, if applicable
+	 * 
+	 * <p>
+	 * This also shifts any backfill and forbidden pattern records.
+	 * 
+	 * @param amt the number of bytes to shift.
+	 * @return the result
+	 */
+	public abstract AssemblyResolution shift(int amt);
+
+	/**
+	 * Get this same resolution, but without any right siblings
+	 * 
+	 * @return the resolution
+	 */
+	public AssemblyResolution withoutRight() {
+		return withRight(null);
+	}
+
+	/**
+	 * Get this same resolution, but with the given right sibling
+	 * 
+	 * @return the resolution
+	 */
+	public abstract AssemblyResolution withRight(AssemblyResolution right);
+
+	/**
+	 * Get this same resolution, pushing its right siblings down to its children
+	 */
+	public abstract AssemblyResolution parent(String description, int opCount);
 }

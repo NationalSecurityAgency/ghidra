@@ -99,6 +99,18 @@ public class AARCH64BEAssemblyTest extends AbstractAssemblyTest {
 	public void testAssemble_mov_x0_0x8() {
 		assertOneCompatRestExact("mov x0,#0x8", "00:01:80:d2");
 	}
+	
+	@Test
+	public void testAssemble_mov_x2_0x0() {
+		// NB: 0 is special here because immediates include a shift. 0 can have any shift
+		assertOneCompatRestExact("mov x2,#0x0", "02:00:80:d2");
+	}
+
+	@Test
+	public void testAssemble_mov_x1_n0x1() {
+		// NB: This uses ~(imm16 << (aa_hw * 16)), so -1 becomes 0 when solving the shift
+		assertOneCompatRestExact("mov x1,#-0x1", "01:00:80:92");
+	}
 
 	@Test
 	public void testAssemble_sbfiz_x1_x2_0x2_0x20() {

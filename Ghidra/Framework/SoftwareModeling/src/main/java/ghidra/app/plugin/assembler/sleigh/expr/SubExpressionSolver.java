@@ -18,7 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import ghidra.app.plugin.processors.sleigh.expression.SubExpression;
 
 /**
- * Solves expressions of the form A - B
+ * Solves expressions of the form {@code A - B}
  */
 public class SubExpressionSolver extends AbstractBinaryExpressionSolver<SubExpression> {
 

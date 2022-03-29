@@ -29,6 +29,7 @@ public abstract class AssemblyParseTreeNode {
 
 	/**
 	 * Construct a node for a tree parsed by the given grammar
+	 * 
 	 * @param grammar the grammar
 	 */
 	public AssemblyParseTreeNode(AssemblyGrammar grammar) {
@@ -38,14 +39,17 @@ public abstract class AssemblyParseTreeNode {
 	/**
 	 * Get the symbol for which this node is substituted
 	 * 
+	 * <p>
 	 * For a branch, this is the LHS of the corresponding production. For a token, this is the
 	 * terminal whose tokenizer matched it.
+	 * 
 	 * @return the symbol
 	 */
 	public abstract AssemblySymbol getSym();
 
 	/**
 	 * Get the branch which contains this node
+	 * 
 	 * @return
 	 */
 	public AssemblyParseBranch getParent() {
@@ -54,6 +58,7 @@ public abstract class AssemblyParseTreeNode {
 
 	/**
 	 * Set the branch which contains this node
+	 * 
 	 * @param parent
 	 */
 	protected void setParent(AssemblyParseBranch parent) {
@@ -63,6 +68,7 @@ public abstract class AssemblyParseTreeNode {
 
 	/**
 	 * For debugging: Display this parse tree via the given stream
+	 * 
 	 * @param out the stream
 	 */
 	public void print(PrintStream out) {
@@ -71,13 +77,15 @@ public abstract class AssemblyParseTreeNode {
 
 	/**
 	 * For debugging: Display the tree with the given indent
+	 * 
 	 * @param out the stream
 	 * @param indent the indent
 	 */
 	protected abstract void print(PrintStream out, String indent);
 
 	/**
-	 * Check if this node yields a subconstructor resolution 
+	 * Check if this node yields a subconstructor resolution
+	 * 
 	 * @return true if this node yields a subconstructor resolution
 	 */
 	public boolean isConstructor() {
@@ -86,6 +94,7 @@ public abstract class AssemblyParseTreeNode {
 
 	/**
 	 * Check if this node yields a numeric value
+	 * 
 	 * @return true if this node yields a numeric value
 	 */
 	public boolean isNumeric() {
@@ -94,6 +103,7 @@ public abstract class AssemblyParseTreeNode {
 
 	/**
 	 * Get the grammar used to parse the tree
+	 * 
 	 * @return the grammar
 	 */
 	public AssemblyGrammar getGrammar() {
@@ -102,6 +112,7 @@ public abstract class AssemblyParseTreeNode {
 
 	/**
 	 * Generate the string that this node parsed
+	 * 
 	 * @return the string
 	 */
 	public abstract String generateString();
