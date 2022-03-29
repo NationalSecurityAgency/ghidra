@@ -405,7 +405,7 @@ public class RowObjectSelectionManager<T> extends DefaultListSelectionModel
 
 	private boolean restoreSelectedRows(int[] rows) {
 		traceRows("restoreSelectedRows(): ", rows);
-		if (ArrayUtilities.isArrayPrimativeEqual(rows, table.getSelectedRows())) {
+		if (ArrayUtilities.isArrayPrimitiveEqual(rows, table.getSelectedRows())) {
 			trace("\tselection hasn't changed--nothing to do");
 			// the selection is the same, nothing to change; don't send out excess events
 			return false;

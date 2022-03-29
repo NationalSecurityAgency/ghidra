@@ -46,7 +46,7 @@ public final class ArrayUtilities {
 	 * @return true if each element of the array is equal
 	 * @throws IllegalArgumentException if either argument is not an array
 	 */
-	public static boolean isArrayPrimativeEqual(Object o1, Object o2) {
+	public static boolean isArrayPrimitiveEqual(Object o1, Object o2) {
 		if (o1 == null) {
 			return (o2 == null);
 		}
