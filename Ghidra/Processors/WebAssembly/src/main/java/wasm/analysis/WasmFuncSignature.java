@@ -21,6 +21,7 @@ import wasm.format.WasmEnums.ValType;
 public class WasmFuncSignature {
 	private ValType[] params;
 	private ValType[] returns;
+	private int funcIdx;
 	private String name;
 	private Address startAddr;
 	private Address endAddr; // address of last byte in the function (inclusive)
@@ -36,6 +37,10 @@ public class WasmFuncSignature {
 
 	public ValType[] getLocals() {
 		return locals;
+	}
+
+	public int getFuncIdx() {
+		return funcIdx;
 	}
 
 	public String getName() {
@@ -54,15 +59,16 @@ public class WasmFuncSignature {
 		return locals == null;
 	}
 
-	public WasmFuncSignature(ValType[] paramTypes, ValType[] returnTypes, String name, Address addr) {
+	public WasmFuncSignature(ValType[] paramTypes, ValType[] returnTypes, int funcIdx, String name, Address addr) {
+		this.funcIdx = funcIdx;
 		this.name = name;
 		this.startAddr = addr;
 		this.params = paramTypes;
 		this.returns = returnTypes;
 	}
 
-	public WasmFuncSignature(ValType[] paramTypes, ValType[] returnTypes, String name, Address startAddr, Address endAddr, ValType[] locals) {
-		this(paramTypes, returnTypes, name, startAddr);
+	public WasmFuncSignature(ValType[] paramTypes, ValType[] returnTypes, int funcIdx, String name, Address startAddr, Address endAddr, ValType[] locals) {
+		this(paramTypes, returnTypes, funcIdx, name, startAddr);
 		this.endAddr = endAddr;
 		this.locals = locals;
 	}

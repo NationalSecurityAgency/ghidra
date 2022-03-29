@@ -167,21 +167,26 @@ public class WasmPreAnalyzer extends AbstractAnalyzer {
 			}
 			monitor.incrementProgress(1);
 
-			WasmFuncSignature func = state.getFunctionByAddress(function.getEntryPoint());
-			if (func == null) {
-				Msg.error(this, "Function not defined in Wasm file: " + function.getEntryPoint());
+			WasmFunctionAnalysis funcAnalysis;
+			try {
+				funcAnalysis = state.getFunctionAnalysis(function.getEntryPoint());
+			} catch (Exception e) {
+				Msg.error(this, "Failed to analyze function " + function.getName(), e);
+				function.setComment("WARNING: Wasm function analysis failed, output may be incorrect: " + e);
 				continue;
 			}
-			if (func.isImport()) {
+			if (funcAnalysis == null) {
 				continue;
 			}
-			WasmFunctionAnalysis funcAnalysis = state.getFunctionAnalysis(function);
+
 			try {
 				funcAnalysis.applyContext(program, cStackGlobal);
-				AddressSet funcSet = new AddressSet(func.getStartAddr(), func.getEndAddr());
+				AddressSet funcSet = new AddressSet(
+					funcAnalysis.getSignature().getStartAddr(),
+					funcAnalysis.getSignature().getEndAddr());
 				disassembler.disassemble(funcSet, funcSet, false);
 			} catch (Exception e) {
-				Msg.error(this, "Failed to analyze function " + func, e);
+				Msg.error(this, "Failed to analyze function " + function.getName(), e);
 			}
 		}
 		return true;

@@ -25,17 +25,17 @@ import java.util.Map;
 import ghidra.app.plugin.core.analysis.AnalysisState;
 import ghidra.app.plugin.core.analysis.AnalysisStateInfo;
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Function;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.util.Msg;
 import wasm.WasmLoader;
 import wasm.format.WasmEnums.ValType;
 import wasm.format.WasmModule;
+import wasm.format.sections.structures.WasmCodeEntry;
 import wasm.format.sections.structures.WasmFuncType;
 
 public class WasmAnalysis implements AnalysisState {
@@ -49,31 +49,31 @@ public class WasmAnalysis implements AnalysisState {
 	public static synchronized WasmAnalysis getState(Program program) {
 		WasmAnalysis analysisState = AnalysisStateInfo.getAnalysisState(program, WasmAnalysis.class);
 		if (analysisState == null) {
-			analysisState = new WasmAnalysis(program);
+			Memory mem = program.getMemory();
+			Address moduleStart = mem.getBlock(".module").getStart();
+			ByteProvider memByteProvider = new MemoryByteProvider(mem, moduleStart);
+			BinaryReader memBinaryReader = new BinaryReader(memByteProvider, true);
+			WasmModule module;
+			try {
+				module = new WasmModule(memBinaryReader);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+
+			analysisState = new WasmAnalysis(program.getAddressFactory(), module);
 			AnalysisStateInfo.putAnalysisState(program, analysisState);
 		}
 		return analysisState;
 	}
 
-	private Program program;
 	private WasmModule module = null;
 	private List<WasmFuncSignature> functions = null;
 	private Map<Address, WasmFuncSignature> functionsByAddress = new HashMap<>();
-	private Map<Function, WasmFunctionAnalysis> functionAnalyses = new HashMap<>();
+	private Map<Address, WasmFunctionAnalysis> functionAnalyses = new HashMap<>();
 
-	public WasmAnalysis(Program program) {
-		Memory mem = program.getMemory();
-		Address moduleStart = mem.getBlock(".module").getStart();
-		ByteProvider memByteProvider = new MemoryByteProvider(mem, moduleStart);
-		BinaryReader memBinaryReader = new BinaryReader(memByteProvider, true);
-		try {
-			module = new WasmModule(memBinaryReader);
-		} catch (IOException e) {
-			Msg.error(this, "Failed to construct WasmModule", e);
-		}
-
-		this.program = program;
-		this.functions = getFunctions(program, module);
+	public WasmAnalysis(AddressFactory addressFactory, WasmModule module) {
+		this.module = module;
+		this.functions = getFunctions(addressFactory, module);
 		for (WasmFuncSignature func : functions) {
 			functionsByAddress.put(func.getStartAddr(), func);
 		}
@@ -95,20 +95,19 @@ public class WasmAnalysis implements AnalysisState {
 		return functionsByAddress.get(address);
 	}
 
-	public synchronized WasmFunctionAnalysis getFunctionAnalysis(Function f) {
-		if (!functionAnalyses.containsKey(f)) {
-			WasmFuncSignature func = getFunctionByAddress(f.getEntryPoint());
-			BinaryReader codeReader = new BinaryReader(new MemoryByteProvider(program.getMemory(), func.getStartAddr()), true);
-			WasmFunctionAnalysis funcAnalysis = new WasmFunctionAnalysis(func);
-			try {
-				funcAnalysis.analyzeFunction(program, codeReader);
-				functionAnalyses.put(f, funcAnalysis);
-			} catch (Exception e) {
-				Msg.error(this, "Failed to analyze function " + func.getName(), e);
-				f.setComment("WARNING: Wasm function analysis failed, output may be incorrect: " + e);
+	public synchronized WasmFunctionAnalysis getFunctionAnalysis(Address entryPoint) throws IOException {
+		if (!functionAnalyses.containsKey(entryPoint)) {
+			WasmFuncSignature func = getFunctionByAddress(entryPoint);
+			WasmCodeEntry code = module.getFunctionCode(func.getFuncIdx());
+			if (code == null) {
+				return null;
 			}
+			BinaryReader codeReader = new BinaryReader(new ByteArrayProvider(code.getInstructions()), true);
+			WasmFunctionAnalysis funcAnalysis = new WasmFunctionAnalysis(func);
+			funcAnalysis.analyzeFunction(this, codeReader);
+			functionAnalyses.put(entryPoint, funcAnalysis);
 		}
-		return functionAnalyses.get(f);
+		return functionAnalyses.get(entryPoint);
 	}
 
 	public WasmFuncType getType(int typeidx) {
@@ -123,32 +122,28 @@ public class WasmAnalysis implements AnalysisState {
 		return module.getTableType(tableidx).getElementType();
 	}
 
-	private static List<WasmFuncSignature> getFunctions(Program program, WasmModule module) {
+	private static List<WasmFuncSignature> getFunctions(AddressFactory addressFactory, WasmModule module) {
 		int numFunctions = module.getFunctionCount();
 		List<WasmFuncSignature> functions = new ArrayList<>(numFunctions);
 		for (int funcidx = 0; funcidx < numFunctions; funcidx++) {
 			WasmFuncType funcType = module.getFunctionType(funcidx);
-			Address startAddress = WasmLoader.getFunctionAddress(program, module, funcidx);
-			Address endAddress = startAddress.add(WasmLoader.getFunctionSize(program, module, funcidx) - 1);
+			Address startAddress = WasmLoader.getFunctionAddress(addressFactory, module, funcidx);
+			Address endAddress = startAddress.add(WasmLoader.getFunctionSize(module, funcidx) - 1);
+			String name = WasmLoader.getFunctionName(module, funcidx);
 
-			String name = null;
-			Symbol[] labels = program.getSymbolTable().getSymbols(startAddress);
-			if (labels.length > 0) {
-				name = labels[0].getName();
-			}
-
+			WasmCodeEntry code = module.getFunctionCode(funcidx);
 			ValType[] params = funcType.getParamTypes();
 			ValType[] returns = funcType.getReturnTypes();
-			ValType[] nonParamLocals = module.getFunctionLocals(funcidx);
-			if (nonParamLocals == null) {
+			if (code == null) {
 				/* import */
-				functions.add(new WasmFuncSignature(params, returns, name, startAddress));
+				functions.add(new WasmFuncSignature(params, returns, funcidx, name, startAddress));
 			} else {
+				ValType[] nonParamLocals = code.getLocals();
 				ValType[] locals = new ValType[params.length + nonParamLocals.length];
 
 				System.arraycopy(params, 0, locals, 0, params.length);
 				System.arraycopy(nonParamLocals, 0, locals, params.length, nonParamLocals.length);
-				functions.add(new WasmFuncSignature(params, returns, name, startAddress, endAddress, locals));
+				functions.add(new WasmFuncSignature(params, returns, funcidx, name, startAddress, endAddress, locals));
 			}
 		}
 		return functions;

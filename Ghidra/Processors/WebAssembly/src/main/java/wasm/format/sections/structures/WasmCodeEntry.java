@@ -43,8 +43,8 @@ public class WasmCodeEntry implements StructConverter {
 		for (int i = 0; i < localCount.asLong(); ++i) {
 			locals.add(new WasmLocalEntry(reader));
 		}
-		int instructionOffset = (int) reader.getPointerIndex();
-		instructions = reader.readNextByteArray((int) (codeOffset + codeSize.asLong() - instructionOffset));
+		instructions = reader.readByteArray(codeOffset, codeSize.asInt32());
+		reader.setPointerIndex(codeOffset + codeSize.asLong());
 	}
 
 	public long getCodeSize() {
@@ -77,10 +77,6 @@ public class WasmCodeEntry implements StructConverter {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureBuilder builder = new StructureBuilder("code_" + codeOffset);
 		builder.add(codeSize, "code_size");
-		builder.add(localCount, "local_count");
-		for (int i = 0; i < localCount.asLong(); i++) {
-			builder.add(locals.get(i).toDataType(), "local_" + i);
-		}
 		builder.addArray(BYTE, instructions.length, "instructions");
 		return builder.toStructure();
 	}

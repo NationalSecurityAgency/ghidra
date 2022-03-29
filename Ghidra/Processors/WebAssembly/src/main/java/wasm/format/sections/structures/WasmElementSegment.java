@@ -24,8 +24,8 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Program;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.WasmLoader;
 import wasm.format.StructureBuilder;
@@ -134,21 +134,21 @@ public class WasmElementSegment implements StructConverter {
 		}
 	}
 
-	public Address[] getAddresses(Program program, WasmModule module) {
+	public Address[] getAddresses(AddressFactory addressFactory, WasmModule module) {
 		int count = (int) this.count.asLong();
 		Address[] result = new Address[count];
 
 		if (funcidxs != null) {
 			for (int i = 0; i < count; i++) {
 				long funcidx = funcidxs.get(i).asLong();
-				result[i] = WasmLoader.getFunctionAddress(program, module, (int) funcidx);
+				result[i] = WasmLoader.getFunctionAddress(addressFactory, module, (int) funcidx);
 			}
 			return result;
 		}
 
 		if (exprs != null) {
 			for (int i = 0; i < count; i++) {
-				result[i] = exprs.get(i).asAddress(program, module);
+				result[i] = exprs.get(i).asAddress(addressFactory, module);
 			}
 			return result;
 		}

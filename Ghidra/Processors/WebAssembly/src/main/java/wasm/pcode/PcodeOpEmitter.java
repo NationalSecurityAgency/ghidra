@@ -19,18 +19,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 public class PcodeOpEmitter {
-	private Program program;
+	private Language language;
 	private Address baseAddress;
 	private List<PcodeOp> ops = new ArrayList<>();
 
-	public PcodeOpEmitter(Program program, Address baseAddress) {
-		this.program = program;
+	public PcodeOpEmitter(Language language, Address baseAddress) {
+		this.language = language;
 		this.baseAddress = baseAddress;
 	}
 
@@ -50,7 +50,7 @@ public class PcodeOpEmitter {
 	}
 
 	private Varnode getRegister(String name) {
-		Register register = program.getRegister(name);
+		Register register = language.getRegister(name);
 		return new Varnode(register.getAddress(), register.getBitLength() / 8);
 	}
 
