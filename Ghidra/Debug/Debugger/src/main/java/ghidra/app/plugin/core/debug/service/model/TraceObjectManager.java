@@ -261,6 +261,9 @@ public class TraceObjectManager {
 			catch (DuplicateNameException e) {
 				throw new AssertionError(e); // Should be shrinking
 			}
+			catch (IllegalArgumentException e) {
+				Msg.warn(this, "Unable to set creation snap for " + traceThread);
+			}
 		}
 	}
 
