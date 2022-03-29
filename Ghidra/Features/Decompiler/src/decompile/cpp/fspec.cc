@@ -56,32 +56,72 @@ void ParamEntry::resolveJoin(list<ParamEntry> &curList)
       int4 max = entry->group + entry->groupsize;
       if (max > maxgrp)
 	maxgrp = max;
+      // For output <pentry>, if the most signifigant part overlaps with an earlier <pentry>
+      // the least signifigant part is marked for extra checks, and vice versa.
+      flags |= (i==0) ? extracheck_low : extracheck_high;
     }
   }
   if (maxgrp < 0 || mingrp >= 1000)
     throw LowlevelError("<pentry> join must overlap at least one previous entry");
   group = mingrp;
   groupsize = (maxgrp - mingrp);
+  flags |= overlapping;
   if (groupsize > joinrec->numPieces())
     throw LowlevelError("<pentry> join must overlap sequential entries");
 }
 
-/// A ParamEntry with \e join storage must either overlap a single other ParamEntry or
-/// all pieces must overlap.
-/// \return \b true if \b this is a join whose pieces do not all overlap
-bool ParamEntry::isNonOverlappingJoin(void) const
+/// Search for overlaps of \b this with any previous entry.  If an overlap is discovered,
+/// verify the form is correct for the different ParamEntry to share \e group slots and
+/// reassign \b this group.
+/// \param curList is the list of previous entries
+void ParamEntry::resolveOverlap(list<ParamEntry> &curList)
 
 {
-  if (joinrec == (JoinRecord *)0)
-    return false;
-  return (joinrec->numPieces() != groupsize);
+  if (joinrec != (JoinRecord *)0)
+    return;		// Overlaps with join records dealt with in resolveJoin
+  int4 grpsize = 0;
+  int4 mingrp = 1000;
+  int4 maxgrp = -1;
+  list<ParamEntry>::const_iterator iter,enditer;
+  Address addr(spaceid,addressbase);
+  enditer = curList.end();
+  --enditer;		// The last entry is \b this ParamEntry
+  for(iter=curList.begin();iter!=enditer;++iter) {
+    const ParamEntry &entry(*iter);
+    if (!entry.intersects(addr, size)) continue;
+    if (contains(entry)) {	// If this contains the intersecting entry
+      if (entry.isOverlap()) continue;	// Don't count resources (already counted overlapped entry)
+      if (entry.group < mingrp)
+	mingrp = entry.group;
+      int4 max = entry.group + entry.groupsize;
+      if (max > maxgrp)
+	maxgrp = max;
+      grpsize += entry.groupsize;
+      // For output <pentry>, if the most signifigant part overlaps with an earlier <pentry>
+      // the least signifigant part is marked for extra checks, and vice versa.
+      if (addressbase == entry.addressbase)
+	flags |= spaceid->isBigEndian() ? extracheck_low : extracheck_high;
+      else
+	flags |= spaceid->isBigEndian() ? extracheck_high : extracheck_low;
+    }
+    else
+      throw LowlevelError("Illegal overlap of <pentry> in compiler spec");
+  }
+
+  if (grpsize == 0) return;		// No overlaps
+  if (grpsize != (maxgrp - mingrp))
+    throw LowlevelError("<pentry> must overlap sequential entries");
+  group = mingrp;
+  groupsize = grpsize;
+  flags |= overlapping;
 }
 
 /// This entry must properly contain the other memory range, and
-/// the entry properties must be compatible.
-/// \param op2 is the other entry to compare with \b this
-/// \return \b true if the other entry is contained
-bool ParamEntry::contains(const ParamEntry &op2) const
+/// the entry properties must be compatible.  A \e join ParamEntry can
+/// subsume another \e join ParamEntry, but we expect the addressbase to be identical.
+/// \param op2 is the given entry to compare with \b this
+/// \return \b true if the given entry is subsumed
+bool ParamEntry::subsumesDefinition(const ParamEntry &op2) const
 
 {
   if ((type!=TYPE_UNKNOWN)&&(op2.type != type)) return false;
@@ -92,6 +132,7 @@ bool ParamEntry::contains(const ParamEntry &op2) const
   return true;
 }
 
+/// We assume a \e join ParamEntry cannot be contained by a single contiguous memory range.
 /// \param addr is the starting address of the potential containing range
 /// \param sz is the number of bytes in the range
 /// \return \b true if the entire ParamEntry fits inside the range
@@ -103,6 +144,38 @@ bool ParamEntry::containedBy(const Address &addr,int4 sz) const
   uintb entryoff = addressbase + size-1;
   uintb rangeoff = addr.getOffset() + sz-1;
   return (entryoff <= rangeoff);
+}
+
+/// If \b this a a \e join, each piece is tested for intersection.
+/// Otherwise, \b this, considered as a single memory, is tested for intersection.
+/// \param addr is the starting address of the given memory range to test against
+/// \param sz is the number of bytes in the given memory range
+/// \return \b true if there is any kind of intersection
+bool ParamEntry::intersects(const Address &addr,int4 sz) const
+
+{
+  uintb rangeend;
+  if (joinrec != (JoinRecord *)0) {
+    rangeend = addr.getOffset() + sz - 1;
+    for(int4 i=0;i<joinrec->numPieces();++i) {
+      const VarnodeData &vdata( joinrec->getPiece(i) );
+      if (addr.getSpace() != vdata.space) continue;
+      uintb vdataend = vdata.offset + vdata.size - 1;
+      if (addr.getOffset() < vdata.offset && rangeend < vdataend)
+	continue;
+      if (addr.getOffset() > vdata.offset && rangeend > vdataend)
+	continue;
+      return true;
+    }
+  }
+  if (spaceid != addr.getSpace()) return false;
+  rangeend = addr.getOffset() + sz - 1;
+  uintb thisend = addressbase + size - 1;
+  if (addr.getOffset() < addressbase && rangeend < thisend)
+    return false;
+  if (addr.getOffset() > addressbase && rangeend > thisend)
+    return false;
+  return true;
 }
 
 /// Check if the given memory range is contained in \b this.
@@ -192,6 +265,28 @@ bool ParamEntry::getContainer(const Address &addr,int4 sz,VarnodeData &res) cons
   if (al2 != 0)
     res.size += (alignment - al2); // Bump up size to nearest alignment
   return true;
+}
+
+/// Test that \b this, as one or more memory ranges, contains the other ParamEntry's memory range.
+/// A \e join ParamEntry cannot be contained by another entry, but it can contain an entry in one
+/// of its pieces.
+/// \param op2 is the given ParamEntry to test for containment
+/// \return \b true if the given ParamEntry is contained
+bool ParamEntry::contains(const ParamEntry &op2) const
+
+{
+  if (op2.joinrec != (JoinRecord *)0) return false;	// Assume a join entry cannot be contained
+  if (joinrec == (JoinRecord *)0) {
+    Address addr(spaceid,addressbase);
+    return op2.containedBy(addr, size);
+  }
+  for(int4 i=0;i<joinrec->numPieces();++i) {
+    const VarnodeData &vdata(joinrec->getPiece(i));
+    Address addr = vdata.getAddr();
+    if (op2.containedBy(addr,vdata.size))
+      return true;
+  }
+  return false;
 }
 
 /// \brief Calculate the type of \e extension to expect for the given logical value
@@ -402,54 +497,7 @@ void ParamEntry::restoreXml(const Element *el,const AddrSpaceManager *manage,boo
   if (grouped)
     flags |= is_grouped;
   resolveJoin(curList);
-}
-
-/// \brief Check if \b this entry represents a \e joined parameter and requires extra scrutiny
-///
-/// Return value parameter lists allow overlapping entries if one of the overlapping entries
-/// is a \e joined parameter.  In this case the return value recovery logic needs to know
-/// what portion(s) of the joined parameter are overlapped. This method sets flags on \b this
-/// to indicate the overlap.
-/// \param entry is the full parameter list to check for overlaps with \b this
-void ParamEntry::extraChecks(list<ParamEntry> &entry)
-
-{
-  if (joinrec == (JoinRecord *)0) return;		// Nothing to do if not multiprecision
-  if (joinrec->numPieces() != 2) return;
-  const VarnodeData &highPiece(joinrec->getPiece(0));
-  bool seenOnce = false;
-  list<ParamEntry>::const_iterator iter;
-  for(iter=entry.begin();iter!=entry.end();++iter) {	// Search for high piece, used as whole/low in another entry
-    AddrSpace *spc = (*iter).getSpace();
-    uintb off = (*iter).getBase();
-    int4 sz = (*iter).getSize();
-    if ((highPiece.offset == off)&&(highPiece.space == spc)&&(highPiece.size == sz)) {
-      if (seenOnce) throw LowlevelError("Extra check hits twice");
-      seenOnce = true;
-      flags |= extracheck_low;				// If found, we must do extra checks on the low
-    }
-  }
-  if (!seenOnce)
-    flags |= extracheck_high;				// The default is to do extra checks on the high
-}
-
-/// If the storage is in the \e join space, we count the number of join pieces that overlap something
-/// in the given list of entries.
-/// \param curList is the list of entries to check
-/// \return the number of overlapping pieces
-int4 ParamEntry::countJoinOverlap(const list<ParamEntry> &curList) const
-
-{
-  if (joinrec == (JoinRecord *)0)
-    return 0;
-
-  int count = 0;
-  for (int4 i=0;i<joinrec->numPieces();++i) {
-    const ParamEntry *match = findEntryByStorage(curList, joinrec->getPiece(i));
-    if (match != (const ParamEntry *)0)
-      count += 1;
-  }
-  return count;
+  resolveOverlap(curList);
 }
 
 /// Entries within a group must be distinguishable by size or by type.
@@ -1176,15 +1224,6 @@ void ParamListStandard::restoreXml(const Element *el,const AddrSpaceManager *man
       parseGroup(subel, manage, effectlist, numgroup, normalstack, autokilledbycall, splitFloat);
     }
   }
-  // Check that any pentry tags with join storage don't overlap following tags
-  for (list<ParamEntry>::const_iterator eiter=entry.begin();eiter!=entry.end();++eiter) {
-    const ParamEntry &curEntry( *eiter );
-    if (curEntry.isNonOverlappingJoin()) {
-      if (curEntry.countJoinOverlap(entry) != 1) {
-	throw LowlevelError("pentry tag must be listed after all its overlaps");
-      }
-    }
-  }
   calcDelay();
   populateResolver();
 }
@@ -1302,17 +1341,6 @@ bool ParamListRegisterOut::possibleParam(const Address &loc,int4 size) const
   return false;
 }
 
-void ParamListRegisterOut::restoreXml(const Element *el,const AddrSpaceManager *manage,
-				      vector<EffectRecord> &effectlist,bool normalstack)
-{
-  ParamListStandard::restoreXml(el,manage,effectlist,normalstack);
-  list<ParamEntry>::iterator iter;
-  for(iter=entry.begin();iter!=entry.end();++iter) {
-    ParamEntry &curEntry(*iter);
-    curEntry.extraChecks(entry);
-  }
-}
-
 ParamList *ParamListRegisterOut::clone(void) const
 
 {
@@ -1427,11 +1455,11 @@ void ParamListMerged::foldIn(const ParamListStandard &op2)
     int4 typeint = 0;
     list<ParamEntry>::iterator iter;
     for(iter=entry.begin();iter!=entry.end();++iter) {
-      if ((*iter).contains(opentry)) {
+      if ((*iter).subsumesDefinition(opentry)) {
 	typeint = 2;
 	break;
       }
-      if (opentry.contains( *iter )) {
+      if (opentry.subsumesDefinition( *iter )) {
 	typeint = 1;
 	break;
       }
