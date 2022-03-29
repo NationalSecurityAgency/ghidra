@@ -171,7 +171,7 @@ public class WasmPreAnalyzer extends AbstractAnalyzer {
 			try {
 				funcAnalysis = state.getFunctionAnalysis(function.getEntryPoint());
 			} catch (Exception e) {
-				Msg.error(this, "Failed to analyze function " + function.getName(), e);
+				Msg.error(this, "Failed to analyze function " + function.getName() + " @ " + function.getEntryPoint(), e);
 				function.setComment("WARNING: Wasm function analysis failed, output may be incorrect: " + e);
 				continue;
 			}
@@ -186,7 +186,7 @@ public class WasmPreAnalyzer extends AbstractAnalyzer {
 					funcAnalysis.getSignature().getEndAddr());
 				disassembler.disassemble(funcSet, funcSet, false);
 			} catch (Exception e) {
-				Msg.error(this, "Failed to analyze function " + function.getName(), e);
+				Msg.error(this, "Failed to analyze function " + function.getName() + " @ " + function.getEntryPoint(), e);
 			}
 		}
 		return true;

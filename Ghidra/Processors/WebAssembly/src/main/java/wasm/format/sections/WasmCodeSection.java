@@ -46,9 +46,8 @@ public class WasmCodeSection extends WasmSection {
 	@Override
 	protected void addToStructure(StructureBuilder builder) throws DuplicateNameException, IOException {
 		builder.add(count, "count");
-		for (int i = 0; i < functions.size(); i++) {
-			builder.add(functions.get(i), "function_" + i);
-		}
+		// Do not add individual code entries to the structure: they need to be parsed
+		// as code instead of data.
 	}
 
 	@Override

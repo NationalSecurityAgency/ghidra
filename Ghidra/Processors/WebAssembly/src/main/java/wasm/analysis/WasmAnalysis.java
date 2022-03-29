@@ -50,7 +50,7 @@ public class WasmAnalysis implements AnalysisState {
 		WasmAnalysis analysisState = AnalysisStateInfo.getAnalysisState(program, WasmAnalysis.class);
 		if (analysisState == null) {
 			Memory mem = program.getMemory();
-			Address moduleStart = mem.getBlock(".module").getStart();
+			Address moduleStart = WasmLoader.getModuleAddress(program.getAddressFactory());
 			ByteProvider memByteProvider = new MemoryByteProvider(mem, moduleStart);
 			BinaryReader memBinaryReader = new BinaryReader(memByteProvider, true);
 			WasmModule module;
@@ -98,6 +98,9 @@ public class WasmAnalysis implements AnalysisState {
 	public synchronized WasmFunctionAnalysis getFunctionAnalysis(Address entryPoint) throws IOException {
 		if (!functionAnalyses.containsKey(entryPoint)) {
 			WasmFuncSignature func = getFunctionByAddress(entryPoint);
+			if (func == null) {
+				return null;
+			}
 			WasmCodeEntry code = module.getFunctionCode(func.getFuncIdx());
 			if (code == null) {
 				return null;
