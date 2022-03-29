@@ -61,7 +61,7 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 		this.thread = codeSpace.getThread(); // TODO: Bleh, should be parameter
 
 		this.eventQueues = new DomainObjectEventQueues(this, DBTraceProgramView.TIME_INTERVAL,
-			DBTraceProgramView.BUF_SIZE, view.trace.getLock());
+			view.trace.getLock());
 
 		// TODO: Make these create code/memory spaces lazily, to allow null at construction
 		// NOTE: Use reference manager as example

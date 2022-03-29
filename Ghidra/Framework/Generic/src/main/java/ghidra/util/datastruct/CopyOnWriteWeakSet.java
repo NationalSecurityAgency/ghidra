@@ -20,24 +20,24 @@ import java.util.*;
 import org.apache.commons.collections4.IteratorUtils;
 
 /**
- * A set that avoids {@link ConcurrentModificationException}s by copying the internal storage 
- * <b>for every mutation operation</b>.  Thus, this data structure is only efficient when the 
+ * A set that avoids {@link ConcurrentModificationException}s by copying the internal storage
+ * <b>for every mutation operation</b>.  Thus, this data structure is only efficient when the
  * number of event notification operations significantly out numbers mutations to this structure
  * (e.g., adding and removing items.
  * <p>
- * An example use cases where using this class is a good fit would be a listener list where 
- * listeners are added during initialization, but not after that.   Further, this hypothetical 
+ * An example use cases where using this class is a good fit would be a listener list where
+ * listeners are added during initialization, but not after that.   Further, this hypothetical
  * list fires a large number of events.
  * <p>
- * A bad use of this class would be as a container to store widgets where the container the 
+ * A bad use of this class would be as a container to store widgets where the container the
  * contents are changed often, but iterated over very little.
  * <p>
  * Finally, if this structure is only ever used from a single thread, like the Swing thread, then
  * you do not need the overhead of this class, as the Swing thread synchronous access guarantees
- * that the structure cannot be mutated while it is being iterated.  See 
+ * that the structure cannot be mutated while it is being iterated.  See
  * {@link WeakDataStructureFactory#createSingleThreadAccessWeakSet()}.
  *
- * @param <T>
+ * @param <T> the type
  * @see WeakSet
  */
 class CopyOnWriteWeakSet<T> extends WeakSet<T> {

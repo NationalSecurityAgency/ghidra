@@ -913,7 +913,7 @@ public class DBTraceProgramView implements TraceProgramView {
 		this.viewport.setSnap(snap);
 
 		this.eventQueues =
-			new DomainObjectEventQueues(this, TIME_INTERVAL, BUF_SIZE, trace.getLock());
+			new DomainObjectEventQueues(this, TIME_INTERVAL, trace.getLock());
 
 		this.regViewsByThread = new WeakValueHashMap<>();
 

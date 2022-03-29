@@ -122,7 +122,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	}
 
 	public ProgramUserDataDB(ProgramDB program) throws IOException {
-		super(new DBHandle(), getName(program), 500, 1000, program);
+		super(new DBHandle(), getName(program), 500, program);
 		this.program = program;
 		this.language = program.getLanguage();
 		languageID = language.getLanguageID();
@@ -162,7 +162,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	public ProgramUserDataDB(DBHandle dbh, ProgramDB program, TaskMonitor monitor)
 			throws IOException, VersionException, LanguageNotFoundException, CancelledException {
 
-		super(dbh, getName(program), 500, 1000, program);
+		super(dbh, getName(program), 500, program);
 		this.program = program;
 		if (monitor == null) {
 			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
