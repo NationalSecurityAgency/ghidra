@@ -105,6 +105,10 @@ public class WasmFunctionAnalysis {
 			contextValues.put(address, contextValues.get(address).or(BigInteger.valueOf(value).shiftLeft(reg.getShift())));
 		}
 
+		public BigInteger getContext(Address address) {
+			return contextValues.get(address);
+		}
+
 		public void commitContext(Program program) {
 			ProgramContext context = program.getProgramContext();
 			Register contextRegister = context.getBaseContextRegister();
@@ -1079,6 +1083,10 @@ public class WasmFunctionAnalysis {
 			instAddress = startAddress.add(reader.getPointerIndex());
 			analyzeOpcode(analysis, instAddress, reader);
 		}
+	}
+
+	public BigInteger getContext(Address address) {
+		return contextreg.getContext(address);
 	}
 
 	public void applyContext(Program program, int cStackGlobal) {

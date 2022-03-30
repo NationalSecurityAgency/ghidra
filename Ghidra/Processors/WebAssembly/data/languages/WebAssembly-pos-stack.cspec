@@ -1583,4 +1583,14 @@
       <input name="regoffset" />
     </pcode>
   </callotherfixup>
+  <callotherfixup targetop="callPrologueCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
+  <callotherfixup targetop="callEpilogueCallOther">
+    <pcode dynamic="true">
+      <input name="regoffset" />
+    </pcode>
+  </callotherfixup>
 </compiler_spec>

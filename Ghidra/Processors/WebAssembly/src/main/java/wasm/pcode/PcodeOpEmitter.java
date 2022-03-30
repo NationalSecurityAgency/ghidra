@@ -51,7 +51,7 @@ public class PcodeOpEmitter {
 
 	private Varnode getRegister(String name) {
 		Register register = language.getRegister(name);
-		return new Varnode(register.getAddress(), register.getBitLength() / 8);
+		return new Varnode(register.getAddress(), register.getNumBytes());
 	}
 
 	public void emitNop() {
