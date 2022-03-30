@@ -21,6 +21,8 @@
     <choice>
       <value type="string">true</value>
       <value type="string">false</value>
+      <value type="string">yes</value>
+      <value type="string">no</value>
       <value type="string">1</value>
       <value type="string">0</value>
     </choice>
