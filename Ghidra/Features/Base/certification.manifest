@@ -424,6 +424,7 @@ src/main/help/help/topics/GhidraScriptMgrPlugin/images/New_Script_Editor.png||GH
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Pick.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Rename.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/SaveAs.png||GHIDRA||||END|
+src/main/help/help/topics/GhidraScriptMgrPlugin/images/ScriptQuickLaunchDialog.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Script_Dirs.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Script_Manager.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Select_Font.png||GHIDRA||||END|

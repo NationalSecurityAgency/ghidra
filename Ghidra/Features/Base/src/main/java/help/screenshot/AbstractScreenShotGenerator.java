@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -1707,46 +1706,12 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		return null;
 	}
 
-	public <T extends JComponent> T findChildWithType(Container node, Class<T> cls,
-			Predicate<T> pred) {
-		synchronized (node.getTreeLock()) {
-			if (cls.isInstance(node)) {
-				T potential = cls.cast(node);
-				if (pred == null || pred.test(potential)) {
-					return potential;
-				}
-			}
-			for (Component child : node.getComponents()) {
-				if (!(child instanceof Container)) {
-					return null;
-				}
-				Container cont = (Container) child;
-				JComponent found = findChildWithType(cont, cls, pred);
-				if (found != null) {
-					return cls.cast(found);
-				}
-			}
-		}
-		return null;
-	}
-
-	public <T extends JComponent> T findComponent(final Class<T> cls, final Predicate<T> pred) {
-		final DialogComponentProvider dialog = getDialog();
-		final AtomicReference<T> result = new AtomicReference<>();
-		runSwing(() -> {
-			JComponent top = dialog.getComponent();
-			result.set(findChildWithType(top, cls, pred));
-		});
-		waitForSwing();
-		return result.get();
-	}
-
 	public Component showTab(final String title) {
-		final DialogComponentProvider dialog = getDialog();
-		final AtomicReference<Component> result = new AtomicReference<>();
+		DialogComponentProvider dialog = getDialog();
+		AtomicReference<Component> result = new AtomicReference<>();
 		runSwing(() -> {
 			JComponent top = dialog.getComponent();
-			JTabbedPane tabs = findChildWithType(top, JTabbedPane.class, null);
+			JTabbedPane tabs = findComponent(top, JTabbedPane.class);
 			if (tabs == null) {
 				throw new IllegalStateException("No tab pane is present in current dialog");
 			}

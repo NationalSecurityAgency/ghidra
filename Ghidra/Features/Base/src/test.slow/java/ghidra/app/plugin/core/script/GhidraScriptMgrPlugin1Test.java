@@ -20,21 +20,18 @@ import static org.junit.Assert.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import javax.swing.Action;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import javax.swing.table.TableColumn;
 
 import org.junit.Test;
 
 import docking.DockingUtils;
 import docking.action.DockingActionIf;
-import docking.actions.*;
+import docking.actions.KeyBindingUtils;
+import docking.actions.ToolActions;
+import ghidra.util.TaskUtilities;
 
 public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTest {
-
-	public GhidraScriptMgrPlugin1Test() {
-		super();
-	}
 
 	@Test
 	public void testRunLastScriptAction() throws Exception {
@@ -149,6 +146,59 @@ public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTes
 		ToolActions toolActions = (ToolActions) plugin.getTool().getToolActions();
 		Action toolActionByKeyStroke = toolActions.getAction(newKs);
 		assertNotNull(toolActionByKeyStroke);
+	}
+
+	@Test
+	public void testScriptQuickChooser() throws Exception {
+
+		ScriptSelectionDialog dialog = launchQuickChooser();
+
+		String scriptName = "HelloWorldScript";
+		pickScript(dialog, scriptName, "HelloWorldScript.java");
+
+		String output = getConsoleText();
+
+		String expectedOutput = "Hello World";
+		assertTrue("Script did not run - output: " + output,
+			output.indexOf(expectedOutput) != -1);
+	}
+
+	@Test
+	public void testScriptQuickLaunch_WithGlobbing() throws Exception {
+
+		ScriptSelectionDialog dialog = launchQuickChooser();
+
+		String scriptName = "Hello*dScr";
+		pickScript(dialog, scriptName, "HelloWorldScript.java");
+
+		String output = getConsoleText();
+
+		String expectedOutput = "Hello World";
+		assertTrue("Script did not run - output: " + output,
+			output.indexOf(expectedOutput) != -1);
+	}
+
+//==================================================================================================
+// Private Methods 
+//==================================================================================================	
+
+	private void pickScript(ScriptSelectionDialog dialog, String userText, String scriptName) {
+		JTextField textField =
+			findComponent(dialog.getComponent(), JTextField.class);
+		triggerText(textField, userText);
+
+		TaskListenerFlag taskFlag = new TaskListenerFlag(scriptName);
+		TaskUtilities.addTrackedTaskListener(taskFlag);
+
+		triggerEnter(textField);
+
+		waitForTaskEnd(taskFlag);
+	}
+
+	private ScriptSelectionDialog launchQuickChooser() {
+		DockingActionIf action = getAction(env.getTool(), "Script Quick Launch");
+		performAction(action, false);
+		return waitForDialogComponent(ScriptSelectionDialog.class);
 	}
 
 	private void assertColumnValue(String columnName, Object expectedValue) {

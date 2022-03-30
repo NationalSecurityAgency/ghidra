@@ -246,6 +246,12 @@ class GhidraScriptActionManager {
 			"Manage Script Directories", ResourceManager.loadImage("images/text_list_bullets.png"),
 			provider::showBundleStatusComponent);
 
+		new ActionBuilder("Script Quick Launch", plugin.getName())
+				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_S,
+					DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.SHIFT_DOWN_MASK))
+				.onAction(this::chooseScript)
+				.buildAndInstall(plugin.getTool());
+
 		Icon icon = ResourceManager.loadImage("images/red-cross.png");
 		Predicate<ActionContext> test = context -> {
 			Object contextObject = context.getContextObject();
@@ -270,6 +276,20 @@ class GhidraScriptActionManager {
 				.inWindow(ActionBuilder.When.ALWAYS)
 				.onAction(context -> showGhidraScriptJavadoc())
 				.buildAndInstall(plugin.getTool());
+	}
+
+	private void chooseScript(ActionContext actioncontext1) {
+
+		List<ScriptInfo> scriptInfos = provider.getScriptInfos();
+		ScriptSelectionDialog dialog = new ScriptSelectionDialog(plugin, scriptInfos);
+		dialog.show();
+
+		ScriptInfo chosenInfo = dialog.getUserChoice();
+		if (chosenInfo == null) {
+			return;
+		}
+
+		provider.runScript(chosenInfo.getSourceFile());
 	}
 
 	private void showGhidraScriptJavadoc() {
