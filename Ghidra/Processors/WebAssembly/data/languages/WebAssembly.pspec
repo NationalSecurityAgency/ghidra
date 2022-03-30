@@ -5,6 +5,7 @@
 <processor_spec>
   <properties>
     <property key="pcodeInjectLibraryClass" value="wasm.pcode.PcodeInjectLibraryWasm"/>
+    <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.WasmEmulateInstructionStateModifier"/>
   </properties>
   <inferptrbounds>
     <range space="ram" first="0x400" last="0xffffffff"/>

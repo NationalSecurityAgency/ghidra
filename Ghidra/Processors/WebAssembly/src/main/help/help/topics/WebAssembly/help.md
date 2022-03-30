@@ -53,6 +53,18 @@ monitor = ConsoleTaskMonitor()
 WasmLoader.loadDataToMemory(currentProgram, WasmAnalysis.getState(currentProgram).module, 5, 0, 0x1000, monitor)
 ```
 
+## Emulation
+
+This module supports emulation of Wasm code using the standard Ghidra emulation
+framework, i.e. via `EmulatorHelper`, `Emulator` and `Emulate`.
+
+Stack frames for inactive function frames (locals, Wasm stack variables, and the
+return address) are stored on a shadow stack, which begins at the `ss0` register
+and grows towards higher addresses in the register space.
+
+The `emulate_writev.py` script demonstrates emulation with hooking of the
+Emscripten `__syscall3` function in order to process `writev` calls.
+
 ## Limitations and Known Bugs
 
 - Currently, inlining functions (via marking them "In Line") is not supported

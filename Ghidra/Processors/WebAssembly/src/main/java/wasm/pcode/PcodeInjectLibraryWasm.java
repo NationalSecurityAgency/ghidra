@@ -41,6 +41,8 @@ public class PcodeInjectLibraryWasm extends PcodeInjectLibrary {
 		} else if (tp == InjectPayload.CALLOTHERFIXUP_TYPE) {
 			switch (name) {
 			case "popCallOther":
+			case "callEpilogueCallOther":
+			case "callPrologueCallOther":
 				return new InjectPayloadWasmPop(sourceName);
 			case "pushCallOther":
 				return new InjectPayloadWasmPush(sourceName);

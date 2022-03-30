@@ -31,7 +31,8 @@ define token I64 (64)
 
 define pcodeop popCallOther;
 define pcodeop pushCallOther;
-
+define pcodeop callPrologueCallOther;
+define pcodeop callEpilogueCallOther;
 define pcodeop halt_trap;
 define pcodeop popcnt;
 define pcodeop clz;
@@ -207,7 +208,7 @@ macro doBranch(br_target) {
 
 :end is opc=0x0b; ctx_is_return=1; ctx_is_directive=0 {
 	nop();
-	popCallOther(&o0);
+	callEpilogueCallOther(&o0);
 	return [LR];
 }
 :end is opc=0x0b; ctx_is_return=0; ctx_is_directive=0 {
@@ -236,20 +237,22 @@ macro doBranch(br_target) {
 
 :return is opc=0x0f; ctx_is_directive=0 {
 	nop();
-	popCallOther(&o0);
+	callEpilogueCallOther(&o0);
 	return [LR];
 }
+# note: anything following the call doesn't happen in emulation mode
+# the movement of outputs is handled by callEpilogueCallOther in emulation mode
 :call br_target is opc=0x10; ULeb128; br_target; ctx_is_directive=0 {
-	nop();
-	popCallOther(&i0);
+	LR = inst_next;
+	callPrologueCallOther(&i0);
 	call br_target;
 	pushCallOther(&o0);
 }
 :call_indirect "type="^typeidx tableref is opc=0x11; typeidx; tableref; sp1_32; ctx_is_directive=0 {
-	nop();
 	addr:8 = &tableref + zext(sp1_32) * 4;
 	val:4 = *[table] addr;
-	popCallOther(&i0);
+	LR = inst_next;
+	callPrologueCallOther(&i0);
 	call [val];
 	pushCallOther(&o0);
 }

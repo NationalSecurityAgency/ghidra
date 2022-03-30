@@ -11,7 +11,12 @@ define space table   type=ram_space		 size=8;
 define space global  type=ram_space		 size=4;
 define space register type=register_space size=4;
 
-define register offset=0 size=4 [ _  PC SP LR BRTableInput];
+# PC is the program counter
+# SP is the C stack pointer if present
+# SSP is the shadow stack pointer for the ss* register block, only for emulation
+# LR is the return address register, only really used during emulation
+# BRTableInput is a temporary register used to hold the value for br_table
+define register offset=0 size=4 [ _  PC SP SSP LR BRTableInput];
 
 # Define context bits (if defined, size must be multiple of 4-bytes)
 define register offset=0x1000 size=16   contextreg;
@@ -1665,6 +1670,7 @@ define register offset=0x10000000 size=4 [
 ];
 
 # Artificial registers used to hold function inputs
+# Only used for the decompiler - emulation places inputs in locals directly
 define register offset=0x20000000 size=16 [
       i0o   i1o   i2o   i3o   i4o   i5o   i6o   i7o
       i8o   i9o  i10o  i11o  i12o  i13o  i14o  i15o
@@ -1874,6 +1880,10 @@ define register offset=0x30000000 size=4 [
 
 # Artificial temporary registers used to hold block arguments during branches
 define register offset=0x40000000 size=4 [ t0 ];
+
+# Shadow stack registers used to store the locals, stacks and return addresses for other frames during emulation
+# The current function's locals and stack are always stored in l*/s* registers.
+define register offset=0x80000000 size=4 [ ss0 ];
 
 # All context registers are set by the pre-analyzer
 define context contextreg
