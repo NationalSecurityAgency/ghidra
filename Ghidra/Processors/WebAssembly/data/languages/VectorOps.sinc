@@ -1,0 +1,1493 @@
+# Ghidra only supports scalars up to 64 bits
+define token I128 (64)
+	f128_0 = (0, 63)
+	f128_1 = (0, 63)
+;
+
+loadaddr2: memalign memoffset is memalign; memoffset; sp2_32 {
+	addr:4 = memoffset:4 + sp2_32;
+	export addr;
+}
+
+laneidx: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx0: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx1: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx2: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx3: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx4: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx5: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx6: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx7: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx8: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx9: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx10: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx11: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx12: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx13: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx14: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+laneidx15: ULeb128 is ULeb128 {
+	export ULeb128;
+}
+
+## Vector instructions
+# [i32] -> [v128]
+:v128.load loadaddr is opc=0xFD; opc2_0; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = *:16 loadaddr;
+}
+
+define pcodeop v128_load8x8_s;
+# [i32] -> [v128]
+:v128.load8x8_s loadaddr is opc=0xFD; opc2_1; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load8x8_s(loadaddr);
+}
+
+define pcodeop v128_load8x8_u;
+# [i32] -> [v128]
+:v128.load8x8_u loadaddr is opc=0xFD; opc2_2; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load8x8_u(loadaddr);
+}
+
+define pcodeop v128_load16x4_s;
+# [i32] -> [v128]
+:v128.load16x4_s loadaddr is opc=0xFD; opc2_3; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load16x4_s(loadaddr);
+}
+
+define pcodeop v128_load16x4_u;
+# [i32] -> [v128]
+:v128.load16x4_u loadaddr is opc=0xFD; opc2_4; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load16x4_u(loadaddr);
+}
+
+define pcodeop v128_load32x2_s;
+# [i32] -> [v128]
+:v128.load32x2_s loadaddr is opc=0xFD; opc2_5; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load32x2_s(loadaddr);
+}
+
+define pcodeop v128_load32x2_u;
+# [i32] -> [v128]
+:v128.load32x2_u loadaddr is opc=0xFD; opc2_6; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load32x2_u(loadaddr);
+}
+
+define pcodeop v128_load8_splat;
+# [i32] -> [v128]
+:v128.load8_splat loadaddr is opc=0xFD; opc2_7; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load8_splat(loadaddr);
+}
+
+define pcodeop v128_load16_splat;
+# [i32] -> [v128]
+:v128.load16_splat loadaddr is opc=0xFD; opc2_8; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load16_splat(loadaddr);
+}
+
+define pcodeop v128_load32_splat;
+# [i32] -> [v128]
+:v128.load32_splat loadaddr is opc=0xFD; opc2_9; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load32_splat(loadaddr);
+}
+
+define pcodeop v128_load64_splat;
+# [i32] -> [v128]
+:v128.load64_splat loadaddr is opc=0xFD; opc2_10; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load64_splat(loadaddr);
+}
+
+# [i32 v128] -> []
+:v128.store storeaddr is opc=0xFD; opc2_11; storeaddr; sp1_128; ctx_is_directive=0 {
+    *:16 storeaddr = sp1_128;
+}
+
+# [] -> [v128]
+:v128.const "i64x2" f128_0 f128_1 is opc=0xFD; opc2_12; f128_0; f128_1; sp0_128; ctx_is_directive=0 {
+    sp0_128[0,64] = f128_0;
+    sp0_128[64,64] = f128_1;
+}
+
+define pcodeop i8x16_shuffle;
+# [v128 v128] -> [v128]
+:i8x16.shuffle laneidx0 laneidx1 laneidx2 laneidx3 laneidx4 laneidx5 laneidx6 laneidx7 laneidx8 laneidx9 laneidx10 laneidx11 laneidx12 laneidx13 laneidx14 laneidx15 is opc=0xFD; opc2_13; laneidx0; laneidx1; laneidx2; laneidx3; laneidx4; laneidx5; laneidx6; laneidx7; laneidx8; laneidx9; laneidx10; laneidx11; laneidx12; laneidx13; laneidx14; laneidx15; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_shuffle(laneidx0, laneidx1, laneidx2, laneidx3, laneidx4, laneidx5, laneidx6, laneidx7, laneidx8, laneidx9, laneidx10, laneidx11, laneidx12, laneidx13, laneidx14, laneidx15, sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_swizzle;
+# [v128 v128] -> [v128]
+:i8x16.swizzle is opc=0xFD; opc2_14; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_swizzle(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_splat;
+# [i32] -> [v128]
+:i8x16.splat is opc=0xFD; opc2_15; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_128 = i8x16_splat(sp1_32);
+}
+
+define pcodeop i16x8_splat;
+# [i32] -> [v128]
+:i16x8.splat is opc=0xFD; opc2_16; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_128 = i16x8_splat(sp1_32);
+}
+
+define pcodeop i32x4_splat;
+# [i32] -> [v128]
+:i32x4.splat is opc=0xFD; opc2_17; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_128 = i32x4_splat(sp1_32);
+}
+
+define pcodeop i64x2_splat;
+# [i64] -> [v128]
+:i64x2.splat is opc=0xFD; opc2_18; sp1_128; sp1_64; ctx_is_directive=0 {
+    sp1_128 = i64x2_splat(sp1_64);
+}
+
+define pcodeop f32x4_splat;
+# [f32] -> [v128]
+:f32x4.splat is opc=0xFD; opc2_19; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_128 = f32x4_splat(sp1_32);
+}
+
+define pcodeop f64x2_splat;
+# [f64] -> [v128]
+:f64x2.splat is opc=0xFD; opc2_20; sp1_128; sp1_64; ctx_is_directive=0 {
+    sp1_128 = f64x2_splat(sp1_64);
+}
+
+define pcodeop i8x16_extract_lane_s;
+# [v128] -> [i32]
+:i8x16.extract_lane_s laneidx is opc=0xFD; opc2_21; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i8x16_extract_lane_s(laneidx, sp1_128);
+}
+
+define pcodeop i8x16_extract_lane_u;
+# [v128] -> [i32]
+:i8x16.extract_lane_u laneidx is opc=0xFD; opc2_22; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i8x16_extract_lane_u(laneidx, sp1_128);
+}
+
+define pcodeop i8x16_replace_lane;
+# [v128 i32] -> [v128]
+:i8x16.replace_lane laneidx is opc=0xFD; opc2_23; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_replace_lane(laneidx, sp1_32, sp2_128);
+}
+
+define pcodeop i16x8_extract_lane_s;
+# [v128] -> [i32]
+:i16x8.extract_lane_s laneidx is opc=0xFD; opc2_24; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i16x8_extract_lane_s(laneidx, sp1_128);
+}
+
+define pcodeop i16x8_extract_lane_u;
+# [v128] -> [i32]
+:i16x8.extract_lane_u laneidx is opc=0xFD; opc2_25; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i16x8_extract_lane_u(laneidx, sp1_128);
+}
+
+define pcodeop i16x8_replace_lane;
+# [v128 i32] -> [v128]
+:i16x8.replace_lane laneidx is opc=0xFD; opc2_26; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_replace_lane(laneidx, sp1_32, sp2_128);
+}
+
+define pcodeop i32x4_extract_lane;
+# [v128] -> [i32]
+:i32x4.extract_lane laneidx is opc=0xFD; opc2_27; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i32x4_extract_lane(laneidx, sp1_128);
+}
+
+define pcodeop i32x4_replace_lane;
+# [v128 i32] -> [v128]
+:i32x4.replace_lane laneidx is opc=0xFD; opc2_28; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_replace_lane(laneidx, sp1_32, sp2_128);
+}
+
+define pcodeop i64x2_extract_lane;
+# [v128] -> [i64]
+:i64x2.extract_lane laneidx is opc=0xFD; opc2_29; laneidx; sp1_128; sp1_64; ctx_is_directive=0 {
+    sp1_64 = i64x2_extract_lane(laneidx, sp1_128);
+}
+
+define pcodeop i64x2_replace_lane;
+# [v128 i64] -> [v128]
+:i64x2.replace_lane laneidx is opc=0xFD; opc2_30; laneidx; sp1_64; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_replace_lane(laneidx, sp1_64, sp2_128);
+}
+
+define pcodeop f32x4_extract_lane;
+# [v128] -> [f32]
+:f32x4.extract_lane laneidx is opc=0xFD; opc2_31; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = f32x4_extract_lane(laneidx, sp1_128);
+}
+
+define pcodeop f32x4_replace_lane;
+# [v128 f32] -> [v128]
+:f32x4.replace_lane laneidx is opc=0xFD; opc2_32; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_replace_lane(laneidx, sp1_32, sp2_128);
+}
+
+define pcodeop f64x2_extract_lane;
+# [v128] -> [f64]
+:f64x2.extract_lane laneidx is opc=0xFD; opc2_33; laneidx; sp1_128; sp1_64; ctx_is_directive=0 {
+    sp1_64 = f64x2_extract_lane(laneidx, sp1_128);
+}
+
+define pcodeop f64x2_replace_lane;
+# [v128 f64] -> [v128]
+:f64x2.replace_lane laneidx is opc=0xFD; opc2_34; laneidx; sp1_64; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_replace_lane(laneidx, sp1_64, sp2_128);
+}
+
+define pcodeop i8x16_eq;
+# [v128 v128] -> [v128]
+:i8x16.eq is opc=0xFD; opc2_35; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_eq(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_ne;
+# [v128 v128] -> [v128]
+:i8x16.ne is opc=0xFD; opc2_36; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_ne(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_lt_s;
+# [v128 v128] -> [v128]
+:i8x16.lt_s is opc=0xFD; opc2_37; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_lt_s(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_lt_u;
+# [v128 v128] -> [v128]
+:i8x16.lt_u is opc=0xFD; opc2_38; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_lt_u(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_gt_s;
+# [v128 v128] -> [v128]
+:i8x16.gt_s is opc=0xFD; opc2_39; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_gt_s(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_gt_u;
+# [v128 v128] -> [v128]
+:i8x16.gt_u is opc=0xFD; opc2_40; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_gt_u(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_le_s;
+# [v128 v128] -> [v128]
+:i8x16.le_s is opc=0xFD; opc2_41; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_le_s(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_le_u;
+# [v128 v128] -> [v128]
+:i8x16.le_u is opc=0xFD; opc2_42; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_le_u(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_ge_s;
+# [v128 v128] -> [v128]
+:i8x16.ge_s is opc=0xFD; opc2_43; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_ge_s(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_ge_u;
+# [v128 v128] -> [v128]
+:i8x16.ge_u is opc=0xFD; opc2_44; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_ge_u(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_eq;
+# [v128 v128] -> [v128]
+:i16x8.eq is opc=0xFD; opc2_45; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_eq(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_ne;
+# [v128 v128] -> [v128]
+:i16x8.ne is opc=0xFD; opc2_46; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_ne(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_lt_s;
+# [v128 v128] -> [v128]
+:i16x8.lt_s is opc=0xFD; opc2_47; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_lt_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_lt_u;
+# [v128 v128] -> [v128]
+:i16x8.lt_u is opc=0xFD; opc2_48; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_lt_u(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_gt_s;
+# [v128 v128] -> [v128]
+:i16x8.gt_s is opc=0xFD; opc2_49; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_gt_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_gt_u;
+# [v128 v128] -> [v128]
+:i16x8.gt_u is opc=0xFD; opc2_50; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_gt_u(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_le_s;
+# [v128 v128] -> [v128]
+:i16x8.le_s is opc=0xFD; opc2_51; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_le_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_le_u;
+# [v128 v128] -> [v128]
+:i16x8.le_u is opc=0xFD; opc2_52; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_le_u(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_ge_s;
+# [v128 v128] -> [v128]
+:i16x8.ge_s is opc=0xFD; opc2_53; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_ge_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_ge_u;
+# [v128 v128] -> [v128]
+:i16x8.ge_u is opc=0xFD; opc2_54; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_ge_u(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_eq;
+# [v128 v128] -> [v128]
+:i32x4.eq is opc=0xFD; opc2_55; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_eq(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_ne;
+# [v128 v128] -> [v128]
+:i32x4.ne is opc=0xFD; opc2_56; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_ne(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_lt_s;
+# [v128 v128] -> [v128]
+:i32x4.lt_s is opc=0xFD; opc2_57; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_lt_s(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_lt_u;
+# [v128 v128] -> [v128]
+:i32x4.lt_u is opc=0xFD; opc2_58; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_lt_u(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_gt_s;
+# [v128 v128] -> [v128]
+:i32x4.gt_s is opc=0xFD; opc2_59; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_gt_s(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_gt_u;
+# [v128 v128] -> [v128]
+:i32x4.gt_u is opc=0xFD; opc2_60; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_gt_u(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_le_s;
+# [v128 v128] -> [v128]
+:i32x4.le_s is opc=0xFD; opc2_61; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_le_s(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_le_u;
+# [v128 v128] -> [v128]
+:i32x4.le_u is opc=0xFD; opc2_62; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_le_u(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_ge_s;
+# [v128 v128] -> [v128]
+:i32x4.ge_s is opc=0xFD; opc2_63; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_ge_s(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_ge_u;
+# [v128 v128] -> [v128]
+:i32x4.ge_u is opc=0xFD; opc2_64; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_ge_u(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_eq;
+# [v128 v128] -> [v128]
+:f32x4.eq is opc=0xFD; opc2_65; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_eq(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_ne;
+# [v128 v128] -> [v128]
+:f32x4.ne is opc=0xFD; opc2_66; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_ne(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_lt;
+# [v128 v128] -> [v128]
+:f32x4.lt is opc=0xFD; opc2_67; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_lt(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_gt;
+# [v128 v128] -> [v128]
+:f32x4.gt is opc=0xFD; opc2_68; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_gt(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_le;
+# [v128 v128] -> [v128]
+:f32x4.le is opc=0xFD; opc2_69; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_le(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_ge;
+# [v128 v128] -> [v128]
+:f32x4.ge is opc=0xFD; opc2_70; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_ge(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_eq;
+# [v128 v128] -> [v128]
+:f64x2.eq is opc=0xFD; opc2_71; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_eq(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_ne;
+# [v128 v128] -> [v128]
+:f64x2.ne is opc=0xFD; opc2_72; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_ne(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_lt;
+# [v128 v128] -> [v128]
+:f64x2.lt is opc=0xFD; opc2_73; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_lt(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_gt;
+# [v128 v128] -> [v128]
+:f64x2.gt is opc=0xFD; opc2_74; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_gt(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_le;
+# [v128 v128] -> [v128]
+:f64x2.le is opc=0xFD; opc2_75; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_le(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_ge;
+# [v128 v128] -> [v128]
+:f64x2.ge is opc=0xFD; opc2_76; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_ge(sp1_128, sp2_128);
+}
+
+define pcodeop v128_not;
+# [v128] -> [v128]
+:v128.not is opc=0xFD; opc2_77; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_not(sp1_128);
+}
+
+define pcodeop v128_and;
+# [v128 v128] -> [v128]
+:v128.and is opc=0xFD; opc2_78; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = v128_and(sp1_128, sp2_128);
+}
+
+define pcodeop v128_andnot;
+# [v128 v128] -> [v128]
+:v128.andnot is opc=0xFD; opc2_79; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = v128_andnot(sp1_128, sp2_128);
+}
+
+define pcodeop v128_or;
+# [v128 v128] -> [v128]
+:v128.or is opc=0xFD; opc2_80; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = v128_or(sp1_128, sp2_128);
+}
+
+define pcodeop v128_xor;
+# [v128 v128] -> [v128]
+:v128.xor is opc=0xFD; opc2_81; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = v128_xor(sp1_128, sp2_128);
+}
+
+define pcodeop v128_bitselect;
+# [v128 v128 v128] -> [v128]
+:v128.bitselect is opc=0xFD; opc2_82; sp1_128; sp2_128; sp3_128; ctx_is_directive=0 {
+    sp3_128 = v128_bitselect(sp1_128, sp2_128, sp3_128);
+}
+
+define pcodeop v128_any_true;
+# [v128] -> [i32]
+:v128.any_true is opc=0xFD; opc2_83; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = v128_any_true(sp1_128);
+}
+
+define pcodeop v128_load8_lane;
+# [i32 v128] -> [v128]
+:v128.load8_lane loadaddr2 laneidx is opc=0xFD; opc2_84; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = v128_load8_lane(loadaddr2, laneidx, sp1_128);
+}
+
+define pcodeop v128_load16_lane;
+# [i32 v128] -> [v128]
+:v128.load16_lane loadaddr2 laneidx is opc=0xFD; opc2_85; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = v128_load16_lane(loadaddr2, laneidx, sp1_128);
+}
+
+define pcodeop v128_load32_lane;
+# [i32 v128] -> [v128]
+:v128.load32_lane loadaddr2 laneidx is opc=0xFD; opc2_86; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = v128_load32_lane(loadaddr2, laneidx, sp1_128);
+}
+
+define pcodeop v128_load64_lane;
+# [i32 v128] -> [v128]
+:v128.load64_lane loadaddr2 laneidx is opc=0xFD; opc2_87; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = v128_load64_lane(loadaddr2, laneidx, sp1_128);
+}
+
+define pcodeop v128_store8_lane;
+# [i32 v128] -> []
+:v128.store8_lane storeaddr laneidx is opc=0xFD; opc2_88; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
+    v128_store8_lane(storeaddr, laneidx, sp1_128);
+}
+
+define pcodeop v128_store16_lane;
+# [i32 v128] -> []
+:v128.store16_lane storeaddr laneidx is opc=0xFD; opc2_89; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
+    v128_store16_lane(storeaddr, laneidx, sp1_128);
+}
+
+define pcodeop v128_store32_lane;
+# [i32 v128] -> []
+:v128.store32_lane storeaddr laneidx is opc=0xFD; opc2_90; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
+    v128_store32_lane(storeaddr, laneidx, sp1_128);
+}
+
+define pcodeop v128_store64_lane;
+# [i32 v128] -> []
+:v128.store64_lane storeaddr laneidx is opc=0xFD; opc2_91; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
+    v128_store64_lane(storeaddr, laneidx, sp1_128);
+}
+
+define pcodeop v128_load32_zero;
+# [i32] -> [v128]
+:v128.load32_zero loadaddr laneidx is opc=0xFD; opc2_92; loadaddr; laneidx; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load32_zero(loadaddr, laneidx);
+}
+
+define pcodeop v128_load64_zero;
+# [i32] -> [v128]
+:v128.load64_zero loadaddr laneidx is opc=0xFD; opc2_93; loadaddr; laneidx; sp1_128; ctx_is_directive=0 {
+    sp1_128 = v128_load64_zero(loadaddr, laneidx);
+}
+
+define pcodeop f32x4_demote_f64x2_zero;
+# [v128] -> [v128]
+:f32x4.demote_f64x2_zero is opc=0xFD; opc2_94; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f32x4_demote_f64x2_zero(sp1_128);
+}
+
+define pcodeop f64x2_promote_low_f32x4;
+# [v128] -> [v128]
+:f64x2.promote_low_f32x4 is opc=0xFD; opc2_95; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f64x2_promote_low_f32x4(sp1_128);
+}
+
+define pcodeop i8x16_abs;
+# [v128] -> [v128]
+:i8x16.abs is opc=0xFD; opc2_96; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i8x16_abs(sp1_128);
+}
+
+define pcodeop i8x16_neg;
+# [v128] -> [v128]
+:i8x16.neg is opc=0xFD; opc2_97; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i8x16_neg(sp1_128);
+}
+
+define pcodeop i8x16_popcnt;
+# [v128] -> [v128]
+:i8x16.popcnt is opc=0xFD; opc2_98; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i8x16_popcnt(sp1_128);
+}
+
+define pcodeop i8x16_all_true;
+# [v128] -> [i32]
+:i8x16.all_true is opc=0xFD; opc2_99; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i8x16_all_true(sp1_128);
+}
+
+define pcodeop i8x16_bitmask;
+# [v128] -> [i32]
+:i8x16.bitmask is opc=0xFD; opc2_100; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i8x16_bitmask(sp1_128);
+}
+
+define pcodeop i8x16_narrow_i16x8_s;
+# [v128 v128] -> [v128]
+:i8x16.narrow_i16x8_s is opc=0xFD; opc2_101; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_narrow_i16x8_s(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_narrow_i16x8_u;
+# [v128 v128] -> [v128]
+:i8x16.narrow_i16x8_u is opc=0xFD; opc2_102; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_narrow_i16x8_u(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_ceil;
+# [v128] -> [v128]
+:f32x4.ceil is opc=0xFD; opc2_103; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f32x4_ceil(sp1_128);
+}
+
+define pcodeop f32x4_floor;
+# [v128] -> [v128]
+:f32x4.floor is opc=0xFD; opc2_104; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f32x4_floor(sp1_128);
+}
+
+define pcodeop f32x4_trunc;
+# [v128] -> [v128]
+:f32x4.trunc is opc=0xFD; opc2_105; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f32x4_trunc(sp1_128);
+}
+
+define pcodeop f32x4_nearest;
+# [v128] -> [v128]
+:f32x4.nearest is opc=0xFD; opc2_106; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f32x4_nearest(sp1_128);
+}
+
+define pcodeop i8x16_shl;
+# [v128 i32] -> [v128]
+:i8x16.shl is opc=0xFD; opc2_107; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_shl(sp1_32, sp2_128);
+}
+
+define pcodeop i8x16_shr_s;
+# [v128 i32] -> [v128]
+:i8x16.shr_s is opc=0xFD; opc2_108; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_shr_s(sp1_32, sp2_128);
+}
+
+define pcodeop i8x16_shr_u;
+# [v128 i32] -> [v128]
+:i8x16.shr_u is opc=0xFD; opc2_109; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_shr_u(sp1_32, sp2_128);
+}
+
+define pcodeop i8x16_add;
+# [v128 v128] -> [v128]
+:i8x16.add is opc=0xFD; opc2_110; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_add(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_add_sat_s;
+# [v128 v128] -> [v128]
+:i8x16.add_sat_s is opc=0xFD; opc2_111; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_add_sat_s(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_add_sat_u;
+# [v128 v128] -> [v128]
+:i8x16.add_sat_u is opc=0xFD; opc2_112; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_add_sat_u(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_sub;
+# [v128 v128] -> [v128]
+:i8x16.sub is opc=0xFD; opc2_113; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_sub(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_sub_sat_s;
+# [v128 v128] -> [v128]
+:i8x16.sub_sat_s is opc=0xFD; opc2_114; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_sub_sat_s(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_sub_sat_u;
+# [v128 v128] -> [v128]
+:i8x16.sub_sat_u is opc=0xFD; opc2_115; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_sub_sat_u(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_ceil;
+# [v128] -> [v128]
+:f64x2.ceil is opc=0xFD; opc2_116; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f64x2_ceil(sp1_128);
+}
+
+define pcodeop f64x2_floor;
+# [v128] -> [v128]
+:f64x2.floor is opc=0xFD; opc2_117; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f64x2_floor(sp1_128);
+}
+
+define pcodeop i8x16_min_s;
+# [v128 v128] -> [v128]
+:i8x16.min_s is opc=0xFD; opc2_118; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_min_s(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_min_u;
+# [v128 v128] -> [v128]
+:i8x16.min_u is opc=0xFD; opc2_119; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_min_u(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_max_s;
+# [v128 v128] -> [v128]
+:i8x16.max_s is opc=0xFD; opc2_120; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_max_s(sp1_128, sp2_128);
+}
+
+define pcodeop i8x16_max_u;
+# [v128 v128] -> [v128]
+:i8x16.max_u is opc=0xFD; opc2_121; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_max_u(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_trunc;
+# [v128] -> [v128]
+:f64x2.trunc is opc=0xFD; opc2_122; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f64x2_trunc(sp1_128);
+}
+
+define pcodeop i8x16_avgr_u;
+# [v128 v128] -> [v128]
+:i8x16.avgr_u is opc=0xFD; opc2_123; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i8x16_avgr_u(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_extadd_pairwise_i8x16_s;
+# [v128] -> [v128]
+:i16x8.extadd_pairwise_i8x16_s is opc=0xFD; opc2_124; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i16x8_extadd_pairwise_i8x16_s(sp1_128);
+}
+
+define pcodeop i16x8_extadd_pairwise_i8x16_u;
+# [v128] -> [v128]
+:i16x8.extadd_pairwise_i8x16_u is opc=0xFD; opc2_125; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i16x8_extadd_pairwise_i8x16_u(sp1_128);
+}
+
+define pcodeop i32x4_extadd_pairwise_i16x8_s;
+# [v128] -> [v128]
+:i32x4.extadd_pairwise_i16x8_s is opc=0xFD; opc2_126; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_extadd_pairwise_i16x8_s(sp1_128);
+}
+
+define pcodeop i32x4_extadd_pairwise_i16x8_u;
+# [v128] -> [v128]
+:i32x4.extadd_pairwise_i16x8_u is opc=0xFD; opc2_127; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_extadd_pairwise_i16x8_u(sp1_128);
+}
+
+define pcodeop i16x8_abs;
+# [v128] -> [v128]
+:i16x8.abs is opc=0xFD; opc2_128; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i16x8_abs(sp1_128);
+}
+
+define pcodeop i16x8_neg;
+# [v128] -> [v128]
+:i16x8.neg is opc=0xFD; opc2_129; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i16x8_neg(sp1_128);
+}
+
+define pcodeop i16x8_q15mulr_sat_s;
+# [v128 v128] -> [v128]
+:i16x8.q15mulr_sat_s is opc=0xFD; opc2_130; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_q15mulr_sat_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_all_true;
+# [v128] -> [i32]
+:i16x8.all_true is opc=0xFD; opc2_131; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i16x8_all_true(sp1_128);
+}
+
+define pcodeop i16x8_bitmask;
+# [v128] -> [i32]
+:i16x8.bitmask is opc=0xFD; opc2_132; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i16x8_bitmask(sp1_128);
+}
+
+define pcodeop i16x8_narrow_i32x4_s;
+# [v128 v128] -> [v128]
+:i16x8.narrow_i32x4_s is opc=0xFD; opc2_133; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_narrow_i32x4_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_narrow_i32x4_u;
+# [v128 v128] -> [v128]
+:i16x8.narrow_i32x4_u is opc=0xFD; opc2_134; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_narrow_i32x4_u(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_extend_low_i8x16_s;
+# [v128] -> [v128]
+:i16x8.extend_low_i8x16_s is opc=0xFD; opc2_135; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i16x8_extend_low_i8x16_s(sp1_128);
+}
+
+define pcodeop i16x8_extend_high_i8x16_s;
+# [v128] -> [v128]
+:i16x8.extend_high_i8x16_s is opc=0xFD; opc2_136; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i16x8_extend_high_i8x16_s(sp1_128);
+}
+
+define pcodeop i16x8_extend_low_i8x16_u;
+# [v128] -> [v128]
+:i16x8.extend_low_i8x16_u is opc=0xFD; opc2_137; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i16x8_extend_low_i8x16_u(sp1_128);
+}
+
+define pcodeop i16x8_extend_high_i8x16_u;
+# [v128] -> [v128]
+:i16x8.extend_high_i8x16_u is opc=0xFD; opc2_138; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i16x8_extend_high_i8x16_u(sp1_128);
+}
+
+define pcodeop i16x8_shl;
+# [v128 i32] -> [v128]
+:i16x8.shl is opc=0xFD; opc2_139; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_shl(sp1_32, sp2_128);
+}
+
+define pcodeop i16x8_shr_s;
+# [v128 i32] -> [v128]
+:i16x8.shr_s is opc=0xFD; opc2_140; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_shr_s(sp1_32, sp2_128);
+}
+
+define pcodeop i16x8_shr_u;
+# [v128 i32] -> [v128]
+:i16x8.shr_u is opc=0xFD; opc2_141; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_shr_u(sp1_32, sp2_128);
+}
+
+define pcodeop i16x8_add;
+# [v128 v128] -> [v128]
+:i16x8.add is opc=0xFD; opc2_142; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_add(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_add_sat_s;
+# [v128 v128] -> [v128]
+:i16x8.add_sat_s is opc=0xFD; opc2_143; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_add_sat_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_add_sat_u;
+# [v128 v128] -> [v128]
+:i16x8.add_sat_u is opc=0xFD; opc2_144; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_add_sat_u(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_sub;
+# [v128 v128] -> [v128]
+:i16x8.sub is opc=0xFD; opc2_145; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_sub(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_sub_sat_s;
+# [v128 v128] -> [v128]
+:i16x8.sub_sat_s is opc=0xFD; opc2_146; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_sub_sat_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_sub_sat_u;
+# [v128 v128] -> [v128]
+:i16x8.sub_sat_u is opc=0xFD; opc2_147; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_sub_sat_u(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_nearest;
+# [v128] -> [v128]
+:f64x2.nearest is opc=0xFD; opc2_148; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f64x2_nearest(sp1_128);
+}
+
+define pcodeop i16x8_mul;
+# [v128 v128] -> [v128]
+:i16x8.mul is opc=0xFD; opc2_149; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_mul(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_min_s;
+# [v128 v128] -> [v128]
+:i16x8.min_s is opc=0xFD; opc2_150; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_min_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_min_u;
+# [v128 v128] -> [v128]
+:i16x8.min_u is opc=0xFD; opc2_151; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_min_u(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_max_s;
+# [v128 v128] -> [v128]
+:i16x8.max_s is opc=0xFD; opc2_152; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_max_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_max_u;
+# [v128 v128] -> [v128]
+:i16x8.max_u is opc=0xFD; opc2_153; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_max_u(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_avgr_u;
+# [v128 v128] -> [v128]
+:i16x8.avgr_u is opc=0xFD; opc2_155; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_avgr_u(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_extmul_low_i8x16_s;
+# [v128 v128] -> [v128]
+:i16x8.extmul_low_i8x16_s is opc=0xFD; opc2_156; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_extmul_low_i8x16_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_extmul_high_i8x16_s;
+# [v128 v128] -> [v128]
+:i16x8.extmul_high_i8x16_s is opc=0xFD; opc2_157; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_extmul_high_i8x16_s(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_extmul_low_i8x16_u;
+# [v128 v128] -> [v128]
+:i16x8.extmul_low_i8x16_u is opc=0xFD; opc2_158; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_extmul_low_i8x16_u(sp1_128, sp2_128);
+}
+
+define pcodeop i16x8_extmul_high_i8x16_u;
+# [v128 v128] -> [v128]
+:i16x8.extmul_high_i8x16_u is opc=0xFD; opc2_159; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i16x8_extmul_high_i8x16_u(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_abs;
+# [v128] -> [v128]
+:i32x4.abs is opc=0xFD; opc2_160; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_abs(sp1_128);
+}
+
+define pcodeop i32x4_neg;
+# [v128] -> [v128]
+:i32x4.neg is opc=0xFD; opc2_161; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_neg(sp1_128);
+}
+
+define pcodeop i32x4_all_true;
+# [v128] -> [i32]
+:i32x4.all_true is opc=0xFD; opc2_163; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i32x4_all_true(sp1_128);
+}
+
+define pcodeop i32x4_bitmask;
+# [v128] -> [i32]
+:i32x4.bitmask is opc=0xFD; opc2_164; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i32x4_bitmask(sp1_128);
+}
+
+define pcodeop i32x4_extend_low_i16x8_s;
+# [v128] -> [v128]
+:i32x4.extend_low_i16x8_s is opc=0xFD; opc2_167; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_extend_low_i16x8_s(sp1_128);
+}
+
+define pcodeop i32x4_extend_high_i16x8_s;
+# [v128] -> [v128]
+:i32x4.extend_high_i16x8_s is opc=0xFD; opc2_168; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_extend_high_i16x8_s(sp1_128);
+}
+
+define pcodeop i32x4_extend_low_i16x8_u;
+# [v128] -> [v128]
+:i32x4.extend_low_i16x8_u is opc=0xFD; opc2_169; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_extend_low_i16x8_u(sp1_128);
+}
+
+define pcodeop i32x4_extend_high_i16x8_u;
+# [v128] -> [v128]
+:i32x4.extend_high_i16x8_u is opc=0xFD; opc2_170; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_extend_high_i16x8_u(sp1_128);
+}
+
+define pcodeop i32x4_shl;
+# [v128 i32] -> [v128]
+:i32x4.shl is opc=0xFD; opc2_171; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_shl(sp1_32, sp2_128);
+}
+
+define pcodeop i32x4_shr_s;
+# [v128 i32] -> [v128]
+:i32x4.shr_s is opc=0xFD; opc2_172; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_shr_s(sp1_32, sp2_128);
+}
+
+define pcodeop i32x4_shr_u;
+# [v128 i32] -> [v128]
+:i32x4.shr_u is opc=0xFD; opc2_173; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_shr_u(sp1_32, sp2_128);
+}
+
+define pcodeop i32x4_add;
+# [v128 v128] -> [v128]
+:i32x4.add is opc=0xFD; opc2_174; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_add(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_sub;
+# [v128 v128] -> [v128]
+:i32x4.sub is opc=0xFD; opc2_177; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_sub(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_mul;
+# [v128 v128] -> [v128]
+:i32x4.mul is opc=0xFD; opc2_181; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_mul(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_min_s;
+# [v128 v128] -> [v128]
+:i32x4.min_s is opc=0xFD; opc2_182; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_min_s(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_min_u;
+# [v128 v128] -> [v128]
+:i32x4.min_u is opc=0xFD; opc2_183; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_min_u(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_max_s;
+# [v128 v128] -> [v128]
+:i32x4.max_s is opc=0xFD; opc2_184; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_max_s(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_max_u;
+# [v128 v128] -> [v128]
+:i32x4.max_u is opc=0xFD; opc2_185; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_max_u(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_dot_i16x8_s;
+# [v128 v128] -> [v128]
+:i32x4.dot_i16x8_s is opc=0xFD; opc2_186; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_dot_i16x8_s(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_extmul_low_i16x8_s;
+# [v128 v128] -> [v128]
+:i32x4.extmul_low_i16x8_s is opc=0xFD; opc2_188; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_extmul_low_i16x8_s(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_extmul_high_i16x8_s;
+# [v128 v128] -> [v128]
+:i32x4.extmul_high_i16x8_s is opc=0xFD; opc2_189; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_extmul_high_i16x8_s(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_extmul_low_i16x8_u;
+# [v128 v128] -> [v128]
+:i32x4.extmul_low_i16x8_u is opc=0xFD; opc2_190; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_extmul_low_i16x8_u(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_extmul_high_i16x8_u;
+# [v128 v128] -> [v128]
+:i32x4.extmul_high_i16x8_u is opc=0xFD; opc2_191; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i32x4_extmul_high_i16x8_u(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_abs;
+# [v128] -> [v128]
+:i64x2.abs is opc=0xFD; opc2_192; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i64x2_abs(sp1_128);
+}
+
+define pcodeop i64x2_neg;
+# [v128] -> [v128]
+:i64x2.neg is opc=0xFD; opc2_193; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i64x2_neg(sp1_128);
+}
+
+define pcodeop i64x2_all_true;
+# [v128] -> [i32]
+:i64x2.all_true is opc=0xFD; opc2_195; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i64x2_all_true(sp1_128);
+}
+
+define pcodeop i64x2_bitmask;
+# [v128] -> [i32]
+:i64x2.bitmask is opc=0xFD; opc2_196; sp1_128; sp1_32; ctx_is_directive=0 {
+    sp1_32 = i64x2_bitmask(sp1_128);
+}
+
+define pcodeop i64x2_extend_low_i32x4_s;
+# [v128] -> [v128]
+:i64x2.extend_low_i32x4_s is opc=0xFD; opc2_199; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i64x2_extend_low_i32x4_s(sp1_128);
+}
+
+define pcodeop i64x2_extend_high_i32x4_s;
+# [v128] -> [v128]
+:i64x2.extend_high_i32x4_s is opc=0xFD; opc2_200; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i64x2_extend_high_i32x4_s(sp1_128);
+}
+
+define pcodeop i64x2_extend_low_i32x4_u;
+# [v128] -> [v128]
+:i64x2.extend_low_i32x4_u is opc=0xFD; opc2_201; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i64x2_extend_low_i32x4_u(sp1_128);
+}
+
+define pcodeop i64x2_extend_high_i32x4_u;
+# [v128] -> [v128]
+:i64x2.extend_high_i32x4_u is opc=0xFD; opc2_202; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i64x2_extend_high_i32x4_u(sp1_128);
+}
+
+define pcodeop i64x2_shl;
+# [v128 i32] -> [v128]
+:i64x2.shl is opc=0xFD; opc2_203; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_shl(sp1_32, sp2_128);
+}
+
+define pcodeop i64x2_shr_s;
+# [v128 i32] -> [v128]
+:i64x2.shr_s is opc=0xFD; opc2_204; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_shr_s(sp1_32, sp2_128);
+}
+
+define pcodeop i64x2_shr_u;
+# [v128 i32] -> [v128]
+:i64x2.shr_u is opc=0xFD; opc2_205; sp1_32; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_shr_u(sp1_32, sp2_128);
+}
+
+define pcodeop i64x2_add;
+# [v128 v128] -> [v128]
+:i64x2.add is opc=0xFD; opc2_206; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_add(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_sub;
+# [v128 v128] -> [v128]
+:i64x2.sub is opc=0xFD; opc2_209; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_sub(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_mul;
+# [v128 v128] -> [v128]
+:i64x2.mul is opc=0xFD; opc2_213; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_mul(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_eq;
+# [v128 v128] -> [v128]
+:i64x2.eq is opc=0xFD; opc2_214; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_eq(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_ne;
+# [v128 v128] -> [v128]
+:i64x2.ne is opc=0xFD; opc2_215; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_ne(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_lt_s;
+# [v128 v128] -> [v128]
+:i64x2.lt_s is opc=0xFD; opc2_216; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_lt_s(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_gt_s;
+# [v128 v128] -> [v128]
+:i64x2.gt_s is opc=0xFD; opc2_217; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_gt_s(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_le_s;
+# [v128 v128] -> [v128]
+:i64x2.le_s is opc=0xFD; opc2_218; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_le_s(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_ge_s;
+# [v128 v128] -> [v128]
+:i64x2.ge_s is opc=0xFD; opc2_219; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_ge_s(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_extmul_low_i32x4_s;
+# [v128 v128] -> [v128]
+:i64x2.extmul_low_i32x4_s is opc=0xFD; opc2_220; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_extmul_low_i32x4_s(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_extmul_high_i32x4_s;
+# [v128 v128] -> [v128]
+:i64x2.extmul_high_i32x4_s is opc=0xFD; opc2_221; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_extmul_high_i32x4_s(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_extmul_low_i32x4_u;
+# [v128 v128] -> [v128]
+:i64x2.extmul_low_i32x4_u is opc=0xFD; opc2_222; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_extmul_low_i32x4_u(sp1_128, sp2_128);
+}
+
+define pcodeop i64x2_extmul_high_i32x4_u;
+# [v128 v128] -> [v128]
+:i64x2.extmul_high_i32x4_u is opc=0xFD; opc2_223; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = i64x2_extmul_high_i32x4_u(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_abs;
+# [v128] -> [v128]
+:f32x4.abs is opc=0xFD; opc2_224; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f32x4_abs(sp1_128);
+}
+
+define pcodeop f32x4_neg;
+# [v128] -> [v128]
+:f32x4.neg is opc=0xFD; opc2_225; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f32x4_neg(sp1_128);
+}
+
+define pcodeop f32x4_sqrt;
+# [v128] -> [v128]
+:f32x4.sqrt is opc=0xFD; opc2_227; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f32x4_sqrt(sp1_128);
+}
+
+define pcodeop f32x4_add;
+# [v128 v128] -> [v128]
+:f32x4.add is opc=0xFD; opc2_228; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_add(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_sub;
+# [v128 v128] -> [v128]
+:f32x4.sub is opc=0xFD; opc2_229; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_sub(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_mul;
+# [v128 v128] -> [v128]
+:f32x4.mul is opc=0xFD; opc2_230; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_mul(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_div;
+# [v128 v128] -> [v128]
+:f32x4.div is opc=0xFD; opc2_231; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_div(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_min;
+# [v128 v128] -> [v128]
+:f32x4.min is opc=0xFD; opc2_232; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_min(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_max;
+# [v128 v128] -> [v128]
+:f32x4.max is opc=0xFD; opc2_233; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_max(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_pmin;
+# [v128 v128] -> [v128]
+:f32x4.pmin is opc=0xFD; opc2_234; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_pmin(sp1_128, sp2_128);
+}
+
+define pcodeop f32x4_pmax;
+# [v128 v128] -> [v128]
+:f32x4.pmax is opc=0xFD; opc2_235; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f32x4_pmax(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_abs;
+# [v128] -> [v128]
+:f64x2.abs is opc=0xFD; opc2_236; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f64x2_abs(sp1_128);
+}
+
+define pcodeop f64x2_neg;
+# [v128] -> [v128]
+:f64x2.neg is opc=0xFD; opc2_237; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f64x2_neg(sp1_128);
+}
+
+define pcodeop f64x2_sqrt;
+# [v128] -> [v128]
+:f64x2.sqrt is opc=0xFD; opc2_239; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f64x2_sqrt(sp1_128);
+}
+
+define pcodeop f64x2_add;
+# [v128 v128] -> [v128]
+:f64x2.add is opc=0xFD; opc2_240; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_add(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_sub;
+# [v128 v128] -> [v128]
+:f64x2.sub is opc=0xFD; opc2_241; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_sub(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_mul;
+# [v128 v128] -> [v128]
+:f64x2.mul is opc=0xFD; opc2_242; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_mul(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_div;
+# [v128 v128] -> [v128]
+:f64x2.div is opc=0xFD; opc2_243; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_div(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_min;
+# [v128 v128] -> [v128]
+:f64x2.min is opc=0xFD; opc2_244; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_min(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_max;
+# [v128 v128] -> [v128]
+:f64x2.max is opc=0xFD; opc2_245; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_max(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_pmin;
+# [v128 v128] -> [v128]
+:f64x2.pmin is opc=0xFD; opc2_246; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_pmin(sp1_128, sp2_128);
+}
+
+define pcodeop f64x2_pmax;
+# [v128 v128] -> [v128]
+:f64x2.pmax is opc=0xFD; opc2_247; sp1_128; sp2_128; ctx_is_directive=0 {
+    sp2_128 = f64x2_pmax(sp1_128, sp2_128);
+}
+
+define pcodeop i32x4_trunc_sat_f32x4_s;
+# [v128] -> [v128]
+:i32x4.trunc_sat_f32x4_s is opc=0xFD; opc2_248; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_trunc_sat_f32x4_s(sp1_128);
+}
+
+define pcodeop i32x4_trunc_sat_f32x4_u;
+# [v128] -> [v128]
+:i32x4.trunc_sat_f32x4_u is opc=0xFD; opc2_249; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_trunc_sat_f32x4_u(sp1_128);
+}
+
+define pcodeop f32x4_convert_i32x4_s;
+# [v128] -> [v128]
+:f32x4.convert_i32x4_s is opc=0xFD; opc2_250; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f32x4_convert_i32x4_s(sp1_128);
+}
+
+define pcodeop f32x4_convert_i32x4_u;
+# [v128] -> [v128]
+:f32x4.convert_i32x4_u is opc=0xFD; opc2_251; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f32x4_convert_i32x4_u(sp1_128);
+}
+
+define pcodeop i32x4_trunc_sat_f64x2_s_zero;
+# [v128] -> [v128]
+:i32x4.trunc_sat_f64x2_s_zero is opc=0xFD; opc2_252; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_trunc_sat_f64x2_s_zero(sp1_128);
+}
+
+define pcodeop i32x4_trunc_sat_f64x2_u_zero;
+# [v128] -> [v128]
+:i32x4.trunc_sat_f64x2_u_zero is opc=0xFD; opc2_253; sp1_128; ctx_is_directive=0 {
+    sp1_128 = i32x4_trunc_sat_f64x2_u_zero(sp1_128);
+}
+
+define pcodeop f64x2_convert_low_i32x4_s;
+# [v128] -> [v128]
+:f64x2.convert_low_i32x4_s is opc=0xFD; opc2_254; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f64x2_convert_low_i32x4_s(sp1_128);
+}
+
+define pcodeop f64x2_convert_low_i32x4_u;
+# [v128] -> [v128]
+:f64x2.convert_low_i32x4_u is opc=0xFD; opc2_255; sp1_128; ctx_is_directive=0 {
+    sp1_128 = f64x2_convert_low_i32x4_u(sp1_128);
+}

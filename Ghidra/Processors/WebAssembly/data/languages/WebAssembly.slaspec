@@ -1887,11 +1887,11 @@ define register offset=0x80000000 size=4 [ ss0 ];
 
 # All context registers are set by the pre-analyzer
 define context contextreg
-	ctx_is_op64 = (0, 0) noflow
-	ctx_is_directive = (1, 1) noflow
-	ctx_is_return = (2, 2) noflow
-	ctx_is_global_sp = (3, 3) noflow
-	ctx_directive_type = (4, 6) noflow
+	ctx_is_directive = (0, 0) noflow
+	ctx_is_return = (1, 1) noflow
+	ctx_is_global_sp = (2, 2) noflow
+	ctx_directive_type = (3, 5) noflow
+	ctx_operand_size = (6, 13) noflow
 	ctx_case_index = (32, 63) noflow
 	ctx_br_target = (64, 95) noflow
 	ctx_sp = (96, 127) noflow

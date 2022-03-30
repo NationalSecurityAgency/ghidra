@@ -78,11 +78,11 @@ public class WasmFunctionAnalysis {
 
 		/* These definitions must be synced with WebAssembly.slaspec */
 		private static final int CONTEXT_REG_WIDTH = 128;
-		private static final RegisterDefinition REG_IS_OP64 = new RegisterDefinition(0, 0);
-		private static final RegisterDefinition REG_IS_DIRECTIVE = new RegisterDefinition(1, 1);
-		private static final RegisterDefinition REG_IS_RETURN = new RegisterDefinition(2, 2);
-		private static final RegisterDefinition REG_IS_GLOBAL_SP = new RegisterDefinition(3, 3);
-		private static final RegisterDefinition REG_DIRECTIVE_TYPE = new RegisterDefinition(4, 6);
+		private static final RegisterDefinition REG_IS_DIRECTIVE = new RegisterDefinition(0, 0);
+		private static final RegisterDefinition REG_IS_RETURN = new RegisterDefinition(1, 1);
+		private static final RegisterDefinition REG_IS_GLOBAL_SP = new RegisterDefinition(2, 2);
+		private static final RegisterDefinition REG_DIRECTIVE_TYPE = new RegisterDefinition(3, 5);
+		private static final RegisterDefinition REG_OPERAND_SIZE = new RegisterDefinition(6, 13);
 		private static final RegisterDefinition REG_CASE_INDEX = new RegisterDefinition(32, 63);
 		private static final RegisterDefinition REG_BR_TARGET = new RegisterDefinition(64, 95);
 		private static final RegisterDefinition REG_SP = new RegisterDefinition(96, 127);
@@ -132,19 +132,11 @@ public class WasmFunctionAnalysis {
 		}
 
 		/**
-		 * Set whether the instruction takes a 64-bit stack operand. This currently
-		 * affects local.*, global.* and select instructions.
+		 * Set how large the stack operand is. This currently affects local.*, global.*
+		 * and select instructions.
 		 */
-		public void setIsOp64(Address address, ValType type) {
-			int value;
-			if (type == null || type.getSize() == 4) {
-				/* 32-bit operand */
-				value = 0;
-			} else {
-				/* 64-bit operand */
-				value = 1;
-			}
-			setRegister(address, REG_IS_OP64, value);
+		public void setOperandSize(Address address, ValType type) {
+			setRegister(address, REG_OPERAND_SIZE, type.getSize());
 		}
 
 		/** Mark this global.* instruction as operating on the C stack pointer. */
@@ -610,7 +602,7 @@ public class WasmFunctionAnalysis {
 				throw new ValidationException(instAddress, "inconsistent types in select");
 			}
 			ValType resultType = (t1 != null) ? t1 : t2;
-			contextreg.setIsOp64(instAddress, resultType);
+			contextreg.setOperandSize(instAddress, resultType);
 			pushValue(instAddress, resultType);
 			break;
 		}
@@ -630,21 +622,21 @@ public class WasmFunctionAnalysis {
 		case 0x20: /* local.get x */ {
 			long localidx = readLeb128(reader);
 			ValType type = func.getLocals()[(int) localidx];
-			contextreg.setIsOp64(instAddress, type);
+			contextreg.setOperandSize(instAddress, type);
 			pushValue(instAddress, type);
 			break;
 		}
 		case 0x21: /* local.set x */ {
 			long localidx = readLeb128(reader);
 			ValType type = func.getLocals()[(int) localidx];
-			contextreg.setIsOp64(instAddress, type);
+			contextreg.setOperandSize(instAddress, type);
 			popValue(instAddress, type);
 			break;
 		}
 		case 0x22: /* local.tee x */ {
 			long localidx = readLeb128(reader);
 			ValType type = func.getLocals()[(int) localidx];
-			contextreg.setIsOp64(instAddress, type);
+			contextreg.setOperandSize(instAddress, type);
 			popValue(instAddress, type);
 			pushValue(instAddress, type);
 			break;
@@ -652,7 +644,7 @@ public class WasmFunctionAnalysis {
 		case 0x23: /* global.get x */ {
 			long globalidx = readLeb128(reader);
 			ValType type = analysis.getGlobalType((int) globalidx);
-			contextreg.setIsOp64(instAddress, type);
+			contextreg.setOperandSize(instAddress, type);
 			globalGetSets.put(instAddress, globalidx);
 			pushValue(instAddress, type);
 			break;
@@ -660,7 +652,7 @@ public class WasmFunctionAnalysis {
 		case 0x24: /* global.set x */ {
 			long globalidx = readLeb128(reader);
 			ValType type = analysis.getGlobalType((int) globalidx);
-			contextreg.setIsOp64(instAddress, type);
+			contextreg.setOperandSize(instAddress, type);
 			globalGetSets.put(instAddress, globalidx);
 			popValue(instAddress, type);
 			break;
@@ -1050,6 +1042,428 @@ public class WasmFunctionAnalysis {
 			}
 			default:
 				Msg.warn(this, "Illegal opcode 0xfc " + String.format("0x%02x", opcode2) + " at " + instAddress);
+				break;
+			}
+			break;
+		}
+		case 0xFD: {
+			int opcode2 = LEB128.readAsUInt32(reader);
+			switch (opcode2) {
+			case 0x0: /* v128.load */
+			case 0x1: /* v128.load8x8_s */
+			case 0x2: /* v128.load8x8_u */
+			case 0x3: /* v128.load16x4_s */
+			case 0x4: /* v128.load16x4_u */
+			case 0x5: /* v128.load32x2_s */
+			case 0x6: /* v128.load32x2_u */
+			case 0x7: /* v128.load8_splat */
+			case 0x8: /* v128.load16_splat */
+			case 0x9: /* v128.load32_splat */
+			case 0xA: /* v128.load64_splat */
+				memoryLoad(reader, instAddress, ValType.v128);
+				break;
+			case 0xB: /* v128.store */
+				memoryStore(reader, instAddress, ValType.v128);
+				break;
+			case 0xC: /* v128.const */
+				reader.readNextByteArray(16); /* value */
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0xD: /* i8x16.shuffle */
+				for (int i = 0; i < 16; i++)
+					readLeb128(reader); /* laneidx16 */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xE: /* i8x16.swizzle */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xF: /* i8x16.splat */
+			case 0x10: /* i16x8.splat */
+			case 0x11: /* i32x4.splat */
+				unaryOp(instAddress, ValType.i32, ValType.v128);
+				break;
+			case 0x12: /* i64x2.splat */
+				unaryOp(instAddress, ValType.i64, ValType.v128);
+				break;
+			case 0x13: /* f32x4.splat */
+				unaryOp(instAddress, ValType.f32, ValType.v128);
+				break;
+			case 0x14: /* f64x2.splat */
+				unaryOp(instAddress, ValType.f64, ValType.v128);
+				break;
+			case 0x15: /* i8x16.extract_lane_s */
+			case 0x16: /* i8x16.extract_lane_u */
+				readLeb128(reader); /* laneidx */
+				unaryOp(instAddress, ValType.v128, ValType.i32);
+				break;
+			case 0x17: /* i8x16.replace_lane */
+				readLeb128(reader); /* laneidx */
+				popValue(instAddress, ValType.i32);
+				popValue(instAddress, ValType.v128);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0x18: /* i16x8.extract_lane_s */
+			case 0x19: /* i16x8.extract_lane_u */
+				readLeb128(reader); /* laneidx */
+				unaryOp(instAddress, ValType.v128, ValType.i32);
+				break;
+			case 0x1A: /* i16x8.replace_lane */
+				readLeb128(reader); /* laneidx */
+				popValue(instAddress, ValType.i32);
+				popValue(instAddress, ValType.v128);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0x1B: /* i32x4.extract_lane */
+				readLeb128(reader); /* laneidx */
+				unaryOp(instAddress, ValType.v128, ValType.i32);
+				break;
+			case 0x1C: /* i32x4.replace_lane */
+				readLeb128(reader); /* laneidx */
+				popValue(instAddress, ValType.i32);
+				popValue(instAddress, ValType.v128);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0x1D: /* i64x2.extract_lane */
+				readLeb128(reader); /* laneidx */
+				unaryOp(instAddress, ValType.v128, ValType.i64);
+				break;
+			case 0x1E: /* i64x2.replace_lane */
+				readLeb128(reader); /* laneidx */
+				popValue(instAddress, ValType.i64);
+				popValue(instAddress, ValType.v128);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0x1F: /* f32x4.extract_lane */
+				readLeb128(reader); /* laneidx */
+				unaryOp(instAddress, ValType.v128, ValType.f32);
+				break;
+			case 0x20: /* f32x4.replace_lane */
+				readLeb128(reader); /* laneidx */
+				popValue(instAddress, ValType.f32);
+				popValue(instAddress, ValType.v128);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0x21: /* f64x2.extract_lane */
+				readLeb128(reader); /* laneidx */
+				unaryOp(instAddress, ValType.v128, ValType.f64);
+				break;
+			case 0x22: /* f64x2.replace_lane */
+				readLeb128(reader); /* laneidx */
+				popValue(instAddress, ValType.f64);
+				popValue(instAddress, ValType.v128);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0x23: /* i8x16.eq */
+			case 0x24: /* i8x16.ne */
+			case 0x25: /* i8x16.lt_s */
+			case 0x26: /* i8x16.lt_u */
+			case 0x27: /* i8x16.gt_s */
+			case 0x28: /* i8x16.gt_u */
+			case 0x29: /* i8x16.le_s */
+			case 0x2A: /* i8x16.le_u */
+			case 0x2B: /* i8x16.ge_s */
+			case 0x2C: /* i8x16.ge_u */
+			case 0x2D: /* i16x8.eq */
+			case 0x2E: /* i16x8.ne */
+			case 0x2F: /* i16x8.lt_s */
+			case 0x30: /* i16x8.lt_u */
+			case 0x31: /* i16x8.gt_s */
+			case 0x32: /* i16x8.gt_u */
+			case 0x33: /* i16x8.le_s */
+			case 0x34: /* i16x8.le_u */
+			case 0x35: /* i16x8.ge_s */
+			case 0x36: /* i16x8.ge_u */
+			case 0x37: /* i32x4.eq */
+			case 0x38: /* i32x4.ne */
+			case 0x39: /* i32x4.lt_s */
+			case 0x3A: /* i32x4.lt_u */
+			case 0x3B: /* i32x4.gt_s */
+			case 0x3C: /* i32x4.gt_u */
+			case 0x3D: /* i32x4.le_s */
+			case 0x3E: /* i32x4.le_u */
+			case 0x3F: /* i32x4.ge_s */
+			case 0x40: /* i32x4.ge_u */
+			case 0x41: /* f32x4.eq */
+			case 0x42: /* f32x4.ne */
+			case 0x43: /* f32x4.lt */
+			case 0x44: /* f32x4.gt */
+			case 0x45: /* f32x4.le */
+			case 0x46: /* f32x4.ge */
+			case 0x47: /* f64x2.eq */
+			case 0x48: /* f64x2.ne */
+			case 0x49: /* f64x2.lt */
+			case 0x4A: /* f64x2.gt */
+			case 0x4B: /* f64x2.le */
+			case 0x4C: /* f64x2.ge */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x4D: /* v128.not */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x4E: /* v128.and */
+			case 0x4F: /* v128.andnot */
+			case 0x50: /* v128.or */
+			case 0x51: /* v128.xor */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x52: /* v128.bitselect */
+				popValue(instAddress, ValType.v128);
+				popValue(instAddress, ValType.v128);
+				popValue(instAddress, ValType.v128);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0x53: /* v128.any_true */
+				unaryOp(instAddress, ValType.v128, ValType.i32);
+				break;
+			case 0x54: /* v128.load8_lane */
+			case 0x55: /* v128.load16_lane */
+			case 0x56: /* v128.load32_lane */
+			case 0x57: /* v128.load64_lane */
+				readLeb128(reader); /* align */
+				readLeb128(reader); /* offset */
+				readLeb128(reader); /* laneidx */
+				popValue(instAddress, ValType.v128);
+				popValue(instAddress, ValType.i32);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0x58: /* v128.store8_lane */
+			case 0x59: /* v128.store16_lane */
+			case 0x5A: /* v128.store32_lane */
+			case 0x5B: /* v128.store64_lane */
+				readLeb128(reader); /* align */
+				readLeb128(reader); /* offset */
+				readLeb128(reader); /* laneidx */
+				popValue(instAddress, ValType.v128);
+				popValue(instAddress, ValType.i32);
+				break;
+			case 0x5C: /* v128.load32_zero */
+			case 0x5D: /* v128.load64_zero */
+				readLeb128(reader); /* align */
+				readLeb128(reader); /* offset */
+				readLeb128(reader); /* laneidx */
+				popValue(instAddress, ValType.i32);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0x5E: /* f32x4.demote_f64x2_zero */
+			case 0x5F: /* f64x2.promote_low_f32x4 */
+			case 0x60: /* i8x16.abs */
+			case 0x61: /* i8x16.neg */
+			case 0x62: /* i8x16.popcnt */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x63: /* i8x16.all_true */
+			case 0x64: /* i8x16.bitmask */
+				unaryOp(instAddress, ValType.v128, ValType.i32);
+				break;
+			case 0x65: /* i8x16.narrow_i16x8_s */
+			case 0x66: /* i8x16.narrow_i16x8_u */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x67: /* f32x4.ceil */
+			case 0x68: /* f32x4.floor */
+			case 0x69: /* f32x4.trunc */
+			case 0x6A: /* f32x4.nearest */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x6B: /* i8x16.shl */
+			case 0x6C: /* i8x16.shr_s */
+			case 0x6D: /* i8x16.shr_u */
+				popValue(instAddress, ValType.i32);
+				popValue(instAddress, ValType.v128);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0x6E: /* i8x16.add */
+			case 0x6F: /* i8x16.add_sat_s */
+			case 0x70: /* i8x16.add_sat_u */
+			case 0x71: /* i8x16.sub */
+			case 0x72: /* i8x16.sub_sat_s */
+			case 0x73: /* i8x16.sub_sat_u */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x74: /* f64x2.ceil */
+			case 0x75: /* f64x2.floor */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x76: /* i8x16.min_s */
+			case 0x77: /* i8x16.min_u */
+			case 0x78: /* i8x16.max_s */
+			case 0x79: /* i8x16.max_u */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x7A: /* f64x2.trunc */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x7B: /* i8x16.avgr_u */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x7C: /* i16x8.extadd_pairwise_i8x16_s */
+			case 0x7D: /* i16x8.extadd_pairwise_i8x16_u */
+			case 0x7E: /* i32x4.extadd_pairwise_i16x8_s */
+			case 0x7F: /* i32x4.extadd_pairwise_i16x8_u */
+			case 0x80: /* i16x8.abs */
+			case 0x81: /* i16x8.neg */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x82: /* i16x8.q15mulr_sat_s */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x83: /* i16x8.all_true */
+			case 0x84: /* i16x8.bitmask */
+				unaryOp(instAddress, ValType.v128, ValType.i32);
+				break;
+			case 0x85: /* i16x8.narrow_i32x4_s */
+			case 0x86: /* i16x8.narrow_i32x4_u */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x87: /* i16x8.extend_low_i8x16_s */
+			case 0x88: /* i16x8.extend_high_i8x16_s */
+			case 0x89: /* i16x8.extend_low_i8x16_u */
+			case 0x8A: /* i16x8.extend_high_i8x16_u */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x8B: /* i16x8.shl */
+			case 0x8C: /* i16x8.shr_s */
+			case 0x8D: /* i16x8.shr_u */
+				popValue(instAddress, ValType.i32);
+				popValue(instAddress, ValType.v128);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0x8E: /* i16x8.add */
+			case 0x8F: /* i16x8.add_sat_s */
+			case 0x90: /* i16x8.add_sat_u */
+			case 0x91: /* i16x8.sub */
+			case 0x92: /* i16x8.sub_sat_s */
+			case 0x93: /* i16x8.sub_sat_u */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x94: /* f64x2.nearest */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0x95: /* i16x8.mul */
+			case 0x96: /* i16x8.min_s */
+			case 0x97: /* i16x8.min_u */
+			case 0x98: /* i16x8.max_s */
+			case 0x99: /* i16x8.max_u */
+			case 0x9B: /* i16x8.avgr_u */
+			case 0x9C: /* i16x8.extmul_low_i8x16_s */
+			case 0x9D: /* i16x8.extmul_high_i8x16_s */
+			case 0x9E: /* i16x8.extmul_low_i8x16_u */
+			case 0x9F: /* i16x8.extmul_high_i8x16_u */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xA0: /* i32x4.abs */
+			case 0xA1: /* i32x4.neg */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xA3: /* i32x4.all_true */
+			case 0xA4: /* i32x4.bitmask */
+				unaryOp(instAddress, ValType.v128, ValType.i32);
+				break;
+			case 0xA7: /* i32x4.extend_low_i16x8_s */
+			case 0xA8: /* i32x4.extend_high_i16x8_s */
+			case 0xA9: /* i32x4.extend_low_i16x8_u */
+			case 0xAA: /* i32x4.extend_high_i16x8_u */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xAB: /* i32x4.shl */
+			case 0xAC: /* i32x4.shr_s */
+			case 0xAD: /* i32x4.shr_u */
+				popValue(instAddress, ValType.i32);
+				popValue(instAddress, ValType.v128);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0xAE: /* i32x4.add */
+			case 0xB1: /* i32x4.sub */
+			case 0xB5: /* i32x4.mul */
+			case 0xB6: /* i32x4.min_s */
+			case 0xB7: /* i32x4.min_u */
+			case 0xB8: /* i32x4.max_s */
+			case 0xB9: /* i32x4.max_u */
+			case 0xBA: /* i32x4.dot_i16x8_s */
+			case 0xBC: /* i32x4.extmul_low_i16x8_s */
+			case 0xBD: /* i32x4.extmul_high_i16x8_s */
+			case 0xBE: /* i32x4.extmul_low_i16x8_u */
+			case 0xBF: /* i32x4.extmul_high_i16x8_u */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xC0: /* i64x2.abs */
+			case 0xC1: /* i64x2.neg */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xC3: /* i64x2.all_true */
+			case 0xC4: /* i64x2.bitmask */
+				unaryOp(instAddress, ValType.v128, ValType.i32);
+				break;
+			case 0xC7: /* i64x2.extend_low_i32x4_s */
+			case 0xC8: /* i64x2.extend_high_i32x4_s */
+			case 0xC9: /* i64x2.extend_low_i32x4_u */
+			case 0xCA: /* i64x2.extend_high_i32x4_u */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xCB: /* i64x2.shl */
+			case 0xCC: /* i64x2.shr_s */
+			case 0xCD: /* i64x2.shr_u */
+				popValue(instAddress, ValType.i32);
+				popValue(instAddress, ValType.v128);
+				pushValue(instAddress, ValType.v128);
+				break;
+			case 0xCE: /* i64x2.add */
+			case 0xD1: /* i64x2.sub */
+			case 0xD5: /* i64x2.mul */
+			case 0xD6: /* i64x2.eq */
+			case 0xD7: /* i64x2.ne */
+			case 0xD8: /* i64x2.lt_s */
+			case 0xD9: /* i64x2.gt_s */
+			case 0xDA: /* i64x2.le_s */
+			case 0xDB: /* i64x2.ge_s */
+			case 0xDC: /* i64x2.extmul_low_i32x4_s */
+			case 0xDD: /* i64x2.extmul_high_i32x4_s */
+			case 0xDE: /* i64x2.extmul_low_i32x4_u */
+			case 0xDF: /* i64x2.extmul_high_i32x4_u */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xE0: /* f32x4.abs */
+			case 0xE1: /* f32x4.neg */
+			case 0xE3: /* f32x4.sqrt */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xE4: /* f32x4.add */
+			case 0xE5: /* f32x4.sub */
+			case 0xE6: /* f32x4.mul */
+			case 0xE7: /* f32x4.div */
+			case 0xE8: /* f32x4.min */
+			case 0xE9: /* f32x4.max */
+			case 0xEA: /* f32x4.pmin */
+			case 0xEB: /* f32x4.pmax */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xEC: /* f64x2.abs */
+			case 0xED: /* f64x2.neg */
+			case 0xEF: /* f64x2.sqrt */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xF0: /* f64x2.add */
+			case 0xF1: /* f64x2.sub */
+			case 0xF2: /* f64x2.mul */
+			case 0xF3: /* f64x2.div */
+			case 0xF4: /* f64x2.min */
+			case 0xF5: /* f64x2.max */
+			case 0xF6: /* f64x2.pmin */
+			case 0xF7: /* f64x2.pmax */
+				binaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			case 0xF8: /* i32x4.trunc_sat_f32x4_s */
+			case 0xF9: /* i32x4.trunc_sat_f32x4_u */
+			case 0xFA: /* f32x4.convert_i32x4_s */
+			case 0xFB: /* f32x4.convert_i32x4_u */
+			case 0xFC: /* i32x4.trunc_sat_f64x2_s_zero */
+			case 0xFD: /* i32x4.trunc_sat_f64x2_u_zero */
+			case 0xFE: /* f64x2.convert_low_i32x4_s */
+			case 0xFF: /* f64x2.convert_low_i32x4_u */
+				unaryOp(instAddress, ValType.v128, ValType.v128);
+				break;
+			default:
+				Msg.warn(this, "Illegal opcode 0xfd " + String.format("0x%02x", opcode2) + " at " + instAddress);
 				break;
 			}
 			break;
