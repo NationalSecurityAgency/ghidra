@@ -479,7 +479,7 @@ public class WasmFunctionAnalysis {
 	// #endregion
 
 	private void analyzeOpcode(WasmAnalysis analysis, Address instAddress, BinaryReader reader) throws IOException {
-		contextreg.setStackPointer(instAddress, 8 * valueStack.size());
+		contextreg.setStackPointer(instAddress, valueStack.size());
 		int opcode = reader.readNextUnsignedByte();
 		switch (opcode) {
 		case 0x00: /* unreachable */

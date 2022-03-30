@@ -78,6 +78,8 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 
 	public final static long IMPORT_BASE = 0x7f000000L;
 	public final static long CODE_BASE = 0x80000000L;
+	/* Size of each register */
+	public final static int REG_SIZE = 16;
 
 	@Override
 	public String getName() {
@@ -137,7 +139,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 	}
 
 	public static Address getGlobalAddress(AddressFactory addressFactory, int globalidx) {
-		return addressFactory.getAddressSpace("global").getAddress(((long) globalidx) * 8);
+		return addressFactory.getAddressSpace("global").getAddress(((long) globalidx) * REG_SIZE);
 	}
 
 	public static Address getModuleAddress(AddressFactory addressFactory) {

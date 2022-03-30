@@ -20,6 +20,7 @@ import ghidra.program.model.lang.InjectContext;
 import ghidra.program.model.lang.InjectPayloadSleigh;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeOp;
+import wasm.WasmLoader;
 import wasm.analysis.WasmAnalysis;
 import wasm.analysis.WasmFuncSignature;
 import wasm.format.WasmEnums.ValType;
@@ -50,11 +51,11 @@ public class InjectPayloadWasmEntry extends InjectPayloadSleigh {
 		ValType[] params = sig.getParams();
 		ValType[] locals = sig.getLocals();
 		for (int i = 0; i < params.length; i++) {
-			ops.emitCopy(inputBase.add(i * 8L), localsBase.add(i * 8L), params[i].getSize());
+			ops.emitCopy(inputBase.add(i * WasmLoader.REG_SIZE), localsBase.add(i * WasmLoader.REG_SIZE), params[i].getSize());
 		}
 		Address zero = program.getAddressFactory().getConstantAddress(0L);
 		for (int i = params.length; i < locals.length; i++) {
-			ops.emitCopy(zero, localsBase.add(i * 8L), locals[i].getSize());
+			ops.emitCopy(zero, localsBase.add(i * WasmLoader.REG_SIZE), locals[i].getSize());
 		}
 		return ops.getPcodeOps();
 	}
