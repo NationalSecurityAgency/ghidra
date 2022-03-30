@@ -487,28 +487,28 @@ storeaddr: memalign memoffset is memalign; memoffset; sp2_32 {
 }
 
 # TODO: actually handle saturation, or express semantics via pcodeop?
-:i32.trunc_sat_f32_s  is opc=0xFC; opc2=0x00; sp1_32; ctx_is_directive=0 {
+:i32.trunc_sat_f32_s  is opc=0xFC; opc2_0; sp1_32; ctx_is_directive=0 {
 	sp1_32 = trunc(sp1_32);
 }
 # TODO: Can we do an unsigned trunc?
-:i32.trunc_sat_f32_u  is opc=0xFC; opc2=0x01; sp1_32; ctx_is_directive=0 {
+:i32.trunc_sat_f32_u  is opc=0xFC; opc2_1; sp1_32; ctx_is_directive=0 {
 	sp1_32 = trunc(sp1_32);
 }
-:i32.trunc_sat_f64_s  is opc=0xFC; opc2=0x02; sp1_32; sp1_64; ctx_is_directive=0 {
+:i32.trunc_sat_f64_s  is opc=0xFC; opc2_2; sp1_32; sp1_64; ctx_is_directive=0 {
 	sp1_32 = trunc(sp1_64);
 }
-:i32.trunc_sat_f64_u  is opc=0xFC; opc2=0x03; sp1_32; sp1_64; ctx_is_directive=0 {
+:i32.trunc_sat_f64_u  is opc=0xFC; opc2_3; sp1_32; sp1_64; ctx_is_directive=0 {
 	sp1_32 = trunc(sp1_64);
 }
-:i64.trunc_sat_f32_s  is opc=0xFC; opc2=0x04; sp1_32; sp1_64; ctx_is_directive=0 {
+:i64.trunc_sat_f32_s  is opc=0xFC; opc2_4; sp1_32; sp1_64; ctx_is_directive=0 {
 	sp1_64 = trunc(sp1_32);
 }
-:i64.trunc_sat_f32_u  is opc=0xFC; opc2=0x05; sp1_32; sp1_64; ctx_is_directive=0 {
+:i64.trunc_sat_f32_u  is opc=0xFC; opc2_5; sp1_32; sp1_64; ctx_is_directive=0 {
 	sp1_64 = trunc(sp1_32);
 }
-:i64.trunc_sat_f64_s  is opc=0xFC; opc2=0x06; sp1_64; ctx_is_directive=0 {
+:i64.trunc_sat_f64_s  is opc=0xFC; opc2_6; sp1_64; ctx_is_directive=0 {
 	sp1_64 = trunc(sp1_64);
 }
-:i64.trunc_sat_f64_u  is opc=0xFC; opc2=0x07; sp1_64; ctx_is_directive=0 {
+:i64.trunc_sat_f64_u  is opc=0xFC; opc2_7; sp1_64; ctx_is_directive=0 {
 	sp1_64 = trunc(sp1_64);
 }

@@ -965,7 +965,7 @@ public class WasmFunctionAnalysis {
 			break;
 		}
 		case 0xFC: {
-			int opcode2 = reader.readNextUnsignedByte();
+			int opcode2 = LEB128.readAsUInt32(reader);
 			switch (opcode2) {
 			case 0x00: /* i32.trunc_sat_f32_s */
 			case 0x01: /* i32.trunc_sat_f32_u */
