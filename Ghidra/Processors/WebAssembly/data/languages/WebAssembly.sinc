@@ -55,22 +55,22 @@ define pcodeop memory_fill;
 # This is a silly hack because I couldn't work out how to use Leb128 itself
 # in the disassembly actions section of another constructor...
 @define SYMBOL local4
-@define DEST_EXPR "0x10000000 + 8 * "
+@define DEST_EXPR "0x10000000 + 16 * "
 @define EXPORT_EXPR "export *[register]:4 dest;"
 @include "Leb128_u32.sinc"
 
 @define SYMBOL local8
-@define DEST_EXPR "0x10000000 + 8 * "
+@define DEST_EXPR "0x10000000 + 16 * "
 @define EXPORT_EXPR "export *[register]:8 dest;"
 @include "Leb128_u32.sinc"
 
 @define SYMBOL global4
-@define DEST_EXPR "8 * "
+@define DEST_EXPR "16 * "
 @define EXPORT_EXPR "export *[global]:4 dest;"
 @include "Leb128_u32.sinc"
 
 @define SYMBOL global8
-@define DEST_EXPR "8 * "
+@define DEST_EXPR "16 * "
 @define EXPORT_EXPR "export *[global]:8 dest;"
 @include "Leb128_u32.sinc"
 
@@ -79,35 +79,35 @@ define pcodeop memory_fill;
 @define EXPORT_EXPR "export *[table]:4 dest;"
 @include "Leb128_u32.sinc"
 
-sp0_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + ctx_sp - 0;] {
+sp0_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 0) * $(REG_SIZE);] {
 	export *[register]:4 tmp_sp;
 }
 
-sp0_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + ctx_sp - 0;] {
+sp0_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 0) * $(REG_SIZE);] {
 	export *[register]:8 tmp_sp;
 }
 
-sp1_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + ctx_sp - 8;] {
+sp1_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 1) * $(REG_SIZE);] {
 	export *[register]:4 tmp_sp;
 }
 
-sp1_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + ctx_sp - 8;] {
+sp1_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 1) * $(REG_SIZE);] {
 	export *[register]:8 tmp_sp;
 }
 
-sp2_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + ctx_sp - 16;] {
+sp2_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 2) * $(REG_SIZE);] {
 	export *[register]:4 tmp_sp;
 }
 
-sp2_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + ctx_sp - 16;] {
+sp2_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 2) * $(REG_SIZE);] {
 	export *[register]:8 tmp_sp;
 }
 
-sp3_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + ctx_sp - 24;] {
+sp3_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 3) * $(REG_SIZE);] {
 	export *[register]:4 tmp_sp;
 }
 
-sp3_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + ctx_sp - 24;] {
+sp3_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 3) * $(REG_SIZE);] {
 	export *[register]:8 tmp_sp;
 }
 

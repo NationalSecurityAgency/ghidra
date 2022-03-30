@@ -20,6 +20,7 @@ import ghidra.program.model.lang.InjectContext;
 import ghidra.program.model.lang.InjectPayloadCallother;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeOp;
+import wasm.WasmLoader;
 import wasm.analysis.WasmAnalysis;
 import wasm.analysis.WasmFunctionAnalysis;
 import wasm.analysis.WasmFunctionAnalysis.StackEffect;
@@ -63,9 +64,9 @@ public class InjectPayloadWasmPop extends InjectPayloadCallother {
 
 		long stackHeight = stackEffect.getPopHeight();
 		ValType[] todo = stackEffect.getToPop();
-		Address stackAddress = program.getRegister("s0").getAddress().add(stackHeight * 8);
+		Address stackAddress = program.getRegister("s0").getAddress().add(stackHeight * WasmLoader.REG_SIZE);
 		for (int i = 0; i < todo.length; i++) {
-			ops.emitCopy(stackAddress.add(i * 8L), baseAddress.add(i * 8L), todo[i].getSize());
+			ops.emitCopy(stackAddress.add(i * WasmLoader.REG_SIZE), baseAddress.add(i * WasmLoader.REG_SIZE), todo[i].getSize());
 		}
 
 		return ops.getPcodeOps();
