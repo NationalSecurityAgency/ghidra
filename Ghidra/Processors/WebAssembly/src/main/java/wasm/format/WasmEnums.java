@@ -21,6 +21,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DoubleDataType;
 import ghidra.program.model.data.FloatDataType;
 import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.Undefined;
 import ghidra.program.model.data.Undefined4DataType;
 import ghidra.program.model.data.Undefined8DataType;
 
@@ -37,11 +38,13 @@ public class WasmEnums {
 		i64(0x7e),
 		f32(0x7d),
 		f64(0x7c),
+		v128(0x7b),
 
 		funcref(0x70),
 		externref(0x6f);
 
 		private static final HashMap<Integer, ValType> BY_BYTE = new HashMap<>();
+		public static final DataType Undefined16 = Undefined.getUndefinedDataType(16);
 		public final int typeByte;
 
 		static {
@@ -64,6 +67,8 @@ public class WasmEnums {
 				return FloatDataType.dataType;
 			case f64:
 				return DoubleDataType.dataType;
+			case v128:
+				return Undefined16;
 			case funcref:
 				return PointerDataType.dataType;
 			case externref:
@@ -82,6 +87,8 @@ public class WasmEnums {
 			case i64:
 			case f64:
 				return 8;
+			case v128:
+				return 16;
 			}
 			return 4;
 		}

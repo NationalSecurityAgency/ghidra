@@ -65,6 +65,11 @@ define pcodeop memory_fill;
 @define EXPORT_EXPR "export *[register]:8 dest;"
 @include "Leb128_u32.sinc"
 
+@define SYMBOL local16
+@define DEST_EXPR "0x10000000 + 16 * "
+@define EXPORT_EXPR "export *[register]:16 dest;"
+@include "Leb128_u32.sinc"
+
 @define SYMBOL global4
 @define DEST_EXPR "16 * "
 @define EXPORT_EXPR "export *[global]:4 dest;"
@@ -73,6 +78,11 @@ define pcodeop memory_fill;
 @define SYMBOL global8
 @define DEST_EXPR "16 * "
 @define EXPORT_EXPR "export *[global]:8 dest;"
+@include "Leb128_u32.sinc"
+
+@define SYMBOL global16
+@define DEST_EXPR "16 * "
+@define EXPORT_EXPR "export *[global]:16 dest;"
 @include "Leb128_u32.sinc"
 
 @define SYMBOL tableref
@@ -90,12 +100,20 @@ sp0_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 0) * $(REG_SIZE);] {
 	export *[register]:8 tmp_sp;
 }
 
+sp0_128: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 0) * $(REG_SIZE);] {
+	export *[register]:16 tmp_sp;
+}
+
 sp1_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 1) * $(REG_SIZE);] {
 	export *[register]:4 tmp_sp;
 }
 
 sp1_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 1) * $(REG_SIZE);] {
 	export *[register]:8 tmp_sp;
+}
+
+sp1_128: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 1) * $(REG_SIZE);] {
+	export *[register]:16 tmp_sp;
 }
 
 sp2_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 2) * $(REG_SIZE);] {
@@ -106,12 +124,20 @@ sp2_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 2) * $(REG_SIZE);] {
 	export *[register]:8 tmp_sp;
 }
 
+sp2_128: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 2) * $(REG_SIZE);] {
+	export *[register]:16 tmp_sp;
+}
+
 sp3_32: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 3) * $(REG_SIZE);] {
 	export *[register]:4 tmp_sp;
 }
 
 sp3_64: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 3) * $(REG_SIZE);] {
 	export *[register]:8 tmp_sp;
+}
+
+sp3_128: tmp_sp is ctx_sp [tmp_sp = 0x50000000 + (ctx_sp - 3) * $(REG_SIZE);] {
+	export *[register]:16 tmp_sp;
 }
 
 br_target: ctx_br_target is ctx_br_target {
@@ -286,11 +312,19 @@ macro select64(sp1_32, sp2_64, sp3_64) {
 	sp3_64 = sp2_64;
 }
 
-:select is opc=0x1b; sp1_32; sp2_32; sp3_32; ctx_is_directive=0; ctx_is_op64=0 {
+macro select128(sp1_32, sp2_128, sp3_128) {
+	if (sp1_32 != 0) goto inst_next;
+	sp3_128 = sp2_128;
+}
+
+:select is opc=0x1b; sp1_32; sp2_32; sp3_32; ctx_is_directive=0; ctx_operand_size=4 {
 	select32(sp1_32, sp2_32, sp3_32);
 }
-:select is opc=0x1b; sp1_32; sp2_64; sp3_64; ctx_is_directive=0; ctx_is_op64=1 {
+:select is opc=0x1b; sp1_32; sp2_64; sp3_64; ctx_is_directive=0; ctx_operand_size=8 {
 	select64(sp1_32, sp2_64, sp3_64);
+}
+:select is opc=0x1b; sp1_32; sp2_128; sp3_128; ctx_is_directive=0; ctx_operand_size=16 {
+	select128(sp1_32, sp2_128, sp3_128);
 }
 
 # In the current version of Wasm, only one type index is permitted in select t*.
@@ -305,6 +339,11 @@ valtype_64: valtype is topbit=1 & v=1; topbit=0 & v=0; valtype & (bytev=0x7e | b
 valtype_64: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=0 & v=0; valtype & (bytev=0x7e | bytev=0x7c) {}
 valtype_64: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=0 & v=0; valtype & (bytev=0x7e | bytev=0x7c) {}
 valtype_64: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=1 & v=0; topbit=0 & v=0; valtype & (bytev=0x7e | bytev=0x7c) {}
+valtype_128: valtype is topbit=0 & v=1; valtype & bytev=0x7b {}
+valtype_128: valtype is topbit=1 & v=1; topbit=0 & v=0; valtype & bytev=0x7b {}
+valtype_128: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=0 & v=0; valtype & bytev=0x7b {}
+valtype_128: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=0 & v=0; valtype & bytev=0x7b {}
+valtype_128: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=1 & v=0; topbit=0 & v=0; valtype & bytev=0x7b {}
 
 :select valtype_32 is opc=0x1c; valtype_32; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
 	# i32, f32, funcref, externref
@@ -314,47 +353,66 @@ valtype_64: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=1 
 	# i64, f64
 	select64(sp1_32, sp2_64, sp3_64);
 }
+:select valtype_128 is opc=0x1c; valtype_128; sp1_32; sp2_128; sp3_128; ctx_is_directive=0 {
+	# v128
+	select128(sp1_32, sp2_128, sp3_128);
+}
 
 ## Variable Instructions
-:local.get local4 is opc=0x20; local4; sp0_32; ctx_is_directive=0; ctx_is_op64=0 {
+:local.get local4 is opc=0x20; local4; sp0_32; ctx_is_directive=0; ctx_operand_size=4 {
 	sp0_32 = local4;
 }
-:local.get local8 is opc=0x20; local8; sp0_64; ctx_is_directive=0; ctx_is_op64=1 {
+:local.get local8 is opc=0x20; local8; sp0_64; ctx_is_directive=0; ctx_operand_size=8 {
 	sp0_64 = local8;
 }
+:local.get local16 is opc=0x20; local16; sp0_128; ctx_is_directive=0; ctx_operand_size=16 {
+	sp0_128 = local16;
+}
 
-:local.set local4 is opc=0x21; local4; sp1_32; ctx_is_directive=0; ctx_is_op64=0 {
+:local.set local4 is opc=0x21; local4; sp1_32; ctx_is_directive=0; ctx_operand_size=4 {
 	local4 = sp1_32;
 }
-:local.set local8 is opc=0x21; local8; sp1_64; ctx_is_directive=0; ctx_is_op64=1 {
+:local.set local8 is opc=0x21; local8; sp1_64; ctx_is_directive=0; ctx_operand_size=8 {
 	local8 = sp1_64;
 }
+:local.set local16 is opc=0x21; local16; sp1_128; ctx_is_directive=0; ctx_operand_size=16 {
+	local16 = sp1_128;
+}
 
-:local.tee local4 is opc=0x22; local4; sp1_32; ctx_is_directive=0; ctx_is_op64=0 {
+:local.tee local4 is opc=0x22; local4; sp1_32; ctx_is_directive=0; ctx_operand_size=4 {
 	local4 = sp1_32;
 }
-:local.tee local8 is opc=0x22; local8; sp1_64; ctx_is_directive=0; ctx_is_op64=1 {
+:local.tee local8 is opc=0x22; local8; sp1_64; ctx_is_directive=0; ctx_operand_size=8 {
 	local8 = sp1_64;
 }
+:local.tee local16 is opc=0x22; local16; sp1_128; ctx_is_directive=0; ctx_operand_size=16 {
+	local16 = sp1_128;
+}
 
-:global.get global4 is opc=0x23; global4; sp0_32; ctx_is_directive=0; ctx_is_op64=0; ctx_is_global_sp=0 {
+:global.get global4 is opc=0x23; global4; sp0_32; ctx_is_directive=0; ctx_operand_size=4; ctx_is_global_sp=0 {
 	sp0_32 = global4;
 }
-:global.get global4 is opc=0x23; global4; sp0_32; ctx_is_directive=0; ctx_is_op64=0; ctx_is_global_sp=1 {
+:global.get global4 is opc=0x23; global4; sp0_32; ctx_is_directive=0; ctx_operand_size=4; ctx_is_global_sp=1 {
 	sp0_32 = SP;
 }
-:global.get global8 is opc=0x23; global8; sp0_64; ctx_is_directive=0; ctx_is_op64=1 {
+:global.get global8 is opc=0x23; global8; sp0_64; ctx_is_directive=0; ctx_operand_size=8 {
 	sp0_64 = global8;
 }
+:global.get global16 is opc=0x23; global16; sp0_128; ctx_is_directive=0; ctx_operand_size=16 {
+	sp0_128 = global16;
+}
 
-:global.set global4 is opc=0x24; global4; sp1_32; ctx_is_directive=0; ctx_is_op64=0; ctx_is_global_sp=0 {
+:global.set global4 is opc=0x24; global4; sp1_32; ctx_is_directive=0; ctx_operand_size=4; ctx_is_global_sp=0 {
 	global4 = sp1_32;
 }
-:global.set global4 is opc=0x24; global4; sp1_32; ctx_is_directive=0; ctx_is_op64=0; ctx_is_global_sp=1 {
+:global.set global4 is opc=0x24; global4; sp1_32; ctx_is_directive=0; ctx_operand_size=4; ctx_is_global_sp=1 {
 	SP = sp1_32;
 }
-:global.set global8 is opc=0x24; global8; sp1_64; ctx_is_directive=0; ctx_is_op64=1 {
+:global.set global8 is opc=0x24; global8; sp1_64; ctx_is_directive=0; ctx_operand_size=8 {
 	global8 = sp1_64;
+}
+:global.set global16 is opc=0x24; global16; sp1_128; ctx_is_directive=0; ctx_operand_size=16 {
+	global16 = sp1_128;
 }
 
 ## Table Instructions
@@ -436,3 +494,4 @@ valtype_64: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=1 
 }
 
 @include "BasicOps.sinc"
+@include "VectorOps.sinc"

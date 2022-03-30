@@ -28,6 +28,7 @@ import ghidra.program.model.data.Float8DataType;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.WasmLoader;
 import wasm.format.StructureBuilder;
+import wasm.format.WasmEnums.ValType;
 import wasm.format.WasmModule;
 
 /* A reader for expressions containing a single constant instruction.
@@ -44,6 +45,7 @@ followed by an explicit end byte (0x0b).
 public final class ConstantExpression implements StructConverter {
 
 	private ConstantInstruction type;
+	private LEB128 opcode2;
 	private Object value;
 
 	private enum ConstantInstruction {
@@ -51,6 +53,7 @@ public final class ConstantExpression implements StructConverter {
 		I64_CONST, /* i64.const n: value is LEB128 */
 		F32_CONST, /* f32.const z: value is byte[4] */
 		F64_CONST, /* f64.const z: value is byte[8] */
+		V128_CONST, /* v128.const z: value is byte[16] */
 		REF_NULL_FUNCREF, /* ref.null funcref: value is null */
 		REF_NULL_EXTERNREF, /* ref.null externref: value is null */
 		REF_FUNC, /* ref.func x: value is LEB128 funcidx */
@@ -97,6 +100,15 @@ public final class ConstantExpression implements StructConverter {
 			type = ConstantInstruction.REF_FUNC;
 			value = LEB128.readUnsignedValue(reader);
 			break;
+		case 0xFD:
+			opcode2 = LEB128.readUnsignedValue(reader);
+			if (opcode2.asUInt32() == 0x0C) {
+				type = ConstantInstruction.V128_CONST;
+				value = reader.readNextByteArray(16);
+				break;
+			} else {
+				throw new IllegalArgumentException("Invalid instruction opcode 0xfd " + opcode2.asUInt32() + " in constant expression");
+			}
 		default:
 			throw new IllegalArgumentException("Invalid instruction opcode " + typeCode + " in constant expression");
 		}
@@ -141,6 +153,7 @@ public final class ConstantExpression implements StructConverter {
 			return intToBytes((int) WasmLoader.getFunctionAddressOffset(module, (int) ((LEB128) value).asLong()));
 		case F32_CONST:
 		case F64_CONST:
+		case V128_CONST:
 			return (byte[]) value;
 		case REF_NULL_FUNCREF:
 		case REF_NULL_EXTERNREF:
@@ -189,6 +202,10 @@ public final class ConstantExpression implements StructConverter {
 			break;
 		case F64_CONST:
 			builder.add(Float8DataType.dataType, "value");
+			break;
+		case V128_CONST:
+			builder.add((LEB128) opcode2, "opcode2");
+			builder.add(ValType.Undefined16, "value");
 			break;
 		case REF_NULL_FUNCREF:
 		case REF_NULL_EXTERNREF:
