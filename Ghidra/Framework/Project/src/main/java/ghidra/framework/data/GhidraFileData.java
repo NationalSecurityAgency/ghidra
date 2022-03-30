@@ -1774,7 +1774,7 @@ public class GhidraFileData {
 	private class GenericDomainObjectDB extends DomainObjectAdapterDB {
 
 		protected GenericDomainObjectDB(DBHandle dbh) throws IOException {
-			super(dbh, "Generic", 500, 1000, GhidraFileData.this);
+			super(dbh, "Generic", 500, GhidraFileData.this);
 			loadMetadata();
 		}
 

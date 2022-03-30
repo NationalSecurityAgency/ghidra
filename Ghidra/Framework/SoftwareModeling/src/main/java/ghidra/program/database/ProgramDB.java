@@ -218,7 +218,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 */
 	public ProgramDB(String name, Language language, CompilerSpec compilerSpec, Object consumer)
 			throws IOException {
-		super(new DBHandle(), name, 500, 1000, consumer);
+		super(new DBHandle(), name, 500, consumer);
 
 		if (!(compilerSpec instanceof BasicCompilerSpec)) {
 			throw new IllegalArgumentException(
@@ -287,7 +287,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	public ProgramDB(DBHandle dbh, int openMode, TaskMonitor monitor, Object consumer)
 			throws IOException, VersionException, LanguageNotFoundException, CancelledException {
 
-		super(dbh, "Untitled", 500, 1000, consumer);
+		super(dbh, "Untitled", 500, consumer);
 
 		if (monitor == null) {
 			monitor = TaskMonitor.DUMMY;
