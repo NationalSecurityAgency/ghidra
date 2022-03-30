@@ -48,7 +48,7 @@ public class GhidraJarBundle extends GhidraBundle {
 	public GhidraJarBundle(BundleHost bundleHost, ResourceFile file, boolean enabled,
 			boolean systemBundle) {
 		super(bundleHost, file, enabled, systemBundle);
-		this.bundleLocation = "file://" + file.getAbsolutePath().toString();
+		this.bundleLocation = file.toURI().toString();
 	}
 
 	@Override

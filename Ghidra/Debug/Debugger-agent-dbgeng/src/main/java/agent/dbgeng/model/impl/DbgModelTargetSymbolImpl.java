@@ -20,17 +20,22 @@ import java.util.Map;
 
 import agent.dbgeng.manager.impl.DbgMinimalSymbol;
 import agent.dbgeng.model.iface2.DbgModelTargetSymbol;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetSymbol;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 
-@TargetObjectSchemaInfo(name = "Symbol", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
-		@TargetAttributeType(name = TargetSymbol.NAMESPACE_ATTRIBUTE_NAME, type = DbgModelTargetSymbolContainerImpl.class),
+@TargetObjectSchemaInfo(
+	name = "Symbol",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(
+			name = TargetSymbol.NAMESPACE_ATTRIBUTE_NAME,
+			type = DbgModelTargetSymbolContainerImpl.class),
 		@TargetAttributeType(name = TargetObject.VALUE_ATTRIBUTE_NAME, type = Address.class),
 		@TargetAttributeType(name = TargetSymbol.SIZE_ATTRIBUTE_NAME, type = long.class),
+		@TargetAttributeType(name = TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME, type = String.class),
 		@TargetAttributeType(name = "Name", type = String.class),
 		@TargetAttributeType(name = "Size", type = long.class),
 		@TargetAttributeType(name = "TypeId", type = int.class),
@@ -58,11 +63,16 @@ public class DbgModelTargetSymbolImpl extends DbgModelTargetObjectImpl
 		this.value = symbols.getModel().getAddressSpace("ram").getAddress(symbol.getAddress());
 		this.size = symbol.getSize();
 
+		TargetObject module = symbols.getParent();
+		String moduleName =
+			(String) module.getCachedAttribute(TargetObject.SHORT_DISPLAY_ATTRIBUTE_NAME);
 		changeAttributes(List.of(), List.of(), Map.of( //
 			// TODO: DATA_TYPE
 			NAMESPACE_ATTRIBUTE_NAME, symbols, //
 			VALUE_ATTRIBUTE_NAME, value, //
 			SIZE_ATTRIBUTE_NAME, size, //
+			TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME, //
+			   moduleName + "!" + symbol.getName(), //
 			"Name", symbol.getName(), //
 			"Size", size, //
 			"TypeId", symbol.getTypeId(), //

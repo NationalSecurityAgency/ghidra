@@ -305,7 +305,7 @@ public class MarkerManager implements MarkerService {
 
 	List<MarkerSetImpl> copyMarkerSets(Program program) {
 		MarkerSetCacheEntry entry = markerSetCache.get(program);
-		return entry == null ? List.of() : entry.copyList();
+		return entry == null ? Collections.emptyList() : entry.copyList();
 	}
 
 	/**

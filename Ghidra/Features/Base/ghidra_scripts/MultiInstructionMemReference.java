@@ -43,29 +43,16 @@ import java.util.Arrays;
 import java.util.List;
 
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeImpl;
-import ghidra.program.model.address.AddressRangeIterator;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.block.CodeBlock;
 import ghidra.program.model.block.PartitionCodeSubModel;
-import ghidra.program.model.lang.OperandType;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
-import ghidra.program.model.symbol.RefType;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.util.ContextEvaluator;
-import ghidra.program.util.ContextEvaluatorAdapter;
-import ghidra.program.util.OperandFieldLocation;
-import ghidra.program.util.SymbolicPropogator;
-import ghidra.program.util.VarnodeContext;
+import ghidra.program.model.symbol.*;
+import ghidra.program.util.*;
 import ghidra.util.exception.CancelledException;
 
 public class MultiInstructionMemReference extends GhidraScript {
@@ -75,9 +62,10 @@ public class MultiInstructionMemReference extends GhidraScript {
 	private Object[] inputObjects;
 	private Object[] resultObjects;
 	private Register singleRegister;
-	private boolean  registerInOut;
+	private boolean registerInOut;
 	private boolean targetInDelaySlot = false;
-	
+	private boolean loadStore = false;
+
 	@Override
 	public void run() throws Exception {
 		long numInstructions = currentProgram.getListing().getNumInstructions();
@@ -116,17 +104,17 @@ public class MultiInstructionMemReference extends GhidraScript {
 		if (addr == null) {
 			return null;
 		}
-		
+
 		Instruction instr = currentProgram.getListing().getInstructionContaining(addr);
 		if (instr == null) {
 			return null;
 		}
-		
+
 		List<Object> defOpRep = instr.getDefaultOperandRepresentationList(opIndex);
 		if (subOpIndex >= 0 && subOpIndex < defOpRep.size()) {
 			Object obj = defOpRep.get(subOpIndex);
 			if (obj instanceof Register) {
-			 return (Register) obj;
+				return (Register) obj;
 			}
 		}
 		return instr.getRegister(opIndex);
@@ -169,8 +157,8 @@ public class MultiInstructionMemReference extends GhidraScript {
 				return checkContext(false, opIndex, context, instr);
 			}
 
-
-			private boolean checkContext(boolean input, final int opIndex, VarnodeContext context, Instruction instr) {
+			private boolean checkContext(boolean input, final int opIndex, VarnodeContext context,
+					Instruction instr) {
 				if (instr.getMinAddress().equals(curInstrloc)) {
 					if (targetInDelaySlot && instr.getDelaySlotDepth() > 0) {
 						instr = instr.getNext();
@@ -186,22 +174,25 @@ public class MultiInstructionMemReference extends GhidraScript {
 				}
 				return false;
 			}
-			
 
 			@Override
-			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop, Address address,
-					int size, RefType refType) {
-				
+			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
+					Address address, int size, RefType refType) {
+
 				return super.evaluateReference(context, instr, pcodeop, address, size, refType);
 			}
 
-
-			private boolean checkInstructionMatch(final int opIdx, boolean input, VarnodeContext context,
-					Instruction instr) {
+			private boolean checkInstructionMatch(final int opIdx, boolean input,
+					VarnodeContext context, Instruction instr) {
 				List<Object> list = Arrays.asList(input ? inputObjects : resultObjects);
-				
-				for (int index = opIdx; index < instr.getNumOperands(); index++)
-				{
+
+				// if the register appeared as an input and output varnode, and not a load or store, then
+				// is just a calculation, so don't consider the an input values
+				if (input && !loadStore && registerInOut) {
+					return false;
+				}
+
+				for (int index = opIdx; index < instr.getNumOperands(); index++) {
 					if (getRefsForOperand(context, instr, list, index)) {
 						// register is both an in/out check if symbolic on out
 						if (registerInOut) {
@@ -216,7 +207,6 @@ public class MultiInstructionMemReference extends GhidraScript {
 				return false;
 			}
 
-
 			/**
 			 * Check the current operand for references based on input/outputs
 			 * 
@@ -227,19 +217,20 @@ public class MultiInstructionMemReference extends GhidraScript {
 			 * 
 			 * @return true if a reference was found
 			 */
-			private boolean getRefsForOperand(VarnodeContext context, Instruction instr, List<Object> list, int opIndex) {
+			private boolean getRefsForOperand(VarnodeContext context, Instruction instr,
+					List<Object> list, int opIndex) {
 				Object[] opObjects = instr.getOpObjects(opIndex);
-				for (int indexOpObj = 0; indexOpObj < opObjects.length; indexOpObj++) {
-					if (!(opObjects[indexOpObj] instanceof Register)) {
+				for (Object opObject : opObjects) {
+					if (!(opObject instanceof Register)) {
 						continue;
 					}
-					Register reg = (Register) opObjects[indexOpObj];
+					Register reg = (Register) opObject;
 
 					// if operand has a single register and this isn't it
 					if (singleRegister != null && !reg.equals(singleRegister)) {
 						continue;
 					}
-					
+
 					// check that the register is on the correct input/output list
 					if (!list.contains(reg)) {
 						continue;
@@ -253,7 +244,7 @@ public class MultiInstructionMemReference extends GhidraScript {
 						continue;
 					}
 					long offset = uval.longValue();
-					
+
 					AddressSpace space = instr.getMinAddress().getAddressSpace();
 					Address addr = space.getTruncatedAddress(offset, true);
 
@@ -264,7 +255,8 @@ public class MultiInstructionMemReference extends GhidraScript {
 				return false;
 			}
 
-			private boolean addSymbolicRefs(boolean input, VarnodeContext context, Instruction instr, List<Object> list) {
+			private boolean addSymbolicRefs(boolean input, VarnodeContext context,
+					Instruction instr, List<Object> list) {
 				// get the value of the single register to see if this is the value desired
 				if (singleRegister == null) {
 					return false;
@@ -273,19 +265,20 @@ public class MultiInstructionMemReference extends GhidraScript {
 				if (!list.contains(singleRegister)) {
 					return false;
 				}
-			    Varnode registerVarnodeValue = context.getRegisterVarnodeValue(singleRegister);
-			    if (!context.isSymbol(registerVarnodeValue) && !registerVarnodeValue.isRegister()) {
-			    	return false;
-			    }
+				Varnode registerVarnodeValue = context.getRegisterVarnodeValue(singleRegister);
+				if (!context.isSymbol(registerVarnodeValue) && !registerVarnodeValue.isRegister()) {
+					return false;
+				}
 				Address symAddr = registerVarnodeValue.getAddress();
 				if (symAddr == context.BAD_ADDRESS) {
 					return false;
 				}
-				
+
 				String valStr = "";
 				if (registerVarnodeValue.isRegister()) {
 					valStr = context.getRegister(registerVarnodeValue).toString();
-				} else {
+				}
+				else {
 					// is an offset from a space
 					String name = symAddr.getAddressSpace().getName();
 					BigInteger offset = symAddr.getOffsetAsBigInteger();
@@ -293,20 +286,19 @@ public class MultiInstructionMemReference extends GhidraScript {
 				}
 				Address lastSetLocation = context.getLastSetLocation(singleRegister, null);
 
-				
 				String comment = instr.getComment(Instruction.EOL_COMMENT);
 				if (comment == null) {
 					comment = "";
 				}
-				
+
 				String inoutChar = (input ? " " : "\'");
 				String lastStr = (lastSetLocation != null ? " @" + lastSetLocation : "");
-				
-				String markup = singleRegister+inoutChar+"= "+ valStr + lastStr;
-				if (comment.replace('\'',' ').contains(markup.replace('\'',' '))) {
+
+				String markup = singleRegister + inoutChar + "= " + valStr + lastStr;
+				if (comment.replace('\'', ' ').contains(markup.replace('\'', ' '))) {
 					return false;
 				}
-				comment = (comment.trim().length()==0 ? markup : comment + "\n" + markup);
+				comment = (comment.trim().length() == 0 ? markup : comment + "\n" + markup);
 				instr.setComment(Instruction.EOL_COMMENT, comment);
 				return false;
 			}
@@ -348,14 +340,15 @@ public class MultiInstructionMemReference extends GhidraScript {
 					inputObjects = instr.getInputObjects();
 					resultObjects = instr.getResultObjects();
 					registerInOut = checkRegisterInOut(singleRegister, inputObjects, resultObjects);
+					loadStore = checkLoadStore(instr.getPcode());
 				}
-				
+
 				// if the instruction attempting to markup is in the delayslot, backup an instruction
 				if (instr != null && instr.isInDelaySlot()) {
 					instr = instr.getPrevious();
 					if (instr != null) {
 						curInstrloc = instr.getMinAddress();
-						targetInDelaySlot  = true;
+						targetInDelaySlot = true;
 					}
 				}
 
@@ -371,14 +364,24 @@ public class MultiInstructionMemReference extends GhidraScript {
 		}
 	}
 
+	private boolean checkLoadStore(PcodeOp[] pcode) {
+		for (PcodeOp pcodeOp : pcode) {
+			int opcode = pcodeOp.getOpcode();
+			if (opcode == PcodeOp.LOAD || opcode == PcodeOp.STORE) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private boolean checkRegisterInOut(Register reg, Object[] in, Object[] out) {
 		if (reg == null || in == null || out == null) {
 			return false;
 		}
-		
+
 		List<Object> inList = Arrays.asList(in);
 		List<Object> outList = Arrays.asList(out);
-		
+
 		return inList.contains(reg) && outList.contains(reg);
 	}
 
@@ -394,7 +397,7 @@ public class MultiInstructionMemReference extends GhidraScript {
 			if (instruction == null) {
 				return;
 			}
-		}		
+		}
 		if (opIndex == -1) {
 			for (int i = 0; i < instruction.getNumOperands(); i++) {
 				int opType = instruction.getOperandType(i);
@@ -408,13 +411,13 @@ public class MultiInstructionMemReference extends GhidraScript {
 		if (opIndex == -1) {
 			opIndex = instruction.getNumOperands() - 1;
 		}
-		
+
 		// check if it already has the reference
-	    Reference[] referencesFrom = instruction.getReferencesFrom(); 
+		Reference[] referencesFrom = instruction.getReferencesFrom();
 		boolean hasRef = Arrays.stream(referencesFrom).anyMatch(p -> p.getToAddress().equals(addr));
-	    if (hasRef) {
-	    	return;
-	    }
+		if (hasRef) {
+			return;
+		}
 
 		if (opIndex == -1) {
 			instruction.addMnemonicReference(addr, RefType.DATA, SourceType.ANALYSIS);

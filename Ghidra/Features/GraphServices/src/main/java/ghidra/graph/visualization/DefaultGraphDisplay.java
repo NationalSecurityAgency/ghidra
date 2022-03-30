@@ -37,7 +37,6 @@ import org.jungrapht.visualization.layout.algorithms.LayoutAlgorithm;
 import org.jungrapht.visualization.layout.algorithms.util.InitialDimensionFunction;
 import org.jungrapht.visualization.layout.model.LayoutModel;
 import org.jungrapht.visualization.layout.model.Point;
-import org.jungrapht.visualization.renderers.Renderer.VertexLabel.Position;
 import org.jungrapht.visualization.selection.MutableSelectedState;
 import org.jungrapht.visualization.transform.*;
 import org.jungrapht.visualization.transform.shape.MagnifyImageLensSupport;
@@ -71,24 +70,6 @@ import resources.Icons;
 
 /**
  * Delegates to a {@link VisualizationViewer} to draw a graph visualization
- * 
- * <P>This graph uses the following properties:
- * <UL>
- *  <LI>selectedVertexColor - hex color using '0x' or '#', with 6 digits
- *  </LI>
- *  <LI>selectedEdgeColor - hex color using '0x' or '#', with 6 digits
- *  </LI>
- *  <LI>displayVerticesAsIcons - if true, shapes will be used to draw vertices based upon 
- *      {@link GhidraIconCache}; false, then vertex shapes will be created from 
- *      {@link ProgramGraphFunctions#getVertexShape(Attributed)}
- *  </LI>
- *  <LI>vertexLabelPosition - see {@link Position}
- *  </LI>
- *  <LI>initialLayoutAlgorithm - the name of the layout algorithm to be used for the initial 
- *      graph layout
- *  </LI>
- * </UL>
- * 
  */
 public class DefaultGraphDisplay implements GraphDisplay {
 
@@ -125,9 +106,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	private final DefaultGraphDisplayComponentProvider componentProvider;
 
 	/**
-	 * Whether to ensure the focused vertex is visible, scrolling if necessary
-	 * the visualization in order to center the selected vertex
-	 * or the center of the set of selected vertices
+	 * Whether to ensure the focused vertex is visible, scrolling if necessary the visualization in
+	 * order to center the selected vertex or the center of the set of selected vertices
 	 */
 	private boolean ensureVertexIsVisible = false;
 
@@ -150,9 +130,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 */
 	private final GraphJobRunner jobRunner = new GraphJobRunner();
 
-	/**
-	 * a satellite view that shows in the lower left corner as a birds-eye view of the graph display
-	 */
 	private final SatelliteVisualizationViewer<AttributedVertex, AttributedEdge> satelliteViewer;
 
 	private FilterDialog filterDialog;
@@ -299,9 +276,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.build();
 	}
 
-	/**
-	 * create the highlighters ({@code Paintable}s to show which vertices have been selected or focused)
-	 */
 	private void buildHighlighers() {
 
 		viewer.removePostRenderPaintable(multiSelectedVertexPaintable);
@@ -358,10 +332,10 @@ public class DefaultGraphDisplay implements GraphDisplay {
 					((AbstractButton) context.getSourceObject()).isSelected())
 				.buildAndInstallLocal(componentProvider);
 
-		this.ensureVertexIsVisible = true;  // since we intialized action to selected
+		this.ensureVertexIsVisible = true;  // since we initialized action to selected
 
-		// create a toggle for enabling 'free-form' selection: selection is
-		// inside of a traced shape instead of a rectangle
+		// create a toggle for enabling 'free-form' selection: selection is inside of a traced
+		// shape instead of a rectangle
 		new ToggleActionBuilder("Free-Form Selection", ACTION_OWNER)
 				.toolBarIcon(DefaultDisplayGraphIcons.LASSO_ICON)
 				.description("Trace Free-Form Shape to select multiple vertices (CTRL-click-drag)")
@@ -594,9 +568,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		}
 	}
 
-	/**
-	 * Group the selected vertices into one vertex that represents them all
-	 */
 	private void groupSelectedVertices() {
 		AttributedVertex vertex = graphCollapser.groupSelectedVertices();
 		if (vertex != null) {
@@ -615,9 +586,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	/**
-	 * Ungroup the selected vertices. If the focusedVertex is no longer
-	 * in the graph, null it. This will happen if the focusedVertex was
-	 * the GroupVertex
+	 * Ungroup the selected vertices. If the focusedVertex is no longer in the graph, null it. This
+	 * will happen if the focusedVertex was the GroupVertex
 	 */
 	private void ungroupSelectedVertices() {
 		graphCollapser.ungroupSelectedVertices();
@@ -678,18 +648,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	// select all the edges that connect the supplied vertices
 	private void selectEdgesConnecting(Collection<AttributedVertex> vertices) {
-		viewer.getSelectedEdgeState()
-				.select(
-					graph.edgeSet()
-							.stream()
-							.filter(
-								e -> {
-									AttributedVertex source = graph.getEdgeSource(e);
-									AttributedVertex target = graph.getEdgeTarget(e);
-									return vertices.contains(source) && vertices.contains(target);
-								})
-							.collect(Collectors.toSet()));
-
+		Set<AttributedEdge> edges = graph.edgeSet()
+				.stream()
+				.filter(
+					e -> {
+						AttributedVertex source = graph.getEdgeSource(e);
+						AttributedVertex target = graph.getEdgeTarget(e);
+						return vertices.contains(source) && vertices.contains(target);
+					})
+				.collect(Collectors.toSet());
+		viewer.getSelectedEdgeState().select(edges);
 	}
 
 	private boolean isAllSelected(Set<AttributedVertex> vertices) {
@@ -919,9 +887,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		viewer.getSelectedVertexState().select(Set.of(source, target));
 	}
 
-	/**
-	 * connect the selection state to to the visualization
-	 */
 	private void connectSelectionStateListeners() {
 		switchableSelectionListener = new SwitchableSelectionItemListener();
 		viewer.getSelectedVertexState().addItemListener(switchableSelectionListener);
@@ -1188,7 +1153,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	/**
-	 * cause the graph to be centered and scaled nicely for the view window
+	 * Cause the graph to be centered and scaled nicely for the view window
 	 */
 	public void centerAndScale() {
 		viewer.scaleToLayout();
@@ -1309,7 +1274,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			}
 		});
 
-		// We control tooltips with the PopupRegulator.  Use null values to disable the default 
+		// We control tooltips with the PopupRegulator.  Use null values to disable the default
 		// tool tip mechanism
 		vv.setVertexToolTipFunction(v -> null);
 		vv.setEdgeToolTipFunction(e -> null);
@@ -1460,9 +1425,14 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		});
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + " " + displayId;
+	}
+
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	// class passed to the PopupRegulator to help construct info popups for the graph
 	private class GraphDisplayPopupSource implements PopupSource<AttributedVertex, AttributedEdge> {
@@ -1476,8 +1446,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		@Override
 		public ToolTipInfo<?> getToolTipInfo(MouseEvent event) {
 
-			// check for a vertex hit first, otherwise, we get edge hits when we are hovering 
-			// over a vertex, due to how edges are interpreted as existing all the way to the 
+			// check for a vertex hit first, otherwise, we get edge hits when we are hovering
+			// over a vertex, due to how edges are interpreted as existing all the way to the
 			// center point of a vertex
 			AttributedVertex vertex = getVertex(event);
 			if (vertex != null) {
@@ -1531,8 +1501,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	/**
-	 * Item listener for selection changes in the graph with the additional 
-	 * capability of being able to disable the listener without removing it. 
+	 * Item listener for selection changes in the graph with the additional
+	 * capability of being able to disable the listener without removing it.
 	 */
 	private class SwitchableSelectionItemListener implements ItemListener {
 		boolean enabled = true;
@@ -1545,9 +1515,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		}
 
 		private void run(ItemEvent e) {
-			// there was a change in the set of selected vertices.
-			// if the focused vertex is null, set it from one of the selected
-			// vertices
+			// There was a change in the set of selected vertices.  If the focused vertex is null,
+			// set it from one of the selected vertices
 			if (e.getStateChange() == ItemEvent.SELECTED) {
 				Set<AttributedVertex> selectedVertices = getSelectedVertices();
 				notifySelectionChanged(new HashSet<>(selectedVertices));

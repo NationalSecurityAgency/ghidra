@@ -165,23 +165,36 @@ public class FunctionDB extends DatabaseObject implements Function {
 		}
 	}
 
+	private List<Address> getFunctionThunkAddresses(long functionId, boolean recursive) {
+		List<Long> functionIds = manager.getThunkFunctionIds(functionId);
+		if (functionIds == null) {
+			return null;
+		}
+		SymbolTable symMgr = program.getSymbolTable();
+		List<Address> thunkAddrList = new ArrayList<>();
+		for (long id : functionIds) {
+			Symbol s = symMgr.getSymbol(id);
+			thunkAddrList.add(s.getAddress());
+			if (recursive) {
+				List<Address> thunkAddrs = getFunctionThunkAddresses(id, true);
+				if (thunkAddrs != null) {
+					thunkAddrList.addAll(thunkAddrs);
+				}
+			}
+		}
+		return thunkAddrList;
+	}
+
 	@Override
-	public Address[] getFunctionThunkAddresses() {
+	public Address[] getFunctionThunkAddresses(boolean recursive) {
 		manager.lock.acquire();
 		try {
 			checkIsValid();
-			List<Long> functionIds = manager.getThunkFunctionIds(key);
-			if (functionIds == null) {
+			List<Address> thunkAddrList = getFunctionThunkAddresses(key, recursive);
+			if (thunkAddrList == null) {
 				return null;
 			}
-			SymbolTable symMgr = program.getSymbolTable();
-			Address[] addresses = new Address[functionIds.size()];
-			int index = 0;
-			for (long functionId : functionIds) {
-				Symbol s = symMgr.getSymbol(functionId);
-				addresses[index++] = s.getAddress();
-			}
-			return addresses;
+			return thunkAddrList.toArray(new Address[thunkAddrList.size()]);
 		}
 		finally {
 			manager.lock.release();

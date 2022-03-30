@@ -51,6 +51,12 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 			return new NameTypePair(parameter.name, parameter.type);
 		}
 
+		public static NameTypePair fromParameter(ParameterDescription<?> parameter,
+				Object context) {
+			String contextName = addContext(parameter.name, context);
+			return new NameTypePair(contextName, parameter.type);
+		}
+
 		public static NameTypePair fromString(String name) throws ClassNotFoundException {
 			String[] parts = name.split(",", 2);
 			if (parts.length != 2) {
@@ -99,6 +105,7 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 	// TODO: Not sure this is the best keying, but I think it works.
 	private Map<NameTypePair, Object> memorized = new HashMap<>();
 	private Map<String, ?> arguments;
+	private Object currentContext;
 
 	public DebuggerMethodInvocationDialog(PluginTool tool, String title, String buttonText,
 			Icon buttonIcon) {
@@ -110,7 +117,7 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 	}
 
 	protected Object computeMemorizedValue(ParameterDescription<?> parameter) {
-		return memorized.computeIfAbsent(NameTypePair.fromParameter(parameter),
+		return memorized.computeIfAbsent(NameTypePair.fromParameter(parameter, currentContext),
 			ntp -> parameter.defaultValue);
 	}
 
@@ -187,7 +194,7 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 		return paramEditors.keySet()
 				.stream()
 				.collect(Collectors.toMap(param -> param.name,
-					param -> memorized.get(NameTypePair.fromParameter(param))));
+					param -> memorized.get(NameTypePair.fromParameter(param, currentContext))));
 	}
 
 	public Map<String, ?> getArguments() {
@@ -195,10 +202,12 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 	}
 
 	public <T> void setMemorizedArgument(String name, Class<T> type, T value) {
+		name = addContext(name, currentContext);
 		memorized.put(new NameTypePair(name, type), value);
 	}
 
 	public <T> T getMemorizedArgument(String name, Class<T> type) {
+		name = addContext(name, currentContext);
 		return type.cast(memorized.get(new NameTypePair(name, type)));
 	}
 
@@ -206,7 +215,7 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 	public void propertyChange(PropertyChangeEvent evt) {
 		PropertyEditor editor = (PropertyEditor) evt.getSource();
 		ParameterDescription<?> param = paramEditors.getKey(editor);
-		memorized.put(NameTypePair.fromParameter(param), editor.getValue());
+		memorized.put(NameTypePair.fromParameter(param, currentContext), editor.getValue());
 	}
 
 	public void writeConfigState(SaveState saveState) {
@@ -235,5 +244,17 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 				Msg.error(this, "Error restoring memorized parameter " + name, e);
 			}
 		}
+	}
+
+	public Object getCurrentContext() {
+		return currentContext;
+	}
+
+	public void setCurrentContext(Object currentContext) {
+		this.currentContext = currentContext;
+	}
+
+	static private String addContext(String name, Object context) {
+		return context == null ? name : name + ":" + context;
 	}
 }

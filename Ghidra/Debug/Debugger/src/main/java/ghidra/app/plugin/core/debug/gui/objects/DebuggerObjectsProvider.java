@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.gui.objects;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.MouseEvent;
+import java.io.PrintWriter;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.Map.Entry;
@@ -37,14 +38,18 @@ import docking.WindowPosition;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
+import docking.widgets.OptionDialog;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel;
 import docking.widgets.tree.GTree;
+import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.objects.actions.*;
 import ghidra.app.plugin.core.debug.gui.objects.components.*;
+import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
+import ghidra.app.script.*;
 import ghidra.app.services.*;
 import ghidra.async.*;
 import ghidra.dbg.*;
@@ -57,21 +62,23 @@ import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.util.DebuggerCallbackReorderer;
 import ghidra.dbg.util.PathUtils;
+import ghidra.framework.model.Project;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.HelpLocation;
-import ghidra.util.Swing;
+import ghidra.util.*;
 import ghidra.util.datastruct.PrivatelyQueuedListener;
 import ghidra.util.table.GhidraTable;
+import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 public class DebuggerObjectsProvider extends ComponentProviderAdapter
@@ -253,6 +260,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private boolean ignoreState = false;
 
 	Set<TargetConfigurable> configurables = new HashSet<>();
+	private String lastMethod = "";
+	Map<String, GhidraScript> scripts = new HashMap<>();
+	Map<String, String> scriptNames = new HashMap<>();
 
 	public DebuggerObjectsProvider(final DebuggerObjectsPlugin plugin, DebuggerObjectModel model,
 			ObjectContainer container, boolean asTree) throws Exception {
@@ -859,6 +869,22 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		return result != null;
 	}
 
+	public boolean hasInstance(ActionContext context, Class<? extends TargetObject> clazz) {
+		TargetObject object = this.getObjectFromContext(context);
+		if (object == null) {
+			return false;
+		}
+		if (isLocalOnly()) {
+			return clazz.isInstance(object);
+		}
+		for (Object attr : object.getCachedAttributes().values()) {
+			if (clazz.isInstance(attr)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public TargetObject getAncestor(ActionContext context, Class<? extends TargetObject> clazz) {
 		TargetObject object = this.getObjectFromContext(context);
 		TargetObject ref = object;
@@ -1010,6 +1036,22 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.buildAndInstallLocal(this);
 		
 		groupTargetIndex++;
+	
+		new ActionBuilder("Method", plugin.getName())
+			.keyBinding("M")
+			.menuPath("Exec &Method")
+			.menuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
+			.menuIcon(AbstractDetachAction.ICON)
+			.popupMenuPath("Exec &Method")
+			.popupMenuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
+			.popupMenuIcon(AbstractDetachAction.ICON)
+			.helpLocation(AbstractAttachAction.help(plugin))
+			.enabledWhen(ctx -> hasInstance(ctx, TargetMethod.class))
+			.onAction(ctx -> performMethod(ctx))
+			.enabled(true)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
 
 		/*
 		new ActionBuilder("AttachAction", plugin.getName())
@@ -1054,8 +1096,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.popupMenuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
 			.popupMenuIcon(AbstractKillAction.ICON)
 			.helpLocation(AbstractKillAction.help(plugin))
-			.enabledWhen(ctx -> isInstance(ctx, TargetKillable.class) && isStopped(ctx))
-			.popupWhen(ctx -> isInstance(ctx, TargetKillable.class) && isStopped(ctx))
+			.enabledWhen(ctx -> isInstance(ctx, TargetKillable.class) && (isStopped(ctx) || !isAccessConditioned(ctx)))
+			.popupWhen(ctx -> isInstance(ctx, TargetKillable.class) && (isStopped(ctx) || !isAccessConditioned(ctx)))
 			.onAction(ctx -> performKill(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
@@ -1253,6 +1295,21 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.buildAndInstallLocal(this);
 		
 		groupTargetIndex++;
+		
+		new ActionBuilder("GoTo", plugin.getName())
+			.keyBinding("G")
+			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.popupMenuPath("&GoTo")
+			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.helpLocation(AbstractToggleAction.help(plugin))
+			.enabledWhen(ctx -> isInstance(ctx, TargetObject.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetObject.class))
+			.onAction(ctx -> performNavigate(ctx))
+			.enabled(false)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
+
 	
 		displayAsTreeAction = new DisplayAsTreeAction(tool, plugin.getName(), this);
 		displayAsTableAction = new DisplayAsTableAction(tool, plugin.getName(), this);
@@ -1381,21 +1438,15 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public void performLaunch(ActionContext context) {
 		performAction(context, true, TargetLauncher.class, launcher -> {
-			if (currentProgram != null) {
-				// TODO: A generic or pluggable way of deriving the default arguments
-				String path = currentProgram.getExecutablePath();
-				String cmdlineArgs = launchDialog.getMemorizedArgument(
-					TargetCmdLineLauncher.CMDLINE_ARGS_NAME, String.class);
-				if (path != null) {
-					if (cmdlineArgs == null) {
-						launchDialog.setMemorizedArgument(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
-							String.class, path);
-					}
-					else if (!cmdlineArgs.startsWith(path)) {
-						launchDialog.setMemorizedArgument(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
-							String.class, path);
-					}
-				}
+			String argsKey = TargetCmdLineLauncher.CMDLINE_ARGS_NAME;
+			// TODO: A generic or pluggable way of deriving the default arguments
+			String path = (currentProgram != null) ? currentProgram.getExecutablePath() : null;
+			launchDialog.setCurrentContext(path);
+			String cmdlineArgs = launchDialog.getMemorizedArgument(argsKey, String.class);
+			if (cmdlineArgs == null) {
+				cmdlineArgs = path;
+				launchDialog.setMemorizedArgument(argsKey, String.class,
+					cmdlineArgs);
 			}
 			Map<String, ?> args = launchDialog.promptArguments(launcher.getParameters());
 			if (args == null) {
@@ -1431,6 +1482,89 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't re-attach"));
 	}
 
+	public void performMethod(ActionContext context) {
+		TargetObject obj = getObjectFromContext(context);
+		List<String> list = new ArrayList<>();
+		Map<String, ?> attributes = obj.getCachedAttributes();
+		for (Entry<String, ?> entry : attributes.entrySet()) {
+			if (entry.getValue() instanceof TargetMethod) {
+				list.add(entry.getKey());
+			}
+		}
+		String choice = OptionDialog.showInputChoiceDialog(getComponent(), "Methods", "Methods", list.toArray(new String [] {}), lastMethod, OptionDialog.QUESTION_MESSAGE);
+		if (choice != null) {
+			TargetMethod method = (TargetMethod) attributes.get(choice);
+			Map<String, ?> args = launchDialog.promptArguments(method.getParameters());
+			if (args != null) {
+				String script = (String) args.get("Script");
+				if (script != null && !script.isEmpty()) {
+					mapScript(args);
+				}
+				method.invoke(args);
+				if (!choice.equals("unload")) {
+					lastMethod = choice;
+				}
+			}
+		}
+	}
+
+	private void mapScript(Map<String, ?> args) {		
+		String name = (String) args.get("Name");
+		String scriptName = (String) args.get("Script");
+		if (name.isEmpty() || scriptName.isEmpty()) {
+			return;
+		}
+					
+		ResourceFile sourceFile = GhidraScriptUtil.findScriptByName(scriptName);
+		if (sourceFile == null) {
+			Msg.error(this, "Couldn't find script");
+			return;
+		}
+		GhidraScriptProvider provider = GhidraScriptUtil.getProvider(sourceFile);
+		if (provider == null) {
+			Msg.error(this, "Couldn't find script provider");
+			return;
+		}
+		
+		PrintWriter writer = consoleService.getStdOut();
+		GhidraScript script;
+		try {
+			script = provider.getScriptInstance(sourceFile, writer);
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+			Msg.error(this, e.getMessage());
+			return;
+		}
+		scripts.put(name, script);
+		scriptNames.put(name, scriptName);
+	}
+
+	private void fireScript(String key, String [] args) {			
+		GhidraScript script = scripts.get(key);
+		String scriptName = scriptNames.get(key);
+		if (script == null || scriptName == null) {
+			return;
+		}
+			
+		PluginTool tool = plugin.getTool();
+		Project project = tool.getProject();
+
+		ProgramLocation currentLocation = listingService.getCurrentLocation();
+		ProgramSelection currentSelection = listingService.getCurrentSelection();
+		
+		GhidraState state = new GhidraState(tool, project, currentProgram,
+			currentLocation, currentSelection, null);
+		
+		PrintWriter writer = consoleService.getStdOut();
+		TaskMonitor monitor = TaskMonitor.DUMMY;
+		script.set(state, monitor, writer);
+
+		try {
+			script.runScript(scriptName, args);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+		
 	public void startRecording(TargetProcess targetObject, boolean prompt) {
 		TraceRecorder rec = modelService.getRecorder(targetObject);
 		if (rec != null) {
@@ -1515,11 +1649,27 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public void performSetBreakpoint(ActionContext context) {
+		setText(context);
 		performAction(context, false, TargetBreakpointSpecContainer.class, container -> {
 			breakpointDialog.setContainer(container);
 			tool.showDialog(breakpointDialog);
 			return AsyncUtils.NIL;
 		}, "Couldn't set breakpoint");
+	}
+
+	private void setText(ActionContext context) {
+		breakpointDialog.setText("");
+		TargetObject obj = getObjectFromContext(context);
+		Object key = obj.getCachedAttribute(TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME);
+		if (key != null) {
+			breakpointDialog.setText(key.toString());
+		}
+		else {
+			if (obj instanceof DummyTargetObject) {
+				DummyTargetObject dto = (DummyTargetObject) obj;
+				breakpointDialog.setText(dto.getValue().toString());
+			}
+		}
 	}
 
 	public void performToggle(ActionContext context) {
@@ -1549,6 +1699,15 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}, "Couldn't configure one or more options");
 	}
 
+	public void performNavigate(ActionContext context) {
+		performAction(context, false, TargetObject.class, t -> {
+			if (t != null) {
+				navigateToSelectedObject(t, null);
+			}
+			return AsyncUtils.NIL;
+		}, "Couldn't navigate");
+	}
+
 	public void initiateConsole(ActionContext context) {
 		performAction(context, false, TargetInterpreter.class, interpreter -> {
 			getPlugin().showConsole(interpreter);
@@ -1556,6 +1715,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}, "Couldn't show interpreter");
 	}
 
+	public boolean isAccessConditioned(ActionContext context) {
+		TargetObject object = this.getObjectFromContext(context);
+		if (object == null) {
+			return false;
+		}
+		return object instanceof TargetAccessConditioned;
+	}
+	
 	public boolean isStopped(ActionContext context) {
 		TargetObject object = this.getObjectFromContext(context);
 		if (object == null) {
@@ -1606,9 +1773,21 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}
 
 		@Override
-		public void consoleOutput(TargetObject console, Channel channel, String out) {
-			//getPlugin().showConsole((TargetInterpreter) console);
-			System.err.println("consoleOutput: " + out);
+		public void consoleOutput(TargetObject console, Channel channel, byte [] bytes) {
+			String ret = new String(bytes);
+			if (ret.contains(TargetMethod.REDIRECT)) {
+				String[] split = ret.split(TargetMethod.REDIRECT);
+				String key = split[0];
+				String val = split[1];
+				GhidraScript script = scripts.get(key);
+				if (script != null) {
+					String [] args = new String[1];
+					args[0] = val;
+					fireScript(key, args);
+					return;
+				}
+			}
+			System.err.println("consoleOutput: " + new String(ret));
 		}
 
 		@AttributeCallback(TargetObject.DISPLAY_ATTRIBUTE_NAME)
@@ -1844,4 +2023,68 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		return listener.queue.in;
 	}
 
+	public void navigateToSelectedObject(TargetObject object, Object value) {
+		if (listingService == null || listingService == null) {
+			return;
+		}
+		if (value == null) {
+			value =
+				object.getCachedAttribute(TargetBreakpointLocation.ADDRESS_ATTRIBUTE_NAME);
+		}
+		if (value == null) {
+			value = object.getCachedAttribute(TargetObject.PREFIX_INVISIBLE + "range");
+		}
+		if (value == null) {
+			value = object.getCachedAttribute(TargetObject.VALUE_ATTRIBUTE_NAME);
+		}
+		if (value == null) {
+			return;
+		}
+
+		Address addr = null;
+		if (value instanceof Address) {
+			addr = (Address) value;
+		}
+		else if (value instanceof AddressRangeImpl) {
+			AddressRangeImpl range = (AddressRangeImpl) value;
+			addr = range.getMinAddress();
+		}
+		else if (value instanceof Long) {
+			Long lval = (Long) value;
+			addr = object.getModel().getAddress("ram", lval);
+		}
+		else if (value instanceof String) {
+			String sval = (String) value;
+			addr = stringToAddress(object, addr, sval);
+		}
+		if (addr != null) {
+			TraceRecorder recorder = modelService.getRecorderForSuccessor(object);
+			if (recorder == null) {
+				recorder = modelService.getRecorder(currentTrace);
+				if (recorder == null) {
+					return;
+				}
+			}
+			DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
+			Address traceAddr = memoryMapper.targetToTrace(addr);
+			listingService.goTo(traceAddr, true);
+		}
+	}
+
+	private Address stringToAddress(TargetObject selectedObject, Address addr, String sval) {
+		Integer base = 16;
+		if (selectedObject instanceof TargetConfigurable) {
+			TargetConfigurable configurable = (TargetConfigurable) selectedObject;
+			base =
+				(Integer) configurable.getCachedAttribute(TargetConfigurable.BASE_ATTRIBUTE_NAME);
+		}
+		try {
+			Long lval = Long.parseLong(sval, base);
+			addr = selectedObject.getModel().getAddress("ram", lval);
+		}
+		catch (NumberFormatException nfe) {
+			// IGNORE
+		}
+		return addr;
+	}
 }

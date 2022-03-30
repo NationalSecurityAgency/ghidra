@@ -1344,12 +1344,13 @@ macro th_set_carry_for_asr(op1,shift_count) {
 	Rd0811 = Rd0811 & clearMask;
 }
 
-:bfi^ItCond	Rd0811,Rn0003,thLsbImm,thBitWidth 		is TMode=1 & ItCond & op4=0xf36 & Rn0003; thc1515=0 & Rd0811 & thc0505=0 & thLsbImm & thMsbImm & thBitWidth
+:bfi^ItCond	Rd0811,Rn0003,thLsbImm,thBitWidth 		is TMode=1 & ItCond & op4=0xf36 & Rn0003; thc1515=0 & Rd0811 & thc0505=0 & thLsbImm & thBitWidth
 {
     build ItCond;
-	clearMask:4 = (-1 << (thMsbImm + 1)) | (-1 >> (32 - thLsbImm));
-	bits:4 = (Rn0003 << thLsbImm) & ~clearMask;
-	Rd0811 = (Rd0811 & clearMask) | bits;
+    vmask:4 = (1 << thBitWidth) - 1;
+    clear:4 = ~(vmask << thLsbImm);
+    bits:4 = (Rn0003 & vmask) << thLsbImm;
+    Rd0811 = (Rd0811 & clear) | bits;
 }
 
 @endif # VERSION_6T2 || VERSION_7

@@ -69,6 +69,7 @@ public interface TargetBreakpointSpec extends TargetObject, /*@Transitional*/ Ta
 	String CONTAINER_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "container";
 	String EXPRESSION_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "expression";
 	String KINDS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "kinds";
+	String AS_BPT_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "bpt";
 
 	/**
 	 * Get the container of this breakpoint.

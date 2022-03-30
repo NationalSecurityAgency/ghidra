@@ -1523,8 +1523,8 @@ void PrintC::pushEnumConstant(uintb val,const TypeEnum *ct,
 /// If so push the string, if not return \b false to indicate a token was not pushed
 /// \param val is the value of the given constant pointer
 /// \param ct is the pointer data-type attached to the value
-/// \param vn is the Varnode holding the value
-/// \param op is the PcodeOp using the value
+/// \param vn is the Varnode holding the value (may be null)
+/// \param op is the PcodeOp using the value (may be null)
 /// \return \b true if a quoted string was pushed to the RPN stack
 bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *vn,const PcodeOp *op)
 
@@ -1532,7 +1532,10 @@ bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *
   if (val==0) return false;
   AddrSpace *spc = glb->getDefaultDataSpace();
   uintb fullEncoding;
-  Address stringaddr = glb->resolveConstant(spc,val,ct->getSize(),op->getAddr(),fullEncoding);
+  Address point;
+  if (op != (const PcodeOp *)0)
+    point = op->getAddr();
+  Address stringaddr = glb->resolveConstant(spc,val,ct->getSize(),point,fullEncoding);
   if (stringaddr.isInvalid()) return false;
   if (!glb->symboltab->getGlobalScope()->isReadOnly(stringaddr,1,Address()))
     return false;	     // Check that string location is readonly

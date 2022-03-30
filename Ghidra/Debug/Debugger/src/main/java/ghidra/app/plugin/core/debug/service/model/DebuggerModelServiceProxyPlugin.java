@@ -161,6 +161,9 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		@Override
 		public void elementAdded(DebuggerObjectModel element) {
 			modelListeners.fire.elementAdded(element);
+			if (currentModel == null) {
+				activateModel(element);
+			}
 		}
 
 		@Override

@@ -27,7 +27,7 @@ import resources.icons.EmptyIcon;
 
 /**
  * Creates a panel that displays an {@link Image}. Users may pan the image as desired and zoom the
- * image according to specific zoom levels. 
+ * image according to specific zoom levels.
  */
 public class ImagePanel extends JPanel {
 
@@ -40,7 +40,7 @@ public class ImagePanel extends JPanel {
 		// neutral
 		1.0f,
 		// expanding scales
-		1.5f, 2f, 2.5f, 3f, 4f, 5f, 6f, 7f, 8f, 9f, 10f 
+		1.5f, 2f, 2.5f, 3f, 4f, 5f, 6f, 7f, 8f, 9f, 10f
 		
 		// @formatter:on
 	};
@@ -127,6 +127,7 @@ public class ImagePanel extends JPanel {
 
 	/**
 	 * Create an NavigableImagePanel with the specified image
+	 * @param image the image
 	 */
 	public ImagePanel(Image image) {
 		initUI();
@@ -174,7 +175,7 @@ public class ImagePanel extends JPanel {
 		firePropertyChange(IMAGE_PROPERTY, oldImage, this.image);
 	}
 
-	/** 
+	/**
 	 * Get the currently-displayed image
 	 * @return the current image
 	 */
@@ -183,7 +184,7 @@ public class ImagePanel extends JPanel {
 	}
 
 	/**
-	 * Set the background color of the panel. If the specified color is null, the 
+	 * Set the background color of the panel. If the specified color is null, the
 	 * default color for panel backgrounds is used.
 	 * @param color the new background color
 	 */
@@ -202,12 +203,24 @@ public class ImagePanel extends JPanel {
 		return imagePanel.getBackground();
 	}
 
+	/**
+	 * Unused
+	 * @param text unused
+	 * @deprecated unused
+	 */
+	@Deprecated(since = "10.2", forRemoval = true) // unused
 	public void setText(String text) {
-		label.setText(text);
+		// unused
 	}
 
+	/**
+	 * Unused
+	 * @return unused
+	 * @deprecated unused
+	 */
+	@Deprecated(since = "10.2", forRemoval = true) // unused
 	public String getText() {
-		return label.getText();
+		return null;
 	}
 
 	/**
@@ -219,11 +232,11 @@ public class ImagePanel extends JPanel {
 	}
 
 	/**
-	 * Set the magnification factor of the image. The zoom parameter is aligned to the 
-	 * nearest pre-configured magnification factor, rounding down for zoom factors less than 
+	 * Set the magnification factor of the image. The zoom parameter is aligned to the
+	 * nearest pre-configured magnification factor, rounding down for zoom factors less than
 	 * 1.0, and up for factors greater than 1.0. Zoom factors outside the pre-configured range
-	 * are limited to the nearest range extent.  
-	 * @param zoom
+	 * are limited to the nearest range extent.
+	 * @param zoom the zoom
 	 */
 	public void setZoomFactor(float zoom) {
 
@@ -250,7 +263,7 @@ public class ImagePanel extends JPanel {
 		// idx is now the index for where zoom should be inserted into levels...
 
 		if (idx == 0) {
-			// Smaller zoom factor than our minimum-supported; just provide 
+			// Smaller zoom factor than our minimum-supported; just provide
 			// our minimum-supported
 			return 0;
 		}
@@ -269,17 +282,17 @@ public class ImagePanel extends JPanel {
 		return idx;
 	}
 
-	/** 
-	 * Get the default zoom level
-	 * @return
+	/**
+	 * Get the default zoom factory
+	 * @return the zoom factor
 	 */
 	public float getDefaultZoomFactor() {
 		return defaultZoomFactor;
 	}
 
 	/**
-	 * Set the default zoom level, adhering to the same set of constrains as {@link #setZoomFactor(float)} 
-	 * @param zoom
+	 * Set the default zoom level, adhering to the same set of constrains as {@link #setZoomFactor(float)}
+	 * @param zoom the zoom
 	 * @see #setZoomFactor(float)
 	 * @see #resetZoom()
 	 */
@@ -309,14 +322,14 @@ public class ImagePanel extends JPanel {
 	}
 
 	/**
-	 * Determine if the image can zoom in further based on current magnification levels 
+	 * Determine if the image can zoom in further based on current magnification levels
 	 * @return True if magnification steps are available, false otherwise
 	 */
 	public boolean canZoomIn() {
 		return image != null && zoomLevelIndex < ZOOM_LEVELS.length - 1;
 	}
 
-	/** 
+	/**
 	 * Enlarge the image about the image center
 	 */
 	public void zoomIn() {
@@ -354,7 +367,7 @@ public class ImagePanel extends JPanel {
 	}
 
 	/**
-	 * Determine if the image can zoom out further based on current magnification levels 
+	 * Determine if the image can zoom out further based on current magnification levels
 	 * @return True if (de-)magnification steps are available, false otherwise
 	 */
 
@@ -452,7 +465,7 @@ public class ImagePanel extends JPanel {
 	}
 
 	/**
-	 *	Move the image back to the center. Zoom factor is unmodified. 
+	 *	Move the image back to the center. Zoom factor is unmodified.
 	 */
 	public void resetImageTranslation() {
 		label.resetTranslation();

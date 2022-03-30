@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,15 @@
  */
 package ghidra.app.util.bin.format.objectiveC;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.symbol.Namespace;
-
-import java.util.ArrayList;
-import java.util.List;
+import ghidra.util.Msg;
 
 public abstract class ObjectiveC_MethodList implements StructConverter {
 	private String _className;
@@ -31,7 +32,8 @@ public abstract class ObjectiveC_MethodList implements StructConverter {
 
 	protected List<ObjectiveC_Method> methods = new ArrayList<ObjectiveC_Method>();
 
-	protected ObjectiveC_MethodList(ObjectiveC1_State state, BinaryReader reader, String className) {
+	protected ObjectiveC_MethodList(ObjectiveC1_State state, BinaryReader reader,
+			String className) {
 		this._state = state;
 		this._index = reader.getPointerIndex();
 		this._className = className;
@@ -51,17 +53,23 @@ public abstract class ObjectiveC_MethodList implements StructConverter {
 		_state.beenApplied.add(_index);
 
 		Address address = ObjectiveC1_Utilities.toAddress(_state.program, _index);
+		DataType dt = toDataType();
 		try {
-			ObjectiveC1_Utilities.applyData(_state.program, toDataType(), address);
+			ObjectiveC1_Utilities.applyData(_state.program, dt, address);
 		}
-		catch (Exception e) {}
+		catch (Exception e) {
+			Msg.warn(this, "Could not create " + dt.getName() + " @" + address);
+		}
 
 		try {
 			//creates a symbol on the method list data structure
-			Namespace methodListNamespace = ObjectiveC1_Utilities.createNamespace(_state.program, ObjectiveC1_Constants.NAMESPACE, _className);
-			ObjectiveC1_Utilities.createSymbol(_state.program, methodListNamespace, namespace.getName(), address);
+			Namespace methodListNamespace = ObjectiveC1_Utilities.createNamespace(_state.program,
+				ObjectiveC1_Constants.NAMESPACE, _className);
+			ObjectiveC1_Utilities.createSymbol(_state.program, methodListNamespace,
+				namespace.getName(), address);
 		}
-		catch (Exception e) {}
+		catch (Exception e) {
+		}
 
 		for (ObjectiveC_Method method : getMethods()) {
 			method.applyTo(namespace);

@@ -18,150 +18,68 @@ package ghidra.pcode.exec;
 import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.processors.sleigh.template.OpTpl;
+import ghidra.app.util.pcode.AbstractAppender;
+import ghidra.app.util.pcode.AbstractPcodeFormatter;
 import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
-import ghidra.util.HTMLUtilities;
 
 public class PcodeProgram {
-	protected static String htmlSpan(String cls, String display) {
-		return String.format("<span class=\"%s\">%s</span>", cls,
-			HTMLUtilities.escapeHTML(display));
-	}
+	protected static class MyAppender extends AbstractAppender<String> {
+		protected final PcodeProgram program;
+		protected final StringBuffer buf = new StringBuffer();
 
-	public static String registerToString(Register reg, boolean markup) {
-		if (markup) {
-			return htmlSpan("register", reg.toString());
+		public MyAppender(PcodeProgram program, Language language) {
+			super(language, true);
+			this.program = program;
+			buf.append("<" + program.getHead() + ":\n");
 		}
-		else {
-			return reg.toString();
-		}
-	}
 
-	public static String constToString(Varnode cvn, boolean markup) {
-		String display = String.format("%d:%d", cvn.getOffset(), cvn.getSize());
-		if (markup) {
-			return htmlSpan("constant", display);
+		@Override
+		protected void appendString(String string) {
+			buf.append(string);
 		}
-		else {
-			return display;
-		}
-	}
 
-	public static String uniqueToString(Varnode uvn, boolean markup) {
-		String display = String.format("$U%s:%d",
-			uvn.getAddress().getOffsetAsBigInteger().toString(16), uvn.getSize());
-		if (markup) {
-			return htmlSpan("unique", display);
+		protected void endLine() {
+			buf.append("\n");
 		}
-		else {
-			return display;
-		}
-	}
 
-	public static String addressToString(Varnode avn, boolean markup) {
-		String display = String.format("%s:%d", avn.getAddress().toString(true), avn.getSize());
-		if (markup) {
-			return htmlSpan("address", display);
-		}
-		else {
-			return display;
-		}
-	}
-
-	public static String vnToString(Language language, Varnode vn, boolean markup) {
-		Register reg =
-			language.getRegister(vn.getAddress().getAddressSpace(), vn.getOffset(), vn.getSize());
-		if (reg != null) {
-			return registerToString(reg, markup);
-		}
-		if (vn.isConstant()) {
-			return constToString(vn, markup);
-		}
-		if (vn.isUnique()) {
-			return uniqueToString(vn, markup);
-		}
-		return addressToString(vn, markup);
-	}
-
-	public static String spaceToString(Language language, Varnode vn, boolean markup) {
-		if (!vn.isConstant()) {
-			throw new IllegalArgumentException("space id must be a constant varnode");
-		}
-		AddressSpace space = language.getAddressFactory().getAddressSpace((int) vn.getOffset());
-		String display = space == null ? "<null>" : space.getName();
-		if (markup) {
-			return htmlSpan("space", display);
-		}
-		else {
-			return display;
-		}
-	}
-
-	public static String useropToString(Language language, Varnode vn, boolean markup,
-			Map<Integer, String> useropNames) {
-		if (!vn.isConstant()) {
-			throw new IllegalArgumentException("userop index must be a constant varnode");
-		}
-		String display = "\"" + useropNames.get((int) vn.getOffset()) + "\"";
-		if (markup) {
-			return htmlSpan("userop", display);
-		}
-		else {
-			return display;
-		}
-	}
-
-	public static String opCodeToString(Language language, int op, boolean markup) {
-		if (markup) {
-			return htmlSpan("op", PcodeOp.getMnemonic(op));
-		}
-		else {
-			return PcodeOp.getMnemonic(op);
-		}
-	}
-
-	public static String opToString(Language language, PcodeOp op, boolean markup,
-			Map<Integer, String> useropNames) {
-		StringBuilder sb = new StringBuilder();
-		Varnode output = op.getOutput();
-		if (output != null) {
-			sb.append(vnToString(language, output, markup));
-			sb.append(" = ");
-		}
-		int opcode = op.getOpcode();
-		sb.append(opCodeToString(language, opcode, markup));
-		boolean isDeref = opcode == PcodeOp.LOAD || opcode == PcodeOp.STORE;
-		boolean isUserop = opcode == PcodeOp.CALLOTHER;
-		int i;
-		if (isDeref) {
-			sb.append(' ');
-			sb.append(spaceToString(language, op.getInput(0), markup));
-			sb.append('(');
-			sb.append(vnToString(language, op.getInput(1), markup));
-			sb.append(')');
-			i = 2;
-		}
-		else if (isUserop) {
-			sb.append(' ');
-			sb.append(useropToString(language, op.getInput(0), markup, useropNames));
-			i = 1;
-		}
-		else {
-			i = 0;
-		}
-		for (; i < op.getNumInputs(); i++) {
-			if (i != 0) {
-				sb.append(',');
+		@Override
+		protected String stringifyUseropUnchecked(Language language, int id) {
+			String name = super.stringifyUseropUnchecked(language, id);
+			if (name != null) {
+				return name;
 			}
-			sb.append(' ');
-			sb.append(vnToString(language, op.getInput(i), markup));
+			return program.useropNames.get(id);
 		}
-		return sb.toString();
+
+		@Override
+		public String finish() {
+			buf.append(">");
+			return buf.toString();
+		}
+	}
+
+	protected static class MyFormatter extends AbstractPcodeFormatter<String, MyAppender> {
+		protected final PcodeProgram program;
+
+		public MyFormatter(PcodeProgram program) {
+			this.program = program;
+		}
+
+		@Override
+		protected MyAppender createAppender(Language language, boolean indent) {
+			return new MyAppender(program, language);
+		}
+
+		@Override
+		protected FormatResult formatOpTemplate(MyAppender appender, OpTpl op) {
+			FormatResult result = super.formatOpTemplate(appender, op);
+			appender.endLine();
+			return result;
+		}
 	}
 
 	public static PcodeProgram fromInstruction(Instruction instruction) {
@@ -208,12 +126,6 @@ public class PcodeProgram {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder("<" + getHead() + ":");
-		for (PcodeOp op : code) {
-			sb.append(
-				"\n  " + op.getSeqnum() + ": " + opToString(language, op, false, useropNames));
-		}
-		sb.append("\n>");
-		return sb.toString();
+		return new MyFormatter(this).formatOps(language, code);
 	}
 }

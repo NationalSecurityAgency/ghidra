@@ -189,8 +189,7 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 					log.appendMsg(
 						"No DWARF to Ghidra register mappings found for this program's language [" +
 							program.getLanguageID().getIdAsString() +
-							"], unable to import functions.");
-					importOptions.setImportFuncs(false);
+							"], function information may be incorrect / incomplete.");
 				}
 
 				DWARFParser dp =

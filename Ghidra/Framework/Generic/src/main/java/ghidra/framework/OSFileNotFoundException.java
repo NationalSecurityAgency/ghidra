@@ -69,7 +69,8 @@ public class OSFileNotFoundException extends FileNotFoundException {
 		this(Platform.CURRENT_PLATFORM, null, fileName);
 	}
 
-	/** Gets the {@link Platform} associated with this exception
+	/**
+	 * Gets the {@link Platform} associated with this exception
 	 * 
 	 * @return The {@link Platform} associated with this exception
 	 */

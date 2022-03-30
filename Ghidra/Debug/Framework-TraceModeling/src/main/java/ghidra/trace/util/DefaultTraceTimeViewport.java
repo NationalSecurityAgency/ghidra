@@ -189,12 +189,14 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	protected boolean isLower(long lower) {
-		synchronized (ordered) {
-			Range<Long> range = spanSet.rangeContaining(lower);
-			if (range == null) {
-				return false;
+		try (LockHold hold = trace.lockRead()) { // May not be necessary
+			synchronized (ordered) {
+				Range<Long> range = spanSet.rangeContaining(lower);
+				if (range == null) {
+					return false;
+				}
+				return range.lowerEndpoint().longValue() == lower;
 			}
-			return range.lowerEndpoint().longValue() == lower;
 		}
 	}
 
@@ -265,12 +267,12 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 		List<Range<Long>> ordered = new ArrayList<>();
 		try (LockHold hold = trace.lockRead()) {
 			collectForkRanges(trace.getTimeManager(), snap, spanSet, ordered);
-		}
-		synchronized (this.ordered) {
-			this.spanSet.clear();
-			this.ordered.clear();
-			this.spanSet.addAll(spanSet);
-			this.ordered.addAll(ordered);
+			synchronized (this.ordered) {
+				this.spanSet.clear();
+				this.ordered.clear();
+				this.spanSet.addAll(spanSet);
+				this.ordered.addAll(ordered);
+			}
 		}
 		assert !ordered.isEmpty();
 		changeListeners.fire.run();
@@ -325,41 +327,51 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 
 	@Override
 	public boolean isForked() {
-		synchronized (ordered) {
-			return ordered.size() > 1;
+		try (LockHold hold = trace.lockRead()) { // May not be necessary
+			synchronized (ordered) {
+				return ordered.size() > 1;
+			}
 		}
 	}
 
 	public List<Range<Long>> getOrderedSpans() {
-		synchronized (ordered) {
-			return List.copyOf(ordered);
+		try (LockHold hold = trace.lockRead()) { // May not be necessary
+			synchronized (ordered) {
+				return List.copyOf(ordered);
+			}
 		}
 	}
 
 	public List<Range<Long>> getOrderedSpans(long snap) {
-		synchronized (ordered) {
-			setSnap(snap);
-			return getOrderedSpans();
+		try (LockHold hold = trace.lockRead()) { // setSnap requires this
+			synchronized (ordered) {
+				setSnap(snap);
+				return getOrderedSpans();
+			}
 		}
 	}
 
 	@Override
 	public List<Long> getOrderedSnaps() {
-		synchronized (ordered) {
-			return ordered
-					.stream()
-					.map(Range::upperEndpoint)
-					.collect(Collectors.toList());
+		try (LockHold hold = trace.lockRead()) { // May not be necessary
+			synchronized (ordered) {
+				return ordered
+						.stream()
+						.map(Range::upperEndpoint)
+						.collect(Collectors.toList());
+			}
 		}
 	}
 
 	@Override
 	public List<Long> getReversedSnaps() {
-		synchronized (ordered) {
-			return Lists.reverse(ordered)
-					.stream()
-					.map(Range::upperEndpoint)
-					.collect(Collectors.toList());
+		try (LockHold hold = trace.lockRead()) { // May not be necessary
+			synchronized (ordered) {
+				return Lists.reverse(ordered)
+						.stream()
+						.map(Range::upperEndpoint)
+						.collect(Collectors.toList());
+			}
 		}
 	}
 

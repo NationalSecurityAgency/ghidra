@@ -45,8 +45,6 @@ public class ServerAdmin implements GhidraLaunchable {
 	private static final String MIGRATE_COMMAND = "-migrate";
 	private static final String MIGRATE_ALL_COMMAND = "-migrate-all";
 
-	private boolean propertyUsed = false;
-
 	/**
 	 * Main method for launching the ServerAdmin Application via GhidraLauncher.
 	 * The following properties may be set:
@@ -86,30 +84,32 @@ public class ServerAdmin implements GhidraLaunchable {
 		String configFilePath = args.length != 0 && !args[0].startsWith("-") ? args[ix++]
 				: System.getProperty(CONFIG_FILE_PROPERTY);
 
-		File serverDir = getServerDirFromConfig(configFilePath);
-		if (serverDir == null || (args.length - ix) == 0) {
+		System.out.println("server.conf: " + configFilePath);
+
+		File serverRootDir = getServerDirFromConfig(configFilePath);
+		if (serverRootDir == null || (args.length - ix) == 0) {
 			displayUsage("");
 			System.exit(-1);
 			return;
 		}
 
 		try {
-			serverDir = serverDir.getCanonicalFile();
+			serverRootDir = serverRootDir.getCanonicalFile();
 		}
 		catch (IOException e1) {
-			System.err.println("Failed to resolve server directory: " + serverDir);
+			System.err.println("Failed to resolve server directory: " + serverRootDir);
 			System.exit(-1);
 		}
 
-		System.out.println("Using server directory: " + serverDir);
+		System.out.println("Using server directory: " + serverRootDir);
 
-		File userFile = new File(serverDir, UserManager.USER_PASSWORD_FILE);
-		if (!serverDir.isDirectory() || !userFile.isFile()) {
+		File userFile = new File(serverRootDir, UserManager.USER_PASSWORD_FILE);
+		if (!serverRootDir.isDirectory() || !userFile.isFile()) {
 			System.err.println("Invalid Ghidra server directory!");
 			System.exit(-1);
 		}
 
-		File cmdDir = new File(serverDir, UserAdmin.ADMIN_CMD_DIR);
+		File cmdDir = CommandProcessor.getCommandDir(serverRootDir);
 		if (!cmdDir.isDirectory() || !cmdDir.canWrite()) {
 			System.err.println("Insufficient privilege or server not started!");
 			System.exit(-1);
@@ -117,6 +117,8 @@ public class ServerAdmin implements GhidraLaunchable {
 
 		// Process command line
 		boolean listRepositories = false;
+		boolean listAllUserPermissions = false;
+		Set<String> listUsernameSet = new HashSet<>();
 		boolean listUsers = false;
 		boolean migrationConfirmed = false;
 		boolean migrationAbort = false;
@@ -125,98 +127,122 @@ public class ServerAdmin implements GhidraLaunchable {
 		for (; ix < args.length; ix += cmdLen) {
 			boolean queueCmd = true;
 			String pwdHash = null;
-			if (UserAdmin.ADD_USER_COMMAND.equals(args[ix])) {  // add user
-				cmdLen = 2;
-				validateSID(args, ix + 1);
-				if (hasOptionalArg(args, ix + 2, UserAdmin.PASSWORD_OPTION)) {
-					++cmdLen;
-					pwdHash = promptForPasswordAndGetSaltedHash(args[ix + 1]);
-				}
-			}
-			else if (UserAdmin.REMOVE_USER_COMMAND.equals(args[ix])) { // remove user
-				cmdLen = 2;
-				validateSID(args, ix + 1);
-			}
-			else if (UserAdmin.RESET_USER_COMMAND.equals(args[ix])) { // reset user
-				cmdLen = 2;
-				validateSID(args, ix + 1);
-				if (hasOptionalArg(args, ix + 2, UserAdmin.PASSWORD_OPTION)) {
-					++cmdLen;
-					pwdHash = promptForPasswordAndGetSaltedHash(args[ix + 1]);
-				}
-			}
-			else if (UserAdmin.SET_USER_DN_COMMAND.equals(args[ix])) { // set/add user with DN for PKI
-				cmdLen = 3;
-				validateSID(args, ix + 1);
-				validateDN(args, ix + 2);
-			}
-			else if (UserAdmin.SET_ADMIN_COMMAND.equals(args[ix])) { // set/add repository admin
-				cmdLen = 3;
-				validateSID(args, ix + 1);
-				validateRepName(args, ix + 2, serverDir);
-			}
-			else if (LIST_COMMAND.equals(args[ix])) { // list repositories
-				cmdLen = 1;
-				queueCmd = false;
-				listRepositories = true;
-			}
-			else if (USERS_COMMAND.equals(args[ix])) { // list users (also affects listRepositories)
-				cmdLen = 1;
-				queueCmd = false;
-				listUsers = true;
-			}
-			else if (MIGRATE_ALL_COMMAND.equals(args[ix])) { // list repositories
-				cmdLen = 1;
-				queueCmd = false;
-				if (!migrationConfirmed && !confirmMigration()) {
-					migrationAbort = true;
-				}
-				migrationConfirmed = true;
-				if (!migrationAbort) {
-					RepositoryManager.markAllRepositoriesForIndexMigration(serverDir);
-				}
-			}
-			else if (MIGRATE_COMMAND.equals(args[ix])) { // list repositories
-				cmdLen = 2;
-				queueCmd = false;
-				if (ix == (args.length - 1)) {
-					System.err.println("Missing " + MIGRATE_COMMAND + " repository name argument");
-				}
-				else {
-					String repositoryName = args[ix + 1];
+			switch (args[ix]) {
+				case CommandProcessor.ADD_USER_COMMAND:  // add user
+					cmdLen = 2;
+					validateSID(args, ix + 1);
+					if (hasOptionalArg(args, ix + 2, CommandProcessor.PASSWORD_OPTION)) {
+						++cmdLen;
+						pwdHash = promptForPasswordAndGetSaltedHash(args[ix + 1]);
+					}
+					break;
+				case CommandProcessor.REMOVE_USER_COMMAND: // remove user
+					cmdLen = 2;
+					validateSID(args, ix + 1);
+					break;
+				case CommandProcessor.RESET_USER_COMMAND: // reset user
+					cmdLen = 2;
+					validateSID(args, ix + 1);
+					if (hasOptionalArg(args, ix + 2, CommandProcessor.PASSWORD_OPTION)) {
+						++cmdLen;
+						pwdHash = promptForPasswordAndGetSaltedHash(args[ix + 1]);
+					}
+					break;
+				case CommandProcessor.SET_USER_DN_COMMAND: // set/add user with DN for PKI
+					cmdLen = 3;
+					validateSID(args, ix + 1);
+					validateDN(args, ix + 2);
+					break;
+				case CommandProcessor.GRANT_USER_COMMAND: // grant repository permission
+					cmdLen = 4;
+					validateSID(args, ix + 1);
+					validatePermission(args, ix + 2);
+					validateRepositoryName(args, ix + 3, serverRootDir);
+					break;
+				case CommandProcessor.REVOKE_USER_COMMAND: // revoke repository access
+					cmdLen = 3;
+					validateSID(args, ix + 1);
+					validateRepositoryName(args, ix + 2, serverRootDir);
+					break;
+				case LIST_COMMAND: // list repositories;
+					queueCmd = false;
+					listRepositories = true;
+					boolean hasUsernames = false;
+					while ((ix + 1) < args.length && !args[ix + 1].startsWith("-")) {
+						String sid = args[++ix]; // consume next arg as user sid
+						validateSID(sid);
+						listUsernameSet.add(sid);
+						hasUsernames = true;
+					}
+					if (!hasUsernames && (ix + 1) < args.length && "--users".equals(args[ix + 1])) {
+						listAllUserPermissions = true;
+						++ix;
+					}
+					break;
+				case USERS_COMMAND: // list users (also affects listRepositories)
+					queueCmd = false;
+					listUsers = true;
+					listUsernameSet.clear();
+					break;
+				case MIGRATE_ALL_COMMAND: // list repositories;
+					queueCmd = false;
 					if (!migrationConfirmed && !confirmMigration()) {
 						migrationAbort = true;
 					}
 					migrationConfirmed = true;
 					if (!migrationAbort) {
-						Repository.markRepositoryForIndexMigration(serverDir, repositoryName,
-							false);
+						RepositoryManager.markAllRepositoriesForIndexMigration(serverRootDir);
 					}
-				}
-			}
-			else {
-				displayUsage("Invalid usage!");
-				System.exit(-1);
+					break;
+				case MIGRATE_COMMAND: // list repositories
+					queueCmd = false;
+					if (ix == (args.length - 1)) {
+						System.err.println(
+							"Missing " + MIGRATE_COMMAND + " repository name argument");
+					}
+					else {
+						String repositoryName = args[ix + 1];
+						if (!migrationConfirmed && !confirmMigration()) {
+							migrationAbort = true;
+						}
+						migrationConfirmed = true;
+						if (!migrationAbort) {
+							Repository.markRepositoryForIndexMigration(serverRootDir,
+								repositoryName,
+								false);
+						}
+					}
+					break;
+				default:
+					displayUsage("Invalid usage!");
+					System.exit(-1);
 			}
 			if (queueCmd) {
 				addCommand(cmdList, args, ix, cmdLen, pwdHash);
 			}
 		}
 
-		try {
-			UserAdmin.writeCommands(cmdList, cmdDir);
+		if (cmdList.size() != 0) {
+			try {
+				CommandProcessor.writeCommands(cmdList, cmdDir);
+			}
+			catch (IOException e) {
+				System.err.println("Failed to queue commands: " + e.toString());
+				System.exit(-1);
+			}
+			System.out.println("Command queued.");
 		}
-		catch (IOException e) {
-			System.err.println("Failed to queue commands: " + e.toString());
-			System.exit(-1);
-		}
-		System.out.println(cmdList.size() + " command(s) queued.");
 
 		if (listUsers) {
-			UserManager.listUsers(serverDir);
+			UserManager.listUsers(serverRootDir);
 		}
 		if (listRepositories) {
-			RepositoryManager.listRepositories(serverDir, listUsers);
+			if (listUsernameSet.isEmpty()) {
+				RepositoryManager.listRepositories(serverRootDir, listAllUserPermissions);
+			}
+			else {
+				RepositoryManager.listRepositories(serverRootDir, listUsernameSet);
+			}
 		}
 		System.out.println();
 	}
@@ -360,9 +386,9 @@ public class ServerAdmin implements GhidraLaunchable {
 	}
 
 	/**
-	 * Validate properly formatted Distinguished Name
+	 * Validate properly formatted Distinguished Name as command arg
 	 * Example:  'CN=Doe John, OU=X, OU=Y, OU=DoD, O=U.S. Government, C=US'
-	 * @param args
+	 * @param args command args
 	 * @param i argument index
 	 */
 	private void validateDN(String[] args, int i) {
@@ -376,43 +402,58 @@ public class ServerAdmin implements GhidraLaunchable {
 			args[i] = "\"" + x500User.getName() + "\"";
 		}
 		catch (Exception e) {
-			Msg.error(UserAdmin.class, "Invalid DN: " + dn);
+			Msg.error(CommandProcessor.class, "Invalid DN: " + dn);
 			System.exit(-1);
 		}
 	}
 
 	/**
 	 * Validate username/sid
-	 * @param args
+	 * @param args command args
 	 * @param i argument index
 	 */
 	private void validateSID(String[] args, int i) {
 		if (args.length < (i + 1)) {
-			displayUsage("Invalid usage!");
+			displayUsage("Invalid usage, expected username/sid");
 			System.exit(-1);
 		}
-		String sid = args[i];
+		validateSID(args[i]);
+	}
+
+	private void validateSID(String sid) {
 		if (!UserManager.isValidUserName(sid)) {
-			Msg.error(UserAdmin.class, "Invalid username/sid: " + sid);
+			displayUsage("Invalid username/sid: " + sid);
 			System.exit(-1);
 		}
 	}
 
 	/**
-	 * Validate repository name
-	 * @param args
+	 * Validate repository permission arg (repository name to follow)
+	 * @param args command args
 	 * @param i argument index
-	 * @param rootDirFile base repository directory
 	 */
-	private void validateRepName(String[] args, int i, File rootDirFile) {
+	private void validatePermission(String[] args, int i) {
+		if (args.length < (i + 1) || CommandProcessor.parsePermission(args[i]) < 0) {
+			displayUsage("Invalid usage, expected grant permission +r, +w or +a");
+			System.exit(-1);
+		}
+	}
+
+	/**
+	 * Validate existing repository name as command arg
+	 * @param args command args
+	 * @param i argument index
+	 * @param rootDirFile base repositories directory
+	 */
+	private void validateRepositoryName(String[] args, int i, File rootDirFile) {
 		if (args.length < (i + 1)) {
-			displayUsage("Invalid usage!");
+			displayUsage("Invalid usage, expected repository name");
 			System.exit(-1);
 		}
 		String repName = args[i];
 		File f = new File(rootDirFile, NamingUtilities.mangle(repName));
 		if (!f.isDirectory()) {
-			Msg.error(UserAdmin.class, "Repository not found: " + repName);
+			Msg.error(CommandProcessor.class, "Repository not found: " + repName);
 			System.exit(-1);
 		}
 	}
@@ -483,7 +524,7 @@ public class ServerAdmin implements GhidraLaunchable {
 
 	/**
 	 * Display an optional message followed by usage syntax.
-	 * @param msg
+	 * @param msg optional error message to proceed usage display
 	 */
 	private void displayUsage(String msg) {
 		if (msg != null) {
@@ -496,21 +537,27 @@ public class ServerAdmin implements GhidraLaunchable {
 		System.err.println("\nSupported commands:");
 		System.err.println("  -add <sid> [--p]");
 		System.err.println(
-			"      Add a new user to the server identified by their sid identifier [--p prompt for password]");
+			"      Add a new user to the server identified by their sid identifier [optional --p prompts for password]");
+		System.err.println("  -grant <sid> [+r|+w|+a] <repository-name>");
+		System.err.println(
+			"      Grant access permission for a user, identified by sid, to the named repository");
+		System.err.println("  -revoke <sid> <repository-name>");
+		System.err.println(
+			"      Revoke access for a user, identified by sid, to a named repository");
 		System.err.println("  -remove <sid>");
-		System.err.println("      Remove the specified user from the server's user list");
+		System.err.println(
+			"      Remove the specified user from the server's user list and revoke all repository access");
 		System.err.println("  -reset <sid> [--p]");
 		System.err.println(
-			"      Reset the specified user's server login password [--p prompt for password]");
+			"      Reset the specified user's server login password [optional --p prompts for password]");
 		System.err.println("  -dn <sid> \"<dname>\"");
 		System.err.println(
 			"      When PKI authentication is used, add the specified X500 Distinguished Name for a user");
-		System.err.println("  -admin <sid> \"<repository-name>\"");
-		System.err.println(
-			"      Grant ADMIN privilege to the specified user with the specified repository");
-		System.err.println("  -list [-users]");
+		System.err.println("  -list [--users]");
 		System.err.println(
 			"      Output list of repositories to the console (user access list will be included with -users)");
+		System.err.println("  -list <sid> [<sid>...]");
+		System.err.println("      Output list of repository permissions for each user specified");
 		System.err.println("  -users");
 		System.err.println("      Output list of users to console which have server access");
 		System.err.println("  -migrate \"<repository-name>\"");
