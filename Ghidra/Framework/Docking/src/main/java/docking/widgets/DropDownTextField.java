@@ -655,7 +655,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		}
 
 		String textFieldText = getText();
-		if (!shouldReplaceTextFieldTextWithSelectedItem(textFieldText, selectedValue)) {
+		if (!shouldReplaceTextFieldTextWithSelectedItem(textFieldText, (T) selectedItem)) {
 			// The selected item text does not start with the text in the text field, which
 			// implies the user has added or changed text and the list has not yet been updated.
 			return;
