@@ -231,6 +231,10 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 					info.trackTraceBreakpoint(breakpoint, c, false);
 				}
 			}
+			catch (TrackedTooSoonException e) {
+				Msg.info(this, "Ignoring " + breakpoint +
+					" added until service has finished loading its trace");
+			}
 		}
 
 		private void breakpointChanged(TraceBreakpoint breakpoint) {
@@ -241,6 +245,10 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				synchronized (lock) {
 					info.trackTraceBreakpoint(breakpoint, c, true);
 				}
+			}
+			catch (TrackedTooSoonException e) {
+				Msg.info(this, "Ignoring " + breakpoint +
+					" changed until service has finished loading its trace");
 			}
 		}
 
@@ -265,6 +273,10 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 					synchronized (lock) {
 						info.trackTraceBreakpoint(breakpoint, c, false);
 					}
+				}
+				catch (TrackedTooSoonException e) {
+					Msg.info(this, "Ignoring " + breakpoint +
+						" span changed until service has finished loading its trace");
 				}
 			}
 		}
@@ -362,7 +374,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				long length, Collection<TraceBreakpointKind> kinds);
 
 		protected LogicalBreakpointInternal getOrCreateLogicalBreakpointFor(Address address,
-				TraceBreakpoint breakpoint, AddCollector c) {
+				TraceBreakpoint breakpoint, AddCollector c) throws TrackedTooSoonException {
 			Set<LogicalBreakpointInternal> set =
 				breakpointsByAddress.computeIfAbsent(address, a -> new HashSet<>());
 			for (LogicalBreakpointInternal lb : set) {
@@ -543,7 +555,12 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		protected void trackTraceBreakpoints(Collection<TraceBreakpoint> breakpoints,
 				AddCollector collector) {
 			for (TraceBreakpoint b : breakpoints) {
-				trackTraceBreakpoint(b, collector, false);
+				try {
+					trackTraceBreakpoint(b, collector, false);
+				}
+				catch (TrackedTooSoonException e) {
+					throw new AssertionError(e);
+				}
 			}
 		}
 
@@ -562,7 +579,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		protected void trackTraceBreakpoint(TraceBreakpoint breakpoint, AddCollector c,
-				boolean forceUpdate) {
+				boolean forceUpdate) throws TrackedTooSoonException {
 			Address traceAddr = breakpoint.getMinAddress();
 			ProgramLocation progLoc = computeStaticLocation(breakpoint);
 			LogicalBreakpointInternal lb;
