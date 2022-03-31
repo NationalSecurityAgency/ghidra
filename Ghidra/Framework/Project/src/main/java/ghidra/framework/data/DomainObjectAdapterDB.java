@@ -602,6 +602,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		DomainObjectAdapterDB userData = getUserData();
 		if (userData != null && userData.isChanged() && (getDomainFile() instanceof GhidraFile)) {
 			try {
+				userData.prepareToSave();
 				userData.save(null, TaskMonitorAdapter.DUMMY_MONITOR);
 			}
 			catch (CancelledException e) {
