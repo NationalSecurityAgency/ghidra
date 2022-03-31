@@ -36,11 +36,6 @@ public class DbgDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 		}
 
 		@Override
-		public String getMenuParentTitle() {
-			return "Debug " + program.getName();
-		}
-
-		@Override
 		protected List<String> getLauncherPath() {
 			return PathUtils.parse("");
 		}

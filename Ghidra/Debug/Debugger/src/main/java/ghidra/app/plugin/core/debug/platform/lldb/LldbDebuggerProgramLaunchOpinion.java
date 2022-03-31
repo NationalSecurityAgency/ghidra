@@ -36,11 +36,6 @@ public class LldbDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOp
 		}
 
 		@Override
-		public String getMenuParentTitle() {
-			return "Debug " + program.getName();
-		}
-
-		@Override
 		protected List<String> getLauncherPath() {
 			return PathUtils.parse("");
 		}
