@@ -787,8 +787,7 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 	}
 
 	protected void executeEntry(RangeEntry entry, Program dest, TraceRecorder recorder,
-			TaskMonitor monitor)
-			throws Exception {
+			TaskMonitor monitor) throws Exception {
 		MemoryBlock block = executeEntryBlock(entry, dest, monitor);
 		Address dstMin = entry.getDstRange().getMinAddress();
 		if (block.isOverlay()) {
