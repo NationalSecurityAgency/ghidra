@@ -24,6 +24,8 @@ import org.apache.tools.ant.filters.*
  *
  *********************************************************************************/
 
+apply from: "$rootProject.projectDir/gradle/support/sbom.gradle"
+
 /********************************************************************************
  * Local Vars
  *********************************************************************************/
@@ -359,6 +361,13 @@ task assembleDistribution (type: Copy) {
 		into "Ghidra"
 	}
 
+	//////////////////////////////////////
+	// Software Bill of Materials (SBOM)
+	//////////////////////////////////////
+	doLast {
+		def bomFile = file("${destinationDir}/bom.json")
+		writeSoftwareBillOfMaterials(destinationDir, bomFile)
+	}
 }
 
 /*********************************************************************************
