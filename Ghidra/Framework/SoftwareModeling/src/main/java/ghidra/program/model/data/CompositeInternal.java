@@ -157,7 +157,7 @@ public interface CompositeInternal extends Composite {
 	}
 
 	/**
-	 * Dump composite and its components for use in {@link #toString()} representation.
+	 * Dump composite and its components for use in {@link Object#toString()} representation.
 	 * @param composite composite instance to be dumped
 	 * @return formatted dump as string
 	 */
@@ -174,7 +174,7 @@ public interface CompositeInternal extends Composite {
 	}
 
 	/**
-	 * Dump all components for use in {@link #toString()} representation.
+	 * Dump all components for use in {@link Object#toString()} representation.
 	 * 
 	 * @param buffer string buffer
 	 * @param pad    padding to be used with each component output line

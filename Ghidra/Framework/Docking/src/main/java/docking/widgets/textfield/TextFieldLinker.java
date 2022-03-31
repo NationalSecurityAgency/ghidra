@@ -527,8 +527,8 @@ public class TextFieldLinker {
 	 * with the results of {@link #getText()} will have unexpected effects.
 	 * 
 	 * @param field the field to link
-	 * @param exp the separator following the field
-	 * @param sep the separator that replaces {@code exp} when matched
+	 * @param pat the regular expression to search for following the field
+	 * @param sep the separator that replaces {@code pat} when matched
 	 */
 	public void linkField(JTextField field, Pattern pat, String sep) {
 		checkLast();

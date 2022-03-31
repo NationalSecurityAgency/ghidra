@@ -88,7 +88,7 @@ public abstract class VertexShape {
 	/**
 	 * Returns the size factor for a shape relative to its label. Shapes are sized based on the
 	 * label of a vertex so that the label can fit inside the shape (mostly). Some subclasses
-	 * will need to override this value to some value > 1 to fit the label in the shape. For 
+	 * will need to override this value to some value &gt; 1 to fit the label in the shape. For 
 	 * example, a rectangle shape does not need to be extended because text naturally fits. But
 	 * for a shape like a triangle, its bounding box needs to be bigger so that text doesn't
 	 * "stick out" in the narrow part of the triangle. 
