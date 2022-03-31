@@ -27,7 +27,7 @@ public enum EnumPcodeRow implements PcodeRow {
 	}
 
 	@Override
-	public int getSequence() {
+	public Integer getSequence() {
 		return 0;
 	}
 
