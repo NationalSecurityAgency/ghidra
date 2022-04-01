@@ -13,36 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.pcode;
+package ghidra.app.plugin.core.debug.service.breakpoint;
 
-import ghidra.program.model.pcode.PcodeOp;
+public class TrackedTooSoonException extends Exception {
 
-public class BranchPcodeRow implements PcodeRow {
-	private final int sequence;
-	private final int fromSeq;
-
-	public BranchPcodeRow(int sequence, int fromSeq) {
-		this.sequence = sequence;
-		this.fromSeq = fromSeq;
-	}
-
-	@Override
-	public Integer getSequence() {
-		return sequence;
-	}
-
-	@Override
-	public String getCode() {
-		return "(branched from " + fromSeq + ")";
-	}
-
-	@Override
-	public boolean isNext() {
-		return true;
-	}
-
-	@Override
-	public PcodeOp getOp() {
-		return null;
-	}
 }
