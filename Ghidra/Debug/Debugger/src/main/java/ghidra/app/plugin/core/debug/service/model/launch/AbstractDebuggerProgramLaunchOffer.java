@@ -24,12 +24,12 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
 import ghidra.app.services.DebuggerModelService;
 import ghidra.async.AsyncUtils;
 import ghidra.async.SwingExecutorService;
 import ghidra.dbg.*;
 import ghidra.dbg.target.TargetLauncher;
+import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
@@ -37,11 +37,8 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.PluginUtils;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramUserData;
-import ghidra.program.model.util.StringPropertyMap;
 import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
@@ -73,13 +70,11 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 					val);
 			}
 		}
-		String owner = PluginUtils.getPluginNameFromClass(DebuggerModelServicePlugin.class);
 		ProgramUserData userData = program.getProgramUserData();
 		try (UndoableTransaction tid = UndoableTransaction.start(userData)) {
-			StringPropertyMap stringProperty =
-				userData.getStringProperty(owner, getConfigName(), true);
 			Element element = state.saveToXml();
-			stringProperty.add(Address.NO_ADDRESS, XmlUtilities.toString(element));
+			userData.setStringProperty(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
+				XmlUtilities.toString(element));
 		}
 	}
 
@@ -98,8 +93,10 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 * @param params the parameters
 	 * @return the default arguments
 	 */
-	protected abstract Map<String, ?> generateDefaultLauncherArgs(
-			Map<String, ParameterDescription<?>> params);
+	protected Map<String, ?> generateDefaultLauncherArgs(
+			Map<String, ParameterDescription<?>> params) {
+		return Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, program.getExecutablePath());
+	}
 
 	/**
 	 * Prompt the user for arguments, showing those last used or defaults
@@ -148,33 +145,28 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		 * TODO: Supposedly, per-program, per-user config stuff is being generalized for analyzers.
 		 * Re-examine this if/when that gets merged
 		 */
-		String owner = PluginUtils.getPluginNameFromClass(DebuggerModelServicePlugin.class);
 		ProgramUserData userData = program.getProgramUserData();
-		StringPropertyMap property =
-			userData.getStringProperty(owner, getConfigName(), false);
+		String property = userData.getStringProperty(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, null);
 		if (property != null) {
-			String xml = property.getString(Address.NO_ADDRESS);
-			if (xml != null) {
-				try {
-					Element element = XmlUtilities.fromString(xml);
-					SaveState state = new SaveState(element);
-					Map<String, Object> args = new LinkedHashMap<>();
-					for (ParameterDescription<?> param : params.values()) {
-						args.put(param.name,
-							ConfigStateField.getState(state, param.type, param.name));
-					}
-					return args;
+			try {
+				Element element = XmlUtilities.fromString(property);
+				SaveState state = new SaveState(element);
+				Map<String, Object> args = new LinkedHashMap<>();
+				for (ParameterDescription<?> param : params.values()) {
+					args.put(param.name,
+						ConfigStateField.getState(state, param.type, param.name));
 				}
-				catch (JDOMException | IOException e) {
-					if (!forPrompt) {
-						throw new RuntimeException(
-							"Saved launcher args are corrupt, or launcher parameters changed. Not launching.",
-							e);
-					}
-					Msg.error(this,
-						"Saved launcher args are corrup, or launcher parameters changed. Defaulting.",
+				return args;
+			}
+			catch (JDOMException | IOException e) {
+				if (!forPrompt) {
+					throw new RuntimeException(
+						"Saved launcher args are corrupt, or launcher parameters changed. Not launching.",
 						e);
 				}
+				Msg.error(this,
+					"Saved launcher args are corrup, or launcher parameters changed. Defaulting.",
+					e);
 			}
 		}
 
@@ -194,7 +186,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 * @param params the parameters of the model's launcher
 	 * @return the chosen arguments, or null if the user cancels at the prompt
 	 */
-	protected Map<String, ?> getLauncherArgs(Map<String, ParameterDescription<?>> params,
+	public Map<String, ?> getLauncherArgs(Map<String, ParameterDescription<?>> params,
 			boolean prompt) {
 		return prompt
 				? promptLauncherArgs(params)
