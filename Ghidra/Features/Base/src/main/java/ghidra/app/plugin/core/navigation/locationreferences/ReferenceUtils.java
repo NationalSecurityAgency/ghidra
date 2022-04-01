@@ -862,8 +862,10 @@ public final class ReferenceUtils {
 		Program p = location.getProgram();
 		Listing l = p.getListing();
 		Data dataContaining = l.getDataContaining(location.getAddress());
-		Data data = dataContaining.getComponent(location.getComponentPath());
-		return data;
+		if (dataContaining != null) {
+			return dataContaining.getComponent(location.getComponentPath());
+		}
+		return null;
 	}
 
 	/*
