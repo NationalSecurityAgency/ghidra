@@ -34,6 +34,7 @@ import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
+import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
 import ghidra.framework.plugintool.PluginTool;
@@ -57,6 +58,16 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		this.program = program;
 		this.tool = tool;
 		this.factory = factory;
+	}
+
+	@Override
+	public String getMenuParentTitle() {
+		String name = program.getName();
+		DomainFile df = program.getDomainFile();
+		if (df != null) {
+			name = df.getName();
+		}
+		return "Debug " + name;
 	}
 
 	protected List<String> getLauncherPath() {
