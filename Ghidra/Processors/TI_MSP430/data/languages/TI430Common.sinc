@@ -212,7 +212,6 @@ DST16_0_4: dest_Direct16_0_4		is dest_Direct16_0_4 & reg_Direct16_0_4W {export r
 SRC8_8_4: src_Direct16_8_4		is src_Direct16_8_4 & src_Direct_lo {export src_Direct_lo;}
 DST8_0_4: reg_Direct16_0_4		is reg_Direct16_0_4 & dest_Direct_lo {export dest_Direct_lo;}
 
-define pcodeop bcd_add;		# Binary coded decimal (BCD) addition
 ####################################
 # Status Register (SR) Map
 ####################################
@@ -247,7 +246,8 @@ define pcodeop bcd_add;		# Binary coded decimal (BCD) addition
 AMASK: val	is ctx_isHi=1 [ val = 0xFFFF; ]  { export *[const]:4 val; }
 AMASK: val	is ctx_isHi=0 [ val = 0xFFFFF; ] { export *[const]:4 val; }
 @else
-AMASK:		val	is epsilon [ val = 0xFFFF; ]  { export *[const]:2 val; }
+AMASK: val	is bow=0 [ val = 0xFFFE; ]  { export *[const]:2 val; } # Memory accesses for unaligned (odd) word addresses round down for alignment.
+AMASK: val	is bow=1 [ val = 0xFFFF; ]  { export *[const]:2 val; }
 @endif
 
 #-----------------------------------------------
@@ -258,12 +258,14 @@ AMASK:		val	is epsilon [ val = 0xFFFF; ]  { export *[const]:2 val; }
 #
 #-----------------------------------------------
 REG_W_AS: DST16_0_4 			 		 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
+REG_W_AS: DST16_0_4 			 		 is DST16_0_4 & reg16_0_4=0 & as=0x0 & bow=0x0  {DST16_0_4 = inst_next & 0xFFFE; export DST16_0_4;} # PC register accesses point to next instruction
 REG_W_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:2 tmp;}
-REG_W_AS: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-REG_W_AS: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+REG_W_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK & reg_Indexed16_0_4=1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s - 0x2) & AMASK; export *:2 tmp;} # PUSH, CALL X(SP) - addressing includes SP decrement
+REG_W_AS: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect (@Rn):
+REG_W_AS: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
 REG_W_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
 REG_W_AS: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
-REG_W_AS: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
+REG_W_AS: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 & AMASK; indexExtWord16_0_16 {tmp:$(REG_SIZE) = indexExtWord16_0_16 & AMASK; export *:2 tmp; } # Absolute
 REG_W_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x0  { export 4:2;}		# Constant
 REG_W_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x0  { export 8:2;}		# Constant
 REG_W_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x0  { export 0:2;}		# Constant
@@ -272,15 +274,19 @@ REG_W_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x0  { export 2:2;}		# Con
 REG_W_AS: "#-1" 					 is	reg16_0_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2;} 	    # Constant
 
 REG_W_AS_DEST: DST16_0_4 			 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
+REG_W_AS_DEST: DST16_0_4 			 is DST16_0_4 & reg16_0_4=0 & as=0x0 & bow=0x0  {DST16_0_4 = inst_next & 0xFFFE; export DST16_0_4;} # PC register accesses point to next instruction
 REG_W_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:2 tmp;}
-REG_W_AS_DEST: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-REG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
-REG_W_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:2 tmp; } # Symbolic
-REG_W_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
+REG_W_AS_DEST: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect (@Rn):
+REG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = reg_InDirect16_0_4 & AMASK; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
+REG_W_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
+REG_W_AS_DEST: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x0 & AMASK ; indexExtWord16_0_16 {export *:2 inst_next; } # Immediate - Undocumented behaviour
+REG_W_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 {tmp:$(REG_SIZE) = indexExtWord16_0_16 & AMASK; export *:2 tmp; } # Absolute
 
 #-----------------------------------------------
 REG_B_AS: DST8_0_4 			 		 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
+REG_B_AS: DST8_0_4 			 		 is DST8_0_4 & reg16_0_4=0 & as=0x0 & bow=0x1  {tmp:$(REG_SIZE) = inst_next; DST8_0_4 = tmp:1 & 0xFF; export DST8_0_4;} # PC register accesses point to next instruction - must return register for resulting stores
 REG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:1 tmp;}
+REG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK & reg_Indexed16_0_4=1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s - 0x2) & AMASK; export *:1 tmp;} # PUSH.B X(SP) - includes SP decrement
 REG_B_AS: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
 REG_B_AS: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
 REG_B_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
@@ -294,10 +300,12 @@ REG_B_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:1;}		# Con
 REG_B_AS: "#-1" 					 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	# Constant	
 
 REG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
+REG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & reg16_0_4=0 & as=0x0 & bow=0x1  {tmp:$(REG_SIZE) = inst_next; DST8_0_4 = tmp:1 & 0xFF; export DST8_0_4;} # PC register accesses point to next instruction
 REG_B_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:1 tmp;}
 REG_B_AS_DEST: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
 REG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
 REG_B_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
+REG_B_AS_DEST: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x1 & AMASK ; indexExtWord16_0_16 {export *:1 inst_next; } # Undocumented behaviour
 REG_B_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
 
 #-----------------------------------------------
@@ -306,12 +314,13 @@ REG_B_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; i
 #
 #-----------------------------------------------
 SRC_W_AS: SRC16_8_4 			 		 is SRC16_8_4 & as=0x0 & bow=0x0  {export SRC16_8_4;} # Word/Register Direct (Rn):
+SRC_W_AS: SRC16_8_4 			 		 is SRC16_8_4 & src16_8_4=0 & as=0x0 & bow=0x0 {tmp:2 = inst_next; export tmp;} # PC register accesses point to next instruction (PC-relative addresses already covered by Immediate/Symbolic modes)
 SRC_W_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (src_Indexed16_8_4 + indexExtWord16_0_16s) & AMASK; export *:2 tmp;}
-SRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-SRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
-SRC_W_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:2 tmp; } # Symbolic
+SRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = src_InDirect16_8_4 & AMASK; export *:2 tmp;} # Word/Register Indirect (@Rn):
+SRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0 & AMASK {tmp:$(REG_SIZE) = src_InDirect16_8_4 & AMASK; export *:2 tmp;} # Word/Register Indirect Autoincrement (@Rn+):
+SRC_W_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
 SRC_W_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
-SRC_W_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
+SRC_W_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 {tmp:$(REG_SIZE) = indexExtWord16_0_16 & AMASK; export *:2 tmp; } # Absolute
 SRC_W_AS: "#4" 						 is src16_8_4=0x2 & as=0x2 & bow=0x0  { export 4:2; }		# Constant
 SRC_W_AS: "#8" 						 is src16_8_4=0x2 & as=0x3 & bow=0x0  { export 8:2; }		# Constant
 SRC_W_AS: "#0" 						 is src16_8_4=0x3 & as=0x0 & bow=0x0  { export 0:2; }		# Constant
@@ -320,6 +329,7 @@ SRC_W_AS: "#2" 						 is src16_8_4=0x3 & as=0x2 & bow=0x0  { export 2:2; }		# Co
 SRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant	
 #-----------------------------------------------
 SRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & as=0x0 & bow=0x1  { export SRC8_8_4;} # Word/Register Direct (Rn):
+SRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & src16_8_4=0 & as=0x0 & bow=0x1  {tmp:$(REG_SIZE) = inst_next; tmp2:1 = tmp:1; export tmp2;} # PC register accesses point to next instruction.
 SRC_B_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (src_Indexed16_8_4 + indexExtWord16_0_16s) & AMASK; export *:1 tmp;}
 SRC_B_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
 SRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
@@ -340,37 +350,47 @@ SRC_B_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1; } 	#
 #-----------------------------------------------
 DEST_W_AD: DST16_0_4 		  		 is DST16_0_4 & ad=0x0 & bow=0x0
      {export DST16_0_4;} # Word/Register Direct (Rn):
+DEST_W_AD: DST16_0_4 			 		 is DST16_0_4 & dest_0_4=0 & ad=0x0 & bow=0x0  {DST16_0_4 = inst_next; export DST16_0_4;} # PC register accesses point to next instruction.
 
+# Register relative destinations for R1, R4-R15
 DEST_W_AD: indexExtWord16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s
      {tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:2 tmp;}
 #---Depends on SRC ---#
+# Source is register-relative and involves 'embedded' immediate
 DEST_W_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & AMASK & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16s
      {tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExt2Word16_0_16s) & AMASK; export *:2 tmp;}
+# Source is an 'embedded' immediate implemented by @PC+
 DEST_W_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & AMASK & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16s
      {tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExt2Word16_0_16s) & AMASK; export *:2 tmp;}
+# Source is involves a register increment (@reg+) that applies to the destination (of same register, but not PC, SR, R3)
+DEST_W_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x0 & AMASK & as=0x3 & src16_8_4=dest_0_4 & (src16_8_4 = 1 | src16_8_4 >= 4) ; indexExt2Word16_0_16s
+     {tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + 2 + indexExt2Word16_0_16s) & AMASK; export *:2 tmp;}
 #---End of Depend ----#
 
+# PC-relative destinations
 DEST_W_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ]
-     {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:2 tmp; } # Symbolic
+     {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
 #---Depends on SRC ---#
 DEST_W_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x0 & AMASK & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16s [labelCalc = inst_start + 4 + indexExt2Word16_0_16s; ]
-     {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:2 tmp; } # Symbolic
+     {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
 DEST_W_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x0 & AMASK & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16s [labelCalc = inst_start + 4 + indexExt2Word16_0_16s; ]
-     {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:2 tmp; } # Symbolic
+     {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
 #---End of Depend ----#
 
-DEST_W_AD: "&"^indexExtWord16_0_16 	  is dest=0x2 & ad=0x1 & bow=0x0 ; indexExtWord16_0_16
-     {export *:2 indexExtWord16_0_16; } # Absolute
+# SR-relative (absolute value) destinations
+DEST_W_AD: "&"^indexExtWord16_0_16 	  is dest=0x2 & ad=0x1 & bow=0x0 & AMASK; indexExtWord16_0_16
+     {tmp:$(REG_SIZE) = indexExtWord16_0_16 & AMASK; export *:2 tmp;} # Absolute
 #---Depends on SRC ---#
-DEST_W_AD: "&"^indexExt2Word16_0_16   is dest=0x2 & ad=0x1 & bow=0x0 & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16
-     {export *:2 indexExt2Word16_0_16; } # Absolute
-DEST_W_AD: "&"^indexExt2Word16_0_16   is dest=0x2 & ad=0x1 & bow=0x0 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16
-     {export *:2 indexExt2Word16_0_16; } # Absolute
+DEST_W_AD: "&"^indexExt2Word16_0_16   is dest=0x2 & ad=0x1 & bow=0x0 & AMASK & as=0x1 & ((src16_8_4>=0x0 & src16_8_4<=0x2) | (src16_8_4>=0x4 & src16_8_4<=0xF)) ; indexExtWord16_0_16 ; indexExt2Word16_0_16
+     {tmp:$(REG_SIZE) = indexExt2Word16_0_16 & AMASK; export *:2 tmp;} # Absolute
+DEST_W_AD: "&"^indexExt2Word16_0_16   is dest=0x2 & ad=0x1 & bow=0x0 & AMASK & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16
+     {tmp:$(REG_SIZE) = indexExt2Word16_0_16 & AMASK; export *:2 tmp; } # Absolute
 #---End of Depend ----#
 
 #-----------------------------------------------
 DEST_B_AD: DST8_0_4 		  			 is DST8_0_4 & dest_Direct_lo & ad=0x0 & bow=0x1
      { export DST8_0_4; }        # Word/Register Direct (Rn):
+DEST_B_AD: DST8_0_4 			 		 is DST8_0_4 & dest_Direct_lo & dest_0_4=0 & ad=0x0 & bow=0x1  {tmp:$(REG_SIZE) = inst_next; DST8_0_4 = tmp:1 & 0xFF; export DST8_0_4;} # PC register accesses point to next instruction
 
 DEST_B_AD: indexExtWord16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s
      { tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:1 tmp;}
@@ -379,6 +399,9 @@ DEST_B_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_
      { tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExt2Word16_0_16s) & AMASK; export *:1 tmp;}
 DEST_B_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & AMASK & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16s
      { tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + indexExt2Word16_0_16s) & AMASK; export *:1 tmp;}
+# Source includes a register increment (@reg+) that applies to the destination (use of same register in source and dest, but not PC, SR, R3)
+DEST_B_AD: indexExt2Word16_0_16s^"("^dest_Indexed16_0_4^")" is dest_Indexed16_0_4 & ad=0x1 & bow=0x1 & AMASK & as=0x3 & src16_8_4=dest_0_4 & (src16_8_4 = 1 | src16_8_4 >= 4) ; indexExt2Word16_0_16s
+     {tmp:$(REG_SIZE) = (dest_Indexed16_0_4 + 2 + indexExt2Word16_0_16s) & AMASK; export *:1 tmp;}
 #---End of Depend ----#
 
 DEST_B_AD: labelCalc 				  is dest=0x0 & ad=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s [labelCalc = inst_start + 2 + indexExtWord16_0_16s; ]
@@ -401,10 +424,16 @@ DEST_B_AD: "&"^indexExt2Word16_0_16   is dest=0x2 & ad=0x1 & bow=0x1 & as=0x3 & 
 
 
 # For handling constant operands in CALL and BR instructions.
-DirectAddr: "#"^indexExtWord16_0_16  is indexExtWord16_0_16 {export *:$(REG_SIZE) indexExtWord16_0_16; }
-     
+DirectAddr: "#"^label is indexExtWord16_0_16 [label = indexExtWord16_0_16 & 0xFFFE;] {export *:$(REG_SIZE) label; } # Align value to show and jump to actual target
+
+# Following is only valid for double operand instructions, whose dest uses ad
 tbl_bzero:			is ad=0 & reg_Direct16_0_4 & dest_Direct_lo {ztmp:1 = dest_Direct_lo; reg_Direct16_0_4 = 0; dest_Direct_lo = ztmp; }
 tbl_bzero:			is epsilon {}
+
+# Following is valid for single operand instructions whose dest uses as
+tbl_bzero_singleop:			is as=0 & reg_Direct16_0_4 & dest_Direct_lo {ztmp:1 = dest_Direct_lo; reg_Direct16_0_4 = 0; dest_Direct_lo = ztmp; }
+tbl_bzero_singleop:			is epsilon {}
+
 
 @if REG_SIZE == "4"
 tbl_wzero:			is ad=0 & reg_Direct16_0_4 & reg_Direct16_0_4W {ztmp:2 = reg_Direct16_0_4W; reg_Direct16_0_4 = 0; reg_Direct16_0_4W = ztmp; }
@@ -416,15 +445,19 @@ tbl_wzero:			is epsilon {}
 #    does correct increment of source register
 #    Also catches when PC is being stored to and does the correct branching
 #
-postRegIncrement:   is as=0x3 & src16_8_4   & bow=0x0 & reg_InDirect16_0_4                { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 2; }
-postRegIncrement:   is as=0x3 & src16_8_4   & bow=0x1 & reg_InDirect16_0_4                 { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 1; }
-postRegIncrement:  	is as=0x3 & src16_8_4=1 & bow=0x1 & reg_InDirect16_0_4   { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 2; }
-postRegIncrement:   is as=0x3 & src16_8_4=0 & bow=0x0 & reg_InDirect16_0_4   { }     # PC is incremented by 2, but that is just to skip over the value
-postRegIncrement:   is as=0x3 & src16_8_4=0 & bow=0x1 & reg_InDirect16_0_4   { }     # PC is incremented by 2, but that is just to skip over the value
-postRegIncrement:   is as=0x3 & src16_8_4=2 & bow=0x1     { }
-postRegIncrement:   is as=0x3 & src16_8_4=3 & bow=0x1     { }
-postRegIncrement:   is as=0x3 & src16_8_4=2 & bow=0x0     { }
-postRegIncrement:   is as=0x3 & src16_8_4=3 & bow=0x0     { }
+postRegIncrement:   is as=0x3 & dest_0_4   & bow=0x0 & reg_InDirect16_0_4                { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 2; }
+postRegIncrement:   is as=0x3 & dest_0_4=1 & bow=0x0 & reg_InDirect16_0_4 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0)               { } # PUSH.W SP, SP modification covered by PUSH
+postRegIncrement:   is as=0x3 & dest_0_4   & bow=0x1 & reg_InDirect16_0_4                 { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 1; }
+postRegIncrement:  	is as=0x3 & dest_0_4=1 & bow=0x1 & reg_InDirect16_0_4 { reg_InDirect16_0_4 = reg_InDirect16_0_4 + 2; }
+postRegIncrement:  	is as=0x3 & dest_0_4=1 & bow=0x1 & reg_InDirect16_0_4 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0) { } # PUSH.B @SP+, SP modification covered by PUSH
+postRegIncrement:   is as=0x3 & dest_0_4=0 & bow=0x0 & reg_InDirect16_0_4   { }     # PC is incremented by 2, but that is just to skip over the value
+postRegIncrement:   is as=0x3 & dest_0_4=0 & bow=0x1 & reg_InDirect16_0_4   { }     # PC is incremented by 2, but that is just to skip over the value
+postRegIncrement:   is as=0x3 & dest_0_4=2 & bow=0x1     { }
+postRegIncrement:   is as=0x3 & dest_0_4=3 & bow=0x1     { }
+postRegIncrement:   is as=0x3 & dest_0_4=2 & bow=0x0     { }
+postRegIncrement:   is as=0x3 & dest_0_4=3 & bow=0x0     { }
+postRegIncrement:   is as=0x0 & dest_0_4=0 & bow=0x0 & (op16_12_4!=0x1 | op16_8_4!=0x2 | op16_7_1!=0x0) { PC = PC & 0xFFFE; goto [PC]; } # If PC is modified, alter flow (except for PUSH instructions)
+postRegIncrement:   is as=0x0 & dest_0_4=0 & bow=0x1 & (op16_12_4!=0x1 | op16_8_4!=0x2 | op16_7_1!=0x0) { PC = PC & 0xFE; goto [PC]; } # If PC is modified, alter flow (except for PUSH instructions)
 postRegIncrement:   is as     & bow                       { }
 
 # R2 and R3 are constant generators - post-increment not supported
@@ -478,27 +511,26 @@ zeroExtend: is dest_Direct_lo & dest_Direct16_0_4
 { dest_Direct16_0_4 = zext(dest_Direct_lo); }
 
 #
-# Post processing when destination is the PC
+# Post processing when destination is the PC - for byte operations
 #
-postIncrementStore:  			 is postIncrement & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend 
+postIncrementStore:  			 is postIncrement & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
 { build zeroExtend; build postIncrement; return [PC]; }
-postIncrementStore:  			 is postIncrement & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend 
-{ build zeroExtend; build postIncrement; goto [PC];}
+postIncrementStore:  			 is postIncrement & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
+{ build zeroExtend; build postIncrement; PC = PC & 0xFFFFFE; goto [PC];} # Writes to PC are rounded to alignment
 postIncrementStore:              is postIncrement & ad=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
 { build zeroExtend; build postIncrement; }
 
 postIncrementStore:  			 is postIncrement & ctx_haveext=0 & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0 & bow=0x1 & zeroExtend 
 { build zeroExtend; build postIncrement; return [PC]; }
-postIncrementStore:  			 is postIncrement & ctx_haveext=0 & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & zeroExtend 
-{ build zeroExtend; build postIncrement; goto [PC];}
+postIncrementStore:  			 is postIncrement & ctx_haveext=0 & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & zeroExtend # MOV.B any,PC
+{ build zeroExtend; build postIncrement; PC = PC & 0xFE; goto [PC];} # Writes to PC are rounded to alignment
 postIncrementStore:              is postIncrement & ctx_haveext=0 & ad=0x0 & bow=0x1 & zeroExtend
 { build zeroExtend; build postIncrement; }
-
 
 postIncrementStore:  			 is postIncrement & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0
 { build postIncrement; return [PC]; }
 postIncrementStore:  			 is postIncrement & ad=0x0 & dest_Direct16_0_4=0x0
-{ build postIncrement; goto [PC];}
+{ build postIncrement; PC = PC & 0xFFFE; goto [PC];} # Writes to PC are rounded to alignment
 postIncrementStore:              is postIncrement & ad & bow
 { build postIncrement; }
 
@@ -547,7 +579,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     000    | B/W |   As    |     register    | 
 :RRC^".W" REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
 	# Operation Flags...
-	$(OVERFLOW) = ((REG_W_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	$(OVERFLOW) = 0;	# V Flag is reset
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = REG_W_AS_DEST[0,1];
@@ -560,14 +592,14 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 }
 
 
-:RRC^".B" REG_B_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x1 & tbl_bzero & postRegIncrement) ... & REG_B_AS_DEST {
+:RRC^".B" REG_B_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x1 & tbl_bzero_singleop & postRegIncrement) ... & REG_B_AS_DEST {
 	# Operation Flags...
-	$(OVERFLOW) = ((REG_B_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
+	$(OVERFLOW) = 0;	# V Flag is reset
 	# Operation...
 	tmp:1 = $(CARRY);
 	$(CARRY) = (REG_B_AS_DEST & 0x1);
 	REG_B_AS_DEST = ((tmp << 0x7) | (REG_B_AS_DEST >> 0x1));
-	build tbl_bzero;
+	build tbl_bzero_singleop;
 	# Result Flags...
 	$(SIGN) = (REG_B_AS_DEST s< 0x0);			# S Flag
 	$(ZERO) = (REG_B_AS_DEST == 0x0);			# Z Flag
@@ -615,14 +647,14 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 }
 
 
-:RRA^".B" REG_B_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x1 & tbl_bzero & postRegIncrement) ... & REG_B_AS_DEST {
+:RRA^".B" REG_B_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x1 & tbl_bzero_singleop & postRegIncrement) ... & REG_B_AS_DEST {
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;					# V Flag (reset)
 	# Operation...
 	$(CARRY) = (REG_B_AS_DEST & 0x1);
 	MSB:1 = REG_B_AS_DEST >> 0x7;
 	REG_B_AS_DEST = ((MSB << 0x7) | (REG_B_AS_DEST >> 0x1));
-	build tbl_bzero;
+	build tbl_bzero_singleop;
 	# Result Flags...
 	$(SIGN) = (REG_B_AS_DEST s< 0x0);			# S Flag
 	$(ZERO) = (REG_B_AS_DEST == 0x0);			# Z Flag
@@ -659,16 +691,16 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     100    | B/W |   As    |     register    | 
-:PUSH^".W" REG_W_AS is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x0 & postRegIncrement) ... & REG_W_AS {
-	SP = SP - 0x2;
-	*:2 SP = REG_W_AS;
+:PUSH^".W" REG_W_AS is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x0 & postRegIncrement & AMASK) ... & REG_W_AS {
+	*:2 ((SP - 0x2) & AMASK) = REG_W_AS; # Mask for possible unaligned SP
+	SP = SP - 0x2; # Actual behaviour, in conflict with documentation
 	#Status bits are not affected
 	build postRegIncrement;
 }
 
 :PUSH^".B" REG_B_AS is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & REG_B_AS {
-	SP = SP - 0x2;
-	*:1 SP = REG_B_AS;
+	*:1 (SP - 0x2) = REG_B_AS;
+	SP = SP - 0x2; # Actual behaviour, in conflict with documentation
 	#Status bits are not affected
 	build postRegIncrement;
 }	
@@ -681,19 +713,19 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     101    |  0  |   As    |     register    | 
-:CALL REG_W_AS is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x1 & bow=0x0 & postRegIncrement) ... & REG_W_AS {
+:CALL REG_W_AS is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x1 & bow=0x0 & postRegIncrement & AMASK) ... & REG_W_AS {
+    PC = zext(REG_W_AS) & 0xFFFFFFFE:$(REG_SIZE); # PC assignment before SP modification (relevant for CALL SP). Behaviour differs from documentation
     SP = SP - 0x2;
-    *:2 SP = inst_next;
-    PC = zext(REG_W_AS);
+    *:2 (SP & AMASK) = inst_next;
     build postRegIncrement;
     call [PC];
     #Status bits are not affected
 }
 
-:CALL DirectAddr       is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x1 & reg16_0_4=0x0 & as=0x3 & bow=0x0 & postRegIncrement); DirectAddr {
+:CALL DirectAddr       is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x1 & reg16_0_4=0x0 & as=0x3 & bow=0x0 & postRegIncrement & AMASK); DirectAddr {
+    PC = &DirectAddr; # PC assignment before SP modification (relevant for CALL SP). Behaviour differs from documentation
     SP = SP - 0x2;
-    *:2 SP = inst_next;
-    PC = &DirectAddr;
+    *:2 (SP & AMASK) = inst_next;
     build postRegIncrement;
     call DirectAddr;
     #Status bits are not affected
@@ -708,11 +740,11 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
 #	| 0  | 0  | 0  | 1  | 0  | 0  |     110    |  0  |   00    |       0000      | 
-:RETI is ctx_haveext=0 & op16_12_4=0x1 & op16_8_4=0x3 & op16_7_1=0x0 & as=0x0 & bow=0x0 & op16_0_4=0x0 & op16_4_4=0x0 {
+:RETI is ctx_haveext=0 & op16_12_4=0x1 & op16_8_4=0x3 & op16_7_1=0x0 & as=0x0 & bow=0x0 & op16_0_4=0x0 & op16_4_4=0x0 & AMASK {
 @if REG_SIZE == "2"
-	SR = *:2 SP;
+	SR = *:2 (SP & AMASK);
 	SP = SP + 0x2;
-	PC = *:2 SP;
+	PC = (*:2 (SP & AMASK)) & AMASK;
 @else
 	tmp:$(REG_SIZE) = zext(*:2 SP);
 	SR = zext(tmp[0,12]);
@@ -774,8 +806,9 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 # Emulated instructions
 #-----------------------
 # Branch
-:BR SRC_W_AS   is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & ad=0x0 & dest_Direct16_0_4=0x0) ... & SRC_W_AS ... {
-	PC = zext(SRC_W_AS);
+:BR SRC_W_AS   is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & ad=0x0 & dest_Direct16_0_4=0x0 & postIncrement) ... & SRC_W_AS ... {
+	PC = zext(SRC_W_AS) & 0xFFFFFFFE:$(REG_SIZE);
+	build postIncrement; # needed before branch
 	goto [PC];
 	#Status bits are not affected
 }
@@ -794,8 +827,8 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 }
 
 # Pop word from stack
-:POP^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & (ad=0x1 | dest_Direct16_0_4) & as=0x3 & src_Direct16_8_4=0x1 & tbl_wzero) ... & DEST_W_AD ... {
-	DEST_W_AD = *:2 SP;
+:POP^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & (ad=0x1 | dest_Direct16_0_4) & as=0x3 & src_Direct16_8_4=0x1 & tbl_wzero & AMASK) ... & DEST_W_AD ... {
+	DEST_W_AD = *:2 (SP & AMASK);
 	build tbl_wzero;
 	SP = SP + 0x2;
 	#Status bits are not affected
@@ -809,9 +842,33 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	#Status bits are not affected
 }
 
+# POP.W SP - increment occurs after read but before write, and is therefore lost
+:POP^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & ad=0x0 & dest_Direct16_0_4 & as=0x3 & src_Direct16_8_4=0x1 & dest_Direct16_0_4=0x1 & tbl_wzero & AMASK) ... & DEST_W_AD ... {
+	DEST_W_AD = *:2 (SP & AMASK); # Unaligned word memory accesses round down
+	build tbl_wzero;
+	#Status bits are not affected
+}
+
+# POP.B SP - increment occurs after read but before write, and is therefore lost
+:POP^".B" DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x1 & ad=0x0 & dest_Direct16_0_4 & as=0x3 & src_Direct16_8_4=0x1 & dest_Direct16_0_4=0x1 & tbl_bzero) ... & DEST_B_AD ... {
+	DEST_B_AD = *:1 SP;
+	build tbl_bzero;
+	#Status bits are not affected
+}
+
+# POP.B PC - writes to PC are rounded down, but base instruction does not use postIncrementStore to handle this case
+:POP^".B" DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x1 & ad=0x0 & dest_Direct16_0_4 & as=0x3 & src_Direct16_8_4=0x1 & dest_Direct16_0_4=0x0 & tbl_bzero) ... & DEST_B_AD ... {
+	DEST_B_AD = *:1 SP;
+	build tbl_bzero;
+	SP = SP + 0x2;
+	PC = PC & 0xFFFFFFFE:$(REG_SIZE);
+	goto [PC];
+	#Status bits are not affected
+}
+
 # Return from subroutine
-:RET           is ctx_haveext=0 & op16_12_4=0x4 & bow=0x0 & ad=0x0 & as=0x3 & dest_Direct16_0_4=0x0 & src_Direct16_8_4=0x1 {
-	PC = zext(*:2 SP);
+:RET           is ctx_haveext=0 & op16_12_4=0x4 & bow=0x0 & ad=0x0 & as=0x3 & dest_Direct16_0_4=0x0 & src_Direct16_8_4=0x1 & AMASK {
+	PC = zext(*:2 (SP & AMASK)) & AMASK; # Stack pointer can be misaligned, and subsequent write to PC rounds to alignment
 	SP = SP + 0x2;
 	return [PC];
 	#Status bits are not affected
@@ -938,14 +995,16 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #------------------
 :ADD^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x5 & bow=0x0 & tbl_wzero & postIncrementStore) ... & SRC_W_AS ... & DEST_W_AD ... {
 	# Operation Flags...
-	$(CARRY) = carry(SRC_W_AS, DEST_W_AD); 	 	# C Flag
-	$(OVERFLOW) = scarry(SRC_W_AS, DEST_W_AD); 	# V Flag
+	tmp_carry:1 = carry(SRC_W_AS, DEST_W_AD); 	 	# C Flag
+	tmp_overflow:1 = scarry(SRC_W_AS, DEST_W_AD); 	# V Flag
 	# Operation...
 	DEST_W_AD = SRC_W_AS + DEST_W_AD;
 	build tbl_wzero;
 	# Result Flags...
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
+	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	build postIncrementStore;
 }
 
@@ -955,14 +1014,16 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #------------------
 :ADD^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x5 & bow=0x1 & tbl_bzero & postIncrementStore) ... & SRC_B_AS ... & DEST_B_AD ... {
 	# Operation Flags...
-	$(CARRY) = carry(SRC_B_AS, DEST_B_AD); 	 	# C Flag
-	$(OVERFLOW) = scarry(SRC_B_AS, DEST_B_AD); 	# V Flag
+	tmp_carry:1 = carry(SRC_B_AS, DEST_B_AD); 	 	# C Flag
+	tmp_overflow:1 = scarry(SRC_B_AS, DEST_B_AD); 	# V Flag
 	# Operation...
 	DEST_B_AD = SRC_B_AS + DEST_B_AD;
 	build tbl_bzero;
 	# Result Flags...
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);			# Z Flag
+	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	build postIncrementStore;
 }
 
@@ -981,14 +1042,15 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 :ADC^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x6 & as=0x0 & src_Direct16_8_4=0x3 & bow=0x0 & tbl_wzero & postIncrementStore) ... & DEST_W_AD ... {
 	# Operation Flags...
 	tmp_carry:1 = carry(DEST_W_AD,zext($(CARRY)));		 #C Flag
- 	$(OVERFLOW) = scarry(DEST_W_AD, zext($(CARRY))); #V Flag
+ 	tmp_overflow:1 = scarry(DEST_W_AD, zext($(CARRY))); #V Flag
  	# Operation...
 	DEST_W_AD = DEST_W_AD + zext($(CARRY));
 	build tbl_wzero;
 	# Result Flags...
-	$(CARRY) = tmp_carry;
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
+	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	build postIncrementStore;
 }
 
@@ -996,14 +1058,15 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 :ADC^".B" DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x6 & as=0x0 & src_Direct16_8_4=0x3 & bow=0x1 & tbl_bzero & postIncrementStore) ... & DEST_B_AD ... {
 	# Operation Flags...
 	tmp_carry:1 = carry(DEST_B_AD,$(CARRY));		 #C Flag
- 	$(OVERFLOW) = scarry(DEST_B_AD,$(CARRY)); #V Flag
+ 	tmp_overflow:1 = scarry(DEST_B_AD,$(CARRY)); #V Flag
  	# Operation...
 	DEST_B_AD = DEST_B_AD + $(CARRY);
 	build tbl_bzero;
 	# Result Flags...
-	$(CARRY) = tmp_carry;
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);			# Z Flag
+	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	build postIncrementStore;
 }
 
@@ -1011,12 +1074,13 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 :RLC^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x6 & as=0x0 & ad=0x0 & src_Direct16_8_4=dest_Direct16_0_4 & bow=0x0 & tbl_wzero & postIncrementStore) ... & DEST_W_AD ... {
 	# Operation Flags...
 	tmp_carry:1 = (carry(DEST_W_AD,zext($(CARRY))) || carry(DEST_W_AD,DEST_W_AD + zext($(CARRY))));		 #C Flag
- 	$(OVERFLOW) = (scarry(DEST_W_AD,zext($(CARRY))) || scarry(DEST_W_AD,DEST_W_AD + zext($(CARRY)))); #V Flag
+ 	tmp_overflow:1 = (scarry(DEST_W_AD,zext($(CARRY))) || scarry(DEST_W_AD,DEST_W_AD + zext($(CARRY)))); #V Flag
  	# Operation...
 	DEST_W_AD = DEST_W_AD + DEST_W_AD + zext($(CARRY));
 	build tbl_wzero;
 	# Result Flags...
 	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
 	build postIncrementStore;
@@ -1043,12 +1107,14 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 :ADDC^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x6 & bow=0x0 & tbl_wzero & postIncrementStore) ... & SRC_W_AS ... & DEST_W_AD ... {
 	# Operation Flags...
 	tmp_carry:1 = (carry(SRC_W_AS,zext($(CARRY))) || carry(DEST_W_AD,SRC_W_AS + zext($(CARRY))));		 #C Flag
- 	$(OVERFLOW) = (scarry(SRC_W_AS,zext($(CARRY))) || scarry(DEST_W_AD,SRC_W_AS + zext($(CARRY)))); #V Flag
+	tmp_res:2 = SRC_W_AS + DEST_W_AD + zext($(CARRY)); # Cannot use scarry as src and dst (each without carry) are compared to final result (with carry)
+	tmp_overflow:1 = ((DEST_W_AD s< 0x0) && (SRC_W_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_W_AD) && (0x0 s<= SRC_W_AS) && (tmp_res s< 0x0));
  	# Operation...
 	DEST_W_AD = SRC_W_AS + DEST_W_AD + zext($(CARRY));
 	build tbl_wzero;
 	# Result Flags...
 	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
 	build postIncrementStore;
@@ -1061,12 +1127,14 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 :ADDC^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x6 & bow=0x1 & tbl_bzero & postIncrementStore) ... & SRC_B_AS ... & DEST_B_AD ... {
 	# Operation Flags...
 	tmp_carry:1 = (carry(SRC_B_AS, $(CARRY)) || carry(DEST_B_AD,SRC_B_AS + $(CARRY)));		 #C Flag
- 	$(OVERFLOW) = (scarry(SRC_B_AS, $(CARRY)) || scarry(DEST_B_AD,SRC_B_AS + $(CARRY))); #V Flag
+	tmp_res:1 = SRC_B_AS + DEST_B_AD + zext($(CARRY));
+	tmp_overflow:1 = ((DEST_B_AD s< 0x0) && (SRC_B_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_B_AD) && (0x0 s<= SRC_B_AS) && (tmp_res s< 0x0));
  	# Operation...
 	DEST_B_AD = SRC_B_AS + DEST_B_AD + $(CARRY);
 	build tbl_bzero;
 	# Result Flags...
 	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);			# Z Flag
 	build postIncrementStore;
@@ -1117,14 +1185,17 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	16 bit SRC Word
 #------------------
 :SUBC^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x7 & bow=0x0 & tbl_wzero & postIncrementStore) ... & SRC_W_AS ... & DEST_W_AD ... {
+	# Operation
+	tmp_res:2 = DEST_W_AD + ~SRC_W_AS + zext($(CARRY));
 	# Operation Flags...
-	brw:2 = 1 - zext( $(CARRY) );
-	$(CARRY) = ((brw + SRC_W_AS) <= DEST_W_AD);		# Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DEST_W_AD, SRC_W_AS + brw);	
+	tmp_carry:1 = (carry(~SRC_W_AS, zext($(CARRY))) || carry(DEST_W_AD, ~SRC_W_AS + zext($(CARRY))));
+	tmp_overflow:1 = ((DEST_W_AD s< 0x0) && (~SRC_W_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_W_AD) && (0x0 s<= ~SRC_W_AS) && (tmp_res s< 0x0));
 	# Operation...
-	DEST_W_AD = DEST_W_AD - SRC_W_AS - brw;
+	DEST_W_AD = tmp_res;
 	build tbl_wzero;
 	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
 	build postIncrementStore;
@@ -1135,14 +1206,17 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	16 bit SRC Byte
 #------------------
 :SUBC^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x7 & bow=0x1 & tbl_bzero & postIncrementStore) ... & SRC_B_AS ... & DEST_B_AD ... {
-	# Operation Flags...
-	brw:1 = 1 - $(CARRY);
-    $(CARRY) = ((brw + SRC_B_AS) <= DEST_B_AD);             # Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DEST_B_AD, SRC_B_AS + brw);	
 	# Operation...
-	DEST_B_AD = DEST_B_AD - SRC_B_AS - brw;
+	tmp_res:1 = DEST_B_AD + ~SRC_B_AS + $(CARRY);
+	# Operation Flags...
+	tmp_carry:1 = (carry(~SRC_B_AS, $(CARRY)) || carry(DEST_B_AD, ~SRC_B_AS + $(CARRY)));
+	tmp_overflow:1 = ((DEST_B_AD s< 0x0) && (~SRC_B_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_B_AD) && (0x0 s<= ~SRC_B_AS) && (tmp_res s< 0x0));
+	# Operation...
+	DEST_B_AD = tmp_res;
 	build tbl_bzero;
 	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);			# Z Flag
 	build postIncrementStore;
@@ -1162,7 +1236,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 # Decrement word
 :DEC^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x8 & as=0x1 & src_Direct16_8_4=0x3 & bow=0x0 & tbl_wzero & postIncrementStore) ... & DEST_W_AD ... {
 	# Operation Flags...
-	$(CARRY) = (0x0 == DEST_W_AD);			# C Flag
+	$(CARRY) = (0x0 != DEST_W_AD);			# C Flag
 	$(OVERFLOW) = (0x8000 == DEST_W_AD);	# V Flag
 	# Operation...
 	DEST_W_AD = DEST_W_AD - 0x1;		
@@ -1176,7 +1250,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 # Decrement byte
 :DEC^".B" DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x8 & as=0x1 & src_Direct16_8_4=0x3 & bow=0x1 & tbl_bzero & postIncrementStore) ... & DEST_B_AD ... {
 	# Operation Flags...
-	$(CARRY) = (0x0 == DEST_B_AD);			# C Flag
+	$(CARRY) = (0x0 != DEST_B_AD);			# C Flag
 	$(OVERFLOW) = (0x80 == DEST_B_AD);		# V Flag
 	# Operation...
 	DEST_B_AD = DEST_B_AD - 0x1;		
@@ -1190,7 +1264,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 # Double decrement word
 :DECD^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x8 & as=0x2 & src_Direct16_8_4=0x3 & bow=0x0 & tbl_wzero & postIncrementStore) ... & DEST_W_AD ... {
 	# Operation Flags...
-	$(CARRY) = ((0x0 == DEST_W_AD) || (0x1 == DEST_W_AD));			# C Flag
+	$(CARRY) = ((0x0 != DEST_W_AD) && (0x1 != DEST_W_AD));			# C Flag
 	$(OVERFLOW) = ((0x8000 == DEST_W_AD) || (0x8001 == DEST_W_AD));	# V Flag
 	# Operation...
 	DEST_W_AD = DEST_W_AD - 0x2;
@@ -1204,7 +1278,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 # Double decrement byte
 :DECD^".B" DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x8 & as=0x2 & src_Direct16_8_4=0x3 & bow=0x1 & tbl_bzero & postIncrementStore) ... & DEST_B_AD ... {
 	# Operation Flags...
-	$(CARRY) = ((0x0 == DEST_B_AD) || (0x1 == DEST_B_AD));			# C Flag
+	$(CARRY) = ((0x0 != DEST_B_AD) && (0x1 != DEST_B_AD));			# C Flag
 	$(OVERFLOW) = ((0x80 == DEST_B_AD) || (0x81 == DEST_B_AD));		# V Flag
 	# Operation...
 	DEST_B_AD = DEST_B_AD - 0x2;
@@ -1220,12 +1294,14 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #------------------
 :SUB^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x8 & bow=0x0 & tbl_wzero & postIncrementStore) ... & SRC_W_AS ... & DEST_W_AD ... {
 	# Operation Flags...
-	$(CARRY) = (SRC_W_AS <= DEST_W_AD);		# Carry is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DEST_W_AD, SRC_W_AS);								# V Flag
+	tmp_carry:1 = (SRC_W_AS <= DEST_W_AD);		# Carry is NOT set if there is a borrow
+	tmp_overflow:1 = sborrow(DEST_W_AD, SRC_W_AS);								# V Flag
 	# Operation...
 	DEST_W_AD = DEST_W_AD - SRC_W_AS;		
 	build tbl_wzero;
 	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
 	build postIncrementStore;
@@ -1237,12 +1313,14 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #------------------
 :SUB^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x8 & bow=0x1 & tbl_bzero & postIncrementStore) ... & SRC_B_AS ... & DEST_B_AD ... {
 	# Operation Flags...
-	$(CARRY) = (SRC_B_AS <= DEST_B_AD);		# Carry is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DEST_B_AD, SRC_B_AS);									# V Flag
+	tmp_carry:1 = (SRC_B_AS <= DEST_B_AD);		# Carry is NOT set if there is a borrow
+	tmp_overflow:1 = sborrow(DEST_B_AD, SRC_B_AS);									# V Flag
 	# Operation...
 	DEST_B_AD = DEST_B_AD - SRC_B_AS;		
 	build tbl_bzero;
 	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);			# Z Flag
 	build postIncrementStore;
@@ -1261,23 +1339,23 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #-----------------------
 # Test word
 :TST^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x9 & as=0x0 & src_Direct16_8_4=0x3 & bow=0x0 & postIncrement) ... & DEST_W_AD ... {
-	# Operation Flags...
-	$(CARRY) = 1;		# Carry is NOT set if there is a borrow
-	$(OVERFLOW) = 0;	# V Flag
 	# Result Flags...
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
+	# Operation Flags...
+	$(CARRY) = 1;		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = 0;	# V Flag
 	build postIncrement;
 }
 
 # Test byte
 :TST^".B" DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x9 & as=0x0 & src_Direct16_8_4=0x3 & bow=0x1 & postIncrement) ... & DEST_B_AD ... {
-	# Operation Flags...
-	$(CARRY) = 1;		# Carry is NOT set if there is a borrow
-	$(OVERFLOW) = 0;	# V Flag
 	# Result Flags...
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);			# Z Flag
+	# Operation Flags...
+	$(CARRY) = 1;		# Carry is NOT set if there is a borrow
+	$(OVERFLOW) = 0;	# V Flag
 	build postIncrement;
 }
 
@@ -1286,11 +1364,13 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #------------------
 :CMP^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x9 & bow=0x0 & postIncrement) ... & SRC_W_AS ... & DEST_W_AD ... {
 	# Operation Flags...
-	$(CARRY) = (SRC_W_AS <= DEST_W_AD);		# Carry is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DEST_W_AD, SRC_W_AS);	# V Flag
+	tmp_carry:1 = (SRC_W_AS <= DEST_W_AD);		# Carry is NOT set if there is a borrow
+	tmp_overflow:1 = sborrow(DEST_W_AD, SRC_W_AS);	# V Flag
 	# Operation...
 	result:2 = (DEST_W_AD - SRC_W_AS);
 	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (result s< 0x0);			# S Flag
 	$(ZERO) = (result == 0x0);			# Z Flag
 	build postIncrement;
@@ -1302,11 +1382,13 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #------------------
 :CMP^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x9 & bow=0x1 & postIncrement) ... & SRC_B_AS ... & DEST_B_AD ... {
 	# Operation Flags...
-	$(CARRY) = (SRC_B_AS <= DEST_B_AD);		# Carry is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DEST_B_AD, SRC_B_AS);	# V Flag
+	tmp_carry:1 = (SRC_B_AS <= DEST_B_AD);		# Carry is NOT set if there is a borrow
+	tmp_overflow:1 = sborrow(DEST_B_AD, SRC_B_AS);	# V Flag
 	# Operation...
 	result:1 = (DEST_B_AD - SRC_B_AS);
 	# Result Flags...
+	$(CARRY) = tmp_carry;
+	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (result s< 0x0);			# S Flag
 	$(ZERO) = (result == 0x0);			# Z Flag
 	build postIncrement;
@@ -1321,7 +1403,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	------------------------------------------------------------------------------
 #	| 1    0    1    0  |     source      | Ad | B/W |   As    |   destination   | 
 #----------------------------------------------------------------------------------------------------------------
-# These decimal add instructions appear to lack supporting BCD p-code operations to handle carries and overflows.
+# These decimal add instructions appear to lack supporting BCD p-code operations to easily handle the operation and flags.
 #----------------------------------------------------------------------------------------------------------------
 #-----------------------
 # Emulated instructions
@@ -1329,10 +1411,35 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 # Decimal add carry to word
 :DADC^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0xA & as=0x0 & src_Direct16_8_4=0x3 & bow=0x0 & tbl_wzero & postIncrementStore) ... & DEST_W_AD ... {
 	# Operation...
-	DEST_W_AD = bcd_add($(CARRY) ,DEST_W_AD);
+	dst_nibble0:2 = DEST_W_AD & 0xf;
+	dst_nibble1:2 = (DEST_W_AD >> 4) & 0xf;
+	dst_nibble2:2 = (DEST_W_AD >> 8) & 0xf;
+	dst_nibble3:2 = (DEST_W_AD >> 12) & 0xf;
+
+	res_nibble0:2 = dst_nibble0 + zext($(CARRY));
+	carry_nibble0:2 = zext(res_nibble0 > 9);
+	res_nibble0 = (res_nibble0 - carry_nibble0 * 10) & 0xf;
+
+	res_nibble1:2 = dst_nibble1 + carry_nibble0;
+	carry_nibble1:2 = zext(res_nibble1 > 9);
+	res_nibble1 = (res_nibble1 - carry_nibble1 * 10) & 0xf;
+
+	res_nibble2:2 = dst_nibble2 + carry_nibble1;
+	carry_nibble2:2 = zext(res_nibble2 > 9);
+	res_nibble2 = (res_nibble2 - carry_nibble2 * 10) & 0xf;
+
+	res_nibble3:2 = dst_nibble3 + carry_nibble2;
+	tmp_carry:1 = res_nibble3 > 9;
+	carry_nibble3:2 = zext(res_nibble3 > 9);
+	res_nibble3 = (res_nibble3 - carry_nibble3 * 10) & 0xf;
+
+	tmp_res:2 = (res_nibble3 << 12) + (res_nibble2 << 8) + (res_nibble1 << 4) + res_nibble0;
+	$(OVERFLOW) = ((0x0 s<= DEST_W_AD) && (tmp_res s< 0x0)); # Undefined in documentation, but this behaviour observed for MSP430FR5994
+	DEST_W_AD = tmp_res;
+
 	build tbl_wzero;
 	# Operation Flags...
-	$(CARRY) = 0;					# Don't currently have BCD overflow op
+	$(CARRY) = tmp_carry;
 	# Result Flags...
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
@@ -1342,10 +1449,25 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 # Decimal add carry to byte
 :DADC^".B" DEST_B_AD is ctx_haveext=0 & (op16_12_4=0xA & as=0x0 & src_Direct16_8_4=0x3 & bow=0x1 & tbl_bzero & postIncrementStore) ... & DEST_B_AD ... {
 	# Operation...
-	DEST_B_AD = bcd_add($(CARRY),DEST_B_AD);
+	dst_nibble0:1 = DEST_B_AD & 0xf;
+	dst_nibble1:1 = (DEST_B_AD >> 4) & 0xf;
+
+	res_nibble0:1 = dst_nibble0 + zext($(CARRY));
+	carry_nibble0:1 = zext(res_nibble0 > 9);
+	res_nibble0 = (res_nibble0 - carry_nibble0 * 10) & 0xf;
+
+	res_nibble1:1 = dst_nibble1 + carry_nibble0;
+	tmp_carry:1 = res_nibble1 > 9;
+	carry_nibble1:1 = zext(res_nibble1 > 9);
+	res_nibble1 = (res_nibble1 - carry_nibble1 * 10) & 0xf;
+
+	tmp_res:1 = (res_nibble1 << 4) + res_nibble0;
+	$(OVERFLOW) = ((0x0 s<= DEST_B_AD) && (tmp_res s< 0x0)); # Undefined in documentation, but this behaviour observed for MSP430FR5994
+	DEST_B_AD = tmp_res;
+
 	build tbl_bzero;
 	# Operation Flags...
-	$(CARRY) = 0;				# This should be overflow
+	$(CARRY) = tmp_carry;
 	# Result Flags...
 	$(SIGN) = (DEST_B_AD s< 0x0);		# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);		# Z Flag
@@ -1356,12 +1478,40 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	16 bit SRC Word
 #------------------
 :DADD^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0xA & bow=0x0 & tbl_wzero & postIncrementStore) ... & SRC_W_AS ... & DEST_W_AD ... {
-	# Operation Flags...
-	$(CARRY) = 0;					# Don't currently have BCD overflow op
 	# Operation...
-	DEST_W_AD = bcd_add(SRC_W_AS ,DEST_W_AD);
+	src_nibble0:2 = SRC_W_AS & 0xf;
+	src_nibble1:2 = (SRC_W_AS >> 4) & 0xf;
+	src_nibble2:2 = (SRC_W_AS >> 8) & 0xf;
+	src_nibble3:2 = (SRC_W_AS >> 12) & 0xf;
+	dst_nibble0:2 = DEST_W_AD & 0xf;
+	dst_nibble1:2 = (DEST_W_AD >> 4) & 0xf;
+	dst_nibble2:2 = (DEST_W_AD >> 8) & 0xf;
+	dst_nibble3:2 = (DEST_W_AD >> 12) & 0xf;
+
+	res_nibble0:2 = src_nibble0 + dst_nibble0 + zext($(CARRY));
+	carry_nibble0:2 = zext(res_nibble0 > 9);
+	res_nibble0 = (res_nibble0 - carry_nibble0 * 10) & 0xf;
+
+	res_nibble1:2 = src_nibble1 + dst_nibble1 + carry_nibble0;
+	carry_nibble1:2 = zext(res_nibble1 > 9);
+	res_nibble1 = (res_nibble1 - carry_nibble1 * 10) & 0xf;
+
+	res_nibble2:2 = src_nibble2 + dst_nibble2 + carry_nibble1;
+	carry_nibble2:2 = zext(res_nibble2 > 9);
+	res_nibble2 = (res_nibble2 - carry_nibble2 * 10) & 0xf;
+
+	res_nibble3:2 = src_nibble3 + dst_nibble3 + carry_nibble2;
+	tmp_carry:1 = res_nibble3 > 9;
+	carry_nibble3:2 = zext(res_nibble3 > 9);
+	res_nibble3 = (res_nibble3 - carry_nibble3 * 10) & 0xf;
+
+	tmp_res:2 = (res_nibble3 << 12) + (res_nibble2 << 8) + (res_nibble1 << 4) + res_nibble0;
+	$(OVERFLOW) = ((DEST_W_AD s< 0x0) && (SRC_W_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_W_AD) && (0x0 s<= SRC_W_AS) && (tmp_res s< 0x0)); # Undefined in ISA, but this behaviour observed for MSP430FR5994
+	DEST_W_AD = tmp_res;
+
 	build tbl_wzero;
 	# Result Flags...
+	$(CARRY) = tmp_carry;
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
 	build postIncrementStore;
@@ -1371,12 +1521,28 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	16 bit SRC Byte
 #------------------
 :DADD^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0xA & bow=0x1 & tbl_bzero & postIncrementStore) ... & SRC_B_AS ... & DEST_B_AD ... {
-	# Operation Flags...
-	$(CARRY) = 0;				# This should be overflow
 	# Operation...
-	DEST_B_AD = bcd_add(SRC_B_AS,DEST_B_AD);
+	src_nibble0:1 = SRC_B_AS & 0xf;
+	src_nibble1:1 = (SRC_B_AS >> 4) & 0xf;
+	dst_nibble0:1 = DEST_B_AD & 0xf;
+	dst_nibble1:1 = (DEST_B_AD >> 4) & 0xf;
+
+	res_nibble0:1 = src_nibble0 + dst_nibble0 + zext($(CARRY));
+	carry_nibble0:1 = zext(res_nibble0 > 9);
+	res_nibble0 = (res_nibble0 - carry_nibble0 * 10) & 0xf;
+
+	res_nibble1:1 = src_nibble1 + dst_nibble1 + carry_nibble0;
+	tmp_carry:1 = res_nibble1 > 9;
+	carry_nibble1:1 = zext(res_nibble1 > 9);
+	res_nibble1 = (res_nibble1 - carry_nibble1 * 10) & 0xf;
+
+	tmp_res:1 = (res_nibble1 << 4) + res_nibble0;
+	$(OVERFLOW) = ((DEST_B_AD s< 0x0) && (SRC_B_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_B_AD) && (0x0 s<= SRC_B_AS) && (tmp_res s< 0x0)); # Undefined in ISA, but this behaviour observed for MSP430FR5994
+	DEST_B_AD = tmp_res;
+
 	build tbl_bzero;
 	# Result Flags...
+	$(CARRY) = tmp_carry;
 	$(SIGN) = (DEST_B_AD s< 0x0);		# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);		# Z Flag
 	build postIncrementStore;
@@ -1394,10 +1560,10 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	16 bit SRC Word
 #------------------
 :BIT^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0xB & bow=0x0 & postIncrement) ... & SRC_W_AS ... & DEST_W_AD ... {
-	# Operation Flags...
-	$(OVERFLOW) = 0x0;					# V Flag (reset)
 	# Operation...
 	result:2 = DEST_W_AD & SRC_W_AS;
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
 	# Result Flags...
 	$(CARRY) = (result != 0x0);			# C Flag
 	$(SIGN) = (result s< 0x0);			# S Flag
@@ -1410,10 +1576,10 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	16 bit SRC Byte
 #------------------
 :BIT^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0xB & bow=0x1 & postIncrement) ... & SRC_B_AS ... & DEST_B_AD ... {
-	# Operation Flags...
-	$(OVERFLOW) = 0x0;					# V Flag (reset)
 	# Operation...
 	result:1 = DEST_B_AD & SRC_B_AS;
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag (reset)
 	# Result Flags...
 	$(CARRY) = (result != 0x0);			# C Flag
 	$(SIGN) = (result s< 0x0);			# S Flag
@@ -1578,11 +1744,12 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #------------------
 :XOR^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0xE & bow=0x0 & tbl_wzero & postIncrementStore) ... & SRC_W_AS ... & DEST_W_AD ... {
 	# Operation Flags...
-	$(OVERFLOW) = ((DEST_W_AD s< 0x0) && (SRC_W_AS s< 0x0)) ;	# V Flag
+	tmp_overflow:1 = ((DEST_W_AD s< 0x0) && (SRC_W_AS s< 0x0)) ;	# V Flag
 	# Operation...
 	DEST_W_AD = DEST_W_AD ^ SRC_W_AS;
 	build tbl_wzero;
 	# Result Flags...
+	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
 	$(CARRY) = (DEST_W_AD != 0x0);			# C Flag
@@ -1594,11 +1761,12 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #------------------
 :XOR^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0xE & bow=0x1 & tbl_bzero & postIncrementStore) ... & SRC_B_AS ... & DEST_B_AD ... {
 	# Operation Flags...
-	$(OVERFLOW) = ((DEST_B_AD s< 0x0) && (SRC_B_AS s< 0x0)) ;	# V Flag
+	tmp_overflow:1 = ((DEST_B_AD s< 0x0) && (SRC_B_AS s< 0x0)) ;	# V Flag
 	# Operation...
 	DEST_B_AD = DEST_B_AD ^ SRC_B_AS;
 	build tbl_bzero;
 	# Result Flags...
+	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);			# Z Flag
 	$(CARRY) = (DEST_B_AD != 0x0);			# C Flag
@@ -1617,12 +1785,12 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	16 bit SRC Word
 #------------------
 :AND^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0xF & bow=0x0 & tbl_wzero & postIncrementStore) ... & SRC_W_AS ... & DEST_W_AD ... {
-	# Operation Flags...
-	$(OVERFLOW) = 0x0;					# V Flag
 	# Operation...
 	result:2 = DEST_W_AD & SRC_W_AS;
 	DEST_W_AD = result;
 	build tbl_wzero;
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag
 	# Result Flags...
 	$(SIGN) = (result s< 0x0);			# S Flag
 	$(ZERO) = (result == 0x0);			# Z Flag
@@ -1635,12 +1803,12 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	16 bit SRC Byte
 #------------------
 :AND^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0xF & bow=0x1 & tbl_bzero & postIncrementStore) ... & SRC_B_AS ... & DEST_B_AD ... {
-	# Operation Flags...
-	$(OVERFLOW) = 0x0;					# V Flag
 	# Operation...
 	result:1 = DEST_B_AD & SRC_B_AS;
 	DEST_B_AD = result;
 	build tbl_bzero;
+	# Operation Flags...
+	$(OVERFLOW) = 0x0;					# V Flag
 	# Result Flags...
 	$(SIGN) = (result s< 0x0);			# S Flag
 	$(ZERO) = (result == 0x0);			# Z Flag
