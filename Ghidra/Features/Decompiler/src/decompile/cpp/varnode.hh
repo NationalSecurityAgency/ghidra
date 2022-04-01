@@ -169,6 +169,7 @@ public:
 
   const Address &getAddr(void) const { return (const Address &) loc; } ///< Get the storage Address
   AddrSpace *getSpace(void) const { return loc.getSpace(); } ///< Get the AddrSpace storing this Varnode
+  AddrSpace *getSpaceFromConst(void) const;	///< Get AddrSpace from \b this encoded constant Varnode
   uintb getOffset(void) const { return loc.getOffset(); } ///< Get the offset (within its AddrSpace) where this is stored
   int4 getSize(void) const { return size; } ///< Get the number of bytes this Varnode stores
   int2 getMergeGroup(void) const { return mergegroup; }	///< Get the \e forced \e merge group of this Varnode
@@ -408,4 +409,12 @@ struct TraverseNode {
 bool contiguous_test(Varnode *vn1,Varnode *vn2);	///< Test if Varnodes are pieces of a whole
 Varnode *findContiguousWhole(Funcdata &data,Varnode *vn1,
 				  Varnode *vn2);	///< Retrieve the whole Varnode given pieces
+
+/// In \b LOAD and \b STORE instructions, the particular address space being read/written is encoded
+/// as a constant Varnode.  Internally, this constant is the actual pointer to the AddrSpace.
+/// \return the AddrSpace pointer
+inline AddrSpace *Varnode::getSpaceFromConst(void) const {
+  return (AddrSpace *)(uintp)loc.getOffset();
+}
+
 #endif

@@ -90,9 +90,6 @@ public:
 
   /// Restore an address and size from parsed XML
   static Address restoreXml(const Element *el,const AddrSpaceManager *manage,int4 &size);
-
-  /// Recover an encoded address space from an address
-  static AddrSpace *getSpaceFromConst(const Address &addr);
 };
 
 /// \brief A class for uniquely labelling and comparing PcodeOps
@@ -440,17 +437,6 @@ inline void Address::saveXml(ostream &s,int4 size) const {
   if (base!=(AddrSpace *)0)
     base->saveXmlAttributes(s,offset,size);
   s << "/>";
-}
-
-/// In \b LOAD and \b STORE instructions, the particular address
-/// space being read/written is encoded as a constant input parameter
-/// to the instruction.  Internally, this constant is the actual
-/// pointer to the AddrSpace.  This function allows the encoded pointer
-/// to be recovered from the address it is encoded in.
-/// \param addr is the Address encoding the pointer
-/// \return the AddrSpace pointer
-inline AddrSpace *Address::getSpaceFromConst(const Address &addr) {
-  return (AddrSpace *)(uintp)addr.offset;
 }
 
 /// \param addr is the Address to test for containment

@@ -3863,7 +3863,7 @@ AddrSpace *RuleLoadVarnode::checkSpacebase(Architecture *glb,PcodeOp *op,uintb &
   AddrSpace *loadspace;
 
   offvn = op->getIn(1);		// Address offset
-  loadspace = Address::getSpaceFromConst(op->getIn(0)->getAddr()); // Space being loaded/stored
+  loadspace = op->getIn(0)->getSpaceFromConst(); // Space being loaded/stored
   // Treat segmentop as part of load/store
   if (offvn->isWritten()&&(offvn->getDef()->code()==CPUI_SEGMENTOP)) {
     offvn = offvn->getDef()->getIn(2);
@@ -7734,7 +7734,7 @@ void RuleSegment::getOpList(vector<uint4> &oplist) const
 int4 RuleSegment::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  SegmentOp *segdef = data.getArch()->userops.getSegmentOp(Address::getSpaceFromConst(op->getIn(0)->getAddr())->getIndex());
+  SegmentOp *segdef = data.getArch()->userops.getSegmentOp(op->getIn(0)->getSpaceFromConst()->getIndex());
   if (segdef == (SegmentOp *)0)
     throw LowlevelError("Segment operand missing definition");
 
@@ -8038,7 +8038,7 @@ int4 RulePtrFlow::applyOp(PcodeOp *op,Funcdata &data)
   case CPUI_LOAD:
   case CPUI_STORE:
     vn = op->getIn(1);
-    spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());
+    spc = op->getIn(0)->getSpaceFromConst();
     if (vn->getSize() > spc->getAddrSize()) {
       vn = truncatePointer(spc,op,vn,1,data);
       madeChange = 1;

@@ -79,7 +79,7 @@ void EmulateFunction::executeLoad(void)
 {
   if (collectloads) {
     uintb off = getVarnodeValue(currentOp->getIn(1));
-    AddrSpace *spc = Address::getSpaceFromConst(currentOp->getIn(0)->getAddr());
+    AddrSpace *spc = currentOp->getIn(0)->getSpaceFromConst();
     off = AddrSpace::addressToByte(off,spc->getWordSize());
     int4 sz = currentOp->getOut()->getSize();
     loadpoints.push_back(LoadTable(Address(spc,off),sz));

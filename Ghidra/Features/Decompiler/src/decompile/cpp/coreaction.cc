@@ -963,10 +963,10 @@ AddrSpace *ActionConstantPtr::searchForSpaceAttribute(Varnode *vn,PcodeOp *op)
 	op = vn->loneDescend();
 	break;
       case CPUI_LOAD:
-	return Address::getSpaceFromConst(op->getIn(0)->getAddr());
+	return op->getIn(0)->getSpaceFromConst();
       case CPUI_STORE:
 	if (op->getIn(1) == vn)
-	  return Address::getSpaceFromConst(op->getIn(0)->getAddr());
+	  return op->getIn(0)->getSpaceFromConst();
 	return (AddrSpace *)0;
       default:
 	return (AddrSpace *)0;
@@ -977,9 +977,9 @@ AddrSpace *ActionConstantPtr::searchForSpaceAttribute(Varnode *vn,PcodeOp *op)
     op = *iter;
     OpCode opc = op->code();
     if (opc == CPUI_LOAD)
-      return Address::getSpaceFromConst(op->getIn(0)->getAddr());
+      return op->getIn(0)->getSpaceFromConst();
     else if (opc == CPUI_STORE && op->getIn(1) == vn)
-      return Address::getSpaceFromConst(op->getIn(0)->getAddr());
+      return op->getIn(0)->getSpaceFromConst();
   }
   return (AddrSpace *)0;
 }
@@ -2203,7 +2203,7 @@ void ActionSetCasts::checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data)
   if (ptrtype->getMetatype()==TYPE_PTR) {
     AddrSpace *spc = ((TypePointer *)ptrtype)->getSpace();
     if (spc != (AddrSpace *)0) {
-      AddrSpace *opSpc = Address::getSpaceFromConst(op->getIn(0)->getAddr());
+      AddrSpace *opSpc = op->getIn(0)->getSpaceFromConst();
       if (opSpc != spc && spc->getContain() != opSpc) {
 	string name = op->getOpcode()->getName();
 	name[0] = toupper( name[0] );
@@ -5080,6 +5080,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RulePiecePathology("protorecovery") );
 
 	actprop->addRule( new RuleDoubleLoad("doubleload") );
+	actprop->addRule( new RuleDoubleStore("doubleprecis") );
 	actprop->addRule( new RuleDoubleIn("doubleprecis") );
 	for(iter=conf->extra_pool_rules.begin();iter!=conf->extra_pool_rules.end();++iter)
 	  actprop->addRule( *iter ); // Add CPU specific rules
