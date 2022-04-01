@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ dependencies {
 	api project(":FileSystem")
 	api project(":DB")
 	api project(":Generic")
-	
+
 	runGhidraServer project
 }
 
@@ -41,10 +41,10 @@ CopySpec yajswCopySpec = copySpec {
 
 	// First check if the file is in the dependencies repo.  If not, check in the bin repo.
 	def yajswZipTree = depsFile.exists() ? zipTree(depsFile) : zipTree(binRepoFile)
-	
-	// In yajsw-beta-13.01.zip there is not a top level directory like there was in previous
+
+	// In yajsw-stable-13.03.zip there is not a top level directory like there was in previous
 	// versions, so we need the "into".  This is a bug which will be fixed in a future version,
-	// of yajsw, so for the next upgrade we'll likely need to get rid of the into and preface each 
+	// of yajsw, so for the next upgrade we'll likely need to get rid of the into and preface each
 	// include with a ${yajswRelease} like we used to do.
 	from(yajswZipTree) {
 		include "lib/core/**"
@@ -68,8 +68,8 @@ task yajswDevUnpack(type:Copy) {
 /*********************************************************************************
  * CLASSPATH FRAGMENT FILE: Production
  *
- * This task creates a file, 'GhidraServer/build/classpath.fragment', 
- * which contains all classpath info necessary for running the server in 
+ * This task creates a file, 'GhidraServer/build/classpath.fragment',
+ * which contains all classpath info necessary for running the server in
  * production mode.
  *
  * The basic conops is this:
@@ -82,18 +82,18 @@ task yajswDevUnpack(type:Copy) {
  *********************************************************************************/
 task generateGhidraServerClasspath {
 	description "Generate a configuration fragment for the Ghidra Server's classpath (release)"
-		
+
 	File outfile = file("${buildDir}/classpath.frag")
 	outputs.file outfile
-	
+
 	// Force the task to be executed every time by setting to false.
 	outputs.upToDateWhen { false }
-	
-	doLast {		
+
+	doLast {
 		outfile.parentFile.mkdirs()
 		outfile.withPrintWriter { out ->
 			int idx = 0
-			configurations.runGhidraServer.each { jarFile ->	
+			configurations.runGhidraServer.each { jarFile ->
 				File distPath = file("/")
 				String resPath
 				for (Configuration conf : project.getConfigurations()) {
@@ -102,7 +102,7 @@ task generateGhidraServerClasspath {
 						out.println("wrapper.java.classpath.${++idx}=\${ghidra_home}/${resPath}")
 						break
 					}
-				}						
+				}
 			}
 		}
 	}
@@ -113,10 +113,10 @@ task generateGhidraServerClasspath {
  * path of this project.
  *
  * Note that we use 'this.project' to reference the GhidraServer project - this is because
- * inside the closure, 'project' refers to the root project, while 'this' refers to 
+ * inside the closure, 'project' refers to the root project, while 'this' refers to
  * GhidraServer.
  */
-rootProject.assembleDistribution { 
+rootProject.assembleDistribution {
 	into (getZipPath(this.project)  + "/data") {
 		with yajswCopySpec
 		from generateGhidraServerClasspath
@@ -129,8 +129,8 @@ rootProject.assembleDistribution {
 /*********************************************************************************
  * CLASSPATH FRAGMENT FILE: Developer
  *
- * This task creates a file, 'GhidraServer/build/dev-meta/classpath.fragment', 
- * which contains all classpath info necessary for running the server in 
+ * This task creates a file, 'GhidraServer/build/dev-meta/classpath.fragment',
+ * which contains all classpath info necessary for running the server in
  * dev mode.
  *
  * All items in the classpath will have the form:
@@ -145,27 +145,27 @@ task generateDevGhidraServerClasspath {
 
 	File outfile = file("${buildDir}/dev-meta/classpath.frag")
 	outputs.file outfile
-	
+
 	// Force the task to be executed every time by setting to false.
 	outputs.upToDateWhen { false }
-	
+
 	doLast {
 		outfile.parentFile.mkdirs()
 		outfile.withPrintWriter { out ->
 			int idx = 0
 			configurations.runGhidraServer.each { jarFile ->
 				def JAR_PATH = jarFile.absolutePath
-				
+
 				// There might be dependencies in the gradle cache, which could be anywhere
-				// (including a different drive). We can only use relative paths if the jar is in 
-				// the root project repo or bin repo. 
+				// (including a different drive). We can only use relative paths if the jar is in
+				// the root project repo or bin repo.
 				if (JAR_PATH.startsWith(rootProject.getProjectDir().absolutePath) || JAR_PATH.startsWith(BIN_REPO)) {
 					JAR_PATH = "\${ghidra_home}/" + rootProject.relativePath(JAR_PATH)
 				}
 				JAR_PATH = JAR_PATH.replace('\\','/') // necessary for windows
 				def index = JAR_PATH.indexOf("/build/")
 				if (index != -1) {
-					// Use Module's bin/ class directory (produced by Eclipse) instead of jar 
+					// Use Module's bin/ class directory (produced by Eclipse) instead of jar
 					JAR_PATH = JAR_PATH.substring(0, index) + "/bin/main"
 				}
 				if (!jarFile.path.contains("/libsForBuild/")) {
@@ -178,8 +178,8 @@ task generateDevGhidraServerClasspath {
 
 
 /*****************************************************************************************
- * We want the two main tasks in this build file to be run at the appropriate time; the  
- * dev task should be run during prepDev; the other should be run during the build       
+ * We want the two main tasks in this build file to be run at the appropriate time; the
+ * dev task should be run during prepDev; the other should be run during the build
  *****************************************************************************************/
 rootProject.prepDev.dependsOn(generateDevGhidraServerClasspath)
 rootProject.prepDev.dependsOn(yajswDevUnpack)
@@ -187,20 +187,20 @@ rootProject.prepDev.dependsOn(yajswDevUnpack)
 
 
 /*********************************************************************************
- * Searches the artifacts of a given configuration for a given jar.  If 
+ * Searches the artifacts of a given configuration for a given jar.  If
  * found, constructs a path to that jar ralative to the given project.
  *
  * Note that we have to check both the given configuration, AND the resolved
- * configuration to ensure we find all possible matches. 
+ * configuration to ensure we find all possible matches.
  *********************************************************************************/
 def String searchArtifactsForJar (proj, conf, jarFile) {
-	
+
 	if (conf == null) {
 		return null
 	}
-			
+
 	String resolution = null
-	
+
 	PublishArtifactSet artifacts = conf.getArtifacts()
 	artifacts.getFiles().each { f ->
 		if (jarFile.equals(f)) {
@@ -208,7 +208,7 @@ def String searchArtifactsForJar (proj, conf, jarFile) {
 			resolution = path
 		}
 	}
-		
+
 	if (artifacts.isEmpty()) {
 		if (conf.isCanBeResolved()) {
 			ResolvedConfiguration resolvedConfiguration = conf.getResolvedConfiguration()
@@ -221,11 +221,11 @@ def String searchArtifactsForJar (proj, conf, jarFile) {
 						resolution = path
 					}
 					break;
-				}		
+				}
 			}
 		}
 	}
-	
+
 	return resolution
 }
 
@@ -238,15 +238,15 @@ def Project getProjectForArtifact(resolvedArtifact) {
 	ModuleVersionIdentifier versionIdent = moduleVersion.getId()
 	String moduleName = versionIdent.getName()
 	Project project = rootProject.findProject(moduleName)
-	
+
 	return project
 }
 
 /*********************************************************************************
- * Searches the files of the given configuration for the given jar.  If found, 
+ * Searches the files of the given configuration for the given jar.  If found,
  * constructs a path to that jar ralative to the given project.
- * 
- * Note that we hvae to use the resolved configuration here; if we don't have 
+ *
+ * Note that we hvae to use the resolved configuration here; if we don't have
  * access to this, the file is not available.
  *********************************************************************************/
 def String searchFilesForJar (proj, conf, jar) {
@@ -254,25 +254,25 @@ def String searchFilesForJar (proj, conf, jar) {
 	if (conf == null) {
 		return null
 	}
-	
+
 	String resolution = null
-	
+
 	if (conf.isCanBeResolved()) {
 		ResolvedConfiguration rc = conf.getResolvedConfiguration()
 		rc.getFiles().each { f ->
 			if (jar.equals(f)) {
-				resolution = rootProject.relativePath(proj.projectDir) + "/lib/" + f.name		
+				resolution = rootProject.relativePath(proj.projectDir) + "/lib/" + f.name
 			}
 		}
 	}
-	
+
 	return resolution
 }
 
 
 /*********************************************************************************
- * Searches all dependencies of a given configuration for a particular jar 
- * file. 
+ * Searches all dependencies of a given configuration for a particular jar
+ * file.
  *
  * Note that there are two types of dependencies we have to check here: project
  * dependencies and normal files. The former requires that we recursively check
@@ -280,10 +280,10 @@ def String searchFilesForJar (proj, conf, jar) {
  * of a list of files.
  *********************************************************************************/
 def String searchDependenciesForJar (proj, conf, jarFile) {
-		
+
 	String relPath = null
-	
-	Set<ProjectDependency> projectDependencies = conf.getAllDependencies().withType(ProjectDependency) 
+
+	Set<ProjectDependency> projectDependencies = conf.getAllDependencies().withType(ProjectDependency)
 	for (ProjectDependency dependency : projectDependencies) {
 		Project dependencyProject = dependency.getDependencyProject()
 		Configuration depProjectConf = dependencyProject.getConfigurations().getByName(conf.getName())
@@ -292,32 +292,32 @@ def String searchDependenciesForJar (proj, conf, jarFile) {
 			return relPath;
 		}
 	}
-		
+
 	relPath = searchFilesForJar(proj, conf, jarFile)
 	return relPath
 }
 
 /*********************************************************************************
- * Finds the location of a given jar in our distribution and returns the path 
+ * Finds the location of a given jar in our distribution and returns the path
  * (relative to the root project).
  *
- * To do this, first search the artifacts of the project and if it's not found, 
- * search all dependencies. 
+ * To do this, first search the artifacts of the project and if it's not found,
+ * search all dependencies.
  *********************************************************************************/
 def String findJarInDistribution(proj, conf, jarFile) {
-							
+
 	if (conf == null) {
 		return null
 	}
-	
+
 	String path = null
-		
+
 	path = searchArtifactsForJar(proj, conf, jarFile)
-	
+
 	if (path == null) {
 		path = searchDependenciesForJar(proj, conf, jarFile)
 	}
-	
+
 	return path
 }
 

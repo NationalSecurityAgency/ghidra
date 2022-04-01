@@ -99,19 +99,19 @@ Unfortunately, in some cases, the artifact or the particular version we desire i
 So, in addition to mavenCentral and jcenter, you must configure a flat directory-style repository for
 manually-downloaded dependencies.
 
-The flat directory-style repository can be created and populated automatically by a provided script, 
+The flat directory-style repository can be created and populated automatically by a provided script,
 or manually by downloading the required dependencies.  Choose one of the two following methods:
   * [Automatic script instructions](#automatic-script-instructions)
   * [Manual download instructions](#manual-download-instructions)
 
 ### Automatic Script Instructions
-The flat directory-style repository can be setup automatically by running a simple Gradle script. 
+The flat directory-style repository can be setup automatically by running a simple Gradle script.
 Navigate to `~/git/ghidra` and run the following:
 ```
 gradle -I gradle/support/fetchDependencies.gradle init
 ```
 The Gradle task to be executed, in this case _init_, is unimportant. The point is to have Gradle execute
-the `fetchDependencies.gradle` script. If it ran correctly you will have a new `~/git/ghidra/dependencies/` 
+the `fetchDependencies.gradle` script. If it ran correctly you will have a new `~/git/ghidra/dependencies/`
 directory populated with the following files:
  * flatRepo/AXMLPrinter2.jar
  * flatRepo/dex-ir-2.0.jar
@@ -125,7 +125,7 @@ directory populated with the following files:
  * GhidraServer/yajsw-stable-13.03.zip
  * fidb/*.fidb
 
-If you see these, congrats! Skip to [building](#building-ghidra) or [developing](#developing-ghidra). If not, continue with manual download 
+If you see these, congrats! Skip to [building](#building-ghidra) or [developing](#developing-ghidra). If not, continue with manual download
 instructions below...
 
 ### Manual Download Instructions
@@ -230,7 +230,7 @@ The output will be placed in `~/git/ghidra/build/dist/`.
 It will be named according to the version, release name, build date, and platform.
 To test it, unzip it where you like, and execute `./ghidraRun`.
 
-__NOTE:__ Unless pre-built manually, the Eclipse GhidraDev plugin will not be included 
+__NOTE:__ Unless pre-built manually, the Eclipse GhidraDev plugin will not be included
 in the build. In addition, some other supporting data will also be missing.
 See the sections below for instructions on how to produce these components.
 You may also be able to copy some of these already-built components from a previous official distribution.
@@ -247,7 +247,7 @@ gradle prepDev
 The `prepDev` tasks primarily include generating some source, indexing our built-in help, and unpacking some dependencies.
 
 ### Import Eclipse Projects
-To develop/modify Ghidra, you must first use Gradle to generate Eclipse projects.  From the project 
+To develop/modify Ghidra, you must first use Gradle to generate Eclipse projects.  From the project
 root:
 
 ```bash
@@ -284,7 +284,7 @@ If the language modules are not pre-compiled, Ghidra will compile them at run ti
 
 ### Import and Build GhidraDev project (optional)
 
-Developing the GhidraDev Eclipse plugin requires the _Eclipse PDE (Plug-in Development Environment)_, which 
+Developing the GhidraDev Eclipse plugin requires the _Eclipse PDE (Plug-in Development Environment)_, which
 can be installed via the Eclipse marketplace.  It is also included in the _Eclipse IDE for RCP and RAP Developers_.
 To generate the GhidraDev Eclipse projects, execute:
 
@@ -292,7 +292,7 @@ To generate the GhidraDev Eclipse projects, execute:
 gradle eclipse -PeclipsePDE
 ```
 
-Import the newly generated GhidraDev projects into Eclipse. 
+Import the newly generated GhidraDev projects into Eclipse.
 
 __Note:__ If you are getting compilation errors related to PyDev and CDT, go into Eclipse's preferences,
 and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/GhidraDev.target_.
