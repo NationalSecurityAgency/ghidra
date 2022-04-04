@@ -19,10 +19,10 @@ import java.util.*;
 
 /**
  * Class for storing paths with fast "contains" method.
- * 
- * Note: a path can only contain a vertex once.
  *
- * @param <V>
+ * <p>Note: a path can only contain a vertex once.
+ *
+ * @param <V> the vertex type.
  */
 public class GraphPath<V> {
 
@@ -58,10 +58,9 @@ public class GraphPath<V> {
 	}
 
 	/**
-	 * Check if a GraphPath starts with another Graphpath.
+	 * Check if a GraphPath starts with another GraphPath.
 	 *
-	 * @param otherPath the other GraphPath for which we are checking if the current GraphPath
-	 * starts with it.
+	 * @param otherPath the other GraphPath we are checking
 	 * @return true if the current GraphPath starts with otherPath, false otherwise
 	 */
 	public boolean startsWith(GraphPath<V> otherPath) {
@@ -107,6 +106,7 @@ public class GraphPath<V> {
 	/**
 	 * Check if vertex v is in the GraphPath.
 	 *
+	 * @param v the vertex
 	 * @return true if vertex v is in this GraphPath
 	 */
 	public boolean contains(V v) {
@@ -165,7 +165,7 @@ public class GraphPath<V> {
 
 	/**
 	 * Return a set with all of the predecessors of the vertex in the GraphPath.
-	 * 
+	 *
 	 * @param v the vertex we want to get the predecessors of
 	 * @return the predecessors of the vertex as a set, return empty set if there are none
 	 */
@@ -206,9 +206,9 @@ public class GraphPath<V> {
 	/**
 	 * Get a part of the whole GraphPath, similar to substring with strings.
 	 *
-	 * @param start the start of the subpart of the GraphPath
-	 * @param end the end of the subpart of the GraphPath
-	 * @return a new GraphPath which is a subPath of the original GraphPath from start to end
+	 * @param start the start of the sub-path of the GraphPath
+	 * @param end the end of the sub-path of the GraphPath
+	 * @return a new GraphPath which is a sub-path of the original GraphPath from start to end
 	 */
 	public GraphPath<V> subPath(int start, int end) {
 		GraphPath<V> subPath = new GraphPath<>();
