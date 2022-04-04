@@ -130,7 +130,12 @@ public abstract class AbstractProgramLoader implements Loader {
 					continue;
 				}
 
-				if (createProgramFile(loadedProgram, folder, name, messageLog,
+				// If this is the main imported program, use the given name, otherwise, use the
+				// internal program name. The first program in the list is the main imported program
+				String domainFileName =
+					loadedProgram == programs.get(0) ? name : loadedProgram.getName();
+
+				if (createProgramFile(loadedProgram, folder, domainFileName, messageLog,
 					monitor)) {
 					results.add(loadedProgram);
 					programsToFixup.add(loadedProgram);
