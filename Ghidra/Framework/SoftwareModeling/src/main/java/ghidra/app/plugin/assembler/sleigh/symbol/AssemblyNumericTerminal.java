@@ -16,6 +16,7 @@
 package ghidra.app.plugin.assembler.sleigh.symbol;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseNumericToken;
@@ -138,11 +139,10 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 			break;
 		}
 		String lab = buffer.substring(s, b);
-		Long val = symbols.choose(lab, space);
-		if (val == null) {
-			return Collections.emptySet();
-		}
-		return Collections.singleton(new AssemblyParseNumericToken(grammar, this, lab, val));
+		return symbols.choose(lab, space)
+				.stream()
+				.map(val -> new AssemblyParseNumericToken(grammar, this, lab, val))
+				.collect(Collectors.toList());
 	}
 
 	/**
