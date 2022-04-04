@@ -20,23 +20,18 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
-  <g
-     id="layer1">
-    <path
-       id="path821-4"
-       d="M 8,4 A 4,4 0 0 0 4,8 4,4 0 0 0 8,12 4,4 0 0 0 12,8 4,4 0 0 0 8,4 Z M 8,6 A 2,2 0 0 1 10,8 2,2 0 0 1 8,10 2,2 0 0 1 6,8 2,2 0 0 1 8,6 Z"
-       style="opacity:1;fill:#aa0000;fill-opacity:1;stroke:none;stroke-width:1.14285719;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    <rect
-       transform="rotate(45)"
-       y="-6.2361064"
-       x="10.478747"
-       height="12.472215"
-       width="1.6699215"
-       id="rect4512"
-       style="opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.66991985;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-  </g>
+  <circle
+     r="7.5"
+     cy="8"
+     cx="8"
+     id="path818"
+     style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.48656309;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <path
+     id="path816"
+     d="M 8 1 C 4.1340068 1 1 4.1340068 1 8 C 1 11.865993 4.1340068 15 8 15 C 11.865993 15 15 11.865993 15 8 C 15 4.1340068 11.865993 1 8 1 z M 5 3.5 L 8 6.5 L 11 3.5 L 12.5 5 L 9.5 8 L 12.5 11 L 11 12.5 L 8 9.5 L 5 12.5 L 3.5 11 L 6.5 8 L 3.5 5 L 5 3.5 z "
+     style="fill:#0166a9;fill-opacity:1;stroke:none;stroke-width:2.11057949;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
 </svg>

@@ -17,41 +17,32 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 
 import java.awt.Component;
 
-import javax.swing.Icon;
 import javax.swing.SwingConstants;
 
 import docking.widgets.table.GTableCellRenderingData;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
-public class DebuggerBreakpointLocEnabledTableCellRenderer
-		extends AbstractGColumnRenderer<Boolean> {
+public class DebuggerBreakpointStateTableCellRenderer extends AbstractGColumnRenderer<State> {
 
-	protected static Icon iconForEnabled(Boolean enabled) {
-		return enabled == null ? null
-				: enabled
-						? DebuggerResources.ICON_BREAKPOINT_ENABLED_MARKER
-						: DebuggerResources.ICON_BREAKPOINT_DISABLED_MARKER;
-	}
-
-	public DebuggerBreakpointLocEnabledTableCellRenderer() {
+	public DebuggerBreakpointStateTableCellRenderer() {
 		setHorizontalAlignment(SwingConstants.CENTER);
 	}
 
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 		super.getTableCellRendererComponent(data);
-		Boolean en = (Boolean) data.getValue();
-		setIcon(iconForEnabled(en));
+		State state = (State) data.getValue();
+		setIcon(state.icon);
 		setHorizontalAlignment(SwingConstants.CENTER);
 		setText("");
-		setToolTipText(en ? "ENABLED" : "DISABLED");
+		setToolTipText(state.name());
 		return this;
 	}
 
 	@Override
-	public String getFilterString(Boolean t, Settings settings) {
-		return t == null ? "null" : t ? "enabled" : "disabled";
+	public String getFilterString(State t, Settings settings) {
+		return t.name();
 	}
 }

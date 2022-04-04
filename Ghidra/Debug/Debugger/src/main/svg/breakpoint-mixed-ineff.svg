@@ -24,11 +24,14 @@
       </cc:Work>
     </rdf:RDF>
   </metadata>
-  <g
-     id="layer1">
-    <path
-       id="path4042"
-       d="M 7 3 A 4 4 0 0 0 3 7 A 4 4 0 0 0 6.1054688 10.894531 A 4 4 0 0 0 10 14 A 4 4 0 0 0 14 10 A 4 4 0 0 0 10.892578 6.1074219 A 4 4 0 0 0 7 3 z M 7 5 A 2 2 0 0 1 9 7 A 2 2 0 0 1 7 9 A 2 2 0 0 1 5 7 A 2 2 0 0 1 7 5 z "
-       style="opacity:1;fill:#aa0000;fill-opacity:1;stroke:none;stroke-width:1.14285719;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-  </g>
+  <circle
+     style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.48656309;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="path818"
+     cx="8"
+     cy="8"
+     r="7.5" />
+  <path
+     style="fill:#808080;fill-opacity:1;stroke:none;stroke-width:2.11057949;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 8 1 A 7 7 0 0 0 1 8 A 7 7 0 0 0 8 15 A 7 7 0 0 0 15 8 A 7 7 0 0 0 8 1 z M 8 3 A 5 5 0 0 1 13 8 A 5 5 0 0 1 11.533203 11.533203 L 4.4667969 4.4667969 A 5 5 0 0 1 8 3 z "
+     id="path816" />
 </svg>
