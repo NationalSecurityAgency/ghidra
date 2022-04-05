@@ -25,6 +25,8 @@ import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNumericSymbols;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.disassemble.DisassemblerMessageListener;
 import ghidra.program.model.address.*;
@@ -33,6 +35,7 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.util.ChangeManager;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -45,6 +48,22 @@ import ghidra.util.task.TaskMonitor;
 public class SleighAssembler implements Assembler {
 	protected static final DbgTimer dbg = DbgTimer.INACTIVE;
 
+	protected class ListenerForSymbolsRefresh implements DomainObjectListener {
+		@Override
+		public void domainObjectChanged(DomainObjectChangedEvent ev) {
+			if (ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDED) ||
+				ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDRESS_CHANGED) ||
+				ev.containsEvent(ChangeManager.DOCR_SYMBOL_REMOVED) ||
+				ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED)) {
+				synchronized (lock) {
+					symbols = null;
+				}
+			}
+		}
+	}
+
+	protected final Object lock = new Object();
+
 	protected AssemblySelector selector;
 	protected Program program;
 	protected Listing listing;
@@ -53,6 +72,8 @@ public class SleighAssembler implements Assembler {
 	protected AssemblyDefaultContext defaultContext;
 	protected AssemblyContextGraph ctxGraph;
 	protected SleighLanguage lang;
+
+	protected AssemblyNumericSymbols symbols;
 
 	/**
 	 * Construct a SleighAssembler.
@@ -240,10 +261,18 @@ public class SleighAssembler implements Assembler {
 	 * @return the map
 	 */
 	protected AssemblyNumericSymbols getNumericSymbols() {
-		if (program != null) {
-			return AssemblyNumericSymbols.fromProgram(program);
+		synchronized (lock) {
+			if (symbols != null) {
+				return symbols;
+			}
+			if (program == null) {
+				symbols = AssemblyNumericSymbols.fromLanguage(lang);
+			}
+			else {
+				symbols = AssemblyNumericSymbols.fromProgram(program);
+			}
+			return symbols;
 		}
-		return AssemblyNumericSymbols.fromLanguage(lang);
 	}
 
 	@Override
