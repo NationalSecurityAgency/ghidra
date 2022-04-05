@@ -27,7 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.tree.TreePath;
 
 import org.apache.commons.collections4.map.LinkedMap;
@@ -79,7 +80,6 @@ import ghidra.util.*;
 import ghidra.util.datastruct.PrivatelyQueuedListener;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		implements ObjectContainerListener {
@@ -196,9 +196,6 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	)
 	String extendedStep = "";
 
-	private static final Icon ENABLED_ICON = ResourceManager.loadImage("images/enabled.png");
-	private static final Icon DISABLED_ICON = ResourceManager.loadImage("images/disabled.png");
-
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
 
@@ -250,6 +247,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private ToggleDockingAction actionToggleHideIntrinsics;
 	private ToggleDockingAction actionToggleSelectionOnly;
 	private ToggleDockingAction actionToggleIgnoreState;
+	private ToggleDockingAction actionToggleUpdateWhileRunning;
 
 	@AutoConfigStateField
 	private boolean autoRecord = true;
@@ -259,6 +257,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private boolean selectionOnly = false;
 	@AutoConfigStateField
 	private boolean ignoreState = false;
+	@AutoConfigStateField
+	private boolean updateWhileRunning = true;
 
 	Set<TargetConfigurable> configurables = new HashSet<>();
 	private String lastMethod = "";
@@ -979,7 +979,18 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.menuGroup(DebuggerResources.GROUP_TARGET, "M" + groupTargetIndex)
 			.helpLocation(new HelpLocation(plugin.getName(), "toggle_ignore_state"))
 			.onAction(ctx -> performToggleIgnoreState(ctx))
-			.selected(selectionOnly)
+			.selected(ignoreState)
+			.enabled(true)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
+
+		actionToggleUpdateWhileRunning = new ToggleActionBuilder("Toggle update while running", plugin.getName())
+			.menuPath("Maintenance","&Update While Running")
+			.menuGroup(DebuggerResources.GROUP_TARGET, "M" + groupTargetIndex)
+			.helpLocation(new HelpLocation(plugin.getName(), "toggle_update_while_running"))
+			.onAction(ctx -> performToggleUpdateWhileRunning(ctx))
+			.selected(isUpdateWhileRunning())
 			.enabled(true)
 			.buildAndInstallLocal(this);
 		
@@ -1351,8 +1362,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public void performToggleAutoupdate(ActionContext context) {
-		TargetObject object = getObjectFromContext(context);
 		/*
+		TargetObject object = getObjectFromContext(context);
 		if (object instanceof DefaultTargetObject) {
 			Map<String, ?> attributes = object.listAttributes();
 			Boolean autoupdate = (Boolean) attributes.get(AUTOUPDATE_ATTRIBUTE_NAME);
@@ -1370,7 +1381,6 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public void performToggleBase(ActionContext context) {
-		//Object contextObject = context.getContextObject();
 		for (TargetConfigurable configurable : configurables) {
 			Object value = configurable.getCachedAttribute(TargetConfigurable.BASE_ATTRIBUTE_NAME);
 			if (value != null) {
@@ -1408,6 +1418,11 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public void performToggleIgnoreState(ActionContext context) {
 		ignoreState = actionToggleIgnoreState.isSelected();
+		refresh("");
+	}
+
+	public void performToggleUpdateWhileRunning(ActionContext context) {
+		updateWhileRunning = actionToggleUpdateWhileRunning.isSelected();
 		refresh("");
 	}
 
@@ -1475,11 +1490,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			if (obj instanceof TargetAttachable) {
 				return attacher.attach((TargetAttachable) obj);
 			}
-			else {
-				attachDialog.fetchAndDisplayAttachable();
-				tool.showDialog(attachDialog);
-				return AsyncUtils.NIL;
-			}
+			attachDialog.fetchAndDisplayAttachable();
+			tool.showDialog(attachDialog);
+			return AsyncUtils.NIL;
 		}, "Couldn't attach");
 	}
 
@@ -1559,7 +1572,6 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			return;
 		}
 
-		PluginTool tool = plugin.getTool();
 		Project project = tool.getProject();
 
 		ProgramLocation currentLocation = listingService.getCurrentLocation();
@@ -1657,9 +1669,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			if (extendedStep.equals("")) {
 				return s.step(TargetStepKind.EXTENDED);
 			}
-			else {
-				return s.step(Map.of("Command", extendedStep));
-			}
+			return s.step(Map.of("Command", extendedStep));
 		}, "Couldn't step extended(" + extendedStep + ")");
 	}
 
@@ -1740,6 +1750,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public boolean isStopped(ActionContext context) {
 		TargetObject object = this.getObjectFromContext(context);
+		return isStopped(object);
+	}
+
+	public boolean isStopped(TargetObject object) {
 		if (object == null) {
 			return false;
 		}
@@ -1924,7 +1938,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		if (focused.getModel() != currentModel) {
 			return;
 		}
-		pane.setFocus(object, focused);
+		if (isStopped(focused) || isUpdateWhileRunning()) {
+			pane.setFocus(object, focused);
+		}
 	}
 
 	public DebuggerTraceManagerService getTraceManager() {
@@ -2101,5 +2117,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			// IGNORE
 		}
 		return addr;
+	}
+
+	public boolean isUpdateWhileRunning() {
+		return updateWhileRunning;
 	}
 }
