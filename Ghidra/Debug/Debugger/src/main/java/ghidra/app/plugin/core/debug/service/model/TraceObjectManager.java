@@ -256,7 +256,13 @@ public class TraceObjectManager {
 			recorder.createSnapshot(traceThread + " started", traceThread, null);
 			try (UndoableTransaction tid =
 				UndoableTransaction.start(recorder.getTrace(), "Adjust thread creation", true)) {
-				traceThread.setCreationSnap(recorder.getSnap());
+				long existing = traceThread.getCreationSnap();
+				if (existing == Long.MIN_VALUE) {
+					traceThread.setCreationSnap(recorder.getSnap());
+				}
+				else {
+					traceThread.setDestructionSnap(Long.MAX_VALUE);
+				}
 			}
 			catch (DuplicateNameException e) {
 				throw new AssertionError(e); // Should be shrinking
