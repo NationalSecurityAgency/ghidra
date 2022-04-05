@@ -42,4 +42,10 @@ public interface DbgModuleMemory {
 	boolean isWrite();
 
 	boolean isExec();
+
+	/* NB: Be sure to implement these in any implementation
+	public int hashCode();
+	public boolean equals(Object obj);
+	*/
+
 }

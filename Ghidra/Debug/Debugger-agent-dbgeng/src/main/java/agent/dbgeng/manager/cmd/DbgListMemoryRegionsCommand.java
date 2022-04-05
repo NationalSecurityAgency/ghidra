@@ -44,7 +44,6 @@ public class DbgListMemoryRegionsCommand extends AbstractDbgCommand<List<DbgModu
 			if (memory.containsValue(region)) {
 				continue; // Do nothing, we're in sync
 			}
-			// Need to create the thread as if we receive =thread-created
 			if (!memory.isEmpty()) {
 				Msg.warn(this, "Resync: Was missing memory: " + region.getId());
 			}
@@ -56,7 +55,6 @@ public class DbgListMemoryRegionsCommand extends AbstractDbgCommand<List<DbgModu
 				continue; // Do nothing, we're in sync
 			}
 			toRemove.add(entry.getKey());
-			//manager.removeMemory(entry.getKey());
 		}
 		for (Long key : toRemove) {
 			manager.removeMemory(key);
