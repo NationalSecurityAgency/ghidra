@@ -71,20 +71,21 @@ public class ObjectTree implements ObjectPane {
 				provider.updateActions(container);
 				TreePath path = e.getPath();
 				Object last = path.getLastPathComponent();
-				if (last instanceof ObjectNode) {
-					ObjectNode node = (ObjectNode) last;
-					TargetObject targetObject = node.getTargetObject();
-					if (targetObject != null && !(targetObject instanceof DummyTargetObject) &&
-						e.getEventOrigin().equals(EventOrigin.USER_GENERATED)) {
-						DebugModelConventions.requestActivation(targetObject).exceptionally(ex -> {
-							Msg.error(this, "Could not activate " + targetObject, ex);
-							return null;
-						});
-						DebugModelConventions.requestFocus(targetObject).exceptionally(ex -> {
-							Msg.error(this, "Could not focus " + targetObject, ex);
-							return null;
-						});
-					}
+				if (!(last instanceof ObjectNode)) {
+					throw new RuntimeException("Path terminating in non-ObjectNode");
+				}
+				ObjectNode node = (ObjectNode) last;
+				TargetObject targetObject = node.getTargetObject();
+				if (targetObject != null && !(targetObject instanceof DummyTargetObject) &&
+					e.getEventOrigin().equals(EventOrigin.USER_GENERATED)) {
+					DebugModelConventions.requestActivation(targetObject).exceptionally(ex -> {
+						Msg.error(this, "Could not activate " + targetObject, ex);
+						return null;
+					});
+					DebugModelConventions.requestFocus(targetObject).exceptionally(ex -> {
+						Msg.error(this, "Could not focus " + targetObject, ex);
+						return null;
+					});
 				}
 				provider.getTool().contextChanged(provider);
 				if (e.getEventOrigin() == EventOrigin.INTERNAL_GENERATED) {
@@ -136,11 +137,8 @@ public class ObjectTree implements ObjectPane {
 				Object last = expandedPath.getLastPathComponent();
 				if (last instanceof ObjectNode) {
 					ObjectNode node = (ObjectNode) last;
-					if (!node.isExpanded()) {
-						//currentExpandedPaths = tree.getExpandedPaths();
-						node.markExpanded();
-						currentExpandedPaths = tree.getExpandedPaths();
-					}
+					node.markExpanded();
+					currentExpandedPaths = tree.getExpandedPaths();
 				}
 			}
 
@@ -150,11 +148,8 @@ public class ObjectTree implements ObjectPane {
 				Object last = collapsedPath.getLastPathComponent();
 				if (last instanceof ObjectNode) {
 					ObjectNode node = (ObjectNode) last;
-					if (node.isExpanded()) {
-						//currentExpandedPaths = tree.getExpandedPaths();
-						node.markCollapsed();
-						currentExpandedPaths = tree.getExpandedPaths();
-					}
+					node.markCollapsed();
+					currentExpandedPaths = tree.getExpandedPaths();
 				}
 			}
 		});
@@ -192,6 +187,9 @@ public class ObjectTree implements ObjectPane {
 	@Override
 	public TargetObject getSelectedObject() {
 		TreePath path = tree.getSelectionPath();
+		if (path == null && currentSelectionPaths.length > 0) {
+			path = currentSelectionPaths[0];
+		}
 		if (path != null) {
 			Object last = path.getLastPathComponent();
 			if (last instanceof ObjectNode) {
@@ -213,7 +211,9 @@ public class ObjectTree implements ObjectPane {
 
 	private void restoreTreeState() {
 		if (currentExpandedPaths != null) {
-			tree.expandPaths(currentExpandedPaths);
+			if (!tree.getExpandedPaths().equals(currentExpandedPaths)) {
+				tree.expandPaths(currentExpandedPaths);
+			}
 		}
 		if (currentSelectionPaths != null) {
 			tree.setSelectionPaths(currentSelectionPaths);
