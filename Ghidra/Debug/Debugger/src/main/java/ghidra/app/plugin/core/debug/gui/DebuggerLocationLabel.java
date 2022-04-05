@@ -197,6 +197,7 @@ public class DebuggerLocationLabel extends JLabel {
 	}
 
 	public void updateLabel() {
-		setText(computeLocationString());
+		String label = computeLocationString();
+		setText(label);
 	}
 }

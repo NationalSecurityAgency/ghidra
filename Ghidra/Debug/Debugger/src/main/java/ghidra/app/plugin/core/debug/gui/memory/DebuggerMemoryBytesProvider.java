@@ -285,6 +285,13 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		locationLabel.updateLabel();
 	}
 
+	@Override
+	public boolean goTo(Program gotoProgram, ProgramLocation location) {
+		boolean result = super.goTo(gotoProgram, location);
+		locationLabel.goToAddress(location == null ? null : location.getAddress());
+		return result;
+	}
+
 	protected DebuggerCoordinates adjustCoordinates(DebuggerCoordinates coordinates) {
 		if (followsCurrentThread) {
 			return coordinates;
