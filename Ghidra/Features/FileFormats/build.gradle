@@ -26,6 +26,7 @@ dependencies {
 
 	api project(':Base')
 	api project(':Recognizers')
+	api project(':PDB')
 	
 	api ':dex-ir:2.0'
 	api ':dex-reader:2.0'

@@ -63,8 +63,8 @@ public class SecurityDataDirectory extends DataDirectory implements ByteArrayCon
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
-			IOException {
+			NTHeader ntHeader)
+			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 
 		if (!isBinary) {//certificates are never mapped into running program...
 			return;
