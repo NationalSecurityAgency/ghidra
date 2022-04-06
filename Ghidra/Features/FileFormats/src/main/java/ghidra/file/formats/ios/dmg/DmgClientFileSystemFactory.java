@@ -15,6 +15,8 @@
  */
 package ghidra.file.formats.ios.dmg;
 
+import java.util.Arrays;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -29,7 +31,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
-import utilities.util.ArrayUtilities;
 
 /**
  * Handles probing for and creating {@link DmgClientFileSystem} instances.
@@ -58,10 +59,10 @@ public class DmgClientFileSystemFactory implements
 	}
 
 	private static boolean isEncrypted(byte[] startBytes) {
-		return ArrayUtilities.arrayRangesEquals(startBytes, 0, DmgConstants.DMG_MAGIC_BYTES_v1, 0,
-			DmgConstants.DMG_MAGIC_BYTES_v1.length) ||
-			ArrayUtilities.arrayRangesEquals(startBytes, 0, DmgConstants.DMG_MAGIC_BYTES_v2, 0,
-				DmgConstants.DMG_MAGIC_BYTES_v2.length);
+		return Arrays.equals(startBytes, 0, DmgConstants.DMG_MAGIC_BYTES_v1.length,
+			DmgConstants.DMG_MAGIC_BYTES_v1, 0, DmgConstants.DMG_MAGIC_BYTES_v1.length) ||
+			Arrays.equals(startBytes, 0, DmgConstants.DMG_MAGIC_BYTES_v2.length,
+				DmgConstants.DMG_MAGIC_BYTES_v2, 0, DmgConstants.DMG_MAGIC_BYTES_v2.length);
 	}
 
 	private static boolean isEncrypted(ByteProvider bp) {
