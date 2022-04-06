@@ -1236,10 +1236,13 @@ public class GTree extends JPanel implements BusyListener {
 	 * @param newNode the node that may cause the tree to refilter.
 	 */
 	public void refilterLater(GTreeNode newNode) {
-		if (isFilteringEnabled && filter != null) {
-			if (filter.acceptsNode(newNode)) {
-				filterUpdateManager.updateLater();
-			}
+		if (!isFilteringEnabled || filter == null) {
+			return;
+		}
+
+		// non-leaf nodes may have children that would require filtering
+		if (!newNode.isLeaf() || filter.acceptsNode(newNode)) {
+			filterUpdateManager.updateLater();
 		}
 	}
 
