@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.exceptionhandlers.gcc;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import ghidra.app.plugin.exceptionhandlers.gcc.datatype.SignedLeb128DataType;
@@ -71,7 +72,7 @@ public class DwarfDecoderFactory {
 
 	private static DwarfEHDecoder createDecoder(DwarfEHDataDecodeFormat style,
 			DwarfEHDataApplicationMode mod, boolean isIndirect) {
-		switch (style) {
+		switch (Objects.requireNonNullElse(style, DwarfEHDataDecodeFormat.DW_EH_PE_omit)) {
 			case DW_EH_PE_absptr:
 				return new DW_EH_PE_absptr_Decoder(mod, isIndirect);
 			case DW_EH_PE_uleb128:
