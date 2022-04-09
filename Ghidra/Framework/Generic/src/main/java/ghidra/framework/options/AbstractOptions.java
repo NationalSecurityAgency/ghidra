@@ -135,6 +135,13 @@ public abstract class AbstractOptions implements Options {
 			throw new IllegalArgumentException(
 				"Can't register an option of type: " + OptionType.NO_TYPE);
 		}
+
+		if (!type.isCompatible(defaultValue)) {
+			throw new IllegalStateException(
+				"Given default value does not match the given OptionType! OptionType = " + type +
+					", defaultValue = " + defaultValue);
+		}
+
 		if (type == OptionType.CUSTOM_TYPE && editor == null) {
 			throw new IllegalStateException(
 				"Can't register a custom option without a property editor");
@@ -173,22 +180,12 @@ public abstract class AbstractOptions implements Options {
 		if (option == null) {
 			return null;
 		}
-
-		if (!isCompatibleOption(option, type, defaultValue)) {
+		if (option.getOptionType() != type) {
 			Msg.error(this, "Registered option incompatible with existing option: " + optionName,
 				new AssertException());
 			return null;
 		}
 		return option;
-	}
-
-	private boolean isCompatibleOption(Option option, OptionType type, Object defaultValue) {
-		if (option.getOptionType() != type) {
-			return false;
-		}
-		Object optionValue = option.getValue(null);
-		return optionValue == null || defaultValue == null ||
-			optionValue.getClass().equals(defaultValue.getClass());
 	}
 
 	@Override
@@ -700,7 +697,16 @@ public abstract class AbstractOptions implements Options {
 			return true;
 		}
 
-		return SUPPORTED_CLASSES.contains(obj.getClass());
+		if (SUPPORTED_CLASSES.contains(obj.getClass())) {
+			return true;
+		}
+		// check for extended classes
+		for (Class<?> class1 : SUPPORTED_CLASSES) {
+			if (class1.isAssignableFrom(obj.getClass())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

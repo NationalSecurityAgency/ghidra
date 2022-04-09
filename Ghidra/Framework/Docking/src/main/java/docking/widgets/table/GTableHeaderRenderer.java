@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
 
+import docking.theme.GColor;
 import docking.widgets.label.GDLabel;
 import resources.*;
 import resources.icons.EmptyIcon;
@@ -37,11 +38,17 @@ import resources.icons.TranslateIcon;
  */
 public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
 	private static final int PADDING_FOR_COLUMN_NUMBER = 10;
+	//@formatter:off
+	public static final Color GRADIENT_START_COLOR = new GColor("color.bg.tableheader.gradient.start");
+	public static final Color GRADIENT_END_COLOR = new GColor("color.bg.tableheader.gradient.end");
+	public static final Color GRADIENT_START_PRIMARY_COLOR = new GColor("color.bg.tableheader.gradient.start.primary");
+	public static final Color GRADIENT_END_PRIMARY_COLOR= new GColor("color.bg.tableheader.gradient.end.primary");
+	//@formatter:on
 
-	private static final Color PRIMARY_SORT_GRADIENT_START = new Color(205, 227, 244);
-	private static final Color PRIMARY_SORT_GRADIENT_END = new Color(126, 186, 233);
-	private static final Color DEFAULT_GRADIENT_START = Color.WHITE;
-	private static final Color DEFAULT_GRADIENT_END = new Color(215, 215, 215);
+//	static {
+//		Gui.registerAltColor(GThemeDefaults.DARK, GRADIENT_START_ID, new Color(20, 20, 20));
+//		Gui.registerAltColor(GThemeDefaults.DARK, GRADIENT_END_ID, new Color(40, 40, 40));
+//	}
 
 	private static final Icon UP_ICON =
 		ResourceManager.getScaledIcon(Icons.SORT_ASCENDING_ICON, 14, 14);
@@ -219,12 +226,12 @@ public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
 	}
 
 	protected Paint getBackgroundPaint() {
-		if (isPaintingPrimarySortColumn) {
-			return new GradientPaint(0, 0, PRIMARY_SORT_GRADIENT_START, 0, getHeight() - 11,
-				PRIMARY_SORT_GRADIENT_END, true);
-		}
-		return new GradientPaint(0, 0, DEFAULT_GRADIENT_START, 0, getHeight() - 11,
-			DEFAULT_GRADIENT_END, true);
+		Color startColor =
+			isPaintingPrimarySortColumn ? GRADIENT_START_PRIMARY_COLOR : GRADIENT_START_COLOR;
+		Color endColor =
+			isPaintingPrimarySortColumn ? GRADIENT_END_PRIMARY_COLOR : GRADIENT_END_COLOR;
+
+		return new GradientPaint(0, 0, startColor, 0, getHeight() - 11, endColor, true);
 	}
 
 	private void updateHelpIcon(JTable table, int currentColumnIndex, Icon icon) {

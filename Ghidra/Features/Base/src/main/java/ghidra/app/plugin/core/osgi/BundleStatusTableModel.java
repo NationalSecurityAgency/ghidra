@@ -27,6 +27,7 @@ import javax.swing.event.TableModelEvent;
 
 import org.osgi.framework.Bundle;
 
+import docking.theme.GColor;
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
 import generic.util.Path;
@@ -42,11 +43,14 @@ import ghidra.util.table.column.GColumnRenderer;
  */
 public class BundleStatusTableModel
 		extends GDynamicColumnTableModel<BundleStatus, List<BundleStatus>> {
-	private static final Color COLOR_BUNDLE_ERROR = Color.RED;
-	private static final Color COLOR_BUNDLE_DISABLED = Color.DARK_GRAY;
-	private static final Color COLOR_BUNDLE_BUSY = Color.GRAY;
-	private static final Color COLOR_BUNDLE_INACTIVE = Color.BLACK;
-	private static final Color COLOR_BUNDLE_ACTIVE = new Color(0.0f, .6f, 0.0f); // a dark green
+
+	//@formatter:off
+	private static final Color COLOR_BUNDLE_ERROR = new GColor("color.fg.table.bundle.error");
+	private static final Color COLOR_BUNDLE_DISABLED = new GColor("color.fg.table.bundle.disabled");
+	private static final Color COLOR_BUNDLE_BUSY = new GColor("color.fg.table.bundle.busy");
+	private static final Color COLOR_BUNDLE_INACTIVE = new GColor("color.fg.table.bundle.inactive");
+	private static final Color COLOR_BUNDLE_ACTIVE = new GColor("color.fg.table.bundle.active"); 
+	//@formatter:on
 
 	private BundleHost bundleHost;
 	private BundleStatusComponentProvider provider;

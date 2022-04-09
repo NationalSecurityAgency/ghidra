@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 
 import org.jdom.Element;
 
+import docking.theme.GColor;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.picking.PickedState;
@@ -45,9 +46,12 @@ import ghidra.util.UndefinedFunction;
 
 public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph> {
 
-	private static final Color END_COLOR = new Color(255, 127, 127);
-	private static final Color START_COLOR = new Color(127, 255, 127);
-	private static final Color UNDEFINED_FUNCTION_COLOR = new Color(220, 220, 220);
+	//@formatter:off
+	private static final Color PICKED_COLOR = new GColor("color.bg.functiongraph.vertex.picked");
+	private static final Color START_COLOR = new GColor("color.bg.functiongraph.vertex.entry");
+	private static final Color END_COLOR = new GColor("color.bg.functiongraph.vertex.exit");	
+	private static final Color UNDEFINED_FUNCTION_COLOR = new GColor("color.bg.undefined");
+	//@formatter:on
 
 	/**
 	 * A somewhat arbitrary value that is used to signal a 'big' graph, which is one that will
@@ -206,7 +210,7 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 		// for background colors when we are zoomed to far to render the listing
 		PickedState<FGVertex> pickedVertexState = viewer.getPickedVertexState();
 		renderContext.setVertexFillPaintTransformer(new FGVertexPickableBackgroundPaintTransformer(
-			pickedVertexState, Color.YELLOW, START_COLOR, END_COLOR));
+			pickedVertexState, PICKED_COLOR, START_COLOR, END_COLOR));
 
 		// edge label rendering
 		com.google.common.base.Function<FGEdge, String> edgeLabelTransformer = e -> e.getLabel();
@@ -233,7 +237,7 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 				viewer.setBackground(UNDEFINED_FUNCTION_COLOR);
 			}
 			else {
-				viewer.setBackground(Color.WHITE);
+				viewer.setBackground(new GColor("color.bg.functiongraph"));
 			}
 		}
 
@@ -257,7 +261,7 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 
 		PickedState<FGVertex> pickedVertexState = viewer.getPickedVertexState();
 		renderContext.setVertexFillPaintTransformer(new FGVertexPickableBackgroundPaintTransformer(
-			pickedVertexState, Color.YELLOW, START_COLOR, END_COLOR));
+			pickedVertexState, PICKED_COLOR, START_COLOR, END_COLOR));
 
 		viewer.setGraphOptions(vgOptions);
 

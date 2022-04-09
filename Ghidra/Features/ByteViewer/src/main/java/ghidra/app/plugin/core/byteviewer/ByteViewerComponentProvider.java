@@ -25,6 +25,7 @@ import java.util.List;
 import javax.swing.JComponent;
 
 import docking.action.ToggleDockingAction;
+import docking.theme.GColor;
 import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.plugin.core.format.*;
@@ -55,11 +56,17 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	static final Font DEFAULT_FONT = new Font("Monospaced", Font.PLAIN, 12);
 	static final int DEFAULT_BYTES_PER_LINE = 16;
-	static final Color DEFAULT_MISSING_VALUE_COLOR = Color.blue;
-	static final Color DEFAULT_EDIT_COLOR = Color.red;
-	static final Color DEFAULT_CURRENT_CURSOR_COLOR = Color.magenta.brighter();
-	static final Color DEFAULT_CURSOR_COLOR = Color.black;
-	static final Color DEFAULT_NONFOCUS_CURSOR_COLOR = Color.darkGray;
+
+	//@formatter:off
+	static final String FG = "byteviewer.color.fg";
+	static final String CURSOR = "byteviewer.color.cursor";
+	static final Color DEFAULT_MISSING_VALUE_COLOR = new GColor("color.fg.byteviewer.novalue"); 
+	static final Color DEFAULT_EDIT_COLOR = new GColor("color.fg.byteviewer.changed");
+	static final Color DEFAULT_CURRENT_CURSOR_COLOR = new GColor("color.cursor.focused.byteviewer.current");
+	static final Color DEFAULT_CURSOR_COLOR = new GColor("color.cursor.focused.byteviewer.noncurrent");
+	static final Color DEFAULT_NONFOCUS_CURSOR_COLOR = new GColor("color.cursor.unfocused.byteviewer");
+	//@formatter:on
+
 	private static final Color DEFAULT_CURSOR_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 
 	static final String DEFAULT_INDEX_NAME = "Addresses";
@@ -101,8 +108,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	private Map<String, Class<? extends DataFormatModel>> dataFormatModelClassMap;
 
 	protected ByteViewerComponentProvider(PluginTool tool, AbstractByteViewerPlugin<?> plugin,
-			String name,
-			Class<?> contextType) {
+			String name, Class<?> contextType) {
 		super(tool, name, plugin.getName(), contextType);
 		this.plugin = plugin;
 
@@ -265,7 +271,8 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 			CURSOR_HIGHLIGHT_BUTTON_NAME, GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES.MIDDLE);
 		panel.setHighlightButton(mouseButton.getMouseEventID());
 
-		panel.setMouseButtonHighlightColor(opt.getColor(HIGHLIGHT_COLOR_NAME, Color.YELLOW));
+		panel.setMouseButtonHighlightColor(
+			opt.getColor(HIGHLIGHT_COLOR_NAME, DEFAULT_HIGHLIGHT_COLOR));
 
 		opt.addOptionsChangeListener(this);
 	}

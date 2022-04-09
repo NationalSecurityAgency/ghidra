@@ -15,7 +15,7 @@
  */
 package docking.widgets.fieldpanel;
 
-import static docking.widgets.EventTrigger.INTERNAL_ONLY;
+import static docking.widgets.EventTrigger.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -29,6 +29,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DockingUtils;
+import docking.theme.GColor;
 import docking.util.GraphicsUtils;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
@@ -51,7 +52,7 @@ public class FieldPanel extends JPanel
 	private boolean inFocus;
 
 	protected BackgroundColorModel backgroundColorModel =
-		new DefaultBackgroundColorModel(Color.WHITE);
+		new DefaultBackgroundColorModel(new GColor("color.bg.fieldpanel"));
 	protected PaintContext paintContext = new PaintContext();
 
 	private AnchoredLayoutHandler layoutHandler;
@@ -415,7 +416,6 @@ public class FieldPanel extends JPanel
 	 */
 	public void setBackgroundColor(Color c) {
 		backgroundColorModel.setDefaultBackgroundColor(c);
-		paintContext.setDefaultBackgroundColor(c);
 	}
 
 	public Color getBackgroundColor(BigInteger index) {
@@ -1238,8 +1238,7 @@ public class FieldPanel extends JPanel
 		if (layout == null) {
 			return null;
 		}
-		Rectangle r =
-			layout.getCursorRect(location.fieldNum, location.row, location.col);
+		Rectangle r = layout.getCursorRect(location.fieldNum, location.row, location.col);
 		return r.getLocation();
 	}
 

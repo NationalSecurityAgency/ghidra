@@ -32,6 +32,7 @@ import javax.swing.UIManager;
 
 import docking.ComponentProvider;
 import docking.action.DockingActionIf;
+import docking.theme.GColor;
 import generic.concurrent.GThreadPool;
 import generic.util.WindowUtilities;
 import ghidra.util.*;
@@ -697,7 +698,7 @@ public class HelpManager implements HelpService {
 	 * you can see the highlights when you do a search in the JavaHelp.
 	 */
 	private void setColorResources() {
-		UIManager.put("EditorPane.selectionBackground", new Color(204, 204, 255));
+		UIManager.put("EditorPane.selectionBackground", new GColor("color.bg.selection.help"));
 		UIManager.put("EditorPane.selectionForeground", UIManager.get("EditorPane.foreground"));
 	}
 

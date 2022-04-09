@@ -23,6 +23,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import docking.theme.GColor;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.EmptyTextField;
 import docking.widgets.fieldpanel.field.Field;
@@ -259,8 +260,8 @@ public class ByteViewerPanel extends JPanel
 				String start = blocks[0].getLocationRepresentation(BigInteger.ZERO);
 				startField.setText(start);
 				ByteBlock lastBlock = blocks[blocks.length - 1];
-				endField.setText(lastBlock.getLocationRepresentation(
-					lastBlock.getLength().subtract(BigInteger.ONE)));
+				endField.setText(lastBlock
+						.getLocationRepresentation(lastBlock.getLength().subtract(BigInteger.ONE)));
 
 				indexPanelWidth = getIndexPanelWidth(blocks);
 				int center = indexPanelWidth / 2;
@@ -833,7 +834,8 @@ public class ByteViewerPanel extends JPanel
 
 		columnHeader.addColumn(ByteViewerComponentProvider.DEFAULT_INDEX_NAME, indexPanel);
 		scrollp.setColumnHeaderComp(columnHeader);
-		compPanel.setBackground(Color.WHITE);
+
+		compPanel.setBackground(new GColor("color.bg.byteviewer"));
 
 		statusPanel = createStatusPanel();
 		add(scrollp, BorderLayout.CENTER);

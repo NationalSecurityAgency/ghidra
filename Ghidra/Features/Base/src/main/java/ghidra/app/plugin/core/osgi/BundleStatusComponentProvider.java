@@ -15,17 +15,18 @@
  */
 package ghidra.app.plugin.core.osgi;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 
 import docking.action.builder.ActionBuilder;
+import docking.theme.GColor;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.GTable;
@@ -105,8 +106,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 		bundleStatusTable = new GTable(bundleStatusTableModel);
 		bundleStatusTable.setName("BUNDLESTATUS_TABLE");
-		bundleStatusTable.setSelectionBackground(new Color(204, 204, 255));
-		bundleStatusTable.setSelectionForeground(Color.BLACK);
+		bundleStatusTable.setSelectionBackground(new GColor("color.bg.table.selection.bundle"));
+		bundleStatusTable.setSelectionForeground(new GColor("color.fg.table.selection.bundle"));
 		bundleStatusTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		// give actions a chance to update status when selection changed

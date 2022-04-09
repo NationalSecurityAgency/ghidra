@@ -18,6 +18,7 @@ package ghidra.graph.viewer.options;
 import java.awt.Color;
 
 import docking.DockingUtils;
+import docking.theme.GColor;
 import ghidra.framework.options.Options;
 import ghidra.util.HelpLocation;
 
@@ -56,7 +57,7 @@ public class VisualGraphOptions {
 		"new graphs and already rendered graphs are zoomed and positioned.  See the help for " +
 		"more details.";
 
-	public static final Color DEFAULT_GRAPH_BACKGROUND_COLOR = Color.WHITE;
+	public static final Color DEFAULT_GRAPH_BACKGROUND_COLOR = new GColor("color.bg.visualgraph");
 	protected Color graphBackgroundColor = DEFAULT_GRAPH_BACKGROUND_COLOR;
 
 	protected boolean useAnimation = true;

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +17,13 @@ package docking.widgets.fieldpanel.internal;
 
 import java.awt.Color;
 
+import docking.theme.GColor;
+
 /**
  * Miscellaneous information needed by fields to paint.
  */
 public class PaintContext {
 
-	private Color defaultBackground;
 	private Color background;
 	private Color foreground;
 	private Color selectionColor;
@@ -43,20 +43,18 @@ public class PaintContext {
 	 * Create a new PaintContext with default color values.
 	 */
 	public PaintContext() {
-		defaultBackground = Color.white;
-		background = Color.white;
-		foreground = Color.black;
-		selectionColor = new Color(180, 255, 180);
-		highlightColor = new Color(255, 255, 150);
-		selectedHighlightColor = Color.green;
-		focusedCursorColor = Color.RED;
+		background = new GColor("color.bg.fieldpanel");
+		foreground = new GColor("color.fg.fieldpanel");
+		selectionColor = new GColor("color.bg.fieldpanel.selection");
+		highlightColor = new GColor("color.bg.fieldpanel.highlight");
+		selectedHighlightColor = new GColor("color.bg.fieldpanel.selection-highlight");
+		focusedCursorColor = new GColor("color.cursor.focused");
+		notFocusedCursorColor = new GColor("color.cursor.unfocused");
 		cursorColor = focusedCursorColor;
 		invisibleCursorColor = new Color(255, 0, 0, 1);
-		notFocusedCursorColor = Color.PINK;
 	}
 
 	public PaintContext(PaintContext other) {
-		defaultBackground = other.defaultBackground;
 		background = other.background;
 		foreground = other.foreground;
 		selectionColor = other.selectionColor;
@@ -70,15 +68,8 @@ public class PaintContext {
 	}
 
 	/**
-	 * Returns the current default background color setting that is used when 
-	 * there is no special background color or highlight or selection.
-	 */
-	public final Color getDefaultBackground() {
-		return defaultBackground;
-	}
-
-	/**
 	 * Returns the current background color setting.
+	 * @return the current background color setting.
 	 */
 	public final Color getBackground() {
 		return background;
@@ -86,6 +77,7 @@ public class PaintContext {
 
 	/**
 	 * Returns the current foreground color setting.
+	 * @return the current foreground color setting.
 	 */
 	public final Color getForeground() {
 		return foreground;
@@ -93,27 +85,31 @@ public class PaintContext {
 
 	/**
 	 * Returns the current selection color setting.
+	 * @return the current selection color setting.
 	 */
 	public final Color getSelectionColor() {
 		return selectionColor;
 	}
 
 	/**
-	 * Returns the current selection color setting.
+	 * Returns the current highlight color setting.
+	 * @return the current highlight color setting.
 	 */
 	public final Color getHighlightColor() {
 		return highlightColor;
 	}
 
 	/**
-	 * Returns the current selection color setting.
+	 * Returns the current selected highlight color setting.
+	 * @return the current selected highlight color setting.
 	 */
 	public final Color getSelectedHighlightColor() {
 		return selectedHighlightColor;
 	}
 
 	/**
-	 * Returns the current cursor color setting.
+	 * Returns the current cursor color.
+	 * @return the current cursor color.
 	 */
 	public final Color getCursorColor() {
 		return cursorColor;
@@ -131,17 +127,6 @@ public class PaintContext {
 	public void setHighlightColor(Color c) {
 		highlightColor = c;
 		adjustSelectedHighlightColor();
-	}
-
-	public void setDefaultBackgroundColor(Color c) {
-		defaultBackground = c;
-	}
-
-	/**
-	 * Returns true if the current background color matches the default background color.
-	 */
-	public final boolean isDefaultBackground() {
-		return defaultBackground.equals(background);
 	}
 
 	private void adjustSelectedHighlightColor() {

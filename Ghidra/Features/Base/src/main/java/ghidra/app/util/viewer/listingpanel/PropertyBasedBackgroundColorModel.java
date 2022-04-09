@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
+import docking.theme.GColor;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.model.DomainObjectChangedEvent;
@@ -40,7 +41,7 @@ public class PropertyBasedBackgroundColorModel
 	public static final String COLOR_PROPERTY_NAME = "LISTING_COLOR";
 	private IntRangeMap colorMap;
 	private AddressIndexMap indexMap;
-	private Color defaultBackgroundColor = Color.WHITE;
+	private Color defaultBackgroundColor = new GColor("color.bg.listing");
 	private Map<Integer, Color> colorCache = new HashMap<>();
 	private Program program;
 	private boolean enabled = false;

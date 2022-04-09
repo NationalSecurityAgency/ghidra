@@ -19,6 +19,7 @@ import java.awt.Color;
 import java.util.*;
 import java.util.Map.Entry;
 
+import docking.theme.GColor;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutOptions;
 import ghidra.framework.options.Options;
@@ -85,24 +86,21 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"Signals that any user color changes to a group vertex will apply that same color to " +
 			"all grouped vertices as well.";
 
-	public static final Color DEFAULT_VERTEX_BACKGROUND_COLOR = Color.WHITE;
-	public static final Color DEFAULT_GROUP_BACKGROUND_COLOR = new Color(226, 255, 155);
-	private static final Color HOVER_HIGHLIGHT_FALL_THROUGH_COLOR = new Color(255, 127, 127);
-	private static final Color HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR = new Color(127, 127, 255);
-	private static final Color HOVER_HIGHLIGHT_CONDITIONAL_COLOR = Color.GREEN;
-
-	private Color defaultVertexBackgroundColor = DEFAULT_VERTEX_BACKGROUND_COLOR;
-
 	private boolean updateGroupColorsAutomatically = true;
-	private Color defaultGroupBackgroundColor = DEFAULT_GROUP_BACKGROUND_COLOR;
 
-	private Color fallthroughEdgeColor = Color.RED;
-	private Color unconditionalJumpEdgeColor = Color.BLUE;
-	private Color conditionalJumpEdgeColor = Color.GREEN.darker().darker();
+	//@formatter:off
+	public static final Color DEFAULT_GROUP_BACKGROUND_COLOR = new GColor("color.bg.functiongraph.vertex.group");
+	private Color defaultVertexBackgroundColor = new GColor("color.bg.functiongraph");
+	private Color defaultGroupBackgroundColor = new GColor("color.bg.functiongraph.vertex.group");
 
-	private Color fallthroughEdgeHighlightColor = HOVER_HIGHLIGHT_FALL_THROUGH_COLOR;
-	private Color unconditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR;
-	private Color conditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_CONDITIONAL_COLOR;
+	private Color fallthroughEdgeColor = new GColor("color.bg.functiongraph.edge.fall-through");
+	private Color conditionalJumpEdgeColor = new GColor("color.bg.functiongraph.edge.jump.conditional");
+	private Color unconditionalJumpEdgeColor = new GColor("color.bg.functiongraph.edge.jump.unconditional");
+
+	private Color fallthroughEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.fall-through.highlight");
+	private Color conditionalJumpEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.jump.conditional.highlight");
+	private Color unconditionalJumpEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.jump.unconditional.highlight");
+	//@formatter:on
 
 	private boolean useFullSizeTooltip = false;
 
@@ -174,10 +172,10 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		options.registerOption(USE_CONDENSED_LAYOUT_KEY, useCondensedLayout(),
 			new HelpLocation(OWNER, "Layout_Compressing"), USE_CONDENSED_LAYOUT_DESCRIPTION);
 
-		options.registerOption(DEFAULT_VERTEX_BACKGROUND_COLOR_KEY, DEFAULT_VERTEX_BACKGROUND_COLOR,
+		options.registerOption(DEFAULT_VERTEX_BACKGROUND_COLOR_KEY, defaultVertexBackgroundColor,
 			help, DEFAULT_VERTEX_BACKGROUND_COLOR_DESCRPTION);
 
-		options.registerOption(DEFAULT_GROUP_BACKGROUND_COLOR_KEY, DEFAULT_GROUP_BACKGROUND_COLOR,
+		options.registerOption(DEFAULT_GROUP_BACKGROUND_COLOR_KEY, defaultGroupBackgroundColor,
 			help, DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION);
 
 		options.registerOption(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically,
@@ -238,10 +236,10 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		useFullSizeTooltip = options.getBoolean(USE_FULL_SIZE_TOOLTIP_KEY, useFullSizeTooltip);
 
 		defaultVertexBackgroundColor =
-			options.getColor(DEFAULT_VERTEX_BACKGROUND_COLOR_KEY, DEFAULT_VERTEX_BACKGROUND_COLOR);
+			options.getColor(DEFAULT_VERTEX_BACKGROUND_COLOR_KEY, defaultVertexBackgroundColor);
 
 		defaultGroupBackgroundColor =
-			options.getColor(DEFAULT_GROUP_BACKGROUND_COLOR_KEY, DEFAULT_GROUP_BACKGROUND_COLOR);
+			options.getColor(DEFAULT_GROUP_BACKGROUND_COLOR_KEY, defaultGroupBackgroundColor);
 
 		updateGroupColorsAutomatically =
 			options.getBoolean(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically);

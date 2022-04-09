@@ -15,16 +15,12 @@
  */
 package ghidra.framework;
 
-import java.awt.Taskbar;
-import java.awt.Toolkit;
-import java.lang.reflect.Field;
-
 import docking.DockingErrorDisplay;
 import docking.DockingWindowManager;
 import docking.framework.ApplicationInformationDisplayFactory;
 import docking.framework.SplashScreen;
+import docking.theme.Gui;
 import docking.widgets.PopupKeyStorePasswordProvider;
-import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
 import ghidra.formats.gfilesystem.crypto.CryptoProviders;
 import ghidra.formats.gfilesystem.crypto.PopupGUIPasswordProvider;
 import ghidra.framework.main.GhidraApplicationInformationDisplayFactory;
@@ -46,10 +42,7 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 
 	@Override
 	protected void initializeApplication() {
-
-		DockingWindowsLookAndFeelUtils.loadFromPreferences();
-
-		platformSpecificFixups();
+		Gui.initialize();
 
 		if (showSplashScreen) {
 			showUserAgreement();
@@ -61,17 +54,6 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 		ApplicationKeyManagerFactory.setKeyStorePasswordProvider(
 			new PopupKeyStorePasswordProvider());
 		CryptoProviders.getInstance().registerCryptoProvider(new PopupGUIPasswordProvider());
-	}
-
-	private static void platformSpecificFixups() {
-
-		// Set the dock icon for macOS
-		if (Taskbar.isTaskbarSupported()) {
-			Taskbar taskbar = Taskbar.getTaskbar();
-			if (taskbar.isSupported(Taskbar.Feature.ICON_IMAGE)) {
-				taskbar.setIconImage(ApplicationInformationDisplayFactory.getLargestWindowIcon());
-			}
-		}
 	}
 
 	private static void showUserAgreement() {

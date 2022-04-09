@@ -17,6 +17,7 @@ package functioncalls.graph.view;
 
 import java.awt.Color;
 
+import docking.theme.GColor;
 import edu.uci.ics.jung.visualization.RenderContext;
 import functioncalls.graph.*;
 import functioncalls.graph.renderer.FcgEdgePaintTransformer;
@@ -41,7 +42,7 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 	private Color lightGray = new Color(233, 233, 233);
 
 	// the satellite gets too cluttered, so wash out the edges
-	private Color washedOutBlack = new Color(0, 0, 0, 25);
+	private Color washedOutBlack = new GColor("color.fcg.satellite.edge");
 
 	private FcgEdgePaintTransformer edgePaintTransformer =
 		new FcgEdgePaintTransformer(lightGreen, lightGray);

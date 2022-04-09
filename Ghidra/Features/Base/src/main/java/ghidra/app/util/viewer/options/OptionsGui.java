@@ -27,6 +27,7 @@ import java.util.stream.IntStream;
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import docking.theme.GColor;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.fieldpanel.*;
@@ -43,95 +44,150 @@ import ghidra.util.SystemUtilities;
  */
 public class OptionsGui extends JPanel {
 	private static final long serialVersionUID = 1L;
-	private static final Color DARK_GREEN = new Color(0, 128, 0);
-	private static final Color BLUE_GREEN = new Color(0, 128, 64);
-	private static final Color DARK_BLUE = new Color(0, 0, 128);
-	private static final Color PALE_BLUE = new Color(128, 128, 255);
-	private static final Color YELLOW_ORANGE = new Color(155, 150, 50);
-	private static final Color PURPLE = new Color(155, 50, 155);
-	private static final Color DEEP_PURPLE = new Color(75, 0, 130);
-	private static final Color DARK_PURPLE = new Color(102, 0, 102);
-	private static final Color DARK_CYAN = new Color(0, 102, 102);
-	private static final Color DARK_ORANGE = new Color(255, 128, 0);
-	private static final Color DARK_RED = new Color(130, 0, 75);
 	private static final Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 	private static final HighlightFactory hlFactory =
 		(field, text, cursorTextOffset) -> NO_HIGHLIGHTS;
 
+	public static final ScreenElement BACKGROUND =
+		new ScreenElement("Background", new GColor("color.bg.listing"));
 	public static final ScreenElement COMMENT_AUTO =
-		new ScreenElement("Comment, Automatic", Color.LIGHT_GRAY);
-	public static final ScreenElement ADDRESS = new ScreenElement("Address", Color.BLACK);
-	public static final ScreenElement BACKGROUND = new ScreenElement("Background", Color.WHITE);
+		new ScreenElement("Comment, Automatic", new GColor("color.fg.listing.comment.auto"));
+	public static final ScreenElement ADDRESS =
+		new ScreenElement("Address", new GColor("color.fg.listing.address"));
+
 	public static final ScreenElement BAD_REF_ADDR =
-		new ScreenElement("Bad Reference Address", Color.RED);
-	public static final ScreenElement BYTES = new ScreenElement("Bytes", Color.BLUE);
-	public static final ScreenElement CONSTANT = new ScreenElement("Constant", BLUE_GREEN);
-	public static final ScreenElement LABELS_UNREFD =
-		new ScreenElement("Labels, Unreferenced", Color.BLACK);
-	public static final ScreenElement ENTRY_POINT = new ScreenElement("Entry Point", Color.MAGENTA);
-	public static final ScreenElement COMMENT_EOL =
-		new ScreenElement("Comment, EOL", "EOL Comment", Color.BLUE);
-	public static final ScreenElement EXT_REF_RESOLVED =
-		new ScreenElement("External Reference, Resolved", Color.CYAN.darker().darker());
-	public static final ScreenElement FIELD_NAME = new ScreenElement("Field Name", Color.BLACK);
+		new ScreenElement("Bad Reference Address", new GColor("color.fg.listing.ref.bad"));
+
+	public static final ScreenElement BYTES =
+		new ScreenElement("Bytes", new GColor("color.fg.listing.bytes"));
+
+	public static final ScreenElement CONSTANT =
+		new ScreenElement("Constant", new GColor("color.fg.listing.constant"));
+
+	public static final ScreenElement LABELS_UNREFD = new ScreenElement("Labels, Unreferenced",
+		new GColor("color.fg.listing.label.unreferenced"));
+
+	public static final ScreenElement ENTRY_POINT =
+		new ScreenElement("Entry Point", new GColor("color.fg.listing.entrypoint"));
+
+	public static final ScreenElement COMMENT_EOL = new ScreenElement("Comment, EOL", "EOL Comment",
+		new GColor("color.fg.listing.comment.auto"));
+
+	public static final ScreenElement EXT_REF_RESOLVED = new ScreenElement(
+		"External Reference, Resolved", new GColor("color.fg.listing.ref.ext.resolved"));
+
+	public static final ScreenElement FIELD_NAME =
+		new ScreenElement("Field Name", new GColor("color.fg.listing.fieldname"));
+
 	public static final ScreenElement FUN_CALL_FIXUP =
-		new ScreenElement("Function Call-Fixup", new Color(255, 0, 204));
-	public static final ScreenElement FUN_NAME = new ScreenElement("Function Name", Color.BLUE);
+		new ScreenElement("Function Call-Fixup", new GColor("color.fg.listing.function.callfixup"));
+
+	public static final ScreenElement FUN_NAME =
+		new ScreenElement("Function Name", new GColor("color.fg.listing.function.name"));
+
 	public static final ScreenElement FUN_PARAMS =
-		new ScreenElement("Function Parameters", Color.BLACK);
-	public static final ScreenElement FUN_TAG = new ScreenElement("Function Tag", DARK_RED);
-	public static final ScreenElement FUN_AUTO_PARAMS =
-		new ScreenElement("Function Auto-Parameters", Color.GRAY);
-	public static final ScreenElement FUN_RET_TYPE =
-		new ScreenElement("Function Return Type", Color.BLACK);
+		new ScreenElement("Function Parameters", new GColor("color.fg.listing.function.param"));
+
+	public static final ScreenElement FUN_TAG =
+		new ScreenElement("Function Tag", new GColor("color.fg.listing.function.tag"));
+
+	public static final ScreenElement FUN_AUTO_PARAMS = new ScreenElement(
+		"Function Auto-Parameters", new GColor("color.fg.listing.function.param.auto"));
+
+	public static final ScreenElement FUN_RET_TYPE = new ScreenElement("Function Return Type",
+		new GColor("color.fg.listing.function.return-type"));
+
 	public static final ScreenElement COMMENT_REPEATABLE =
-		new ScreenElement("Comment, Repeatable", DARK_ORANGE);
-	public static final ScreenElement COMMENT_REF_REPEAT =
-		new ScreenElement("Comment, Referenced Repeatable", new Color(190, 190, 255));
-	public static final ScreenElement LABELS_LOCAL = new ScreenElement("Labels, Local", BLUE_GREEN);
+		new ScreenElement("Comment, Repeatable", new GColor("color.fg.listing.comment.repeatable"));
+
+	public static final ScreenElement COMMENT_REF_REPEAT = new ScreenElement(
+		"Comment, Referenced Repeatable", new GColor("color.fg.listing.comment.ref-repeatable"));
+
+	public static final ScreenElement LABELS_LOCAL =
+		new ScreenElement("Labels, Local", new GColor("color.fg.listing.label.local"));
+
 	public static final ScreenElement MNEMONIC_OVERRIDE =
-		new ScreenElement("Mnemonic, Override", new Color(255, 0, 204));
-	public static final ScreenElement MNEMONIC = new ScreenElement("Mnemonic", DARK_BLUE);
-	public static final ScreenElement UNIMPL =
-		new ScreenElement("Unimplemented Mnemonic", Color.RED);
-	public static final ScreenElement FLOW_ARROW_NON_ACTIVE =
-		new ScreenElement("Flow Arrow, Not Active", new Color(160, 160, 160));
+		new ScreenElement("Mnemonic, Override", new GColor("color.fg.listing.mnemonic.override"));
+
+	public static final ScreenElement MNEMONIC =
+		new ScreenElement("Mnemonic", new GColor("color.fg.listing.mnemonic"));
+
+	public static final ScreenElement UNIMPL = new ScreenElement("Unimplemented Mnemonic",
+		new GColor("color.fg.listing.mnemonic.unimplemented"));
+
+	public static final ScreenElement FLOW_ARROW_NON_ACTIVE = new ScreenElement(
+		"Flow Arrow, Not Active", new GColor("color.fg.listing.flow-arrow.inactive"));
+
 	public static final ScreenElement FLOW_ARROW_ACTIVE =
-		new ScreenElement("Flow Arrow, Active", Color.BLACK);
-	public static final ScreenElement FLOW_ARROW_SELECTED =
-		new ScreenElement("Flow Arrow, Selected", new Color(0, 200, 0));
+		new ScreenElement("Flow Arrow, Active", new GColor("color.fg.listing.flow-arrow.active"));
+
+	public static final ScreenElement FLOW_ARROW_SELECTED = new ScreenElement(
+		"Flow Arrow, Selected", new GColor("color.fg.listing.flow-arrow.selected"));
+
 	public static final ScreenElement LABELS_NON_PRIMARY =
-		new ScreenElement("Labels, Non-primary", YELLOW_ORANGE);
-	public static final ScreenElement COMMENT_PLATE =
-		new ScreenElement("Comment, Plate", "Plate Comment", Color.GRAY);
-	public static final ScreenElement COMMENT_POST =
-		new ScreenElement("Comment, Post", "Post-Comment", Color.BLUE);
-	public static final ScreenElement COMMENT_PRE =
-		new ScreenElement("Comment, Pre", "Pre-Comment", DEEP_PURPLE);
+		new ScreenElement("Labels, Non-primary", new GColor("color.fg.listing.label.non-primary"));
+
+	public static final ScreenElement COMMENT_PLATE = new ScreenElement("Comment, Plate",
+		"Plate Comment", new GColor("color.fg.listing.comment.plate"));
+
+	public static final ScreenElement COMMENT_POST = new ScreenElement("Comment, Post",
+		"Post-Comment", new GColor("color.fg.listing.comment.post"));
+
+	public static final ScreenElement COMMENT_PRE = new ScreenElement("Comment, Pre", "Pre-Comment",
+		new GColor("color.fg.listing.comment.pre"));
+
 	public static final ScreenElement LABELS_PRIMARY =
-		new ScreenElement("Labels, Primary", DARK_BLUE);
-	public static final ScreenElement SEPARATOR = new ScreenElement("Separator", Color.BLACK);
-	public static final ScreenElement VARIABLE = new ScreenElement("Variable", PURPLE);
-	public static final ScreenElement PARAMETER_CUSTOM =
-		new ScreenElement("Parameter, Custom Storage", DARK_PURPLE);
-	public static final ScreenElement PARAMETER_DYNAMIC =
-		new ScreenElement("Parameter, Dynamic Storage", DARK_CYAN);
-	public static final ScreenElement VERSION_TRAK = new ScreenElement("Version Track", PURPLE);
-	public static final ScreenElement XREF = new ScreenElement("XRef", DARK_GREEN);
-	public static final ScreenElement XREF_OFFCUT = new ScreenElement("XRef, Offcut", Color.GRAY);
-	public static final ScreenElement XREF_READ = new ScreenElement("XRef Read", Color.BLUE);
-	public static final ScreenElement XREF_WRITE = new ScreenElement("XRef Write", DARK_ORANGE);
-	public static final ScreenElement XREF_OTHER = new ScreenElement("XRef Other", Color.BLACK);
-	public static final ScreenElement REGISTERS = new ScreenElement("Registers", YELLOW_ORANGE);
-	public static final ScreenElement UNDERLINE = new ScreenElement("Underline", PALE_BLUE);
+		new ScreenElement("Labels, Primary", new GColor("color.fg.listing.label.primary"));
+
+	public static final ScreenElement SEPARATOR =
+		new ScreenElement("Separator", new GColor("color.fg.listing.separator"));
+
+	public static final ScreenElement VARIABLE =
+		new ScreenElement("Variable", new GColor("color.fg.listing.variable"));
+
+	public static final ScreenElement PARAMETER_CUSTOM = new ScreenElement(
+		"Parameter, Custom Storage", new GColor("color.fg.listing.function.param.custom"));
+
+	public static final ScreenElement PARAMETER_DYNAMIC = new ScreenElement(
+		"Parameter, Dynamic Storage", new GColor("color.fg.listing.function.param.dynamic"));
+
+	public static final ScreenElement VERSION_TRAK =
+		new ScreenElement("Version Track", new GColor("color.fg.listing.version-tracking"));
+
+	public static final ScreenElement XREF =
+		new ScreenElement("XRef", new GColor("color.fg.listing.xref"));
+
+	public static final ScreenElement XREF_OFFCUT =
+		new ScreenElement("XRef, Offcut", new GColor("color.fg.listing.xref.offcut"));
+
+	public static final ScreenElement XREF_READ =
+		new ScreenElement("XRef Read", new GColor("color.fg.listing.xref.read"));
+
+	public static final ScreenElement XREF_WRITE =
+		new ScreenElement("XRef Write", new GColor("color.fg.listing.xref.write"));
+
+	public static final ScreenElement XREF_OTHER =
+		new ScreenElement("XRef Other", new GColor("color.fg.listing.xref.other"));
+
+	public static final ScreenElement REGISTERS =
+		new ScreenElement("Registers", new GColor("color.fg.listing.register"));
+
+	public static final ScreenElement UNDERLINE =
+		new ScreenElement("Underline", new GColor("color.fg.listing.underline"));
+
 	public static final ScreenElement PCODE_LINE_LABEL =
-		new ScreenElement("P-code Line Label", Color.BLUE);
+		new ScreenElement("P-code Line Label", new GColor("color.fg.listing.pcode.label"));
+
 	public static final ScreenElement PCODE_ADDR_SPACE =
-		new ScreenElement("P-code Address Space", Color.BLUE);
+		new ScreenElement("P-code Address Space", new GColor("color.fg.listing.pcode.space"));
+
 	public static final ScreenElement PCODE_RAW_VARNODE =
-		new ScreenElement("P-code Raw Varnode", Color.BLUE);
+		new ScreenElement("P-code Raw Varnode", new GColor("color.fg.listing.pcode.varnode"));
+
 	public static final ScreenElement PCODE_USEROP =
-		new ScreenElement("P-code Userop", Color.BLUE);
+		new ScreenElement("P-code Userop", new GColor("color.fg.listing.pcode.userop"));
+
+	//@formatter:on
 
 	static ScreenElement[] elements = { ADDRESS, BACKGROUND, BAD_REF_ADDR, BYTES, COMMENT_AUTO,
 		COMMENT_EOL, COMMENT_PLATE, COMMENT_POST, COMMENT_PRE, COMMENT_REPEATABLE,

@@ -15,7 +15,7 @@
  */
 package ghidra.graph.viewer.vertex;
 
-import static ghidra.graph.viewer.GraphViewerUtils.INTERACTION_ZOOM_THRESHOLD;
+import static ghidra.graph.viewer.GraphViewerUtils.*;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -23,6 +23,7 @@ import java.awt.geom.Point2D;
 
 import com.google.common.base.Function;
 
+import docking.theme.GColor;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.*;
 import edu.uci.ics.jung.visualization.renderers.BasicVertexRenderer;
@@ -40,6 +41,8 @@ import ghidra.graph.viewer.VisualVertex;
  */
 public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends VisualEdge<V>>
 		extends BasicVertexRenderer<V, E> {
+
+	private static final Color HIGHLIGHT_COLOR = new GColor("color.bg.highlight.visualgraph");
 
 	/**
 	 * Creates a copy of the given {@link GraphicsDecorator} that may have scaling tweaked to 
@@ -96,8 +99,7 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 
 		Paint oldPaint = g.getPaint();
 
-		int halfishTransparency = 150;
-		Color yellowWithTransparency = new Color(255, 255, 0, halfishTransparency);
+		Color yellowWithTransparency = HIGHLIGHT_COLOR;
 		g.setPaint(yellowWithTransparency);
 
 		int offset = 10;

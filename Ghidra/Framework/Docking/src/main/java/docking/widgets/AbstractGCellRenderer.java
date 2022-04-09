@@ -21,6 +21,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.border.Border;
 
+import docking.theme.GColor;
 import docking.widgets.label.GDHtmlLabel;
 
 /**
@@ -31,8 +32,8 @@ import docking.widgets.label.GDHtmlLabel;
  *
  */
 public abstract class AbstractGCellRenderer extends GDHtmlLabel {
-
-	private static final Color ALTERNATE_BACKGROUND_COLOR = new Color(237, 243, 254);
+	private static final Color BACKGROUND_COLOR = new GColor("color.bg.table.row");
+	private static final Color ALT_BACKGROUND_COLOR = new GColor("color.bg.table.row.alt");
 
 	/** Allows the user to disable alternating row colors on JLists and JTables */
 	private static final String DISABLE_ALTERNATING_ROW_COLORS_PROPERTY =
@@ -156,7 +157,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	}
 
 	protected Color getDefaultBackgroundColor() {
-		return Color.WHITE;
+		return BACKGROUND_COLOR;
 	}
 
 	protected Color getBackgroundColorForRow(int row) {
@@ -164,7 +165,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		if ((row & 1) == 1) {
 			return getDefaultBackgroundColor();
 		}
-		return ALTERNATE_BACKGROUND_COLOR;
+		return ALT_BACKGROUND_COLOR;
 	}
 
 // ==================================================================================================

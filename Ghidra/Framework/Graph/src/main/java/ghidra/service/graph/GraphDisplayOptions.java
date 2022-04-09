@@ -25,6 +25,7 @@ import javax.swing.event.ChangeListener;
 
 import docking.Tool;
 import docking.options.editor.*;
+import docking.theme.GColor;
 import ghidra.framework.options.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.WebColors;
@@ -36,8 +37,9 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
  */
 public class GraphDisplayOptions implements OptionsChangeListener {
 
-	public static final GraphDisplayOptions DEFAULT =
-		new GraphDisplayOptions(new EmptyGraphType());
+	private static final String COLOR_ID = "graph.display.color";
+
+	public static final GraphDisplayOptions DEFAULT = new GraphDisplayOptions(new EmptyGraphType());
 
 	private static final String FONT = "Font";
 	private static final String LABEL_POSITION = "Label Position";
@@ -64,10 +66,10 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	private Map<String, Integer> edgePriorityMap = new HashMap<>();
 	private List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
 
-	private Color vertexSelectionColor = Color.green;
-	private Color edgeSelectionColor = Color.green;
-	private Color defaultVertexColor = Color.blue;
-	private Color defaultEdgeColor = Color.blue;
+	private Color vertexSelectionColor = new GColor("color.graph.display.vertex.selected");
+	private Color edgeSelectionColor = new GColor("color.graph.display.edge.selected");
+	private Color defaultVertexColor = new GColor("color.graph.display.vertex");
+	private Color defaultEdgeColor = new GColor("color.graph.display.edge");
 	private String favoredEdgeType;
 
 	private VertexShape defaultVertexShape = VertexShape.RECTANGLE;
@@ -727,9 +729,8 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		Options options = rootOptions.getOptions(VERTEX_COLORS);
 
 		for (String vertexType : graphType.getVertexTypes()) {
-			options.registerOption(vertexType, OptionType.COLOR_TYPE,
-				getVertexColor(vertexType), help,
-				"Choose the color for this vertex type");
+			options.registerOption(vertexType, OptionType.COLOR_TYPE, getVertexColor(vertexType),
+				help, "Choose the color for this vertex type");
 		}
 		List<String> list = new ArrayList<>(graphType.getVertexTypes());
 		OptionsEditor editor = new ScrollableOptionsEditor(VERTEX_COLORS, list);
@@ -744,8 +745,8 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		for (String vertexType : graphType.getVertexTypes()) {
 			StringWithChoicesEditor editor = new StringWithChoicesEditor(shapeNames);
 			options.registerOption(vertexType, OptionType.STRING_TYPE,
-				getVertexShapeName(vertexType), help,
-				"Choose the shape for this vertex type", editor);
+				getVertexShapeName(vertexType), help, "Choose the shape for this vertex type",
+				editor);
 		}
 		List<String> list = new ArrayList<>(graphType.getVertexTypes());
 		OptionsEditor editor = new ScrollableOptionsEditor(VERTEX_SHAPES, list);
@@ -756,8 +757,8 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		Options options = rootOptions.getOptions(EDGE_COLORS);
 
 		for (String edgeType : graphType.getEdgeTypes()) {
-			options.registerOption(edgeType, OptionType.COLOR_TYPE,
-				getEdgeColor(edgeType), help, "Choose the color for this edge type");
+			options.registerOption(edgeType, OptionType.COLOR_TYPE, getEdgeColor(edgeType), help,
+				"Choose the color for this edge type");
 		}
 		List<String> list = new ArrayList<>(graphType.getEdgeTypes());
 		OptionsEditor editor = new ScrollableOptionsEditor(EDGE_COLORS, list);
@@ -779,14 +780,14 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 			help, "Color for highlighting selected edge");
 
 		options.registerOption(DEFAULT_VERTEX_SHAPE, OptionType.STRING_TYPE,
-			defaultVertexShape.getName(),
-			help, "Shape for vertices that have no vertex type defined", editor);
+			defaultVertexShape.getName(), help,
+			"Shape for vertices that have no vertex type defined", editor);
 
 		options.registerOption(DEFAULT_VERTEX_COLOR, OptionType.COLOR_TYPE, defaultVertexColor,
 			help, "Color for vertices that have no vertex type defined");
 
-		options.registerOption(DEFAULT_EDGE_COLOR, OptionType.COLOR_TYPE, defaultEdgeColor,
-			help, "Color for edge that have no edge type defined");
+		options.registerOption(DEFAULT_EDGE_COLOR, OptionType.COLOR_TYPE, defaultEdgeColor, help,
+			"Color for edge that have no edge type defined");
 
 		List<String> edgeTypes = graphType.getEdgeTypes();
 		if (!edgeTypes.isEmpty()) {

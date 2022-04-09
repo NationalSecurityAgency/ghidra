@@ -31,6 +31,7 @@ import docking.ActionContext;
 import docking.GenericHeader;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import docking.theme.GThemeDefaults.Colors;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
@@ -204,7 +205,6 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		previewListingPanel = new FGVertexListingPanel(controller,
 			getFormatManager(useFullSizeTooltip), program, addressSet);
 		previewListingPanel.setTextBackgroundColor(FGVertex.TOOLTIP_BACKGROUND_COLOR);
-		//            previewListingPanel.getFieldPanel().setSelectionMode( FieldPanel.NO_SELECTION );
 		previewListingPanel.getFieldPanel().setCursorOn(false);
 
 		// keep the tooltip window from getting too big; use an arbitrary, reasonable max
@@ -224,7 +224,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 		JPanel headerPanel = new JPanel(new BorderLayout());
 		headerPanel.add(tooltipTitleLabel);
-		headerPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		headerPanel.setBorder(BorderFactory.createLineBorder(Colors.Java.BORDER));
 
 		panel.add(headerPanel, BorderLayout.NORTH);
 		panel.add(previewListingPanel, BorderLayout.CENTER);

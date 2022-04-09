@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
 import docking.*;
+import docking.theme.GColor;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import generic.util.WindowUtilities;
@@ -36,8 +37,6 @@ import utility.application.ApplicationLayout;
  * initialization is complete, the splash screen is dismissed.
  */
 public class SplashScreen extends JWindow {
-
-	private static final Color DEFAULT_BACKGROUND_COLOR = new Color(243, 250, 255);
 
 	private static SplashScreen splashWindow; // splash window displayed while ghidra is coming up
 	private static DockingFrame hiddenFrame;
@@ -250,7 +249,7 @@ public class SplashScreen extends JWindow {
 			List<Image> list = ApplicationInformationDisplayFactory.getWindowIcons();
 			hiddenFrame.setIconImages(list);
 			hiddenFrame.setUndecorated(true);
-			hiddenFrame.setTransient(); 
+			hiddenFrame.setTransient();
 		}
 		return hiddenFrame;
 	}
@@ -286,7 +285,7 @@ public class SplashScreen extends JWindow {
 
 	private JPanel createMainPanel() {
 		JPanel mainPanel = new JPanel(new BorderLayout());
-		mainPanel.setBackground(DEFAULT_BACKGROUND_COLOR);
+		mainPanel.setBackground(new GColor("color.bg.splash"));
 		mainPanel.add(createTitlePanel(), BorderLayout.NORTH);
 		mainPanel.add(createContentPanel(), BorderLayout.CENTER);
 		return mainPanel;
@@ -331,7 +330,7 @@ public class SplashScreen extends JWindow {
 		statusLabel.setFont(f);
 
 		statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 2, 10));
-		statusLabel.setBackground(DEFAULT_BACKGROUND_COLOR);
+		statusLabel.setBackground(new GColor("color.bg.splash"));
 		statusLabel.setOpaque(true);
 		return statusLabel;
 	}

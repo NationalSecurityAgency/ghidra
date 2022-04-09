@@ -15,16 +15,15 @@
  */
 package docking.widgets.filechooser;
 
+import java.awt.*;
+import java.awt.event.*;
+import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import java.awt.*;
-import java.awt.event.*;
-import java.io.File;
-import java.io.FileFilter;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -32,6 +31,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.filechooser.FileSystemView;
 
 import docking.*;
+import docking.theme.GColor;
 import docking.widgets.*;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
@@ -73,8 +73,8 @@ import util.HistoryList;
 public class GhidraFileChooser extends DialogComponentProvider implements FileFilter {
 
 	static final String UP_BUTTON_NAME = "UP_BUTTON";
-	private static final Color FOREROUND_COLOR = Color.BLACK;
-	private static final Color BACKGROUND_COLOR = Color.WHITE;
+	private static final Color FOREROUND_COLOR = new GColor("color.fg.filechooser");
+	private static final Color BACKGROUND_COLOR = new GColor("color.bg.filechooser");
 	static final String PREFERENCES_PREFIX = "G_FILE_CHOOSER";
 	private static final String WIDTH_PREFERENCE_PREFIX = PREFERENCES_PREFIX + ".WIDTH.";
 	private static final String HEIGHT_PREFERENCE_PREFIX = PREFERENCES_PREFIX + ".HEIGHT.";

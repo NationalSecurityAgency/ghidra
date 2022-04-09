@@ -28,6 +28,7 @@ import javax.swing.text.*;
 
 import docking.DockingUtils;
 import docking.actions.KeyBindingUtils;
+import docking.theme.GColor;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.framework.options.OptionsChangeListener;
@@ -37,6 +38,7 @@ import ghidra.util.*;
 
 public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
+	private static final String COLOR_ID = "interpreterpanel.color";
 	private static final String COMPLETION_WINDOW_TRIGGER_LABEL = "Completion Window Trigger";
 	private static final String COMPLETION_WINDOW_TRIGGER_DESCRIPTION =
 		"The key binding used to show the auto-complete window " +
@@ -46,8 +48,8 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		"This is the font that will be used in the Console.  " +
 			"Double-click the font example to change it.";
 
-	private static final Color NORMAL_COLOR = Color.black;
-	private static final Color ERROR_COLOR = Color.red;
+	private static final Color NORMAL_COLOR = new GColor("color.fg.interpreterpanel");
+	private static final Color ERROR_COLOR = new GColor("color.fg.interpreterpanel.error");
 
 	public enum TextType {
 		STDOUT, STDERR, STDIN;

@@ -26,6 +26,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.action.DockingAction;
+import docking.theme.GColor;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -61,11 +62,16 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		implements CodeViewerService, CodeFormatService, OptionsChangeListener, FormatModelListener,
 		DomainObjectListener, CodeBrowserPluginInterface {
 
-	private static final Color CURSOR_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 	private static final String CURSOR_COLOR = "Cursor.Cursor Color - Focused";
 	private static final String UNFOCUSED_CURSOR_COLOR = "Cursor.Cursor Color - Unfocused";
 	private static final String BLINK_CURSOR = "Cursor.Blink Cursor";
 	private static final String MOUSE_WHEEL_HORIZONTAL_SCROLLING = "Mouse.Horizontal Scrolling";
+
+	//@formatter:off
+	public static final Color IFOCUSED_CURSOR_COLOR = new GColor("color.cursor.focused.listing");
+	public static final Color IUNFOCUSED_CURSOR_COLOR = new GColor("color.cursor.unfocused.listing");
+	public static final Color ICURRENT_LINE_HIGHLIGHT_COLOR = new GColor("color.bg.currentline.listing");
+	//@formatter:on
 
 	// - Icon -
 	private ImageIcon CURSOR_LOC_ICON =
@@ -554,14 +560,15 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			GhidraOptions.DEFAULT_HIGHLIGHT_COLOR, helpLocation,
 			"The highlight color in the browser.");
 
-		fieldOptions.registerOption(CURSOR_COLOR, Color.RED, helpLocation,
+		fieldOptions.registerOption(CURSOR_COLOR, IFOCUSED_CURSOR_COLOR, helpLocation,
 			"The color of the cursor in the browser.");
-		fieldOptions.registerOption(UNFOCUSED_CURSOR_COLOR, Color.PINK, helpLocation,
+		fieldOptions.registerOption(UNFOCUSED_CURSOR_COLOR, IUNFOCUSED_CURSOR_COLOR, helpLocation,
 			"The color of the cursor in the browser when the browser does not have focus.");
 		fieldOptions.registerOption(BLINK_CURSOR, true, helpLocation,
 			"When selected, the cursor will blink when the containing window is focused.");
-		fieldOptions.registerOption(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR, CURSOR_LINE_COLOR,
-			helpLocation, "The background color of the line where the cursor is located");
+		fieldOptions.registerOption(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR,
+			ICURRENT_LINE_HIGHLIGHT_COLOR, helpLocation,
+			"The background color of the line where the cursor is located");
 		fieldOptions.registerOption(GhidraOptions.HIGHLIGHT_CURSOR_LINE, true, helpLocation,
 			"Toggles highlighting background color of line containing the cursor");
 
@@ -588,10 +595,10 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			highlightMarkers.setMarkerColor(color);
 		}
 
-		color = fieldOptions.getColor(CURSOR_COLOR, Color.RED);
+		color = fieldOptions.getColor(CURSOR_COLOR, IFOCUSED_CURSOR_COLOR);
 		fieldPanel.setFocusedCursorColor(color);
 
-		color = fieldOptions.getColor(UNFOCUSED_CURSOR_COLOR, Color.PINK);
+		color = fieldOptions.getColor(UNFOCUSED_CURSOR_COLOR, IUNFOCUSED_CURSOR_COLOR);
 		fieldPanel.setNonFocusCursorColor(color);
 
 		Boolean isBlinkCursor = fieldOptions.getBoolean(BLINK_CURSOR, true);
@@ -601,8 +608,8 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			fieldOptions.getBoolean(MOUSE_WHEEL_HORIZONTAL_SCROLLING, true);
 		fieldPanel.setHorizontalScrollingEnabled(horizontalScrollingEnabled);
 
-		cursorHighlightColor =
-			fieldOptions.getColor(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR, CURSOR_LINE_COLOR);
+		cursorHighlightColor = fieldOptions.getColor(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR,
+			ICURRENT_LINE_HIGHLIGHT_COLOR);
 
 		isHighlightCursorLine = fieldOptions.getBoolean(GhidraOptions.HIGHLIGHT_CURSOR_LINE, true);
 	}

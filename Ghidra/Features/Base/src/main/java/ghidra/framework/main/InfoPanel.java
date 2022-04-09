@@ -25,6 +25,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.View;
 
 import docking.DockingUtils;
+import docking.theme.GColor;
 import docking.widgets.*;
 import docking.widgets.label.*;
 import generic.util.WindowUtilities;
@@ -58,7 +59,7 @@ class InfoPanel extends JPanel {
 
 	InfoPanel() {
 		getAboutInfo();
-		bgColor = new Color(243, 250, 255);
+		bgColor = new GColor("color.bg.splash.infopanel");
 		create();
 	}
 
@@ -174,7 +175,7 @@ class InfoPanel extends JPanel {
 		Font font = versionLabel.getFont();
 		font = font.deriveFont(14f).deriveFont(Font.BOLD);
 		versionLabel.setFont(font);
-		versionLabel.setForeground(Color.BLACK);
+		versionLabel.setForeground(new GColor("color.fg.infopanel.version"));
 		return versionLabel;
 	}
 

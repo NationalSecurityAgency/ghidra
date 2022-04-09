@@ -64,6 +64,10 @@ public enum OptionType {
 		return stringAdapter.objectToString(object);
 	}
 
+	public boolean isCompatible(Object object) {
+		return object == null || clazz.isAssignableFrom(object.getClass());
+	}
+
 	public Class<?> getValueClass() {
 		return clazz;
 	}
@@ -230,8 +234,8 @@ public enum OptionType {
 			}
 			catch (Exception e) {
 				Msg.error(this,
-					"Can't create customOption instance for: " + customOptionClassName + 
-					e);
+					"Can't create customOption instance for: " + customOptionClassName +
+						e);
 			}
 			return null;
 		}

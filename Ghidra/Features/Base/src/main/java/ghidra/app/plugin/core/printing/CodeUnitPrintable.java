@@ -49,8 +49,7 @@ public class CodeUnitPrintable implements Printable {
 	private static final PaintContext PAINT_CONTEXT = new PaintContext();
 	static {
 		PAINT_CONTEXT.setForegroundColor(Color.BLACK);
-		PAINT_CONTEXT.setDefaultBackgroundColor(Color.WHITE);
-		PAINT_CONTEXT.setBackgroundColor(Color.white);
+		PAINT_CONTEXT.setBackgroundColor(Color.WHITE);
 		PAINT_CONTEXT.setCursorColor(Color.RED);
 		PAINT_CONTEXT.setSelectionColor(new Color(180, 255, 180));
 		PAINT_CONTEXT.setHighlightColor(new Color(255, 255, 150));

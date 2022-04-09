@@ -26,6 +26,7 @@ import javax.swing.text.*;
 import javax.swing.tree.TreeSelectionModel;
 
 import docking.DockingUtils;
+import docking.theme.GColor;
 import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.FieldPanel;
@@ -95,7 +96,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	private static final String SELECTION_GROUP = "Selection Colors";
 	private static final String DIFF_HIGHLIGHT_COLOR_NAME =
 		SELECTION_GROUP + Options.DELIMITER + "Difference Color";
-	private Color diffHighlightColor = new Color(255, 230, 180); // light orange
+	private Color diffHighlightColor = new GColor("color.bg.programdiff.highlight");
 	private Color cursorHighlightColor;
 	protected static final HelpService help = Help.getHelpService();
 

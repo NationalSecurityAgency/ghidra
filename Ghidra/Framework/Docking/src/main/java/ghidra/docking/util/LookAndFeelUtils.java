@@ -15,16 +15,15 @@
  */
 package ghidra.docking.util;
 
-import java.awt.Dimension;
-import java.awt.Font;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.Map.Entry;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.plaf.ComponentUI;
 
-import ghidra.docking.util.painting.GRepaintManager;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.framework.preferences.Preferences;
@@ -33,17 +32,12 @@ import ghidra.util.*;
 /**
  * A utility class to manage LookAndFeel (LaF) settings.
  */
-public class DockingWindowsLookAndFeelUtils {
+public class LookAndFeelUtils {
 
 	/**
-	 * Preference name for look and feel for the application.
+	 * Default Look and feel for the current platform.
 	 */
-	public final static String LAST_LOOK_AND_FEEL_KEY = "LastLookAndFeel";
-
-	/**
-	 * Preference name for whether to use inverted colors.
-	 */
-	public final static String USE_INVERTED_COLORS_KEY = "LookAndFeel.UseInvertedColors";
+	public final static String SYSTEM_LOOK_AND_FEEL = "System";
 
 	/**
 	 * Metal is the non-system, generic Java Look and Feel.
@@ -51,38 +45,37 @@ public class DockingWindowsLookAndFeelUtils {
 	public final static String METAL_LOOK_AND_FEEL = "Metal";
 
 	/**
-	 * Default Look and feel for the current platform.
-	 */
-	private final static String SYSTEM_LOOK_AND_FEEL = "System";
-
-	/**
 	 * The most stable Linux LaF, based on anecdotal observation.
 	 */
-	private static final String NIMBUS_LOOK_AND_FEEL = "Nimbus";
+	public static final String NIMBUS_LOOK_AND_FEEL = "Nimbus";
+
+	public static final String GDK_LOOK_AND_FEEL = "GTK+";
 
 	/**
 	 * The Motif LaF name.
 	 */
-	private static final String MOTIF_LOOK_AND_FEEL = "CDE/Motif";
+	public static final String MOTIF_LOOK_AND_FEEL = "CDE/Motif";
+	/**
+	 * The flatlaf implementation of light mode.
+	 */
+	public static final String FLAT_LIGHT_LOOK_AND_FEEL = "Flat Light";
+	/**
+	 * The Flatlaf implementation of dark mode.
+	 */
+	public static final String FLAT_DARK_LOOK_AND_FEEL = "Flat Dark";
+	public static final String WINDOWS = "Windows";
+	public static final String WINDOWS_CLASSIC = "Windows Classic";
 
-	private static RepaintManager defaultSwingRepaintManager = null;
+	public static final String SYSTEM = "System";
 
-	private DockingWindowsLookAndFeelUtils() {
+	private LookAndFeelUtils() {
 		// utils class, cannot create
 	}
 
 	/**
 	 * Loads settings from {@link Preferences}.
 	 */
-	public static void loadFromPreferences() {
-
-		boolean useHistoricalValue = true;
-		String laf = Preferences.getProperty(LAST_LOOK_AND_FEEL_KEY, getDefaultLookAndFeelName(),
-			useHistoricalValue);
-		setLookAndFeel(laf);
-
-		boolean useInvertedColors = getUseInvertedColorsPreference();
-		setUseInvertedColors(useInvertedColors);
+	public static void installGlobalOverrides() {
 
 		//
 		// Users can change this via the SystemUtilities.FONT_SIZE_OVERRIDE_PROPERTY_NAME
@@ -92,18 +85,6 @@ public class DockingWindowsLookAndFeelUtils {
 		if (fontOverride != null) {
 			setGlobalFontSizeOverride(fontOverride);
 		}
-	}
-
-	/**
-	 * Returns the {@link Preferences} value for whether to use inverted colors when painting.
-	 * @return the {@link Preferences} value for whether to use inverted colors when painting.
-	 */
-	public static boolean getUseInvertedColorsPreference() {
-		boolean useHistoricalValue = true;
-		String useInvertedColorsString = Preferences.getProperty(USE_INVERTED_COLORS_KEY,
-			Boolean.FALSE.toString(), useHistoricalValue);
-		boolean useInvertedColors = Boolean.parseBoolean(useInvertedColorsString);
-		return useInvertedColors;
 	}
 
 	/**
@@ -137,10 +118,34 @@ public class DockingWindowsLookAndFeelUtils {
 				installPopupMenuSettingsOverride();
 			}
 			catch (Exception exc) {
-				Msg.error(DockingWindowsLookAndFeelUtils.class,
+				Msg.error(LookAndFeelUtils.class,
 					"Error loading Look and Feel: " + exc, exc);
 			}
 		});
+	}
+
+	public static void dumpUIProperties() {
+		List<String> colorKeys = getLookAndFeelIdsForType(Color.class);
+		Collections.sort(colorKeys);
+		for (String string : colorKeys) {
+			Msg.debug(LookAndFeelUtils.class, string + "\t\t" + UIManager.get(string));
+		}
+
+	}
+
+	public static List<String> getLookAndFeelIdsForType(Class<?> clazz) {
+		UIDefaults defaults = UIManager.getDefaults();
+		List<String> colorKeys = new ArrayList<>();
+		for (Entry<?, ?> entry : defaults.entrySet()) {
+			Object key = entry.getKey();
+			if (key instanceof String) {
+				Object value = entry.getValue();
+				if (clazz.isInstance(value)) {
+					colorKeys.add((String) key);
+				}
+			}
+		}
+		return colorKeys;
 	}
 
 	/**
@@ -149,7 +154,9 @@ public class DockingWindowsLookAndFeelUtils {
 	 */
 	public static List<String> getLookAndFeelNames() {
 		List<String> list = new ArrayList<>();
-		list.add(DockingWindowsLookAndFeelUtils.SYSTEM_LOOK_AND_FEEL);
+		list.add(LookAndFeelUtils.SYSTEM_LOOK_AND_FEEL);
+		list.add(LookAndFeelUtils.FLAT_LIGHT_LOOK_AND_FEEL);
+		list.add(LookAndFeelUtils.FLAT_DARK_LOOK_AND_FEEL);
 
 		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
 		for (LookAndFeelInfo info : installedLookAndFeels) {
@@ -171,6 +178,12 @@ public class DockingWindowsLookAndFeelUtils {
 		if (lookAndFeelName.equalsIgnoreCase(SYSTEM_LOOK_AND_FEEL)) {
 			return UIManager.getSystemLookAndFeelClassName();
 		}
+		else if (lookAndFeelName.equalsIgnoreCase(FLAT_LIGHT_LOOK_AND_FEEL)) {
+			return "com.formdev.flatlaf.FlatLightLaf";
+		}
+		else if (lookAndFeelName.equalsIgnoreCase(FLAT_DARK_LOOK_AND_FEEL)) {
+			return "com.formdev.flatlaf.FlatDarkLaf";
+		}
 
 		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
 		for (LookAndFeelInfo info : installedLookAndFeels) {
@@ -180,24 +193,9 @@ public class DockingWindowsLookAndFeelUtils {
 			}
 		}
 
-		Msg.debug(DockingWindowsLookAndFeelUtils.class,
+		Msg.debug(LookAndFeelUtils.class,
 			"Unable to find requested Look and Feel: " + lookAndFeelName);
 		return UIManager.getSystemLookAndFeelClassName();
-	}
-
-	public static void setUseInvertedColors(boolean useInvertedColors) {
-		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
-
-			if (defaultSwingRepaintManager == null) {
-				defaultSwingRepaintManager = RepaintManager.currentManager(null /*unused*/);
-			}
-
-			RepaintManager rm = defaultSwingRepaintManager;
-			if (useInvertedColors) {
-				rm = new GRepaintManager();
-			}
-			RepaintManager.setCurrentManager(rm);
-		});
 	}
 
 	/**
@@ -340,8 +338,9 @@ public class DockingWindowsLookAndFeelUtils {
 
 	/**
 	 * Returns the name of the default LookAndFeel for the current OS.
+	 * @return the name
 	 */
-	private static String getDefaultLookAndFeelName() {
+	public static String getDefaultLookAndFeelName() {
 		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
 		if (OS == OperatingSystem.LINUX) {
 			return NIMBUS_LOOK_AND_FEEL;
@@ -369,8 +368,4 @@ public class DockingWindowsLookAndFeelUtils {
 		return NIMBUS_LOOK_AND_FEEL.equals(lookAndFeel.getName());
 	}
 
-	public static boolean isUsingMotifUI() {
-		LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-		return MOTIF_LOOK_AND_FEEL.equals(lookAndFeel.getName());
-	}
 }

@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.theme.GColor;
 import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.Highlight;
@@ -51,18 +52,15 @@ import ghidra.util.datastruct.Stack;
 
 public class ListingHighlightProvider
 		implements ButtonPressedListener, OptionsChangeListener, HighlightProvider {
-
-	private static final String DISPLAY_HIGHLIGHT_NAME =
-		CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Enabled";
-
-	private static final String SCOPED_WRITE_HIGHLIGHT_COLOR =
-		CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Write Highlight Color";
-
-	private static final String SCOPED_READ_HIGHLIGHT_COLOR =
-		CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Read Highlight Color";
-
-	private static final String SCOPE_REGISTER_OPERAND =
-		CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scope Register Operand";
+	//@formatter:off
+	private static final Color DEFAULT_HIGHLIGHT_COLOR = new GColor("color.fg.listing.highlighter.default");
+	private static final Color DEFAULT_SCOPED_READ_COLOR = new GColor("color.fg.listing.highlighter.scoped-read");
+	private static final Color DEFAULT_SCOPED_WRITE_COLOR = new GColor("color.fg.listing.highlighter.scoped-write");
+	private static final String DISPLAY_HIGHLIGHT_NAME = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Enabled";
+	private static final String SCOPED_WRITE_HIGHLIGHT_COLOR = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Write Highlight Color";
+	private static final String SCOPED_READ_HIGHLIGHT_COLOR = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Read Highlight Color";
+	private static final String SCOPE_REGISTER_OPERAND = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scope Register Operand";
+	//@formatter:on
 
 	private static char[] UNDERSCORE_AND_PERIOD_OK = new char[] { '.', '_' };
 	private static char[] UNDERSCORE_OK = new char[] { '_' };
@@ -871,11 +869,11 @@ public class ListingHighlightProvider
 		ToolOptions opt = tool.getOptions(CATEGORY_BROWSER_FIELDS);
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Cursor_Text_Highlight");
 
-		opt.registerOption(HIGHLIGHT_COLOR_NAME, Color.YELLOW, hl,
+		opt.registerOption(HIGHLIGHT_COLOR_NAME, DEFAULT_HIGHLIGHT_COLOR, hl,
 			"The color to use to highlight text.");
-		opt.registerOption(SCOPED_WRITE_HIGHLIGHT_COLOR, new Color(204, 204, 0), hl,
+		opt.registerOption(SCOPED_WRITE_HIGHLIGHT_COLOR, DEFAULT_SCOPED_WRITE_COLOR, hl,
 			"The color to use for showing a register being written.");
-		opt.registerOption(SCOPED_READ_HIGHLIGHT_COLOR, new Color(0, 255, 0), hl,
+		opt.registerOption(SCOPED_READ_HIGHLIGHT_COLOR, DEFAULT_SCOPED_READ_COLOR, hl,
 			"The color to use for showing a register being read.");
 
 		opt.registerOption(SCOPE_REGISTER_OPERAND, true, hl,
@@ -895,11 +893,11 @@ public class ListingHighlightProvider
 			setHighlightString(null, null);
 		}
 
-		textMatchingHighlightColor = opt.getColor(HIGHLIGHT_COLOR_NAME, Color.YELLOW);
-
+		textMatchingHighlightColor = opt.getColor(HIGHLIGHT_COLOR_NAME, DEFAULT_HIGHLIGHT_COLOR);
 		scopeWriteHighlightColor =
-			opt.getColor(SCOPED_WRITE_HIGHLIGHT_COLOR, new Color(204, 204, 0));
-		scopeReadHighlightColor = opt.getColor(SCOPED_READ_HIGHLIGHT_COLOR, new Color(0, 255, 0));
+			opt.getColor(SCOPED_WRITE_HIGHLIGHT_COLOR, DEFAULT_SCOPED_WRITE_COLOR);
+		scopeReadHighlightColor =
+			opt.getColor(SCOPED_READ_HIGHLIGHT_COLOR, DEFAULT_SCOPED_READ_COLOR);
 
 		/////////////////////////////////////////////////////
 
