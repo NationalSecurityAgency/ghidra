@@ -23,6 +23,7 @@ import ghidra.app.services.MarkerService;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.AddressIndexMap;
+import ghidra.docking.util.ColorContext;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
@@ -33,7 +34,7 @@ public class MarkerServiceBackgroundColorModel implements ListingBackgroundColor
 	private MarkerService markerService;
 	private Program program;
 	private AddressIndexMap indexMap;
-	private Color defaultBackgroundColor = Color.WHITE;
+	private Color defaultBackgroundColor = ColorContext.BACKGROUND;
 
 	public MarkerServiceBackgroundColorModel(MarkerService markerService, Program program,
 			AddressIndexMap indexMap) {

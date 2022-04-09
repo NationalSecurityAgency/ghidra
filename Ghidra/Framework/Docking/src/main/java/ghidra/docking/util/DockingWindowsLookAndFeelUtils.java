@@ -15,6 +15,7 @@
  */
 package ghidra.docking.util;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.*;
@@ -29,6 +30,8 @@ import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.*;
+
+import com.formdev.flatlaf.*;
 
 /**
  * A utility class to manage LookAndFeel (LaF) settings.
@@ -59,6 +62,16 @@ public class DockingWindowsLookAndFeelUtils {
 	 * The most stable Linux LaF.
 	 */
 	private static final String NIMBUS_LOOK_AND_FEEL = "Nimbus";
+
+	/**
+	 * The flatlaf implementation of light mode.
+	 */
+	private static final String FLAT_LIGHT_LOOK_AND_FEEL = "Flat Light";
+
+	/**
+	 * The flatlaf implementation of dark mode.
+	 */
+	public static final String FLAT_DARK_LOOK_AND_FEEL = "Flat Dark";
 
 	private static RepaintManager defaultSwingRepaintManager = null;
 
@@ -145,6 +158,8 @@ public class DockingWindowsLookAndFeelUtils {
 	public static List<String> getLookAndFeelNames() {
 		List<String> list = new ArrayList<>();
 		list.add(DockingWindowsLookAndFeelUtils.SYSTEM_LOOK_AND_FEEL);
+		list.add(DockingWindowsLookAndFeelUtils.FLAT_LIGHT_LOOK_AND_FEEL);
+		list.add(DockingWindowsLookAndFeelUtils.FLAT_DARK_LOOK_AND_FEEL);
 
 		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
 		for (LookAndFeelInfo info : installedLookAndFeels) {
@@ -165,6 +180,10 @@ public class DockingWindowsLookAndFeelUtils {
 	private static String findLookAndFeelClassName(String lookAndFeelName) {
 		if (lookAndFeelName.equalsIgnoreCase(SYSTEM_LOOK_AND_FEEL)) {
 			return UIManager.getSystemLookAndFeelClassName();
+		} else if (lookAndFeelName.equalsIgnoreCase(FLAT_LIGHT_LOOK_AND_FEEL)) {
+			return "com.formdev.flatlaf.FlatLightLaf";
+		} else if (lookAndFeelName.equalsIgnoreCase(FLAT_DARK_LOOK_AND_FEEL)) {
+			return "com.formdev.flatlaf.FlatDarkLaf";
 		}
 
 		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
@@ -188,7 +207,7 @@ public class DockingWindowsLookAndFeelUtils {
 			}
 
 			RepaintManager rm = defaultSwingRepaintManager;
-			if (useInvertedColors) {
+			if (useInvertedColors && !isUsingFlatUI()) {
 				rm = new GRepaintManager();
 			}
 			RepaintManager.setCurrentManager(rm);
@@ -324,5 +343,21 @@ public class DockingWindowsLookAndFeelUtils {
 	public static boolean isUsingNimbusUI() {
 		LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
 		return NIMBUS_LOOK_AND_FEEL.equals(lookAndFeel.getName());
+	}
+
+	/**
+	 * Returns true if 'Flat' is the current Look and Feel
+	 * @return true if 'Flat' is the current Look and Feel
+	 */
+	public static boolean isUsingFlatUI() {
+		return getInstalledLookAndFeelName().startsWith("FlatLaf");
+	}
+
+	/**
+	 * Returns true if 'Flat Dark' is the current Look and Feel
+	 * @return true if 'Flat Dark' is the current Look and Feel
+	 */
+	public static boolean isUsingFlatDarkUI() {
+		return getInstalledLookAndFeelName().startsWith("FlatLaf Dark");
 	}
 }

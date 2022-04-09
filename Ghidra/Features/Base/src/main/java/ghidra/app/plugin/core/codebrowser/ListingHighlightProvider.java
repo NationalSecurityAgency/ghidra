@@ -35,6 +35,7 @@ import ghidra.app.plugin.processors.generic.PcodeFieldFactory;
 import ghidra.app.services.ButtonPressedListener;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.field.*;
+import ghidra.docking.util.ColorContext;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
@@ -871,11 +872,11 @@ public class ListingHighlightProvider
 		ToolOptions opt = tool.getOptions(CATEGORY_BROWSER_FIELDS);
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Cursor_Text_Highlight");
 
-		opt.registerOption(HIGHLIGHT_COLOR_NAME, Color.YELLOW, hl,
+		opt.registerOption(HIGHLIGHT_COLOR_NAME, ColorContext.CURSOR_TEXT_HIGHLIGHT, hl,
 			"The color to use to highlight text.");
-		opt.registerOption(SCOPED_WRITE_HIGHLIGHT_COLOR, new Color(204, 204, 0), hl,
+		opt.registerOption(SCOPED_WRITE_HIGHLIGHT_COLOR, ColorContext.CURSOR_TEXT_SCOPED_WRITE_HIGHLIGHT, hl,
 			"The color to use for showing a register being written.");
-		opt.registerOption(SCOPED_READ_HIGHLIGHT_COLOR, new Color(0, 255, 0), hl,
+		opt.registerOption(SCOPED_READ_HIGHLIGHT_COLOR, ColorContext.CURSOR_TEXT_SCOPED_READ_HIGHLIGHT, hl,
 			"The color to use for showing a register being read.");
 
 		opt.registerOption(SCOPE_REGISTER_OPERAND, true, hl,
@@ -895,11 +896,11 @@ public class ListingHighlightProvider
 			setHighlightString(null, null);
 		}
 
-		textMatchingHighlightColor = opt.getColor(HIGHLIGHT_COLOR_NAME, Color.YELLOW);
+		textMatchingHighlightColor = opt.getColor(HIGHLIGHT_COLOR_NAME, ColorContext.CURSOR_TEXT_HIGHLIGHT);
 
 		scopeWriteHighlightColor =
-			opt.getColor(SCOPED_WRITE_HIGHLIGHT_COLOR, new Color(204, 204, 0));
-		scopeReadHighlightColor = opt.getColor(SCOPED_READ_HIGHLIGHT_COLOR, new Color(0, 255, 0));
+			opt.getColor(SCOPED_WRITE_HIGHLIGHT_COLOR, ColorContext.CURSOR_TEXT_SCOPED_WRITE_HIGHLIGHT);
+		scopeReadHighlightColor = opt.getColor(SCOPED_READ_HIGHLIGHT_COLOR, ColorContext.CURSOR_TEXT_SCOPED_READ_HIGHLIGHT);
 
 		/////////////////////////////////////////////////////
 

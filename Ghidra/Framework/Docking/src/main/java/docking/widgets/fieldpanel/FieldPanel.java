@@ -38,6 +38,7 @@ import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexScrollListener;
 import docking.widgets.indexedscrollpane.IndexedScrollable;
+import ghidra.docking.util.ColorContext;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
@@ -51,7 +52,7 @@ public class FieldPanel extends JPanel
 	private boolean inFocus;
 
 	protected BackgroundColorModel backgroundColorModel =
-		new DefaultBackgroundColorModel(Color.WHITE);
+		new DefaultBackgroundColorModel(ColorContext.BACKGROUND);
 	protected PaintContext paintContext = new PaintContext();
 
 	private AnchoredLayoutHandler layoutHandler;

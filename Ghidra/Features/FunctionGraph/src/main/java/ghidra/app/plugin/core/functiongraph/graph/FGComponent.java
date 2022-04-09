@@ -32,6 +32,7 @@ import ghidra.app.plugin.core.functiongraph.graph.jung.transformer.FGVertexPicka
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayout;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.*;
 import ghidra.app.plugin.core.functiongraph.mvc.*;
+import ghidra.docking.util.ColorContext;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.layout.LayoutListener.ChangeType;
 import ghidra.graph.viewer.layout.LayoutProvider;
@@ -232,7 +233,7 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 			if (function instanceof UndefinedFunction) {
 				viewer.setBackground(UNDEFINED_FUNCTION_COLOR);
 			}
-			else {
+			else if (!ColorContext.isDark) {
 				viewer.setBackground(Color.WHITE);
 			}
 		}

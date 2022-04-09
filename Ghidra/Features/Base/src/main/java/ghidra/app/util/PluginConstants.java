@@ -17,6 +17,8 @@ package ghidra.app.util;
 
 import java.awt.Color;
 
+import ghidra.docking.util.ColorContext;
+
 /**
  * Miscellaneous defined constants
  *
@@ -94,11 +96,11 @@ public interface PluginConstants {
 	/**
 	 * Color for highlighting for searches.
 	 */
-	public static final Color SEARCH_HIGHLIGHT_COLOR = new Color(255, 255, 200);
+	public static final Color SEARCH_HIGHLIGHT_COLOR = ColorContext.isDark ? new Color(73, 72, 62) : new Color(255, 255, 200);
 	/**
 	 * Default highlight color used when something to highlight is at the current
 	 * address. 
 	 */
-	public static final Color SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR = Color.YELLOW;
+	public static final Color SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR = ColorContext.isDark ? SEARCH_HIGHLIGHT_COLOR : Color.YELLOW;
 
 }

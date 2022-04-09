@@ -29,6 +29,7 @@ import com.google.common.base.Splitter;
 
 import docking.Tool;
 import docking.options.editor.*;
+import ghidra.docking.util.ColorContext;
 import ghidra.framework.options.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.WebColors;
@@ -68,10 +69,10 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	private Map<String, Integer> edgePriorityMap = new HashMap<>();
 	private List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
 
-	private Color vertexSelectionColor = Color.green;
-	private Color edgeSelectionColor = Color.green;
-	private Color defaultVertexColor = Color.blue;
-	private Color defaultEdgeColor = Color.blue;
+	private Color vertexSelectionColor = ColorContext.GREEN;
+	private Color edgeSelectionColor = ColorContext.GREEN;
+	private Color defaultVertexColor = ColorContext.BLUE;
+	private Color defaultEdgeColor = ColorContext.BLUE;
 	private String favoredEdgeType;
 
 	private VertexShape defaultVertexShape = VertexShape.RECTANGLE;

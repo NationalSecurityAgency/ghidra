@@ -53,6 +53,7 @@ import docking.options.editor.OptionsDialog;
 import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
 import generic.util.WindowUtilities;
+import ghidra.docking.util.ColorContext;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
@@ -77,6 +78,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private static final Dimension PREFERRED_VIEW_SIZE = new Dimension(1000, 1000);
 	private static final Dimension PREFERRED_LAYOUT_SIZE = new Dimension(3000, 3000);
+
+	private static Color BACKGROUND_COLOR = ColorContext.isDark ? new Color(69, 73, 74) : Color.WHITE;
 
 	// layout algorithm categories
 	static final String MIN_CROSS = "Hierarchical MinCross";
@@ -1293,7 +1296,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		graphRenderer.initializeViewer(vv);
 
 		vv.getComponent().requestFocus();
-		vv.setBackground(Color.WHITE);
+		vv.setBackground(BACKGROUND_COLOR);
 		MouseListener[] mouseListeners = vv.getComponent().getMouseListeners();
 		for (MouseListener mouseListener : mouseListeners) {
 			vv.getComponent().removeMouseListener(mouseListener);

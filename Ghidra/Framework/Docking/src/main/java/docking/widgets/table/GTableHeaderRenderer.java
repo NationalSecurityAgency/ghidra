@@ -25,6 +25,7 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 
 import docking.widgets.label.GDLabel;
+import ghidra.docking.util.ColorContext;
 import resources.*;
 import resources.icons.EmptyIcon;
 import resources.icons.TranslateIcon;
@@ -219,6 +220,8 @@ public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
 	}
 
 	protected Paint getBackgroundPaint() {
+		if (ColorContext.isDark)
+			return isPaintingPrimarySortColumn ? getBackground().darker() : getBackground();
 		if (isPaintingPrimarySortColumn) {
 			return new GradientPaint(0, 0, PRIMARY_SORT_GRADIENT_START, 0, getHeight() - 11,
 				PRIMARY_SORT_GRADIENT_END, true);

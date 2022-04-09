@@ -30,6 +30,7 @@ import docking.DockingUtils;
 import docking.actions.KeyBindingUtils;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
+import ghidra.docking.util.ColorContext;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
@@ -46,8 +47,8 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		"This is the font that will be used in the Console.  " +
 			"Double-click the font example to change it.";
 
-	private static final Color NORMAL_COLOR = Color.black;
-	private static final Color ERROR_COLOR = Color.red;
+	private static final Color NORMAL_COLOR = ColorContext.isDark ? ColorContext.WHITE : Color.black;
+	private static final Color ERROR_COLOR = ColorContext.RED;
 
 	public enum TextType {
 		STDOUT, STDERR, STDIN;

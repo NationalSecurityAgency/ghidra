@@ -36,6 +36,7 @@ import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import docking.widgets.label.GDLabel;
 import ghidra.GhidraOptions;
+import ghidra.docking.util.ColorContext;
 import ghidra.util.SystemUtilities;
 
 /**
@@ -59,71 +60,71 @@ public class OptionsGui extends JPanel {
 		(field, text, cursorTextOffset) -> NO_HIGHLIGHTS;
 
 	public static final ScreenElement COMMENT_AUTO =
-		new ScreenElement("Comment, Automatic", Color.LIGHT_GRAY);
-	public static final ScreenElement ADDRESS = new ScreenElement("Address", Color.BLACK);
-	public static final ScreenElement BACKGROUND = new ScreenElement("Background", Color.WHITE);
+		new ScreenElement("Comment, Automatic", ColorContext.isDark ? new Color(95, 129, 157) : Color.LIGHT_GRAY);
+	public static final ScreenElement ADDRESS = new ScreenElement("Address", ColorContext.isDark ? new Color(102, 102, 102) : Color.BLACK);
+	public static final ScreenElement BACKGROUND = new ScreenElement("Background", ColorContext.isDark ? new Color(40, 42, 46) : Color.WHITE);
 	public static final ScreenElement BAD_REF_ADDR =
-		new ScreenElement("Bad Reference Address", Color.RED);
-	public static final ScreenElement BYTES = new ScreenElement("Bytes", Color.BLUE);
-	public static final ScreenElement CONSTANT = new ScreenElement("Constant", BLUE_GREEN);
+		new ScreenElement("Bad Reference Address", ColorContext.isDark ? new Color(165, 66, 66) : Color.RED);
+	public static final ScreenElement BYTES = new ScreenElement("Bytes", ColorContext.isDark ? new Color(129, 162, 190) : Color.BLUE);
+	public static final ScreenElement CONSTANT = new ScreenElement("Constant", ColorContext.isDark ? new Color(165, 66, 66) : BLUE_GREEN);
 	public static final ScreenElement LABELS_UNREFD =
-		new ScreenElement("Labels, Unreferenced", Color.BLACK);
-	public static final ScreenElement ENTRY_POINT = new ScreenElement("Entry Point", Color.MAGENTA);
+		new ScreenElement("Labels, Unreferenced", ColorContext.isDark ? new Color(197, 200, 198) : Color.BLACK);
+	public static final ScreenElement ENTRY_POINT = new ScreenElement("Entry Point", ColorContext.isDark ? new Color(197, 200, 198) : Color.MAGENTA);
 	public static final ScreenElement COMMENT_EOL =
-		new ScreenElement("Comment, EOL", "EOL Comment", Color.BLUE);
+		new ScreenElement("Comment, EOL", "EOL Comment", ColorContext.isDark ? new Color(95, 129, 157) : Color.BLUE);
 	public static final ScreenElement EXT_REF_RESOLVED =
-		new ScreenElement("External Reference, Resolved", Color.CYAN.darker().darker());
-	public static final ScreenElement FIELD_NAME = new ScreenElement("Field Name", Color.BLACK);
+		new ScreenElement("External Reference, Resolved", ColorContext.isDark ? new Color(94, 141, 135) : Color.CYAN.darker().darker());
+	public static final ScreenElement FIELD_NAME = new ScreenElement("Field Name", ColorContext.isDark ? new Color(197, 200, 198) : Color.BLACK);
 	public static final ScreenElement FUN_CALL_FIXUP =
-		new ScreenElement("Function Call-Fixup", new Color(255, 0, 204));
-	public static final ScreenElement FUN_NAME = new ScreenElement("Function Name", Color.BLUE);
+		new ScreenElement("Function Call-Fixup", ColorContext.isDark ? new Color(178, 148, 187) : new Color(255, 0, 204));
+	public static final ScreenElement FUN_NAME = new ScreenElement("Function Name", ColorContext.isDark ? new Color(94, 141, 135) : Color.BLUE);
 	public static final ScreenElement FUN_PARAMS =
-		new ScreenElement("Function Parameters", Color.BLACK);
-	public static final ScreenElement FUN_TAG = new ScreenElement("Function Tag", DARK_RED);
+		new ScreenElement("Function Parameters", ColorContext.isDark ? new Color(197, 200, 198) : Color.BLACK);
+	public static final ScreenElement FUN_TAG = new ScreenElement("Function Tag", ColorContext.isDark ? new Color(133, 103, 143) : DARK_RED);
 	public static final ScreenElement FUN_AUTO_PARAMS =
 		new ScreenElement("Function Auto-Parameters", Color.GRAY);
 	public static final ScreenElement FUN_RET_TYPE =
-		new ScreenElement("Function Return Type", Color.BLACK);
+		new ScreenElement("Function Return Type", ColorContext.isDark ? new Color(197, 200, 198) : Color.BLACK);
 	public static final ScreenElement COMMENT_REPEATABLE =
-		new ScreenElement("Comment, Repeatable", DARK_ORANGE);
+		new ScreenElement("Comment, Repeatable", ColorContext.isDark ? new Color(95, 129, 157) : DARK_ORANGE);
 	public static final ScreenElement COMMENT_REF_REPEAT =
-		new ScreenElement("Comment, Referenced Repeatable", new Color(190, 190, 255));
-	public static final ScreenElement LABELS_LOCAL = new ScreenElement("Labels, Local", BLUE_GREEN);
+		new ScreenElement("Comment, Referenced Repeatable", ColorContext.isDark ? new Color(95, 129, 157) : new Color(190, 190, 255));
+	public static final ScreenElement LABELS_LOCAL = new ScreenElement("Labels, Local", ColorContext.isDark ? new Color(140, 148, 64) : BLUE_GREEN);
 	public static final ScreenElement MNEMONIC_OVERRIDE =
-		new ScreenElement("Mnemonic, Override", new Color(255, 0, 204));
-	public static final ScreenElement MNEMONIC = new ScreenElement("Mnemonic", DARK_BLUE);
+		new ScreenElement("Mnemonic, Override", ColorContext.isDark ? new Color(197, 200, 198) : new Color(255, 0, 204));
+	public static final ScreenElement MNEMONIC = new ScreenElement("Mnemonic", ColorContext.isDark ? new Color(197, 200, 198) : DARK_BLUE);
 	public static final ScreenElement UNIMPL =
 		new ScreenElement("Unimplemented Mnemonic", Color.RED);
 	public static final ScreenElement FLOW_ARROW_NON_ACTIVE =
 		new ScreenElement("Flow Arrow, Not Active", new Color(160, 160, 160));
 	public static final ScreenElement FLOW_ARROW_ACTIVE =
-		new ScreenElement("Flow Arrow, Active", Color.BLACK);
+		new ScreenElement("Flow Arrow, Active", ColorContext.isDark ? new Color(197, 200, 198) : Color.BLACK);
 	public static final ScreenElement FLOW_ARROW_SELECTED =
 		new ScreenElement("Flow Arrow, Selected", new Color(0, 200, 0));
 	public static final ScreenElement LABELS_NON_PRIMARY =
 		new ScreenElement("Labels, Non-primary", YELLOW_ORANGE);
 	public static final ScreenElement COMMENT_PLATE =
-		new ScreenElement("Comment, Plate", "Plate Comment", Color.GRAY);
+		new ScreenElement("Comment, Plate", "Plate Comment", ColorContext.isDark ? new Color(95, 129, 157) : Color.GRAY);
 	public static final ScreenElement COMMENT_POST =
-		new ScreenElement("Comment, Post", "Post-Comment", Color.BLUE);
+		new ScreenElement("Comment, Post", "Post-Comment", ColorContext.isDark ? new Color(95, 129, 157) : Color.BLUE);
 	public static final ScreenElement COMMENT_PRE =
-		new ScreenElement("Comment, Pre", "Pre-Comment", DEEP_PURPLE);
+		new ScreenElement("Comment, Pre", "Pre-Comment", ColorContext.isDark ? new Color(95, 129, 157) : DEEP_PURPLE);
 	public static final ScreenElement LABELS_PRIMARY =
-		new ScreenElement("Labels, Primary", DARK_BLUE);
-	public static final ScreenElement SEPARATOR = new ScreenElement("Separator", Color.BLACK);
-	public static final ScreenElement VARIABLE = new ScreenElement("Variable", PURPLE);
+		new ScreenElement("Labels, Primary", ColorContext.isDark ? new Color(95, 129, 157) : DARK_BLUE);
+	public static final ScreenElement SEPARATOR = new ScreenElement("Separator", ColorContext.isDark ? new Color(197, 200, 198) : Color.BLACK);
+	public static final ScreenElement VARIABLE = new ScreenElement("Variable", ColorContext.isDark ? new Color(133, 103, 143) : PURPLE);
 	public static final ScreenElement PARAMETER_CUSTOM =
-		new ScreenElement("Parameter, Custom Storage", DARK_PURPLE);
+		new ScreenElement("Parameter, Custom Storage", ColorContext.isDark ? new Color(133, 103, 143) : DARK_PURPLE);
 	public static final ScreenElement PARAMETER_DYNAMIC =
-		new ScreenElement("Parameter, Dynamic Storage", DARK_CYAN);
-	public static final ScreenElement VERSION_TRAK = new ScreenElement("Version Track", PURPLE);
-	public static final ScreenElement XREF = new ScreenElement("XRef", DARK_GREEN);
+		new ScreenElement("Parameter, Dynamic Storage", ColorContext.isDark ? new Color(94, 141, 135) : DARK_CYAN);
+	public static final ScreenElement VERSION_TRAK = new ScreenElement("Version Track", ColorContext.isDark ? new Color(178, 148, 187) : PURPLE);
+	public static final ScreenElement XREF = new ScreenElement("XRef", ColorContext.isDark ? new Color(140, 148, 64) : DARK_GREEN);
 	public static final ScreenElement XREF_OFFCUT = new ScreenElement("XRef, Offcut", Color.GRAY);
-	public static final ScreenElement XREF_READ = new ScreenElement("XRef Read", Color.BLUE);
-	public static final ScreenElement XREF_WRITE = new ScreenElement("XRef Write", DARK_ORANGE);
-	public static final ScreenElement XREF_OTHER = new ScreenElement("XRef Other", Color.BLACK);
+	public static final ScreenElement XREF_READ = new ScreenElement("XRef Read", ColorContext.isDark ? new Color(95, 129, 157) : Color.BLUE);
+	public static final ScreenElement XREF_WRITE = new ScreenElement("XRef Write", ColorContext.isDark ? new Color(222, 147, 95) : DARK_ORANGE);
+	public static final ScreenElement XREF_OTHER = new ScreenElement("XRef Other", ColorContext.isDark ? new Color(197, 200, 198) : Color.BLACK);
 	public static final ScreenElement REGISTERS = new ScreenElement("Registers", YELLOW_ORANGE);
-	public static final ScreenElement UNDERLINE = new ScreenElement("Underline", PALE_BLUE);
+	public static final ScreenElement UNDERLINE = new ScreenElement("Underline", ColorContext.isDark ? new Color(178, 148, 187) : PALE_BLUE);
 	public static final ScreenElement PCODE_LINE_LABEL =
 		new ScreenElement("P-code Line Label", Color.BLUE);
 	public static final ScreenElement PCODE_ADDR_SPACE =

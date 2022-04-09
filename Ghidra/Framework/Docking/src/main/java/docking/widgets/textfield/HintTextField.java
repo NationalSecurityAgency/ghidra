@@ -22,6 +22,8 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import ghidra.docking.util.ColorContext;
+
 /**
  * Simple text field that shows a text hint when the field is empty.
  *
@@ -39,7 +41,7 @@ public class HintTextField extends JTextField {
 	// some indication of what the field should contain.
 	private String hint;
 
-	private Color INVALID_COLOR = new Color(255, 225, 225);
+	private Color INVALID_COLOR = ColorContext.isDark ? ColorContext.RED : new Color(255, 225, 225);
 	private Color VALID_COLOR = Color.WHITE;
 	private Color defaultBackgroundColor;
 
@@ -179,7 +181,7 @@ public class HintTextField extends JTextField {
 	 */
 	private void setAttributes() {
 		setFont(getFont().deriveFont(Font.PLAIN));
-		setForeground(Color.BLACK);
+		setForeground(ColorContext.BLACK);
 	}
 
 	/**
@@ -188,7 +190,8 @@ public class HintTextField extends JTextField {
 	 */
 	private void validateField() {
 		if (isFieldValid()) {
-			setBackground(defaultBackgroundColor == null ? VALID_COLOR : defaultBackgroundColor);
+			if (!ColorContext.isDark)
+				setBackground(defaultBackgroundColor == null ? VALID_COLOR : defaultBackgroundColor);
 		}
 		else {
 			setBackground(INVALID_COLOR);

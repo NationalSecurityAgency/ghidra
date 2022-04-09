@@ -28,6 +28,7 @@ import docking.DockingUtils;
 import docking.widgets.*;
 import docking.widgets.label.*;
 import generic.util.WindowUtilities;
+import ghidra.docking.util.ColorContext;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationProperties;
 import ghidra.util.*;
@@ -58,7 +59,7 @@ class InfoPanel extends JPanel {
 
 	InfoPanel() {
 		getAboutInfo();
-		bgColor = new Color(243, 250, 255);
+		bgColor = ColorContext.isDark ? getBackground() : new Color(243, 250, 255);
 		create();
 	}
 
@@ -174,7 +175,8 @@ class InfoPanel extends JPanel {
 		Font font = versionLabel.getFont();
 		font = font.deriveFont(14f).deriveFont(Font.BOLD);
 		versionLabel.setFont(font);
-		versionLabel.setForeground(Color.BLACK);
+		if (!ColorContext.isDark)
+			versionLabel.setForeground(Color.BLACK);
 		return versionLabel;
 	}
 

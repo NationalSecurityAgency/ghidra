@@ -26,6 +26,7 @@ import docking.EmptyBorderToggleButton;
 import docking.widgets.HyperlinkComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.*;
+import ghidra.docking.util.ColorContext;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.*;
@@ -45,7 +46,8 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 	PluginManagerComponent(PluginTool tool, PluginConfigurationModel model) {
 		super(new VerticalLayout(2));
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		setBackground(Color.WHITE);
+		if (!ColorContext.isDark)
+			setBackground(Color.WHITE);
 		this.tool = tool;
 		this.model = model;
 		model.setChangeCallback(this::updateCheckboxes);
@@ -114,7 +116,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 //=================================================================================================
 
 	private class PluginPackageComponent extends JPanel {
-		private final Color BG = Color.white;
+		private Color BG = ColorContext.isDark ? getBackground() : Color.white;
 		private final PluginPackage pluginPackage;
 		private final GCheckBox checkBox;
 
@@ -129,7 +131,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			initializeLabelSection();
 			initializeDescriptionSection();
 
-			setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+			setBorder(BorderFactory.createLineBorder(ColorContext.DARK_GRAY));
 			updateCheckBoxState();
 		}
 
@@ -176,7 +178,8 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 
 			GLabel nameLabel = new GLabel(pluginPackage.getName());
 			nameLabel.setFont(nameLabel.getFont().deriveFont(18f));
-			nameLabel.setForeground(Color.BLACK);
+			if (!ColorContext.isDark)
+				nameLabel.setForeground(Color.BLACK);
 			labelPanel.add(nameLabel);
 
 			HyperlinkComponent configureHyperlink = createConfigureHyperlink();
@@ -207,7 +210,8 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			String htmlDescription = enchanceDescription(pluginPackage.getDescription());
 
 			JLabel descriptionlabel = new GHtmlLabel(htmlDescription);
-			descriptionlabel.setForeground(Color.GRAY);
+			if (!ColorContext.isDark)
+				descriptionlabel.setForeground(Color.GRAY);
 			descriptionlabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 			descriptionlabel.setVerticalAlignment(SwingConstants.TOP);
 			descriptionlabel.setToolTipText(

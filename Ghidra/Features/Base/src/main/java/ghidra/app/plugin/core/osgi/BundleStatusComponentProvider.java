@@ -33,6 +33,7 @@ import docking.widgets.table.GTableFilterPanel;
 import generic.jar.ResourceFile;
 import generic.util.Path;
 import ghidra.app.services.ConsoleService;
+import ghidra.docking.util.ColorContext;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
@@ -104,8 +105,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 		bundleStatusTable = new GTable(bundleStatusTableModel);
 		bundleStatusTable.setName("BUNDLESTATUS_TABLE");
-		bundleStatusTable.setSelectionBackground(new Color(204, 204, 255));
-		bundleStatusTable.setSelectionForeground(Color.BLACK);
+		if (!ColorContext.isDark) {
+			bundleStatusTable.setSelectionBackground(new Color(204, 204, 255));
+			bundleStatusTable.setSelectionForeground(Color.BLACK);
+		}
 		bundleStatusTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		// give actions a chance to update status when selection changed

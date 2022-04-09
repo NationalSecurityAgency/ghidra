@@ -22,6 +22,7 @@ import javax.swing.JComponent;
 import javax.swing.border.Border;
 
 import docking.widgets.label.GDHtmlLabel;
+import ghidra.docking.util.ColorContext;
 
 /**
  * A common base class for list and table renderer objects, unifying the Ghidra look and feel.
@@ -99,6 +100,9 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	 * @return the color
 	 */
 	protected Color getOSDependentBackgroundColor(JComponent parent, int row) {
+		if (ColorContext.isDark) {
+			return parent.getBackground();
+		}
 
 		if (!shouldAlternateRowBackgroundColor()) {
 			return getDefaultBackgroundColor();

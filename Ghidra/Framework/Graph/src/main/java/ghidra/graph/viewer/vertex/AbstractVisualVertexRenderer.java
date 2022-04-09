@@ -29,6 +29,7 @@ import edu.uci.ics.jung.visualization.renderers.BasicVertexRenderer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformerDecorator;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
+import ghidra.docking.util.ColorContext;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
 
@@ -97,7 +98,7 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 		Paint oldPaint = g.getPaint();
 
 		int halfishTransparency = 150;
-		Color yellowWithTransparency = new Color(255, 255, 0, halfishTransparency);
+		Color yellowWithTransparency = ColorContext.isDark ? new Color(55, 59, 65, halfishTransparency) : new Color(255, 255, 0, halfishTransparency);
 		g.setPaint(yellowWithTransparency);
 
 		int offset = 10;

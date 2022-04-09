@@ -22,6 +22,7 @@ import functioncalls.graph.*;
 import functioncalls.graph.renderer.FcgEdgePaintTransformer;
 import functioncalls.graph.renderer.FcgVertexPaintTransformer;
 import functioncalls.plugin.FunctionCallGraphPlugin;
+import ghidra.docking.util.ColorContext;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
 
@@ -41,7 +42,7 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 	private Color lightGray = new Color(233, 233, 233);
 
 	// the satellite gets too cluttered, so wash out the edges
-	private Color washedOutBlack = new Color(0, 0, 0, 25);
+	private Color washedOutBlack = ColorContext.isDark ? new Color(255, 255, 255, 25) : new Color(0, 0, 0, 25);
 
 	private FcgEdgePaintTransformer edgePaintTransformer =
 		new FcgEdgePaintTransformer(lightGreen, lightGray);

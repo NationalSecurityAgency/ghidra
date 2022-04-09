@@ -22,6 +22,7 @@ import java.util.LinkedList;
 import javax.swing.JTextPane;
 import javax.swing.text.*;
 
+import ghidra.docking.util.ColorContext;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
@@ -211,7 +212,8 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 		outputAttributeSet.addAttribute(StyleConstants.FontSize, font.getSize());
 		outputAttributeSet.addAttribute(StyleConstants.Italic, font.isItalic());
 		outputAttributeSet.addAttribute(StyleConstants.Bold, font.isBold());
-		outputAttributeSet.addAttribute(StyleConstants.Foreground, Color.BLACK);
+		if (!ColorContext.isDark)
+			outputAttributeSet.addAttribute(StyleConstants.Foreground, Color.BLACK);
 
 		errorAttributeSet = new SimpleAttributeSet();
 		errorAttributeSet.addAttribute(CUSTOM_ATTRIBUTE_KEY, ERROR_ATTRIBUTE_VALUE);
@@ -219,7 +221,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 		errorAttributeSet.addAttribute(StyleConstants.FontSize, font.getSize());
 		errorAttributeSet.addAttribute(StyleConstants.Italic, font.isItalic());
 		errorAttributeSet.addAttribute(StyleConstants.Bold, font.isBold());
-		errorAttributeSet.addAttribute(StyleConstants.Foreground, Color.RED);
+		errorAttributeSet.addAttribute(StyleConstants.Foreground, ColorContext.RED);
 	}
 
 	private void doUpdate() {

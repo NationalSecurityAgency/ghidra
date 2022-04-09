@@ -45,6 +45,7 @@ import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.options.ListingDisplayOptionsEditor;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.util.AddressIndexMap;
+import ghidra.docking.util.ColorContext;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.Plugin;
@@ -554,9 +555,9 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			GhidraOptions.DEFAULT_HIGHLIGHT_COLOR, helpLocation,
 			"The highlight color in the browser.");
 
-		fieldOptions.registerOption(CURSOR_COLOR, Color.RED, helpLocation,
+		fieldOptions.registerOption(CURSOR_COLOR, ColorContext.CURSOR_FOCUSED, helpLocation,
 			"The color of the cursor in the browser.");
-		fieldOptions.registerOption(UNFOCUSED_CURSOR_COLOR, Color.PINK, helpLocation,
+		fieldOptions.registerOption(UNFOCUSED_CURSOR_COLOR, ColorContext.CURSOR_UNFOCUSED, helpLocation,
 			"The color of the cursor in the browser when the browser does not have focus.");
 		fieldOptions.registerOption(BLINK_CURSOR, true, helpLocation,
 			"When selected, the cursor will blink when the containing window is focused.");
@@ -588,10 +589,10 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			highlightMarkers.setMarkerColor(color);
 		}
 
-		color = fieldOptions.getColor(CURSOR_COLOR, Color.RED);
+		color = fieldOptions.getColor(CURSOR_COLOR, ColorContext.CURSOR_FOCUSED);
 		fieldPanel.setFocusedCursorColor(color);
 
-		color = fieldOptions.getColor(UNFOCUSED_CURSOR_COLOR, Color.PINK);
+		color = fieldOptions.getColor(UNFOCUSED_CURSOR_COLOR, ColorContext.CURSOR_UNFOCUSED);
 		fieldPanel.setNonFocusCursorColor(color);
 
 		Boolean isBlinkCursor = fieldOptions.getBoolean(BLINK_CURSOR, true);

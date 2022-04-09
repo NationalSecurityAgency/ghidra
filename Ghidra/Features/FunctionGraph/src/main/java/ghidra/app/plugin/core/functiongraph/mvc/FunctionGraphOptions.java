@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutOptions;
+import ghidra.docking.util.ColorContext;
 import ghidra.framework.options.Options;
 import ghidra.graph.viewer.options.RelayoutOption;
 import ghidra.graph.viewer.options.VisualGraphOptions;
@@ -85,7 +86,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"Signals that any user color changes to a group vertex will apply that same color to " +
 			"all grouped vertices as well.";
 
-	public static final Color DEFAULT_VERTEX_BACKGROUND_COLOR = Color.WHITE;
+	public static final Color DEFAULT_VERTEX_BACKGROUND_COLOR = ColorContext.BACKGROUND;
 	public static final Color DEFAULT_GROUP_BACKGROUND_COLOR = new Color(226, 255, 155);
 	private static final Color HOVER_HIGHLIGHT_FALL_THROUGH_COLOR = new Color(255, 127, 127);
 	private static final Color HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR = new Color(127, 127, 255);
@@ -96,13 +97,13 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	private boolean updateGroupColorsAutomatically = true;
 	private Color defaultGroupBackgroundColor = DEFAULT_GROUP_BACKGROUND_COLOR;
 
-	private Color fallthroughEdgeColor = Color.RED;
-	private Color unconditionalJumpEdgeColor = Color.BLUE;
-	private Color conditionalJumpEdgeColor = Color.GREEN.darker().darker();
+	private Color fallthroughEdgeColor = ColorContext.isDark ? new Color(165, 66, 66) : Color.RED;
+	private Color unconditionalJumpEdgeColor = ColorContext.isDark ? new Color(140, 148, 64) : Color.BLUE;
+	private Color conditionalJumpEdgeColor = ColorContext.isDark ? new Color(95, 129, 157) : Color.GREEN.darker().darker();
 
-	private Color fallthroughEdgeHighlightColor = HOVER_HIGHLIGHT_FALL_THROUGH_COLOR;
-	private Color unconditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR;
-	private Color conditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_CONDITIONAL_COLOR;
+	private Color fallthroughEdgeHighlightColor = ColorContext.isDark ? new Color(165, 76, 80) : HOVER_HIGHLIGHT_FALL_THROUGH_COLOR;
+	private Color unconditionalJumpEdgeHighlightColor = ColorContext.isDark ? new Color(140, 162, 88) : HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR;
+	private Color conditionalJumpEdgeHighlightColor = ColorContext.isDark ? new Color(95, 160, 196) : HOVER_HIGHLIGHT_CONDITIONAL_COLOR;
 
 	private boolean useFullSizeTooltip = false;
 

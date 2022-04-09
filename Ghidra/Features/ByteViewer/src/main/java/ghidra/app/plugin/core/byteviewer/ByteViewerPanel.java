@@ -35,6 +35,7 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import ghidra.app.plugin.core.format.*;
 import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
+import ghidra.docking.util.ColorContext;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.util.HelpLocation;
@@ -833,7 +834,9 @@ public class ByteViewerPanel extends JPanel
 
 		columnHeader.addColumn(ByteViewerComponentProvider.DEFAULT_INDEX_NAME, indexPanel);
 		scrollp.setColumnHeaderComp(columnHeader);
-		compPanel.setBackground(Color.WHITE);
+
+		if (!ColorContext.isDark)
+			compPanel.setBackground(Color.WHITE);
 
 		statusPanel = createStatusPanel();
 		add(scrollp, BorderLayout.CENTER);

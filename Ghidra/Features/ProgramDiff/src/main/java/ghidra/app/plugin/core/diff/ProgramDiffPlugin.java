@@ -44,6 +44,7 @@ import ghidra.app.plugin.core.bookmark.BookmarkNavigator;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.marker.MarkerManager;
 import ghidra.app.services.*;
+import ghidra.docking.util.ColorContext;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.format.FormatManager;
@@ -95,7 +96,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	private static final String SELECTION_GROUP = "Selection Colors";
 	private static final String DIFF_HIGHLIGHT_COLOR_NAME =
 		SELECTION_GROUP + Options.DELIMITER + "Difference Color";
-	private Color diffHighlightColor = new Color(255, 230, 180); // light orange
+	private Color diffHighlightColor = ColorContext.SELECTION_DIFFERENCE;
 	private Color cursorHighlightColor;
 	protected static final HelpService help = Help.getHelpService();
 

@@ -26,6 +26,7 @@ import docking.*;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import generic.util.WindowUtilities;
+import ghidra.docking.util.ColorContext;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
 import utility.application.ApplicationLayout;
@@ -331,7 +332,8 @@ public class SplashScreen extends JWindow {
 		statusLabel.setFont(f);
 
 		statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 2, 10));
-		statusLabel.setBackground(DEFAULT_BACKGROUND_COLOR);
+		if (!ColorContext.isDark)
+			statusLabel.setBackground(DEFAULT_BACKGROUND_COLOR);
 		statusLabel.setOpaque(true);
 		return statusLabel;
 	}

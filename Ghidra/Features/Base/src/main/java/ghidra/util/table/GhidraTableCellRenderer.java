@@ -16,6 +16,7 @@
  */
 package ghidra.util.table;
 
+import ghidra.docking.util.ColorContext;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
@@ -35,6 +36,10 @@ public class GhidraTableCellRenderer extends GTableCellRenderer {
 	// Defaults as defined by OptionsGui class - would be nice to use the tool options
 	private static final Color BAD_REF_ADDR_COLOR = Color.red;
 	private static final Color EXT_REF_RESOLVED_COLOR = Color.CYAN.darker().darker();
+	public Color SELECTED_CELL_COLOR = ColorContext.isDark ? getForeground() : Color.WHITE;
+	public Color BAD_EQUATE_COLOR = ColorContext.isDark ? new Color(237, 89, 64) : Color.RED;
+	public Color EQUATE_COLOR = ColorContext.isDark ? new Color(58, 132, 250) : Color.BLUE.brighter();
+	public Color SUGGESTION_COLOR = ColorContext.isDark ? getForeground() : Color.GRAY.darker();
 
 	public GhidraTableCellRenderer() {
 		// default constructor
