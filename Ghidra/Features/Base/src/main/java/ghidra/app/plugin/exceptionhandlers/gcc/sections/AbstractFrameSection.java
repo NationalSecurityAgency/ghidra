@@ -124,12 +124,12 @@ abstract class AbstractFrameSection implements CieSource {
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read
 	 * @throws ExceptionHandlerFrameException if a problem was encountered
 	 */
-	protected Cie getCieOrCreateIfMissing(Address currAddress, boolean isInDebugFrame)
+	protected Cie getCieOrCreateIfMissing(Address curAddress, boolean isInDebugFrame)
 			throws MemoryAccessException, ExceptionHandlerFrameException {
-		Cie cie = cieMap.get(currAddress);
+		Cie cie = cieMap.get(curAddress);
 		if (cie == null) {
-			cie = createCie(currAddress, isInDebugFrame);
-			cieMap.put(currAddress, cie);
+			cie = createCie(curAddress, isInDebugFrame);
+			cieMap.put(curAddress, cie);
 		}
 		return cie;
 	}

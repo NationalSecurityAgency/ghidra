@@ -20,9 +20,10 @@ import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyExtendedNonTerminal;
 /**
  * Defines an "extended" grammar
  * 
- * "Extended grammar" as in a grammar extended with state numbers from an LR0 parser.
- * See <a href="http://web.cs.dal.ca/~sjackson/lalr1.html">LALR(1) Parsing</a> from Stephen Jackson
- * of Dalhousie University, Halifax, Nova Scotia, Canada.
+ * <p>
+ * "Extended grammar" as in a grammar extended with state numbers from an LR0 parser. See
+ * <a href="http://web.cs.dal.ca/~sjackson/lalr1.html">LALR(1) Parsing</a> from Stephen Jackson of
+ * Dalhousie University, Halifax, Nova Scotia, Canada.
  */
 public class AssemblyExtendedGrammar
 		extends AbstractAssemblyGrammar<AssemblyExtendedNonTerminal, AssemblyExtendedProduction> {

@@ -31,6 +31,7 @@ public class TableEntryKey implements Comparable<TableEntryKey> {
 
 	/**
 	 * Create a new key for the given state and symbol
+	 * 
 	 * @param state the row
 	 * @param sym the column
 	 */
@@ -79,6 +80,7 @@ public class TableEntryKey implements Comparable<TableEntryKey> {
 
 	/**
 	 * Get the state (row) of the key in the table
+	 * 
 	 * @return the state
 	 */
 	public int getState() {
@@ -87,6 +89,7 @@ public class TableEntryKey implements Comparable<TableEntryKey> {
 
 	/**
 	 * Get the symbol (column) of the entry in the table
+	 * 
 	 * @return the symbol
 	 */
 	public AssemblySymbol getSym() {

@@ -111,7 +111,7 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 
 	/**
 	 * Returns the first component containing the byte at the given offset.
-	 * It is possible with zero-length components (see {@link DataTypeComponent#isZeroLength()})
+	 * It is possible with zero-length components (see {@link DataType#isZeroLength()})
 	 * and bitfields (see @DataTypeComponent#isBitFieldComponent()} for multiple components
 	 * to share the same offset.
 	 * @param offset the offset into the dataType

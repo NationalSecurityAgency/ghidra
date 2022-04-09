@@ -16,40 +16,49 @@
 package ghidra.app.plugin.assembler.sleigh.symbol;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
-import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParser;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseNumericToken;
+import ghidra.program.model.address.AddressSpace;
 
 /**
- * A terminal that accepts any numeric value or program label
+ * A terminal that accepts any numeric value or program symbol (label, equate)
  * 
+ * <p>
  * The literal may take any form accepted by UNIX strtol() with base=0. By default, the literal is
- * interpreted in base 10, but it may be prefixed such that it's interpreted in an alternative
- * base. With the prefix '0x', it is interpreted in hexadecimal. With the prefix '0', it is
- * interpreted in octal.
+ * interpreted in base 10, but it may be prefixed such that it's interpreted in an alternative base.
+ * With the prefix '0x', it is interpreted in hexadecimal. With the prefix '0', it is interpreted in
+ * octal.
+ * 
+ * <p>
+ * It may also take the value of a label. If this operand is an address operand, the acceptable
+ * labels are restricted to those in the expected address space.
  */
 public class AssemblyNumericTerminal extends AssemblyTerminal {
 	public static final String PREFIX_HEX = "0x";
 	public static final String PREFIX_OCT = "0";
 
 	/** Some suggestions, other than labels, to provide */
-	protected static final Collection<String> suggestions = Arrays.asList(new String[] { //
-		"0", "1", "0x0", "+0x0", "-0x0", "01" //
-	});
+	protected static final Collection<String> SUGGESTIONS =
+		List.of("0", "1", "0x0", "+0x0", "-0x0", "01");
 	/** The maximum number of labels to suggest */
 	protected static final int MAX_LABEL_SUGGESTIONS = 10;
 
 	protected final int bitsize;
+	protected final AddressSpace space;
 
-	// TODO: Not all numeric literals can be substituted for a label
 	/**
 	 * Construct a terminal with the given name, accepting any numeric value or program label
+	 * 
 	 * @param name the name
+	 * @param bitsize the maximum size of the value in bits
+	 * @param space the address space if this terminal represents an address operand
 	 */
-	public AssemblyNumericTerminal(String name, int bitsize) {
+	public AssemblyNumericTerminal(String name, int bitsize, AddressSpace space) {
 		super(name);
 		this.bitsize = bitsize;
+		this.space = space;
 	}
 
 	@Override
@@ -63,13 +72,16 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 	/**
 	 * This is only a convenience for testing
 	 * 
-	 * Please use {@link #match(String, int, AssemblyGrammar, Map) match(String, int, AssemblyGrammar, Map&lt;String, Long&gt;)}.
+	 * <p>
+	 * Please use {@link #match(String, int, AssemblyGrammar, Map) match(String, int,
+	 * AssemblyGrammar, Map&lt;String, Long&gt;)}.
+	 * 
 	 * @param buffer the input buffer
 	 * @return the parsed token
 	 */
 	public AssemblyParseNumericToken match(String buffer) {
 		Collection<AssemblyParseNumericToken> col =
-			match(buffer, 0, null, AssemblyParser.EMPTY_LABELS);
+			match(buffer, 0, null, AssemblyNumericSymbols.EMPTY);
 		if (col.isEmpty()) {
 			return null;
 		}
@@ -83,7 +95,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 
 	@Override
 	public Collection<AssemblyParseNumericToken> match(String buffer, int pos,
-			AssemblyGrammar grammar, Map<String, Long> labels) {
+			AssemblyGrammar grammar, AssemblyNumericSymbols symbols) {
 		if (pos >= buffer.length()) {
 			return Collections.emptySet();
 		}
@@ -94,20 +106,21 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 			return matchLiteral(pos + 1, buffer, pos, true, grammar);
 		}
 		else {
-			return match(pos, buffer, grammar, labels);
+			return match(pos, buffer, grammar, symbols);
 		}
 	}
 
 	/**
 	 * Try to match a sign-less numeric literal, or a program label
+	 * 
 	 * @param s the buffer cursor where the literal or label is expected
 	 * @param buffer the input buffer
 	 * @param grammar the grammar containing this terminal
-	 * @param labels the program labels, mapped to their values
+	 * @param symbols the program symbols
 	 * @return the parsed token, or null
 	 */
 	protected Collection<AssemblyParseNumericToken> match(int s, String buffer,
-			AssemblyGrammar grammar, Map<String, Long> labels) {
+			AssemblyGrammar grammar, AssemblyNumericSymbols symbols) {
 		if (s >= buffer.length()) {
 			return Collections.emptySet();
 		}
@@ -126,15 +139,15 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 			break;
 		}
 		String lab = buffer.substring(s, b);
-		Long val = labels.get(lab);
-		if (val == null) {
-			return Collections.emptySet();
-		}
-		return Collections.singleton(new AssemblyParseNumericToken(grammar, this, lab, val));
+		return symbols.choose(lab, space)
+				.stream()
+				.map(val -> new AssemblyParseNumericToken(grammar, this, lab, val))
+				.collect(Collectors.toList());
 	}
 
 	/**
 	 * Try to match a numeric literal, after the optional sign, encoded in hex, decimal, or octal
+	 * 
 	 * @param s buffer cursor where the literal is expected
 	 * @param buffer the input buffer
 	 * @param pos the start offset of the token parsed so far
@@ -157,6 +170,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 
 	/**
 	 * Construct a numeric token
+	 * 
 	 * @param str the string value of the token taken verbatim from the buffer
 	 * @param num portion of the token following the optional sign and prefix
 	 * @param radix the radix of {@code num}
@@ -192,6 +206,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 
 	/**
 	 * Try to match a hexadecimal literal, following the optional sign and prefix
+	 * 
 	 * @param s the buffer cursor where the hex portion starts
 	 * @param buffer the input buffer
 	 * @param pos the start offset of the token parsed so far
@@ -215,6 +230,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 
 	/**
 	 * Try to match a decimal literal, following the optional sign and optional prefix
+	 * 
 	 * @param s the buffer cursor where the hex portion starts
 	 * @param buffer the input buffer
 	 * @param pos the start offset of the token parsed so far
@@ -238,6 +254,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 
 	/**
 	 * Try to match an octal literal, following the optional sign and prefix
+	 * 
 	 * @param s the buffer cursor where the hex portion starts
 	 * @param buffer the input buffer
 	 * @param pos the start offset of the token parsed so far
@@ -264,18 +281,9 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 	}
 
 	@Override
-	public Collection<String> getSuggestions(String got, Map<String, Long> labels) {
-		Set<String> s = new TreeSet<>(suggestions);
-		int labelcount = 0;
-		for (String label : labels.keySet()) {
-			if (labelcount >= MAX_LABEL_SUGGESTIONS) {
-				break;
-			}
-			if (label.startsWith(got)) {
-				s.add(label);
-				labelcount++;
-			}
-		}
+	public Collection<String> getSuggestions(String got, AssemblyNumericSymbols symbols) {
+		Set<String> s = new TreeSet<>(SUGGESTIONS);
+		s.addAll(symbols.getSuggestions(got, space, MAX_LABEL_SUGGESTIONS));
 		return s;
 	}
 

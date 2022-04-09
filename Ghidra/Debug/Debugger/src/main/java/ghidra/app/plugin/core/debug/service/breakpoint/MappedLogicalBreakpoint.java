@@ -350,10 +350,18 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public boolean canMerge(TraceBreakpoint breakpoint) {
+	public boolean canMerge(TraceBreakpoint breakpoint) throws TrackedTooSoonException {
 		TraceBreakpointSet breaks = traceBreaks.get(breakpoint.getTrace());
 		if (breaks == null) {
-			throw new AssertionError();
+			/**
+			 * This happens when the trace is first added to the manager, between the listener being
+			 * installed and the current breakpoints being loaded. We received a breakpoint-changed
+			 * event for a trace that hasn't been loaded, so we don't see its break set in this
+			 * logical breakpoint. The solution is "easy": Just punt, and it'll get generated later.
+			 * It's not enough to return false, because that will generate another logical
+			 * breakpoint, which may actually duplicate this one.
+			 */
+			throw new TrackedTooSoonException();
 		}
 		if (length != breakpoint.getLength()) {
 			return false;

@@ -74,7 +74,7 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 
 	/**
 	 * Determine if symbolAddr is contained within the EXTERNAL block.  If so, relocationAddress will be marked
-	 * with a <code<Unsupported EXTERNAL Data Elf Relocation</code> error bookmark.
+	 * with a <code>Unsupported EXTERNAL Data Elf Relocation</code> error bookmark.
 	 * NOTE: This method should only be invoked when the symbol offset will be adjust with a non-zero 
 	 * value (i.e., addend).
 	 * @param program

@@ -428,7 +428,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 	private void moveDataType(Category toCategory, DataType dataType) {
 		if (dataType.getCategoryPath().equals(toCategory.getCategoryPath())) {
 			errors.add("Move failed.  DataType is already in this category.  Category " +
-				toCategory + "; Data type: " + dataType);
+				toCategory + "; Data type: " + dataType.getName());
 			return;
 		}
 		try {
@@ -436,7 +436,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		}
 		catch (DataTypeDependencyException e) {
 			errors.add("Move failed.  DataType is already in this category.  Category " +
-				toCategory + "; Data type: " + dataType + ". " + e.getMessage());
+				toCategory + "; Data type: " + dataType.getName() + ". " + e.getMessage());
 		}
 	}
 

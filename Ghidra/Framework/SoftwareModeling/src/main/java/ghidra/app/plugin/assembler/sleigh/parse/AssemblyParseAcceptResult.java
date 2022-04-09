@@ -40,6 +40,7 @@ public class AssemblyParseAcceptResult extends AssemblyParseResult {
 
 	/**
 	 * Get the tree
+	 * 
 	 * @return the tree
 	 */
 	public AssemblyParseBranch getTree() {

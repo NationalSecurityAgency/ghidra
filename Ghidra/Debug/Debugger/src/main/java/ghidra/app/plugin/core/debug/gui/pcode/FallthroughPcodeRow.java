@@ -25,7 +25,7 @@ public class FallthroughPcodeRow implements PcodeRow {
 	}
 
 	@Override
-	public int getSequence() {
+	public Integer getSequence() {
 		return sequence;
 	}
 

@@ -38,7 +38,7 @@ public interface DataTypeReferenceFinder extends ExtensionPoint {
 	 * <p>
 	 * Note that this operation is multi-threaded and that results will be delivered as they
 	 * are found via the <code>callback</code>.
-	 * 
+	 *
 	 * @param program the program to search
 	 * @param dataType the type for which to search
 	 * @param callback the callback to be called when a reference is found
@@ -46,8 +46,7 @@ public interface DataTypeReferenceFinder extends ExtensionPoint {
 	 * @throws CancelledException if the operation was cancelled
 	 */
 	public void findReferences(Program program, DataType dataType,
-			Consumer<DataTypeReference> callback,
-			TaskMonitor monitor) throws CancelledException;
+			Consumer<DataTypeReference> callback, TaskMonitor monitor) throws CancelledException;
 
 	/**
 	 * Finds references in the current program to specific field of the given {@link Composite} type
@@ -55,14 +54,34 @@ public interface DataTypeReferenceFinder extends ExtensionPoint {
 	 * <p>
 	 * Note that this operation is multi-threaded and that results will be delivered as they
 	 * are found via the <code>callback</code>.
-	 * 
+	 *
 	 * @param program the program to search
 	 * @param dataType the type containing the field for which to search
-	 * @param fieldName the name of the composite's field for which to search
+	 * @param fieldName the name of the composite's field for which to search; may be null
 	 * @param callback the callback to be called when a reference is found
 	 * @param monitor the monitor that allows for progress and cancellation
 	 * @throws CancelledException if the operation was cancelled
 	 */
 	public void findReferences(Program program, DataType dataType, String fieldName,
+			Consumer<DataTypeReference> callback, TaskMonitor monitor) throws CancelledException;
+
+	/**
+	 * Finds references in the current program to specific field of the given {@link Composite} type
+	 * in a manner appropriate with the given implementation.
+	 * <p>
+	 * The supplied field matcher will be used to restrict matches to the given field.  The matcher
+	 * may be 'empty', supplying only the data type for which to search.  In this case, all uses
+	 * of the type will be matched, regardless of field.
+	 * <p>
+	 * Note that this operation is multi-threaded and that results will be delivered as they
+	 * are found via the <code>callback</code>.
+	 *
+	 * @param program the program to search
+	 * @param fieldMatcher the field matcher to use for matching types
+	 * @param callback the callback to be called when a reference is found
+	 * @param monitor the monitor that allows for progress and cancellation
+	 * @throws CancelledException if the operation was cancelled
+	 */
+	public void findReferences(Program program, FieldMatcher fieldMatcher,
 			Consumer<DataTypeReference> callback, TaskMonitor monitor) throws CancelledException;
 }

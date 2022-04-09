@@ -31,16 +31,20 @@ import ghidra.app.plugin.assembler.sleigh.util.TableEntry;
 /**
  * A class to encapsulate LALR(1) parsing for a given grammar
  * 
- * This class constructs the Action/Goto table (and all the other trappings) of a LALR(1) parser
- * and provides a {@link #parse(String)} method to parse actual sentences.
+ * <p>
+ * This class constructs the Action/Goto table (and all the other trappings) of a LALR(1) parser and
+ * provides a {@link #parse(String)} method to parse actual sentences.
  * 
+ * <p>
  * This implementation is somewhat unconventional in that it permits ambiguous grammars. Instead of
  * complaining, it produces the set of all possible parse trees. Of course, this comes at the cost
  * of some efficiency.
  * 
+ * <p>
  * See Alfred V. Aho, Monica S. Lam, Ravi Sethi, Jeffrey D. Ullman, <i>Compilers: Principles,
- * Techniques, &amp; Tools</i>. Bostom, MA: Pearson, 2007.
+ * Techniques, &amp; Tools</i>. Boston, MA: Pearson, 2007.
  * 
+ * <p>
  * See Jackson, Stephen. <a href="http://web.cs.dal.ca/~sjackson/lalr1.html">LALR(1) Parsing</a>.
  * Halifax, Nova Scotia, Canada: Dalhousie University.
  * &lt;http://web.cs.dal.ca/~sjackson/lalr1.html&gt;
@@ -61,15 +65,15 @@ public class AssemblyParser {
 	// the LALR(1) Action/Goto table
 	protected AssemblyParseActionGotoTable actions;
 
-	/** A convenience to specify no labels in {@link #parse(String, Map)} */
-	public static final Map<String, Long> EMPTY_LABELS =
-		Collections.unmodifiableMap(new HashMap<String, Long>());
-
-	protected static final DbgTimer dbg = DbgTimer.INACTIVE;
-	protected static final boolean dbg_detail = false;
+	/**
+	 * Change this to {@link DbgTimer#ACTIVE} for verbose diagnostics
+	 */
+	protected static final DbgTimer DBG = DbgTimer.INACTIVE;
+	protected static final boolean DBG_DETAIL = false;
 
 	/**
 	 * Construct a LALR(1) parser from the given grammar
+	 * 
 	 * @param grammar the grammar
 	 */
 	public AssemblyParser(AssemblyGrammar grammar) {
@@ -86,39 +90,39 @@ public class AssemblyParser {
 		grammar.addProduction(start, new AssemblySentential<>(grammar.getStart(), AssemblyEOI.EOI));
 		grammar.setStart(start);
 
-		try (DbgCtx dc = dbg.start("Computing First/Follow for General Grammar")) {
+		try (DbgCtx dc = DBG.start("Computing First/Follow for General Grammar")) {
 			this.ff = new AssemblyFirstFollow(grammar);
-			if (dbg_detail) {
-				printGeneralFF(dbg);
+			if (DBG_DETAIL) {
+				printGeneralFF(DBG);
 			}
 		}
 
-		try (DbgCtx dc = dbg.start("Computing LR0 States and Transition Table")) {
+		try (DbgCtx dc = DBG.start("Computing LR0 States and Transition Table")) {
 			buildLR0Machine();
-			if (dbg_detail) {
-				printLR0States(dbg);
-				printLR0TransitionTable(dbg);
+			if (DBG_DETAIL) {
+				printLR0States(DBG);
+				printLR0TransitionTable(DBG);
 			}
 		}
 
-		try (DbgCtx dc = dbg.start("Computing Extended Grammar")) {
+		try (DbgCtx dc = DBG.start("Computing Extended Grammar")) {
 			buildExtendedGrammar();
-			if (dbg_detail) {
-				printExtendedGrammar(dbg);
+			if (DBG_DETAIL) {
+				printExtendedGrammar(DBG);
 			}
 		}
 
-		try (DbgCtx dc = dbg.start("Computing First/Follow for Extended Grammar")) {
+		try (DbgCtx dc = DBG.start("Computing First/Follow for Extended Grammar")) {
 			this.extff = new AssemblyFirstFollow(extendedGrammar);
-			if (dbg_detail) {
-				printExtendedFF(dbg);
+			if (DBG_DETAIL) {
+				printExtendedFF(DBG);
 			}
 		}
 
-		try (DbgCtx dc = dbg.start("Computing Parse Table")) {
+		try (DbgCtx dc = DBG.start("Computing Parse Table")) {
 			buildActionGotoTable();
-			if (dbg_detail) {
-				printParseTable(dbg);
+			if (DBG_DETAIL) {
+				printParseTable(DBG);
 			}
 		}
 	}
@@ -145,7 +149,7 @@ public class AssemblyParser {
 				AssemblySymbol sym = item.getNext();
 				if (sym != null) {
 					AssemblyParseStateItem ni = item.read();
-					go.get(sym).add(ni);
+					go.get(sym).getKernel().add(ni);
 				}
 			}
 			// Now, add the appropriate entries to the transition table
@@ -158,10 +162,12 @@ public class AssemblyParser {
 
 	/**
 	 * Add a newly-constructed LR0 state, and return it's assigned number
+	 * 
+	 * <p>
+	 * If the state already exists, this just returns its previously assigned number
+	 * 
 	 * @param state the newly-constructed state
 	 * @return the assigned number
-	 * 
-	 * If the state already exists, this just returns its previously assigned number
 	 */
 	protected int addLR0State(AssemblyParseState state) {
 		int num = states.indexOf(state);
@@ -188,6 +194,7 @@ public class AssemblyParser {
 
 	/**
 	 * Extend a production, using the given LR0 start state
+	 * 
 	 * @param prod the production to extend
 	 * @param start the starting LR0 state
 	 * @return the extended production, if the start state is valid for it
@@ -195,17 +202,17 @@ public class AssemblyParser {
 	protected AssemblyExtendedProduction extend(AssemblyProduction prod, int start) {
 		AssemblySentential<AssemblyExtendedNonTerminal> extR = new AssemblySentential<>();
 		int curState = start;
-		for (AssemblySymbol sym : prod) {
+		for (AssemblySymbol sym : prod.getRHS()) {
 			int nextState = table.get(curState, sym);
 			if (sym instanceof AssemblyTerminal) {
-				extR.add(sym);
+				extR.addSymbol(sym);
 			}
 			else if (sym instanceof AssemblyNonTerminal) {
-				extR.add(new AssemblyExtendedNonTerminal(curState, (AssemblyNonTerminal) sym,
+				extR.addSymbol(new AssemblyExtendedNonTerminal(curState, (AssemblyNonTerminal) sym,
 					nextState));
 			}
 			else {
-				throw new RuntimeException(
+				throw new AssertionError(
 					"Internal error: all AssemblySymbols must be either terminal or non-terminal");
 			}
 			curState = nextState;
@@ -265,7 +272,7 @@ public class AssemblyParser {
 		// Make $ accept on any state with a completed start item.
 		nextState: for (i = 0; i < states.size(); i++) {
 			AssemblyParseState state = states.get(i);
-			for (AssemblyParseStateItem item : state) {
+			for (AssemblyParseStateItem item : state.getKernel()) {
 				if (item.completed() && item.getProduction().getLHS().getName().equals("$S")) {
 					actions.putAccept(i);
 					continue nextState;
@@ -340,24 +347,28 @@ public class AssemblyParser {
 
 	/**
 	 * Parse the given sentence
+	 * 
 	 * @param input the sentence to parse
 	 * @return all possible parse trees (and possible errors)
 	 */
 	public Iterable<AssemblyParseResult> parse(final String input) {
-		return parse(input, EMPTY_LABELS);
+		return parse(input, AssemblyNumericSymbols.EMPTY);
 	}
 
 	/**
 	 * Parse the given sentence with the given defined labels
+	 * 
+	 * <p>
+	 * The tokenizer for numeric terminals also accepts any key in {@code labels}. In such cases,
+	 * the resulting token is assigned the value of the label.
+	 * 
 	 * @param input the sentence to parser
 	 * @param labels a map of label to number substitutions
 	 * @return all possible parse results (trees and errors)
-	 * 
-	 * The tokenizer for numeric terminals also accepts any key in {@code labels.} In such cases,
-	 * the resulting token is assigned the value of the label.
 	 */
-	public Collection<AssemblyParseResult> parse(final String input, Map<String, Long> labels) {
-		AssemblyParseMachine init = new AssemblyParseMachine(this, input, 0, null, labels);
+	public Collection<AssemblyParseResult> parse(final String input,
+			AssemblyNumericSymbols symbols) {
+		AssemblyParseMachine init = new AssemblyParseMachine(this, input, 0, null, symbols);
 		Set<AssemblyParseMachine> results = init.exhaust();
 
 		Set<AssemblyParseResult> ret = new LinkedHashSet<>();
@@ -368,7 +379,7 @@ public class AssemblyParser {
 			else if (m.error != 0) {
 				Set<String> suggestions = new TreeSet<>();
 				for (AssemblyTerminal t : m.expected) {
-					suggestions.addAll(t.getSuggestions(m.got, labels));
+					suggestions.addAll(t.getSuggestions(m.got, symbols));
 				}
 				ret.add(AssemblyParseResult.error(m.got, suggestions));
 			}
@@ -395,11 +406,11 @@ public class AssemblyParser {
 		for (int i = 0; i < states.size(); i++) {
 			AssemblyParseState state = states.get(i);
 			out.println("I" + i);
-			for (AssemblyParseStateItem item : state) {
+			for (AssemblyParseStateItem item : state.getKernel()) {
 				out.println("K: " + item);
 			}
 			for (AssemblyParseStateItem item : state.getClosure()) {
-				if (!state.contains(item)) {
+				if (!state.getKernel().contains(item)) {
 					out.println("C: " + item);
 				}
 			}
@@ -519,6 +530,7 @@ public class AssemblyParser {
 
 	/**
 	 * Get the grammar used to construct this parser
+	 * 
 	 * @return the grammar
 	 */
 	public AssemblyGrammar getGrammar() {

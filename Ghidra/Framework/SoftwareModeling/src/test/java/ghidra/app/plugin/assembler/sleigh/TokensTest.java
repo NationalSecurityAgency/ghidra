@@ -26,7 +26,7 @@ import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseNumericToken;
 public class TokensTest {
 	@Test
 	public void testNumeric() {
-		AssemblyNumericTerminal t = new AssemblyNumericTerminal("test", 0);
+		AssemblyNumericTerminal t = new AssemblyNumericTerminal("test", 0, null);
 
 		AssemblyParseNumericToken m;
 

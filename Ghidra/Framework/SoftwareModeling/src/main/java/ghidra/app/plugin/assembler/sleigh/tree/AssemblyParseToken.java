@@ -32,6 +32,7 @@ public class AssemblyParseToken extends AssemblyParseTreeNode {
 
 	/**
 	 * Construct a new token having the given string value
+	 * 
 	 * @param grammar the grammar containing the terminal
 	 * @param term the terminal that matched this token
 	 * @param str the portion of the input comprising this token
@@ -67,6 +68,7 @@ public class AssemblyParseToken extends AssemblyParseTreeNode {
 
 	/**
 	 * Get the portion of the input comprising the token
+	 * 
 	 * @return the string value
 	 */
 	public String getString() {

@@ -19,11 +19,13 @@ import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
 
 /**
  * The type of non-terminal for an assembly grammar
+ * 
  * @see AssemblyGrammar
  */
 public class AssemblyNonTerminal extends AssemblySymbol {
 	/**
 	 * Construct a non-terminal having the given name
+	 * 
 	 * @param name the name
 	 */
 	public AssemblyNonTerminal(String name) {

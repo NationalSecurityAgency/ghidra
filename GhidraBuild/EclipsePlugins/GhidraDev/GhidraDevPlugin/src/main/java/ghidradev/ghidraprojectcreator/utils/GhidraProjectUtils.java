@@ -32,6 +32,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.part.FileEditorInput;
 
+import generic.jar.ResourceFile;
 import ghidra.GhidraApplicationLayout;
 import ghidra.framework.GModule;
 import ghidra.launch.JavaConfig;
@@ -356,8 +357,8 @@ public class GhidraProjectUtils {
 		// Get the project's existing linked Ghidra installation folder and path (it may not exist)
 		IFolder ghidraFolder =
 			javaProject.getProject().getFolder(GhidraProjectUtils.GHIDRA_FOLDER_NAME);
-		IPath oldGhidraInstallPath = ghidraFolder.exists()
-				? new Path(ghidraFolder.getLocation().toFile().getAbsolutePath())
+		GhidraApplicationLayout oldGhidraLayout = ghidraFolder.exists()
+				? new GhidraApplicationLayout(ghidraFolder.getLocation().toFile())
 				: null;
 
 		// Loop through the project's existing classpath to decide what to keep (things that aren't
@@ -371,7 +372,7 @@ public class GhidraProjectUtils {
 			// We'll decide whether or not to keep it later.
 			if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER &&
 				entry.getPath().toString().startsWith(JavaRuntime.JRE_CONTAINER)) {
-				if (oldGhidraInstallPath == null) {
+				if (oldGhidraLayout == null) {
 					vmEntryCandidate = entry;
 				}
 			}
@@ -393,18 +394,22 @@ public class GhidraProjectUtils {
 					entryFolder = ResourcesPlugin.getWorkspace().getRoot().getFolder(entry.getPath());
 				}
 				if (entryFolder != null && entryFolder.isLinked() &&
-					oldGhidraInstallPath != null &&
-					oldGhidraInstallPath.isPrefixOf(entryFolder.getLocation())) {
+					inGhidraInstallation(oldGhidraLayout, entryFolder.getLocation())) {
+					String oldGhidraInstallPath =
+						oldGhidraLayout.getApplicationInstallationDir().getAbsolutePath();
 					String origPath = entryFolder.getLocation().toString();
 					String newPath = ghidraInstallDir.getAbsolutePath() +
-						origPath.substring(oldGhidraInstallPath.toString().length());
+						origPath.substring(oldGhidraInstallPath.length());
 					entryFolder.createLink(new Path(newPath), IResource.REPLACE, monitor);
 					classpathEntriesToKeep.add(JavaCore.newSourceEntry(entryFolder.getFullPath()));
 				}
-				// If it's anything else that doesn't live in the old Ghidra installation, keep it. 
-				else if (oldGhidraInstallPath == null ||
-					!oldGhidraInstallPath.isPrefixOf(entry.getPath())) {
+				// If it's anything else that doesn't live in the old Ghidra installation, keep it.
+				// Note that installed Ghidra extensions can live in the user settings directory
+				// which is outside the installation directory.  We don't want to keep these.
+				else if (!inGhidraInstallation(oldGhidraLayout, entry.getPath()) &&
+					!isGhidraExtension(oldGhidraLayout, entry.getPath())) {
 					classpathEntriesToKeep.add(entry);
+					ghidraLayout.getExtensionInstallationDirs();
 				}
 			}
 		}
@@ -451,6 +456,39 @@ public class GhidraProjectUtils {
 					"Failed to setup Python for the project.  PyDev version is not supported.");
 			}
 		}
+	}
+
+	/**
+	 * Checks to see if the given path is contained within the given Ghidra layout's installation 
+	 * directory.
+	 * 
+	 * @param ghidraLayout A Ghidra layout that contains the installation directory to check.
+	 * @param path The path to check.
+	 * @return True if the given path is contained within the given Ghidra layout's installation 
+	 *   directory.
+	 */
+	private static boolean inGhidraInstallation(GhidraApplicationLayout ghidraLayout, IPath path) {
+		return ghidraLayout != null &&
+			new Path(ghidraLayout.getApplicationInstallationDir().getAbsolutePath())
+					.isPrefixOf(path);
+	}
+
+	/**
+	 * Checks to see if the given path is a Ghidra extension.
+	 * 
+	 * @param ghidraLayout A Ghidra layout that contains extension locations to check against.
+	 * @param path The path to check.
+	 * @return True if the given path is a Ghidra extension installed in the given Ghidra layout.
+	 */
+	private static boolean isGhidraExtension(GhidraApplicationLayout ghidraLayout, IPath path) {
+		if (ghidraLayout != null) {
+			for (ResourceFile extensionDir : ghidraLayout.getExtensionInstallationDirs()) {
+				if (new Path(extensionDir.getAbsolutePath()).isPrefixOf(path)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

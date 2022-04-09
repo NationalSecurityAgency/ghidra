@@ -24,8 +24,8 @@ public enum DefaultSolverHint implements SolverHint {
 	 */
 	GUESSING_REPETITION,
 	/**
-	 * A boolean or solver which matches a circular shift is solving the value having guessed a
-	 * shift
+	 * A boolean {@code or} solver which matches a circular shift is solving the value having
+	 * guessed a shift
 	 */
 	GUESSING_CIRCULAR_SHIFT_AMOUNT,
 	/**

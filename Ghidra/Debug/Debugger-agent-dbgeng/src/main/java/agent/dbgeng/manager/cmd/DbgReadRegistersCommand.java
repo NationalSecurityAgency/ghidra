@@ -46,12 +46,14 @@ public class DbgReadRegistersCommand extends AbstractDbgCommand<Map<DbgRegister,
 			return Collections.emptyMap();
 		}
 		Map<DbgRegister, BigInteger> result = new LinkedHashMap<>();
-		for (DbgRegister r : regs) {
-			if (registers != null) {
-				DebugValue value = registers.getValueByName(r.getName());
-				if (value != null) {
-					BigInteger bval = new BigInteger(value.encodeAsBytes());
-					result.put(r, bval);
+		if (registers != null) {
+			for (DbgRegister r : regs) {
+				if (r.isBaseRegister()) {
+					DebugValue value = registers.getValueByName(r.getName());
+					if (value != null) {
+						BigInteger bval = new BigInteger(value.encodeAsBytes());
+						result.put(r, bval);
+					}
 				}
 			}
 		}

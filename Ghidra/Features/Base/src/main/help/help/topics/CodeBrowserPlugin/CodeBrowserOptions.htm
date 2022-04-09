@@ -556,6 +556,24 @@
         be made as small as possible.  For example, when showing an offcut string reference, 
         only the portion of the string that is used will be displayed.</P>
       </BLOCKQUOTE>
+      
+      <H3><A name="File_Offset_Field"></A>File Offset Field</H3>
+
+      <BLOCKQUOTE>
+        <P>The File Offset field shows the filename and file offset of the original imported byte
+        value for the given address.  If the address's byte was not derived from an imported binary 
+        file, or file offset tracking is not supported by the binary file's importer, a value of 
+        "N/A" is shown.</P>
+        <P><B>Show Filename -</B> Option to prefix the file offset with the source filename.  This
+        is useful if more than one binary file has been imported into a program.</P>
+        <P><B>Show Numbers In Hex -</B> Option to display the file offset in hexadecimal rather than
+        decimal.</P>
+        <P><IMG src="../../shared/note.png" border="0">The File Offset field is disabled by default.
+        To enable the field, see the <A HREF="Browser_Field_Formatter.htm#Enable_Field">Enable Field
+        </A> section.
+        </P>
+        
+      </BLOCKQUOTE>
 
       <H3><A name="Format_Code"></A>Format Code</H3>
 

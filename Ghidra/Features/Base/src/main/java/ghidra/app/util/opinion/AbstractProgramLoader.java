@@ -25,6 +25,7 @@ import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
@@ -129,7 +130,12 @@ public abstract class AbstractProgramLoader implements Loader {
 					continue;
 				}
 
-				if (createProgramFile(loadedProgram, folder, loadedProgram.getName(), messageLog,
+				// If this is the main imported program, use the given name, otherwise, use the
+				// internal program name. The first program in the list is the main imported program
+				String domainFileName =
+					loadedProgram == programs.get(0) ? name : loadedProgram.getName();
+
+				if (createProgramFile(loadedProgram, folder, domainFileName, messageLog,
 					monitor)) {
 					results.add(loadedProgram);
 					programsToFixup.add(loadedProgram);
@@ -259,7 +265,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * Creates a {@link Program} with the specified attributes.
 	 *
 	 * @param provider The bytes that will make up the {@link Program}.
-	 * @param programName The name of the {@link Program}.
+	 * @param domainFileName The name for the DomainFile that will store the {@link Program}.
 	 * @param imageBase  The image base address of the {@link Program}.
 	 * @param executableFormatName The file format name of the {@link Program}.  Typically this will
 	 *   be the {@link Loader} name.
@@ -269,9 +275,11 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * @return The newly created {@link Program}.
 	 * @throws IOException if there was an IO-related problem with creating the {@link Program}.
 	 */
-	protected Program createProgram(ByteProvider provider, String programName, Address imageBase,
-			String executableFormatName, Language language, CompilerSpec compilerSpec,
-			Object consumer) throws IOException {
+	protected Program createProgram(ByteProvider provider, String domainFileName,
+			Address imageBase, String executableFormatName, Language language,
+			CompilerSpec compilerSpec, Object consumer) throws IOException {
+
+		String programName = getProgramNameFromSourceData(provider, domainFileName);
 		Program prog = new ProgramDB(programName, language, compilerSpec, consumer);
 		prog.setEventsEnabled(false);
 		int id = prog.startTransaction("Set program properties");
@@ -301,6 +309,16 @@ public abstract class AbstractProgramLoader implements Loader {
 			prog.endTransaction(id, true);
 		}
 		return prog;
+	}
+
+	private String getProgramNameFromSourceData(ByteProvider provider, String domainFileName) {
+		FSRL fsrl = provider.getFSRL();
+		if (fsrl != null) {
+			return fsrl.getName();
+		}
+
+		// If the ByteProvider dosn't have have an FSRL, use the given domainFileName
+		return domainFileName;
 	}
 
 	/**

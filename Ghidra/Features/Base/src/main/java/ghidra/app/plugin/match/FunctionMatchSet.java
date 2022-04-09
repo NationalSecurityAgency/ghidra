@@ -36,9 +36,8 @@ public class FunctionMatchSet extends ArrayList<SubroutineMatch> {
 	private final SymbolTable bSymbolTable;
 
 	/**
-	 * @param thisProgramName Name of this program (i.e. the program from
-	 * which the matching was initiated.
-	 * @param otherProgramName Name of the program being matched.
+	 * @param aProgram The program from which the matching was initiated.
+	 * @param bProgram The program being matched.
 	 */
 	public FunctionMatchSet(Program aProgram, Program bProgram) {
 		super();

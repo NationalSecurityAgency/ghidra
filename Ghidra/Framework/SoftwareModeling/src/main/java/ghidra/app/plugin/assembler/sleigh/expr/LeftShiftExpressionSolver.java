@@ -19,12 +19,12 @@ import java.util.Map;
 import java.util.Set;
 
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedConstructor;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
 import ghidra.app.plugin.processors.sleigh.expression.LeftShiftExpression;
 import ghidra.util.Msg;
 
 /**
- * {@literal Solves expressions of the form A << B}
+ * Solves expressions of the form {@code A << B}
  */
 public class LeftShiftExpressionSolver extends AbstractBinaryExpressionSolver<LeftShiftExpression> {
 
@@ -61,13 +61,12 @@ public class LeftShiftExpressionSolver extends AbstractBinaryExpressionSolver<Le
 
 	@Override
 	protected AssemblyResolution solveTwoSided(LeftShiftExpression exp, MaskedLong goal,
-			Map<String, Long> vals, Map<Integer, Object> res, AssemblyResolvedConstructor cur,
-			Set<SolverHint> hints, String description)
-			throws NeedsBackfillException, SolverException {
+			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
+			String description) throws NeedsBackfillException, SolverException {
 		// Do not guess the same parameter recursively
 		if (hints.contains(DefaultSolverHint.GUESSING_LEFT_SHIFT_AMOUNT)) {
 			// NOTE: Nested left shifts ought to be written as a left shift by a sum
-			return super.solveTwoSided(exp, goal, vals, res, cur, hints, description);
+			return super.solveTwoSided(exp, goal, vals, cur, hints, description);
 		}
 		// Count the number of zeros to the right, and consider this the maximum shift value
 		// Any higher shift amount would produce too many zeros to the right
@@ -76,24 +75,41 @@ public class LeftShiftExpressionSolver extends AbstractBinaryExpressionSolver<Le
 		// use of the leading zero count, at least AFAIK. Maybe to better restrict the max???
 		Set<SolverHint> hintsWithLShift =
 			SolverHint.with(hints, DefaultSolverHint.GUESSING_LEFT_SHIFT_AMOUNT);
+		if (maxShift == 64) {
+			// If the goal is 0s, then any shift will do, so long as the shifted value is 0
+			try {
+				// NB. goal is already 0s, so just use it as subgoal for lhs of shift
+				AssemblyResolution lres =
+					solver.solve(exp.getLeft(), goal, vals, cur, hintsWithLShift, description);
+				if (lres.isError()) {
+					throw new SolverException("Solving left:=0 failed");
+				}
+				// If this works, then the rhs can have any value, so nothing to solve for
+				return lres;
+			}
+			catch (SolverException | UnsupportedOperationException e) {
+				Msg.trace(this, "Trying left:=0 in shift resulted in " + e);
+				// Fall through to the guessing method
+			}
+		}
 		for (int shift = maxShift; shift >= 0; shift--) {
 			try {
 				MaskedLong reqr = MaskedLong.fromLong(shift);
 				MaskedLong reql = computeLeft(reqr, goal);
 
 				AssemblyResolution lres =
-					solver.solve(exp.getLeft(), reql, vals, res, cur, hintsWithLShift, description);
+					solver.solve(exp.getLeft(), reql, vals, cur, hintsWithLShift, description);
 				if (lres.isError()) {
 					throw new SolverException("Solving left failed");
 				}
 				AssemblyResolution rres =
-					solver.solve(exp.getRight(), reqr, vals, res, cur, hints, description);
+					solver.solve(exp.getRight(), reqr, vals, cur, hints, description);
 				if (rres.isError()) {
 					throw new SolverException("Solving right failed");
 				}
-				AssemblyResolvedConstructor lsol = (AssemblyResolvedConstructor) lres;
-				AssemblyResolvedConstructor rsol = (AssemblyResolvedConstructor) rres;
-				AssemblyResolvedConstructor sol = lsol.combine(rsol);
+				AssemblyResolvedPatterns lsol = (AssemblyResolvedPatterns) lres;
+				AssemblyResolvedPatterns rsol = (AssemblyResolvedPatterns) rres;
+				AssemblyResolvedPatterns sol = lsol.combine(rsol);
 				if (sol == null) {
 					throw new SolverException(
 						"Left and right solutions conflict for shift=" + shift);
@@ -105,6 +121,6 @@ public class LeftShiftExpressionSolver extends AbstractBinaryExpressionSolver<Le
 				// try the next
 			}
 		}
-		return super.solveTwoSided(exp, goal, vals, res, cur, hints, description);
+		return super.solveTwoSided(exp, goal, vals, cur, hints, description);
 	}
 }

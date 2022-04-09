@@ -21,6 +21,7 @@ import java.util.Stack;
 /**
  * A debugging, timing, and diagnostic tool
  * 
+ * <p>
  * TODO: I should probably remove this and rely on the Msg.trace() method, or at the very least,
  * refactor this to use that.
  */
@@ -30,6 +31,7 @@ public class DbgTimer extends PrintStream {
 
 	/**
 	 * Create a new debugging timer, wrapping the given output stream
+	 * 
 	 * @param out the stream
 	 */
 	public DbgTimer(OutputStream out) {
@@ -58,6 +60,7 @@ public class DbgTimer extends PrintStream {
 
 		/**
 		 * Create a new stream wrapping another
+		 * 
 		 * @param out the stream to wrap
 		 */
 		private TabbingOutputStream(OutputStream out) {
@@ -66,6 +69,7 @@ public class DbgTimer extends PrintStream {
 
 		/**
 		 * Start a new (indented) line of output
+		 * 
 		 * @throws IOException
 		 */
 		protected void startln() throws IOException {
@@ -78,6 +82,7 @@ public class DbgTimer extends PrintStream {
 
 		/**
 		 * Workaround: Set the time stack reference
+		 * 
 		 * @param timeStack the stack
 		 */
 		protected void setTimeStack(Stack<Long> timeStack) {
@@ -172,20 +177,21 @@ public class DbgTimer extends PrintStream {
 
 	/**
 	 * Start a new, possibly long-running, task
-	 * @param message the message to print when the task begins
-	 * @return a context to close when the task ends
 	 * 
 	 * This is meant to be used idiomatically, as in a try-with-resources block:
+	 * 
 	 * <pre>
-	 * {@code
 	 * try (DbgCtx dc = dbg.start("Twiddling the frobs:")) {
-	 *     // do some classy twiddling
+	 * 	// do some classy twiddling
 	 * } // this will automatically print done and the time elapsed within the try block
-	 * }
 	 * </pre>
 	 * 
 	 * This idiom is preferred because the task will be stopped even if an error occurs, if the
 	 * method returns from within the block, etc.
+	 * 
+	 * @param message the message to print when the task begins
+	 * @return a context to close when the task ends
+	 * 
 	 */
 	public DbgCtx start(Object message) {
 		println(message);
@@ -197,6 +203,7 @@ public class DbgTimer extends PrintStream {
 	/**
 	 * Stop the current task
 	 * 
+	 * <p>
 	 * This will print done and the elapsed time since the start of the task. The "current task" is
 	 * determined from the stack.
 	 */
@@ -208,6 +215,7 @@ public class DbgTimer extends PrintStream {
 
 	/**
 	 * Replace the wrapped output stream (usually temporarily)
+	 * 
 	 * @see #resetOutputStream(TabbingOutputStream)
 	 * @param s the replacement stream
 	 * @return the original stream, wrapped in a tabbing stream
@@ -223,6 +231,7 @@ public class DbgTimer extends PrintStream {
 
 	/**
 	 * Put the original tabbing stream back
+	 * 
 	 * @see #setOutputStream(OutputStream)
 	 * @param s the original wrapped stream
 	 * @return the replacement stream, wrapped in a tabbing stream

@@ -20,11 +20,13 @@ import java.util.*;
 /**
  * A type for solver hints
  * 
- * Hints inform "sub-"solvers of the techniques already being applied by the calling solvers. This
+ * <p>
+ * Hints inform sub-solvers of the techniques already being applied by the calling solvers. This
  * helps prevent situations where, e.g., two multiplication solvers (applied to repeated or nested
  * multiplication) both attempt to synthesize new goals for repetition. This sort of expression is
  * common when decoding immediates in the AArch64 specification.
  * 
+ * <p>
  * Using an interface implemented by an enumeration (instead of just using the enumeration directly)
  * eases expansion by extension without modifying the core code.
  * 

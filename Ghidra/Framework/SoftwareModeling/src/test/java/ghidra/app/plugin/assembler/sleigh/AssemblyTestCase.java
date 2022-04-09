@@ -171,13 +171,13 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 		AssemblyPatternBlock ins = AssemblyPatternBlock.fromString(instr);
 		dbg.println("Checking against: " + ins);
 		Set<AssemblyResolvedError> errs = new TreeSet<>(); // Display in order, I guess
-		Set<AssemblyResolvedConstructor> misses = new TreeSet<>();
+		Set<AssemblyResolvedPatterns> misses = new TreeSet<>();
 		for (AssemblyResolution ar : rr) {
 			if (ar.isError()) {
 				errs.add((AssemblyResolvedError) ar);
 				continue;
 			}
-			AssemblyResolvedConstructor rescon = (AssemblyResolvedConstructor) ar;
+			AssemblyResolvedPatterns rescon = (AssemblyResolvedPatterns) ar;
 			if (ins.getVals().length == rescon.getInstructionLength() &&
 				ins.combine(rescon.getInstruction()) != null) {
 				return;
@@ -214,14 +214,14 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 		boolean failedOne = false;
 		Set<AssemblyResolvedError> errs = new TreeSet<>(); // Display in order, I guess.
 		MultiValuedMap<String, String> misTxtToCons = new TreeSetValuedTreeMap<>();
-		MultiValuedMap<String, AssemblyResolvedConstructor> misTxtConsToRes =
+		MultiValuedMap<String, AssemblyResolvedPatterns> misTxtConsToRes =
 			new TreeSetValuedTreeMap<>();
 		for (AssemblyResolution ar : rr) {
 			if (ar.isError()) {
 				errs.add((AssemblyResolvedError) ar);
 				continue;
 			}
-			AssemblyResolvedConstructor rcon = (AssemblyResolvedConstructor) ar;
+			AssemblyResolvedPatterns rcon = (AssemblyResolvedPatterns) ar;
 			try {
 				dbg.println("  " + rcon.lineToString());
 				for (byte[] ins : rcon.possibleInsVals(ctx)) {
@@ -247,7 +247,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			for (String dis : misTxtToCons.keySet()) {
 				dbg.println("  " + dis);
 				for (String cons : misTxtToCons.get(dis)) {
-					for (AssemblyResolvedConstructor rc : misTxtConsToRes.get(dis + cons)) {
+					for (AssemblyResolvedPatterns rc : misTxtConsToRes.get(dis + cons)) {
 						dbg.println("    d:" + cons);
 						dbg.println("    a:" + rc.dumpConstructorTree());
 						dbg.println(rc.toString("      "));
@@ -363,7 +363,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			}
 
 			@Override
-			public AssemblyResolvedConstructor select(AssemblyResolutionResults rr,
+			public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
 					AssemblyPatternBlock ctx) throws AssemblySemanticException {
 				if (checkOneCompat) {
 					checkOneCompat(instr, rr);

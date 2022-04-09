@@ -32,7 +32,10 @@ public class OpPcodeRow implements PcodeRow {
 	}
 
 	@Override
-	public int getSequence() {
+	public Integer getSequence() {
+		if (op == null) {
+			return null;
+		}
 		return op.getSeqnum().getTime();
 	}
 
@@ -41,6 +44,7 @@ public class OpPcodeRow implements PcodeRow {
 		return code;
 	}
 
+	@Override
 	public boolean isNext() {
 		return isNext;
 	}

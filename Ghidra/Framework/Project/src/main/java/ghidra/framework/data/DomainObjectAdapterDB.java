@@ -90,12 +90,10 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 	 * @param timeInterval the time (in milliseconds) to wait before the
 	 * event queue is flushed.  If a new event comes in before the time expires,
 	 * the timer is reset.
-	 * @param bufSize initial size of event buffer
 	 * @param consumer the object that created this domain object
 	 */
-	protected DomainObjectAdapterDB(DBHandle dbh, String name, int timeInterval, int bufSize,
-			Object consumer) {
-		super(name, timeInterval, bufSize, consumer);
+	protected DomainObjectAdapterDB(DBHandle dbh, String name, int timeInterval, Object consumer) {
+		super(name, timeInterval, consumer);
 		this.dbh = dbh;
 		options = new OptionsDB(this);
 		transactionMgr = new DomainObjectTransactionManager(this);
@@ -604,6 +602,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		DomainObjectAdapterDB userData = getUserData();
 		if (userData != null && userData.isChanged() && (getDomainFile() instanceof GhidraFile)) {
 			try {
+				userData.prepareToSave();
 				userData.save(null, TaskMonitorAdapter.DUMMY_MONITOR);
 			}
 			catch (CancelledException e) {

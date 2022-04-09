@@ -21,6 +21,7 @@ import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContextBuilder;
 import ghidra.app.services.DataTypeReference;
+import ghidra.app.services.FieldMatcher;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
@@ -51,12 +52,12 @@ public abstract class DecompilerReference {
 	 * The <tt>fieldName</tt> is optional.  If not included, then only data type matches will
 	 * be sought.  If it is included, then a match is only included when it is a reference
 	 * to the given data type where that type is being accessed by the given field name.
-	 * 
+	 *
 	 * @param dt the data type to find
-	 * @param fieldName the optional field name used to restrict matches.
+	 * @param fieldMatcher the optional field matcher used to restrict matches.
 	 * @param results the accumulator object into which will be placed any matches
 	 */
-	public abstract void accumulateMatches(DataType dt, String fieldName,
+	public abstract void accumulateMatches(DataType dt, FieldMatcher fieldMatcher,
 			List<DataTypeReference> results);
 
 	public DecompilerVariable getVariable() {
@@ -160,7 +161,7 @@ public abstract class DecompilerReference {
 			int offset = field.getOffset();
 			int n = parent.getLength();
 			if (offset >= 0 && offset < n) {
-				DataTypeComponent dtc = parent.getComponentAt(field.getOffset());
+				DataTypeComponent dtc = parent.getComponentContaining(field.getOffset());
 				fieldDt = dtc.getDataType();
 			}
 		}

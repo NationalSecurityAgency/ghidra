@@ -27,7 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.tree.TreePath;
 
 import org.apache.commons.collections4.map.LinkedMap;
@@ -79,7 +80,6 @@ import ghidra.util.*;
 import ghidra.util.datastruct.PrivatelyQueuedListener;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		implements ObjectContainerListener {
@@ -196,9 +196,6 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	)
 	String extendedStep = "";
 
-	private static final Icon ENABLED_ICON = ResourceManager.loadImage("images/enabled.png");
-	private static final Icon DISABLED_ICON = ResourceManager.loadImage("images/disabled.png");
-
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
 
@@ -222,9 +219,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private MyObjectListener listener = new MyObjectListener();
 
 	public DebuggerMethodInvocationDialog configDialog;
-	public DebuggerMethodInvocationDialog launchDialog;
+	public DebuggerMethodInvocationDialog methodDialog;
 	public DebuggerAttachDialog attachDialog;
 	public DebuggerBreakpointDialog breakpointDialog;
+	private GenericDebuggerProgramLaunchOffer launchOffer;
 
 	DockingAction actionLaunch;
 	DockingAction actionAddBreakpoint;
@@ -249,6 +247,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private ToggleDockingAction actionToggleHideIntrinsics;
 	private ToggleDockingAction actionToggleSelectionOnly;
 	private ToggleDockingAction actionToggleIgnoreState;
+	private ToggleDockingAction actionToggleUpdateWhileRunning;
 
 	@AutoConfigStateField
 	private boolean autoRecord = true;
@@ -258,6 +257,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private boolean selectionOnly = false;
 	@AutoConfigStateField
 	private boolean ignoreState = false;
+	@AutoConfigStateField
+	private boolean updateWhileRunning = true;
 
 	Set<TargetConfigurable> configurables = new HashSet<>();
 	private String lastMethod = "";
@@ -271,6 +272,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		currentProgram = plugin.getActiveProgram();
 		plugin.addProvider(this);
 		this.currentModel = model;
+		launchOffer = new GenericDebuggerProgramLaunchOffer(currentProgram, tool, currentModel);
 		this.root = container;
 		this.asTree = asTree;
 		setIcon(asTree ? ObjectTree.ICON_TREE : ObjectTable.ICON_TABLE);
@@ -327,6 +329,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public void setModel(DebuggerObjectModel model) {
 		currentModel = model;
 		currentModel.addModelListener(getListener(), true);
+		launchOffer = new GenericDebuggerProgramLaunchOffer(currentProgram, tool, currentModel);
 		refresh();
 	}
 
@@ -344,7 +347,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			addTable(getRoot());
 		}
 
-		launchDialog = new DebuggerMethodInvocationDialog(tool, "Launch", "Launch",
+		methodDialog = new DebuggerMethodInvocationDialog(tool, "Method", "Method",
 			DebuggerResources.ICON_LAUNCH);
 		//attachDialogOld = new DebuggerAttachDialog(this);
 		attachDialog = new DebuggerAttachDialog(this);
@@ -459,6 +462,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}
 		currentProgram = program;
 		plugin.setActiveProgram(currentProgram);
+		launchOffer = new GenericDebuggerProgramLaunchOffer(currentProgram, tool, currentModel);
 		contextChanged();
 	}
 
@@ -975,7 +979,18 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.menuGroup(DebuggerResources.GROUP_TARGET, "M" + groupTargetIndex)
 			.helpLocation(new HelpLocation(plugin.getName(), "toggle_ignore_state"))
 			.onAction(ctx -> performToggleIgnoreState(ctx))
-			.selected(selectionOnly)
+			.selected(ignoreState)
+			.enabled(true)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
+
+		actionToggleUpdateWhileRunning = new ToggleActionBuilder("Toggle update while running", plugin.getName())
+			.menuPath("Maintenance","&Update While Running")
+			.menuGroup(DebuggerResources.GROUP_TARGET, "M" + groupTargetIndex)
+			.helpLocation(new HelpLocation(plugin.getName(), "toggle_update_while_running"))
+			.onAction(ctx -> performToggleUpdateWhileRunning(ctx))
+			.selected(isUpdateWhileRunning())
 			.enabled(true)
 			.buildAndInstallLocal(this);
 		
@@ -1347,8 +1362,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public void performToggleAutoupdate(ActionContext context) {
-		TargetObject object = getObjectFromContext(context);
 		/*
+		TargetObject object = getObjectFromContext(context);
 		if (object instanceof DefaultTargetObject) {
 			Map<String, ?> attributes = object.listAttributes();
 			Boolean autoupdate = (Boolean) attributes.get(AUTOUPDATE_ATTRIBUTE_NAME);
@@ -1366,7 +1381,6 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public void performToggleBase(ActionContext context) {
-		//Object contextObject = context.getContextObject();
 		for (TargetConfigurable configurable : configurables) {
 			Object value = configurable.getCachedAttribute(TargetConfigurable.BASE_ATTRIBUTE_NAME);
 			if (value != null) {
@@ -1407,6 +1421,11 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		refresh("");
 	}
 
+	public void performToggleUpdateWhileRunning(ActionContext context) {
+		updateWhileRunning = actionToggleUpdateWhileRunning.isSelected();
+		refresh("");
+	}
+
 	protected <T extends TargetObject> void performAction(ActionContext context,
 			boolean fallbackRoot, Class<T> cls,
 			Function<T, CompletableFuture<Void>> func, String errorMsg) {
@@ -1438,8 +1457,15 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public void performLaunch(ActionContext context) {
 		performAction(context, true, TargetLauncher.class, launcher -> {
+
+			Map<String, ?> args = launchOffer.getLauncherArgs(launcher.getParameters(), true);
+			if (args == null) {
+				// Cancelled
+				return AsyncUtils.NIL;
+			}
+			return launcher.launch(args);
+			/*
 			String argsKey = TargetCmdLineLauncher.CMDLINE_ARGS_NAME;
-			// TODO: A generic or pluggable way of deriving the default arguments
 			String path = (currentProgram != null) ? currentProgram.getExecutablePath() : null;
 			launchDialog.setCurrentContext(path);
 			String cmdlineArgs = launchDialog.getMemorizedArgument(argsKey, String.class);
@@ -1453,6 +1479,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				return AsyncUtils.NIL;
 			}
 			return launcher.launch(args);
+			*/
 		}, "Couldn't launch");
 	}
 
@@ -1463,11 +1490,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			if (obj instanceof TargetAttachable) {
 				return attacher.attach((TargetAttachable) obj);
 			}
-			else {
-				attachDialog.fetchAndDisplayAttachable();
-				tool.showDialog(attachDialog);
-				return AsyncUtils.NIL;
-			}
+			attachDialog.fetchAndDisplayAttachable();
+			tool.showDialog(attachDialog);
+			return AsyncUtils.NIL;
 		}, "Couldn't attach");
 	}
 
@@ -1491,10 +1516,11 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				list.add(entry.getKey());
 			}
 		}
-		String choice = OptionDialog.showInputChoiceDialog(getComponent(), "Methods", "Methods", list.toArray(new String [] {}), lastMethod, OptionDialog.QUESTION_MESSAGE);
+		String choice = OptionDialog.showInputChoiceDialog(getComponent(), "Methods", "Methods",
+			list.toArray(new String[] {}), lastMethod, OptionDialog.QUESTION_MESSAGE);
 		if (choice != null) {
 			TargetMethod method = (TargetMethod) attributes.get(choice);
-			Map<String, ?> args = launchDialog.promptArguments(method.getParameters());
+			Map<String, ?> args = methodDialog.promptArguments(method.getParameters());
 			if (args != null) {
 				String script = (String) args.get("Script");
 				if (script != null && !script.isEmpty()) {
@@ -1508,13 +1534,13 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}
 	}
 
-	private void mapScript(Map<String, ?> args) {		
+	private void mapScript(Map<String, ?> args) {
 		String name = (String) args.get("Name");
 		String scriptName = (String) args.get("Script");
 		if (name.isEmpty() || scriptName.isEmpty()) {
 			return;
 		}
-					
+
 		ResourceFile sourceFile = GhidraScriptUtil.findScriptByName(scriptName);
 		if (sourceFile == null) {
 			Msg.error(this, "Couldn't find script");
@@ -1525,12 +1551,13 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			Msg.error(this, "Couldn't find script provider");
 			return;
 		}
-		
+
 		PrintWriter writer = consoleService.getStdOut();
 		GhidraScript script;
 		try {
 			script = provider.getScriptInstance(sourceFile, writer);
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+		}
+		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 			Msg.error(this, e.getMessage());
 			return;
 		}
@@ -1538,33 +1565,33 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		scriptNames.put(name, scriptName);
 	}
 
-	private void fireScript(String key, String [] args) {			
+	private void fireScript(String key, String[] args) {
 		GhidraScript script = scripts.get(key);
 		String scriptName = scriptNames.get(key);
 		if (script == null || scriptName == null) {
 			return;
 		}
-			
-		PluginTool tool = plugin.getTool();
+
 		Project project = tool.getProject();
 
 		ProgramLocation currentLocation = listingService.getCurrentLocation();
 		ProgramSelection currentSelection = listingService.getCurrentSelection();
-		
+
 		GhidraState state = new GhidraState(tool, project, currentProgram,
 			currentLocation, currentSelection, null);
-		
+
 		PrintWriter writer = consoleService.getStdOut();
 		TaskMonitor monitor = TaskMonitor.DUMMY;
 		script.set(state, monitor, writer);
 
 		try {
 			script.runScript(scriptName, args);
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-		
+
 	public void startRecording(TargetProcess targetObject, boolean prompt) {
 		TraceRecorder rec = modelService.getRecorder(targetObject);
 		if (rec != null) {
@@ -1642,9 +1669,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			if (extendedStep.equals("")) {
 				return s.step(TargetStepKind.EXTENDED);
 			}
-			else {
-				return s.step(Map.of("Command", extendedStep));
-			}
+			return s.step(Map.of("Command", extendedStep));
 		}, "Couldn't step extended(" + extendedStep + ")");
 	}
 
@@ -1722,9 +1747,13 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}
 		return object instanceof TargetAccessConditioned;
 	}
-	
+
 	public boolean isStopped(ActionContext context) {
 		TargetObject object = this.getObjectFromContext(context);
+		return isStopped(object);
+	}
+
+	public boolean isStopped(TargetObject object) {
 		if (object == null) {
 			return false;
 		}
@@ -1773,7 +1802,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}
 
 		@Override
-		public void consoleOutput(TargetObject console, Channel channel, byte [] bytes) {
+		public void consoleOutput(TargetObject console, Channel channel, byte[] bytes) {
 			String ret = new String(bytes);
 			if (ret.contains(TargetMethod.REDIRECT)) {
 				String[] split = ret.split(TargetMethod.REDIRECT);
@@ -1781,7 +1810,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 				String val = split[1];
 				GhidraScript script = scripts.get(key);
 				if (script != null) {
-					String [] args = new String[1];
+					String[] args = new String[1];
 					args[0] = val;
 					fireScript(key, args);
 					return;
@@ -1909,7 +1938,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		if (focused.getModel() != currentModel) {
 			return;
 		}
-		pane.setFocus(object, focused);
+		if (isStopped(focused) || isUpdateWhileRunning()) {
+			pane.setFocus(object, focused);
+		}
 	}
 
 	public DebuggerTraceManagerService getTraceManager() {
@@ -1991,7 +2022,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public void writeConfigState(SaveState saveState) {
 		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
-		launchDialog.writeConfigState(saveState);
+		methodDialog.writeConfigState(saveState);
 	}
 
 	public void readConfigState(SaveState saveState) {
@@ -2001,7 +2032,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		actionToggleHideIntrinsics.setSelected(hideIntrinsics);
 		actionToggleSelectionOnly.setSelected(selectionOnly);
 
-		launchDialog.readConfigState(saveState);
+		methodDialog.readConfigState(saveState);
 	}
 
 	@Override
@@ -2086,5 +2117,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			// IGNORE
 		}
 		return addr;
+	}
+
+	public boolean isUpdateWhileRunning() {
+		return updateWhileRunning;
 	}
 }

@@ -22,7 +22,7 @@ import ghidra.util.HTMLUtilities;
 
 /**
  * A class to hold context representation for {@link LocationReference}s.
- * 
+ *
  * @see LocationReferenceContextBuilder
  */
 public class LocationReferenceContext {
@@ -107,7 +107,7 @@ public class LocationReferenceContext {
 
 	/**
 	 * Returns any sub-strings of this context's overall text that match client-defined input
-	 * 
+	 *
 	 * See the {@link LocationReferenceContextBuilder} for how to define matching text pieces
 	 * @return the matching strings
 	 */
@@ -123,7 +123,7 @@ public class LocationReferenceContext {
 
 	@Override
 	public String toString() {
-		return Json.toString(this);
+		return getPlainText();
 	}
 
 	/**

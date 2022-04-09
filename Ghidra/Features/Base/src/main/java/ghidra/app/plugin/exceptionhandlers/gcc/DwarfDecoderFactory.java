@@ -38,7 +38,7 @@ public class DwarfDecoderFactory {
 	/**
 	 * Get the appropriate decoder for the given 8-bit mode; mode is parsed into
 	 * decode format, application mode, and indirection flag.
-	 * @see #getDecoder(DwarfEHDataDecodeFormat, DwarfEHDataApplicationMode, boolean)
+	 * @see #createDecoder(DwarfEHDataDecodeFormat, DwarfEHDataApplicationMode, boolean)
 	 * @param mode a byte that indicates an encoding
 	 * @return the decoder for the indicated mode of encoding
 	 */

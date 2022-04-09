@@ -451,6 +451,7 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	/**
 	 * Check if this logical breakpoint can subsume the given candidate trace breakpoint
 	 * 
+	 * <p>
 	 * Note that logical breakpoints only include trace breakpoints for traces being actively
 	 * recorded. All statuses regarding trace breakpoints are derived from the target breakpoints,
 	 * i.e., they show the present status, regardless of the view's current time. A separate
@@ -458,8 +459,9 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * 
 	 * @param breakpoint the trace breakpoint to check
 	 * @return true if it can be aggregated.
+	 * @throws TrackedTooSoonException if the containing trace is still being added to the manager
 	 */
-	boolean canMerge(TraceBreakpoint breakpoint);
+	boolean canMerge(TraceBreakpoint breakpoint) throws TrackedTooSoonException;
 
 	boolean trackBreakpoint(Bookmark bookmark);
 

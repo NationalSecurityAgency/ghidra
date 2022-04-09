@@ -15,10 +15,11 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import java.io.File;
+import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -185,6 +186,12 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		return false;
 	}
 
+	protected Comparator<String> getLibNameComparator() {
+		return isCaseInsensitiveLibraryFilenames()
+				? String.CASE_INSENSITIVE_ORDER
+				: (s1, s2) -> s1.compareTo(s2);
+	}
+
 	/**
 	 * Returns the path the loaded {@link ByteProvider} is located in.
 	 * <p>
@@ -340,6 +347,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		Program program = createProgram(provider, programName, imageBaseAddr, getName(), language,
 			compilerSpec, consumer);
 
+		Comparator<String> libNameComparator = getLibNameComparator();
+
 		int transactionID = program.startTransaction("importing");
 		boolean success = false;
 		try {
@@ -351,9 +360,11 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			if (unprocessedLibraries != null) {
 				ExternalManager extMgr = program.getExternalManager();
 				String[] externalNames = extMgr.getExternalLibraryNames();
-				Arrays.sort(externalNames);
+				Arrays.sort(externalNames, libNameComparator);
 				for (String name : externalNames) {
-					if (name.equals(provider.getName()) || Library.UNKNOWN.equals(name)) {
+					if (libNameComparator.compare(name, provider.getName()) == 0 ||
+						libNameComparator.compare(name, program.getName()) == 0 ||
+						Library.UNKNOWN.equals(name)) {
 						// skip self-references and UNKNOWN library...
 						continue;
 					}
@@ -457,7 +468,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			monitor.checkCanceled();
 			try {
 				String externalFileName = FilenameUtils.getName(externalLibName);
-				DomainObject matchingExtProgram = progsByName.get(externalFileName);
+				DomainObject matchingExtProgram =
+					findLibraryWithCaseCorrectSearch(progsByName, externalFileName);
 				if (matchingExtProgram != null && matchingExtProgram.getDomainFile().exists()) {
 					extManager.setExternalPath(externalLibName,
 						matchingExtProgram.getDomainFile().getPathname(), false);
@@ -482,6 +494,17 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				Msg.error(this, "Bad library name: " + externalLibName, e);
 			}
 		}
+	}
+
+	protected Program findLibraryWithCaseCorrectSearch(Map<String, Program> progsByName,
+			String libName) {
+		Comparator<String> comparator = getLibNameComparator();
+		for (String s : progsByName.keySet()) {
+			if (comparator.compare(libName, s) == 0) {
+				return progsByName.get(s);
+			}
+		}
+		return null;
 	}
 
 	/**

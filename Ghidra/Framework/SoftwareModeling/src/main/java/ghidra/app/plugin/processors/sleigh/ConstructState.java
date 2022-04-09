@@ -21,7 +21,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import generic.hash.SimpleCRC32;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedConstructor;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
 
 public class ConstructState {
 	private Constructor ct;
@@ -41,7 +41,11 @@ public class ConstructState {
 		return resolvedStates.get(index);
 	}
 
-	public void addSubState(ConstructState opState) {
+	public int getNumSubStates() {
+		return resolvedStates.size();
+	}
+
+	void addSubState(ConstructState opState) {
 		resolvedStates.add(opState);
 	}
 
@@ -100,7 +104,8 @@ public class ConstructState {
 	 * encoding
 	 * 
 	 * This includes braces to describe the tree structure
-	 * @see AssemblyResolvedConstructor#dumpConstructorTree()
+	 * 
+	 * @see AssemblyResolvedPatterns#dumpConstructorTree()
 	 * @return the constructor tree
 	 */
 	public String dumpConstructorTree() {

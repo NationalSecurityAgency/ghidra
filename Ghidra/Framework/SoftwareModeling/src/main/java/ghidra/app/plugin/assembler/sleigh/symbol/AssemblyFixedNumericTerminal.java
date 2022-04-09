@@ -23,6 +23,7 @@ import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseNumericToken;
 /**
  * A terminal that accepts only a particular numeric value
  * 
+ * <p>
  * This is different from a fixed string, because it will accept any encoding of the given numeric
  * value.
  */
@@ -31,10 +32,11 @@ public class AssemblyFixedNumericTerminal extends AssemblyNumericTerminal {
 
 	/**
 	 * Construct a terminal that accepts only the given numeric value
+	 * 
 	 * @param val the value to accept
 	 */
 	public AssemblyFixedNumericTerminal(long val) {
-		super("" + val, 0);
+		super("" + val, 0, null);
 		this.val = val;
 	}
 
@@ -44,16 +46,16 @@ public class AssemblyFixedNumericTerminal extends AssemblyNumericTerminal {
 	}
 
 	@Override
-	public Collection<String> getSuggestions(String got, Map<String, Long> labels) {
+	public Collection<String> getSuggestions(String got, AssemblyNumericSymbols symbols) {
 		return Collections.singleton("" + val);
 	}
 
 	@Override
 	public Collection<AssemblyParseNumericToken> match(String buffer, int pos,
-			AssemblyGrammar grammar, Map<String, Long> labels) {
+			AssemblyGrammar grammar, AssemblyNumericSymbols symbols) {
 		// TODO: Allow label substitution here? For now, no.
 		Collection<AssemblyParseNumericToken> toks =
-			new HashSet<>(super.match(buffer, pos, grammar, new HashMap<String, Long>()));
+			new HashSet<>(super.match(buffer, pos, grammar, AssemblyNumericSymbols.EMPTY));
 		Iterator<AssemblyParseNumericToken> tokit = toks.iterator();
 		while (tokit.hasNext()) {
 			AssemblyParseNumericToken tok = tokit.next();

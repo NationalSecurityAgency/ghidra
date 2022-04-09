@@ -19,19 +19,20 @@ import java.util.*;
 
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
-import ghidra.app.plugin.assembler.sleigh.util.SleighUtil;
+import ghidra.app.plugin.assembler.sleigh.util.AsmUtil;
 
 /**
- * Provides a mechanism for pruning and selecting binary assembled instructions from the results
- * of parsing textual assembly instructions. There are two opportunities: After parsing, but before
- * semantic resolution, and after resolution. In the first opportunity, filtering is optional ---
- * the user may discard any or all parse trees. The second is required, since only one instruction
- * may be placed at the desired address --- the user must select one instruction among the many
- * results, and if a mask is present, decide on a value for the omitted bits.
+ * Provides a mechanism for pruning and selecting binary assembled instructions from the results of
+ * parsing textual assembly instructions. There are two opportunities: After parsing, but before
+ * prototype generation, and after machine code generation. In the first opportunity, filtering is
+ * optional --- the user may discard any or all parse trees. The second is required, since only one
+ * instruction may be placed at the desired address --- the user must select one instruction among
+ * the many results, and if a mask is present, decide on a value for the omitted bits.
  * 
+ * <p>
  * Extensions of this class are also suitable for collecting diagnostic information about attempted
- * assemblies. For example, an implementation may employ the syntax errors in order to produce
- * code completion suggestions in a GUI.
+ * assemblies. For example, an implementation may employ the syntax errors in order to produce code
+ * completion suggestions in a GUI.
  */
 public class AssemblySelector {
 	protected Set<AssemblyParseResult> syntaxErrors = new TreeSet<>();
@@ -40,7 +41,7 @@ public class AssemblySelector {
 	/**
 	 * A comparator on instruction length (shortest first), then bits lexicographically
 	 */
-	protected Comparator<AssemblyResolvedConstructor> compareBySizeThenBits = (a, b) -> {
+	protected Comparator<AssemblyResolvedPatterns> compareBySizeThenBits = (a, b) -> {
 		int result;
 		result = a.getInstructionLength() - b.getInstructionLength();
 		if (result != 0) {
@@ -48,7 +49,7 @@ public class AssemblySelector {
 		}
 
 		result =
-			SleighUtil.compareArrays(a.getInstruction().getVals(), b.getInstruction().getVals());
+			AsmUtil.compareArrays(a.getInstruction().getVals(), b.getInstruction().getVals());
 		if (result != 0) {
 			return result;
 		}
@@ -58,16 +59,20 @@ public class AssemblySelector {
 	/**
 	 * Filter a collection of parse trees.
 	 * 
-	 * Generally, the assembly resolver considers every possible parsing of an assembly
-	 * instruction. If, for some reason, the user wishes to ignore certain trees (perhaps for
-	 * efficiency, or perhaps because a certain form of instruction is desired), entire parse
-	 * trees may be pruned here.
+	 * <p>
+	 * Generally, the assembly resolver considers every possible parsing of an assembly instruction.
+	 * If, for some reason, the user wishes to ignore certain trees (perhaps for efficiency, or
+	 * perhaps because a certain form of instruction is desired), entire parse trees may be pruned
+	 * here.
 	 * 
-	 * It's possible that no trees pass the filter. In this case, this method ought to throw an
-	 * {@link AssemblySyntaxException}. Another option is to pass the erroneous result on for semantic
-	 * analysis, in which case, the error is simply copied into an erroneous semantic result.
-	 * Depending on preferences, this may simplify the overall filtering and error-handling logic.
+	 * <p>
+	 * It is possible that no trees pass the filter. In this case, this method ought to throw an
+	 * {@link AssemblySyntaxException}. Another option is to pass the erroneous result on for
+	 * semantic analysis, in which case, the error is simply copied into an erroneous semantic
+	 * result. Depending on preferences, this may simplify the overall filtering and error-handling
+	 * logic.
 	 * 
+	 * <p>
 	 * By default, no filtering is applied. If all the trees produce syntax errors, an exception is
 	 * thrown.
 	 * 
@@ -95,10 +100,12 @@ public class AssemblySelector {
 	/**
 	 * Select an instruction from the possible results.
 	 * 
-	 * Must select precisely one resolved constructor from the results given back by the assembly
-	 * resolver. Precisely one. That means the mask of the returned result must consist of all 1s.
-	 * Also, if no selection is suitable, an exception must be thrown.
+	 * <p>
+	 * This must select precisely one resolved constructor from the results given back by the
+	 * assembly resolver. This further implies the mask of the returned result must consist of all
+	 * 1s. If no selection is suitable, this must throw an exception.
 	 * 
+	 * <p>
 	 * By default, this method selects the shortest instruction that is compatible with the given
 	 * context and takes 0 for bits that fall outside the mask. If all possible resolutions produce
 	 * errors, an exception is thrown.
@@ -106,18 +113,18 @@ public class AssemblySelector {
 	 * @param rr the collection of resolved constructors
 	 * @param ctx the applicable context.
 	 * @return a single resolved constructor with a full instruction mask.
-	 * @throws AssemblySemanticException 
+	 * @throws AssemblySemanticException
 	 */
-	public AssemblyResolvedConstructor select(AssemblyResolutionResults rr,
+	public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
 			AssemblyPatternBlock ctx) throws AssemblySemanticException {
-		List<AssemblyResolvedConstructor> sorted = new ArrayList<>();
+		List<AssemblyResolvedPatterns> sorted = new ArrayList<>();
 		// Select only non-erroneous results whose contexts are compatible.
 		for (AssemblyResolution ar : rr) {
 			if (ar.isError()) {
 				semanticErrors.add((AssemblyResolvedError) ar);
 				continue;
 			}
-			AssemblyResolvedConstructor rc = (AssemblyResolvedConstructor) ar;
+			AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) ar;
 			sorted.add(rc);
 		}
 		if (sorted.isEmpty()) {
@@ -127,9 +134,9 @@ public class AssemblySelector {
 		sorted.sort(compareBySizeThenBits);
 
 		// Pick just the first
-		AssemblyResolvedConstructor res = sorted.get(0);
+		AssemblyResolvedPatterns res = sorted.get(0);
 		// Just set the mask to ffs (effectively choosing 0 for the omitted bits)
 		return AssemblyResolution.resolved(res.getInstruction().fillMask(), res.getContext(),
-			"Selected", null);
+			"Selected", null, null, null);
 	}
 }

@@ -15,20 +15,21 @@
  */
 package ghidra.app.plugin.assembler.sleigh.util;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 
 /**
- * Utilities for {@link Collection}s
+ * Utilities for the Assembler
  */
-public class SleighUtil {
+public class AsmUtil {
 	/**
 	 * Compare two collections by their corresponding elements in order
 	 * 
-	 * If the collections have differing sizes, the ordering does not matter. The smaller
-	 * collection precedes the larger. Otherwise, each corresponding pair of elements are compared.
-	 * Once an unequal pair is found, the collections are ordered by those elements. This is
-	 * analogous to {@link String} comparison.
+	 * <p>
+	 * If the collections have differing sizes, the ordering does not matter. The smaller collection
+	 * precedes the larger. Otherwise, each corresponding pair of elements are compared. Once an
+	 * unequal pair is found, the collections are ordered by those elements. This is analogous to
+	 * {@link String} comparison.
+	 * 
 	 * @param a the first set
 	 * @param b the second set
 	 * @return a comparison result as in {@link Comparable#compareTo(Object)}
@@ -53,8 +54,10 @@ public class SleighUtil {
 	/**
 	 * Compare two byte arrays by their corresponding entries
 	 * 
+	 * <p>
 	 * If the two arrays have differing lengths, the shorter precedes the longer. Otherwise, they
 	 * are compared as in C's {@code memcmp}, except that Java {@code byte}s are signed.
+	 * 
 	 * @param a the first array
 	 * @param b the second array
 	 * @return a comparison result as in {@link Comparable#compareTo(Object)}
@@ -74,4 +77,22 @@ public class SleighUtil {
 		return 0;
 	}
 
+	/**
+	 * Extend a list with the given item
+	 * 
+	 * <p>
+	 * Used in functional style when the list is immutable.
+	 * 
+	 * @param <T> the type of elements
+	 * @param list the list
+	 * @param ext the additional item
+	 * @return an immutable copy of the list with the given item appended
+	 */
+	public static <T> List<T> extendList(List<T> list, T ext) {
+		@SuppressWarnings("unchecked")
+		T[] arr = (T[]) new Object[list.size() + 1];
+		list.toArray(arr);
+		arr[list.size()] = ext;
+		return List.of(arr);
+	}
 }

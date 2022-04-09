@@ -158,9 +158,6 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		};
 	}
 
-	/**
-	 * @see javax.swing.CellEditor#getCellEditorValue()
-	 */
 	@Override
 	public Object getCellEditorValue() {
 		return selectionField.getSelectedValue();
@@ -251,7 +248,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 	/**
 	 * Removes a previously added document listener.
-	 * @param listener the listener to remove.s
+	 * @param listener the listener to remove.
 	 */
 	public void removeDocumentListener(DocumentListener listener) {
 		selectionField.getDocument().removeDocumentListener(listener);

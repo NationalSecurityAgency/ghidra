@@ -15,12 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh.grammars;
 
-import java.util.List;
-
-import org.apache.commons.collections4.list.AbstractListDecorator;
-
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNonTerminal;
-import ghidra.app.plugin.assembler.sleigh.symbol.AssemblySymbol;
 
 /**
  * Defines a production in a context-free grammar, usually for parsing mnemonic assembly
@@ -29,7 +24,6 @@ import ghidra.app.plugin.assembler.sleigh.symbol.AssemblySymbol;
  * @param <NT> the type of non-terminals
  */
 public abstract class AbstractAssemblyProduction<NT extends AssemblyNonTerminal>
-		extends AbstractListDecorator<AssemblySymbol>
 		implements Comparable<AbstractAssemblyProduction<NT>> {
 	private final NT lhs;
 	private final AssemblySentential<NT> rhs;
@@ -38,6 +32,7 @@ public abstract class AbstractAssemblyProduction<NT extends AssemblyNonTerminal>
 
 	/**
 	 * Construct a production with the given LHS and RHS
+	 * 
 	 * @param lhs the left-hand side
 	 * @param rhs the right-hand side
 	 */
@@ -47,16 +42,13 @@ public abstract class AbstractAssemblyProduction<NT extends AssemblyNonTerminal>
 		this.rhs = rhs;
 	}
 
-	@Override
-	protected List<AssemblySymbol> decorated() {
-		return rhs;
-	}
-
 	/**
 	 * Get the index of the production
 	 * 
-	 * Instead of using deep comparison, the index is often used as the identify of the production
+	 * <p>
+	 * Instead of using deep comparison, the index is often used as the identity of the production
 	 * within a grammar.
+	 * 
 	 * @return the index
 	 */
 	public int getIndex() {
@@ -65,6 +57,7 @@ public abstract class AbstractAssemblyProduction<NT extends AssemblyNonTerminal>
 
 	/**
 	 * Get the left-hand side
+	 * 
 	 * @return the LHS
 	 */
 	public NT getLHS() {
@@ -73,6 +66,7 @@ public abstract class AbstractAssemblyProduction<NT extends AssemblyNonTerminal>
 
 	/**
 	 * Get the right-hand side
+	 * 
 	 * @return the RHS
 	 */
 	public AssemblySentential<NT> getRHS() {
@@ -123,15 +117,12 @@ public abstract class AbstractAssemblyProduction<NT extends AssemblyNonTerminal>
 		return result;
 	}
 
-	@Override
-	public AssemblySentential<NT> subList(int fromIndex, int toIndex) {
-		return rhs.subList(fromIndex, toIndex);
-	}
-
 	/**
 	 * Get the "name" of this production
 	 * 
+	 * <p>
 	 * This is mostly just notional and for debugging. The name is taken as the name of the LHS.
+	 * 
 	 * @return the name of the LHS
 	 */
 	public String getName() {

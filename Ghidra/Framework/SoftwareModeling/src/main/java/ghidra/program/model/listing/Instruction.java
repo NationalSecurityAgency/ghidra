@@ -198,11 +198,6 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * Get an array of PCode operations (micro code) that this instruction
 	 * performs.  NOTE: If includeOverrides is true, unique temporary varnodes
 	 * may be produced which vary in size to those produced for other instructions.
-	 * If your analysis is sensitive to this you should consider using 
-	 * {@link InstructionPrototype#getPcode(InstructionContext, PcodeOverride, UniqueAddressFactory)}
-	 * instead with your own {@link UniqueAddressFactory} to prevent duplication within 
-	 * your scope of analysis.
-	 * by this method may not be suitable for use with certain analysis
 	 * @param includeOverrides if true any flow overrides will be factored
 	 * into generated pcode.  
 	 * @return an array of Pcode operations,
