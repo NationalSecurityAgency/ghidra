@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -65,22 +65,7 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 	private List<RelocationInfo> externalRelocations = new ArrayList<RelocationInfo>();
 	private List<RelocationInfo> localRelocations = new ArrayList<RelocationInfo>();
 
-	static DynamicSymbolTableCommand createDynamicSymbolTableCommand(
-			FactoryBundledWithBinaryReader reader, MachHeader header) throws IOException {
-		DynamicSymbolTableCommand command =
-			(DynamicSymbolTableCommand) reader.getFactory().create(DynamicSymbolTableCommand.class);
-		command.initDynamicSymbolTableCommand(reader, header);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DynamicSymbolTableCommand() {
-	}
-
-	private void initDynamicSymbolTableCommand(FactoryBundledWithBinaryReader reader,
-			MachHeader header) throws IOException {
+	DynamicSymbolTableCommand(BinaryReader reader, MachHeader header) throws IOException {
 		initLoadCommand(reader);
 
 		ilocalsym = reader.readNextInt();
@@ -107,19 +92,19 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 		if (tocoff > 0) {
 			reader.setPointerIndex(header.getStartIndex() + tocoff);
 			for (int i = 0; i < ntoc; ++i) {
-				tocList.add(TableOfContents.createTableOfContents(reader));
+				tocList.add(new TableOfContents(reader));
 			}
 		}
 		if (modtaboff > 0) {
 			reader.setPointerIndex(header.getStartIndex() + modtaboff);
 			for (int i = 0; i < nmodtab; ++i) {
-				moduleList.add(DynamicLibraryModule.createDynamicLibraryModule(reader, header));
+				moduleList.add(new DynamicLibraryModule(reader, header));
 			}
 		}
 		if (extrefsymoff > 0) {
 			reader.setPointerIndex(header.getStartIndex() + extrefsymoff);
 			for (int i = 0; i < nextrefsyms; ++i) {
-				referencedList.add(DynamicLibraryReference.createDynamicLibraryReference(reader));
+				referencedList.add(new DynamicLibraryReference(reader));
 			}
 		}
 		if (indirectsymoff > 0) {
@@ -132,13 +117,13 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 		if (extreloff > 0) {
 			reader.setPointerIndex(header.getStartIndex() + extreloff);
 			for (int i = 0; i < nextrel; ++i) {
-				externalRelocations.add(RelocationInfo.createRelocationInfo(reader));
+				externalRelocations.add(new RelocationInfo(reader));
 			}
 		}
 		if (locreloff > 0) {
 			reader.setPointerIndex(header.getStartIndex() + locreloff);
 			for (int i = 0; i < nlocrel; ++i) {
-				localRelocations.add(RelocationInfo.createRelocationInfo(reader));
+				localRelocations.add(new RelocationInfo(reader));
 			}
 		}
 

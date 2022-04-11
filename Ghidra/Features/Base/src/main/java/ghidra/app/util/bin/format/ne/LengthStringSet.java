@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
  */
 package ghidra.app.util.bin.format.ne;
 
-import ghidra.app.util.bin.format.*;
-import ghidra.util.Conv;
-
 import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.util.Conv;
 
 /**
  * A class to store a length/string set,
@@ -38,7 +37,7 @@ public class LengthStringSet {
      * Constructs a new length/string set.
      * @param reader the binary reader
      */
-    LengthStringSet(FactoryBundledWithBinaryReader reader) throws IOException {
+	LengthStringSet(BinaryReader reader) throws IOException {
         index = reader.getPointerIndex();
 
         length = reader.readNextByte();

@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -36,22 +36,9 @@ import ghidra.util.task.TaskMonitor;
 public class RunPathCommand extends LoadCommand {
 	private LoadCommandString path;
 
-	static RunPathCommand createRunPathCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		RunPathCommand command = (RunPathCommand) reader.getFactory().create(RunPathCommand.class);
-		command.initRunPathCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public RunPathCommand() {
-	}
-
-	private void initRunPathCommand(FactoryBundledWithBinaryReader reader) throws IOException {
+	RunPathCommand(BinaryReader reader) throws IOException {
 		initLoadCommand(reader);
-		path = LoadCommandString.createLoadCommandString(reader, this);
+		path = new LoadCommandString(reader, this);
 	}
 
 	public LoadCommandString getPath() {

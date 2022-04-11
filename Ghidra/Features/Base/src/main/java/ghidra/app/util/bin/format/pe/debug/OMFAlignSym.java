@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * A class to represent the Object Module Format (OMF) alignment symbol.
@@ -29,22 +27,11 @@ public class OMFAlignSym {
     private short length;
 	private byte [] pad;
 
-    static OMFAlignSym createOMFAlignSym(
-            FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        OMFAlignSym omfAlignSym = (OMFAlignSym) reader.getFactory().create(OMFAlignSym.class);
-        omfAlignSym.initOMFAlignSym(reader, ptr);
-        return omfAlignSym;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public OMFAlignSym() {}
-
-	private void initOMFAlignSym(FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-		length = reader.readShort(ptr); ptr+=BinaryReader.SIZEOF_SHORT;
+	OMFAlignSym(BinaryReader reader, int ptr) throws IOException {
+		length = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
 		pad = reader.readByteArray(ptr, length);
-	}
+    }
 
 	/**
 	 * Returns the alignment padding bytes.

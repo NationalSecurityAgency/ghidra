@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
@@ -53,8 +52,8 @@ public class DyldCacheDylibExtractor {
 			int index, FSRL fsrl, TaskMonitor monitor) throws IOException, MachException {
 
 		// Make sure Mach-O header is valid
-		MachHeader dylibHeader = MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE,
-			splitDyldCache.getProvider(index), dylibOffset, false);
+		MachHeader dylibHeader =
+			new MachHeader(splitDyldCache.getProvider(index), dylibOffset, false);
 		dylibHeader.parse();
 
 		// Pack the DYLIB

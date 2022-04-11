@@ -22,7 +22,6 @@ import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.jdom.JDOMException;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.app.util.bin.format.macho.MachException;
@@ -51,8 +50,7 @@ public class MachoPrelinkUtils {
 			throws IOException, JDOMException {
 
 		try {
-			MachHeader mainHeader =
-				MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider);
+			MachHeader mainHeader = new MachHeader(provider);
 			mainHeader.parse(); // make sure first Mach-O header is valid....
 
 			monitor.setMessage("Parsing PRELINK XML...");
@@ -77,8 +75,7 @@ public class MachoPrelinkUtils {
 			throws IOException, JDOMException {
 
 		try {
-			MachHeader mainHeader =
-				MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider);
+			MachHeader mainHeader = new MachHeader(provider);
 			mainHeader.parse(); // make sure first Mach-O header is valid....
 
 			DyldChainedFixupsCommand cmd =
@@ -187,8 +184,7 @@ public class MachoPrelinkUtils {
 					"Using PrelinkExecutableLoadAddr to find Mach-O offsets (%d modules found)",
 					machoHeaderOffsets.size()));
 
-			MachHeader machoHeader =
-				MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider, 0, true);
+			MachHeader machoHeader = new MachHeader(provider, 0, true);
 			machoHeader.parse();
 			long prelinkStart = MachoPrelinkUtils.getPrelinkStartAddr(machoHeader);
 			for (PrelinkMap info : prelinkList) {

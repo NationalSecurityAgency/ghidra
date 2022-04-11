@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.ne;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.address.SegmentedAddress;
 import ghidra.program.model.address.SegmentedAddressSpace;
 import ghidra.util.Conv;
@@ -29,8 +29,8 @@ import ghidra.util.Conv;
 public class SegmentTable {
     private Segment [] segments;
 
-	SegmentTable(FactoryBundledWithBinaryReader reader, SegmentedAddress baseAddr, short index,
-			short segmentCount, short shiftAlignCount) throws IOException {
+	SegmentTable(BinaryReader reader, SegmentedAddress baseAddr, short index, short segmentCount,
+			short shiftAlignCount) throws IOException {
         long oldIndex = reader.getPointerIndex();
         reader.setPointerIndex(Conv.shortToInt(index));
 

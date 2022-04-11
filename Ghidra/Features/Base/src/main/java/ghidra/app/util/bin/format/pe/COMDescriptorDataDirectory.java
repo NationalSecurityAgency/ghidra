@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -35,23 +35,7 @@ public class COMDescriptorDataDirectory extends DataDirectory {
 
 	private ImageCor20Header header;
 
-	static COMDescriptorDataDirectory createCOMDescriptorDataDirectory(NTHeader ntHeader,
-			FactoryBundledWithBinaryReader reader) throws IOException {
-		COMDescriptorDataDirectory comDescriptorDataDirectory =
-			(COMDescriptorDataDirectory) reader.getFactory().create(
-				COMDescriptorDataDirectory.class);
-		comDescriptorDataDirectory.initCOMDescriptorDataDirectory(ntHeader, reader);
-		return comDescriptorDataDirectory;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public COMDescriptorDataDirectory() {
-	}
-
-	private void initCOMDescriptorDataDirectory(NTHeader ntHeader,
-			FactoryBundledWithBinaryReader reader) throws IOException {
+	COMDescriptorDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		this.ntHeader = ntHeader;
 		processDataDirectory(ntHeader, reader);
 	}
@@ -72,7 +56,7 @@ public class COMDescriptorDataDirectory extends DataDirectory {
 			return false;
 		}
 
-		header = ImageCor20Header.createImageCor20Header(reader, ptr, ntHeader);
+		header = new ImageCor20Header(reader, ptr, ntHeader);
 
 		boolean ret = false;
 		if (ntHeader.shouldParseCliHeaders()) {

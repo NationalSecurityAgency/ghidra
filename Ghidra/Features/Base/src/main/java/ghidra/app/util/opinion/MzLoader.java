@@ -19,16 +19,13 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
-import generic.continues.ContinuesFactory;
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.mz.OldStyleExecutable;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
@@ -69,7 +66,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		if (provider.length() < MIN_BYTE_LENGTH) {
 			return loadSpecs;
 		}
-		OldStyleExecutable ose = new OldStyleExecutable(RethrowContinuesFactory.INSTANCE, provider);
+		OldStyleExecutable ose = new OldStyleExecutable(provider);
 		DOSHeader dos = ose.getDOSHeader();
 		if (dos.isDosSignature() && !dos.hasNewExeHeader() && !dos.hasPeHeader()) {
 			List<QueryResult> results =
@@ -100,10 +97,9 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		ProgramContext context = prog.getProgramContext();
 		Memory memory = prog.getMemory();
 
-		ContinuesFactory factory = MessageLogContinuesFactory.create(log);
-		OldStyleExecutable ose = new OldStyleExecutable(factory, provider);
+		OldStyleExecutable ose = new OldStyleExecutable(provider);
 		DOSHeader dos = ose.getDOSHeader();
-		FactoryBundledWithBinaryReader reader = ose.getBinaryReader();
+		BinaryReader reader = ose.getBinaryReader();
 
 		if (monitor.isCancelled()) {
 			return;
@@ -249,8 +245,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private void processSegments(Program program, FileBytes fileBytes, SegmentedAddressSpace space,
-			FactoryBundledWithBinaryReader reader, DOSHeader dos, MessageLog log,
-			TaskMonitor monitor) {
+			BinaryReader reader, DOSHeader dos, MessageLog log, TaskMonitor monitor) {
 		try {
 			int relocationTableOffset = Conv.shortToInt(dos.e_lfarlc());
 			int csStart = INITIAL_SEGMENT_VAL;
@@ -349,7 +344,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void doRelocations(Program prog, FactoryBundledWithBinaryReader reader, DOSHeader dos) {
+	private void doRelocations(Program prog, BinaryReader reader, DOSHeader dos) {
 		try {
 			Memory mem = prog.getMemory();
 			SegmentedAddressSpace space =

@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -36,23 +36,9 @@ import ghidra.util.task.TaskMonitor;
 public class SubUmbrellaCommand extends LoadCommand {
 	private LoadCommandString sub_umbrella;
 
-	static SubUmbrellaCommand createSubUmbrellaCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		SubUmbrellaCommand command =
-			(SubUmbrellaCommand) reader.getFactory().create(SubUmbrellaCommand.class);
-		command.initSubUmbrellaCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public SubUmbrellaCommand() {
-	}
-
-	private void initSubUmbrellaCommand(FactoryBundledWithBinaryReader reader) throws IOException {
+	SubUmbrellaCommand(BinaryReader reader) throws IOException {
 		initLoadCommand(reader);
-		sub_umbrella = LoadCommandString.createLoadCommandString(reader, this);
+		sub_umbrella = new LoadCommandString(reader, this);
 	}
 
 	public LoadCommandString getSubUmbrellaFrameworkName() {

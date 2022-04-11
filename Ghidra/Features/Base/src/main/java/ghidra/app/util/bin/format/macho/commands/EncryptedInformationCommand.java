@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -40,26 +40,10 @@ public class EncryptedInformationCommand extends LoadCommand {
 	
 	private boolean is32bit;
 
-	static EncryptedInformationCommand createEncryptedInformationCommand(
-			FactoryBundledWithBinaryReader reader, boolean is32bit) throws IOException {
-		EncryptedInformationCommand command =
-			(EncryptedInformationCommand) reader.getFactory().create(
-				EncryptedInformationCommand.class);
-		command.initEncryptedInformationCommand(reader, is32bit);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public EncryptedInformationCommand() {
-	}
-
-	private void initEncryptedInformationCommand(FactoryBundledWithBinaryReader reader,
-			boolean is32bit) throws IOException {
+	EncryptedInformationCommand(BinaryReader reader, boolean is32bit) throws IOException {
 		initLoadCommand(reader);
 		this.is32bit = is32bit;
-		
+
 		cryptoff = reader.readNextInt();
 		cryptsize = reader.readNextInt();
 		cryptid = reader.readNextInt();

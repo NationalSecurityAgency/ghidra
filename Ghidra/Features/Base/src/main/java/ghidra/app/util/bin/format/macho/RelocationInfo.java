@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.macho;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -72,19 +72,7 @@ public class RelocationInfo implements StructConverter {
 	 */
 	private int r_type;
 
-	public static RelocationInfo createRelocationInfo(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		RelocationInfo relocationInfo =
-			(RelocationInfo) reader.getFactory().create(RelocationInfo.class);
-		relocationInfo.initRelocationInfo(reader);
-		return relocationInfo;
-	}
-
-	public RelocationInfo() {
-	}
-
-	private void initRelocationInfo(FactoryBundledWithBinaryReader reader) throws IOException {
-
+	public RelocationInfo(BinaryReader reader) throws IOException {
 		int i1 = reader.readNextInt();
 		int i2 = reader.readNextInt();
 

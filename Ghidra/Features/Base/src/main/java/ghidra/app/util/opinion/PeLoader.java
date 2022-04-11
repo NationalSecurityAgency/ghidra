@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
-import generic.continues.GenericFactory;
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
@@ -33,7 +31,6 @@ import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -79,8 +76,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return loadSpecs;
 		}
 
-		PortableExecutable pe = PortableExecutable.createPortableExecutable(
-			RethrowContinuesFactory.INSTANCE, provider, SectionLayout.FILE, false, false);
+		PortableExecutable pe = new PortableExecutable(provider, SectionLayout.FILE, false, false);
 		NTHeader ntHeader = pe.getNTHeader();
 		if (ntHeader != null && ntHeader.getOptionalHeader() != null) {
 			long imageBase = ntHeader.getOptionalHeader().getImageBase();
@@ -106,9 +102,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		GenericFactory factory = MessageLogContinuesFactory.create(log);
-		PortableExecutable pe = PortableExecutable.createPortableExecutable(factory, provider,
-			SectionLayout.FILE, false, shouldParseCliHeaders(options));
+		PortableExecutable pe = new PortableExecutable(provider, SectionLayout.FILE, false,
+			shouldParseCliHeaders(options));
 
 		NTHeader ntHeader = pe.getNTHeader();
 		if (ntHeader == null) {

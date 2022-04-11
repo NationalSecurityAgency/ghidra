@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,9 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.format.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * 
@@ -27,19 +26,7 @@ import java.io.*;
 class S_ALIGN extends DebugSymbol {
     private byte [] pad;
 
-    static S_ALIGN createS_ALIGN(short length, short type,
-            FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        S_ALIGN s_align = (S_ALIGN) reader.getFactory().create(S_ALIGN.class);
-        s_align.initS_ALIGN(length, type, reader, ptr);
-        return s_align;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public S_ALIGN() {}
-
-	private void initS_ALIGN(short length, short type, FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
+	S_ALIGN(short length, short type, BinaryReader reader, int ptr) throws IOException {
 		processDebugSymbol(length, type);
 
 		if (type != DebugCodeViewConstants.S_ALIGN) {

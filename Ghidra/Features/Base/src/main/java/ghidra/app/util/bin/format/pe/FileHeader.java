@@ -20,8 +20,8 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.pe.ImageRuntimeFunctionEntries._IMAGE_RUNTIME_FUNCTION_ENTRY;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbolAux;
@@ -182,25 +182,11 @@ public class FileHeader implements StructConverter {
 	// TODO: This is x86-64 architecture-specific and needs to be generalized.
 	private List<_IMAGE_RUNTIME_FUNCTION_ENTRY> irfes = new ArrayList<>();
 
-	private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
 	private int startIndex;
 	private NTHeader ntHeader;
 
-	static FileHeader createFileHeader(FactoryBundledWithBinaryReader reader, int startIndex,
-			NTHeader ntHeader) throws IOException {
-		FileHeader fileHeader = (FileHeader) reader.getFactory().create(FileHeader.class);
-		fileHeader.initFileHeader(reader, startIndex, ntHeader);
-		return fileHeader;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public FileHeader() {
-	}
-
-	private void initFileHeader(FactoryBundledWithBinaryReader reader, int startIndex,
-			NTHeader ntHeader) throws IOException {
+	FileHeader(BinaryReader reader, int startIndex, NTHeader ntHeader) throws IOException {
 		this.reader = reader;
 		this.startIndex = startIndex;
 		this.ntHeader = ntHeader;
@@ -417,7 +403,7 @@ public class FileHeader implements StructConverter {
 		reader.setPointerIndex(start);
 
 		ImageRuntimeFunctionEntries entries =
-			ImageRuntimeFunctionEntries.createImageRuntimeFunctionEntries(reader, start, ntHeader);
+			new ImageRuntimeFunctionEntries(reader, start, ntHeader);
 		irfes = entries.getRuntimeFunctionEntries();
 
 		reader.setPointerIndex(oldIndex);
@@ -452,8 +438,7 @@ public class FileHeader implements StructConverter {
 				break;
 			}
 
-			DebugCOFFSymbol symbol =
-				DebugCOFFSymbol.createDebugCOFFSymbol(reader, tmpIndex, stringTableOffset);
+			DebugCOFFSymbol symbol = new DebugCOFFSymbol(reader, tmpIndex, stringTableOffset);
 
 			tmpIndex += DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL;
 
