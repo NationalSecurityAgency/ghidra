@@ -396,9 +396,13 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		Memory mem = buf.getMemory();
 
-		// FIXME! Use signed offset for relative, unsigned by default
+		boolean signedOffset = false;
+		PointerType pointerType = PointerTypeSettingsDefinition.DEF.getType(settings);
+		if (pointerType == PointerType.RELATIVE) {
+			signedOffset = true;
+		}
 
-		Long offset = getStoredOffset(buf, size);
+		Long offset = getStoredOffset(buf, size, signedOffset);
 		if (offset == null) {
 			errorHandler.accept("Insufficient data");
 			return null;
@@ -413,20 +417,24 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		int shift = (int) OffsetShiftSettingsDefinition.DEF.getValue(settings);
 		if (shift < 0) {
-			addrOffset >>>= -shift; // avoid sign-extension
+			if (signedOffset) {
+				addrOffset >>= -shift; // signed right-shift
+			}
+			else {
+				addrOffset >>>= -shift; // unsigned right-shift
+			}
 		}
 		else {
-			addrOffset <<= shift;
+			addrOffset <<= shift; // left-shift
 		}
 
 		try {
-			PointerType choice = PointerTypeSettingsDefinition.DEF.getType(settings);
-			if (choice != PointerType.DEFAULT && spaceName != null) {
+			if (pointerType != PointerType.DEFAULT && spaceName != null) {
 				errorHandler.accept("Address Space and Pointer Type settings conflict");
 				return null;
 			}
 			// Address space setting ignored if Pointer Type has been specified
-			if (choice == PointerType.IMAGE_BASE_RELATIVE) {
+			if (pointerType == PointerType.IMAGE_BASE_RELATIVE) {
 				if (addrOffset == 0) {
 					// Done for consistency with old ImageBaseOffsetDataType.
 					// A 0 relative offset is considerd invalid (NaP)
@@ -440,13 +448,13 @@ public class PointerDataType extends BuiltIn implements Pointer {
 				targetSpace = imageBase.getAddressSpace();
 				return imageBase.addWrap(addrOffset * targetSpace.getAddressableUnitSize());
 			}
-			else if (choice == PointerType.RELATIVE) {
+			else if (pointerType == PointerType.RELATIVE) {
 				// must ignore AddressSpaceSettingsDefinition
 				Address base = buf.getAddress();
 				targetSpace = base.getAddressSpace();
 				return base.addWrap(addrOffset * targetSpace.getAddressableUnitSize());
 			}
-			else if (choice == PointerType.FILE_OFFSET) {
+			else if (pointerType == PointerType.FILE_OFFSET) {
 				if (mem == null) {
 					errorHandler.accept("Memory not specified");
 				}
@@ -469,8 +477,8 @@ public class PointerDataType extends BuiltIn implements Pointer {
 				}
 				return null;
 			}
-			else if (choice != PointerType.DEFAULT) {
-				errorHandler.accept("Unsupported pointer type: " + choice.toString());
+			else if (pointerType != PointerType.DEFAULT) {
+				errorHandler.accept("Unsupported pointer type: " + pointerType.toString());
 				return null;
 			}
 
@@ -503,6 +511,8 @@ public class PointerDataType extends BuiltIn implements Pointer {
 				return getSegmentedAddressValue(buf, size, addrOffset);
 			}
 
+			// addrOffset treated as word offset when targetSpace addressable unitsize > 1
+			// TODO: May need setting to force treatment as byte-offset
 			return targetSpace.getAddress(addrOffset, true);
 		}
 		catch (IllegalArgumentException | AddressOutOfBoundsException e) {
@@ -519,24 +529,30 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	}
 
 	/**
-	 * Get signed offset value based upon bytes stored at the specified buf
-	 * location
+	 * Get an offset value based upon bytes stored at the specified buf
+	 * location.
 	 * 
 	 * @param buf         memory buffer and stored pointer location
 	 * @param size        store pointer size in bytes
+	 * @param signed      true if signed offset or false for unsigned
 	 * @return stored offset value or null if unusable buf or data
 	 */
-	private static Long getStoredOffset(MemBuffer buf, int size) {
+	private static Long getStoredOffset(MemBuffer buf, int size, boolean signed) {
 		byte[] bytes = new byte[size];
 		if (buf.getBytes(bytes, 0) != size) {
 			return null;
 		}
-		return DataConverter.getInstance(buf.isBigEndian()).getSignedValue(bytes, size);
+		DataConverter converter = DataConverter.getInstance(buf.isBigEndian());
+		if (signed) {
+			return converter.getSignedValue(bytes, size);
+		}
+		return converter.getValue(bytes, size);
 	}
 
 	/**
 	 * Generate an address value based upon bytes stored at the specified buf
-	 * location
+	 * location.  The stored bytes will be interpreted as an unsigned byte 
+	 * offset into the specified targetSpace.
 	 * 
 	 * @param buf         memory buffer and stored pointer location
 	 * @param size        pointer size in bytes
@@ -549,9 +565,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return null;
 		}
 
-		// FIXME! Use signed offset for relative, unsigned by default
-
-		Long offset = getStoredOffset(buf, size);
+		Long offset = getStoredOffset(buf, size, false);
 		if (offset == null) {
 			// Insufficient bytes
 			return null;
