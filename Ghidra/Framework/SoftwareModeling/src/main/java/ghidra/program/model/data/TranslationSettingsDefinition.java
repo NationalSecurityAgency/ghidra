@@ -18,6 +18,11 @@ package ghidra.program.model.data;
 import ghidra.docking.settings.JavaEnumSettingsDefinition;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION_ENUM;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.util.PropertyMapManager;
+import ghidra.program.model.util.StringPropertyMap;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  *  SettingsDefinition for translation display, handles both the toggle of
@@ -47,11 +52,6 @@ public class TranslationSettingsDefinition extends JavaEnumSettingsDefinition<TR
 	}
 
 	/**
-	 * 'hidden' setting that stores the translated string value.
-	 */
-	private static final String TRANSLATED_VALUE_SETTING_NAME = "translation";
-
-	/**
 	 * setting that stores the boolean toggle state for "show original" / "show translated"
 	 */
 	private static final String SHOW_TRANSLATED_TOGGLE_SETTING_NAME = "translated";
@@ -70,33 +70,89 @@ public class TranslationSettingsDefinition extends JavaEnumSettingsDefinition<TR
 				: TRANSLATION_ENUM.SHOW_ORIGINAL);
 	}
 
-	public boolean hasTranslatedValue(Settings settings) {
-		return settings.getString(TRANSLATED_VALUE_SETTING_NAME) != null;
+	/*
+	 * Helper methods for managing stored translated string values using a Property Map named "StringTranslations".
+	 * Deprecated use of settings map will continue to be checked if value in property map not found
+	 */
+
+	public static String TRANSLATION_PROPERTY_MAP_NAME = "StringTranslations";
+
+	private static final String DEPRECATED_TRANSLATED_VALUE_SETTING_NAME = "translation";
+
+	/**
+	 * Determine if a translated string value has been set at the specified address.
+	 * @param data defined string data which may have a translation
+	 * @return true if translated string has been stored else false
+	 */
+	public boolean hasTranslatedValue(Data data) {
+		Program p = data.getProgram();
+		PropertyMapManager propertyMapManager = p.getUsrPropertyManager();
+		StringPropertyMap translationMap =
+			propertyMapManager.getStringPropertyMap(TRANSLATION_PROPERTY_MAP_NAME);
+		boolean hasValue = false;
+		if (translationMap != null) {
+			hasValue = translationMap.hasProperty(data.getAddress());
+		}
+		if (!hasValue) {
+			// check for deprecated settings-based value
+			Data d = p.getListing().getDefinedDataAt(data.getAddress());
+			hasValue = d != null ? d.hasProperty(DEPRECATED_TRANSLATED_VALUE_SETTING_NAME) : false;
+		}
+		return hasValue;
 	}
 
-	public String getTranslatedValue(Settings settings) {
-		return settings.getString(TRANSLATED_VALUE_SETTING_NAME);
+	/**
+	 * Get the translated string value which been set at the specified address.
+	 * @param data defined string data which may have a translation
+	 * @return translated string value or null
+	 */
+	public String getTranslatedValue(Data data) {
+		Program p = data.getProgram();
+		PropertyMapManager propertyMapManager = p.getUsrPropertyManager();
+		StringPropertyMap translationMap =
+			propertyMapManager.getStringPropertyMap(TRANSLATION_PROPERTY_MAP_NAME);
+		String value = null;
+		if (translationMap != null) {
+			value = translationMap.getString(data.getAddress());
+		}
+		if (value == null) {
+			// check for deprecated settings-based value
+			Data d = p.getListing().getDefinedDataAt(data.getAddress());
+			value = d != null ? d.getString(DEPRECATED_TRANSLATED_VALUE_SETTING_NAME) : null;
+		}
+		return value;
 	}
 
-	public void setTranslatedValue(Settings settings, String translatedValue) {
-		settings.setString(TRANSLATED_VALUE_SETTING_NAME, translatedValue);
-	}
-
-	@Override
-	public void clear(Settings settings) {
-		super.clear(settings);
-		settings.clearSetting(TRANSLATED_VALUE_SETTING_NAME);
-	}
-
-	@Override
-	public void copySetting(Settings srcSettings, Settings destSettings) {
-		super.copySetting(srcSettings, destSettings);
-		String translated = srcSettings.getString(TRANSLATED_VALUE_SETTING_NAME);
-		if (translated == null) {
-			destSettings.clearSetting(TRANSLATED_VALUE_SETTING_NAME);
+	/**
+	 * Set the translated string value at the specified address.
+	 * @param data defined string data which may have a translation
+	 * @param translatedValue translated string value or null to clear
+	 */
+	public void setTranslatedValue(Data data, String translatedValue) {
+		Program p = data.getProgram();
+		PropertyMapManager propertyMapManager = p.getUsrPropertyManager();
+		StringPropertyMap translationMap =
+			propertyMapManager.getStringPropertyMap(TRANSLATION_PROPERTY_MAP_NAME);
+		if (translationMap == null) {
+			try {
+				translationMap =
+					propertyMapManager.createStringPropertyMap(TRANSLATION_PROPERTY_MAP_NAME);
+			}
+			catch (DuplicateNameException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		Data d = p.getListing().getDefinedDataAt(data.getAddress());
+		if (d != null) {
+			// clear deprecated settings-based value
+			d.clearSetting(DEPRECATED_TRANSLATED_VALUE_SETTING_NAME);
+		}
+		if (translatedValue == null) {
+			translationMap.remove(data.getAddress());
 		}
 		else {
-			destSettings.setString(TRANSLATED_VALUE_SETTING_NAME, translated);
+			translationMap.add(data.getAddress(), translatedValue);
 		}
 	}
+
 }

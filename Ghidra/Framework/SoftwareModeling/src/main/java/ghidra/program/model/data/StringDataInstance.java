@@ -15,10 +15,10 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.EndianSettingsDefinition.ENDIAN;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
+import static ghidra.program.model.data.EndianSettingsDefinition.*;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
 import static ghidra.program.model.data.StringLayoutEnum.*;
-import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
+import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import java.nio.*;
 import java.nio.charset.*;
@@ -300,11 +300,37 @@ public class StringDataInstance {
 				? StringLayoutEnum.NULL_TERMINATED_BOUNDED
 				: getLayoutFromDataType(dataType);
 		this.showTranslation = TRANSLATION.isShowTranslated(settings);
-		this.translatedValue = TRANSLATION.getTranslatedValue(settings);
+		this.translatedValue = getTranslatedValue(settings, buf);
 		this.renderSetting = RENDER.getEnumValue(settings);
 		this.endianSetting = ENDIAN.getEndianess(settings, null);
 
 		this.length = length;
+	}
+
+	private static Data getData(Settings settings, MemBuffer buf) {
+		Data data = null;
+		if (settings instanceof Data) {
+			data = (Data) settings;
+			if (!data.getAddress().equals(buf.getAddress())) {
+				data = null; // address mismatch - not expected
+			}
+		}
+		else {
+			Memory mem = buf.getMemory();
+			if (mem == null) {
+				return null; // must have memory to access translation 
+			}
+			data = DataUtilities.getPrimitiveDataAtAddress(mem.getProgram(), buf.getAddress());
+		}
+		return data;
+	}
+
+	private static String getTranslatedValue(Settings settings, MemBuffer buf) {
+		Data data = getData(settings, buf);
+		if (data == null) {
+			return null;
+		}
+		return TRANSLATION.getTranslatedValue(data);
 	}
 
 	private StringDataInstance(StringDataInstance copyFrom, StringLayoutEnum newLayout,

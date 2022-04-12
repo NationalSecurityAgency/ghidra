@@ -396,6 +396,8 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		Memory mem = buf.getMemory();
 
+		// FIXME! Use signed offset for relative, unsigned by default
+
 		Long offset = getStoredOffset(buf, size);
 		if (offset == null) {
 			errorHandler.accept("Insufficient data");
@@ -547,6 +549,8 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return null;
 		}
 
+		// FIXME! Use signed offset for relative, unsigned by default
+
 		Long offset = getStoredOffset(buf, size);
 		if (offset == null) {
 			// Insufficient bytes
@@ -570,8 +574,6 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			}
 			return null;
 		}
-
-
 
 		try {
 			return targetSpace.getAddress(offset, true);
