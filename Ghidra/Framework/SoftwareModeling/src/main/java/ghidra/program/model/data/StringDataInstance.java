@@ -232,7 +232,7 @@ public class StringDataInstance {
 	private final int charSize;
 	private final int paddedCharSize;
 	private final StringLayoutEnum stringLayout;
-	private final String translatedValue;
+	private final String translatedValue; // empty string indicates no-value, null indicates not-initialized
 	private final Endian endianSetting;
 
 	private final boolean showTranslation;
@@ -307,30 +307,15 @@ public class StringDataInstance {
 		this.length = length;
 	}
 
-	private static Data getData(Settings settings, MemBuffer buf) {
-		Data data = null;
-		if (settings instanceof Data) {
-			data = (Data) settings;
-			if (!data.getAddress().equals(buf.getAddress())) {
-				data = null; // address mismatch - not expected
-			}
-		}
-		else {
-			Memory mem = buf.getMemory();
-			if (mem == null) {
-				return null; // must have memory to access translation 
-			}
-			data = DataUtilities.getPrimitiveDataAtAddress(mem.getProgram(), buf.getAddress());
-		}
-		return data;
-	}
-
 	private static String getTranslatedValue(Settings settings, MemBuffer buf) {
-		Data data = getData(settings, buf);
-		if (data == null) {
-			return null;
+		// Translation only exists for defined Data which corresponds to settings.
+		if (settings instanceof Data) {
+			Data data = (Data) settings;
+			if (data.isDefined()) {
+				return TRANSLATION.getTranslatedValue(data);
+			}
 		}
-		return TRANSLATION.getTranslatedValue(data);
+		return null;
 	}
 
 	private StringDataInstance(StringDataInstance copyFrom, StringLayoutEnum newLayout,

@@ -468,41 +468,16 @@ public final class DataUtilities {
 	 * 
 	 * @param program the program 
 	 * @param address the data address
-	 * @return the outermost Data code unit that starts at the given address or null if the address is code or offcut
+	 * @return the Data that starts at the given address or null if the address is code or offcut
 	 */
 	public static Data getDataAtAddress(Program program, Address address) {
 		if (address == null) {
 			return null;
 		}
 		Listing listing = program.getListing();
-		return listing.getDataAt(address);
-	}
-
-	/**
-	 * Get the primitive (i.e., non-composite/non-array) data at the given address.
-	 * Composites, Arrays or other types which contain components will not be returned.
-	 * @param program the program 
-	 * @param address the data address
-	 * @return the lowest-level primitive Data that starts at the given address or null.
-	 */
-	public static Data getPrimitiveDataAtAddress(Program program, Address address) {
-		Listing listing = program.getListing();
-		long componentOffset = 0;
-		Data dataContaining = listing.getDataContaining(address);
-		Data lastData = dataContaining;
-		while (dataContaining != null) {
-			componentOffset = address.subtract(dataContaining.getMinAddress());
-			if (componentOffset > Integer.MAX_VALUE) {
-				return null;
-			}
-			lastData = dataContaining;
-			dataContaining = dataContaining.getComponentContaining((int) componentOffset);
-		}
-		if (lastData != null && componentOffset == 0 && lastData.getNumComponents() == 0) {
-			DataType dt = lastData.getDataType();
-			if (!(dt instanceof Composite) && !(dt instanceof Array)) {
-				return lastData;
-			}
+		CodeUnit cu = listing.getCodeUnitAt(address);
+		if (cu instanceof Data) {
+			return (Data) cu;
 		}
 		return null;
 	}
