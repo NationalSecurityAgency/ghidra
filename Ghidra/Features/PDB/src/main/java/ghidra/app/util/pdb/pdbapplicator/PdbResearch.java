@@ -334,8 +334,8 @@ public class PdbResearch {
 	static void checkBreak(int recordNumber, MsTypeApplier applier) {
 
 		String nn = applier.getMsType().getName();
-		if ("std::__1::__map_value_compare<std::__1::basic_string<char>,std::__1::__value_type<std::__1::basic_string<char>,std::__1::basic_string<wchar_t> >,std::__1::less<void>,1>".equals(
-			nn)) {
+		if ("std::__1::__map_value_compare<std::__1::basic_string<char>,std::__1::__value_type<std::__1::basic_string<char>,std::__1::basic_string<wchar_t> >,std::__1::less<void>,1>"
+				.equals(nn)) {
 			doNothingSetBreakPointHere();
 		}
 		if ("class std::__1::__iostream_category".equals(nn)) {
@@ -411,9 +411,18 @@ public class PdbResearch {
 	//==============================================================================================
 	static void childWalk(PdbApplicator applicator, TaskMonitor monitor)
 			throws CancelledException, PdbException {
+
+		PdbDebugInfo debugInfo = applicator.getPdb().getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+
 		SymbolGroup symbolGroup = applicator.getSymbolGroup();
-		GlobalSymbolInformation globalSymbolInformation =
-			applicator.getPdb().getDebugInfo().getGlobalSymbolInformation();
+		if (symbolGroup == null) {
+			return;
+		}
+
+		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
 		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		applicator.setMonitorMessage("PDB: Applying typedefs...");
 		monitor.initialize(offsets.size());
@@ -449,6 +458,9 @@ public class PdbResearch {
 			ReferenceSymbolApplier refSymbolApplier = (ReferenceSymbolApplier) applier;
 			AbstractMsSymbolIterator refIter =
 				refSymbolApplier.getInitializedReferencedSymbolGroupIterator();
+			if (refIter == null) {
+				throw new PdbException("PDB: Referenced Symbol Error - not refIter");
+			}
 			// recursion
 			childWalkSym(applicator, refIter.getModuleNumber(), refIter);
 		}
@@ -616,10 +628,18 @@ public class PdbResearch {
 	private static void processPublicSymbols(PdbApplicator applicator,
 			Map<Address, List<Stuff>> map, TaskMonitor monitor) throws CancelledException {
 		AbstractPdb pdb = applicator.getPdb();
-		SymbolGroup symbolGroup = applicator.getSymbolGroup();
 
-		PublicSymbolInformation publicSymbolInformation =
-			pdb.getDebugInfo().getPublicSymbolInformation();
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+
+		SymbolGroup symbolGroup = applicator.getSymbolGroup();
+		if (symbolGroup == null) {
+			return;
+		}
+
+		PublicSymbolInformation publicSymbolInformation = debugInfo.getPublicSymbolInformation();
 		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		applicator.setMonitorMessage(
 			"PDB: Applying " + offsets.size() + " public symbol components...");
@@ -643,10 +663,18 @@ public class PdbResearch {
 	private static void processGlobalSymbols(PdbApplicator applicator,
 			Map<Address, List<Stuff>> map, TaskMonitor monitor) throws CancelledException {
 		AbstractPdb pdb = applicator.getPdb();
-		SymbolGroup symbolGroup = applicator.getSymbolGroup();
 
-		GlobalSymbolInformation globalSymbolInformation =
-			pdb.getDebugInfo().getGlobalSymbolInformation();
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+
+		SymbolGroup symbolGroup = applicator.getSymbolGroup();
+		if (symbolGroup == null) {
+			return;
+		}
+
+		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
 		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		applicator.setMonitorMessage("PDB: Applying global symbols...");
 		monitor.initialize(offsets.size());
@@ -669,8 +697,13 @@ public class PdbResearch {
 	private static void processModuleSymbols(PdbApplicator applicator,
 			Map<Address, List<Stuff>> map, TaskMonitor monitor) throws CancelledException {
 		AbstractPdb pdb = applicator.getPdb();
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+
 		int totalCount = 0;
-		int num = pdb.getDebugInfo().getNumModules();
+		int num = debugInfo.getNumModules();
 		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
 			monitor.checkCanceled();
 			SymbolGroup symbolGroup = applicator.getSymbolGroupForModule(moduleNumber);
@@ -679,8 +712,8 @@ public class PdbResearch {
 			}
 			totalCount += symbolGroup.size();
 		}
-		applicator.setMonitorMessage(
-			"PDB: Applying " + totalCount + " module symbol components...");
+		applicator
+				.setMonitorMessage("PDB: Applying " + totalCount + " module symbol components...");
 		monitor.initialize(totalCount);
 
 		// Process symbols list for each module
@@ -867,7 +900,8 @@ public class PdbResearch {
 							// if count is zero for a definition, then, the field list record
 							// number refers to an actual field list.
 							// So... seems we can trust forward reference and ignore count.
-							if (compType.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
+							if (compType
+									.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
 								doNothingSetBreakPointHere();
 							}
 						}
@@ -912,7 +946,8 @@ public class PdbResearch {
 										// the field list record number refers to an actual field
 										// list. So... seems we can trust forward reference and
 										// ignore count.
-										if (compType.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
+										if (compType
+												.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
 											doNothingSetBreakPointHere();
 										}
 									}

@@ -87,9 +87,6 @@ public abstract class AbstractPdb implements AutoCloseable {
 	protected boolean substreamsDeserialized = false;
 
 	//==============================================================================================
-	private TypeParser typeParser;
-	private SymbolParser symbolParser;
-	//==============================================================================================
 	// Ghidra-specific:
 	private PdbReaderMetrics pdbReaderMetrics = new PdbReaderMetrics(this);
 
@@ -141,7 +138,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Returns the main {@link PdbIdentifiers} found in the PDB Directory. 
+	 * Returns the main {@link PdbIdentifiers} found in the PDB Directory.
 	 * @return {@link PdbIdentifiers} of information.
 	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes.
@@ -151,7 +148,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 		parseDBI();
 		if (debugInfo != null) {
 			try {
-				// dbiAge and targetProcessor set during deserialization of new DBI header 
+				// dbiAge and targetProcessor set during deserialization of new DBI header
 				debugInfo.deserialize(true, TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
@@ -196,22 +193,6 @@ public abstract class AbstractPdb implements AutoCloseable {
 		//  Currently in dumpSubStreams() and parsed in deserializeSubStreams()
 
 		PdbLog.message(pdbReaderMetrics::getPostProcessingReport);
-	}
-
-	/**
-	 * Returns the {@link TypeParser} created for this PDB.
-	 * @return {@link TypeParser} for this PDB.
-	 */
-	public TypeParser getTypeParser() {
-		return typeParser;
-	}
-
-	/**
-	 * Returns the {@link SymbolParser} created for this PDB.
-	 * @return {@link SymbolParser} for this PDB.
-	 */
-	public SymbolParser getSymbolParser() {
-		return symbolParser;
 	}
 
 	/**
@@ -281,7 +262,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	// TODO: this method should be package protected
 	public void setTargetProcessor(Processor targetProcessorIn) {
 		/**
-		 * Should we allow an overwrite?  The {@link PdbNewDebugInfo} value (mapped from 
+		 * Should we allow an overwrite?  The {@link PdbNewDebugInfo} value (mapped from
 		 * {@link ImageFileMachine}) should be processed and laid down first.  Subsequent values
 		 * can come from {@link AbstractCompile2MsSymbol} and {@link Compile3MsSymbol}.  Note:
 		 * {@link PdbDebugInfo} does not carry {@link ImageFileMachine}, and thus no mapping
@@ -312,7 +293,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	/**
 	 * Returns the ItemProgramInterface (of type {@link AbstractTypeProgramInterface})
 	 *  component.
-	 * @return ItemProgramInterface (of type {@link AbstractTypeProgramInterface}) component 
+	 * @return ItemProgramInterface (of type {@link AbstractTypeProgramInterface}) component
 	 * or null if not available.
 	 */
 	public AbstractTypeProgramInterface getItemProgramInterface() {
@@ -325,14 +306,6 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 */
 	public PdbDebugInfo getDebugInfo() {
 		return debugInfo;
-	}
-
-	/**
-	 * Returns the {@link SymbolRecords} component of the PDB.
-	 * @return {@link SymbolRecords} component.
-	 */
-	public SymbolRecords getSymbolRecords() {
-		return debugInfo.getSymbolRecords();
 	}
 
 	/**
@@ -441,7 +414,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @return Version number.
 	 * @throws IOException on file I/O issues.
-	 * @throws PdbException on parsing issues. 
+	 * @throws PdbException on parsing issues.
 	 * @throws CancelledException Upon user cancellation.
 	 */
 	static int deserializeVersionNumber(AbstractMsf msf, TaskMonitor monitor)
@@ -469,14 +442,11 @@ public abstract class AbstractPdb implements AutoCloseable {
 		strings = new ArrayList<>();
 		parameters = new ArrayList<>();
 		nameTable = new NameTable(this);
-
-		typeParser = new TypeParser(this);
-		symbolParser = new SymbolParser(this);
 	}
 
 	/**
 	 * Deserializes the main {@link PdbIdentifiers} found in the PDB Directory from the
-	 *  {@link PdbByteReader}. 
+	 *  {@link PdbByteReader}.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes.
@@ -494,7 +464,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 		return msf;
 	}
 
-	//TODO  Not sure if we will keep this method or if more gets added to it. 
+	//TODO  Not sure if we will keep this method or if more gets added to it.
 	/**
 	 * Deserializes the sub-streams for this {@link AbstractPdb} object.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.

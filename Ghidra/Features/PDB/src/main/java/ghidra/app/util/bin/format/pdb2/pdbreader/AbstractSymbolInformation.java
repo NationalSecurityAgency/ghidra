@@ -168,7 +168,11 @@ public abstract class AbstractSymbolInformation {
 	protected void generateSymbolsList(TaskMonitor monitor)
 			throws PdbException, CancelledException {
 		symbols = new ArrayList<>();
-		Map<Long, AbstractMsSymbol> symbolsByOffset = pdb.getDebugInfo().getSymbolsByOffset();
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+		Map<Long, AbstractMsSymbol> symbolsByOffset = debugInfo.getSymbolsByOffset();
 		for (SymbolHashRecord record : hashRecords) {
 			monitor.checkCanceled();
 			long offset = record.getOffset() - 2; // Modified offset
@@ -353,7 +357,7 @@ public abstract class AbstractSymbolInformation {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param reader {@link PdbByteReader} containing the data buffer to process.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @throws PdbException Upon not enough data left to parse.

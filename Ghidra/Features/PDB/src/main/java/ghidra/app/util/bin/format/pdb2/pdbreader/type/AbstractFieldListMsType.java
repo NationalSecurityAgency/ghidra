@@ -51,8 +51,7 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 			throws PdbException, CancelledException {
 		super(pdb, reader);
 		while (reader.hasMore()) {
-			MsTypeField type = pdb.getTypeParser().parseField(reader);
-//			AbstractMsType type = pdb.getTypeParser().parse(reader);
+			MsTypeField type = TypeParser.parseField(pdb, reader);
 			if ((type instanceof AbstractBaseClassMsType) ||
 				(type instanceof AbstractVirtualBaseClassMsType) ||
 				(type instanceof AbstractIndirectVirtualBaseClassMsType)) {
@@ -85,7 +84,7 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of base class types. 
+	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of base class types.
 	 * @return List of base class types.
 	 */
 	public List<MsTypeField> getBaseClassList() {
@@ -94,7 +93,7 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 
 	/**
 	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of type members types of
-	 *  this field list. 
+	 *  this field list.
 	 * @return Field list.
 	 */
 	public List<MsTypeField> getMemberList() {
@@ -103,7 +102,7 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 
 	/**
 	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of other types. (We have
-	 *  separated these out, but are unsure about what they are at this time.) 
+	 *  separated these out, but are unsure about what they are at this time.)
 	 * @return List of other types.
 	 */
 	public List<MsTypeField> getMethodList() {
