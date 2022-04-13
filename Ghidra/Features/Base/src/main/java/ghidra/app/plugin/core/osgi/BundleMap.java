@@ -45,7 +45,7 @@ public class BundleMap {
 			bundlesByLocation.put(bundle.getLocationIdentifier(), bundle);
 		}
 		finally {
-			lock.writeLock().unlock();
+			writeLock.unlock();
 		}
 	}
 
@@ -197,6 +197,7 @@ public class BundleMap {
 	}
 
 	/**
+	 * Returns the currently mapped bundles.
 	 * @return the currently mapped bundles
 	 */
 	public Collection<GhidraBundle> getGhidraBundles() {
@@ -210,6 +211,7 @@ public class BundleMap {
 	}
 
 	/**
+	 * Returns the currently mapped bundle files.
 	 * @return the currently mapped bundle files
 	 */
 	public Collection<ResourceFile> getBundleFiles() {
