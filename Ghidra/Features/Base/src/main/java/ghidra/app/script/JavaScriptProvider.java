@@ -121,8 +121,8 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			throw new ClassNotFoundException(
 				"Failed to find source bundle containing script: " + sourceFile.toString());
 		}
-		bundleHost.activateAll(Collections.singletonList(bundle), TaskMonitor.DUMMY, writer);
 
+		bundleHost.activateAll(Collections.singletonList(bundle), TaskMonitor.DUMMY, writer);
 		String classname = bundle.classNameForScript(sourceFile);
 		Class<?> clazz = bundle.getOSGiBundle().loadClass(classname); // throws ClassNotFoundException
 		return clazz;
