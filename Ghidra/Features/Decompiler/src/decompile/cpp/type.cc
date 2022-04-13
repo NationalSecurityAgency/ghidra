@@ -2308,6 +2308,7 @@ TypeFactory::TypeFactory(Architecture *g)
 {
   glb = g;
   sizeOfInt = 0;
+  sizeOfLong = 0;
   align = 0;
   enumsize = 0;
 
@@ -2340,6 +2341,9 @@ void TypeFactory::setupSizes(void)
       if (sizeOfInt > 4)					// "int" is rarely bigger than 4 bytes
 	sizeOfInt = 4;
     }
+  }
+  if (sizeOfLong == 0) {
+    sizeOfLong = (sizeOfInt == 4) ? 8 : sizeOfInt;
   }
   if (align == 0)
     align = glb->getDefaultSize();
@@ -3271,6 +3275,7 @@ void TypeFactory::saveXml(ostream &s) const
   dependentOrder(deporder);	// Put types in correct order
   s << "<typegrp";
   a_v_i(s,"intsize",sizeOfInt);
+  a_v_i(s,"longsize",sizeOfLong);
   a_v_i(s,"structalign",align);
   a_v_i(s,"enumsize",enumsize);
   a_v_b(s,"enumsigned",(enumtype==TYPE_INT));
@@ -3573,6 +3578,9 @@ void TypeFactory::restoreXml(const Element *el)
   istringstream i3(el->getAttributeValue("intsize"));
   i3.unsetf(ios::dec | ios::hex | ios::oct);
   i3 >> sizeOfInt;
+  istringstream i4(el->getAttributeValue("longsize"));
+  i4.unsetf(ios::dec | ios::hex | ios::oct);
+  i4 >> sizeOfLong;
   istringstream i(el->getAttributeValue("structalign"));
   i.unsetf(ios::dec | ios::hex | ios::oct);
   i >> align;
@@ -3620,6 +3628,11 @@ void TypeFactory::parseDataOrganization(const Element *el)
       istringstream i(subel->getAttributeValue("value"));
       i.unsetf(ios::dec | ios::hex | ios::oct);
       i >> sizeOfInt;
+    }
+    else if (subel->getName() == "long_size") {
+      istringstream i(subel->getAttributeValue("value"));
+      i.unsetf(ios::dec | ios::hex | ios::oct);
+      i >> sizeOfLong;
     }
     else if (subel->getName() == "size_alignment_map") {
       const List &childlist(subel->getChildren());

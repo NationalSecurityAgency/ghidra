@@ -372,7 +372,7 @@ void Architecture::setPrintLanguage(const string &nm)
   ostream *t = print->getOutputStream();
   print = capa->buildLanguage(this);
   print->setOutputStream(t);	// Restore settings from previous language
-  print->getCastStrategy()->setTypeFactory(types);
+  print->initializeFromArchitecture();
   if (printxml)
     print->setXML(true);
   printlist.push_back(print);
@@ -1342,7 +1342,7 @@ void Architecture::init(DocumentStorage &store)
   buildDatabase(store);
 
   restoreFromSpec(store);
-  print->getCastStrategy()->setTypeFactory(types);
+  print->initializeFromArchitecture();
   symboltab->adjustCaches();	// In case the specs created additional address spaces
   postSpecFile();		// Let subclasses do things after translate is ready
 

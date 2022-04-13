@@ -435,10 +435,11 @@ public:
   void setXML(bool val);						///< Set whether the low-level emitter, emits XML markup
   void setFlat(bool val);						///< Set whether nesting code structure should be emitted
 
-  virtual void adjustTypeOperators(void)=0;				///< Set basic data-type information for p-code operators
-  virtual void resetDefaults(void);					///< Set printing options to their default value
-  virtual void clear(void);						///< Clear the RPN stack and the low-level emitter
-  virtual void setIntegerFormat(const string &nm);			///< Set the default integer format
+  virtual void initializeFromArchitecture(void)=0;		///< Initialize architecture specific aspects of printer
+  virtual void adjustTypeOperators(void)=0;			///< Set basic data-type information for p-code operators
+  virtual void resetDefaults(void);				///< Set printing options to their default value
+  virtual void clear(void);					///< Clear the RPN stack and the low-level emitter
+  virtual void setIntegerFormat(const string &nm);		///< Set the default integer format
 
   /// \brief Set the way comments are displayed in decompiler output
   ///

@@ -25,6 +25,80 @@ void CastStrategy::setTypeFactory(TypeFactory *t)
   promoteSize = tlst->getSizeOfInt();
 }
 
+/// Many languages can mark an integer constant as explicitly \e unsigned. When
+/// the decompiler is deciding on \e cast operations, this is one of the checks
+/// it performs.  This method checks if the indicated input is an
+/// integer constant that needs to be coerced (as a source token) into being unsigned.
+/// If this is \b true, the input Varnode is marked for printing as explicitly \e unsigned.
+/// \param op is the PcodeOp taking the value as input
+/// \param slot is the input slot of the value
+/// \return \b true if the Varnode gets marked for printing
+bool CastStrategy::markExplicitUnsigned(PcodeOp *op,int4 slot) const
+
+{
+  TypeOp *opcode = op->getOpcode();
+  if (!opcode->inheritsSign()) return false;
+  bool inheritsFirstParamOnly = opcode->inheritsSignFirstParamOnly();
+  if ((slot==1) && inheritsFirstParamOnly) return false;
+  Varnode *vn = op->getIn(slot);
+  if (!vn->isConstant()) return false;
+  Datatype *dt = vn->getHighTypeReadFacing(op);
+  type_metatype meta = dt->getMetatype();
+  if ((meta != TYPE_UINT)&&(meta != TYPE_UNKNOWN)) return false;
+  if (dt->isCharPrint()) return false;
+  if (dt->isEnumType()) return false;
+  if ((op->numInput() == 2) && !inheritsFirstParamOnly) {
+    Varnode *firstvn = op->getIn(1-slot);
+    meta = firstvn->getHighTypeReadFacing(op)->getMetatype();
+    if ((meta == TYPE_UINT)||(meta == TYPE_UNKNOWN))
+      return false;		// Other side of the operation will force the unsigned
+  }
+  // Check if type is going to get forced anyway
+  Varnode *outvn = op->getOut();
+  if (outvn != (Varnode *)0) {
+    if (outvn->isExplicit()) return false;
+    PcodeOp *lone = outvn->loneDescend();
+    if (lone != (PcodeOp *)0) {
+      if (!lone->getOpcode()->inheritsSign()) return false;
+    }
+  }
+
+  vn->setUnsignedPrint();
+  return true;
+}
+
+/// This method checks if the indicated input is an integer constant that needs to be coerced
+/// (as a source token) into a data-type that is larger than the base integer. If this is \b true,
+/// the input Varnode is marked for printing as explicitly a larger integer (typically \e long).
+/// \param op is the PcodeOp taking the value as input
+/// \param slot is the input slot of the value
+/// \return \b true if the Varnode gets marked for printing
+bool CastStrategy::markExplicitLongSize(PcodeOp *op,int4 slot) const
+
+{
+  if (!op->getOpcode()->isShiftOp()) return false;
+  if (slot != 0) return false;
+  Varnode *vn = op->getIn(slot);
+  if (!vn->isConstant()) return false;
+  if (vn->getSize() <= promoteSize) return false;
+  Datatype *dt = vn->getHigh()->getType();
+  type_metatype meta = dt->getMetatype();
+  if ((meta != TYPE_UINT)&&(meta != TYPE_INT)&&(meta != TYPE_UNKNOWN)) return false;
+  uintb off = vn->getOffset();
+  if (meta == TYPE_INT && signbit_negative(off, vn->getSize())) {
+    off = uintb_negate(off, vn->getSize());
+    int4 bit = mostsigbit_set(off);
+    if (bit >= promoteSize * 8 - 1) return false;
+  }
+  else {
+    int4 bit = mostsigbit_set(off);
+    if (bit >= promoteSize * 8) return false;	// If integer is big enough, it naturally becomes a long
+  }
+
+  vn->setLongPrint();
+  return true;
+}
+
 bool CastStrategyC::checkIntPromotionForCompare(const PcodeOp *op,int4 slot) const
 
 {
