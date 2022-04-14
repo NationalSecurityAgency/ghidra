@@ -50,6 +50,8 @@ ext.DEPS_DIR = file("${REPO_DIR}/dependencies")
 ext.DOWNLOADS_DIR = file("${DEPS_DIR}/downloads")
 ext.FID_DIR = file("${DEPS_DIR}/fidb")
 ext.FLAT_REPO_DIR = file("${DEPS_DIR}/flatRepo")
+ext.OFFLINE = System.properties["offline"] != null
+ext.createdDirs = [] as Set
 
 file("${REPO_DIR}/Ghidra/application.properties").withReader { reader ->
 	def ghidraProps = new Properties()
@@ -64,7 +66,7 @@ ext.deps = [
 		sha256: "7a9bdf843d43de4d1e94ec2e7b6f55825017b0c4a7ee39ff82660e2493a46f08",
 		destination: {
 			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "dex2jar-2.1.zip")
-			FileUtils.copyDirectory(new File(DOWNLOADS_DIR, "dex-tools-2.1/lib/"), FLAT_REPO_DIR, new WildcardFileFilter("dex-*"));
+			copyDirectory(new File(DOWNLOADS_DIR, "dex-tools-2.1/lib/"), FLAT_REPO_DIR, new WildcardFileFilter("dex-*"));
 		}
 	],
 	[
@@ -154,12 +156,14 @@ ext.deps = [
 ]
 
 // Download dependencies (if necessary) and verify their hashes
-DOWNLOADS_DIR.mkdirs()
+mkdirs(DOWNLOADS_DIR)
 deps.each {
 	File file = new File(DOWNLOADS_DIR, it.name)
-	if (!it.sha256.equals(generateHash(file))) {
-		download(it.url, file.path)
-		assert(it.sha256.equals(generateHash(file)));
+	if (OFFLINE || !it.sha256.equals(generateHash(file))) {
+		download(it.url, file)
+		if (!OFFLINE) {
+			assert(it.sha256.equals(generateHash(file)));
+		}
 	}
 }
 
@@ -167,12 +171,16 @@ deps.each {
 // Some downloads require pre-processing before their relevant pieces can be copied.
 deps.each {
 	if (it.destination instanceof File) {
-		println("Copying " + it.name + " to " + it.destination)
-		it.destination.mkdirs()
-		FileUtils.copyFile(new File(DOWNLOADS_DIR, it.name), new File(it.destination, it.name));
+		if (!OFFLINE) {
+			println "Copying " + it.name + " to " + it.destination
+		}
+		mkdirs(it.destination)
+		copyFile(new File(DOWNLOADS_DIR, it.name), new File(it.destination, it.name));
 	}
 	else if (it.destination instanceof Closure) {
-		println("Processing " + it.name)
+		if (!OFFLINE) {
+			println "Processing " + it.name 
+		}
 		it.destination()
 	}
 	else {
@@ -191,28 +199,32 @@ deps.each {
  * discrepencies will be caught when checking the SHA-256s later on.
  *
  * @param url the file to download
- * @param filename the local file to create for the download
+ * @param file the local file to create for the download
  */
-def download(url, filename) {
-
-	println("URL: " + url)
+def download(url, file) {
+	if (OFFLINE) {
+		println "curl -L -o " + relative(file) +  " '" + url + "'"
+		return
+	}
+	
+	println "URL: " + url
 	def(InputStream istream, size) = establishConnection(url, NUM_RETRIES);
 	assert istream != null : "   ***CONNECTION FAILURE***\n   max attempts exceeded; exiting\n"
 
-	FileOutputStream ostream = new FileOutputStream(filename);
+	FileOutputStream ostream = new FileOutputStream(file);
 	def dataBuffer = new byte[1024];
 	int bytesRead;
 	int totalRead;
 	while ((bytesRead = istream.read(dataBuffer, 0, 1024)) != -1) { 
 		ostream.write(dataBuffer, 0, bytesRead);
 		totalRead += bytesRead
-		print("\r")
-		print("   Downloading: " + totalRead + " of " + size)
+		print "\r"
+		print "   Downloading: " + totalRead + " of " + size
 		if (!size.equals("???")) {
 			int pctComplete = (totalRead / size) * 100
-			print(" (" + pctComplete + "%)")
+			print " (" + pctComplete + "%)"
 		}
-		print("                                               ") // overwrite gradle timer output
+		print "                                               " // overwrite gradle timer output
 		System.out.flush()
 	}
 	println()
@@ -231,10 +243,10 @@ def establishConnection(url, retries) {
 	for (int i = 0; i < retries; i++) {
 		try {
 			if (i == 0) {
-				println("   Connecting...")
+				println "   Connecting..." 
 			}
 			else {
-				println("   Connecting (" + (i+1) + "/" + retries + ")...")
+				println "   Connecting (" + (i+1) + "/" + retries + ")..."
 			}
 			URLConnection conn = new URL(url).openConnection();
 			conn.setRequestMethod("HEAD");
@@ -245,7 +257,7 @@ def establishConnection(url, retries) {
 			return [new BufferedInputStream(new URL(url).openStream()), size]; 
 		}
 		catch (Exception e) {
-			println("   Connection error! " + e)
+			println "   Connection error! " + e
 		}
 	}
 }
@@ -258,12 +270,18 @@ def establishConnection(url, retries) {
  * @param zipFileName the name of the file to unpack
  */
 def unzip(sourceDir, targetDir, zipFileName) {
-	def zip = new ZipFile(new File(sourceDir, zipFileName))
+	def zipFile = new File(sourceDir, zipFileName)
+	if (OFFLINE) {
+		println "unzip " + relative(zipFile) + " -d " + relative(targetDir)
+		return
+	}
+	
+	def zip = new ZipFile(zipFile)
 	zip.entries().findAll { !it.directory }.each { e ->
 		(e.name as File).with { f -> 
 			if (f.parentFile != null) {
 				File destPath = new File(targetDir.path, f.parentFile.path)
-				destPath.mkdirs()
+				mkdirs(destPath)
 				File targetFile = new File(destPath.path, f.name)
 				targetFile.withOutputStream { w -> 
 					w << zip.getInputStream(e)
@@ -272,6 +290,63 @@ def unzip(sourceDir, targetDir, zipFileName) {
 		}
 	}
 	zip.close()
+}
+
+/**
+ * Creates the given directory, including any necessary but nonexistent parent directories
+ *
+ * @return true if and only if the directory was created, along with all necessary parent 
+ *   directories; false otherwise
+ */
+def mkdirs(dir) {
+	if (OFFLINE) {
+		if (!createdDirs.contains(dir)) {
+			println "mkdir -p " + relative(dir)
+			createdDirs << dir
+		}
+		return
+	}
+	return dir.mkdirs()
+ }
+
+/**
+ * Copies a file to a new location
+ *
+ * @param sourceFile the file to copy
+ * @param targetFile the new file
+ */
+def copyFile(sourceFile, targetFile) {
+	if (OFFLINE) {
+		println "cp " + relative(sourceFile) + " " + relative(targetFile)
+		return
+	}
+	
+	FileUtils.copyFile(sourceFile, targetFile)
+}
+
+/**
+ * Copies a filtered directory to a new location
+ *
+ * @param sourceDir the directory to copy
+ * @param targetDir the new directory
+ * @param filter the filter to apply; null to copy everything
+ */
+def copyDirectory(sourceDir, targetDir, filter) {
+	if (OFFLINE) {
+		println "cp -r " + relative(sourceDir) + " " + relative(targetDir)
+		return
+	}
+	
+	FileUtils.copyDirectory(sourceDir, targetDir, filter)
+}
+
+/**
+ * Returns the path of the file relative to the repository
+ *
+ * @return The path of the file relative to the repository
+ */
+def relative(file) {
+	return "\"" + file.absolutePath.substring(REPO_DIR.absolutePath.length() + 1).replaceAll("\\\\", "/") + "\""
 }
 
 /**
