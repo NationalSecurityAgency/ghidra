@@ -265,7 +265,6 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 			throws PdbException, CancelledException {
 		int recordLength;
 		int recordNumber = typeIndexMin;
-		TypeParser parser = pdb.getTypeParser();
 
 		while (reader.hasMore()) {
 			monitor.checkCanceled();
@@ -279,8 +278,8 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 			//  know which of the two to call, and we'd have to create an AbstractTypeIndex:
 			//    	parseTypeRecordNumber(recordReader, recordNumber);
 			//    	parseItemRecordNumber(recordReader, recordNumber);
-			AbstractMsType type =
-				parser.parseRecord(recordReader, RecordNumber.make(recordCategory, recordNumber));
+			AbstractMsType type = TypeParser.parseRecord(pdb, recordReader,
+				RecordNumber.make(recordCategory, recordNumber));
 			typeList.add(type);
 			recordNumber++;
 		}
@@ -392,7 +391,7 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 				throws IOException, PdbException, CancelledException {
 			// I don't believe we need to parse and process the hash table.  They seemingly are
 			//  used to point from a TypeIndex to a raw (byte[]) Type Record.  We are not
-			//  currently maintaining our records in this raw form; we are processing (parsing) 
+			//  currently maintaining our records in this raw form; we are processing (parsing)
 			//  them as we read each record buffer.
 			// Note that we have no evidence of how the Auxiliary stream is used.  Its
 			//  contents might need to get concatenated with the contents of the primary

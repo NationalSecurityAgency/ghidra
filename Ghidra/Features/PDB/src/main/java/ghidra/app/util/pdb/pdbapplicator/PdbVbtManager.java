@@ -53,11 +53,20 @@ public class PdbVbtManager extends VbtManager {
 			throws CancelledException {
 
 		TaskMonitor monitor = applicator.getMonitor();
-		SymbolGroup symbolGroup = applicator.getSymbolGroup();
 		Map<String, Address> myAddressByMangledName = new HashMap<>();
 
-		PublicSymbolInformation publicSymbolInformation =
-			applicator.getPdb().getDebugInfo().getPublicSymbolInformation();
+		AbstractPdb pdb = applicator.getPdb();
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return myAddressByMangledName;
+		}
+
+		SymbolGroup symbolGroup = applicator.getSymbolGroup();
+		if (symbolGroup == null) {
+			return myAddressByMangledName;
+		}
+
+		PublicSymbolInformation publicSymbolInformation = debugInfo.getPublicSymbolInformation();
 		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		applicator.setMonitorMessage("PDB: Searching for virtual base table symbols...");
 		monitor.initialize(offsets.size());
