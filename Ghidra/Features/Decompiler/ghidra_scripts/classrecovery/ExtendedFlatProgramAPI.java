@@ -36,7 +36,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 	final int defaultPointerSize;
 
-	ExtendedFlatProgramAPI(Program program, TaskMonitor taskMonitor) {
+	public ExtendedFlatProgramAPI(Program program, TaskMonitor taskMonitor) {
 
 		super(program, taskMonitor);
 		defaultPointerSize = program.getDefaultPointerSize();
@@ -668,30 +668,31 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	 * Get the nth called function from calling function
 	 * @param callingFunction The calling function
 	 * @param callIndex the called function index (ie 1 = first called function)
+	 * @param getThunkedFunction if true get the thunked function, if false get the thunk itself, if
+	 * there is a thunk
 	 * @return the nth called function in calling function
 	 * @throws CancelledException if cancelled
 	 */
-	public Function getCalledFunctionByCallOrder(Function callingFunction, int callIndex)
-			throws CancelledException {
+	public Function getCalledFunctionByCallOrder(Function callingFunction, int callIndex,
+			boolean getThunkedFunction) throws CancelledException {
 
-		List<ReferenceAddressPair> orderedReferenceAddressPairsFromCallingFunction =
-			getOrderedReferenceAddressPairsFromCallingFunction(callingFunction);
-		if (callIndex > orderedReferenceAddressPairsFromCallingFunction.size()) {
-			return null;
+		int callNumber = 0;
+		InstructionIterator instructions = callingFunction.getProgram()
+				.getListing()
+				.getInstructions(callingFunction.getBody(), true);
+		while (instructions.hasNext() && callNumber < callIndex) {
+			monitor.checkCanceled();
+			Instruction instruction = instructions.next();
+			if (instruction.getFlowType().isCall()) {
+				callNumber++;
+				if (callNumber == callIndex) {
+					Function referencedFunction =
+						getReferencedFunction(instruction.getMinAddress(), getThunkedFunction);
+					return referencedFunction;
+				}
+			}
 		}
-
-		ReferenceAddressPair referenceAddressPair =
-			orderedReferenceAddressPairsFromCallingFunction.get(callIndex - 1);
-		Address calledFunctionAddress = referenceAddressPair.getDestination();
-		Function calledFunction = getFunctionAt(calledFunctionAddress);
-		if (calledFunction == null) {
-			return null;
-		}
-		if (calledFunction.isThunk()) {
-			calledFunction = calledFunction.getThunkedFunction(true);
-		}
-		return calledFunction;
-
+		return null;
 	}
 
 	/**
@@ -885,11 +886,8 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		while (referenceIterator.hasNext()) {
 			monitor.checkCanceled();
 			Address referenceAddress = referenceIterator.next();
-			Address referencedAddress = getSingleReferencedAddress(referenceAddress);
-			if (referencedAddress == null) {
-				continue;
-			}
-			Function function = getFunctionAt(referencedAddress);
+
+			Function function = getReferencedFunction(referenceAddress, true);
 
 			// skip the ones that reference a vftable
 			if (function != null) {
@@ -905,30 +903,43 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	 * @param address the given address
 	 * @param getThunkedFunction if true and referenced function is a thunk, get the thunked function
 	 * @return the referenced function or null if no function is referenced
+	 * @throws CancelledException if cancelled
 	 */
-	public Function getReferencedFunction(Address address, boolean getThunkedFunction) {
+	public Function getReferencedFunction(Address address, boolean getThunkedFunction)
+			throws CancelledException {
 
-		Address referencedAddress = getSingleReferencedAddress(address);
+		Reference[] referencesFrom = getReferencesFrom(address);
 
-		if (referencedAddress == null) {
+		if (referencesFrom.length == 0) {
 			return null;
 		}
 
-		Function function = getFunctionAt(referencedAddress);
+		for (Reference referenceFrom : referencesFrom) {
 
-		if (function == null) {
-			return null;
-		}
+			monitor.checkCanceled();
 
-		if (!getThunkedFunction) {
+			Address referencedAddress = referenceFrom.getToAddress();
+			if (referencedAddress == null) {
+				continue;
+			}
+
+			Function function = getFunctionAt(referencedAddress);
+
+			if (function == null) {
+				continue;
+			}
+
+			if (!getThunkedFunction) {
+				return function;
+			}
+
+			if (function.isThunk()) {
+				function = function.getThunkedFunction(true);
+			}
 			return function;
 		}
 
-		if (function.isThunk()) {
-			function = function.getThunkedFunction(true);
-		}
-
-		return function;
+		return null;
 
 	}
 
