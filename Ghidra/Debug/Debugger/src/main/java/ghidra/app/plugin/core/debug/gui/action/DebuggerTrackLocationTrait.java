@@ -191,8 +191,11 @@ public class DebuggerTrackLocationTrait {
 	}
 
 	public void setSpec(LocationTrackingSpec spec) {
-		// TODO: What if action == null?
-		if (action != null) {
+		if (action == null) {
+			// It might if the client doesn't need a new button, e.g., TraceDiff
+			doSetSpec(spec);
+		}
+		else {
 			action.setCurrentActionStateByUserData(spec);
 		}
 	}
