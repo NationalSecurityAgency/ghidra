@@ -47,6 +47,10 @@ public class WasmCodeEntry implements StructConverter {
 		reader.setPointerIndex(codeOffset + codeSize.asLong());
 	}
 
+	public LEB128 getCodeSizeLeb128() {
+		return codeSize;
+	}
+
 	public long getCodeSize() {
 		return codeSize.asLong();
 	}

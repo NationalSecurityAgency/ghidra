@@ -55,6 +55,7 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
+import wasm.format.StructureBuilder;
 import wasm.format.WasmConstants;
 import wasm.format.WasmEnums.WasmExternalKind;
 import wasm.format.WasmHeader;
@@ -337,6 +338,18 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 			createData(program, program.getListing(), dataStart, dataType);
 		} catch (Exception e) {
 			Msg.error(WasmLoader.class, "Failed to create global block " + globalidx + " at " + dataStart, e);
+		}
+	}
+
+	private static void createCodeLengthData(Program program, MemoryBlock moduleBlock, WasmModule module) {
+		List<WasmImportEntry> imports = module.getImports(WasmExternalKind.EXT_FUNCTION);
+		List<WasmCodeEntry> codeEntries = module.getNonImportedFunctions();
+		for (int i = 0; i < codeEntries.size(); i++) {
+			WasmCodeEntry entry = codeEntries.get(i);
+			StructureBuilder builder = new StructureBuilder("code_" + (i + imports.size()));
+			builder.add(entry.getCodeSizeLeb128(), "code_size");
+			long offset = entry.getOffset() - entry.getCodeSizeLeb128().getLength();
+			createData(program, program.getListing(), moduleBlock.getStart().add(offset), builder.toStructure());
 		}
 	}
 	// #endregion
@@ -674,6 +687,8 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 			monitor.setMessage("Creating section " + section.getName());
 			createData(program, program.getListing(), moduleBlock.getStart().add(section.getSectionOffset()), section.toDataType());
 		}
+
+		createCodeLengthData(program, moduleBlock, module);
 
 		createCustomSections(program, fileBytes, module, monitor);
 
