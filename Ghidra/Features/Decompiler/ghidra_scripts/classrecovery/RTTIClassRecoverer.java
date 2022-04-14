@@ -258,7 +258,6 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 			memberFunctionsToProcess.addAll(recoveredClass.getConstructorList());
 			memberFunctionsToProcess.addAll(recoveredClass.getDestructorList());
 			memberFunctionsToProcess.addAll(recoveredClass.getIndeterminateList());
-
 			memberFunctionsToProcess.addAll(recoveredClass.getInlinedConstructorList());
 
 			Iterator<Function> memberFunctionIterator = memberFunctionsToProcess.iterator();
