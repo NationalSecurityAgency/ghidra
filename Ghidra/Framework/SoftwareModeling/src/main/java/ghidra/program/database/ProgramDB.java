@@ -100,7 +100,11 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * 18-Feb-2021 - version 23   Added support for Big Reflist for tracking FROM references.
 	 *                            Primarily used for large numbers of Entry Point references.
 	 * 31-Mar-2021 - version 24   Added support for CompilerSpec extensions 
-	 * 12-Jan-2022 - version 25   Added support for resolved TypeDefSettingsDefinition   
+	 * 15-Apr-2022 - version 25   Added support for resolved datatype settings corresponding to 
+	 *                            TypeDefSettingsDefinition.  Added DataTypeManager versioning 
+	 *                            support.  Added support for auto-named TypeDef datatypes.
+	 *                            Transitioned string data translation storage to use address-based 
+	 *                            property map (StringTranslations).   
 	 */
 	static final int DB_VERSION = 25;
 
