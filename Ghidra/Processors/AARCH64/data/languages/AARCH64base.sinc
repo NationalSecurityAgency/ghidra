@@ -716,6 +716,23 @@ is b_31=0 & b_2630=0x05 & Addr26
 	goto Addr26;
 }
 
+# C6.2.27 BC.cond page C6-1192 line 70348 MATCH x54000010/mask=xff000010
+# CONSTRUCT x54000010/mask=xff000010 MATCHED 1 DOCUMENTED OPCODES
+# b_0031=01010100...................1....
+
+:bc^"."^BranchCondOp Addr19
+is b_2531=0x2a & o1=0 & Addr19 & o0=1 & br_cond_op=15 & BranchCondOp
+{
+	goto Addr19;
+}
+
+:bc^"."^BranchCondOp Addr19
+is b_2531=0x2a & o1=0 & Addr19 & o0=1 & BranchCondOp
+{
+	if (BranchCondOp) goto Addr19;
+}
+
+
 # C6.2.30 BFM page C6-1197 line 70576 MATCH x33000000/mask=x7f800000
 # C6.2.28 BFC page C6-1193 line 70394 MATCH x330003e0/mask=x7f8003e0
 # C6.2.29 BFI page C6-1195 line 70484 MATCH x33000000/mask=x7f800000
@@ -1843,6 +1860,51 @@ is sf=1 & op=1 & s=0 & b_2428=0x1a & b_2123=4 & Rm_GPR64 & InvCondOp & b_1011=1 
 	Rd_GPR64 = tmp;
 }
 
+# C6.2.68 CPYFP, CPYFM, CPYFE page C6-1262 line 73913 MATCH x19000400/mask=x3f20fc00
+# C6.2.69 CPYFPN, CPYFMN, CPYFEN page C6-1267 line 74246 MATCH x1900c400/mask=x3f20fc00
+# C6.2.70 CPYFPRN, CPYFMRN, CPYFERN page C6-1272 line 74579 MATCH x19008400/mask=x3f20fc00
+# C6.2.79 CPYFPWN, CPYFMWN, CPYFEWN page C6-1317 line 77576 MATCH x19004400/mask=x3f20fc00
+# CONSTRUCT x19000400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
+
+cpyPhase:"p" is opt=0 {export 0:1;}
+cpyPhase:"m" is opt=1 {export 1:1;}
+cpyPhase:"e" is opt=2 {export 2:1;}
+
+cpyType: ""		is b_1015=0x01 {export 0x01:1; }
+cpyType: "n"	is b_1015=0x31 {export 0x31:1; }
+cpyType: "rn"	is b_1015=0x21 {export 0x21:1; }
+cpyType: "wn"	is b_1015=0x11 {export 0x11:1; }
+
+cpyType: "rt"	is b_1015=0x09 {export 0x09:1; }
+cpyType: "rtn"	is b_1015=0x39 {export 0x39:1; }
+cpyType: "rtrn"	is b_1015=0x29 {export 0x29:1; }
+cpyType: "rtwn"	is b_1015=0x19 {export 0x19:1; }
+
+cpyType: "t"	is b_1015=0x0d {export 0x0d:1; }
+cpyType: "tn"	is b_1015=0x3d {export 0x3d:1; }
+cpyType: "trn"	is b_1015=0x2d {export 0x2d:1; }
+cpyType: "twn"	is b_1015=0x1d {export 0x1d:1; }
+
+cpyType: "wt"	is b_1015=0x03 {export 0x03:1; }
+cpyType: "wtn"	is b_1015=0x33 {export 0x33:1; }
+cpyType: "wtrn"	is b_1015=0x23 {export 0x23:1; }
+cpyType: "wtwn"	is b_1015=0x13 {export 0x13:1; }
+
+
+define pcodeop MemoryCopyForward;
+# Memory Copy Forward-only
+:cpyf^cpyPhase^cpyType [Rd_GPR64]!, [Rs_GPR64]!, Rn_GPR64^"!"
+is size.ldstr & b_2429=0x19 & opt != 3 & cpyPhase & b_2121=0 & Rs_GPR64 & cpyType & Rn_GPR64 & Rd_GPR64
+{
+	MemoryCopyForward(Rd_GPR64, Rs_GPR64, Rn_GPR64, cpyType, cpyPhase);
+}
+define pcodeop MemoryCopy;
+:cpy^cpyPhase^cpyType [Rd_GPR64]!, [Rs_GPR64]!, Rn_GPR64^"!"
+is size.ldstr & b_2429=0x1d & opt != 3 & cpyPhase & b_2121=0 & Rs_GPR64 & cpyType & Rn_GPR64 & Rd_GPR64
+{
+	MemoryCopy(Rd_GPR64, Rs_GPR64, Rn_GPR64, cpyType, cpyPhase);
+}
+
 # C6.2.59 CRC32B, CRC32H, CRC32W, CRC32X page C6-611 line 35802 KEEPWITH
 # sf == 0 && sz = 00 CRC32CB variant
 
@@ -2257,7 +2319,20 @@ is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_dbarrier_op & CR
 # AUNIT --inst xd503309f/mask=xfffff0ff --status nodest
 
 :dsb CRm_dbarrier_op
-is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_dbarrier_op & CRm_32 & CRm_10 & Op2=4 & Rt=0x1f
+is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_dbarrier_op & CRm_32 & CRm_10=2 & Op2=4 & Rt=0x1f
+{
+	types:1 = 0x3; #MBReqTypes_All
+	domain:1 = CRm_32;
+	DataSynchronizationBarrier(domain, types);
+}
+
+# C6.2.116 DSB page C6-1464 line 87160 MATCH xd503323f/mask=xfffff3ff
+# CONSTRUCT xd503323f/mask=xfffff3ff MATCHED 1 DOCUMENTED OPCODES
+# xd503323f/mask=xfffff3ff NOT MATCHED BY ANY CONSTRUCTOR
+# b_0031=11010101000000110011..1000111111
+
+:dsb CRm_32
+is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_dbarrier_op & CRm_32 & CRm_10 & Op2=1 & Rt=0x1f
 {
 	types:1 = CRm_10;
 	domain:1 = CRm_32;
@@ -5238,6 +5313,7 @@ is sf=1 & b_3030=0 & S=0 & b_2428=0x1a & b_2123=6 & Rm_GPR64 & b_1015=0x3 & Rn_G
 	Rd_GPR64 = tmp_1;
 }
 
+
 # C6.2.271 SETF8, SETF16 page C6-1759 line 103584 MATCH x3a00080d/mask=xffffbc1f
 # CONSTRUCT x3a00080d/mask=xfffffc1f MATCHED 1 DOCUMENTED OPCODES
 
@@ -5260,6 +5336,38 @@ is b_1531=0b00111010000000000 & b_14=1 & b_1013=0b0010 & b_0004=0b01101 & aa_Wn
 	ZR = (aa_Wn:2 == 0);
 	OV = (((aa_Wn >> 15) & 1) ^ ((aa_Wn >>16) & 1)) == 1;
 }
+
+
+
+
+# C6.2.276 SETP, SETM, SETE page C6-1780 line 105072 MATCH x19c00400/mask=x3fe03c00
+# C6.2.272 SETGP, SETGM, SETGE page C6-1760 line 103652 MATCH x1dc00400/mask=x3fe03c00
+# CONSTRUCT x1dc00400/mask=x3fe03c00 MATCHED 5 DOCUMENTED OPCODES
+
+setPhase:"p" is b_1415=0 {export 0:1;}
+setPhase:"m" is b_1415=1 {export 1:1;}
+setPhase:"e" is b_1415=2 {export 2:1;}
+
+setType: ""		is b_1013=0x1 {export 1:1; }
+setType: "n"	is b_1013=0x9 {export 9:1; }
+setType: "t"	is b_1013=0x5 {export 5:1; }
+setType: "tn"	is b_1013=0xd {export 13:1; }
+
+define pcodeop memorySetTag;
+:setg^setPhase^setType [Rd_GPR64]!, Rn_GPR64!, Rs_GPR64
+is size.ldstr & b_2129=0xee & Rs_GPR64 & b_1415 <3 & setPhase & setType & Rn_GPR64 & Rd_GPR64 {
+	memorySetTag(Rd_GPR64, Rn_GPR64, Rs_GPR64, setPhase, setType);
+}
+
+
+# C6.2.276 SETP, SETM, SETE page C6-1780 line 105072 MATCH x19c00400/mask=x3fe03c00
+# CONSTRUCT x19c00400/mask=x3fe03c00 MATCHED 5 DOCUMENTED OPCODES
+define pcodeop memorySet;
+:setp^setPhase^setType [Rd_GPR64]!, Rn_GPR64!, Rs_GPR64
+is size.ldstr & b_2129=0xce & Rs_GPR64 & b_1415 <3 & setPhase & setType & Rn_GPR64 & Rd_GPR64 {
+	memorySet(Rd_GPR64, Rn_GPR64, Rs_GPR64, setPhase, setType);
+}
+
 
 # C6.2.280 SEV page C6-1796 line 106224 MATCH xd503209f/mask=xffffffff
 # C6.2.126 HINT page C6-1480 line 88030 MATCH xd503201f/mask=xfffff01f
@@ -5336,6 +5444,38 @@ is sf=1 & op.dp3_op54=0 & b_2428=0x1b & op.dp3_op31=1 & Rm_GPR32 & op.dp3_o0=1 &
 	tmp_1:8 = Ra_GPR64 - tmp_2;
 	Rd_GPR64 = tmp_1;
 }
+
+
+# C6.2.285 SMSTART page C6-1802 line 106497 MATCH xd503417f/mask=xfffff9ff
+# C6.2.229 MSR (immediate) page C6-1684 line 99649 MATCH xd500401f/mask=xfff8f01f
+# CONSTRUCT xd503417f/mask=xfffff9ff MATCHED 2 DOCUMENTED OPCODES
+# xd503417f/mask=xfffff9ff NOT MATCHED BY ANY CONSTRUCTOR
+# b_0031=110101010000001101000..101111111
+
+SVAmodeOp: "SM" is b_0911=0x1 {}
+SVAmodeOp: "ZA" is b_0911=0x2 {}
+SVAmodeOp: "" is b_0911=0x3 {}
+
+define pcodeop sveStreamingModeStart;
+define pcodeop sveStreamingModeStop;
+:smstart "{"^SVAmodeOp^"}"
+is b_1131=0x1aa068 & SVAmodeOp & b_08=1 & b_0507=0x3 & op4=0xf {
+	sveStreamingModeStart(SVAmodeOp);
+}
+
+
+# C6.2.286 SMSTOP page C6-1804 line 106604 MATCH xd503407f/mask=xfffff9ff
+# C6.2.229 MSR (immediate) page C6-1684 line 99649 MATCH xd500401f/mask=xfff8f01f
+# CONSTRUCT xd503407f/mask=xfffff9ff MATCHED 2 DOCUMENTED OPCODES
+# xd503407f/mask=xfffff9ff NOT MATCHED BY ANY CONSTRUCTOR
+# b_0031=110101010000001101000..001111111
+
+:smstop "{"^SVAmodeOp^"}"
+is b_1131=0x1aa068 & SVAmodeOp & b_08=0 & b_0507=0x3 & op4=0xf {
+	sveStreamingModeStop(SVAmodeOp);
+}
+
+
 
 # C6.2.288 SMULH page C6-1808 line 106800 MATCH x9b400000/mask=xffe08000
 # CONSTRUCT x9b400000/mask=xffe08000 MATCHED 1 DOCUMENTED OPCODES
@@ -7165,6 +7305,17 @@ is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x2 & imm7Low=2 & Rt=0x1f
 	WaitForEvent();
 }
 
+# C6.2.397 WFET page C6-2005 line 117387 MATCH xd5031000/mask=xffffffe0
+# CONSTRUCT xd5031000/mask=xffffffe0 MATCHED 1 DOCUMENTED OPCODES
+# xd5031000/mask=xffffffe0 NOT MATCHED BY ANY CONSTRUCTOR
+# b_0031=110101010000001100010000000.....
+
+:wfet Rd_GPR64
+is b_0531=0x6a81880 & Rd_GPR64
+{
+	WaitForEvent(Rd_GPR64);
+}
+
 # C6.2.398 WFI page C6-2006 line 117439 MATCH xd503207f/mask=xffffffff
 # C6.2.126 HINT page C6-1480 line 88030 MATCH xd503201f/mask=xfffff01f
 # CONSTRUCT xd503207f/mask=xffffffff MATCHED 2 DOCUMENTED OPCODES
@@ -7174,6 +7325,17 @@ is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x2 & imm7Low=2 & Rt=0x1f
 is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x2 & imm7Low=3 & Rt=0x1f
 {
 	WaitForInterrupt();
+}
+
+# C6.2.399 WFIT page C6-2007 line 117477 MATCH xd5031020/mask=xffffffe0
+# CONSTRUCT xd5031020/mask=xffffffe0 MATCHED 1 DOCUMENTED OPCODES
+# xd5031020/mask=xffffffe0 NOT MATCHED BY ANY CONSTRUCTOR
+# b_0031=110101010000001100010000001.....
+
+:wfit Rd_GPR64
+is b_0531=0x6a81881 & Rd_GPR64
+{
+	WaitForInterrupt(Rd_GPR64);
 }
 
 # C6.2.401 XPACD, XPACI, XPACLRI page C6-2009 line 117573 MATCH xdac143e0/mask=xfffffbe0
@@ -7652,6 +7814,48 @@ is b_1031=0b1101100111100000000000 & Rt_GPR64 & Rn_GPR64xsp
 
 }
 
+# C6.2.132 LD64B page C6-1488 line 88475 MATCH xf83fd000/mask=xfffffc00
+# CONSTRUCT xf83fd000/mask=xfffffc00 MATCHED 1 DOCUMENTED OPCODES
+# xf83fd000/mask=xfffffc00 NOT MATCHED BY ANY CONSTRUCTOR
+# b_0031=1111100000111111110100..........
+
+# Single-copy Atomic 64-byte Load
+:ld64b Rn_GPR64, [Rt_GPR64xsp]
+is b_1031=0x3e0ff4 & Rn_GPR64 & Rt_GPR64xsp {
+	Rn_GPR64 = *Rt_GPR64xsp;
+}
+
+
+# C6.2.292 ST64B page C6-1813 line 107121 MATCH xf83f9000/mask=xfffffc00
+# CONSTRUCT xf83f9000/mask=xfffffc00 MATCHED 1 DOCUMENTED OPCODES
+
+:st64b Rn_GPR64, [Rt_GPR64xsp]
+is b_1031=0x3e0fe4 & Rn_GPR64 & Rt_GPR64xsp {
+	*Rt_GPR64xsp = Rn_GPR64;
+}
+
+
+# C6.2.293 ST64BV page C6-1814 line 107190 MATCH xf820b000/mask=xffe0fc00
+# CONSTRUCT xf820b000/mask=xffe0fc00 MATCHED 1 DOCUMENTED OPCODES
+define pcodeop store64ByteAtomic;
+:st64bv Rs_GPR64, Rn_GPR64, [Rt_GPR64xsp]
+is b_2131=0x7c1 & Rs_GPR64 & b_1015=0x2c & Rn_GPR64 & Rt_GPR64xsp {
+	*Rt_GPR64xsp = Rn_GPR64;
+	Rs_GPR64 = store64ByteAtomic(Rn_GPR64, Rt_GPR64xsp);
+}
+
+
+# C6.2.294 ST64BV0 page C6-1816 line 107284 MATCH xf820a000/mask=xffe0fc00
+# CONSTRUCT xf820a000/mask=xffe0fc00 MATCHED 1 DOCUMENTED OPCODES
+
+:st64bv0
+is b_2131=0b11111000001 & Rs_GPR64 & b_1015=0x28 & Rn_GPR64 & Rt_GPR64xsp {
+	local st64bv_addr:8 = (Rt_GPR64xsp & 0xffff0000) | (accdata & 0xffff);
+	*st64bv_addr = Rn_GPR64;
+	Rs_GPR64 = store64ByteAtomic(Rn_GPR64, st64bv_addr);
+}
+
+
 addrGranuleIndexed_checkAlignment: addrGranuleIndexed is Rn=0b11111 & addrGranuleIndexed { export addrGranuleIndexed; }  # don't check alignment if we're working with the stack, it's assumed to be 16-byte-aligned, though that is technically optional
 addrGranuleIndexed_checkAlignment: addrGranuleIndexed is Rn & addrGranuleIndexed { tmp:8 = addrGranuleIndexed; RequireGranuleAlignment(tmp); export tmp; }  # if the address in tmp is derived from sp, the error condition in RequireGranuleAlignment can still be an unreachable block; it doesn't seem possible to avoid the decompiler message in that case
 
@@ -8103,6 +8307,48 @@ is sf=1 & b_30=0 & S & SBIT_CZNO & b_2128=0b11010110 & b_1015=0b000000 & Rd_GPR6
 }
 
 
+# C6.2.376 TCANCEL page C6-1974 line 115824 MATCH xd4600000/mask=xffe0001f
+# CONSTRUCT xd4600000/mask=xffe0001f MATCHED 1 DOCUMENTED OPCODES
+
+define pcodeop cancelTransaction;
+:tcancel "#"^imm16
+is b_2131=0x6a3 & imm16 & b_0519 & b_2020 & b_0004=0x0 {
+	local tmp:2 = imm16;
+	local reason:2 = b_0519;
+	local retry:1 = b_2020;
+	cancelTransaction(reason, retry);
+}
+
+
+# C6.2.377 TCOMMIT page C6-1975 line 115871 MATCH xd503307f/mask=xffffffff
+# CONSTRUCT xd503307f/mask=xffffffff MATCHED 1 DOCUMENTED OPCODES
+
+define pcodeop commitTransaction;
+:tcommit
+is b_0031=0xd503307f {
+	commitTransaction();
+}
+
+
+# C6.2.379 TSTART page C6-1979 line 116075
+
+define pcodeop transactionStart;
+:tstart Rd_GPR64
+is b_0531=0x6a9193a & Rd_GPR64 {
+	transactionStart(Rd_GPR64);
+}
+
+
+# C6.2.380 TTEST page C6-1981 line 116175
+
+define pcodeop transactionDepth;
+:ttest Rd_GPR64
+is b_0531=0x6a9198b & Rd_GPR64 {
+	Rd_GPR64 = transactionDepth();
+}
+
+
+
 # C6.2.387 UDF page C6-1993 line 116744 MATCH x00000000/mask=xffff0000
 # CONSTRUCT x00000000/mask=xffff0000 MATCHED 1 DOCUMENTED OPCODES
 # Undefined instruction
@@ -8135,567 +8381,3 @@ is b_1231=0b11010101000000000100 & b_0007=0b00111111
 }
 
 
-
-
-
-
-################################ Need implementation
-
-
-
-
-
-
-# C6.2.27 BC.cond page C6-1192 line 70348 MATCH x54000010/mask=xff000010
-# CONSTRUCT x54000010/mask=xff000010 MATCHED 1 DOCUMENTED OPCODES
-# x54000010/mask=xff000010 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=01010100...................1....
-
-:bc
-is b_2431=0b01010100 & imm19 & b_0404=0b1 & cond
-unimpl
-
-# C6.2.68 CPYFP, CPYFM, CPYFE page C6-1262 line 73913 MATCH x19000400/mask=x3f20fc00
-# C6.2.276 SETP, SETM, SETE page C6-1780 line 105072 MATCH x19c00400/mask=x3fe03c00
-# CONSTRUCT x19000400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x19000400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....000001..........
-
-:cpyfp
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b000001 & Rn & Rd
-unimpl
-
-# C6.2.69 CPYFPN, CPYFMN, CPYFEN page C6-1267 line 74246 MATCH x1900c400/mask=x3f20fc00
-# C6.2.276 SETP, SETM, SETE page C6-1780 line 105072 MATCH x19c00400/mask=x3fe03c00
-# CONSTRUCT x1900c400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1900c400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....110001..........
-
-:cpyfpn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b110001 & Rn & Rd
-unimpl
-
-# C6.2.70 CPYFPRN, CPYFMRN, CPYFERN page C6-1272 line 74579 MATCH x19008400/mask=x3f20fc00
-# C6.2.276 SETP, SETM, SETE page C6-1780 line 105072 MATCH x19c00400/mask=x3fe03c00
-# CONSTRUCT x19008400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x19008400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....100001..........
-
-:cpyfprn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b100001 & Rn & Rd
-unimpl
-
-# C6.2.71 CPYFPRT, CPYFMRT, CPYFERT page C6-1277 line 74912 MATCH x19002400/mask=x3f20fc00
-# C6.2.277 SETPN, SETMN, SETEN page C6-1784 line 105360 MATCH x19c02400/mask=x3fe03c00
-# CONSTRUCT x19002400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x19002400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....001001..........
-
-:cpyfprt
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b001001 & Rn & Rd
-unimpl
-
-# C6.2.72 CPYFPRTN, CPYFMRTN, CPYFERTN page C6-1282 line 75245 MATCH x1900e400/mask=x3f20fc00
-# C6.2.277 SETPN, SETMN, SETEN page C6-1784 line 105360 MATCH x19c02400/mask=x3fe03c00
-# CONSTRUCT x1900e400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1900e400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....111001..........
-
-:cpyfprtn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b111001 & Rn & Rd
-unimpl
-
-# C6.2.73 CPYFPRTRN, CPYFMRTRN, CPYFERTRN page C6-1287 line 75578 MATCH x1900a400/mask=x3f20fc00
-# C6.2.277 SETPN, SETMN, SETEN page C6-1784 line 105360 MATCH x19c02400/mask=x3fe03c00
-# CONSTRUCT x1900a400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1900a400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....101001..........
-
-:cpyfprtrn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b101001 & Rn & Rd
-unimpl
-
-# C6.2.74 CPYFPRTWN, CPYFMRTWN, CPYFERTWN page C6-1292 line 75911 MATCH x19006400/mask=x3f20fc00
-# C6.2.277 SETPN, SETMN, SETEN page C6-1784 line 105360 MATCH x19c02400/mask=x3fe03c00
-# CONSTRUCT x19006400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x19006400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....011001..........
-
-:cpyfprtwn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b011001 & Rn & Rd
-unimpl
-
-# C6.2.75 CPYFPT, CPYFMT, CPYFET page C6-1297 line 76244 MATCH x19003400/mask=x3f20fc00
-# C6.2.279 SETPTN, SETMTN, SETETN page C6-1792 line 105936 MATCH x19c03400/mask=x3fe03c00
-# CONSTRUCT x19003400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x19003400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....001101..........
-
-:cpyfpt
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b001101 & Rn & Rd
-unimpl
-
-# C6.2.76 CPYFPTN, CPYFMTN, CPYFETN page C6-1302 line 76577 MATCH x1900f400/mask=x3f20fc00
-# C6.2.279 SETPTN, SETMTN, SETETN page C6-1792 line 105936 MATCH x19c03400/mask=x3fe03c00
-# CONSTRUCT x1900f400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1900f400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....111101..........
-
-:cpyfptn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b111101 & Rn & Rd
-unimpl
-
-# C6.2.77 CPYFPTRN, CPYFMTRN, CPYFETRN page C6-1307 line 76910 MATCH x1900b400/mask=x3f20fc00
-# C6.2.279 SETPTN, SETMTN, SETETN page C6-1792 line 105936 MATCH x19c03400/mask=x3fe03c00
-# CONSTRUCT x1900b400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1900b400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....101101..........
-
-:cpyfptrn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b101101 & Rn & Rd
-unimpl
-
-# C6.2.78 CPYFPTWN, CPYFMTWN, CPYFETWN page C6-1312 line 77243 MATCH x19007400/mask=x3f20fc00
-# C6.2.279 SETPTN, SETMTN, SETETN page C6-1792 line 105936 MATCH x19c03400/mask=x3fe03c00
-# CONSTRUCT x19007400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x19007400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....011101..........
-
-:cpyfptwn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b011101 & Rn & Rd
-unimpl
-
-# C6.2.79 CPYFPWN, CPYFMWN, CPYFEWN page C6-1317 line 77576 MATCH x19004400/mask=x3f20fc00
-# C6.2.276 SETP, SETM, SETE page C6-1780 line 105072 MATCH x19c00400/mask=x3fe03c00
-# CONSTRUCT x19004400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x19004400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....010001..........
-
-:cpyfpwn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b010001 & Rn & Rd
-unimpl
-
-# C6.2.80 CPYFPWT, CPYFMWT, CPYFEWT page C6-1322 line 77909 MATCH x19001400/mask=x3f20fc00
-# C6.2.278 SETPT, SETMT, SETET page C6-1788 line 105648 MATCH x19c01400/mask=x3fe03c00
-# CONSTRUCT x19001400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x19001400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....000101..........
-
-:cpyfpwt
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b000101 & Rn & Rd
-unimpl
-
-# C6.2.81 CPYFPWTN, CPYFMWTN, CPYFEWTN page C6-1327 line 78242 MATCH x1900d400/mask=x3f20fc00
-# C6.2.278 SETPT, SETMT, SETET page C6-1788 line 105648 MATCH x19c01400/mask=x3fe03c00
-# CONSTRUCT x1900d400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1900d400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....110101..........
-
-:cpyfpwtn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b110101 & Rn & Rd
-unimpl
-
-# C6.2.82 CPYFPWTRN, CPYFMWTRN, CPYFEWTRN page C6-1332 line 78575 MATCH x19009400/mask=x3f20fc00
-# C6.2.278 SETPT, SETMT, SETET page C6-1788 line 105648 MATCH x19c01400/mask=x3fe03c00
-# CONSTRUCT x19009400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x19009400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....100101..........
-
-:cpyfpwtrn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b100101 & Rn & Rd
-unimpl
-
-# C6.2.83 CPYFPWTWN, CPYFMWTWN, CPYFEWTWN page C6-1337 line 78908 MATCH x19005400/mask=x3f20fc00
-# C6.2.278 SETPT, SETMT, SETET page C6-1788 line 105648 MATCH x19c01400/mask=x3fe03c00
-# CONSTRUCT x19005400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x19005400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001..0.....010101..........
-
-:cpyfpwtwn
-is size & b_2429=0b011001 & opt & b_2121=0b0 & Rs & b_1015=0b010101 & Rn & Rd
-unimpl
-
-# C6.2.84 CPYP, CPYM, CPYE page C6-1342 line 79241 MATCH x1d000400/mask=x3f20fc00
-# C6.2.272 SETGP, SETGM, SETGE page C6-1760 line 103652 MATCH x1dc00400/mask=x3fe03c00
-# CONSTRUCT x1d000400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d000400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....000001..........
-
-:cpyp
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b000001 & Rn & Rd
-unimpl
-
-# C6.2.85 CPYPN, CPYMN, CPYEN page C6-1348 line 79655 MATCH x1d00c400/mask=x3f20fc00
-# C6.2.272 SETGP, SETGM, SETGE page C6-1760 line 103652 MATCH x1dc00400/mask=x3fe03c00
-# CONSTRUCT x1d00c400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d00c400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....110001..........
-
-:cpypn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b110001 & Rn & Rd
-unimpl
-
-# C6.2.86 CPYPRN, CPYMRN, CPYERN page C6-1354 line 80068 MATCH x1d008400/mask=x3f20fc00
-# C6.2.272 SETGP, SETGM, SETGE page C6-1760 line 103652 MATCH x1dc00400/mask=x3fe03c00
-# CONSTRUCT x1d008400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d008400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....100001..........
-
-:cpyprn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b100001 & Rn & Rd
-unimpl
-
-# C6.2.87 CPYPRT, CPYMRT, CPYERT page C6-1360 line 80481 MATCH x1d002400/mask=x3f20fc00
-# C6.2.273 SETGPN, SETGMN, SETGEN page C6-1765 line 104007 MATCH x1dc02400/mask=x3fe03c00
-# CONSTRUCT x1d002400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d002400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....001001..........
-
-:cpyprt
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b001001 & Rn & Rd
-unimpl
-
-# C6.2.88 CPYPRTN, CPYMRTN, CPYERTN page C6-1366 line 80894 MATCH x1d00e400/mask=x3f20fc00
-# C6.2.273 SETGPN, SETGMN, SETGEN page C6-1765 line 104007 MATCH x1dc02400/mask=x3fe03c00
-# CONSTRUCT x1d00e400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d00e400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....111001..........
-
-:cpyprtn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b111001 & Rn & Rd
-unimpl
-
-# C6.2.89 CPYPRTRN, CPYMRTRN, CPYERTRN page C6-1372 line 81307 MATCH x1d00a400/mask=x3f20fc00
-# C6.2.273 SETGPN, SETGMN, SETGEN page C6-1765 line 104007 MATCH x1dc02400/mask=x3fe03c00
-# CONSTRUCT x1d00a400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d00a400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....101001..........
-
-:cpyprtrn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b101001 & Rn & Rd
-unimpl
-
-# C6.2.90 CPYPRTWN, CPYMRTWN, CPYERTWN page C6-1378 line 81720 MATCH x1d006400/mask=x3f20fc00
-# C6.2.273 SETGPN, SETGMN, SETGEN page C6-1765 line 104007 MATCH x1dc02400/mask=x3fe03c00
-# CONSTRUCT x1d006400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d006400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....011001..........
-
-:cpyprtwn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b011001 & Rn & Rd
-unimpl
-
-# C6.2.91 CPYPT, CPYMT, CPYET page C6-1384 line 82133 MATCH x1d003400/mask=x3f20fc00
-# C6.2.275 SETGPTN, SETGMTN, SETGETN page C6-1775 line 104717 MATCH x1dc03400/mask=x3fe03c00
-# CONSTRUCT x1d003400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d003400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....001101..........
-
-:cpypt
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b001101 & Rn & Rd
-unimpl
-
-# C6.2.92 CPYPTN, CPYMTN, CPYETN page C6-1390 line 82546 MATCH x1d00f400/mask=x3f20fc00
-# C6.2.275 SETGPTN, SETGMTN, SETGETN page C6-1775 line 104717 MATCH x1dc03400/mask=x3fe03c00
-# CONSTRUCT x1d00f400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d00f400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....111101..........
-
-:cpyptn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b111101 & Rn & Rd
-unimpl
-
-# C6.2.93 CPYPTRN, CPYMTRN, CPYETRN page C6-1396 line 82959 MATCH x1d00b400/mask=x3f20fc00
-# C6.2.275 SETGPTN, SETGMTN, SETGETN page C6-1775 line 104717 MATCH x1dc03400/mask=x3fe03c00
-# CONSTRUCT x1d00b400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d00b400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....101101..........
-
-:cpyptrn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b101101 & Rn & Rd
-unimpl
-
-# C6.2.94 CPYPTWN, CPYMTWN, CPYETWN page C6-1402 line 83372 MATCH x1d007400/mask=x3f20fc00
-# C6.2.275 SETGPTN, SETGMTN, SETGETN page C6-1775 line 104717 MATCH x1dc03400/mask=x3fe03c00
-# CONSTRUCT x1d007400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d007400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....011101..........
-
-:cpyptwn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b011101 & Rn & Rd
-unimpl
-
-# C6.2.95 CPYPWN, CPYMWN, CPYEWN page C6-1408 line 83785 MATCH x1d004400/mask=x3f20fc00
-# C6.2.272 SETGP, SETGM, SETGE page C6-1760 line 103652 MATCH x1dc00400/mask=x3fe03c00
-# CONSTRUCT x1d004400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d004400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....010001..........
-
-:cpypwn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b010001 & Rn & Rd
-unimpl
-
-# C6.2.96 CPYPWT, CPYMWT, CPYEWT page C6-1414 line 84198 MATCH x1d001400/mask=x3f20fc00
-# C6.2.274 SETGPT, SETGMT, SETGET page C6-1770 line 104362 MATCH x1dc01400/mask=x3fe03c00
-# CONSTRUCT x1d001400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d001400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....000101..........
-
-:cpypwt
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b000101 & Rn & Rd
-unimpl
-
-# C6.2.97 CPYPWTN, CPYMWTN, CPYEWTN page C6-1420 line 84611 MATCH x1d00d400/mask=x3f20fc00
-# C6.2.274 SETGPT, SETGMT, SETGET page C6-1770 line 104362 MATCH x1dc01400/mask=x3fe03c00
-# CONSTRUCT x1d00d400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d00d400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....110101..........
-
-:cpypwtn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b110101 & Rn & Rd
-unimpl
-
-# C6.2.98 CPYPWTRN, CPYMWTRN, CPYEWTRN page C6-1426 line 85024 MATCH x1d009400/mask=x3f20fc00
-# C6.2.274 SETGPT, SETGMT, SETGET page C6-1770 line 104362 MATCH x1dc01400/mask=x3fe03c00
-# CONSTRUCT x1d009400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d009400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....100101..........
-
-:cpypwtrn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b100101 & Rn & Rd
-unimpl
-
-# C6.2.99 CPYPWTWN, CPYMWTWN, CPYEWTWN page C6-1432 line 85437 MATCH x1d005400/mask=x3f20fc00
-# C6.2.274 SETGPT, SETGMT, SETGET page C6-1770 line 104362 MATCH x1dc01400/mask=x3fe03c00
-# CONSTRUCT x1d005400/mask=x3f20fc00 MATCHED 2 DOCUMENTED OPCODES
-# x1d005400/mask=x3f20fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101..0.....010101..........
-
-:cpypwtwn
-is size & b_2429=0b011101 & opt & b_2121=0b0 & Rs & b_1015=0b010101 & Rn & Rd
-unimpl
-
-# C6.2.116 DSB page C6-1464 line 87160 MATCH xd503323f/mask=xfffff3ff
-# CONSTRUCT xd503323f/mask=xfffff3ff MATCHED 1 DOCUMENTED OPCODES
-# xd503323f/mask=xfffff3ff NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=11010101000000110011..1000111111
-
-:dsb
-is b_1231=0b11010101000000110011 & imm2 & b_0009=0b1000111111
-unimpl
-
-# C6.2.132 LD64B page C6-1488 line 88475 MATCH xf83fd000/mask=xfffffc00
-# CONSTRUCT xf83fd000/mask=xfffffc00 MATCHED 1 DOCUMENTED OPCODES
-# xf83fd000/mask=xfffffc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=1111100000111111110100..........
-
-:ld64b
-is b_1031=0b1111100000111111110100 & Rn & Rt
-unimpl
-
-# C6.2.272 SETGP, SETGM, SETGE page C6-1760 line 103652 MATCH x1dc00400/mask=x3fe03c00
-# C6.2.84 CPYP, CPYM, CPYE page C6-1342 line 79241 MATCH x1d000400/mask=x3f20fc00
-# C6.2.85 CPYPN, CPYMN, CPYEN page C6-1348 line 79655 MATCH x1d00c400/mask=x3f20fc00
-# C6.2.86 CPYPRN, CPYMRN, CPYERN page C6-1354 line 80068 MATCH x1d008400/mask=x3f20fc00
-# C6.2.95 CPYPWN, CPYMWN, CPYEWN page C6-1408 line 83785 MATCH x1d004400/mask=x3f20fc00
-# CONSTRUCT x1dc00400/mask=x3fe03c00 MATCHED 5 DOCUMENTED OPCODES
-# x1dc00400/mask=x3fe03c00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101110.......0001..........
-
-:setgp
-is size & b_2129=0b011101110 & Rs & x & x & b_1013=0b0001 & Rn & Rd
-unimpl
-
-# C6.2.273 SETGPN, SETGMN, SETGEN page C6-1765 line 104007 MATCH x1dc02400/mask=x3fe03c00
-# C6.2.87 CPYPRT, CPYMRT, CPYERT page C6-1360 line 80481 MATCH x1d002400/mask=x3f20fc00
-# C6.2.88 CPYPRTN, CPYMRTN, CPYERTN page C6-1366 line 80894 MATCH x1d00e400/mask=x3f20fc00
-# C6.2.89 CPYPRTRN, CPYMRTRN, CPYERTRN page C6-1372 line 81307 MATCH x1d00a400/mask=x3f20fc00
-# C6.2.90 CPYPRTWN, CPYMRTWN, CPYERTWN page C6-1378 line 81720 MATCH x1d006400/mask=x3f20fc00
-# CONSTRUCT x1dc02400/mask=x3fe03c00 MATCHED 5 DOCUMENTED OPCODES
-# x1dc02400/mask=x3fe03c00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101110.......1001..........
-
-:setgpn
-is size & b_2129=0b011101110 & Rs & x & x & b_1013=0b1001 & Rn & Rd
-unimpl
-
-# C6.2.274 SETGPT, SETGMT, SETGET page C6-1770 line 104362 MATCH x1dc01400/mask=x3fe03c00
-# C6.2.96 CPYPWT, CPYMWT, CPYEWT page C6-1414 line 84198 MATCH x1d001400/mask=x3f20fc00
-# C6.2.97 CPYPWTN, CPYMWTN, CPYEWTN page C6-1420 line 84611 MATCH x1d00d400/mask=x3f20fc00
-# C6.2.98 CPYPWTRN, CPYMWTRN, CPYEWTRN page C6-1426 line 85024 MATCH x1d009400/mask=x3f20fc00
-# C6.2.99 CPYPWTWN, CPYMWTWN, CPYEWTWN page C6-1432 line 85437 MATCH x1d005400/mask=x3f20fc00
-# CONSTRUCT x1dc01400/mask=x3fe03c00 MATCHED 5 DOCUMENTED OPCODES
-# x1dc01400/mask=x3fe03c00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101110.......0101..........
-
-:setgpt
-is size & b_2129=0b011101110 & Rs & x & x & b_1013=0b0101 & Rn & Rd
-unimpl
-
-# C6.2.275 SETGPTN, SETGMTN, SETGETN page C6-1775 line 104717 MATCH x1dc03400/mask=x3fe03c00
-# C6.2.91 CPYPT, CPYMT, CPYET page C6-1384 line 82133 MATCH x1d003400/mask=x3f20fc00
-# C6.2.92 CPYPTN, CPYMTN, CPYETN page C6-1390 line 82546 MATCH x1d00f400/mask=x3f20fc00
-# C6.2.93 CPYPTRN, CPYMTRN, CPYETRN page C6-1396 line 82959 MATCH x1d00b400/mask=x3f20fc00
-# C6.2.94 CPYPTWN, CPYMTWN, CPYETWN page C6-1402 line 83372 MATCH x1d007400/mask=x3f20fc00
-# CONSTRUCT x1dc03400/mask=x3fe03c00 MATCHED 5 DOCUMENTED OPCODES
-# x1dc03400/mask=x3fe03c00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011101110.......1101..........
-
-:setgptn
-is size & b_2129=0b011101110 & Rs & x & x & b_1013=0b1101 & Rn & Rd
-unimpl
-
-# C6.2.276 SETP, SETM, SETE page C6-1780 line 105072 MATCH x19c00400/mask=x3fe03c00
-# C6.2.68 CPYFP, CPYFM, CPYFE page C6-1262 line 73913 MATCH x19000400/mask=x3f20fc00
-# C6.2.69 CPYFPN, CPYFMN, CPYFEN page C6-1267 line 74246 MATCH x1900c400/mask=x3f20fc00
-# C6.2.70 CPYFPRN, CPYFMRN, CPYFERN page C6-1272 line 74579 MATCH x19008400/mask=x3f20fc00
-# C6.2.79 CPYFPWN, CPYFMWN, CPYFEWN page C6-1317 line 77576 MATCH x19004400/mask=x3f20fc00
-# CONSTRUCT x19c00400/mask=x3fe03c00 MATCHED 5 DOCUMENTED OPCODES
-# x19c00400/mask=x3fe03c00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001110.......0001..........
-
-:setp
-is size & b_2129=0b011001110 & Rs & x & x & b_1013=0b0001 & Rn & Rd
-unimpl
-
-# C6.2.277 SETPN, SETMN, SETEN page C6-1784 line 105360 MATCH x19c02400/mask=x3fe03c00
-# C6.2.71 CPYFPRT, CPYFMRT, CPYFERT page C6-1277 line 74912 MATCH x19002400/mask=x3f20fc00
-# C6.2.72 CPYFPRTN, CPYFMRTN, CPYFERTN page C6-1282 line 75245 MATCH x1900e400/mask=x3f20fc00
-# C6.2.73 CPYFPRTRN, CPYFMRTRN, CPYFERTRN page C6-1287 line 75578 MATCH x1900a400/mask=x3f20fc00
-# C6.2.74 CPYFPRTWN, CPYFMRTWN, CPYFERTWN page C6-1292 line 75911 MATCH x19006400/mask=x3f20fc00
-# CONSTRUCT x19c02400/mask=x3fe03c00 MATCHED 5 DOCUMENTED OPCODES
-# x19c02400/mask=x3fe03c00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001110.......1001..........
-
-:setpn
-is size & b_2129=0b011001110 & Rs & x & x & b_1013=0b1001 & Rn & Rd
-unimpl
-
-# C6.2.278 SETPT, SETMT, SETET page C6-1788 line 105648 MATCH x19c01400/mask=x3fe03c00
-# C6.2.80 CPYFPWT, CPYFMWT, CPYFEWT page C6-1322 line 77909 MATCH x19001400/mask=x3f20fc00
-# C6.2.81 CPYFPWTN, CPYFMWTN, CPYFEWTN page C6-1327 line 78242 MATCH x1900d400/mask=x3f20fc00
-# C6.2.82 CPYFPWTRN, CPYFMWTRN, CPYFEWTRN page C6-1332 line 78575 MATCH x19009400/mask=x3f20fc00
-# C6.2.83 CPYFPWTWN, CPYFMWTWN, CPYFEWTWN page C6-1337 line 78908 MATCH x19005400/mask=x3f20fc00
-# CONSTRUCT x19c01400/mask=x3fe03c00 MATCHED 5 DOCUMENTED OPCODES
-# x19c01400/mask=x3fe03c00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001110.......0101..........
-
-:setpt
-is size & b_2129=0b011001110 & Rs & x & x & b_1013=0b0101 & Rn & Rd
-unimpl
-
-# C6.2.279 SETPTN, SETMTN, SETETN page C6-1792 line 105936 MATCH x19c03400/mask=x3fe03c00
-# C6.2.75 CPYFPT, CPYFMT, CPYFET page C6-1297 line 76244 MATCH x19003400/mask=x3f20fc00
-# C6.2.76 CPYFPTN, CPYFMTN, CPYFETN page C6-1302 line 76577 MATCH x1900f400/mask=x3f20fc00
-# C6.2.77 CPYFPTRN, CPYFMTRN, CPYFETRN page C6-1307 line 76910 MATCH x1900b400/mask=x3f20fc00
-# C6.2.78 CPYFPTWN, CPYFMTWN, CPYFETWN page C6-1312 line 77243 MATCH x19007400/mask=x3f20fc00
-# CONSTRUCT x19c03400/mask=x3fe03c00 MATCHED 5 DOCUMENTED OPCODES
-# x19c03400/mask=x3fe03c00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=..011001110.......1101..........
-
-:setptn
-is size & b_2129=0b011001110 & Rs & x & x & b_1013=0b1101 & Rn & Rd
-unimpl
-
-# C6.2.285 SMSTART page C6-1802 line 106497 MATCH xd503417f/mask=xfffff9ff
-# C6.2.229 MSR (immediate) page C6-1684 line 99649 MATCH xd500401f/mask=xfff8f01f
-# CONSTRUCT xd503417f/mask=xfffff9ff MATCHED 2 DOCUMENTED OPCODES
-# xd503417f/mask=xfffff9ff NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=110101010000001101000..101111111
-
-:smstart
-is b_1131=0b110101010000001101000 & x & x & b_0008=0b101111111
-unimpl
-
-# C6.2.286 SMSTOP page C6-1804 line 106604 MATCH xd503407f/mask=xfffff9ff
-# C6.2.229 MSR (immediate) page C6-1684 line 99649 MATCH xd500401f/mask=xfff8f01f
-# CONSTRUCT xd503407f/mask=xfffff9ff MATCHED 2 DOCUMENTED OPCODES
-# xd503407f/mask=xfffff9ff NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=110101010000001101000..001111111
-
-:smstop
-is b_1131=0b110101010000001101000 & x & x & b_0008=0b001111111
-unimpl
-
-# C6.2.292 ST64B page C6-1813 line 107121 MATCH xf83f9000/mask=xfffffc00
-# CONSTRUCT xf83f9000/mask=xfffffc00 MATCHED 1 DOCUMENTED OPCODES
-# xf83f9000/mask=xfffffc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=1111100000111111100100..........
-
-:st64b
-is b_1031=0b1111100000111111100100 & Rn & Rt
-unimpl
-
-# C6.2.293 ST64BV page C6-1814 line 107190 MATCH xf820b000/mask=xffe0fc00
-# CONSTRUCT xf820b000/mask=xffe0fc00 MATCHED 1 DOCUMENTED OPCODES
-# xf820b000/mask=xffe0fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=11111000001.....101100..........
-
-:st64bv
-is b_2131=0b11111000001 & Rs & b_1015=0b101100 & Rn & Rt
-unimpl
-
-# C6.2.294 ST64BV0 page C6-1816 line 107284 MATCH xf820a000/mask=xffe0fc00
-# CONSTRUCT xf820a000/mask=xffe0fc00 MATCHED 1 DOCUMENTED OPCODES
-# xf820a000/mask=xffe0fc00 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=11111000001.....101000..........
-
-:st64bv0
-is b_2131=0b11111000001 & Rs & b_1015=0b101000 & Rn & Rt
-unimpl
-
-# C6.2.376 TCANCEL page C6-1974 line 115824 MATCH xd4600000/mask=xffe0001f
-# CONSTRUCT xd4600000/mask=xffe0001f MATCHED 1 DOCUMENTED OPCODES
-# xd4600000/mask=xffe0001f NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=11010100011................00000
-
-:tcancel
-is b_2131=0b11010100011 & imm16 & b_0004=0b00000
-unimpl
-
-# C6.2.377 TCOMMIT page C6-1975 line 115871 MATCH xd503307f/mask=xffffffff
-# CONSTRUCT xd503307f/mask=xffffffff MATCHED 1 DOCUMENTED OPCODES
-# xd503307f/mask=xffffffff NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=11010101000000110011000001111111
-
-:tcommit
-is b_0031=0b11010101000000110011000001111111
-unimpl
-
-# C6.2.397 WFET page C6-2005 line 117387 MATCH xd5031000/mask=xffffffe0
-# CONSTRUCT xd5031000/mask=xffffffe0 MATCHED 1 DOCUMENTED OPCODES
-# xd5031000/mask=xffffffe0 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=110101010000001100010000000.....
-
-:wfet
-is b_0531=0b110101010000001100010000000 & Rd
-unimpl
-
-# C6.2.399 WFIT page C6-2007 line 117477 MATCH xd5031020/mask=xffffffe0
-# CONSTRUCT xd5031020/mask=xffffffe0 MATCHED 1 DOCUMENTED OPCODES
-# xd5031020/mask=xffffffe0 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=110101010000001100010000001.....
-
-:wfit
-is b_0531=0b110101010000001100010000001 & Rd
-unimpl
-
-# C6.2.228 MRS page C6-1683 line 99588
-# xd5300000/mask=xfff00000 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=110101010011....................
-
-# C6.2.379 TSTART page C6-1979 line 116075
-# xd5233060/mask=xffffffe0 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=110101010010001100110000011.....
-
-:tstart
-is b_0531=0b110101010010001100110000011 & Rt
-unimpl
-
-# C6.2.380 TTEST page C6-1981 line 116175
-# xd5233160/mask=xffffffe0 NOT MATCHED BY ANY CONSTRUCTOR
-# b_0031=110101010010001100110001011.....
-
-:ttest
-is b_0531=0b110101010010001100110001011 & Rt
-unimpl
