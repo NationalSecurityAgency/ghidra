@@ -23,6 +23,7 @@ import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.OffsetReference;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
@@ -86,6 +87,23 @@ public interface Memory extends AddressSetView {
 	 * Returns true if the memory is bigEndian, false otherwise.
 	 */
 	public boolean isBigEndian();
+
+	/**
+	 * Determine if the specified address is contained within the reserved EXTERNAL block
+	 * (see {@link MemoryBlock#EXTERNAL_BLOCK_NAME}).  This artificial memory block has certain
+	 * limitations that may require associated addresses to be properly identified.  All
+	 * data access/referencing has the biggest exposure since the importers generally
+	 * allocate a fixed and possibly insufficient amount of memory to corresponding data
+	 * symbols.  Any pointer math performed based upon an EXTERNAL block symbol address
+	 * is likely to produce an unuseable address that may collide with unrelated symbols
+	 * stored within the memory block (e.g., {@link OffsetReference} is one such example).  
+	 * @param addr address
+	 * @return true if address is contained within EXTERNAL memory block, else false.
+	 */
+	public default boolean isExternalBlockAddress(Address addr) {
+		MemoryBlock block = getBlock(addr);
+		return block != null && block.isExternalBlock();
+	}
 
 	/**
 	 * Sets the live memory handler

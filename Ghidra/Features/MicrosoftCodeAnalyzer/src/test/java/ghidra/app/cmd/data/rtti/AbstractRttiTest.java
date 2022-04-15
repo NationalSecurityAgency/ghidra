@@ -15,9 +15,8 @@
  */
 package ghidra.app.cmd.data.rtti;
 
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getAbsoluteAddress;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.*;
+import static org.junit.Assert.*;
 
 import ghidra.app.cmd.data.AbstractCreateDataTypeModelTest;
 import ghidra.app.cmd.data.TypeDescriptorModel;
@@ -591,10 +590,10 @@ class AbstractRttiTest extends AbstractCreateDataTypeModelTest {
 	}
 
 	protected void checkRtti2Data(ProgramDB program, long address, int numEntries) {
+		DataType rtti1Dt = Rtti1Model.getDataType(program);
 		DataType expectedDataType =
-			MSDataTypeUtils.is64Bit(program) ? new ImageBaseOffset32DataType()
-					: new PointerDataType(Rtti1Model.getDataType(program),
-						program.getDataTypeManager());
+			MSDataTypeUtils.is64Bit(program) ? IBO32DataType.createIBO32PointerTypedef(rtti1Dt)
+					: new PointerDataType(rtti1Dt, program.getDataTypeManager());
 		checkArrayData(program, address, expectedDataType, numEntries);
 	}
 

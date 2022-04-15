@@ -32,7 +32,7 @@ public class DataAction3Test extends AbstractDataActionTest {
 		List<DataType> builtIns = getBuiltInDataTypesAsFavorites();
 		for (DataType type : builtIns) {
 			String actionName = "Define " + type.getName();
-			manipulateAllSettings(true, false, false, actionName);
+			manipulateAllSettings(true, false, false, getAction(actionName));
 		}
 	}
 
@@ -42,7 +42,7 @@ public class DataAction3Test extends AbstractDataActionTest {
 		List<DataType> builtIns = getBuiltInDataTypesAsFavorites();
 		for (DataType type : builtIns) {
 			String actionName = "Define " + type.getName();
-			manipulateAllSettings(false, false, false, actionName);
+			manipulateAllSettings(false, false, false, getAction(actionName));
 		}
 	}
 }

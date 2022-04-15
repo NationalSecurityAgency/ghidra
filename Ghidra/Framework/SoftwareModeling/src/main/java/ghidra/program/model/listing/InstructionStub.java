@@ -290,7 +290,7 @@ public class InstructionStub implements Instruction {
 
 	@Override
 	public Memory getMemory() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override

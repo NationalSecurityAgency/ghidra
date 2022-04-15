@@ -29,7 +29,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.scalar.Scalar;
@@ -75,7 +74,6 @@ public class SymbolicPropogator {
 		new NotFoundException("Divide by zero");
 
 	private long pointerMask;
-	private AddressRange externalBlockRange;
 
 	protected static final int MAX_EXACT_INSTRUCTIONS = 100;
 
@@ -99,7 +97,6 @@ public class SymbolicPropogator {
 		spaceContext = new ProgramContextImpl(language);
 
 		setPointerMask(program);
-		setExternalRange(program);
 
 		context = new VarnodeContext(program, programContext, spaceContext);
 		context.setDebug(debug);
@@ -120,18 +117,6 @@ public class SymbolicPropogator {
 			ptrSize = 8;
 		}
 		pointerMask = maskSize[ptrSize];
-	}
-
-	/**
-	 * Identify EXTERNAL block range which should not be disassembled.
-	 * @param program
-	 * @return EXTERNAL block range or null if not found
-	 */
-	private void setExternalRange(Program program) {
-		MemoryBlock block = program.getMemory().getBlock(MemoryBlock.EXTERNAL_BLOCK_NAME);
-		if (block != null) {
-			externalBlockRange = new AddressRangeImpl(block.getStart(), block.getEnd());
-		}
 	}
 
 	/**
@@ -2329,7 +2314,7 @@ public class SymbolicPropogator {
 		}
 
 		if (refType.isFlow() && !refType.isIndirect() &&
-			(externalBlockRange == null || !externalBlockRange.contains(target))) {
+			!program.getMemory().isExternalBlockAddress(target)) {
 			Data udata = program.getListing().getUndefinedDataAt(target);
 			if (udata != null) {
 				DisassembleCommand cmd = new DisassembleCommand(target, null, true);

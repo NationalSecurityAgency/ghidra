@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
-import db.*;
+import db.DBConstants;
+import db.DBHandle;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.framework.Application;
 import ghidra.framework.data.DomainObjectAdapterDB;
@@ -47,9 +48,9 @@ import ghidra.program.database.util.AddressSetPropertyMapDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.pcode.Varnode;
-import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
@@ -98,9 +99,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            created tables. 
 	 * 18-Feb-2021 - version 23   Added support for Big Reflist for tracking FROM references.
 	 *                            Primarily used for large numbers of Entry Point references.
-	 * 31-Mar-2021 - version 24   Added support for CompilerSpec extensions     
+	 * 31-Mar-2021 - version 24   Added support for CompilerSpec extensions 
+	 * 12-Jan-2022 - version 25   Added support for resolved TypeDefSettingsDefinition   
 	 */
-	static final int DB_VERSION = 24;
+	static final int DB_VERSION = 25;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
@@ -121,8 +123,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	public static final int COMPOUND_VARIABLE_STORAGE_ADDED_VERSION = 18;
 	public static final int AUTO_PARAMETERS_ADDED_VERSION = 19;
 
-	private static final String LANG_DEFAULT_VERSION = "1.0";
+	private static final String DATA_MAP_TABLE_NAME = "Program";
 
+	// Data map keys
 	private static final String PROGRAM_NAME = "Program Name";
 	private static final String PROGRAM_DB_VERSION = "DB Version";
 	private static final String LANGUAGE_VERSION = "Language Version";
@@ -134,15 +137,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private static final String EXECUTABLE_FORMAT = "Executable Format";
 	private static final String EXECUTABLE_MD5 = "Executable MD5";
 	private static final String EXECUTABLE_SHA256 = "Executable SHA256";
-	private static final String TABLE_NAME = "Program";
 	private static final String EXECUTE_PATH = "Execute Path";
 	private static final String EXECUTE_FORMAT = "Execute Format";
 	private static final String IMAGE_OFFSET = "Image Offset";
-
-	private final static Field[] COL_FIELDS = new Field[] { StringField.INSTANCE };
-	private final static String[] COL_TYPES = new String[] { "Value" };
-	private final static Schema SCHEMA =
-		new Schema(0, StringField.INSTANCE, "Key", COL_FIELDS, COL_TYPES);
 
 	//
 	// The numbering of managers controls the order in which they are notified.
@@ -188,7 +185,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private AddressMapDB addrMap;
 	private ListingDB listing;
 	private ProgramUserDataDB programUserData;
-	private Table table;
+	private DBStringMapAdapter dataMap;
 	private Language language;
 	private CompilerSpec compilerSpec;
 
@@ -240,7 +237,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		try {
 			int id = startTransaction("create program");
 
-			createDatabase();
+			createProgramInfo();
 			if (createManagers(CREATE, TaskMonitor.DUMMY) != null) {
 				throw new AssertException("Unexpected version exception on create");
 			}
@@ -300,16 +297,28 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			changeable = (openMode != READ_ONLY);
 
 			// check DB version and read name, languageName, languageVersion and languageMinorVersion
-			VersionException dbVersionExc = initializeDatabase(openMode);
+			VersionException dbVersionExc = initializeProgramInfo(openMode);
 
-			VersionException languageVersionExc = null;
-
+			LanguageVersionException languageVersionExc = null;
 			try {
 				language = DefaultLanguageService.getLanguageService().getLanguage(languageID);
-				languageVersionExc = checkLanguageVersion(openMode);
+				languageVersionExc =
+					LanguageVersionException.check(language, languageVersion, languageMinorVersion);
 			}
 			catch (LanguageNotFoundException e) {
-				languageVersionExc = checkForLanguageChange(e, openMode);
+				languageVersionExc =
+					LanguageVersionException.checkForLanguageChange(e, languageID, languageVersion);
+			}
+
+			if (languageVersionExc != null) {
+				languageUpgradeRequired = true;
+				languageUpgradeTranslator = languageVersionExc.getLanguageTranslator();
+				if (languageUpgradeTranslator != null) {
+					// stub language needed to facilitate upgrade process
+					language = languageVersionExc.getOldLanguage();
+					languageVersion = language.getVersion();
+					languageMinorVersion = language.getMinorVersion();
+				}
 			}
 
 			initCompilerSpec();
@@ -320,12 +329,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			if (dbVersionExc != null) {
 				versionExc = dbVersionExc.combine(versionExc);
 			}
-			if (languageVersionExc != null) {
-				languageUpgradeRequired = true;
-				if (openMode != UPGRADE) {
-					// Language upgrade required
-					versionExc = languageVersionExc.combine(versionExc);
-				}
+			if (languageVersionExc != null && openMode != UPGRADE) {
+				// Language upgrade required
+				versionExc = languageVersionExc.combine(versionExc);
 			}
 
 			if (versionExc != null) {
@@ -410,104 +416,12 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					language.getLanguageDescription().getDescription() +
 					" Not Found, using default: " + e);
 			langSpec = language.getDefaultCompilerSpec();
-			if (compilerSpec == null) {
+			if (langSpec == null) {
 				throw e;
 			}
-			compilerSpecID = compilerSpec.getCompilerSpecID();
+			compilerSpecID = langSpec.getCompilerSpecID();
 		}
 		compilerSpec = ProgramCompilerSpec.getProgramCompilerSpec(this, langSpec);
-	}
-
-	/**
-	 * Language corresponding to languageId was found.  Check language version
-	 * for language upgrade situation.
-	 * @param openMode one of:
-	 * 		READ_ONLY: the original database will not be modified
-	 * 		UPDATE: the database can be written to.
-	 * 		UPGRADE: the database is upgraded to the latest schema as it is opened.
-	 * @throws LanguageNotFoundException if a language cannot be found for this program
-	 * @return VersionException if language upgrade required
-	 */
-	private VersionException checkLanguageVersion(int openMode) throws LanguageNotFoundException {
-
-		if (language.getVersion() > languageVersion) {
-
-			Language newLanguage = language;
-
-			Language oldLanguage = OldLanguageFactory.getOldLanguageFactory()
-					.getOldLanguage(languageID, languageVersion);
-			if (oldLanguage == null) {
-				// Assume minor version behavior - old language does not exist for current major version
-				Msg.error(this, "Old language specification not found: " + languageID +
-					" (Version " + languageVersion + ")");
-				return new VersionException(true);
-			}
-
-			// Ensure that we can upgrade the language
-			languageUpgradeTranslator = LanguageTranslatorFactory.getLanguageTranslatorFactory()
-					.getLanguageTranslator(oldLanguage, newLanguage);
-			if (languageUpgradeTranslator == null) {
-
-// TODO: This is a bad situation!! Most language revisions should be supportable, if not we have no choice but to throw 
-// a LanguageNotFoundException  until we figure out how to deal with nasty translations which require
-// a complete redisassembly and possibly auto analysis.
-
-				throw new LanguageNotFoundException(language.getLanguageID(),
-					"(Ver " + languageVersion + "." + languageMinorVersion + " -> " +
-						newLanguage.getVersion() + "." + newLanguage.getMinorVersion() +
-						") language version translation not supported");
-			}
-			language = oldLanguage;
-			return new VersionException(true);
-		}
-		else if (language.getVersion() == languageVersion &&
-			language.getMinorVersion() > languageMinorVersion) {
-			// Minor version change - translator not needed (languageUpgradeTranslator is null)
-			return new VersionException(true);
-		}
-		else if (language.getMinorVersion() != languageMinorVersion ||
-			language.getVersion() != languageVersion) {
-			throw new LanguageNotFoundException(language.getLanguageID(), languageVersion,
-				languageMinorVersion);
-		}
-		return null;
-	}
-
-	/**
-	 * Language specified by languageName was not found.  Check for 
-	 * valid language translation/migration.  Old language version specified by
-	 * languageVersion.
-	 * @param openMode one of:
-	 * 		READ_ONLY: the original database will not be modified
-	 * 		UPDATE: the database can be written to.
-	 * 		UPGRADE: the database is upgraded to the latest schema as it is opened.
-	 * @return true if language upgrade required
-	 * @throws LanguageNotFoundException if a suitable replacement language not found
-	 */
-	private VersionException checkForLanguageChange(LanguageNotFoundException e, int openMode)
-			throws LanguageNotFoundException {
-
-		languageUpgradeTranslator = LanguageTranslatorFactory.getLanguageTranslatorFactory()
-				.getLanguageTranslator(languageID, languageVersion);
-		if (languageUpgradeTranslator == null) {
-			throw e;
-		}
-
-		language = languageUpgradeTranslator.getOldLanguage();
-		languageID = language.getLanguageID();
-
-		VersionException ve = new VersionException(true);
-		LanguageID oldLangName = languageUpgradeTranslator.getOldLanguage().getLanguageID();
-		LanguageID newLangName = languageUpgradeTranslator.getNewLanguage().getLanguageID();
-		String message;
-		if (oldLangName.equals(newLangName)) {
-			message = "Program requires a processor language version change";
-		}
-		else {
-			message = "Program requires a processor language change to: " + newLangName;
-		}
-		ve.setDetailMessage(message);
-		return ve;
 	}
 
 	@Override
@@ -571,22 +485,22 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	@Override
-	public SymbolTable getSymbolTable() {
-		return (SymbolTable) managers[SYMBOL_MGR];
+	public SymbolManager getSymbolTable() {
+		return (SymbolManager) managers[SYMBOL_MGR];
 	}
 
 	@Override
-	public ExternalManager getExternalManager() {
-		return (ExternalManager) managers[EXTERNAL_MGR];
+	public ExternalManagerDB getExternalManager() {
+		return (ExternalManagerDB) managers[EXTERNAL_MGR];
 	}
 
 	@Override
-	public EquateTable getEquateTable() {
-		return (EquateTable) managers[EQUATE_MGR];
+	public EquateManager getEquateTable() {
+		return (EquateManager) managers[EQUATE_MGR];
 	}
 
 	@Override
-	public Memory getMemory() {
+	public MemoryMapDB getMemory() {
 		return memoryManager;
 	}
 
@@ -595,8 +509,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	@Override
-	public ReferenceManager getReferenceManager() {
-		return (ReferenceManager) managers[REF_MGR];
+	public ReferenceDBManager getReferenceManager() {
+		return (ReferenceDBManager) managers[REF_MGR];
 	}
 
 	public CodeManager getCodeManager() {
@@ -613,17 +527,17 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	@Override
-	public FunctionManager getFunctionManager() {
+	public FunctionManagerDB getFunctionManager() {
 		return (FunctionManagerDB) managers[FUNCTION_MGR];
 	}
 
 	@Override
-	public BookmarkManager getBookmarkManager() {
-		return (BookmarkManager) managers[BOOKMARK_MGR];
+	public BookmarkDBManager getBookmarkManager() {
+		return (BookmarkDBManager) managers[BOOKMARK_MGR];
 	}
 
 	@Override
-	public RelocationTable getRelocationTable() {
+	public RelocationManager getRelocationTable() {
 		return (RelocationManager) managers[RELOC_MGR];
 	}
 
@@ -1183,9 +1097,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			if (name.equals(newName)) {
 				return;
 			}
-			DBRecord record = table.getRecord(new StringField(PROGRAM_NAME));
-			record.setString(0, newName);
-			table.putRecord(record);
+			dataMap.put(PROGRAM_NAME, newName);
 			getTreeManager().setProgramName(name, newName);
 			super.setName(newName);
 		}
@@ -1198,8 +1110,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	private void refreshName() throws IOException {
-		DBRecord record = table.getRecord(new StringField(PROGRAM_NAME));
-		name = record.getString(0);
+		name = dataMap.get(PROGRAM_NAME);
 	}
 
 	private void refreshImageBase() throws IOException {
@@ -1292,9 +1203,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	private long getStoredBaseImageOffset() throws IOException {
-		DBRecord rec = table.getRecord(new StringField(IMAGE_OFFSET));
-		if (rec != null) {
-			return (new BigInteger(rec.getString(0), 16)).longValue();
+		String imageBaseStr = dataMap.get(IMAGE_OFFSET);
+		if (imageBaseStr != null) {
+			return (new BigInteger(imageBaseStr, 16)).longValue();
 		}
 		return 0;
 	}
@@ -1352,10 +1263,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 			if (commit) {
 				try {
-					DBRecord record = SCHEMA.createRecord(new StringField(IMAGE_OFFSET));
-					record.setString(0, Long.toHexString(base.getOffset()));
-					table.putRecord(record);
-
+					dataMap.put(IMAGE_OFFSET, Long.toHexString(base.getOffset()));
 					storedImageBase = base;
 					imageBaseOverride = false;
 
@@ -1409,32 +1317,15 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return "Program";
 	}
 
-	private void createDatabase() throws IOException {
-		table = dbh.createTable(TABLE_NAME, SCHEMA);
-		DBRecord record = SCHEMA.createRecord(new StringField(PROGRAM_NAME));
-		record.setString(0, name);
-		table.putRecord(record);
-
+	private void createProgramInfo() throws IOException {
+		dataMap = new DBStringMapAdapter(dbh, DATA_MAP_TABLE_NAME, true);
+		dataMap.put(PROGRAM_NAME, name);
 		// NOTE: Keep unused language name record for backward compatibility to avoid NPE
-		record = SCHEMA.createRecord(new StringField(OLD_LANGUAGE_NAME));
-		record.setString(0, languageID.getIdAsString());
-		table.putRecord(record);
-
-		record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
-		record.setString(0, languageID.getIdAsString());
-		table.putRecord(record);
-
-		record = SCHEMA.createRecord(new StringField(COMPILER_SPEC_ID));
-		record.setString(0, compilerSpecID.getIdAsString());
-		table.putRecord(record);
-
-		record = SCHEMA.createRecord(new StringField(LANGUAGE_VERSION));
-		record.setString(0, languageVersion + "." + languageMinorVersion);
-		table.putRecord(record);
-
-		record = SCHEMA.createRecord(new StringField(PROGRAM_DB_VERSION));
-		record.setString(0, Integer.toString(DB_VERSION));
-		table.putRecord(record);
+		dataMap.put(OLD_LANGUAGE_NAME, languageID.getIdAsString());
+		dataMap.put(LANGUAGE_ID, languageID.getIdAsString());
+		dataMap.put(COMPILER_SPEC_ID, compilerSpecID.getIdAsString());
+		dataMap.put(LANGUAGE_VERSION, languageVersion + "." + languageMinorVersion);
+		dataMap.put(PROGRAM_DB_VERSION, Integer.toString(DB_VERSION));
 	}
 
 	/**
@@ -1451,21 +1342,16 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * @throws VersionException if the data is newer than this version of Ghidra and can not be
 	 * upgraded or opened.
 	 */
-	private VersionException initializeDatabase(int openMode)
+	private VersionException initializeProgramInfo(int openMode)
 			throws IOException, VersionException, LanguageNotFoundException {
 		boolean requiresUpgrade = false;
 
-		table = dbh.getTable(TABLE_NAME);
-		if (table == null) {
-			throw new IOException("Unsupported File Content");
-		}
-		DBRecord record = table.getRecord(new StringField(PROGRAM_NAME));
-		name = record.getString(0);
+		dataMap = new DBStringMapAdapter(dbh, DATA_MAP_TABLE_NAME, false);
+		name = dataMap.get(PROGRAM_NAME);
 
-		record = table.getRecord(new StringField(LANGUAGE_ID));
-		if (record == null) { // must be in old style combined language/compiler spec format
-			record = table.getRecord(new StringField(OLD_LANGUAGE_NAME));
-			String oldLanguageName = record.getString(0);
+		String languageIdStr = dataMap.get(LANGUAGE_ID);
+		if (languageIdStr == null) { // must be in old style combined language/compiler spec format
+			String oldLanguageName = dataMap.get(OLD_LANGUAGE_NAME);
 			LanguageCompilerSpecPair languageCompilerSpecPair =
 				OldLanguageMappingService.lookupMagicString(oldLanguageName, false);
 			if (languageCompilerSpecPair == null) {
@@ -1477,31 +1363,28 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				requiresUpgrade = true;
 			}
 			else {
-				record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
-				record.setString(0, languageID.getIdAsString());
-				table.putRecord(record);
-				record = SCHEMA.createRecord(new StringField(COMPILER_SPEC_ID));
-				record.setString(0, compilerSpecID.getIdAsString());
-				table.putRecord(record);
+				dataMap.put(LANGUAGE_ID, languageID.getIdAsString());
+				dataMap.put(COMPILER_SPEC_ID, compilerSpecID.getIdAsString());
 			}
 		}
 		else {
-			languageID = new LanguageID(record.getString(0));
-			record = table.getRecord(new StringField(COMPILER_SPEC_ID));
-			compilerSpecID = new CompilerSpecID(record.getString(0));
+			languageID = new LanguageID(languageIdStr);
+			compilerSpecID = new CompilerSpecID(dataMap.get(COMPILER_SPEC_ID));
 		}
 
-		record = table.getRecord(new StringField(LANGUAGE_VERSION));
-		String languageVersionStr = record == null ? LANG_DEFAULT_VERSION : record.getString(0);
-		String[] vs = languageVersionStr.split("\\.");
 		languageVersion = 1;
 		languageMinorVersion = 0;
-		try {
-			languageVersion = Integer.parseInt(vs[0]);
-			languageMinorVersion = Integer.parseInt(vs[1]);
-		}
-		catch (Exception e) {
-			// Ignore
+
+		String languageVersionStr = dataMap.get(LANGUAGE_VERSION);
+		if (languageVersionStr != null) {
+			try {
+				String[] vs = languageVersionStr.split("\\.");
+				languageVersion = Integer.parseInt(vs[0]);
+				languageMinorVersion = Integer.parseInt(vs[1]);
+			}
+			catch (Exception e) {
+				// Ignore
+			}
 		}
 
 		int storedVersion = getStoredVersion();
@@ -1525,16 +1408,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		checkFunctionWrappedPointers(monitor);
 
 		// Update stored database version
-		table = dbh.getTable(TABLE_NAME);
-		Field key = new StringField(PROGRAM_DB_VERSION);
-		String versionStr = Integer.toString(DB_VERSION);
-		DBRecord record = table.getRecord(key);
-		if (record != null && versionStr.equals(record.getString(0))) {
-			return; // already has correct version
-		}
-		record = SCHEMA.createRecord(key);
-		record.setString(0, versionStr);
-		table.putRecord(record);
+		dataMap.put(PROGRAM_DB_VERSION, Integer.toString(DB_VERSION));
 	}
 
 	/*
@@ -1547,7 +1421,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			// Implemented compound VariableStorage and return "parameter"
 			// Added signature SourceType stored in function flags
 			// Added support for dynamic return/param storage
-			((FunctionManagerDB) getFunctionManager()).initSignatureSource(monitor);
+			getFunctionManager().initSignatureSource(monitor);
 		}
 		// versions prior to COMPOUND_VARIABLE_STORAGE_ADDED_VERSION did not support
 		// dynamic storage so the following upgrade is unnecessary
@@ -1555,17 +1429,16 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			// Implemented auto and forced-indirect parameters -
 			// must eliminate fix __thiscall functions using dynamic storage
 			// to eliminate default 'this' parameter
-			((FunctionManagerDB) getFunctionManager()).removeExplicitThisParameters(monitor);
+			getFunctionManager().removeExplicitThisParameters(monitor);
 		}
 
 	}
 
 	public int getStoredVersion() throws IOException {
-		DBRecord record = table.getRecord(new StringField(PROGRAM_DB_VERSION));
-		if (record != null) {
-			String s = record.getString(0);
+		String dbVersionDtr = dataMap.get(PROGRAM_DB_VERSION);
+		if (dbVersionDtr != null) {
 			try {
-				return Integer.parseInt(s);
+				return Integer.parseInt(dbVersionDtr);
 			}
 			catch (NumberFormatException e) {
 				// return 1 for invalid value
@@ -1576,22 +1449,25 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	private void checkOldProperties(int openMode, TaskMonitor monitor)
 			throws IOException, VersionException {
-		DBRecord record = table.getRecord(new StringField(EXECUTE_PATH));
-		if (record != null) {
+		String exePath = dataMap.get(EXECUTE_PATH);
+		if (exePath != null) {
 			if (openMode == READ_ONLY) {
 				return; // not important, get on path or format will return "unknown"
 			}
 			if (openMode != UPGRADE) {
 				throw new VersionException(true);
 			}
+
+			// migrate old data to program info
 			Options pl = getOptions(PROGRAM_INFO);
-			String value = record.getString(0);
-			pl.setString(EXECUTABLE_PATH, value);
-			table.deleteRecord(record.getKeyField());
-			record = table.getRecord(new StringField(EXECUTE_FORMAT));
-			if (record != null) {
-				pl.setString(EXECUTABLE_FORMAT, value);
-				table.deleteRecord(record.getKeyField());
+
+			pl.setString(EXECUTABLE_PATH, exePath);
+			dataMap.put(EXECUTE_PATH, null);
+
+			String exeFormat = dataMap.get(EXECUTE_FORMAT);
+			if (exeFormat != null) {
+				pl.setString(EXECUTABLE_FORMAT, exeFormat);
+				dataMap.put(EXECUTE_FORMAT, null);
 			}
 		}
 		int storedVersion = getStoredVersion();
@@ -1615,7 +1491,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				throw new VersionException(true);
 			}
 		}
-
 	}
 
 	/*
@@ -2103,9 +1978,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					addrMap.memoryMapChanged(memoryManager);
 
 					monitor.setMessage("Updating symbols...");
-					((SymbolManager) getSymbolTable()).setLanguage(translator, monitor);
-					((ExternalManagerDB) getExternalManager()).setLanguage(translator, monitor);
-					((FunctionManagerDB) getFunctionManager()).setLanguage(translator, monitor);
+					getSymbolTable().setLanguage(translator, monitor);
+					getExternalManager().setLanguage(translator, monitor);
+					getFunctionManager().setLanguage(translator, monitor);
 				}
 
 				clearCache(true);
@@ -2133,15 +2008,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					translator.fixupInstructions(this, translator.getOldLanguage(), monitor);
 				}
 
-				DBRecord record = SCHEMA.createRecord(new StringField(LANGUAGE_ID));
-				record.setString(0, languageID.getIdAsString());
-				table.putRecord(record);
-				record = SCHEMA.createRecord(new StringField(COMPILER_SPEC_ID));
-				record.setString(0, compilerSpecID.getIdAsString());
-				table.putRecord(record);
-				record = SCHEMA.createRecord(new StringField(LANGUAGE_VERSION));
-				record.setString(0, languageVersion + "." + languageMinorVersion);
-				table.putRecord(record);
+				dataMap.put(LANGUAGE_ID, languageID.getIdAsString());
+				dataMap.put(COMPILER_SPEC_ID, compilerSpecID.getIdAsString());
+				dataMap.put(LANGUAGE_VERSION, languageVersion + "." + languageMinorVersion);
+
 				setChanged(true);
 				clearCache(true);
 				invalidate();

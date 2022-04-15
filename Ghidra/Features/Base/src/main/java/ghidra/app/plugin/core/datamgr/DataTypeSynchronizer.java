@@ -119,7 +119,7 @@ public class DataTypeSynchronizer {
 		long lastChangeTime = refDT.getLastChangeTime();
 		DataType sourceDT = sourceDTM.resolve(refDT, DataTypeConflictHandler.REPLACE_HANDLER);
 		if (!namesAreEquivalent(refDT, sourceDT)) {
-			renameDataType(sourceDTM, sourceDT, refDT.getName());
+			renameDataType(sourceDTM, sourceDT, refDT);
 		}
 		if (!StringUtils.equals(refDT.getDescription(), sourceDT.getDescription())) {
 			sourceDT.setDescription(refDT.getDescription());
@@ -132,7 +132,7 @@ public class DataTypeSynchronizer {
 		long lastChangeTime = sourceDT.getLastChangeTime();
 		DataType refDT = refDTM.resolve(sourceDT, DataTypeConflictHandler.REPLACE_HANDLER);
 		if (!namesAreEquivalent(refDT, sourceDT)) {
-			renameDataType(refDTM, refDT, sourceDT.getName());
+			renameDataType(refDTM, refDT, sourceDT);
 		}
 		if (!StringUtils.equals(sourceDT.getDescription(), refDT.getDescription())) {
 			refDT.setDescription(sourceDT.getDescription());
@@ -231,7 +231,15 @@ public class DataTypeSynchronizer {
 		}
 	}
 
-	private static void renameDataType(DataTypeManager sourceDTM, DataType sourceDT, String name) {
+	private static void renameDataType(DataTypeManager sourceDTM, DataType sourceDT,
+			DataType dtToCopy) {
+		if (isAutoNamedTypedef(dtToCopy)) {
+			if (sourceDT instanceof TypeDef) {
+				((TypeDef) sourceDT).enableAutoNaming();
+				return;
+			}
+		}
+		String name = dtToCopy.getName();
 		int index = name.indexOf(DataType.CONFLICT_SUFFIX);
 		if (index > 0) {
 			name = name.substring(0, index);
@@ -254,7 +262,21 @@ public class DataTypeSynchronizer {
 		}
 	}
 
+	private static boolean isAutoNamedTypedef(DataType dt) {
+		if (dt instanceof TypeDef) {
+			TypeDef td = (TypeDef) dt;
+			return td.isAutoNamed();
+		}
+		return false;
+	}
+
 	public static boolean namesAreEquivalent(DataType dt1, DataType dt2) {
+		if (isAutoNamedTypedef(dt1)) {
+			return isAutoNamedTypedef(dt2);
+		}
+		else if (isAutoNamedTypedef(dt2)) {
+			return false;
+		}
 		String name1 = dt1.getName();
 		String name2 = dt2.getName();
 		if (name1.equals(name2)) {

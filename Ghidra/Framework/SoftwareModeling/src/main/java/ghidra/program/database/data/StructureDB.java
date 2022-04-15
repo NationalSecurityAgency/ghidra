@@ -554,7 +554,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	private DataTypeComponentDB doDelete(int index) throws IOException {
 		DataTypeComponentDB dtc = components.remove(index);
 		dtc.getDataType().removeParent(this);
-		componentAdapter.removeRecord(dtc.getKey());
+		long compKey = dtc.getKey();
+		componentAdapter.removeRecord(compKey);
+		dataMgr.getSettingsAdapter().removeAllSettingsRecords(compKey);
 		return dtc;
 	}
 
@@ -882,14 +884,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			int idx = Collections.binarySearch(components, Integer.valueOf(ordinal),
 				OrdinalComparator.INSTANCE);
 			if (idx >= 0) {
-				DataTypeComponentDB dtc = components.remove(idx);
-				dtc.getDataType().removeParent(this);
-				try {
-					componentAdapter.removeRecord(dtc.getKey());
-				}
-				catch (IOException e) {
-					dataMgr.dbError(e);
-				}
+				DataTypeComponentDB dtc = doDelete(idx);
 				int len = dtc.getLength();
 				if (len > 1) {
 					shiftOffsets(idx, len - 1, 0); // updates timestamp
@@ -1589,7 +1584,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		}
 		for (DataTypeComponentDB dtc : components) {
 			dtc.getDataType().removeParent(this);
-			componentAdapter.removeRecord(dtc.getKey());
+			long compKey = dtc.getKey();
+			componentAdapter.removeRecord(compKey);
+			dataMgr.getSettingsAdapter().removeAllSettingsRecords(compKey);
 		}
 
 		components.clear();
@@ -1700,11 +1697,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 					removeBitFieldComponent = bitfieldDt.getBaseDataType() == dt;
 				}
 				if (removeBitFieldComponent || dtc.getDataType() == dt) {
-					dt.removeParent(this);
+					doDelete(i);
 // FIXME: Consider replacing with undefined type instead of removing (don't remove bitfield)
-					components.remove(i);
 					shiftOffsets(i, dtc.getLength() - 1, 0); // ordinals only
-					componentAdapter.removeRecord(dtc.getKey());
 					--numComponents; // may be revised by repack
 					changed = true;
 				}
@@ -1861,7 +1856,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			return false;
 		}
 
-		checkIsValid();
+		validate(lock);
 		if (resolving) { // actively resolving children
 			if (dataType.getUniversalID().equals(getUniversalID())) {
 				return true;
@@ -2202,10 +2197,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				}
 				if (remove) {
 					// error case - remove component
-					oldDt.removeParent(this);
-					components.remove(i);
+					doDelete(i);
 					shiftOffsets(i, comp.getLength() - 1, 0); // ordinals only
-					componentAdapter.removeRecord(comp.getKey());
 					changed = true;
 				}
 			}
@@ -2224,7 +2217,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	private void setComponentDataType(DataTypeComponentDB comp, DataType newDt,
-			int nextIndex) {
+			int nextIndex) throws IOException {
 
 		int oldLen = comp.getLength();
 		int len = DataTypeComponent.usesZeroLengthComponent(newDt) ? 0 : newDt.getLength();
@@ -2238,6 +2231,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			comp.setLength(len, false); // do before record save below
 		}
 		comp.setDataType(newDt); // saves component record
+		dataMgr.getSettingsAdapter().removeAllSettingsRecords(comp.getKey());
 		newDt.addParent(this);
 
 		if (isPackingEnabled()) {
@@ -2281,7 +2275,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			for (DataTypeComponentDB dtc : components) {
 				dtc.getDataType().removeParent(this);
 				try {
-					componentAdapter.removeRecord(dtc.getKey());
+					long compKey = dtc.getKey();
+					componentAdapter.removeRecord(compKey);
+					dataMgr.getSettingsAdapter().removeAllSettingsRecords(compKey);
 				}
 				catch (IOException e) {
 					dataMgr.dbError(e);

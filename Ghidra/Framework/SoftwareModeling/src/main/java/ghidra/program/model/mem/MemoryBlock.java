@@ -22,7 +22,8 @@ import java.util.List;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.symbol.OffsetReference;
 import ghidra.util.NamingUtilities;
 
 /**
@@ -31,8 +32,18 @@ import ghidra.util.NamingUtilities;
 public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
-	 * A special EXTERNAL block may be created by certain program loaders (e.g., Elf) to act as a
-	 * stand-in for unknown external symbol locations.
+	 * A special purpose EXTERNAL block may be created by certain program loaders 
+	 * (e.g., Elf) to act as a stand-in for unknown external symbol locations when 
+	 * relocation support is required using a valid memory address.  While the
+	 * EXTERNAL block is created out of neccessity for relocation processing it
+	 * introduces a number of limitations when used to carry data symbols
+	 * where pointer math and offset-references may occur.  
+	 * <p>
+	 * The method {@link Memory#isExternalBlockAddress(Address)}
+	 * may be used to determine if a specific address is contained within an EXTERNAL memory block.
+	 * <p>
+	 * NOTE: Close proximity to the end of an address space should be avoided
+	 * to allow for {@link OffsetReference} use.
 	 */
 	public static final String EXTERNAL_BLOCK_NAME = "EXTERNAL";
 
@@ -272,8 +283,26 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Returns true if this is either a bit-mapped or byte-mapped block
+	 * 
+	 * @return true if this is either a bit-mapped or byte-mapped block
 	 */
 	public boolean isMapped();
+
+	/**
+	 * Returns true if this is a reserved EXTERNAL memory block based upon its name
+	 * (see {@link MemoryBlock#EXTERNAL_BLOCK_NAME}).  Checks for individual addresses may be done
+	 * using {@link Memory#isExternalBlockAddress(Address)}.
+	 * <p>
+	 * Note that EXTERNAL blocks always resides within a memory space and never within the artifial
+	 * {@link AddressSpace#EXTERNAL_SPACE} which is not a memory space.  This can be a source of confusion.
+	 * An EXTERNAL memory block exists to facilitate relocation processing for some external
+	 * symbols which require a real memory address. 
+	 * 
+	 * @return true if this is a reserved EXTERNAL memory block
+	 */
+	public default boolean isExternalBlock() {
+		return EXTERNAL_BLOCK_NAME.equals(getName());
+	}
 
 	/**
 	 * Returns true if this is an overlay block (i.e., contained within overlay space).
@@ -300,19 +329,4 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 */
 	public List<MemoryBlockSourceInfo> getSourceInfos();
 
-	/**
-	 * Determine if the specified address is contained within the reserved EXTERNAL block.
-	 * 
-	 * @param address address of interest
-	 * @param program
-	 * @return true if address is contained within the reserved EXTERNAL block, else false.
-	 */
-	public static boolean isExternalBlockAddress(Address address, Program program) {
-		Memory memory = program.getMemory();
-		if (!address.isMemoryAddress()) {
-			return false;
-		}
-		MemoryBlock block = memory.getBlock(address);
-		return block != null && MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName());
-	}
 }

@@ -18,7 +18,6 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
-import ghidra.program.database.map.AddressMap;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -37,8 +36,8 @@ abstract class PointerDBAdapter implements RecordTranslator {
 	static final int PTR_CATEGORY_COL = 1;
 	static final int PTR_LENGTH_COL = 2;
 
-	static PointerDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor,
-			AddressMap addrMap) throws VersionException, IOException {
+	static PointerDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
+			throws VersionException, IOException {
 
 		if (openMode == DBConstants.CREATE) {
 			return new PointerDBAdapterV2(handle, true);

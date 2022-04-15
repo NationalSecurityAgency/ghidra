@@ -84,7 +84,8 @@ public class LoadConfigDataDirectory extends DataDirectory {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			DataType dt = ntHeader.getOptionalHeader().is64bit() ? new ImageBaseOffset64DataType() : new ImageBaseOffset32DataType();
+			DataType dt = ntHeader.getOptionalHeader().is64bit() ? IBO64DataType.dataType
+					: IBO32DataType.dataType;
 
 			PeUtils.createData(program, addr, dt, log);
 

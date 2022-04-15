@@ -23,8 +23,9 @@ import ghidra.docking.settings.Settings;
  */
 public class PaddingSettingsDefinition implements EnumSettingsDefinition {
 
-	private static final int PADDED_VALUE = 1;
-	private static final int UNPADDED_VALUE = 0;
+	public static final int PADDED_VALUE = 1;
+	public static final int UNPADDED_VALUE = 0;
+
 	private static final String[] choices = { "unpadded", "padded" };
 	private static final String PADDED = "padded";
 
@@ -67,6 +68,11 @@ public class PaddingSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getValueString(Settings settings) {
+		return choices[getChoice(settings)];
+	}
+
+	@Override
 	public void setChoice(Settings settings, int value) {
 		settings.setLong(PADDED, value);
 	}
@@ -79,6 +85,11 @@ public class PaddingSettingsDefinition implements EnumSettingsDefinition {
 	@Override
 	public String getName() {
 		return "Padding";
+	}
+
+	@Override
+	public String getStorageKey() {
+		return PADDED;
 	}
 
 	@Override

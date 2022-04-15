@@ -428,11 +428,6 @@ public class BitFieldDataType extends AbstractDataType {
 	}
 
 	@Override
-	public void setDefaultSettings(Settings settings) {
-		this.defaultSettings = settings;
-	}
-
-	@Override
 	public int getAlignment() {
 		return baseDataType.getAlignment();
 	}

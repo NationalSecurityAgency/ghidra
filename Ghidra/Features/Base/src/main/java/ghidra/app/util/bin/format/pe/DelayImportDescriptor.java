@@ -299,7 +299,7 @@ public class DelayImportDescriptor implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		DataType ibo32 = new ImageBaseOffset32DataType();
+		DataType ibo32 = new IBO32DataType();
 		StructureDataType struct = new StructureDataType(NAME, 0);
 		struct.add(DWORD, "grAttrs", null);
 		struct.add(ibo32, "szName", null);

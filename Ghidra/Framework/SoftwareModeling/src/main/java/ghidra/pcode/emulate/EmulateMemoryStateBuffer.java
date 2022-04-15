@@ -15,11 +15,11 @@
  */
 package ghidra.pcode.emulate;
 
+import java.math.BigInteger;
+
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.*;
-
-import java.math.BigInteger;
 
 /**
  * <code>MemoryStateBuffer</code> provides a MemBuffer for instruction parsing use
@@ -111,8 +111,7 @@ public class EmulateMemoryStateBuffer implements MemBuffer {
 
 	@Override
 	public Memory getMemory() {
-		// Make sure Sleigh language provider does not call this method
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override

@@ -522,19 +522,7 @@ public class PropertyListMergeManager2Test extends AbstractMergeTest {
 
 	@Test
 	public void testAnalyzedFalseInLatest() throws Exception {
-		mtf.initialize("notepad", new OriginalProgramModifierListener() {
-
-			@Override
-			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Program Information");
-					list.setBoolean("Analyzed", false);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-			}
+		mtf.initialize("notepad", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
@@ -605,19 +593,7 @@ public class PropertyListMergeManager2Test extends AbstractMergeTest {
 
 	@Test
 	public void testAnalyzedFalseInMy() throws Exception {
-		mtf.initialize("notepad", new OriginalProgramModifierListener() {
-
-			@Override
-			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Program Information");
-					list.setBoolean("Analyzed", false);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-			}
+		mtf.initialize("notepad", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
@@ -734,10 +710,20 @@ public class PropertyListMergeManager2Test extends AbstractMergeTest {
 	public void testAnalyzedTrueInLatestFalseInMy() throws Exception {
 		// test case: conflict because both values changed
 		// Choose 'latest'
-		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+		mtf.initialize("notepad", new OriginalProgramModifierListener() {
+
+			@Override
+			public void modifyOriginal(ProgramDB program) throws Exception {
+				int transactionID = program.startTransaction("test");
+				try {
+					Options list = program.getOptions("Program Information");
+					list.setBoolean("Analyzed", false); // revert to default state
+				}
+				finally {
+					program.endTransaction(transactionID, true);
+				}
+			}
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int transactionID = program.startTransaction("test");
@@ -777,10 +763,20 @@ public class PropertyListMergeManager2Test extends AbstractMergeTest {
 	public void testAnalyzedFalseInLatestTrueInMy() throws Exception {
 		// test case: conflict because both values changed
 		// Choose 'latest'
-		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+		mtf.initialize("notepad", new OriginalProgramModifierListener() {
+
+			@Override
+			public void modifyOriginal(ProgramDB program) throws Exception {
+				int transactionID = program.startTransaction("test");
+				try {
+					Options list = program.getOptions("Program Information");
+					list.setBoolean("Analyzed", false); // revert to default value
+				}
+				finally {
+					program.endTransaction(transactionID, true);
+				}
+			}
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int transactionID = program.startTransaction("test");
@@ -793,9 +789,6 @@ public class PropertyListMergeManager2Test extends AbstractMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int transactionID = program.startTransaction("test");

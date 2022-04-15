@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.datastruct.SoftCacheMap;
@@ -42,7 +41,6 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 	protected DynamicDataType(CategoryPath path, String name, DataTypeManager dtm) {
 		super(path, name, dtm);
 		this.map = new SoftCacheMap<>(100);
-		defaultSettings = new SettingsImpl();
 	}
 
 	@Override

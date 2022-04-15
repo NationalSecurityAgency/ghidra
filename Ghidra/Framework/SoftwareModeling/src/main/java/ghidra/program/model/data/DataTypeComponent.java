@@ -94,12 +94,6 @@ public interface DataTypeComponent {
 	public Settings getDefaultSettings();
 
 	/**
-	 * Set default settings for this dataType.
-	 * @param settings the new default settings.
-	 */
-	public void setDefaultSettings(Settings settings);
-
-	/**
 	 * Sets the comment for the component.
 	 * @param comment this components comment or null to clear comment.
 	 */

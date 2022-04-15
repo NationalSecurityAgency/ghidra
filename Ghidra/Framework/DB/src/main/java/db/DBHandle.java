@@ -679,11 +679,16 @@ public class DBHandle {
 	 * @param outFile buffer file open for writing
 	 * @param newDatabaseId database ID to be forced for new database or null to generate 
 	 * new database ID
+	 * @param associateWithNewFile if true the outFile will be associated with this DBHandle as the 
+	 * current source file, if false no change will be made to this DBHandle's state and the outFile
+	 * will be written and set as read-only.  The caller is responsbile for disposing the outFile if 
+	 * this parameter is false.
 	 * @param monitor progress monitor
 	 * @throws IOException if IO error occurs
 	 * @throws CancelledException if monitor cancels operation
 	 */
-	protected synchronized void saveAs(BufferFile outFile, Long newDatabaseId, TaskMonitor monitor)
+	protected synchronized void saveAs(BufferFile outFile, Long newDatabaseId,
+			boolean associateWithNewFile, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		if (txStarted) {
@@ -704,7 +709,7 @@ public class DBHandle {
 			endTransaction(txId, true); // saved file may be corrupt on IOException
 		}
 
-		bufferMgr.saveAs(outFile, true, monitor);
+		bufferMgr.saveAs(outFile, associateWithNewFile, monitor);
 	}
 
 	/**

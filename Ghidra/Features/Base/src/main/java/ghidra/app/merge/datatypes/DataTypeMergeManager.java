@@ -665,7 +665,6 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * in RESULT; false if the data type did not have to be added
 	 */
 	private boolean dataTypeRenamedOrMoved(long id) {
-
 		DataType newDt = null;
 
 		switch (conflictOption) {
@@ -700,7 +699,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		DataType resultDt = dtms[RESULT].getDataType(id);
 		DataType newDt = null;
 		if (resultDt != null) {
-			setDataTypeName(resultDt, dt.getName());
+			setDataTypeName(resultDt, dt);
 			setCategoryPath(resultDt, dt.getCategoryPath());
 		}
 		else {
@@ -1645,8 +1644,12 @@ public class DataTypeMergeManager implements MergeResolver {
 				return;
 			}
 		}
-		String name = category.getName();
-		String newName = name;
+		String newName = category.getName();
+		String baseName = newName;
+		int index = newName.indexOf(DataType.CONFLICT_SUFFIX);
+		if (index > 0) {
+			baseName = newName.substring(0, index);
+		}
 		int oneUpNumber = 0;
 		while (true) {
 			try {
@@ -1656,7 +1659,7 @@ public class DataTypeMergeManager implements MergeResolver {
 					return;
 				}
 				++oneUpNumber;
-				newName = name + DataType.CONFLICT_SUFFIX + oneUpNumber;
+				newName = baseName + DataType.CONFLICT_SUFFIX + oneUpNumber;
 			}
 			catch (DuplicateNameException e) {
 				throw new AssertException("Got DuplicateNameException");
@@ -1673,6 +1676,11 @@ public class DataTypeMergeManager implements MergeResolver {
 			return;
 		}
 		String name = newName;
+		String baseName = newName;
+		int index = newName.indexOf(DataType.CONFLICT_SUFFIX);
+		if (index > 0) {
+			baseName = newName.substring(0, index);
+		}
 		int oneUpNumber = 0;
 		while (true) {
 			try {
@@ -1681,7 +1689,7 @@ public class DataTypeMergeManager implements MergeResolver {
 			}
 			catch (DuplicateNameException e) {
 				++oneUpNumber;
-				name = newName + DataType.CONFLICT_SUFFIX + oneUpNumber;
+				name = baseName + DataType.CONFLICT_SUFFIX + oneUpNumber;
 			}
 			catch (InvalidNameException e) {
 				throw new AssertException("Got InvalidNameException: " + e);
@@ -1689,26 +1697,38 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 	}
 
-	private void setDataTypeName(DataType dt, String newName) {
+	private void setDataTypeName(DataType dt, DataType dtToCopy) {
+		if (isAutoNamedTypedef(dtToCopy)) {
+			if (dt instanceof TypeDef) {
+				((TypeDef) dt).enableAutoNaming();
+				return;
+			}
+		}
+		String newName = dtToCopy.getName();
 		if (dt.getName().equals(newName)) {
 			return;
 		}
-		String name = newName;
+		String baseName = newName;
+		int index = newName.indexOf(DataType.CONFLICT_SUFFIX);
+		if (index > 0) {
+			baseName = newName.substring(0, index);
+		}
 		int oneUpNumber = 0;
 		while (true) {
 			try {
-				dt.setName(name);
+				dt.setName(newName);
 				return;
 			}
 			catch (DuplicateNameException e) {
 				++oneUpNumber;
-				name = newName + DataType.CONFLICT_SUFFIX + oneUpNumber;
+				newName = baseName + DataType.CONFLICT_SUFFIX + oneUpNumber;
 			}
 			catch (InvalidNameException e) {
 				throw new AssertException("Got InvalidNameException: " + e);
 			}
 		}
 	}
+
 
 	private boolean categoryWasMoved(long id, DataTypeManager dtm1, DataTypeManager dtm2) {
 		Category cat1 = dtm1.getCategory(id);
@@ -1765,10 +1785,24 @@ public class DataTypeMergeManager implements MergeResolver {
 		return dataTypeWasRenamed(id, dtms[ORIGINAL], dtm);
 	}
 
+	private boolean isAutoNamedTypedef(DataType dt) {
+		if (dt instanceof TypeDef) {
+			TypeDef td = (TypeDef) dt;
+			return td.isAutoNamed();
+		}
+		return false;
+	}
+
 	private boolean dataTypeWasRenamed(long id, DataTypeManager dtm1, DataTypeManager dtm2) {
 		DataType dt1 = dtm1.getDataType(id);
 		DataType dt2 = dtm2.getDataType(id);
 		if (dt1 != null && dt2 != null) {
+			if (isAutoNamedTypedef(dt1)) {
+				return isAutoNamedTypedef(dt2);
+			}
+			else if (isAutoNamedTypedef(dt2)) {
+				return false;
+			}
 			String name1 = dt1.getName();
 			String name2 = dt2.getName();
 			return !name1.equals(name2);
@@ -1790,9 +1824,6 @@ public class DataTypeMergeManager implements MergeResolver {
 					Composite c1 = (Composite) dt1;
 					Composite c2 = (Composite) dt2;
 					return compositeDataTypeWasChanged(c1, c2);
-				}
-				if (dt1 instanceof TypeDef) {
-					return false;
 				}
 				return !dt1.isEquivalent(dt2);
 			}
@@ -2698,7 +2729,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		DataType dt = dtms[RESULT].getDataType(id);
 		if (dataTypeWasRenamed(id, dtms[MY])) {
 			if (dt != null) {
-				setDataTypeName(dt, myDt.getName());
+				setDataTypeName(dt, myDt);
 			}
 		}
 	}

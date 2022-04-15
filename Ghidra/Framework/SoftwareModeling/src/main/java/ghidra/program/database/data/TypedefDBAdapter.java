@@ -28,19 +28,23 @@ import ghidra.util.task.TaskMonitor;
 abstract class TypedefDBAdapter {
 
 	static final String TYPEDEF_TABLE_NAME = "Typedefs";
-	static final Schema SCHEMA = TypedefDBAdapterV1.V1_SCHEMA;
+	static final Schema SCHEMA = TypedefDBAdapterV2.V2_SCHEMA;
 
-	static final int TYPEDEF_DT_ID_COL = TypedefDBAdapterV1.V1_TYPEDEF_DT_ID_COL;
-	static final int TYPEDEF_NAME_COL = TypedefDBAdapterV1.V1_TYPEDEF_NAME_COL;
-	static final int TYPEDEF_CAT_COL = TypedefDBAdapterV1.V1_TYPEDEF_CAT_COL;
+	static final int TYPEDEF_DT_ID_COL = TypedefDBAdapterV2.V2_TYPEDEF_DT_ID_COL;
+	static final int TYPEDEF_FLAGS_COL = TypedefDBAdapterV2.V2_TYPEDEF_FLAGS_COL;
+	static final int TYPEDEF_NAME_COL = TypedefDBAdapterV2.V2_TYPEDEF_NAME_COL;
+	static final int TYPEDEF_CAT_COL = TypedefDBAdapterV2.V2_TYPEDEF_CAT_COL;
 	static final int TYPEDEF_SOURCE_ARCHIVE_ID_COL =
-		TypedefDBAdapterV1.V1_TYPEDEF_SOURCE_ARCHIVE_ID_COL;
+		TypedefDBAdapterV2.V2_TYPEDEF_SOURCE_ARCHIVE_ID_COL;
 	static final int TYPEDEF_UNIVERSAL_DT_ID_COL =
-		TypedefDBAdapterV1.V1_TYPEDEF_UNIVERSAL_DT_ID_COL;
+		TypedefDBAdapterV2.V2_TYPEDEF_UNIVERSAL_DT_ID_COL;
 	static final int TYPEDEF_SOURCE_SYNC_TIME_COL =
-		TypedefDBAdapterV1.V1_TYPEDEF_SOURCE_SYNC_TIME_COL;
+		TypedefDBAdapterV2.V2_TYPEDEF_SOURCE_SYNC_TIME_COL;
 	static final int TYPEDEF_LAST_CHANGE_TIME_COL =
-		TypedefDBAdapterV1.V1_TYPEDEF_LAST_CHANGE_TIME_COL;
+		TypedefDBAdapterV2.V2_TYPEDEF_LAST_CHANGE_TIME_COL;
+
+	// Typedef flags bits
+	static final int TYPEDEF_FLAG_AUTONAME = 0x1;
 
 	/**
 	 * Gets an adapter for working with the Typedef data type database table. The adapter is based
@@ -55,7 +59,7 @@ abstract class TypedefDBAdapter {
 	static TypedefDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
 			throws VersionException, IOException {
 		try {
-			return new TypedefDBAdapterV1(handle, openMode == DBConstants.CREATE);
+			return new TypedefDBAdapterV2(handle, openMode == DBConstants.CREATE);
 		}
 		catch (VersionException e) {
 			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
@@ -76,6 +80,12 @@ abstract class TypedefDBAdapter {
 	 * @throws VersionException if a read only adapter can't be obtained for the database handle's version.
 	 */
 	static TypedefDBAdapter findReadOnlyAdapter(DBHandle handle) throws VersionException {
+		try {
+			return new TypedefDBAdapterV1(handle);
+		}
+		catch (VersionException e) {
+			// ignore
+		}
 		return new TypedefDBAdapterV0(handle);
 	}
 
@@ -95,14 +105,14 @@ abstract class TypedefDBAdapter {
 		long id = tmpHandle.startTransaction();
 		TypedefDBAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new TypedefDBAdapterV1(tmpHandle, true);
+			tmpAdapter = new TypedefDBAdapterV2(tmpHandle, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec, false);
 			}
 			oldAdapter.deleteTable(handle);
-			TypedefDBAdapter newAdapter = new TypedefDBAdapterV1(handle, true);
+			TypedefDBAdapter newAdapter = new TypedefDBAdapterV2(handle, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
 				DBRecord rec = it.next();
@@ -120,6 +130,7 @@ abstract class TypedefDBAdapter {
 	 * Creates a database record for a type definition data type.
 	 * @param dataTypeID the ID of the data type that is referred to by this type definition.
 	 * @param name the unique name for this data type
+	 * @param flags typedef flags (e.g., auto-name flag bit).
 	 * @param categoryID the ID for the category that contains this data type.
 	 * @param sourceArchiveID the ID for the source archive where this data type originated.
 	 * @param sourceDataTypeID the ID of the associated data type in the source archive.
@@ -127,7 +138,7 @@ abstract class TypedefDBAdapter {
 	 * @return the database record for this data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract DBRecord createRecord(long dataTypeID, String name, long categoryID,
+	abstract DBRecord createRecord(long dataTypeID, String name, short flags, long categoryID,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException;
 
 	/**

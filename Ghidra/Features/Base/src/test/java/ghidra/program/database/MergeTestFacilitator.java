@@ -90,7 +90,7 @@ public class MergeTestFacilitator {
 	 * Get the change set for Result program.
 	 */
 	public ProgramChangeSet getResultChangeSet() {
-		return model.getResultChangeSet();
+		return model.getLatestChangeSet();
 	}
 
 	public void dispose() {

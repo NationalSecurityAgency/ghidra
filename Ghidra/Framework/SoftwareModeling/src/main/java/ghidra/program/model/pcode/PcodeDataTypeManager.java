@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.program.database.data.PointerTypedefInspector;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.CompilerSpec;
@@ -251,6 +252,103 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
+	 * Get the inner data-type being referred to by an offset from a relative/shifted pointer.
+	 * Generally we expect the base of the relative pointer to be a structure and the offset
+	 * refers to a (possibly nested) field. In this case, we return the data-type of the field.
+	 * Otherwise return an "undefined" data-type.
+	 * @param base is the base data-type of the relative pointer
+	 * @param offset is the offset into the base data-type
+	 * @return the inner data-type
+	 */
+	public static DataType findPointerRelativeInner(DataType base, int offset) {
+		if (base instanceof TypeDef) {
+			base = ((TypeDef) base).getBaseDataType();
+		}
+		while (base instanceof Structure) {
+			DataTypeComponent component = ((Structure) base).getComponentContaining(offset);
+			if (component == null) {
+				break;
+			}
+			base = component.getDataType();
+			offset -= component.getOffset();
+			if (offset == 0) {
+				return base;
+			}
+		}
+		return Undefined1DataType.dataType;
+	}
+
+	/**
+	 * Build an XML representation of a pointer with an associated offset relative to a base data-type.
+	 * The pointer is encoded as a TypeDef (of a Pointer). The "pointed to" object is the base data-type,
+	 * the relative offset is passed in, and other properties come from the TypeDef.
+	 * @param resBuf is the output buffer accumulating the XML
+	 * @param type is the TypeDef encoding the relative pointer
+	 * @param offset is the relative offset (already extracted from the TypeDef)
+	 */
+	private void buildPointerRelative(StringBuilder resBuf, TypeDef type, long offset) {
+		Pointer pointer = (Pointer) type.getBaseDataType();
+		resBuf.append("<type");
+		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "ptrrel");
+		appendNameIdAttributes(resBuf, type);
+		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", pointer.getLength());
+		if (pointerWordSize != 1) {
+			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "wordsize", pointerWordSize);
+		}
+		resBuf.append(">\n");
+		DataType parent = pointer.getDataType();
+		DataType ptrto = findPointerRelativeInner(parent, (int) offset);
+		buildTypeRef(resBuf, ptrto, 1);
+		buildTypeRef(resBuf, parent, 1);
+		resBuf.append("\n<off>").append(offset).append("</off>\n");
+		resBuf.append("</type>");
+	}
+
+	/**
+	 * Build an XML representation of a TypeDef data-type.  Generally this sends
+	 * a \<def> tag with a \<typeref> reference to the underlying data-type being typedefed,
+	 * but we check for Settings on the TypeDef object that can indicate
+	 * specialty data-types with their own XML format.
+	 * @param resBuf is the output buffer accumulating the XML
+	 * @param type is the TypeDef to build the XML for
+	 * @param size is the size of the data-type for the specific instantiation
+	 */
+	private void buildTypeDef(StringBuilder resBuf, TypeDef type, int size) {
+		DataType refType = type.getDataType();
+		int sz = refType.getLength();
+		if (sz <= 0) {
+			sz = size;
+		}
+
+		if (type.isPointer()) {
+			if (hasUnsupportedTypedefSettings(type)) {
+				// switch refType to undefined type if pointer-typedef settings are unsupported
+				refType = Undefined.getUndefinedDataType(sz);
+			}
+			else {
+				long offset = PointerTypedefInspector.getPointerComponentOffset(type);
+				if (offset != 0) {
+					buildPointerRelative(resBuf, type, offset);
+					return;
+				}
+			}
+		}
+		resBuf.append("<def");
+		appendNameIdAttributes(resBuf, type);
+		resBuf.append('>');
+
+		buildTypeRef(resBuf, refType, sz);
+		resBuf.append("</def>");
+		return;
+	}
+
+	private boolean hasUnsupportedTypedefSettings(TypeDef type) {
+		return (PointerTypedefInspector.getPointerType(type) != PointerType.DEFAULT ||
+			PointerTypedefInspector.hasPointerBitShift(type) ||
+			PointerTypedefInspector.hasPointerBitMask(type));
+	}
+
+	/**
 	 * Generate an XML tag describing the given data-type. Most data-types produce a {@code <type>} tag,
 	 * fully describing the data-type. Where possible a {@code <typeref>} tag is produced, which just gives
 	 * the name of the data-type, deferring a full description of the data-type. For certain simple or
@@ -358,7 +456,25 @@ public class PcodeDataTypeManager {
 		resBuf.append("</field>\n");
 	}
 
-	private String buildTypeInternal(StringBuilder resBuf, DataType type, int size) {
+	/**
+	 * Build an XML document string representing the type information for a data type
+	 * 
+	 * @param resBuf is the stream to append the document to
+	 * @param type data type to build XML for
+	 * @param size size of the data type
+	 */
+	public void buildType(StringBuilder resBuf, DataType type, int size) {
+		if (type != null && type.getDataTypeManager() != progDataTypes) {
+			type = type.clone(progDataTypes);
+		}
+		if ((type instanceof VoidDataType) || (type == null)) {
+			resBuf.append("<void/>");
+			return;
+		}
+		else if (type instanceof TypeDef) {
+			buildTypeDef(resBuf, (TypeDef) type, size);
+			return;
+		}
 		resBuf.append("<type");
 		if (type instanceof Pointer) {
 			SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
@@ -606,7 +722,6 @@ public class PcodeDataTypeManager {
 			resBuf.append('>');
 		}
 		resBuf.append("</type>");
-		return resBuf.toString();
 	}
 
 	private void appendNameIdAttributes(StringBuilder resBuf, DataType type) {
@@ -621,37 +736,6 @@ public class PcodeDataTypeManager {
 				SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", id);
 			}
 		}
-	}
-
-	/**
-	 * Build an XML document string representing the type information for a data type
-	 * 
-	 * @param resBuf is the stream to append the document to
-	 * @param type data type to build XML for
-	 * @param size size of the data type
-	 */
-	public void buildType(StringBuilder resBuf, DataType type, int size) {
-		if (type != null && type.getDataTypeManager() != progDataTypes) {
-			type = type.clone(progDataTypes);
-		}
-		if ((type instanceof VoidDataType) || (type == null)) {
-			resBuf.append("<void/>");
-			return;
-		}
-		else if (type instanceof TypeDef) {
-			resBuf.append("<def");
-			appendNameIdAttributes(resBuf, type);
-			resBuf.append('>');
-			DataType refType = ((TypeDef) type).getDataType();
-			int sz = refType.getLength();
-			if (sz <= 0) {
-				sz = size;
-			}
-			buildTypeRef(resBuf, refType, sz);
-			resBuf.append("</def>");
-			return;
-		}
-		buildTypeInternal(resBuf, type, size);
 	}
 
 	/**

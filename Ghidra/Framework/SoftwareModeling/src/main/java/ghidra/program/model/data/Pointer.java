@@ -15,14 +15,21 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.program.database.data.PointerTypedefInspector;
+
 /**
  * Interface for pointers
  */
 public interface Pointer extends DataType {
 
 	/**
+	 * Pointer representation used when unable to generate a suitable address
+	 */
+	public final String NaP = "NaP";
+
+	/**
 	 * Returns the "pointed to" dataType
-	 * 
+	 * @return referenced datatype (may be null)
 	 */
 	DataType getDataType();
 
@@ -32,5 +39,19 @@ public interface Pointer extends DataType {
 	 * @return the newly created pointer.
 	 */
 	Pointer newPointer(DataType dataType);
+
+	/**
+	 * Construct a pointer-typedef builder base on this pointer.
+	 * <br>
+	 * Other construction options are provided when directly instantiating 
+	 * a {@link PointerTypedefBuilder}.  In addition the utility class {@link PointerTypedefInspector}
+	 * can be used to easily determine pointer-typedef settings.
+	 * @return pointer-typedef builder
+	 * @throws IllegalArgumentException if an invalid name is 
+	 * specified or pointer does not have a datatype manager.
+	 */
+	default PointerTypedefBuilder typedefBuilder() {
+		return new PointerTypedefBuilder(this, this.getDataTypeManager());
+	}
 
 }
