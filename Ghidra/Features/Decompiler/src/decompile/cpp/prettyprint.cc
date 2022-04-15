@@ -233,7 +233,8 @@ void EmitXml::tagType(const char *ptr,syntax_highlight hl,const Datatype *ct) {
 /// \param hl indicates how the identifier should be highlighted
 /// \param ct is the data-type associated with the field
 /// \param o is the (byte) offset of the field within its structured data-type
-void EmitXml::tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 o) {
+/// \param op is the PcodeOp associated with the field (usually PTRSUB or SUBPIECE)
+void EmitXml::tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 o,const PcodeOp *op) {
   *s << "<field " << highlight[(int4)hl];
   if (ct != (const Datatype *)0) {
     *s << " name=\"";
@@ -243,6 +244,8 @@ void EmitXml::tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,in
     }
     
     *s << "\" off=\"" << dec << o << '\"';
+    if (op != (const PcodeOp *)0)
+      *s << " opref=\"0x" << hex << op->getTime() << "\"";
   }
   *s << '>';
   xml_escape(*s,ptr);
@@ -419,7 +422,7 @@ void TokenSplit::print(EmitXml *emit) const
     emit->tagType(tok.c_str(),hl,ptr_second.ct);
     break;
   case field_t: // tagField
-    emit->tagField(tok.c_str(),hl,ptr_second.ct,(int4)off);
+    emit->tagField(tok.c_str(),hl,ptr_second.ct,(int4)off,op);
     break;
   case comm_t:	// tagComment
     emit->tagComment(tok.c_str(),hl,ptr_second.spc,off);
@@ -1054,12 +1057,12 @@ void EmitPrettyPrint::tagType(const char *ptr,syntax_highlight hl,const Datatype
   scan();
 }
 
-void EmitPrettyPrint::tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 o)
+void EmitPrettyPrint::tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 o,const PcodeOp *op)
 
 {
   checkstring();
   TokenSplit &tok( tokqueue.push() );
-  tok.tagField(ptr,hl,ct,o);
+  tok.tagField(ptr,hl,ct,o,op);
   scan();
 }
 

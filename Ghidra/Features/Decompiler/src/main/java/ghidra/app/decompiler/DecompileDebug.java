@@ -340,9 +340,9 @@ public class DecompileDebug {
 		DataTypeDependencyOrderer TypeOrderer =
 			new DataTypeDependencyOrderer(program.getDataTypeManager(), dtypes);
 		//First output all structures as zero size so to avoid any cyclic dependencies.
-		for (DataType dataType : TypeOrderer.getStructList()) {
+		for (DataType dataType : TypeOrderer.getCompositeList()) {
 			debugStream.write(
-				(dtmanage.buildStructTypeZeroSizeOveride(dataType) + "\n").toString().getBytes());
+				(dtmanage.buildCompositeZeroSizePlaceholder(dataType) + "\n").toString().getBytes());
 		}
 		//Next, use the dependency stack to output types.
 		for (DataType dataType : TypeOrderer.getDependencyList()) {

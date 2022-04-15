@@ -24,12 +24,12 @@ import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
-public class RenameStructureFieldTask extends RenameTask {
+public class RenameStructFieldTask extends RenameTask {
 
 	private Structure structure;
 	public int offset;
 
-	public RenameStructureFieldTask(PluginTool tool, Program program, DecompilerProvider provider,
+	public RenameStructFieldTask(PluginTool tool, Program program, DecompilerProvider provider,
 			ClangToken token, Structure structure, int offset) {
 		super(tool, program, provider, token, token.getText());
 		this.structure = structure;

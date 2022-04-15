@@ -85,6 +85,7 @@ void Funcdata::clear(void)
 
   clearActiveOutput();
   funcp.clearUnlockedOutput();	// Inputs are cleared by localmap
+  unionMap.clear();
   clearBlocks();
   obank.clear();
   vbank.clear();
@@ -850,6 +851,105 @@ void PcodeEmitFd::dump(const Address &addr,OpCode opc,VarnodeData *outvar,Varnod
     vn = fd->newVarnode(vars[i].size,vars[i].space,vars[i].offset);
     fd->opSetInput(op,vn,i);
   }
+}
+
+/// \brief Get the resolved union field associated with the given edge
+///
+/// If there is no field associated with the edge, null is returned
+/// \param parent is the data-type being resolved
+/// \param op is the PcodeOp component of the given edge
+/// \param slot is the slot component of the given edge
+/// \return the associated field as a ResolvedUnion or null
+const ResolvedUnion *Funcdata::getUnionField(const Datatype *parent,const PcodeOp *op,int4 slot) const
+
+{
+  map<ResolveEdge,ResolvedUnion>::const_iterator iter;
+  ResolveEdge edge(parent,op,slot);
+  iter = unionMap.find(edge);
+  if (iter != unionMap.end())
+    return &(*iter).second;
+  return (const ResolvedUnion *)0;
+}
+
+/// \brief Associate a union field with the given edge
+///
+/// If there was a previous association, it is overwritten unless it was \e locked.
+/// The method returns \b true except in this case where a previous locked association exists.
+/// \param parent is the parent union data-type
+/// \param op is the PcodeOp component of the given edge
+/// \param slot is the slot component of the given edge
+/// \param resolve is the resolved union
+/// \return \b true unless there was a locked association
+bool Funcdata::setUnionField(const Datatype *parent,const PcodeOp *op,int4 slot,const ResolvedUnion &resolve)
+
+{
+  ResolveEdge edge(parent,op,slot);
+  pair<map<ResolveEdge,ResolvedUnion>::iterator,bool> res;
+  res = unionMap.emplace(edge,resolve);
+  if (!res.second) {
+    if ((*res.first).second.isLocked()) {
+      return false;
+    }
+    (*res.first).second = resolve;
+  }
+  return true;
+}
+
+/// \brief Force a specific union field resolution for the given edge
+///
+/// The \b parent data-type is taken directly from the given Varnode.
+/// \param parent is the parent data-type
+/// \param fieldNum is the index of the field to force
+/// \param op is PcodeOp of the edge
+/// \param slot is -1 for the write edge or >=0 indicating the particular read edge
+void Funcdata::forceFacingType(Datatype *parent,int4 fieldNum,PcodeOp *op,int4 slot)
+
+{
+  Datatype *baseType = parent;
+  if (baseType->getMetatype() == TYPE_PTR)
+    baseType = ((TypePointer *)baseType)->getPtrTo();
+  if (parent->isPointerRel()) {
+    // Don't associate a relative pointer with the resolution, but convert to a standard pointer
+    parent = glb->types->getTypePointer(parent->getSize(), baseType, ((TypePointer *)parent)->getWordSize());
+  }
+  ResolvedUnion resolve(parent,fieldNum,*glb->types);
+  setUnionField(parent, op, slot, resolve);
+}
+
+/// \brief Copy a Varnode's read facing resolve to another PcodeOp
+///
+/// \param op is the new PcodeOp reading the Varnode
+/// \param slot is the new read slot
+/// \param oldOp is the PcodeOp to inherit the resolve from
+/// \param oldSlot is the old read slot
+void Funcdata::inheritReadResolution(const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot)
+
+{
+  Datatype *ct = op->getIn(slot)->getType();
+  if (!ct->needsResolution()) return;
+  map<ResolveEdge,ResolvedUnion>::const_iterator iter;
+  ResolveEdge edge(ct,oldOp,oldSlot);
+  iter = unionMap.find(edge);
+  if (iter == unionMap.end()) return;
+  setUnionField(ct,op,slot,(*iter).second);
+}
+
+/// \brief Copy any write facing for a specific data-type from one PcodeOp to another
+///
+/// \param parent is the data-type that needs resolution
+/// \param op is the destination PcodeOp
+/// \param oldOp is the source PcodeOp
+/// \return the resolution index that was copied or -1 if there was no resolution
+int4 Funcdata::inheritWriteResolution(Datatype *parent,const PcodeOp *op,PcodeOp *oldOp)
+
+{
+  map<ResolveEdge,ResolvedUnion>::const_iterator iter;
+  ResolveEdge edge(parent,oldOp,-1);
+  iter = unionMap.find(edge);
+  if (iter == unionMap.end())
+    return -1;
+  setUnionField(parent,op,-1,(*iter).second);
+  return (*iter).second.getFieldNum();
 }
 
 #ifdef OPACTION_DEBUG

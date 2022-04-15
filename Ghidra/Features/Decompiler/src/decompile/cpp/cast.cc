@@ -58,10 +58,10 @@ bool CastStrategyC::checkIntPromotionForExtension(const PcodeOp *op) const
   return true;		// Otherwise we need a cast before we extend
 }
 
-int4 CastStrategyC::localExtensionType(const Varnode *vn) const
+int4 CastStrategyC::localExtensionType(const Varnode *vn,const PcodeOp *op) const
 
 {
-  type_metatype meta = vn->getHigh()->getType()->getMetatype();
+  type_metatype meta = vn->getHighTypeReadFacing(op)->getMetatype();
   int4 natural;		// 1= natural zero extension, 2= natural sign extension
   if ((meta == TYPE_UINT)||(meta == TYPE_BOOL)||(meta == TYPE_UNKNOWN))
     natural = UNSIGNED_EXTENSION;
@@ -78,14 +78,14 @@ int4 CastStrategyC::localExtensionType(const Varnode *vn) const
     return natural;
   if (!vn->isWritten())
     return UNKNOWN_PROMOTION;
-  const PcodeOp *op = vn->getDef();
-  if (op->isBoolOutput())
+  const PcodeOp *defOp = vn->getDef();
+  if (defOp->isBoolOutput())
     return EITHER_EXTENSION;
-  OpCode opc = op->code();
-  if ((opc == CPUI_CAST)||(opc == CPUI_LOAD)||op->isCall())
+  OpCode opc = defOp->code();
+  if ((opc == CPUI_CAST)||(opc == CPUI_LOAD)||defOp->isCall())
     return natural;
   if (opc == CPUI_INT_AND) {		// This is kind of recursing
-    const Varnode *tmpvn = op->getIn(1);
+    const Varnode *tmpvn = defOp->getIn(1);
     if (tmpvn->isConstant()) {
       if (!signbit_negative(tmpvn->getOffset(),tmpvn->getSize()))
 	return EITHER_EXTENSION;
@@ -102,7 +102,7 @@ int4 CastStrategyC::intPromotionType(const Varnode *vn) const
   if (vn->getSize() >= promoteSize)
     return NO_PROMOTION;
   if (vn->isConstant())
-    return localExtensionType(vn);
+    return localExtensionType(vn,vn->loneDescend());
   if (vn->isExplicit())
     return NO_PROMOTION;
   if (!vn->isWritten()) return UNKNOWN_PROMOTION;
@@ -111,21 +111,21 @@ int4 CastStrategyC::intPromotionType(const Varnode *vn) const
   switch(op->code()) {
   case CPUI_INT_AND:
     othervn = op->getIn(1);
-    if ((localExtensionType(othervn) & UNSIGNED_EXTENSION) != 0)
+    if ((localExtensionType(othervn,op) & UNSIGNED_EXTENSION) != 0)
       return UNSIGNED_EXTENSION;
     othervn = op->getIn(0);
-    if ((localExtensionType(othervn) & UNSIGNED_EXTENSION) != 0)
+    if ((localExtensionType(othervn,op) & UNSIGNED_EXTENSION) != 0)
       return UNSIGNED_EXTENSION;	// If either side has zero extension, result has zero extension
     break;
   case CPUI_INT_RIGHT:
     othervn = op->getIn(0);
-    val = localExtensionType(othervn);
+    val = localExtensionType(othervn,op);
     if ((val & UNSIGNED_EXTENSION) != 0)	// If the input provably zero extends
       return val;				// then the result is a zero extension (plus possibly a sign extension)
     break;
   case CPUI_INT_SRIGHT:
     othervn = op->getIn(0);
-    val = localExtensionType(othervn);
+    val = localExtensionType(othervn,op);
     if ((val & SIGNED_EXTENSION) != 0)		// If input can be construed as a sign-extension
       return val;				// then the result is a sign extension (plus possibly a zero extension)
     break;
@@ -134,25 +134,25 @@ int4 CastStrategyC::intPromotionType(const Varnode *vn) const
   case CPUI_INT_DIV:
   case CPUI_INT_REM:
     othervn = op->getIn(0);
-    if ((localExtensionType(othervn) & UNSIGNED_EXTENSION) == 0)
+    if ((localExtensionType(othervn,op) & UNSIGNED_EXTENSION) == 0)
       return UNKNOWN_PROMOTION;
     othervn = op->getIn(1);
-    if ((localExtensionType(othervn) & UNSIGNED_EXTENSION) == 0)
+    if ((localExtensionType(othervn,op) & UNSIGNED_EXTENSION) == 0)
       return UNKNOWN_PROMOTION;
     return UNSIGNED_EXTENSION;		// If both sides have zero extension, result has zero extension
   case CPUI_INT_SDIV:
   case CPUI_INT_SREM:
     othervn = op->getIn(0);
-    if ((localExtensionType(othervn) & SIGNED_EXTENSION) == 0)
+    if ((localExtensionType(othervn,op) & SIGNED_EXTENSION) == 0)
       return UNKNOWN_PROMOTION;
     othervn = op->getIn(1);
-    if ((localExtensionType(othervn) & SIGNED_EXTENSION) == 0)
+    if ((localExtensionType(othervn,op) & SIGNED_EXTENSION) == 0)
       return UNKNOWN_PROMOTION;
     return SIGNED_EXTENSION;		// If both sides have sign extension, result has sign extension
   case CPUI_INT_NEGATE:
   case CPUI_INT_2COMP:
     othervn = op->getIn(0);
-    if ((localExtensionType(othervn) & SIGNED_EXTENSION) != 0)
+    if ((localExtensionType(othervn,op) & SIGNED_EXTENSION) != 0)
       return SIGNED_EXTENSION;
     break;
   case CPUI_INT_ADD:
@@ -176,7 +176,7 @@ bool CastStrategyC::isExtensionCastImplied(const PcodeOp *op,const PcodeOp *read
   else {
     if (readOp == (PcodeOp *) 0)
       return false;
-    type_metatype metatype = outVn->getHigh()->getType()->getMetatype();
+    type_metatype metatype = outVn->getHighTypeReadFacing(readOp)->getMetatype();
     const Varnode *otherVn;
     int4 slot;
     switch (readOp->code()) {
@@ -206,7 +206,7 @@ bool CastStrategyC::isExtensionCastImplied(const PcodeOp *op,const PcodeOp *read
 	}
 	else if (!otherVn->isExplicit())
 	  return false;
-	if (otherVn->getHigh()->getType()->getMetatype() != metatype)
+	if (otherVn->getHighTypeReadFacing(readOp)->getMetatype() != metatype)
 	  return false;
 	break;
       default:
@@ -298,13 +298,13 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
 Datatype *CastStrategyC::arithmeticOutputStandard(const PcodeOp *op)
 
 {
-  Datatype *res1 = op->getIn(0)->getHigh()->getType();
+  Datatype *res1 = op->getIn(0)->getHighTypeReadFacing(op);
   if (res1->getMetatype() == TYPE_BOOL)	// Treat boolean as if it is cast to an integer
     res1 = tlst->getBase(res1->getSize(),TYPE_INT);
   Datatype *res2;
 
   for(int4 i=1;i<op->numInput();++i) {
-    res2 = op->getIn(i)->getHigh()->getType();
+    res2 = op->getIn(i)->getHighTypeReadFacing(op);
     if (res2->getMetatype() == TYPE_BOOL) continue;
     if (0>res2->typeOrder(*res1))
       res1 = res2;

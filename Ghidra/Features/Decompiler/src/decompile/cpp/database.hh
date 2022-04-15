@@ -144,11 +144,7 @@ typedef rangemap<SymbolEntry> EntryMap;			///< A rangemap of SymbolEntry
 /// At its most basic, a Symbol is a \b name and a \b data-type.
 /// Practically a Symbol knows what Scope its in, how it should be
 /// displayed, and the symbols \e category. A category is a subset
-/// of symbols that are stored together for quick access.  The
-/// \b category field can be:
-///    -  -1   for no category
-///    -   0   indicates a function parameter
-///    -   1   indicates an equate symbol
+/// of symbols that are stored together for quick access.
 class Symbol {
   friend class Scope;
   friend class ScopeInternal;
@@ -162,7 +158,7 @@ protected:
 				// only typelock,namelock,readonly,externref
 				// addrtied, persist inherited from scope
   uint4 dispflags;		///< Flags affecting the display of this symbol
-  int2 category;		///< Special category (-1==none 0=parameter 1=equate)
+  int2 category;		///< Special category (\b function_parameter, \b equate, etc.)
   uint2 catindex;		///< Index within category
   uint8 symbolId;		///< Unique id, 0=unassigned
   vector<list<SymbolEntry>::iterator> mapentry;	///< List of storage locations labeled with \b this Symbol
@@ -185,6 +181,14 @@ public:
     isolate = 16,		///< Symbol should not speculatively merge automatically
     merge_problems = 32,	///< Set if some SymbolEntrys did not get merged
     is_this_ptr = 64		///< We are the "this" symbol for a class method
+  };
+
+  /// \brief The possible specialize Symbol \e categories
+  enum {
+    no_category = -1,		///< Symbol is not in a special category
+    function_parameter = 0,	///< The Symbol is a parameter to a function
+    equate = 1,			///< The Symbol holds \e equate information about a constant
+    union_facet = 2		///< Symbol holding read or write facing union field information
   };
 
   Symbol(Scope *sc,const string &nm,Datatype *ct);	///< Construct given a name and data-type
@@ -271,9 +275,19 @@ class EquateSymbol : public Symbol {
   uintb value;				///< Value of the constant being equated
 public:
   EquateSymbol(Scope *sc,const string &nm,uint4 format,uintb val);	///< Constructor
-  EquateSymbol(Scope *sc) : Symbol(sc) { value = 0; category = 1; }	///< Constructor for use with restoreXml
+  EquateSymbol(Scope *sc) : Symbol(sc) { value = 0; category = equate; }	///< Constructor for use with restoreXml
   uintb getValue(void) const { return value; }				///< Get the constant value
   bool isValueClose(uintb op2Value,int4 size) const;			///< Is the given value similar to \b this equate
+  virtual void saveXml(ostream &s) const;
+  virtual void restoreXml(const Element *el);
+};
+
+class UnionFacetSymbol : public Symbol {
+  int4 fieldNum;			///< Particular field to associate with Symbol access
+public:
+  UnionFacetSymbol(Scope *sc,const string &nm,Datatype *unionDt,int4 fldNum);	///< Constructor from components
+  UnionFacetSymbol(Scope *sc) : Symbol(sc) { fieldNum = -1; category = union_facet; }	///< Constructor for restoreXml
+  int4 getFieldNumber(void) const { return fieldNum; }		///< Get the particular field associate with \b this
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el);
 };
@@ -894,7 +908,7 @@ inline Symbol::Symbol(Scope *sc,const string &nm,Datatype *ct)
   type=ct;
   flags=0;
   dispflags=0;
-  category=-1;
+  category=no_category;
   catindex = 0;
   symbolId=0;
   wholeCount=0;
@@ -911,7 +925,7 @@ inline Symbol::Symbol(Scope *sc)
   type = (Datatype *)0;
   flags=0;
   dispflags=0;
-  category=-1;
+  category=no_category;
   catindex = 0;
   symbolId = 0;
   wholeCount=0;
