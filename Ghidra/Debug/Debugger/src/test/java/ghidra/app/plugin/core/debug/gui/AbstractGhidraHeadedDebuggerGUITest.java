@@ -583,6 +583,38 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		modelService.addModel(mb.testModel);
 	}
 
+	protected TraceRecorder recordAndWaitSync() throws Exception {
+		createTestModel();
+		mb.createTestProcessesAndThreads();
+		mb.createTestThreadRegisterBanks();
+		// NOTE: Test mapper uses TOYBE64
+		mb.testProcess1.regs.addRegistersFromLanguage(getToyBE64Language(),
+			Register::isBaseRegister);
+		mb.testProcess1.addRegion(".text", mb.rng(0x00400000, 0x00401000), "rx");
+		mb.testProcess1.addRegion(".data", mb.rng(0x00600000, 0x00601000), "rw");
+
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+
+		waitFor(() -> {
+			TraceThread thread = recorder.getTraceThread(mb.testThread1);
+			if (thread == null) {
+				return false;
+			}
+			/*
+			DebuggerRegisterMapper mapper = recorder.getRegisterMapper(thread);
+			if (mapper == null) {
+				return false;
+			}
+			if (!mapper.getRegistersOnTarget().containsAll(baseRegs)) {
+				return false;
+			}
+			*/
+			return true;
+		});
+		return recorder;
+	}
+
 	protected void nop() {
 	}
 

@@ -236,7 +236,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		TraceThread thread1;
 		TraceThread thread2;
-		DebuggerListingProvider extraProvider = SwingExecutorService.INSTANCE
+		DebuggerListingProvider extraProvider = SwingExecutorService.LATER
 				.submit(() -> listingPlugin.createListingIfMissing(trackPc, true))
 				.get();
 		try (UndoableTransaction tid = tb.startTransaction()) {

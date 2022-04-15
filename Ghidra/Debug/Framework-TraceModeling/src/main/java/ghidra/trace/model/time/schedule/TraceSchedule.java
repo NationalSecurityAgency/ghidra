@@ -487,6 +487,10 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		return new TraceSchedule(snap, steps.clone(), pTicks);
 	}
 
+	private long keyOf(TraceThread thread) {
+		return thread == null ? -1 : thread.getKey();
+	}
+
 	/**
 	 * Returns the equivalent of executing this schedule then performing a given patch
 	 * 
@@ -497,10 +501,12 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		if (!this.pSteps.isNop()) {
 			Sequence pTicks = this.pSteps.clone();
 			pTicks.advance(new PatchStep(thread.getKey(), sleigh));
+			pTicks.coalescePatches(thread.getTrace().getBaseLanguage());
 			return new TraceSchedule(snap, steps.clone(), pTicks);
 		}
 		Sequence ticks = this.steps.clone();
-		ticks.advance(new PatchStep(thread.getKey(), sleigh));
+		ticks.advance(new PatchStep(keyOf(thread), sleigh));
+		ticks.coalescePatches(thread.getTrace().getBaseLanguage());
 		return new TraceSchedule(snap, ticks, new Sequence());
 	}
 }

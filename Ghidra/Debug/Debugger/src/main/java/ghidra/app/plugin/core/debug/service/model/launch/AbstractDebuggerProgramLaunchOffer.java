@@ -280,7 +280,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 					"The given launcher path is not a TargetLauncher, according to its schema");
 			}
 			return new ValueExpecter(m, launcherPath);
-		}, SwingExecutorService.INSTANCE).thenCompose(l -> {
+		}, SwingExecutorService.LATER).thenCompose(l -> {
 			monitor.incrementProgress(1);
 			monitor.setMessage("Launching");
 			TargetLauncher launcher = (TargetLauncher) l;

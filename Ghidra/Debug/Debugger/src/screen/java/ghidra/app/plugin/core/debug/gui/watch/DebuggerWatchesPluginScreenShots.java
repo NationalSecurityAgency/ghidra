@@ -63,14 +63,14 @@ public class DebuggerWatchesPluginScreenShots extends GhidraScreenShotGenerator 
 
 			PcodeExecutor<byte[]> executor0 =
 				TraceSleighUtils.buildByteExecutor(tb.trace, snap0, thread, 0);
-			executor0.executeLine("RSP = 0x7ffefff8");
-			executor0.executeLine("*:4 (RSP+8) = 0x4030201");
+			executor0.executeSleighLine("RSP = 0x7ffefff8");
+			executor0.executeSleighLine("*:4 (RSP+8) = 0x4030201");
 
 			PcodeExecutor<byte[]> executor1 =
 				TraceSleighUtils.buildByteExecutor(tb.trace, snap1, thread, 0);
-			executor1.executeLine("RSP = 0x7ffefff8");
-			executor1.executeLine("*:4 (RSP+8) = 0x1020304");
-			executor1.executeLine("*:4 0x7fff0004:8 = 0x4A9A70C8");
+			executor1.executeSleighLine("RSP = 0x7ffefff8");
+			executor1.executeSleighLine("*:4 (RSP+8) = 0x1020304");
+			executor1.executeSleighLine("*:4 0x7fff0004:8 = 0x4A9A70C8");
 		}
 
 		watchesProvider.addWatch("RSP");

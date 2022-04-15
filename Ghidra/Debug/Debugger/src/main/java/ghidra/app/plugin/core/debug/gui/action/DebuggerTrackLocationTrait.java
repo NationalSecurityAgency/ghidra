@@ -192,7 +192,9 @@ public class DebuggerTrackLocationTrait {
 
 	public void setSpec(LocationTrackingSpec spec) {
 		// TODO: What if action == null?
-		action.setCurrentActionStateByUserData(spec);
+		if (action != null) {
+			action.setCurrentActionStateByUserData(spec);
+		}
 	}
 
 	public LocationTrackingSpec getSpec() {

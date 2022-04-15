@@ -334,7 +334,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		public PcodeFrame getFrame() {
 			return null;
 		}
-		
+
 		@Override
 		public Instruction getInstruction() {
 			return null;
@@ -562,6 +562,29 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 				tb.trace.getTimeManager().getSnapshot(1, true).setEventThread(t2);
 			}
 			time.finish(tb.trace, TraceSchedule.parse("1:4;t0-4"), machine, TaskMonitor.DUMMY);
+		}
+	}
+
+	@Test
+	public void testCoalescePatches() throws Exception {
+		// TODO: Should parse require coalescing? Can't without passing a language...
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
+			TraceThread thread;
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				thread = tb.trace.getThreadManager().createThread("Threads[0]", 0);
+			}
+			TraceSchedule time = TraceSchedule.parse("0");
+			time = time.patched(thread, "r0l=1");
+			assertEquals("0:t0-{r0l=0x1}", time.toString());
+			time = time.patched(thread, "r0h=2");
+			assertEquals("0:t0-{r0=0x200000001}", time.toString());
+			time = time.patched(thread, "r1l=3").patched(thread, "*[ram]:4 0xcafe:8=0xdeadbeef");
+			assertEquals("0:t0-{*:4 0xcafe:8=0xdeadbeef};t0-{r0=0x200000001};t0-{r1l=0x3}",
+				time.toString());
+
+			time = time.patched(thread, "*:8 0xcb00:8 = 0x1122334455667788");
+			assertEquals("0:t0-{*:8 0xcafe:8=0xdead112233445566};t0-{*:2 0xcb06:8=0x7788};" +
+				"t0-{r0=0x200000001};t0-{r1l=0x3}", time.toString());
 		}
 	}
 }

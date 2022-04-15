@@ -15,19 +15,12 @@
  */
 package ghidra.app.plugin.core.assembler;
 
-import static org.junit.Assert.*;
-
-import java.util.List;
-import java.util.Objects;
-
-import javax.swing.JTextField;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.*;
 
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.core.assembler.AssemblyDualTextField.AssemblyCompletion;
-import ghidra.app.plugin.core.assembler.AssemblyDualTextField.AssemblyInstruction;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
@@ -41,7 +34,6 @@ import ghidra.program.model.data.ShortDataType;
 import ghidra.program.model.data.TerminatedStringDataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
-import ghidra.program.util.ProgramLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskMonitor;
@@ -55,8 +47,7 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private CodeViewerProvider codeViewer;
 
-	private AssemblyDualTextField instructionInput;
-	private JTextField dataInput;
+	private AssemblerPluginTestHelper helper;
 
 	private ProgramDB program;
 	private AddressSpace space;
@@ -73,23 +64,19 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assemblerPlugin = addPlugin(tool, AssemblerPlugin.class);
 
 		codeViewer = waitForComponentProvider(CodeViewerProvider.class);
-
-		instructionInput = assemblerPlugin.patchInstructionAction.input;
-		dataInput = assemblerPlugin.patchDataAction.input;
-
 		program = createDefaultProgram(getName(), "Toy:BE:64:default", this);
+
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		memory = program.getMemory();
 		listing = program.getListing();
+
+		helper = new AssemblerPluginTestHelper(assemblerPlugin, codeViewer, program);
 
 		try (ProgramTransaction trans = ProgramTransaction.open(program, "Setup")) {
 			memory.createInitializedBlock(".text", space.getAddress(0x00400000), 0x1000, (byte) 0,
 				TaskMonitor.DUMMY, false);
 			trans.commit();
 		}
-
-		// Snuff the assembler's warning prompt
-		assemblerPlugin.patchInstructionAction.shownWarning.put(program.getLanguage(), true);
 
 		env.showTool();
 		programManager.openProgram(program);
@@ -100,45 +87,10 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		env.dispose();
 	}
 
-	protected void assertDualFields() {
-		assertFalse(instructionInput.getAssemblyField().isVisible());
-		assertTrue(instructionInput.getMnemonicField().isVisible());
-		assertTrue(instructionInput.getOperandsField().isVisible());
-	}
-
-	protected List<AssemblyCompletion> inputAndGetCompletions(String text) {
-		return runSwing(() -> {
-			instructionInput.setText(text);
-			instructionInput.auto.startCompletion(instructionInput.getOperandsField());
-			instructionInput.auto.flushUpdates();
-			return instructionInput.auto.getSuggestions();
-		});
-	}
-
-	private void goTo(Address address) {
-		runSwing(() -> codeViewer.goTo(program, new ProgramLocation(program, address)));
-		waitForSwing();
-	}
-
 	@Test
 	public void testActionPatchInstructionNoExisting() throws Exception {
 		Address address = space.getAddress(0x00400000);
-		goTo(address);
-
-		performAction(assemblerPlugin.patchInstructionAction, codeViewer, true);
-		assertDualFields();
-		assertEquals("", instructionInput.getText());
-		assertEquals(address, assemblerPlugin.patchInstructionAction.getAddress());
-
-		List<AssemblyCompletion> completions = inputAndGetCompletions("imm r0, #1234");
-		AssemblyCompletion first = completions.get(0);
-		assertTrue(first instanceof AssemblyInstruction);
-		AssemblyInstruction ai = (AssemblyInstruction) first;
-
-		runSwing(() -> assemblerPlugin.patchInstructionAction.accept(ai));
-		waitForProgram(program);
-
-		Instruction ins = Objects.requireNonNull(listing.getInstructionAt(address));
+		Instruction ins = helper.patchInstructionAt(address, "", "imm r0, #1234");
 		assertEquals("imm r0,#0x4d2", ins.toString());
 	}
 
@@ -151,44 +103,12 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			trans.commit();
 		}
 
-		goTo(address);
-
-		performAction(assemblerPlugin.patchInstructionAction, codeViewer, true);
-		assertDualFields();
-		assertEquals("imm r0,#0x4d2", instructionInput.getText());
-		assertEquals(address, assemblerPlugin.patchInstructionAction.getAddress());
-
-		List<AssemblyCompletion> completions = inputAndGetCompletions("imm r0, #123");
-		AssemblyCompletion first = completions.get(0);
-		assertTrue(first instanceof AssemblyInstruction);
-		AssemblyInstruction ai = (AssemblyInstruction) first;
-
-		runSwing(() -> assemblerPlugin.patchInstructionAction.accept(ai));
-		waitForProgram(program);
-
-		Instruction ins = Objects.requireNonNull(listing.getInstructionAt(address));
+		Instruction ins = helper.patchInstructionAt(address, "imm r0,#0x4d2", "imm r0, #123");
 		assertEquals("imm r0,#0x7b", ins.toString());
 	}
 
 	// TODO: Test disabled on uninitialized memory
 	// TODO: Test disabled on read-only listings
-
-	protected Data doPatchAt(Address address, String expText, String newText) {
-		goTo(address);
-
-		performAction(assemblerPlugin.patchDataAction, codeViewer, true);
-		assertTrue(dataInput.isVisible());
-		assertEquals(expText, dataInput.getText());
-		assertEquals(address, assemblerPlugin.patchDataAction.getAddress());
-
-		runSwing(() -> {
-			dataInput.setText(newText);
-			assemblerPlugin.patchDataAction.accept();
-		});
-		waitForProgram(program);
-
-		return Objects.requireNonNull(listing.getDataAt(address));
-	}
 
 	@Test
 	public void testActionPatchDataShortHexValid() throws Exception {
@@ -198,7 +118,7 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			trans.commit();
 		}
 
-		Data data = doPatchAt(address, "0h", "1234h");
+		Data data = helper.patchDataAt(address, "0h", "1234h");
 		assertEquals("1234h", data.getDefaultValueRepresentation());
 	}
 
@@ -211,7 +131,7 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			trans.commit();
 		}
 
-		Data data = doPatchAt(address, "0", "1234");
+		Data data = helper.patchDataAt(address, "0", "1234");
 		assertEquals("1234", data.getDefaultValueRepresentation());
 	}
 
@@ -224,7 +144,8 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			trans.commit();
 		}
 
-		Data data = doPatchAt(address, "\"Hello, World!\"", "\"Hello, Patch!\"");
+		Data data = helper.patchDataAt(address, "\"Hello, World!\"",
+			"\"Hello, Patch!\"");
 		assertEquals("\"Hello, Patch!\"", data.getDefaultValueRepresentation());
 	}
 
@@ -237,7 +158,8 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			trans.commit();
 		}
 
-		Data data = doPatchAt(address, "\"Hello, World!\"", "\"Hello!\"");
+		Data data =
+			helper.patchDataAt(address, "\"Hello, World!\"", "\"Hello!\"");
 		assertEquals("\"Hello!\"", data.getDefaultValueRepresentation());
 		assertEquals(7, data.getLength());
 	}
@@ -251,7 +173,7 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			trans.commit();
 		}
 
-		Data data = doPatchAt(address, "\"Hello, World!\"", "\"Hello to you, too!\"");
+		Data data = helper.patchDataAt(address, "\"Hello, World!\"", "\"Hello to you, too!\"");
 		assertEquals("\"Hello to you, too!\"", data.getDefaultValueRepresentation());
 		assertEquals(19, data.getLength());
 	}

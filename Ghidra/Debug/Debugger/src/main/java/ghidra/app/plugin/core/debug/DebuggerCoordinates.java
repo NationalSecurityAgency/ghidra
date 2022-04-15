@@ -28,6 +28,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.database.DBTraceContentHandler;
+import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
@@ -81,9 +82,28 @@ public class DebuggerCoordinates {
 			null, null, null);
 	}
 
+	public static DebuggerCoordinates rawView(TraceProgramView view) {
+		return all(view.getTrace(), null, null, view, TraceSchedule.snap(view.getSnap()), null);
+	}
+
 	public static DebuggerCoordinates view(TraceProgramView view) {
-		return all(view == null ? null : view.getTrace(), null, null, view,
-			view == null ? null : TraceSchedule.snap(view.getSnap()), null);
+		if (view == null) {
+			return NOWHERE;
+		}
+		long snap = view.getSnap();
+		if (!DBTraceUtils.isScratch(snap)) {
+			return rawView(view);
+		}
+		Trace trace = view.getTrace();
+		TraceSnapshot snapshot = trace.getTimeManager().getSnapshot(snap, false);
+		if (snapshot == null) {
+			return rawView(view);
+		}
+		TraceSchedule schedule = snapshot.getSchedule();
+		if (schedule == null) {
+			return rawView(view);
+		}
+		return trace(trace).withTime(schedule);
 	}
 
 	public static DebuggerCoordinates snap(long snap) {

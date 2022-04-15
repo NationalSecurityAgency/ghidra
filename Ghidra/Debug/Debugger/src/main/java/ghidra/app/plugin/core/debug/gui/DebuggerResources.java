@@ -22,12 +22,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.*;
 
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.action.builder.*;
+import docking.menu.ActionState;
 import docking.widgets.table.*;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -47,6 +50,7 @@ import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPlugin;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesPlugin;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
+import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.app.services.MarkerService;
 import ghidra.async.AsyncUtils;
@@ -162,7 +166,7 @@ public interface DebuggerResources {
 	// TODO: Draw an icon?
 	ImageIcon ICON_CAPTURE_SYMBOLS = ResourceManager.loadImage("images/closedFolderLabels.png");
 
-	ImageIcon ICON_LOG_FATAL = ResourceManager.loadImage("images/edit-bomg.png");
+	ImageIcon ICON_LOG_FATAL = ResourceManager.loadImage("images/edit-bomb.png");
 	ImageIcon ICON_LOG_ERROR = ResourceManager.loadImage("images/dialog-warning_red.png");
 	ImageIcon ICON_LOG_WARN = ResourceManager.loadImage("images/dialog-warning.png");
 
@@ -181,6 +185,17 @@ public interface DebuggerResources {
 	ImageIcon ICON_DIFF = ResourceManager.loadImage("images/table_relationship.png");
 	ImageIcon ICON_DIFF_PREV = ResourceManager.loadImage("images/up.png");
 	ImageIcon ICON_DIFF_NEXT = ResourceManager.loadImage("images/down.png");
+
+	ImageIcon ICON_EDIT_MODE_READ_ONLY = ResourceManager.loadImage("images/write-disabled.png");
+	ImageIcon ICON_EDIT_MODE_WRITE_TARGET = ResourceManager.loadImage("images/write-target.png");
+	ImageIcon ICON_EDIT_MODE_WRITE_TRACE = ResourceManager.loadImage("images/write-trace.png");
+	ImageIcon ICON_EDIT_MODE_WRITE_EMULATOR =
+		ResourceManager.loadImage("images/write-emulator.png");
+
+	String NAME_EDIT_MODE_READ_ONLY = "Read Only";
+	String NAME_EDIT_MODE_WRITE_TARGET = "Write Target";
+	String NAME_EDIT_MODE_WRITE_TRACE = "Write Trace";
+	String NAME_EDIT_MODE_WRITE_EMULATOR = "Write Emulator";
 
 	HelpLocation HELP_PACKAGE = new HelpLocation("Debugger", "package");
 
@@ -2031,6 +2046,26 @@ public interface DebuggerResources {
 					.toolBarGroup(GROUP)
 					.toolBarIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface EditModeAction {
+		String NAME = "Edit Mode";
+		String DESCRIPTION = "Choose what to edit in dynamic views";
+		String GROUP = GROUP_GENERAL;
+		Icon ICON = StateEditingMode.values()[0].icon;
+		String HELP_ANCHOR = "edit_mode";
+
+		static MultiStateActionBuilder<StateEditingMode> builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new MultiStateActionBuilder<StateEditingMode>(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarGroup(GROUP)
+					.toolBarIcon(ICON_EDIT_MODE_WRITE_TARGET)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
+					.addStates(Stream.of(StateEditingMode.values())
+							.map(m -> new ActionState<>(m.name, m.icon, m))
+							.collect(Collectors.toList()));
 		}
 	}
 

@@ -72,7 +72,7 @@ public class PcodeExecutor<T> {
 		return state;
 	}
 
-	public void executeLine(String line) {
+	public void executeSleighLine(String line) {
 		PcodeProgram program = SleighProgramCompiler.compileProgram(language,
 			"line", List.of(line + ";"), SleighUseropLibrary.NIL);
 		execute(program, SleighUseropLibrary.nil());

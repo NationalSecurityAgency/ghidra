@@ -133,8 +133,13 @@ public class VerticalPixelAddressMapImpl implements VerticalPixelAddressMap {
 			return new AddressSet();
 		}
 		if (viewedAddresses == null) {
+			Address start = getStartAddress();
+			Address end = getEndAddress();
+			if (start == null || end == null) {
+				return new AddressSet();
+			}
 			viewedAddresses =
-				map.getOriginalAddressSet().intersectRange(getStartAddress(), getEndAddress());
+				map.getOriginalAddressSet().intersectRange(start, end);
 		}
 		return viewedAddresses;
 	}
