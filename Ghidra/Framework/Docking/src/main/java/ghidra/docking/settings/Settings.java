@@ -63,21 +63,27 @@ public interface Settings {
 	Object getValue(String name);
 	
 	/**
-	 * Associates the given long value with the name
+	 * Associates the given long value with the name.
+	 * Note that an attempted setting change may be ignored if prohibited
+	 * (e.g., immutable Settings, undefined setting name).
 	 * @param name the key
 	 * @param value the value associated with the key
 	 */
 	void setLong(String name, long value);
 
 	/**
-	 * Associates the given String value with the name
+	 * Associates the given String value with the name.
+	 * Note that an attempted setting change may be ignored if prohibited
+	 * (e.g., immutable Settings, undefined setting name).
 	 * @param name the key
 	 * @param value the value associated with the key
 	 */
 	void setString(String name, String value);
 	
 	/**
-	 * Associates the given object with the name
+	 * Associates the given object with the name.
+	 * Note that an attempted setting change may be ignored if prohibited
+	 * (e.g., immutable Settings, undefined setting name).
 	 * @param name the key
 	 * @param value the value to associate with the key
 	 */
