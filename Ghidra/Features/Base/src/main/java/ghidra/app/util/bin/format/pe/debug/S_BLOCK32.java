@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +20,7 @@ package ghidra.app.util.bin.format.pe.debug;
  */
 class S_BLOCK32 extends DebugSymbol {
 
-	static S_BLOCK32 createS_BLOCK32(short length, short type) {
-        return new S_BLOCK32(length, type);
-    }
-
-    private S_BLOCK32(short length, short type) {
+	S_BLOCK32(short length, short type) {
 		processDebugSymbol(length, type);
 	}
 

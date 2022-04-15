@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -38,27 +38,11 @@ public class PreboundDynamicLibraryCommand extends LoadCommand {
 	private int nmodules;
 	private LoadCommandString linkedModules;
 
-	static PreboundDynamicLibraryCommand createPreboundDynamicLibraryCommand(
-			FactoryBundledWithBinaryReader reader) throws IOException {
-		PreboundDynamicLibraryCommand command =
-			(PreboundDynamicLibraryCommand) reader.getFactory().create(
-				PreboundDynamicLibraryCommand.class);
-		command.initPreboundDynamicLibraryCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public PreboundDynamicLibraryCommand() {
-	}
-
-	private void initPreboundDynamicLibraryCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	PreboundDynamicLibraryCommand(BinaryReader reader) throws IOException {
 		initLoadCommand(reader);
-		name = LoadCommandString.createLoadCommandString(reader, this);
+		name = new LoadCommandString(reader, this);
 		nmodules = reader.readNextInt();
-		linkedModules = LoadCommandString.createLoadCommandString(reader, this);
+		linkedModules = new LoadCommandString(reader, this);
 	}
 
 	@Override

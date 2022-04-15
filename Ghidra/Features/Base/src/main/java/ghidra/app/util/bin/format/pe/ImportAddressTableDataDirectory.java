@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -35,22 +35,10 @@ public class ImportAddressTableDataDirectory extends DataDirectory {
 
     private List<ThunkData []> thunkDataSetList;
 
-    static ImportAddressTableDataDirectory createImportAddressTableDataDirectory(
-            NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-            throws IOException {
-        ImportAddressTableDataDirectory importAddressTableDataDirectory = (ImportAddressTableDataDirectory) reader.getFactory().create(ImportAddressTableDataDirectory.class);
-        importAddressTableDataDirectory.initImportAddressTableDataDirectory(ntHeader, reader);
-        return importAddressTableDataDirectory;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public ImportAddressTableDataDirectory() {}
-
-	private void initImportAddressTableDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader) throws IOException {
+	ImportAddressTableDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
-	}
+
+    }
 
 	/**
 	 * Returns the thunk data set at the specified index.
@@ -96,7 +84,7 @@ public class ImportAddressTableDataDirectory extends DataDirectory {
 		int tmp = size;
 
     	while (tmp > 0) {
-			ThunkData thunk = ThunkData.createThunkData(reader, ptr, ntHeader.getOptionalHeader().is64bit());
+			ThunkData thunk = new ThunkData(reader, ptr, ntHeader.getOptionalHeader().is64bit());
 
 			if (thunk.getAddressOfData() == 0) {
 				ThunkData [] set = new ThunkData[thunkList.size()];

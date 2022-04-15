@@ -22,7 +22,6 @@ import java.util.*;
 import org.apache.commons.collections4.BidiMap;
 import org.jdom.JDOMException;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
@@ -181,8 +180,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 		if (offset == null) {
 			return null;
 		}
-		MachHeader machHeader =
-			MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider, offset, true);
+		MachHeader machHeader = new MachHeader(provider, offset, true);
 		LanguageCompilerSpecPair lcs = MacosxLanguageHelper.getLanguageCompilerSpecPair(
 			languageService, machHeader.getCpuType(), machHeader.getCpuSubType());
 		Program program =
@@ -315,8 +313,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 			ByteProvider systemKextProvider =
 				new MemoryByteProvider(systemProgram.getMemory(), address);
 
-			MachHeader machHeader = MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE,
-				systemKextProvider, 0, false);
+			MachHeader machHeader = new MachHeader(systemKextProvider, 0, false);
 			machHeader.parse();
 
 			//MachoLoader loader = new MachoLoader();
@@ -419,8 +416,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 			}
 			String kextName = "Kext_0x" + Conv.toHexString(machoHeaderOffset) + ".kext";
 			try {
-				MachHeader header = MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE,
-					provider, machoHeaderOffset);
+				MachHeader header = new MachHeader(provider, machoHeaderOffset);
 				header.parse();
 				String name = findNameOfKext(header, monitor);
 				if (name != null) {

@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -40,22 +40,7 @@ public class LinkerOptionCommand extends LoadCommand {
 	private int count;
 	private List<String> linkerOptions;
 
-	static LinkerOptionCommand createLinkerOptionCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-
-		LinkerOptionCommand command =
-			(LinkerOptionCommand) reader.getFactory().create(LinkerOptionCommand.class);
-		command.initLinkerOptionCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public LinkerOptionCommand() {
-	}
-
-	private void initLinkerOptionCommand(FactoryBundledWithBinaryReader reader) throws IOException {
+	LinkerOptionCommand(BinaryReader reader) throws IOException {
 		initLoadCommand(reader);
 		count = reader.readNextInt();
 		linkerOptions = new ArrayList<>(count);

@@ -18,8 +18,8 @@ package ghidra.app.util.bin.format.mz;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.ne.InvalidWindowsHeaderException;
 import ghidra.app.util.bin.format.ne.WindowsHeader;
@@ -89,27 +89,14 @@ public class DOSHeader implements StructConverter, Writeable {
 
 	private byte [] stubBytes;
 
-    private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
 
     /**
      * Constructs a new DOS header.
      * @param reader the binary reader
      */
-    public static DOSHeader createDOSHeader(
-            FactoryBundledWithBinaryReader reader) throws IOException {
-        DOSHeader dosHeader = (DOSHeader) reader.getFactory().create(DOSHeader.class);
-        dosHeader.initDOSHeader(reader);
-        return dosHeader;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DOSHeader() {}
-
-    private void initDOSHeader(FactoryBundledWithBinaryReader reader) throws IOException {
+	public DOSHeader(BinaryReader reader) throws IOException {
         this.reader = reader;
-
         parse();
     }
 
@@ -283,7 +270,7 @@ public class DOSHeader implements StructConverter, Writeable {
 		if (e_lfanew >= 0 && e_lfanew <= 0x1000000) {
 			try {
 				NTHeader ntHeader =
-					NTHeader.createNTHeader(reader, e_lfanew, SectionLayout.FILE, false, false);
+					new NTHeader(reader, e_lfanew, SectionLayout.FILE, false, false);
 				if (ntHeader != null && ntHeader.getOptionalHeader() != null) {
 					return true;
 				}

@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -38,21 +38,7 @@ public class VersionMinCommand extends LoadCommand {
 	private int version;
 	private int sdk;
 
-	static VersionMinCommand createVersionMinCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		VersionMinCommand versionMinCommand =
-			(VersionMinCommand) reader.getFactory().create(VersionMinCommand.class);
-		versionMinCommand.initVersionMinCommand(reader);
-		return versionMinCommand;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public VersionMinCommand() {
-	}
-
-	private void initVersionMinCommand(FactoryBundledWithBinaryReader reader) throws IOException {
+	VersionMinCommand(BinaryReader reader) throws IOException {
 		initLoadCommand(reader);
 
 		version = reader.readNextInt();

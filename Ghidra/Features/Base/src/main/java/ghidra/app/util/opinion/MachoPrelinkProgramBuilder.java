@@ -30,7 +30,6 @@ import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr;
 import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.bin.format.macho.prelink.PrelinkMap;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Pointer64DataType;
@@ -564,8 +563,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		public PrelinkMachoInfo(ByteProvider provider, long fileOffset, Address headerAddr,
 				String kextName) throws Exception {
 			this.headerAddr = headerAddr;
-			this.header = MachHeader.createMachHeader(MessageLogContinuesFactory.create(log),
-				provider, fileOffset, false);
+			this.header = new MachHeader(provider, fileOffset, false);
 			this.header.parse();
 			this.headerAddr = headerAddr;
 			this.name = kextName;

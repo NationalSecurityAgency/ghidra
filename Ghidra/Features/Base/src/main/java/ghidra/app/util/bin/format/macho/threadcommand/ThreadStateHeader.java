@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.macho.threadcommand;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.util.exception.DuplicateNameException;
@@ -27,21 +27,7 @@ public class ThreadStateHeader implements StructConverter {
 	private int flavor;
 	private int count;
 
-	static ThreadStateHeader createThreadStateHeader(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		ThreadStateHeader threadStateHeader =
-			(ThreadStateHeader) reader.getFactory().create(ThreadStateHeader.class);
-		threadStateHeader.initThreadStateHeader(reader);
-		return threadStateHeader;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ThreadStateHeader() {
-	}
-
-	private void initThreadStateHeader(FactoryBundledWithBinaryReader reader) throws IOException {
+	ThreadStateHeader(BinaryReader reader) throws IOException {
 		flavor = reader.readNextInt();
 		count = reader.readNextInt();
 	}

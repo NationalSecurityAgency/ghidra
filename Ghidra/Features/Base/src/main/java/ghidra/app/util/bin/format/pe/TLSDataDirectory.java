@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -38,21 +38,9 @@ public class TLSDataDirectory extends DataDirectory {
 
     private TLSDirectory tls;
 
-    static TLSDataDirectory createTLSDataDirectory(NTHeader ntHeader,
-            FactoryBundledWithBinaryReader reader) throws IOException {
-        TLSDataDirectory tlsDataDirectory = (TLSDataDirectory) reader.getFactory().create(TLSDataDirectory.class);
-        tlsDataDirectory.initTLSDataDirectory(ntHeader, reader);
-        return tlsDataDirectory;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public TLSDataDirectory() {}
-
-	private void initTLSDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader) throws IOException {
+	TLSDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
-	}
+    }
 
 	/**
 	 * Returns the thread local storage directory.
@@ -113,7 +101,7 @@ public class TLSDataDirectory extends DataDirectory {
 			return false;
 		}
 
-        tls = TLSDirectory.createTLSDirectory(reader, ptr, ntHeader.getOptionalHeader().is64bit());
+		tls = new TLSDirectory(reader, ptr, ntHeader.getOptionalHeader().is64bit());
         return true;
     }
 

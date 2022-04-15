@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,7 @@ package ghidra.app.util.bin.format.ne;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.*;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.util.Conv;
 
 /**
@@ -27,7 +26,7 @@ import ghidra.util.Conv;
  * 
  */
 public class ImportedNameTable {
-    private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
     private short index;
 
     /**
@@ -35,7 +34,7 @@ public class ImportedNameTable {
      * @param reader the binary reader
      * @param index the index where the table begins
      */
-    ImportedNameTable(FactoryBundledWithBinaryReader reader, short index) {
+	ImportedNameTable(BinaryReader reader, short index) {
         this.reader = reader;
         this.index = index;
     }

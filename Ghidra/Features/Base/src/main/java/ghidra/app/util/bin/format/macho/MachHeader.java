@@ -19,9 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import generic.continues.GenericFactory;
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -44,7 +42,7 @@ public class MachHeader implements StructConverter {
 	private boolean _is32bit;
 	private List<LoadCommand> _commands = new ArrayList<>();
 	private long _commandIndex;
-	private FactoryBundledWithBinaryReader _reader;
+	private BinaryReader _reader;
 	private long _machHeaderStartIndexInProvider;
 	private long _machHeaderStartIndex = 0;
 	private boolean _parsed = false;
@@ -65,58 +63,49 @@ public class MachHeader implements StructConverter {
 		}
 		return false;
 	}
+	
 	/**
-	 * Assumes the MachHeader starts at index 0 in the ByteProvider.
+	 * Creates a new {@link MachHeader}.  Assumes the MachHeader starts at index 0 in the 
+	 * ByteProvider.
+	 * 
 	 * @param provider the ByteProvider
 	 * @throws IOException if an I/O error occurs while reading from the ByteProvider
 	 * @throws MachException if an invalid MachHeader is detected
 	 */
-	public static MachHeader createMachHeader(GenericFactory factory, ByteProvider provider)
-			throws IOException, MachException {
-		return createMachHeader(factory, provider, 0);
+	public MachHeader(ByteProvider provider) throws IOException, MachException {
+		this(provider, 0);
 	}
 
 	/**
-	 * Assumes the MachHeader starts at index <i>machHeaderStartIndexInProvider</i> in the ByteProvider.
+	 * Creates a new {@link MachHeader}. Assumes the MachHeader starts at index 
+	 * <i>machHeaderStartIndexInProvider</i> in the ByteProvider.
+	 * 
 	 * @param provider the ByteProvider
-	 * @param machHeaderStartIndexInProvider the index into the ByteProvider where the MachHeader begins.
+	 * @param machHeaderStartIndexInProvider the index into the ByteProvider where the MachHeader 
+	 *   begins
 	 * @throws IOException if an I/O error occurs while reading from the ByteProvider
 	 * @throws MachException if an invalid MachHeader is detected
 	 */
-	public static MachHeader createMachHeader(GenericFactory factory, ByteProvider provider,
-			long machHeaderStartIndexInProvider) throws IOException, MachException {
-		MachHeader machHeader = (MachHeader) factory.create(MachHeader.class);
-		machHeader.initMachHeader(factory, provider, machHeaderStartIndexInProvider, true);
-		return machHeader;
+	public MachHeader(ByteProvider provider, long machHeaderStartIndexInProvider)
+			throws IOException, MachException {
+		this(provider, machHeaderStartIndexInProvider, true);
 	}
 
 	/**
-	 * Assumes the MachHeader starts at index <i>machHeaderStartIndexInProvider</i> in the ByteProvider.
+	 * Creatse a new {@link MachHeader}.  Assumes the MachHeader starts at index 
+	 * <i>machHeaderStartIndexInProvider</i> in the ByteProvider.
+	 * 
 	 * @param provider the ByteProvider
-	 * @param machHeaderStartIndexInProvider the index into the ByteProvider where the MachHeader begins.
-	 * @param isRemainingMachoRelativeToStartIndex TRUE if the rest of the macho uses relative indexing. This is common in UBI and kernel cache files.
-	 *                                             FALSE if the rest of the file uses absolute indexing from 0. This is common in DYLD cache files.
+	 * @param machHeaderStartIndexInProvider the index into the ByteProvider where the MachHeader 
+	 *   begins.
+	 * @param isRemainingMachoRelativeToStartIndex true if the rest of the macho uses relative 
+	 *   indexin (this is common in UBI and kernel cache files); otherwise, false if the rest of the
+	 *   file uses absolute indexing from 0 (this is common in DYLD cache files)
 	 * @throws IOException if an I/O error occurs while reading from the ByteProvider
 	 * @throws MachException if an invalid MachHeader is detected
 	 */
-	public static MachHeader createMachHeader(GenericFactory factory, ByteProvider provider,
-			long machHeaderStartIndexInProvider, boolean isRemainingMachoRelativeToStartIndex)
-			throws IOException, MachException {
-		MachHeader machHeader = (MachHeader) factory.create(MachHeader.class);
-		machHeader.initMachHeader(factory, provider, machHeaderStartIndexInProvider,
-			isRemainingMachoRelativeToStartIndex);
-		return machHeader;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public MachHeader() {
-	}
-
-	private void initMachHeader(GenericFactory factory, ByteProvider provider,
-			long machHeaderStartIndexInProvider, boolean isRemainingMachoRelativeToStartIndex)
-			throws IOException, MachException {
+	public MachHeader(ByteProvider provider, long machHeaderStartIndexInProvider,
+			boolean isRemainingMachoRelativeToStartIndex) throws IOException, MachException {
 		magic = readMagic(provider, machHeaderStartIndexInProvider);
 
 		if (!MachConstants.isMagic(magic)) {
@@ -128,7 +117,7 @@ public class MachHeader implements StructConverter {
 		}
 
 		_machHeaderStartIndexInProvider = machHeaderStartIndexInProvider;
-		_reader = new FactoryBundledWithBinaryReader(factory, provider, isLittleEndian());
+		_reader = new BinaryReader(provider, isLittleEndian());
 		_reader.setPointerIndex(machHeaderStartIndexInProvider + 4);//skip magic number...
 
 		cpuType = _reader.readNextInt();
@@ -219,13 +208,17 @@ public class MachHeader implements StructConverter {
 	 * Returns the start index that should be used for calculating offsets.
 	 * This will be 0 for things such as the dyld shared cache where offsets are
 	 * based off the beginning of the file.
+	 * 
+	 * @return the start index that should be used for calculating offsets
 	 */
 	public long getStartIndex() {
 		return _machHeaderStartIndex;
 	}
 
 	/**
-	 * Returns offset of MachHeader in the ByteProvider
+	 * Returns the offset of the MachHeader in the ByteProvider
+	 * 
+	 * @return the offset of the MachHeader in the ByteProvider
 	 */
 	public long getStartIndexInProvider() {
 		return _machHeaderStartIndexInProvider;

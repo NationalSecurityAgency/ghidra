@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.threadcommand;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -67,21 +67,7 @@ public class ThreadStateARM_64 extends ThreadState {
 	public int cpsr;
 	public int pad;
 
-	static ThreadStateARM_64 createThreadStateARM_64(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		ThreadStateARM_64 threadStateARM_64 =
-			(ThreadStateARM_64) reader.getFactory().create(ThreadStateARM_64.class);
-		threadStateARM_64.initThreadStateARM_64(reader);
-		return threadStateARM_64;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ThreadStateARM_64() {
-	}
-
-	private void initThreadStateARM_64(FactoryBundledWithBinaryReader reader) throws IOException {
+	ThreadStateARM_64(BinaryReader reader) throws IOException {
 		x0 = reader.readNextLong();
 		x1 = reader.readNextLong();
 		x2 = reader.readNextLong();

@@ -18,8 +18,8 @@ package ghidra.app.util.bin.format.pe;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.pe.rich.RichHeaderRecord;
 import ghidra.program.model.data.DataType;
@@ -35,33 +35,17 @@ public class RichHeader implements StructConverter, Writeable {
 	public final static int IMAGE_DANS_SIGNATURE = 0x536E6144; // DanS
 	public final static String NAME = "IMAGE_RICH_HEADER";
 
-	private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
 	private RichTable table;
 
 	/**
-	 * Create and returns the Rich header found from the given reader.  The reader should be
+	 * Creates the Rich header found from the given reader.  The reader should be
 	 * positioned directly after the DOS header.
 	 * 
 	 * @param reader The reader to read the PE with.
-	 * @return The Rich header associated with the given reader.
 	 */
-	public static RichHeader createRichHeader(FactoryBundledWithBinaryReader reader) {
-		RichHeader richHeader = (RichHeader) reader.getFactory().create(RichHeader.class);
-		richHeader.initRichHeader(reader);
-		return richHeader;
-	}
-
-	/**
-	 * Do not directly call this constructor.
-	 * <p>  
-	 * Use {@link #createRichHeader(FactoryBundledWithBinaryReader)}
-	 */
-	public RichHeader() {
-		// Constructor needs to exist, but shouldn't do anything.
-	}
-
-	private void initRichHeader(FactoryBundledWithBinaryReader binaryReader) {
-		this.reader = binaryReader;
+	public RichHeader(BinaryReader reader) {
+		this.reader = reader;
 		parse();
 	}
 

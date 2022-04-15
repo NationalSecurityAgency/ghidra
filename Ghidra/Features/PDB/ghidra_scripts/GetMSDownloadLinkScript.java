@@ -23,14 +23,12 @@
 // showing it to the user.
 //@category Import
 
-import java.util.List;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.AccessMode;
+import java.util.List;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.FileByteProvider;
 import ghidra.app.util.bin.format.pe.NTHeader;
@@ -56,8 +54,7 @@ public class GetMSDownloadLinkScript extends GhidraScript {
 
 		try (FileByteProvider bp = new FileByteProvider(f, null, AccessMode.READ)) {
 			monitor.setMessage("Parsing file " + f.getName());
-			PortableExecutable pe = PortableExecutable.createPortableExecutable(
-				RethrowContinuesFactory.INSTANCE, bp, SectionLayout.FILE, false, false);
+			PortableExecutable pe = new PortableExecutable(bp, SectionLayout.FILE, false, false);
 			NTHeader ntHeader = pe.getNTHeader();
 			if (ntHeader != null && ntHeader.getOptionalHeader() != null) {
 				int timeDateStamp = ntHeader.getFileHeader().getTimeDateStamp();

@@ -17,13 +17,10 @@ package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeConflictException;
-import ghidra.program.model.data.ImageBaseOffset32DataType;
-import ghidra.program.model.data.ImageBaseOffset64DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
@@ -34,22 +31,9 @@ public class LoadConfigDataDirectory extends DataDirectory {
 
     private LoadConfigDirectory lcd;
 
-    static LoadConfigDataDirectory createLoadConfigDataDirectory(
-            NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-            throws IOException {
-        LoadConfigDataDirectory loadConfigDataDirectory = (LoadConfigDataDirectory) reader.getFactory().create(LoadConfigDataDirectory.class);
-        loadConfigDataDirectory.initLoadConfigDataDirectory(ntHeader, reader);
-        return loadConfigDataDirectory;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public LoadConfigDataDirectory() {}
-
-	private void initLoadConfigDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader) throws IOException {
+	LoadConfigDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
-	}
+    }
 
 	/**
 	 * Returns the load config directory object defined in this data directory.
@@ -115,7 +99,7 @@ public class LoadConfigDataDirectory extends DataDirectory {
 			return false;
 		}
 
-        lcd = LoadConfigDirectory.createLoadConfigDirectory(reader, ptr, ntHeader.getOptionalHeader());
+		lcd = new LoadConfigDirectory(reader, ptr, ntHeader.getOptionalHeader());
         return true;
     }
 

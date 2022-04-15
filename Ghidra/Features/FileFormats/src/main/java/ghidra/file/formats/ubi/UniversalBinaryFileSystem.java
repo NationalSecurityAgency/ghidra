@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.CpuTypes;
 import ghidra.app.util.bin.format.ubi.FatArch;
@@ -74,7 +73,7 @@ public class UniversalBinaryFileSystem extends GFileSystemBase {
 	@Override
 	public void open(TaskMonitor monitor) throws IOException, CancelledException {
 		try {
-			header = FatHeader.createFatHeader(RethrowContinuesFactory.INSTANCE, provider);
+			header = new FatHeader(provider);
 			List<FatArch> architectures = header.getArchitectures();
 			for (FatArch architecture : architectures) {
 				Processor processor =

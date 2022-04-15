@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -32,23 +32,7 @@ public class LoadCommandString implements StructConverter {
 	private int offset;
 	private String string;
 
-	static LoadCommandString createLoadCommandString(FactoryBundledWithBinaryReader reader,
-			LoadCommand command) throws IOException {
-		LoadCommandString loadCommandString =
-			(LoadCommandString) reader.getFactory().create(LoadCommandString.class);
-		loadCommandString.initLoadCommandString(reader, command);
-		return loadCommandString;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY
-	 * METHODS INSTEAD.
-	 */
-	public LoadCommandString() {
-	}
-
-	private void initLoadCommandString(FactoryBundledWithBinaryReader reader, LoadCommand command)
-			throws IOException {
+	LoadCommandString(BinaryReader reader, LoadCommand command) throws IOException {
 		offset = reader.readNextInt();
 		string = reader.readAsciiString(command.getStartIndex() + offset);
 	}

@@ -24,7 +24,6 @@ import java.util.*;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
 
-import generic.continues.GenericFactory;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
@@ -35,7 +34,6 @@ import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.bin.format.elf.relocation.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.options.Options;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.database.register.AddressRangeObjectMap;
@@ -1425,9 +1423,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					try (ByteProvider debugDataBP =
 						new ObfuscatedFileByteProvider(tmpFile, null, AccessMode.READ)) {
 
-						GenericFactory factory = MessageLogContinuesFactory.create(log);
-						ElfHeader minidebugElf =
-							ElfHeader.createElfHeader(factory, debugDataBP, null);
+						ElfHeader minidebugElf = new ElfHeader(debugDataBP, null);
 						minidebugElf.parse();
 
 						ElfSymbolTable[] minidebugSymbolTables = minidebugElf.getSymbolTables();
