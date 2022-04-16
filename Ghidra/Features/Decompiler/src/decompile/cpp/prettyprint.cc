@@ -258,11 +258,13 @@ void EmitXml::tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,in
 /// \param hl indicates how the comment should be highlighted
 /// \param spc is the address space of the address where the comment is attached
 /// \param off is the offset of the address where the comment is attached
+/// \param type is the type of the comment
 void EmitXml::tagComment(const char *ptr,syntax_highlight hl,
-			   const AddrSpace *spc,uintb off) {
+			   const AddrSpace *spc,uintb off, const char* type) {
   *s << "<comment " << highlight[(int4)hl];
   a_v(*s,"space",spc->getName());
   a_v_u(*s,"off",off);
+  a_v(*s,"type",type);
   *s << '>';
   xml_escape(*s,ptr);
   *s << "</comment>";
@@ -422,7 +424,7 @@ void TokenSplit::print(EmitXml *emit) const
     emit->tagField(tok.c_str(),hl,ptr_second.ct,(int4)off);
     break;
   case comm_t:	// tagComment
-    emit->tagComment(tok.c_str(),hl,ptr_second.spc,off);
+    emit->tagComment(tok.c_str(),hl,ptr_second.spc,off,ptr_second.type);
     break;
   case label_t:	// tagLabel
     emit->tagLabel(tok.c_str(),hl,ptr_second.spc,off);
@@ -1064,11 +1066,11 @@ void EmitPrettyPrint::tagField(const char *ptr,syntax_highlight hl,const Datatyp
 }
 
 void EmitPrettyPrint::tagComment(const char *ptr,syntax_highlight hl,
-				   const AddrSpace *spc,uintb off)
+				   const AddrSpace *spc,uintb off, const char* type)
 {
   checkstring();
   TokenSplit &tok( tokqueue.push() );
-  tok.tagComment(ptr,hl,spc,off);
+  tok.tagComment(ptr,hl,spc,off,type);
   scan();
 }
 

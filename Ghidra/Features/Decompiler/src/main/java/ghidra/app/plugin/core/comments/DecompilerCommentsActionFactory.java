@@ -22,6 +22,8 @@ import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.decompiler.DecompilerLocation;
+import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.ClangCommentToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.address.Address;
@@ -130,16 +132,32 @@ public class DecompilerCommentsActionFactory extends CommentsActionFactory {
 
         @Override
         protected int getEditCommentType(ActionContext context) {
+            ProgramLocation location = getLocationForContext(context);
+            // CommentType.getCommentType has special-case logic for editing
+            // the selected comment for CommentFieldLocation, but it doesn't know
+            // about comments from the decompiler (and can't because CommentType
+            // is framework code without knowledge of the decompiler).
+            // Thus, we re-implement that check here.
+            if (location instanceof DecompilerLocation) {
+                ClangToken token = ((DecompilerLocation) location).getToken();
+                if (token instanceof ClangCommentToken) {
+                    return ((ClangCommentToken) token).getCommentType();
+                }
+            }
+
+            int defaultCommentType = CodeUnit.NO_COMMENT;
             if (context instanceof DecompilerActionContext) {
                 DecompilerActionContext decompContext = (DecompilerActionContext) context;
                 Address addr = decompContext.getAddress();
                 if (addr.equals(decompContext.getFunctionEntryPoint())) {
-                    return CodeUnit.PLATE_COMMENT;
+                    defaultCommentType = CodeUnit.PLATE_COMMENT;
                 }
-                return CodeUnit.PRE_COMMENT;
+                else {
+                    defaultCommentType = CodeUnit.PRE_COMMENT;
+                }
             }
             CodeUnit cu = getCodeUnit(context);
-            return CommentType.getCommentType(cu, getLocationForContext(context), CodeUnit.NO_COMMENT);
+            return CommentType.getCommentType(cu, location, defaultCommentType);
         }
     }
 }

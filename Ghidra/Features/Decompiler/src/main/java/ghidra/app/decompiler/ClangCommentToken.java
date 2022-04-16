@@ -18,12 +18,14 @@ package ghidra.app.decompiler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.pcode.PcodeFactory;
+import ghidra.program.util.CommentType;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 
 public class ClangCommentToken extends ClangToken {
 
 	private Address srcaddr;	// source address of the comment
+	private int commenttype;
 
 	public static ClangCommentToken derive(ClangCommentToken source, String text) {
 
@@ -34,6 +36,7 @@ public class ClangCommentToken extends ClangToken {
 		newToken.setSyntaxType(source.getSyntaxType());
 		newToken.setHighlight(source.getHighlight());
 		newToken.srcaddr = source.srcaddr;
+		newToken.commenttype = source.commenttype;
 		return newToken;
 	}
 
@@ -57,6 +60,10 @@ public class ClangCommentToken extends ClangToken {
 		return srcaddr;
 	}
 
+	public int getCommentType() {
+		return commenttype;
+	}
+
 	@Override
 	public void restoreFromXML(XmlElement el, XmlElement end, PcodeFactory pfactory) {
 		super.restoreFromXML(el, end, pfactory);
@@ -64,6 +71,7 @@ public class ClangCommentToken extends ClangToken {
 		AddressSpace spc = pfactory.getAddressFactory().getAddressSpace(name);
 		long offset = SpecXmlUtils.decodeLong(el.getAttribute(ClangXML.OFFSET));
 		srcaddr = spc.getAddress(offset);
+		commenttype = CommentType.encodeCommentType(el.getAttribute(ClangXML.TYPE));
 	}
 
 }

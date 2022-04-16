@@ -122,7 +122,7 @@ public:
   virtual void tagFuncName(const char *ptr,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op);
   virtual void tagType(const char *ptr,syntax_highlight hl,const Datatype *ct);
   virtual void tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 off);
-  virtual void tagComment(const char *ptr,syntax_highlight hl,const AddrSpace *spc,uintb off);
+  virtual void tagComment(const char *ptr,syntax_highlight hl,const AddrSpace *spc,uintb off,const char *type);
   virtual void tagLabel(const char *ptr,syntax_highlight hl,const AddrSpace *spc,uintb off);
   virtual void print(const char *str,syntax_highlight hl=no_color);
   virtual int4 openParen(char o,int4 id=0);		///< Emit an open parenthesis
@@ -273,7 +273,7 @@ public:
   virtual void tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 off) {
     *s << ptr; }
   virtual void tagComment(const char *ptr,syntax_highlight hl,
-			   const AddrSpace *spc,uintb off) {
+			   const AddrSpace *spc,uintb off, const char* type) {
     *s << ptr; }
   virtual void tagLabel(const char *ptr,syntax_highlight hl,
 			 const AddrSpace *spc,uintb off) {
@@ -354,13 +354,14 @@ private:
   EmitXml::syntax_highlight hl;	///< Highlighting for token
   // Additional markup elements for token
   const PcodeOp *op;		///< Pcode-op associated with \b this token
-  union {
+  struct {
     const Varnode *vn;		///< Associated Varnode
     const FlowBlock *bl;	///< Associated Control-flow
     const Funcdata *fd;		///< Associated Function
     const Datatype *ct;		///< Associated Data-type
     const AddrSpace *spc;	///< Associated Address
     const Symbol *symbol;	///< Associated Symbol being displayed
+    const char *type;		///< Associated comment type
   } ptr_second;			///< Additional markup associated with the token
   uintb off;			///< Offset associated either with address or field markup
   int4 indentbump;		///< Amount to indent if a line breaks
@@ -514,9 +515,10 @@ public:
   /// \param h indicates how the comment should be highlighted
   /// \param s is the address space of the address where the comment is attached
   /// \param o is the offset of the address where the comment is attached
+  /// \param type is the type of the comment
   void tagComment(const char *ptr,EmitXml::syntax_highlight h,
-		   const AddrSpace *s,uintb o) {
-    tok = ptr; size = tok.size(); ptr_second.spc=s; off=o;
+		   const AddrSpace *s,uintb o, const char* type) {
+    tok = ptr; size = tok.size(); ptr_second.spc=s; off=o; ptr_second.type=type;
     tagtype=comm_t; delimtype=tokenstring; hl=h; }
 
   /// \brief Create a code label identifier token
@@ -775,7 +777,7 @@ public:
   virtual void tagType(const char *ptr,syntax_highlight hl,const Datatype *ct);
   virtual void tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 off);
   virtual void tagComment(const char *ptr,syntax_highlight hl,
-			  const AddrSpace *spc,uintb off);
+			  const AddrSpace *spc,uintb off, const char* type);
   virtual void tagLabel(const char *ptr,syntax_highlight hl,
 			const AddrSpace *spc,uintb off);
   virtual void print(const char *str,syntax_highlight hl=no_color);

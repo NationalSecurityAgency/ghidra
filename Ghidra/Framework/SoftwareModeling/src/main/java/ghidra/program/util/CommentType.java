@@ -73,4 +73,19 @@ public class CommentType {
 		return true;
 	}
 
+	public static int encodeCommentType(String name) {
+		switch (name) {
+		case "user1":
+			return CodeUnit.EOL_COMMENT;
+		case "user2":
+			return CodeUnit.PRE_COMMENT;
+		case "user3":
+			return CodeUnit.POST_COMMENT;
+		case "header":
+			return CodeUnit.PLATE_COMMENT;
+		default:
+			// Hit for "warning" and "warningheader"
+			return CodeUnit.NO_COMMENT;
+		}
+	}
 }
