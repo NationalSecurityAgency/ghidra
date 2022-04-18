@@ -82,7 +82,7 @@ To develop the Ghidra tool itself, it is highly recommended to use Eclipse, whic
 development process has been highly customized for.
 
 ##### Install build and development tools:
-* Follow the above build instructions so the build completes without errors
+* Follow the above [build instructions](#build) so the build completes without errors
 * Install [Eclipse IDE for Java Developers][eclipse]
 
 ##### Prepare the development environment:
