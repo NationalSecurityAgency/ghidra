@@ -24,22 +24,21 @@ import ghidra.app.services.DebuggerModelService;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
-@PluginInfo( // 
-	shortDescription = "Debugger breakpoints manager", //
-	description = "GUI to manage breakpoints", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
-	servicesRequired = { //
-		DebuggerLogicalBreakpointService.class, //
-		DebuggerModelService.class, //
+@PluginInfo(
+	shortDescription = "Debugger breakpoints manager",
+	description = "GUI to manage breakpoints",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	servicesRequired = {
+		DebuggerLogicalBreakpointService.class,
+		DebuggerModelService.class,
 	},
 	eventsConsumed = {
-		TraceOpenedPluginEvent.class, //
-		TraceClosedPluginEvent.class, //
-		TraceActivatedPluginEvent.class, //
-	} //
-)
+		TraceOpenedPluginEvent.class,
+		TraceClosedPluginEvent.class,
+		TraceActivatedPluginEvent.class,
+	})
 public class DebuggerBreakpointsPlugin extends AbstractDebuggerPlugin {
 	protected DebuggerBreakpointsProvider provider;
 

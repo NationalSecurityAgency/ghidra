@@ -46,6 +46,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerStateEditingService.StateEditor;
 import ghidra.async.AsyncLazyValue;
 import ghidra.async.AsyncUtils;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
@@ -72,7 +73,6 @@ import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.*;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -387,6 +387,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	private DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	private DebuggerListingService listingService;
+	@AutoServiceConsumed
+	private DebuggerStateEditingService editingService;
 	@AutoServiceConsumed
 	private MarkerService markerService; // TODO: Mark address types (separate plugin?)
 	@SuppressWarnings("unused")
@@ -758,37 +760,15 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 	}
 
-	boolean canWriteTarget() {
-		if (!current.isAliveAndPresent()) {
-			return false;
-		}
-		TraceRecorder recorder = current.getRecorder();
-		TargetRegisterBank targetRegs =
-			recorder.getTargetRegisterBank(current.getThread(), current.getFrame());
-		if (targetRegs == null) {
-			return false;
-		}
-		return true;
-	}
-
 	boolean canWriteRegister(Register register) {
 		if (!isEditsEnabled()) {
 			return false;
 		}
-		if (register.isProcessorContext()) {
-			return false; // TODO: Limitation from using Sleigh for patching
-		}
-		return true;
-	}
-
-	boolean canWriteTargetRegister(Register register) {
-		if (!isEditsEnabled()) {
+		if (editingService == null) {
 			return false;
 		}
-		if (!canWriteTarget()) {
-			return false;
-		}
-		return current.getRecorder().isRegisterOnTarget(current.getThread(), register);
+		StateEditor editor = editingService.createStateEditor(current);
+		return editor.isRegisterEditable(register);
 	}
 
 	BigInteger getRegisterValue(Register register) {
@@ -804,37 +784,40 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	void writeRegisterValue(RegisterValue rv) {
-		if (canWriteTargetRegister(rv.getRegister())) {
-			rv = combineWithTraceBaseRegisterValue(rv);
-			CompletableFuture<Void> future = current.getRecorder()
-					.writeThreadRegisters(current.getThread(), current.getFrame(),
-						Map.of(rv.getRegister(), rv));
-			future.exceptionally(ex -> {
-				ex = AsyncUtils.unwrapThrowable(ex);
-				if (ex instanceof DebuggerModelAccessException) {
-					Msg.error(this, "Could not write target register", ex);
-					plugin.getTool()
-							.setStatusInfo("Could not write target register: " + ex.getMessage());
-				}
-				else {
-					Msg.showError(this, getComponent(), "Edit Register",
-						"Could not write target register", ex);
-				}
-				return null;
-			});
+		if (editingService == null) {
+			Msg.showError(this, getComponent(), "Edit Register", "No editing service.");
 			return;
 		}
-		TraceSchedule time = current.getTime().patched(current.getThread(), generateSleigh(rv));
-		traceManager.activateTime(time);
-	}
+		StateEditor editor = editingService.createStateEditor(current);
+		if (!editor.isRegisterEditable(rv.getRegister())) {
+			rv = combineWithTraceBaseRegisterValue(rv);
+		}
+		if (!editor.isRegisterEditable(rv.getRegister())) {
+			Msg.showError(this, getComponent(), "Edit Register",
+				"Neither the register nor its base can be edited.");
+			return;
+		}
 
-	protected String generateSleigh(RegisterValue rv) {
-		return String.format("%s=0x%s", rv.getRegister(), rv.getUnsignedValue().toString(16));
+		CompletableFuture<Void> future = editor.setRegister(rv);
+		future.exceptionally(ex -> {
+			ex = AsyncUtils.unwrapThrowable(ex);
+			if (ex instanceof DebuggerModelAccessException) {
+				Msg.error(this, "Could not write target register", ex);
+				plugin.getTool()
+						.setStatusInfo("Could not write target register: " + ex.getMessage());
+			}
+			else {
+				Msg.showError(this, getComponent(), "Edit Register",
+					"Could not write target register", ex);
+			}
+			return null;
+		});
+		return;
 	}
 
 	private RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv) {
 		TraceMemoryRegisterSpace regs = getRegisterMemorySpace(false);
-		long snap = current.getSnap();
+		long snap = current.getViewSnap();
 		return TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, snap, regs, true);
 	}
 
@@ -847,7 +830,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		try (UndoableTransaction tid =
 			UndoableTransaction.start(current.getTrace(), "Edit Register Type", false)) {
 			TraceCodeRegisterSpace space = getRegisterMemorySpace(true).getCodeSpace(true);
-			long snap = current.getSnap();
+			long snap = current.getViewSnap();
 			space.definedUnits().clear(Range.closed(snap, snap), register, TaskMonitor.DUMMY);
 			if (dataType != null) {
 				space.definedData().create(Range.atLeast(snap), register, dataType);
@@ -864,7 +847,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (space == null) {
 			return null;
 		}
-		long snap = current.getSnap();
+		long snap = current.getViewSnap();
 		return space.definedData().getForRegister(snap, register);
 	}
 

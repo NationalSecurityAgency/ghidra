@@ -23,17 +23,17 @@
     </TABLE>
 
     <P><A name="Toggle_Header"></A>The dynamic listing is analogous to Ghidra's listing for static
-    analysis, but in the dynamic context. That is, it displays memory contents from a target. More
+    analysis, but in the dynamic context. It displays annotated memory contents from a target. More
     precisely, it displays recorded memory contents in a trace. In most use cases, that trace is
     "at the present," meaning it is the most recent memory from a live target. Multiple listings
     can be displayed simultaneously, using the same pattern as many other Ghidra windows. The
     "primary" listing is always displayed and generally tracks with the rest of the tool. Any
-    listing can be "snapshotted," i.e., duplicated. This is where dynamic listings differ from
-    static listings. Static snapshots remain in place; they do not automatically navigate. Dynamic
-    snapshots can still be configured to navigate, following the rest of the tool. A common use is
-    to configure a "snapshot" to follow the stack pointer. Still, you can disable a listing's
-    automatic navigation, so it behaves like a true snapshot. A current limitation is that you
-    cannot use snapshots to display different points in time for the same trace.</P>
+    listing can be "snapshotted," i.e., cloned. This is where dynamic listings differ from static
+    listings. Static clones remain in place; they do not automatically navigate. Dynamic clones can
+    still be configured to navigate, following the rest of the tool. A common use is to configure a
+    clone to follow the stack pointer. Still, you can disable a listing's automatic navigation, so
+    it behaves like a true clone. A current limitation is that you cannot use clones to display
+    different points in time for the same trace.</P>
 
     <P>Where applicable, the static listing's location is synchronized to the dynamic listing, and
     vice versa. The dynamic listing permits most of the same mark-up as the static listing. Any
@@ -58,6 +58,12 @@
     failed, the first address in the failed range is displayed with a pink background. Otherwise,
     up-to-date contents are displayed with the default background color.</P>
 
+    <P>The dynamic listing supports editing memory via the <A href=
+    "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">Machine State Editing
+    Plugin and Service</A>. Such edits are performed as usual: Via the <A href=
+    "help/topics/AssemblerPlugin/Assembler.htm">Patch</A> actions, or by pasting byte strings.
+    These edits may be directed toward a live target, the trace, or the emulator.</P>
+
     <H2>Actions</H2>
 
     <P>The listing provides a variety of actions, some for managing and configuring listings, and
@@ -67,7 +73,7 @@
 
     <P>This action is always available in the <SPAN class="menu">Window &rarr; Debugger</SPAN>
     menu. It creates a new listing window with the same configuration as the primary dynamic
-    listing. It is equivalent to "snapshotting" the primary dynamic listing.</P>
+    listing. It is equivalent to cloning the primary dynamic listing.</P>
 
     <H3><A name="export_view"></A>Export Trace View</H3>
 
@@ -78,11 +84,11 @@
 
     <H3><A name="follows_thread"></A>Follows Selected Thread</H3>
 
-    <P>This action is only available on snapshot dynamic listings. The primary listing always
-    follows the tool's current thread. Disabling this toggle causes the snapshot to remain on its
-    own current thread rather than following the tool's. The current thread is used when computing
-    a location to navigate to automatically. It is only applicable when "Track Location" is set to
-    something other than "Do Not Track."</P>
+    <P>This action is only available on cloned dynamic listings. The primary listing always follows
+    the tool's current thread. Disabling this toggle causes the clone to remain on its own current
+    thread rather than following the tool's. The current thread is used when computing a location
+    to navigate to automatically. It is only applicable when "Track Location" is set to something
+    other than "Do Not Track."</P>
 
     <H3><A name="track_location"></A>Track Location</H3>
 

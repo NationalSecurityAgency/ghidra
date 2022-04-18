@@ -31,9 +31,8 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.program.TraceProgramView;
 
 @ServiceInfo( //
-	defaultProvider = DebuggerLogicalBreakpointServicePlugin.class, //
-	description = "Aggregate breakpoints for programs and live traces" //
-)
+	defaultProvider = DebuggerLogicalBreakpointServicePlugin.class,
+	description = "Aggregate breakpoints for programs and live traces")
 public interface DebuggerLogicalBreakpointService {
 	/**
 	 * Get all logical breakpoints known to the tool.

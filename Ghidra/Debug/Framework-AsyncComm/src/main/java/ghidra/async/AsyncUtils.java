@@ -409,7 +409,7 @@ public interface AsyncUtils<T> {
 	Cleaner CLEANER = Cleaner.create();
 
 	ExecutorService FRAMEWORK_EXECUTOR = Executors.newWorkStealingPool();
-	ExecutorService SWING_EXECUTOR = SwingExecutorService.INSTANCE;
+	ExecutorService SWING_EXECUTOR = SwingExecutorService.LATER;
 
 	CompletableFuture<Void> NIL = CompletableFuture.completedFuture(null);
 

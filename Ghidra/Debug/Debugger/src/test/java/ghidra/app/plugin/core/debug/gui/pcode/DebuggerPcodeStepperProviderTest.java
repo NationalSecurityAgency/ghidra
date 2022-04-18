@@ -75,7 +75,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 			thread = tb.getOrAddThread("1", 0);
 
 			PcodeExecutor<byte[]> init = TraceSleighUtils.buildByteExecutor(tb.trace, 0, thread, 0);
-			init.executeLine("pc = 0x00400000");
+			init.executeSleighLine("pc = 0x00400000");
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			iit = asm.assemble(start,

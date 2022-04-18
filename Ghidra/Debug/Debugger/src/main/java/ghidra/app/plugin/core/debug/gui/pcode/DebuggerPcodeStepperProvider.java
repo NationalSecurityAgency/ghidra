@@ -897,7 +897,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 				return;
 			}
 			doLoadPcodeFrameFromEmulator(emulationService.getCachedEmulator(trace, time));
-		}, SwingExecutorService.INSTANCE);
+		}, SwingExecutorService.LATER);
 	}
 
 	protected void doLoadPcodeFrameFromEmulator(DebuggerTracePcodeEmulator emu) {

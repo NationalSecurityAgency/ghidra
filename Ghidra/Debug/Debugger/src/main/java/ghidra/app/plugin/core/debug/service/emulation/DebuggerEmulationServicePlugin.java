@@ -59,7 +59,7 @@ import ghidra.util.task.TaskMonitor;
 	description = "Manages and cache trace emulation states",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.UNSTABLE,
+	status = PluginStatus.RELEASED,
 	eventsConsumed = {
 		TraceClosedPluginEvent.class,
 		ProgramActivatedPluginEvent.class,
