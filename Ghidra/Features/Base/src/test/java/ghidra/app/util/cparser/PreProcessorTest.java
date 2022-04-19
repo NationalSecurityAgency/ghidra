@@ -20,24 +20,44 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayOutputStream;
 import java.net.URL;
 
-import org.junit.Test;
+import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.app.util.cparser.CPP.ParseException;
 import ghidra.app.util.cparser.CPP.PreProcessor;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 
 public class PreProcessorTest extends AbstractGenericTest {
+	private static String resourceName = "PreProcessorTest.h";
+	private static CategoryPath path = new CategoryPath(new CategoryPath("/PreProcessorTest.h"), "defines");
+	
+	// must get rid of after all tests
+	private static StandAloneDataTypeManager dtMgr;
+	private static ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	private static PreProcessor parser;
+	
+	long value;
+	String defname;
 
 	public PreProcessorTest() {
 		super();
 	}
 
-	@Test
-	public void testHeaderParsing() throws Exception {
-		PreProcessor parser = new PreProcessor();
+	@BeforeClass
+	public static void init() {
+		URL url = PreProcessorTest.class.getResource(resourceName);
+		
+		String[] args = new String[]  {"-I"+url.getPath()+"/..","-DFROM_ARG_VALUE=300", "-DFROM_ARG_DEF", "-DFROM_ARG_EMPTY=\"\""};
+		parser = null;
+		try {
+			parser = new PreProcessor(args);
+		}
+		catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		parser.setOutputStream(baos);
 
 ////		String[] args = new String[]  {"-I/local/VisualStudio/Windows/v7.0a/Include", "-I/local/VisualStudio/VS12/include", "-D_WIN32", "-D_CRT_SECURE_NO_WARNINGS"};
@@ -53,14 +73,25 @@ public class PreProcessorTest extends AbstractGenericTest {
 ////		fullName = "adoguids.h";
 ////		parser.parse(fullName);
 
-		String resourceName = "PreProcessorTest.h";
-		URL url = PreProcessorTest.class.getResource(resourceName);
-
 		parser.parse(url.getFile());
 
 		// Uncomment to print out parse results
-		System.err.println(baos.toString());
+		// System.err.println(baos.toString());
 
+		dtMgr = new StandAloneDataTypeManager("parsed");
+		parser.getDefinitions().populateDefineEquates(dtMgr);
+	}
+	
+	@AfterClass
+	public static void destroy() {
+		dtMgr = null;
+		baos = null;
+		parser = null;
+	}
+	
+	@Test
+	public void testHeaderParsed() throws Exception {
+		
 		String results = baos.toString("ASCII");
 		int end = results.lastIndexOf(";") + 1;
 		String endStr = results.substring(end - 9, end);
@@ -68,15 +99,15 @@ public class PreProcessorTest extends AbstractGenericTest {
 
 		assertTrue("macro expansion _fpl(bob) failed ", results
 				.indexOf("extern int __declspec(\"fp(\\\"l\\\", \" #bob \")\") __ifplbob;") != -1);
+	}
+	
+	@Test
+	public void testDefines() throws Exception {
+		long value;
+		String defname;
 
-		StandAloneDataTypeManager dtMgr = new StandAloneDataTypeManager("parsed");
-		parser.getDefinitions().populateDefineEquates(dtMgr);
-
-		CategoryPath path = new CategoryPath("/PreProcessorTest.h");
-		path = new CategoryPath(path, "defines");
-
-		long value = 32516;
-		String defname = "DefVal1";
+		value = 32516;
+		defname = "DefVal1";
 		checkDefine(dtMgr, path, value, defname);
 
 		value = 0x06010000 + 0xf1;
@@ -129,10 +160,145 @@ public class PreProcessorTest extends AbstractGenericTest {
 		defname = "isDefineOnValue";
 		value = 1;
 		checkDefine(dtMgr, path, value, defname);
+		
+		defname = "DID_EXPANSION";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
 
 		defname = "BIGNUM";
 		value = 64 * 16 + 16;
 		checkDefine(dtMgr, path, value, defname);
+		
+		defname = "NEWLINETEST1";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+		
+		defname = "NEWLINETEST2";
+		value = 2;
+		checkDefine(dtMgr, path, value, defname);
+		
+		defname = "NEWLINETEST3";
+		value = 3;
+		checkDefine(dtMgr, path, value, defname);
+		
+		
+		defname = "SEPERATORC";
+		String defval = parser.getDef(defname);
+		assertEquals(defval, "','");
+	}
+	
+	@Test
+	public void testDefinesArgValue() {
+		defname = "DID_ARG_VALUE";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+		
+		// This is from a -D arg define, not from a file
+		CategoryPath argCategoryPath = new CategoryPath(CategoryPath.ROOT, "defines");	
+		defname = "FROM_ARG_VALUE";
+		value = 300;
+		checkDefine(dtMgr, argCategoryPath, value, defname);
+	}
+
+	@Test
+	public void testDefinesArgEmpty() {
+		defname = "DID_ARG_EMPTY";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+	}
+
+	@Test
+	public void testDefinesArgDef() {
+		defname = "DID_ARG_DEF";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+	}
+
+	@Test
+	public void testDefinesArgIsDefValue() {
+		defname = "DID_ARG_ISDEF_VALUE";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+	}
+
+	@Test
+	public void testDefinesArgIsDefEmpty() {
+		defname = "DID_ARG_ISDEF_EMPTY";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+	}
+
+	@Test
+	public void testDefinesArgIsDefDef() {
+		defname = "DID_ARG_ISDEF_DEF";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+	}
+
+	@Test
+	public void testFileDefinesValue() {
+		defname = "DID_FILE_VALUE";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+	}
+
+	@Test
+	public void testDefinesFileEmpty() {
+		defname = "DID_FILE_EMPTY";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+	}
+
+	@Test
+	public void testDefinesFileDef() {
+		defname = "DID_FILE_DEF";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+	}
+
+	@Test
+	public void testDefinesFileIsDefValue() {
+		defname = "DID_FILE_ISDEF_VALUE";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+	}
+
+	@Test
+	public void testDefinesFileIsDefEmpty() {
+		defname = "DID_FILE_ISDEF_EMPTY";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+	}
+
+	@Test
+	public void testDefinesFileIsDefDef() {
+		defname = "DID_FILE_ISDEF_DEF";
+		value = 1;
+		checkDefine(dtMgr, path, value, defname);
+	}
+	
+	@Test
+	public void testMultipleInclude() {
+		defname = "INCLUDE1";
+		String defval = parser.getDef(defname);
+		assertNotNull("Had 1 duplicate include", defval);
+		
+		defname = "INCLUDE2";
+		defval = parser.getDef(defname);
+		assertNotNull("Had 2 duplicate include", defval);
+		
+		defname = "INCLUDE3";
+		defval = parser.getDef(defname);
+		assertNotNull("Had 3 duplicate include", defval);
+		
+		defname = "INCLUDE4";
+		defval = parser.getDef(defname);
+		assertNotNull("Had 4 duplicate include", defval);
+		
+		defname = "INCLUDE5";
+		defval = parser.getDef(defname);
+		// if a define is not defined, getDef() returns name of define as value
+		assertEquals("No INCLUDE5 define", "INCLUDE5", defval);
 	}
 
 	private void checkDefine(StandAloneDataTypeManager dtMgr, CategoryPath path, long value,

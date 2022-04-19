@@ -18,6 +18,26 @@
  ** Some data types are checked.  More checking of the parsed information would be beneficial at some point.
  **/
  
+ void blarg(int *);
+
+ void * foo;
+
+ typedef void *bar;
+
+ typedef int size_t;
+ typedef int pid_t;
+
+
+
+ struct _IO_FILE_complete
+{
+  size_t __pad5;
+  int _mode;
+  /* Make sure we don't get into trouble again.  */
+  char _unused2[15 * sizeof (int) - 4 * sizeof (void **) - sizeof (size_t)];
+};
+
+
 
 /**
  ** use of long as an attribute
@@ -60,7 +80,7 @@ int (__stdcall * GetSectionBlock) (
  #pragma pack(push, 4)
  
  __pragma(pack(push, MyName, 8))
-struct packed8 {
+struct __declspec(align(16)) __pragma(warning(push)) __pragma(warning(disable:4845)) __declspec(no_init_all) __pragma(warning(pop)) packed8 {
     char a;
     short b;
     int c;
@@ -90,6 +110,10 @@ struct packed2 {
 struct packed1 {
     char a;
 };
+
+#pragma pack(push);
+#pragma pack(1);
+#pragma pack(pop);
 
 #pragma pack();  // reset to none
 
