@@ -518,8 +518,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			}
 		}
 		else if (toAddrIsBase) {
-			Address addr = toAddr.addWrap(offset);
-			if (isExternalBlockAddress(addr)) {
+			toAddr = toAddr.addWrap(offset);
+			if (isExternalBlockAddress(toAddr)) {
 				badOffsetReference = true;
 			}
 		}
