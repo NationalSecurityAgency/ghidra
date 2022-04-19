@@ -68,9 +68,9 @@ public class ElfHeader implements StructConverter, Writeable {
 	private int e_flags; //processor-specific flags
 	private short e_ehsize; //elf header size
 	private short e_phentsize; //size of entries in the program header table
-	private short e_phnum; //number of enties in the program header table
+	private int e_phnum; //number of enties in the program header table (may not be preserved)
 	private short e_shentsize; //size of entries in the section header table
-	private short e_shnum; //number of enties in the section header table
+	private int e_shnum; //number of enties in the section header table (may not be preserved)
 	private short e_shstrndx; //section index of the section name string table
 
 	private Structure headerStructure;
@@ -78,6 +78,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	private boolean parsed = false;
 	private boolean parsedSectionHeaders = false;
 
+	private ElfSectionHeader section0 = null;
 	private ElfSectionHeader[] sectionHeaders = new ElfSectionHeader[0];
 	private ElfProgramHeader[] programHeaders = new ElfProgramHeader[0];
 	private ElfStringTable[] stringTables = new ElfStringTable[0];
@@ -161,9 +162,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			e_version = reader.readNextInt();
 
 			if (is32Bit()) {
-				e_entry = reader.readNextInt() & 0xffffffffL;
-				e_phoff = reader.readNextInt() & 0xffffffffL;
-				e_shoff = reader.readNextInt() & 0xffffffffL;
+				e_entry = Integer.toUnsignedLong(reader.readNextInt());
+				e_phoff = Integer.toUnsignedLong(reader.readNextInt());
+				e_shoff = Integer.toUnsignedLong(reader.readNextInt());
 			}
 			else if (is64Bit()) {
 				e_entry = reader.readNextLong();
@@ -178,21 +179,68 @@ public class ElfHeader implements StructConverter, Writeable {
 
 			e_flags = reader.readNextInt();
 			e_ehsize = reader.readNextShort();
+
 			e_phentsize = reader.readNextShort();
-			e_phnum = reader.readNextShort();
-			if (e_phnum < 0) {
-				e_phnum = 0; // protect against stripped program headers
-			}
+			e_phnum = reader.readNextUnsignedShort();
+
 			e_shentsize = reader.readNextShort();
-			e_shnum = reader.readNextShort();
-			if (e_shnum < 0) {
-				e_shnum = 0; // protect against stripped section headers (have seen -1)
-			}
+			e_shnum = reader.readNextUnsignedShort();
+
 			e_shstrndx = reader.readNextShort();
+
+			if (e_shnum >= Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_LORESERVE)) {
+				e_shnum = readExtendedSectionHeaderCount(); // use extended stored section header count
+			}
+
+			if (e_phnum == Short.toUnsignedInt(ElfConstants.PN_XNUM)) {
+				e_phnum = readExtendedProgramHeaderCount(); // use extended stored program header count
+			}
 		}
 		catch (IOException e) {
 			throw new ElfException(e);
 		}
+	}
+
+	private ElfSectionHeader getSection0() throws IOException {
+		if (section0 == null && e_shnum != 0) {
+			long index = e_shoff;
+			if (!providerContainsRegion(index, e_shentsize)) {
+				return null;
+			}
+			reader.setPointerIndex(index);
+			section0 = new ElfSectionHeader(reader, this);
+		}
+		return section0;
+	}
+
+	/**
+	 * Read extended program header count stored in first section header (ST_NULL) sh_info field value. 
+	 * Returned value is constrained to the range 0..0x7fffffff.
+	 * @return extended program header count or 0 if not found or out of range
+	 * @throws IOException if file IO error occurs
+	 */
+	private int readExtendedProgramHeaderCount() throws IOException {
+		ElfSectionHeader s = getSection0();
+		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
+			long val = s.getInfo();
+			return (val < 0 || val > Integer.MAX_VALUE) ? 0 : (int) val;
+		}
+		return 0;
+	}
+
+	/**
+	 * Read extended section header count stored in first section header (ST_NULL) sh_size field value. 
+	 * Returned value is constrained to the range 0..0x7fffffff.
+	 * @return extended section header count or 0 if not found or out of range
+	 * @throws IOException if file IO error occurs
+	 */
+	private int readExtendedSectionHeaderCount() throws IOException {
+		ElfSectionHeader s = getSection0();
+		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
+			long val = s.getSize();
+			return (val < 0 || val > Integer.MAX_VALUE) ? 0 : (int) val;
+		}
+		return 0;
 	}
 
 	private void initElfLoadAdapter() {
@@ -951,6 +999,10 @@ public class ElfHeader implements StructConverter, Writeable {
 			sectionHeaders[i] = new ElfSectionHeader(reader, this);
 		}
 
+		if (sectionHeaders.length != 0) {
+			section0 = sectionHeaders[0];
+		}
+
 		//note: we cannot retrieve all the names
 		//until after we have read all the section headers.
 		//this is because one of the section headers 
@@ -1283,11 +1335,13 @@ public class ElfHeader implements StructConverter, Writeable {
 
 	/**
 	 * This member holds the number of entries in the program header table. Thus the product
-	 * of e_phentsize and e_phnum gives the table's size in bytes. If a file has no program
-	 * header table, e_phnum holds the value zero.
+	 * of e_phentsize and unsigned e_phnum gives the table's size in bytes. If original 
+	 * e_phnum equals PNXNUM (0xffff) an attempt will be made to obtained the extended size
+	 * from section[0].sh_info field.  If a file has no program header table, e_phnum holds 
+	 * the value zero.
 	 * @return the number of entries in the program header table
 	 */
-	public short e_phnum() {
+	public int getProgramHeaderCount() {
 		return e_phnum;
 	}
 
@@ -1311,11 +1365,11 @@ public class ElfHeader implements StructConverter, Writeable {
 
 	/**
 	 * This member holds the number of entries in the section header table. Thus the product
-	 * of e_shentsize and e_shnum gives the section header table's size in bytes. If a file
+	 * of e_shentsize and unsigned e_shnum gives the section header table's size in bytes. If a file
 	 * has no section header table, e_shnum holds the value zero.
 	 * @return the number of entries in the section header table
 	 */
-	public short e_shnum() {
+	public int getSectionHeaderCount() {
 		return e_shnum;
 	}
 
@@ -1911,7 +1965,7 @@ public class ElfHeader implements StructConverter, Writeable {
 
 		programHeaders = tmp;
 
-		e_phnum = (short) programHeaders.length;
+		e_phnum = programHeaders.length;
 
 	}
 
@@ -1947,8 +2001,16 @@ public class ElfHeader implements StructConverter, Writeable {
 		raf.write(dc.getBytes(e_flags));
 		raf.write(dc.getBytes(e_ehsize));
 		raf.write(dc.getBytes(e_phentsize));
+		if (e_phnum >= Short.toUnsignedInt(ElfConstants.PN_XNUM)) {
+			throw new IOException(
+				"Unsupported program header count serialization: " + e_phnum);
+		}
 		raf.write(dc.getBytes(e_phnum));
 		raf.write(dc.getBytes(e_shentsize));
+		if (e_shnum >= Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_LORESERVE)) {
+			throw new IOException(
+				"Unsupported section header count serialization: " + e_shnum);
+		}
 		raf.write(dc.getBytes(e_shnum));
 		raf.write(dc.getBytes(e_shstrndx));
 	}

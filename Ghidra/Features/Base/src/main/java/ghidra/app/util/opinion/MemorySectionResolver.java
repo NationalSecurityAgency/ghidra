@@ -34,6 +34,8 @@ public abstract class MemorySectionResolver {
 
 	protected final Program program;
 
+	private Set<String> usedBlockNames = new HashSet<>();
+
 	private List<MemorySection> sections = new ArrayList<>(); // built-up prior to resolve
 	private Map<String, Integer> sectionIndexMap = new HashMap<>();
 
@@ -43,6 +45,9 @@ public abstract class MemorySectionResolver {
 
 	public MemorySectionResolver(Program program) {
 		this.program = program;
+		if (!program.getMemory().isEmpty()) {
+			throw new IllegalStateException("program memory blocks already exist - unsupported");
+		}
 	}
 
 	/**
@@ -124,16 +129,15 @@ public abstract class MemorySectionResolver {
 		else {
 			baseName = "NO-NAME";
 		}
-		Memory mem = program.getMemory();
 		String name = baseName;
 		int index = 0;
-		while (mem.getBlock(name) != null) {
+		while (usedBlockNames.contains(name)) {
 			name = baseName + "-" + (++index);
 		}
 		return name;
 	}
 
-	private String getUniqueSectionChunkName(MemorySection section, Memory memory,
+	private String getUniqueSectionChunkName(MemorySection section,
 			int preferredIndex) {
 		String sectionName = section.getSectionName();
 		int index = preferredIndex;
@@ -142,7 +146,7 @@ public abstract class MemorySectionResolver {
 			if (index >= 0) {
 				name += "." + index;
 			}
-			if (memory.getBlock(name) == null) {
+			if (!usedBlockNames.contains(name)) {
 				return name;
 			}
 			if (index <= 0) {
@@ -245,6 +249,8 @@ public abstract class MemorySectionResolver {
 	 */
 	public void resolve(TaskMonitor monitor) throws CancelledException {
 
+		monitor.setMessage("Loading memory blocks...");
+
 		if (sectionMemoryMap != null) {
 			throw new IllegalStateException("already resolved");
 		}
@@ -263,9 +269,11 @@ public abstract class MemorySectionResolver {
 
 		// process sections in reverse order - last-in takes precedence
 		int sectionCount = sections.size();
+		monitor.initialize(sectionCount);
 		for (int index = sectionCount - 1; index >= 0; --index) {
 			monitor.checkCanceled();
 			resolveSectionMemory(sections.get(index), fileAllocationMap, monitor);
+			monitor.incrementProgress(1);
 		}
 	}
 
@@ -352,7 +360,7 @@ public abstract class MemorySectionResolver {
 				continue; // skip range
 			}
 
-			String blockName = getUniqueSectionChunkName(section, memory, rangeIndex);
+			String blockName = getUniqueSectionChunkName(section, rangeIndex);
 
 			Address physicalStartAddr = section.getMinPhysicalAddress().add(sectionByteOffset);
 
@@ -381,6 +389,7 @@ public abstract class MemorySectionResolver {
 				if (block != null) {
 					minAddr = block.getStart();
 					maxAddr = block.getEnd();
+					usedBlockNames.add(blockName);
 				}
 				else {
 					// block may be null due to unexpected conflict or pruning - allow to continue
