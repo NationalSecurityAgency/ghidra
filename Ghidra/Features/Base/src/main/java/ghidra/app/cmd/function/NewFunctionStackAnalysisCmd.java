@@ -298,7 +298,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 					Address address, int opIndex) {
 				AddressSpace space = address.getAddressSpace();
 				String spaceName = space.getName();
-				if (spaceName.startsWith("track_") || spaceName.equals(stackReg.getName())) {
+				if (spaceName.startsWith("track_") || context.isStackSpaceName(spaceName)) {
 					if (opIndex == -1) {
 						opIndex = getStackOpIndex(context, instr, (int) address.getOffset());
 						// if didn't get the right opIndex, and has a delayslot, check for good stack ref
@@ -576,7 +576,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 						continue;
 					}
 					String spaceName = vnode.getAddress().getAddressSpace().getName();
-					if (spaceName.startsWith("track_") || spaceName.equals(stackReg.getName())) {
+					if (spaceName.startsWith("track_") || context.isStackSpaceName(spaceName)) {
 //						opLocation = opIndex;
 						local_offset += (int) vnode.getOffset();
 					}
