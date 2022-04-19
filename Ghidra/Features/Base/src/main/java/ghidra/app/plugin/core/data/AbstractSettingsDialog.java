@@ -227,6 +227,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 	@Override
 	protected void cancelCallback() {
+		settingsTable.editingStopped(null);
 		close();
 		dispose();
 	}
@@ -240,6 +241,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 	}
 
 	private void apply() {
+		settingsTable.editingStopped(null);
 		try {
 			applySettings();
 		}
