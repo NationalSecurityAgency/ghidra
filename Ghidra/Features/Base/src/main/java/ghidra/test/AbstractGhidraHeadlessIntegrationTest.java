@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import org.junit.BeforeClass;
+
 import docking.test.AbstractDockingTest;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.events.ProgramLocationPluginEvent;
@@ -94,6 +96,15 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 		// don't let scripts step on each other as tests are writing source files
 		System.setProperty(GhidraScriptConstants.USER_SCRIPTS_DIR_PROPERTY, getTestDirectoryPath());
+	}
+
+	@BeforeClass
+	public static void cleanDbTestDir() {
+		// keep files around in batch mode to allow tests to run faster; assume batch mode performs
+		// its own cleanup; only run once per class to allow subsequent tests to be faster
+		if (!BATCH_MODE) {
+			TestProgramManager.cleanDbTestDir();
+		}
 	}
 
 	public static boolean deleteProject(String directory, String name) {
