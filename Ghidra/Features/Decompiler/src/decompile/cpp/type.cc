@@ -619,6 +619,9 @@ void TypePointer::printRaw(ostream &s) const
 {
   ptrto->printRaw(s);
   s << " *";
+  if (spaceid != (AddrSpace *)0) {
+    s << '(' << spaceid->getName() << ')';
+  }
 }
 
 int4 TypePointer::compare(const Datatype &op,int4 level) const
@@ -629,6 +632,11 @@ int4 TypePointer::compare(const Datatype &op,int4 level) const
   // Both must be pointers
   TypePointer *tp = (TypePointer *) &op;
   if (wordsize != tp->wordsize) return (wordsize < tp->wordsize) ? -1 : 1;
+  if (spaceid != tp->spaceid) {
+    if (spaceid == (AddrSpace *)0) return 1;	// Pointers with address space come earlier
+    if (tp->spaceid == (AddrSpace *)0) return -1;
+    return (spaceid->getIndex() < tp->spaceid->getIndex()) ? -1 : 1;
+  }
   level -= 1;
   if (level < 0) {
     if (id == op.getId()) return 0;
@@ -644,6 +652,11 @@ int4 TypePointer::compareDependency(const Datatype &op) const
   TypePointer *tp = (TypePointer *) &op;	// Both must be pointers
   if (ptrto != tp->ptrto) return (ptrto < tp->ptrto) ? -1 : 1;	// Compare absolute pointers
   if (wordsize != tp->wordsize) return (wordsize < tp->wordsize) ? -1 : 1;
+  if (spaceid != tp->spaceid) {
+    if (spaceid == (AddrSpace *)0) return 1;	// Pointers with address space come earlier
+    if (tp->spaceid == (AddrSpace *)0) return -1;
+    return (spaceid->getIndex() < tp->spaceid->getIndex()) ? -1 : 1;
+  }
   return (op.getSize()-size);
 }
 
@@ -658,6 +671,8 @@ void TypePointer::saveXml(ostream &s) const
   saveXmlBasic(metatype,s);
   if (wordsize != 1)
     a_v_i(s,"wordsize",wordsize);
+  if (spaceid != (AddrSpace *)0)
+    a_v(s,"space",spaceid->getName());
   s << '>';
   ptrto->saveXmlRef(s);
   s << "</type>";
@@ -670,12 +685,17 @@ void TypePointer::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
   restoreXmlBasic(el);
-  for(int4 i=0;i<el->getNumAttributes();++i)
-    if (el->getAttributeName(i) == "wordsize") {
+  for(int4 i=0;i<el->getNumAttributes();++i) {
+    const string &attrName(el->getAttributeName(i));
+    if (attrName == "wordsize") {
       istringstream s(el->getAttributeValue(i));
       s.unsetf(ios::dec | ios::hex | ios::oct);
       s >> wordsize;
     }
+    else if (attrName == "space") {
+      spaceid = typegrp.getArch()->getSpaceByName(el->getAttributeValue(i));
+    }
+  }
   ptrto = typegrp.restoreXmlType( *el->getChildren().begin() );
   calcSubmeta();
   if (name.size() == 0)		// Inherit only if no name
@@ -1740,12 +1760,17 @@ void TypePointerRel::restoreXml(const Element *el,TypeFactory &typegrp)
   flags |= is_ptrrel;
   restoreXmlBasic(el);
   metatype = TYPE_PTR;		// Don't use TYPE_PTRREL internally
-  for(int4 i=0;i<el->getNumAttributes();++i)
-    if (el->getAttributeName(i) == "wordsize") {
+  for(int4 i=0;i<el->getNumAttributes();++i) {
+    const string &attribName(el->getAttributeName(i));
+    if (attribName == "wordsize") {
       istringstream s(el->getAttributeValue(i));
       s.unsetf(ios::dec | ios::hex | ios::oct);
       s >> wordsize;
     }
+    else if (attribName == "space") {
+      spaceid = typegrp.getArch()->getSpaceByName(el->getAttributeValue("space"));
+    }
+  }
   const List &list(el->getChildren());
   List::const_iterator iter;
   iter = list.begin();
@@ -3104,6 +3129,13 @@ TypePointerRel *TypeFactory::getTypePointerRel(TypePointer *parentPtr,Datatype *
 ///
 /// The resulting data-type is named and not ephemeral and will display as a formal data-type
 /// in decompiler output.
+/// \param sz is the size in bytes of the pointer
+/// \param parent is data-type of the parent container being indirectly pointed to
+/// \param ptrTo is the data-type being pointed directly to
+/// \param ws is the addressable unit size of pointed to data
+/// \param off is the offset of the pointed-to data-type relative to the \e container
+/// \param nm is the name to associate with the pointer
+/// \return the new/matching pointer
 TypePointerRel *TypeFactory::getTypePointerRel(int4 sz,Datatype *parent,Datatype *ptrTo,int4 ws,int4 off,const string &nm)
 
 {
@@ -3111,6 +3143,24 @@ TypePointerRel *TypeFactory::getTypePointerRel(int4 sz,Datatype *parent,Datatype
   tp.name = nm;
   tp.id = Datatype::hashName(nm);
   TypePointerRel *res = (TypePointerRel *)findAdd(tp);
+  return res;
+}
+
+/// \brief Build a named pointer with an address space attribute
+///
+/// The new data-type acts like a typedef of a normal pointer but can affect the resolution of
+/// constants by the type propagation system.
+/// \param ptrTo is the data-type being pointed directly to
+/// \param spc is the address space to associate with the pointer
+/// \param nm is the name to associate with the pointer
+/// \return the new/matching pointer
+TypePointer *TypeFactory::getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc,const string &nm)
+
+{
+  TypePointer tp(ptrTo,spc);
+  tp.name = nm;
+  tp.id = Datatype::hashName(nm);
+  TypePointer *res = (TypePointer *)findAdd(tp);
   return res;
 }
 

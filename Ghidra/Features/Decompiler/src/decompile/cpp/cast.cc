@@ -226,8 +226,17 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
   Datatype *curbase = curtype;
   bool isptr = false;
   while((reqbase->getMetatype()==TYPE_PTR)&&(curbase->getMetatype()==TYPE_PTR)) {
-    reqbase = ((const TypePointer *)reqbase)->getPtrTo();
-    curbase = ((const TypePointer *)curbase)->getPtrTo();
+    const TypePointer *reqptr = (const TypePointer *)reqbase;
+    const TypePointer *curptr = (const TypePointer *)curbase;
+    if (reqptr->getWordSize() != curptr->getWordSize())
+      return reqtype;
+    if (reqptr->getSpace() != curptr->getSpace()) {
+      if (reqptr->getSpace() != (AddrSpace *)0 && curptr->getSpace() != (AddrSpace *)0)
+	return reqtype;		// Pointers to different address spaces.  We must cast
+	// If one pointer doesn't have an address, assume a conversion to/from sub-type and don't need a cast
+    }
+    reqbase = reqptr->getPtrTo();
+    curbase = curptr->getPtrTo();
     care_uint_int = true;
     isptr = true;
   }

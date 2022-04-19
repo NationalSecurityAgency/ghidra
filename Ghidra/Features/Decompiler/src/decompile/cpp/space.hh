@@ -244,7 +244,7 @@ class OverlaySpace : public AddrSpace {
   AddrSpace *baseSpace;		///< Space being overlayed
 public:
   OverlaySpace(AddrSpaceManager *m,const Translate *t);	///< Constructor
-  AddrSpace *getBaseSpace(void) const;			///< Get the address space being overlayed
+  virtual AddrSpace *getContain(void) const { return baseSpace; }
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el);
 };

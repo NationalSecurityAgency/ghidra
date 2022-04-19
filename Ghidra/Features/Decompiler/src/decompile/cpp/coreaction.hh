@@ -180,7 +180,7 @@ public:
 /// \brief Check for constants, with pointer type, that correspond to global symbols
 class ActionConstantPtr : public Action {
   int4 localcount;		///< Number of passes made for this function
-  static AddrSpace *searchForLoadStore(Varnode *vn,PcodeOp *op);
+  static AddrSpace *searchForSpaceAttribute(Varnode *vn,PcodeOp *op);
   static AddrSpace *selectInferSpace(Varnode *vn,PcodeOp *op,const vector<AddrSpace *> &spaceList);
   static SymbolEntry *isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,
 				Address &rampoint,uintb &fullEncoding,Funcdata &data);
@@ -310,6 +310,7 @@ public:
 /// input. In this case, it casts to the necessary pointer type
 /// immediately.
 class ActionSetCasts : public Action {
+  static void checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data);
   static bool testStructOffset0(Varnode *vn,PcodeOp *op,Datatype *ct,CastStrategy *castStrategy);
   static bool tryResolutionAdjustment(PcodeOp *op,int4 slot,Funcdata &data);
   static bool isOpIdentical(Datatype *ct1,Datatype *ct2);

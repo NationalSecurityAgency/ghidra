@@ -345,8 +345,7 @@ void AddrSpaceManager::insertSpace(AddrSpace *spc)
     // fallthru
   case IPTR_PROCESSOR:
     if (spc->isOverlay()) {	// If this is a new overlay space
-      OverlaySpace *ospc = (OverlaySpace *)spc;
-      ospc->getBaseSpace()->setFlags(AddrSpace::overlaybase); // Mark the base as being overlayed
+      spc->getContain()->setFlags(AddrSpace::overlaybase); // Mark the base as being overlayed
     }
     else if (spc->isOtherSpace()) {
       if (spc->index != OtherSpace::INDEX)

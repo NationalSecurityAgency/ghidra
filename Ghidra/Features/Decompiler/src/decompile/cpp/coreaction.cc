@@ -935,17 +935,25 @@ int4 ActionShadowVar::apply(Funcdata &data)
   return 0;
 }
 
-/// \brief Make a limited search from a constant for a LOAD or STORE so we can see the AddrSpace being accessed
+/// \brief Search for address space annotations in the path of a pointer constant.
 ///
-/// We traverse forward through the op reading the constant, through INT_ADD, INDIRECT, COPY, and MULTIEQUAL
-/// until we hit a LOAD or STORE.
+/// From a constant, search forward in its data-flow either for a LOAD or STORE operation where we can
+/// see the address space being accessed, or search for a pointer data-type with an address space attribute.
+/// We make a limited traversal through the op reading the constant, through INT_ADD, INDIRECT, COPY,
+/// and MULTIEQUAL until we hit a LOAD or STORE.
 /// \param vn is the constant we are searching from
 /// \param op is the PcodeOp reading the constant
 /// \return the discovered AddrSpace or null
-AddrSpace *ActionConstantPtr::searchForLoadStore(Varnode *vn,PcodeOp *op)
+AddrSpace *ActionConstantPtr::searchForSpaceAttribute(Varnode *vn,PcodeOp *op)
 
 {
   for(int4 i=0;i<3;++i) {
+    Datatype *dt = vn->getType();
+    if (dt->getMetatype() == TYPE_PTR) {
+      AddrSpace *spc = ((TypePointer*)dt)->getSpace();
+      if (spc != (AddrSpace*)0 && spc->getAddrSize() == vn->getSize())	// If provided a pointer with space attribute
+	return spc;		// use that
+    }
     switch(op->code()) {
       case CPUI_INT_ADD:
       case CPUI_COPY:
@@ -988,6 +996,11 @@ AddrSpace *ActionConstantPtr::selectInferSpace(Varnode *vn,PcodeOp *op,const vec
 
 {
   AddrSpace *resSpace = (AddrSpace *)0;
+  if (vn->getType()->getMetatype() == TYPE_PTR) {
+    AddrSpace *spc = ((TypePointer *)vn->getType())->getSpace();
+    if (spc != (AddrSpace *)0 && spc->getAddrSize() == vn->getSize())
+      return spc;
+  }
   for(int4 i=0;i<spaceList.size();++i) {
     AddrSpace *spc = spaceList[i];
     int4 minSize = spc->getMinimumPtrSize();
@@ -998,7 +1011,7 @@ AddrSpace *ActionConstantPtr::selectInferSpace(Varnode *vn,PcodeOp *op,const vec
     else if (vn->getSize() < minSize)
       continue;
     if (resSpace != (AddrSpace *)0) {
-      AddrSpace *searchSpc = searchForLoadStore(vn,op);
+      AddrSpace *searchSpc = searchForSpaceAttribute(vn,op);
       if (searchSpc != (AddrSpace *)0)
 	resSpace = searchSpc;
       break;
@@ -2167,6 +2180,42 @@ int4 ActionDefaultParams::apply(Funcdata &data)
   return 0;			// Indicate success
 }
 
+/// \brief Check if the data-type of the given value being used as a pointer makes sense
+///
+/// If the data-type is a pointer make sure:
+///   - The pointed-to size matches the size of the value being loaded are stored
+///   - Any address space attached to the pointer matches the address space of the LOAD/STORE
+///
+/// If any of the conditions are violated, a warning is added to the output.
+/// \param op is the LOAD/STORE acting on a pointer
+/// \param vn is the given value being used as a pointer
+/// \param data is the function containing the PcodeOp
+void ActionSetCasts::checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data)
+
+{
+  Datatype *ptrtype = op->getIn(1)->getHighTypeReadFacing(op);
+  int4 valsize = vn->getSize();
+  if ((ptrtype->getMetatype()!=TYPE_PTR)|| (((TypePointer *)ptrtype)->getPtrTo()->getSize() != valsize)) {
+    string name = op->getOpcode()->getName();
+    name[0] = toupper( name[0] );
+    data.warning(name + " size is inaccurate",op->getAddr());
+  }
+  if (ptrtype->getMetatype()==TYPE_PTR) {
+    AddrSpace *spc = ((TypePointer *)ptrtype)->getSpace();
+    if (spc != (AddrSpace *)0) {
+      AddrSpace *opSpc = Address::getSpaceFromConst(op->getIn(0)->getAddr());
+      if (opSpc != spc && spc->getContain() != opSpc) {
+	string name = op->getOpcode()->getName();
+	name[0] = toupper( name[0] );
+	ostringstream s;
+	s << name << " refers to '" << opSpc->getName() << "' but pointer attribute is '";
+	s << spc->getName() << '\'';
+	data.warning(s.str(),op->getAddr());
+      }
+    }
+  }
+}
+
 /// \brief Test if the given cast conflict can be resolved by passing to the first structure field
 ///
 /// Test if the given Varnode data-type is a pointer to a structure and if interpreting
@@ -2512,18 +2561,10 @@ int4 ActionSetCasts::apply(Funcdata &data)
 	count += castInput(op,i,data,castStrategy);
       }
       if (opc == CPUI_LOAD) {
-	TypePointer *ptrtype = (TypePointer *)op->getIn(1)->getHighTypeReadFacing(op);
-	int4 valsize = op->getOut()->getSize();
-	if ((ptrtype->getMetatype()!=TYPE_PTR)||
-	    (ptrtype->getPtrTo()->getSize() != valsize))
-	  data.warning("Load size is inaccurate",op->getAddr());
+	checkPointerIssues(op, op->getOut(), data);
       }
       else if (opc == CPUI_STORE) {
-	TypePointer *ptrtype = (TypePointer *)op->getIn(1)->getHighTypeReadFacing(op);
-	int4 valsize = op->getIn(2)->getSize();
-	if ((ptrtype->getMetatype()!=TYPE_PTR)||
-	    (ptrtype->getPtrTo()->getSize() != valsize))
-	  data.warning("Store size is inaccurate",op->getAddr());
+	checkPointerIssues(op, op->getIn(2), data);
       }
       Varnode *vn = op->getOut();
       if (vn == (Varnode *)0) continue;
