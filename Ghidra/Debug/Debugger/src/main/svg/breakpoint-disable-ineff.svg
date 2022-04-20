@@ -20,21 +20,18 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
-  <g
-     id="layer1">
-    <circle
-       r="4"
-       cy="11.000002"
-       cx="11"
-       id="path821"
-       style="opacity:1;fill:#aa0000;fill-opacity:1;stroke:none;stroke-width:1.14285719;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-    <path
-       id="path821-7"
-       d="M 5 1 A 4 4 0 0 0 1 5 A 4 4 0 0 0 5 9 A 4 4 0 0 0 9 5 A 4 4 0 0 0 5 1 z M 5 3 A 2 2 0 0 1 7 5 A 2 2 0 0 1 5 7 A 2 2 0 0 1 3 5 A 2 2 0 0 1 5 3 z "
-       style="opacity:1;fill:#aa0000;fill-opacity:1;stroke:none;stroke-width:1.14285719;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
-  </g>
+  <circle
+     style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.48656309;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="path818"
+     cx="8"
+     cy="8"
+     r="7.5" />
+  <path
+     style="fill:#808080;fill-opacity:1;stroke:none;stroke-width:2.11057949;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 8 1 A 7 7 0 0 0 1 8 A 7 7 0 0 0 8 15 A 7 7 0 0 0 15 8 A 7 7 0 0 0 8 1 z M 8 3 A 5 5 0 0 1 13 8 A 5 5 0 0 1 8 13 A 5 5 0 0 1 3 8 A 5 5 0 0 1 8 3 z "
+     id="path816" />
 </svg>

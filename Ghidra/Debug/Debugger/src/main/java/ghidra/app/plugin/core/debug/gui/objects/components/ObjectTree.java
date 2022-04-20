@@ -47,7 +47,7 @@ import resources.ResourceManager;
 public class ObjectTree implements ObjectPane {
 
 	public static final ImageIcon ICON_TREE =
-		ResourceManager.loadImage("images/breakpoint-disable.png");
+		ResourceManager.loadImage("images/object-unpopulated.png");
 
 	private ObjectNode root;
 	private GTree tree;

@@ -15,10 +15,12 @@
  */
 package ghidra.app.plugin.core.debug.gui.breakpoint;
 
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import ghidra.app.services.LogicalBreakpoint;
+import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.app.services.TraceRecorder;
-import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.thread.TraceThread;
@@ -42,22 +44,32 @@ public class BreakpointLocationRow {
 		return recorder != null && loc.isEnabled(recorder.getSnap());
 	}
 
+	public State getState() {
+		LogicalBreakpoint lb = provider.breakpointService.getBreakpoint(loc);
+		if (lb == null) {
+			return State.NONE; // Should only happen in transition
+		}
+		return lb.computeStateForLocation(loc);
+	}
+
 	public void setEnabled(boolean enabled) {
-		// TODO: Make this toggle the individual location, if possible, not the whole spec.
-		TraceRecorder recorder = provider.modelService.getRecorder(loc.getTrace());
-		TargetBreakpointLocation bpt = recorder.getTargetBreakpoint(loc);
 		if (enabled) {
-			bpt.getSpecification().enable().exceptionally(ex -> {
+			provider.breakpointService.enableLocs(Set.of(loc)).exceptionally(ex -> {
 				provider.breakpointError("Toggle breakpoint", "Could not enable breakpoint", ex);
 				return null;
 			});
 		}
 		else {
-			bpt.getSpecification().disable().exceptionally(ex -> {
+			provider.breakpointService.disableLocs(Set.of(loc)).exceptionally(ex -> {
 				provider.breakpointError("Toggle breakpoint", "Could not disable breakpoint", ex);
 				return null;
 			});
 		}
+	}
+
+	public void setState(State state) {
+		assert state.isNormal();
+		setEnabled(state.isEnabled());
 	}
 
 	public void setName(String name) {

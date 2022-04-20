@@ -24,18 +24,18 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.table.TableCellEditor;
 
 import docking.widgets.table.GTableFilterPanel;
-import ghidra.app.services.LogicalBreakpoint.Enablement;
+import ghidra.app.services.LogicalBreakpoint.State;
 
-public class DebuggerBreakpointEnablementTableCellEditor extends AbstractCellEditor
+public abstract class DebuggerBreakpointStateTableCellEditor<T> extends AbstractCellEditor
 		implements TableCellEditor, ActionListener {
-	private final GTableFilterPanel<LogicalBreakpointRow> filterPanel;
+	private final GTableFilterPanel<T> filterPanel;
 	protected final JButton button = new JButton();
 
-	private Enablement value = Enablement.NONE;
-	private LogicalBreakpointRow row;
+	private State value = State.NONE;
+	private T row;
 
-	public DebuggerBreakpointEnablementTableCellEditor(
-			GTableFilterPanel<LogicalBreakpointRow> filterPanel) {
+	public DebuggerBreakpointStateTableCellEditor(
+			GTableFilterPanel<T> filterPanel) {
 		this.filterPanel = filterPanel;
 
 		button.setHorizontalAlignment(SwingConstants.CENTER);
@@ -62,16 +62,17 @@ public class DebuggerBreakpointEnablementTableCellEditor extends AbstractCellEdi
 			button.setBackground(table.getBackground());
 		}
 		this.row = filterPanel.getRowObject(row);
-		this.value = (Enablement) value;
-		button.setIcon(DebuggerBreakpointEnablementTableCellRenderer.iconForEnablement(this.value));
+		this.value = (State) value;
+		button.setIcon(this.value.icon);
 		button.setHorizontalAlignment(SwingConstants.CENTER);
 		return button;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		boolean mapped = row.isMapped();
-		value = value.getToggled(mapped);
+		value = getToggledState(row, value);
 		fireEditingStopped();
 	}
+
+	protected abstract State getToggledState(T row, State current);
 }
