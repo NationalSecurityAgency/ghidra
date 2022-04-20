@@ -1152,9 +1152,11 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
 {
   bool print_negsign;
   bool force_unsigned_token;
+  bool force_sized_token;
   uint4 displayFormat = 0;
 
   force_unsigned_token = false;
+  force_sized_token = false;
   if ((vn != (const Varnode *)0)&&(!vn->isAnnotation())) {
     Symbol *sym = vn->getHigh()->getSymbol();
     if (sym != (Symbol *)0) {
@@ -1164,6 +1166,8 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
       }
       displayFormat = sym->getDisplayFormat();
     }
+    force_unsigned_token = vn->isUnsignedPrint();
+    force_sized_token = vn->isLongPrint();
   }
   if (sign && displayFormat != Symbol::force_char) { // Print the constant as signed
     uintb mask = calc_mask(sz);
@@ -1171,11 +1175,10 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
     print_negsign = (flip < val);
     if (print_negsign)
       val = flip+1;
+    force_unsigned_token = false;
   }
   else {
     print_negsign = false;
-    if (vn != (const Varnode *)0)
-      force_unsigned_token = vn->isUnsignedPrint();
   }
 
 				// Figure whether to print as hex or decimal
@@ -1217,6 +1220,8 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
   }
   if (force_unsigned_token)
     t << 'U';			// Force unsignedness explicitly
+  if (force_sized_token)
+    t << sizeSuffix;
 
   if (vn==(const Varnode *)0)
     pushAtom(Atom(t.str(),syntax,EmitXml::const_color,op));
@@ -2188,6 +2193,16 @@ void PrintC::resetDefaults(void)
 {
   PrintLanguage::resetDefaults();
   resetDefaultsPrintC();
+}
+
+void PrintC::initializeFromArchitecture(void)
+
+{
+  castStrategy->setTypeFactory(glb->types);
+  if (glb->types->getSizeOfLong() == glb->types->getSizeOfInt())	// If long and int sizes are the same
+    sizeSuffix = "LL";		// Use "long long" suffix to indicate large integer
+  else
+    sizeSuffix = "L";		// Otherwise just use long suffix
 }
 
 void PrintC::adjustTypeOperators(void)

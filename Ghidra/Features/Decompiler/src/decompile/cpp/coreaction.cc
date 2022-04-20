@@ -2474,7 +2474,9 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
 
   ct = op->getOpcode()->getInputCast(op,slot,castStrategy); // Input type expected by this operation
   if (ct == (Datatype *)0) {
-    if (op->markExplicitUnsigned(slot))	// Decide if this input should be explicitly printed as unsigned constant
+    bool resUnsigned = castStrategy->markExplicitUnsigned(op, slot);
+    bool resSized = castStrategy->markExplicitLongSize(op, slot);
+    if (resUnsigned || resSized)
       return 1;
     return 0;
   }

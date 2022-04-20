@@ -237,46 +237,6 @@ Datatype *TypeOp::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varn
   return (Datatype *)0;		// Don't propagate by default
 }
 
-/// Many languages can mark an integer constant as explicitly \e unsigned. When
-/// the decompiler is deciding on \e cast operations, this is one of the checks
-/// it performs.  This method checks if the indicated input is an
-/// integer constant that needs to be coerced (as a source token) into being unsigned.
-/// If this is \b true, the input Varnode is marked for printing as explicitly \e unsigned.
-/// \param op is the PcodeOp taking the value as input
-/// \param slot is the input slot of the value
-/// \return \b true if the Varnode gets marked for printing
-bool TypeOp::markExplicitUnsigned(PcodeOp *op,int4 slot) const
-
-{
-  if ((addlflags & inherits_sign)==0) return false;
-  if ((slot==1) && ((addlflags & inherits_sign_zero)!=0)) return false;
-  Varnode *vn = op->getIn(slot);
-  if (!vn->isConstant()) return false;
-  Datatype *dt = vn->getHighTypeReadFacing(op);
-  type_metatype meta = dt->getMetatype();
-  if ((meta != TYPE_UINT)&&(meta != TYPE_UNKNOWN)) return false;
-  if (dt->isCharPrint()) return false;
-  if (dt->isEnumType()) return false;
-  if ((op->numInput() == 2) && ((addlflags & inherits_sign_zero)==0)) {
-    Varnode *firstvn = op->getIn(1-slot);
-    meta = firstvn->getHighTypeReadFacing(op)->getMetatype();
-    if ((meta == TYPE_UINT)||(meta == TYPE_UNKNOWN))
-      return false;		// Other side of the operation will force the unsigned
-  }
-  // Check if type is going to get forced anyway
-  Varnode *outvn = op->getOut();
-  if (outvn != (Varnode *)0) {
-    if (outvn->isExplicit()) return false;
-    PcodeOp *lone = outvn->loneDescend();
-    if (lone != (PcodeOp *)0) {
-      if (!lone->inheritsSign()) return false;
-    }
-  }
-
-  vn->setUnsignedPrint();
-  return true;
-}
-
 Datatype *TypeOpBinary::getOutputLocal(const PcodeOp *op) const
 
 {
@@ -1462,7 +1422,7 @@ TypeOpIntLeft::TypeOpIntLeft(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_LEFT,"<<",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign | inherits_sign_zero;
+  addlflags = inherits_sign | inherits_sign_zero | shift_op;
   behave = new OpBehaviorIntLeft();
 }
 
@@ -1487,7 +1447,7 @@ TypeOpIntRight::TypeOpIntRight(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_RIGHT,">>",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign | inherits_sign_zero;
+  addlflags = inherits_sign | inherits_sign_zero | shift_op;
   behave = new OpBehaviorIntRight();
 }
 
@@ -1527,7 +1487,7 @@ TypeOpIntSright::TypeOpIntSright(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_SRIGHT,">>",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign | inherits_sign_zero;
+  addlflags = inherits_sign | inherits_sign_zero | shift_op;
   behave = new OpBehaviorIntSright();
 }
 

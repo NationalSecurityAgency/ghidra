@@ -534,6 +534,7 @@ public:
 /// \brief Container class for all Datatype objects in an Architecture
 class TypeFactory {
   int4 sizeOfInt;		///< Size of the core "int" datatype
+  int4 sizeOfLong;		///< Size of the core "long" datatype
   int4 align;			///< Alignment of structures
   int4 enumsize;		///< Size of an enumerated type
   type_metatype enumtype;	///< Default enumeration meta-type (when parsing C)
@@ -570,6 +571,7 @@ public:
   void setStructAlign(int4 al) { align = al; }		///< Set the default structure alignment
   int4 getStructAlign(void) const { return align; }	///< Get the default structure alignment
   int4 getSizeOfInt(void) const { return sizeOfInt; }	///< Get the size of the default "int"
+  int4 getSizeOfLong(void) const { return sizeOfLong; }	///< Get the size of the default "long"
   Architecture *getArch(void) const { return glb; }	///< Get the Architecture object
   Datatype *findByName(const string &n);		///< Return type of given name
   Datatype *setName(Datatype *ct,const string &n); 	///< Set the given types name

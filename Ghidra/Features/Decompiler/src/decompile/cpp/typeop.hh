@@ -38,7 +38,8 @@ class TypeOp {
 public:
   enum {
     inherits_sign = 1,		///< Operator token inherits signedness from its inputs
-    inherits_sign_zero = 2	///< Only inherits sign from first operand, not the second
+    inherits_sign_zero = 2,	///< Only inherits sign from first operand, not the second
+    shift_op = 4		///< Shift operation
   };
 protected:
   TypeFactory *tlst;		///< Pointer to data-type factory
@@ -57,7 +58,6 @@ public:
   OpCode getOpcode(void) const { return opcode; }	///< Get the op-code value
   uint4 getFlags(void) const { return opflags; }	///< Get the properties associated with the op-code
   OpBehavior *getBehavior(void) const { return behave; }	///< Get the behavior associated with the op-code
-  bool markExplicitUnsigned(PcodeOp *op,int4 slot) const;	///< Check if a constant input should be explicitly labeled as \e unsigned
 
   /// \brief Emulate the unary op-code on an input value
   ///
@@ -103,8 +103,14 @@ public:
 
   bool isCommutative(void) const;		///< Return \b true if this op-code is commutative
 
-  /// \brief Return \b true if the op-code inherits it signedness from its inputs
+  /// \brief Return \b true if the op-code inherits its signedness from its inputs
   bool inheritsSign(void) const { return ((addlflags & inherits_sign)!=0); }
+
+  /// \brief Return \b true if the op-code inherits its signedness from only its first input
+  bool inheritsSignFirstParamOnly(void) const { return ((addlflags & inherits_sign_zero)!=0); }
+
+  /// \brief Return \b true if the op-code is a shift (INT_LEFT, INT_RIGHT, or INT_SRIGHT)
+  bool isShiftOp(void) const { return ((addlflags & shift_op)!=0); }
 
   /// \brief Find the minimal (or suggested) data-type of an output to \b this op-code
   virtual Datatype *getOutputLocal(const PcodeOp *op) const;

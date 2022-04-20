@@ -153,6 +153,12 @@ public:
   /// \param intype is the input data-type
   /// \return \b true if the INT_ZEXT should be represented as a cast
   virtual bool isZextCast(Datatype *outtype,Datatype *intype) const=0;
+
+  /// \brief Check if a constant input should be explicitly labeled as an \e unsigned token
+  bool markExplicitUnsigned(PcodeOp *op,int4 slot) const;
+
+  /// \brief Check is a constant input should be explicitly labeled as a \e long integer token
+  bool markExplicitLongSize(PcodeOp *op,int4 slot) const;
 };
 
 /// \brief Casting strategies that are specific to the C language

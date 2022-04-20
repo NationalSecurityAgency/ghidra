@@ -121,6 +121,7 @@ protected:
   bool option_unplaced;		///< Set to \b true if we should display unplaced comments
   bool option_hide_exts;	///< Set to \b true if we should hide implied extension operations
   string nullToken;		///< Token to use for 'null'
+  string sizeSuffix;		///< Characters to print to indicate a \e long integer token
   CommentSorter commsorter;	///< Container/organizer for comments in the current function
 
   // Routines that are specific to C/C++
@@ -210,6 +211,7 @@ public:
   void setHideImpliedExts(bool val) { option_hide_exts = val; }	///< Toggle whether implied extensions are hidden
   virtual ~PrintC(void) {}
   virtual void resetDefaults(void);
+  virtual void initializeFromArchitecture(void);
   virtual void adjustTypeOperators(void);
   virtual void setCommentStyle(const string &nm);
   virtual void docTypeDefinitions(const TypeFactory *typegrp);

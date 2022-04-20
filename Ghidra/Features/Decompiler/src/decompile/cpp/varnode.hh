@@ -113,13 +113,14 @@ public:
     lisconsume = 0x08,		///< In consume worklist
     ptrcheck = 0x10,	        ///< The Varnode value is \e NOT a pointer
     ptrflow = 0x20,             ///< If this varnode flows to or from a pointer
-    unsignedprint = 0x40,	///< Constant that must be explicitly printed as unsigned
-    stack_store = 0x80,		///< Created by an explicit STORE
-    locked_input = 0x100,	///< Input that exists even if its unused
-    spacebase_placeholder = 0x200, ///< This varnode is inserted artificially to track a register
+    unsignedprint = 0x40,	///< Constant that must be explicitly printed as an unsigned token
+    longprint = 0x80,		///< Constant that must be explicitly printed as a \e long integer token
+    stack_store = 0x100,	///< Created by an explicit STORE
+    locked_input = 0x200,	///< Input that exists even if its unused
+    spacebase_placeholder = 0x400, ///< This varnode is inserted artificially to track a register
 				///< value at a specific point in the code
-    stop_uppropagation = 0x400,	///< Data-types do not propagate from an output into \b this
-    has_implied_field = 0x800	///< The varnode is implied but also has a data-type that needs resolution
+    stop_uppropagation = 0x800,	///< Data-types do not propagate from an output into \b this
+    has_implied_field = 0x1000	///< The varnode is implied but also has a data-type that needs resolution
   };
 private:
   mutable uint4 flags;		///< The collection of boolean attributes for this Varnode
@@ -262,6 +263,7 @@ public:
   bool isIncidentalCopy(void) const { return ((flags&Varnode::incidental_copy)!=0); } ///< Does this varnode get copied as a side-effect
   bool isWriteMask(void) const { return ((addlflags&Varnode::writemask)!=0); } ///< Is \b this (not) considered a true write location when calculating SSA form?
   bool isUnsignedPrint(void) const { return ((addlflags&Varnode::unsignedprint)!=0); } ///< Must \b this be printed as unsigned
+  bool isLongPrint(void) const { return ((addlflags&Varnode::longprint)!=0); } ///< Must \b this be printed as a \e long token
   bool isWritten(void) const { return ((flags&Varnode::written)!=0); }   ///< Does \b this have a defining write operation?
 
   /// Does \b this have Cover information?
@@ -309,6 +311,7 @@ public:
   void setAutoLiveHold(void) { flags |= Varnode::autolive_hold; }	///< Place temporary hold on dead code removal
   void clearAutoLiveHold(void) { flags &= ~Varnode::autolive_hold; }	///< Clear temporary hold on dead code removal
   void setUnsignedPrint(void) { addlflags |= Varnode::unsignedprint; } ///< Force \b this to be printed as unsigned
+  void setLongPrint(void) { addlflags |= Varnode::longprint; }	///< Force \b this to be printed as a \e long token
   void setStopUpPropagation(void) { addlflags |= Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
   void clearStopUpPropagation(void) { addlflags &= ~Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
   void setImpliedField(void) { addlflags |= Varnode::has_implied_field; }	///< Mark \this as having an implied field
