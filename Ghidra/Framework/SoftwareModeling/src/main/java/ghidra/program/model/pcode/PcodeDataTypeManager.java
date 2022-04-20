@@ -439,7 +439,7 @@ public class PcodeDataTypeManager {
 			}
 			resBuf.append("<field");
 			String field_name = comp.getFieldName();
-			if (field_name == null) {
+			if (field_name == null || field_name.length() == 0) {
 				field_name = comp.getDefaultFieldName();
 			}
 			SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", field_name);
@@ -470,7 +470,7 @@ public class PcodeDataTypeManager {
 			}
 			resBuf.append("<field");
 			String field_name = comp.getFieldName();
-			if (field_name == null) {
+			if (field_name == null || field_name.length() == 0) {
 				field_name = comp.getDefaultFieldName();
 			}
 			SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", field_name);
