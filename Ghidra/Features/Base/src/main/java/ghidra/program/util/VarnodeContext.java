@@ -340,7 +340,7 @@ public class VarnodeContext implements ProcessorContext {
 
 		return isStackSpaceName(regSpace.getName());
 	}
-	
+
 	/**
 	 * Check if spaceName is associated with the stack
 	 * 
@@ -849,6 +849,16 @@ public class VarnodeContext implements ProcessorContext {
 			allLastSet.put(node, addressSet);
 		}
 		addressSet.add(address);
+		
+		// for registers with parent larger register, must store that they were
+		// last set at this address as well.
+		if (node.isRegister()) {
+			Register parentRegister = trans.getRegister(node).getParentRegister();
+			if (parentRegister != null) {
+				node = trans.getVarnode(parentRegister);
+				addSetVarnodeToLastSetLocations(node, address);
+			}
+		}
 	}
 
 	/**
