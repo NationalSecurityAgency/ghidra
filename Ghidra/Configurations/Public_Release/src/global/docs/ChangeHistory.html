@@ -7,6 +7,65 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.1.3 Change History (April 2022)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>API</I>. Added the <code>getActiveGraphDisplay()</code> API method to GraphDisplayProvider to get the active graph. (GP-1804, Issue #4060)</li>
+    <li><I>Debugger</I>. Created better comment in Dynamic Listing <B>Go To</B> dialog so users don't default to <code><B>*:4 EAX</B></code> syntax. (GP-1820)</li>
+    <li><I>Debugger</I>. Created new navigation methods for Objects representing addresses. (GP-1822)</li>
+    <li><I>Debugger</I>. Switched to DomainFile name in Debugger dialogs to avoid confusion. (GP-1872)</li>
+    <li><I>Debugger:Trace</I>. Improved performance of trace database. (GP-1727)</li>
+    <li><I>FID</I>. Updated stale signatures in the FID database files. (GP-1853, Issue #2877)</li>
+    <li><I>Importer:ELF</I>. Added support for additional ELF ARM-32 relocations not previously handled (<code>R_ARM_THM_JUMP8</code>, <code>R_ARM_THM_JUMP11</code>, <code>R_ARM_THM_MOVW_ABS_NC</code>, <code>R_ARM_THM_MOVT_ABS</code>, <code>R_ARM_THM_MOVW_PREL_NC</code>, <code>R_ARM_THM_MOVT_PREL</code>, <code>R_ARM_THM_MOVW_BREL_NC</code>, <code>R_ARM_THM_MOVW_BREL</code>, <code>R_ARM_THM_MOVT_BREL</code>). (GP-1742, Issue #2794)</li>
+    <li><I>Processors</I>. Refactored the 6805/6809 processor to better allow variants of MC6800 processor line. (GP-1695, Issue #3673)</li>
+    <li><I>Processors</I>. Added 16-byte return values for AARCH64 in <code>X0</code>, <code>X1</code>. (GP-1739)</li>
+    <li><I>Scripting</I>. Improved RecoverClassesFromRTTIScript's method to validate GCC programs. (GP-1832)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed FID Analyzer to run only once on programs with call-fixups or identified non-returning flow. (GP-1502)</li>
+    <li><I>Analysis</I>. Corrected the creation of Objective-C structures when structures collided with existing generic pointers laid down by chained-pointer processing during import. (GP-1841)</li>
+    <li><I>Analysis</I>. Corrected stack reference creation and the display of current instruction stack depth in the stack-depth browser field for MIPS 64-bit language processor with 32-bit addressing. (GP-1862)</li>
+    <li><I>Analysis</I>. Fixed placement of constant references when a parent register's value is built up using the smaller sub-registers (hi/low).  This is common on MIPS and other 8-bit processors such as AVR8.  This would occasionally cause a reference to be placed incorrectly on a previous function call. (GP-1942)</li>
+    <li><I>Basic Infrastructure</I>. Fixed a NoClassDefFoundError that occurred when launching Ghidra in single-jar mode. (GP-1741, Issue #3961)</li>
+    <li><I>C Parsing</I>. CParser fixes for <code>pragma(push)</code>, re-included header files, <code>#if/defined()</code> tests on define values, unicode BOM files, and full evaluation of macro expansion. Added more information to the CParserPlugin.out file prefixed with <code><B>///</B></code> comments which should enable easier diagnosis of parsing issues. Reparsed current standard data archives with correct 64/32 data organizations. Fixed issue where many data types had incorrect <code>pack()</code> values in Windows archives, such as <code>WNDCLASSEXW</code>. To make use of the corrected data types, programs data types will need to be re-synchronized if they depend on the included Windows or clib data type archives. Windows VS2022 and Windows 11 SDK header files can now parse and will be included in the next feature release. (GP-1744, Issue #3756)</li>
+    <li><I>Data Types</I>. Corrected UnsupportedOperationException error which could occur when dragging a datatype from one archive to another. (GP-1758)</li>
+    <li><I>Data Types</I>. Fixed Data Types filter not being applied when using the various <B>Find</B> actions. (GP-1799)</li>
+    <li><I>Debugger</I>. Fixed the defaults for log4j file locations; template patterns for empty values were crashing the process on Windows. (GP-1731, Issue #3965)</li>
+    <li><I>Debugger</I>. Fixed NullPointerException caused by Debugger Console's preferred height. (GP-1766)</li>
+    <li><I>Debugger</I>. Fixed race condition on right-click of non-selected tree node. (GP-1845, Issue #4093)</li>
+    <li><I>Debugger</I>. Fixed missing eflags in Register View for dbgeng. (GP-1873)</li>
+    <li><I>Debugger</I>. Fixed IllegalArgumentException in TraceObjectManager. (GP-1874)</li>
+    <li><I>Debugger:Breakpoints</I>. Fixed issue with toggling breakpoints from within the Dynamic Listing. (GP-1706)</li>
+    <li><I>Debugger:Memory</I>. Fixed timing issue where Debugger Memory view may have incorrect location label. (GP-1882)</li>
+    <li><I>Debugger:Trace</I>. Fixed issue with StringDataType null terminators in stale trace ranges. (GP-1737)</li>
+    <li><I>Decompiler</I>. Updated the Decompiler <B>Find</B> dialog's default text when showing the dialog with <B>comment</B> text selected. (GP-1721, Issue #3946)</li>
+    <li><I>Decompiler</I>. Fixed the Decompiler <B>Find</B> dialog's sometimes incorrect result highlighting. (GP-1765, Issue #3928)</li>
+    <li><I>Decompiler</I>. Fixed a bug in the Decompiler preventing prototype overrides from being applied to calls produced by Call-Fixup injection. (GP-1792, Issue #3319)</li>
+    <li><I>Decompiler</I>. Updated the Decompiler hover for structure fields to show the parent name and the offset in the parent. (GP-1793, Issue #3920)</li>
+    <li><I>Decompiler</I>. Eliminated infinite loop in the Decompiler encountered when applying convert/equate. (GP-1924, Issue #4121)</li>
+    <li><I>FID</I>. Fixed bug causing <code>Program ... has different compiler spec...</code> exception when populating FID signatures. (GP-1839, Issue #4042)</li>
+    <li><I>FileSystems</I>. Fixed problem opening files in paths that start with a UNC location (<code>\\location\path</code>). (GP-1696, Issue #3912)</li>
+    <li><I>Framework</I>. Fixed bug that could cause a NullPointerException when removing custom Compiler Specification extensions from a Program. (GP-1715, Issue #3906)</li>
+    <li><I>GUI</I>. Fixed default function Plate Comment formatting. (GP-1717)</li>
+    <li><I>GUI</I>. Fixed the Search Memory Dialog buttons to re-enable after closing a long-running search results table. (GP-1753, Issue #4014)</li>
+    <li><I>GUI</I>. Updated Symbol <B>Edit</B> dialog to not allow namespaces editing with a blank name. (GP-1754, Issue #4015)</li>
+    <li><I>GUI</I>. Fixed table CSV export of boolean values. (GP-1764, Issue #3947, #4026)</li>
+    <li><I>Headless</I>. Corrected potential NullPointerException for Headless Analyzer when a specified filename to process does not exist in a searched project folder. (GP-1916)</li>
+    <li><I>Help</I>. Fixed Help Viewer <B>Find</B> feature, clearing search result highlights when the search dialog is closed. (GP-1718)</li>
+    <li><I>Importer:ELF</I>. Corrected MIPS type 5/6 relocation calculation.  Previously, the <code>LO16</code> value, extracted as an addend from the instruction, was not sign-extended. (GP-1834)</li>
+    <li><I>Importer:PE</I>. Fixed a bug that prevented certain types of PE files from being recognized by the PeLoader. (GP-1713, Issue #3830, #3902)</li>
+    <li><I>Importer:PE</I>. Detect .NET managed code in mixed Native/MangedCode binaries and only disassemble the correct x86 or CLR routines based on the current processor. (GP-1938, Issue #4159)</li>
+    <li><I>Processors</I>. ARM <code>BL</code> conditional call instruction, which calls to the next instruction, has been changed to a branch instead of a call.  Calling the next instruction on ARM is generally only to get the <code>LR</code> register loaded for PIC code. (GP-1752)</li>
+    <li><I>Processors</I>. Fix bug in MIPS <code>rdhwr</code> instruction to use correct hardware registers. (GP-1879)</li>
+    <li><I>Scripting</I>. Fixed the <B>Bytes</B> table column rendering in the scripting TableChooserDialog. (GP-1714)</li>
+    <li><I>Scripting</I>. Fixed two bugs in RecoverClassesFromRTTIScript.java encountered when creating class structures. (GP-1781)</li>
+    <li><I>Scripting</I>. OSGI jar bundles now correctly load on Windows. (GP-1846, Issue #3995)</li>
+    <li><I>Sleigh</I>. Fixed bug preventing prototype model extensions with p-code from being imported. (GP-1915)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.1.2 Change History (January 2022)</H1>
 <blockquote><p><u>Improvements</u></p>
 <ul>
