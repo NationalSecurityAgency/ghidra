@@ -15,13 +15,14 @@
  */
 package agent.gdb.manager.parsing;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.MultiMapUtils;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
-import org.apache.commons.lang3.StringEscapeUtils;
 
 import agent.gdb.manager.parsing.GdbParsingUtils.AbstractGdbParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
@@ -266,9 +267,6 @@ public class GdbMiParser extends AbstractGdbParser {
 		}
 	}
 
-	// see #parseString() for why this is no longer used....
-	//protected static final Pattern CSTRING = Pattern.compile("\\\"(\\\\.|[^\\\\\"])*\\\"");
-
 	protected static final Pattern COMMA = Pattern.compile(",");
 	protected static final Pattern LBRACKET = Pattern.compile("\\[");
 	protected static final Pattern RBRACKET = Pattern.compile("\\]");
@@ -354,40 +352,78 @@ public class GdbMiParser extends AbstractGdbParser {
 	}
 
 	/**
-	 * Parse the string at the cursor
+	 * Parse the string at the cursor, undoing GDB's printchar transformation.
 	 * 
 	 * @see #parseString(CharSequence)
 	 * @return the string
 	 * @throws GdbParseError if no text matches the pattern
 	 */
 	public String parseString() throws GdbParseError {
-		/*
-		 * Matching CSTRING for inputs of too many characters (2048, really?) causes a
-		 * StackOverflowException in Java's built-in Pattern object. Boo! Thus, I'll write this
-		 * myself. All said and done, this might actually look better than the old regex
-		 */
-		// String match = match(CSTRING);
-		//return StringEscapeUtils.unescapeJava(match.substring(1, match.length() - 1));
-		int start = buf.position();
 		if ('"' != peek(false)) { // Keep whitespace that is in the string
 			throw new GdbParseError("\"", buf);
 		}
 		buf.get(); // consume "
+
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		while (true) {
-			char c = buf.get();
-			if (c == '"') {
+			char ch = buf.get();
+			if (ch > 0xff) {
+				throw new GdbParseError("byte", "U+" + String.format("%04X", ch));
+			} else if (ch == '"') {
 				break;
+			} else if (ch != '\\') {
+				baos.write(ch);
+				continue;
 			}
-			else if (c == '\\') {
-				buf.get();
+
+			/* Handle backslash-escape */
+			ch = buf.get();
+			switch (ch) {
+				case 'n':
+					baos.write('\n');
+					break;
+				case 'b':
+					baos.write('\b');
+					break;
+				case 't':
+					baos.write('\t');
+					break;
+				case 'f':
+					baos.write('\f');
+					break;
+				case 'r':
+					baos.write('\r');
+					break;
+				case 'e':
+					baos.write(0x1b);
+					break;
+				case 'a':
+					baos.write(0x07);
+					break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+					char ch2 = buf.get();
+					if (ch2 < '0' || ch2 > '9') {
+						throw new GdbParseError("octal", "" + ch2);
+					}
+					char ch3 = buf.get();
+					if (ch3 < '0' || ch3 > '9') {
+						throw new GdbParseError("octal", "" + ch3);
+					}
+					int octchar = ((ch - '0') << 6) | ((ch2 - '0') << 3) | (ch3 - '0');
+					baos.write(octchar);
+					break;
+				case '\\':
+				case '"':
+					baos.write(ch);
+					break;
+				default:
+					throw new GdbParseError("escape", "" + ch);
 			}
 		}
-		// the closing " will already have been consumed
-		int end = buf.position();
-		buf.position(0);
-		String result = buf.subSequence(start + 1, end - 1).toString(); // remove "s
-		buf.position(end);
-		return StringEscapeUtils.unescapeJava(result);
+		return baos.toString(StandardCharsets.UTF_8);
 	}
 
 	/**
