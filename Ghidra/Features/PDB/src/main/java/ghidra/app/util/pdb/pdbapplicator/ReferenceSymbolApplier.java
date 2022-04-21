@@ -53,11 +53,17 @@ public class ReferenceSymbolApplier extends MsSymbolApplier {
 	void apply() throws CancelledException, PdbException {
 		// Potential recursive call via applicator.procSym().
 		AbstractMsSymbolIterator refIter = getInitializedReferencedSymbolGroupIterator();
+		if (refIter == null) {
+			throw new PdbException("PDB: Referenced Symbol Error - null refIter");
+		}
 		applicator.procSym(refIter);
 	}
 
 	AbstractMsSymbolIterator getInitializedReferencedSymbolGroupIterator() {
 		SymbolGroup refSymbolGroup = getReferencedSymbolGroup();
+		if (refSymbolGroup == null) {
+			return null;
+		}
 		AbstractMsSymbolIterator refIter = refSymbolGroup.iterator();
 		refIter.initGetByOffset(getOffsetInReferencedSymbolGroup());
 		return refIter;

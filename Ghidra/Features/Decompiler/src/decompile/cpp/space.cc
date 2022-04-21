@@ -659,13 +659,6 @@ OverlaySpace::OverlaySpace(AddrSpaceManager *m,const Translate *t)
   setFlags(overlay);
 }
 
-/// \return the base address space
-AddrSpace *OverlaySpace::getBaseSpace(void) const
-
-{
-  return baseSpace;
-}
-
 void OverlaySpace::saveXml(ostream &s) const
 
 {

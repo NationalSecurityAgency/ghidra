@@ -19,9 +19,10 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.KeyStroke;
 
-import docking.ActionContext;
-import docking.action.*;
+import docking.action.KeyBindingData;
+import docking.action.KeyBindingType;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ListingContextAction;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataType;
@@ -31,7 +32,7 @@ import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 /**
  * An action that allows the user to change or select a data type.
  */
-public class ChooseDataTypeAction extends DockingAction {
+public class ChooseDataTypeAction extends ListingContextAction {
 
 	private DataPlugin plugin;
 	private static final KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_T, 0);
@@ -53,11 +54,10 @@ public class ChooseDataTypeAction extends DockingAction {
 	}
 
 	@Override
-	public void actionPerformed(ActionContext context) {
-		ListingActionContext listingContext = (ListingActionContext) context.getContextObject();
-		DataType dataType = getDataType(listingContext);
+	protected void actionPerformed(ListingActionContext context) {
+		DataType dataType = getDataType(context);
 		if (dataType != null) {
-			plugin.createData(dataType, listingContext, false, true);
+			plugin.createData(dataType, context, false, true);
 		}
 	}
 
@@ -74,11 +74,7 @@ public class ChooseDataTypeAction extends DockingAction {
 	}
 
 	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		Object contextObject = context.getContextObject();
-		if (contextObject instanceof ListingActionContext) {
-			return plugin.isCreateDataAllowed(((ListingActionContext) contextObject));
-		}
-		return false;
+	protected boolean isEnabledForContext(ListingActionContext context) {
+		return plugin.isCreateDataAllowed(context);
 	}
 }

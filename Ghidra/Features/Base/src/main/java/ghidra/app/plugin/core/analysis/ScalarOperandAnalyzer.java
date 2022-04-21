@@ -294,7 +294,7 @@ public class ScalarOperandAnalyzer extends AbstractAnalyzer {
 			// add in an offcut reference
 			program.getReferenceManager()
 					.addOffsetMemReference(refInstr.getMinAddress(), offAddr,
-						-entryLen, RefType.DATA, SourceType.ANALYSIS, opIndex);
+						false, -entryLen, RefType.DATA, SourceType.ANALYSIS, opIndex);
 			return;
 		}
 
@@ -332,7 +332,7 @@ public class ScalarOperandAnalyzer extends AbstractAnalyzer {
 			// add in an offcut reference
 			program.getReferenceManager()
 					.addOffsetMemReference(instr.getMinAddress(), offAddr,
-						(i + 3) * entryLen, RefType.DATA, SourceType.ANALYSIS, opIndex);
+						false, (i + 3) * entryLen, RefType.DATA, SourceType.ANALYSIS, opIndex);
 			return;
 		}
 	}

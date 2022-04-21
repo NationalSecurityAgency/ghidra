@@ -15,21 +15,133 @@
  */
 package ghidra.trace.model.time.schedule;
 
-import java.util.List;
-import java.util.Objects;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import javax.help.UnsupportedOperationException;
 
+import com.google.common.collect.*;
+import com.google.common.primitives.UnsignedLong;
+
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.emu.PcodeThread;
-import ghidra.pcode.exec.PcodeProgram;
+import ghidra.pcode.exec.*;
+import ghidra.pcode.utils.Utils;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class PatchStep implements Step {
 	protected final long threadKey;
-	protected final String sleigh;
-	protected final int hashCode;
+	protected String sleigh;
+	protected int hashCode;
+
+	public static String generateSleigh(Language language, Address address, byte[] data,
+			int length) {
+		BigInteger value = Utils.bytesToBigInteger(data, length, language.isBigEndian(), false);
+		if (address.isMemoryAddress()) {
+			AddressSpace space = address.getAddressSpace();
+			if (language.getDefaultSpace() == space) {
+				return String.format("*:%d 0x%s:%d=0x%s",
+					length,
+					address.getOffsetAsBigInteger().toString(16), space.getPointerSize(),
+					value.toString(16));
+			}
+			return String.format("*[%s]:%d 0x%s:%d=0x%s",
+				space.getName(), length,
+				address.getOffsetAsBigInteger().toString(16), space.getPointerSize(),
+				value.toString(16));
+		}
+		Register register = language.getRegister(address, length);
+		if (register == null) {
+			throw new AssertionError("Can only modify memory or register");
+		}
+		return String.format("%s=0x%s", register, value.toString(16));
+	}
+
+	public static String generateSleigh(Language language, Address address, byte[] data) {
+		return generateSleigh(language, address, data, data.length);
+	}
+
+	protected static List<String> generateSleigh(Language language,
+			Map<AddressSpace, SemisparseByteArray> patches) {
+		List<String> result = new ArrayList<>();
+		for (Entry<AddressSpace, SemisparseByteArray> entry : patches.entrySet()) {
+			generateSleigh(result, language, entry.getKey(), entry.getValue());
+		}
+		return result;
+	}
+
+	protected static void generateSleigh(List<String> result, Language language, AddressSpace space,
+			SemisparseByteArray array) {
+		if (space.isRegisterSpace()) {
+			generateRegisterSleigh(result, language, space, array);
+		}
+		else {
+			generateMemorySleigh(result, language, space, array);
+		}
+	}
+
+	protected static void generateMemorySleigh(List<String> result, Language language,
+			AddressSpace space, SemisparseByteArray array) {
+		byte[] data = new byte[8];
+		for (Range<UnsignedLong> range : array.getInitialized(0, -1).asRanges()) {
+			assert range.lowerBoundType() == BoundType.CLOSED;
+			Address start = space.getAddress(range.lowerEndpoint().longValue());
+			Address end = space.getAddress(range.upperEndpoint().longValue() -
+				(range.upperBoundType() == BoundType.OPEN ? 1 : 0));
+			for (AddressRange chunk : new AddressRangeChunker(start, end, data.length)) {
+				Address min = chunk.getMinAddress();
+				int length = (int) chunk.getLength();
+				array.getData(min.getOffset(), data, 0, length);
+				result.add(generateSleigh(language, min, data, length));
+			}
+		}
+	}
+
+	protected static Range<UnsignedLong> rangeOfRegister(Register r) {
+		long lower = r.getAddress().getOffset();
+		long upper = lower + r.getNumBytes();
+		return Range.closedOpen(UnsignedLong.fromLongBits(lower), UnsignedLong.fromLongBits(upper));
+	}
+
+	protected static boolean isContained(Register r, RangeSet<UnsignedLong> remains) {
+		return remains.encloses(rangeOfRegister(r));
+	}
+
+	protected static void generateRegisterSleigh(List<String> result, Language language,
+			AddressSpace space, SemisparseByteArray array) {
+		byte[] data = new byte[8];
+		RangeSet<UnsignedLong> remains = TreeRangeSet.create(array.getInitialized(0, -1));
+		while (!remains.isEmpty()) {
+			Range<UnsignedLong> span = remains.span();
+			assert span.lowerBoundType() == BoundType.CLOSED;
+			Address min = space.getAddress(span.lowerEndpoint().longValue());
+			Register register = Stream.of(language.getRegisters(min))
+					.filter(r -> r.getAddress().equals(min))
+					.filter(r -> r.getNumBytes() <= data.length)
+					.filter(r -> isContained(r, remains))
+					.sorted(Comparator.comparing(r -> -r.getNumBytes()))
+					.findFirst()
+					.orElse(null);
+			if (register == null) {
+				throw new IllegalArgumentException("Could not find a register for " + min);
+			}
+			int length = register.getNumBytes();
+			array.getData(min.getOffset(), data, 0, length);
+			BigInteger value = Utils.bytesToBigInteger(data, length, language.isBigEndian(), false);
+			result.add(String.format("%s=0x%s", register, value.toString(16)));
+			remains.remove(rangeOfRegister(register));
+		}
+	}
 
 	public static PatchStep parse(long threadKey, String stepSpec) {
 		// TODO: Can I parse and validate the sleigh here?
@@ -43,6 +155,11 @@ public class PatchStep implements Step {
 		this.threadKey = threadKey;
 		this.sleigh = Objects.requireNonNull(sleigh);
 		this.hashCode = Objects.hash(threadKey, sleigh); // TODO: May become mutable
+	}
+
+	private void setSleigh(String sleigh) {
+		this.sleigh = sleigh;
+		this.hashCode = Objects.hash(threadKey, sleigh);
 	}
 
 	@Override
@@ -162,4 +279,120 @@ public class PatchStep implements Step {
 		PcodeProgram prog = emuThread.getMachine().compileSleigh("schedule", List.of(sleigh + ";"));
 		emuThread.getExecutor().execute(prog, emuThread.getUseropLibrary());
 	}
+
+	@Override
+	public long coalescePatches(Language language, List<Step> steps) {
+		long threadKey = -1;
+		int toRemove = 0;
+		Map<AddressSpace, SemisparseByteArray> patches = new TreeMap<>();
+		for (int i = steps.size() - 1; i >= 0; i--) {
+			Step step = steps.get(i);
+			long stk = step.getThreadKey();
+			if (threadKey == -1) {
+				threadKey = stk;
+			}
+			else if (stk != -1 && stk != threadKey) {
+				break;
+			}
+			if (!(step instanceof PatchStep)) {
+				break;
+			}
+			PatchStep ps = (PatchStep) step;
+			Map<AddressSpace, SemisparseByteArray> subs = ps.getPatches(language);
+			if (subs == null) {
+				break;
+			}
+			mergePatches(subs, patches);
+			patches = subs;
+			toRemove++;
+		}
+		List<String> sleighPatches = generateSleigh(language, patches);
+		assert sleighPatches.size() <= toRemove;
+		for (String sleighPatch : sleighPatches) {
+			PatchStep ps = (PatchStep) steps.get(steps.size() - toRemove);
+			ps.setSleigh(sleighPatch);
+			toRemove--;
+		}
+		return toRemove;
+	}
+
+	protected void mergePatches(Map<AddressSpace, SemisparseByteArray> into,
+			Map<AddressSpace, SemisparseByteArray> from) {
+		for (Entry<AddressSpace, SemisparseByteArray> entry : from.entrySet()) {
+			if (!into.containsKey(entry.getKey())) {
+				into.put(entry.getKey(), entry.getValue());
+			}
+			else {
+				into.get(entry.getKey()).putAll(entry.getValue());
+			}
+		}
+	}
+
+	protected Map<AddressSpace, SemisparseByteArray> getPatches(Language language) {
+		PcodeProgram prog = SleighProgramCompiler.compileProgram((SleighLanguage) language,
+			"schedule", List.of(sleigh + ";"), SleighUseropLibrary.nil());
+		// SemisparseArray is a bit overkill, no?
+		Map<AddressSpace, SemisparseByteArray> result = new TreeMap<>();
+		for (PcodeOp op : prog.getCode()) {
+			// Only accept patches in form [mem/reg] = [constant]
+			switch (op.getOpcode()) {
+				case PcodeOp.COPY:
+					if (!getPatchCopyOp(language, result, op)) {
+						return null;
+					}
+					break;
+				case PcodeOp.STORE:
+					if (!getPatchStoreOp(language, result, op)) {
+						return null;
+					}
+					break;
+				default:
+					return null;
+			}
+		}
+		return result;
+	}
+
+	protected boolean getPatchCopyOp(Language language,
+			Map<AddressSpace, SemisparseByteArray> result, PcodeOp op) {
+		Varnode output = op.getOutput();
+		if (!output.isAddress() && !output.isRegister()) {
+			return false;
+		}
+		Varnode input = op.getInput(0);
+		if (!input.isConstant()) {
+			return false;
+		}
+		Address address = output.getAddress();
+		SemisparseByteArray array = result.computeIfAbsent(address.getAddressSpace(),
+			as -> new SemisparseByteArray());
+		array.putData(address.getOffset(),
+			Utils.longToBytes(input.getOffset(), input.getSize(),
+				language.isBigEndian()));
+		return true;
+	}
+
+	protected boolean getPatchStoreOp(Language language,
+			Map<AddressSpace, SemisparseByteArray> result,
+			PcodeOp op) {
+		Varnode vnSpace = op.getInput(0);
+		if (!vnSpace.isConstant()) {
+			return false;
+		}
+		AddressSpace space =
+			language.getAddressFactory().getAddressSpace((int) vnSpace.getOffset());
+		Varnode vnOffset = op.getInput(1);
+		if (!vnOffset.isConstant()) {
+			return false;
+		}
+		Varnode vnValue = op.getInput(2);
+		if (!vnValue.isConstant()) {
+			return false;
+		}
+		SemisparseByteArray array = result.computeIfAbsent(space, as -> new SemisparseByteArray());
+		array.putData(vnOffset.getOffset(), Utils.longToBytes(vnValue.getOffset(),
+			vnValue.getSize(), language.isBigEndian()));
+		return true;
+	}
+
 }

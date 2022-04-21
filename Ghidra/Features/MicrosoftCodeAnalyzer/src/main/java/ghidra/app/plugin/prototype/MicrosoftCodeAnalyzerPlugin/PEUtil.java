@@ -17,9 +17,8 @@ package ghidra.app.plugin.prototype.MicrosoftCodeAnalyzerPlugin;
 
 import java.io.IOException;
 
-import generic.continues.RethrowContinuesFactory;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.MemoryByteProvider;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.Constants;
 import ghidra.app.util.datatype.microsoft.GuidInfo;
@@ -46,9 +45,8 @@ public class PEUtil {
 			MemoryByteProvider mbp = new MemoryByteProvider(program.getMemory(),
 				program.getAddressFactory().getDefaultAddressSpace());
 			try {
-				FactoryBundledWithBinaryReader reader = new FactoryBundledWithBinaryReader(
-					RethrowContinuesFactory.INSTANCE, mbp, true/*LittleEndian*/);
-				DOSHeader dosHeader = DOSHeader.createDOSHeader(reader);
+				BinaryReader reader = new BinaryReader(mbp, true/*LittleEndian*/);
+				DOSHeader dosHeader = new DOSHeader(reader);
 				if (dosHeader.e_magic() == DOSHeader.IMAGE_DOS_SIGNATURE) {
 					int peHeaderStartIndex = dosHeader.e_lfanew();
 					int peMagicNumber = reader.readInt(peHeaderStartIndex);

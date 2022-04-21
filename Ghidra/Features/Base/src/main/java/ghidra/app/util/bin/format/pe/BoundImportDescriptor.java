@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -56,35 +55,29 @@ public class BoundImportDescriptor implements StructConverter, ByteArrayConverte
 
     private List<BoundImportForwarderRef> forwarders = new ArrayList<BoundImportForwarderRef>();
 
-    static BoundImportDescriptor createBoundImportDescriptor(
-            FactoryBundledWithBinaryReader reader, int readerIndex,
-            int biddIndex) throws IOException {
-        BoundImportDescriptor boundImportDescriptor = (BoundImportDescriptor) reader.getFactory().create(BoundImportDescriptor.class);
-        boundImportDescriptor.initBoundImportDescriptor(reader, readerIndex, biddIndex);
-        return boundImportDescriptor;
+	BoundImportDescriptor(BinaryReader reader, int readerIndex, int biddIndex) throws IOException {
+		timeDateStamp = reader.readInt(readerIndex);
+		readerIndex += BinaryReader.SIZEOF_INT;
+		offsetModuleName = reader.readShort(readerIndex);
+		readerIndex += BinaryReader.SIZEOF_SHORT;
+		numberOfModuleForwarderRefs = reader.readShort(readerIndex);
+		readerIndex += BinaryReader.SIZEOF_SHORT;
+		if (offsetModuleName < 0) {
+			Msg.error(this, "Invalid offsetModuleName " + offsetModuleName);
+			return;
+		}
+
+		moduleName = reader.readAsciiString(biddIndex + offsetModuleName);
+
+		for (int i = 0; i < numberOfModuleForwarderRefs; ++i) {
+			forwarders.add(new BoundImportForwarderRef(reader, readerIndex, biddIndex));
+			readerIndex += BoundImportForwarderRef.IMAGE_SIZEOF_BOUND_IMPORT_FORWARDER_REF;
+		}
     }
 
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public BoundImportDescriptor() {}
+	BoundImportDescriptor() {
 
-    private void initBoundImportDescriptor(FactoryBundledWithBinaryReader reader, int readerIndex, int biddIndex) throws IOException {
-        timeDateStamp               = reader.readInt  (readerIndex); readerIndex += BinaryReader.SIZEOF_INT;
-        offsetModuleName            = reader.readShort(readerIndex); readerIndex += BinaryReader.SIZEOF_SHORT;
-        numberOfModuleForwarderRefs = reader.readShort(readerIndex); readerIndex += BinaryReader.SIZEOF_SHORT;
-        if (offsetModuleName < 0) {
-        	Msg.error(this, "Invalid offsetModuleName "+offsetModuleName);
-        	return;
-        }
-
-        moduleName = reader.readAsciiString(biddIndex + offsetModuleName);
-
-        for (int i = 0 ; i < numberOfModuleForwarderRefs ; ++i) {
-            forwarders.add(BoundImportForwarderRef.createBoundImportForwarderRef(reader, readerIndex, biddIndex));
-            readerIndex += BoundImportForwarderRef.IMAGE_SIZEOF_BOUND_IMPORT_FORWARDER_REF;
-        }
-    }
+	}
 
 	public BoundImportDescriptor(String name, int timeDateStamp) {
 		this.moduleName = name;

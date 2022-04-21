@@ -253,6 +253,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager; // For goto time (emu mods)
 	@AutoServiceConsumed
+	protected DebuggerStateEditingService editingService;
+	@AutoServiceConsumed
 	private DebuggerStaticMappingService mappingService; // For listing action
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;

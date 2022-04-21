@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.app.util.bin.format.mz;
 
-import generic.continues.*;
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
 
 /**
  * A class to manage loading Old-style (MZ) Executables.
@@ -28,7 +26,7 @@ import java.io.*;
  * 
  */
 public class OldStyleExecutable {
-    private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
     private DOSHeader dosHeader;
 
     /**
@@ -36,16 +34,16 @@ public class OldStyleExecutable {
      * @param bp the byte provider
      * @throws IOException if an I/O error occurs
      */
-    public OldStyleExecutable(GenericFactory factory, ByteProvider bp) throws IOException {
-        reader = new FactoryBundledWithBinaryReader(factory, bp, true);
-        dosHeader = DOSHeader.createDOSHeader(reader);
+	public OldStyleExecutable(ByteProvider bp) throws IOException {
+		reader = new BinaryReader(bp, true);
+		dosHeader = new DOSHeader(reader);
     }
 
     /**
      * Returns the underlying binary reader.
      * @return the underlying binary reader
      */
-    public FactoryBundledWithBinaryReader getBinaryReader() {
+	public BinaryReader getBinaryReader() {
         return reader;
     }
 

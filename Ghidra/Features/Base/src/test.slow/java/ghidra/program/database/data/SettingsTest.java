@@ -27,12 +27,13 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -42,10 +43,18 @@ import ghidra.util.task.TaskMonitorAdapter;
  */
 public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
-	private DataTypeManagerDB dataMgr;
+	private ProgramBasedDataTypeManager dataMgr;
 	private Listing listing;
 	private AddressSpace space;
 	private int transactionID;
+
+	// Suitable settings allowed for StringDataType data
+	private static String LONG_SETTING_NAME = "mutability";
+	private static String STRING_SETTING_NAME = "charset";
+
+	// NOTE: Datatypes must be resolved before settings may be changed
+	// with the exception of TypeDefDataType which does permit
+	// TypeDefSettingsDefinition settings defined by the base-datatype.
 
 	public SettingsTest() {
 		super();
@@ -59,6 +68,16 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		listing = program.getListing();
 		transactionID = program.startTransaction("Test");
 		addBlock();
+		// pointer-typedef has the largest 
+//		System.out.println("Defined string settings:");
+//		for (SettingsDefinition def : StringDataType.dataType.getSettingsDefinitions()) {
+//			System.out.println(def.getStorageKey());
+//		}
+
+		for (int i = 0; i < 40; i++) {
+			DataUtilities.createData(program, addr(i), StringDataType.dataType, 1, false,
+				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+		}
 	}
 
 	@After
@@ -71,72 +90,85 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSetDefaultSettings() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
-		Data data = listing.getDataAt(addr(10));
-		ByteDataType dt = (ByteDataType) data.getDataType();
-		Settings defaultSettings = dt.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
-		defaultSettings.setByteArray("bytes", new byte[] { 0, 1, 2 });
 
-		assertEquals("red", defaultSettings.getString("color"));
-		Long lv = defaultSettings.getLong("someLongValue");
+		DataType dt = StringDataType.dataType;
+
+		Settings defaultSettings = dt.getDefaultSettings();
+
+		// immutable warnings expected
+		defaultSettings.setString(STRING_SETTING_NAME, "red");
+		defaultSettings.setLong(LONG_SETTING_NAME, 10);
+
+		assertNull(defaultSettings.getString(STRING_SETTING_NAME));
+		assertNull(defaultSettings.getLong(LONG_SETTING_NAME));
+
+		// May modify byte default settings after resolve
+		dt = dataMgr.resolve(dt, null);
+
+		defaultSettings = dt.getDefaultSettings();
+		defaultSettings.setString(STRING_SETTING_NAME, "red");
+		defaultSettings.setLong(LONG_SETTING_NAME, 10);
+
+		assertEquals("red", defaultSettings.getString(STRING_SETTING_NAME));
+		Long lv = defaultSettings.getLong(LONG_SETTING_NAME);
 		assertNotNull(lv);
 		assertEquals(10, lv.longValue());
-		byte[] b = defaultSettings.getByteArray("bytes");
-		assertNotNull(b);
-		assertEquals(3, b.length);
 
-		defaultSettings.setValue("long", new Long(10));
-		Object obj = defaultSettings.getValue("long");
-		assertNotNull(obj);
-		assertEquals(10, ((Long) obj).longValue());
+		defaultSettings.setValue(LONG_SETTING_NAME, 20L);
+		Object obj = defaultSettings.getValue(LONG_SETTING_NAME);
+		assertTrue(obj instanceof Long);
+		assertEquals(20, ((Long) obj).longValue());
 	}
 
 	@Test
-	public void testSetDefaultSettings2() throws Exception {
-		TypedefDataType td = new TypedefDataType("ByteTypedef", new ByteDataType());
-		listing.createData(addr(10), td, td.getLength());
-		Data data = listing.getDataAt(addr(10));
-		TypeDef typeDef = (TypeDef) data.getDataType();
+	public void testSetTypedefDefaultSettings() throws Exception {
+
+		TypeDef typeDef = new TypedefDataType(CategoryPath.ROOT, "ByteTypedef",
+			new ByteDataType(dataMgr), dataMgr);
+
+		assertEquals(0, ByteDataType.dataType.getTypeDefSettingsDefinitions().length);
 
 		Settings defaultSettings = typeDef.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
-		defaultSettings.setByteArray("bytes", new byte[] { 0, 1, 2 });
 
-		assertEquals("red", defaultSettings.getString("color"));
-		Long lv = defaultSettings.getLong("someLongValue");
-		assertNotNull(lv);
-		assertEquals(10, lv.longValue());
-		byte[] b = defaultSettings.getByteArray("bytes");
-		assertNotNull(b);
-		assertEquals(3, b.length);
+		// immutable warnings expected
+		FormatSettingsDefinition.DEF.setChoice(defaultSettings, FormatSettingsDefinition.CHAR);
+		EndianSettingsDefinition.DEF.setBigEndian(defaultSettings, false);
+		PaddingSettingsDefinition.DEF.setPadded(defaultSettings, true);
 
-		defaultSettings.setValue("long", new Long(10));
-		Object obj = defaultSettings.getValue("long");
-		assertNotNull(obj);
-		assertEquals(10, ((Long) obj).longValue());
+		assertNull(defaultSettings.getLong("format"));
+		assertNull(defaultSettings.getLong("endian"));
+		assertNull(defaultSettings.getLong("padding"));
+
+		// May modify arbitrary typedef default settings after resolve
+		typeDef = (TypeDef) dataMgr.resolve(typeDef, null);
+
+		defaultSettings = typeDef.getDefaultSettings();
+		FormatSettingsDefinition.DEF.setChoice(defaultSettings, FormatSettingsDefinition.CHAR);
+		EndianSettingsDefinition.DEF.setBigEndian(defaultSettings, false);
+		PaddingSettingsDefinition.DEF.setPadded(defaultSettings, true);
+
+		assertEquals(FormatSettingsDefinition.CHAR, defaultSettings.getLong("format").longValue());
+		assertEquals(EndianSettingsDefinition.LITTLE,
+			defaultSettings.getLong("endian").longValue());
+		assertEquals(PaddingSettingsDefinition.PADDED_VALUE,
+			defaultSettings.getLong("padded").longValue());
 
 		try {
-			defaultSettings.setValue("color", Color.RED);
+			defaultSettings.setValue("format", Color.RED);
 			Assert.fail("Should not be able to set arbitrary objects");
 		}
 		catch (IllegalArgumentException e) {
 			// expected
 		}
-
 	}
 
 	@Test
 	public void testIsEmpty() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
+
 		Data data = listing.getDataAt(addr(10));
-		ByteDataType dt = (ByteDataType) data.getDataType();
-		Settings defaultSettings = dt.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
-		defaultSettings.setByteArray("bytes", new byte[] { 0, 1, 2 });
+		Settings defaultSettings = data.getDataType().getDefaultSettings();
+		defaultSettings.setString(STRING_SETTING_NAME, "red");
+		defaultSettings.setLong(LONG_SETTING_NAME, 10);
 
 		assertTrue(!defaultSettings.isEmpty());
 
@@ -146,117 +178,100 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testGetNames() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
-		Data data = listing.getDataAt(addr(10));
-		ByteDataType dt = (ByteDataType) data.getDataType();
+
+		DataType dt = dataMgr.resolve(StringDataType.dataType, null);
 		Settings defaultSettings = dt.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
-		defaultSettings.setByteArray("bytes", new byte[] { 0, 1, 2 });
-		defaultSettings.setString("endian", "big Endian");
+		defaultSettings.setString(STRING_SETTING_NAME, "red");
+		defaultSettings.setLong(LONG_SETTING_NAME, 10);
 
 		String[] names = defaultSettings.getNames();
-		assertEquals(4, names.length);
+		assertEquals(2, names.length);
 	}
 
 	@Test
 	public void testClearSetting() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
-		Data data = listing.getDataAt(addr(10));
-		ByteDataType dt = (ByteDataType) data.getDataType();
-		Settings defaultSettings = dt.getDefaultSettings();
-		defaultSettings.setString("color", "red");
-		defaultSettings.setLong("someLongValue", 10);
-		defaultSettings.setByteArray("bytes", new byte[] { 0, 1, 2 });
 
-		defaultSettings.clearSetting("color");
-		assertNull(defaultSettings.getString("color"));
+		DataType dt = dataMgr.resolve(StringDataType.dataType, null);
+		Settings defaultSettings = dt.getDefaultSettings();
+		defaultSettings.setString(STRING_SETTING_NAME, "red");
+		defaultSettings.setLong(LONG_SETTING_NAME, 10);
+
+		defaultSettings.clearSetting(STRING_SETTING_NAME);
+		assertNull(defaultSettings.getString(STRING_SETTING_NAME));
 	}
 
 	@Test
 	public void testInstanceSettings() throws Exception {
 
-		listing.createData(addr(10), new ByteDataType(), 1);
-		Data data = listing.getDataAt(addr(10));
-		ByteDataType dt = (ByteDataType) data.getDataType();
+		Data data = DataUtilities.createData(program, addr(10), ByteDataType.dataType, 1, false,
+			ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+
+		DataType dt = data.getDataType();
 		Settings defaultSettings = dt.getDefaultSettings();
-		defaultSettings.setLong("format", FormatSettingsDefinition.CHAR);
-		defaultSettings.setLong("signed", 0);
-		defaultSettings.setLong("padded", 1);
+		FormatSettingsDefinition.DEF.setChoice(defaultSettings, FormatSettingsDefinition.CHAR);
+		EndianSettingsDefinition.DEF.setBigEndian(defaultSettings, false);
+		PaddingSettingsDefinition.DEF.setPadded(defaultSettings, true);
 
-		SettingsDefinition[] defs = dt.getSettingsDefinitions();
-		for (int i = 0; i < defs.length; i++) {
+		assertEquals(FormatSettingsDefinition.CHAR, data.getLong("format").longValue());
+		FormatSettingsDefinition.DEF.setChoice(data, FormatSettingsDefinition.DECIMAL);
+		assertEquals(FormatSettingsDefinition.DECIMAL, data.getLong("format").longValue());
 
-			if (defs[i] instanceof EnumSettingsDefinition) {
-				EnumSettingsDefinition enumDef = (EnumSettingsDefinition) defs[i];
-				int value = enumDef.getChoice(data);
-				enumDef.setChoice(data, value);
-				if (i == 0) {
-					assertEquals(FormatSettingsDefinition.CHAR, data.getLong("format").longValue());
-				}
-				else if (i == 1) {
-					assertEquals(0, data.getLong("signed").longValue());
-				}
-				else if (i == 2) {
-					assertEquals(1, data.getLong("padded").longValue());
-				}
+		assertEquals(EndianSettingsDefinition.LITTLE, data.getLong("endian").longValue());
+		EndianSettingsDefinition.DEF.setChoice(data, EndianSettingsDefinition.BIG);
+		assertEquals(EndianSettingsDefinition.BIG, data.getLong("endian").longValue());
 
-			}
-		}
+		assertEquals(PaddingSettingsDefinition.PADDED_VALUE, data.getLong("padded").longValue());
+		PaddingSettingsDefinition.DEF.setChoice(data, PaddingSettingsDefinition.UNPADDED_VALUE);
+		assertEquals(PaddingSettingsDefinition.UNPADDED_VALUE, data.getLong("padded").longValue());
+
+		FormatSettingsDefinition.DEF.setChoice(defaultSettings, FormatSettingsDefinition.HEX);
+		EndianSettingsDefinition.DEF.clear(defaultSettings);
+		PaddingSettingsDefinition.DEF.clear(defaultSettings);
+
+		assertEquals(FormatSettingsDefinition.DECIMAL, data.getLong("format").longValue());
+		assertEquals(EndianSettingsDefinition.BIG, data.getLong("endian").longValue());
+		assertEquals(PaddingSettingsDefinition.UNPADDED_VALUE, data.getLong("padded").longValue());
 	}
 
 	@Test
 	public void testGetInstanceNames() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
 		Data data = listing.getDataAt(addr(10));
-		data.setString("color", "red");
-		data.setLong("someLongValue", 10);
-		data.setByteArray("bytes", new byte[] { 0, 1, 2 });
-		data.setString("endian", "big Endian");
+		data.setString(STRING_SETTING_NAME, "red");
+		data.setLong(LONG_SETTING_NAME, 10);
 
 		String[] names = data.getNames();
-		assertEquals(4, names.length);
+		assertEquals(2, names.length);
 	}
 
 	@Test
 	public void testClearInstanceSettings() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
 		Data data = listing.getDataAt(addr(10));
 
-		data.setString("color", "red");
-		data.setLong("someLongValue", 10);
-		data.setByteArray("bytes", new byte[] { 0, 1, 2 });
+		data.setString(STRING_SETTING_NAME, "red");
+		data.setLong(LONG_SETTING_NAME, 10);
 
-		data.clearSetting("color");
-		assertNull(data.getString("color"));
+		data.clearSetting(STRING_SETTING_NAME);
+		assertNull(data.getString(STRING_SETTING_NAME));
 	}
 
 	@Test
 	public void testClearAllInstanceSettings() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
 		Data data = listing.getDataAt(addr(10));
 
-		data.setString("color", "red");
-		data.setLong("someLongValue", 10);
-		data.setByteArray("bytes", new byte[] { 0, 1, 2 });
-		data.setString("endian", "big Endian");
+		data.setString(STRING_SETTING_NAME, "red");
+		data.setLong(LONG_SETTING_NAME, 10);
 
 		data.clearAllSettings();
-		assertNull(data.getString("color"));
-		assertNull(data.getLong("someLongValue"));
-		assertNull(data.getByteArray("bytes"));
-		assertNull(data.getString("endian"));
+		assertNull(data.getString(STRING_SETTING_NAME));
+		assertNull(data.getLong(LONG_SETTING_NAME));
 	}
 
 	@Test
 	public void testIsEmptyInstanceSettings() throws Exception {
-		listing.createData(addr(10), new ByteDataType(), 1);
 		Data data = listing.getDataAt(addr(10));
 
-		data.setString("color", "red");
-		data.setLong("someLongValue", 10);
-		data.setByteArray("bytes", new byte[] { 0, 1, 2 });
-		data.setString("endian", "big Endian");
+		data.setString(STRING_SETTING_NAME, "red");
+		data.setLong(LONG_SETTING_NAME, 10);
 
 		assertTrue(!data.isEmpty());
 		data.clearAllSettings();
@@ -264,28 +279,30 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(data.isEmpty());
 	}
 
+	private Data getDataAt(long offset) {
+		Data data = listing.getDataAt(addr(offset));
+		assertNotNull("expected data at address 0x" + Long.toHexString(offset));
+		return data;
+	}
+
 	@Test
 	public void testMoveSettings() throws Exception {
 
 		for (int i = 0; i < 10; i++) {
-			Address a = addr(i);
-			dataMgr.setStringSettingsValue(a, "color", "red" + i);
-			dataMgr.setLongSettingsValue(a, "someLongValue", i);
-			dataMgr.setByteSettingsValue(a, "bytes", new byte[] { 0, 1, 2 });
+			Data d = getDataAt(i);
+			dataMgr.setStringSettingsValue(d, STRING_SETTING_NAME, "red" + i);
+			dataMgr.setLongSettingsValue(d, LONG_SETTING_NAME, i);
 		}
-		dataMgr.moveAddressRange(addr(0), addr(20), 10, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.moveAddressRange(addr(0), addr(20), 10, TaskMonitor.DUMMY);
 		int j = 0;
 		for (int i = 20; i < 30; i++, j++) {
-			Address a = addr(i);
+			Data d = getDataAt(i);
 
-			String s = dataMgr.getStringSettingsValue(a, "color");
+			String s = dataMgr.getStringSettingsValue(d, STRING_SETTING_NAME);
 			assertEquals("red" + j, s);
 
-			Long lvalue = dataMgr.getLongSettingsValue(a, "someLongValue");
+			Long lvalue = dataMgr.getLongSettingsValue(d, LONG_SETTING_NAME);
 			assertEquals(j, lvalue.longValue());
-
-			assertNotNull(dataMgr.getByteSettingsValue(a, "bytes"));
-
 		}
 	}
 
@@ -293,13 +310,12 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testMoveSettings2() {
 
 		for (int i = 0; i < 10; i++) {
-			Address a = addr(i);
-			dataMgr.setStringSettingsValue(a, "color", "red" + i);
-			dataMgr.setLongSettingsValue(a, "someLongValue", i);
-			dataMgr.setByteSettingsValue(a, "bytes", new byte[] { 0, 1, 2 });
+			Data d = getDataAt(i);
+			dataMgr.setStringSettingsValue(d, STRING_SETTING_NAME, "red" + i);
+			dataMgr.setLongSettingsValue(d, LONG_SETTING_NAME, i);
 		}
 		try {
-			dataMgr.moveAddressRange(addr(0), addr(5), 10, TaskMonitorAdapter.DUMMY_MONITOR);
+			dataMgr.moveAddressRange(addr(0), addr(5), 10, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			Assert.fail("Unexpected cancelled exception");
@@ -307,15 +323,13 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int j = 0;
 		for (int i = 5; i < 15; i++, j++) {
-			Address a = addr(i);
+			Data d = getDataAt(i);
 
-			String s = dataMgr.getStringSettingsValue(a, "color");
+			String s = dataMgr.getStringSettingsValue(d, STRING_SETTING_NAME);
 			assertEquals("red" + j, s);
 
-			Long lvalue = dataMgr.getLongSettingsValue(a, "someLongValue");
+			Long lvalue = dataMgr.getLongSettingsValue(d, LONG_SETTING_NAME);
 			assertEquals(j, lvalue.longValue());
-
-			assertNotNull(dataMgr.getByteSettingsValue(a, "bytes"));
 		}
 	}
 
@@ -324,28 +338,25 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int j = 20;
 		for (int i = 20; i < 30; i++, j++) {
-			Address a = addr(i);
-			dataMgr.setStringSettingsValue(a, "color", "red" + i);
-			dataMgr.setLongSettingsValue(a, "someLongValue", i);
-			dataMgr.setByteSettingsValue(a, "bytes", new byte[] { 0, 1, 2 });
+			Data d = getDataAt(i);
+			dataMgr.setStringSettingsValue(d, STRING_SETTING_NAME, "red" + i);
+			dataMgr.setLongSettingsValue(d, LONG_SETTING_NAME, i);
 		}
 		j = 20;
 		try {
-			dataMgr.moveAddressRange(addr(20), addr(5), 10, TaskMonitorAdapter.DUMMY_MONITOR);
+			dataMgr.moveAddressRange(addr(20), addr(5), 10, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			Assert.fail("Unexpected cancelled exception");
 		}
 		for (int i = 5; i < 15; i++, j++) {
-			Address a = addr(i);
+			Data d = getDataAt(i);
 
-			String s = dataMgr.getStringSettingsValue(a, "color");
+			String s = dataMgr.getStringSettingsValue(d, STRING_SETTING_NAME);
 			assertEquals("red" + j, s);
 
-			Long lvalue = dataMgr.getLongSettingsValue(a, "someLongValue");
+			Long lvalue = dataMgr.getLongSettingsValue(d, LONG_SETTING_NAME);
 			assertEquals(j, lvalue.longValue());
-
-			assertNotNull(dataMgr.getByteSettingsValue(a, "bytes"));
 		}
 
 	}
@@ -381,89 +392,84 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testDefaultSettingsOnTypedef() throws Exception {
 		DataType byteDT = dataMgr.resolve(new ByteDataType(), null);
-		SettingsDefinition[] bdefs = byteDT.getSettingsDefinitions();
+		SettingsDefinition[] settingsDefinitions = byteDT.getSettingsDefinitions();
 		Settings settings = byteDT.getDefaultSettings();
-		settings.setLong("format", FormatSettingsDefinition.OCTAL);
-
-		settings.setString("color", "red");
-		settings.setLong("someLongValue", 10);
+		FormatSettingsDefinition.DEF.setChoice(settings, FormatSettingsDefinition.OCTAL);
 
 		TypedefDataType tdt = new TypedefDataType("ByteTypedef", byteDT);
 		TypeDef td = (TypeDef) dataMgr.addDataType(tdt, null);
 
 		SettingsDefinition[] sdefs = td.getSettingsDefinitions();
-		assertNotNull(sdefs);
-
-		assertEquals(bdefs.length, sdefs.length);
+		assertTrue(sdefs.length >= settingsDefinitions.length);  // TypeDef may add some of its own
 
 		Settings defSettings = td.getDefaultSettings();
-		assertNull(defSettings.getValue("format"));
-		assertNull(defSettings.getValue("color"));
-		assertNull(defSettings.getValue("someLongValue"));
+		assertEquals(FormatSettingsDefinition.OCTAL,
+			FormatSettingsDefinition.DEF.getChoice(defSettings));
+
+		FormatSettingsDefinition.DEF.setChoice(defSettings, FormatSettingsDefinition.DECIMAL);
+		assertEquals(FormatSettingsDefinition.DECIMAL,
+			FormatSettingsDefinition.DEF.getChoice(defSettings));
+
+		FormatSettingsDefinition.DEF.setChoice(settings, FormatSettingsDefinition.HEX);
+
+		assertEquals(FormatSettingsDefinition.DECIMAL,
+			FormatSettingsDefinition.DEF.getChoice(defSettings)); // unchanged
+
 	}
 
 	@Test
 	public void testDefaultSettingsOnTypedef2() throws Exception {
 		DataType byteDT = dataMgr.resolve(new ByteDataType(), null);
-		SettingsDefinition[] bdefs = byteDT.getSettingsDefinitions();
 		Settings settings = byteDT.getDefaultSettings();
-		Settings defaultSettings = new SettingsImpl(byteDT.getDefaultSettings());
-		settings.setLong("format", FormatSettingsDefinition.OCTAL);
-		bdefs[0].copySetting(settings, defaultSettings);
 
 		TypedefDataType tdt = new TypedefDataType("ByteTypedef", byteDT);
 		TypeDef td = (TypeDef) dataMgr.addDataType(tdt, null);
 		Settings defSettings = td.getDefaultSettings();
-		assertNull(defSettings.getValue("format"));
+		defSettings.setLong("format", FormatSettingsDefinition.OCTAL);
+		assertEquals((long) FormatSettingsDefinition.OCTAL, defSettings.getValue("format"));
 
 		// change the default settings for Byte data type; should not 
 		// affect the typedef default settings
 
 		settings.setLong("format", FormatSettingsDefinition.BINARY);
-		bdefs[0].copySetting(settings, defaultSettings);
 
 		defSettings = td.getDefaultSettings();
-		assertNull(defSettings.getValue("format"));
+		assertEquals((long) FormatSettingsDefinition.OCTAL, defSettings.getValue("format"));
 	}
 
 	@Test
 	public void testDefaultSettingsOnTypedefUndoRedo() throws Exception {
 		DataType byteDT = dataMgr.resolve(new ByteDataType(), null);
-		SettingsDefinition[] bdefs = byteDT.getSettingsDefinitions();
 		Settings settings = byteDT.getDefaultSettings();
-		Settings defaultSettings = new SettingsImpl(byteDT.getDefaultSettings());
 		settings.setLong("format", FormatSettingsDefinition.OCTAL);
-		bdefs[0].copySetting(settings, defaultSettings);
 		endTransaction();
 
 		startTransaction();
 		TypedefDataType tdt = new TypedefDataType("ByteTypedef", byteDT);
 		TypeDef td = (TypeDef) dataMgr.addDataType(tdt, null);
 		Settings defSettings = td.getDefaultSettings();
-		assertNull(defSettings.getValue("format"));
+		assertEquals((long) FormatSettingsDefinition.OCTAL, defSettings.getValue("format")); // inherits from byteDt
 		endTransaction();
 
 		startTransaction();
 		defSettings.setLong("format", FormatSettingsDefinition.BINARY);
+		assertEquals((long) FormatSettingsDefinition.BINARY, defSettings.getValue("format"));
 		endTransaction();
 
 		undo(program);
 		defSettings = td.getDefaultSettings();
-		assertNull(defSettings.getValue("format"));
+		assertEquals((long) FormatSettingsDefinition.OCTAL, defSettings.getValue("format")); // inherits from byteDt
 
 		redo(program);
 		defSettings = td.getDefaultSettings();
-		assertEquals(new Long(FormatSettingsDefinition.BINARY), defSettings.getValue("format"));
+		assertEquals((long) FormatSettingsDefinition.BINARY, defSettings.getValue("format"));
 	}
 
 	@Test
 	public void testDefaultSettingsOnDeletedTypdef() throws Exception {
 		DataType byteDT = dataMgr.resolve(new ByteDataType(), null);
-		SettingsDefinition[] bdefs = byteDT.getSettingsDefinitions();
 		Settings settings = byteDT.getDefaultSettings();
-		Settings defaultSettings = new SettingsImpl(byteDT.getDefaultSettings());
 		settings.setLong("format", FormatSettingsDefinition.OCTAL);
-		bdefs[0].copySetting(settings, defaultSettings);
 
 		TypedefDataType tdt = new TypedefDataType("ByteTypedef", byteDT);
 		TypeDef td = (TypeDef) dataMgr.addDataType(tdt, null);
@@ -476,7 +482,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		endTransaction();
 
 		startTransaction();
-		dataMgr.remove(td, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.remove(td, TaskMonitor.DUMMY);
 		endTransaction();
 		// make sure accessing the settings does not blow up
 		assertTrue(td.isDeleted());
@@ -487,7 +493,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(!td.isDeleted());
 
 		Settings s = td.getDefaultSettings();
-		assertNull(s.getValue("format"));
+		assertEquals((long) FormatSettingsDefinition.OCTAL, s.getValue("format"));
 
 		redo(program);
 		assertTrue(td.isDeleted());
@@ -511,6 +517,6 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Memory memory = program.getMemory();
 		memory.createInitializedBlock("test", addr(0), 100, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 	}
 }

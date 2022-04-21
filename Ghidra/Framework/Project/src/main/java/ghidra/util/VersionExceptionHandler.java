@@ -85,7 +85,7 @@ public class VersionExceptionHandler {
 		String message = "This " + contentType +
 			" file is shared with other users.  If you upgrade this file,\n" +
 			"other users will not be able to read the new version until they upgrade to \n" +
-			"the same version of Ghidra. Do you want to continue?";
+			"a compatible version of Ghidra. Do you want to continue?";
 		return OptionDialog.showOptionDialog(parent, title, message, "Upgrade",
 			OptionDialog.WARNING_MESSAGE);
 	}

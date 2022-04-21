@@ -189,7 +189,7 @@ void PrintLanguage::pushAtom(const Atom &atom)
 /// \param vn is the given implied Varnode
 /// \param op is PcodeOp taking the Varnode as input
 /// \param m is the set of printing modifications to apply for this sub-expression
-void PrintLanguage::pushVnImplied(const Varnode *vn,const PcodeOp *op,uint4 m)
+void PrintLanguage::pushVn(const Varnode *vn,const PcodeOp *op,uint4 m)
 
 {
 //   if (pending == nodepend.size())
@@ -202,7 +202,7 @@ void PrintLanguage::pushVnImplied(const Varnode *vn,const PcodeOp *op,uint4 m)
 //   }
 
   // But it is more efficient to just call them in reverse order
-  nodepend.push_back(NodePending(vn,op,m));
+  nodepend.emplace_back(vn,op,m);
 }
 
 /// This method pushes a given Varnode as a \b leaf of the current expression.
@@ -217,35 +217,20 @@ void PrintLanguage::pushVnExplicit(const Varnode *vn,const PcodeOp *op)
     pushAnnotation(vn,op);
     return;
   }
-  HighVariable *high = vn->getHigh();
   if (vn->isConstant()) {
-    pushConstant(vn->getOffset(),high->getType(),vn,op);
+    pushConstant(vn->getOffset(),vn->getHighTypeReadFacing(op),vn,op);
     return;
   }
-  Symbol *sym = high->getSymbol();
-  if (sym == (Symbol *)0) {
-    pushUnnamedLocation(high->getNameRepresentative()->getAddr(),vn,op);
-  }
-  else {
-    int4 symboloff = high->getSymbolOffset();
-    if (symboloff == -1)
-      pushSymbol(sym,vn,op);
-    else {
-      if (symboloff + vn->getSize() <= sym->getType()->getSize())
-	pushPartialSymbol(sym,symboloff,vn->getSize(),vn,op,vn->getHigh()->getType());
-      else
-	pushMismatchSymbol(sym,symboloff,vn->getSize(),vn,op);
-    }
-  }
+  pushSymbolDetail(vn,op,true);
 }
 
-/// The given Varnode will ultimately be emitted as an explicit variable on
-/// the left-hand side of an \e assignment statement. As with pushVnExplicit(),
-/// this method decides how the Varnode will be emitted and pushes the resulting
-/// Atom onto the RPN stack.
-/// \param vn is the given LSH Varnode
-/// \param op is the PcodeOp which produces the Varnode as an output
-void PrintLanguage::pushVnLHS(const Varnode *vn,const PcodeOp *op)
+/// We know that the given Varnode matches part of a single Symbol.
+/// Push a set of tokens that represents the Varnode, which may require
+/// extracting subfields or casting to get the correct value.
+/// \param vn is the given Varnode
+/// \param op is the PcodeOp involved in the expression with the Varnode
+/// \param isRead is \b true if the PcodeOp reads the Varnode
+void PrintLanguage::pushSymbolDetail(const Varnode *vn,const PcodeOp *op,bool isRead)
 
 {
   HighVariable *high = vn->getHigh();
@@ -255,14 +240,19 @@ void PrintLanguage::pushVnLHS(const Varnode *vn,const PcodeOp *op)
   }
   else {
     int4 symboloff = high->getSymbolOffset();
-    if (symboloff == -1)
-      pushSymbol(sym,vn,op);
-    else {
-      if (symboloff + vn->getSize() <= sym->getType()->getSize())
-	pushPartialSymbol(sym,symboloff,vn->getSize(),vn,op,(Datatype *)0);
-      else
-	pushMismatchSymbol(sym,symboloff,vn->getSize(),vn,op);
+    if (symboloff == -1) {
+      if (!sym->getType()->needsResolution()) {
+	pushSymbol(sym,vn,op);
+	return;
+      }
+      symboloff = 0;
     }
+    if (symboloff + vn->getSize() <= sym->getType()->getSize()) {
+      int4 inslot = isRead ? op->getSlot(vn) : -1;
+      pushPartialSymbol(sym,symboloff,vn->getSize(),vn,op,inslot);
+    }
+    else
+      pushMismatchSymbol(sym,symboloff,vn->getSize(),vn,op);
   }
 }
 
@@ -399,7 +389,7 @@ void PrintLanguage::emitAtom(const Atom &atom)
     emit->tagType(atom.name.c_str(),atom.highlight,atom.ptr_second.ct);
     break;
   case fieldtoken:
-    emit->tagField(atom.name.c_str(),atom.highlight,atom.ptr_second.ct,atom.offset);
+    emit->tagField(atom.name.c_str(),atom.highlight,atom.ptr_second.ct,atom.offset,atom.op);
     break;
   case blanktoken:
     break;			// Print nothing
@@ -519,17 +509,22 @@ void PrintLanguage::recurse(void)
 
 {
   uint4 modsave = mods;
-  int4 final = pending;		// Already claimed
+  int4 lastPending = pending;		// Already claimed
   pending = nodepend.size();	// Lay claim to the rest
-  while(final < pending) {
+  while(lastPending < pending) {
     const Varnode *vn = nodepend.back().vn;
     const PcodeOp *op = nodepend.back().op;
     mods = nodepend.back().vnmod;
     nodepend.pop_back();
     pending -= 1;
     if (vn->isImplied()) {
-      const PcodeOp *defOp = vn->getDef();
-      defOp->getOpcode()->push(this,defOp,op);
+      if (vn->hasImpliedField()) {
+	pushImpliedField(vn, op);
+      }
+      else {
+	const PcodeOp *defOp = vn->getDef();
+	defOp->getOpcode()->push(this,defOp,op);
+      }
     }
     else
       pushVnExplicit(vn,op);
@@ -554,8 +549,8 @@ void PrintLanguage::opBinary(const OpToken *tok,const PcodeOp *op)
   pushOp(tok,op);		// Push on reverse polish notation
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
-  pushVnImplied(op->getIn(1),op,mods);
-  pushVnImplied(op->getIn(0),op,mods);
+  pushVn(op->getIn(1),op,mods);
+  pushVn(op->getIn(0),op,mods);
 }
 
 /// Push an operator onto the stack that has a normal unary format.
@@ -568,7 +563,7 @@ void PrintLanguage::opUnary(const OpToken *tok,const PcodeOp *op)
   pushOp(tok,op);
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
-  pushVnImplied(op->getIn(0),op,mods);
+  pushVn(op->getIn(0),op,mods);
 }
 
 void PrintLanguage::resetDefaultsInternal(void)

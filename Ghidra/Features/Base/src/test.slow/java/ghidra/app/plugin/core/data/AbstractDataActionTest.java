@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
@@ -28,7 +29,7 @@ import org.junit.*;
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.action.MenuData;
-import docking.widgets.combobox.GComboBox;
+import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.StringChoices;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
@@ -38,8 +39,8 @@ import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.clear.ClearCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.plugin.core.data.DataSettingsDialog.SettingsEditor;
-import ghidra.app.plugin.core.data.DataSettingsDialog.SettingsRowObject;
+import ghidra.app.plugin.core.data.AbstractSettingsDialog.SettingsEditor;
+import ghidra.app.plugin.core.data.AbstractSettingsDialog.SettingsRowObject;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.docking.settings.FormatSettingsDefinition;
 import ghidra.docking.settings.SettingsDefinition;
@@ -79,7 +80,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	protected static final String CREATE_STRUCTURE = "Create Structure";
 	protected static final String EDIT_DATA_TYPE = "Edit Data Type";
 	protected static final String CREATE_ARRAY = "Define Array";
-	protected static final String DEFAULT_DATA_SETTINGS = "Default Data Settings";
+	protected static final String DEFAULT_SETTINGS = "Default Settings";
 	protected static final String DATA_SETTINGS = "Data Settings";
 	protected static final String CHOOSE_DATA_TYPE = "Choose Data Type";
 
@@ -178,7 +179,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, EDIT_DATA_TYPE, enabled, caseStr);
 		checkAction(actions, CREATE_ARRAY, enabled, caseStr);
 		checkAction(actions, CHOOSE_DATA_TYPE, enabled, caseStr);
-		checkAction(actions, DEFAULT_DATA_SETTINGS, enabled, caseStr);
+		checkAction(actions, DEFAULT_SETTINGS, enabled, caseStr);
 		checkAction(actions, DATA_SETTINGS, enabled, caseStr);
 		checkAction(actions, CYCLE_FLOAT_DOUBLE, enabled, caseStr);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, enabled, caseStr);
@@ -220,7 +221,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 		waitForSwing();
 
-		final DataSettingsDialog dlg = waitForDialogComponent(DataSettingsDialog.class);
+		final AbstractSettingsDialog dlg = waitForDialogComponent(AbstractSettingsDialog.class);
 		assertNotNull("Expected data settings dialog", dlg);
 
 		waitForSwing();
@@ -244,11 +245,11 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	protected void changeSettings(final boolean defaultSetting, final String[] settingNames,
 			final String[] newValues) throws Exception {
 
-		doAction(defaultSetting ? DEFAULT_DATA_SETTINGS : DATA_SETTINGS, false);
+		doAction(defaultSetting ? DEFAULT_SETTINGS : DATA_SETTINGS, false);
 
 		waitForSwing();
 
-		final DataSettingsDialog dlg = waitForDialogComponent(DataSettingsDialog.class);
+		final AbstractSettingsDialog dlg = waitForDialogComponent(AbstractSettingsDialog.class);
 		assertNotNull("Expected data settings dialog", dlg);
 
 		waitForSwing();
@@ -296,19 +297,19 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		waitForSwing();
 	}
 
-	private void endEdit(DataSettingsDialog d) {
+	private void endEdit(AbstractSettingsDialog d) {
 		GTable table = d.getSettingsTable();
 		runSwing(() -> table.editingStopped(new ChangeEvent(table)));
 	}
 
-	private void setComboValue(DataSettingsDialog d, String string) {
+	private void setComboValue(AbstractSettingsDialog d, String string) {
 		GTable table = d.getSettingsTable();
 		TableCellEditor activeEditor = runSwing(() -> table.getCellEditor());
 		assertNotNull("Table should be editing, but is not", activeEditor);
 		assertTrue("Editor type is not correct", activeEditor instanceof SettingsEditor);
 
 		SettingsEditor settingsEditor = (SettingsEditor) activeEditor;
-		GComboBox<String> combo = settingsEditor.getComboBox();
+		GhidraComboBox<String> combo = settingsEditor.getComboBox();
 
 		int index = runSwing(() -> {
 			int n = combo.getItemCount();
@@ -328,7 +329,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		});
 	}
 
-	private void triggerEdit(DataSettingsDialog d, int row, int col) {
+	private void triggerEdit(AbstractSettingsDialog d, int row, int col) {
 		GTable table = d.getSettingsTable();
 		boolean editStarted = runSwing(() -> table.editCellAt(row, col));
 		assertTrue("Unable to edit dialog table cell at " + row + ", " + col, editStarted);
@@ -359,19 +360,18 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	protected boolean firstIteration = true;
 
 	protected void manipulateAllSettings(boolean testDefaultSetting, boolean insideStruct,
-			boolean commonStruct, String defineAction) throws Exception {
+			boolean commonStruct, DockingActionIf dockingAction) throws Exception {
 
 		long loc1 = 0x1006a02;
 		long loc2 = 0x100abeb;
 
-		DockingActionIf dockingAction = getAction(defineAction);
 		assertNotNull(dockingAction);
 
 		DataType dt;
 		boolean useSelection = true;
 
 		if (dockingAction instanceof DataAction) {
-			DataAction action = (DataAction) getAction(defineAction);
+			DataAction action = (DataAction) dockingAction;
 			dt = action.getDataType();
 			useSelection = (dt instanceof StringDataType);
 		}
@@ -404,7 +404,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		if (useSelection) {
 			makeSelection(loc1, loc1 + 0x10);
 		}
-		doAction(defineAction, true);
+		doAction(dockingAction, true);
 		Data data1 = getContextData();
 
 		if (insideStruct) {
@@ -435,7 +435,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 			if (useSelection) {
 				makeSelection(loc2, loc2 + 0x10);
 			}
-			doAction(defineAction, true);
+			doAction(dockingAction, true);
 			data2 = getContextData();
 
 			if (insideStruct) {
@@ -485,9 +485,9 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 					manipulateTerminatedSettings(testDefaultSetting, insideStruct, commonStruct,
 						data1, data2);
 				}
-
 				else if (sdef instanceof DataTypeMnemonicSettingsDefinition) {
-					// TODO: ???
+					manipulateMnemonicSettings(testDefaultSetting, insideStruct, commonStruct,
+						data1, data2);
 				}
 				else if (sdef instanceof MutabilitySettingsDefinition) {
 					manipulateMutabilitySettings(testDefaultSetting, insideStruct, commonStruct,
@@ -864,6 +864,62 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 	}
 
+	/**
+	 * Test MNEMONIC data setting
+	 * @param testDefaultSetting if true test default setting, else test instance setting for data2
+	 * @param insideStruct data are inside two structure instances
+	 * @param commonStruct data structures are the same type
+	 * @param data1 data at some location with same type as data2
+	 * @param data2 data at current location
+	 * @throws Exception
+	 */
+	protected void manipulateMnemonicSettings(boolean testDefaultSetting, boolean insideStruct,
+			boolean commonStruct, Data data1, Data data2) throws Exception {
+
+		assertSame(data1.getDataType(), data2.getDataType());
+
+		boolean settingsAreShared =
+			testDefaultSetting && (!insideStruct || (insideStruct && commonStruct));
+
+		String[] settingNames = new String[] { "Mnemonic-style" };
+
+		useDefaultSettings();
+
+		DataType dt = data1.getDataType();
+		if (dt instanceof Array) {
+			dt = ((Array) dt).getDataType();
+			data1 = data1.getComponent(0);
+			data2 = data2.getComponent(0);
+		}
+
+		// Currently only supported by integer types
+		assertTrue(dt instanceof AbstractIntegerDataType);
+
+		AbstractIntegerDataType intDt = (AbstractIntegerDataType) dt;
+		String defaultMnemonic = intDt.getDisplayName();
+		String assemblyMnemonic = intDt.getAssemblyMnemonic(); // this is the real default setting
+		String cMnemonic = intDt.getCMnemonic();
+
+		assertEquals(assemblyMnemonic, data1.getMnemonicString());
+		assertEquals(assemblyMnemonic, data2.getMnemonicString());
+
+		changeSettings(testDefaultSetting, settingNames, new String[] { "C" });
+		assertEquals(settingsAreShared ? cMnemonic : assemblyMnemonic, data1.getMnemonicString());
+		assertEquals(cMnemonic, data2.getMnemonicString());
+
+		changeSettings(testDefaultSetting, settingNames, new String[] { "assembly" });
+
+		assertEquals(assemblyMnemonic, data1.getMnemonicString());
+		assertEquals(assemblyMnemonic, data2.getMnemonicString());
+
+		changeSettings(testDefaultSetting, settingNames, new String[] { "default" });
+
+		assertEquals(settingsAreShared ? defaultMnemonic : assemblyMnemonic,
+			data1.getMnemonicString());
+		assertEquals(defaultMnemonic, data2.getMnemonicString());
+
+	}
+
 	protected String getDataTypeAction(String dtName) {
 		String actionName = "Define " + dtName;
 		if (getAction(actionName) == null) {
@@ -1114,7 +1170,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		ProgramSelection sel = getCurrentSelection();
 		boolean useSelection = (sel != null && !sel.isEmpty());
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 
 		for (DockingActionIf element : actions) {
 			MenuData menuBarData = element.getMenuBarData();
@@ -1189,7 +1245,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, CREATE_STRUCTURE, false, caseName);
 		checkAction(actions, EDIT_DATA_TYPE, editStructOK, caseName);
 		checkAction(actions, CREATE_ARRAY, false, caseName);
-		checkAction(actions, DEFAULT_DATA_SETTINGS, hasSettings, caseName);
+		checkAction(actions, DEFAULT_SETTINGS, hasSettings, caseName);
 		checkAction(actions, DATA_SETTINGS, hasSettings, caseName);
 		checkAction(actions, CYCLE_FLOAT_DOUBLE, false, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, false, caseName);
@@ -1213,7 +1269,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	protected void checkOnUndefined(Set<DockingActionIf> actions) {
 
 		if (actions == null) {
-			actions = getActionsByOwner(tool, plugin.getName());
+			actions = getDataPluginActions();
 		}
 
 		Data data = getContextData();
@@ -1233,7 +1289,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, EDIT_DATA_TYPE,
 			pdata != null && (pdata.isStructure() || pdata.isUnion()), caseName);
 		checkAction(actions, CREATE_ARRAY, true, caseName);
-		checkAction(actions, DEFAULT_DATA_SETTINGS, false, caseName);
+		checkAction(actions, DEFAULT_SETTINGS, false, caseName);
 		checkAction(actions, DATA_SETTINGS, hasNormalUnitSelection, caseName);
 		checkAction(actions, CYCLE_FLOAT_DOUBLE, true, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, true, caseName);
@@ -1252,7 +1308,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	protected void checkOnDefined(Set<DockingActionIf> actions, Class<?> expectedDataType) {
 
 		if (actions == null) {
-			actions = getActionsByOwner(tool, plugin.getName());
+			actions = getDataPluginActions();
 		}
 
 		String dtName = expectedDataType.getName();
@@ -1300,7 +1356,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 			(pdata != null && (pdata.isStructure() || pdata.isUnion())) || (dt instanceof Enum),
 			caseName);
 		checkAction(actions, CREATE_ARRAY, true, caseName);
-		checkAction(actions, DEFAULT_DATA_SETTINGS,
+		checkAction(actions, DEFAULT_SETTINGS,
 			(!hasSelection || isSelectionJustSingleDataInstance(sel, d)) && hasSettings, caseName);
 		checkAction(actions, DATA_SETTINGS, hasNormalUnitSelection || hasSettings, caseName);
 		checkAction(actions, CYCLE_FLOAT_DOUBLE, onFloatDoubleData, caseName);
@@ -1319,7 +1375,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	protected void checkOnArray(Set<DockingActionIf> actions, DataType interiorDt, int arraySize) {
 
 		if (actions == null) {
-			actions = getActionsByOwner(tool, plugin.getName());
+			actions = getDataPluginActions();
 		}
 
 		Data d = getContextData();
@@ -1363,7 +1419,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, EDIT_DATA_TYPE,
 			pdata != null && (pdata.isStructure() || pdata.isUnion()), caseName);
 		checkAction(actions, CREATE_ARRAY, true, caseName);
-		checkAction(actions, DEFAULT_DATA_SETTINGS,
+		checkAction(actions, DEFAULT_SETTINGS,
 			hasSettings && (!hasSelection || isSelectionJustSingleDataInstance(sel, d)), caseName);
 		checkAction(actions, DATA_SETTINGS, hasSettings, caseName);
 		checkAction(actions, CYCLE_FLOAT_DOUBLE, true, caseName);
@@ -1388,7 +1444,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	protected void checkOnStructure(Set<DockingActionIf> actions, int structSize) {
 
 		if (actions == null) {
-			actions = getActionsByOwner(tool, plugin.getName());
+			actions = getDataPluginActions();
 		}
 
 		Data d = getContextData();
@@ -1412,7 +1468,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		checkAction(actions, CREATE_STRUCTURE, sel != null && !sel.isEmpty(), caseName);
 		checkAction(actions, EDIT_DATA_TYPE, true, caseName);
 		checkAction(actions, CREATE_ARRAY, true, caseName);
-		checkAction(actions, DEFAULT_DATA_SETTINGS, false, caseName);
+		checkAction(actions, DEFAULT_SETTINGS, false, caseName);
 		checkAction(actions, DATA_SETTINGS, hasNormalUnitSelection, caseName);
 		checkAction(actions, CYCLE_FLOAT_DOUBLE, true, caseName);
 		checkAction(actions, CYCLE_BYTE_WORD_DWORD_QWORD, true, caseName);
@@ -1428,8 +1484,24 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 	}
 
+	/**
+	 * Get the specified DataPlugin action (without context constraint)
+	 * @param name action name
+	 * @return action or null if not found
+	 */
 	protected DockingActionIf getAction(String name) {
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		return getAction(name, null);
+	}
+
+	/**
+	 * Get the specified DataPlugin action.
+	 * @param name action name
+	 * @param context if not null will only return an action which is
+	 * valid for this context.
+	 * @return action or null if not found
+	 */
+	protected DockingActionIf getAction(String name, ActionContext context) {
+		Set<DockingActionIf> actions = getDataPluginActions(context);
 		for (DockingActionIf element : actions) {
 			String actionName = element.getName();
 			int pos = actionName.indexOf(" (");
@@ -1443,11 +1515,54 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		return null;
 	}
 
+	/**
+	 * Get the set of all actions owned by DataPlugin which are valid for
+	 * the specified context.
+	 * @param context current action context
+	 * @return set of valid actions
+	 */
+	protected Set<DockingActionIf> getDataPluginActions(ActionContext context) {
+		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		if (context == null) {
+			return actions;
+		}
+		// assumes returned set may be modified
+		return actions.stream()
+				.filter(a -> a.isValidContext(context))
+				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * Get the set of all actions owned by DataPlugin which are valid for
+	 * the current action context.
+	 * @return set of valid actions
+	 */
+	protected Set<DockingActionIf> getDataPluginActions() {
+		return getDataPluginActions(getProgramContext());
+	}
+
+	/**
+	 * Execute the specified DataPlugin action using the current program context.
+	 * Assertion failures will occur if action not found or is not enabled for the
+	 * current context.
+	 * @param name action name
+	 * @param waitForCompletion if true invocation will wait for action to complete
+	 * its execution in the swing thread, if false it will be scheduled and return immediately.
+	 */
 	protected void doAction(String name, boolean waitForCompletion) {
-		DockingActionIf action = getAction(name);
-		assertNotNull("Action was not found: " + name, action);
+		ActionContext programContext = getProgramContext();
+		DockingActionIf action = getAction(name, programContext);
+		String contextMsg = "";
+		if (programContext != null) {
+			contextMsg = " (" + programContext.getClass().getSimpleName() + ")";
+		}
+		assertNotNull("Action was not found" + contextMsg + ": " + name, action);
+		doAction(action, waitForCompletion);
+	}
+
+	protected void doAction(DockingActionIf action, boolean waitForCompletion) {
 		if (!action.isEnabledForContext(getProgramContext())) {
-			Assert.fail("Action is not valid: " + name);
+			Assert.fail("Action is not valid: " + action.getName());
 		}
 
 		try {
@@ -1455,7 +1570,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		}
 		catch (Throwable t) {
 			t.printStackTrace();
-			Assert.fail("Action '" + name + "' failed: " + t.toString());
+			Assert.fail("Action '" + action.getName() + "' failed: " + t.toString());
 		}
 
 	}
@@ -1498,6 +1613,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		boolean enabledForContext = action.isEnabledForContext(programContext);
 		if (isValidContext != enabledForContext) {
 			Msg.debug(this, "checkAction(): ");
+			action.isEnabledForContext(programContext);
 		}
 		assertEquals(
 			"Context is not in correct valid state. Context: actionName = " + action.getName() +

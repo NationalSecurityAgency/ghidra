@@ -21,6 +21,7 @@ import java.awt.image.ImageObserver;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import ghidra.app.util.viewer.listingpanel.VerticalPixelAddressMap;
@@ -55,16 +56,16 @@ class PointMarkerSet extends MarkerSetImpl {
 	 */
 	PointMarkerSet(MarkerManager navigationManager, String name, String desc, int priority,
 			boolean showMarkers, boolean showNavigation, boolean colorBackground, Color markerColor,
-			ImageIcon icon, boolean isPreferred, Program program) {
+			Icon icon, boolean isPreferred, Program program) {
 		super(navigationManager, program, name, desc, priority, showMarkers, showNavigation,
 			colorBackground,
 			markerColor, isPreferred);
 		if (icon == null) {
 			icon = ResourceManager.loadImage("images/warning.png");
 		}
-		icon = ResourceManager.getScaledIcon(icon, 16, 16, Image.SCALE_SMOOTH);
-		image = icon.getImage();
-		imageObserver = icon.getImageObserver();
+		ImageIcon imageIcon = ResourceManager.getScaledIcon(icon, 16, 16, Image.SCALE_SMOOTH);
+		image = imageIcon.getImage();
+		imageObserver = imageIcon.getImageObserver();
 		if (markerColor != null) {
 			fillColor = getFillColor(markerColor);
 		}
@@ -86,7 +87,7 @@ class PointMarkerSet extends MarkerSetImpl {
 	 */
 	PointMarkerSet(MarkerManager navigationManager, String name, String desc, int priority,
 			boolean showMarkers, boolean showNavigation, boolean colorBackground, Color markerColor,
-			ImageIcon icon, Program program) {
+			Icon icon, Program program) {
 		this(navigationManager, name, desc, priority, showMarkers, showNavigation,
 			colorBackground,
 			markerColor, icon, true, program);

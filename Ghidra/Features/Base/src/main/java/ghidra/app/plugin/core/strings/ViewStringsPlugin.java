@@ -23,11 +23,13 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.data.DataSettingsDialog;
+import ghidra.app.plugin.core.data.DataTypeSettingsDialog;
 import ghidra.app.services.GoToService;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
@@ -62,8 +64,6 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 		ResourceManager.getDisabledIcon(Icons.REFRESH_ICON, 60);
 
 	private DockingAction refreshAction;
-	private DockingAction showSettingsAction;
-	private DockingAction showDefaultSettingsAction;
 	private SelectionNavigationAction linkNavigationAction;
 	private ViewStringsProvider provider;
 	private SwingUpdateManager reloadUpdateMgr;
@@ -111,13 +111,14 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 		linkNavigationAction = new SelectionNavigationAction(this, provider.getTable());
 		tool.addLocalAction(provider, linkNavigationAction);
 
-		showSettingsAction = new DockingAction("Settings", getName()) {
+		DockingAction editDataSettingsAction =
+			new DockingAction("Data Settings", getName(), KeyBindingType.SHARED) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				try {
 					DataSettingsDialog dialog = provider.getSelectedRowCount() == 1
-							? new DataSettingsDialog(currentProgram, provider.getSelectedData())
-							: new DataSettingsDialog(currentProgram, provider.selectData());
+							? new DataSettingsDialog(provider.getSelectedData())
+							: new DataSettingsDialog(currentProgram, provider.getProgramSelection());
 
 					tool.showDialog(dialog);
 					dialog.dispose();
@@ -128,33 +129,47 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 			}
 
 		};
-		showSettingsAction.setPopupMenuData(new MenuData(new String[] { "Settings..." }, "R"));
-		showSettingsAction.setDescription("Shows settings for the selected strings");
-		showSettingsAction.setHelpLocation(new HelpLocation("DataPlugin", "Data_Settings"));
-		showDefaultSettingsAction = new DockingAction("Default Settings", getName()) {
+		editDataSettingsAction.setPopupMenuData(new MenuData(new String[] { "Settings..." }, "R"));
+		editDataSettingsAction.setHelpLocation(new HelpLocation("DataPlugin", "Data_Settings"));
+
+		DockingAction editDefaultSettingsAction =
+			new DockingAction("Default Settings", getName(), KeyBindingType.SHARED) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				Data data = provider.getSelectedData();
-				DataSettingsDialog dataSettingsDialog =
-					new DataSettingsDialog(getCurrentProgram(), data.getDataType());
+				DataType dt = getSelectedDataType();
+				if (dt == null) {
+					return;
+				}
+				DataTypeSettingsDialog dataSettingsDialog =
+					new DataTypeSettingsDialog(dt, dt.getSettingsDefinitions());
 				tool.showDialog(dataSettingsDialog);
 				dataSettingsDialog.dispose();
 			}
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				return provider.getSelectedRowCount() == 1;
+				if (provider.getSelectedRowCount() != 1) {
+					return false;
+				}
+				DataType dt = getSelectedDataType();
+				if (dt == null) {
+					return false;
+				}
+				return dt.getSettingsDefinitions().length != 0;
+			}
+
+			private DataType getSelectedDataType() {
+				Data data = provider.getSelectedData();
+				return data != null ? data.getDataType() : null;
 			}
 		};
-		showDefaultSettingsAction.setPopupMenuData(
+		editDefaultSettingsAction.setPopupMenuData(
 			new MenuData(new String[] { "Default Settings..." }, "R"));
-		showDefaultSettingsAction.setDescription(
-			"Shows settings for the selected string data type");
-		showDefaultSettingsAction.setHelpLocation(
-			new HelpLocation("DataPlugin", "Default_Data_Settings"));
+		editDefaultSettingsAction.setHelpLocation(
+			new HelpLocation("DataPlugin", "Default_Settings"));
 
-		tool.addLocalAction(provider, showSettingsAction);
-		tool.addLocalAction(provider, showDefaultSettingsAction);
+		tool.addLocalAction(provider, editDataSettingsAction);
+		tool.addLocalAction(provider, editDefaultSettingsAction);
 
 	}
 

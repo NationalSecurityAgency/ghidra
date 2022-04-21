@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -36,23 +36,9 @@ import ghidra.util.task.TaskMonitor;
 public class SubClientCommand extends LoadCommand {
 	private LoadCommandString client;
 
-	static SubClientCommand createSubClientCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		SubClientCommand clientCommand =
-			(SubClientCommand) reader.getFactory().create(SubClientCommand.class);
-		clientCommand.initSubClientCommand(reader);
-		return clientCommand;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public SubClientCommand() {
-	}
-
-	private void initSubClientCommand(FactoryBundledWithBinaryReader reader) throws IOException {
+	SubClientCommand(BinaryReader reader) throws IOException {
 		initLoadCommand(reader);
-		client = LoadCommandString.createLoadCommandString(reader, this);
+		client = new LoadCommandString(reader, this);
 	}
 
 	/**

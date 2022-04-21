@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.opinion.MachoLoader;
@@ -62,7 +61,7 @@ public class DSymSectionProvider implements DWARFSectionProvider {
 	public DSymSectionProvider(File dsymFile) throws IOException, MachException {
 		this.provider = new RandomAccessByteProvider(dsymFile);
 		
-		machHeader = MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider);
+		machHeader = new MachHeader(provider);
 		machHeader.parse();
 		for (Section s : machHeader.getAllSections()) {
 			// strip leading "_"'s from section name to normalize

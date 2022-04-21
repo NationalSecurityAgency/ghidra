@@ -16,59 +16,82 @@
 package ghidra.program.database.data;
 
 import java.util.LinkedHashMap;
+import java.util.Objects;
 
-import ghidra.program.model.address.Address;
 import ghidra.util.datastruct.FixedSizeHashMap;
 
-class SettingsCache {
-	private static final int CACHE_SIZE = 200;
+class SettingsCache<K> {
 
-	class AddressNamePair {
-		Address address;
+	private static class IdNamePair {
+		Object id; // object which corresponds to association ID (e.g., Address, DataType-ID) 
 		String name;
 
-		AddressNamePair(Address address, String name) {
-			this.address = address;
+		IdNamePair(Object id, String name) {
+			this.id = id;
 			this.name = name;
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			if (!(obj instanceof AddressNamePair)) {
+			if (!(obj instanceof IdNamePair)) {
 				return false;
 			}
-			AddressNamePair other = (AddressNamePair) obj;
-			return other.address.equals(address) && other.name.equals(name);
+			IdNamePair other = (IdNamePair) obj;
+			return other.id.equals(id) && other.name.equals(name);
 		}
 
 		@Override
 		public int hashCode() {
-			return address.hashCode() + name.hashCode();
+			return Objects.hash(id, name);
 		}
 	}
 
-	private LinkedHashMap<AddressNamePair, InstanceSettingsDB> map;
+	private LinkedHashMap<IdNamePair, SettingDB> map;
 
-	SettingsCache() {
-		map = new FixedSizeHashMap<>(CACHE_SIZE, CACHE_SIZE);
+	/**
+	 * Construct settings cache of a specified size
+	 * @param size cache size (maximum number of entries held)
+	 */
+	SettingsCache(int size) {
+		map = new FixedSizeHashMap<>(size, size);
 	}
 
-	public void remove(Address address, String name) {
-		AddressNamePair key = new AddressNamePair(address, name);
+	/**
+	 * Remove specific setting record from cache
+	 * @param id association ID object (e.g., Address, DataType ID)
+	 * @param name name of setting
+	 */
+	public void remove(K id, String name) {
+		IdNamePair key = new IdNamePair(id, name);
 		map.remove(key);
 	}
 
+	/**
+	 * Clear all cached entries
+	 */
 	void clear() {
 		map.clear();
 	}
 
-	InstanceSettingsDB getInstanceSettings(Address address, String name) {
-		AddressNamePair key = new AddressNamePair(address, name);
+	/**
+	 * Get a cached setting record
+	 * @param id association ID object (e.g., Address, DataType ID)
+	 * @param name name of setting
+	 * @return cached setting or null if not found
+	 */
+	SettingDB get(K id, String name) {
+		IdNamePair key = new IdNamePair(id, name);
 		return map.get(key);
 	}
 
-	void put(Address address, String name, InstanceSettingsDB settings) {
-		AddressNamePair key = new AddressNamePair(address, name);
-		map.put(key, settings);
+	/**
+	 * Add setting record to cache
+	 * @param id association ID object (e.g., Address, DataType ID)
+	 * @param name name of setting
+	 * @param setting object
+	 */
+	void put(K id, String name, SettingDB setting) {
+		IdNamePair key = new IdNamePair(id, name);
+		map.put(key, setting);
 	}
 }

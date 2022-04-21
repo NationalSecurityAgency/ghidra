@@ -30,7 +30,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.*;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.prop.PropertyVisitor;
@@ -57,7 +56,6 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	private boolean checkedComments;
 	protected byte[] bytes;
 	private ProgramContext programContext;
-	protected ChangeManager changeMgr;
 	protected Lock lock;
 
 	/**
@@ -80,7 +78,6 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		program = (ProgramDB) codeMgr.getProgram();
 		refMgr = program.getReferenceManager();
 		programContext = program.getProgramContext();
-		changeMgr = program;
 	}
 
 	@Override

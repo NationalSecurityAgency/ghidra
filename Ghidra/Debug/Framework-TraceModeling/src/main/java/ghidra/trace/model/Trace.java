@@ -369,6 +369,10 @@ public interface Trace extends DataTypeManagerDomainObject {
 		public static final TraceSnapshotChangeType<Void> DELETED = new TraceSnapshotChangeType<>();
 	}
 
+	public interface TraceProgramViewListener {
+		void viewCreated(TraceProgramView view);
+	}
+
 	Language getBaseLanguage();
 
 	CompilerSpec getBaseCompilerSpec();
@@ -413,6 +417,13 @@ public interface Trace extends DataTypeManagerDomainObject {
 	TraceVariableSnapProgramView createProgramView(long snap);
 
 	/**
+	 * Collect all program views, fixed or variable, of this trace.
+	 * 
+	 * @return the current set of program views
+	 */
+	Collection<TraceProgramView> getAllProgramViews();
+
+	/**
 	 * Get the "canonical" program view for this trace
 	 * 
 	 * <p>
@@ -422,6 +433,10 @@ public interface Trace extends DataTypeManagerDomainObject {
 	 * @return the canonical program view
 	 */
 	TraceVariableSnapProgramView getProgramView();
+
+	void addProgramViewListener(TraceProgramViewListener listener);
+
+	void removeProgramViewListener(TraceProgramViewListener listener);
 
 	LockHold lockRead();
 

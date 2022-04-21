@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -37,22 +37,7 @@ public class EntryPointCommand extends LoadCommand {
 	private long entryOffset;
 	private long stackSize;
 
-	static EntryPointCommand createEntryPointCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-
-		EntryPointCommand command =
-			(EntryPointCommand) reader.getFactory().create(EntryPointCommand.class);
-		command.initEntryPointCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public EntryPointCommand() {
-	}
-
-	private void initEntryPointCommand(FactoryBundledWithBinaryReader reader) throws IOException {
+	EntryPointCommand(BinaryReader reader) throws IOException {
 		initLoadCommand(reader);
 		entryOffset = reader.readNextLong();
 		stackSize = reader.readNextLong();

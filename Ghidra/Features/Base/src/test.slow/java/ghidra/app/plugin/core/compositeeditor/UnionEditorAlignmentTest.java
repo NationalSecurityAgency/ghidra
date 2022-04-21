@@ -47,20 +47,21 @@ public class UnionEditorAlignmentTest extends AbstractUnionEditorTest {
 		assertEquals(1, unionModel.getNumSelectedRows());
 		checkSelection(new int[] { 0 });
 
-//		// Check enablement.
-//		CompositeEditorAction[] pActions = provider.getActions();
-//		for (int i = 0; i < pActions.length; i++) {
-//			if ((pActions[i] instanceof FavoritesAction)
-//			|| (pActions[i] instanceof CycleGroupAction)
-//			|| (pActions[i] instanceof EditFieldAction)
-//			|| (pActions[i] instanceof PointerAction)
-//			|| (pActions[i] instanceof HexNumbersAction)) {
-//				checkEnablement(pActions[i], true);
-//			}
-//			else {
-//				checkEnablement(pActions[i], false);
-//			}
-//		}
+		// Check enablement for empty table with modified state.
+		CompositeEditorTableAction[] pActions = provider.getActions();
+		for (int i = 0; i < pActions.length; i++) {
+			if ((pActions[i] instanceof FavoritesAction) ||
+				(pActions[i] instanceof CycleGroupAction) ||
+				(pActions[i] instanceof EditFieldAction) ||
+				(pActions[i] instanceof PointerAction) ||
+				(pActions[i] instanceof HexNumbersAction) ||
+				(pActions[i] instanceof ApplyAction)) {
+				checkEnablement(pActions[i], true);
+			}
+			else {
+				checkEnablement(pActions[i], false);
+			}
+		}
 
 		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
 		addDataType(new ByteDataType());
@@ -111,16 +112,23 @@ public class UnionEditorAlignmentTest extends AbstractUnionEditorTest {
 
 		// Check enablement.
 		CompositeEditorTableAction[] pActions = provider.getActions();
-		for (CompositeEditorTableAction pAction : pActions) {
-			if ((pAction instanceof FavoritesAction) ||
-				(pAction instanceof CycleGroupAction) ||
-				(pAction instanceof EditFieldAction) ||
-				(pAction instanceof PointerAction) ||
-				(pAction instanceof HexNumbersAction) || (pAction instanceof ApplyAction)) {
-				checkEnablement(pAction, true);
+		for (int i = 0; i < pActions.length; i++) {
+			if ((pActions[i] instanceof FavoritesAction) ||
+				(pActions[i] instanceof CycleGroupAction) ||
+				(pActions[i] instanceof EditFieldAction) ||
+				(pActions[i] instanceof PointerAction) ||
+				(pActions[i] instanceof HexNumbersAction) ||
+				(pActions[i] instanceof MoveDownAction) ||
+				(pActions[i] instanceof DuplicateAction) ||
+				(pActions[i] instanceof DuplicateMultipleAction) ||
+				(pActions[i] instanceof DeleteAction) ||
+				(pActions[i] instanceof ArrayAction) ||
+				(pActions[i] instanceof ShowComponentPathAction) ||
+				(pActions[i] instanceof ApplyAction)) {
+				checkEnablement(pActions[i], true);
 			}
 			else {
-				checkEnablement(pAction, false);
+				checkEnablement(pActions[i], false);
 			}
 		}
 

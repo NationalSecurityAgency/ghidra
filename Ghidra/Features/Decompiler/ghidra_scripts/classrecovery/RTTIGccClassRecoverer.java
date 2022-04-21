@@ -1077,20 +1077,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return true;
 	}
 
-	private Data createVftableArray(Address vftableAddress, int numFunctionPointers)
-			throws Exception {
-
-		api.clearListing(vftableAddress,
-			vftableAddress.add((numFunctionPointers * defaultPointerSize - 1)));
-
-		DataType pointerDataType = dataTypeManager.getPointer(null);
-		ArrayDataType vftableArrayDataType =
-			new ArrayDataType(pointerDataType, numFunctionPointers, defaultPointerSize);
-
-		Data vftableArrayData = api.createData(vftableAddress, vftableArrayDataType);
-		return vftableArrayData;
-	}
-
 	/**
 	 * Method to check for a valid vtable at the given address
 	 * @param vtableAddress the given address

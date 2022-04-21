@@ -17,9 +17,8 @@ package ghidra.app.util.bin.format.ne;
 
 import java.io.IOException;
 
-import generic.continues.GenericFactory;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.program.model.address.SegmentedAddress;
 
@@ -29,7 +28,7 @@ import ghidra.program.model.address.SegmentedAddress;
  * 
  */
 public class NewExecutable {
-    private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
     private DOSHeader dosHeader;
     private WindowsHeader winHeader;
 
@@ -40,10 +39,9 @@ public class NewExecutable {
 	 * @param baseAddr the image base of the executable
 	 * @throws IOException if an I/O error occurs.
 	 */
-	public NewExecutable(GenericFactory factory, ByteProvider bp, SegmentedAddress baseAddr)
-			throws IOException {
-        reader = new FactoryBundledWithBinaryReader(factory, bp, true);
-        dosHeader = DOSHeader.createDOSHeader(reader);
+	public NewExecutable(ByteProvider bp, SegmentedAddress baseAddr) throws IOException {
+		reader = new BinaryReader(bp, true);
+		dosHeader = new DOSHeader(reader);
 
         if (dosHeader.isDosSignature()) {
             try {
@@ -57,7 +55,7 @@ public class NewExecutable {
      * Returns the underlying binary reader.
      * @return the underlying binary reader
      */
-    public FactoryBundledWithBinaryReader getBinaryReader() {
+	public BinaryReader getBinaryReader() {
         return reader;
     }
     /**

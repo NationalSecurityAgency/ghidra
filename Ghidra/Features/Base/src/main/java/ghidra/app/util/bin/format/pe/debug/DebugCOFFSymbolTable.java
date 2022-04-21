@@ -15,10 +15,10 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.format.*;
-import ghidra.app.util.bin.format.pe.NTHeader;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.pe.NTHeader;
 
 /**
  * A class to represent the COFF Symbol Table.
@@ -29,20 +29,8 @@ public class DebugCOFFSymbolTable {
 
     private DebugCOFFSymbol [] symbols;
 
-    public static DebugCOFFSymbolTable createDebugCOFFSymbolTable(
-            FactoryBundledWithBinaryReader reader,
-            DebugCOFFSymbolsHeader coffHeader, int offset) throws IOException {
-        DebugCOFFSymbolTable debugCOFFSymbolTable = (DebugCOFFSymbolTable) reader.getFactory().create(DebugCOFFSymbolTable.class);
-        debugCOFFSymbolTable.initDebugCOFFSymbolTable(reader, coffHeader, offset);
-        return debugCOFFSymbolTable;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DebugCOFFSymbolTable() {}
-
-    private void initDebugCOFFSymbolTable(FactoryBundledWithBinaryReader reader, DebugCOFFSymbolsHeader coffHeader, int offset) throws IOException {
+	public DebugCOFFSymbolTable(BinaryReader reader, DebugCOFFSymbolsHeader coffHeader, int offset)
+			throws IOException {
         this.ptrToSymbolTable = coffHeader.getFirstSymbolLVA() + offset;
         this.symbolCount      = coffHeader.getNumberOfSymbols();
 
@@ -52,7 +40,8 @@ public class DebugCOFFSymbolTable {
         if (symbolCount > 0 && symbolCount < NTHeader.MAX_SANE_COUNT) {
 	        symbols = new DebugCOFFSymbol[symbolCount];
 	        for (int i = 0 ; i < symbolCount ; ++i) {
-	            symbols[i] = DebugCOFFSymbol.createDebugCOFFSymbol(reader, ptrToSymbolTable + (i * DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL), this);
+				symbols[i] = new DebugCOFFSymbol(reader,
+					ptrToSymbolTable + (i * DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL), this);
 	        }
         }
     }

@@ -57,7 +57,6 @@ public class PropertyListMergeManager implements MergeResolver {
 	private int currentConflict;
 	private int totalConflictCount;
 	private ProgramMultiUserMergeManager mergeManager;
-	private int progressIndex;
 	private int propertyListChoice = ASK_USER;
 
 	/**
@@ -157,7 +156,7 @@ public class PropertyListMergeManager implements MergeResolver {
 				}
 			}
 			mergeManager.updateProgress(100);
-			currentMonitor.initialize(myNamesCount);
+
 			try {
 				processConflicts();
 				commit = true;
@@ -193,7 +192,6 @@ public class PropertyListMergeManager implements MergeResolver {
 				return;
 			}
 			addProperty(list, resultList, optionName);
-			currentMonitor.setProgress(++progressIndex);
 		}
 
 	}
@@ -251,7 +249,6 @@ public class PropertyListMergeManager implements MergeResolver {
 
 					if (latestValue.equals(origValue)) {
 						latestList.removeOption(propertyName);
-						currentMonitor.setProgress(++progressIndex);
 					}
 					else {
 						String listName = latestList.getName();
@@ -275,25 +272,28 @@ public class PropertyListMergeManager implements MergeResolver {
 		Object resultValue = getValue(resultList, propertyName);
 		Object origValue = getValue(origList, propertyName);
 
-		if (!SystemUtilities.isEqual(resultValue, myValue)) {
-			if (propertyName.equals(Program.ANALYZED) && (myValue instanceof Boolean)) {
-				// If latest or my version sets "Analyzed" to true, then it should result in true.
-				setValue(resultList, propertyName, myList.getType(propertyName), Boolean.TRUE);
-				currentMonitor.setProgress(++progressIndex);
-				return;
-			}
-			if (SystemUtilities.isEqual(resultValue, origValue)) {
-				setValue(resultList, propertyName, myList.getType(propertyName), myValue);
-				currentMonitor.setProgress(++progressIndex);
-			}
-			else {
-				String listName = resultList.getName();
-				ArrayList<ConflictInfo> mapList = getConflictList(listName);
-				mapList.add(new ConflictInfo(listName, propertyName,
-					resultList.getType(propertyName), myList.getType(propertyName),
-					origList.getType(propertyName), resultValue, myValue, origValue));
-				++totalConflictCount;
-			}
+		if (SystemUtilities.isEqual(origValue, myValue) ||
+			SystemUtilities.isEqual(resultValue, myValue)) {
+			// value was not modified in my program or it was changed the same as in latest
+			return;
+		}
+		if (propertyName.equals(Program.ANALYZED) && Boolean.TRUE.equals(myValue)) {
+			// If my version sets "Analyzed" to true, then it should result in true.
+			setValue(resultList, propertyName, myList.getType(propertyName), Boolean.TRUE);
+			return;
+		}
+		if (SystemUtilities.isEqual(resultValue, origValue)) {
+			// no change by latest - use my value
+			setValue(resultList, propertyName, myList.getType(propertyName), myValue);
+		}
+		else {
+			// my change conflicts with latest change
+			String listName = resultList.getName();
+			ArrayList<ConflictInfo> mapList = getConflictList(listName);
+			mapList.add(new ConflictInfo(listName, propertyName,
+				resultList.getType(propertyName), myList.getType(propertyName),
+				origList.getType(propertyName), resultValue, myValue, origValue));
+			++totalConflictCount;
 		}
 	}
 
@@ -322,7 +322,6 @@ public class PropertyListMergeManager implements MergeResolver {
 
 		if (!myValue.equals(origValue)) {
 			setValue(resultList, propertyName, myList.getType(propertyName), myValue);
-			currentMonitor.setProgress(++progressIndex);
 		}
 
 	}
@@ -412,7 +411,7 @@ public class PropertyListMergeManager implements MergeResolver {
 			String currentListName) throws CancelledException {
 
 		for (int i = 0; i < conflictList.size(); i++) {
-			currentMonitor.setProgress(++progressIndex);
+			currentMonitor.setProgress(i);
 
 			ConflictInfo info = conflictList.get(i);
 

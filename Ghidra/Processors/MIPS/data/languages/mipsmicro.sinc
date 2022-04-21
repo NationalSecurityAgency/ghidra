@@ -42,6 +42,7 @@ define token micinstr (16)
   mic_rs32_0a=(0,4)
   mic_rs32_0b=(0,4)
   mic_rs32_0lo=(0,4)
+  mic_rs32_hw=(0,4)
   mic_rs32_5=(5,9)
 
   mic_rt32_0=(0,4)
@@ -186,6 +187,17 @@ define token micinstrb (16)
 
 attach variables [ mic_rd7 mic_rd1 mic_rt4 mic_rs1 mic_rs7 mic_rs0 mic_rs4 mic_rt3 mic_rt7 mic_base4 ]
                  [ s0 s1 v0 v1 a0 a1 a2 a3 ];
+
+attach variables [ mic_rs32_hw ] [
+	HW_CPUNUM	HW_SYNCI_STEP	HW_CC		HW_CCRe
+	HW_PerfCtr	HW_XNP			HW_RES6		HW_RES7
+	HW_RES8		HW_RES9			HW_RES10	HW_RES11
+	HW_RES12	HW_RES13		HW_RES14	HW_RES15
+	HW_RES16	HW_RES17		HW_RES18	HW_RES19
+	HW_RES20	HW_RES21		HW_RES22	HW_RES23
+	HW_RES24	HW_RES25		HW_RES26	HW_RES27
+	HW_RES28	HW_ULR			HW_RESIM30	HW_RESIM31
+];
 
 @ifdef MIPS64
 attach variables [ mic_rd7lo mic_rd1lo mic_rt4lo mic_rs1lo mic_rs7lo mic_rs0lo mic_rs4lo mic_rt3lo mic_rt7lo ]
@@ -2769,8 +2781,8 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
     micb_fdD = mipsFloatPS(mic_fsD, mic_ftD_5);
 }
 
-:rdhwr mic_rt32_5, mic_rs32_0   		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0110101100 {
-	mic_rt32_5 = getHWRegister(mic_rs32_0);
+:rdhwr mic_rt32_5, mic_rs32_hw   		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rt32_5 & mic_rs32_hw ; micb_poolax=0b111100 & micb_axf=0b0110101100 {
+	mic_rt32_5 = getHWRegister(mic_rs32_hw);
 }
 
 :sub.PS micb_fd, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5; micb_fd & micb_fdD & micb_bit10=0 & micb_fmt8=2 & micb_fxf3=0b01110000 {
@@ -3663,8 +3675,13 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	micb_rd32 = sext(tmp);
 }
 
-:rdhwr mic_rt32_5, mic_rs32_0, micb_sel	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & mic_rt32_5 & mic_rs32_0 ; micb_sel & micb_z14=0 & micb_bit10=0 & micb_axf2=0b0111000000 {
-	mic_rt32_5 = getHWRegister(mic_rs32_0, micb_sel:1);
+#sel only valid for PerfCtr
+:rdhwr mic_rt32_5, mic_rs32_hw, micb_sel	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & mic_rt32_5 & mic_rs32_hw & mic_rs32_0=4; micb_sel & micb_z14=0 & micb_bit10=0 & micb_axf2=0b0111000000 {
+	mic_rt32_5 = getHWRegister(mic_rs32_hw, micb_sel:1);
+}
+
+:rdhwr mic_rt32_5, mic_rs32_hw	is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & mic_rt32_5 & mic_rs32_hw & mic_rs32_0!=4; micb_sel=0 & micb_z14=0 & micb_bit10=0 & micb_axf2=0b0111000000 {
+	mic_rt32_5 = getHWRegister(mic_rs32_hw);
 }
 
 :rint.S mic_fd, mic_fs_5				is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=1 & mic_fs_5 & mic_fd ; micb_fd=0 & micb_fmt9=0 & micb_fxf5=0b000100000 {

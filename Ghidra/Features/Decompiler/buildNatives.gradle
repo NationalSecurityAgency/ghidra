@@ -86,6 +86,7 @@ model {
 		                include "funcdata.cc"
 		                include "funcdata_block.cc"
 		                include "funcdata_varnode.cc"
+		                include "unionresolve.cc"
 		                include "funcdata_op.cc"
 		                include "pcodeinject.cc"
 		                include "heritage.cc"

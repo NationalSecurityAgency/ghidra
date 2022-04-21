@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.pe;
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.pe.resource.*;
 import ghidra.app.util.datatype.microsoft.*;
 import ghidra.app.util.importer.MessageLog;
@@ -161,22 +161,7 @@ public class ResourceDataDirectory extends DataDirectory {
 
 	public static Set<Integer> directoryMap;
 
-	static ResourceDataDirectory createResourceDataDirectory(NTHeader ntHeader,
-			FactoryBundledWithBinaryReader reader) throws IOException {
-		ResourceDataDirectory resourceDataDirectory =
-			(ResourceDataDirectory) reader.getFactory().create(ResourceDataDirectory.class);
-		resourceDataDirectory.initResourceDataDirectory(ntHeader, reader);
-		return resourceDataDirectory;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ResourceDataDirectory() {
-	}
-
-	private void initResourceDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	ResourceDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		directoryMap = new HashSet<>();
 		processDataDirectory(ntHeader, reader);
 	}

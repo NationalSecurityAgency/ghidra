@@ -1784,7 +1784,7 @@ extImm: "#"^thv_c0811	is TMode=1 & thv_c0811	{ tmp:1 = thv_c0811; export tmp; }
 }
 
 
-:vraddhn.i^esize2021x2 Dd,Qn,Qm    is (($(AMODE) & cond=15 & c2527=1 & c2323=0 & c2021<3  & c0811=4 & Q6=0 & c0404=0) |
+:vraddhn.i^esize2021x2 Dd,Qn,Qm    is (($(AMODE) & cond=15 & c2527=1 & c2323=1 & c2021<3  & c0811=4 & Q6=0 & c0404=0) |
 	                                   ($(TMODE_F) & thv_c2327=0x1f & thv_c2021<3  & thv_c0811=4 & thv_Q6=0 & thv_c0404=0) ) & Qm & esize2021x2 & Qn & Dd
 {
 	Dd = VectorRoundAddAndNarrow(Qn,Qm,esize2021x2);

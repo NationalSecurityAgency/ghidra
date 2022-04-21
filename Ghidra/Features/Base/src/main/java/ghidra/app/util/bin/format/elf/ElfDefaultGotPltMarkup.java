@@ -60,7 +60,7 @@ public class ElfDefaultGotPltMarkup {
 	}
 
 	public void process(TaskMonitor monitor) throws CancelledException {
-		if (elf.e_shnum() == 0) {
+		if (elf.getSectionHeaderCount() == 0) {
 			processDynamicPLTGOT(ElfDynamicType.DT_PLTGOT, ElfDynamicType.DT_JMPREL, monitor);
 		}
 		else {

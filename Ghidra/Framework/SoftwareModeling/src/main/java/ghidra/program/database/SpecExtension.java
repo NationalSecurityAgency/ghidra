@@ -637,7 +637,13 @@ public class SpecExtension {
 		}
 		cspecValidator.verify(res.optionName, document);
 		checkExtension(res);
-		parseExtension(res.optionName, document, program.getCompilerSpec(), false);
+		if (!(program.getCompilerSpec() instanceof BasicCompilerSpec)) {
+			throw new SleighException(
+				"Can only test specification extensions against SLEIGH program");
+		}
+		BasicCompilerSpec cSpecCopy =
+			new BasicCompilerSpec((BasicCompilerSpec) program.getCompilerSpec());
+		parseExtension(res.optionName, document, cSpecCopy, false);
 		return res;
 	}
 

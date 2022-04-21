@@ -15,6 +15,8 @@
  */
 package ghidra.file.formats.coff;
 
+import java.util.Arrays;
+
 import java.io.IOException;
 
 import ghidra.app.util.bin.ByteProvider;
@@ -24,7 +26,6 @@ import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import utilities.util.ArrayUtilities;
 
 public class CoffArchiveFileSystemFactory implements
 		GFileSystemFactoryByteProvider<CoffArchiveFileSystem>, GFileSystemProbeBytesOnly {
@@ -48,7 +49,8 @@ public class CoffArchiveFileSystemFactory implements
 
 	@Override
 	public boolean probeStartBytes(FSRL containerFSRL, byte[] startBytes) {
-		return ArrayUtilities.arrayRangesEquals(CoffArchiveConstants.MAGIC_BYTES, 0, startBytes, 0,
-			CoffArchiveConstants.MAGIC_BYTES.length);
+		return Arrays.equals(
+			CoffArchiveConstants.MAGIC_BYTES, 0, CoffArchiveConstants.MAGIC_BYTES.length,
+			startBytes, 0, CoffArchiveConstants.MAGIC_BYTES.length);
 	}
 }

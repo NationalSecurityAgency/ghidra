@@ -18,8 +18,6 @@ package ghidra.async;
 import java.util.Collection;
 import java.util.concurrent.*;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
-
 import ghidra.async.AsyncUtils.TemperamentalRunnable;
 import ghidra.async.AsyncUtils.TemperamentalSupplier;
 import ghidra.util.Msg;
@@ -30,7 +28,7 @@ public interface AsyncTestUtils {
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 	static final long RETRY_INTERVAL_MS = 100;
 
-	default <T> T waitOnNoValidate(CompletableFuture<T> future) {
+	default <T> T waitOnNoValidate(CompletableFuture<T> future) throws Throwable {
 		// Do this instead of plain ol' .get(time), to ease debugging
 		// When suspended in .get(time), you can't introspect much, otherwise
 		long started = System.currentTimeMillis();
@@ -40,15 +38,11 @@ public interface AsyncTestUtils {
 			}
 			catch (TimeoutException e) {
 				if (Long.compareUnsigned(System.currentTimeMillis() - started, TIMEOUT_MS) >= 0) {
-					throw new RuntimeException(AsyncUtils.unwrapThrowable(e));
+					throw e;
 				}
 			}
 			catch (Exception e) {
-				Throwable unwrapped = AsyncUtils.unwrapThrowable(e);
-				if (unwrapped instanceof RuntimeException) {
-					throw (RuntimeException) unwrapped;
-				}
-				return ExceptionUtils.rethrow(e);
+				throw AsyncUtils.unwrapThrowable(e);
 			}
 		}
 	}

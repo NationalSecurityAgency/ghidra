@@ -157,7 +157,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 	 * spec from Language.
 	 * @param op2 is the spec to clone
 	 */
-	protected BasicCompilerSpec(BasicCompilerSpec op2) {
+	public BasicCompilerSpec(BasicCompilerSpec op2) {
 		language = op2.language;
 		description = op2.description;
 		// PrototypeModel is immutable but the map may change, so callingConventionMap

@@ -121,6 +121,7 @@ protected:
   bool option_unplaced;		///< Set to \b true if we should display unplaced comments
   bool option_hide_exts;	///< Set to \b true if we should hide implied extension operations
   string nullToken;		///< Token to use for 'null'
+  string sizeSuffix;		///< Characters to print to indicate a \e long integer token
   CommentSorter commsorter;	///< Container/organizer for comments in the current function
 
   // Routines that are specific to C/C++
@@ -172,14 +173,14 @@ protected:
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
 			    const Varnode *vn,const PcodeOp *op);
   virtual void pushAnnotation(const Varnode *vn,const PcodeOp *op);
-  virtual void pushSymbol(const Symbol *sym,const Varnode *vn,
-			  const PcodeOp *op);
+  virtual void pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op);
   virtual void pushUnnamedLocation(const Address &addr,
 				   const Varnode *vn,const PcodeOp *op);
   virtual void pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
-				 const Varnode *vn,const PcodeOp *op,Datatype *outtype);
+				 const Varnode *vn,const PcodeOp *op,int4 inslot);
   virtual void pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 				  const Varnode *vn,const PcodeOp *op);
+  virtual void pushImpliedField(const Varnode *vn,const PcodeOp *op);
   virtual void push_integer(uintb val,int4 sz,bool sign,
 			    const Varnode *vn,
 			    const PcodeOp *op);
@@ -210,6 +211,7 @@ public:
   void setHideImpliedExts(bool val) { option_hide_exts = val; }	///< Toggle whether implied extensions are hidden
   virtual ~PrintC(void) {}
   virtual void resetDefaults(void);
+  virtual void initializeFromArchitecture(void);
   virtual void adjustTypeOperators(void);
   virtual void setCommentStyle(const string &nm);
   virtual void docTypeDefinitions(const TypeFactory *typegrp);

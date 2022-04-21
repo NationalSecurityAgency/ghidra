@@ -80,11 +80,20 @@ public class ObjectiveC2_Method extends ObjectiveC_Method {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType("method" + (isSmall ? "_small" : "") + "_t", 0);
 		if (isSmall) {
-			DataType sdw = SignedDWordDataType.dataType;
 			String comment = "offset from this address";
-			struct.add(sdw, sdw.getLength(), "name", comment);
-			struct.add(sdw, sdw.getLength(), "types", comment);
-			struct.add(sdw, sdw.getLength(), "imp", comment);
+
+			PointerTypedef strPtrRefDt = new PointerTypedef(null, new PointerDataType(STRING), 4,
+				null, PointerType.RELATIVE);
+
+			PointerTypedef strRefDt =
+				new PointerTypedef(null, STRING, 4, null, PointerType.RELATIVE);
+
+			PointerTypedef voidRefDt =
+				new PointerTypedef(null, VOID, 4, null, PointerType.RELATIVE);
+
+			struct.add(strPtrRefDt, "name", comment);
+			struct.add(strRefDt, "types", comment);
+			struct.add(voidRefDt, "imp", comment);
 		}
 		else {
 			struct.add(new PointerDataType(STRING), _state.pointerSize, "name", null);

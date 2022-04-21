@@ -21,8 +21,7 @@ import java.util.List;
 import org.xml.sax.*;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.VoidDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
@@ -265,7 +264,7 @@ public class HighParamID extends PcodeSyntaxTree {
 					dataType = pm.getDataType();
 				}
 				else {
-					dataType = dtManage.findUndefined(vn.getSize());
+					dataType = Undefined.getUndefinedDataType(vn.getSize());
 				}
 				//Msg.debug(this, "func: " + func.getName() + " -- type: " + dataType.getName());
 				if (!(dataType == null || dataType instanceof VoidDataType)) {
@@ -298,7 +297,7 @@ public class HighParamID extends PcodeSyntaxTree {
 					dataType = pm.getDataType();
 				}
 				else {
-					dataType = dtManage.findUndefined(vn.getSize());
+					dataType = Undefined.getUndefinedDataType(vn.getSize());
 				}
 				Variable v = new ParameterImpl(null, dataType, buildStorage(vn), func.getProgram());
 				//Msg.debug(this, "function(" + func.getName() + ")--param: " + v.toString() +

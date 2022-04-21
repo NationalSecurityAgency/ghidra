@@ -880,7 +880,8 @@ public final class FileUtilities {
 	 *
 	 * @param f1 the parent file
 	 * @param f2 the child file
-	 * @return the portion of the second file that trails the full path of the first file.
+	 * @return the portion of the second file that trails the full path of the first file; null as
+	 * described above
 	 * @throws IOException if there is an error canonicalizing the path
 	 */
 	public static String relativizePath(File f1, File f2) throws IOException {
@@ -903,17 +904,18 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Return the relative path string of one resource file in another. If
-	 * no path can be constructed or the files are the same, then null is returned.
+	 * Return the relative path string of one resource file in another. If no path can be 
+	 * constructed or the files are the same, then null is returned.
 	 * 
-	 * Note: unlike {@link #relativizePath(File, File)}, this function does not resolve symbolic links.
+	 * Note: unlike {@link #relativizePath(File, File)}, this function does not resolve symbolic 
+	 * links.
 	 *
 	 * <P>For example, given, in this order, two files with these paths
 	 *  <code>/a/b</code> and <code>/a/b/c</code>, this method will return 'c'.
 	 *
 	 * @param f1 the parent resource file
 	 * @param f2 the child resource file
-	 * @return the relative path of {@code f2} in {@code f1}
+	 * @return the relative path of {@code f2} in {@code f1}; null if f1 is not a parent of f2
 	 */
 	public static String relativizePath(ResourceFile f1, ResourceFile f2) {
 		StringBuilder sb = new StringBuilder(f2.getName());

@@ -100,30 +100,31 @@ public class ToolTipUtils {
 	 */
 	public static HTMLDataTypeRepresentation getHTMLRepresentation(DataType dataType) {
 		if (dataType != null) {
+			if (dataType instanceof BuiltIn) {
+				return new DefaultDataTypeHTMLRepresentation(dataType);
+			}
 			if (dataType instanceof TypeDef) {
 				return new TypeDefDataTypeHTMLRepresentation((TypeDef) dataType);
 			}
-			else if (dataType instanceof Composite) {
+			if (dataType instanceof Composite) {
 				return new CompositeDataTypeHTMLRepresentation((Composite) dataType);
 			}
-			else if (dataType instanceof Enum) {
+			if (dataType instanceof Enum) {
 				return new EnumDataTypeHTMLRepresentation((Enum) dataType);
 			}
-			else if (dataType instanceof FunctionDefinition) {
+			if (dataType instanceof FunctionDefinition) {
 				return new FunctionDataTypeHTMLRepresentation((FunctionDefinition) dataType);
 			}
-			else if (dataType instanceof Pointer) {
+			if (dataType instanceof Pointer) {
 				return new PointerDataTypeHTMLRepresentation((Pointer) dataType);
 			}
-			else if (dataType instanceof Array) {
+			if (dataType instanceof Array) {
 				return new ArrayDataTypeHTMLRepresentation((Array) dataType);
 			}
-			else if (dataType instanceof BitFieldDataType) {
+			if (dataType instanceof BitFieldDataType) {
 				return new BitFieldDataTypeHTMLRepresentation((BitFieldDataType) dataType);
 			}
-			else {
-				return new DefaultDataTypeHTMLRepresentation(dataType);
-			}
+			return new DefaultDataTypeHTMLRepresentation(dataType);
 		}
 
 		return new NullDataTypeHTMLRepresentation();

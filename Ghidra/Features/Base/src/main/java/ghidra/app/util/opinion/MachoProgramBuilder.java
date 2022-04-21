@@ -28,7 +28,6 @@ import ghidra.app.util.bin.format.macho.relocation.*;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.mem.FileBytes;
@@ -107,7 +106,7 @@ public class MachoProgramBuilder {
 
 		monitor.setMessage("Completing Mach-O header parsing...");
 		monitor.setCancelEnabled(false);
-		machoHeader = MachHeader.createMachHeader(MessageLogContinuesFactory.create(log), provider);
+		machoHeader = new MachHeader(provider);
 		machoHeader.parse();
 		monitor.setCancelEnabled(true);
 

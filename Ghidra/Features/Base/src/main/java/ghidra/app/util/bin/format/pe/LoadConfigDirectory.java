@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
@@ -76,22 +75,7 @@ public class LoadConfigDirectory implements StructConverter {
 
 	private boolean is64bit;
 
-	static LoadConfigDirectory createLoadConfigDirectory(FactoryBundledWithBinaryReader reader,
-			int index, OptionalHeader oh) throws IOException {
-		LoadConfigDirectory loadConfigDirectory =
-			(LoadConfigDirectory) reader.getFactory().create(LoadConfigDirectory.class);
-		loadConfigDirectory.initLoadConfigDirectory(reader, index, oh);
-		return loadConfigDirectory;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public LoadConfigDirectory() {
-	}
-
-	private void initLoadConfigDirectory(FactoryBundledWithBinaryReader reader, int index,
-			OptionalHeader oh) throws IOException {
+	LoadConfigDirectory(BinaryReader reader, int index, OptionalHeader oh) throws IOException {
 		is64bit = oh.is64bit();
 
 		long oldIndex = reader.getPointerIndex();

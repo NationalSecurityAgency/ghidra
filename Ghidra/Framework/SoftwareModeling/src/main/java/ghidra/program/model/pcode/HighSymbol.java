@@ -47,7 +47,7 @@ public class HighSymbol {
 	protected SymbolEntry[] entryList;	// List of mappings for this symbol
 
 	private HighVariable highVariable;
-	private PcodeDataTypeManager dtmanage;	// Datatype manager for XML generation
+	protected PcodeDataTypeManager dtmanage;	// Datatype manager for XML generation
 
 	/**
 	 * Constructor for use with restoreXML

@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.pe.debug;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.pe.OffsetValidator;
 import ghidra.program.model.data.*;
 import ghidra.util.Conv;
@@ -62,21 +62,8 @@ public class DebugMisc implements StructConverter {
 	 * @param debugDir the debug directory associated to this MISC debug
 	 * @param ntHeader 
 	 */
-	static DebugMisc createDebugMisc(FactoryBundledWithBinaryReader reader,
-			DebugDirectory debugDir, OffsetValidator validator) throws IOException {
-		DebugMisc debugMisc = (DebugMisc) reader.getFactory().create(DebugMisc.class);
-		debugMisc.initDebugMisc(reader, debugDir, validator);
-		return debugMisc;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DebugMisc() {
-	}
-
-	private void initDebugMisc(FactoryBundledWithBinaryReader reader, DebugDirectory debugDir,
-			OffsetValidator validator) throws IOException {
+	DebugMisc(BinaryReader reader, DebugDirectory debugDir, OffsetValidator validator)
+			throws IOException {
 		this.debugDir = debugDir;
 
 		long oldIndex = reader.getPointerIndex();

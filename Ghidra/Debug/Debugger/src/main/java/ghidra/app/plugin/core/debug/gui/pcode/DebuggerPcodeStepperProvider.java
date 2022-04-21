@@ -107,6 +107,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	protected enum PcodeTableColumns implements EnumeratedTableColumn<PcodeTableColumns, PcodeRow> {
 		SEQUENCE("Sequence", Integer.class, PcodeRow::getSequence),
+		LABEL("Label", String.class, PcodeRow::getLabel),
 		CODE("Code", String.class, PcodeRow::getCode);
 
 		private final String header;
@@ -331,90 +332,122 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	class ToPcodeRowsAppender extends AbstractAppender<List<PcodeRow>> {
 		private final List<PcodeRow> rows = new ArrayList<>();
 		private final PcodeFrame frame;
-		private StringBuilder html;
+
+		private boolean hasLabel;
+		private StringBuilder labelHtml;
+		private StringBuilder codeHtml;
+
 		private PcodeOp op;
 		private boolean isNext;
 
-		public ToPcodeRowsAppender(Language language, boolean indent, PcodeFrame frame) {
-			super(language, indent);
+		public ToPcodeRowsAppender(Language language, PcodeFrame frame) {
+			super(language, false);
 			this.frame = frame;
 		}
 
 		void startRow(PcodeOp op, boolean isNext) {
+			if (hasLabel && this.op == null) {
+				// Just continue formatting the current label-only row
+			}
+			else {
+				// Reset and actually start a new row
+				labelHtml = new StringBuilder("<html>");
+				hasLabel = false;
+				codeHtml = new StringBuilder("<html>");
+			}
 			this.op = op;
 			this.isNext = isNext;
-			html = new StringBuilder("<html>");
 		}
 
 		void endRow() {
-			html.append("</html>");
-			rows.add(new OpPcodeRow(language, op, isNext, html.toString()));
+			if (hasLabel && op == null) {
+				// Don't end, just wait for the code
+			}
+			else {
+				// Actually append the row
+				labelHtml.append("</html>");
+				codeHtml.append("</html>");
+				rows.add(new OpPcodeRow(language, op, isNext, labelHtml.toString(),
+					codeHtml.toString()));
+				hasLabel = false;
+				op = null;
+			}
 		}
 
 		@Override
 		public void appendAddressWordOffcut(long wordOffset, long offcut) {
-			html.append(htmlSpan(SPAN_ADDRESS, stringifyWordOffcut(wordOffset, offcut)));
+			codeHtml.append(htmlSpan(SPAN_ADDRESS, stringifyWordOffcut(wordOffset, offcut)));
 		}
 
 		@Override
 		public void appendCharacter(char c) {
 			if (c == '=') {
-				html.append(htmlSpan(SPAN_SEPARATOR, " = "));
+				codeHtml.append("&nbsp;");
+				codeHtml.append(htmlSpan(SPAN_SEPARATOR, "="));
+				codeHtml.append("&nbsp;");
+			}
+			else if (c == ' ') {
+				codeHtml.append("&nbsp;");
 			}
 			else {
-				html.append(htmlSpan(SPAN_SEPARATOR, Character.toString(c)));
+				codeHtml.append(htmlSpan(SPAN_SEPARATOR, Character.toString(c)));
 			}
 		}
 
 		@Override
 		public void appendIndent() {
-			html.append("&nbsp;&nbsp;");
 		}
 
 		@Override
 		public void appendLabel(String label) {
-			html.append(htmlSpan(SPAN_LOCAL, label));
+			codeHtml.append(htmlSpan(SPAN_LOCAL, label));
+		}
+
+		@Override
+		public void appendLineLabel(long label) {
+			hasLabel = true;
+			labelHtml.append(htmlSpan(SPAN_LINE_LABEL, stringifyLineLabel(label)));
 		}
 
 		@Override
 		public void appendLineLabelRef(long label) {
-			html.append(htmlSpan(SPAN_LINE_LABEL, stringifyLineLabel(label)));
+			codeHtml.append(htmlSpan(SPAN_LINE_LABEL, stringifyLineLabel(label)));
 		}
 
 		@Override
 		public void appendMnemonic(int opcode) {
 			String style = opcode == PcodeOp.UNIMPLEMENTED ? SPAN_UNIMPL : SPAN_MNEMONIC;
-			html.append(htmlSpan(style, stringifyOpMnemonic(opcode)));
+			codeHtml.append(htmlSpan(style, stringifyOpMnemonic(opcode)));
 		}
 
 		@Override
 		public void appendRawVarnode(AddressSpace space, long offset, long size) {
-			html.append(htmlSpan(SPAN_RAW, stringifyRawVarnode(space, offset, size)));
+			codeHtml.append(htmlSpan(SPAN_RAW, stringifyRawVarnode(space, offset, size)));
 		}
 
 		@Override
 		public void appendRegister(Register register) {
-			html.append(htmlSpan(SPAN_REGISTER, stringifyRegister(register)));
+			codeHtml.append(htmlSpan(SPAN_REGISTER, stringifyRegister(register)));
 		}
 
 		@Override
 		public void appendScalar(long value) {
-			html.append(htmlSpan(SPAN_SCALAR, stringifyScalarValue(value)));
+			codeHtml.append(htmlSpan(SPAN_SCALAR, stringifyScalarValue(value)));
 		}
 
 		@Override
 		public void appendSpace(AddressSpace space) {
-			html.append(htmlSpan(SPAN_SPACE, stringifySpace(space)));
+			codeHtml.append(htmlSpan(SPAN_SPACE, stringifySpace(space)));
 		}
 
 		@Override
 		public void appendUnique(long offset) {
-			html.append(htmlSpan(SPAN_LOCAL, stringifyUnique(offset)));
+			codeHtml.append(htmlSpan(SPAN_LOCAL, stringifyUnique(offset)));
 		}
 
 		@Override
 		public void appendUserop(int id) {
-			html.append(htmlSpan(SPAN_USEROP, stringifyUserop(language, id)));
+			codeHtml.append(htmlSpan(SPAN_USEROP, stringifyUserop(language, id)));
 		}
 
 		@Override
@@ -428,6 +461,15 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 		@Override
 		public List<PcodeRow> finish() {
+			String label;
+			if (hasLabel) {
+				labelHtml.append("</html>");
+				label = labelHtml.toString();
+			}
+			else {
+				label = "";
+			}
+			rows.add(new FallthroughPcodeRow(frame.getCode().size(), frame.isFallThrough(), label));
 			return rows;
 		}
 	}
@@ -451,7 +493,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 		@Override
 		protected ToPcodeRowsAppender createAppender(Language language, boolean indent) {
-			return new ToPcodeRowsAppender(language, indent, frame);
+			return new ToPcodeRowsAppender(language, frame);
 		}
 
 		@Override
@@ -541,6 +583,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	PcodeTableModel pcodeTableModel = new PcodeTableModel();
 	JLabel instructionLabel;
 	// No filter panel on p-code
+	PcodeCellRenderer codeColRenderer;
 
 	DockingAction actionStepBackward;
 	DockingAction actionStepForward;
@@ -696,16 +739,31 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		pcodeTableModel.fireTableDataChanged();
 	}
 
-	protected int computeSeqColWidth(JLabel renderer) {
+	protected int measureColWidth(JLabel renderer, String sample) {
 		Font font = renderer.getFont();
 		Insets insets = renderer.getBorder().getBorderInsets(renderer);
-		return (int) font.getStringBounds("00", METRIC_FRC).getWidth() + insets.left + insets.right;
+		return (int) font.getStringBounds(sample, METRIC_FRC).getWidth() + insets.left +
+			insets.right;
+	}
+
+	protected int measureWidthHtml(JLabel renderer, String sampleHtml) {
+		String sampleText = HTMLUtilities.fromHTML(sampleHtml);
+		return measureColWidth(renderer, sampleText);
 	}
 
 	protected void buildMainPanel() {
-		JPanel pcodePanel = new JPanel(new BorderLayout());
+		// An intervening panel to interrupt swings table-viewport nonsense
+		// This will allow the viewport to properly fit the table's contents
+		JPanel pcodeTablePanel = new JPanel(new BorderLayout());
 		pcodeTable = new GhidraTable(pcodeTableModel);
-		pcodePanel.add(new JScrollPane(pcodeTable));
+		pcodeTablePanel.add(pcodeTable, BorderLayout.CENTER);
+
+		JScrollPane pcodeScrollPane = new JScrollPane(pcodeTablePanel,
+			ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+			ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+		JPanel pcodePanel = new JPanel(new BorderLayout());
+		pcodePanel.add(pcodeScrollPane, BorderLayout.CENTER);
 		instructionLabel = new JLabel();
 		pcodePanel.add(instructionLabel, BorderLayout.NORTH);
 		mainPanel.setLeftComponent(pcodePanel);
@@ -732,12 +790,17 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		TableColumn seqCol = pcodeColModel.getColumn(PcodeTableColumns.SEQUENCE.ordinal());
 		CounterBackgroundCellRenderer seqColRenderer = new CounterBackgroundCellRenderer();
 		seqCol.setCellRenderer(seqColRenderer);
-		int seqColWidth = computeSeqColWidth(seqColRenderer);
+		int seqColWidth = measureColWidth(seqColRenderer, "00");
 		seqCol.setMinWidth(seqColWidth);
 		seqCol.setMaxWidth(seqColWidth);
+		TableColumn labelCol = pcodeColModel.getColumn(PcodeTableColumns.LABEL.ordinal());
+		codeColRenderer = new PcodeCellRenderer();
+		labelCol.setCellRenderer(codeColRenderer);
+		int labelColWidth = measureColWidth(codeColRenderer, "<00>");
+		labelCol.setMinWidth(labelColWidth);
+		labelCol.setMaxWidth(labelColWidth);
 		TableColumn codeCol = pcodeColModel.getColumn(PcodeTableColumns.CODE.ordinal());
-		codeCol.setCellRenderer(new PcodeCellRenderer());
-		//codeCol.setPreferredWidth(75);
+		codeCol.setCellRenderer(codeColRenderer);
 
 		TableColumnModel uniqueColModel = uniqueTable.getColumnModel();
 		TableColumn refCol = uniqueColModel.getColumn(UniqueTableColumns.REF.ordinal());
@@ -811,14 +874,26 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	}
 
 	protected void populateSingleton(PcodeRow row) {
-		pcodeTableModel.clear();
 		pcodeTableModel.add(row);
-		uniqueTableModel.clear();
 	}
 
 	protected void populateFromFrame(PcodeFrame frame, PcodeExecutorState<byte[]> state) {
 		populatePcode(frame);
 		populateUnique(frame, state);
+	}
+
+	protected int computeCodeColWidth(List<PcodeRow> rows) {
+		return rows.stream()
+				.map(r -> measureWidthHtml(codeColRenderer, r.getCode()))
+				.reduce(0, Integer::max);
+	}
+
+	protected void adjustCodeColWidth(List<PcodeRow> rows) {
+		TableColumn codeCol =
+			pcodeTable.getColumnModel().getColumn(PcodeTableColumns.CODE.ordinal());
+		int width = computeCodeColWidth(rows);
+		codeCol.setMinWidth(width);
+		codeCol.setPreferredWidth(width);
 	}
 
 	protected void populatePcode(PcodeFrame frame) {
@@ -827,16 +902,17 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		PcodeRowHtmlFormatter formatter = new PcodeRowHtmlFormatter(language, frame);
 		List<PcodeRow> toAdd = formatter.getRows();
 
+		int sel = formatter.nextRowIndex;
 		if (frame.isBranch()) {
-			toAdd.add(new BranchPcodeRow(frame.getCode().size(), frame.getBranched()));
+			sel = frame.getCode().size() + 1;
+			toAdd.add(new BranchPcodeRow(sel, frame.getBranched()));
 		}
 		else if (frame.isFallThrough()) {
-			toAdd.add(new FallthroughPcodeRow(frame.getCode().size()));
+			sel = frame.getCode().size();
 		}
-		pcodeTableModel.clear();
+		adjustCodeColWidth(toAdd);
 		pcodeTableModel.addAll(toAdd);
-		pcodeTable.getSelectionModel()
-				.setSelectionInterval(formatter.nextRowIndex, formatter.nextRowIndex);
+		pcodeTable.getSelectionModel().setSelectionInterval(sel, sel);
 		pcodeTable.scrollToSelectedRow();
 	}
 
@@ -862,8 +938,12 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 			uniques.stream()
 					.map(u -> new UniqueRow(this, language, state, u))
 					.collect(Collectors.toList());
-		uniqueTableModel.clear();
 		uniqueTableModel.addAll(toAdd);
+	}
+
+	protected void clear() {
+		pcodeTableModel.clear();
+		uniqueTableModel.clear();
 	}
 
 	protected void doLoadPcodeFrame() {
@@ -871,33 +951,39 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 			instructionLabel.setText("(no instruction)");
 		}
 		if (emulationService == null) {
+			clear();
 			return;
 		}
 		DebuggerCoordinates current = this.current; // Volatile, also after background
 		Trace trace = current.getTrace();
 		if (trace == null) {
+			clear();
 			return;
 		}
 		if (current.getThread() == null) {
+			clear();
 			populateSingleton(EnumPcodeRow.NO_THREAD);
 			return;
 		}
 		TraceSchedule time = current.getTime();
 		if (time.pTickCount() == 0) {
+			clear();
 			populateSingleton(EnumPcodeRow.DECODE);
 			return;
 		}
 		DebuggerTracePcodeEmulator emu = emulationService.getCachedEmulator(trace, time);
 		if (emu != null) {
+			clear();
 			doLoadPcodeFrameFromEmulator(emu);
 			return;
 		}
 		emulationService.backgroundEmulate(trace, time).thenAcceptAsync(__ -> {
+			clear();
 			if (current != this.current) {
 				return;
 			}
 			doLoadPcodeFrameFromEmulator(emulationService.getCachedEmulator(trace, time));
-		}, SwingExecutorService.INSTANCE);
+		}, SwingExecutorService.LATER);
 	}
 
 	protected void doLoadPcodeFrameFromEmulator(DebuggerTracePcodeEmulator emu) {

@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
-import ghidra.app.util.bin.format.pe.OffsetValidator;
-
 import java.io.IOException;
 import java.util.ArrayList;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.pe.OffsetValidator;
 
 /**
  * A helper class to parsing different types of 
@@ -90,27 +90,12 @@ public class DebugDirectoryParser {
 	 * @param validator the validator for the directory
 	 * @throws IOException if an I/O error occurs
 	 */
-	public static DebugDirectoryParser createDebugDirectoryParser(
-			FactoryBundledWithBinaryReader reader, long ptr, int size, OffsetValidator validator)
+	public DebugDirectoryParser(BinaryReader reader, long ptr, int size, OffsetValidator validator)
 			throws IOException {
-		DebugDirectoryParser debugDirectoryParser =
-			(DebugDirectoryParser) reader.getFactory().create(DebugDirectoryParser.class);
-		debugDirectoryParser.initDebugDirectoryParser(reader, ptr, size, validator);
-		return debugDirectoryParser;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DebugDirectoryParser() {
-	}
-
-	private void initDebugDirectoryParser(FactoryBundledWithBinaryReader reader, long ptr,
-			int size, OffsetValidator validator) throws IOException {
 		int debugFormatsCount = size / DebugDirectory.IMAGE_SIZEOF_DEBUG_DIRECTORY;
 
 		for (int i = 0; i < debugFormatsCount; ++i) {
-			DebugDirectory debugDir = DebugDirectory.createDebugDirectory(reader, ptr, validator);
+			DebugDirectory debugDir = new DebugDirectory(reader, ptr, validator);
 			if (debugDir.getSizeOfData() == 0)
 				break;
 
@@ -134,27 +119,26 @@ public class DebugDirectoryParser {
 					break;
 				case IMAGE_DEBUG_TYPE_FIXUP:
 					debugDir.setDescription("Fixup");
-					fixupDebug = DebugFixup.createDebugFixup(reader, debugDir, validator);
+					fixupDebug = new DebugFixup(reader, debugDir, validator);
 					break;
 				case IMAGE_DEBUG_TYPE_EXCEPTION:
 					debugDir.setDescription("Exception");
 					break;
 				case IMAGE_DEBUG_TYPE_MISC:
 					debugDir.setDescription("Misc");
-					miscDebug = DebugMisc.createDebugMisc(reader, debugDir, validator);
+					miscDebug = new DebugMisc(reader, debugDir, validator);
 					break;
 				case IMAGE_DEBUG_TYPE_FPO:
 					debugDir.setDescription("FPO");
 					break;
 				case IMAGE_DEBUG_TYPE_CODEVIEW:
 					debugDir.setDescription("CodeView");
-					codeViewDebug = DebugCodeView.createDebugCodeView(reader, debugDir, validator);
+					codeViewDebug = new DebugCodeView(reader, debugDir, validator);
 					break;
 				case IMAGE_DEBUG_TYPE_COFF:
 					debugDir.setDescription("COFF");
 					coffDebug =
-						DebugCOFFSymbolsHeader.createDebugCOFFSymbolsHeader(reader, debugDir,
-							validator);
+						new DebugCOFFSymbolsHeader(reader, debugDir, validator);
 					break;
 				case IMAGE_DEBUG_TYPE_UNKNOWN:
 					debugDir.setDescription("Unknown");

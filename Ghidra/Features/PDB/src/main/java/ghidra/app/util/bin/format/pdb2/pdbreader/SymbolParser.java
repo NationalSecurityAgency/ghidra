@@ -27,34 +27,29 @@ import ghidra.util.exception.CancelledException;
 public class SymbolParser {
 
 	//==============================================================================================
-	// Internals
-	//==============================================================================================
-	private AbstractPdb pdb;
-
-	//==============================================================================================
 	// API
 	//==============================================================================================
 	/**
 	 * Constructor.
-	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed.
 	 */
-	public SymbolParser(AbstractPdb pdb) {
-		Objects.requireNonNull(pdb, "pdb cannot be null");
-		this.pdb = pdb;
+	private SymbolParser() {
 	}
 
 	/**
 	 * Deserializes an {@link AbstractMsSymbol} from the {@link PdbByteReader} and returns it.
+	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed.
 	 * @param reader {@link PdbByteReader} from which to deserialize the symbol record.
 	 * @return {@link AbstractMsSymbol} that was parsed.
 	 * @throws PdbException upon error parsing a field.
 	 * @throws CancelledException Upon user cancellation.
 	 */
-	public AbstractMsSymbol parse(PdbByteReader reader) throws PdbException, CancelledException {
+	public static AbstractMsSymbol parse(AbstractPdb pdb, PdbByteReader reader)
+			throws PdbException, CancelledException {
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		int symbolTypeId = reader.parseUnsignedShortVal();
 		AbstractMsSymbol symbol;
 		try {
-			symbol = parseRecord(symbolTypeId, reader);
+			symbol = parseRecord(pdb, symbolTypeId, reader);
 		}
 		catch (PdbException e) {
 			symbol = new BadMsSymbol(pdb, symbolTypeId);
@@ -64,14 +59,15 @@ public class SymbolParser {
 
 	/**
 	 * Deserializes an {@link AbstractMsSymbol} from the {@link PdbByteReader} and returns it.
+	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed.
 	 * @param symbolTypeId the PDB ID for the symbol type to be parsed.
 	 * @param reader {@link PdbByteReader} from which to deserialize the symbol record.
 	 * @return {@link AbstractMsSymbol} that was parsed.
 	 * @throws PdbException upon error parsing a field.
 	 * @throws CancelledException Upon user cancellation.
 	 */
-	private AbstractMsSymbol parseRecord(int symbolTypeId, PdbByteReader reader)
-			throws PdbException, CancelledException {
+	private static AbstractMsSymbol parseRecord(AbstractPdb pdb, int symbolTypeId,
+			PdbByteReader reader) throws PdbException, CancelledException {
 
 		pdb.getPdbReaderMetrics().witnessSymbolTypeId(symbolTypeId);
 

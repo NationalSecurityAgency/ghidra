@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -41,22 +41,7 @@ public class TwoLevelHintsCommand extends LoadCommand {
 	private int nhints;
 	private List<TwoLevelHint> hints = new ArrayList<TwoLevelHint>();
 
-	static TwoLevelHintsCommand createTwoLevelHintsCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		TwoLevelHintsCommand command =
-			(TwoLevelHintsCommand) reader.getFactory().create(TwoLevelHintsCommand.class);
-		command.initTwoLevelHintsCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public TwoLevelHintsCommand() {
-	}
-
-	private void initTwoLevelHintsCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	TwoLevelHintsCommand(BinaryReader reader) throws IOException {
 		initLoadCommand(reader);
 		offset = reader.readNextInt();
 		nhints = reader.readNextInt();
@@ -64,7 +49,7 @@ public class TwoLevelHintsCommand extends LoadCommand {
 		long index = reader.getPointerIndex();
 		reader.setPointerIndex(offset);
 		for (int i = 0; i < nhints; ++i) {
-			hints.add(TwoLevelHint.createTwoLevelHint(reader));
+			hints.add(new TwoLevelHint(reader));
 		}
 		reader.setPointerIndex(index);
 	}

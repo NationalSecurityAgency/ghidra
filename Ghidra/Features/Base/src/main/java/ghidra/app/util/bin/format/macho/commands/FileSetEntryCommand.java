@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -42,22 +42,7 @@ public class FileSetEntryCommand extends LoadCommand {
 
 	boolean is32bit;
 
-	public static FileSetEntryCommand createFileSetEntryCommand(
-			FactoryBundledWithBinaryReader reader, boolean is32bit) throws IOException {
-		FileSetEntryCommand filesetEntryCommand =
-			(FileSetEntryCommand) reader.getFactory().create(FileSetEntryCommand.class);
-		filesetEntryCommand.initFileSetEntryCommand(reader, is32bit);
-		return filesetEntryCommand;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public FileSetEntryCommand() {
-	}
-
-	private void initFileSetEntryCommand(FactoryBundledWithBinaryReader reader, boolean is32bit)
-			throws IOException {
+	public FileSetEntryCommand(BinaryReader reader, boolean is32bit) throws IOException {
 		initLoadCommand(reader);
 		this.is32bit = is32bit;
 

@@ -23,8 +23,9 @@ import java.util.Random;
 
 import org.junit.Assert;
 
-import db.buffers.BufferFileManager;
-import db.buffers.DummyBufferFileMgr;
+import db.buffers.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -802,6 +803,30 @@ public class DBTestUtils {
 
 	static BufferFileManager getBufferFileManager(File dir, String dbName) {
 		return new DummyBufferFileMgr(dir, dbName, false, false);
+	}
+
+	/**
+	 * Clone a DBHandle backed by a new temporary source buffer file.
+	 * The specified dbh will remain associated with its original source buffer file.
+	 * @param dbh DBHandle to clone
+	 * @return new DBhandle
+	 * @throws IOException if a file IO error occurs
+	 */
+	public static DBHandle cloneDbHandle(DBHandle dbh) throws IOException {
+
+		try {
+			File tmpFile = File.createTempFile("tmp", ".db");
+			tmpFile.delete();
+
+			LocalBufferFile bf = new LocalBufferFile(tmpFile, dbh.getBufferSize());
+			dbh.saveAs(bf, dbh.getDatabaseId(), false, TaskMonitor.DUMMY);
+			tmpFile.deleteOnExit();
+
+			return new DBHandle(bf);
+		}
+		catch (CancelledException e) {
+			throw new IOException(e); // unexpected
+		}
 	}
 }
 

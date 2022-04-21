@@ -173,7 +173,10 @@ public abstract class DecompilerVariable {
 			}
 
 			if (parent instanceof ClangTokenGroup) {
-				return getAddressFromParent((ClangTokenGroup) parent, variable);
+				Address parentAddress = getAddressFromParent((ClangTokenGroup) parent, variable);
+				if (parentAddress != null) {
+					return parentAddress;
+				}
 			}
 
 			Address parentAddress = parent.getMinAddress();

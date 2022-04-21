@@ -20,8 +20,7 @@ import java.net.URL;
 import java.util.Collection;
 
 import db.DBRecord;
-import ghidra.docking.settings.Settings;
-import ghidra.docking.settings.SettingsDefinition;
+import ghidra.docking.settings.*;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.data.*;
@@ -39,8 +38,10 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	protected DBRecord record;
 	protected final DataTypeManagerDB dataMgr;
-	private volatile Settings defaultSettings;
+	protected volatile Settings defaultSettings;
 	private final static SettingsDefinition[] EMPTY_DEFINITIONS = new SettingsDefinition[0];
+	private final static TypeDefSettingsDefinition[] EMPTY_TYPEDEF_DEFINITIONS =
+		new TypeDefSettingsDefinition[0];
 	protected boolean resolving;
 	protected boolean pointerPostResolveRequired;
 	protected Lock lock;
@@ -107,6 +108,12 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	}
 
 	@Override
+	protected void setDeleted() {
+		defaultSettings = null;
+		super.setDeleted();
+	}
+
+	@Override
 	protected boolean refresh() {
 		category = null;
 		defaultSettings = null;
@@ -155,6 +162,10 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		return name;
 	}
 
+	protected Settings doGetDefaultSettings() {
+		return new DataTypeSettingsDB(dataMgr, this, key);
+	}
+
 	@Override
 	public Settings getDefaultSettings() {
 		Settings localDefaultSettings = defaultSettings;
@@ -163,16 +174,17 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		}
 		lock.acquire();
 		try {
-			checkIsValid();
-			if (defaultSettings == null) {
-				defaultSettings = new SettingsDBManager(dataMgr, this, key);
+			if (checkIsValid()) {
+				defaultSettings = doGetDefaultSettings();
+			}
+			else {
+				defaultSettings = SettingsImpl.NO_SETTINGS; // deleted datatype - keep everyone happy
 			}
 			return defaultSettings;
 		}
 		finally {
 			lock.release();
 		}
-
 	}
 
 	@Override
@@ -199,6 +211,11 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	}
 
 	@Override
+	public TypeDefSettingsDefinition[] getTypeDefSettingsDefinitions() {
+		return EMPTY_TYPEDEF_DEFINITIONS;
+	}
+
+	@Override
 	public boolean isDeleted() {
 		return isDeleted(lock);
 	}
@@ -216,12 +233,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	@Override
 	public DataTypeManager getDataTypeManager() {
 		return dataMgr;
-	}
-
-	@Override
-	public void setDefaultSettings(Settings settings) {
-		checkIsValid();
-		defaultSettings = settings;
 	}
 
 	@Override
@@ -577,4 +588,5 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 			throws DataTypeEncodeException {
 		throw new DataTypeEncodeException("Encoding not supported", repr, this);
 	}
+
 }

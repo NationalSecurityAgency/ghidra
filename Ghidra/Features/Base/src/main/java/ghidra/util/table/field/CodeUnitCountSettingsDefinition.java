@@ -52,10 +52,15 @@ public class CodeUnitCountSettingsDefinition implements EnumSettingsDefinition {
 			return 0;
 		}
 		Long value = settings.getLong(CODE_UNIT_COUNT);
-		if (value == null) {
+		if (value == null || value < 0 || value >= choices.length) {
 			return 0;
 		}
 		return value.intValue();
+	}
+
+	@Override
+	public String getValueString(Settings settings) {
+		return choices[getChoice(settings)];
 	}
 
 	@Override
@@ -82,6 +87,11 @@ public class CodeUnitCountSettingsDefinition implements EnumSettingsDefinition {
 
 	@Override
 	public String getName() {
+		return CODE_UNIT_COUNT;
+	}
+
+	@Override
+	public String getStorageKey() {
 		return CODE_UNIT_COUNT;
 	}
 

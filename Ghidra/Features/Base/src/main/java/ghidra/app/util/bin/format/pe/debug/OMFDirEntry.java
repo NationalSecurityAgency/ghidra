@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * <pre>
@@ -38,24 +37,15 @@ class OMFDirEntry {
     private int   lfo;
     private int   cb;
 
-    static OMFDirEntry createOMFDirEntry(
-            FactoryBundledWithBinaryReader reader, int index)
-            throws IOException {
-        OMFDirEntry omfDirEntry = (OMFDirEntry) reader.getFactory().create(OMFDirEntry.class);
-        omfDirEntry.initOMFDirEntry(reader, index);
-        return omfDirEntry;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public OMFDirEntry() {}
-
-    private void initOMFDirEntry(FactoryBundledWithBinaryReader reader, int index) throws IOException {
-        subsection = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
-        imod       = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
-        lfo        = reader.readInt  (index); index+=BinaryReader.SIZEOF_INT;
-        cb         = reader.readInt  (index); index+=BinaryReader.SIZEOF_INT;
+	OMFDirEntry(BinaryReader reader, int index) throws IOException {
+		subsection = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
+		imod = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
+		lfo = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
+		cb = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
     }
 
     short getSubSectionType() {

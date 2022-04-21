@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
@@ -26,22 +26,9 @@ import ghidra.util.task.TaskMonitor;
 
 public class DefaultDataDirectory extends DataDirectory {
 
-	static DefaultDataDirectory createDefaultDataDirectory(
-            NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-            throws IOException {
-	    DefaultDataDirectory defaultDataDirectory = (DefaultDataDirectory) reader.getFactory().create(DefaultDataDirectory.class);
-	    defaultDataDirectory.initDefaultDataDirectory(ntHeader, reader);
-	    return defaultDataDirectory;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DefaultDataDirectory() {}
-
-    private void initDefaultDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader) throws IOException {
+	DefaultDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
-	}
+    }
 
 	@Override
 	public String getDirectoryName() {

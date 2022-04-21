@@ -24,7 +24,6 @@ import docking.widgets.dialogs.InputDialog;
 import docking.widgets.dialogs.InputDialogListener;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
-import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.InsufficientBytesException;
 import ghidra.util.Msg;
@@ -78,11 +77,6 @@ class StructureEditorModel extends CompEditorModel {
 	@Override
 	public int getCommentColumn() {
 		return COMMENT;
-	}
-
-	@Override
-	public void load(Composite dataType, boolean useOffLineCategory) {
-		super.load(dataType, useOffLineCategory);
 	}
 
 	@Override
@@ -143,7 +137,7 @@ class StructureEditorModel extends CompEditorModel {
 		}
 		else if (columnIndex == getMnemonicColumn()) {
 			DataType dt = dtc.getDataType();
-			value = dt.getMnemonic(new SettingsImpl());
+			value = dt.getMnemonic(dtc.getDefaultSettings());
 			int compLen = dtc.getLength();
 			int dtLen = dt.isZeroLength() ? 0 : dt.getLength();
 			if (dtLen > compLen) {

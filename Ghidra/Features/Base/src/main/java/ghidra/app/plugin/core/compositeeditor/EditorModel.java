@@ -23,15 +23,8 @@ import ghidra.util.task.TaskMonitor;
 
 public interface EditorModel {
 
-	/**
-	 * Loads the specified composite into the model replacing
-	 * whatever composite is there.
-	 *
-	 * @param dataType the new composite data type.
-	 * @param offline false indicates don't try to keep the composite itself
-	 * in the editor's data type manager.
-	 */
-	public void load(Composite dataType, boolean offline);
+	// TODO: This model interface serves no real purpose and could be collapsed into the 
+	// abstract class CompositeEditorModel implementation.
 
 	/**
 	 * Called when the model is no longer needed. 
@@ -396,23 +389,6 @@ public interface EditorModel {
 	 * @throws UsrException if components can't be moved down.
 	 */
 	public boolean moveDown() throws UsrException;
-
-//	/**
-//	 * 
-//	 * @param dataType
-//	 * @return
-//	 * @throws UsrException
-//	 */
-//	public DataTypeComponent replace(DataType dataType) throws UsrException;
-//
-//	/**
-//	 * 
-//	 * @param rowIndex
-//	 * @param dataType
-//	 * @return
-//	 * @throws UsrException
-//	 */
-//	public DataTypeComponent replace(int rowIndex, DataType dataType) throws UsrException;
 
 	/**
 	 * 

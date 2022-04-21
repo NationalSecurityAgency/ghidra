@@ -27,8 +27,13 @@ public class BranchPcodeRow implements PcodeRow {
 	}
 
 	@Override
-	public Integer getSequence() {
+	public int getSequence() {
 		return sequence;
+	}
+
+	@Override
+	public String getLabel() {
+		return "";
 	}
 
 	@Override

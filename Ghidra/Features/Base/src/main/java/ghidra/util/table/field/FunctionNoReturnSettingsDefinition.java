@@ -42,6 +42,11 @@ public class FunctionNoReturnSettingsDefinition implements BooleanSettingsDefini
 	}
 
 	@Override
+	public String getValueString(Settings settings) {
+		return Boolean.toString(getValue(settings));
+	}
+
+	@Override
 	public void setValue(Settings settings, boolean value) {
 		settings.setString(NORETURN, Boolean.toString(value));
 	}
@@ -70,6 +75,11 @@ public class FunctionNoReturnSettingsDefinition implements BooleanSettingsDefini
 	@Override
 	public String getName() {
 		return NAME;
+	}
+
+	@Override
+	public String getStorageKey() {
+		return NORETURN;
 	}
 
 	@Override

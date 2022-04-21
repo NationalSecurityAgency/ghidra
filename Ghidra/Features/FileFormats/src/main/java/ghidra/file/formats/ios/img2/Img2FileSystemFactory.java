@@ -15,6 +15,8 @@
  */
 package ghidra.file.formats.ios.img2;
 
+import java.util.Arrays;
+
 import java.io.IOException;
 
 import ghidra.app.util.bin.ByteProvider;
@@ -23,7 +25,6 @@ import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import utilities.util.ArrayUtilities;
 
 public class Img2FileSystemFactory implements GFileSystemFactoryByteProvider<Img2FileSystem>, GFileSystemProbeBytesOnly {
 
@@ -34,8 +35,8 @@ public class Img2FileSystemFactory implements GFileSystemFactoryByteProvider<Img
 
 	@Override
 	public boolean probeStartBytes(FSRL containerFSRL, byte[] startBytes) {
-		return ArrayUtilities.arrayRangesEquals(startBytes, 0, Img2Constants.IMG2_SIGNATURE_BYTES,
-			0, Img2Constants.IMG2_SIGNATURE_BYTES.length);
+		return Arrays.equals(startBytes, 0, Img2Constants.IMG2_SIGNATURE_BYTES.length,
+			Img2Constants.IMG2_SIGNATURE_BYTES, 0, Img2Constants.IMG2_SIGNATURE_BYTES.length);
 	}
 
 	@Override

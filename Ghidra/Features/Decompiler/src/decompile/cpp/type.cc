@@ -18,8 +18,8 @@
 
 /// The base propagation ordering associated with each meta-type.
 /// The array elements correspond to the ordering of #type_metatype.
-sub_metatype Datatype::base2sub[13] = {
-    SUB_STRUCT, SUB_PARTIALSTRUCT, SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE, SUB_BOOL,
+sub_metatype Datatype::base2sub[14] = {
+    SUB_UNION, SUB_STRUCT, SUB_PARTIALSTRUCT, SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE, SUB_BOOL,
     SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN, SUB_SPACEBASE, SUB_VOID
 };
 
@@ -190,6 +190,9 @@ void metatype2string(type_metatype metatype,string &res)
   case TYPE_STRUCT:
     res = "struct";
     break;
+  case TYPE_UNION:
+    res = "union";
+    break;
   case TYPE_SPACEBASE:
     res = "spacebase";
     break;
@@ -246,6 +249,8 @@ type_metatype string2metatype(const string &metastring)
       return TYPE_UNKNOWN;
     else if (metastring=="uint")
       return TYPE_UINT;
+    else if (metastring=="union")
+      return TYPE_UNION;
     break;
   case 'i':
     if (metastring == "int")
@@ -370,6 +375,41 @@ Datatype *Datatype::getStripped(void) const
   return (Datatype *)0;
 }
 
+/// For certain data-types, particularly \e union, variables of that data-type are transformed into a subtype
+/// depending on the particular use.  Each read or write of the variable may use a different subtype.
+/// This method returns the particular subtype required based on a specific PcodeOp. A slot index >=0
+/// indicates which operand \e reads the variable, or if the index is -1, the variable is \e written.
+/// \param op is the specific PcodeOp
+/// \param slot indicates the input operand, or the output
+/// \return the resolved sub-type
+Datatype *Datatype::resolveInFlow(PcodeOp *op,int4 slot)
+
+{
+  return this;
+}
+
+/// This is the constant version of resolveInFlow.  If a resulting subtype has already been calculated,
+/// for the particular read (\b slot >= 0) or write (\b slot == -1), then return it.
+/// Otherwise return the original data-type.
+/// \param op is the PcodeOp using the Varnode assigned with \b this data-type
+/// \param slot is the slot reading or writing the Varnode
+/// \return the resolved subtype or the original data-type
+Datatype* Datatype::findResolve(const PcodeOp *op,int4 slot)
+
+{
+  return this;
+}
+
+/// If \b this data-type has an alternate data-type form that matches the given data-type,
+/// return an index indicating this form, otherwise return -1.
+/// \param ct is the given data-type
+/// \return the index of the matching form or -1
+int4 Datatype::findCompatibleResolve(Datatype *ct) const
+
+{
+  return -1;
+}
+
 /// Restore the basic properties (name,size,id) of a data-type from an XML element
 /// Properties are read from the attributes of the element
 /// \param el is the XML element
@@ -447,6 +487,53 @@ uint8 Datatype::hashSize(uint8 id,int4 size)
   sizeHash *= 0x98251033aecbabaf;	// Hash the size
   id ^= sizeHash;
   return id;
+}
+
+/// Contruct from the given \<field> element.
+/// \param el is the element
+/// \param typegrp is the TypeFactory for parsing data-type info
+TypeField::TypeField(const Element *el,TypeFactory &typegrp)
+
+{
+  ident = -1;
+  offset = -1;
+  for(int4 i=0;i<el->getNumAttributes();++i) {
+    const string &attribName(el->getAttributeName(i));
+    if (attribName == "name")
+      name = el->getAttributeValue(i);
+    else if (attribName == "offset") {
+      istringstream j(el->getAttributeValue(i));
+      j.unsetf(ios::dec | ios::hex | ios::oct);
+      j >> offset;
+    }
+    else if (attribName == "id") {
+      istringstream j(el->getAttributeValue(i));
+      j.unsetf(ios::dec | ios::hex | ios::oct);
+      j >> ident;
+    }
+  }
+  type = typegrp.restoreXmlType( *el->getChildren().begin() );
+  if (name.size()==0)
+    throw LowlevelError("name attribute must not be empty in <field> tag");
+  if (offset < 0)
+    throw LowlevelError("offset attribute invalid for <field> tag");
+  if (ident < 0)
+    ident = offset;	// By default the id is the offset
+}
+
+/// Write out a formal description of \b this as an XML \<field> tag.
+/// \param s is the stream to write to
+void TypeField::saveXml(ostream &s) const
+
+{
+  s << "<field";
+  a_v(s,"name",name);
+  a_v_i(s,"offset",offset);
+  if (ident != offset)
+    a_v_i(s,"id",ident);
+  s << '>';
+  type->saveXmlRef(s);
+  s << "</field>\n";
 }
 
 /// Parse a \<type> tag for attributes of the character data-type
@@ -532,6 +619,9 @@ void TypePointer::printRaw(ostream &s) const
 {
   ptrto->printRaw(s);
   s << " *";
+  if (spaceid != (AddrSpace *)0) {
+    s << '(' << spaceid->getName() << ')';
+  }
 }
 
 int4 TypePointer::compare(const Datatype &op,int4 level) const
@@ -542,6 +632,11 @@ int4 TypePointer::compare(const Datatype &op,int4 level) const
   // Both must be pointers
   TypePointer *tp = (TypePointer *) &op;
   if (wordsize != tp->wordsize) return (wordsize < tp->wordsize) ? -1 : 1;
+  if (spaceid != tp->spaceid) {
+    if (spaceid == (AddrSpace *)0) return 1;	// Pointers with address space come earlier
+    if (tp->spaceid == (AddrSpace *)0) return -1;
+    return (spaceid->getIndex() < tp->spaceid->getIndex()) ? -1 : 1;
+  }
   level -= 1;
   if (level < 0) {
     if (id == op.getId()) return 0;
@@ -557,6 +652,11 @@ int4 TypePointer::compareDependency(const Datatype &op) const
   TypePointer *tp = (TypePointer *) &op;	// Both must be pointers
   if (ptrto != tp->ptrto) return (ptrto < tp->ptrto) ? -1 : 1;	// Compare absolute pointers
   if (wordsize != tp->wordsize) return (wordsize < tp->wordsize) ? -1 : 1;
+  if (spaceid != tp->spaceid) {
+    if (spaceid == (AddrSpace *)0) return 1;	// Pointers with address space come earlier
+    if (tp->spaceid == (AddrSpace *)0) return -1;
+    return (spaceid->getIndex() < tp->spaceid->getIndex()) ? -1 : 1;
+  }
   return (op.getSize()-size);
 }
 
@@ -571,6 +671,8 @@ void TypePointer::saveXml(ostream &s) const
   saveXmlBasic(metatype,s);
   if (wordsize != 1)
     a_v_i(s,"wordsize",wordsize);
+  if (spaceid != (AddrSpace *)0)
+    a_v(s,"space",spaceid->getName());
   s << '>';
   ptrto->saveXmlRef(s);
   s << "</type>";
@@ -583,28 +685,39 @@ void TypePointer::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
   restoreXmlBasic(el);
-  for(int4 i=0;i<el->getNumAttributes();++i)
-    if (el->getAttributeName(i) == "wordsize") {
+  for(int4 i=0;i<el->getNumAttributes();++i) {
+    const string &attrName(el->getAttributeName(i));
+    if (attrName == "wordsize") {
       istringstream s(el->getAttributeValue(i));
       s.unsetf(ios::dec | ios::hex | ios::oct);
       s >> wordsize;
     }
+    else if (attrName == "space") {
+      spaceid = typegrp.getArch()->getSpaceByName(el->getAttributeValue(i));
+    }
+  }
   ptrto = typegrp.restoreXmlType( *el->getChildren().begin() );
   calcSubmeta();
-  if (name.size() == 0)		// Inherit only coretype only if no name
-    flags = ptrto->getInheritable();
+  if (name.size() == 0)		// Inherit only if no name
+    flags |= ptrto->getInheritable();
 }
 
 /// Pointers to structures may require a specific \b submeta
 void TypePointer::calcSubmeta(void)
 
 {
-  if (ptrto->getMetatype() == TYPE_STRUCT) {
+  type_metatype ptrtoMeta = ptrto->getMetatype();
+  if (ptrtoMeta == TYPE_STRUCT) {
     if (ptrto->numDepend() > 1 || ptrto->isIncomplete())
       submeta = SUB_PTR_STRUCT;
     else
       submeta = SUB_PTR;
   }
+  else if (ptrtoMeta == TYPE_UNION) {
+    submeta = SUB_PTR_STRUCT;
+  }
+  if (ptrto->needsResolution() && ptrtoMeta != TYPE_PTR)
+    flags |= needs_resolution;		// Inherit needs_resolution, but only if not a pointer
 }
 
 /// \brief Find a sub-type pointer given an offset into \b this
@@ -665,15 +778,47 @@ bool TypePointer::isPtrsubMatching(uintb off) const
     if (newoff != 0)
       return false;
   }
-  else {
+  else if (ptrto->getMetatype() == TYPE_ARRAY || ptrto->getMetatype() == TYPE_STRUCT) {
     int4 sz = off;
     int4 typesize = ptrto->getSize();
-    if ((ptrto->getMetatype() != TYPE_ARRAY)&&(ptrto->getMetatype() != TYPE_STRUCT))
-      return false;	// Not a pointer to a structured type
-    else if ((typesize <= AddrSpace::addressToByteInt(sz,wordsize))&&(typesize!=0))
+    if ((typesize <= AddrSpace::addressToByteInt(sz,wordsize))&&(typesize!=0))
       return false;
   }
+  else if (ptrto->getMetatype() == TYPE_UNION) {
+    // A PTRSUB reaching here cannot be used for a union field resolution
+    // These are created by ActionSetCasts::resolveUnion
+    return false;	// So we always return false
+  }
+  else
+    return false;	// Not a pointer to a structured data-type
   return true;
+}
+
+Datatype *TypePointer::resolveInFlow(PcodeOp *op,int4 slot)
+
+{
+  if (ptrto->getMetatype() == TYPE_UNION) {
+    Funcdata *fd = op->getParent()->getFuncdata();
+    const ResolvedUnion *res = fd->getUnionField(this,op,slot);
+    if (res != (ResolvedUnion*)0)
+      return res->getDatatype();
+    ScoreUnionFields scoreFields(*fd->getArch()->types,this,op,slot);
+    fd->setUnionField(this,op,slot,scoreFields.getResult());
+    return scoreFields.getResult().getDatatype();
+  }
+  return this;
+}
+
+Datatype* TypePointer::findResolve(const PcodeOp *op,int4 slot)
+
+{
+  if (ptrto->getMetatype() == TYPE_UNION) {
+    const Funcdata *fd = op->getParent()->getFuncdata();
+    const ResolvedUnion *res = fd->getUnionField(this,op,slot);
+    if (res != (ResolvedUnion*)0)
+      return res->getDatatype();
+  }
+  return this;
 }
 
 void TypeArray::printRaw(ostream &s) const
@@ -747,6 +892,34 @@ void TypeArray::saveXml(ostream &s) const
   s << "</type>";
 }
 
+Datatype *TypeArray::resolveInFlow(PcodeOp *op,int4 slot)
+
+{
+  // This is currently only called if the array size is 1
+  // in which case this should always resolve to the element data-type
+  return arrayof;
+}
+
+Datatype* TypeArray::findResolve(const PcodeOp *op,int4 slot)
+
+{
+  // This is currently only called if the array size is 1
+  // in which case this should always resolve to the element data-type
+  return arrayof;
+}
+
+int4 TypeArray::findCompatibleResolve(Datatype *ct) const
+
+{
+  if (ct->needsResolution() && !arrayof->needsResolution()) {
+    if (ct->findCompatibleResolve(arrayof) >= 0)
+      return 0;
+  }
+  if (arrayof == ct)
+    return 0;
+  return -1;
+}
+
 /// Parse a \<type> tag with a child describing the array element data-type.
 /// \param el is the root XML element
 /// \param typegrp is the factory owning \b this data-type
@@ -761,6 +934,8 @@ void TypeArray::restoreXml(const Element *el,TypeFactory &typegrp)
   arrayof  = typegrp.restoreXmlType(*el->getChildren().begin());
   if ((arraysize<=0)||(arraysize*arrayof->getSize()!=size))
     throw LowlevelError("Bad size for array of type "+arrayof->getName());
+  if (arraysize == 1)
+    flags |= needs_resolution;		// Array of size 1 needs special treatment
 }
 
 TypeEnum::TypeEnum(const TypeEnum &op) : TypeBase(op)
@@ -978,6 +1153,10 @@ void TypeStruct::setFields(const vector<TypeField> &fd)
     if (end > size)
       size = end;
   }
+  if (field.size() == 1) {			// A single field
+    if (field[0].type->getSize() == size)	// that fills the whole structure
+      flags |= needs_resolution;		// needs special attention
+  }
 }
 
 /// Find the proper subfield given an offset. Return the index of that field
@@ -1034,7 +1213,7 @@ int4 TypeStruct::getLowerBoundField(int4 off) const
 /// \param sz is the size of the byte range
 /// \param newoff points to the renormalized offset to pass back
 /// \return the containing field or NULL if the range is not contained
-const TypeField *TypeStruct::getField(int4 off,int4 sz,int4 *newoff) const
+const TypeField *TypeStruct::resolveTruncation(int4 off,int4 sz,int4 *newoff) const
 
 {
   int4 i;
@@ -1196,12 +1375,7 @@ void TypeStruct::saveXml(ostream &s) const
   s << ">\n";
   vector<TypeField>::const_iterator iter;
   for(iter=field.begin();iter!=field.end();++iter) {
-    s << "<field";
-    a_v(s,"name",(*iter).name);
-    a_v_i(s,"offset",(*iter).offset);
-    s << '>';
-    (*iter).type->saveXmlRef(s);
-    s << "</field>\n";
+    (*iter).saveXml(s);
   }
   s << "</type>";
 }
@@ -1216,27 +1390,365 @@ void TypeStruct::restoreFields(const Element *el,TypeFactory &typegrp)
   List::const_iterator iter;
   int4 maxoffset = 0;
   for(iter=list.begin();iter!=list.end();++iter) {
-    field.push_back( TypeField() );
-    field.back().name = (*iter)->getAttributeValue("name");
-    istringstream j((*iter)->getAttributeValue("offset"));
-    j.unsetf(ios::dec | ios::hex | ios::oct);
-    j >> field.back().offset;
-    field.back().type = typegrp.restoreXmlType( *(*iter)->getChildren().begin() );
+    field.emplace_back(*iter,typegrp);
     int4 trialmax = field.back().offset + field.back().type->getSize();
     if (trialmax > maxoffset)
       maxoffset = trialmax;
-    if (field.back().name.size()==0) {
+    if (maxoffset > size) {
       ostringstream s;
-      s << "unlabelled" << dec << field.back().offset;
-      field.back().name = s.str();
+      s << "Field " << field.back().name << " does not fit in structure " + name;
+      throw LowlevelError(s.str());
     }
   }
-  if (maxoffset > size)
-    throw LowlevelError("Size too small for fields of structure "+name);
   if (size == 0)		// We can restore an incomplete structure, indicated by 0 size
     flags |=  type_incomplete;
   else
     markComplete();		// Otherwise the structure is complete
+  if (field.size() == 1) {			// A single field
+    if (field[0].type->getSize() == size)	// that fills the whole structure
+      flags |= needs_resolution;		// needs special resolution
+  }
+}
+
+/// We know if this method is called that \b this structure has a single field that fills the entire
+/// structure.  The indicated Varnode can either be referred either by naming the struture or naming
+/// the field.  This method returns an indication of the best fit: either 0 for the field or
+/// -1 for the structure.
+/// \param op is the given PcodeOp using the Varnode
+/// \param slot is -1 if the Varnode is an output or >=0 indicating the input slot
+/// \return either 0 to indicate the field or -1 to indicate the structure
+int4 TypeStruct::scoreFill(PcodeOp *op,int4 slot) const
+
+{
+  if (op->code() == CPUI_COPY || op->code() == CPUI_INDIRECT) {
+    Varnode *vn;
+    if (slot == 0)
+      vn = op->getOut();
+    else
+      vn = op->getIn(0);
+    if (vn->isTypeLock() && vn->getType() == this)
+      return -1;	// COPY of the structure directly, use whole structure
+  }
+  else if ((op->code() == CPUI_LOAD && slot == -1)||(op->code() == CPUI_STORE && slot == 2)) {
+    Varnode *vn = op->getIn(1);
+    if (vn->isTypeLock()) {
+      Datatype *ct = vn->getTypeReadFacing(op);
+      if (ct->getMetatype() == TYPE_PTR && ((TypePointer *)ct)->getPtrTo() == this)
+	return -1;	// LOAD or STORE of the structure directly, use whole structure
+    }
+  }
+  else if (op->isCall()) {
+    Funcdata *fd = op->getParent()->getFuncdata();
+    FuncCallSpecs *fc = fd->getCallSpecs(op);
+    if (fc != (FuncCallSpecs *)0) {
+      ProtoParameter *param = (ProtoParameter *)0;
+      if (slot >= 1 && fc->isInputLocked())
+	param = fc->getParam(slot-1);
+      else if (slot < 0 && fc->isOutputLocked())
+	param = fc->getOutput();
+      if (param != (ProtoParameter *)0 && param->getType() == this)
+	return -1;	// Function signature refers to structure directly, use whole structure
+    }
+  }
+  return 0;	// In all other cases refer to the field
+}
+
+Datatype *TypeStruct::resolveInFlow(PcodeOp *op,int4 slot)
+
+{
+  Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
+
+  int4 fieldNum = scoreFill(op,slot);
+
+  ResolvedUnion compFill(this,fieldNum,*fd->getArch()->types);
+  fd->setUnionField(this, op, slot, compFill);
+  return compFill.getDatatype();
+}
+
+Datatype *TypeStruct::findResolve(const PcodeOp *op,int4 slot)
+
+{
+  const Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
+  return field[0].type;		// If not calculated before, assume referring to field
+}
+
+int4 TypeStruct::findCompatibleResolve(Datatype *ct) const
+
+{
+  Datatype *fieldType = field[0].type;
+  if (ct->needsResolution() && !fieldType->needsResolution()) {
+    if (ct->findCompatibleResolve(fieldType) >= 0)
+      return 0;
+  }
+  if (fieldType == ct)
+    return 0;
+  return -1;
+}
+
+/// Assign an offset to fields in order so that each field starts at an aligned offset within the structure
+/// \param list is the list of fields
+/// \param align is the given alignment
+void TypeStruct::assignFieldOffsets(vector<TypeField> &list,int4 align)
+
+{
+  int4 offset = 0;
+  vector<TypeField>::iterator iter;
+  for(iter=list.begin();iter!=list.end();++iter) {
+    if ((*iter).offset != -1) continue;
+    int4 cursize = (*iter).type->getSize();
+    int4 curalign = 0;
+    if (align > 1) {
+      curalign = align;
+      while((curalign>>1) >= cursize)
+	curalign >>= 1;
+      curalign -= 1;
+    }
+    if ((offset & curalign)!=0)
+      offset = (offset-(offset & curalign) + (curalign+1));
+    (*iter).offset = offset;
+    (*iter).ident = offset;
+    offset += cursize;
+  }
+}
+
+/// Copy a list of fields into this union, establishing its size.
+/// Should only be called once when constructing the type.  TypeField \b offset is assumed to be 0.
+/// \param fd is the list of fields to copy in
+void TypeUnion::setFields(const vector<TypeField> &fd)
+
+{
+  vector<TypeField>::const_iterator iter;
+ 				// Need to calculate size
+  size = 0;
+  for(iter=fd.begin();iter!=fd.end();++iter) {
+    field.push_back(*iter);
+    int4 end = field.back().type->getSize();
+    if (end > size)
+      size = end;
+  }
+}
+
+/// Children of the XML element describe each field.
+/// \param el is the root union element
+/// \param typegrp is the factory owning the new union
+void TypeUnion::restoreFields(const Element *el,TypeFactory &typegrp)
+
+{
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  for(iter=list.begin();iter!=list.end();++iter) {
+    field.emplace_back(*iter,typegrp);
+    if (field.back().offset + field.back().type->getSize() > size) {
+      ostringstream s;
+      s << "Field " << field.back().name << " does not fit in union " << name;
+      throw LowlevelError(s.str());
+    }
+  }
+  if (size == 0)		// We can restore an incomplete structure, indicated by 0 size
+    flags |=  type_incomplete;
+  else
+    markComplete();		// Otherwise the union is complete
+}
+
+TypeUnion::TypeUnion(const TypeUnion &op)
+  : Datatype(op)
+{
+  setFields(op.field);
+  size = op.size;		// setFields might have changed the size
+}
+
+int4 TypeUnion::compare(const Datatype &op,int4 level) const
+
+{
+  int4 res = Datatype::compare(op,level);
+  if (res != 0) return res;
+  const TypeUnion *tu = (const TypeUnion *)&op;
+  vector<TypeField>::const_iterator iter1,iter2;
+
+  if (field.size() != tu->field.size()) return (tu->field.size()-field.size());
+  iter1 = field.begin();
+  iter2 = tu->field.begin();
+  // Test only the name and first level metatype first
+  while(iter1 != field.end()) {
+    if ((*iter1).name != (*iter2).name)
+      return ((*iter1).name < (*iter2).name) ? -1:1;
+    if ((*iter1).type->getMetatype() != (*iter2).type->getMetatype())
+      return ((*iter1).type->getMetatype() < (*iter2).type->getMetatype()) ? -1 : 1;
+    ++iter1;
+    ++iter2;
+  }
+  level -= 1;
+  if (level < 0) {
+    if (id == op.getId()) return 0;
+    return (id < op.getId()) ? -1 : 1;
+  }
+  // If we are still equal, now go down deep into each field type
+  iter1 = field.begin();
+  iter2 = tu->field.begin();
+  while(iter1 != field.end()) {
+    if ((*iter1).type != (*iter2).type) { // Short circuit recursive loops
+      int4 c = (*iter1).type->compare( *(*iter2).type, level );
+      if (c != 0) return c;
+    }
+    ++iter1;
+    ++iter2;
+  }
+  return 0;
+}
+
+int4 TypeUnion::compareDependency(const Datatype &op) const
+
+{
+  int4 res = Datatype::compareDependency(op);
+  if (res != 0) return res;
+  const TypeUnion *tu = (const TypeUnion *)&op;
+  vector<TypeField>::const_iterator iter1,iter2;
+
+  if (field.size() != tu->field.size()) return (tu->field.size()-field.size());
+  iter1 = field.begin();
+  iter2 = tu->field.begin();
+  // Test only the name and first level metatype first
+  while(iter1 != field.end()) {
+    if ((*iter1).name != (*iter2).name)
+      return ((*iter1).name < (*iter2).name) ? -1:1;
+    Datatype *fld1 = (*iter1).type;
+    Datatype *fld2 = (*iter2).type;
+    if (fld1 != fld2)
+      return (fld1 < fld2) ? -1 : 1; // compare the pointers directly
+    ++iter1;
+    ++iter2;
+  }
+  return 0;
+}
+
+void TypeUnion::saveXml(ostream &s) const
+
+{
+  if (typedefImm != (Datatype *)0) {
+    saveXmlTypedef(s);
+    return;
+  }
+  s << "<type";
+  saveXmlBasic(metatype,s);
+  s << ">\n";
+  vector<TypeField>::const_iterator iter;
+  for(iter=field.begin();iter!=field.end();++iter) {
+    (*iter).saveXml(s);
+  }
+  s << "</type>";
+}
+
+Datatype *TypeUnion::resolveInFlow(PcodeOp *op,int4 slot)
+
+{
+  Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
+  ScoreUnionFields scoreFields(*fd->getArch()->types,this,op,slot);
+  fd->setUnionField(this, op, slot, scoreFields.getResult());
+  return scoreFields.getResult().getDatatype();
+}
+
+Datatype* TypeUnion::findResolve(const PcodeOp *op,int4 slot)
+
+{
+  const Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
+  return this;
+}
+
+/// \brief Resolve which union field is being used for a given PcodeOp when a truncation is involved
+///
+/// This is used either when a Varnode is backed by a larger Symbol with a union data-type,
+/// or if the Varnode is produced by a CPUI_SUBPIECE where the input Varnode has a union data-type.
+/// Scoring is done to compute the best field and the result is cached with the function.
+/// The record of the best field is returned or null if there is no appropriate field
+/// \param offset is the byte offset into the union we are truncating to
+/// \param op is either the PcodeOp reading the truncated Varnode or the CPUI_SUBPIECE doing the truncation
+/// \param slot is either the input slot of the reading PcodeOp or the artificial SUBPIECE slot: 1
+/// \param newoff is used to pass back how much offset is left to resolve
+/// \return the field of the union best associated with the truncation or null
+const TypeField *TypeUnion::resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff)
+
+{
+  Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0 && res->getFieldNum() >= 0) {
+    const TypeField *field = getField(res->getFieldNum());
+    newoff = offset - field->offset;
+    return field;
+  }
+  if (op->code() == CPUI_SUBPIECE && slot == 1) {	// The slot is artificial in this case
+    ScoreUnionFields scoreFields(*fd->getArch()->types,this,offset,op);
+    fd->setUnionField(this, op, slot, scoreFields.getResult());
+    if (scoreFields.getResult().getFieldNum() >= 0) {
+      newoff = 0;
+      return getField(scoreFields.getResult().getFieldNum());
+    }
+  }
+  else {
+    ScoreUnionFields scoreFields(*fd->getArch()->types,this,offset,op,slot);
+    fd->setUnionField(this, op, slot, scoreFields.getResult());
+    if (scoreFields.getResult().getFieldNum() >= 0) {
+      const TypeField *field = getField(scoreFields.getResult().getFieldNum());
+      newoff = offset - field->offset;
+      return field;
+    }
+  }
+  return (const TypeField *)0;
+}
+
+/// \brief Return a precalculated field associated with a truncation
+///
+/// This is the \e const version of resolveTruncation().  No new scoring is done, but if a cached result
+/// is available, return it.
+/// \param offset is the byte offset of the truncation
+/// \param op is the PcodeOp reading the truncated value
+/// \param slot is the input slot being read
+/// \param newoff is used to pass back any remaining offset into the field which still must be resolved
+/// \return the field to use with truncation or null if there is no appropriate field
+const TypeField *TypeUnion::findTruncation(int4 offset,const PcodeOp *op,int4 slot,int4 &newoff) const
+
+{
+  const Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0 && res->getFieldNum() >= 0) {
+    const TypeField *field = getField(res->getFieldNum());
+    newoff = offset - field->offset;
+    return field;
+  }
+  return (const TypeField *)0;
+}
+
+int4 TypeUnion::findCompatibleResolve(Datatype *ct) const
+
+{
+  if (!ct->needsResolution()) {
+    for(int4 i=0;i<field.size();++i) {
+      if (field[i].type == ct && field[i].offset == 0)
+	return i;
+    }
+  }
+  else {
+    for(int4 i=0;i<field.size();++i) {
+      if (field[i].offset != 0) continue;
+      Datatype *fieldType = field[i].type;
+      if (fieldType->getSize() != ct->getSize()) continue;
+      if (fieldType->needsResolution()) continue;
+      if (ct->findCompatibleResolve(fieldType) >= 0)
+	return i;
+    }
+  }
+  return -1;
 }
 
 /// Parse a \<type> tag with children describing the data-type being pointed to and the parent data-type.
@@ -1248,12 +1760,17 @@ void TypePointerRel::restoreXml(const Element *el,TypeFactory &typegrp)
   flags |= is_ptrrel;
   restoreXmlBasic(el);
   metatype = TYPE_PTR;		// Don't use TYPE_PTRREL internally
-  for(int4 i=0;i<el->getNumAttributes();++i)
-    if (el->getAttributeName(i) == "wordsize") {
+  for(int4 i=0;i<el->getNumAttributes();++i) {
+    const string &attribName(el->getAttributeName(i));
+    if (attribName == "wordsize") {
       istringstream s(el->getAttributeValue(i));
       s.unsetf(ios::dec | ios::hex | ios::oct);
       s >> wordsize;
     }
+    else if (attribName == "space") {
+      spaceid = typegrp.getArch()->getSpaceByName(el->getAttributeValue("space"));
+    }
+  }
   const List &list(el->getChildren());
   List::const_iterator iter;
   iter = list.begin();
@@ -1271,9 +1788,9 @@ void TypePointerRel::restoreXml(const Element *el,TypeFactory &typegrp)
     cacheStrippedType(typegrp);	// it is considered ephemeral
 }
 
-/// For a variable that is a relative pointer, constant offsets off of the variable can be
+/// For a variable that is a relative pointer, constant offsets relative to the variable can be
 /// displayed either as coming from the variable itself or from the parent object.
-/// \param byteOff is the given offset off of the variable
+/// \param addrOff is the given offset in address units
 /// \return \b true if the variable should be displayed as coming from the parent
 bool TypePointerRel::evaluateThruParent(uintb addrOff) const
 
@@ -1791,6 +2308,7 @@ TypeFactory::TypeFactory(Architecture *g)
 {
   glb = g;
   sizeOfInt = 0;
+  sizeOfLong = 0;
   align = 0;
   enumsize = 0;
 
@@ -1823,6 +2341,9 @@ void TypeFactory::setupSizes(void)
       if (sizeOfInt > 4)					// "int" is rarely bigger than 4 bytes
 	sizeOfInt = 4;
     }
+  }
+  if (sizeOfLong == 0) {
+    sizeOfLong = (sizeOfInt == 4) ? 8 : sizeOfInt;
   }
   if (align == 0)
     align = glb->getDefaultSize();
@@ -2090,11 +2611,9 @@ Datatype *TypeFactory::setName(Datatype *ct,const string &n)
 bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,uint4 flags)
 
 {
-  int4 offset,cursize,curalign;
-
   if (!ot->isIncomplete())
     throw LowlevelError("Can only set fields on an incomplete structure");
-  offset = 0;
+  int4 offset = 0;
   vector<TypeField>::iterator iter;
 
   // Find the maximum offset, from the explicitly set offsets
@@ -2109,23 +2628,6 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
       if (end > offset)
 	offset = end;
     }
-  }
-
-  // Assign offsets, respecting alignment, where not explicitly set
-  for(iter=fd.begin();iter!=fd.end();++iter) {
-    if ((*iter).offset != -1) continue;
-    cursize = (*iter).type->getSize();
-    curalign = 0;
-    if (align > 1) {
-      curalign = align;
-      while((curalign>>1) >= cursize)
-	curalign >>= 1;
-      curalign -= 1;
-    }
-    if ((offset & curalign)!=0)
-      offset = (offset-(offset & curalign) + (curalign+1));
-    (*iter).offset = offset;
-    offset += cursize;
   }
 
   sort(fd.begin(),fd.end());	// Sort fields by offset
@@ -2145,6 +2647,42 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
   tree.insert(ot);
   recalcPointerSubmeta(ot, SUB_PTR);
   recalcPointerSubmeta(ot, SUB_PTR_STRUCT);
+  return true;
+}
+
+/// If \b fixedsize is greater than 0, force the final structure to have that size.
+/// This method should only be used on an incomplete union. It will mark the union as complete.
+/// \param fd is the list of fields to set
+/// \param ot is the TypeUnion object to modify
+/// \param fixedsize is 0 or the forced size of the union
+/// \param flags are other flags to set on the union
+/// \return true if modification was successful
+bool TypeFactory::setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,uint4 flags)
+
+{
+  if (!ot->isIncomplete())
+    throw LowlevelError("Can only set fields on an incomplete union");
+  vector<TypeField>::iterator iter;
+
+  for(iter=fd.begin();iter!=fd.end();++iter) {
+    Datatype *ct = (*iter).type;
+    // Do some sanity checks on the field
+    if (ct->getMetatype() == TYPE_VOID) return false;
+    if ((*iter).offset != 0) return false;
+    if ((*iter).name.size() == 0) return false;
+  }
+
+  tree.erase(ot);
+  ot->setFields(fd);
+  ot->flags &= ~(uint4)Datatype::type_incomplete;
+  ot->flags |= (flags & (Datatype::variable_length | Datatype::type_incomplete));
+  if (fixedsize > 0) {		// If the caller is trying to force a size
+    if (fixedsize > ot->size)	// If the forced size is bigger than the size required for fields
+      ot->size = fixedsize;	//     Force the bigger size
+    else if (fixedsize < ot->size) // If the forced size is smaller, this is an error
+      throw LowlevelError("Trying to force too small a size on "+ot->getName());
+  }
+  tree.insert(ot);
   return true;
 }
 
@@ -2519,12 +3057,22 @@ TypeArray *TypeFactory::getTypeArray(int4 as,Datatype *ao)
 TypeStruct *TypeFactory::getTypeStruct(const string &n)
 
 {
-				// We should probably strip offsets here
-				// But I am currently choosing not to
   TypeStruct tmp;
   tmp.name = n;
   tmp.id = Datatype::hashName(n);
   return (TypeStruct *) findAdd(tmp);
+}
+
+/// The created union will be incomplete and have no fields. They must be added later.
+/// \param n is the name of the union
+/// \return the TypeUnion object
+TypeUnion *TypeFactory::getTypeUnion(const string &n)
+
+{
+  TypeUnion tmp;
+  tmp.name = n;
+  tmp.id = Datatype::hashName(n);
+  return (TypeUnion *) findAdd(tmp);
 }
 
 /// The created enumeration will have no named values and a default configuration
@@ -2585,6 +3133,13 @@ TypePointerRel *TypeFactory::getTypePointerRel(TypePointer *parentPtr,Datatype *
 ///
 /// The resulting data-type is named and not ephemeral and will display as a formal data-type
 /// in decompiler output.
+/// \param sz is the size in bytes of the pointer
+/// \param parent is data-type of the parent container being indirectly pointed to
+/// \param ptrTo is the data-type being pointed directly to
+/// \param ws is the addressable unit size of pointed to data
+/// \param off is the offset of the pointed-to data-type relative to the \e container
+/// \param nm is the name to associate with the pointer
+/// \return the new/matching pointer
 TypePointerRel *TypeFactory::getTypePointerRel(int4 sz,Datatype *parent,Datatype *ptrTo,int4 ws,int4 off,const string &nm)
 
 {
@@ -2592,6 +3147,24 @@ TypePointerRel *TypeFactory::getTypePointerRel(int4 sz,Datatype *parent,Datatype
   tp.name = nm;
   tp.id = Datatype::hashName(nm);
   TypePointerRel *res = (TypePointerRel *)findAdd(tp);
+  return res;
+}
+
+/// \brief Build a named pointer with an address space attribute
+///
+/// The new data-type acts like a typedef of a normal pointer but can affect the resolution of
+/// constants by the type propagation system.
+/// \param ptrTo is the data-type being pointed directly to
+/// \param spc is the address space to associate with the pointer
+/// \param nm is the name to associate with the pointer
+/// \return the new/matching pointer
+TypePointer *TypeFactory::getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc,const string &nm)
+
+{
+  TypePointer tp(ptrTo,spc);
+  tp.name = nm;
+  tp.id = Datatype::hashName(nm);
+  TypePointer *res = (TypePointer *)findAdd(tp);
   return res;
 }
 
@@ -2702,6 +3275,7 @@ void TypeFactory::saveXml(ostream &s) const
   dependentOrder(deporder);	// Put types in correct order
   s << "<typegrp";
   a_v_i(s,"intsize",sizeOfInt);
+  a_v_i(s,"longsize",sizeOfLong);
   a_v_i(s,"structalign",align);
   a_v_i(s,"enumsize",enumsize);
   a_v_b(s,"enumsigned",(enumtype==TYPE_INT));
@@ -2711,7 +3285,7 @@ void TypeFactory::saveXml(ostream &s) const
     if ((*iter)->isCoreType()) { // If this would be saved as a coretype
       type_metatype meta = (*iter)->getMetatype();
       if ((meta != TYPE_PTR)&&(meta != TYPE_ARRAY)&&
-	  (meta != TYPE_STRUCT))
+	  (meta != TYPE_STRUCT)&&(meta != TYPE_UNION))
 	continue;		// Don't save it here
     }
     s << ' ';
@@ -2736,7 +3310,7 @@ void TypeFactory::saveXmlCoreTypes(ostream &s) const
     if (!ct->isCoreType()) continue;
     type_metatype meta = ct->getMetatype();
     if ((meta==TYPE_PTR)||(meta==TYPE_ARRAY)||
-	(meta==TYPE_STRUCT))
+	(meta==TYPE_STRUCT)||(meta==TYPE_UNION))
       continue;
     s << ' ';
     ct->saveXml(s);
@@ -2752,24 +3326,44 @@ void TypeFactory::saveXmlCoreTypes(ostream &s) const
 Datatype *TypeFactory::restoreTypedef(const Element *el)
 
 {
-  uint8 id;
-  istringstream s1(el->getAttributeValue("id"));
-  s1.unsetf(ios::dec | ios::hex | ios::oct);
-  s1 >> id;
-  string nm = el->getAttributeValue("name");
+  uint8 id = 0;
+  string nm;
+  for(int4 i=0;i<el->getNumAttributes();++i) {
+    const string &attribName(el->getAttributeName(i));
+    if (attribName == "id") {
+      istringstream s1(el->getAttributeValue("id"));
+      s1.unsetf(ios::dec | ios::hex | ios::oct);
+      s1 >> id;
+    }
+    else if (attribName == "name") {
+      nm = el->getAttributeValue("name");
+    }
+  }
+  if (id == 0) {			// Its possible the typedef is a builtin
+    id = Datatype::hashName(nm);	// There must be some kind of id
+  }
   Datatype *defedType = restoreXmlType( *el->getChildren().begin() );
   if (defedType->isVariableLength())
     id = Datatype::hashSize(id, defedType->size);
-  if (defedType->getMetatype() == TYPE_STRUCT) {
-    // Its possible that a typedef of a struct is recursively defined, in which case
+  if (defedType->getMetatype() == TYPE_STRUCT || defedType->getMetatype() == TYPE_UNION) {
+    // Its possible that a typedef of a struct/union is recursively defined, in which case
     // an incomplete version may already be in the container
-    TypeStruct *prev = (TypeStruct *)findByIdLocal(nm, id);
+    Datatype *prev = findByIdLocal(nm, id);
     if (prev != (Datatype *)0) {
       if (defedType != prev->getTypedef())
         throw LowlevelError("Trying to create typedef of existing type: " + prev->name);
-      TypeStruct *defedStruct = (TypeStruct *)defedType;
-      if (prev->field.size() != defedStruct->field.size())
-	prev->field = defedStruct->field;
+      if (prev->getMetatype() == TYPE_STRUCT) {
+	TypeStruct *prevStruct = (TypeStruct *)prev;
+	TypeStruct *defedStruct = (TypeStruct *)defedType;
+	if (prevStruct->field.size() != defedStruct->field.size())
+	  setFields(defedStruct->field,prevStruct,defedStruct->size,defedStruct->flags);
+      }
+      else {
+	TypeUnion *prevUnion = (TypeUnion *)prev;
+	TypeUnion *defedUnion = (TypeUnion *)defedType;
+	if (prevUnion->field.size() != defedUnion->field.size())
+	  setFields(defedUnion->field,prevUnion,defedUnion->size,defedUnion->flags);
+      }
       return prev;
     }
   }
@@ -2801,6 +3395,35 @@ Datatype* TypeFactory::restoreStruct(const Element *el,bool forcecore)
   else {		// If structure is a placeholder stub
     if (!setFields(ts.field,(TypeStruct*)ct,ts.size,ts.flags)) // Define structure now by copying fields
       throw LowlevelError("Bad structure definition");
+  }
+  return ct;
+}
+
+/// If necessary create a stub object before parsing the field descriptions, to deal with recursive definitions
+/// \param el is the XML element describing the union
+/// \param forcecore is \b true if the data-type is considered core
+/// \return the newly minted union data-type
+Datatype* TypeFactory::restoreUnion(const Element *el,bool forcecore)
+
+{
+  TypeUnion tu;
+  tu.restoreXmlBasic(el);
+  if (forcecore)
+    tu.flags |= Datatype::coretype;
+  Datatype *ct = findByIdLocal(tu.name,tu.id);
+  if (ct == (Datatype*)0) {
+    ct = findAdd(tu);	// Create stub to allow recursive definitions
+  }
+  else if (ct->getMetatype() != TYPE_UNION)
+    throw LowlevelError("Trying to redefine type: " + tu.name);
+  tu.restoreFields(el,*this);
+  if (!ct->isIncomplete()) {	// Structure of this name was already present
+    if (0 != ct->compareDependency(tu))
+      throw LowlevelError("Redefinition of union: " + tu.name);
+  }
+  else {		// If structure is a placeholder stub
+    if (!setFields(tu.field,(TypeUnion*)ct,tu.size,tu.flags)) // Define structure now by copying fields
+      throw LowlevelError("Bad union definition");
   }
   return ct;
 }
@@ -2886,6 +3509,9 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
   case TYPE_STRUCT:
     ct = restoreStruct(el,forcecore);
     break;
+  case TYPE_UNION:
+    ct = restoreUnion(el,forcecore);
+    break;
   case TYPE_SPACEBASE:
     {
       TypeSpacebase tsb((AddrSpace *)0,Address(),glb);
@@ -2952,6 +3578,9 @@ void TypeFactory::restoreXml(const Element *el)
   istringstream i3(el->getAttributeValue("intsize"));
   i3.unsetf(ios::dec | ios::hex | ios::oct);
   i3 >> sizeOfInt;
+  istringstream i4(el->getAttributeValue("longsize"));
+  i4.unsetf(ios::dec | ios::hex | ios::oct);
+  i4 >> sizeOfLong;
   istringstream i(el->getAttributeValue("structalign"));
   i.unsetf(ios::dec | ios::hex | ios::oct);
   i >> align;
@@ -2999,6 +3628,11 @@ void TypeFactory::parseDataOrganization(const Element *el)
       istringstream i(subel->getAttributeValue("value"));
       i.unsetf(ios::dec | ios::hex | ios::oct);
       i >> sizeOfInt;
+    }
+    else if (subel->getName() == "long_size") {
+      istringstream i(subel->getAttributeValue("value"));
+      i.unsetf(ios::dec | ios::hex | ios::oct);
+      i >> sizeOfLong;
     }
     else if (subel->getName() == "size_alignment_map") {
       const List &childlist(subel->getChildren());

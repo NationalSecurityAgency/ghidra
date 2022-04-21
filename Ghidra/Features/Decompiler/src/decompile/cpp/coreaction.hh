@@ -180,7 +180,7 @@ public:
 /// \brief Check for constants, with pointer type, that correspond to global symbols
 class ActionConstantPtr : public Action {
   int4 localcount;		///< Number of passes made for this function
-  static AddrSpace *searchForLoadStore(Varnode *vn,PcodeOp *op);
+  static AddrSpace *searchForSpaceAttribute(Varnode *vn,PcodeOp *op);
   static AddrSpace *selectInferSpace(Varnode *vn,PcodeOp *op,const vector<AddrSpace *> &spaceList);
   static SymbolEntry *isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op,int4 slot,
 				Address &rampoint,uintb &fullEncoding,Funcdata &data);
@@ -310,10 +310,14 @@ public:
 /// input. In this case, it casts to the necessary pointer type
 /// immediately.
 class ActionSetCasts : public Action {
-  static bool testStructOffset0(Varnode *vn,Datatype *ct,CastStrategy *castStrategy);
+  static void checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data);
+  static bool testStructOffset0(Varnode *vn,PcodeOp *op,Datatype *ct,CastStrategy *castStrategy);
+  static bool tryResolutionAdjustment(PcodeOp *op,int4 slot,Funcdata &data);
   static bool isOpIdentical(Datatype *ct1,Datatype *ct2);
+  static int4 resolveUnion(PcodeOp *op,int4 slot,Funcdata &data);
   static int4 castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStrategy);
   static int4 castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy *castStrategy);
+  static PcodeOp *insertPtrsubZero(PcodeOp *op,int4 slot,Datatype *ct,Funcdata &data);
 public:
   ActionSetCasts(const string &g) : Action(rule_onceperfunc,"setcasts",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
@@ -926,9 +930,6 @@ class ActionInferTypes : public Action {
   int4 localcount;					///< Number of passes performed for this function
   static void buildLocaltypes(Funcdata &data);		///< Assign initial data-type based on local info
   static bool writeBack(Funcdata &data);		///< Commit the final propagated data-types to Varnodes
-  static int4 propagateAddPointer(uintb &off,PcodeOp *op,int4 slot,int4 sz);	///< Test if edge is pointer plus a constant
-  static Datatype *propagateAddIn2Out(TypeFactory *typegrp,PcodeOp *op,int4 inslot);
-  static bool propagateGoodEdge(PcodeOp *op,int4 inslot,int4 outslot,Varnode *invn);
   static bool propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 inslot,int4 outslot);
   static void propagateOneType(TypeFactory *typegrp,Varnode *vn);
   static void propagateRef(Funcdata &data,Varnode *vn,const Address &addr);
@@ -1034,13 +1035,13 @@ public:
 };
 
 /// Class representing a \e term in an additive expression
-class PcodeOpEdge {
+class AdditiveEdge {
   PcodeOp *op;			///< Lone descendant reading the term
   int4 slot;			///< The input slot of the term
   Varnode *vn;			///< The term Varnode
   PcodeOp *mult;		///< The (optional) multiplier being applied to the term
 public:
-  PcodeOpEdge(PcodeOp *o,int4 s,PcodeOp *m) { op = o; slot = s; vn = op->getIn(slot); mult=m; }	///< Constructor
+  AdditiveEdge(PcodeOp *o,int4 s,PcodeOp *m) { op = o; slot = s; vn = op->getIn(slot); mult=m; }	///< Constructor
   PcodeOp *getMultiplier(void) const { return mult; }	///< Get the multiplier PcodeOp
   PcodeOp *getOp(void) const { return op; }		///< Get the component PcodeOp adding in the term
   int4 getSlot(void) const { return slot; }		///< Get the slot reading the term
@@ -1054,15 +1055,15 @@ public:
 /// sorting of the terms to facilitate constant collapse and factoring simplifications.
 class TermOrder {
   PcodeOp *root;			///< The final PcodeOp in the expression
-  vector<PcodeOpEdge> terms;		///< Collected terms
-  vector<PcodeOpEdge *> sorter;		///< An array of references to terms for quick sorting
-  static bool additiveCompare(const PcodeOpEdge *op1,const PcodeOpEdge *op2);
+  vector<AdditiveEdge> terms;		///< Collected terms
+  vector<AdditiveEdge *> sorter;		///< An array of references to terms for quick sorting
+  static bool additiveCompare(const AdditiveEdge *op1,const AdditiveEdge *op2);
 public:
   TermOrder(PcodeOp *rt) { root = rt; }	///< Construct given root PcodeOp
   int4 getSize(void) const { return terms.size(); }	///< Get the number of terms in the expression
   void collect(void);			///< Collect all the terms in the expression
   void sortTerms(void);			///< Sort the terms using additiveCompare()
-  const vector<PcodeOpEdge *> &getSort(void) { return sorter; }	///< Get the sorted list of references
+  const vector<AdditiveEdge *> &getSort(void) { return sorter; }	///< Get the sorted list of references
 };
 
 /// \brief A comparison operator for ordering terms in a sum
@@ -1072,7 +1073,7 @@ public:
 /// \param op1 is the first term to compare
 /// \param op2 is the second term
 /// \return \b true if the first term is less than the second
-inline bool TermOrder::additiveCompare(const PcodeOpEdge *op1,const PcodeOpEdge *op2) {
+inline bool TermOrder::additiveCompare(const AdditiveEdge *op1,const AdditiveEdge *op2) {
     return (-1 == op1->getVarnode()->termOrder(op2->getVarnode())); }
 
 #endif

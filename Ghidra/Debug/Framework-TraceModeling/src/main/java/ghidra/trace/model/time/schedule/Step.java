@@ -15,10 +15,12 @@
  */
 package ghidra.trace.model.time.schedule;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.PcodeThread;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.util.exception.CancelledException;
@@ -171,4 +173,6 @@ public interface Step extends Comparable<Step> {
 
 	<T> void execute(PcodeThread<T> emuThread, Consumer<PcodeThread<T>> stepAction,
 			TaskMonitor monitor) throws CancelledException;
+
+	long coalescePatches(Language language, List<Step> steps);
 }

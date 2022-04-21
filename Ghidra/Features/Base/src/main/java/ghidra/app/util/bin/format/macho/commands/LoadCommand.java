@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -37,10 +37,7 @@ public abstract class LoadCommand implements StructConverter {
 	private int cmd;
 	private int cmdsize;
 
-	public LoadCommand() {
-	}
-
-	protected void initLoadCommand(FactoryBundledWithBinaryReader reader) throws IOException {
+	protected void initLoadCommand(BinaryReader reader) throws IOException {
 		startIndex = reader.getPointerIndex();
 		cmd = reader.readNextInt();
 		cmdsize = reader.readNextInt();

@@ -56,7 +56,7 @@ public class DefaultModuleMapProposal
 				// TODO: Determine how to handle these.
 				return false;
 			}
-			if (MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName())) {
+			if (block.isExternalBlock()) {
 				return false;
 			}
 			return true;

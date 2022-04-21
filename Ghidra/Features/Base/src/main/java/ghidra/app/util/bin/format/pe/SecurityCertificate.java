@@ -108,11 +108,6 @@ public class SecurityCertificate implements StructConverter {
 		return result;
 	}
 
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public SecurityCertificate() {}
-
 	int getNumberOfBytesConsumed() {
 		return (int) NumericUtilities.getUnsignedAlignedValue(dwLength, 8);
 	}

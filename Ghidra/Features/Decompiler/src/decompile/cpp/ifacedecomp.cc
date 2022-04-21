@@ -1266,7 +1266,7 @@ void IfcRename::execute(istream &s)
   else
     throw IfaceExecutionError("More than one symbol named: "+oldname);
 
-  if (sym->getCategory() == 0)
+  if (sym->getCategory() == Symbol::function_parameter)
     dcp->fd->getFuncProto().setInputLock(true);
   sym->getScope()->renameSymbol(sym,newname);
   sym->getScope()->setAttribute(sym,Varnode::namelock|Varnode::typelock);
@@ -1330,7 +1330,7 @@ void IfcRetype::execute(istream &s)
   else
     sym = symList[0];
 
-  if (sym->getCategory()==0)
+  if (sym->getCategory()==Symbol::function_parameter)
     dcp->fd->getFuncProto().setInputLock(true);
   sym->getScope()->retypeSymbol(sym,ct);
   sym->getScope()->setAttribute(sym,Varnode::typelock);
@@ -2893,8 +2893,10 @@ void IfcReadonly::execute(istream &s)
 /// \class IfcPointerSetting
 /// \brief Create a pointer with additional settings: `pointer setting <name> <basetype> offset <val>`
 ///
-/// The new data-type is named and must be pointer.  It must have a setting
-///   - \b offset which creates a shifted pointer
+/// Alternately: `pointer setting <name> <basetype> space <spacename>`
+/// The new data-type is named and must be pointer.
+/// An \e offset setting creates a relative pointer and attaches the provided offset value.
+/// A \e space setting create a pointer with the provided address space as an attribute.
 void IfcPointerSetting::execute(istream &s)
 
 {
@@ -2926,6 +2928,19 @@ void IfcPointerSetting::execute(istream &s)
     Datatype *ptrto = TypePointerRel::getPtrToFromParent(bt, off, *dcp->conf->types);
     AddrSpace *spc = dcp->conf->getDefaultDataSpace();
     dcp->conf->types->getTypePointerRel(spc->getAddrSize(), bt, ptrto, spc->getWordSize(), off,typeName);
+  }
+  else if (setting == "space") {
+    string spaceName;
+    s >> spaceName;
+    if (spaceName.length() == 0)
+      throw IfaceParseError("Missing name of address space");
+    Datatype *ptrTo = dcp->conf->types->findByName(baseType);
+    if (ptrTo == (Datatype *)0)
+      throw IfaceParseError("Unknown base data-type: "+baseType);
+    AddrSpace *spc = dcp->conf->getSpaceByName(spaceName);
+    if (spc == (AddrSpace *)0)
+      throw IfaceParseError("Unknown space: "+spaceName);
+    dcp->conf->types->getTypePointerWithSpace(ptrTo,spc,typeName);
   }
   else
     throw IfaceParseError("Unknown pointer setting: "+setting);

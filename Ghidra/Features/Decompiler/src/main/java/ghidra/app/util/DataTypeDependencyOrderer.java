@@ -50,7 +50,7 @@ public class DataTypeDependencyOrderer {
 
 	private HashSet<Entry> procSet = new HashSet<>();
 	private HashSet<Entry> doneSet = new HashSet<>();
-	private ArrayList<DataType> structList = new ArrayList<>();
+	private ArrayList<DataType> compositeList = new ArrayList<>();
 	private ArrayList<DataType> orderedDependentsList = new ArrayList<>();
 
 	private HashMap<Entry, Set<Entry>> whoIDependOn = new HashMap<>();
@@ -142,34 +142,32 @@ public class DataTypeDependencyOrderer {
 
 	/**
 	 * This method returns two lists:
-	 * 1) is the set of structs. Intended for outputting zero-sized definitions.
-	 * 2) is the acyclic dependency list (broken at structs and pointers to structs)
+	 * 1) is the set of structs/unions. Intended for outputting zero-sized definitions.
+	 * 2) is the acyclic dependency list (broken at composites and pointers to composites)
 	 * This works (and the dependency graph is able to be broken of cycles) because
-	 *  structures can be given zero size to start with and then later updated with full size.
-	 * @return  pair of arrayLists--one of structs and one complete list of dependents
+	 * composites can be given zero size to start with and then later updated with full size.
+	 * @return  pair of arrayLists--one of composites and one complete list of dependents
 	 */
 	public Pair<ArrayList<DataType>, ArrayList<DataType>> getAcyclicDependencyLists() {
 		if (processed == false) {
 			processDependencyLists();
 		}
-		return new Pair<>(structList, orderedDependentsList);
+		return new Pair<>(compositeList, orderedDependentsList);
 	}
 
 	/**
-	 * This method returns the ArrayList of structs
-	 *  to structs found in the input list, intended
-	 *  to be used initially as zero-sized structures.
-	 * @return  An arrayList of structs
+	 * This method returns the ArrayList of structs/unions
+	 * @return  An arrayList of Composite
 	 */
-	public ArrayList<DataType> getStructList() {
+	public ArrayList<DataType> getCompositeList() {
 		if (processed == false) {
 			processDependencyLists();
 		}
-		return structList;
+		return compositeList;
 	}
 
 	/**
-	 * This returns the acyclic dependency list (broken at structs and pointers to structs)
+	 * This returns the acyclic dependency list (broken at composites and pointers to composites)
 	 * @return  An ArrayList of dependents.
 	 */
 	public ArrayList<DataType> getDependencyList() {
@@ -225,7 +223,7 @@ public class DataTypeDependencyOrderer {
 		}
 		catch (Exception e) {
 			//If exception, return a basic list of inputs.
-			structList.clear();
+			compositeList.clear();
 			orderedDependentsList.clear();
 			for (Entry entry : inputSet) {
 				orderedDependentsList.add(entry.dataType);
@@ -239,7 +237,7 @@ public class DataTypeDependencyOrderer {
 		whoDependsOnMe.clear();
 		whoIDependOn.clear();
 		noDependentsQueue.clear();
-		structList.clear();
+		compositeList.clear();
 		orderedDependentsList.clear();
 		procSet.clear();
 		procSet.addAll(inputSet);
@@ -314,9 +312,9 @@ public class DataTypeDependencyOrderer {
 			//Msg.debug(this, "ORDERED_LIST_SIZE: " + orderedDependentsList.size() + " -- TYPE: " +
 			//	dataType.getName());
 			orderedDependentsList.add(entry.dataType);
-			//dependency stack of struct for which zero-sized structs should first be used.
-			if (entry.dataType instanceof Structure) {
-				structList.add(entry.dataType);
+			//dependency stack of struct/union for which zero-sized placeholders should be emitted first
+			if (entry.dataType instanceof Composite) {
+				compositeList.add(entry.dataType);
 			}
 			removeMyDependentsEdgesToMe(entry);
 		}
@@ -340,7 +338,7 @@ public class DataTypeDependencyOrderer {
 			procSet.add(subEntry);
 		}
 		if (entry.dataType instanceof Pointer) { //avoid cycles with structures/composites
-			if (subType instanceof Structure) {
+			if (subType instanceof Composite) {
 				return;
 			}
 		}
