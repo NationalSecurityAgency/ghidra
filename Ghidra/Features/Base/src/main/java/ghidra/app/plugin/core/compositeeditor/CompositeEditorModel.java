@@ -74,6 +74,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 *
 	 * @param dataType the new composite data type.
 	 */
+	@Override
 	public void load(Composite dataType) {
 		if (dataType == null) { // TODO: Why is this needed?  Use case?
 			return;
@@ -104,7 +105,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		// Listen so we can update editor if name changes for this structure.
 		originalCompositeId = DataTypeManager.NULL_DATATYPE_ID;
 		if (originalDTM.contains(dataType)) {
-			originalCompositeId = originalDTM.getID(dataType); // Get the id if editing an existing data type.
+			// Get the id if editing an existing data type.
+			originalCompositeId = originalDTM.getID(dataType);
 		}
 		originalDTM.addDataTypeManagerListener(this);
 
@@ -117,7 +119,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 		editorStateChanged(CompositeEditorModelListener.COMPOSITE_LOADED);
 	}
-	
+
 	/**
 	 * Create view composite with the appropriate datatype manager and 
 	 * changes listener(s) if required.
@@ -393,7 +395,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		if (newDt == null) {
 			return; // Was nothing and is nothing.
 		}
-		
+
 		if (DataTypeComponent.usesZeroLengthComponent(newDt)) {
 			newLength = 0;
 		}
@@ -401,7 +403,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		checkIsAllowableDataType(newDt);
 
 		newDt = resolveDataType(newDt, viewDTM, DataTypeConflictHandler.DEFAULT_HANDLER);
-		
+
 		if (newLength < 0) {
 			// prefer previous size first
 			int suggestedLength = (previousLength <= 0) ? lastNumBytes : previousLength;
@@ -410,7 +412,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			if (sizedDataType == null) {
 				return;
 			}
-			newDt = resolveDataType(sizedDataType.getDataType(),  viewDTM, DataTypeConflictHandler.DEFAULT_HANDLER);
+			newDt = resolveDataType(sizedDataType.getDataType(), viewDTM,
+				DataTypeConflictHandler.DEFAULT_HANDLER);
 			newLength = sizedDataType.getLength();
 			if (newLength <= 0) {
 				throw new UsrException("Can't currently add this data type.");
@@ -430,9 +433,10 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	/**
-	 * Resolves the data type against the indicated data type manager using the specified conflictHandler.
-	 * Transactions should have already been initiated prior to calling this method. 
-	 * If not then override this method to perform the transaction code around the resolve.
+	 * Resolves the data type against the indicated data type manager using the specified 
+	 * conflictHandler.  Transactions should have already been initiated prior to calling this 
+	 * method.   If not then override this method to perform the transaction code around the 
+	 * resolve.
 	 * 
 	 * @param dt the data type to be resolved
 	 * @param resolveDtm the data type manager to resolve the data type against
