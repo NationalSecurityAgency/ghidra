@@ -35,6 +35,12 @@ public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {
 		@Override
 		protected String normalizeName(String name) {
 			name = super.normalizeName(name);
+			if ("efl".equals(name)) {
+				return "eflags";
+			}
+			if ("rfl".equals(name)) {
+				return "eflags";
+			}
 			if ("rflags".equals(name)) {
 				return "eflags";
 			}

@@ -965,7 +965,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		 */
 		Trace trace = getTraceFromContext(context);
 		boolean mapped = breakpointService.anyMapped(bs, trace);
-		Enablement toggled = en.getToggled(mapped);
+		Enablement toggled = en.getToggled(mapped && trace == null);
 		if (toggled.enabled) {
 			breakpointService.enableAll(bs, trace).exceptionally(ex -> {
 				breakpointError(title, "Could not enable breakpoints", ex);

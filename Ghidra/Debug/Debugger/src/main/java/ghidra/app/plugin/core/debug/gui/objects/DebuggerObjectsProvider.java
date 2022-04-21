@@ -45,6 +45,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.objects.actions.*;
 import ghidra.app.plugin.core.debug.gui.objects.components.*;
+import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.services.*;
 import ghidra.async.*;
 import ghidra.dbg.*;
@@ -63,8 +64,7 @@ import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
@@ -1252,6 +1252,21 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.buildAndInstallLocal(this);
 		
 		groupTargetIndex++;
+		
+		new ActionBuilder("GoTo", plugin.getName())
+			.keyBinding("G")
+			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.popupMenuPath("&GoTo")
+			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
+			.helpLocation(AbstractToggleAction.help(plugin))
+			.enabledWhen(ctx -> isInstance(ctx, TargetObject.class))
+			.popupWhen(ctx -> isInstance(ctx, TargetObject.class))
+			.onAction(ctx -> performNavigate(ctx))
+			.enabled(false)
+			.buildAndInstallLocal(this);
+		
+		groupTargetIndex++;
+
 	
 		displayAsTreeAction = new DisplayAsTreeAction(tool, plugin.getName(), this);
 		displayAsTableAction = new DisplayAsTableAction(tool, plugin.getName(), this);
@@ -1543,6 +1558,15 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			}
 			return fence.ready();
 		}, "Couldn't configure one or more options");
+	}
+
+	public void performNavigate(ActionContext context) {
+		performAction(context, false, TargetObject.class, t -> {
+			if (t != null) {
+				navigateToSelectedObject(t, null);
+			}
+			return AsyncUtils.NIL;
+		}, "Couldn't navigate");
 	}
 
 	public void initiateConsole(ActionContext context) {
@@ -1840,4 +1864,68 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		return listener.queue.in;
 	}
 
+	public void navigateToSelectedObject(TargetObject object, Object value) {
+		if (listingService == null || listingService == null) {
+			return;
+		}
+		if (value == null) {
+			value =
+				object.getCachedAttribute(TargetBreakpointLocation.ADDRESS_ATTRIBUTE_NAME);
+		}
+		if (value == null) {
+			value = object.getCachedAttribute(TargetObject.PREFIX_INVISIBLE + "range");
+		}
+		if (value == null) {
+			value = object.getCachedAttribute(TargetObject.VALUE_ATTRIBUTE_NAME);
+		}
+		if (value == null) {
+			return;
+		}
+
+		Address addr = null;
+		if (value instanceof Address) {
+			addr = (Address) value;
+		}
+		else if (value instanceof AddressRangeImpl) {
+			AddressRangeImpl range = (AddressRangeImpl) value;
+			addr = range.getMinAddress();
+		}
+		else if (value instanceof Long) {
+			Long lval = (Long) value;
+			addr = object.getModel().getAddress("ram", lval);
+		}
+		else if (value instanceof String) {
+			String sval = (String) value;
+			addr = stringToAddress(object, addr, sval);
+		}
+		if (addr != null) {
+			TraceRecorder recorder = modelService.getRecorderForSuccessor(object);
+			if (recorder == null) {
+				recorder = modelService.getRecorder(currentTrace);
+				if (recorder == null) {
+					return;
+				}
+			}
+			DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
+			Address traceAddr = memoryMapper.targetToTrace(addr);
+			listingService.goTo(traceAddr, true);
+		}
+	}
+
+	private Address stringToAddress(TargetObject selectedObject, Address addr, String sval) {
+		Integer base = 16;
+		if (selectedObject instanceof TargetConfigurable) {
+			TargetConfigurable configurable = (TargetConfigurable) selectedObject;
+			base =
+				(Integer) configurable.getCachedAttribute(TargetConfigurable.BASE_ATTRIBUTE_NAME);
+		}
+		try {
+			Long lval = Long.parseLong(sval, base);
+			addr = selectedObject.getModel().getAddress("ram", lval);
+		}
+		catch (NumberFormatException nfe) {
+			// IGNORE
+		}
+		return addr;
+	}
 }

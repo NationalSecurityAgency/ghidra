@@ -153,6 +153,11 @@ public class AddEditDialog extends DialogComponentProvider {
 		}
 
 		String symbolName = symbolPath.getName();
+		if (StringUtils.isBlank(symbolName)) {
+			// this is the case of having a namespace without a name, such as "Namespace::"
+			setStatusText("Name cannot be blank while changing namespace");
+			return;
+		}
 
 		// see if the user specified a namespace path and if so, then get the
 		// new namespace name from that path
@@ -178,6 +183,7 @@ public class AddEditDialog extends DialogComponentProvider {
 			return;
 		}
 
+		cmd = new CompoundCmd(symbol == null ? "Add Label" : "Edit Label");
 		if (primaryCheckBox.isEnabled() && primaryCheckBox.isSelected()) {
 			cmd.add(new SetLabelPrimaryCmd(addr, symbolName, parent));
 		}

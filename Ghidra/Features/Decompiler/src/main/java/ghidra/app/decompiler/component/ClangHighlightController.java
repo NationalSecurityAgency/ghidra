@@ -33,17 +33,17 @@ import util.CollectionUtils;
  * Class to handle highlights for a decompiled function.
  * 
  * <p>This class does not painting directly.  Rather, this class tracks the currently highlighted
- * tokens and then sets the highlight color on the token when it is highlighted and clears the 
+ * tokens and then sets the highlight color on the token when it is highlighted and clears the
  * highlight color when the highlight is removed.
  * 
- * <p>This class maintains the notion of 'primary' highlights and 'secondary' highlights.  
+ * <p>This class maintains the notion of 'primary' highlights and 'secondary' highlights.
  * Primary highlights are considered transient and get cleared whenever the location changes.
  * Secondary highlights will stay until they are manually cleared by a user action.  Primary
  * highlights happen when the user clicks around the Decompiler.  They show state such as the
- * current field, impact of a variable (via a slicing action), or related syntax (such as 
+ * current field, impact of a variable (via a slicing action), or related syntax (such as
  * matching braces).  Secondary highlights are triggered by the user to show all occurrences of
- * a particular variable.  Further,  the user can apply multiple secondary highlights at the 
- * same time, with different colors for each highlight.  
+ * a particular variable.  Further,  the user can apply multiple secondary highlights at the
+ * same time, with different colors for each highlight.
  */
 public abstract class ClangHighlightController {
 
@@ -80,14 +80,6 @@ public abstract class ClangHighlightController {
 		defaultHighlightColor = c;
 	}
 
-	public String getHighlightedText() {
-		ClangToken highlightedToken = getHighlightedToken();
-		if (highlightedToken != null) {
-			return highlightedToken.getText();
-		}
-		return null;
-	}
-
 	public long getUpdateId() {
 		return updateId;
 	}
@@ -108,7 +100,7 @@ public abstract class ClangHighlightController {
 	 * Return the current highlighted token (if exists and unique)
 	 * @return token or null
 	 */
-	private ClangToken getHighlightedToken() {
+	public ClangToken getHighlightedToken() {
 		if (primaryHighlightTokens.size() == 1) {
 			HighlightToken hlToken = CollectionUtils.any(primaryHighlightTokens);
 			return hlToken.getToken();

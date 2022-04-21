@@ -215,7 +215,7 @@ public class DecompilerUtils {
 	}
 
 	/**
-	 * Returns the function represented by the given token.  This will be either the 
+	 * Returns the function represented by the given token.  This will be either the
 	 * decompiled function or a function referenced within the decompiled function.
 	 * 
 	 * @param program the program
@@ -270,8 +270,8 @@ public class DecompilerUtils {
 
 	/**
 	 * Similar to {@link #getTokens(ClangNode, AddressSetView)}, but uses the tokens from
-	 * the given view fields.  Sometimes the tokens in the model (represented by the 
-	 * {@link ClangNode}) are different than the fields in the view (such as when a list of 
+	 * the given view fields.  Sometimes the tokens in the model (represented by the
+	 * {@link ClangNode}) are different than the fields in the view (such as when a list of
 	 * comment tokens are condensed into a single comment token).
 	 * 
 	 * @param fields the fields to check
@@ -354,8 +354,7 @@ public class DecompilerUtils {
 	public static AddressSet findClosestAddressSet(Program program, AddressSpace functionSpace,
 			List<ClangToken> tokenList) {
 		AddressSet addressSet = new AddressSet();
-		for (int i = 0; i < tokenList.size(); ++i) {
-			ClangToken tok = tokenList.get(i);
+		for (ClangToken tok : tokenList) {
 			addTokenAddressRangeToSet(addressSet, tok, functionSpace);
 		}
 
@@ -574,8 +573,8 @@ public class DecompilerUtils {
 		}
 
 		Stack<ClangSyntaxToken> braceStack = new Stack<>();
-		for (int i = 0; i < list.size(); ++i) {
-			ClangToken token = (ClangToken) list.get(i);
+		for (ClangNode element : list) {
+			ClangToken token = (ClangToken) element;
 			if (token instanceof ClangSyntaxToken) {
 				ClangSyntaxToken syntaxToken = (ClangSyntaxToken) token;
 
@@ -637,7 +636,7 @@ public class DecompilerUtils {
 	 * sequence of tokens that are part of the comment and group them into a single
 	 * ClangCommentToken.  This makes post processing on the full comment string easier.
 	 * A single comment string can contain white space that manifests as ClangSyntaxTokens
-	 * with white space as text. 
+	 * with white space as text.
 	 * @param alltoks is the token stream
 	 * @param i is the position of the initial comment token
 	 * @param first is the initial comment token
@@ -749,6 +748,17 @@ public class DecompilerUtils {
 		if (token == null) {
 			token = context.getTokenAtCursor();
 		}
+
+		return getDataType(token);
+	}
+
+	/**
+	 * Returns the data type for the given  token
+	 * 
+	 * @param token the token
+	 * @return the data type or null
+	 */
+	public static DataType getDataType(ClangToken token) {
 
 		Varnode varnode = DecompilerUtils.getVarnodeRef(token);
 		if (varnode != null) {

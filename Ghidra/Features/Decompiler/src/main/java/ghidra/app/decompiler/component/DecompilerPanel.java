@@ -266,7 +266,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 
 		// The existing highlights are based on the previously generated tokens, which no longer
-		// exist.  Use those tokens to highlight the current tokens, which are conceptually the 
+		// exist.  Use those tokens to highlight the current tokens, which are conceptually the
 		// same tokens.
 		Set<HighlightToken> oldHighlights =
 			highlightController.getSecondaryHighlightsByFunction(function);
@@ -332,9 +332,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		// to go to an actual token, since multiple tokens can share an address, we woudln't know
 		// which token is best.)
 		//
-		// Note:  at the time of this writing, not all fields have an address value.  For 
+		// Note:  at the time of this writing, not all fields have an address value.  For
 		//        example, the ClangFuncNameToken, does not have an address.  (It seems that most
-		//        of the tokens in the function signature do not have an address, which can 
+		//        of the tokens in the function signature do not have an address, which can
 		//        probably be fixed.)   So, to deal with this oddity, we will have some special
 		//        case code below.
 		//
@@ -389,7 +389,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	/**
 	 * Put cursor on first token in the list
-	 * @param tokens the tokens to search for 
+	 * @param tokens the tokens to search for
 	 */
 	private void goToBeginningOfLine(List<ClangToken> tokens) {
 		if (tokens.isEmpty()) {
@@ -450,8 +450,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	/**
-	 * Translate Ghidra address to decompiler address. Functions within an overlay space are 
-	 * decompiled in their physical space, therefore decompiler results refer to the 
+	 * Translate Ghidra address to decompiler address. Functions within an overlay space are
+	 * decompiled in their physical space, therefore decompiler results refer to the
 	 * functions underlying .physical space
 	 * 
 	 * @param addr the Ghidra address
@@ -470,7 +470,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	/**
-	 * Translate Ghidra address set to decompiler address set. Functions within an overlay 
+	 * Translate Ghidra address set to decompiler address set. Functions within an overlay
 	 * space are decompiled in their physical space, therefore decompiler results
 	 * refer to the functions underlying .physical space
 	 * 
@@ -536,13 +536,18 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		highlightController.clearAllHighlights();
 	}
 
+	public FontMetrics getFontMetrics() {
+		Font font = options.getDefaultFont();
+		return super.getFontMetrics(font);
+	}
+
 	private FontMetrics getFontMetrics(DecompileOptions decompileOptions) {
 		Font font = decompileOptions.getDefaultFont();
 		return getFontMetrics(font);
 	}
 
 	/**
-	 * Passing false signals to disallow navigating to new functions from within the panel by 
+	 * Passing false signals to disallow navigating to new functions from within the panel by
 	 * using the mouse.
 	 * @param enabled false disabled mouse function navigation
 	 */
@@ -594,7 +599,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			tryGoToVarnode((ClangVariableToken) token, newWindow);
 		}
 		else if (token instanceof ClangCommentToken) {
-			tryGoToComment(location, event, textField, token, newWindow);
+			tryGoToComment(location, event, textField, newWindow);
 		}
 		else if (token instanceof ClangSyntaxToken) {
 			tryGoToSyntaxToken((ClangSyntaxToken) token);
@@ -602,10 +607,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	private void tryGoToComment(FieldLocation location, MouseEvent event, ClangTextField textField,
-			ClangToken token, boolean newWindow) {
+			boolean newWindow) {
 
-		// special cases
-		// -comments: these no longer use tokens for each item, but are one composite field
+		// comments may use annotations; tell the annotation it was clicked
 		FieldElement clickedElement = textField.getClickedObject(location);
 		if (clickedElement instanceof AnnotatedTextFieldElement) {
 			AnnotatedTextFieldElement annotation = (AnnotatedTextFieldElement) clickedElement;
@@ -613,7 +617,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return;
 		}
 
-		String text = clickedElement.getText();
+		String text = textField.getText();
 		String word = StringUtilities.findWord(text, location.col);
 		tryGoToScalar(word, newWindow);
 	}
@@ -717,7 +721,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 				Address addr = space.getAddress(NumericUtilities.parseHexLong(offsetStr), true);
 				controller.goToAddress(addr, newWindow);
 			}
-			catch (Exception e) {
+			catch (AddressOutOfBoundsException e) {
 				// give-up
 			}
 			return;
@@ -726,7 +730,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			long value = NumericUtilities.parseHexLong(text);
 			controller.goToScalar(value, newWindow);
 		}
-		catch (Exception e) {
+		catch (NumberFormatException e) {
 			return; // give up
 		}
 	}
@@ -834,6 +838,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		repaint();
 	}
 
+	public FieldBasedSearchLocation getSearchResults() {
+		return (FieldBasedSearchLocation) currentSearchLocation;
+	}
+
 //==================================================================================================
 // End Search Methods
 //==================================================================================================
@@ -856,7 +864,46 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public String getHighlightedText() {
-		return highlightController.getHighlightedText();
+		ClangToken token = highlightController.getHighlightedToken();
+		if (token == null) {
+			return null;
+		}
+		if (token instanceof ClangCommentToken) {
+			return null; // comments are not single words that get highlighted
+		}
+		return token.getText();
+	}
+
+	public String getTextUnderCursor() {
+
+		FieldLocation location = fieldPanel.getCursorLocation();
+		ClangTextField textField = (ClangTextField) fieldPanel.getCurrentField();
+		if (textField == null) {
+			return null;
+		}
+
+		ClangToken token = textField.getToken(location);
+		if (!(token instanceof ClangCommentToken)) {
+			return token.getText(); // non-comment tokens are not multi-word; use the token's text
+		}
+
+		FieldElement clickedElement = textField.getClickedObject(location);
+		if (clickedElement instanceof AnnotatedTextFieldElement) {
+			AnnotatedTextFieldElement annotation = (AnnotatedTextFieldElement) clickedElement;
+			return annotation.getDisplayString();
+		}
+
+		String text = textField.getText();
+		return StringUtilities.findWord(text, location.col);
+	}
+
+	public String getSelectedText() {
+		FieldSelection selection = fieldPanel.getSelection();
+		if (selection.isEmpty()) {
+			return null;
+		}
+
+		return FieldSelectionHelper.getFieldSelectionText(selection, fieldPanel);
 	}
 
 	public FieldLocation getCursorPosition() {
@@ -887,15 +934,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return tokens.get(0);
 		}
 		return null;
-	}
-
-	public String getTextSelection() {
-		FieldSelection selection = fieldPanel.getSelection();
-		if (selection.isEmpty()) {
-			return null;
-		}
-
-		return FieldSelectionHelper.getFieldSelectionText(selection, fieldPanel);
 	}
 
 	public ClangToken getTokenAtCursor() {
@@ -957,7 +995,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private void doFindTokensByName(List<ClangToken> tokens, ClangTokenGroup group, String name) {
 
-		// TODO is it possible that two or more different variable tokens share the same name? 
+		// TODO is it possible that two or more different variable tokens share the same name?
 		for (int i = 0; i < group.numChildren(); ++i) {
 			ClangNode child = group.Child(i);
 			if (child instanceof ClangTokenGroup) {
@@ -1053,7 +1091,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class SearchHighlightFactory implements HighlightFactory {
 
@@ -1138,10 +1176,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		/**
 		 * Moves this field panel to the given line and column.  Further, this navigation will
 		 * fire an event to the rest of the tool.   (This is in contrast to a field panel
-		 * <code>goTo</code>, which we use to simply move the cursor, but not trigger an 
-		 * tool-level navigation event.) 
+		 * <code>goTo</code>, which we use to simply move the cursor, but not trigger an
+		 * tool-level navigation event.)
 		 * 
-		 * @param lineNumber the line number 
+		 * @param lineNumber the line number
 		 * @param column the column within the line
 		 */
 		void navigateTo(int lineNumber, int column) {
@@ -1171,7 +1209,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		void doUpdate() {
 
 			// Note: don't send this buffered cursor change highlight if some other highlight
-			//       has been applied.  Otherwise, this highlight would overwrite the last 
+			//       has been applied.  Otherwise, this highlight would overwrite the last
 			//       applied highlight.
 			long lastUpdateId = highlightController.getUpdateId();
 			if (updateId == lastUpdateId) {

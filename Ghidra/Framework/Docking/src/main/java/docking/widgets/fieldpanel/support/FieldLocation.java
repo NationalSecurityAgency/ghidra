@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +19,36 @@ import java.math.BigInteger;
 
 import org.jdom.Element;
 
+import docking.widgets.fieldpanel.Layout;
+import docking.widgets.fieldpanel.field.Field;
+
 /**
- * Class to represent locations within the FieldViewer.
+ * Class to represent {@link Field} locations within the field viewer.
+ * <p>
+ * A field location represents a place within a Field.  Fields live within a concept we call a
+ * layout.   A layout represents an 'item', for example an address, along with a grouping of
+ * related information.   Each layout will contain one or more Field objects.   Further, each
+ * layout's fields may have varying shapes, such as single or multiple rows within the layout.
+ * Thusly, a layout could conceptually represent a single line of text or multiple groupings of
+ * text and images, similar to how a newspaper or web page is laid out.
+ * <p>
+ * A layout lives in a larger collection of layouts, which are laid out vertically.  The index of a
+ *  layout is its position within that larger list.  This class contains the index of the layout
+ *  within which it lives.
+ * <p>
+ * A {@link FieldSelection} may be within a single layout or may cross multiple layouts.  To
+ * determine if a selection crosses multiple layouts, you can get the {@link FieldRange range} of
+ * the selection.   You can then use the range's start and end locations to determine if the
+ * selection spans multiple layouts.   If the start and end indexes of the range are the same, then
+ * the selection is within a single layout; otherwise, the selection spans multiple layouts.
+ * <p>
+ * This location also contains row and column values.  These values refer to the row and column of
+ * text within a single Field.   Lastly, this class contains a field number, which represents the
+ * relative field number inside of the over layout, which may contain multiple fields.
+ * 
+ * @see FieldSelection
+ * @see FieldRange
+ * @see Layout
  */
 public class FieldLocation implements Comparable<FieldLocation> {
 	public static final FieldLocation MAX =
@@ -29,7 +56,7 @@ public class FieldLocation implements Comparable<FieldLocation> {
 			Integer.MAX_VALUE);
 
 	public int fieldNum; // the number of the field for this location
-	public int row; // the row  position within the field .
+	public int row; // the row position within the field 
 	public int col; // the col position within the field
 
 	private BigInteger index;
@@ -94,12 +121,19 @@ public class FieldLocation implements Comparable<FieldLocation> {
 		this(loc.index, loc.fieldNum, loc.row, loc.col);
 	}
 
+	/**
+	 * Returns the index for this location.  The index corresponds to the layout that contains
+	 * the field represented by this location.  See the javadoc header for more details.
+	 * @return the index for this location.
+	 */
 	public BigInteger getIndex() {
 		return index;
 	}
 
 	/**
-	 * Returns the field index for this location.
+	 * Returns the number of the field for this location.  This is the number of the field within
+	 * a given layout.  See the javadoc header for more details.
+	 * @return the number of the field for this location.
 	 */
 	public int getFieldNum() {
 		return fieldNum;
@@ -107,6 +141,7 @@ public class FieldLocation implements Comparable<FieldLocation> {
 
 	/**
 	 * Returns the row within the Field for this location.
+	 * @return the row within the Field for this location.
 	 */
 	public int getRow() {
 		return row;
@@ -114,15 +149,12 @@ public class FieldLocation implements Comparable<FieldLocation> {
 
 	/**
 	 * Returns the column within the Field for this location.
+	 * @return the column within the Field for this location.
 	 */
 	public int getCol() {
 		return col;
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) {
@@ -141,6 +173,7 @@ public class FieldLocation implements Comparable<FieldLocation> {
 		return false;
 	}
 
+	@Override
 	public int compareTo(FieldLocation o) {
 		int compareTo = index.compareTo(o.index);
 		if (compareTo != 0) {
@@ -167,19 +200,11 @@ public class FieldLocation implements Comparable<FieldLocation> {
 		return 0;
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return index.intValue() + fieldNum * 100 + row * 10 + col;
 	}
 
-	/**
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return index.toString() + ", " + fieldNum + ", " + row + ", " + col;
@@ -200,7 +225,6 @@ public class FieldLocation implements Comparable<FieldLocation> {
 		fieldNum = loc.fieldNum;
 		row = loc.row;
 		col = loc.col;
-
 	}
 
 	public void setIndex(BigInteger index) {

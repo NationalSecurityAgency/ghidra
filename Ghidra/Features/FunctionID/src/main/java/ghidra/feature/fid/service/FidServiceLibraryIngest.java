@@ -54,12 +54,10 @@ class FidServiceLibraryIngest {
 
 	private LibraryRecord library = null; // Database record of the library we are creating
 	private CompilerSpec compilerSpec = null;
-	private Map<FunctionRecord, Set<ChildSymbol>> unresolvedSymbols =
-		new HashMap<>();
+	private Map<FunctionRecord, Set<ChildSymbol>> unresolvedSymbols = new HashMap<>();
 	private TreeSet<Long> globalUniqueFunction = new TreeSet<>();
 	private FidPopulateResult result = null;
-	private TreeMap<String, FidPopulateResult.Count> childHistogram =
-		new TreeMap<>(); // Counts of child references to function symbols
+	private TreeMap<String, FidPopulateResult.Count> childHistogram = new TreeMap<>(); // Counts of child references to function symbols
 
 	private static class FunctionRow {
 		public FunctionRecord functionRecord;
@@ -604,7 +602,8 @@ class FidServiceLibraryIngest {
 			return false;
 		}
 		if (compilerSpec != null) {
-			if (!compilerSpec.equals(program.getCompilerSpec())) {
+			if (!compilerSpec.getCompilerSpecID()
+					.equals(program.getCompilerSpec().getCompilerSpecID())) {
 				throw new IllegalArgumentException(
 					"Program " + program.getName() + " has different compiler spec (" +
 						program.getCompilerSpec().getCompilerSpecID() +

@@ -33,6 +33,7 @@ import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.mem.MemoryBlock;
@@ -110,8 +111,9 @@ public class RecoveredClassHelper {
 	List<Function> allDestructors = new ArrayList<Function>();
 	List<Function> allInlinedConstructors = new ArrayList<Function>();
 	List<Function> allInlinedDestructors = new ArrayList<Function>();
+	List<Function> nonClassInlines = new ArrayList<Function>();
 
-	List<Namespace> badFIDNamespaces = new ArrayList<Namespace>();
+	Set<Namespace> badFIDNamespaces = new HashSet<Namespace>();
 	List<Structure> badFIDStructures = new ArrayList<Structure>();
 
 	List<Function> badFIDFunctions = new ArrayList<Function>();
@@ -1950,10 +1952,7 @@ public class RecoveredClassHelper {
 		if (recoveredClass.getOrderToVftableMap().size() == 0) {
 			createVftableOrderMapping(recoveredClass);
 		}
-
-		// If not already, make function a thiscall
-		extendedFlatAPI.makeFunctionThiscall(constructorFunction);
-
+		
 		recoveredClass.addConstructor(constructorFunction);
 		addToAllConstructors(constructorFunction);
 	}
@@ -1969,9 +1968,6 @@ public class RecoveredClassHelper {
 			Function inlinedConstructorFunction)
 			throws InvalidInputException, DuplicateNameException {
 
-		//If not already, make function a thiscall
-		extendedFlatAPI.makeFunctionThiscall(inlinedConstructorFunction);
-
 		recoveredClass.addInlinedConstructor(inlinedConstructorFunction);
 		addToAllInlinedConstructors(inlinedConstructorFunction);
 	}
@@ -1985,9 +1981,6 @@ public class RecoveredClassHelper {
 	 */
 	public void addDestructorToClass(RecoveredClass recoveredClass, Function destructorFunction)
 			throws InvalidInputException, DuplicateNameException {
-
-		//If not already, make function a thiscall
-		extendedFlatAPI.makeFunctionThiscall(destructorFunction);
 
 		recoveredClass.addDestructor(destructorFunction);
 		addToAllDestructors(destructorFunction);
@@ -2003,9 +1996,6 @@ public class RecoveredClassHelper {
 	public void addInlinedDestructorToClass(RecoveredClass recoveredClass,
 			Function inlinedDestructorFunction)
 			throws InvalidInputException, DuplicateNameException {
-
-		//If not already, make function a thiscall
-		extendedFlatAPI.makeFunctionThiscall(inlinedDestructorFunction);
 
 		recoveredClass.addInlinedDestructor(inlinedDestructorFunction);
 		addToAllInlinedDestructors(inlinedDestructorFunction);
@@ -2255,14 +2245,14 @@ public class RecoveredClassHelper {
 	public void makeFunctionThiscall(Function function)
 			throws InvalidInputException, DuplicateNameException {
 
-		if (function.getCallingConventionName().equals("__thiscall")) {
+		if (function.getCallingConventionName().equals(CompilerSpec.CALLING_CONVENTION_thiscall)) {
 			return;
 		}
 
 		ReturnParameterImpl returnType =
 			new ReturnParameterImpl(function.getSignature().getReturnType(), program);
 
-		function.updateFunction("__thiscall", returnType,
+		function.updateFunction(CompilerSpec.CALLING_CONVENTION_thiscall, returnType,
 			FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, function.getSignatureSource(),
 			function.getParameters());
 	}
@@ -3145,11 +3135,10 @@ public class RecoveredClassHelper {
 						notInFunctionVftableRefs.add(addr);
 					}
 					else {
-						boolean functionCreated =
-							extendedFlatAPI.createFunction(prog, addr);
-						if (!functionCreated) {
-							notInFunctionVftableRefs.add(addr);
-						}
+						boolean functionCreated = extendedFlatAPI.createFunction(program, addr);
+							if (!functionCreated) {
+								notInFunctionVftableRefs.add(addr);
+							}
 					}
 				}
 			}
@@ -3806,11 +3795,13 @@ public class RecoveredClassHelper {
 		if (bookmarkComment.contains("Single Match")) {
 
 			Symbol symbol = symbolTable.getPrimarySymbol(functionAddress);
+
 			if (symbol != null && symbol.getSource() == SourceType.ANALYSIS &&
 				!symbol.getName().equals(name) && !symbol.getParentNamespace().equals(namespace)) {
 				// add to list of bad namespaces to be cleaned up later 
-				if (!badFIDNamespaces.contains(symbol.getParentNamespace())) {
-					badFIDNamespaces.add(symbol.getParentNamespace());
+				Namespace parentNamespace = symbol.getParentNamespace();
+				if (!parentNamespace.isGlobal()) {
+					badFIDNamespaces.add(parentNamespace);
 				}
 				extendedFlatAPI.addUniqueStringToPlateComment(functionAddress,
 					"***** Removed Bad FID Symbol *****");
@@ -4425,6 +4416,11 @@ public class RecoveredClassHelper {
 		while (badNamespaceIterator.hasNext()) {
 			monitor.checkCanceled();
 			Namespace badNamespace = badNamespaceIterator.next();
+
+			// global namespace shouldn't be on list but check anyway
+			if (badNamespace.isGlobal()) {
+				continue;
+			}
 
 			// delete empty namespace and parent namespaces
 			if (!extendedFlatAPI.hasSymbolsInNamespace(badNamespace)) {
@@ -5965,6 +5961,7 @@ public class RecoveredClassHelper {
 
 							// remove from the allConstructors too
 							addInlinedConstructorToClass(recoveredClass, constructor);
+							nonClassInlines.add(constructor);
 							constructorIterator.remove();
 							removeFromAllConstructors(constructor);
 
@@ -6964,6 +6961,40 @@ public class RecoveredClassHelper {
 			}
 
 		}
+	}
+
+	public void makeConstructorsAndDestructorsThiscalls(List<RecoveredClass> recoveredClasses)
+			throws CancelledException, InvalidInputException, DuplicateNameException {
+
+		if (recoveredClasses.isEmpty()) {
+			return;
+		}
+
+		List<Function> allConstructorDestructorFunctions = new ArrayList<Function>();
+
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+
+			monitor.checkCanceled();
+
+			allConstructorDestructorFunctions.addAll(recoveredClass.getConstructorList());
+			allConstructorDestructorFunctions.addAll(recoveredClass.getDestructorList());
+			allConstructorDestructorFunctions.addAll(recoveredClass.getInlinedConstructorList());
+			allConstructorDestructorFunctions.addAll(recoveredClass.getInlinedDestructorList());
+		}
+
+		if (allConstructorDestructorFunctions.isEmpty()) {
+			return;
+		}
+
+		// remove the inlines that are not in their expected class -- still want the inline
+		// comments later in processing but don't make them this calls
+		allConstructorDestructorFunctions.removeAll(nonClassInlines);
+
+		for (Function function : allConstructorDestructorFunctions) {
+			monitor.checkCanceled();
+			makeFunctionThiscall(function);
+		}
+
 	}
 
 	/**
@@ -8071,7 +8102,7 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to add class vftable pointers to the given class structure
+	 * Method to add/overwrite class vftable pointers to the given class structure
 	 * @param classStructureDataType the class structure data type
 	 * @param recoveredClass the given recovered class
 	 * @param vfPointerDataTypes the map of addresses/vftables, a null should be passed to indicate
@@ -8092,7 +8123,7 @@ public class RecoveredClassHelper {
 			return classStructureDataType;
 		}
 
-		// If the map is not empty, the class structure will contain incomplete information so 
+		// If the map is not complete, the class structure will contain incomplete information so 
 		// put out a debug message to indicate this issue
 		if (!isClassOffsetToVftableMapComplete(recoveredClass)) {
 			Msg.debug(this,
@@ -8111,13 +8142,17 @@ public class RecoveredClassHelper {
 
 			DataType classVftablePointer = vfPointerDataTypes.get(vftableAddress);
 
-			boolean addedVftablePointer = false;
+			if (classVftablePointer == null) {
+				continue;
+			}
+
 
 			// loop until the vftable pointer is added
-			// if component at offset is not a structure, replace with vftablePtr
-			// if component at offset is a structure, replace with components then loop
-			// until finally component is not a structure and can be replaced
-			while (!addedVftablePointer) {
+			// if there is room and the component offset is not a structure, replace with vftablePtr
+			// otherwise, within the range from top of containing component to the end of where the
+			// vftable it to replace, clear component(s) or replace structure(s) with internal
+			// components and loop until can replace with the vftable pointer
+			while (true) {
 
 				monitor.checkCanceled();
 
@@ -8126,69 +8161,84 @@ public class RecoveredClassHelper {
 					EditStructureUtils.addDataTypeToStructure(classStructureDataType, vftableOffset,
 						classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
 				if (addedToStructure) {
-					addedVftablePointer = true;
-					continue;
+					break;
 				}
 
-				// if already has a base class vftable pointer replace with main class vftablePtr
-				// get the item at that location
-				// if offset is in the middle, get the top of the component
+				// if the component at the offset is the start of the component, and the component
+				// isn't a structure and if the component is big enough to be replaced, or there 
+				// are enough undefined that can be replaced then replace
+				DataTypeComponent componentAt =
+					classStructureDataType.getComponentAt(vftableOffset);
+
+				if (componentAt != null && !(componentAt.getDataType() instanceof Structure) &&
+					(componentAt.getLength() >= classVftablePointer.getLength() ||
+						EditStructureUtils.hasEnoughUndefinedsOfAnyLengthAtOffset(
+							classStructureDataType, vftableOffset, classVftablePointer.getLength(),
+							monitor))) {
+
+					EditStructureUtils.clearLengthAtOffset(classStructureDataType, vftableOffset,
+						classVftablePointer.getLength(), monitor);
+					classStructureDataType.replaceAtOffset(vftableOffset, classVftablePointer,
+						classVftablePointer.getLength(), CLASS_VTABLE_PTR_FIELD_EXT, "");
+					break;
+				}
+
+				// otherwise if in middle of a containing dt then loop until all structs in 
+				// range are expanded and other items are cleared
 				DataTypeComponent currentComponent =
 					classStructureDataType.getComponentContaining(vftableOffset);
 
-				int componentOffset = currentComponent.getOffset();
+				int currentOffset = currentComponent.getOffset();
+				int endOffset = vftableOffset + classVftablePointer.getLength();
+				while (currentComponent != null && currentOffset < endOffset) {
 
-				if (currentComponent.getFieldName().endsWith(CLASS_VTABLE_PTR_FIELD_EXT)) {
-					classStructureDataType.replaceAtOffset(vftableOffset, classVftablePointer,
-						classVftablePointer.getLength(), CLASS_VTABLE_PTR_FIELD_EXT, "");
-					addedVftablePointer = true;
-					continue;
-				}
-
-				// if the current component isn't a structure just replace it with the
-				// vftable pointer
-				if (!(currentComponent.getDataType() instanceof Structure)) {
-					classStructureDataType.replaceAtOffset(vftableOffset, classVftablePointer,
-						classVftablePointer.getLength(), CLASS_VTABLE_PTR_FIELD_EXT, "");
-					addedVftablePointer = true;
-					continue;
-				}
-
-				// if there is a structure at the offset, replace it with its pieces then 
-				// loop again to try to place vftable pointer over either empty bytes or 
-				// base vftableptr
-				DataType currentDT = currentComponent.getDataType();
-				Structure internalStruct = (Structure) currentDT;
-
-				DataTypeComponent[] components = internalStruct.getComponents();
-
-				// if there is an empty structure at the offset, clear it which will replace
-				// it with an undefined data type of size 1
-				if (components.length == 0) {
-					classStructureDataType.clearAtOffset(componentOffset);
-					continue;
-				}
-				// if non-empty, replace the structure with its components
-				for (DataTypeComponent component : components) {
-
-					int innerOffset = component.getOffset();
-
-					int replaceOffset = component.getOffset() + componentOffset;
-					if (classStructureDataType.getLength() <= replaceOffset) {
-						Msg.debug(this,
-							classStructureDataType.getName() + " trying to place component " +
-								component.getFieldName() + " at offset " + component.getOffset());
+					int nextOffset = currentComponent.getEndOffset() + 1;
+					// if there is a structure at the offset, replace it with its pieces 
+					if (currentComponent.getDataType() instanceof Structure) {
+						DataType currentDT = currentComponent.getDataType();
+						Structure internalStruct = (Structure) currentDT;
+						expandInternalStructure(classStructureDataType, internalStruct,
+							currentOffset);
 					}
-
-					// add indiv components of internal structure to the outer structure
-					classStructureDataType.replaceAtOffset(componentOffset + innerOffset,
-						component.getDataType(), component.getLength(), component.getFieldName(),
-						"");
+					// if not a structure then clear it
+					else {
+						classStructureDataType.clearAtOffset(currentOffset);
+					}
+					currentOffset = nextOffset;
+					currentComponent = classStructureDataType.getComponentAt(currentOffset);
 				}
-
 			}
 		}
 		return classStructureDataType;
+	}
+
+	/**
+	 * Method to replace an internal structure into individual parts within the containing structure
+	 * @param structure the containing structure
+	 * @param internalStruct the internal structure
+	 * @param offset the offset of the internal structure
+	 */
+	private void expandInternalStructure(Structure structure, Structure internalStruct,
+			int offset) {
+
+		DataTypeComponent[] components = internalStruct.getComponents();
+
+		// if there is an empty structure at the offset, clear it which will replace
+		// it with an undefined data type of size 1
+		if (components.length == 0) {
+			structure.clearAtOffset(offset);
+			return;
+		}
+		// if non-empty, replace the structure with its components
+		for (DataTypeComponent component : components) {
+
+			int innerOffset = component.getOffset();
+
+			// add indiv components of internal structure to the outer structure
+			structure.replaceAtOffset(offset + innerOffset, component.getDataType(),
+				component.getLength(), component.getFieldName(), "");
+		}
+		return;
 	}
 
 	/**

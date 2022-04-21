@@ -306,11 +306,7 @@ class PrototypeManager {
 	///////////////////////////////////////////////////////
 
 	private void populatePrototypes() {
-		if (program.isLanguageUpgradePending()) {
-			return; // do not load prototypes prior to language upgrade
-		}
 		try {
-
 			RecordIterator iter = protoAdapter.getRecords();
 			while (iter.hasNext()) {
 				DBRecord record = iter.next();

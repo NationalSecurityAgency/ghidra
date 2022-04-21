@@ -29,6 +29,7 @@ import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -57,6 +58,10 @@ public class DebuggerBlockChooserDialog extends DialogComponentProvider {
 		}
 
 		public String getProgramName() {
+			DomainFile df = program.getDomainFile();
+			if (df != null) {
+				return df.getName();
+			}
 			return program.getName();
 		}
 

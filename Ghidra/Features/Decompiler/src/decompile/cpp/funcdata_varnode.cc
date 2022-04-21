@@ -1177,11 +1177,10 @@ bool Funcdata::attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash)
   dhash.clear();
   Varnode *vn = dhash.findVarnode(this,entry->getFirstUseAddress(),entry->getHash());
   if (vn == (Varnode *)0) return false;
+  if (vn->getSymbolEntry() != (SymbolEntry *)0) return false;	// Varnode is already labeled
   if (entry->getSymbol()->getCategory() == 1) {	// Is this an equate symbol
-    if (vn->mapentry != entry) {		// Check we haven't marked this before
-      vn->setSymbolEntry(entry);
-      return true;
-    }
+    vn->setSymbolEntry(entry);
+    return true;
   }
   else if (entry->getSize() == vn->getSize()) {
     if (vn->setSymbolProperties(entry))
@@ -1205,7 +1204,7 @@ bool Funcdata::attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash)
   Varnode *vn = dhash.findVarnode(this,entry->getFirstUseAddress(),entry->getHash());
   if (vn == (Varnode *)0)
     return false;
-  if (vn->getSymbolEntry() == entry) return false; // Already applied it
+  if (vn->getSymbolEntry() != (SymbolEntry *)0) return false; // Symbol already applied
   Symbol *sym = entry->getSymbol();
   if (sym->getCategory() == 1) {	// Equate symbol does not depend on size
     vn->setSymbolEntry(entry);

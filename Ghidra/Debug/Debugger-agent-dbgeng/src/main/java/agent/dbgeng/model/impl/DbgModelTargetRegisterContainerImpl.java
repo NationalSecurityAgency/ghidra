@@ -170,6 +170,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 		}));
 	}
 
+	@Override
 	public Map<String, byte[]> getCachedRegisters() {
 		return values;
 	}

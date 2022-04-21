@@ -2257,6 +2257,15 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto Addr24;
 }
 
+# bl<COND> used as a PIC instruction to get at current PC in lr
+:bl^COND Addr24 		is $(AMODE) & COND & c2527=5 & L24=1 & immed24=0xffffff & Addr24
+{
+  build COND;
+  build Addr24;
+  lr = inst_next;
+  goto Addr24;
+}
+
 :bl Addr24 		is $(AMODE) &  cond=14 & c2527=5 & L24=1 & Addr24
 {
   lr = inst_next;
