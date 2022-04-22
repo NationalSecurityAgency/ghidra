@@ -299,4 +299,9 @@ public class DebugCOFFSymbol implements StructConverter {
     	return structure;
     }
 
+	@Override
+	public String toString() {
+		return String.format("%s section=%d value=0x%x type=0x%x class=0x%x aux=%d", name,
+			sectionNumber, value, type, storageClass, numberOfAuxSymbols);
+	}
 }
