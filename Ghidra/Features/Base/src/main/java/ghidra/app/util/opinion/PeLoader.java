@@ -140,10 +140,10 @@ public class PeLoader extends AbstractPeDebugLoader {
 			processImports(optionalHeader, program, monitor, log);
 			processDelayImports(optionalHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
-			processDebug(optionalHeader, fileHeader, sectionToAddress, program, monitor);
+			processDebug(optionalHeader, ntHeader, sectionToAddress, program, monitor);
 			processProperties(optionalHeader, program, monitor);
 			processComments(program.getListing(), monitor);
-			processSymbols(fileHeader, sectionToAddress, program, monitor, log);
+			processSymbols(ntHeader, sectionToAddress, program, monitor, log);
 			processImageRuntimeFunctionEntries(fileHeader, program, monitor, log);
 
 			processEntryPoints(ntHeader, program, monitor);
@@ -286,12 +286,13 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
-	private void processSymbols(FileHeader fileHeader, Map<SectionHeader, Address> sectionToAddress,
+	private void processSymbols(NTHeader ntHeader, Map<SectionHeader, Address> sectionToAddress,
 			Program program, TaskMonitor monitor, MessageLog log) {
+		FileHeader fileHeader = ntHeader.getFileHeader();
 		List<DebugCOFFSymbol> symbols = fileHeader.getSymbols();
 		int errorCount = 0;
 		for (DebugCOFFSymbol symbol : symbols) {
-			if (!processDebugCoffSymbol(symbol, fileHeader, sectionToAddress, program, monitor)) {
+			if (!processDebugCoffSymbol(symbol, ntHeader, sectionToAddress, program, monitor)) {
 				++errorCount;
 			}
 		}
@@ -923,7 +924,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		return null;
 	}
 
-	private void processDebug(OptionalHeader optionalHeader, FileHeader fileHeader,
+	private void processDebug(OptionalHeader optionalHeader, NTHeader ntHeader,
 			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
 		if (monitor.isCancelled()) {
 			return;
@@ -946,7 +947,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		processDebug(parser, fileHeader, sectionToAddress, program, monitor);
+		processDebug(parser, ntHeader, sectionToAddress, program, monitor);
 	}
 
 	@Override

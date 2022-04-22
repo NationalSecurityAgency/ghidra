@@ -25,7 +25,7 @@ import ghidra.app.util.bin.format.pe.OffsetValidator;
  * A helper class to parsing different types of 
  * debug information from a debug directory
  */
-public class DebugDirectoryParser {
+public class DebugDirectoryParser implements OffsetValidator {
 
 	/**
 	 * Unknown debug type.
@@ -81,21 +81,25 @@ public class DebugDirectoryParser {
 	private DebugCodeView codeViewDebug;
 	private DebugCOFFSymbolsHeader coffDebug;
 	private DebugFixup fixupDebug;
+	private BinaryReader reader;
+	private long sizeOfImage;
 
 	/**
 	 * Constructs a new debug directory parser.
 	 * @param reader the binary reader
 	 * @param ptr the pointer into the binary reader
 	 * @param size the size of the directory
-	 * @param validator the validator for the directory
+	 * @param sizeOfImage the size of the image in memory
 	 * @throws IOException if an I/O error occurs
 	 */
-	public DebugDirectoryParser(BinaryReader reader, long ptr, int size, OffsetValidator validator)
+	public DebugDirectoryParser(BinaryReader reader, long ptr, int size, long sizeOfImage)
 			throws IOException {
+		this.reader = reader;
+		this.sizeOfImage = sizeOfImage;
 		int debugFormatsCount = size / DebugDirectory.IMAGE_SIZEOF_DEBUG_DIRECTORY;
 
 		for (int i = 0; i < debugFormatsCount; ++i) {
-			DebugDirectory debugDir = new DebugDirectory(reader, ptr, validator);
+			DebugDirectory debugDir = new DebugDirectory(reader, ptr, this);
 			if (debugDir.getSizeOfData() == 0)
 				break;
 
@@ -119,26 +123,26 @@ public class DebugDirectoryParser {
 					break;
 				case IMAGE_DEBUG_TYPE_FIXUP:
 					debugDir.setDescription("Fixup");
-					fixupDebug = new DebugFixup(reader, debugDir, validator);
+					fixupDebug = new DebugFixup(reader, debugDir, this);
 					break;
 				case IMAGE_DEBUG_TYPE_EXCEPTION:
 					debugDir.setDescription("Exception");
 					break;
 				case IMAGE_DEBUG_TYPE_MISC:
 					debugDir.setDescription("Misc");
-					miscDebug = new DebugMisc(reader, debugDir, validator);
+					miscDebug = new DebugMisc(reader, debugDir, this);
 					break;
 				case IMAGE_DEBUG_TYPE_FPO:
 					debugDir.setDescription("FPO");
 					break;
 				case IMAGE_DEBUG_TYPE_CODEVIEW:
 					debugDir.setDescription("CodeView");
-					codeViewDebug = new DebugCodeView(reader, debugDir, validator);
+					codeViewDebug = new DebugCodeView(reader, debugDir, this);
 					break;
 				case IMAGE_DEBUG_TYPE_COFF:
 					debugDir.setDescription("COFF");
 					coffDebug =
-						new DebugCOFFSymbolsHeader(reader, debugDir, validator);
+						new DebugCOFFSymbolsHeader(reader, debugDir, this);
 					break;
 				case IMAGE_DEBUG_TYPE_UNKNOWN:
 					debugDir.setDescription("Unknown");
@@ -187,5 +191,20 @@ public class DebugDirectoryParser {
 	 */
 	public DebugFixup getDebugFixup() {
 		return fixupDebug;
+	}
+
+	@Override
+	public boolean checkPointer(long ptr) {
+		try {
+			return ptr > 0 && ptr < reader.length();
+		}
+		catch (IOException e) {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean checkRVA(long rva) {
+		return (0 <= rva) && (rva <= sizeOfImage);
 	}
 }
