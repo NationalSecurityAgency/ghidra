@@ -1486,6 +1486,56 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 	<skip>
 }
 
+# Floating Point Square Reciprocal Approximate
+# pattern 1111nnnn01111101			
+# text	  fsrra <F_REG_N>
+# arch    # arch_sh2a_or_sh3e_up
+:fsrra FRN_0t	is
+	OP_0=0xF & FRN_0t & DRN_1t & OP_4=0x7D {
+	if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
+	FRN_0t = int2float(1 :4) f/ sqrt( FRN_0t );
+	goto <skip>;
+	<doublePrecision>
+	DRN_1t = int2float(1 :4) f/ sqrt( DRN_1t );
+	<skip>
+}
+
+#define pcodeop fsca;
+define pcodeop sin;
+define pcodeop cos;
+
+# Floating Point Sine And Cosine Approximate
+# pattern 1111nnn011111101
+# text	  fsca FPUL,<F_REG_N>
+# arch    # arch_sh2a_or_sh3e_up
+:fsca FPUL,FRN_0t is
+	OP_0=0xF & FPUL & FRN_0t & OP_4=0xFD {
+	#fsca(FPUL, FRN_0t);
+	if (( $(FPSCR_PR) != 0 )) goto <skip>;
+	
+	angle:4 = int2float(0 :4);    			# float
+	offset:4 = 0x00010000;				# long
+        fraction:4 = 0x0000FFFF;			# long
+	
+	fraction = fraction & FPUL;			# extract sub-rotation
+	angle 	 = int2float(fraction);			# convert to float
+	
+	pi:4 = 0x40490fdb;				# 3.1415927.. as 32-bit float
+	pi2:4 = int2float(2 :4) f* pi;			# multiply pi by 2 (2pi)
+        angle = (pi2 f* angle) / offset;  		# convert to radian
+    
+	local _sin:4 = sin(angle);			# call fake sin & cos
+	local _cos:4 = cos(angle);
+	
+	FRN_0t = _sin;					# _sin goes to FR[n]
+	*:4 ( FRN_0t + 4 ) = _cos;			# _cos goes to FR[n+1]
+							# what is this nasty hack?
+	*[register]:4 (&:4 FRN_0t + 4) = _cos;
+	
+	# PC = PC + 2;
+	<skip>
+}
+
 # Transfer from System Register
 # pattern 1111nnnn00001101
 # text    fsts FPUL,<F_REG_N>
@@ -2273,6 +2323,34 @@ define pcodeop mac_wOp;
 	N_0t = zext($(T_FLAG));
 }
 
+
+# Load non-boundary alignment data (32-bit)
+# pattern 0100mmmm10101001
+# text    movua.l @<REG_M>,R0
+# arch    
+:movua.l M_0t_at,r0               is OP_0=0x4 & M_0t_at & r0 & OP_4=0xA9  {
+	r0 = (*:4 ( M_0t_at ));
+	
+	if (M_0t_at != 0) goto <increment>;
+	goto <skip>;
+	<increment>
+	M_0t_at = M_0t_at + 4;
+	<skip>
+}
+
+# Load non-boundary alignment data (32-bit)
+# pattern 0100mmmm11101001
+# text    movua.l @<REG_M>+,R0
+# arch    
+:movua.l M_0t_at,r0               is OP_0=0x4 & M_0t_at & r0 & OP_4=0xE9 {
+	r0 = (*:4 ( M_0t_at ));
+	
+	if (M_0t_at != 0) goto <increment>;
+	goto <skip>;
+	<increment>
+	M_0t_at = M_0t_at + 4;
+	<skip>
+}
 
 # Double-Precision Multiplication
 # pattern 0000nnnnmmmm0111
