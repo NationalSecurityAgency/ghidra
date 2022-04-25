@@ -51,6 +51,7 @@ import ghidra.util.task.TaskMonitor;
 public class RecoveredClassHelper {
 
 	public static final String DTM_CLASS_DATA_FOLDER_NAME = "ClassDataTypes";
+	public static final String DTM_CLASS_DATA_FOLDER_PATH = "/" + DTM_CLASS_DATA_FOLDER_NAME + "/";
 	private static final String CLASS_DATA_STRUCT_NAME = "_data";
 	private static final String DEFAULT_VFUNCTION_PREFIX = "vfunction";
 	private static final String VFUNCTION_COMMENT = "virtual function #";
@@ -158,9 +159,9 @@ public class RecoveredClassHelper {
 
 		extendedFlatAPI = new ExtendedFlatProgramAPI(program, monitor);
 
-		this.classDataTypesCategoryPath = extendedFlatAPI
-				.createDataTypeCategoryPath(CategoryPath.ROOT, DTM_CLASS_DATA_FOLDER_NAME);
+		CategoryPath path = new CategoryPath(CategoryPath.ROOT, DTM_CLASS_DATA_FOLDER_NAME);
 
+		this.classDataTypesCategoryPath = path;
 		this.createBookmarks = createBookmarks;
 		this.useShortTemplates = useShortTemplates;
 		this.nameVfunctions = nameVunctions;
@@ -2637,10 +2638,9 @@ public class RecoveredClassHelper {
 			throws CancelledException {
 
 		String className = namespace.getName();
-		String classNameWithNamespace = namespace.getName(true);
 
 		CategoryPath classPath = extendedFlatAPI
-				.createDataTypeCategoryPath(classDataTypesCategoryPath, classNameWithNamespace);
+				.createDataTypeCategoryPath(classDataTypesCategoryPath, namespace);
 
 		RecoveredClass newClass =
 			new RecoveredClass(className, classPath, namespace, dataTypeManager);
@@ -7287,7 +7287,7 @@ public class RecoveredClassHelper {
 			return null;
 		}
 
-		if (!category.getCategoryPath().getPath().contains(DTM_CLASS_DATA_FOLDER_NAME)) {
+		if (!category.getCategoryPath().getPath().startsWith(DTM_CLASS_DATA_FOLDER_PATH)) {
 			return null;
 		}
 
@@ -7705,7 +7705,6 @@ public class RecoveredClassHelper {
 
 		// get the corresponding existing pointer for this function definition from the dtManager
 		Pointer pointer = getPointerDataType(functionDefinition);
-
 		if (pointer == null) {
 			throw new IllegalArgumentException(
 				"Cannot find existing pointer data type for " + functionDefinition.getName());
@@ -7730,6 +7729,11 @@ public class RecoveredClassHelper {
 			// get class namespace using the vftable structure
 			Namespace vfunctionStructureNamespace = getClassNamespace(vftableStructure);
 
+			//skip if not in the class data type folder so cannot get corresponding namespace
+			if (vfunctionStructureNamespace == null) {
+				continue;
+			}
+			
 			Data vftableData =
 				getVftableStructureFromListing(vfunctionStructureNamespace, vftableStructure);
 
@@ -7803,32 +7807,16 @@ public class RecoveredClassHelper {
 	 * the given data type. This is getting an existing pointer not trying to create a new one.
 	 * @param dataType the given data type
 	 * @return the existing pointer data type to the given data type in the same class dt folder
-	 * @throws CancelledException if cancelled
 	 */
-	private Pointer getPointerDataType(DataType dataType) throws CancelledException {
+	private Pointer getPointerDataType(DataType dataType) {
 
-		CategoryPath classPath = dataType.getCategoryPath();
+		Category category = dataTypeManager.getCategory(dataType.getCategoryPath());
 
-		Category category = dataTypeManager.getCategory(classPath);
+		DataType pointer = new PointerDataType(dataType, dataTypeManager);
 
-		DataType[] classDataTypes = category.getDataTypes();
-		for (DataType classDataType : classDataTypes) {
+		DataType dt = category.getDataType(pointer.getName());
 
-			monitor.checkCanceled();
-
-			if (!(classDataType instanceof Pointer)) {
-				continue;
-			}
-
-			Pointer pointer = (Pointer) classDataType;
-
-			DataType pointedToDataType = pointer.getDataType();
-
-			if (pointedToDataType.equals(dataType)) {
-				return pointer;
-			}
-		}
-		return null;
+		return (dt instanceof Pointer) ? (Pointer) dt : null;
 	}
 
 	/**
@@ -7871,14 +7859,15 @@ public class RecoveredClassHelper {
 	public List<FunctionDefinition> getClassFunctionDefinitions(Namespace classNamespace)
 			throws CancelledException {
 
-		CategoryPath classPath = getClassDataFolder(classNamespace);
+		// get the data type category associated with the given class namespace
+		Category category = getDataTypeCategory(classNamespace);
 
-		Category category = dataTypeManager.getCategory(classPath);
-
+		// return null if there isn't one
 		if (category == null) {
 			return null;
 		}
 
+		// get the function definitions in the given data type category and add them to the list
 		List<FunctionDefinition> functionDefs = new ArrayList<FunctionDefinition>();
 
 		DataType[] classDataTypes = category.getDataTypes();
@@ -7896,22 +7885,30 @@ public class RecoveredClassHelper {
 		return functionDefs;
 	}
 
-	private CategoryPath getClassDataFolder(Namespace classNamespace) throws CancelledException {
+	/**
+	 * Get the associated data type category for the given class namespace
+	 * @param classNamespace the given class namespace
+	 * @return the associated data type category or null if it doesn't exist
+	 * @throws CancelledException if cancelled
+	 */
+	public Category getDataTypeCategory(Namespace classNamespace) throws CancelledException {
 
-		String classNameWithNamespace = classNamespace.getName(true);
+		// Make a CategoryPath for the given namespace
+		CategoryPath classPath =
+			extendedFlatAPI.createDataTypeCategoryPath(classDataTypesCategoryPath, classNamespace);
 
-		// Create Data Type Manager Category for given class
-		CategoryPath classPath = extendedFlatAPI
-				.createDataTypeCategoryPath(classDataTypesCategoryPath, classNameWithNamespace);
-
-		return classPath;
+		// check to see if it exists in the data type manager and return it (it will return null
+		// if it is not in the dtman
+		Category category = dataTypeManager.getCategory(classPath);
+		return category;
 	}
 
 	/**
 	 * Method to get the class Namespace corresponding to the given data type. NOTE: The data type
 	 * must be in the DTM_CLASS_DATA_FOLDER_NAME folder in the data type manager.
 	 * @param dataType the given data type
-	 * @return the class Namespace corresponding to the given data type
+	 * @return the class Namespace corresponding to the given data type or null if the data type
+	 * is not in the DTM_CLASS_DATA_FOLDER_NAME folder or if class doesn't exist
 	 * @throws CancelledException if cancelled
 	 */
 	public Namespace getClassNamespace(DataType dataType) throws CancelledException {
@@ -7922,32 +7919,29 @@ public class RecoveredClassHelper {
 
 		CategoryPath categoryPath = dataType.getCategoryPath();
 
-		String className = categoryPath.getName();
-
 		String path = categoryPath.getPath();
 
-		if (!path.contains(DTM_CLASS_DATA_FOLDER_NAME)) {
-			throw new IllegalArgumentException("DataType must be in the " +
-				DTM_CLASS_DATA_FOLDER_NAME + " data type manager folder");
+		if (!path.startsWith(DTM_CLASS_DATA_FOLDER_PATH)) {
+			return null;
 		}
 
-		path = path.replace("/" + DTM_CLASS_DATA_FOLDER_NAME + "/", "");
+		// strip off the leading class folder path and replace /'s with ::'s to get
+		// class namespace path
+		path = path.substring(DTM_CLASS_DATA_FOLDER_PATH.length());
+		// TODO: update with regex to exclude very unlikely \/ case
 		path = path.replace("/", "::");
 
-		Iterator<GhidraClass> classNamespaces = program.getSymbolTable().getClassNamespaces();
+		List<Namespace> namespaceByPath =
+			NamespaceUtils.getNamespaceByPath(program, null, path);
 
-		while (classNamespaces.hasNext()) {
-			monitor.checkCanceled();
-			Namespace namespace = classNamespaces.next();
-			if (!namespace.getName().equals(className)) {
-				continue;
-			}
-			String fullName = namespace.getName(true);
-			if (fullName.equals(path)) {
+		// ignore namespaces contained within libraries
+		for (Namespace namespace : namespaceByPath) {
+			if (!namespace.isExternal()) {
 				return namespace;
 			}
 		}
 
+		Msg.debug(this, "Expected clas namespace not found: " + path);
 		return null;
 	}
 

@@ -885,6 +885,14 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			// Get class name from class vftable is in
 			Namespace classNamespace = classHierarchyDescriptorSymbol.getParentNamespace();
 
+			// get the data type category associated with the given class namespace
+			Category category = getDataTypeCategory(classNamespace);
+
+			// if it already exists, continue since this class has already been recovered
+			if (category != null) {
+				continue;
+			}
+
 			if (classNamespace.getSymbol().getSymbolType() != SymbolType.CLASS) {
 				classNamespace = promoteToClassNamespace(classNamespace);
 				if (classNamespace.getSymbol().getSymbolType() != SymbolType.CLASS) {
@@ -901,13 +909,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			// non-vftable class
 			if (vftableSymbolsInNamespace.size() == 0) {
 				String className = classNamespace.getName();
-				String classNameWithNamespace = classNamespace.getName(true);
 
-				// Create Data Type Manager Category for given class
-				// TODO: make this global and check it for null
-				CategoryPath classPath =
-					extendedFlatAPI.createDataTypeCategoryPath(classDataTypesCategoryPath,
-						classNameWithNamespace);
+				// Make a CategoryPath for given class
+				CategoryPath classPath = extendedFlatAPI
+						.createDataTypeCategoryPath(classDataTypesCategoryPath, classNamespace);
 
 				RecoveredClass nonVftableClass =
 					new RecoveredClass(className, classPath, classNamespace, dataTypeManager);
@@ -1009,12 +1014,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 * Method to figure out the class hierarchies either with RTTI if it is present or with vftable 
 	 * references
 	 * @param recoveredClasses List of classes to process
-	 * @throws CancelledException if cancelled
-	 * @throws AddressOutOfBoundsException AddressOutOfBoundsException
-	 * @throws MemoryAccessException if memory cannot be read
+	 * @throws Exception various exceptions
 	 */
 	private void assignClassInheritanceAndHierarchies(List<RecoveredClass> recoveredClasses)
-			throws CancelledException, MemoryAccessException, AddressOutOfBoundsException {
+			throws Exception {
 
 		// Use RTTI information to determine inheritance type and 
 		// class hierarchy
