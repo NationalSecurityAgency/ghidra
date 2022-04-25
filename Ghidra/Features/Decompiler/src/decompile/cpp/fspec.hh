@@ -57,7 +57,8 @@ public:
     smallsize_floatext = 64,	///< Assume values smaller than max \b size are floating-point extended to full size
     extracheck_high = 128,	///< Perform extra checks during parameter recovery on most sig portion of the double
     extracheck_low = 256,	///< Perform extra checks during parameter recovery on least sig portion of the double
-    is_grouped = 512		///< This entry is grouped with other entries
+    is_grouped = 512,		///< This entry is grouped with other entries
+    overlapping = 0x100		///< Overlaps an earlier entry (and doesn't consume additional resource slots)
   };
 private:
   uint4 flags;			///< Boolean properties of the parameter
@@ -73,6 +74,7 @@ private:
   JoinRecord *joinrec;		///< Non-null if this is logical variable from joined pieces
   static const ParamEntry *findEntryByStorage(const list<ParamEntry> &entryList,const VarnodeData &vn);
   void resolveJoin(list<ParamEntry> &curList); 	///< Make adjustments for a \e join ParamEntry
+  void resolveOverlap(list<ParamEntry> &curList);	///< Make adjustments for ParamEntry that overlaps others
 
   /// \brief Is the logical value left-justified within its container
   bool isLeftJustified(void) const { return (((flags&force_left_justify)!=0)||(!spaceid->isBigEndian())); }
@@ -87,21 +89,21 @@ public:
   bool isExclusion(void) const { return (alignment==0); }	///< Return \b true if this holds a single parameter exclusively
   bool isReverseStack(void) const { return ((flags & reverse_stack)!=0); }	///< Return \b true if parameters are allocated in reverse order
   bool isGrouped(void) const { return ((flags & is_grouped)!=0); }	///< Return \b true if \b this is grouped with other entries
-  bool isNonOverlappingJoin(void) const;	///< Return \b true if not all pieces overlap other ParamEntry tags
-  bool contains(const ParamEntry &op2) const;		///< Does \b this contain the indicated entry.
+  bool isOverlap(void) const { return ((flags & overlapping)!=0); }	///< Return \b true if \b this overlaps another entry
+  bool subsumesDefinition(const ParamEntry &op2) const;	///< Does \b this subsume the definition of the given ParamEntry
   bool containedBy(const Address &addr,int4 sz) const;	///< Is this entry contained by the given range
+  bool intersects(const Address &addr,int4 sz) const;	///< Does \b this intersect the given range in some way
   int4 justifiedContain(const Address &addr,int4 sz) const;	///< Calculate endian aware containment
   bool getContainer(const Address &addr,int4 sz,VarnodeData &res) const;
+  bool contains(const ParamEntry &op2) const;	///< Does \this contain the given entry (as a subpiece)
   OpCode assumedExtension(const Address &addr,int4 sz,VarnodeData &res) const;
   int4 getSlot(const Address &addr,int4 skip) const;
   AddrSpace *getSpace(void) const { return spaceid; }	///< Get the address space containing \b this entry
   uintb getBase(void) const { return addressbase; }	///< Get the starting offset of \b this entry
   Address getAddrBySlot(int4 &slot,int4 sz) const;
   void restoreXml(const Element *el,const AddrSpaceManager *manage,bool normalstack,bool grouped,list<ParamEntry> &curList);
-  void extraChecks(list<ParamEntry> &entry);
   bool isParamCheckHigh(void) const { return ((flags & extracheck_high)!=0); }	///< Return \b true if there is a high overlap
   bool isParamCheckLow(void) const { return ((flags & extracheck_low)!=0); }	///< Return \b true if there is a low overlap
-  int4 countJoinOverlap(const list<ParamEntry> &curList) const;		///< Count the number of other entries \b this overlaps
   static void orderWithinGroup(const ParamEntry &entry1,const ParamEntry &entry2);	///< Enforce ParamEntry group ordering rules
 };
 
@@ -561,7 +563,6 @@ public:
   virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
   virtual void fillinMap(ParamActive *active) const;
   virtual bool possibleParam(const Address &loc,int4 size) const;
-  virtual void restoreXml(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,bool normalstack);
   virtual ParamList *clone(void) const;
 };
 
