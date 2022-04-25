@@ -1903,15 +1903,22 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			throws IllegalStateException, IncompatibleLanguageException, LockException {
 		if (newLanguage == language) {
 			setLanguage((LanguageTranslator) null, newCompilerSpecID, forceRedisassembly, monitor);
-			return;
 		}
-		LanguageTranslator languageTranslator =
-			LanguageTranslatorFactory.getLanguageTranslatorFactory()
-					.getLanguageTranslator(language, newLanguage);
-		if (languageTranslator == null) {
-			throw new IncompatibleLanguageException("Language translation not supported");
+		else {
+			LanguageTranslator languageTranslator =
+				LanguageTranslatorFactory.getLanguageTranslatorFactory()
+						.getLanguageTranslator(language, newLanguage);
+			if (languageTranslator == null) {
+				throw new IncompatibleLanguageException("Language translation not supported");
+			}
+			setLanguage(languageTranslator, newCompilerSpecID, forceRedisassembly, monitor);
 		}
-		setLanguage(languageTranslator, newCompilerSpecID, forceRedisassembly, monitor);
+		try {
+			updateMetadata();
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
 	}
 
 	/**
@@ -1922,7 +1929,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * @param monitor task monitor
 	 * @throws LockException if exclusive access is missing 
 	 */
-	public void setLanguage(LanguageTranslator translator, CompilerSpecID newCompilerSpecID,
+	private void setLanguage(LanguageTranslator translator, CompilerSpecID newCompilerSpecID,
 			boolean forceRedisassembly, TaskMonitor monitor) throws LockException {
 
 		checkExclusiveAccess();
