@@ -1719,7 +1719,7 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 
 :rts				is opbig=0x4e & op37=14 & op02=5				{ PC = *SP; SP = SP+4; return [PC]; }
 
-:sbcd Tyb,Txb			is op=8 & op48=16 & Txb & Tyb
+:sbcd Txb,Tyb			is op=8 & op48=16 & Txb & Tyb
                     {  CF = (Tyb < Txb) || ( (XF == 1) && (Tyb == Txb) );  Tyb = Tyb - Txb - XF; Tyb = bcdAdjust(Tyb); bcdflags(Tyb); }
 
 :s^cc eab			is (op=5 & cc & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eab				{ eab = -cc; }
