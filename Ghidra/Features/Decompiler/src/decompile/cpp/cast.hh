@@ -159,6 +159,17 @@ public:
 
   /// \brief Check is a constant input should be explicitly labeled as a \e long integer token
   bool markExplicitLongSize(PcodeOp *op,int4 slot) const;
+
+  /// \brief For the given PcodeOp, does it matter if a constant operand is presented as a character or integer
+  ///
+  /// In most languages, character constants are promoted to integers as a matter of course, so it
+  /// doesn't matter if the constant is represented as an integer (a string of digits) or a character
+  /// (surrounded by quotes). But its possible that a particular operator does care. If the operator
+  /// needs an explicit character representation for an operand with a character data-type, return \b true.
+  /// \param vn is the constant with character data-type
+  /// \param op is the given PcodeOp which reads the constant (may be null)
+  /// \return \b true if the constant must be represented as an explicit character
+  bool caresAboutCharRepresentation(const Varnode *vn,const PcodeOp *op) const { return false; }
 };
 
 /// \brief Casting strategies that are specific to the C language
