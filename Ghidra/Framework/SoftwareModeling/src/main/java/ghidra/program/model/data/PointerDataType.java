@@ -411,7 +411,11 @@ public class PointerDataType extends BuiltIn implements Pointer {
 		long addrOffset = offset;
 
 		long mask = OffsetMaskSettingsDefinition.DEF.getValue(settings);
-		if (mask != 0) {
+		if (mask == 0) {
+			errorHandler.accept("Invalid pointer mask: 0");
+			return null;
+		}
+		if (mask != OffsetMaskSettingsDefinition.DEFAULT) {
 			addrOffset &= mask;
 		}
 
@@ -424,7 +428,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 				addrOffset >>>= -shift; // unsigned right-shift
 			}
 		}
-		else {
+		else if (shift > 0) {
 			addrOffset <<= shift; // left-shift
 		}
 
@@ -504,7 +508,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 					errorHandler.accept("Unsupported segmented address size: " + size);
 					return null;
 				}
-				if (mask != 0 || shift != 0) {
+				if (mask != OffsetMaskSettingsDefinition.DEFAULT || shift != 0) {
 					errorHandler.accept("Unsupported mask/shift setting for segmented address");
 					return null;
 				}
