@@ -1,0 +1,83 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:windows">
+<!--
+    Contrived example comparing a signed byte.  The decompiler
+    should not use the 'char' data-type.
+-->
+<bytechunk space="ram" offset="0x140001058" readonly="true">
+                0f57db0f57c9f20f
+2adaf2410f2ac9f20f58d8f20f58da0f
+57d2f20f2a542428f20f58d90f57c9f2
+0f2a4c2430f20f58daf20f58d90f28c3
+c3cccccc0f28c8660f6ec20f5bc0f30f
+58c1c3cc660f6ec1f30fe6c0f20f58c1
+f20f2cc0c3cccccc660f6ed1f30fe6d2
+66410f6ec0f20f58d1f30fe6c0f20f58
+d0f20f58d3f20f2cc2c3cccc488bc448
+8958084889681048897018574883ec50
+f30f1005101201008bd10f2970e88bf1
+0f2978d8e88bfffffff20f100dcf1101
+008bce0f28f8e889fffffff20f101dcd
+110100448d4601f20f100db91101008b
+ce8be8e880fffffff20f1015c0110100
+8d5602f20f1005ad1101008d4e03894c
+2428448d4e01895424208bf88bd6e8f5
+feffff0f57c9f20f11442420f30f5acf
+448bcf488d0d46110100448bc50f28f0
+66480f7ecae842000000488b5c246048
+8b742470660f6ed5488b6c24680f5bd2
+660f6ecff30f58d70f287c24300f5bc9
+f30f58d10f5ad2f20f58d60f28742440
+f20f2cc24883c4505fc3
+</bytechunk>
+<bytechunk space="ram" offset="0x1400122c0" readonly="true">
+613a20256620623a20256420633a2025
+6c6420643a2025670a00
+</bytechunk>
+<bytechunk space="ram" offset="0x1400122e0" readonly="true">
+9a999999999901400000000000000840
+00000000000014400000000000001c40
+000000000000204000004040
+</bytechunk>
+<symbol space="ram" offset="0x140001058" name="dldlll"/>
+<symbol space="ram" offset="0x140001094" name="fi"/>
+<symbol space="ram" offset="0x1400010a4" name="id"/>
+<symbol space="ram" offset="0x1400010b8" name="ldld"/>
+<symbol space="ram" offset="0x1400010dc" name="main"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>map fun r0x1400011cc printf nocode</com>
+  <com>parse line extern void printf(char *,...);</com>
+  <com>lo fu dldlll</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu fi</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu id</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu ldld</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern float8 dldlll(float8 a,int4 b,float8 c,int4 d,int4 e,int4 f);</com>
+  <com>parse line extern float4 fi(float4 a,int4 b);</com>
+  <com>parse line extern int4 id(int4 a,float8 b);</com>
+  <com>parse line extern int4 ldld(int4 a,float8 b,int4 c,float8 d);</com>
+  <com>lo fu main</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Mixed float/int #1" min="1" max="1">float8 dldlll\(float8 param_1,int4 param_2,float8 param_3,int4 param_4,int4 param_5,int4 param_6\)</stringmatch>
+<stringmatch name="Mixed float/int #2" min="1" max="1">return.*param.*\+.*param.*\+.*param.*\+.*param.*\+.*param.*\+.*param.*;</stringmatch>
+<stringmatch name="Mixed float/int #3" min="1" max="1">float4 fi\(float4 param_1,int4 param_2\)</stringmatch>
+<stringmatch name="Mixed float/int #4" min="1" max="1">int4 id\(int4 param_1,float8 param_2\)</stringmatch>
+<stringmatch name="Mixed float/int #5" min="1" max="1">int4 ldld\(int4 param_1,float8 param_2,int4 param_3,float8 param_4\)</stringmatch>
+<stringmatch name="Mixed float/int #6" min="4" max="4">return.*param.*\+.*param.*;</stringmatch>
+<stringmatch name="Mixed float/int #7" min="1" max="1">fVar. = fi\(3\.0,param_1\);</stringmatch>
+<stringmatch name="Mixed float/int #8" min="1" max="1">uVar. = id\(param_1,2\.2\);</stringmatch>
+<stringmatch name="Mixed float/int #9" min="1" max="1">uVar. = ldld\(param_1,3\.0,param_1 \+ 1,5\.0\);</stringmatch>
+<stringmatch name="Mixed float/int #10" min="1" max="1">fVar. = dldlll\(7\.0,param_1,8\.0,param_1 \+ 1,param_1 \+ 2</stringmatch>
+</decompilertest>

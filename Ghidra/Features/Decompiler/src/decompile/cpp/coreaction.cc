@@ -1865,7 +1865,7 @@ int4 ActionReturnRecovery::apply(Funcdata &data)
 	int4 slot = trial.getSlot();
 	vn = op->getIn(slot);
 	if (ancestorReal.execute(op,slot,&trial,false))
-	  if (data.ancestorOpUse(maxancestor,vn,op,trial,0))
+	  if (data.ancestorOpUse(maxancestor,vn,op,trial,0,0))
 	    trial.markActive(); // This varnode sees active use as a parameter
 	count += 1;
       }

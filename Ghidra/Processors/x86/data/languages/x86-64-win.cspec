@@ -37,6 +37,9 @@
     <range space="ram"/>
   </global>
   <stackpointer register="RSP" space="ram"/>
+  <returnaddress>
+    <varnode space="stack" offset="0" size="8"/>
+  </returnaddress>
   <default_proto>
     <prototype name="__fastcall" extrapop="8" stackshift="8">
       <input>
@@ -97,6 +100,16 @@
         <register name="R15"/>
         <register name="DF"/>
         <register name="GS_OFFSET"/>
+        <register name="XMM6"/>
+        <register name="XMM7"/>
+        <register name="XMM8"/>
+        <register name="XMM9"/>
+        <register name="XMM10"/>
+        <register name="XMM11"/>
+        <register name="XMM12"/>
+        <register name="XMM13"/>
+        <register name="XMM14"/>
+        <register name="XMM15"/>
       </unaffected>
       <killedbycall>
         <register name="RAX"/>
@@ -167,6 +180,16 @@
         <register name="R15"/>
         <register name="DF"/>
         <register name="GS_OFFSET"/>
+        <register name="XMM6"/>
+        <register name="XMM7"/>
+        <register name="XMM8"/>
+        <register name="XMM9"/>
+        <register name="XMM10"/>
+        <register name="XMM11"/>
+        <register name="XMM12"/>
+        <register name="XMM13"/>
+        <register name="XMM14"/>
+        <register name="XMM15"/>
     </unaffected>
     <killedbycall>
       <register name="RAX"/>
