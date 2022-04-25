@@ -904,3 +904,18 @@ char lineInFunc(int i) {
  #line 3 "third/line.h"
  }
  
+
+/**
+ ** Check _Static_assert support
+ **/
+int check_assert(void)
+{
+	// test with message
+    _Static_assert(1 + 2 + 3 < 6, "With message");
+    static_assert(1 + 1 != 2, "math fail!");
+
+    // test no message
+    _Static_assert(sizeof(int) < sizeof(char));
+    static_assert(sizeof(int) < sizeof(char));
+
+}
