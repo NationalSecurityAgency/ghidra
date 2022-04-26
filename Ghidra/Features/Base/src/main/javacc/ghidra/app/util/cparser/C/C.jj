@@ -1725,7 +1725,7 @@ Token PragmaConstant() : {
 void StaticAssert() : {
 }
 {
-  ( ( <STATICASSERT> ) "(" ConstantExpression() [ "," <PSTRING_LITERAL> ] ")" )
+  ( ( <STATICASSERT> ) "(" ConstantExpression() [ "," <STRING_LITERAL> ] ")" )
 }
 
 
