@@ -992,7 +992,9 @@ TOKEN :
 	|
 	<ASM : ( [ "_" ] )* "asm" ( [ "_" ] )*  >
 	|
-	<INLINE : ( [ "_" ] )* ("inline" | "forceinline") ( [ "_" ] )*> 
+	<INLINE : ( [ "_" ] )* ("inline" | "forceinline") ( [ "_" ] )*>
+	|
+	<STATICASSERT : ("_S" | "s") "tatic_assert">
 	|
 	<FLOAT : "float"> 
 	|
@@ -1720,6 +1722,12 @@ Token PragmaConstant() : {
   }
 }
 
+void StaticAssert() : {
+}
+{
+  ( ( <STATICASSERT> ) "(" ConstantExpression() [ "," <PSTRING_LITERAL> ] ")" )
+}
+
 
 DataType StructOrUnionSpecifier() : {
 	Token t;
@@ -2378,6 +2386,8 @@ void Statement() : {}
 		AsmStatement()
 		|
 		PragmaSpec()
+		|
+		StaticAssert()
 	)
 }
 
