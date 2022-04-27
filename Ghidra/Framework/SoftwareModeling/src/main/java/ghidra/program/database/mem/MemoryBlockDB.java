@@ -107,6 +107,7 @@ public class MemoryBlockDB implements MemoryBlock {
 	 * @return collection of blocks which map onto this block or null if none identified
 	 */
 	Collection<MemoryBlockDB> getMappedBlocks() {
+		memMap.buildAddressSets(); // updates mappedBlocks if needed
 		return mappedBlocks;
 	}
 
@@ -261,6 +262,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		try {
 			checkValid();
 			setPermissionBit(EXECUTE, x);
+			memMap.blockExecuteChanged(this);
 			memMap.fireBlockChanged(this);
 		}
 		finally {
@@ -276,6 +278,7 @@ public class MemoryBlockDB implements MemoryBlock {
 			setPermissionBit(READ, read);
 			setPermissionBit(WRITE, write);
 			setPermissionBit(EXECUTE, execute);
+			memMap.blockExecuteChanged(this);
 			memMap.fireBlockChanged(this);
 		}
 		finally {
