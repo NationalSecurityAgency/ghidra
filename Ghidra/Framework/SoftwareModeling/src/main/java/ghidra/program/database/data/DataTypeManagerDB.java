@@ -1011,9 +1011,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return dataType;
 		}
 
+		if (dataType.isDeleted()) {
+			throw new IllegalArgumentException("can't resolve deleted datatype");
+		}
+
 		if (dataType instanceof BitFieldDataType) {
 			return resolveBitFieldDataType((BitFieldDataType) dataType, handler);
 		}
+
 		lock.acquire();
 		DataTypeConflictHandler originalHandler = null;
 		boolean isEquivalenceCacheOwner = activateEquivalenceCache();
@@ -1816,11 +1821,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (dt instanceof BadDataType) {
 			return BAD_DATATYPE_ID;
 		}
-		if (dt instanceof DatabaseObject) {
+		if (dt instanceof DataTypeDB) {
 			// NOTE: Implementation DOES NOT check or guarantee that datatype or its returned ID 
 			// correspond to this datatype manager instance. This seems incorrect although it's 
 			// possible that uses depend on this behavior.
-			return ((DatabaseObject) dt).getKey();
+			DataTypeDB dtDb = (DataTypeDB) dt;
+			if (dtDb.isDeleted()) {
+				return BAD_DATATYPE_ID;
+			}
+			return dtDb.getKey();
 		}
 
 		Long l = builtIn2IdMap.get(dt);
@@ -2155,12 +2164,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		// otherwise, it probably belongs to this dataTypeManager, but it could a
 		// leftover after an undo. So make sure it really is there.
 		if (dataType instanceof DataTypeDB) {
-			long id = ((DataTypeDB) dataType).getKey();
-//	NOTE: Does not seem to help following an undo/redo		
-//			DataTypeDB existingDt = dtCache.get(id);
-//			return existingDt == dataType && existingDt.validate(lock);
-//			
-			return dtCache.get(id) != null;
+			DataTypeDB dtDb = (DataTypeDB) dataType;
+			return dtCache.get(dtDb.getKey()) == dataType && !dtDb.isDeleted();
 		}
 		return builtIn2IdMap.containsKey(dataType);
 	}
