@@ -104,7 +104,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	public void enableForProgramWithName(String name) {
-		progBreak.enableWithComment(name);
+		progBreak.toggleWithComment(true, name);
 	}
 
 	@Override
