@@ -35,7 +35,7 @@ public class OffsetMaskSettingsDefinition
 	private static final String DISPLAY_NAME = "Offset Mask";
 	private static BigInteger MAX_VALUE = new BigInteger("0ffffffffffffffff", 16);
 
-	private static final long DEFAULT = -1; // unsigned mask - all bits are ones
+	public static final long DEFAULT = -1; // unsigned mask - all bits are ones
 
 	public static final OffsetMaskSettingsDefinition DEF =
 		new OffsetMaskSettingsDefinition();

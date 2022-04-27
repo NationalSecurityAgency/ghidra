@@ -416,36 +416,32 @@ public class FileHeader implements StructConverter {
 
 		long oldIndex = reader.getPointerIndex();
 
-		int tmpIndex = getPointerToSymbolTable();
-		if (tmpIndex == 0) {
+		int symbolTableOffset = getPointerToSymbolTable();
+		if (symbolTableOffset == 0) {
 			return;
 		}
-		if (!ntHeader.checkRVA(tmpIndex)) {
-			Msg.error(this, "Invalid file index " + Integer.toHexString(tmpIndex));
-			return;
-		}
-
-		if (numberOfSymbols < 0 || numberOfSymbols > reader.length()) {
-			Msg.error(this, "Invalid symbol count " + Integer.toHexString(numberOfSymbols));
+		if (numberOfSymbols < 0) {
+			Msg.error(this, "Invalid symbol count: " + Integer.toHexString(numberOfSymbols));
 			return;
 		}
 
 		long stringTableOffset = getStringTableOffset();
 
 		for (int i = 0; i < numberOfSymbols; ++i) {
-			if (!ntHeader.checkRVA(tmpIndex)) {
-				Msg.error(this, "Invalid file index " + Integer.toHexString(tmpIndex));
+			if (symbolTableOffset < 0 || symbolTableOffset >= reader.length()) {
+				Msg.error(this,
+					"Invalid symbol table file index: " + Integer.toHexString(symbolTableOffset));
 				break;
 			}
 
-			DebugCOFFSymbol symbol = new DebugCOFFSymbol(reader, tmpIndex, stringTableOffset);
-
-			tmpIndex += DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL;
-
-			tmpIndex +=
-				(DebugCOFFSymbolAux.IMAGE_SIZEOF_AUX_SYMBOL * symbol.getNumberOfAuxSymbols());
+			DebugCOFFSymbol symbol =
+				new DebugCOFFSymbol(reader, symbolTableOffset, stringTableOffset);
 
 			int numberOfAuxSymbols = symbol.getNumberOfAuxSymbols();
+
+			symbolTableOffset += DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL;
+			symbolTableOffset += DebugCOFFSymbolAux.IMAGE_SIZEOF_AUX_SYMBOL * numberOfAuxSymbols;
+
 			i += numberOfAuxSymbols > 0 ? numberOfAuxSymbols : 0;
 
 			symbols.add(symbol);
@@ -461,10 +457,11 @@ public class FileHeader implements StructConverter {
 	 * @throws IOException if io error
 	 */
 	long getStringTableOffset() throws IOException {
-		if (pointerToSymbolTable <= 0 /* 0 is excluded because other stuff is there */ ||
-			!ntHeader.checkRVA(pointerToSymbolTable) || (numberOfSymbols < 0) ||
-			(pointerToSymbolTable + (numberOfSymbols * DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL) > reader
-					.length())) {
+		if (pointerToSymbolTable <= 0 || numberOfSymbols < 0) {
+			return -1;
+		}
+		if (pointerToSymbolTable + (numberOfSymbols * DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL) > reader
+				.length()) {
 			return -1;
 		}
 		return pointerToSymbolTable + (DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL * numberOfSymbols);
