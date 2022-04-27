@@ -57,7 +57,7 @@ public class FVToolBar extends JToolBar {
 	 * PRIVATE METHODS
 	 *********************************************************************************/
 
-	private void createFileOpenTool() {
+	private void createScrollLockTool() {
 		ImageIcon icon = ResourceManager.loadImage("images/lock.png");
 		Action lockAction = new ScrollLockAction("undefined", icon, "Scroll Lock");
 		scrollLockBtn = new EmptyBorderToggleButton();
@@ -68,9 +68,9 @@ public class FVToolBar extends JToolBar {
 		add(scrollLockBtn);
 	}
 
-	private void createScrollLockTool() {
+	private void createFileOpenTool() {
 		ImageIcon icon = ResourceManager.loadImage("images/openSmallFolder.png");
-		Action openAction = new FileOpenAction("undefined", icon, "Scroll Lock");
+		Action openAction = new FileOpenAction("undefined", icon, "Opens the log file folder");
 		fileOpenBtn = new EmptyBorderButton();
 		fileOpenBtn.setAction(openAction);
 		fileOpenBtn.setText("Opens the log file folder");
