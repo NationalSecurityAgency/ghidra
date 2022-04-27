@@ -45,8 +45,8 @@ public class FVToolBar extends JToolBar {
 	 */
 	public FVToolBar(FVEventListener eventListener) {
 		this.eventListener = eventListener;
-		createScrollLockTool();
 		createFileOpenTool();
+		createScrollLockTool();		
 	}
 
 	public EmptyBorderToggleButton getScrollLockBtn() {
