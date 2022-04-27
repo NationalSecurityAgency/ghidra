@@ -129,7 +129,8 @@ public class FixElfExternalOffsetDataRelocationScript extends GhidraScript {
 		}
 
 		DataType dt = data.getDataType();
-		boolean isDefaultTypeApplied = Undefined.isUndefined(dt);
+		boolean isDefaultTypeApplied = address.equals(data.getAddress()) &&
+			(Undefined.isUndefined(dt) || isDefaultPointer(dt));
 		int componentOffset = (int) address.subtract(data.getAddress());
 		if (!isDefaultTypeApplied &&
 			!canFixupStructure(dt, componentOffset, address.getPointerSize())) {
@@ -173,6 +174,14 @@ public class FixElfExternalOffsetDataRelocationScript extends GhidraScript {
 			}
 		}
 		return true;
+	}
+
+	private boolean isDefaultPointer(DataType dt) {
+		if (dt instanceof Pointer) {
+			DataType refDt = ((Pointer) dt).getDataType();
+			return refDt == null || refDt == DataType.DEFAULT;
+		}
+		return false;
 	}
 
 	private boolean canFixupStructure(DataType dt, int componentOffset, int pointerLength) {
