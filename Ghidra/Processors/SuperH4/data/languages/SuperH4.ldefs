@@ -30,4 +30,19 @@
     <external_name tool="IDA-PRO" name="sh4"/>
     <external_name tool="gnu" name="sh4"/>
   </language>
+  <language processor="SuperH4"
+            endian="little"
+            size="32"
+            variant="SH7091"
+            version="1.01"
+            slafile="SuperH4_SH7091.sla"
+            processorspec="SuperH4.pspec"
+            manualindexfile="../manuals/superh4.idx"
+            id="SuperH4:LE:32:SH7091">
+    <description>SuperH-4(a) (SH4) little endian</description>
+    <compiler name="default" spec="SuperH4_le.cspec" id="default"/>
+    <compiler name="Visual Studio" spec="SuperH4_le.cspec" id="windows"/>
+    <external_name tool="IDA-PRO" name="sh4"/>
+    <external_name tool="gnu" name="sh4"/>
+  </language>
 </language_definitions>

@@ -1,4 +1,4 @@
-# This module defines SuperH version 4, but should work against versions 1,2, and 3. 
+# This module defines SuperH version 4, but should work against versions 1,2, and 3.
 # There is a SuperH version 4A (which has 4 byte instruction length) which has instructions incompatable
 # with this.
 
@@ -18,7 +18,7 @@
 # WARNING:
 
 # NOTE: SuperH 4 and floating point disassembly and decompiling precision.
-# Many of the floating point instructions can do either single or double precision calculations depending 
+# Many of the floating point instructions can do either single or double precision calculations depending
 # on a flag FPSCR_PR at runtime.  This means at disassembly stage we don't have all the information required
 # determine the arguments to some floating point instructions.
 
@@ -41,12 +41,12 @@
 # areas 0x1C000000 and 0xFC000000. We don't currently simulate this behavior.
 
 # NOTE: SuperH/Renesas return value convention.
-# Renesas and gcc return most values from a function in r0 but floats are return in fr0 and doubles in dr0. 
+# Renesas and gcc return most values from a function in r0 but floats are return in fr0 and doubles in dr0.
 # Ghidra calling spec has no way of specifying this behavior so such return values are not handled correctly.
 
 # NOTE: SuperH/Renesas calling convention
 # Renesas and gcc pass most values to a function via r4-r7 but floats are passed by fr4-fr7 and doubles in
-# dr4, dr6, dr8, and dr10.   
+# dr4, dr6, dr8, and dr10.
 
 # NOTE: floating point errors
 # In implementing the floating point pcode we ignored many of the possible error conditions floating point
@@ -54,7 +54,7 @@
 
 # NOTE: SuperH 4 Memory model
 # SuperH 4 has a Memory Management Unit (i.e. MMU).  Which means that depending on mode the memory can
-# look very different.  We don't model this behavior.  We also don't simulate the MMU address translation, 
+# look very different.  We don't model this behavior.  We also don't simulate the MMU address translation,
 # so all addresses are raw.
 
 
@@ -198,7 +198,7 @@ define register offset=2560 size=1 [
 
 macro genSRregister() {
 
-	SR = 	
+	SR =
     (zext(T)     << $(T_SHIFT))     |
     (zext(S)     << $(S_SHIFT))     |
     (zext(IMASK) << $(IMASK_SHIFT)) |
@@ -281,7 +281,7 @@ macro splitSRregister() {
 
 macro genFPSCRregister() {
 
-	FPSCR = 	
+	FPSCR =
     (zext(FPSCR_RM)     << $(FPSCR_RM_SHIFT))     |
     (zext(FPSCR_FLAG)   << $(FPSCR_FLAG_SHIFT))   |
     (zext(FPSCR_ENABLE) << $(FPSCR_ENABLE_SHIFT)) |
@@ -346,6 +346,8 @@ define token instr(16)
 	N_1   = ( 9,11) # register id
 	N_2   = (10,11) # register id
 	FRN_0 = ( 8,11) # float register id
+	FRN_1 = ( 8,10) # float register id
+	FRN_2 = ( 8,10) # float register id
 	DRN_1 = ( 9,11) # double register id
 	XDN_1 = ( 9,11) # double register id
 	XDRN  = ( 8,11) # float register id
@@ -360,14 +362,22 @@ define token instr(16)
 
 # Context variables ====================================================
 # Attach variables =====================================================
-# attach normal registers 
+# attach normal registers
 attach variables [ N_0 M_0 ] [
   r0  r1  r2  r3  r4  r5  r6  r7  r8  r9  r10  r11  r12  r13  r14  r15
 ];
 
-# attach float registers 
-attach variables [ FRN_0 FRM_0] [
+# attach float registers
+attach variables [ FRN_0 FRM_0 ] [
   fr0  fr1  fr2  fr3  fr4  fr5  fr6  fr7  fr8  fr9  fr10  fr11  fr12  fr13  fr14  fr15
+];
+
+attach variables [ FRN_1 ] [
+  fr0 fr1  fr2  fr3  fr4  fr5  fr6  fr7
+];
+
+attach variables [ FRN_2 ] [
+  fr1  fr2  fr3  fr4  fr5  fr6  fr7  fr8
 ];
 
 # attach double registers
@@ -398,49 +408,49 @@ attach variables [ BANK ] [
 #
 # Register direct
 # Rn			EA is Rn.
-# 
+#
 # Register indirect
 # @Rn			Rn contains EA
-# 
+#
 # Register indirect with postincrement
 # @Rn+			Rn contains EA
 #               After EA calculation:
 #				increment Rn by 1 for byte, 2 for word, 4 for long word, 8 quadword operand
-# 
+#
 # Register indirect with predecrement
 # @-Rn			Rn contains EA,
 #               Before EA calculation:
 #				increment Rn by 1 for byte, 2 for word, 4 for long word, 8 quadword operand
-# 
+#
 # Register indirect with displacement
 # @(disp:4, Rn)	EA is Rn + 4-bit displacement disp added. disp is zero extended,
 #               then multiplied by 1 for byte, 2 for word, 4 for long word operand size
-# 
+#
 # Indexed register indirect
 # @(R0, Rn)		EA is Rn + R0
-# 
+#
 # GBR indirect with displacement
 # @(disp:8,GBR)	EA is GBR contents with 8-bit displacement added.
 #				8-bit displacement disp added. disp is zero extended,
 #               then multiplied by 1 for byte, 2 for word, 4 for long word operand size
-# 
+#
 # Indexed GBR indirect
 # @(R0, GBR)	EA is GBR + R0
-# 
+#
 # PC-relative with displacement
 # @(disp:8, PC)	EA is PC+4 + 8bit displacement. disp is zero extended,
 #               then multiplied by 1 for byte, 2 for word, 4 for long word operand size
-# 
+#
 # PC-relative
 # disp:8		EA is PC+4 + 8-bit displacement.
 #				disp is sign-extended and multiplied by 2.
-# 
+#
 # PC-relative
 # disp:12		EA is PC+4 + 12-bit displacement.
 #				disp is sign-extended and multiplied by 2.
-# 
+#
 # Rn			EA is PC+4 + Rn.
-# 
+#
 M_0t:   M_0  is M_0 { export M_0; }
 
 N_0t:   N_0  is N_0 { export N_0; }
@@ -640,7 +650,7 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 	$(T_FLAG) = carry( N_0t, M_0t );
 	local result:4 = N_0t + M_0t;
 	$(T_FLAG) = $(T_FLAG) || carry( result, Tcopy );
-	N_0t = result + Tcopy;	
+	N_0t = result + Tcopy;
 }
 
 
@@ -702,7 +712,7 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 	local cond = $(T_FLAG);
 	delayslot(1);
 	if ( cond == 0 ) goto I_0tbranch;
-} 
+}
 
 
 # Unconditional Branch
@@ -811,7 +821,7 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 :cmp^"/eq" M_0t,N_0t        is OP_0=0x3 & N_0t & M_0t & OP_1=0x0 {
 
 	$(T_FLAG) = ( N_0t == M_0t );
-} 
+}
 
 
 # Compare
@@ -830,7 +840,7 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 :cmp^"/gt" M_0t,N_0t        is OP_0=0x3 & N_0t & M_0t & OP_1=0x7 {
 
 	$(T_FLAG) = ( N_0t s> M_0t);
-} 
+}
 
 
 # Compare
@@ -1040,7 +1050,7 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # pattern 0011nnnnmmmm1101
 # text    dmuls.l <REG_M>,<REG_N>
 # arch    arch_sh2_up
-:dmuls.l M_0t,N_0t          is OP_0=0x3 &  OP_1=0xd &  M_0t &  N_0t 
+:dmuls.l M_0t,N_0t          is OP_0=0x3 &  OP_1=0xd &  M_0t &  N_0t
 {
 	local temp:8 = sext(M_0t) * sext(N_0t);
 	MACL = temp[0,32];
@@ -1454,7 +1464,7 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # pattern 1111001111111101
 # text    fschg
 # arch    arch_sh2a_or_sh4a_up (not in sh4)
-:fschg                      is 
+:fschg                      is
     OP_3=0xf3fd {
 
 	if (!( $(FPSCR_PR) == 0 )) goto <skip>;
@@ -2211,7 +2221,7 @@ define pcodeop mac_wOp;
 # arch    arch_sh_up
 :mov.l M_0t,U_2t_N0_dispr04 is OP_0=0x1 & M_0t & N_0t & U_2t_N0_dispr04 {
 
-	*:4 ( U_2t_N0_dispr04 + N_0t ) = M_0t; # NOTE U_2t_N0_dispr04 units is bytes 
+	*:4 ( U_2t_N0_dispr04 + N_0t ) = M_0t; # NOTE U_2t_N0_dispr04 units is bytes
 }
 
 
@@ -2267,7 +2277,7 @@ define pcodeop mac_wOp;
 # T Bit Transfer
 # pattern 0000nnnn00101001
 # text    movt <REG_N>
-# arch 
+# arch
 :movt N_0t                  is OP_0=0x0 & N_0t & OP_4=0x29 {
 
 	N_0t = zext($(T_FLAG));
@@ -2277,7 +2287,7 @@ define pcodeop mac_wOp;
 # Double-Precision Multiplication
 # pattern 0000nnnnmmmm0111
 # text    mul.l <REG_M>,<REG_N>
-# arch 
+# arch
 :mul.l M_0t,N_0t            is OP_0=0x0 & N_0t & M_0t & OP_1=0x7 {
 
 	MACL = N_0t * M_0t;
@@ -2287,7 +2297,7 @@ define pcodeop mac_wOp;
 # Signed Multiplication
 # pattern 0010nnnnmmmm1111
 # text    muls.w <REG_M>,<REG_N>
-# arch 
+# arch
 :muls.w M_0t,N_0t           is OP_0=0x2 & N_0t & M_0t & OP_1=0xf {
 
 	MACL = sext(N_0t:2) * sext(M_0t:2);
@@ -2297,7 +2307,7 @@ define pcodeop mac_wOp;
 # Unsigned Multiplication
 # pattern 0010nnnnmmmm1110
 # text    mulu.w <REG_M>,<REG_N>
-# arch 
+# arch
 :mulu.w M_0t,N_0t           is OP_0=0x2 & N_0t & M_0t & OP_1=0xe {
 
 	MACL = zext(N_0t:2) * zext(M_0t:2);
@@ -2307,7 +2317,7 @@ define pcodeop mac_wOp;
 # Sign Inversion
 # pattern 0110nnnnmmmm1011
 # text    neg <REG_M>,<REG_N>
-# arch 
+# arch
 :neg M_0t,N_0t              is OP_0=0x6 & N_0t & M_0t & OP_1=0xb {
 
 	N_0t = -M_0t;
@@ -2317,7 +2327,7 @@ define pcodeop mac_wOp;
 # Sign Inversion with Borrow
 # pattern 0110nnnnmmmm1010
 # text    negc <REG_M>,<REG_N>
-# arch 
+# arch
 :negc M_0t,N_0t             is OP_0=0x6 & N_0t & M_0t & OP_1=0xa {
 	local Tcopy:4 = zext($(T_FLAG));
 	$(T_FLAG) = 0 != M_0t;
@@ -2330,14 +2340,14 @@ define pcodeop mac_wOp;
 # No Operation
 # pattern 0000000000001001
 # text    nop
-# arch 
+# arch
 :nop                        is OP_3=0x9 {  } # Empty on purpose
 
 
 # Bit Inversion
 # pattern 0110nnnnmmmm0111
 # text    not <REG_M>,<REG_N>
-# arch 
+# arch
 :not M_0t,N_0t              is OP_0=0x6 & N_0t & M_0t & OP_1=0x7 {
 
 	N_0t = ~M_0t;
@@ -2345,10 +2355,10 @@ define pcodeop mac_wOp;
 
 define pcodeop CacheBlockInvalidate;
 
-# Operand Cache Block Invalidate 
+# Operand Cache Block Invalidate
 # pattern 0000nnnn10010011
 # text    ocbi @<REG_N>
-# arch 
+# arch
 :ocbi N_0t_at1              is OP_0=0x0 & N_0t_at1 & OP_4=0x93 { CacheBlockInvalidate(N_0t_at1); }
 
 define pcodeop CacheBlockPurge;
@@ -2356,23 +2366,23 @@ define pcodeop CacheBlockPurge;
 # Cache Block Purge
 # pattern 0000nnnn10100011
 # text    ocbp @<REG_N>
-# arch 
+# arch
 :ocbp N_0t_at1              is OP_0=0x0 & N_0t_at1 & OP_4=0xa3 { CacheBlockPurge(N_0t_at1); }
 
 define pcodeop CacheBlockWriteBack;
 
-# TODO ocbwb 
+# TODO ocbwb
 # Cache Block Write-Back
 # pattern 0000nnnn10110011
 # text    ocbwb @<REG_N>
-# arch 
+# arch
 :ocbwb N_0t_at1             is OP_0=0x0 & N_0t_at1 & OP_4=0xb3 { CacheBlockWriteBack(N_0t_at1); }
 
 
 # Logical OR
 # pattern 0010nnnnmmmm1011
 # text    or <REG_M>,<REG_N>
-# arch 
+# arch
 :or M_0t,N_0t               is OP_0=0x2 & N_0t & M_0t & OP_1=0xb {
 
 	N_0t = N_0t | M_0t;
@@ -2382,7 +2392,7 @@ define pcodeop CacheBlockWriteBack;
 # Logical OR
 # pattern 11001011iiiiiiii
 # text    or #<imm>,R0
-# arch 
+# arch
 :or U_0t_r0                 is OP_2=0xcb & U_0t_r0 {
 
 	r0 = r0 | U_0t_r0;
@@ -2392,7 +2402,7 @@ define pcodeop CacheBlockWriteBack;
 # Logical OR
 # pattern 11001111iiiiiiii
 # text    or.b #<imm>,@(R0,GBR)
-# arch 
+# arch
 :or.b U_0t1                 is OP_2=0xcf & U_0t1 {
 
 	*:1 (GBR + r0) = ( *:1 (GBR + r0) ) | U_0t1;
@@ -2402,14 +2412,14 @@ define pcodeop CacheBlockWriteBack;
 # Prefetch to Data Cache
 # pattern 0000nnnn10000011
 # text    pref @<REG_N>
-# arch 
+# arch
 :pref N_0tjmp               is OP_0=0x0 & N_0tjmp & OP_4=0x83 { } # Empty on purpose
 
 
 # One-Bit Left Rotation through T Bit
 # pattern 0100nnnn00100100
 # text    rotcl <REG_N>
-# arch 
+# arch
 :rotcl N_0t                 is OP_0=0x4 & N_0t & OP_4=0x24 {
 
 	temp:1 = ( (N_0t & 0x80000000) != 0 );
@@ -2420,7 +2430,7 @@ define pcodeop CacheBlockWriteBack;
 # One-Bit Right Rotation through T Bit
 # pattern 0100nnnn00100101
 # text    rotcr <REG_N>
-# arch 
+# arch
 :rotcr N_0t                 is OP_0=0x4 & N_0t & OP_4=0x25 {
 
 	temp:1 = ( (N_0t & 0x00000001) != 0 );
@@ -2432,7 +2442,7 @@ define pcodeop CacheBlockWriteBack;
 # One-Bit Left Rotation
 # pattern 0100nnnn00000100
 # text    rotl <REG_N>
-# arch 
+# arch
 :rotl N_0t                  is OP_0=0x4 & N_0t & OP_4=0x4 {
 
 	$(T_FLAG)      = ( (N_0t & 0x80000000) != 0 );
@@ -2443,7 +2453,7 @@ define pcodeop CacheBlockWriteBack;
 # One-Bit Right Rotation
 # pattern 0100nnnn00000101
 # text    rotr <REG_N>
-# arch 
+# arch
 :rotr N_0t                  is OP_0=0x4 & N_0t & OP_4=0x5 {
 
 	$(T_FLAG)      = ( (N_0t & 0x00000001) != 0 );
@@ -2454,7 +2464,7 @@ define pcodeop CacheBlockWriteBack;
 # Return from Exception Handling
 # pattern 0000000000101011
 # text    rte
-# arch 
+# arch
 :rte                        is OP_3=0x2b {
 
 	SR = SSR;
@@ -2468,7 +2478,7 @@ define pcodeop CacheBlockWriteBack;
 # Return from Subroutine Procedure
 # pattern 0000000000001011
 # text    rts
-# arch 
+# arch
 :rts                        is OP_3=0xb {
 
 	PC = PR;
@@ -2480,7 +2490,7 @@ define pcodeop CacheBlockWriteBack;
 # S Bit Setting
 # pattern 0000000001011000
 # text    sets
-# arch 
+# arch
 :sets                       is OP_3=0x58 {
 
 	$(S_FLAG) = 1;
@@ -2490,7 +2500,7 @@ define pcodeop CacheBlockWriteBack;
 # T Bit Setting
 # pattern 0000000000011000
 # text    sett
-# arch 
+# arch
 :sett                       is OP_3=0x18 {
 
 	$(T_FLAG) = 1;
@@ -2514,7 +2524,7 @@ define pcodeop CacheBlockWriteBack;
 # One-Bit Left Arithmetic Shift
 # pattern 0100nnnn00100000
 # text    shal <REG_N>
-# arch 
+# arch
 :shal N_0t                  is OP_0=0x4 & N_0t & OP_4=0x20 {
 
 	$(T_FLAG) = ( ( N_0t & 0x80000000 ) != 0 );
@@ -2525,7 +2535,7 @@ define pcodeop CacheBlockWriteBack;
 # One-Bit Right Arithmetic Shift
 # pattern 0100nnnn00100001
 # text    shar <REG_N>
-# arch 
+# arch
 :shar N_0t                  is OP_0=0x4 & N_0t & OP_4=0x21 {
 
 	$(T_FLAG)    = ( ( N_0t & 0x00000001 ) != 0 );
@@ -2551,7 +2561,7 @@ define pcodeop CacheBlockWriteBack;
 # One-Bit Left Logical Shift
 # pattern 0100nnnn00000000
 # text    shll <REG_N>
-# arch 
+# arch
 :shll N_0t                  is OP_0=0x4 & N_0t & OP_4=0x0 {
 
 	$(T_FLAG) = ( ( N_0t & 0x80000000 ) != 0 );
@@ -2562,7 +2572,7 @@ define pcodeop CacheBlockWriteBack;
 # n-Bit Left Logical Shift
 # pattern 0100nnnn00001000
 # text    shll2 <REG_N>
-# arch 
+# arch
 :shll2 N_0t                 is OP_0=0x4 & N_0t & OP_4=0x8 {
 
 	N_0t = ( N_0t << 2 );
@@ -2572,7 +2582,7 @@ define pcodeop CacheBlockWriteBack;
 # n-Bit Left Logical Shift
 # pattern 0100nnnn00011000
 # text    shll8 <REG_N>
-# arch 
+# arch
 :shll8 N_0t                 is OP_0=0x4 & N_0t & OP_4=0x18 {
 
 	N_0t = ( N_0t << 8 );
@@ -2581,7 +2591,7 @@ define pcodeop CacheBlockWriteBack;
 
 # pattern 0100nnnn00101000
 # text    shll16 <REG_N>
-# arch 
+# arch
 :shll16 N_0t                is OP_0=0x4 & N_0t & OP_4=0x28 {
 
 	N_0t = ( N_0t << 16 );
@@ -2591,7 +2601,7 @@ define pcodeop CacheBlockWriteBack;
 # One-Bit Right Logical Shift
 # pattern 0100nnnn00000001
 # text    shlr <REG_N>
-# arch 
+# arch
 :shlr N_0t                  is OP_0=0x4 & N_0t & OP_4=0x1 {
 
 	$(T_FLAG) = ( ( N_0t & 0x00000001 ) != 0 );
@@ -2602,7 +2612,7 @@ define pcodeop CacheBlockWriteBack;
 # n-Bit Left Logical Shift
 # pattern 0100nnnn00001001
 # text    shlr2 <REG_N>
-# arch 
+# arch
 :shlr2 N_0t                 is OP_0=0x4 & N_0t & OP_4=0x9 {
 
 	N_0t = N_0t >> 2;
@@ -2612,7 +2622,7 @@ define pcodeop CacheBlockWriteBack;
 # n-Bit Left Logical Shift
 # pattern 0100nnnn00011001
 # text    shlr8 <REG_N>
-# arch 
+# arch
 :shlr8 N_0t                 is OP_0=0x4 & N_0t & OP_4=0x19 {
 
 	N_0t = N_0t >> 8;
@@ -2622,7 +2632,7 @@ define pcodeop CacheBlockWriteBack;
 # n-Bit Left Logical Shift
 # pattern 0100nnnn00101001
 # text    shlr16 <REG_N>
-# arch 
+# arch
 :shlr16 N_0t                is OP_0=0x4 & N_0t & OP_4=0x29 {
 
 	N_0t = N_0t >> 16;
@@ -2632,7 +2642,7 @@ define pcodeop CacheBlockWriteBack;
 # Transition to Power-Down Mode
 # pattern 0000000000011011
 # text    sleep
-# arch 
+# arch
 :sleep                      is OP_3=0x1b {  } # empty on purpose
 
 
@@ -2650,7 +2660,7 @@ define pcodeop CacheBlockWriteBack;
 # Store from Control Register
 # pattern 0000nnnn00010010
 # text    stc GBR,<REG_N>
-# arch 
+# arch
 :stc gbr_N_0t               is OP_0=0x0 & gbr_N_0t & OP_4=0x12 {
 
 	gbr_N_0t = GBR;
@@ -3058,3 +3068,25 @@ define pcodeop TrapAlways;
 	N_0t = (M_0t << 16) | (N_0t >> 16);
 }
 
+@ifdef HAS_FSCA_FSRRA
+
+define pcodeop sin;
+define pcodeop cos;
+define pcodeop invsqrt;
+
+# Calculate the sine and cosine approximations of FPUL
+# pattern   1111nnn011111101
+# text      fsca	FPUL, <F_REG_N>
+:fsca FPUL,FRN_1            is OP_0=0xf & FRN_1 & FRN_2 & OP_5=0xfd & FPUL {
+	FRN_1 = sin(FPUL);
+	FRN_2 = cos(FPUL);
+}
+
+# Calculate approximate inverse of the arithmetic square root
+# pattern   1111nnnn01111101
+# text      fsrra	<F_REG_N>
+:fsrra FRN_0                is OP_0=0xf & FRN_0 & OP_4=0x7d {
+	FRN_0 = invsqrt(FRN_0);
+}
+
+@endif

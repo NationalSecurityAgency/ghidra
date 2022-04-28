@@ -1,0 +1,9 @@
+# The Sega Dreamcast\Naomi are SH-4 with the addition of the fsca and fsrra
+# instructions from SH-4A
+# See https://github.com/NationalSecurityAgency/ghidra/issues/1730
+
+
+@define HAS_FSCA_FSRRA "true"
+@define ENDIAN "little"
+
+@include "SuperH4.sinc"
