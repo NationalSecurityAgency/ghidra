@@ -513,27 +513,34 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 	}
 
 	private void repositionScrollpane() {
-		// NOTE:  CRAZY CODE!  subtract one to position short of final newline
-		outputTextPane.setCaretPosition(Math.max(0, outputTextPane.getDocument().getLength() - 1));
+		outputTextPane.setCaretPosition(Math.max(0, outputTextPane.getDocument().getLength()));
 	}
+
+	AnsiRenderer stdErrRenderer = new AnsiRenderer();
+	AnsiRenderer stdInRenderer = new AnsiRenderer();
+	AnsiRenderer stdOutRenderer = new AnsiRenderer();
 
 	void addText(String text, TextType type) {
 		SimpleAttributeSet attributes;
+		AnsiRenderer renderer;
 		switch (type) {
 			case STDERR:
+				renderer = stdErrRenderer;
 				attributes = STDERR_SET;
 				break;
 			case STDIN:
+				renderer = stdInRenderer;
 				attributes = STDIN_SET;
 				break;
 			case STDOUT:
 			default:
+				renderer = stdOutRenderer;
 				attributes = STDOUT_SET;
 				break;
 		}
 		try {
 			StyledDocument document = outputTextPane.getStyledDocument();
-			document.insertString(document.getLength(), text, attributes);
+			renderer.renderString(document, text, attributes);
 			repositionScrollpane();
 		}
 		catch (BadLocationException e) {

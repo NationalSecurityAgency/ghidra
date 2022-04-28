@@ -69,14 +69,8 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 			if (os == null) {
 				return;
 			}
-			/**
-			 * NB: yes, the extra space is lame... The InterpreterPanel's repositionScrollPane
-			 * method subtracts 1 from the text length to compute the new position causing it to
-			 * scroll to the last character printed. We want it to scroll to the next line, so...
-			 */
 			try {
 				os.write(out);
-				os.write(' ');
 			}
 			catch (IOException e) {
 				Msg.error(this, "Cannot write to interpreter window: ", e);
