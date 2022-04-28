@@ -100,9 +100,6 @@ public class ToolTipUtils {
 	 */
 	public static HTMLDataTypeRepresentation getHTMLRepresentation(DataType dataType) {
 		if (dataType != null) {
-			if (dataType instanceof BuiltIn) {
-				return new DefaultDataTypeHTMLRepresentation(dataType);
-			}
 			if (dataType instanceof TypeDef) {
 				return new TypeDefDataTypeHTMLRepresentation((TypeDef) dataType);
 			}

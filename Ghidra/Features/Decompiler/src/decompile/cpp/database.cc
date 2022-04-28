@@ -375,18 +375,8 @@ void Symbol::saveXmlHeader(ostream &s) const
   int4 format = getDisplayFormat();
   if (format != 0) {
     s << " format=\"";
-    if (format == force_hex)
-      s << "hex\"";
-    else if (format == force_dec)
-      s << "dec\"";
-    else if (format == force_char)
-      s << "char\"";
-    else if (format == force_oct)
-      s << "oct\"";
-    else if (format == force_bin)
-      s << "bin\"";
-    else
-      s << "hex\"";
+    s << Datatype::decodeIntegerFormat(format);
+    s << '\"';
   }
   a_v_i(s,"cat",category);
   if (category >= 0)
@@ -413,16 +403,7 @@ void Symbol::restoreXmlHeader(const Element *el)
       case 'f':
 	if (attName == "format") {
 	  const string &formString(el->getAttributeValue(i));
-	  if (formString == "hex")
-	    dispflags |= force_hex;
-	  else if (formString == "dec")
-	    dispflags |= force_dec;
-	  else if (formString == "char")
-	    dispflags |= force_char;
-	  else if (formString == "oct")
-	    dispflags |= force_oct;
-	  else if (formString == "bin")
-	    dispflags |= force_bin;
+	  dispflags |= Datatype::encodeIntegerFormat(formString);
 	}
 	break;
       case 'h':
@@ -3088,9 +3069,9 @@ Scope *Database::resolveScope(uint8 id) const
 ///
 /// The name is parsed using a \b delimiter that is passed in. The name can
 /// be only partially qualified by passing in a starting Scope, which the
-/// name is assumed to be relative to. Otherwise the name is assumed to be
-/// relative to the global Scope.  The unqualified (base) name of the Symbol
-/// is passed back to the caller.
+/// name is assumed to be relative to. If the starting scope is \b null, or the name
+/// starts with the delimiter, the name is assumed to be relative to the global Scope.
+/// The unqualified (base) name of the Symbol is passed back to the caller.
 /// \param fullname is the qualified Symbol name
 /// \param delim is the delimiter separating names
 /// \param basename will hold the passed back base Symbol name
@@ -3107,10 +3088,15 @@ Scope *Database::resolveScopeFromSymbolName(const string &fullname,const string 
   for(;;) {
     endmark = fullname.find(delim,mark);
     if (endmark == string::npos) break;
-    string scopename = fullname.substr(mark,endmark-mark);
-    start = start->resolveScope(scopename,idByNameHash);
-    if (start == (Scope *)0)	// Was the scope name bad
-      return start;
+    if (endmark == 0) {		// Path is "absolute"
+      start = globalscope;	// Start from the global scope
+    }
+    else {
+      string scopename = fullname.substr(mark,endmark-mark);
+      start = start->resolveScope(scopename,idByNameHash);
+      if (start == (Scope *)0)	// Was the scope name bad
+	return start;
+    }
     mark = endmark + delim.size();
   }
   basename = fullname.substr(mark,endmark);

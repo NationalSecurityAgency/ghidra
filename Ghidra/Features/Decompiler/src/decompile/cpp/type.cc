@@ -316,6 +316,9 @@ void Datatype::saveXmlBasic(type_metatype meta,ostream &s) const
     a_v_b(s,"varlength",true);
   if ((flags & opaque_string)!=0)
     a_v_b(s,"opaquestring",true);
+  uint4 format = getDisplayFormat();
+  if (format != 0)
+    a_v(s,"format",decodeIntegerFormat(format));
 }
 
 /// Write a simple reference to \b this data-type as an XML \<typeref> tag,
@@ -350,6 +353,9 @@ void Datatype::saveXmlTypedef(ostream &s) const
   s << "<def";
   a_v(s,"name",name);
   a_v_u(s,"id",id);
+  uint4 format = getDisplayFormat();
+  if (format != 0)
+    a_v(s,"format",Datatype::decodeIntegerFormat(format));
   s << ">";
   typedefImm->saveXmlRef(s);
   s << "</def>";
@@ -445,6 +451,10 @@ void Datatype::restoreXmlBasic(const Element *el)
       if (xml_readbool(el->getAttributeValue(i)))
 	flags |= opaque_string;
     }
+    else if (attribName == "format") {
+      uint4 val = encodeIntegerFormat(el->getAttributeValue(i));
+      setDisplayFormat(val);
+    }
   }
   if ((id==0)&&(name.size()>0))	// If there is a type name
     id = hashName(name);	// There must be some kind of id
@@ -487,6 +497,53 @@ uint8 Datatype::hashSize(uint8 id,int4 size)
   sizeHash *= 0x98251033aecbabaf;	// Hash the size
   id ^= sizeHash;
   return id;
+}
+/// \brief Encode the \b format attribute from an XML element
+///
+/// Possible values are:
+///   - 1  - \b hex
+///   - 2  - \b dec
+///   - 3  - \b oct
+///   - 4  - \b bin
+///   - 5 - \b char
+///
+/// \param val is the string to encode
+/// \return the encoded value
+uint4 Datatype::encodeIntegerFormat(const string &val)
+
+{
+  if (val == "hex")
+    return 1;
+  else if (val == "dec")
+    return 2;
+  else if (val == "oct")
+    return 3;
+  else if (val == "bin")
+    return 4;
+  else if (val == "char")
+    return 5;
+  throw LowlevelError("Unrecognized integer format: " + val);
+}
+
+/// \brief Decode the given format value into an XML attribute string
+///
+/// Possible encoded values are 1-5 corresponding to "hex", "dec", "oct", "bin", "char"
+/// \param val is the value to decode
+/// \return the decoded string
+string Datatype::decodeIntegerFormat(uint4 val)
+
+{
+  if (val == 1)
+    return "hex";
+  else if (val == 2)
+    return "dec";
+  else if (val == 3)
+    return "oct";
+  else if (val == 4)
+    return "bin";
+  else if (val == 5)
+    return "char";
+  throw LowlevelError("Unrecognized integer format encoding");
 }
 
 /// Contruct from the given \<field> element.
@@ -2600,6 +2657,17 @@ Datatype *TypeFactory::setName(Datatype *ct,const string &n)
   return ct;
 }
 
+/// The display format for the data-type is changed based on the given format.  A value of
+/// zero clears any preexisting format.  Otherwise the value can be one of:
+/// 1=\b hex, 2=\b dec, 4=\b oct, 8=\b bin, 16=\b char
+/// \param ct is the given data-type to change
+/// \param format is the given format
+void TypeFactory::setDisplayFormat(Datatype *ct,uint4 format)
+
+{
+  ct->setDisplayFormat(format);
+}
+
 /// Make sure all the offsets are fully established then set fields of the structure
 /// If \b fixedsize is greater than 0, force the final structure to have that size.
 /// This method should only be used on an incomplete structure. It will mark the structure as complete.
@@ -2947,8 +3015,9 @@ void TypeFactory::recalcPointerSubmeta(Datatype *base,sub_metatype sub)
 /// \param ct is the given data-type to clone
 /// \param name is the new name for the clone
 /// \param id is the new id for the clone (or 0)
+/// \param format is a particular format to force when printing (or zero)
 /// \return the (found or created) \e typedef data-type
-Datatype *TypeFactory::getTypedef(Datatype *ct,const string &name,uint8 id)
+Datatype *TypeFactory::getTypedef(Datatype *ct,const string &name,uint8 id,uint4 format)
 
 {
   if (id == 0)
@@ -2964,6 +3033,7 @@ Datatype *TypeFactory::getTypedef(Datatype *ct,const string &name,uint8 id)
   res->id = id;			// and new id
   res->flags &= ~((uint4)Datatype::coretype);	// Not a core type
   res->typedefImm = ct;
+  res->setDisplayFormat(format);
   insert(res);
   return res;
 }
@@ -3328,15 +3398,19 @@ Datatype *TypeFactory::restoreTypedef(const Element *el)
 {
   uint8 id = 0;
   string nm;
+  uint4 format = 0;		// No forced display format by default
   for(int4 i=0;i<el->getNumAttributes();++i) {
     const string &attribName(el->getAttributeName(i));
     if (attribName == "id") {
-      istringstream s1(el->getAttributeValue("id"));
+      istringstream s1(el->getAttributeValue(i));
       s1.unsetf(ios::dec | ios::hex | ios::oct);
       s1 >> id;
     }
     else if (attribName == "name") {
-      nm = el->getAttributeValue("name");
+      nm = el->getAttributeValue(i);
+    }
+    else if (attribName == "format") {
+      format = Datatype::encodeIntegerFormat(el->getAttributeValue(i));
     }
   }
   if (id == 0) {			// Its possible the typedef is a builtin
@@ -3367,7 +3441,7 @@ Datatype *TypeFactory::restoreTypedef(const Element *el)
       return prev;
     }
   }
-  return getTypedef(defedType, nm, id);
+  return getTypedef(defedType, nm, id, format);
 }
 
 /// If necessary create a stub object before parsing the field descriptions, to deal with recursive definitions

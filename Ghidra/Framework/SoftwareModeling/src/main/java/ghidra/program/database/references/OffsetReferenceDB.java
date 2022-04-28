@@ -56,4 +56,9 @@ class OffsetReferenceDB extends MemReferenceDB implements OffsetReference {
 		return offsetOrShift == ref.getOffset();
 	}
 
+	@Override
+	public String toString() {
+		return super.toString() + " Offset: 0x" + Long.toHexString(offsetOrShift);
+	}
+
 }

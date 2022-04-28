@@ -34,6 +34,11 @@ import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
+/**
+ * An action to force the use of a particular field on the access of a union.
+ * The user selects particular field name token in the decompiler window and is presented
+ * with a list of other possible fields the access can be changed to.
+ */
 public class ForceUnionAction extends AbstractDecompilerAction {
 	private Varnode accessVn;		// The Varnode being accessed with a union data-type
 	private PcodeOp accessOp;		// PcodeOp accessing the union
@@ -65,6 +70,13 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		return (composite instanceof Union);
 	}
 
+	/**
+	 * Determine if the data-type of the given Varnode is related to the union -unionDt-
+	 * The Varnode's data-type may be a typedef of, a pointer to, or a truncated form of
+	 * the union.  If so the Varnode's data-type is returned, otherwise null is returned.
+	 * @param vn is the given Varnode
+	 * @return the data-type of the Varnode (if it is related to the union) or null
+	 */
 	private DataType typeIsUnionRelated(Varnode vn) {
 		if (vn == null) {
 			return null;
@@ -85,13 +97,26 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 			return dt;
 		}
 		// Its possible the varnode is a truncated symbol
-		dt = high.getSymbol().getDataType();
+		HighSymbol symbol = high.getSymbol();
+		if (symbol == null) {
+			return null;
+		}
+		dt = symbol.getDataType();
 		if (dt instanceof TypeDef) {
 			dt = ((TypeDef) dt).getBaseDataType();
 		}
 		return (dt == unionDt) ? dt : null;
 	}
 
+	/**
+	 * Determine the particular Varnode whose union facet will be modified by this action.
+	 * The field -accessVn- will be filled in with the particular Varnode. -accessOp- is set to
+	 * the operation at the cursor, and -accessOp- is either an input or the output, with
+	 * -accessSlot- being set either to the input slot or -1 if the Varnode is the output.
+	 * Additionally -parentDt is filled in with the data-type associated with the Varnode.
+	 * If the union can't be determined, -accessOp- is set to null.
+	 * @param tokenAtCursor is the display token selected by the user
+	 */
 	private void determineFacet(ClangToken tokenAtCursor) {
 		accessOp = tokenAtCursor.getPcodeOp();
 		int opcode = accessOp.getOpcode();
@@ -136,6 +161,15 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		}
 	}
 
+	/**
+	 * Build a list of all the union field names for the user to select from, when determining
+	 * which data-type to force.  Two lists are produced.  The first contains every possible
+	 * field name. The second list is filtered by the size of the Varnode being forced,
+	 * which must match the size of the selected field data-type.
+	 * @param allFields will hold the unfiltered list of names
+	 * @param size is the size of the Varnode to filter on
+	 * @return the filtered list of names
+	 */
 	private String[] buildFieldOptions(ArrayList<String> allFields, int size) {
 		DataTypeComponent[] components = unionDt.getDefinedComponents();
 		ArrayList<String> res = new ArrayList<>();
@@ -155,6 +189,12 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		return resArray;
 	}
 
+	/**
+	 * Find the index of a given string, within an array of strings
+	 * @param list is the array of strings
+	 * @param value is the given string to find
+	 * @return the index of the given string within the array, or -1 if it isn't present
+	 */
 	private static int findStringIndex(ArrayList<String> list, String value) {
 		for (int i = 0; i < list.size(); ++i) {
 			if (list.get(i).equals(value)) {
@@ -164,6 +204,15 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		return -1;
 	}
 
+	/**
+	 * Let the user choose the particular field to force on the selected Varnode. The names
+	 * of the fields in the associated union are presented, possibly along with the special
+	 * string "no field". The choices are filtered so that they match the size of the Varnode
+	 * being forced.  Its possible that all names are filtered out except the current field
+	 * assigned to the Varnode, in which case a confirmation dialog is brought up instead.
+	 * @param defaultFieldName is the default name to use when presenting options to the user
+	 * @return the index of the selected field or -1 if "no field" was selected
+	 */
 	private boolean selectFieldNumber(String defaultFieldName) {
 		int size = 0;
 		if (!(parentDt instanceof Pointer)) {

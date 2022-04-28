@@ -59,6 +59,7 @@ public:
   void clearArchitecture(void);		///< Free all resources for the current architecture/program
   void followFlow(ostream &s,int4 size);
   Varnode *readVarnode(istream &s);	///< Read a varnode from the given stream
+  void readSymbol(const string &name,vector<Symbol *> &res);	///< Find a symbol by name
 };
 
 /// \brief Disassembly emitter that prints to a console stream
@@ -352,12 +353,12 @@ public:
   virtual void execute(istream &s);
 };
 
-class IfcForceHex : public IfaceDecompCommand {
+class IfcForceFormat : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
 };
 
-class IfcForceDec : public IfaceDecompCommand {
+class IfcForceDatatypeFormat : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
 };

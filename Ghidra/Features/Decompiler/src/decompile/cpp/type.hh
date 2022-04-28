@@ -93,11 +93,6 @@ protected:
   /// Boolean properties of datatypes
   enum {
     coretype = 1,		///< This is a basic type which will never be redefined
-    // Bits above the first bit are considered a sub-metatype
-    // If the metatypes are equal, we compare on sub-metatype
-    // Currently this is only used to order int, char, and enum
-    // The order of the sub-metatype is reversed so that
-    // char comes before int1
     chartype = 2,		///< ASCII character data
     enumtype = 4,		///< An enumeration type (as well as an integer)
     poweroftwo = 8,		///< An enumeration type where all values are of 2^^n form
@@ -108,7 +103,8 @@ protected:
     has_stripped = 0x100,	///< Datatype has a stripped form for formal declarations
     is_ptrrel = 0x200,		///< Datatype is a TypePointerRel
     type_incomplete = 0x400,	///< Set if \b this (recursive) data-type has not been fully defined yet
-    needs_resolution = 0x800	///< Datatype (union, pointer to union) needs resolution before propagation
+    needs_resolution = 0x800,	///< Datatype (union, pointer to union) needs resolution before propagation
+    force_format = 0x7000,	///< 3-bits encoding display format, 0=none, 1=hex, 2=dec, 3=oct, 4=bin, 5=char
   };
   friend class TypeFactory;
   friend struct DatatypeCompare;
@@ -123,6 +119,7 @@ protected:
   void saveXmlBasic(type_metatype meta,ostream &s) const;	///< Save basic data-type properties
   void saveXmlTypedef(ostream &s) const;	///< Write \b this as a \e typedef tag to stream
   void markComplete(void) { flags &= ~(uint4)type_incomplete; }		///< Mark \b this data-type as completely defined
+  void setDisplayFormat(uint4 format);		///< Set a specific display format
   virtual Datatype *clone(void) const=0;	///< Clone the data-type
   static uint8 hashName(const string &nm);	///< Produce a data-type id by hashing the type name
   static uint8 hashSize(uint8 id,int4 size);	///< Reversibly hash size into id
@@ -149,6 +146,7 @@ public:
   bool isIncomplete(void) const { return (flags & type_incomplete)!=0; }	///< Is \b this an incompletely defined data-type
   bool needsResolution(void) const { return (flags & needs_resolution)!=0; }	///< Is \b this a union or a pointer to union
   uint4 getInheritable(void) const { return (flags & coretype); }	///< Get properties pointers inherit
+  uint4 getDisplayFormat(void) const;				///< Get the display format for constants with \b this data-type
   type_metatype getMetatype(void) const { return metatype; }	///< Get the type \b meta-type
   sub_metatype getSubMeta(void) const { return submeta; }	///< Get the \b sub-metatype
   uint8 getId(void) const { return id; }			///< Get the type id
@@ -173,6 +171,8 @@ public:
   int4 typeOrder(const Datatype &op) const { if (this==&op) return 0; return compare(op,10); }	///< Order this with -op- datatype
   int4 typeOrderBool(const Datatype &op) const;	///< Order \b this with -op-, treating \e bool data-type as special
   void saveXmlRef(ostream &s) const;	///< Write an XML reference of \b this to stream
+  static uint4 encodeIntegerFormat(const string &val);
+  static string decodeIntegerFormat(uint4 val);
 };
 
 /// \brief A field within a structure or union
@@ -575,6 +575,7 @@ public:
   Architecture *getArch(void) const { return glb; }	///< Get the Architecture object
   Datatype *findByName(const string &n);		///< Return type of given name
   Datatype *setName(Datatype *ct,const string &n); 	///< Set the given types name
+  void setDisplayFormat(Datatype *ct,uint4 format);	///< Set the display format associated with the given data-type
   bool setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,uint4 flags);	///< Set fields on a TypeStruct
   bool setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,uint4 flags);	///< Set fields on a TypeUnion
   void setPrototype(const FuncProto *fp,TypeCode *newCode,uint4 flags);	///< Set the prototype on a TypeCode
@@ -601,7 +602,7 @@ public:
   TypeCode *getTypeCode(ProtoModel *model,Datatype *outtype,
 			const vector<Datatype *> &intypes,
 			bool dotdotdot);			///< Create a "function" datatype
-  Datatype *getTypedef(Datatype *ct,const string &name,uint8 id);	///< Create a new \e typedef data-type
+  Datatype *getTypedef(Datatype *ct,const string &name,uint8 id,uint4 format);	///< Create a new \e typedef data-type
   TypePointerRel *getTypePointerRel(TypePointer *parentPtr,Datatype *ptrTo,int4 off);	///< Get pointer offset relative to a container
   TypePointerRel *getTypePointerRel(int4 sz,Datatype *parent,Datatype *ptrTo,int4 ws,int4 off,const string &nm);
   TypePointer *getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc,const string &nm);
@@ -617,6 +618,32 @@ public:
   void setCoreType(const string &name,int4 size,type_metatype meta,bool chartp);	///< Create a core data-type
   void cacheCoreTypes(void);				///< Cache common types
 };
+
+/// The display format for the data-type is changed based on the given format.  A value of
+/// zero clears any preexisting format.  Otherwise the value can be one of:
+/// 1=\b hex, 2=\b dec, 3=\b oct, 4=\b bin, 5=\b char
+/// \param format is the given format
+inline void Datatype::setDisplayFormat(uint4 format)
+
+{
+  flags &= ~(uint4)force_format;	// Clear preexisting
+  flags |= (format << 12);
+}
+
+/// A non-zero result indicates the type of formatting that is forced on the constant.
+/// One of the following values is returned.
+///   - 1 for hexadecimal
+///   - 2 for decimal
+///   - 3 for octal
+///   - 4 for binary
+///   - 5 for char
+///
+/// \return the forced encoding type or zero
+inline uint4 Datatype::getDisplayFormat(void) const
+
+{
+  return (flags & force_format) >> 12;
+}
 
 /// Order data-types, with special handling of the \e bool data-type. Data-types are compared
 /// using the normal ordering, but \e bool is ordered after all other data-types. A return value
