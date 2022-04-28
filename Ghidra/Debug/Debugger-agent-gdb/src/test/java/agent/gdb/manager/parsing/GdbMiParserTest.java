@@ -61,4 +61,16 @@ public class GdbMiParserTest {
 			exp.add("w", "World");
 		}), parser.parseMap());
 	}
+
+	@Test
+	public void testParseStringEscapes() throws GdbParseError {
+		GdbMiParser parser = new GdbMiParser("\"basic=\\n\\b\\t\\f\\r c=\\e[0m\\a delim=\\\\\\\" octal=\\000\\177\"");
+		assertEquals("basic=\n\b\t\f\r c=\033[0m\007 delim=\\\" octal=\000\177", parser.parseString());
+	}
+
+	@Test
+	public void testParseStringUTF8() throws GdbParseError {
+		GdbMiParser parser = new GdbMiParser("\"\\302\\244 \\342\\204\\212 \\343\\201\\251 \\351\\276\\231 \\360\\237\\230\\200\"");
+		assertEquals("\u00a4 \u210a \u3069 \u9f99 \ud83d\ude00", parser.parseString());
+	}
 }
