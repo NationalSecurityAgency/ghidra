@@ -89,8 +89,7 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 		waitForSwing();
 
 		// I/O processing has a dedicated thread
-		// FIXME: The trailing space is a hack to fix scrolling....
-		waitForPass(() -> assertEquals("Hello, World!\n ", interpreter.getOutputText()));
+		waitForPass(() -> assertEquals("Hello, World!\n", interpreter.getOutputText()));
 	}
 
 	@Test

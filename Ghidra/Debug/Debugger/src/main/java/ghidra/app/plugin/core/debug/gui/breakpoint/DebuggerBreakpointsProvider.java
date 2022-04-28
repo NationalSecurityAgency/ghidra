@@ -140,7 +140,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		@Override
 		public List<LogicalBreakpointTableColumns> defaultSortOrder() {
-			return List.of(LogicalBreakpointTableColumns.ADDRESS);
+			return List.of(LogicalBreakpointTableColumns.IMAGE,
+				LogicalBreakpointTableColumns.ADDRESS, LogicalBreakpointTableColumns.NAME);
 		}
 	}
 
@@ -217,7 +218,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		@Override
 		public List<BreakpointLocationTableColumns> defaultSortOrder() {
-			return List.of(BreakpointLocationTableColumns.ADDRESS);
+			return List.of(BreakpointLocationTableColumns.ADDRESS,
+				BreakpointLocationTableColumns.NAME);
 		}
 	}
 

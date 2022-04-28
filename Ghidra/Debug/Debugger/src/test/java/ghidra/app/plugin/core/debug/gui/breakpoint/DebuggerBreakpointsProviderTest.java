@@ -73,6 +73,12 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		mappingService = tool.getService(DebuggerStaticMappingService.class);
 	}
 
+	protected void waitAndFlush(TraceRecorder recorder) throws Throwable {
+		waitOn(recorder.getTarget().getModel().flushEvents());
+		waitOn(recorder.flushTransactions());
+		waitForDomainObject(recorder.getTrace());
+	}
+
 	protected void addMapping(Trace trace, Program prog) throws Exception {
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping", true)) {
 			DebuggerStaticMappingUtils.addMapping(
@@ -206,7 +212,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testEnablementColumnMapped() throws Exception {
+	public void testEnablementColumnMapped() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
@@ -241,8 +247,8 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		waitForPass(() -> assertEquals(State.INCONSISTENT_DISABLED, row.getState()));
 
 		// NOTE: This acts on the corresponding target, not directly on trace
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.disableForTrace(trace));
+		waitAndFlush(recorder);
 
 		waitForPass(() -> assertEquals(State.DISABLED, row.getState()));
 
@@ -252,8 +258,8 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		waitForPass(() -> assertEquals(State.INCONSISTENT_ENABLED, row.getState()));
 
 		// This duplicates the initial case, but without it, I just feel incomplete
-		lb.enableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.enableForTrace(trace));
+		waitAndFlush(recorder);
 
 		waitForPass(() -> assertEquals(State.ENABLED, row.getState()));
 	}
