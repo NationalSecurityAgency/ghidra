@@ -73,6 +73,20 @@ public interface TraceObject extends TraceUniqueObject {
 	void insert(ConflictResolution resolution);
 
 	/**
+	 * Get the parent value along this object's canonical path for a given snapshot
+	 * 
+	 * <p>
+	 * To be the canonical parent value at a given snapshot, three things must be true: 1) The
+	 * parent object must have this object's path with the last key removed. 2) The parent value's
+	 * entry key must be equal to the final key of this object's path. 3) The value's lifespan must
+	 * contain the given snapshot. If no value satisfies these, null is returned.
+	 * 
+	 * @param snap the snapshot key
+	 * @return the canonical parent value, or null
+	 */
+	TraceObjectValue getCanonicalParent(long snap);
+
+	/**
 	 * Check if this object is the root
 	 * 
 	 * @return true if root
@@ -309,10 +323,15 @@ public interface TraceObject extends TraceUniqueObject {
 	/**
 	 * Set a value for the given lifespan, truncating existing entries
 	 * 
+	 * <p>
+	 * Setting a value of {@code null} effectively deletes the value for the given lifespan and
+	 * returns {@code null}. Values of the same key intersecting the given lifespan or either
+	 * truncated or deleted.
+	 * 
 	 * @param lifespan the lifespan of the value
 	 * @param key the key to set
 	 * @param value the new value
-	 * @return the created value entry
+	 * @return the created value entry, or null
 	 */
 	TraceObjectValue setValue(Range<Long> lifespan, String key, Object value);
 
@@ -362,6 +381,16 @@ public interface TraceObject extends TraceUniqueObject {
 	TargetObjectSchema getTargetSchema();
 
 	/**
+	 * Search for ancestors having the given target interface
+	 * 
+	 * @param span the span which the found objects must intersect
+	 * @param targetIf the interface class
+	 * @return the stream of found paths to values
+	 */
+	Stream<? extends TraceObjectValPath> queryAncestorsTargetInterface(Range<Long> span,
+			Class<? extends TargetObject> targetIf);
+
+	/**
 	 * Search for ancestors providing the given interface and retrieve those interfaces
 	 * 
 	 * @param <I> the interface type
@@ -371,6 +400,19 @@ public interface TraceObject extends TraceUniqueObject {
 	 */
 	<I extends TraceObjectInterface> Stream<I> queryAncestorsInterface(Range<Long> span,
 			Class<I> ifClass);
+
+	/**
+	 * Search for ancestors on the canonical path having the given target interface
+	 * 
+	 * <p>
+	 * The object may not yet be inserted at its canonical path
+	 * 
+	 * @param span the span which the found objects must intersect
+	 * @param targetIf the interface class
+	 * @return the stream of objects
+	 */
+	Stream<? extends TraceObject> queryCanonicalAncestorsTargetInterface(Range<Long> span,
+			Class<? extends TargetObject> targetIf);
 
 	/**
 	 * Search for ancestors on the canonical path providing the given interface
@@ -385,6 +427,9 @@ public interface TraceObject extends TraceUniqueObject {
 	 */
 	<I extends TraceObjectInterface> Stream<I> queryCanonicalAncestorsInterface(
 			Range<Long> span, Class<I> ifClass);
+
+	Stream<? extends TraceObjectValPath> querySuccessorsTargetInterface(Range<Long> span,
+			Class<? extends TargetObject> targetIf);
 
 	/**
 	 * Search for successors providing the given interface and retrieve those interfaces

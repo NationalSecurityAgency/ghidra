@@ -74,6 +74,6 @@ public abstract class AbstractModelForGdbInferiorActivationTest
 				.filter(l -> l.trim().startsWith("*"))
 				.collect(Collectors.toList())).trim();
 		String inferiorId = line.split("\\s+")[1];
-		assertEquals(expected.getPath(), INF_PATTERN.applyIndices(inferiorId).getSingletonPath());
+		assertEquals(expected.getPath(), INF_PATTERN.applyKeys(inferiorId).getSingletonPath());
 	}
 }

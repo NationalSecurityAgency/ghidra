@@ -81,7 +81,7 @@ public abstract class AbstractModelForLldbX64RegistersTest
 			for (Entry<String, byte[]> ent : getRegisterWrites().entrySet()) {
 				String regName = ent.getKey();
 				Map<List<String>, TargetRegister> regs = m.findAll(TargetRegister.class,
-					path, pred -> pred.applyIndices(regName), false);
+					path, pred -> pred.applyKeys(regName), false);
 				for (TargetRegister reg : regs.values()) {
 					assertEquals(ent.getValue().length, (reg.getBitLength() + 7) / 8);
 				}
@@ -121,7 +121,7 @@ public abstract class AbstractModelForLldbX64RegistersTest
 		for (TargetRegisterBank bank : banks.values()) {
 			for (String name : exp.keySet()) {
 				Map<List<String>, TargetRegister> regs = m.findAll(TargetRegister.class,
-					bank.getPath(), pred -> pred.applyIndices(name), false);
+					bank.getPath(), pred -> pred.applyKeys(name), false);
 				for (TargetRegister reg : regs.values()) {
 					byte[] bytes = waitOn(bank.readRegister(reg));
 					read.put(name, bytes);
@@ -149,7 +149,7 @@ public abstract class AbstractModelForLldbX64RegistersTest
 		for (TargetRegisterBank bank : banks.values()) {
 			for (String name : write.keySet()) {
 				Map<List<String>, TargetRegister> regs = m.findAll(TargetRegister.class,
-					bank.getPath(), pred -> pred.applyIndices(name), false);
+					bank.getPath(), pred -> pred.applyKeys(name), false);
 				for (TargetRegister reg : regs.values()) {
 					waitOn(bank.writeRegister(reg, write.get(name)));
 

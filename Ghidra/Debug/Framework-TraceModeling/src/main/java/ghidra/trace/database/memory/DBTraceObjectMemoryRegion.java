@@ -22,6 +22,7 @@ import com.google.common.collect.Range;
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.*;
+import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
@@ -71,6 +72,27 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 		protected TraceChangeType<TraceMemoryRegion, Void> getDeletedType() {
 			return TraceMemoryRegionChangeType.DELETED;
 		}
+
+		@Override
+		protected void emitExtraAdded() {
+			updateViewsAdded();
+		}
+
+		@Override
+		protected void emitExtraLifespanChanged(Range<Long> oldLifespan, Range<Long> newLifespan) {
+			updateViewsLifespanChanged(oldLifespan, newLifespan);
+		}
+
+		@Override
+		protected void emitExtraValueChanged(Range<Long> lifespan, String key, Object oldValue,
+				Object newValue) {
+			updateViewsValueChanged(lifespan, key, oldValue, newValue);
+		}
+
+		@Override
+		protected void emitExtraDeleted() {
+			updateViewsDeleted();
+		}
 	}
 
 	private final DBTraceObject object;
@@ -96,7 +118,6 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	public void setName(String name) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.setValue(getLifespan(), TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
-			object.getTrace().updateViewsChangeRegionBlockName(this);
 		}
 	}
 
@@ -116,7 +137,6 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 			}
 			TraceObjectInterfaceUtils.setLifespan(TraceObjectMemoryRegion.class, object,
 				newLifespan);
-			object.getTrace().updateViewsChangeRegionBlockLifespan(this, oldLifespan, newLifespan);
 		}
 	}
 
@@ -157,7 +177,6 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 				return;
 			}
 			object.setValue(getLifespan(), TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, newRange);
-			object.getTrace().updateViewsChangeRegionBlockRange(this, oldRange, newRange);
 		}
 	}
 
@@ -229,7 +248,6 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 				Boolean val = flags.contains(flag) ? true : null;
 				object.setValue(lifespan, keyForFlag(flag), val);
 			}
-			object.getTrace().updateViewsChangeRegionBlockFlags(this, lifespan);
 		}
 	}
 
@@ -239,7 +257,6 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 			for (TraceMemoryFlag flag : flags) {
 				object.setValue(lifespan, keyForFlag(flag), true);
 			}
-			object.getTrace().updateViewsChangeRegionBlockFlags(this, lifespan);
 		}
 	}
 
@@ -249,7 +266,6 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 			for (TraceMemoryFlag flag : flags) {
 				object.setValue(lifespan, keyForFlag(flag), null);
 			}
-			object.getTrace().updateViewsChangeRegionBlockFlags(this, lifespan);
 		}
 	}
 
@@ -296,7 +312,6 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	public void delete() {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.deleteTree();
-			object.getTrace().updateViewsDeleteRegionBlock(this);
 		}
 	}
 
@@ -308,5 +323,36 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
 		return translator.translate(rec);
+	}
+
+	protected void updateViewsAdded() {
+		object.getTrace().updateViewsAddRegionBlock(this);
+	}
+
+	protected void updateViewsLifespanChanged(Range<Long> oldLifespan, Range<Long> newLifespan) {
+		object.getTrace().updateViewsChangeRegionBlockLifespan(this, oldLifespan, newLifespan);
+	}
+
+	protected void updateViewsValueChanged(Range<Long> lifespan, String key, Object oldValue,
+			Object newValue) {
+		DBTrace trace = object.getTrace();
+		switch (key) {
+			case TargetMemoryRegion.RANGE_ATTRIBUTE_NAME:
+				trace.updateViewsChangeRegionBlockRange(this,
+					(AddressRange) oldValue, (AddressRange) newValue);
+				return;
+			case TargetObject.DISPLAY_ATTRIBUTE_NAME:
+				trace.updateViewsChangeRegionBlockName(this);
+				return;
+			case TargetMemoryRegion.READABLE_ATTRIBUTE_NAME:
+			case TargetMemoryRegion.WRITABLE_ATTRIBUTE_NAME:
+			case TargetMemoryRegion.EXECUTABLE_ATTRIBUTE_NAME:
+				trace.updateViewsChangeRegionBlockFlags(this, lifespan);
+				return;
+		}
+	}
+
+	protected void updateViewsDeleted() {
+		object.getTrace().updateViewsDeleteRegionBlock(this);
 	}
 }

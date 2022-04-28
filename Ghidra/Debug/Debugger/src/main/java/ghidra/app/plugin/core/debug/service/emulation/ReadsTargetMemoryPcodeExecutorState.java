@@ -69,7 +69,7 @@ public class ReadsTargetMemoryPcodeExecutorState
 			if (!isLive()) {
 				return false;
 			}
-			waitTimeout(recorder.captureProcessMemory(unknown, TaskMonitor.DUMMY, false));
+			waitTimeout(recorder.readMemoryBlocks(unknown, TaskMonitor.DUMMY, false));
 			return true;
 		}
 

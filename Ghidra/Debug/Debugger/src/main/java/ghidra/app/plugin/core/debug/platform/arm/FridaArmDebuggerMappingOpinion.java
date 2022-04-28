@@ -49,24 +49,28 @@ public class FridaArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 
 	protected static class FridaAarch64MacosOffer extends DefaultDebuggerMappingOffer {
 		public FridaAarch64MacosOffer(TargetProcess process) {
-			super(process, 50, "AARCH64/Frida on macos", LANG_ID_AARCH64,COMP_ID_DEFAULT,
+			super(process, 50, "AARCH64/Frida on macos", LANG_ID_AARCH64, COMP_ID_DEFAULT,
 				Set.of("cpsr"));
 		}
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetObject target,
 			boolean includesOverrides) {
+		if (!(target instanceof TargetProcess)) {
+			return Set.of();
+		}
 		if (!env.getDebugger().toLowerCase().contains("frida")) {
 			return Set.of();
 		}
 		String arch = env.getArchitecture();
-		boolean is64Bit = arch.contains("AARCH64") || arch.contains("arm64") || arch.contains("arm");
+		boolean is64Bit =
+			arch.contains("AARCH64") || arch.contains("arm64") || arch.contains("arm");
 		String os = env.getOperatingSystem();
 		if (os.contains("macos")) {
 			if (is64Bit) {
 				Msg.info(this, "Using os=" + os + " arch=" + arch);
-				return Set.of(new FridaAarch64MacosOffer(process));
+				return Set.of(new FridaAarch64MacosOffer((TargetProcess) target));
 			}
 		}
 		return Set.of();

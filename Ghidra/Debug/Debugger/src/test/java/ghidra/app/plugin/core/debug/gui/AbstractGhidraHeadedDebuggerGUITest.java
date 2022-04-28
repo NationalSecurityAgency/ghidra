@@ -454,8 +454,13 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	protected static void performEnabledAction(ActionContextProvider provider,
 			DockingActionIf action, boolean wait) {
-		ActionContext context = provider.getActionContext(null);
-		waitForCondition(() -> action.isEnabledForContext(context));
+		ActionContext context = waitForValue(() -> {
+			ActionContext ctx = provider.getActionContext(null);
+			if (!action.isEnabledForContext(ctx)) {
+				return null;
+			}
+			return ctx;
+		});
 		performAction(action, context, wait);
 	}
 

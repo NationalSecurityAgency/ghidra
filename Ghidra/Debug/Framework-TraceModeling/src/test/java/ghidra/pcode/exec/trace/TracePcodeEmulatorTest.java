@@ -143,7 +143,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				tb.trace.getStackManager()
 						.getStack(thread, 1, false)
 						.getFrame(0, false)
-						.getProgramCounter());
+						.getProgramCounter(1));
 		}
 	}
 

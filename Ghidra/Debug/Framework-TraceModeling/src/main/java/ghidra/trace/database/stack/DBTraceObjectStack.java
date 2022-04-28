@@ -24,7 +24,8 @@ import com.google.common.collect.Range;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.*;
-import ghidra.trace.database.target.*;
+import ghidra.trace.database.target.DBTraceObject;
+import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject;
@@ -52,7 +53,7 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 		}
 
 		@Override
-		protected TraceChangeType<TraceStack, Void> getChangedType() {
+		protected TraceChangeType<TraceStack, ?> getChangedType() {
 			return TraceStackChangeType.CHANGED;
 		}
 
@@ -106,7 +107,7 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			PathMatcher matcher = object.getTargetSchema().searchFor(TargetStackFrame.class, true);
 			List<String> relKeyList =
-				matcher.applyIndices(PathUtils.makeIndex(level)).getSingletonPath();
+				matcher.applyKeys(PathUtils.makeIndex(level)).getSingletonPath();
 			if (relKeyList == null) {
 				throw new IllegalStateException("Could not determine where to create new frame");
 			}
@@ -117,8 +118,9 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 	}
 
 	protected void copyFrameAttributes(TraceObjectStackFrame from, TraceObjectStackFrame to) {
-		// TODO: All attributes or just those known to StackFrame?
-		to.setProgramCounter(from.getProgramCounter());
+		// TODO: All attributes within a given span, intersected to that span?
+		to.setProgramCounter(to.getObject().getLifespan(),
+			from.getProgramCounter(from.getObject().getMaxSnap()));
 	}
 
 	protected void shiftFrameAttributes(int from, int to, int count,
@@ -141,12 +143,13 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 	protected void clearFrameAttributes(int start, int end, List<TraceObjectStackFrame> frames) {
 		for (int i = start; i < end; i++) {
 			TraceObjectStackFrame frame = frames.get(i);
-			frame.setProgramCounter(null);
+			frame.setProgramCounter(frame.getObject().getLifespan(), null);
 		}
 	}
 
 	@Override
 	public void setDepth(int depth, boolean atInner) {
+		// TODO: Need a span parameter
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			List<TraceObjectStackFrame> frames = // Want mutable list
 				doGetFrames().collect(Collectors.toCollection(ArrayList::new));
@@ -179,7 +182,7 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 	protected TraceStackFrame doGetFrame(int level) {
 		TargetObjectSchema schema = object.getTargetSchema();
 		PathPredicates matcher = schema.searchFor(TargetStackFrame.class, true);
-		matcher = matcher.applyIndices(PathUtils.makeIndex(level));
+		matcher = matcher.applyKeys(PathUtils.makeIndex(level));
 		return object.getSuccessors(object.getLifespan(), matcher)
 				.findAny()
 				.map(p -> p.getLastChild(object).queryInterface(TraceObjectStackFrame.class))

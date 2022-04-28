@@ -106,11 +106,11 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator {
 
 			TraceStackFrame frame;
 			frame = stack.getFrame(0, false);
-			frame.setProgramCounter(tb.addr(0x00404321));
+			frame.setProgramCounter(Range.all(), tb.addr(0x00404321));
 			frame = stack.getFrame(1, false);
-			frame.setProgramCounter(tb.addr(0x00401234));
+			frame.setProgramCounter(Range.all(), tb.addr(0x00401234));
 			frame = stack.getFrame(2, false);
-			frame.setProgramCounter(tb.addr(0x00401001));
+			frame.setProgramCounter(Range.all(), tb.addr(0x00401001));
 		}
 		root.createFile("trace", tb.trace, TaskMonitor.DUMMY);
 		root.createFile("echo", program, TaskMonitor.DUMMY);

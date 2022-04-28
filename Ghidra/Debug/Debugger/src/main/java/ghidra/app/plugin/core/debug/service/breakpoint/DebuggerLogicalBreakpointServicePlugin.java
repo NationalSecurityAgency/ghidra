@@ -250,6 +250,11 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				Msg.info(this, "Ignoring " + breakpoint +
 					" changed until service has finished loading its trace");
 			}
+			catch (NoSuchElementException e) {
+				// TODO: This catch clause should not be necessary.
+				Msg.error(this,
+					"!!!! Object-based breakpoint emitted event without a spec: " + breakpoint);
+			}
 		}
 
 		private void breakpointLifespanChanged(TraceAddressSpace spaceIsNull,

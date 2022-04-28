@@ -854,6 +854,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	}
 
+	public boolean isRoot(ActionContext context) {
+		TargetObject object = this.getObjectFromContext(context);
+		if (object == null) {
+			return false;
+		}
+		return object.isRoot();
+	}
+
 	public boolean isInstance(ActionContext context, Class<? extends TargetObject> clazz) {
 		TargetObject object = this.getObjectFromContext(context);
 		if (object == null) {
@@ -1128,8 +1136,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.popupMenuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
 			.popupMenuIcon(AbstractRecordAction.ICON)
 			.helpLocation(new HelpLocation(plugin.getName(), "record"))
-			.enabledWhen(ctx -> isInstance(ctx, TargetProcess.class))
-			.popupWhen(ctx -> isInstance(ctx, TargetProcess.class))
+			.enabledWhen(ctx -> isInstance(ctx, TargetProcess.class) || isRoot(ctx))
+			.popupWhen(ctx -> isInstance(ctx, TargetProcess.class) || isRoot(ctx))
 			.onAction(ctx -> performStartRecording(ctx))
 			.enabled(true)
 			.buildAndInstallLocal(this);
@@ -1592,7 +1600,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}
 	}
 
-	public void startRecording(TargetProcess targetObject, boolean prompt) {
+	public void startRecording(TargetObject targetObject, boolean prompt) {
 		TraceRecorder rec = modelService.getRecorder(targetObject);
 		if (rec != null) {
 			return; // Already being recorded
@@ -1630,6 +1638,11 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public void performStartRecording(ActionContext context) {
+		TargetObject maybeRoot = getObjectFromContext(context);
+		if (maybeRoot.isRoot()) {
+			startRecording(maybeRoot, true);
+			return;
+		}
 		performAction(context, false, TargetProcess.class, proc -> {
 			TargetProcess valid = DebugModelConventions.liveProcessOrNull(proc);
 			if (valid != null) {

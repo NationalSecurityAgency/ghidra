@@ -410,6 +410,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 			return;
 		}
 		if (currentStack == stack) {
+			stackTableModel.fireTableDataChanged();
 			return;
 		}
 		currentStack = stack;
