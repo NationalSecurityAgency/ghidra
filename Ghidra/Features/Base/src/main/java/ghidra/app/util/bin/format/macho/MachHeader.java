@@ -135,9 +135,9 @@ public class MachHeader implements StructConverter {
 		_commandIndex = _reader.getPointerIndex();
 	}
 
-	public void parse() throws IOException, MachException {
+	public MachHeader parse() throws IOException, MachException {
 		if (_parsed) {
-			return;
+			return this;
 		}
 		for (int i = 0; i < nCmds; ++i) {
 			_reader.setPointerIndex(_commandIndex);
@@ -146,6 +146,7 @@ public class MachHeader implements StructConverter {
 			_commandIndex += lc.getCommandSize();
 		}
 		_parsed = true;
+		return this;
 	}
 
 	public int getMagic() {
