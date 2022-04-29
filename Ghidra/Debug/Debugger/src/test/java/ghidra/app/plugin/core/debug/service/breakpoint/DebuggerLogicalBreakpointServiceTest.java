@@ -86,7 +86,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 			assertTrue(current.remove(lb));
 		}
 
-		public synchronized void assertAccurate() {
+		public synchronized void assertAgreesWithService() {
 			waitForPass(() -> {
 				assertEquals(breakpointService.getAllBreakpoints(), changeListener.current);
 			});
@@ -174,22 +174,42 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 			createTargetTraceMapper(mb.testProcess3), ActionSource.AUTOMATIC);
 	}
 
-	@After
-	public void tearDownBreakpointServiceTest() {
-		assertConsistent();
-		changeListener.assertAccurate();
-		if (recorder1 != null && recorder1.isRecording()) {
-			waitForLock(recorder1.getTrace());
-			recorder1.stopRecording();
+	protected void waitRecorder(TraceRecorder recorder) throws Throwable {
+		if (recorder == null) {
+			return;
 		}
-		if (recorder3 != null && recorder3.isRecording()) {
-			waitForLock(recorder3.getTrace());
-			recorder3.stopRecording();
-		}
-		ListenerMap.checkErr();
+		waitOn(recorder.getTarget().getModel().flushEvents());
+		waitOn(recorder.flushTransactions());
+		waitForDomainObject(recorder.getTrace());
 	}
 
-	protected void assertConsistent() {
+	@After
+	public void tearDownBreakpointServiceTest() throws Throwable {
+		Msg.debug(this, "Tearing down");
+		try {
+			waitRecorder(recorder1);
+			waitRecorder(recorder3);
+			waitForProgram(program);
+
+			assertServiceAgreesWithOpenProgramsAndTraces();
+			changeListener.assertAgreesWithService();
+			if (recorder1 != null && recorder1.isRecording()) {
+				waitForLock(recorder1.getTrace());
+				recorder1.stopRecording();
+			}
+			if (recorder3 != null && recorder3.isRecording()) {
+				waitForLock(recorder3.getTrace());
+				recorder3.stopRecording();
+			}
+			ListenerMap.checkErr();
+		}
+		catch (Throwable t) {
+			Msg.error(this, "Failed during tear down: " + t);
+			throw t;
+		}
+	}
+
+	protected void assertServiceAgreesWithOpenProgramsAndTraces() {
 		Map<Trace, Set<LogicalBreakpoint>> breaksByTraceViaPer = new HashMap<>();
 		for (Trace trace : traceManager.getOpenTraces()) {
 			Set<LogicalBreakpoint> breaks = new HashSet<>();
@@ -243,8 +263,6 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 
 		assertEquals(breaksByProgramViaPer, breaksByProgramViaAll);
 		assertEquals(breaksByTraceViaPer, breaksByTraceViaAll);
-
-		changeListener.assertAccurate();
 	}
 
 	protected void addProgramTextBlock(Program p) throws Throwable {
@@ -659,7 +677,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		addProgramBreakpoints(program);
 		waitForSwing();
 
-		changeListener.assertAccurate();
+		changeListener.assertAgreesWithService();
 
 		expectMappingChange(() -> addTextMapping(recorder1, text, program));
 		waitForSwing();
@@ -704,7 +722,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		waitForPass(() -> {
 			assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
 		});
-		changeListener.assertAccurate();
+		changeListener.assertAgreesWithService();
 
 		expectMappingChange(() -> addTextMapping(recorder1, text, program));
 		waitForSwing();
@@ -737,7 +755,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		waitForSwing();
 
 		assertLogicalBreakpointsForUnmappedBookmarks();
-		changeListener.assertAccurate();
+		changeListener.assertAgreesWithService();
 
 		traceManager.openTrace(trace);
 		// NOTE: Extraneous mappings-changed events can cause timing issues here.
@@ -905,7 +923,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		waitForSwing();
 
 		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
-		assertConsistent();
+		assertServiceAgreesWithOpenProgramsAndTraces();
 
 		removeTargetSoftwareBreakpoint(recorder1);
 
@@ -935,7 +953,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		waitForSwing();
 
 		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
-		assertConsistent();
+		assertServiceAgreesWithOpenProgramsAndTraces();
 
 		expectMappingChange(() -> removeTextMapping(recorder1, program));
 		waitForSwing();
@@ -1188,7 +1206,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		 */
 		waitForLock(trace);
 		waitForDomainObject(trace);
-		changeListener.assertAccurate();
+		changeListener.assertAgreesWithService();
 
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Will abort", false)) {
 			expectMappingChange(() -> addTextMapping(recorder1, text, program));
