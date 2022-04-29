@@ -208,6 +208,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				return;
 			}
 
+			//run fixup old elf relocations script
+			runScript("FixElfExternalOffsetDataRelocationScript.java");
+
 			hasDebugSymbols = isDwarfLoadedInProgram();
 			if (hasDwarf() && !hasDebugSymbols) {
 				println(
