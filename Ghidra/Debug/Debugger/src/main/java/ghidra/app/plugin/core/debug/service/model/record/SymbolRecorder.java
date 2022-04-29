@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.service.model;
+package ghidra.app.plugin.core.debug.service.model.record;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import ghidra.app.plugin.core.debug.service.model.RecorderPermanentTransaction;
+import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
@@ -30,12 +32,12 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
-public class DefaultSymbolRecorder {
+public class SymbolRecorder {
 
-	private DefaultTraceRecorder recorder;
-	private Trace trace;
+	private final TraceRecorder recorder;
+	private final Trace trace;
 
-	public DefaultSymbolRecorder(DefaultTraceRecorder recorder) {
+	public SymbolRecorder(TraceRecorder recorder) {
 		this.recorder = recorder;
 		this.trace = recorder.getTrace();
 	}

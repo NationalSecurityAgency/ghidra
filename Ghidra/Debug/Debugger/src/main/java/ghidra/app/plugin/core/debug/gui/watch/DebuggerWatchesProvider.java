@@ -578,11 +578,18 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	}
 
 	private ProgramLocation getDynamicLocation(ProgramLocation someLoc) {
+		if (someLoc == null) {
+			return null;
+		}
 		TraceProgramView view = current.getView();
 		if (view == null) {
 			return null;
 		}
-		if (someLoc.getProgram() instanceof TraceProgramView) {
+		Program program = someLoc.getProgram();
+		if (program == null) {
+			return null;
+		}
+		if (program instanceof TraceProgramView) {
 			return someLoc;
 		}
 		return mappingService.getDynamicLocationFromStatic(view, someLoc);

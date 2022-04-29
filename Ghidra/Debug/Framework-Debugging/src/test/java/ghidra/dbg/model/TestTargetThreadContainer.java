@@ -34,7 +34,7 @@ public class TestTargetThreadContainer
 		return thread;
 	}
 
-	public void removeThreads(TestTargetThread[] threads) {
+	public void removeThreads(TestTargetThread... threads) {
 		List<String> indices =
 			Stream.of(threads).map(TargetObject::getIndex).collect(Collectors.toList());
 		changeElements(indices, List.of(), Map.of(), "Test Threads Removed");

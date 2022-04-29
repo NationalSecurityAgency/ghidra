@@ -87,6 +87,6 @@ public abstract class AbstractModelForGdbThreadActivationTest
 				.collect(Collectors.toList()));
 		String threadGid = line.split("\\s+")[2];
 		assertEquals(expected.getPath(),
-			THREAD_PATTERN.applyIndices(threadGid, threadGid).getSingletonPath());
+			THREAD_PATTERN.applyKeys(threadGid, threadGid).getSingletonPath());
 	}
 }

@@ -507,6 +507,8 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testGetSuccessors() {
 		populateModel(3);
 
+		assertEquals(1, root.getSuccessors(Range.all(), PathPredicates.parse("")).count());
+
 		assertEquals(1, root.getSuccessors(Range.all(), PathPredicates.parse("Targets")).count());
 
 		assertEquals(1,
@@ -529,6 +531,29 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			root.getSuccessors(Range.all(), PathPredicates.parse("anAttribute")).count());
 		assertEquals(0,
 			root.getSuccessors(Range.all(), PathPredicates.parse("anAttribute.nope")).count());
+	}
+
+	@Test
+	public void testGetOrderedSuccessors() {
+		populateModel(3);
+
+		assertEquals(List.of(root),
+			root.getOrderedSuccessors(Range.all(), TraceObjectKeyPath.parse(""), true)
+					.map(p -> p.getLastChild(root))
+					.collect(Collectors.toList()));
+		assertEquals(List.of(root),
+			root.getOrderedSuccessors(Range.all(), TraceObjectKeyPath.parse(""), false)
+					.map(p -> p.getLastChild(root))
+					.collect(Collectors.toList()));
+
+		assertEquals(List.of(targets.get(0), targets.get(1), targets.get(2)),
+			root.getOrderedSuccessors(Range.all(), TraceObjectKeyPath.parse("curTarget"), true)
+					.map(p -> p.getLastChild(root))
+					.collect(Collectors.toList()));
+		assertEquals(List.of(targets.get(2), targets.get(1), targets.get(0)),
+			root.getOrderedSuccessors(Range.all(), TraceObjectKeyPath.parse("curTarget"), false)
+					.map(p -> p.getLastChild(root))
+					.collect(Collectors.toList()));
 	}
 
 	@Test
@@ -795,6 +820,38 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	}
 
 	@Test
+	public void testSetValue_NullContainedTruncates() {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
+			assertNull(root.setValue(Range.closed(0L, 9L), "a", null));
+			assertEquals(0, root.getValues().size());
+
+			assertNotNull(root.setValue(Range.closed(0L, 9L), "a", 1));
+			assertEquals(1, root.getValues().size());
+
+			assertNull(root.setValue(Range.singleton(5L), "a", null));
+			assertEquals(2, root.getValues().size());
+
+			assertEquals(List.of(Range.closed(0L, 4L), Range.closed(6L, 9L)),
+				root.getOrderedValues(Range.all(), "a", true)
+						.map(v -> v.getLifespan())
+						.collect(Collectors.toList()));
+		}
+	}
+
+	@Test
+	public void testSetValue_NullSameDeletes() {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
+			assertNotNull(root.setValue(Range.closed(0L, 9L), "a", 1));
+			assertEquals(1, root.getValues().size());
+
+			assertNull(root.setValue(Range.closed(0L, 9L), "a", null));
+			assertEquals(0, root.getValues().size());
+		}
+	}
+
+	@Test
 	public void testSetAttribute() {
 		try (UndoableTransaction tid = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
@@ -815,7 +872,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	}
 
 	@Test
-	public void testObjectDelete() {
+	public void testObjectDelete() throws Exception {
 		populateModel(3);
 
 		// Delete a leaf
@@ -844,6 +901,12 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(2,
 			manager.getObjectsByPath(Range.all(), TraceObjectKeyPath.parse("Targets[]")).count());
 		assertTrue(t0.getParents().stream().anyMatch(v -> v.getParent() == targetContainer));
+		assertEquals(2, targetContainer.getValues().size());
+
+		b.trace.undo();
+		b.trace.redo();
+
+		assertEquals(2, targetContainer.getValues().size());
 
 		try (UndoableTransaction tid = b.startTransaction()) {
 			targetContainer.delete();
@@ -876,7 +939,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	}
 
 	@Test
-	public void testObjectTruncateOrDelete() {
+	public void testRootObjectTruncateOrDelete() {
 		try (UndoableTransaction tid = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 

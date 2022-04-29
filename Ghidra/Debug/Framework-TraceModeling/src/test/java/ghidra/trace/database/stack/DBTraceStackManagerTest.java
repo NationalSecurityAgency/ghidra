@@ -24,6 +24,8 @@ import java.util.stream.StreamSupport;
 
 import org.junit.*;
 
+import com.google.common.collect.Range;
+
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.stack.TraceStack;
@@ -137,13 +139,13 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 
 			TraceStack stack1 = stackManager.getStack(thread, 0, true);
 			stack1.setDepth(2, true);
-			(frame1a = stack1.getFrame(0, false)).setProgramCounter(b.addr(0x0040100));
-			(frame1b = stack1.getFrame(1, false)).setProgramCounter(b.addr(0x0040300));
+			(frame1a = stack1.getFrame(0, false)).setProgramCounter(Range.all(), b.addr(0x0040100));
+			(frame1b = stack1.getFrame(1, false)).setProgramCounter(Range.all(), b.addr(0x0040300));
 
 			TraceStack stack2 = stackManager.getStack(thread, 1, true);
 			stack2.setDepth(2, true);
-			(frame2a = stack2.getFrame(0, false)).setProgramCounter(b.addr(0x0040200));
-			(frame2b = stack2.getFrame(1, false)).setProgramCounter(b.addr(0x0040400));
+			(frame2a = stack2.getFrame(0, false)).setProgramCounter(Range.all(), b.addr(0x0040200));
+			(frame2b = stack2.getFrame(1, false)).setProgramCounter(Range.all(), b.addr(0x0040400));
 		}
 
 		assertEquals(Set.of(frame1a, frame2a, frame1b, frame2b), toSet(stackManager
@@ -271,11 +273,11 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 			stack.setDepth(1, true);
 			frame = stack.getFrame(0, false);
 
-			assertNull(frame.getProgramCounter());
-			frame.setProgramCounter(b.addr(0x00400123));
+			assertNull(frame.getProgramCounter(Long.MAX_VALUE));
+			frame.setProgramCounter(Range.all(), b.addr(0x00400123));
 		}
 
-		assertEquals(b.addr(0x00400123), frame.getProgramCounter());
+		assertEquals(b.addr(0x00400123), frame.getProgramCounter(0));
 	}
 
 	@Test
@@ -289,7 +291,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 			stack.setDepth(1, true);
 			frame = stack.getFrame(0, false);
 			// NB. Object-mode sets comment at pc in listing, not on frame itself
-			frame.setProgramCounter(b.addr(0x00400123));
+			frame.setProgramCounter(Range.all(), b.addr(0x00400123));
 
 			assertNull(frame.getComment());
 			frame.setComment("Hello, World!");

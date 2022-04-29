@@ -17,6 +17,8 @@ package ghidra.trace.database.stack;
 
 import java.util.List;
 
+import com.google.common.collect.Range;
+
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
@@ -72,23 +74,25 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	}
 
 	@Override
-	public Address getProgramCounter() {
-		return TraceObjectInterfaceUtils.getValue(object, object.getMaxSnap(),
+	public Address getProgramCounter(long snap) {
+		return TraceObjectInterfaceUtils.getValue(object, snap,
 			TargetStackFrame.PC_ATTRIBUTE_NAME, Address.class, null);
 	}
 
 	@Override
-	public void setProgramCounter(Address pc) {
+	public void setProgramCounter(Range<Long> span, Address pc) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			if (pc == Address.NO_ADDRESS) {
 				pc = null;
 			}
-			object.setValue(object.getLifespan(), TargetStackFrame.PC_ATTRIBUTE_NAME, pc);
+			object.setValue(object.getLifespan().intersection(span),
+				TargetStackFrame.PC_ATTRIBUTE_NAME, pc);
 		}
 	}
 
 	@Override
 	public String getComment() {
+		// TODO: Do I need to add a snap argument?
 		// TODO: One day, we'll have dynamic columns in the debugger
 		/**
 		 * I don't use an attribute for this, because there's not a nice way track the "identity" of
@@ -101,7 +105,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 		 * follow the "same frame" as its level changes.
 		 */
 		try (LockHold hold = object.getTrace().lockRead()) {
-			Address pc = getProgramCounter();
+			Address pc = getProgramCounter(object.getMaxSnap());
 			return pc == null ? null
 					: object.getTrace()
 							.getCommentAdapter()
@@ -111,11 +115,12 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 
 	@Override
 	public void setComment(String comment) {
+		// TODO: Do I need to add a span argument?
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.getTrace()
 					.getCommentAdapter()
-					.setComment(object.getLifespan(), getProgramCounter(), CodeUnit.EOL_COMMENT,
-						comment);
+					.setComment(object.getLifespan(), getProgramCounter(object.getMaxSnap()),
+						CodeUnit.EOL_COMMENT, comment);
 		}
 	}
 
@@ -124,23 +129,38 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 		return object;
 	}
 
-	protected boolean isPcChange(TraceChangeRecord<?, ?> rec) {
+	protected boolean changeApplies(TraceChangeRecord<?, ?> rec) {
 		TraceChangeRecord<TraceObjectValue, Object> cast =
 			TraceObjectChangeType.VALUE_CHANGED.cast(rec);
-		return TargetStackFrame.PC_ATTRIBUTE_NAME.equals(cast.getAffectedObject().getEntryKey());
+		TraceObjectValue affected = cast.getAffectedObject();
+		assert affected.getParent() == object;
+		if (!TargetStackFrame.PC_ATTRIBUTE_NAME.equals(affected.getEntryKey())) {
+			return false;
+		}
+		if (object.getCanonicalParent(affected.getMaxSnap()) == null) {
+			return false;
+		}
+		return true;
+	}
+
+	protected long snapFor(TraceChangeRecord<?, ?> rec) {
+		if (rec.getEventType() == TraceObjectChangeType.VALUE_CHANGED.getType()) {
+			return TraceObjectChangeType.VALUE_CHANGED.cast(rec).getAffectedObject().getMinSnap();
+		}
+		return object.getMinSnap();
 	}
 
 	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceObjectChangeType.CREATED.getType() ||
+		if (rec.getEventType() == TraceObjectChangeType.INSERTED.getType() ||
 			rec.getEventType() == TraceObjectChangeType.DELETED.getType() ||
 			rec.getEventType() == TraceObjectChangeType.VALUE_CHANGED.getType() &&
-				isPcChange(rec)) {
-			// NB. Affected object may be the wrapped object, or the value entry
+				changeApplies(rec)) {
 			TraceAddressSpace space =
 				spaceForValue(object.getMinSnap(), TargetStackFrame.PC_ATTRIBUTE_NAME);
-			return new TraceChangeRecord<>(TraceStackChangeType.CHANGED, space, getStack(), null,
-				null);
+			TraceObjectStack stack = getStack();
+			return new TraceChangeRecord<>(TraceStackChangeType.CHANGED, space, stack,
+				0L, snapFor(rec));
 		}
 		return null;
 	}

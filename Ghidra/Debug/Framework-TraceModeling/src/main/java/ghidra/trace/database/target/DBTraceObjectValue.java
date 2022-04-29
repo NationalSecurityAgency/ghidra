@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -48,7 +49,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 
 		protected PrimaryTriple(DBTraceObject parent, String key, long minSnap) {
 			this.parent = parent;
-			this.key = key;
+			this.key = Objects.requireNonNull(key);
 			this.minSnap = minSnap;
 		}
 
@@ -75,19 +76,15 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 			if (value == null) {
 				return null;
 			}
-			if (value.key == null) {
-				ByteBuffer buf = ByteBuffer.allocate(Long.BYTES * 2);
-				buf.putLong(DBTraceObjectDBFieldCodec.encode(value.parent) ^ Long.MIN_VALUE);
-				buf.putLong(value.minSnap ^ Long.MIN_VALUE);
-				return buf.array();
-			}
 
 			byte[] keyBytes = value.key.getBytes(cs);
 			ByteBuffer buf = ByteBuffer.allocate(keyBytes.length + 1 + Long.BYTES * 2);
 
 			buf.putLong(DBTraceObjectDBFieldCodec.encode(value.parent) ^ Long.MIN_VALUE);
+
 			buf.put(keyBytes);
 			buf.put((byte) 0);
+
 			buf.putLong(value.minSnap ^ Long.MIN_VALUE);
 
 			return buf.array();
@@ -101,16 +98,12 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 
 			DBTraceObject parent =
 				DBTraceObjectDBFieldCodec.decode(ent, buf.getLong() ^ Long.MIN_VALUE);
-			String key;
-			if (enc.length > Long.BYTES * 2) {
-				int nullPos = ArrayUtils.indexOf(enc, (byte) 0, buf.position());
-				assert nullPos != -1;
-				key = new String(enc, buf.position(), nullPos - buf.position(), cs);
-				buf.position(nullPos + 1);
-			}
-			else {
-				key = null;
-			}
+
+			int nullPos = ArrayUtils.indexOf(enc, (byte) 0, buf.position());
+			assert nullPos != -1;
+			String key = new String(enc, buf.position(), nullPos - buf.position(), cs);
+			buf.position(nullPos + 1);
+
 			long minSnap = buf.getLong() ^ Long.MIN_VALUE;
 
 			return new PrimaryTriple(parent, key, minSnap);
@@ -186,14 +179,17 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 		indexed = true,
 		codec = PrimaryTripleDBFieldCodec.class)
 	private PrimaryTriple triple;
-	@DBAnnotatedField(column = MAX_SNAP_COLUMN_NAME)
+	@DBAnnotatedField(
+		column = MAX_SNAP_COLUMN_NAME)
 	private long maxSnap;
 	@DBAnnotatedField(
 		column = CHILD_COLUMN_NAME,
 		indexed = true,
 		codec = DBTraceObjectDBFieldCodec.class)
 	private DBTraceObject child;
-	@DBAnnotatedField(column = PRIMITIVE_COLUMN_NAME, codec = VariantDBFieldCodec.class)
+	@DBAnnotatedField(
+		column = PRIMITIVE_COLUMN_NAME,
+		codec = VariantDBFieldCodec.class)
 	private Object primitive;
 
 	protected final DBTraceObjectManager manager;
@@ -260,12 +256,12 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 
 	@Override
 	public DBTraceObject getParent() {
-		return triple.parent;
+		return triple == null ? null : triple.parent;
 	}
 
 	@Override
 	public String getEntryKey() {
-		return triple.key;
+		return triple == null ? null : triple.key;
 	}
 
 	@Override

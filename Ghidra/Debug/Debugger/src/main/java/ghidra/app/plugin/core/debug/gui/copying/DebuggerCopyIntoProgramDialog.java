@@ -811,7 +811,7 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 		synchronized (this) {
 			monitor.checkCanceled();
 			CompletableFuture<NavigableMap<Address, byte[]>> recCapture =
-				recorder.captureProcessMemory(new AddressSet(range), monitor, false);
+				recorder.readMemoryBlocks(new AddressSet(range), monitor, false);
 			this.captureTask = recCapture.thenCompose(__ -> {
 				return recorder.getTarget().getModel().flushEvents();
 			}).thenCompose(__ -> {

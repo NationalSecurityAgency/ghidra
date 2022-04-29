@@ -69,7 +69,17 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 	}
 
 	protected void objectInvalidated(TargetObject object) {
-		creationLog.remove(object.getPath());
+		synchronized (lock) {
+			creationLog.remove(object.getPath());
+			CompletableFuture.runAsync(() -> {
+				synchronized (cbLock) {
+					cbCreationLog.remove(object.getPath());
+				}
+			}, clientExecutor).exceptionally(ex -> {
+				Msg.error(this, "Error updated objectInvalidated before callback");
+				return null;
+			});
+		}
 	}
 
 	protected void addModelRoot(SpiTargetObject root) {

@@ -60,7 +60,7 @@ public abstract class AbstractModelForLldbScenarioX64RegistersTest
 		for (String name : toWrite.keySet()) {
 			for (TargetRegisterBank bank : banks.values()) {
 				Map<List<String>, TargetRegister> regs = m.findAll(TargetRegister.class,
-					bank.getPath(), pred -> pred.applyIndices(name), false);
+					bank.getPath(), pred -> pred.applyKeys(name), false);
 				for (TargetRegister reg : regs.values()) {
 					waitOn(bank.writeRegister(reg, toWrite.get(name)));
 				}

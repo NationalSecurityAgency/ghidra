@@ -24,25 +24,33 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import ghidra.app.plugin.core.debug.utils.DefaultTransactionCoalescer;
 import ghidra.app.plugin.core.debug.utils.TransactionCoalescer;
 import ghidra.app.plugin.core.debug.utils.TransactionCoalescer.CoalescedTx;
+import ghidra.framework.model.DomainObjectException;
 import ghidra.framework.model.UndoableDomainObject;
 import ghidra.util.Msg;
+import ghidra.util.exception.ClosedException;
 
 public class PermanentTransactionExecutor {
 
 	private final TransactionCoalescer txc;
-	private final Executor[] threads;
+	private final ExecutorService[] threads;
 	private final UndoableDomainObject obj;
 
 	public PermanentTransactionExecutor(UndoableDomainObject obj, String name, int threadCount,
 			int delayMs) {
 		this.obj = obj;
 		txc = new DefaultTransactionCoalescer<>(obj, RecorderPermanentTransaction::start, delayMs);
-		this.threads = new Executor[threadCount];
+		this.threads = new ExecutorService[threadCount];
 		for (int i = 0; i < threadCount; i++) {
 			ThreadFactory factory = new BasicThreadFactory.Builder()
 					.namingPattern(name + "thread-" + i + "-%d")
 					.build();
 			threads[i] = Executors.newSingleThreadExecutor(factory);
+		}
+	}
+
+	public void shutdownNow() {
+		for (ExecutorService t : threads) {
+			t.shutdownNow();
 		}
 	}
 
@@ -69,6 +77,12 @@ public class PermanentTransactionExecutor {
 			}
 			try (CoalescedTx tx = txc.start(description)) {
 				runnable.run();
+			}
+			catch (DomainObjectException e) {
+				if (e.getCause() instanceof ClosedException) {
+					Msg.info(this, obj + " is closed. Shutting down transaction executor.");
+					shutdownNow();
+				}
 			}
 		}, selectThread(sel)).exceptionally(e -> {
 			Msg.error(this, "Trouble recording " + description, e);

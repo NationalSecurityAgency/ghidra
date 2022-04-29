@@ -83,7 +83,7 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			this.viewport = trace.getProgramView().getViewport();
 
 			this.pc = trace.getBaseLanguage().getProgramCounter();
-			this.pcRange = TraceRegisterUtils.rangeForRegister(pc);
+			this.pcRange = pc == null ? null : TraceRegisterUtils.rangeForRegister(pc);
 
 			ClassSearcher.addChangeListener(injectsChangeListener);
 			updateInjects();
@@ -140,9 +140,9 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			}
 		}
 
-		private void stackChanged(TraceStack stack) {
+		private void stackChanged(TraceStack stack, long zero, long snap) {
 			queueRunnable(() -> {
-				disassembleStackPcVals(stack, stack.getSnap(), null);
+				disassembleStackPcVals(stack, snap, null);
 			});
 		}
 
@@ -186,7 +186,7 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 				if (space.getFrameLevel() != 0) {
 					return;
 				}
-				if (!range.getRange().intersects(pcRange)) {
+				if (pcRange == null || !range.getRange().intersects(pcRange)) {
 					return;
 				}
 				TraceThread thread = space.getThread();
@@ -198,18 +198,18 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			});
 		}
 
-		protected void disassembleStackPcVals(TraceStack stack, long memSnap, AddressRange range) {
+		protected void disassembleStackPcVals(TraceStack stack, long snap, AddressRange range) {
 			TraceStackFrame frame = stack.getFrame(0, false);
 			if (frame == null) {
 				return;
 			}
-			Address pcVal = frame.getProgramCounter();
+			Address pcVal = frame.getProgramCounter(snap);
 			if (pcVal == null) {
 				return;
 			}
 			if (range == null || range.contains(pcVal)) {
 				// NOTE: If non-0 frames are ever used, level should be passed in for injects
-				disassemble(pcVal, stack.getThread(), memSnap);
+				disassemble(pcVal, stack.getThread(), snap);
 			}
 		}
 

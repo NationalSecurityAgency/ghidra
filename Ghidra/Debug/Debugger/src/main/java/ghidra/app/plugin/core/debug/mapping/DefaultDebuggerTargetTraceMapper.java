@@ -35,12 +35,12 @@ public class DefaultDebuggerTargetTraceMapper implements DebuggerTargetTraceMapp
 	protected final Set<String> extraRegNames;
 
 	public DefaultDebuggerTargetTraceMapper(TargetObject target, LanguageID langID,
-			CompilerSpecID csId, Collection<String> extraRegNames)
+			CompilerSpecID csID, Collection<String> extraRegNames)
 			throws LanguageNotFoundException, CompilerSpecNotFoundException {
 		this.target = target;
 		LanguageService langServ = DefaultLanguageService.getLanguageService();
 		this.language = langServ.getLanguage(langID);
-		this.cSpec = language.getCompilerSpecByID(csId);
+		this.cSpec = language.getCompilerSpecByID(csID);
 
 		this.extraRegNames = Set.copyOf(extraRegNames);
 	}

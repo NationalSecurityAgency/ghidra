@@ -15,28 +15,19 @@
  */
 package agent.frida.model;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.junit.Ignore;
 import org.junit.Test;
 
 import agent.frida.model.iface2.FridaModelTargetProcess;
-import agent.frida.model.iface2.FridaModelTargetThreadContainer;
 import agent.frida.model.impl.FridaModelTargetThreadContainerImpl;
-import ghidra.dbg.agent.DefaultTargetModelRoot;
 import ghidra.dbg.target.*;
-import ghidra.dbg.test.AbstractDebuggerModelRegistersTest;
-import ghidra.dbg.test.AbstractDebuggerModelTest;
-import ghidra.dbg.test.ProvidesTargetViaLaunchSpecimen;
+import ghidra.dbg.test.*;
 import ghidra.dbg.util.PathUtils;
 
 public abstract class AbstractModelForFridaX64RegistersTest
@@ -94,7 +85,7 @@ public abstract class AbstractModelForFridaX64RegistersTest
 			for (Entry<String, byte[]> ent : getRegisterWrites().entrySet()) {
 				String regName = ent.getKey();
 				Map<List<String>, TargetRegister> regs = m.findAll(TargetRegister.class,
-					path, pred -> pred.applyIndices(regName), false);
+					path, pred -> pred.applyKeys(regName), false);
 				for (TargetRegister reg : regs.values()) {
 					assertEquals(ent.getValue().length, (reg.getBitLength() + 7) / 8);
 				}
@@ -134,7 +125,7 @@ public abstract class AbstractModelForFridaX64RegistersTest
 		for (TargetRegisterBank bank : banks.values()) {
 			for (String name : exp.keySet()) {
 				Map<List<String>, TargetRegister> regs = m.findAll(TargetRegister.class,
-					bank.getPath(), pred -> pred.applyIndices(name), false);
+					bank.getPath(), pred -> pred.applyKeys(name), false);
 				for (TargetRegister reg : regs.values()) {
 					byte[] bytes = waitOn(bank.readRegister(reg));
 					read.put(name, bytes);
@@ -163,7 +154,7 @@ public abstract class AbstractModelForFridaX64RegistersTest
 		for (TargetRegisterBank bank : banks.values()) {
 			for (String name : write.keySet()) {
 				Map<List<String>, TargetRegister> regs = m.findAll(TargetRegister.class,
-					bank.getPath(), pred -> pred.applyIndices(name), false);
+					bank.getPath(), pred -> pred.applyKeys(name), false);
 				for (TargetRegister reg : regs.values()) {
 					waitOn(bank.writeRegister(reg, write.get(name)));
 

@@ -194,6 +194,12 @@ public interface TargetMethod extends TargetObject {
 		public static TargetParameterMap copyOf(Map<String, ParameterDescription<?>> map) {
 			return new ImmutableTargetParameterMap(map);
 		}
+
+		@SafeVarargs
+		public static TargetParameterMap ofEntries(
+				Entry<String, ParameterDescription<?>>... entries) {
+			return new ImmutableTargetParameterMap(Map.ofEntries(entries));
+		}
 	}
 
 	/**
