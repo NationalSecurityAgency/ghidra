@@ -15,9 +15,10 @@
  */
 package ghidra.file.formats.ios.prelink;
 
+import java.util.*;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
 
 import org.apache.commons.collections4.BidiMap;
 import org.jdom.JDOMException;
@@ -194,8 +195,10 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 				new ByteProviderWrapper(provider, offset, provider.length() - offset);
 			MachoProgramBuilder.buildProgram(program, providerWrapper, fileBytes, new MessageLog(),
 				monitor);
-			program.setExecutableFormat(MachoLoader.MACH_O_NAME);
-			program.setExecutablePath(file.getPath());
+
+			AbstractProgramLoader.setProgramProperties(program, providerWrapper,
+				MachoLoader.MACH_O_NAME);
+			program.setExecutablePath(file.getPath()); // override the value set by AbstractProgramLoader.setProgramProperties
 
 			if (file.equals(systemKextFile)) {
 				processSystemKext(languageService, program, monitor);
