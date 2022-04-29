@@ -3072,7 +3072,6 @@ define pcodeop TrapAlways;
 
 define pcodeop sin;
 define pcodeop cos;
-define pcodeop invsqrt;
 
 # Calculate the sine and cosine approximations of FPUL
 # pattern   1111nnn011111101
@@ -3086,7 +3085,7 @@ define pcodeop invsqrt;
 # pattern   1111nnnn01111101
 # text      fsrra	<F_REG_N>
 :fsrra FRN_0                is OP_0=0xf & FRN_0 & OP_4=0x7d {
-	FRN_0 = invsqrt(FRN_0);
+	FRN_0 = 1 f/ sqrt(FRN_0);
 }
 
 @endif
