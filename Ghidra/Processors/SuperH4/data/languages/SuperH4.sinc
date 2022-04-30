@@ -1525,7 +1525,7 @@ define pcodeop cos;
 	
 	pi:4 = 0x40490fdb;				# 3.1415927.. as 32-bit float
 	pi2:4 = int2float(2 :4) f* pi;			# multiply pi by 2 (2pi)
-        angle = (pi2 f* angle) f/ offset;  		# convert to radian
+        angle = (pi2 f* angle) f/ int2float(65536 :4);  # convert to radian
     
 	local _sin:4 = sin(angle);			# call fake sin & cos
 	local _cos:4 = cos(angle);
