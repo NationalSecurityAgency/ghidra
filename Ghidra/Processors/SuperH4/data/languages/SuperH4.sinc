@@ -346,6 +346,8 @@ define token instr(16)
 	N_1   = ( 9,11) # register id
 	N_2   = (10,11) # register id
 	FRN_0 = ( 8,11) # float register id
+        FRN_1 = ( 8,10) # float register id
+        FRN_2 = ( 8,10) # float register id
 	DRN_1 = ( 9,11) # double register id
 	XDN_1 = ( 9,11) # double register id
 	XDRN  = ( 8,11) # float register id
@@ -368,6 +370,14 @@ attach variables [ N_0 M_0 ] [
 # attach float registers 
 attach variables [ FRN_0 FRM_0] [
   fr0  fr1  fr2  fr3  fr4  fr5  fr6  fr7  fr8  fr9  fr10  fr11  fr12  fr13  fr14  fr15
+];
+
+attach variables [ FRN_1 ] [
+  fr0 fr1  fr2  fr3  fr4  fr5  fr6  fr7
+];
+
+attach variables [ FRN_2 ] [
+  fr1  fr2  fr3  fr4  fr5  fr6  fr7  fr8
 ];
 
 # attach double registers
@@ -1490,17 +1500,11 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # pattern 1111nnnn01111101			
 # text	  fsrra <F_REG_N>
 # arch    # arch_sh2a_or_sh3e_up
-:fsrra FRN_0t	is
-	OP_0=0xF & FRN_0t & DRN_1t & OP_4=0x7D {
-	if (!( $(FPSCR_PR) == 0 )) goto <doublePrecision>;
-	FRN_0t = int2float(1 :4) f/ sqrt( FRN_0t );
-	goto <skip>;
-	<doublePrecision>
-	DRN_1t = int2float(1 :4) f/ sqrt( DRN_1t );
-	<skip>
+:fsrra FRN_0	is
+	OP_0=0xF & FRN_0 & OP_4=0x7D {
+	FRN_0 = int2float(1 :4) f/ sqrt( FRN_0 );
 }
 
-#define pcodeop fsca;
 define pcodeop sin;
 define pcodeop cos;
 
@@ -1508,10 +1512,9 @@ define pcodeop cos;
 # pattern 1111nnn011111101
 # text	  fsca FPUL,<F_REG_N>
 # arch    # arch_sh2a_or_sh3e_up
-:fsca FPUL,FRN_0t is
-	OP_0=0xF & FPUL & FRN_0t & OP_4=0xFD {
-	#fsca(FPUL, FRN_0t);
-	if (( $(FPSCR_PR) != 0 )) goto <skip>;
+:fsca FPUL,FRN_1 is
+	OP_0=0xF & FPUL & FRN_1 & FRN_2  & OP_4=0xFD {
+	if (( $(FPSCR_PR) == 0 )) goto inst_next;
 	
 	angle:4 = int2float(0 :4);    			# float
 	offset:4 = 0x00010000;				# long
@@ -1527,13 +1530,8 @@ define pcodeop cos;
 	local _sin:4 = sin(angle);			# call fake sin & cos
 	local _cos:4 = cos(angle);
 	
-	FRN_0t = _sin;					# _sin goes to FR[n]
-	*:4 ( FRN_0t + 4 ) = _cos;			# _cos goes to FR[n+1]
-							# what is this nasty hack?
-	*[register]:4 (&:4 FRN_0t + 4) = _cos;
-	
-	# PC = PC + 2;
-	<skip>
+	FRN_1 = _sin;					# _sin goes to FR[n]
+	FRN_2 = _cos;           			# _cos goes to FR[n+1]
 }
 
 # Transfer from System Register
@@ -2324,32 +2322,23 @@ define pcodeop mac_wOp;
 }
 
 
-# Load non-boundary alignment data (32-bit)
+# Move Unaligned Long
 # pattern 0100mmmm10101001
 # text    movua.l @<REG_M>,R0
 # arch    
 :movua.l M_0t_at,r0               is OP_0=0x4 & M_0t_at & r0 & OP_4=0xA9  {
-	r0 = (*:4 ( M_0t_at ));
-	
-	if (M_0t_at != 0) goto <increment>;
-	goto <skip>;
-	<increment>
-	M_0t_at = M_0t_at + 4;
-	<skip>
+	r0 = (*:4 ( M_0t_at ));                 
 }
 
-# Load non-boundary alignment data (32-bit)
+# Move Unaligned Long Pointer
 # pattern 0100mmmm11101001
 # text    movua.l @<REG_M>+,R0
 # arch    
 :movua.l M_0t_at,r0               is OP_0=0x4 & M_0t_at & r0 & OP_4=0xE9 {
 	r0 = (*:4 ( M_0t_at ));
 	
-	if (M_0t_at != 0) goto <increment>;
-	goto <skip>;
-	<increment>
+	if (M_0t_at == 0) goto inst_next;
 	M_0t_at = M_0t_at + 4;
-	<skip>
 }
 
 # Double-Precision Multiplication
