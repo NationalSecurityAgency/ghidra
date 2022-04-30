@@ -507,7 +507,7 @@ public class DefaultTraceRecorderOnto741 implements TraceRecorder {
 				}
 				listenerForRecord.retroOfferRegMapperDependents();
 			}).exceptionally(ex -> {
-				Msg.error(this, "Could not intialize register mapper", ex);
+				Msg.error(this, "Could not initialize register mapper", ex);
 				return null;
 			});
 		}
@@ -597,7 +597,7 @@ public class DefaultTraceRecorderOnto741 implements TraceRecorder {
 				}
 				listeners.fire.registerBankMapped(DefaultTraceRecorder.this);
 			}).exceptionally(ex -> {
-				Msg.error(this, "Could not intialize register mapper", ex);
+				Msg.error(this, "Could not initialize register mapper", ex);
 				return null;
 			});
 		}
@@ -1803,7 +1803,7 @@ public class DefaultTraceRecorderOnto741 implements TraceRecorder {
 			}
 			listenerForRecord.retroOfferMemMapperDependents();
 		}).exceptionally(ex -> {
-			Msg.error(this, "Could not intialize memory mapper", ex);
+			Msg.error(this, "Could not initialize memory mapper", ex);
 			return null;
 		});
 	}
