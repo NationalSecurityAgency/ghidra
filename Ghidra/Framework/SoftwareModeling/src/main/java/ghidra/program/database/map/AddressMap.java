@@ -87,12 +87,19 @@ public interface AddressMap {
 	 * never be generated.  The returned key ranges will correspond 
 	 * to those key ranges which have previously been created within 
 	 * the specified address range and may represent a much smaller subset 
-	 * of addresses within the specified range.
-	 * @param start minimum address of range
+	 * of addresses within the specified range. 
+	 * NOTE: if the create parameter is true, the given range must not extend in the upper 32 bits 
+	 * by more than 1 segment. For example, range(0x0000000000000000 - 0x0000000100000000) 
+	 * is acceptable, but the range (0x0000000000000000 - 0x0000000200000000) is not because the
+	 * upper 32 bits differ by 2.
+	 * @param start the start address of the range
 	 * @param end maximum address of range
 	 * @param create true if a new keys may be generated, otherwise returned 
-	 * key-ranges will be limited to those already defined.
+	 * key-ranges will be limited to those already defined. And if true, the range will be limited
+	 * to a size of 2^32 so that at most it creates two new address bases
 	 * @return "sorted" list of KeyRange objects
+	 * @throws UnsupportedOperationException if the given range is so large that the upper 32 bit
+	 * segments differ by more than 1.
 	 */
 	public List<KeyRange> getKeyRanges(Address start, Address end, boolean create);
 
@@ -136,7 +143,8 @@ public interface AddressMap {
 	 * key-ranges will be limited to those already defined.
 	 * @return "sorted" list of KeyRange objects
 	 */
-	public List<KeyRange> getKeyRanges(Address start, Address end, boolean absolute, boolean create);
+	public List<KeyRange> getKeyRanges(Address start, Address end, boolean absolute,
+			boolean create);
 
 	/**
 	 * Generates a properly ordered list of database key ranges for a
