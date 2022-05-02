@@ -99,6 +99,8 @@ public class AddressMapDB implements AddressMap {
 	private Address[] sortedBaseEndAddrs;
 	private List<KeyRange> allKeyRanges; // all existing key ranges (includes non-absolute memory, and external space) 
 	private HashMap<Address, Integer> addrToIndexMap = new HashMap<Address, Integer>();
+	private Address lastBaseAddress;
+	private int lastIndex;
 
 	private long baseImageOffset; // pertains to default address space only
 	private List<AddressRange> segmentedRanges; // when using segmented memory, this list contains	
@@ -253,6 +255,7 @@ public class AddressMapDB implements AddressMap {
 
 	@Override
 	public synchronized void invalidateCache() throws IOException {
+		lastBaseAddress = null;
 		if (!readOnly) {
 			baseAddrs = adapter.getBaseAddresses(true);
 			init(true);
@@ -391,8 +394,13 @@ public class AddressMapDB implements AddressMap {
 
 		AddressSpace space = addr.getAddressSpace();
 		Address tBase = space.getAddressInThisSpaceOnly(normalizedBaseOffset);
+		if (tBase.equals(lastBaseAddress)) {
+			return lastIndex;
+		}
 		Integer tIndex = addrToIndexMap.get(tBase);
 		if (tIndex != null) {
+			lastBaseAddress = tBase;
+			lastIndex = tIndex;
 			return tIndex;
 		}
 		else if (indexOperation == INDEX_MATCH) {
