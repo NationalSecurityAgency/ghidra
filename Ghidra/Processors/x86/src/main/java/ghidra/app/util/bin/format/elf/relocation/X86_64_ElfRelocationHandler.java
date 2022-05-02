@@ -87,12 +87,13 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 					"Runtime copy not supported", elfRelocationContext.getLog());
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_64:
-				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
-					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
-					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
-				}
 				value = symbolValue + addend;
 				memory.setLong(relocationAddress, value);
+				if (addend != 0) {
+					warnExternalOffsetRelocation(program, relocationAddress,
+						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+					applyComponentOffsetPointer(program, relocationAddress, addend);
+				}
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_16:
 				value = symbolValue + addend;

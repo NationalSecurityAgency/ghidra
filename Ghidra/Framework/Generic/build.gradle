@@ -26,7 +26,6 @@ eclipse.project.name = 'Framework Generic'
 
 dependencies {
 	api project(':Utility')
-	api "cglib:cglib-nodep:2.2"
 	api "com.google.guava:guava:19.0"
 	api "org.jdom:jdom-legacy:1.1.3"
 	api "org.apache.logging.log4j:log4j-api:2.17.1"
@@ -34,8 +33,8 @@ dependencies {
 	api "org.apache.commons:commons-collections4:4.1"
 	api "org.apache.commons:commons-lang3:3.9"
 	api "org.apache.commons:commons-text:1.6"
-	api "commons-io:commons-io:2.6"	
-	api "com.google.code.gson:gson:2.8.9"
+	api "commons-io:commons-io:2.11.0"	
+	api "com.google.code.gson:gson:2.9.0"
 	api 'org.bouncycastle:bcpkix-jdk15on:1.69' // requires bcutil and bcprov
 	api 'org.bouncycastle:bcprov-jdk15on:1.69'
 	api 'org.bouncycastle:bcutil-jdk15on:1.69'

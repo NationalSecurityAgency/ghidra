@@ -27,8 +27,13 @@ public enum EnumPcodeRow implements PcodeRow {
 	}
 
 	@Override
-	public Integer getSequence() {
+	public int getSequence() {
 		return 0;
+	}
+
+	@Override
+	public String getLabel() {
+		return "";
 	}
 
 	@Override

@@ -40,21 +40,39 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 
 		protected abstract TraceChangeType<T, Range<Long>> getLifespanChangedType();
 
-		protected abstract TraceChangeType<T, Void> getChangedType();
+		protected abstract TraceChangeType<T, ?> getChangedType();
 
 		protected abstract boolean appliesToKey(String key);
 
 		protected abstract TraceChangeType<T, Void> getDeletedType();
 
+		protected void emitExtraAdded() {
+			// Extension point
+		}
+
+		protected void emitExtraLifespanChanged(Range<Long> oldLifespan, Range<Long> newLifespan) {
+			// Extension point
+		}
+
+		protected void emitExtraValueChanged(Range<Long> lifespan, String key, Object oldValue,
+				Object newValue) {
+			// Extension point
+		}
+
+		protected void emitExtraDeleted() {
+			// Extension point
+		}
+
 		public TraceChangeRecord<?, ?> translate(TraceChangeRecord<?, ?> rec) {
 			TraceAddressSpace space = spaceValueKey == null ? null
 					: spaceForValue(object, object.getMinSnap(), spaceValueKey);
-			if (rec.getEventType() == TraceObjectChangeType.CREATED.getType()) {
+			if (rec.getEventType() == TraceObjectChangeType.INSERTED.getType()) {
 				TraceChangeType<T, Void> type = getAddedType();
 				if (type == null) {
 					return null;
 				}
 				assert rec.getAffectedObject() == object;
+				emitExtraAdded();
 				return new TraceChangeRecord<>(type, space, iface, null,
 					null);
 			}
@@ -69,6 +87,7 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 				assert rec.getAffectedObject() == object;
 				TraceChangeRecord<TraceObject, Range<Long>> cast =
 					TraceObjectChangeType.LIFESPAN_CHANGED.cast(rec);
+				emitExtraLifespanChanged(cast.getOldValue(), cast.getNewValue());
 				return new TraceChangeRecord<>(type, space, iface,
 					cast.getOldValue(), cast.getNewValue());
 			}
@@ -76,17 +95,23 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 				if (object.isDeleted()) {
 					return null;
 				}
-				TraceChangeType<T, Void> type = getChangedType();
+				TraceChangeType<T, ?> type = getChangedType();
 				if (type == null) {
 					return null;
 				}
 				TraceChangeRecord<TraceObjectValue, Object> cast =
 					TraceObjectChangeType.VALUE_CHANGED.cast(rec);
-				String key = cast.getAffectedObject().getEntryKey();
+				TraceObjectValue affected = cast.getAffectedObject();
+				String key = affected.getEntryKey();
 				if (!appliesToKey(key)) {
 					return null;
 				}
-				assert cast.getAffectedObject().getParent() == object;
+				assert affected.getParent() == object;
+				if (object.getCanonicalParent(affected.getMaxSnap()) == null) {
+					return null; // Object is not complete
+				}
+				emitExtraValueChanged(affected.getLifespan(), key, cast.getOldValue(),
+					cast.getNewValue());
 				return new TraceChangeRecord<>(type, space, iface, null, null);
 			}
 			if (rec.getEventType() == TraceObjectChangeType.DELETED.getType()) {
@@ -95,6 +120,7 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 					return null;
 				}
 				assert rec.getAffectedObject() == object;
+				emitExtraDeleted();
 				return new TraceChangeRecord<>(type, space, iface, null, null);
 			}
 			return null;

@@ -60,8 +60,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.datastruct.LRUMap;
 import ghidra.util.task.TaskLauncher;
 
@@ -612,9 +611,11 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	public void setDataTypeSelected(DataType dataType) {
-		if (provider.isVisible()) {
-			provider.setDataTypeSelected(dataType);
-		}
+		Swing.runIfSwingOrRunLater(() -> {
+			if (provider.isVisible()) {
+				provider.setDataTypeSelected(dataType);
+			}
+		});
 	}
 
 	@Override

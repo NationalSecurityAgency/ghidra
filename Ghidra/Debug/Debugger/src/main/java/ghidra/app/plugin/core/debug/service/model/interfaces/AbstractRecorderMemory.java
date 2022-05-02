@@ -32,6 +32,13 @@ public interface AbstractRecorderMemory {
 
 	public CompletableFuture<Void> writeMemory(Address address, byte[] data);
 
+	/**
+	 * Get accessible memory, as viewed in the trace
+	 * 
+	 * @param pred an additional predicate applied via "AND" with accessibility
+	 * @param memMapper target-to-trace mapping utility
+	 * @return the computed set
+	 */
 	public AddressSet getAccessibleMemory(Predicate<TargetMemory> pred,
 			DebuggerMemoryMapper memMapper);
 

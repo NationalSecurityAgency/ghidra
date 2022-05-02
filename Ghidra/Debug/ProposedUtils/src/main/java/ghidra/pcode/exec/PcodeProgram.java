@@ -116,6 +116,10 @@ public class PcodeProgram {
 		return language;
 	}
 
+	public List<PcodeOp> getCode() {
+		return code;
+	}
+
 	public <T> void execute(PcodeExecutor<T> executor, SleighUseropLibrary<T> library) {
 		executor.execute(this, library);
 	}

@@ -544,7 +544,7 @@ void Funcdata::opUndoPtradd(PcodeOp *op,bool finalize)
     newVal &= calc_mask(offVn->getSize());
     Varnode *newOffVn = newConstant(offVn->getSize(), newVal);
     if (finalize)
-      newOffVn->updateType(offVn->getType(), false, false);
+      newOffVn->updateType(offVn->getTypeReadFacing(op), false, false);
     opSetInput(op,newOffVn,1);
     return;
   }

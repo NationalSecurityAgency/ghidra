@@ -36,7 +36,7 @@ import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.services.*;
-import ghidra.app.services.LogicalBreakpoint.Enablement;
+import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.app.util.viewer.listingpanel.MarkerClickedListener;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
@@ -216,18 +216,51 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		return result;
 	}
 
+	protected Color colorForState(State state) {
+		if (state.isEnabled()) {
+			if (state.isEffective()) {
+				return breakpointEnabledMarkerColor;
+			}
+			else {
+				return breakpointIneffEnMarkerColor;
+			}
+		}
+		else {
+			if (state.isEffective()) {
+				return breakpointDisabledMarkerColor;
+			}
+			else {
+				return breakpointIneffDisMarkerColor;
+			}
+		}
+	}
+
+	protected boolean stateColorsBackground(State state) {
+		if (state.isEnabled()) {
+			if (state.isEffective()) {
+				return breakpointEnabledColoringBackground;
+			}
+			else {
+				return breakpointIneffEnColoringBackground;
+			}
+		}
+		else {
+			if (state.isEffective()) {
+				return breakpointDisabledColoringBackground;
+			}
+			else {
+				return breakpointIneffDisColoringBackground;
+			}
+		}
+	}
+
 	/**
 	 * A variety of marker sets (one for each logical state) attached to a program or trace view
 	 */
 	protected class BreakpointMarkerSets {
 		final Program program;
 
-		final MarkerSet enabled;
-		final MarkerSet disabled;
-		final MarkerSet ineffectiveE;
-		final MarkerSet ineffectiveD;
-		final MarkerSet mixedED;
-		final MarkerSet mixedDE;
+		final Map<State, MarkerSet> sets = new HashMap<>();
 
 		protected BreakpointMarkerSets(Program program) {
 			this.program = program;
@@ -238,227 +271,122 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 				manager.defineType(LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE,
 					DebuggerResources.ICON_BLANK,
 					DebuggerResources.DEFAULT_COLOR_ENABLED_BREAKPOINT_MARKERS,
-					DebuggerResources.PRIORITY_BREAKPOINT_ENABLED_MARKER - 1);
+					MarkerService.BREAKPOINT_PRIORITY - 1);
 				manager.defineType(LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE,
 					DebuggerResources.ICON_BLANK,
 					DebuggerResources.DEFAULT_COLOR_ENABLED_BREAKPOINT_MARKERS,
-					DebuggerResources.PRIORITY_BREAKPOINT_DISABLED_MARKER - 1);
+					MarkerService.BREAKPOINT_PRIORITY - 1);
 			}
 
-			enabled = getEnabledMarkerSet();
-			disabled = getDisabledMarkerSet();
-			ineffectiveE = getIneffectiveEMarkerSet();
-			ineffectiveD = getIneffectiveDMarkerSet();
-			mixedED = getMixedEDMarkerSet();
-			mixedDE = getMixedDEMarkerSet();
+			for (State state : State.values()) {
+				getMarkerSet(state);
+			}
 		}
 
-		private MarkerSet getEnabledMarkerSet() {
-			MarkerSet set = markerService
-					.getMarkerSet(DebuggerResources.MARKER_NAME_BREAKPOINT_ENABLED, program);
+		MarkerSet getMarkerSet(State state) {
+			return sets.computeIfAbsent(state, this::doGetMarkerSet);
+		}
+
+		MarkerSet doGetMarkerSet(State state) {
+			if (state.icon == null) {
+				return null;
+			}
+			MarkerSet set = markerService.getMarkerSet(state.display, program);
 			if (set != null) {
 				return set;
 			}
-			return markerService.createPointMarker(
-				DebuggerResources.MARKER_NAME_BREAKPOINT_ENABLED,
-				DebuggerResources.MARKER_NAME_BREAKPOINT_ENABLED, program,
-				DebuggerResources.PRIORITY_BREAKPOINT_ENABLED_MARKER, true, true, true,
-				breakpointEnabledMarkerColor, DebuggerResources.ICON_BREAKPOINT_ENABLED_MARKER,
-				true);
-		}
-
-		private MarkerSet getDisabledMarkerSet() {
-			MarkerSet set = markerService
-					.getMarkerSet(DebuggerResources.MARKER_NAME_BREAKPOINT_DISABLED, program);
-			if (set != null) {
-				return set;
-			}
-			return markerService.createPointMarker(
-				DebuggerResources.MARKER_NAME_BREAKPOINT_DISABLED,
-				DebuggerResources.MARKER_NAME_BREAKPOINT_DISABLED, program,
-				DebuggerResources.PRIORITY_BREAKPOINT_DISABLED_MARKER, true, false, false,
-				breakpointEnabledMarkerColor, DebuggerResources.ICON_BREAKPOINT_DISABLED_MARKER,
-				false);
-		}
-
-		private MarkerSet getIneffectiveEMarkerSet() {
-			MarkerSet set = markerService
-					.getMarkerSet(DebuggerResources.MARKER_NAME_BREAKPOINT_INEFFECTIVE_E, program);
-			if (set != null) {
-				return set;
-			}
-			return markerService.createPointMarker(
-				DebuggerResources.MARKER_NAME_BREAKPOINT_INEFFECTIVE_E,
-				DebuggerResources.MARKER_NAME_BREAKPOINT_INEFFECTIVE_E, program,
-				DebuggerResources.PRIORITY_BREAKPOINT_INEFFECTIVE_E_MARKER, true, false, true,
-				breakpointIneffectiveEMarkerColor,
-				DebuggerResources.ICON_BREAKPOINT_INEFFECTIVE_E_MARKER,
-				false);
-		}
-
-		private MarkerSet getIneffectiveDMarkerSet() {
-			MarkerSet set = markerService
-					.getMarkerSet(DebuggerResources.MARKER_NAME_BREAKPOINT_INEFFECTIVE_D, program);
-			if (set != null) {
-				return set;
-			}
-			return markerService.createPointMarker(
-				DebuggerResources.MARKER_NAME_BREAKPOINT_INEFFECTIVE_D,
-				DebuggerResources.MARKER_NAME_BREAKPOINT_INEFFECTIVE_D, program,
-				DebuggerResources.PRIORITY_BREAKPOINT_INEFFECTIVE_D_MARKER, true, false, false,
-				breakpointIneffectiveDMarkerColor,
-				DebuggerResources.ICON_BREAKPOINT_INEFFECTIVE_D_MARKER,
-				false);
-		}
-
-		private MarkerSet getMixedEDMarkerSet() {
-			MarkerSet set = markerService
-					.getMarkerSet(DebuggerResources.MARKER_NAME_BREAKPOINT_MIXED_ED, program);
-			if (set != null) {
-				return set;
-			}
-			return markerService.createPointMarker(
-				DebuggerResources.MARKER_NAME_BREAKPOINT_MIXED_ED,
-				DebuggerResources.MARKER_NAME_BREAKPOINT_MIXED_ED, program,
-				DebuggerResources.PRIORITY_BREAKPOINT_MIXED_ED_MARKER, true, true, true,
-				breakpointEnabledMarkerColor, DebuggerResources.ICON_BREAKPOINT_MIXED_ED_MARKER,
-				false);
-		}
-
-		private MarkerSet getMixedDEMarkerSet() {
-			MarkerSet set = markerService
-					.getMarkerSet(DebuggerResources.MARKER_NAME_BREAKPOINT_MIXED_DE, program);
-			if (set != null) {
-				return set;
-			}
-			return markerService.createPointMarker(
-				DebuggerResources.MARKER_NAME_BREAKPOINT_MIXED_DE,
-				DebuggerResources.MARKER_NAME_BREAKPOINT_MIXED_DE, program,
-				DebuggerResources.PRIORITY_BREAKPOINT_MIXED_DE_MARKER, true, false, false,
-				breakpointEnabledMarkerColor, DebuggerResources.ICON_BREAKPOINT_MIXED_DE_MARKER,
-				false);
-		}
-
-		MarkerSet get(Enablement en) {
-			switch (en) {
-				case ENABLED:
-					return enabled;
-				case DISABLED:
-					return disabled;
-				case INEFFECTIVE_ENABLED:
-					return ineffectiveE;
-				case INEFFECTIVE_DISABLED:
-					return ineffectiveD;
-				case ENABLED_DISABLED:
-					return mixedED;
-				case DISABLED_ENABLED:
-					return mixedDE;
-				case NONE:
-					return null;
-				default:
-					throw new AssertionError();
-			}
+			return markerService.createPointMarker(state.display, state.display, program,
+				MarkerService.BREAKPOINT_PRIORITY, true, true, stateColorsBackground(state),
+				colorForState(state), state.icon, true);
 		}
 
 		public void setEnabledMarkerColor(Color color) {
-			if (enabled != null) {
-				enabled.setMarkerColor(color);
-			}
-			if (mixedED != null) {
-				mixedED.setMarkerColor(color);
+			for (State state : State.values()) {
+				if (state == State.NONE || !state.isEnabled() || !state.isEffective()) {
+					continue;
+				}
+				getMarkerSet(state).setMarkerColor(color);
 			}
 		}
 
 		public void setDisabledMarkerColor(Color color) {
-			if (disabled != null) {
-				disabled.setMarkerColor(color);
-			}
-			if (mixedDE != null) {
-				mixedDE.setMarkerColor(color);
+			for (State state : State.values()) {
+				if (state == State.NONE || state.isEnabled() || !state.isEffective()) {
+					continue;
+				}
+				getMarkerSet(state).setMarkerColor(color);
 			}
 		}
 
 		public void setIneffectiveEnabledMarkerColor(Color color) {
-			if (ineffectiveE != null) {
-				ineffectiveE.setMarkerColor(color);
+			for (State state : State.values()) {
+				if (state == State.NONE || !state.isEnabled() || state.isEffective()) {
+					continue;
+				}
+				getMarkerSet(state).setMarkerColor(color);
 			}
 		}
 
 		public void setIneffectiveDisabledMarkerColor(Color color) {
-			if (ineffectiveD != null) {
-				ineffectiveD.setMarkerColor(color);
+			for (State state : State.values()) {
+				if (state == State.NONE || state.isEnabled() || state.isEffective()) {
+					continue;
+				}
+				getMarkerSet(state).setMarkerColor(color);
 			}
 		}
 
 		public void setEnabledColoringBackground(boolean coloringBackground) {
-			if (enabled != null) {
-				enabled.setColoringBackground(coloringBackground);
-			}
-			if (mixedED != null) {
-				mixedED.setColoringBackground(coloringBackground);
+			for (State state : State.values()) {
+				if (state == State.NONE || !state.isEnabled() || !state.isEffective()) {
+					continue;
+				}
+				getMarkerSet(state).setColoringBackground(coloringBackground);
 			}
 		}
 
 		public void setDisabledColoringBackground(boolean coloringBackground) {
-			if (disabled != null) {
-				disabled.setColoringBackground(coloringBackground);
-			}
-			if (mixedDE != null) {
-				mixedDE.setColoringBackground(coloringBackground);
+			for (State state : State.values()) {
+				if (state == State.NONE || state.isEnabled() || !state.isEffective()) {
+					continue;
+				}
+				getMarkerSet(state).setColoringBackground(coloringBackground);
 			}
 		}
 
 		public void setIneffectiveEnabledColoringBackground(boolean coloringBackground) {
-			if (ineffectiveE != null) {
-				ineffectiveE.setColoringBackground(coloringBackground);
+			for (State state : State.values()) {
+				if (state == State.NONE || !state.isEnabled() || state.isEffective()) {
+					continue;
+				}
+				getMarkerSet(state).setColoringBackground(coloringBackground);
 			}
 		}
 
 		public void setIneffectiveDisabledColoringBackground(boolean coloringBackground) {
-			if (ineffectiveD != null) {
-				ineffectiveD.setColoringBackground(coloringBackground);
+			for (State state : State.values()) {
+				if (state == State.NONE || state.isEnabled() || state.isEffective()) {
+					continue;
+				}
+				getMarkerSet(state).setColoringBackground(coloringBackground);
 			}
 		}
 
 		public void dispose() {
-			if (enabled != null) {
-				markerService.removeMarker(enabled, program);
-			}
-			if (disabled != null) {
-				markerService.removeMarker(disabled, program);
-			}
-			if (ineffectiveE != null) {
-				markerService.removeMarker(ineffectiveE, program);
-			}
-			if (ineffectiveD != null) {
-				markerService.removeMarker(ineffectiveD, program);
-			}
-			if (mixedED != null) {
-				markerService.removeMarker(mixedED, program);
-			}
-			if (mixedDE != null) {
-				markerService.removeMarker(mixedDE, program);
+			for (State state : State.values()) {
+				MarkerSet set = sets.get(state);
+				if (set != null) {
+					markerService.removeMarker(set, program);
+				}
 			}
 		}
 
 		public void clear() {
-			if (enabled != null) {
-				enabled.clearAll();
-			}
-			if (disabled != null) {
-				disabled.clearAll();
-			}
-			if (ineffectiveE != null) {
-				ineffectiveE.clearAll();
-			}
-			if (ineffectiveD != null) {
-				ineffectiveD.clearAll();
-			}
-			if (mixedED != null) {
-				mixedED.clearAll();
-			}
-			if (mixedDE != null) {
-				mixedDE.clearAll();
+			for (State state : State.values()) {
+				MarkerSet set = sets.get(state);
+				if (set != null) {
+					set.clearAll();
+				}
 			}
 		}
 	}
@@ -493,35 +421,27 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		}
 	}
 
-	protected static Enablement computeEnablement(LogicalBreakpoint breakpoint,
-			Program programOrView) {
+	protected static State computeState(LogicalBreakpoint breakpoint, Program programOrView) {
 		if (programOrView instanceof TraceProgramView) {
 			TraceProgramView view = (TraceProgramView) programOrView;
-			return breakpoint.computeEnablementForTrace(view.getTrace());
+			return breakpoint.computeStateForTrace(view.getTrace());
 		}
 		// Program view should consider all trace placements
 		// TODO: A mode for only considering the current trace (for effectiveness in program)
-		return breakpoint.computeEnablement();
+		return breakpoint.computeState();
 	}
 
 	/**
-	 * TODO: Document me
-	 * 
-	 * <p>
-	 * This is a little different from that in the breakpoint service.
+	 * It seems the purpose of this was to omit the program mode from the dynamic listing. I don't
+	 * think we need that anymore, so I've just delegated to exactly the same as the breakpoint
+	 * service, which will include the program mode, if applicable. TODO: Remove this and just call
+	 * the service's version directly?
 	 * 
 	 * @param loc
 	 * @return
 	 */
-	protected Enablement computeEnablement(ProgramLocation loc) {
-		Program programOrView = loc.getProgram();
-		if (programOrView instanceof TraceProgramView) {
-			return breakpointService.computeEnablement(loc).getPrimary();
-		}
-		// Program view should consider all trace breakpoints, too
-		// breakpointService.computeEnablement(loc) only considers program breakpoint
-		Set<LogicalBreakpoint> bs = breakpointService.getBreakpointsAt(loc);
-		return breakpointService.computeEnablement(bs);
+	protected State computeState(ProgramLocation loc) {
+		return breakpointService.computeState(loc);
 	}
 
 	protected class ToggleBreakpointAction extends AbstractToggleBreakpointAction {
@@ -623,8 +543,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 				return false;
 			}
 			ProgramLocation location = getLocationFromContext(context);
-			Enablement en = computeEnablement(location);
-			if (en == Enablement.ENABLED || en == Enablement.NONE) {
+			State state = computeState(location);
+			if (state == State.ENABLED || state == State.NONE) {
 				return false;
 			}
 			return true;
@@ -660,8 +580,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 				return false;
 			}
 			ProgramLocation location = getLocationFromContext(context);
-			Enablement en = computeEnablement(location);
-			if (en == Enablement.DISABLED || en == Enablement.NONE) {
+			State state = computeState(location);
+			if (state == State.DISABLED || state == State.NONE) {
 				return false;
 			}
 			return true;
@@ -699,8 +619,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 				return false;
 			}
 			ProgramLocation location = getLocationFromContext(context);
-			Enablement en = computeEnablement(location);
-			if (en == Enablement.NONE) {
+			State state = computeState(location);
+			if (state == State.NONE) {
 				return false;
 			}
 			return true;
@@ -751,32 +671,32 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		DebuggerResources.DEFAULT_COLOR_DISABLED_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFFECTIVE_E_BREAKPOINT_MARKERS, //
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_MARKERS, //
 		description = "Background color for memory at an enabled, but ineffective, breakpoint", //
 		help = @HelpInfo(anchor = "colors"))
-	private Color breakpointIneffectiveEMarkerColor =
-		DebuggerResources.DEFAULT_COLOR_INEFFECTIVE_E_BREAKPOINT_MARKERS;
+	private Color breakpointIneffEnMarkerColor =
+		DebuggerResources.DEFAULT_COLOR_INEFF_EN_BREAKPOINT_MARKERS;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFFECTIVE_E_BREAKPOINT_COLORING_BACKGROUND, //
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND, //
 		description = "Whether or not to color background for memory at an enabled, but ineffective, breakpoint", //
 		help = @HelpInfo(anchor = "colors"))
-	private boolean breakpointIneffectiveEColoringBackground =
-		DebuggerResources.DEFAULT_COLOR_INEFFECTIVE_E_BREAKPOINT_COLORING_BACKGROUND;
+	private boolean breakpointIneffEnColoringBackground =
+		DebuggerResources.DEFAULT_COLOR_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFFECTIVE_D_BREAKPOINT_MARKERS, //
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_MARKERS, //
 		description = "Background color for memory at an disabled, but ineffective, breakpoint", //
 		help = @HelpInfo(anchor = "colors"))
-	private Color breakpointIneffectiveDMarkerColor =
-		DebuggerResources.DEFAULT_COLOR_INEFFECTIVE_D_BREAKPOINT_MARKERS;
+	private Color breakpointIneffDisMarkerColor =
+		DebuggerResources.DEFAULT_COLOR_INEFF_DIS_BREAKPOINT_MARKERS;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFFECTIVE_D_BREAKPOINT_COLORING_BACKGROUND, //
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND, //
 		description = "Whether or not to color background for memory at an disabled, but ineffective, breakpoint", //
 		help = @HelpInfo(anchor = "colors"))
-	private boolean breakpointIneffectiveDColoringBackground =
-		DebuggerResources.DEFAULT_COLOR_INEFFECTIVE_D_BREAKPOINT_COLORING_BACKGROUND;
+	private boolean breakpointIneffDisColoringBackground =
+		DebuggerResources.DEFAULT_COLOR_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND;
 
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
@@ -789,7 +709,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		new ToggleBreakpointsMarkerClickedListener();
 
 	private final AsyncDebouncer<Void> updateDebouncer =
-		new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 100);
+		new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 50);
 
 	// package access for testing
 	SetBreakpointAction actionSetSoftwareBreakpoint;
@@ -851,7 +771,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFFECTIVE_E_BREAKPOINT_MARKERS)
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_MARKERS)
 	private void setIneffectiveEBreakpointMarkerColor(Color breakpointMarkerColor) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setIneffectiveEnabledMarkerColor(breakpointMarkerColor);
@@ -859,7 +779,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFFECTIVE_E_BREAKPOINT_COLORING_BACKGROUND)
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND)
 	private void setIneffectiveEBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setIneffectiveEnabledColoringBackground(breakpointColoringBackground);
@@ -867,7 +787,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFFECTIVE_D_BREAKPOINT_MARKERS)
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_MARKERS)
 	private void setIneffectiveDBreakpointMarkerColor(Color breakpointMarkerColor) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setIneffectiveDisabledMarkerColor(breakpointMarkerColor);
@@ -875,7 +795,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFFECTIVE_D_BREAKPOINT_COLORING_BACKGROUND)
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND)
 	private void setIneffectiveDBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setIneffectiveDisabledColoringBackground(breakpointColoringBackground);
@@ -961,7 +881,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			placeBreakpointDialog.prompt(tool, breakpointService, title, loc, length, kinds, "");
 			return;
 		}
-		Enablement en = breakpointService.computeEnablement(bs, loc);
+		State state = breakpointService.computeState(bs, loc);
 		/**
 		 * If we're in the static listing, this will return null, indicating we should use the
 		 * program's perspective. The methods taking trace should accept a null trace and behave
@@ -969,8 +889,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		 */
 		Trace trace = getTraceFromContext(context);
 		boolean mapped = breakpointService.anyMapped(bs, trace);
-		Enablement toggled = en.getToggled(mapped && trace == null);
-		if (toggled.enabled) {
+		State toggled = state.getToggled(mapped);
+		if (toggled.isEnabled()) {
 			breakpointService.enableAll(bs, trace).exceptionally(ex -> {
 				breakpointError(title, "Could not enable breakpoints", ex);
 				return null;
@@ -1008,17 +928,17 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 
 	protected void doMarks(BreakpointMarkerSets marks,
 			Map<Address, Set<LogicalBreakpoint>> byAddress,
-			java.util.function.Function<LogicalBreakpoint, Enablement> enFunc) {
+			java.util.function.Function<LogicalBreakpoint, State> stateFunc) {
 		for (Map.Entry<Address, Set<LogicalBreakpoint>> bEnt : byAddress.entrySet()) {
-			Map<Long, Enablement> en = new HashMap<>();
+			Map<Long, State> byLength = new HashMap<>();
 			for (LogicalBreakpoint lb : bEnt.getValue()) {
-				en.compute(lb.getLength(), (l, e) -> (e == null ? Enablement.NONE : e)
-						.sameAdddress(enFunc.apply(lb)));
+				byLength.compute(lb.getLength(), (l, e) -> (e == null ? State.NONE : e)
+						.sameAdddress(stateFunc.apply(lb)));
 			}
 			Address start = bEnt.getKey();
-			for (Map.Entry<Long, Enablement> eEnt : en.entrySet()) {
-				Address end = start.add(eEnt.getKey() - 1);
-				MarkerSet set = marks.get(eEnt.getValue());
+			for (Map.Entry<Long, State> sEnt : byLength.entrySet()) {
+				Address end = start.add(sEnt.getKey() - 1);
+				MarkerSet set = marks.getMarkerSet(sEnt.getValue());
 				if (set != null) {
 					set.add(start, end);
 				}
@@ -1041,11 +961,11 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 					TraceProgramView view = (TraceProgramView) program;
 					Trace trace = view.getTrace();
 					doMarks(marks, breakpointService.getBreakpoints(trace),
-						lb -> lb.computeEnablementForTrace(trace));
+						lb -> lb.computeStateForTrace(trace));
 				}
 				else {
 					doMarks(marks, breakpointService.getBreakpoints(program),
-						lb -> lb.computeEnablementForProgram(program));
+						lb -> lb.computeStateForProgram(program));
 				}
 			}
 		}

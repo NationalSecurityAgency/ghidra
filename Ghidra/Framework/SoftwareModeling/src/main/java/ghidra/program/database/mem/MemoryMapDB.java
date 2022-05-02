@@ -57,6 +57,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	private AddressSet initializedLoadedAddrSet = new AddressSet();
 	private AddressSet allInitializedAddrSet = new AddressSet();
 	private AddressSetView executeSet = null;
+	private AddressSet externalBlockAddrSet;
 
 	private MemoryBlock lastBlock;// the last accessed block
 	private LiveMemoryHandler liveMemory;
@@ -130,6 +131,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		addrSet = new AddressSet();
 		initializedLoadedAddrSet = new AddressSet();
 		allInitializedAddrSet = new AddressSet();
+		externalBlockAddrSet = new AddressSet();
 		// we have to process the non-mapped blocks first because to process the mapped
 		// blocks we need the address sets for the non-mapped blocks to be complete
 		for (MemoryBlockDB block : blocks) {
@@ -161,6 +163,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	private void addBlockAddresses(MemoryBlockDB block, boolean scanAllMappedBlocksIfNeeded) {
 		AddressSet blockSet = new AddressSet(block.getStart(), block.getEnd());
 		addrSet = addrSet.union(blockSet);
+		if (block.isExternalBlock()) {
+			// NOTE: no handling for mapped blocks which should never map onto EXTERNAL block
+			externalBlockAddrSet.add(block.getStart(), block.getEnd());
+		}
 		if (block.isMapped()) {
 
 			// Identify source-blocks which block maps onto and add as a mapped-block to each of these
@@ -1763,6 +1769,11 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public boolean isEmpty() {
 		return addrSet.isEmpty();
+	}
+
+	@Override
+	public boolean isExternalBlockAddress(Address addr) {
+		return externalBlockAddrSet.contains(addr);
 	}
 
 	@Override

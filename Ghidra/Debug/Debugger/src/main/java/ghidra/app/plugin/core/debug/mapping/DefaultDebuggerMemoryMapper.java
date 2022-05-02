@@ -45,12 +45,6 @@ public class DefaultDebuggerMemoryMapper implements DebuggerMemoryMapper {
 	public Address traceToTarget(Address traceAddr) {
 		assert isInFactory(traceAddr, traceAddressFactory);
 		return toSameNamedSpace(traceAddr, targetAddressFactory);
-	};
-
-	@Override
-	public AddressRange traceToTarget(AddressRange traceRange) {
-		return new AddressRangeImpl(traceToTarget(traceRange.getMinAddress()),
-			traceToTarget(traceRange.getMaxAddress()));
 	}
 
 	@Override
@@ -64,11 +58,5 @@ public class DefaultDebuggerMemoryMapper implements DebuggerMemoryMapper {
 		}
 		assert isInFactory(targetAddr, targetAddressFactory);
 		return toSameNamedSpace(targetAddr, traceAddressFactory);
-	}
-
-	@Override
-	public AddressRange targetToTrace(AddressRange targetRange) {
-		return new AddressRangeImpl(targetToTrace(targetRange.getMinAddress()),
-			targetToTrace(targetRange.getMaxAddress()));
 	}
 }

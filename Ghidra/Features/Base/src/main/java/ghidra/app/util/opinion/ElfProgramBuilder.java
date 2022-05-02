@@ -24,7 +24,6 @@ import java.util.*;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
 
-import generic.continues.GenericFactory;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
@@ -35,7 +34,6 @@ import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.bin.format.elf.relocation.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.options.Options;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.database.register.AddressRangeObjectMap;
@@ -117,6 +115,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		int id = program.startTransaction("Load ELF program");
 		boolean success = false;
 		try {
+			monitor.setIndeterminate(true);
 
 			addProgramProperties(monitor);
 
@@ -137,9 +136,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			processProgramHeaders(monitor);
 			processSectionHeaders(monitor);
 
+			monitor.setIndeterminate(false);
+
 			resolve(monitor);
 
-			if (elf.e_shnum() == 0) {
+			if (elf.getSectionHeaderCount() == 0) {
 				// create/expand segments to their fullsize if no sections are defined
 				expandProgramHeaderBlocks(monitor);
 			}
@@ -153,6 +154,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			markupElfHeader(monitor);
 			markupProgramHeaders(monitor);
 			markupSectionHeaders(monitor);
+
+			monitor.setProgress(0);
+			monitor.setIndeterminate(true);
+
 			markupDynamicTable(monitor);
 			markupInterpreter(monitor);
 
@@ -224,11 +229,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		// Ignore header regions which will always be allocated to blocks
 		int elfHeaderSize = elf.toDataType().getLength();
 		fileMap.paintRange(0, elfHeaderSize - 1, -4); // -4: header block
-		int programHeaderSize = elf.e_phentsize() * elf.e_phnum();
+		int programHeaderSize = elf.e_phentsize() * elf.getProgramHeaderCount();
 		if (programHeaderSize != 0) {
 			fileMap.paintRange(elf.e_phoff(), elf.e_phoff() + programHeaderSize - 1, -4); // -4: header block
 		}
-		int sectionHeaderSize = elf.e_shentsize() * elf.e_shnum();
+		int sectionHeaderSize = elf.e_shentsize() * elf.getSectionHeaderCount();
 		if (sectionHeaderSize != 0) {
 			fileMap.paintRange(elf.e_shoff(), elf.e_shoff() + sectionHeaderSize - 1, -4); // -4: header block
 		}
@@ -290,7 +295,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private boolean isDiscardableFillerSegment(MemoryLoadable loadable, String blockName,
 			Address start, long fileOffset, long length) throws IOException {
-		if (elf.e_shnum() == 0 || elf.e_phnum() == 0) {
+		if (elf.getSectionHeaderCount() == 0 || elf.getProgramHeaderCount() == 0) {
 			return false; // only prune if both sections and program headers are present
 		}
 		if (length > DISCARDABLE_SEGMENT_SIZE || !blockName.startsWith(SEGMENT_NAME_PREFIX)) {
@@ -737,12 +742,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	private void processRelocations(TaskMonitor monitor) throws CancelledException {
-		monitor.setMessage("Processing relocation tables...");
 
 		ElfRelocationTable[] relocationTables = elf.getRelocationTables();
 		if (relocationTables.length == 0) {
 			return;
 		}
+
+		monitor.setMessage("Processing relocation tables...");
 
 		boolean processRelocations = ElfLoaderOptionsFactory.performRelocations(options);
 		if (processRelocations && ElfRelocationHandlerFactory.getHandler(elf) == null) {
@@ -1014,11 +1020,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private void markupProgramHeaders(TaskMonitor monitor) {
 
-		int headerCount = elf.e_phnum();
+		int headerCount = elf.getProgramHeaderCount();
 		int size = elf.e_phentsize() * headerCount;
 		if (size == 0) {
 			return;
 		}
+
+		monitor.setMessage("Markup Program Headers ...");
 
 		Structure phStructDt = (Structure) elf.getProgramHeaders()[0].toDataType();
 		phStructDt = phStructDt.clone(program.getDataTypeManager());
@@ -1049,8 +1057,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 
 			ElfProgramHeader[] programHeaders = elf.getProgramHeaders();
+			monitor.setMaximum(programHeaders.length);
 			int vaddrFieldIndex = elf.is64Bit() ? 3 : 2; // p_vaddr structure element index
 			for (int i = 0; i < programHeaders.length; i++) {
+				monitor.checkCanceled();
+				monitor.incrementProgress(1);
+
 				Data d = array.getComponent(i);
 				d.setComment(CodeUnit.EOL_COMMENT, programHeaders[i].getComment());
 				if (programHeaders[i].getType() == ElfProgramHeaderConstants.PT_NULL) {
@@ -1075,16 +1087,18 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private void markupSectionHeaders(TaskMonitor monitor) {
 
-		int headerCount = elf.e_shnum();
+		int headerCount = elf.getSectionHeaderCount();
 		int size = elf.e_shentsize() * headerCount;
 		if (size == 0) {
 			return;
 		}
 
+		monitor.setMessage("Markup Section Headers ...");
+
 		Structure shStructDt = (Structure) elf.getSections()[0].toDataType();
 		shStructDt = shStructDt.clone(program.getDataTypeManager());
 
-		Array arrayDt = new ArrayDataType(shStructDt, elf.e_shnum(), elf.e_shentsize());
+		Array arrayDt = new ArrayDataType(shStructDt, headerCount, elf.e_shentsize());
 
 		Address headerAddr = findLoadAddress(elf.e_shoff(), size);
 
@@ -1110,7 +1124,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 
 			ElfSectionHeader[] sections = elf.getSections();
+			monitor.setMaximum(sections.length);
 			for (int i = 0; i < sections.length; i++) {
+				monitor.checkCanceled();
+				monitor.incrementProgress(1);
 
 				Data d = array.getComponent(i);
 				String comment = sections[i].getNameAsString();
@@ -1425,9 +1442,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					try (ByteProvider debugDataBP =
 						new ObfuscatedFileByteProvider(tmpFile, null, AccessMode.READ)) {
 
-						GenericFactory factory = MessageLogContinuesFactory.create(log);
-						ElfHeader minidebugElf =
-							ElfHeader.createElfHeader(factory, debugDataBP, null);
+						ElfHeader minidebugElf = new ElfHeader(debugDataBP, null);
 						minidebugElf.parse();
 
 						ElfSymbolTable[] minidebugSymbolTables = minidebugElf.getSymbolTables();
@@ -2762,9 +2777,15 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	 * @throws CancelledException
 	 */
 	private void expandProgramHeaderBlocks(TaskMonitor monitor) throws CancelledException {
+
+		monitor.setMessage("Exapanding Program Segments...");
+
 		ElfProgramHeader[] elfProgramHeaders = elf.getProgramHeaders();
+		monitor.setMaximum(elfProgramHeaders.length);
 		for (int i = 0; i < elfProgramHeaders.length; ++i) {
 			monitor.checkCanceled();
+			monitor.incrementProgress(1);
+
 			ElfProgramHeader elfProgramHeader = elfProgramHeaders[i];
 			if (elfProgramHeaders[i].getType() == ElfProgramHeaderConstants.PT_LOAD) {
 
@@ -2866,9 +2887,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private void processProgramHeaders(TaskMonitor monitor) throws CancelledException {
 
-		if (elf.isRelocatable() && elf.e_phnum() != 0) {
+		if (elf.isRelocatable() && elf.getProgramHeaderCount() != 0) {
 			log("Ignoring unexpected program headers for relocatable ELF (e_phnum=" +
-				elf.e_phnum() + ")");
+				elf.getProgramHeaderCount() + ")");
 			return;
 		}
 
@@ -2937,7 +2958,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		long loadSizeBytes = elfProgramHeader.getAdjustedLoadSize();
 		long fullSizeBytes = elfProgramHeader.getAdjustedMemorySize();
 
-		boolean maintainExecuteBit = elf.e_shnum() == 0;
+		boolean maintainExecuteBit = elf.getSectionHeaderCount() == 0;
 
 		if (fullSizeBytes <= 0) {
 			log("Skipping zero-length segment [" + segmentNumber + "," +
@@ -2953,7 +2974,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		try {
 			// Only allow segment fragmentation if section headers are defined
-			boolean isFragmentationOK = (elf.e_shnum() != 0);
+			boolean isFragmentationOK = (elf.getSectionHeaderCount() != 0);
 
 			String comment = getSectionComment(addr, fullSizeBytes, space.getAddressableUnitSize(),
 				elfProgramHeader.getDescription(), address.isLoadedMemoryAddress());
@@ -3359,8 +3380,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			x = false;
 		}
 
-		Msg.debug(this,
-			"Loading block " + name + " at " + start + " from file offset " + fileOffset);
+//		Msg.debug(this,
+//			"Loading block " + name + " at " + start + " from file offset " + fileOffset);
 
 		long endOffset = fileOffset + revisedLength - 1;
 		if (endOffset >= fileBytes.getSize()) {

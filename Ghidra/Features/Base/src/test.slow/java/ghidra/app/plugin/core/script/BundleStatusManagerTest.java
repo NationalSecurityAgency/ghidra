@@ -435,11 +435,11 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 		}
 
 		void awaitActivation() throws InterruptedException {
-			assertTrue(activationLatch.await(5000, TimeUnit.MILLISECONDS));
+			assertTrue(activationLatch.await(30000, TimeUnit.MILLISECONDS));
 		}
 
 		void awaitDisablement() throws InterruptedException {
-			assertTrue(disablementLatch.await(5000, TimeUnit.MILLISECONDS));
+			assertTrue(disablementLatch.await(30000, TimeUnit.MILLISECONDS));
 		}
 
 	}

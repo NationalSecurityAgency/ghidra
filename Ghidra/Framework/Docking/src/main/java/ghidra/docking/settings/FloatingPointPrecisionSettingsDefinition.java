@@ -59,6 +59,11 @@ public class FloatingPointPrecisionSettingsDefinition implements EnumSettingsDef
 	}
 
 	@Override
+	public String getValueString(Settings settings) {
+		return Integer.toString(getPrecision(settings));
+	}
+
+	@Override
 	public void setChoice(Settings settings, int valueIndex) {
 
 		if (valueIndex < 0) {
@@ -84,6 +89,11 @@ public class FloatingPointPrecisionSettingsDefinition implements EnumSettingsDef
 
 	@Override
 	public String getName() {
+		return PRECISION_DIGITS;
+	}
+
+	@Override
+	public String getStorageKey() {
 		return PRECISION_DIGITS;
 	}
 

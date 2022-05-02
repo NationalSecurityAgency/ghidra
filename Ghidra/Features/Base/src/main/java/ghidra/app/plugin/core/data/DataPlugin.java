@@ -17,21 +17,31 @@ package ghidra.app.plugin.core.data;
 
 import java.util.*;
 
-import docking.ActionContext;
+import javax.swing.tree.TreePath;
+
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.OptionDialog;
+import docking.widgets.tree.GTree;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.data.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.plugin.core.compositeeditor.*;
+import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeTreeNode;
 import ghidra.app.services.DataService;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.database.data.DataTypeManagerDB;
+import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -76,18 +86,17 @@ public class DataPlugin extends Plugin implements DataService {
 		{ DATA_MENU_POPUP_PATH, "Edit Data Type..." };
 	private static final String[] DATA_SETTINGS_POPUP_PATH =
 		{ DATA_MENU_POPUP_PATH, "Settings..." };
-	private static final String[] DEFAULT_DATA_SETTINGS_POPUP_PATH =
+	private static final String[] DEFAULT_SETTINGS_POPUP_PATH =
 		{ DATA_MENU_POPUP_PATH, "Default Settings..." };
+	private static final String[] DATATYPE_SETTINGS_POPUP_PATH = { "Settings..." };
 	private static final String[] CHOOSE_DATA_TYPE_POPUP_PATH =
 		{ DATA_MENU_POPUP_PATH, "Choose Data Type..." };
 
 	private DataTypeManagerService dtmService;
 
-	private DockingAction settingsAction;
-	private DockingAction defaultSettingsAction;
 	private DataAction pointerAction;
 	private DataAction recentlyUsedAction;
-	private DockingAction editDataTypeAction; // Edit a data type action
+	private DockingAction editDataTypeAction;
 	private CreateStructureAction createStructureAction;
 	private CreateArrayAction createArrayAction;
 	private RenameDataFieldAction renameDataFieldAction;
@@ -143,77 +152,72 @@ public class DataPlugin extends Plugin implements DataService {
 		pointerAction = new PointerDataAction(this);
 		tool.addAction(pointerAction);
 
-		settingsAction = new DockingAction("Data Settings", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				dataSettingsCallback((ListingActionContext) context.getContextObject());
-			}
+		// Data instance settings action based upon data selection in listing
+		new ActionBuilder("Data Settings", getName())
+				.sharedKeyBinding()
+				.popupMenuPath(DATA_SETTINGS_POPUP_PATH)
+				.popupMenuGroup("Settings")
+				.withContext(ListingActionContext.class)
+				.enabledWhen(context -> isDataTypeSettingsAllowed(context, false))
+				.onAction(context -> dataSettingsCallback(context))
+				.buildAndInstall(tool);
 
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				if (contextObject instanceof ListingActionContext) {
-					return isDataTypeSettingsAllowed((ListingActionContext) context, false);
-				}
-				return false;
-			}
-		};
+		// Default settings action based upon data selection in listing
+		new ActionBuilder("Default Settings", getName())
+				.sharedKeyBinding()
+				.popupMenuPath(DEFAULT_SETTINGS_POPUP_PATH)
+				.popupMenuGroup("Settings")
+				.withContext(ListingActionContext.class)
+				.enabledWhen(context -> isDataTypeSettingsAllowed(context, true))
+				.onAction(context -> editDefaultDataSettings(context))
+				.buildAndInstall(tool);
 
-		settingsAction.setPopupMenuData(new MenuData(DATA_SETTINGS_POPUP_PATH, null, "Settings"));
+		// Default settings action for selected datatypes from datatype manager
+		new ActionBuilder("Default Settings", getName())
+				.sharedKeyBinding()
+				.popupMenuPath(DATATYPE_SETTINGS_POPUP_PATH)
+				.popupMenuGroup("Settings")
+				.withContext(DataTypesActionContext.class)
+				.enabledWhen(context -> isDefaultDataTypeSettingsAllowed(context))
+				.onAction(context -> editDefaultDataTypeSettings(context))
+				.buildAndInstall(tool);
 
-		settingsAction.setEnabled(true);
-		tool.addAction(settingsAction);
+		// Default settings action for composite editor components (Program-based)
+		new ActionBuilder("Default Settings", getName())
+				.sharedKeyBinding()
+				.popupMenuPath(DATATYPE_SETTINGS_POPUP_PATH)
+				.popupMenuGroup("Settings")
+				.withContext(ComponentProgramActionContext.class)
+				.enabledWhen(context -> isDefaultComponentSettingsAllowed(context))
+				.onAction(context -> editDefaultComponentSettings(context))
+				.buildAndInstall(tool);
 
-		defaultSettingsAction = new DockingAction("Default Data Settings", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				defaultDataSettingsCallback((ListingActionContext) context.getContextObject());
-			}
+		// Default settings action for composite editor components (stand-alone archive)
+		new ActionBuilder("Default Settings", getName())
+				.sharedKeyBinding()
+				.popupMenuPath(DATATYPE_SETTINGS_POPUP_PATH)
+				.popupMenuGroup("Settings")
+				.withContext(ComponentStandAloneActionContext.class)
+				.enabledWhen(context -> isDefaultComponentSettingsAllowed(context))
+				.onAction(context -> editDefaultComponentSettings(context))
+				.buildAndInstall(tool);
 
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				if (contextObject instanceof ListingActionContext) {
-					return isDataTypeSettingsAllowed((ListingActionContext) context, true);
-				}
-				return false;
-			}
-		};
-
-		defaultSettingsAction.setPopupMenuData(
-			new MenuData(DEFAULT_DATA_SETTINGS_POPUP_PATH, null, "Settings"));
-
-		defaultSettingsAction.setEnabled(true);
-		tool.addAction(defaultSettingsAction);
-
-		editDataTypeAction = new DockingAction("Edit Data Type", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				editDataTypeCallback((ListingActionContext) context.getContextObject());
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				if (contextObject instanceof ListingActionContext) {
-					DataType editableDt =
-						getEditableDataTypeFromContext((ListingActionContext) contextObject);
+		editDataTypeAction = new ActionBuilder("Edit Data Type", getName())
+				.popupMenuPath(EDIT_DATA_TYPE_POPUP_PATH)
+				.popupMenuGroup("BasicData")
+				.withContext(ListingActionContext.class)
+				.enabledWhen(c -> {
+					DataType editableDt = getEditableDataTypeFromContext(c);
 					if (editableDt != null) {
 						editDataTypeAction.setHelpLocation(
 							dtmService.getEditorHelpLocation(editableDt));
 						return true;
 					}
-				}
-				return false;
-			}
-		};
-
-		editDataTypeAction.setPopupMenuData(
-			new MenuData(EDIT_DATA_TYPE_POPUP_PATH, null, "BasicData"));
-
-		editDataTypeAction.setEnabled(true);
-		editDataTypeAction.setHelpLocation(new HelpLocation("DataTypeEditors", "Structure_Editor"));
-		tool.addAction(editDataTypeAction);
+					return false;
+				})
+				.onAction(c -> editDataTypeCallback(c))
+				.helpLocation(new HelpLocation("DataTypeEditors", "Structure_Editor"))
+				.buildAndInstall(tool);
 
 		chooseDataTypeAction = new ChooseDataTypeAction(this);
 		chooseDataTypeAction.setEnabled(false);
@@ -605,10 +609,103 @@ public class DataPlugin extends Plugin implements DataService {
 			if (data == null) {
 				return;
 			}
-			dialog = new DataSettingsDialog(context.getProgram(), data);
+			dialog = new DataSettingsDialog(data);
 		}
 		tool.showDialog(dialog);
 		dialog.dispose();
+	}
+
+	DataType getSelectedDataType(DataTypesActionContext context) {
+		Object contextObject = context.getContextObject();
+		GTree gtree = (GTree) contextObject;
+		TreePath[] selectionPaths = gtree.getSelectionPaths();
+		if (selectionPaths == null || selectionPaths.length != 1) {
+			return null;
+		}
+		DataTypeTreeNode node = (DataTypeTreeNode) selectionPaths[0].getLastPathComponent();
+		if (!(node instanceof DataTypeNode)) {
+			return null;
+		}
+		DataTypeNode dataTypeNode = (DataTypeNode) node;
+		DataType dataType = dataTypeNode.getDataType();
+		if (dataType.getDataTypeManager() instanceof DataTypeManagerDB) {
+			return dataType;
+		}
+		return null;
+	}
+
+	protected void editDefaultDataTypeSettings(DataTypesActionContext context) {
+		DataType dataType = getSelectedDataType(context);
+		if (dataType == null) {
+			return;
+		}
+		DataTypeManager dtm = dataType.getDataTypeManager();
+		if (!(dtm instanceof DataTypeManagerDB)) {
+			return;
+		}
+
+		SettingsDefinition[] settingsDefinitions = dataType.getSettingsDefinitions();
+		if (!(dtm instanceof ProgramDataTypeManager)) {
+			// Non-Program use limited to TypeDefSettingsDefinition only
+			settingsDefinitions =
+				SettingsDefinition.filterSettingsDefinitions(settingsDefinitions, def -> {
+					return (def instanceof TypeDefSettingsDefinition);
+				});
+		}
+
+		DataTypeSettingsDialog dialog = new DataTypeSettingsDialog(dataType, settingsDefinitions);
+		tool.showDialog(dialog);
+		dialog.dispose();
+	}
+
+	private void editDefaultComponentSettings(ComponentContext context) {
+		DataTypeSettingsDialog dialog = new DataTypeSettingsDialog(context.getDataTypeComponent());
+		tool.showDialog(dialog);
+		dialog.dispose();
+		dialog = null;
+	}
+
+	protected boolean isDefaultDataTypeSettingsAllowed(DataTypesActionContext context) {
+		DataType dt = getSelectedDataType(context);
+		if (dt == null) {
+			return false;
+		}
+
+		DataTypeManager dtm = dt.getDataTypeManager();
+		if (dtm instanceof BuiltInDataTypeManager) {
+			return false; // no settings modifications are permitted
+		}
+		if ((dt instanceof BuiltIn) && !dtm.allowsDefaultBuiltInSettings()) {
+			// prevent BuiltIn settings modification when not allowed
+			return false;
+		}
+
+		SettingsDefinition[] settingsDefinitions = dt.getSettingsDefinitions();
+		if (dtm instanceof ProgramBasedDataTypeManager) {
+			// Any defined setting may be modified within a Program
+			return settingsDefinitions.length != 0;
+		}
+
+		// Non-Program use limited to TypeDefSettingsDefinition modification only
+		for (SettingsDefinition def : settingsDefinitions) {
+			if (def instanceof TypeDefSettingsDefinition) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	boolean isDefaultComponentSettingsAllowed(ComponentContext context) {
+		// Note: targetDtm should not be modified and reflects the ultimate target.
+		// This context is intended to be used by composite editors where the component
+		// parent datatype resides within a temporary datatype manager and not the targetDtm 
+		// until a subsequent save/apply is performed when the settings will get copied.
+		DataTypeManager targetDtm = context.getDataTypeManager();
+		if (targetDtm.allowsDefaultComponentSettings()) {
+			DataType dt = context.getDataTypeComponent().getDataType();
+			return dt.getSettingsDefinitions().length != 0;
+		}
+		return false;
 	}
 
 	boolean isDataTypeSettingsAllowed(ListingActionContext context, boolean editDefaults) {
@@ -624,7 +721,7 @@ public class DataPlugin extends Plugin implements DataService {
 		return data.getDataType().getSettingsDefinitions().length != 0;
 	}
 
-	private void defaultDataSettingsCallback(ListingActionContext context) {
+	private void editDefaultDataSettings(ListingActionContext context) {
 
 		// get the structure dt we are over
 		Data data = getDataUnit(context);
@@ -632,23 +729,19 @@ public class DataPlugin extends Plugin implements DataService {
 			return;
 		}
 
-		DataSettingsDialog dialog = null;
-		Program program = context.getProgram();
+		DataTypeSettingsDialog dialog = null;
 		Data parent = data.getParent();
 		if (parent != null) {
 			DataType parentDT = parent.getDataType();
 			if (parentDT instanceof Composite) {
 				int[] path = context.getLocation().getComponentPath();
-
-				dialog = new DataSettingsDialog(program,
+				dialog = new DataTypeSettingsDialog(
 					((Composite) parentDT).getComponent(path[path.length - 1]));
 			}
-			else {
-				dialog = new DataSettingsDialog(program, data.getDataType());
-			}
 		}
-		else {
-			dialog = new DataSettingsDialog(program, data.getDataType());
+		if (dialog == null) {
+			DataType dt = data.getDataType();
+			dialog = new DataTypeSettingsDialog(dt, dt.getSettingsDefinitions());
 		}
 
 		tool.showDialog(dialog);

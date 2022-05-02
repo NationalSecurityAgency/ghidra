@@ -22,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import javax.swing.event.TableModelEvent;
 
 import org.osgi.framework.Bundle;
@@ -33,8 +33,10 @@ import generic.util.Path;
 import ghidra.docking.util.ColorContext;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.util.*;
-import ghidra.util.table.column.*;
+import ghidra.util.Swing;
+import ghidra.util.SystemUtilities;
+import ghidra.util.table.column.AbstractGColumnRenderer;
+import ghidra.util.table.column.GColumnRenderer;
 
 /**
  * Model for {@link BundleStatus} objects. 
@@ -74,10 +76,10 @@ public class BundleStatusTableModel
 	}
 
 	private BundleStatus getStatus(GhidraBundle bundle) {
-		return getStatusFromLoc(bundle.getLocationIdentifier());
+		return getStatusFromLocation(bundle.getLocationIdentifier());
 	}
 
-	private BundleStatus getStatusFromLoc(String bundleLoc) {
+	private BundleStatus getStatusFromLocation(String bundleLoc) {
 		return bundleLocToStatusMap.get(bundleLoc);
 	}
 
@@ -255,7 +257,7 @@ public class BundleStatusTableModel
 		// wrap the assigned comparator to detect if the order changes
 
 		AtomicBoolean changed = new AtomicBoolean(false);
-		Comparator<BundleStatus> wrapper = new Comparator<BundleStatus>() {
+		Comparator<BundleStatus> wrapper = new Comparator<>() {
 			Comparator<BundleStatus> comparator = sortingContext.getComparator();
 
 			@Override
@@ -368,7 +370,7 @@ public class BundleStatusTableModel
 		@Override
 		public void bundleException(GhidraBundleException exception) {
 			Swing.runLater(() -> {
-				BundleStatus status = getStatusFromLoc(exception.getBundleLocation());
+				BundleStatus status = getStatusFromLocation(exception.getBundleLocation());
 				if (status != null) {
 					status.setSummary(exception.getMessage());
 					int rowIndex = getRowIndex(status);

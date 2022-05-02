@@ -23,7 +23,8 @@ import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
-import docking.action.*;
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.plugin.core.byteviewer.*;
@@ -42,6 +43,8 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
@@ -187,6 +190,25 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		setHelpLocation(DebuggerResources.HELP_PROVIDER_MEMORY_BYTES);
 	}
 
+	@Override
+	protected ProgramByteBlockSet newByteBlockSet(ByteBlockChangeManager changeManager) {
+		if (program == null) {
+			return null;
+		}
+		// A bit of work to get it to ignore existing instructions. Let them be clobbered!
+		return new ProgramByteBlockSet(this, program, changeManager) {
+			@Override
+			protected MemoryByteBlock newMemoryByteBlock(Memory memory, MemoryBlock memBlock) {
+				return new MemoryByteBlock(program, memory, memBlock) {
+					@Override
+					protected boolean editAllowed(Address addr, long length) {
+						return true;
+					}
+				};
+			}
+		};
+	}
+
 	/**
 	 * TODO: I'd rather this not be here
 	 */
@@ -209,6 +231,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	@Override
 	protected ByteViewerPanel newByteViewerPanel() {
 		initTraits();
+		// For highlighting, e.g., state, pc
 		return new DebuggerMemoryBytesPanel(this);
 	}
 
@@ -358,6 +381,9 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	}
 
 	protected void doGoToTracked() {
+		if (editModeAction.isSelected()) {
+			return;
+		}
 		ProgramLocation loc = trackingTrait.getTrackedLocation();
 		if (loc == null) {
 			return;
@@ -445,27 +471,5 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 			newProvider.setLocation(currentLocation);
 			newProvider.panel.setViewerPosition(vp);
 		});
-	}
-
-	@Override
-	protected ProgramByteBlockSet newByteBlockSet(ByteBlockChangeManager changeManager) {
-		if (program == null) {
-			return null;
-		}
-		return new WritesTargetProgramByteBlockSet(this, program, changeManager);
-	}
-
-	@Override
-	public void addLocalAction(DockingActionIf action) {
-		/**
-		 * TODO This is a terrible hack, but it's temporary. We do not yet support writing target
-		 * memory from the bytes provider. Once we do, we should obviously take this hack out. I
-		 * don't think we'll forget, because the only way to get the write toggle button back is to
-		 * delete this override.
-		 */
-		if (action == editModeAction) {
-			return;
-		}
-		super.addLocalAction(action);
 	}
 }

@@ -231,8 +231,6 @@ public:
 
   Datatype *outputTypeLocal(void) const { return opcode->getOutputLocal(this); } ///< Calculate the local output type
   Datatype *inputTypeLocal(int4 slot) const { return opcode->getInputLocal(this,slot); }	///< Calculate the local input type
-  bool markExplicitUnsigned(int4 slot) { return opcode->markExplicitUnsigned(this,slot); } ///< Decide on unsignedness printing
-  bool inheritsSign(void) const { return opcode->inheritsSign(); } ///< Does this token inherit its sign from operands
 };
 
 /// \brief An edge in a data-flow path or graph

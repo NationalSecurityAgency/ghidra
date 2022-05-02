@@ -338,6 +338,12 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		DataTypeManager nodeDtm = dataType.getDataTypeManager();
 		boolean sameManager = (dtm == nodeDtm);
 		DataType newDt = !sameManager ? dataType.clone(nodeDtm) : dataType.copy(nodeDtm);
+
+		if (!sameManager && toCategory.isRoot()) {
+			// preserve use of source category when copy to root
+			toCategory = dtm.createCategory(dataType.getCategoryPath());
+		}
+
 		if (sameManager && newDt.getCategoryPath().equals(toCategory.getCategoryPath())) {
 			renameAsCopy(toCategory, newDt);
 		}

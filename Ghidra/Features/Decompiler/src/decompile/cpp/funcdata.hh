@@ -24,6 +24,7 @@
 #include "heritage.hh"
 #include "merge.hh"
 #include "dynamic.hh"
+#include "unionresolve.hh"
 
 class FlowInfo;
 
@@ -88,6 +89,7 @@ class Funcdata {
   ParamActive *activeoutput;	///< Data for assessing which parameters are passed to \b this function
   Override localoverride;	///< Overrides of data-flow, prototypes, etc. that are local to \b this function
   map<VarnodeData,const LanedRegister *> lanedMap;	///< Current storage locations which may be laned registers
+  map<ResolveEdge,ResolvedUnion> unionMap;	///< A map from data-flow edges to the resolved field of TypeUnion being accessed
 
 				// Low level Varnode functions
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
@@ -100,6 +102,7 @@ class Funcdata {
   Varnode *cloneVarnode(const Varnode *vn);	///< Clone a Varnode (between copies of the function)
   void destroyVarnode(Varnode *vn);		///< Delete the given Varnode from \b this function
   void coverVarnodes(SymbolEntry *entry,vector<Varnode *> &list);
+  bool applyUnionFacet(SymbolEntry *entry,DynamicHash &dhash);
 				// Low level op functions
   void opZeroMulti(PcodeOp *op);		///< Transform trivial CPUI_MULTIEQUAL to CPUI_COPY
 				// Low level block functions
@@ -373,6 +376,7 @@ public:
   bool onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamTrial &trial,uint4 mainFlags) const;
   bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial,uint4 mainFlags) const;
   bool syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes);
+  Datatype *checkSymbolType(Varnode *vn);	///< Check for any delayed symbol data-type information on the given Varnode
   void transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset);
   bool fillinReadOnly(Varnode *vn);		///< Replace the given Varnode with its (constant) value in the load image
   bool replaceVolatile(Varnode *vn);		///< Replace accesses of the given Varnode with \e volatile operations
@@ -488,6 +492,12 @@ public:
   PcodeOpTree::const_iterator endOp(const Address &addr) const { return obank.end(addr); }
 
   bool moveRespectingCover(PcodeOp *op,PcodeOp *lastOp);	///< Move given op past \e lastOp respecting covers if possible
+
+  const ResolvedUnion *getUnionField(const Datatype *parent,const PcodeOp *op,int4 slot) const;
+  bool setUnionField(const Datatype *parent,const PcodeOp *op,int4 slot,const ResolvedUnion &resolve);
+  void forceFacingType(Datatype *parent,int4 fieldNum,PcodeOp *op,int4 slot);
+  void inheritReadResolution(const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot);
+  int4 inheritWriteResolution(Datatype *parent,const PcodeOp *op,PcodeOp *oldOp);
 
   // Jumptable routines
   JumpTable *linkJumpTable(PcodeOp *op);		///< Link jump-table with a given BRANCHIND

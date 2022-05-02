@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.program;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.util.*;
 import java.util.function.Function;
@@ -108,11 +108,10 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 	}
 
 	@Override
-	public Reference addOffsetMemReference(Address fromAddr, Address toAddr, long offset,
-			RefType type, SourceType source, int opIndex) {
-		return refs(true).addOffsetReference(chooseLifespan(fromAddr), fromAddr, toAddr, offset,
-			type,
-			source, opIndex);
+	public Reference addOffsetMemReference(Address fromAddr, Address toAddr, boolean toAddrIsBase,
+			long offset, RefType type, SourceType source, int opIndex) {
+		return refs(true).addOffsetReference(chooseLifespan(fromAddr), fromAddr, toAddr,
+			toAddrIsBase, offset, type, source, opIndex);
 	}
 
 	@Override

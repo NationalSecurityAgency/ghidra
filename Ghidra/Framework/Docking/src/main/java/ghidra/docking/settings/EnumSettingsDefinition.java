@@ -50,4 +50,9 @@ public interface EnumSettingsDefinition extends SettingsDefinition {
 	 */
 	public String[] getDisplayChoices(Settings settings);
 
+	@Override
+	public default boolean hasSameValue(Settings settings1, Settings settings2) {
+		return getChoice(settings1) == getChoice(settings2);
+	}
+
 }

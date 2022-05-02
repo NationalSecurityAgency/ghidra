@@ -95,7 +95,7 @@ public class DiscardedByLinkMsSymbol extends AbstractMsSymbol {
 //		SymbolParser parser = new SymbolParser(pdb);
 //		symbolList = parser.deserializeSymbolRecords(dataReader);
 		symbolList = getOrderedSymbols(
-			pdb.getSymbolRecords().deserializeSymbolRecords(dataReader, TaskMonitor.DUMMY));
+			SymbolRecords.deserializeSymbolRecords(pdb, dataReader, TaskMonitor.DUMMY));
 	}
 
 	/**

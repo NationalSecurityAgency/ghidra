@@ -20,13 +20,12 @@ import java.io.IOException;
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-import utilities.util.ArrayUtilities;
 
 public class Apple8900Header implements StructConverter {
 
-	private byte[] magic;
-	private byte[] version;
-	private byte encrypted;
+	private byte[] magic;			// "8900"
+	private byte[] version;			// "1.0"
+	private byte encrypted;			// format, plaintext=0x4, encrypted=0x3
 	private byte[] unknown0;
 	private int sizeOfData;
 	private int footerSignatureOffset;
@@ -61,7 +60,7 @@ public class Apple8900Header implements StructConverter {
 	}
 
 	public String getVersion() {
-		return new String(ArrayUtilities.reverse(version));
+		return new String(version);
 	}
 
 	public boolean isEncrypted() {

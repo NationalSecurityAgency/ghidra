@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * <pre>
@@ -40,38 +39,29 @@ public class OMFModule {
     private OMFSegDesc [] segDescArr;
     private String name;
 
-    static OMFModule createOMFModule(
-            FactoryBundledWithBinaryReader reader, int ptr, int byteCount)
-            throws IOException {
-        OMFModule omfModule = (OMFModule) reader.getFactory().create(OMFModule.class);
-        omfModule.initOMFModule(reader, ptr, byteCount);
-        return omfModule;
-    }
+	OMFModule(BinaryReader reader, int ptr, int byteCount) throws IOException {
+		int index = ptr;
 
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public OMFModule() {}
+		this.ovlNumber = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
+		this.iLib = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
+		this.cSeg = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
+		this.style = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
 
-    private void initOMFModule(FactoryBundledWithBinaryReader reader, int ptr, int byteCount) throws IOException {
-        int index = ptr;
+		this.segDescArr = new OMFSegDesc[cSeg];
 
-        this.ovlNumber = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
-        this.iLib      = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
-        this.cSeg      = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
-        this.style     = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
+		for (int i = 0; i < cSeg; ++i) {
+			segDescArr[i] = new OMFSegDesc(reader, index);
 
-        this.segDescArr = new OMFSegDesc[cSeg];
+			index += OMFSegDesc.IMAGE_SIZEOF_OMF_SEG_DESC;
+		}
 
-        for (int i = 0 ; i < cSeg ; ++i) {
-            segDescArr[i] = OMFSegDesc.createOMFSegDesc(reader, index);
+		++index; // why do we need to increment?????
 
-            index += OMFSegDesc.IMAGE_SIZEOF_OMF_SEG_DESC;
-        }
-
-        ++index; // why do we need to increment?????
-
-        name = reader.readAsciiString(index);
+		name = reader.readAsciiString(index);
     }
 
     public short getOvlNumber() {

@@ -1166,7 +1166,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	class RefreshingBundleHostListener implements BundleHostListener {
+	private class RefreshingBundleHostListener implements BundleHostListener {
 
 		@Override
 		public void bundleBuilt(GhidraBundle bundle, String summary) {
@@ -1179,8 +1179,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			GhidraSourceBundle sourceBundle = (GhidraSourceBundle) bundle;
 			ResourceFile sourceDirectory = sourceBundle.getFile();
 			if (summary == null) {
-				// a null summary means the build didn't change anything,
-				// so use any errors from the last build
+				// a null summary means the build didn't change anything, so use any errors from 
+				// the last build
 				for (ResourceFile sourceFile : sourceBundle.getAllErrors().keySet()) {
 					if (sourceFile.getParentFile().equals(sourceDirectory)) {
 						ScriptInfo scriptInfo = infoManager.getScriptInfo(sourceFile);

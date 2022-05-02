@@ -134,15 +134,15 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			}
 		}
 
-		public ProgramEnablement computeEnablement() {
+		public ProgramMode computeMode() {
 			if (eBookmark != null) {
-				return ProgramEnablement.ENABLED;
+				return ProgramMode.ENABLED;
 			}
 			if (dBookmark != null) {
-				return ProgramEnablement.DISABLED;
+				return ProgramMode.DISABLED;
 			}
 			else {
-				return ProgramEnablement.MISSING;
+				return ProgramMode.MISSING;
 			}
 		}
 
@@ -233,27 +233,29 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 		}
 
 		public boolean isEnabled() {
-			return computeEnablement() == ProgramEnablement.ENABLED;
+			return computeMode() == ProgramMode.ENABLED;
 		}
 
 		public boolean isDisabled() {
-			return computeEnablement() == ProgramEnablement.DISABLED;
+			return computeMode() == ProgramMode.DISABLED;
 		}
 
 		public String computeCategory() {
 			return TraceBreakpointKindSet.encode(kinds) + ";" + Long.toUnsignedString(length);
 		}
 
-		public void enableWithComment(String comment) {
+		public void toggleWithComment(boolean enabled, String comment) {
+			String addType =
+				enabled ? BREAKPOINT_ENABLED_BOOKMARK_TYPE : BREAKPOINT_DISABLED_BOOKMARK_TYPE;
+			String delType =
+				enabled ? BREAKPOINT_DISABLED_BOOKMARK_TYPE : BREAKPOINT_ENABLED_BOOKMARK_TYPE;
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(program, "Enable breakpoint", false)) {
+				UndoableTransaction.start(program, "Enable breakpoint", true)) {
 				BookmarkManager manager = program.getBookmarkManager();
 				String catStr = computeCategory();
-				manager.setBookmark(address, BREAKPOINT_ENABLED_BOOKMARK_TYPE, catStr,
-					comment);
-				manager.removeBookmarks(new AddressSet(address), BREAKPOINT_DISABLED_BOOKMARK_TYPE,
-					catStr, TaskMonitor.DUMMY);
-				tid.commit();
+				manager.setBookmark(address, addType, catStr, comment);
+				manager.removeBookmarks(new AddressSet(address), delType, catStr,
+					TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
 				throw new AssertionError(e);
@@ -264,26 +266,14 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			if (isEnabled()) {
 				return;
 			}
-			enableWithComment(getComment());
+			toggleWithComment(true, getComment());
 		}
 
 		public void disable() {
 			if (isDisabled()) {
 				return;
 			}
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(program, "Disable breakpoint", false)) {
-				BookmarkManager manager = program.getBookmarkManager();
-				String catStr = computeCategory();
-				manager.setBookmark(address, BREAKPOINT_DISABLED_BOOKMARK_TYPE, catStr,
-					getComment());
-				manager.removeBookmarks(new AddressSet(address), BREAKPOINT_ENABLED_BOOKMARK_TYPE,
-					catStr, TaskMonitor.DUMMY);
-				tid.commit();
-			}
-			catch (CancelledException e) {
-				throw new AssertionError(e);
-			}
+			toggleWithComment(false, getComment());
 		}
 	}
 
@@ -313,19 +303,22 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 		}
 
 		public Address computeTargetAddress() {
-			// TODO: Can this change? If not, can compute in constructor.
 			return recorder.getMemoryMapper().traceToTarget(address);
 		}
 
-		public TraceEnablement computeEnablement() {
-			TraceEnablement en = TraceEnablement.MISSING;
+		public TraceMode computeMode() {
+			TraceMode mode = TraceMode.NONE;
 			for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
-				en = en.combine(TraceEnablement.fromBool(bpt.obj.isEnabled(recorder.getSnap())));
-				if (en == TraceEnablement.MIXED) {
-					return en;
+				mode = mode.combine(computeMode(bpt.obj));
+				if (mode == TraceMode.MISSING) {
+					return mode;
 				}
 			}
-			return en;
+			return mode;
+		}
+
+		public TraceMode computeMode(TraceBreakpoint bpt) {
+			return TraceMode.fromBool(bpt.isEnabled(recorder.getSnap()));
 		}
 
 		public boolean isEmpty() {
@@ -445,6 +438,16 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * @param address the address of this logical breakpoint in the given trace
 	 */
 	void setTraceAddress(TraceRecorder recorder, Address address);
+
+	/**
+	 * Remove the given trace from this set
+	 * 
+	 * <p>
+	 * This happens when a trace's recorder stops or when a trace is closed.
+	 * 
+	 * @param trace the trace no longer participating
+	 */
+	void removeTrace(Trace trace);
 
 	boolean canMerge(Program program, Bookmark bookmark);
 

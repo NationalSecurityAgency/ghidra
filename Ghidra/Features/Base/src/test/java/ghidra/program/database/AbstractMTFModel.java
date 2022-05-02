@@ -17,6 +17,7 @@ package ghidra.program.database;
 
 import java.io.IOException;
 
+import db.*;
 import db.buffers.BufferFile;
 import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -28,6 +29,7 @@ import ghidra.program.model.listing.ProgramChangeSet;
 import ghidra.test.TestEnv;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -105,7 +107,7 @@ public abstract class AbstractMTFModel {
 		return privateChangeSet;
 	}
 
-	public ProgramChangeSet getResultChangeSet() {
+	public ProgramChangeSet getLatestChangeSet() {
 		return latestChangeSet;
 	}
 
@@ -113,7 +115,7 @@ public abstract class AbstractMTFModel {
 		return env;
 	}
 
-	protected void disableAutoAnalysis(Program p) {
+	protected static void disableAutoAnalysis(Program p) {
 		// Disable all analysis
 		AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(p);
 		AbstractGenericTest.setInstanceField("isEnabled", analysisMgr, Boolean.FALSE);
@@ -169,4 +171,25 @@ public abstract class AbstractMTFModel {
 			throws Exception;
 
 	public abstract void initialize(String programName, ProgramModifierListener l) throws Exception;
+
+	/**
+	 * Clone a program to a new instance.  The new instance will be assigned an empty change-set.
+	 * @param prog program to be cloned
+	 * @param consumer new program consumer
+	 * @return new program instance
+	 * @throws IOException if a file IO error occurs
+	 */
+	public static ProgramDB cloneProgram(ProgramDB prog, Object consumer) throws IOException {
+		try {
+			DBHandle newDbh = DBTestUtils.cloneDbHandle(prog.getDBHandle());
+			ProgramDB newProg =
+				new ProgramDB(newDbh, DBConstants.UPDATE, TaskMonitor.DUMMY, consumer);
+			newProg.setChangeSet(new ProgramDBChangeSet(newProg.getAddressMap(), 20));
+			disableAutoAnalysis(newProg);
+			return newProg;
+		}
+		catch (CancelledException | VersionException e) {
+			throw new RuntimeException(e); // unexpected
+		}
+	}
 }

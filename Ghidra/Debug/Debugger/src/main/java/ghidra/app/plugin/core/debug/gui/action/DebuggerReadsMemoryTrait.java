@@ -67,7 +67,7 @@ public abstract class DebuggerReadsMemoryTrait {
 			Trace trace = current.getTrace();
 			TraceRecorder recorder = current.getRecorder();
 			BackgroundUtils.async(tool, trace, NAME, true, true, false,
-				(__, monitor) -> recorder.captureProcessMemory(selection, monitor, false));
+				(__, monitor) -> recorder.readMemoryBlocks(selection, monitor, false));
 		}
 
 		@Override
@@ -78,7 +78,7 @@ public abstract class DebuggerReadsMemoryTrait {
 			}
 			TraceRecorder recorder = current.getRecorder();
 			// TODO: Either allow partial, or provide action to intersect with accessible
-			if (!recorder.getAccessibleProcessMemory().contains(selection)) {
+			if (!recorder.getAccessibleMemory().contains(selection)) {
 				return false;
 			}
 			return true;

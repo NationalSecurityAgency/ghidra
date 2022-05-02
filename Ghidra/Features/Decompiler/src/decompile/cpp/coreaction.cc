@@ -935,17 +935,25 @@ int4 ActionShadowVar::apply(Funcdata &data)
   return 0;
 }
 
-/// \brief Make a limited search from a constant for a LOAD or STORE so we can see the AddrSpace being accessed
+/// \brief Search for address space annotations in the path of a pointer constant.
 ///
-/// We traverse forward through the op reading the constant, through INT_ADD, INDIRECT, COPY, and MULTIEQUAL
-/// until we hit a LOAD or STORE.
+/// From a constant, search forward in its data-flow either for a LOAD or STORE operation where we can
+/// see the address space being accessed, or search for a pointer data-type with an address space attribute.
+/// We make a limited traversal through the op reading the constant, through INT_ADD, INDIRECT, COPY,
+/// and MULTIEQUAL until we hit a LOAD or STORE.
 /// \param vn is the constant we are searching from
 /// \param op is the PcodeOp reading the constant
 /// \return the discovered AddrSpace or null
-AddrSpace *ActionConstantPtr::searchForLoadStore(Varnode *vn,PcodeOp *op)
+AddrSpace *ActionConstantPtr::searchForSpaceAttribute(Varnode *vn,PcodeOp *op)
 
 {
   for(int4 i=0;i<3;++i) {
+    Datatype *dt = vn->getType();
+    if (dt->getMetatype() == TYPE_PTR) {
+      AddrSpace *spc = ((TypePointer*)dt)->getSpace();
+      if (spc != (AddrSpace*)0 && spc->getAddrSize() == vn->getSize())	// If provided a pointer with space attribute
+	return spc;		// use that
+    }
     switch(op->code()) {
       case CPUI_INT_ADD:
       case CPUI_COPY:
@@ -988,6 +996,11 @@ AddrSpace *ActionConstantPtr::selectInferSpace(Varnode *vn,PcodeOp *op,const vec
 
 {
   AddrSpace *resSpace = (AddrSpace *)0;
+  if (vn->getType()->getMetatype() == TYPE_PTR) {
+    AddrSpace *spc = ((TypePointer *)vn->getType())->getSpace();
+    if (spc != (AddrSpace *)0 && spc->getAddrSize() == vn->getSize())
+      return spc;
+  }
   for(int4 i=0;i<spaceList.size();++i) {
     AddrSpace *spc = spaceList[i];
     int4 minSize = spc->getMinimumPtrSize();
@@ -998,7 +1011,7 @@ AddrSpace *ActionConstantPtr::selectInferSpace(Varnode *vn,PcodeOp *op,const vec
     else if (vn->getSize() < minSize)
       continue;
     if (resSpace != (AddrSpace *)0) {
-      AddrSpace *searchSpc = searchForLoadStore(vn,op);
+      AddrSpace *searchSpc = searchForSpaceAttribute(vn,op);
       if (searchSpc != (AddrSpace *)0)
 	resSpace = searchSpc;
       break;
@@ -1029,7 +1042,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
   bool needexacthit;
   Architecture *glb = data.getArch();
   Varnode *outvn;
-  if (vn->getType()->getMetatype() == TYPE_PTR) { // Are we explicitly marked as a pointer
+  if (vn->getTypeReadFacing(op)->getMetatype() == TYPE_PTR) { // Are we explicitly marked as a pointer
     rampoint = glb->resolveConstant(spc,vn->getOffset(),vn->getSize(),op->getAddr(),fullEncoding);
     needexacthit = false;
   }
@@ -1057,9 +1070,9 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
       break;
     case CPUI_INT_ADD:
       outvn = op->getOut();
-      if (outvn->getType()->getMetatype()==TYPE_PTR) {
+      if (outvn->getTypeDefFacing()->getMetatype()==TYPE_PTR) {
 	// Is there another pointer base in this expression
-	if (op->getIn(1-slot)->getType()->getMetatype()==TYPE_PTR)
+	if (op->getIn(1-slot)->getTypeReadFacing(op)->getMetatype()==TYPE_PTR)
 	  return (SymbolEntry *)0; // If so, we are not a pointer
 	// FIXME: need to fully explore additive tree
 	needexacthit = false;
@@ -1197,7 +1210,7 @@ int4 ActionDeindirect::apply(Funcdata &data)
     }
     if (data.isTypeRecoveryOn()) {
       // Check for a function pointer that has an attached prototype
-      Datatype *ct = op->getIn(0)->getType();
+      Datatype *ct = op->getIn(0)->getTypeReadFacing(op);
       if ((ct->getMetatype()==TYPE_PTR)&&
 	  (((TypePointer *)ct)->getPtrTo()->getMetatype()==TYPE_CODE)) {
 	TypeCode *tc = (TypeCode *)((TypePointer *)ct)->getPtrTo();
@@ -2167,20 +2180,57 @@ int4 ActionDefaultParams::apply(Funcdata &data)
   return 0;			// Indicate success
 }
 
+/// \brief Check if the data-type of the given value being used as a pointer makes sense
+///
+/// If the data-type is a pointer make sure:
+///   - The pointed-to size matches the size of the value being loaded are stored
+///   - Any address space attached to the pointer matches the address space of the LOAD/STORE
+///
+/// If any of the conditions are violated, a warning is added to the output.
+/// \param op is the LOAD/STORE acting on a pointer
+/// \param vn is the given value being used as a pointer
+/// \param data is the function containing the PcodeOp
+void ActionSetCasts::checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data)
+
+{
+  Datatype *ptrtype = op->getIn(1)->getHighTypeReadFacing(op);
+  int4 valsize = vn->getSize();
+  if ((ptrtype->getMetatype()!=TYPE_PTR)|| (((TypePointer *)ptrtype)->getPtrTo()->getSize() != valsize)) {
+    string name = op->getOpcode()->getName();
+    name[0] = toupper( name[0] );
+    data.warning(name + " size is inaccurate",op->getAddr());
+  }
+  if (ptrtype->getMetatype()==TYPE_PTR) {
+    AddrSpace *spc = ((TypePointer *)ptrtype)->getSpace();
+    if (spc != (AddrSpace *)0) {
+      AddrSpace *opSpc = Address::getSpaceFromConst(op->getIn(0)->getAddr());
+      if (opSpc != spc && spc->getContain() != opSpc) {
+	string name = op->getOpcode()->getName();
+	name[0] = toupper( name[0] );
+	ostringstream s;
+	s << name << " refers to '" << opSpc->getName() << "' but pointer attribute is '";
+	s << spc->getName() << '\'';
+	data.warning(s.str(),op->getAddr());
+      }
+    }
+  }
+}
+
 /// \brief Test if the given cast conflict can be resolved by passing to the first structure field
 ///
 /// Test if the given Varnode data-type is a pointer to a structure and if interpreting
 /// the data-type as a pointer to the structure's first field will get it to match the
 /// desired data-type.
 /// \param vn is the given Varnode
+/// \param op is the PcodeOp reading the Varnode
 /// \param ct is the desired data-type
 /// \param castStrategy is used to determine if the data-types are compatible
 /// \return \b true if a pointer to the first field makes sense
-bool ActionSetCasts::testStructOffset0(Varnode *vn,Datatype *ct,CastStrategy *castStrategy)
+bool ActionSetCasts::testStructOffset0(Varnode *vn,PcodeOp *op,Datatype *ct,CastStrategy *castStrategy)
 
 {
   if (ct->getMetatype() != TYPE_PTR) return false;
-  Datatype *highType = vn->getHigh()->getType();
+  Datatype *highType = vn->getHighTypeReadFacing(op);
   if (highType->getMetatype() != TYPE_PTR) return false;
   Datatype *highPtrTo = ((TypePointer *)highType)->getPtrTo();
   if (highPtrTo->getMetatype() != TYPE_STRUCT) return false;
@@ -2195,6 +2245,52 @@ bool ActionSetCasts::testStructOffset0(Varnode *vn,Datatype *ct,CastStrategy *ca
   if (curtype->getMetatype() == TYPE_ARRAY)
     curtype = ((TypeArray *)curtype)->getBase();
   return (castStrategy->castStandard(reqtype, curtype, true, true) == (Datatype *)0);
+}
+
+/// \brief Try to adjust the input and output Varnodes to eliminate a CAST
+///
+/// If input/output data-types are different, it may be due to late merges.  For
+/// unions, the CAST can sometimes be eliminated by adjusting the data-type resolutions
+/// of the Varnodes relative to the PcodeOp
+/// \param op is the PcodeOp reading the input Varnode and writing the output Varnode
+/// \param slot is the index of the input Varnode
+/// \param data is the function
+/// \return \b true if an adjustment is made so that a CAST is no longer needed
+bool ActionSetCasts::tryResolutionAdjustment(PcodeOp *op,int4 slot,Funcdata &data)
+
+{
+  Varnode *outvn = op->getOut();
+  if (outvn == (Varnode *)0)
+    return false;
+  Datatype *outType = outvn->getHigh()->getType();
+  Datatype *inType = op->getIn(slot)->getHigh()->getType();
+  if (!inType->needsResolution() && !outType->needsResolution()) return false;
+  int4 inResolve = -1;
+  int4 outResolve = -1;
+  if (inType->needsResolution()) {
+    inResolve = inType->findCompatibleResolve(outType);
+    if (inResolve < 0) return false;
+  }
+  if (outType->needsResolution()) {
+    if (inResolve >= 0)
+      outResolve = outType->findCompatibleResolve(inType->getDepend(inResolve));
+    else
+      outResolve = outType->findCompatibleResolve(inType);
+    if (outResolve < 0) return false;
+  }
+
+  TypeFactory *typegrp = data.getArch()->types;
+  if (inType->needsResolution()) {
+    ResolvedUnion resolve(inType,inResolve,*typegrp);
+    if (!data.setUnionField(inType, op, slot, resolve))
+      return false;
+  }
+  if (outType->needsResolution()) {
+    ResolvedUnion resolve(outType,outResolve,*typegrp);
+    if (!data.setUnionField(outType, op, -1, resolve))
+      return false;
+  }
+  return true;
 }
 
 /// \brief Test if two data-types are operation identical
@@ -2219,6 +2315,42 @@ bool ActionSetCasts::isOpIdentical(Datatype *ct1,Datatype *ct2)
   return (ct1 == ct2);
 }
 
+/// \brief If the given op reads a pointer to a union, insert the CPUI_PTRSUB that resolves the union
+///
+/// \param op is the given PcodeOp
+/// \param slot is index of the input slot being read
+/// \param data is the containing function
+/// \return 1 if a PTRSUB is inserted, 0 otherwise
+int4 ActionSetCasts::resolveUnion(PcodeOp *op,int4 slot,Funcdata &data)
+
+{
+  Varnode *vn = op->getIn(slot);
+  if (vn->isAnnotation()) return 0;
+  Datatype *dt = vn->getHigh()->getType();
+  if (!dt->needsResolution())
+    return 0;
+  const ResolvedUnion *resUnion = data.getUnionField(dt, op,slot);
+  if (resUnion != (ResolvedUnion*)0 && resUnion->getFieldNum() >= 0) {
+    // Insert specific placeholder indicating which field is accessed
+    if (dt->getMetatype() == TYPE_PTR) {
+      PcodeOp *ptrsub = insertPtrsubZero(op,slot,resUnion->getDatatype(),data);
+      data.setUnionField(dt, ptrsub,-1,*resUnion);			// Attach the resolution to the PTRSUB
+    }
+    else if (vn->isImplied()) {
+      if (vn->isWritten()) {
+	// If the writefacing and readfacing resolutions for vn (an implied variable) are the same,
+	// the resolutions are unnecessary and we treat the vn as if it had the field data-type
+	const ResolvedUnion *writeRes = data.getUnionField(dt, vn->getDef(), -1);
+	if (writeRes != (const ResolvedUnion *)0 && writeRes->getFieldNum() == resUnion->getFieldNum())
+	  return 0;	// Don't print implied fields for vn
+      }
+      vn->setImpliedField();
+    }
+    return 1;
+  }
+  return 0;
+}
+
 /// \brief Insert cast to output Varnode type after given PcodeOp if it is necessary
 ///
 /// \param op is the given PcodeOp
@@ -2231,12 +2363,23 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   Datatype *outct,*ct,*tokenct;
   Varnode *vn,*outvn;
   PcodeOp *newop;
-  HighVariable *outHigh;
+  Datatype *outHighType;
   bool force=false;
 
   tokenct = op->getOpcode()->getOutputToken(op,castStrategy);
   outvn = op->getOut();
-  outHigh = outvn->getHigh();
+  outHighType = outvn->getHigh()->getType();
+  if (tokenct == outHighType) {
+    if (tokenct->needsResolution()) {
+      // operation copies directly to outvn AS a union
+      ResolvedUnion resolve(tokenct);
+      data.setUnionField(tokenct, op, -1, resolve);
+    }
+    // Short circuit more sophisticated casting tests.  If they are the same type, there is no cast
+    return 0;
+  }
+  if (outHighType->needsResolution())
+    outHighType = outHighType->findResolve(op, -1);	// Finish fetching DefFacing data-type
   if (outvn->isImplied()) {
     // implied varnode must have parse type
     if (outvn->isTypeLock()) {
@@ -2244,26 +2387,30 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
       // The Varnode input to a CPUI_RETURN is marked as implied but
       // casting should act as if it were explicit
       if (outOp == (PcodeOp *)0 || outOp->code() != CPUI_RETURN) {
-	force = !isOpIdentical(outHigh->getType(), tokenct);
+	force = !isOpIdentical(outHighType, tokenct);
       }
     }
-    else if (outHigh->getType()->getMetatype() != TYPE_PTR) // If implied varnode has an atomic (non-pointer) type
+    else if (outHighType->getMetatype() != TYPE_PTR) {	// If implied varnode has an atomic (non-pointer) type
       outvn->updateType(tokenct,false,false); // Ignore it in favor of the token type
+      outHighType = outvn->getHighTypeDefFacing();
+    }
     else if (tokenct->getMetatype() == TYPE_PTR) { // If the token is a pointer AND implied varnode is pointer
-      outct = ((TypePointer *)outHigh->getType())->getPtrTo();
+      outct = ((TypePointer *)outHighType)->getPtrTo();
       type_metatype meta = outct->getMetatype();
       // Preserve implied pointer if it points to a composite
-      if ((meta!=TYPE_ARRAY)&&(meta!=TYPE_STRUCT))
+      if ((meta!=TYPE_ARRAY)&&(meta!=TYPE_STRUCT)&&(meta!=TYPE_UNION)) {
 	outvn->updateType(tokenct,false,false); // Otherwise ignore it in favor of the token type
+	outHighType = outvn->getHighTypeDefFacing();
+      }
     }
   }
   if (!force) {
-    outct = outHigh->getType();	// Type of result
+    outct = outHighType;	// Type of result
     ct = castStrategy->castStandard(outct,tokenct,false,true);
     if (ct == (Datatype *)0) return 0;
   }
 				// Generate the cast op
-  vn = data.newUnique(op->getOut()->getSize());
+  vn = data.newUnique(outvn->getSize());
   vn->updateType(tokenct,false,false);
   vn->setImplied();
   newop = data.newOp(1,op->getAddr());
@@ -2271,11 +2418,42 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   data.getArch()->stats->countCast();
 #endif
   data.opSetOpcode(newop,CPUI_CAST);
-  data.opSetOutput(newop,op->getOut());
+  data.opSetOutput(newop,outvn);
   data.opSetInput(newop,vn,0);
   data.opSetOutput(op,vn);
   data.opInsertAfter(newop,op); // Cast comes AFTER this operation
+  if (outHighType->needsResolution())
+    data.forceFacingType(outHighType, -1, newop, -1);
+
   return 1;
+}
+
+/// \brief Insert a PTRSUB with offset 0 that accesses a field of the given data-type
+///
+/// The data-type can be a structure, in which case the field at offset zero is being accessed.
+/// The data-type can reference a union, in which case a specific field is being accessed
+/// as indicated by Funcdata::getUnionField.  The PTRSUB is inserted right before the given
+/// PcodeOp.  The indicated input Varnode becomes the PTRSUB input, and the PTRSUB output
+/// replaces the Varnode in the PcodeOp.
+/// \param op is the given PcodeOp where the PTRSUB is inserted
+/// \param slot is the slot corresponding to the indicated Varnode
+/// \param ct is the data-type produced by the PTRSUB
+/// \param data is containing Function
+/// \return the new PTRSUB op
+PcodeOp *ActionSetCasts::insertPtrsubZero(PcodeOp *op,int4 slot,Datatype *ct,Funcdata &data)
+
+{
+  Varnode *vn = op->getIn(slot);
+  PcodeOp *newop = data.newOp(2,op->getAddr());
+  Varnode *vnout = data.newUniqueOut(vn->getSize(), newop);
+  vnout->updateType(ct,false,false);
+  vnout->setImplied();
+  data.opSetOpcode(newop, CPUI_PTRSUB);
+  data.opSetInput(newop,vn,0);
+  data.opSetInput(newop,data.newConstant(4, 0),1);
+  data.opSetInput(op,vnout,slot);
+  data.opInsertBefore(newop,op);
+  return newop;
 }
 
 /// \brief Insert cast to produce the input Varnode to a given PcodeOp if necessary
@@ -2296,7 +2474,9 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
 
   ct = op->getOpcode()->getInputCast(op,slot,castStrategy); // Input type expected by this operation
   if (ct == (Datatype *)0) {
-    if (op->markExplicitUnsigned(slot))	// Decide if this input should be explicitly printed as unsigned constant
+    bool resUnsigned = castStrategy->markExplicitUnsigned(op, slot);
+    bool resSized = castStrategy->markExplicitLongSize(op, slot);
+    if (resUnsigned || resSized)
       return 1;
     return 0;
   }
@@ -2315,17 +2495,12 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
     if (vn->getType() == ct)
       return 1;
   }
-  else if (testStructOffset0(vn, ct, castStrategy)) {
+  else if (testStructOffset0(vn, op, ct, castStrategy)) {
     // Insert a PTRSUB(vn,#0) instead of a CAST
-    newop = data.newOp(2,op->getAddr());
-    vnout = data.newUniqueOut(vn->getSize(), newop);
-    vnout->updateType(ct,false,false);
-    vnout->setImplied();
-    data.opSetOpcode(newop, CPUI_PTRSUB);
-    data.opSetInput(newop,vn,0);
-    data.opSetInput(newop,data.newConstant(4, 0),1);
-    data.opSetInput(op,vnout,slot);
-    data.opInsertBefore(newop,op);
+    insertPtrsubZero(op, slot, ct, data);
+    return 1;
+  }
+  else if (tryResolutionAdjustment(op, slot, data)) {
     return 1;
   }
   newop = data.newOp(1,op->getAddr());
@@ -2339,6 +2514,12 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
   data.opSetInput(newop,vn,0);
   data.opSetInput(op,vnout,slot);
   data.opInsertBefore(newop,op); // Cast comes AFTER operation
+  if (ct->needsResolution()) {
+    data.forceFacingType(ct, -1, newop, -1);
+  }
+  if (vn->getHigh()->getType()->needsResolution()) {
+    data.inheritReadResolution(newop, 0, op, slot);
+  }
   return 1;
 }
 
@@ -2362,12 +2543,12 @@ int4 ActionSetCasts::apply(Funcdata &data)
       if (opc == CPUI_CAST) continue;
       if (opc == CPUI_PTRADD) {	// Check for PTRADD that no longer fits its pointer
 	int4 sz = (int4)op->getIn(2)->getOffset();
-	TypePointer *ct = (TypePointer *)op->getIn(0)->getHigh()->getType();
+	TypePointer *ct = (TypePointer *)op->getIn(0)->getHighTypeReadFacing(op);
 	if ((ct->getMetatype() != TYPE_PTR)||(ct->getPtrTo()->getSize() != AddrSpace::addressToByteInt(sz, ct->getWordSize())))
 	  data.opUndoPtradd(op,true);
       }
       else if (opc == CPUI_PTRSUB) {	// Check for PTRSUB that no longer fits pointer
-	if (!op->getIn(0)->getHigh()->getType()->isPtrsubMatching(op->getIn(1)->getOffset())) {
+	if (!op->getIn(0)->getHighTypeReadFacing(op)->isPtrsubMatching(op->getIn(1)->getOffset())) {
 	  if (op->getIn(1)->getOffset() == 0) {
 	    data.opRemoveInput(op, 1);
 	    data.opSetOpcode(op, CPUI_COPY);
@@ -2376,21 +2557,16 @@ int4 ActionSetCasts::apply(Funcdata &data)
 	    data.opSetOpcode(op, CPUI_INT_ADD);
 	}
       }
-      for(int4 i=0;i<op->numInput();++i) // Do input casts first, as output may depend on input
+      // Do input casts first, as output may depend on input
+      for(int4 i=0;i<op->numInput();++i) {
+	count += resolveUnion(op, i, data);
 	count += castInput(op,i,data,castStrategy);
+      }
       if (opc == CPUI_LOAD) {
-	TypePointer *ptrtype = (TypePointer *)op->getIn(1)->getHigh()->getType();
-	int4 valsize = op->getOut()->getSize();
-	if ((ptrtype->getMetatype()!=TYPE_PTR)||
-	    (ptrtype->getPtrTo()->getSize() != valsize))
-	  data.warning("Load size is inaccurate",op->getAddr());
+	checkPointerIssues(op, op->getOut(), data);
       }
       else if (opc == CPUI_STORE) {
-	TypePointer *ptrtype = (TypePointer *)op->getIn(1)->getHigh()->getType();
-	int4 valsize = op->getIn(2)->getSize();
-	if ((ptrtype->getMetatype()!=TYPE_PTR)||
-	    (ptrtype->getPtrTo()->getSize() != valsize))
-	  data.warning("Store size is inaccurate",op->getAddr());
+	checkPointerIssues(op, op->getIn(2), data);
       }
       Varnode *vn = op->getOut();
       if (vn == (Varnode *)0) continue;
@@ -4240,7 +4416,13 @@ void ActionInferTypes::buildLocaltypes(Funcdata &data)
     if (vn->isAnnotation()) continue;
     if ((!vn->isWritten())&&(vn->hasNoDescend())) continue;
     bool needsBlock = false;
-    ct = vn->getLocalType(needsBlock);
+    if (vn->getSymbolEntry() != (SymbolEntry *)0) {
+      ct = data.checkSymbolType(vn);
+      if (ct == (Datatype *)0)
+	ct = vn->getLocalType(needsBlock);
+    }
+    else
+      ct = vn->getLocalType(needsBlock);
     if (needsBlock)
       vn->setStopUpPropagation();
 #ifdef TYPEPROP_DEBUG
@@ -4273,200 +4455,6 @@ bool ActionInferTypes::writeBack(Funcdata &data)
   return change;
 }
 
-/// Determine if the given data-type edge looks like a pointer
-/// propagating through an "add a constant" operation. We assume the input
-/// to the edge has a pointer data-type.  This routine returns one the commands:
-///   - 0  indicates this is "add a constant" adding a zero  (PTRSUB or PTRADD)
-///   - 1  indicates this is "add a constant" and the constant is passed back
-///   - 2  indicating the pointer does not propagate through
-///   - 3  the input data-type propagates through untransformed
-///
-/// \param off passes back the constant offset if the command is '0' or '1'
-/// \param op is the PcodeOp propagating the data-type
-/// \param slot is the input edge being propagated
-/// \param sz is the size of the data-type being pointed to
-/// \return a command indicating how the op should be treated
-int4 ActionInferTypes::propagateAddPointer(uintb &off,PcodeOp *op,int4 slot,int4 sz)
-
-{
-  if (op->code() == CPUI_PTRADD) {
-    if (slot != 0) return 2;
-    Varnode *constvn = op->getIn(1);
-    uintb mult = op->getIn(2)->getOffset();
-    if (constvn->isConstant()) {
-      off = (constvn->getOffset() * mult) & calc_mask(constvn->getSize()) ;
-      return (off == 0) ? 0 : 1;
-    }
-    if (sz != 0 && (mult % sz) != 0)
-      return 2;
-    return 3;
-  }
-  if (op->code() == CPUI_PTRSUB) {
-    if (slot != 0) return 2;
-    off = op->getIn(1)->getOffset();
-    return (off == 0) ? 0 : 1;
-  }
-  if (op->code() == CPUI_INT_ADD) {
-    Varnode *othervn = op->getIn(1-slot);
-				// Check if othervn is an offset
-    if (!othervn->isConstant()) {
-      if (othervn->isWritten()) {
-	PcodeOp *multop = othervn->getDef();
-	if (multop->code() == CPUI_INT_MULT) {
-	  Varnode *constvn = multop->getIn(1);
-	  if (constvn->isConstant()) {
-	    uintb mult = constvn->getOffset();
-	    if (mult == calc_mask(constvn->getSize()))	// If multiplying by -1
-	      return 2;		// Assume this is a pointer difference and don't propagate
-	    if (sz != 0 && (mult % sz) !=0)
-	      return 2;
-	  }
-	  return 3;
-	}
-      }
-      if (sz == 1)
-	return 3;
-      return 2;
-    }
-    if (othervn->getTempType()->getMetatype() == TYPE_PTR) // Check if othervn marked as ptr
-      return 2;
-    off = othervn->getOffset();
-    return (off == 0) ? 0 : 1;
-  }
-  return 2;
-}
-
-/// \brief Propagate a pointer data-type through an ADD operation.
-///
-/// Assuming a pointer data-type from an ADD PcodeOp propagates from an input to
-/// its output, calculate the transformed data-type of the output Varnode, which
-/// will depend on details of the operation. If the edge doesn't make sense as
-/// "an ADD to a pointer", prevent the propagation by returning the output Varnode's
-/// current data-type.
-/// \param typegrp is the TypeFactory for constructing the transformed Datatype
-/// \param op is the ADD operation
-/// \param inslot is the edge to propagate along
-/// \return the transformed Datatype or the original output Datatype
-Datatype *ActionInferTypes::propagateAddIn2Out(TypeFactory *typegrp,PcodeOp *op,int4 inslot)
-
-{
-  TypePointer *pointer = (TypePointer *)op->getIn(inslot)->getTempType(); // We know this is a pointer type
-  uintb uoffset;
-  int4 command = propagateAddPointer(uoffset,op,inslot,pointer->getPtrTo()->getSize());
-  if (command == 2) return op->getOut()->getTempType(); // Doesn't look like a good pointer add
-  TypePointer *parent = (TypePointer *)0;
-  uintb parentOff;
-  if (command != 3) {
-    uoffset = AddrSpace::addressToByte(uoffset,pointer->getWordSize());
-    bool allowWrap = (op->code() != CPUI_PTRSUB);
-    do {
-      pointer = pointer->downChain(uoffset,parent,parentOff,allowWrap,*typegrp);
-      if (pointer == (TypePointer *)0)
-	break;
-    } while(uoffset != 0);
-  }
-  if (parent != (TypePointer *)0) {
-    // If the innermost containing object is a TYPE_STRUCT or TYPE_ARRAY
-    // preserve info about this container
-    Datatype *pt;
-    if (pointer == (TypePointer *)0)
-      pt = typegrp->getBase(1,TYPE_UNKNOWN); // Offset does not point at a proper sub-type
-    else
-      pt = pointer->getPtrTo();	// The sub-type being directly pointed at
-    pointer = typegrp->getTypePointerRel(parent, pt, parentOff);
-  }
-  if (pointer == (TypePointer *)0) {
-    if (command == 0)
-      return op->getIn(inslot)->getTempType();
-    return  op->getOut()->getTempType();
-  }
-  if (op->getIn(inslot)->isSpacebase()) {
-    if (pointer->getPtrTo()->getMetatype() == TYPE_SPACEBASE)
-      pointer = typegrp->getTypePointer(pointer->getSize(),typegrp->getBase(1,TYPE_UNKNOWN),pointer->getWordSize());
-  }
-  return pointer;
-}
-
-/// \brief Determine if propagation should happen along the given edge
-///
-/// This enforces a series of rules about how a data-type can propagate
-/// between the input and output Varnodes of a single PcodeOp. An input to the
-/// edge may either an input or output to the PcodeOp.  A \e slot value of -1
-/// indicates the PcodeOp output, a non-negative value indicates a PcodeOp input index.
-/// \param op is the PcodeOp to test propagation through
-/// \param inslot indicates the edge's input Varnode
-/// \param outslot indicates the edge's output Varnode
-/// \param invn is the input Varnode
-/// \return \b false if edge cannot propagate type
-bool ActionInferTypes::propagateGoodEdge(PcodeOp *op,int4 inslot,int4 outslot,Varnode *invn)
-
-{
-  if (inslot == outslot) return false; // don't backtrack
-  type_metatype metain = invn->getTempType()->getMetatype();
-  switch(op->code()) {
-  case CPUI_NEW:
-    if ((inslot != 0)||(outslot != -1)) return false;
-    break;
-  case CPUI_INDIRECT:
-    if (op->isIndirectCreation()) return false;
-    if ((inslot==1)||(outslot==1)) return false;
-    if ((inslot!=-1)&&(outslot!=-1)) return false; // Must propagate input <-> output
-    break;
-  case CPUI_COPY:
-    if ((inslot!=-1)&&(outslot!=-1)) return false; // Must propagate input <-> output
-    break;
-  case CPUI_MULTIEQUAL:
-    if ((inslot!=-1)&&(outslot!=-1)) return false; // Must propagate input <-> output
-    break;
-  case CPUI_INT_SLESS:
-  case CPUI_INT_SLESSEQUAL:
-  case CPUI_INT_LESS:
-  case CPUI_INT_LESSEQUAL:
-    if ((inslot==-1)||(outslot==-1)) return false; // Must propagate input <-> input
-    break;
-  case CPUI_INT_EQUAL:
-  case CPUI_INT_NOTEQUAL:
-    if ((inslot==-1)||(outslot==-1)) return false; // Must propagate input <-> input
-    break;
-  case CPUI_LOAD:
-  case CPUI_STORE:
-    if ((inslot==0)||(outslot==0)) return false; // Don't propagate along this edge
-    if (invn->isSpacebase()) return false;
-    break;
-  case CPUI_PTRADD:
-    if ((inslot==2)||(outslot==2)) return false; // Don't propagate along this edge
-  case CPUI_PTRSUB:
-    if ((inslot!=-1)&&(outslot!=-1)) return false; // Must propagate input <-> output
-    if (metain != TYPE_PTR) return false;
-    break;
-  case CPUI_INT_ADD:
-    if (metain != TYPE_PTR) {
-      if ((metain == TYPE_INT)||(metain == TYPE_UINT)) {
-	if ((outslot==1) && (op->getIn(1)->isConstant()))
-	    return true;
-      }
-      return false;
-    }
-    if ((inslot!=-1)&&(outslot!=-1)) return false; // Must propagate input <-> output
-    break;
-  case CPUI_SEGMENTOP:
-    // Must propagate  slot2 <-> output
-    if ((inslot==0)||(inslot==1)) return false;
-    if ((outslot==0)||(outslot==1)) return false;
-    if (invn->isSpacebase()) return false;
-    if (metain != TYPE_PTR) return false;
-    break;
-  case CPUI_INT_AND:
-  case CPUI_INT_OR:
-  case CPUI_INT_XOR:
-    if (!invn->getTempType()->isPowerOfTwo()) return false; // Only propagate flag enums
-    break;
-  default:
-    return false;
-  }
-  return true;
-}
-
 /// \brief Attempt to propagate a data-type across a single PcodeOp edge
 ///
 /// Given an \e input Varnode and an \e output Varnode defining a directed edge
@@ -4483,126 +4471,31 @@ bool ActionInferTypes::propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 i
 
 {
   Varnode *invn,*outvn;
-  Datatype *newtype;
 
+  if (inslot == outslot) return false; // don't backtrack
   if (outslot < 0)
     outvn = op->getOut();
   else {
     outvn = op->getIn(outslot);
-    if (outvn->stopsUpPropagation())
-      return false;
+    if (outvn->isAnnotation()) return false;
   }
-  if (outvn->isAnnotation()) return false;
-  if (outvn->isTypeLock()) return false; // Can't propagate through typelock
   invn = (inslot==-1) ? op->getOut() : op->getIn(inslot);
-  if (!propagateGoodEdge(op,inslot,outslot,invn))
-    return false;
-
   Datatype *alttype = invn->getTempType();
+  if (alttype->needsResolution()) {
+    alttype = alttype->resolveInFlow(op, inslot);
+  }
+  if (outvn->isTypeLock()) return false; // Can't propagate through typelock
+  if (outvn->stopsUpPropagation() && outslot >= 0) return false;	// Propagation is blocked
+
   if (alttype->getMetatype() == TYPE_BOOL) {	// Only propagate boolean
     if (outvn->getNZMask() > 1)			// If we know output can only take boolean values
       return false;
   }
-  switch(op->code()) {
-  case CPUI_INT_LESS:
-  case CPUI_INT_LESSEQUAL:
-  case CPUI_INT_EQUAL:
-  case CPUI_INT_NOTEQUAL:
-    if (invn->isSpacebase()) {
-      AddrSpace *spc = typegrp->getArch()->getDefaultDataSpace();
-      newtype = typegrp->getTypePointer(alttype->getSize(),typegrp->getBase(1,TYPE_UNKNOWN),spc->getWordSize());
-    }
-    else if (alttype->isPointerRel() && !outvn->isConstant()) {
-      TypePointerRel *relPtr = (TypePointerRel *)alttype;
-      if (relPtr->getParent()->getMetatype() == TYPE_STRUCT && relPtr->getPointerOffset() >= 0) {
-	// If we know the pointer is in the middle of a structure, don't propagate across comparison operators
-	// as the two sides of the operator are likely to be different types , and the other side can also
-	// get data-type information from the structure pointer
-	newtype = typegrp->getTypePointer(relPtr->getSize(),typegrp->getBase(1,TYPE_UNKNOWN),relPtr->getWordSize());
-      }
-      else
-	newtype = alttype;
-    }
-    else
-      newtype = alttype;
-    break;
-  case CPUI_INDIRECT:
-  case CPUI_COPY:
-  case CPUI_MULTIEQUAL:
-  case CPUI_INT_AND:
-  case CPUI_INT_OR:
-  case CPUI_INT_XOR:
-    if (invn->isSpacebase()) {
-      AddrSpace *spc = typegrp->getArch()->getDefaultDataSpace();
-      newtype = typegrp->getTypePointer(alttype->getSize(),typegrp->getBase(1,TYPE_UNKNOWN),spc->getWordSize());
-    }
-    else
-      newtype = alttype;
-    break;
-  case CPUI_INT_SLESS:
-  case CPUI_INT_SLESSEQUAL:
-    if (alttype->getMetatype() != TYPE_INT) return false;	// Only propagate signed things
-    newtype = alttype;
-    break;
-  case CPUI_NEW:
-    {
-      Varnode *vn0 = op->getIn(0);
-      if (!vn0->isWritten()) return false;		// Don't propagate
-      if (vn0->getDef()->code() != CPUI_CPOOLREF) return false;
-      newtype = alttype;		// Propagate cpool result as result of new operator
-    }
-    break;
-  case CPUI_SEGMENTOP:
-    {
-      AddrSpace *spc = typegrp->getArch()->getDefaultDataSpace();
-      Datatype *btype = ((TypePointer *)alttype)->getPtrTo();
-      newtype = typegrp->getTypePointer(outvn->getSize(),btype,spc->getWordSize());
-    }
-    break;
-  case CPUI_LOAD:
-    if (inslot == -1) {	 // Propagating output to input (value to ptr)
-      AddrSpace *spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());
-      newtype = typegrp->getTypePointerNoDepth(outvn->getTempType()->getSize(),alttype,spc->getWordSize());
-    }
-    else if (alttype->getMetatype()==TYPE_PTR) {
-      newtype = ((TypePointer *)alttype)->getPtrTo();
-      if (newtype->getSize() != outvn->getTempType()->getSize() || newtype->isVariableLength()) // Size must be appropriate
-	newtype = outvn->getTempType();
-    }
-    else
-      newtype = outvn->getTempType(); // Don't propagate anything
-    break;
-  case CPUI_STORE:
-    if (inslot==2) {		// Propagating value to ptr
-      AddrSpace *spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());
-      newtype = typegrp->getTypePointerNoDepth(outvn->getTempType()->getSize(),alttype,spc->getWordSize());
-    }
-    else if (alttype->getMetatype()==TYPE_PTR) {
-      newtype = ((TypePointer *)alttype)->getPtrTo();
-      if (newtype->getSize() != outvn->getTempType()->getSize() || newtype->isVariableLength())
-	newtype = outvn->getTempType();
-    }
-    else
-      newtype = outvn->getTempType(); // Don't propagate anything
-    break;
-  case CPUI_PTRADD:
-  case CPUI_PTRSUB:
-    if (inslot == -1)		// Propagating output to input
-      newtype = op->getIn(outslot)->getTempType();	// Don't propagate pointer types this direction
-    else
-      newtype = propagateAddIn2Out(typegrp,op,inslot);
-    break;
-  case CPUI_INT_ADD:
-    if (outvn->isConstant() && (alttype->getMetatype() != TYPE_PTR))
-      newtype = alttype;
-    else if (inslot == -1)		// Propagating output to input
-      newtype = op->getIn(outslot)->getTempType();	// Don't propagate pointer types this direction
-    else
-      newtype = propagateAddIn2Out(typegrp,op,inslot);
-    break;
-  default:
-    return false;		// Don't propagate along this edge
-  }
+
+  Datatype *newtype = op->getOpcode()->propagateType(alttype, op, invn, outvn, inslot, outslot);
+  if (newtype == (Datatype *)0)
+    return false;
+
   if (0>newtype->typeOrder(*outvn->getTempType())) {
 #ifdef TYPEPROP_DEBUG
     propagationDebug(typegrp->getArch(),outvn,newtype,op,inslot,(Varnode *)0);
@@ -4939,11 +4832,11 @@ void TermOrder::collect(void)
     for(int4 i=0;i<curop->numInput();++i) {
       curvn = curop->getIn(i);	// curvn is a node of the subtree IF
       if (!curvn->isWritten()) { // curvn is not defined by another operation
-	terms.push_back(PcodeOpEdge(curop,i,multop));
+	terms.push_back(AdditiveEdge(curop,i,multop));
 	continue;
       }
       if (curvn->loneDescend() == (PcodeOp *)0) { // curvn has more then one use
-	terms.push_back(PcodeOpEdge(curop,i,multop));
+	terms.push_back(AdditiveEdge(curop,i,multop));
 	continue;
       }
       subop = curvn->getDef();
@@ -4958,7 +4851,7 @@ void TermOrder::collect(void)
 	    }
 	  }
 	}
-	terms.push_back(PcodeOpEdge(curop,i,multop));
+	terms.push_back(AdditiveEdge(curop,i,multop));
 	continue;
       }
       opstack.push_back(subop);
@@ -4970,7 +4863,7 @@ void TermOrder::collect(void)
 void TermOrder::sortTerms(void)
 
 {
-  for(vector<PcodeOpEdge>::iterator iter=terms.begin();iter!=terms.end();++iter)
+  for(vector<AdditiveEdge>::iterator iter=terms.begin();iter!=terms.end();++iter)
     sorter.push_back( &(*iter) );
 
   sort(sorter.begin(),sorter.end(),additiveCompare);

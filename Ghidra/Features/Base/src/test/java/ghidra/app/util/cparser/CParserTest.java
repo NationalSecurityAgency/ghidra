@@ -125,12 +125,6 @@ public class CParserTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPreProcessor() throws Exception {
-		// TODO: parse a header file with lots of CPP defines, etc
-		// TODO: Do a simple parse to make sure the data came out correctly
-	}
-
-	@Test
 	public void testHeaderParsing() throws Exception {
 //		Uncomment to save the parse results to a GDT file to check out
 //
@@ -153,6 +147,11 @@ public class CParserTest extends AbstractGenericTest {
 
 		DataType dt;
 		String str;
+
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_IO_FILE_complete");
+		Structure sldt = (Structure) dt;
+		DataTypeComponent data3 = sldt.getComponent(2);
+		assertEquals("Computed Array correct", 40, data3.getLength());
 
 		dt = dtMgr.getDataType(new CategoryPath("/"), "fnptr"); // typedef int (*fnptr)(struct fstruct);
 		// "fnptr" named typedef of pointer to "int fnptr(fstruct )" --- should an anonymous function name be used?

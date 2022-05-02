@@ -158,10 +158,10 @@ public class PcodeFunctionParser {
 
 		MemoryBufferImpl memoryBuffer =
 			new MemoryBufferImpl(this.program.getMemory(), ramSpaceAddress);
-		SettingsImpl settings = new SettingsImpl();
 
 		StringDataInstance stringDataInstance = StringDataInstance
-				.getStringDataInstance(new StringDataType(), memoryBuffer, settings, BUFFER_LENGTH);
+				.getStringDataInstance(new StringDataType(), memoryBuffer, SettingsImpl.NO_SETTINGS,
+					BUFFER_LENGTH);
 		String stringValue = stringDataInstance.getStringValue();
 		if (stringValue == null) {
 			return null;

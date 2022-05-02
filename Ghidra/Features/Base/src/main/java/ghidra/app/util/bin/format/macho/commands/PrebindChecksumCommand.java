@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -36,22 +36,7 @@ import ghidra.util.task.TaskMonitor;
 public class PrebindChecksumCommand extends LoadCommand {
 	private int cksum;
 
-	static PrebindChecksumCommand createPrebindChecksumCommand(
-			FactoryBundledWithBinaryReader reader) throws IOException {
-		PrebindChecksumCommand checksumCommand =
-			(PrebindChecksumCommand) reader.getFactory().create(PrebindChecksumCommand.class);
-		checksumCommand.initPrebindChecksumCommand(reader);
-		return checksumCommand;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public PrebindChecksumCommand() {
-	}
-
-	private void initPrebindChecksumCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	PrebindChecksumCommand(BinaryReader reader) throws IOException {
 		initLoadCommand(reader);
 		cksum = reader.readNextInt();
 	}

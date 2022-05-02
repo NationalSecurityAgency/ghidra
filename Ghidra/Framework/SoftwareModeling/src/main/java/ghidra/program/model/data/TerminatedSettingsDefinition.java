@@ -63,6 +63,11 @@ public class TerminatedSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getValueString(Settings settings) {
+		return choices[getChoice(settings)];
+	}
+
+	@Override
 	public void setChoice(Settings settings, int value) {
 		settings.setLong(TERMINATED, value);
 	}
@@ -75,6 +80,11 @@ public class TerminatedSettingsDefinition implements EnumSettingsDefinition {
 	@Override
 	public String getName() {
 		return "Termination";
+	}
+
+	@Override
+	public String getStorageKey() {
+		return TERMINATED;
 	}
 
 	@Override

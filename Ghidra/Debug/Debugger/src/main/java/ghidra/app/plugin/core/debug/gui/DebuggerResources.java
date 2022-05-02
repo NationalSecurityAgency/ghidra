@@ -22,12 +22,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.*;
 
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.action.builder.*;
+import docking.menu.ActionState;
 import docking.widgets.table.*;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -47,8 +50,8 @@ import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPlugin;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesPlugin;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
+import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
-import ghidra.app.services.MarkerService;
 import ghidra.async.AsyncUtils;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.util.PluginUtils;
@@ -90,32 +93,18 @@ public interface DebuggerResources {
 	ImageIcon ICON_SNAP_BACKWARD = ResourceManager.loadImage("images/2leftarrow.png");
 	ImageIcon ICON_SEEK_PRESENT = ICON_RESUME;
 
-	boolean altIcons = Boolean.getBoolean("debugger.breakpoints.alt.icons");
-
-	ImageIcon ICON_SET_BREAKPOINT =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-set.png")
-				: ResourceManager.loadImage("images/breakpoint-set.png");
-	ImageIcon ICON_CLEAR_BREAKPOINT =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-clear.png")
-				: ResourceManager.loadImage("images/breakpoint-clear.png");
-	ImageIcon ICON_ENABLE_BREAKPOINT =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-enable.png")
-				: ResourceManager.loadImage("images/breakpoint-enable.png");
+	ImageIcon ICON_SET_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-enable.png");
+	ImageIcon ICON_CLEAR_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-clear.png");
+	ImageIcon ICON_ENABLE_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-enable.png");
 	ImageIcon ICON_ENABLE_ALL_BREAKPOINTS =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoints-enable-all.png")
-				: ResourceManager.loadImage("images/breakpoints-enable-all.png");
-	ImageIcon ICON_DISABLE_BREAKPOINT =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-disable.png")
-				: ResourceManager.loadImage("images/breakpoint-disable.png");
+		ResourceManager.loadImage("images/breakpoints-enable-all.png");
+	ImageIcon ICON_DISABLE_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-disable.png");
 	ImageIcon ICON_DISABLE_ALL_BREAKPOINTS =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoints-disable-all.png")
-				: ResourceManager.loadImage("images/breakpoints-disable-all.png");
+		ResourceManager.loadImage("images/breakpoints-disable-all.png");
 	ImageIcon ICON_CLEAR_ALL_BREAKPOINTS =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoints-clear-all.png")
-				: ResourceManager.loadImage("images/breakpoints-clear-all.png");
+		ResourceManager.loadImage("images/breakpoints-clear-all.png");
 	ImageIcon ICON_MAKE_BREAKPOINTS_EFFECTIVE =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoints-make-effective.png")
-				: ResourceManager.loadImage("images/breakpoints-make-effective.png");
+		ResourceManager.loadImage("images/breakpoints-make-effective.png");
 
 	// TODO: Some overlay to indicate dynamic, or new icon altogether
 	ImageIcon ICON_LISTING = ResourceManager.loadImage("images/Browser.gif");
@@ -123,7 +112,7 @@ public interface DebuggerResources {
 	ImageIcon ICON_CONSOLE = ResourceManager.loadImage("images/console.png");
 	ImageIcon ICON_REGISTERS = ResourceManager.loadImage("images/registers.png");
 	ImageIcon ICON_STACK = ResourceManager.loadImage("images/stack.png");
-	ImageIcon ICON_BREAKPOINTS = ResourceManager.loadImage("images/breakpoints.png");
+	ImageIcon ICON_BREAKPOINTS = ResourceManager.loadImage("images/breakpoint-mixed.png");
 	ImageIcon ICON_MODULES = ResourceManager.loadImage("images/modules.png");
 	ImageIcon ICON_MAPPINGS = ICON_PROGRAM; // TODO: A better icon 
 	ImageIcon ICON_PCODE = ResourceManager.loadImage("images/stepinto.png"); // TODO
@@ -162,7 +151,7 @@ public interface DebuggerResources {
 	// TODO: Draw an icon?
 	ImageIcon ICON_CAPTURE_SYMBOLS = ResourceManager.loadImage("images/closedFolderLabels.png");
 
-	ImageIcon ICON_LOG_FATAL = ResourceManager.loadImage("images/edit-bomg.png");
+	ImageIcon ICON_LOG_FATAL = ResourceManager.loadImage("images/edit-bomb.png");
 	ImageIcon ICON_LOG_ERROR = ResourceManager.loadImage("images/dialog-warning_red.png");
 	ImageIcon ICON_LOG_WARN = ResourceManager.loadImage("images/dialog-warning.png");
 
@@ -181,6 +170,17 @@ public interface DebuggerResources {
 	ImageIcon ICON_DIFF = ResourceManager.loadImage("images/table_relationship.png");
 	ImageIcon ICON_DIFF_PREV = ResourceManager.loadImage("images/up.png");
 	ImageIcon ICON_DIFF_NEXT = ResourceManager.loadImage("images/down.png");
+
+	ImageIcon ICON_EDIT_MODE_READ_ONLY = ResourceManager.loadImage("images/write-disabled.png");
+	ImageIcon ICON_EDIT_MODE_WRITE_TARGET = ResourceManager.loadImage("images/write-target.png");
+	ImageIcon ICON_EDIT_MODE_WRITE_TRACE = ResourceManager.loadImage("images/write-trace.png");
+	ImageIcon ICON_EDIT_MODE_WRITE_EMULATOR =
+		ResourceManager.loadImage("images/write-emulator.png");
+
+	String NAME_EDIT_MODE_READ_ONLY = "Read Only";
+	String NAME_EDIT_MODE_WRITE_TARGET = "Write Target";
+	String NAME_EDIT_MODE_WRITE_TRACE = "Write Trace";
+	String NAME_EDIT_MODE_WRITE_EMULATOR = "Write Emulator";
 
 	HelpLocation HELP_PACKAGE = new HelpLocation("Debugger", "package");
 
@@ -297,33 +297,36 @@ public interface DebuggerResources {
 	String OPTION_NAME_COLORS_PCODE_COUNTER = "Colors.Pcode Counter";
 	Color DEFAULT_COLOR_PCODE_COUNTER = new Color(0.75f, 0.875f, 0.75f);
 
-	String MARKER_NAME_BREAKPOINT_ENABLED = "Enabled Breakpoint";
-	String MARKER_NAME_BREAKPOINT_DISABLED = "Disabled Breakpoint";
-	String MARKER_NAME_BREAKPOINT_INEFFECTIVE_E = "Ineffective Enabled Breakpoint";
-	String MARKER_NAME_BREAKPOINT_INEFFECTIVE_D = "Ineffective Disabled Breakpoint";
-	String MARKER_NAME_BREAKPOINT_MIXED_ED = "Mixed Enabled-Disabled Breakpont";
-	String MARKER_NAME_BREAKPOINT_MIXED_DE = "Mixed Disabled-Enabled Breakpont";
-	int PRIORITY_BREAKPOINT_ENABLED_MARKER = MarkerService.BREAKPOINT_PRIORITY;
-	int PRIORITY_BREAKPOINT_DISABLED_MARKER = MarkerService.BREAKPOINT_PRIORITY;
-	int PRIORITY_BREAKPOINT_INEFFECTIVE_E_MARKER = MarkerService.BREAKPOINT_PRIORITY;
-	int PRIORITY_BREAKPOINT_INEFFECTIVE_D_MARKER = MarkerService.BREAKPOINT_PRIORITY;
-	int PRIORITY_BREAKPOINT_MIXED_ED_MARKER = MarkerService.BREAKPOINT_PRIORITY;
-	int PRIORITY_BREAKPOINT_MIXED_DE_MARKER = MarkerService.BREAKPOINT_PRIORITY;
+	String NAME_BREAKPOINT_MARKER_ENABLED = "Enabled Breakpoint";
+	String NAME_BREAKPOINT_MARKER_DISABLED = "Disabled Breakpoint";
+	String NAME_BREAKPOINT_MARKER_MIXED = "Mixed Breakpoint";
+	String NAME_BREAKPOINT_MARKER_INEFF_EN = "Ineffective Enabled Breakpoint";
+	String NAME_BREAKPOINT_MARKER_INEFF_DIS = "Ineffective Disabled Breakpoint";
+	String NAME_BREAKPOINT_MARKER_INEFF_MIX = "Ineffective Mixed Breakpoint";
+	String NAME_BREAKPOINT_MARKER_INCON_EN = "Inconsistent Enabled Breakpoint";
+	String NAME_BREAKPOINT_MARKER_INCON_DIS = "Inconsistent Disabled Breakpoint";
+	String NAME_BREAKPOINT_MARKER_INCON_MIX = "Inconsistent Mixed Breakpoint";
 
-	ImageIcon ICON_BREAKPOINT_ENABLED_MARKER = ICON_ENABLE_BREAKPOINT;
-	ImageIcon ICON_BREAKPOINT_DISABLED_MARKER = ICON_DISABLE_BREAKPOINT;
-	ImageIcon ICON_BREAKPOINT_MIXED_ED_MARKER =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-mixed-ed.png")
-				: ResourceManager.loadImage("images/breakpoint-mixed-ed.png");
-	ImageIcon ICON_BREAKPOINT_MIXED_DE_MARKER =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-mixed-de.png")
-				: ResourceManager.loadImage("images/breakpoint-mixed-de.png");
-	ImageIcon ICON_BREAKPOINT_INEFFECTIVE_E_MARKER =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-ineffective-e.png")
-				: ResourceManager.loadImage("images/breakpoint-ineffective-e.png");
-	ImageIcon ICON_BREAKPOINT_INEFFECTIVE_D_MARKER =
-		altIcons ? ResourceManager.loadImage("images/alt-breakpoint-ineffective-d.png")
-				: ResourceManager.loadImage("images/breakpoint-ineffective-d.png");
+	ImageIcon ICON_BREAKPOINT_OVERLAY_INCONSISTENT =
+		ResourceManager.loadImage("images/breakpoint-overlay-inconsistent.png");
+	ImageIcon ICON_BREAKPOINT_MARKER_ENABLED = ICON_ENABLE_BREAKPOINT;
+	ImageIcon ICON_BREAKPOINT_MARKER_DISABLED = ICON_DISABLE_BREAKPOINT;
+	ImageIcon ICON_BREAKPOINT_MARKER_MIXED =
+		ResourceManager.loadImage("images/breakpoint-mixed.png");
+
+	ImageIcon ICON_BREAKPOINT_MARKER_INEFF_EN =
+		ResourceManager.loadImage("images/breakpoint-enable-ineff.png");
+	ImageIcon ICON_BREAKPOINT_MARKER_INEFF_DIS =
+		ResourceManager.loadImage("images/breakpoint-disable-ineff.png");
+	ImageIcon ICON_BREAKPOINT_MARKER_INEFF_MIX =
+		ResourceManager.loadImage("images/breakpoint-mixed-ineff.png");
+
+	Icon ICON_BREAKPOINT_MARKER_INCON_EN =
+		new MultiIcon(ICON_BREAKPOINT_MARKER_ENABLED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
+	Icon ICON_BREAKPOINT_MARKER_INCON_DIS =
+		new MultiIcon(ICON_BREAKPOINT_MARKER_DISABLED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
+	Icon ICON_BREAKPOINT_MARKER_INCON_MIX =
+		new MultiIcon(ICON_BREAKPOINT_MARKER_MIXED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
 
 	Icon ICON_UNIQUE_REF_READ =
 		new RotateIcon(ResourceManager.loadImage("images/cursor_arrow.gif"), 180); // TODO
@@ -331,16 +334,16 @@ public interface DebuggerResources {
 	Icon ICON_UNIQUE_REF_RW = new MultiIcon(ICON_UNIQUE_REF_READ, ICON_UNIQUE_REF_WRITE); // TODO
 
 	String OPTION_NAME_COLORS_ENABLED_BREAKPOINT_MARKERS = "Colors.Enabled Breakpoint Markers";
-	Color DEFAULT_COLOR_ENABLED_BREAKPOINT_MARKERS = new Color(0.875f, 0.75f, 0.75f);
+	Color DEFAULT_COLOR_ENABLED_BREAKPOINT_MARKERS = new Color(0.75f, 0.75f, 0.875f);
 	String OPTION_NAME_COLORS_DISABLED_BREAKPOINT_MARKERS = "Colors.Disabled Breakpoint Markers";
 	Color DEFAULT_COLOR_DISABLED_BREAKPOINT_MARKERS = DEFAULT_COLOR_ENABLED_BREAKPOINT_MARKERS;
-	String OPTION_NAME_COLORS_INEFFECTIVE_E_BREAKPOINT_MARKERS =
+	String OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_MARKERS =
 		"Colors.Ineffective Enabled Breakpoint Markers";
-	Color DEFAULT_COLOR_INEFFECTIVE_E_BREAKPOINT_MARKERS = new Color(0.75f, 0.75f, 0.75f);
-	String OPTION_NAME_COLORS_INEFFECTIVE_D_BREAKPOINT_MARKERS =
+	Color DEFAULT_COLOR_INEFF_EN_BREAKPOINT_MARKERS = new Color(0.75f, 0.75f, 0.75f);
+	String OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_MARKERS =
 		"Colors.Ineffective Disabled Breakpoint Markers";
-	Color DEFAULT_COLOR_INEFFECTIVE_D_BREAKPOINT_MARKERS =
-		DEFAULT_COLOR_INEFFECTIVE_E_BREAKPOINT_MARKERS;
+	Color DEFAULT_COLOR_INEFF_DIS_BREAKPOINT_MARKERS =
+		DEFAULT_COLOR_INEFF_EN_BREAKPOINT_MARKERS;
 
 	String OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND =
 		"Colors.Enabled Breakpoint Markers Have Background";
@@ -350,13 +353,13 @@ public interface DebuggerResources {
 		"Colors.Disabled Breakpoint Markers Have Background";
 	boolean DEFAULT_COLOR_DISABLED_BREAKPOINT_COLORING_BACKGROUND = false;
 
-	String OPTION_NAME_COLORS_INEFFECTIVE_E_BREAKPOINT_COLORING_BACKGROUND =
+	String OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND =
 		"Colors.Ineffective Enabled Breakpoint Markers Have Background";
-	boolean DEFAULT_COLOR_INEFFECTIVE_E_BREAKPOINT_COLORING_BACKGROUND = true;
+	boolean DEFAULT_COLOR_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND = true;
 
-	String OPTION_NAME_COLORS_INEFFECTIVE_D_BREAKPOINT_COLORING_BACKGROUND =
+	String OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND =
 		"Colors.Ineffective Disabled Breakpoint Markers Have Background";
-	boolean DEFAULT_COLOR_INEFFECTIVE_D_BREAKPOINT_COLORING_BACKGROUND = false;
+	boolean DEFAULT_COLOR_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND = false;
 
 	String OPTION_NAME_LOG_BUFFER_LIMIT = "Log Buffer Size";
 	int DEFAULT_LOG_BUFFER_LIMIT = 100;
@@ -1150,7 +1153,7 @@ public interface DebuggerResources {
 	abstract class AbstractToggleBreakpointAction extends DockingAction {
 		public static final String NAME = "Toggle Breakpoint";
 		// TODO: A "toggle breakpoint" icon
-		public static final Icon ICON = ICON_BREAKPOINT_MIXED_ED_MARKER;
+		public static final Icon ICON = ICON_BREAKPOINT_MARKER_MIXED;
 		public static final String HELP_ANCHOR = "toggle_breakpoint";
 
 		public AbstractToggleBreakpointAction(Plugin owner) {
@@ -1195,7 +1198,7 @@ public interface DebuggerResources {
 	}
 
 	abstract class AbstractEnableSelectedBreakpointsAction extends DockingAction {
-		public static final String NAME = "Enable Breakpoints";
+		public static final String NAME = "Enable";
 		public static final Icon ICON = ICON_ENABLE_BREAKPOINT;
 		public static final String HELP_ANCHOR = "enable_breakpoints";
 
@@ -1232,7 +1235,7 @@ public interface DebuggerResources {
 	}
 
 	abstract class AbstractDisableSelectedBreakpointsAction extends DockingAction {
-		public static final String NAME = "Disable Breakpoints";
+		public static final String NAME = "Disable";
 		public static final Icon ICON = ICON_DISABLE_BREAKPOINT;
 		public static final String HELP_ANCHOR = "disable_breakpoints";
 
@@ -1271,7 +1274,7 @@ public interface DebuggerResources {
 	}
 
 	abstract class AbstractClearSelectedBreakpointsAction extends DockingAction {
-		public static final String NAME = "Clear Breakpoints";
+		public static final String NAME = "Clear";
 		public static final Icon ICON = ICON_CLEAR_BREAKPOINT;
 		public static final String HELP_ANCHOR = "clear_breakpoints";
 
@@ -2031,6 +2034,26 @@ public interface DebuggerResources {
 					.toolBarGroup(GROUP)
 					.toolBarIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface EditModeAction {
+		String NAME = "Edit Mode";
+		String DESCRIPTION = "Choose what to edit in dynamic views";
+		String GROUP = GROUP_GENERAL;
+		Icon ICON = StateEditingMode.values()[0].icon;
+		String HELP_ANCHOR = "edit_mode";
+
+		static MultiStateActionBuilder<StateEditingMode> builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new MultiStateActionBuilder<StateEditingMode>(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarGroup(GROUP)
+					.toolBarIcon(ICON_EDIT_MODE_WRITE_TARGET)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
+					.addStates(Stream.of(StateEditingMode.values())
+							.map(m -> new ActionState<>(m.name, m.icon, m))
+							.collect(Collectors.toList()));
 		}
 	}
 

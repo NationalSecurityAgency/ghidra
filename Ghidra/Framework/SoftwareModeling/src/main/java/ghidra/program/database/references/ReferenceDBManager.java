@@ -34,6 +34,7 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ChangeManager;
 import ghidra.util.Lock;
+import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -486,12 +487,48 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
+	private boolean isExternalBlockAddress(Address addr) {
+		return program.getMemory().isExternalBlockAddress(addr);
+	}
+
 	@Override
-	public Reference addOffsetMemReference(Address fromAddr, Address toAddr, long offset,
-			RefType type, SourceType sourceType, int opIndex) {
+	public Reference addOffsetMemReference(Address fromAddr, Address toAddr, boolean toAddrIsBase,
+			long offset, RefType type, SourceType sourceType, int opIndex) {
 		if (!fromAddr.isMemoryAddress() || !toAddr.isMemoryAddress()) {
 			throw new IllegalArgumentException("From and To addresses must be memory addresses");
 		}
+
+		// Handle EXTERNAL Block offset-reference transformation
+		boolean isExternalBlockRef = isExternalBlockAddress(toAddr);
+		boolean badOffsetReference = false;
+		if (isExternalBlockRef) {
+			// NOTE: Resulting EXTERNAL Block reference may become incorrect 
+			// if EXTERNAL block is moved or removed. 
+			if (!toAddrIsBase) {
+				Address baseAddr = toAddr.subtractWrap(offset);
+				if (isExternalBlockAddress(baseAddr)) {
+					toAddr = baseAddr;
+					toAddrIsBase = true;
+				}
+				else {
+					// assume unintentional reference into EXTERNAL block
+					isExternalBlockRef = false;
+					badOffsetReference = true;
+				}
+			}
+		}
+		else if (toAddrIsBase) {
+			toAddr = toAddr.addWrap(offset);
+			if (isExternalBlockAddress(toAddr)) {
+				badOffsetReference = true;
+			}
+		}
+
+		if (badOffsetReference) {
+			Msg.warn(this, "Offset Reference from " + fromAddr +
+				" produces bad Xref into EXTERNAL block");
+		}
+
 		try {
 			removeNonMemRefs(fromAddr, opIndex);
 			return addRef(fromAddr, toAddr, type, sourceType, opIndex, true, false, offset);
@@ -1883,7 +1920,9 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		Reference memRef;
 		if (ref.isOffsetReference()) {
 			OffsetReference offRef = (OffsetReference) ref;
-			memRef = addOffsetMemReference(from, to, offRef.getOffset(), type, sourceType, opIndex);
+			memRef =
+				addOffsetMemReference(from, offRef.getBaseAddress(), true, offRef.getOffset(), type,
+				sourceType, opIndex);
 		}
 		else if (ref.isShiftedReference()) {
 			ShiftedReference shiftRef = (ShiftedReference) ref;

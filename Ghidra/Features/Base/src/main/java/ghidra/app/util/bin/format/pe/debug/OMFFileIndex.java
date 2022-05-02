@@ -15,12 +15,11 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
-import ghidra.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
 
-import java.io.*;
-import java.util.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.util.Conv;
 
 /**
  * A class to represent the Object Module Format (OMF) File Index data structure.
@@ -44,44 +43,38 @@ public class OMFFileIndex {
 	private int [] nameRef;
 	private String [] names;
 
-    static OMFFileIndex createOMFFileIndex(
-            FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        OMFFileIndex omfFileIndex = (OMFFileIndex) reader.getFactory().create(OMFFileIndex.class);
-        omfFileIndex.initOMFFileIndex(reader, ptr);
-        return omfFileIndex;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public OMFFileIndex() {}
-
-	private void initOMFFileIndex(FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
+	OMFFileIndex(BinaryReader reader, int ptr) throws IOException {
 		int index = ptr;
 
-		cMod = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
-		cRef = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
+		cMod = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
+		cRef = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
 
 		modStart = new short[Conv.shortToInt(cMod)];
-		for(int i = 0; i < cMod; ++i){
-			modStart[i] = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
+		for (int i = 0; i < cMod; ++i) {
+			modStart[i] = reader.readShort(index);
+			index += BinaryReader.SIZEOF_SHORT;
 		}
 
 		cRefCnt = new short[Conv.shortToInt(cMod)];
-		for(int i = 0; i < cMod; i++){
-			cRefCnt[i] = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
+		for (int i = 0; i < cMod; i++) {
+			cRefCnt[i] = reader.readShort(index);
+			index += BinaryReader.SIZEOF_SHORT;
 		}
 
 		nameRef = new int[Conv.shortToInt(cRef)];
-		for(int i = 0; i < cRef; ++i){
-			nameRef[i] = reader.readInt(index); index+=BinaryReader.SIZEOF_INT;
+		for (int i = 0; i < cRef; ++i) {
+			nameRef[i] = reader.readInt(index);
+			index += BinaryReader.SIZEOF_INT;
 		}
 
 		ArrayList<String> namesList = new ArrayList<String>();
-		for (int i = 0 ; i < Conv.shortToInt(cRef) ; ++i) {
+		for (int i = 0; i < Conv.shortToInt(cRef); ++i) {
 			int nameIndex = index + nameRef[i];
 
-			byte len = reader.readByte(nameIndex); nameIndex+=BinaryReader.SIZEOF_BYTE;
+			byte len = reader.readByte(nameIndex);
+			nameIndex += BinaryReader.SIZEOF_BYTE;
 			int length = Conv.byteToInt(len);
 
 			String name = reader.readAsciiString(nameIndex, length);

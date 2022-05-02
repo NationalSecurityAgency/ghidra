@@ -15,7 +15,7 @@
  */
 package ghidra.app.cmd.data.exceptionhandling;
 
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getAlignedPack4Structure;
+import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.*;
 
 import ghidra.app.cmd.data.AbstractCreateDataTypeModel;
 import ghidra.app.cmd.data.EHDataTypeUtilities;
@@ -114,7 +114,7 @@ public class EHTryBlockModel extends AbstractCreateDataTypeModel {
 
 		/* comps[4] */
 		if (isRelative) {
-			compDt = new ImageBaseOffset32DataType(dataTypeManager);
+			compDt = new IBO32DataType(dataTypeManager);
 			struct.add(compDt, "dispHandlerArray", null);
 		}
 		else {

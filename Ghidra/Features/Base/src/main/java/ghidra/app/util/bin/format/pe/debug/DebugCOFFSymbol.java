@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.pe.debug;
 import java.io.IOException;
 
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.Conv;
 import ghidra.util.exception.DuplicateNameException;
@@ -129,27 +128,13 @@ public class DebugCOFFSymbol implements StructConverter {
     private byte numberOfAuxSymbols;
     private DebugCOFFSymbolAux [] auxSymbols;
 
-    public static DebugCOFFSymbol createDebugCOFFSymbol(
-            FactoryBundledWithBinaryReader reader, int index,
-            DebugCOFFSymbolTable symbolTable) throws IOException {
-        return createDebugCOFFSymbol(reader, index, symbolTable.getStringTableIndex());
+	public DebugCOFFSymbol(BinaryReader reader, int index, DebugCOFFSymbolTable symbolTable)
+			throws IOException {
+		this(reader, index, symbolTable.getStringTableIndex());
     }
 
-	public static DebugCOFFSymbol createDebugCOFFSymbol(FactoryBundledWithBinaryReader reader,
-			int index, long stringTableIndex) throws IOException {
-		DebugCOFFSymbol debugCOFFSymbol =
-			(DebugCOFFSymbol) reader.getFactory().create(DebugCOFFSymbol.class);
-        debugCOFFSymbol.initDebugCOFFSymbol(reader, index, stringTableIndex);
-        return debugCOFFSymbol;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DebugCOFFSymbol() {}
-
-	private void initDebugCOFFSymbol(FactoryBundledWithBinaryReader reader, int index,
-			long stringTableIndex) throws IOException {
+	public DebugCOFFSymbol(BinaryReader reader, int index, long stringTableIndex)
+			throws IOException {
         // read the union first...
         //
         int shortVal = reader.readInt(index);
@@ -177,7 +162,7 @@ public class DebugCOFFSymbol implements StructConverter {
 
         for (int i = 0 ; i < numberOfAuxSymbols ; ++i) {
 
-            auxSymbols[i] = DebugCOFFSymbolAux.createDebugCOFFSymbolAux(reader, index, this);
+			auxSymbols[i] = new DebugCOFFSymbolAux(reader, index, this);
             index += DebugCOFFSymbolAux.IMAGE_SIZEOF_AUX_SYMBOL;
         }
     }
@@ -314,4 +299,9 @@ public class DebugCOFFSymbol implements StructConverter {
     	return structure;
     }
 
+	@Override
+	public String toString() {
+		return String.format("%s section=%d value=0x%x type=0x%x class=0x%x aux=%d", name,
+			sectionNumber, value, type, storageClass, numberOfAuxSymbols);
+	}
 }

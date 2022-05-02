@@ -21,11 +21,9 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
-import ghidra.app.plugin.core.debug.service.model.TraceEventListener;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.lifecycle.Internal;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -251,11 +249,11 @@ public interface TraceRecorder {
 	boolean isRegisterBankAccessible(TraceThread thread, int frameLevel);
 
 	/**
-	 * Get the set of accessible process memory, as viewed in the trace
+	 * Get the set of accessible target memory, as viewed in the trace
 	 * 
 	 * @return the computed set
 	 */
-	AddressSetView getAccessibleProcessMemory();
+	AddressSetView getAccessibleMemory();
 
 	/**
 	 * Capture a target thread's registers.
@@ -293,50 +291,49 @@ public interface TraceRecorder {
 			Map<Register, RegisterValue> values);
 
 	/**
-	 * Read (and capture) a range of process memory
-	 * 
-	 * <p>
-	 * This will not quantize the blocks; whereas
-	 * {@link #captureProcessMemory(AddressSetView, TaskMonitor)} will.
+	 * Read (and capture) a range of target memory
 	 * 
 	 * @param start the address to start at, as viewed in the trace
 	 * @param length the number of bytes to read
 	 * @return a future which completes with the read bytes
 	 */
-	CompletableFuture<byte[]> readProcessMemory(Address start, int length);
+	CompletableFuture<byte[]> readMemory(Address start, int length);
 
 	/**
-	 * Write (and capture) a range of process memory
+	 * Write (and capture) a range of target memory
 	 * 
 	 * @param start the address to start at, as viewed in the trace
 	 * @param data the data to write
 	 * @return a future which completes when the entire write is complete
 	 */
-	CompletableFuture<Void> writeProcessMemory(Address start, byte[] data);
+	CompletableFuture<Void> writeMemory(Address start, byte[] data);
 
 	/**
-	 * Capture a portion of the target's memory.
+	 * Read (and capture) several blocks of target memory
 	 * 
 	 * <p>
-	 * Though this function returns immediately, the given monitor will be updated in the background
-	 * as the task progresses. Thus, the caller should ensure the monitor is visible until the
-	 * returned future completes.
+	 * The given address set is quantized to the minimal set of blocks covering the requested set.
+	 * To capture a precise range, use {@link #readMemory(Address, int)} instead. Though this
+	 * function returns immediately, the given monitor will be updated in the background as the task
+	 * progresses. Thus, the caller should ensure the monitor is visible until the returned future
+	 * completes.
 	 * 
 	 * <p>
 	 * This task is relatively error tolerant. If a block or region cannot be captured -- a common
-	 * occurrence -- the error is logged, but the future may still complete successfully. For large
-	 * captures, it is recommended to set {@code toMap} to false. The recorder will place the bytes
-	 * into the trace where they can be retrieved later. For small captures, and where bypassing the
-	 * database may offer some advantage, set {@code toMap} to true, and the captured bytes will be
-	 * returned in an interval map. Connected intervals may or may not be joined.
+	 * occurrence -- the error is logged, but the task may still complete "successfully." For large
+	 * captures, it is recommended to set {@code returnResult} to false. The recorder will capture
+	 * the bytes into the trace where they can be retrieved later. For small captures, and where
+	 * bypassing the database may offer some advantage, set {@code returnResult} to true, and the
+	 * captured bytes will be returned in an interval map. Connected intervals may or may not be
+	 * joined.
 	 * 
-	 * @param selection the addresses to capture, as viewed in the trace
+	 * @param set the addresses to capture, as viewed in the trace
 	 * @param monitor a monitor for displaying task steps
-	 * @param toMap true to return results in a map, false to complete with null
-	 * @return a future which completes with the capture results
+	 * @param returnResult true to complete with results, false to complete with null
+	 * @return a future which completes when the task finishes
 	 */
-	CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView selection,
-			TaskMonitor monitor, boolean toMap);
+	CompletableFuture<NavigableMap<Address, byte[]>> readMemoryBlocks(AddressSetView set,
+			TaskMonitor monitor, boolean returnResult);
 
 	/**
 	 * Write a variable (memory or register) of the given thread or the process
@@ -345,7 +342,7 @@ public interface TraceRecorder {
 	 * This is a convenience for writing target memory or registers, based on address. If the given
 	 * address represents a register, this will attempt to map it to a register and write it in the
 	 * given thread and frame. If the address is in memory, it will simply delegate to
-	 * {@link #writeProcessMemory(Address, byte[])}.
+	 * {@link #writeMemory(Address, byte[])}.
 	 * 
 	 * @param thread the thread. Ignored (may be null) if address is in memory
 	 * @param frameLevel the frame, usually 0. Ignored if address is in memory
@@ -356,7 +353,7 @@ public interface TraceRecorder {
 	default CompletableFuture<Void> writeVariable(TraceThread thread, int frameLevel,
 			Address address, byte[] data) {
 		if (address.isMemoryAddress()) {
-			return writeProcessMemory(address, data);
+			return writeMemory(address, data);
 		}
 		if (address.isRegisterAddress()) {
 			Language lang = getTrace().getBaseLanguage();
@@ -549,22 +546,6 @@ public interface TraceRecorder {
 	 * @return a future which completes with true if the operation was successful, false otherwise.
 	 */
 	CompletableFuture<Boolean> requestFocus(TargetObject focus);
-
-	/**
-	 * Get the internal listener on the model used by the recorder
-	 * 
-	 * <p>
-	 * This allows external "hints" to be given to the recorder by manually injecting objects into
-	 * its listener.
-	 * 
-	 * <p>
-	 * TODO: This is a bit of a stop-gap until we have a better way of drawing the recorder's
-	 * attention to certain object, or otherwise controlling what it records.
-	 * 
-	 * @return the listener
-	 */
-	@Internal
-	TraceEventListener getListenerForRecord();
 
 	/**
 	 * Wait for pending transactions finish execution.

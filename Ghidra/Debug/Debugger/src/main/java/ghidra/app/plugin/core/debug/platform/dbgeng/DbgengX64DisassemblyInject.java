@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.plugin.core.debug.workflow.DisassemblyInject;
 import ghidra.app.plugin.core.debug.workflow.DisassemblyInjectInfo;
@@ -97,7 +96,7 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 			try {
 				// This is on its own task thread, so whatever.
 				// Just don't hang it indefinitely.
-				recorder.captureProcessMemory(set, TaskMonitor.DUMMY, false)
+				recorder.readMemoryBlocks(set, TaskMonitor.DUMMY, false)
 						.get(1000, TimeUnit.MILLISECONDS);
 			}
 			catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -107,8 +106,7 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 		}
 		MemoryByteProvider mbp = new MemoryByteProvider(view.getMemory(), module.getBase());
 		try {
-			PortableExecutable pe = PortableExecutable.createPortableExecutable(
-				RethrowContinuesFactory.INSTANCE, mbp, SectionLayout.MEMORY, false, false);
+			PortableExecutable pe = new PortableExecutable(mbp, SectionLayout.MEMORY, false, false);
 			NTHeader ntHeader = pe.getNTHeader();
 			if (ntHeader == null) {
 				return Mode.UNK;

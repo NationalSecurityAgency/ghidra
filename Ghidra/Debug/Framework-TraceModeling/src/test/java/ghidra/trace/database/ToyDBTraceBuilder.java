@@ -303,9 +303,9 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	public DBTraceReference addOffsetReference(long creationSnap, Address from, Address to,
-			long offset) {
+			boolean toAddrIsBase, long offset) {
 		return trace.getReferenceManager()
-				.addOffsetReference(Range.atLeast(creationSnap), from, to,
+				.addOffsetReference(Range.atLeast(creationSnap), from, to, toAddrIsBase,
 					offset, RefType.DATA, SourceType.DEFAULT, -1);
 	}
 

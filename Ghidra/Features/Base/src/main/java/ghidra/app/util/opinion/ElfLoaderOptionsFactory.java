@@ -17,7 +17,6 @@ package ghidra.app.util.opinion;
 
 import java.util.List;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
@@ -61,7 +60,7 @@ public class ElfLoaderOptionsFactory {
 		options.add(new Option(PERFORM_RELOCATIONS_NAME, PERFORM_RELOCATIONS_DEFAULT, Boolean.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-applyRelocations"));
 
-		ElfHeader elf = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider, null);
+		ElfHeader elf = new ElfHeader(provider, null);
 
 		long imageBase = elf.findImageBase();
 		if (imageBase == 0 && (elf.isRelocatable() || elf.isSharedObject())) {

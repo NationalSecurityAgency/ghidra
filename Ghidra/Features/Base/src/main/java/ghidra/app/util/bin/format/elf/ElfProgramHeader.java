@@ -21,9 +21,11 @@ import java.util.HashMap;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.*;
+import ghidra.app.util.bin.format.MemoryLoadable;
+import ghidra.app.util.bin.format.Writeable;
 import ghidra.program.model.data.*;
-import ghidra.util.*;
+import ghidra.util.DataConverter;
+import ghidra.util.StringUtilities;
 
 /**
  * An executable or shared object file's program header table is an 
@@ -76,36 +78,22 @@ public class ElfProgramHeader
 	private long p_memsz;
 	private long p_align;
 
-	private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
 
-	static ElfProgramHeader createElfProgramHeader(FactoryBundledWithBinaryReader reader,
-			ElfHeader header) throws IOException {
-		ElfProgramHeader elfProgramHeader =
-			(ElfProgramHeader) reader.getFactory().create(ElfProgramHeader.class);
-		elfProgramHeader.initElfProgramHeader(reader, header);
-		return elfProgramHeader;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ElfProgramHeader() {
-	}
-
-	protected void initElfProgramHeader(FactoryBundledWithBinaryReader reader, ElfHeader header)
+	public ElfProgramHeader(BinaryReader reader, ElfHeader header)
 			throws IOException {
 		this.header = header;
 		this.reader = reader;
 
 		if (header.is32Bit()) {
 			p_type = reader.readNextInt();
-			p_offset = reader.readNextInt() & Conv.INT_MASK;
-			p_vaddr = reader.readNextInt() & Conv.INT_MASK;
-			p_paddr = reader.readNextInt() & Conv.INT_MASK;
-			p_filesz = reader.readNextInt() & Conv.INT_MASK;
-			p_memsz = reader.readNextInt() & Conv.INT_MASK;
+			p_offset = Integer.toUnsignedLong(reader.readNextInt());
+			p_vaddr = Integer.toUnsignedLong(reader.readNextInt());
+			p_paddr = Integer.toUnsignedLong(reader.readNextInt());
+			p_filesz = Integer.toUnsignedLong(reader.readNextInt());
+			p_memsz = Integer.toUnsignedLong(reader.readNextInt());
 			p_flags = reader.readNextInt();
-			p_align = reader.readNextInt() & Conv.INT_MASK;
+			p_align = Integer.toUnsignedLong(reader.readNextInt());
 		}
 		else if (header.is64Bit()) {
 			p_type = reader.readNextInt();
@@ -130,6 +118,7 @@ public class ElfProgramHeader
 
 	/**
 	 * Constructs a new program header with the specified type.
+	 * @param header ELF header
 	 * @param type the new type of the program header
 	 */
 	public ElfProgramHeader(ElfHeader header, int type) {

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +19,7 @@ import ghidra.framework.cmd.Command;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 
 /**
@@ -29,24 +29,35 @@ public class AddOffsetMemRefCmd implements Command {
 
 	private Address fromAddr;
 	private Address toAddr;
+	private boolean toAddrIsBase;
 	private RefType refType;
 	private SourceType source;
 	private int opIndex;
 	private long offset;
 	
     /**
-     * Command constructor for adding an offset memory reference
+	 * Command constructor for adding an offset memory reference. The first memory reference placed on
+	 * an operand will be made primary by default.  All non-memory references 
+	 * will be removed from the specified operand.  If toAddr corresponds to
+	 * the EXTERNAL memory block (see {@link MemoryBlock#EXTERNAL_BLOCK_NAME}) the
+	 * resulting offset reference will report to/base address as the same
+	 * regardless of specified offset.
 	 * @param fromAddr address of the codeunit where the reference occurs
 	 * @param toAddr address of the location being referenced.
+	 * @param toAddrIsBase if true toAddr is treated as base address, else treated as (base+offet).
+	 * It is generally preferred to specify as a base address to ensure proper handling of
+	 * EXTERNAL block case.
 	 * @param refType reference type - how the location is being referenced.
 	 * @param source the source of the reference
 	 * @param opIndex the operand index in the code unit where the reference occurs 
 	 * @param offset value added to a base address to get the toAddr
-     */
-    public AddOffsetMemRefCmd(Address fromAddr, Address toAddr,  RefType refType, 
+	 */
+	public AddOffsetMemRefCmd(Address fromAddr, Address toAddr, boolean toAddrIsBase,
+			RefType refType,
 			SourceType source, int opIndex, long offset) {
     	this.fromAddr = fromAddr;
     	this.toAddr = toAddr;
+		this.toAddrIsBase = toAddrIsBase;
     	this.refType = refType;
     	this.source = source;
     	this.opIndex = opIndex;
@@ -60,10 +71,10 @@ public class AddOffsetMemRefCmd implements Command {
     public boolean applyTo(DomainObject obj) {
     	Program p = (Program)obj;
     	ReferenceManager refMgr = p.getReferenceManager();
-		refMgr.addOffsetMemReference(fromAddr, toAddr, offset, refType, source, opIndex);
+		refMgr.addOffsetMemReference(fromAddr, toAddr, toAddrIsBase, offset, refType, source,
+			opIndex);
 		return true;
     }
- 
 
     /**
      * @see ghidra.framework.cmd.Command#getStatusMsg()

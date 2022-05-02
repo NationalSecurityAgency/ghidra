@@ -18,16 +18,15 @@ package ghidra.app.plugin.core.osgi;
 import generic.jar.ResourceFile;
 
 /**
- * An error produced during {@link GhidraBundle#build()} with a time stamp
+ * An error produced during {@link GhidraBundle#build()} with a timestamp.
  */
 public class BuildError {
 	// the lastModified time of the source causing this error
 	private final long lastModified;
-
 	private final StringBuilder message = new StringBuilder();
 
 	/**
-	 * Construct an object to record error message produced for {@code sourceFile}
+	 * Construct an object to record error message produced for {@code sourceFile}.
 	 * @param sourceFile the file causing this error 
 	 */
 	public BuildError(ResourceFile sourceFile) {
@@ -35,15 +34,15 @@ public class BuildError {
 	}
 
 	/**
-	 * Append {@code str} to the current error message
-	 * 
-	 * @param str the string to append 
+	 * Append the given string to the current error message.
+	 * @param s the string to append 
 	 */
-	public void append(String str) {
-		message.append(str);
+	public void append(String s) {
+		message.append(s);
 	}
 
 	/**
+	 * The error message.
 	 * @return the error message
 	 */
 	String getMessage() {
@@ -51,6 +50,7 @@ public class BuildError {
 	}
 
 	/**
+	 * The last modified time of the source for this build error.
 	 * @return the last modified time of the source for this build error
 	 */
 	public long getLastModified() {

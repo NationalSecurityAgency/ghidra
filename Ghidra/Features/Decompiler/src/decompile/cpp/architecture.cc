@@ -372,7 +372,7 @@ void Architecture::setPrintLanguage(const string &nm)
   ostream *t = print->getOutputStream();
   print = capa->buildLanguage(this);
   print->setOutputStream(t);	// Restore settings from previous language
-  print->getCastStrategy()->setTypeFactory(types);
+  print->initializeFromArchitecture();
   if (printxml)
     print->setXML(true);
   printlist.push_back(print);
@@ -831,9 +831,9 @@ void Architecture::parseGlobal(const Element *el)
       // We need to duplicate the range being marked as global into the overlay space(s)
       int4 num = numSpaces();
       for(int4 i=0;i<num;++i) {
-        OverlaySpace *ospc = (OverlaySpace *)getSpace(i);
+        AddrSpace *ospc = getSpace(i);
         if (ospc == (AddrSpace *)0 || !ospc->isOverlay()) continue;
-        if (ospc->getBaseSpace() != range.getSpace()) continue;
+        if (ospc->getContain() != range.getSpace()) continue;
         symboltab->addRange(scope,ospc,range.getFirst(),range.getLast());
       }
     }
@@ -852,7 +852,7 @@ void Architecture::addOtherSpace(void)
     for(int4 i=0;i<num;++i){
       AddrSpace *ospc = getSpace(i);
       if (!ospc->isOverlay()) continue;
-      if (((OverlaySpace *)ospc)->getBaseSpace() != otherSpace) continue;
+      if (ospc->getContain() != otherSpace) continue;
       symboltab->addRange(scope,ospc,0,otherSpace->getHighest());
     }
   }
@@ -1342,7 +1342,7 @@ void Architecture::init(DocumentStorage &store)
   buildDatabase(store);
 
   restoreFromSpec(store);
-  print->getCastStrategy()->setTypeFactory(types);
+  print->initializeFromArchitecture();
   symboltab->adjustCaches();	// In case the specs created additional address spaces
   postSpecFile();		// Let subclasses do things after translate is ready
 

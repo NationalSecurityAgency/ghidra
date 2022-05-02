@@ -107,14 +107,14 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	@Override
 	public void setName(String name) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
+			object.setValue(getLifespan(), TargetModule.MODULE_NAME_ATTRIBUTE_NAME, name);
 		}
 	}
 
 	@Override
 	public String getName() {
 		return TraceObjectInterfaceUtils.getValue(object, getLoadedSnap(),
-			TargetObject.DISPLAY_ATTRIBUTE_NAME, String.class, "");
+			TargetModule.MODULE_NAME_ATTRIBUTE_NAME, String.class, "");
 	}
 
 	@Override

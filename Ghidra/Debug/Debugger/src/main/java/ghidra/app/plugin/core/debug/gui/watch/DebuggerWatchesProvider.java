@@ -253,6 +253,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager; // For goto time (emu mods)
 	@AutoServiceConsumed
+	protected DebuggerStateEditingService editingService;
+	@AutoServiceConsumed
 	private DebuggerStaticMappingService mappingService; // For listing action
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
@@ -576,11 +578,18 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	}
 
 	private ProgramLocation getDynamicLocation(ProgramLocation someLoc) {
+		if (someLoc == null) {
+			return null;
+		}
 		TraceProgramView view = current.getView();
 		if (view == null) {
 			return null;
 		}
-		if (someLoc.getProgram() instanceof TraceProgramView) {
+		Program program = someLoc.getProgram();
+		if (program == null) {
+			return null;
+		}
+		if (program instanceof TraceProgramView) {
 			return someLoc;
 		}
 		return mappingService.getDynamicLocationFromStatic(view, someLoc);

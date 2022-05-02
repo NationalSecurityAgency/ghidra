@@ -91,15 +91,16 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				if (elfRelocationContext.extractAddend()) {
 					addend = memory.getInt(relocationAddress);
 				}
-				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
-					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
-					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
-				}
 				newValue = (int) (symbolValue + addend);
 				if (isThumb) {
 					newValue |= 1;
 				}
 				memory.setInt(relocationAddress, newValue);
+				if (addend != 0) {
+					warnExternalOffsetRelocation(program, relocationAddress,
+						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+					applyComponentOffsetPointer(program, relocationAddress, addend);
+				}
 				break;
 			}
 			case ARM_ElfRelocationConstants.R_ARM_REL32: { // Target class: Data

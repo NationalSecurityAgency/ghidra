@@ -113,12 +113,14 @@ public:
     lisconsume = 0x08,		///< In consume worklist
     ptrcheck = 0x10,	        ///< The Varnode value is \e NOT a pointer
     ptrflow = 0x20,             ///< If this varnode flows to or from a pointer
-    unsignedprint = 0x40,	///< Constant that must be explicitly printed as unsigned
-    stack_store = 0x80,		///< Created by an explicit STORE
-    locked_input = 0x100,	///< Input that exists even if its unused
-    spacebase_placeholder = 0x200, ///< This varnode is inserted artificially to track a register
+    unsignedprint = 0x40,	///< Constant that must be explicitly printed as an unsigned token
+    longprint = 0x80,		///< Constant that must be explicitly printed as a \e long integer token
+    stack_store = 0x100,	///< Created by an explicit STORE
+    locked_input = 0x200,	///< Input that exists even if its unused
+    spacebase_placeholder = 0x400, ///< This varnode is inserted artificially to track a register
 				///< value at a specific point in the code
-    stop_uppropagation = 0x400	///< Data-types do not propagate from an output into \b this
+    stop_uppropagation = 0x800,	///< Data-types do not propagate from an output into \b this
+    has_implied_field = 0x1000	///< The varnode is implied but also has a data-type that needs resolution
   };
 private:
   mutable uint4 flags;		///< The collection of boolean attributes for this Varnode
@@ -176,6 +178,10 @@ public:
   SymbolEntry *getSymbolEntry(void) const { return mapentry; } ///< Get symbol and scope information associated with this Varnode
   uint4 getFlags(void) const { return flags; } ///< Get all the boolean attributes
   Datatype *getType(void) const { return type; } ///< Get the Datatype associated with this Varnode
+  Datatype *getTypeDefFacing(void) const;	///< Return the data-type of \b this when it is written to
+  Datatype *getTypeReadFacing(const PcodeOp *op) const;	///< Get the data-type of \b this when it is read by the given PcodeOp
+  Datatype *getHighTypeDefFacing(void) const;	///< Return the data-type of the HighVariable when \b this is written to
+  Datatype *getHighTypeReadFacing(const PcodeOp *op) const;	///< Return data-type of the HighVariable when read by the given PcodeOp
   void setTempType(Datatype *t) const { temp.dataType = t; }	///< Set the temporary Datatype
   Datatype *getTempType(void) const { return temp.dataType; } ///< Get the temporary Datatype (used during type propagation)
   void setValueSet(ValueSet *v) const { temp.valueSet = v; }	///< Set the temporary ValueSet record
@@ -245,6 +251,7 @@ public:
   bool isStackStore(void) const { return ((addlflags&Varnode::stack_store)!=0); } ///< Was this originally produced by an explicit STORE
   bool isLockedInput(void) const { return ((addlflags&Varnode::locked_input)!=0); }	///< Is always an input, even if unused
   bool stopsUpPropagation(void) const { return ((addlflags&Varnode::stop_uppropagation)!=0); }	///< Is data-type propagation stopped
+  bool hasImpliedField(void) const { return ((addlflags&Varnode::has_implied_field)!=0); }	///< Does \b this have an implied field
 
   /// Is \b this just a special placeholder representing INDIRECT creation?
   bool isIndirectZero(void) const { return ((flags&(Varnode::indirect_creation|Varnode::constant))==(Varnode::indirect_creation|Varnode::constant)); }
@@ -256,6 +263,7 @@ public:
   bool isIncidentalCopy(void) const { return ((flags&Varnode::incidental_copy)!=0); } ///< Does this varnode get copied as a side-effect
   bool isWriteMask(void) const { return ((addlflags&Varnode::writemask)!=0); } ///< Is \b this (not) considered a true write location when calculating SSA form?
   bool isUnsignedPrint(void) const { return ((addlflags&Varnode::unsignedprint)!=0); } ///< Must \b this be printed as unsigned
+  bool isLongPrint(void) const { return ((addlflags&Varnode::longprint)!=0); } ///< Must \b this be printed as a \e long token
   bool isWritten(void) const { return ((flags&Varnode::written)!=0); }   ///< Does \b this have a defining write operation?
 
   /// Does \b this have Cover information?
@@ -303,8 +311,10 @@ public:
   void setAutoLiveHold(void) { flags |= Varnode::autolive_hold; }	///< Place temporary hold on dead code removal
   void clearAutoLiveHold(void) { flags &= ~Varnode::autolive_hold; }	///< Clear temporary hold on dead code removal
   void setUnsignedPrint(void) { addlflags |= Varnode::unsignedprint; } ///< Force \b this to be printed as unsigned
+  void setLongPrint(void) { addlflags |= Varnode::longprint; }	///< Force \b this to be printed as a \e long token
   void setStopUpPropagation(void) { addlflags |= Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
   void clearStopUpPropagation(void) { addlflags &= ~Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
+  void setImpliedField(void) { addlflags |= Varnode::has_implied_field; }	///< Mark \this as having an implied field
   bool updateType(Datatype *ct,bool lock,bool override); ///< (Possibly) set the Datatype given various restrictions
   void setStackStore(void) { addlflags |= Varnode::stack_store; } ///< Mark as produced by explicit CPUI_STORE
   void setLockedInput(void) { addlflags |= Varnode::locked_input; }	///< Mark as existing input, even if unused

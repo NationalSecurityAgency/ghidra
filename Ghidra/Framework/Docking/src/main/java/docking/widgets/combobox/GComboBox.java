@@ -25,6 +25,8 @@ import docking.widgets.GComponent;
  * A {@link JComboBox} that disables HTML rendering.
  * 
  * @param <E> the type of the elements of this combo box
+ * 
+ * See {@link GhidraComboBox} for improved functionality including handling of Enter key.
  */
 public class GComboBox<E> extends JComboBox<E> implements GComponent {
 

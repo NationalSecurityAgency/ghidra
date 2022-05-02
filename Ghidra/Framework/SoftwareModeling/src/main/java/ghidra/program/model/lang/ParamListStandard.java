@@ -317,14 +317,6 @@ public class ParamListStandard implements ParamList {
 				parseGroup(parser, cspec, pe, numgroup, splitFloat);
 			}
 		}
-		// Check that any pentry tags with join storage don't overlap following tags
-		for (ParamEntry curEntry : pe) {
-			if (curEntry.isNonOverlappingJoin()) {
-				if (curEntry.countJoinOverlap(pe) != 1) {
-					throw new XmlParseException("pentry tag must be listed after all its overlaps");
-				}
-			}
-		}
 		parser.end(mainel);
 		entry = new ParamEntry[pe.size()];
 		pe.toArray(entry);

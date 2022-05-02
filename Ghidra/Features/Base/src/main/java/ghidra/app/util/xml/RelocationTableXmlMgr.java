@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,11 @@
  */
 package ghidra.app.util.xml;
 
+import java.util.Iterator;
+import java.util.StringTokenizer;
+
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -27,9 +31,6 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.*;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
-
-import java.util.Iterator;
-import java.util.StringTokenizer;
 
 class RelocationTableXmlMgr {
 
@@ -66,8 +67,8 @@ class RelocationTableXmlMgr {
 				}
 				int type = XmlUtilities.parseInt(element.getAttribute("TYPE"));
 				long[] values = unpackLongs(element.getAttribute("VALUE"));
-				byte[] bytes = unpackBytes(element.getAttribute("BYTES"));
-				String symbolName = element.getAttribute("SYMBOL_NAME");
+				byte[] bytes = unpackBytes(element.getAttribute("BYTES")); // optional
+				String symbolName = element.getAttribute("SYMBOL_NAME"); // optional
 
 				relocTable.add(addr, type, values, bytes, symbolName);
 			}
@@ -120,7 +121,7 @@ class RelocationTableXmlMgr {
 
 	private String pack(byte[] values) {
 		if (values == null || values.length == 0) {
-			return "";
+			return null;
 		}
 		StringBuffer buf = new StringBuffer();
 		for (byte v : values) {
@@ -149,9 +150,14 @@ class RelocationTableXmlMgr {
 			attrs.addAttribute("ADDRESS", XmlProgramUtilities.toString(reloc.getAddress()));
 			attrs.addAttribute("TYPE", reloc.getType(), true);
 			attrs.addAttribute("VALUE", pack(reloc.getValues()));
-			attrs.addAttribute("BYTES", pack(reloc.getBytes()));
-			attrs.addAttribute("SYMBOL_NAME", reloc.getSymbolName());
-
+			String packedBytes = pack(reloc.getBytes());
+			if (packedBytes != null) {
+				attrs.addAttribute("BYTES", packedBytes);
+			}
+			String symName = reloc.getSymbolName();
+			if (!StringUtils.isEmpty(symName)) {
+				attrs.addAttribute("SYMBOL_NAME", reloc.getSymbolName());
+			}
 			writer.startElement("RELOCATION", attrs);
 			writer.endElement("RELOCATION");
 		}

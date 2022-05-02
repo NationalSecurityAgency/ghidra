@@ -15,13 +15,17 @@
  */
 package ghidra.app.extension.datatype.finder;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.apache.commons.collections4.IterableUtils;
+import org.apache.commons.lang3.StringUtils;
 
+import generic.io.NullPrintWriter;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.decompiler.parallel.*;
@@ -33,8 +37,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.BuiltInDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
-import ghidra.util.Msg;
-import ghidra.util.StringUtilities;
+import ghidra.util.*;
 import ghidra.util.datastruct.SetAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -282,12 +285,22 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		private DataType dataType;
 		private FieldMatcher fieldMatcher;
 
+		private ByteArrayOutputStream debugBytes = new ByteArrayOutputStream();
+		private PrintWriter debugWriter = new PrintWriter(debugBytes);
+
 		DecompilerDataTypeFinder(DecompileResults results, Function function, DataType dataType,
 				FieldMatcher fieldMatcher) {
 			this.decompilation = results;
 			this.function = function;
 			this.dataType = dataType;
 			this.fieldMatcher = fieldMatcher;
+
+			if (SystemUtilities.isInTestingMode()) {
+				debugWriter = new PrintWriter(debugBytes);
+			}
+			else {
+				debugWriter = new NullPrintWriter();
+			}
 		}
 
 		List<DataTypeReference> findUsage() {
@@ -311,7 +324,16 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 				return;
 			}
 
+			debugWriter.println("f: " + function + "\n\tchecking vars...");
 			List<DecompilerReference> variables = findVariableReferences(tokens);
+			debugWriter.println("f: " + function + "\n\t...done checking");
+
+			debugWriter.flush();
+			String output = debugBytes.toString();
+			if (!StringUtils.isBlank(output)) {
+				Msg.debug(this, "Final Debug:\n" + output);
+			}
+
 			variables.forEach(v -> matchUsage(v, results));
 		}
 
@@ -364,23 +386,36 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 			VariableAccessDR access = null;
 			for (ClangToken token : filteredTokens) {
 
+				debugWriter.println("f: " + function + "\n\tchecking token: " + token);
+
 				if (token instanceof ClangTypeToken) {
 
 					if (token.Parent() instanceof ClangReturnType) {
+						debugWriter.println("f: " + function + "\n\t\treturn type: " + line);
+
 						results.add(new ReturnTypeDR(line, (ClangTypeToken) token));
 					}
 					else if (token.isVariableRef()) {
 						// Note: variable refs will get their variable in an upcoming token
 						if (isFunctionPrototype(token.Parent())) {
+
+							debugWriter.println("f: " + function + "\n\t\tparameter: " + line);
+
 							declaration = new ParameterDR(line, (ClangTypeToken) token);
 						}
 						else {
+
+							debugWriter.println("f: " + function + "\n\t\tlocal var: " + line);
+
 							declaration = new LocalVariableDR(line, (ClangTypeToken) token);
 						}
 
 						results.add(declaration);
 					}
 					else {
+
+						debugWriter.println("f: " + function + "\n\t\tadding a cast");
+
 						// Assumption: this is a cast inside of a ClangStatement
 						// Assumption: there can be multiple casts concatenated
 						castsSoFar.add(new DecompilerVariableType(token));
@@ -400,11 +435,20 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 					//    variable access/usage.
 					//
 					if (declaration != null) {
+
+						debugWriter.println(
+							"f: " + function + "\n\t\thave declaration - " + declaration);
+
 						declaration.setVariable((ClangVariableToken) token);
 						declaration = null;
 					}
 					else {
 						if (access == null || access.getVariable() != null) {
+
+							debugWriter
+									.println("f: " + function + "\n\t\tcreating variable access: " +
+										line);
+
 							access = new VariableAccessDR(line);
 							results.add(access);
 						}
@@ -435,6 +479,11 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 
 					ClangFieldToken field = (ClangFieldToken) token;
 					if (typesDoNotMatch(access, field)) {
+
+						debugWriter.println(
+							"f: " + function + "\n\t\tcreating an anonymous variable access: " +
+								line);
+
 						// this can happen when a field is used anonymously, such as directly
 						// after a nested array index operation
 						results.add(new AnonymousVariableAccessDR(line, field));

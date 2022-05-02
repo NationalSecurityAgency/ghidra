@@ -17,10 +17,11 @@ package ghidra.app.plugin.core.data;
 
 import javax.swing.KeyStroke;
 
-import docking.ActionContext;
-import docking.action.*;
+import docking.action.KeyBindingData;
+import docking.action.KeyBindingType;
 import ghidra.app.cmd.data.*;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ListingContextAction;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.CycleGroup;
@@ -34,7 +35,7 @@ import ghidra.util.Msg;
  * <code>CycleGroupAction</code> cycles data through a series of data types
  * defined by a <code>CycleGroup</code>.
  */
-public class CycleGroupAction extends DockingAction {
+public class CycleGroupAction extends ListingContextAction {
 
 	private DataPlugin plugin;
 	private CycleGroup cycleGroup;
@@ -63,26 +64,13 @@ public class CycleGroupAction extends DockingAction {
 	}
 
 	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		Object contextObject = context.getContextObject();
-		if (contextObject instanceof ListingActionContext) {
-			return plugin.isCreateDataAllowed((ListingActionContext) contextObject);
-		}
-		return false;
+	protected boolean isEnabledForContext(ListingActionContext context) {
+		return plugin.isCreateDataAllowed(context);
 	}
 
 	@Override
-	public void actionPerformed(ActionContext context) {
-
-		if (context != null) {
-			Object contextObject = context.getContextObject();
-
-			if (contextObject instanceof ListingActionContext) {
-				ListingActionContext programContextObject = (ListingActionContext) contextObject;
-				cycleData(programContextObject);
-				return;
-			}
-		}
+	protected void actionPerformed(ListingActionContext context) {
+		cycleData(context);
 	}
 
 	/**

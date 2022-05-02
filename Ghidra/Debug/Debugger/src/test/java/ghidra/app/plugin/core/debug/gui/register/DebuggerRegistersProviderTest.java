@@ -33,15 +33,17 @@ import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersProvider.RegisterTableColumns;
-import ghidra.app.services.ActionSource;
+import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.services.DebuggerStateEditingService;
+import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncTestUtils;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.listing.DBTraceCodeRegisterSpace;
-import ghidra.trace.model.Trace;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
@@ -56,6 +58,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 	protected DebuggerRegistersPlugin registersPlugin;
 	protected DebuggerRegistersProvider registersProvider;
 	protected DebuggerListingPlugin listingPlugin;
+	protected DebuggerStateEditingService editingService;
 
 	protected Register r0;
 	protected Register pc;
@@ -76,6 +79,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		registersPlugin = addPlugin(tool, DebuggerRegistersPlugin.class);
 		registersProvider = waitForComponentProvider(DebuggerRegistersProvider.class);
 		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
+		editingService = addPlugin(tool, DebuggerStateEditingServicePlugin.class);
 
 		createTrace();
 		r0 = tb.language.getRegister("r0");
@@ -136,36 +140,6 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			addRegisterTypes(thread, tid);
 		}
-	}
-
-	protected TraceRecorder recordAndWaitSync() throws Exception {
-		createTestModel();
-		mb.createTestProcessesAndThreads();
-		mb.createTestThreadRegisterBanks();
-		// NOTE: Test mapper uses TOYBE64
-		mb.testProcess1.regs.addRegistersFromLanguage(getToyBE64Language(),
-			Register::isBaseRegister);
-
-		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
-
-		waitFor(() -> {
-			TraceThread thread = recorder.getTraceThread(mb.testThread1);
-			if (thread == null) {
-				return false;
-			}
-			/*
-			DebuggerRegisterMapper mapper = recorder.getRegisterMapper(thread);
-			if (mapper == null) {
-				return false;
-			}
-			if (!mapper.getRegistersOnTarget().containsAll(baseRegs)) {
-				return false;
-			}
-			*/
-			return true;
-		});
-		return recorder;
 	}
 
 	protected RegisterRow findRegisterRow(Register reg) {
@@ -388,12 +362,14 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 	// TODO: Make contextreg modifiable by Registers window
 
 	@Test
-	public void testDeadModifyValueEmulates() throws Exception {
+	public void testModifyValueEmu() throws Exception {
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
 		traceManager.activateThread(thread);
 		waitForSwing();
+
+		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
 
 		assertTrue(registersProvider.actionEnableEdits.isEnabled());
 		performAction(registersProvider.actionEnableEdits);
@@ -410,54 +386,11 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		waitForSwing();
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertTrue(DBTraceUtils.isScratch(viewSnap));
 			assertEquals(BigInteger.valueOf(0x1234),
 				regVals.getValue(viewSnap, r0).getUnsignedValue());
 			assertEquals(BigInteger.valueOf(0x1234), row.getValue());
 		});
-	}
-
-	@Test
-	public void testLiveModifyValueAffectsTarget() throws Exception {
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(recorder.getTrace());
-		traceManager.activateThread(recorder.getTraceThread(mb.testThread1));
-		waitForSwing();
-
-		assertTrue(registersProvider.actionEnableEdits.isEnabled());
-		performAction(registersProvider.actionEnableEdits);
-
-		RegisterRow row = findRegisterRow(r0);
-		assertTrue(row.isValueEditable());
-
-		setRowText(row, "0102030405060708");
-		waitForSwing();
-
-		assertArrayEquals(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }, mb.testBank1.regVals.get("r0"));
-	}
-
-	@Test
-	public void testLiveModifySubValueAffectsTarget() throws Throwable {
-		TraceRecorder recorder = recordAndWaitSync();
-		Trace trace = recorder.getTrace();
-		traceManager.openTrace(trace);
-		TraceThread thread = recorder.getTraceThread(mb.testThread1);
-		traceManager.activateThread(thread);
-		waitForSwing();
-
-		assertTrue(registersProvider.actionEnableEdits.isEnabled());
-		performAction(registersProvider.actionEnableEdits);
-
-		mb.testBank1.writeRegistersNamed(Map.of("r0", new byte[] { 0 }));
-		waitOn(mb.testModel.flushEvents());
-		waitForDomainObject(trace);
-
-		RegisterRow rowL = findRegisterRow(r0l);
-		waitForPass(() -> assertTrue(rowL.isValueEditable()));
-
-		setRowText(rowL, "05060708");
-		waitForSwing();
-
-		assertArrayEquals(new byte[] { 0, 0, 0, 0, 5, 6, 7, 8 }, mb.testBank1.regVals.get("r0"));
 	}
 
 	// NOTE: Value modification only allowed on live target

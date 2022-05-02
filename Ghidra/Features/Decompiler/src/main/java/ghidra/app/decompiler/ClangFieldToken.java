@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +17,7 @@ package ghidra.app.decompiler;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.PcodeFactory;
+import ghidra.program.model.pcode.PcodeOp;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 
@@ -28,35 +28,49 @@ import ghidra.xml.XmlElement;
 public class ClangFieldToken extends ClangToken {
 	private DataType datatype;			// Structure from which this field is a part
 	private int offset;					// Byte offset of the field within the structure
+	private PcodeOp op;					// The op associated with the field extraction
 
 	public ClangFieldToken(ClangNode par) {
 		super(par);
 		datatype = null;
 	}
-	
+
 	/**
 	 * @return the structure datatype associated with this field token
 	 */
 	public DataType getDataType() {
 		return datatype;
 	}
-	
+
 	/**
 	 * @return the byte offset of this field with its structure
 	 */
 	public int getOffset() {
 		return offset;
 	}
-	
+
 	@Override
-    public void restoreFromXML(XmlElement el,XmlElement end,PcodeFactory pfactory) {
-		super.restoreFromXML(el,end,pfactory);
+	public PcodeOp getPcodeOp() {
+		return op;
+	}
+
+	@Override
+	public void restoreFromXML(XmlElement el, XmlElement end, PcodeFactory pfactory) {
+		super.restoreFromXML(el, end, pfactory);
 		String datatypestring = el.getAttribute("name");		// Name of the structure
-		if (datatypestring != null)
-			datatype = pfactory.getDataTypeManager().findBaseType(datatypestring,el.getAttribute("id"));
+		if (datatypestring != null) {
+			datatype =
+				pfactory.getDataTypeManager().findBaseType(datatypestring, el.getAttribute("id"));
+		}
 		String offsetstring = el.getAttribute(ClangXML.OFFSET);
-		if (offsetstring != null)
+		if (offsetstring != null) {
 			offset = SpecXmlUtils.decodeInt(offsetstring);
+		}
+		String oprefstring = el.getAttribute(ClangXML.OPREF);
+		if (oprefstring != null) {
+			int refid = SpecXmlUtils.decodeInt(oprefstring);
+			op = pfactory.getOpRef(refid);
+		}
 	}
 
 }

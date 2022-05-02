@@ -29,7 +29,6 @@ import ghidra.program.model.block.CodeBlock;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
@@ -237,7 +236,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 	}
 
 	private AddressSetView computeThunkBody(Program program) {
-		if (MemoryBlock.isExternalBlockAddress(entry, program)) {
+		if (program.getMemory().isExternalBlockAddress(entry)) {
 			return new AddressSet(entry, entry);
 		}
 		Listing listing = program.getListing();
@@ -306,7 +305,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		if (f == null) {
 			// If referencedFunctionAddr contained within EXTERNAL block attempt to 
 			// create a thunk function for it
-			if (MemoryBlock.isExternalBlockAddress(referencedFunctionAddr, program)) {
+			if (program.getMemory().isExternalBlockAddress(referencedFunctionAddr)) {
 				CreateThunkFunctionCmd extThunkCmd =
 					new CreateThunkFunctionCmd(referencedFunctionAddr, false);
 				if (extThunkCmd.applyTo(program)) {
@@ -627,7 +626,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 	 */
 	static Address getThunkedExternalFunctionAddress(Program program, Address entry) {
 
-		if (!MemoryBlock.isExternalBlockAddress(entry, program)) {
+		if (!program.getMemory().isExternalBlockAddress(entry)) {
 			return null;
 		}
 

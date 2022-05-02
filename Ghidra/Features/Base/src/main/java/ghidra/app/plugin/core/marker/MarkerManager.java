@@ -20,7 +20,7 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JToolTip;
 import javax.swing.event.ChangeListener;
 
@@ -135,7 +135,7 @@ public class MarkerManager implements MarkerService {
 	@Override
 	public MarkerSet createPointMarker(String name, String markerDescription, Program program,
 			int priority, boolean showMarkers, boolean showNavigation, boolean colorBackground,
-			Color color, ImageIcon icon) {
+			Color color, Icon icon) {
 		MarkerSetImpl markers =
 			new PointMarkerSet(this, name, markerDescription, priority, showMarkers,
 				showNavigation, colorBackground, color, icon, program);
@@ -146,7 +146,7 @@ public class MarkerManager implements MarkerService {
 	@Override
 	public MarkerSet createPointMarker(String name, String markerDescription, Program program,
 			int priority, boolean showMarkers, boolean showNavigation, boolean colorBackground,
-			Color color, ImageIcon icon, boolean isPreferred) {
+			Color color, Icon icon, boolean isPreferred) {
 		MarkerSetImpl markers =
 			new PointMarkerSet(this, name, markerDescription, priority, showMarkers,
 				showNavigation, colorBackground, color, icon, isPreferred, program);

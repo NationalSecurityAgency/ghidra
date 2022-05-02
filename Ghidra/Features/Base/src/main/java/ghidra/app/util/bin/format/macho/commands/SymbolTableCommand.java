@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -48,22 +48,7 @@ public class SymbolTableCommand extends LoadCommand {
 
 	private List<NList> symbols = new ArrayList<NList>();
 
-	public static SymbolTableCommand createSymbolTableCommand(FactoryBundledWithBinaryReader reader,
-			MachHeader header) throws IOException {
-		SymbolTableCommand symbolTableCommand =
-			(SymbolTableCommand) reader.getFactory().create(SymbolTableCommand.class);
-		symbolTableCommand.initSymbolTableCommand(reader, header);
-		return symbolTableCommand;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public SymbolTableCommand() {
-	}
-
-	private void initSymbolTableCommand(FactoryBundledWithBinaryReader reader, MachHeader header)
-			throws IOException {
+	public SymbolTableCommand(BinaryReader reader, MachHeader header) throws IOException {
 		initLoadCommand(reader);
 
 		symoff = reader.readNextInt();
@@ -81,7 +66,7 @@ public class SymbolTableCommand extends LoadCommand {
 		reader.setPointerIndex(startIndex + symoff);
 
 		for (int i = 0; i < nsyms; ++i) {
-			nlistList.add(NList.createNList(reader, is32bit));
+			nlistList.add(new NList(reader, is32bit));
 		}
 		// sort the entries by the index in the string table, so don't jump around reading
 		List<NList> sortedList =

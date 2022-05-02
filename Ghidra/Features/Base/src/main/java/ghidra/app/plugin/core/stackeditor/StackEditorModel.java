@@ -22,7 +22,6 @@ import javax.swing.JOptionPane;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
-
 /**
  * Function stack editor model for maintaining information about the edits to
  * a function stack frame. Updates the stack frame with the edit changes.
@@ -33,7 +32,6 @@ import docking.widgets.fieldpanel.support.FieldSelection;
  * When edit actions occur and there is a selection, the listener's are notified
  * of the new selection via the listener's overrideSelection method.
  */
-
 import ghidra.app.plugin.core.compositeeditor.CompositeEditorModel;
 import ghidra.app.plugin.core.compositeeditor.DataTypeHelper;
 import ghidra.app.util.datatype.EmptyCompositeException;
@@ -89,7 +87,7 @@ public class StackEditorModel extends CompositeEditorModel {
 		return false;
 	}
 
-	void stackChangedExcternally(boolean changed) {
+	void stackChangedExternally(boolean changed) {
 		stackChangedExternally = changed;
 	}
 
@@ -97,13 +95,17 @@ public class StackEditorModel extends CompositeEditorModel {
 		originalStack = function.getStackFrame();
 		StackFrameDataType stackFrameDataType = new StackFrameDataType(originalStack, dtm);
 		stackFrameDataType.setCategoryPath(dtm.getRootCategory().getCategoryPath());
-		load(stackFrameDataType, false);
+		load(stackFrameDataType);
 	}
 
 	@Override
-	public void load(Composite dataType, boolean useOffLineCategory) {
-		stackChangedExcternally(false);
-		super.load(dataType, useOffLineCategory);
+	public void load(Composite dataType) {
+		stackChangedExternally(false);
+		super.load(dataType);
+	}
+
+	protected Composite createViewCompositeFromOriginalComposite(Composite original) {
+		return (Composite) original.copy(original.getDataTypeManager());
 	}
 
 	StackFrameDataType getViewComposite() {
@@ -1023,7 +1025,7 @@ public class StackEditorModel extends CompositeEditorModel {
 					newSv.setComment(comment);
 				}
 			}
-			load(new StackFrameDataType(original, dtm), false);
+			load(new StackFrameDataType(original, dtm));
 			clearStatus();
 			return true;
 		}
@@ -1183,7 +1185,6 @@ public class StackEditorModel extends CompositeEditorModel {
 			originalDataTypePath.getDataTypeName().equals(newPath.getDataTypeName()) &&
 			originalDataTypePath.getCategoryPath().equals(oldPath.getCategoryPath())) {
 			originalDataTypePath = newPath;
-			originalCategoryChanged();
 			compositeInfoChanged();
 		}
 	}
@@ -1241,7 +1242,7 @@ public class StackEditorModel extends CompositeEditorModel {
 	@Override
 	protected Composite getOriginalComposite() {
 		// This is to allow the stack editor panel to have access.
-		return super.getOriginalComposite();
+		return originalComposite; // not contained within datatype manager
 	}
 
 	@Override

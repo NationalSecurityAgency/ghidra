@@ -17,9 +17,10 @@ package ghidra.app.util.bin.format.elf;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
-import ghidra.util.*;
+import ghidra.util.DataConverter;
+import ghidra.util.StringUtilities;
 
 /**
  * A class to represent the Elf<code>32</code>_Dyn data structure.
@@ -56,28 +57,14 @@ public class ElfDynamic implements ByteArrayConverter {
 	private ElfHeader elf;
 
 	private int d_tag;
-//	private ElfDynamicType d_tag_type;
     private long d_val;
 
-    public static ElfDynamic createElfDynamic(
-FactoryBundledWithBinaryReader reader, ElfHeader elf)
-            throws IOException {
-        ElfDynamic elfDynamic = (ElfDynamic) reader.getFactory().create(ElfDynamic.class);
-		elfDynamic.initElfDynamic(reader, elf);
-        return elfDynamic;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public ElfDynamic() {}
-
-	private void initElfDynamic(FactoryBundledWithBinaryReader reader, ElfHeader elf)
+	public ElfDynamic(BinaryReader reader, ElfHeader elf)
 			throws IOException {
 		this.elf = elf;
 		if (elf.is32Bit()) {
 			d_tag = reader.readNextInt();
-            d_val = reader.readNextInt() & Conv.INT_MASK;
+			d_val = Integer.toUnsignedLong(reader.readNextInt());
         }
         else {
 			d_tag = (int) reader.readNextLong();
@@ -148,7 +135,7 @@ FactoryBundledWithBinaryReader reader, ElfHeader elf)
      * @param value the new value dynamic
      */
     public void setValue(int value) {
-        this.d_val = value & Conv.INT_MASK;
+		this.d_val = Integer.toUnsignedLong(value);
     }
 
     /**
@@ -191,8 +178,8 @@ FactoryBundledWithBinaryReader reader, ElfHeader elf)
 	}
 
     /**
-     * Returns the size in bytes of this object.
-     */
+	 * @return the size in bytes of this object.
+	 */
 	public int sizeof() {
 		return elf.is32Bit() ? 8 : 16;
     }

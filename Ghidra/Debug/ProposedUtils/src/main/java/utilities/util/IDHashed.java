@@ -17,9 +17,11 @@ package utilities.util;
 
 public class IDHashed<T> {
 	public final T obj;
+	public final int hashCode;
 
 	public IDHashed(T obj) {
 		this.obj = obj;
+		this.hashCode = System.identityHashCode(obj);
 	}
 
 	@Override
@@ -29,7 +31,7 @@ public class IDHashed<T> {
 
 	@Override
 	public int hashCode() {
-		return System.identityHashCode(obj);
+		return hashCode;
 	}
 
 	@Override

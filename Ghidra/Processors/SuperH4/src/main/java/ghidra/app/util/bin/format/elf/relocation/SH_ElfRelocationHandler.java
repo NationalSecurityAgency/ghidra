@@ -63,18 +63,22 @@ public class SH_ElfRelocationHandler extends ElfRelocationHandler {
 
 		switch (type) {
 			case SH_ElfRelocationConstants.R_SH_DIR32:
-			case SH_ElfRelocationConstants.R_SH_GLOB_DAT:
-			case SH_ElfRelocationConstants.R_SH_JMP_SLOT:
-				// 32-bit absolute relocations
+				// 32-bit absolute relocation w/ addend
 				if (elfRelocationContext.extractAddend()) {
 					addend = memory.getInt(relocationAddress);
 				}
-				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
-					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
-					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
-				}
 				newValue = symbolValue + addend;
 				memory.setInt(relocationAddress, newValue);
+				if (addend != 0) {
+					warnExternalOffsetRelocation(program, relocationAddress,
+						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+					applyComponentOffsetPointer(program, relocationAddress, addend);
+				}
+				break;
+			case SH_ElfRelocationConstants.R_SH_GLOB_DAT:
+			case SH_ElfRelocationConstants.R_SH_JMP_SLOT:
+				// 32-bit absolute relocations, no addend
+				memory.setInt(relocationAddress, symbolValue);
 				break;
 
 			case SH_ElfRelocationConstants.R_SH_REL32:  // 32-bit PC relative relocation

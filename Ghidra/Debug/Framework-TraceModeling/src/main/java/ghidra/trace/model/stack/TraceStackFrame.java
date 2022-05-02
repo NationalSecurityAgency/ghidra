@@ -15,6 +15,8 @@
  */
 package ghidra.trace.model.stack;
 
+import com.google.common.collect.Range;
+
 import ghidra.program.model.address.Address;
 
 public interface TraceStackFrame {
@@ -22,9 +24,9 @@ public interface TraceStackFrame {
 
 	int getLevel();
 
-	Address getProgramCounter();
+	Address getProgramCounter(long snap);
 
-	void setProgramCounter(Address pc);
+	void setProgramCounter(Range<Long> span, Address pc);
 
 	String getComment();
 

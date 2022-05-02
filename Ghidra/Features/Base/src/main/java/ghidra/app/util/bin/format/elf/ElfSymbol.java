@@ -17,9 +17,8 @@ package ghidra.app.util.bin.format.elf;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
-import ghidra.util.Conv;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.NotFoundException;
 
@@ -104,33 +103,9 @@ public class ElfSymbol implements ByteArrayConverter {
 	private String nameAsString;
 
 	/**
-	 * create an ElfSymbol()
+	 * Creates a new section symbol.
 	 * Warning! the routine initSymbolName() must be called on the symbol later
 	 * to initialize the string name.  This is a performance enhancement.
-	 * 
-	 * @param reader to read symbol from
-	 * @param symbolIndex index of the symbol to read
-	 * @param symbolTable symbol table to associate the symbol to
-	 * @param header else header
-	 * @return newly created ElfSymbol
-	 * 
-	 * @throws IOException if an issue with reading occurs
-	 */
-	public static ElfSymbol createElfSymbol(FactoryBundledWithBinaryReader reader, int symbolIndex,
-			ElfSymbolTable symbolTable, ElfHeader header) throws IOException {
-		ElfSymbol elfSymbol = (ElfSymbol) reader.getFactory().create(ElfSymbol.class);
-		elfSymbol.initElfSymbol(reader, symbolIndex, symbolTable, header);
-		return elfSymbol;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ElfSymbol() {
-	}
-
-	/**
-	 * Creates a new section symbol.
 	 * @param header the corresponding ELF header
 	 * @param sectionAddress the start address of the section
 	 * @param sectionHeaderIndex the index of the section in the section header table
@@ -147,6 +122,8 @@ public class ElfSymbol implements ByteArrayConverter {
 
 	/**
 	 * Creates a new global function symbol.
+	 * Warning! the routine initSymbolName() must be called on the symbol later
+	 * to initialize the string name.  This is a performance enhancement.
 	 * @param header the corresponding ELF header
 	 * @param name the byte index of the name
 	 * @param nameAsString the string name of the section
@@ -178,7 +155,17 @@ public class ElfSymbol implements ByteArrayConverter {
 		this.symbolTableIndex = symbolIndex;
 	}
 
-	private void initElfSymbol(FactoryBundledWithBinaryReader reader, int symbolIndex,
+	/**
+	 * Construct a normal ElfSymbol.
+	 * Warning! the routine initSymbolName() must be called on the symbol later
+	 * to initialize the string name.  This is a performance enhancement.
+	 * @param reader to read symbol from
+	 * @param symbolIndex index of the symbol to read
+	 * @param symbolTable symbol table to associate the symbol to
+	 * @param header else header
+	 * @throws IOException if an issue with reading occurs
+	 */
+	public ElfSymbol(BinaryReader reader, int symbolIndex,
 			ElfSymbolTable symbolTable, ElfHeader header) throws IOException {
 		this.header = header;
 		this.symbolTable = symbolTable;
@@ -186,8 +173,8 @@ public class ElfSymbol implements ByteArrayConverter {
 
 		if (header.is32Bit()) {
 			st_name = reader.readNextInt();
-			st_value = reader.readNextInt() & Conv.INT_MASK;
-			st_size = reader.readNextInt() & Conv.INT_MASK;
+			st_value = Integer.toUnsignedLong(reader.readNextInt());
+			st_size = Integer.toUnsignedLong(reader.readNextInt());
 			st_info = reader.readNextByte();
 			st_other = reader.readNextByte();
 			st_shndx = reader.readNextShort();
@@ -235,7 +222,7 @@ public class ElfSymbol implements ByteArrayConverter {
 	 * @param reader to read from
 	 * @param stringTable stringTable to initialize symbol name
 	 */
-	public void initSymbolName(FactoryBundledWithBinaryReader reader, ElfStringTable stringTable) {
+	public void initSymbolName(BinaryReader reader, ElfStringTable stringTable) {
 		if (nameAsString == null) {
 			nameAsString = stringTable.readString(reader, st_name);
 		}

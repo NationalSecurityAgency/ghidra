@@ -15,13 +15,12 @@
  */
 package ghidra.app.util.bin.format.pe;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
-import ghidra.program.model.data.*;
-import ghidra.util.*;
-import ghidra.util.exception.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.*;
+import ghidra.program.model.data.*;
+import ghidra.util.DataConverter;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A class to represent the <code>IMAGE_IMPORT_BY_NAME</code>
@@ -42,22 +41,9 @@ public class ImportByName implements StructConverter, ByteArrayConverter {
     private short  hint;
     private String name;
 
-    static ImportByName createImportByName(
-            FactoryBundledWithBinaryReader reader, int index)
-            throws IOException {
-        ImportByName importByName = (ImportByName) reader.getFactory().create(ImportByName.class);
-        importByName.initImportByName(reader, index);
-        return importByName;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public ImportByName() {}
-
-	private void initImportByName(FactoryBundledWithBinaryReader reader, int index) throws IOException {
-        hint = reader.readShort(index);
-        name = reader.readAsciiString(index+BinaryReader.SIZEOF_SHORT);
+	ImportByName(BinaryReader reader, int index) throws IOException {
+		hint = reader.readShort(index);
+		name = reader.readAsciiString(index + BinaryReader.SIZEOF_SHORT);
     }
 
 	/**

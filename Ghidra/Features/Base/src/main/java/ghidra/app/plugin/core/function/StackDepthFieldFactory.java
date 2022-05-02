@@ -89,7 +89,7 @@ public class StackDepthFieldFactory extends FieldFactory {
 		//Register stackReg = cu.getProgram().getCompilerSpec().getStackPointer();
 		int depthChange = depth.getDepth(cu.getMinAddress());
 
-		String depthString = getDepthString(depthChange);
+		String depthString = getDepthString(depthChange, cu.isInDelaySlot());
 
 		// This can be used to display the value of any register symbolically flowing over the program.
 		// depthString = depth.getRegValueRepresentation(cu.getMinAddress(), cu.getProgram().getRegister("ESP"));
@@ -113,8 +113,13 @@ public class StackDepthFieldFactory extends FieldFactory {
 	 * @param depthChange
 	 * @return
 	 */
-	private String getDepthString(int depthChange) {
+	private String getDepthString(int depthChange, boolean isInDelaySlot) {
+		if (isInDelaySlot) {
+			return ""; // if in delayslot, stack changes will be on main instruction
+		}
+		
 		String stringDepth = "- ? -";
+
 		if (depthChange != Function.UNKNOWN_STACK_DEPTH_CHANGE &&
 			depthChange != Function.INVALID_STACK_DEPTH_CHANGE) {
 			if (depthChange > 0) {
@@ -129,6 +134,7 @@ public class StackDepthFieldFactory extends FieldFactory {
 				stringDepth = filler.substring(len) + stringDepth;
 			}
 		}
+		
 		return stringDepth;
 	}
 

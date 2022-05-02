@@ -67,7 +67,7 @@ public class GhidraJarBundle extends GhidraBundle {
 	}
 
 	protected ManifestParser createManifestParser() throws GhidraBundleException {
-		try (Jar jar = new Jar(file.getFile(true))) {
+		try (Jar jar = new Jar(bundleFile.getFile(true))) {
 			Manifest manifest = jar.getManifest();
 			if (manifest == null) {
 				throw new GhidraBundleException(bundleLocation, "jar bundle with no manifest");

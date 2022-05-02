@@ -828,13 +828,8 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
       fl = entry->getAllFlags();
       if (entry->getSize() >= vnexemplar->getSize()) {
 	if (typesyes) {
-	  uintb off = (vnexemplar->getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
-	  Datatype *cur = entry->getSymbol()->getType();
-	  do {
-	    ct = cur;
-	    cur = cur->getSubType(off,&off);
-	  } while(cur != (Datatype *)0);
-	  if ((ct->getSize() != vnexemplar->getSize())||(ct->getMetatype() == TYPE_UNKNOWN))
+	  ct = entry->getSizedType(vnexemplar->getAddr(), vnexemplar->getSize());
+	  if (ct != (Datatype *)0 && ct->getMetatype() == TYPE_UNKNOWN)
 	    ct = (Datatype *)0;
 	}
       }
@@ -861,6 +856,52 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
 	updateoccurred = true;
   }
   return updateoccurred;
+}
+
+/// If the Varnode is a partial Symbol with \e union data-type, the best description of the Varnode's
+/// data-type is delayed until data-type propagation is started.
+/// We attempt to resolve this description and also lay down any facing resolutions for the Varnode
+/// \param vn is the given Varnode
+/// \return the best data-type or null
+Datatype *Funcdata::checkSymbolType(Varnode *vn)
+
+{
+  if (vn->isTypeLock()) return vn->getType();
+  SymbolEntry *entry = vn->getSymbolEntry();
+  Symbol *sym = entry->getSymbol();
+  if (sym->getType()->getMetatype() != TYPE_UNION)
+    return (Datatype *)0;
+  TypeUnion *unionType = (TypeUnion *)sym->getType();
+  int4 off = (int4)(vn->getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
+  if (off == 0 && unionType->getSize() == vn->getSize())
+    return (Datatype *)0;
+  const TypeField *finalField = (const TypeField *)0;
+  uintb finalOff = 0;
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    const TypeField *field = unionType->resolveTruncation(off, op, op->getSlot(vn),off);
+    if (field != (const TypeField *)0) {
+      finalField = field;
+      finalOff = off;
+    }
+  }
+  if (vn->isWritten()) {
+    const TypeField *field = unionType->resolveTruncation(off, vn->getDef(), -1, off);
+    if (field != (const TypeField *)0) {
+      finalField = field;
+      finalOff = off;
+    }
+  }
+  if (finalField != (const TypeField *)0) {	// If any use of the Varnode resolves to a specific field
+    // Try to truncate down to a final data-type to assign to the Varnode
+    Datatype *ct = finalField->type;
+    while(ct != (Datatype *)0 && (finalOff != 0 || ct->getSize() != vn->getSize())) {
+	ct = ct->getSubType(finalOff, &finalOff);
+    }
+    return ct;
+  }
+  return (Datatype *)0;
 }
 
 /// A Varnode overlaps the given SymbolEntry.  Make sure the Varnode is part of the variable
@@ -1175,13 +1216,16 @@ bool Funcdata::attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash)
   if (sym->getScope() != localmap)
     throw LowlevelError("Cannot currently have a dynamic symbol outside the local scope");
   dhash.clear();
+  int4 category = sym->getCategory();
+  if (category == Symbol::union_facet) {
+    return applyUnionFacet(entry, dhash);
+  }
   Varnode *vn = dhash.findVarnode(this,entry->getFirstUseAddress(),entry->getHash());
   if (vn == (Varnode *)0) return false;
-  if (entry->getSymbol()->getCategory() == 1) {	// Is this an equate symbol
-    if (vn->mapentry != entry) {		// Check we haven't marked this before
-      vn->setSymbolEntry(entry);
-      return true;
-    }
+  if (vn->getSymbolEntry() != (SymbolEntry *)0) return false;	// Varnode is already labeled
+  if (category == Symbol::equate) {	// Is this an equate symbol
+    vn->setSymbolEntry(entry);
+    return true;
   }
   else if (entry->getSize() == vn->getSize()) {
     if (vn->setSymbolProperties(entry))
@@ -1202,12 +1246,15 @@ bool Funcdata::attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash)
 
 {
   dhash.clear();
+  Symbol *sym = entry->getSymbol();
+  if (sym->getCategory() == Symbol::union_facet) {
+    return applyUnionFacet(entry, dhash);
+  }
   Varnode *vn = dhash.findVarnode(this,entry->getFirstUseAddress(),entry->getHash());
   if (vn == (Varnode *)0)
     return false;
-  if (vn->getSymbolEntry() == entry) return false; // Already applied it
-  Symbol *sym = entry->getSymbol();
-  if (sym->getCategory() == 1) {	// Equate symbol does not depend on size
+  if (vn->getSymbolEntry() != (SymbolEntry *)0) return false; // Symbol already applied
+  if (sym->getCategory() == Symbol::equate) {	// Equate symbol does not depend on size
     vn->setSymbolEntry(entry);
     return true;
   }
@@ -1404,6 +1451,28 @@ void Funcdata::coverVarnodes(SymbolEntry *entry,vector<Varnode *> &list)
       scope->addSymbol(s.str(),vn->getHigh()->getType(),vn->getAddr(),usepoint);
     }
   }
+}
+
+/// \brief Cache information from a UnionFacetSymbol
+///
+/// The symbol forces a particular union field resolution for the associated PcodeOp and slot,
+/// which are extracted from the given \e dynamic SymbolEntry.  The resolution is cached
+/// in the \b unionMap so that it will get picked up by resolveInFlow() methods etc.
+/// \param entry is the given SymbolEntry
+/// \param dhash is preallocated storage for calculating the dynamic hash
+/// \return \b true if the UnionFacetSymbol is successfully cached
+bool Funcdata::applyUnionFacet(SymbolEntry *entry,DynamicHash &dhash)
+
+{
+  Symbol *sym = entry->getSymbol();
+  PcodeOp *op = dhash.findOp(this, entry->getFirstUseAddress(), entry->getHash());
+  if (op == (PcodeOp *)0)
+    return false;
+  int4 slot = DynamicHash::getSlotFromHash(entry->getHash());
+  int4 fldNum = ((UnionFacetSymbol *)sym)->getFieldNumber();
+  ResolvedUnion resolve(sym->getType(), fldNum, *glb->types);
+  resolve.setLock(true);
+  return setUnionField(sym->getType(),op,slot,resolve);
 }
 
 /// Search for \e addrtied Varnodes whose storage falls in the global Scope, then

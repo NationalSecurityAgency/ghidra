@@ -36,4 +36,9 @@ public interface BooleanSettingsDefinition extends SettingsDefinition {
 	 */
 	public abstract void setValue(Settings settings, boolean value);
 
+	@Override
+	public default boolean hasSameValue(Settings settings1, Settings settings2) {
+		return getValue(settings1) == getValue(settings2);
+	}
+
 }

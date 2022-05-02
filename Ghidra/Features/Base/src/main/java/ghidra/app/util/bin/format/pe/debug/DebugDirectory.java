@@ -18,9 +18,7 @@ package ghidra.app.util.bin.format.pe.debug;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import ghidra.app.util.bin.ByteArrayConverter;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.pe.OffsetValidator;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
@@ -74,22 +72,7 @@ public class DebugDirectory implements StructConverter, ByteArrayConverter {
 	 * @param index the index where this debug directory begins
 	 * @param ntHeader 
 	 */
-	static DebugDirectory createDebugDirectory(FactoryBundledWithBinaryReader reader, long index,
-			OffsetValidator validator) throws IOException {
-		DebugDirectory debugDirectory =
-			(DebugDirectory) reader.getFactory().create(DebugDirectory.class);
-		debugDirectory.initDebugDirectory(reader, index, validator);
-		return debugDirectory;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DebugDirectory() {
-	}
-
-	private void initDebugDirectory(FactoryBundledWithBinaryReader reader, long index,
-			OffsetValidator validator) throws IOException {
+	DebugDirectory(BinaryReader reader, long index, OffsetValidator validator) throws IOException {
 		long oldIndex = reader.getPointerIndex();
 		reader.setPointerIndex(index);
 
@@ -104,22 +87,22 @@ public class DebugDirectory implements StructConverter, ByteArrayConverter {
 
 		if (type < 0 || type > 16 || sizeOfData < 0) {
 			Msg.error(this, "Invalid DebugDirectory");
-			sizeOfData = 0;
-			reader.setPointerIndex(oldIndex);
-			return;
-		}
-		if (sizeOfData > 0) {
-			if (!validator.checkPointer(pointerToRawData)) {
-				Msg.error(this, "Invalid pointerToRawData " + pointerToRawData);
 				sizeOfData = 0;
 				reader.setPointerIndex(oldIndex);
 				return;
 			}
-			blobBytes = reader.readByteArray(pointerToRawData, sizeOfData);
-		}
+			if (sizeOfData > 0) {
+				if (!validator.checkPointer(pointerToRawData)) {
+					Msg.error(this, "Invalid pointerToRawData " + pointerToRawData);
+					sizeOfData = 0;
+					reader.setPointerIndex(oldIndex);
+					return;
+				}
+				blobBytes = reader.readByteArray(pointerToRawData, sizeOfData);
+			}
 
-		this.index = index;
-		reader.setPointerIndex(oldIndex);
+			this.index = index;
+			reader.setPointerIndex(oldIndex);
 	}
 
 	/**

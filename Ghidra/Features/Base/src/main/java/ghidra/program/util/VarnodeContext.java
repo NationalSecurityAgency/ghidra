@@ -316,6 +316,9 @@ public class VarnodeContext implements ProcessorContext {
 	private void setupValidSymbolicStackNames(Program program) {
 		// figure out what register is used for stack values
 		Register stackRegister = getStackRegister();
+		if (stackRegister == null) {
+			return;
+		}
 
 		validSymbolicStackNames.add(stackRegister.getName());
 		List<Register> childRegisters = stackRegister.getChildRegisters();
@@ -325,13 +328,27 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	/**
-	 * Return true if this varnode is stored in the symbolic stack space
+	 * Check if varnode is in the stack space
+	 * 
+	 * @param varnode varnode to check
+	 * 
+	 * @return true if this varnode is stored in the symbolic stack space
 	 */
 	public boolean isStackSymbolicSpace(Varnode varnode) {
 		// symbolic spaces are off of a register, find the space
 		AddressSpace regSpace = addrFactory.getAddressSpace(varnode.getSpace());
 
-		return validSymbolicStackNames.contains(regSpace.getName());
+		return isStackSpaceName(regSpace.getName());
+	}
+
+	/**
+	 * Check if spaceName is associated with the stack
+	 * 
+	 * @param spaceName of address space to check
+	 * @return true if spaceName is associated with the stack space
+	 */
+	public boolean isStackSpaceName(String spaceName) {
+		return validSymbolicStackNames.contains(spaceName);
 	}
 
 	/**
@@ -832,6 +849,16 @@ public class VarnodeContext implements ProcessorContext {
 			allLastSet.put(node, addressSet);
 		}
 		addressSet.add(address);
+		
+		// for registers with parent larger register, must store that they were
+		// last set at this address as well.
+		if (node.isRegister()) {
+			Register parentRegister = trans.getRegister(node).getParentRegister();
+			if (parentRegister != null) {
+				node = trans.getVarnode(parentRegister);
+				addSetVarnodeToLastSetLocations(node, address);
+			}
+		}
 	}
 
 	/**

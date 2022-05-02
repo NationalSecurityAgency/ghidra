@@ -1308,7 +1308,8 @@ public class HeadlessAnalyzer {
 		boolean filesProcessed = false;
 
 		DomainFile domFile = parentFolder.getFile(filename);
-		if (ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(domFile.getContentType())) {
+		if (domFile != null &&
+			ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(domFile.getContentType())) {
 			filesProcessed = true;
 			processFileNoImport(domFile);
 		}

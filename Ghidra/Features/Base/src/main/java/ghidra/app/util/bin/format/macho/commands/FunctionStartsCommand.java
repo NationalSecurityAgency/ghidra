@@ -21,7 +21,6 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.address.Address;
 
@@ -32,18 +31,8 @@ import ghidra.program.model.address.Address;
  */
 public class FunctionStartsCommand extends LinkEditDataCommand {
 	
-	static FunctionStartsCommand createFunctionStartsCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		FunctionStartsCommand command =
-			(FunctionStartsCommand) reader.getFactory().create(FunctionStartsCommand.class);
-		command.initLinkEditDataCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public FunctionStartsCommand() {
+	FunctionStartsCommand(BinaryReader reader) throws IOException {
+		super(reader);
 	}
 
 	/**

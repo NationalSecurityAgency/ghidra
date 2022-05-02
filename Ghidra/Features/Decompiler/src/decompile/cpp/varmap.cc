@@ -395,7 +395,7 @@ void ScopeLocal::markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool parameter
       // If the symbol and the use are both as parameters
       // this is likely the special case of a shared return call sharing the parameter location
       // of the original function in which case we don't print a warning
-      if ((!parameter) || (sym->getCategory() != 0))
+      if ((!parameter) || (sym->getCategory() != Symbol::function_parameter))
 	fd->warningHeader("Variable defined which should be unmapped: "+sym->getName());
       return;
     }
@@ -814,7 +814,7 @@ void MapState::reconcileDatatypes(void)
   maplist.swap(newList);
 }
 
-/// The given LoadGuard, which may be a LOAD or STORE is converted into an appropriate
+/// The given LoadGuard, which may be a LOAD or STORE, is converted into an appropriate
 /// RangeHint, attempting to make use of any data-type or index information.
 /// \param guard is the given LoadGuard
 /// \param opc is the expected op-code (CPUI_LOAD or CPUI_STORE)
@@ -825,7 +825,7 @@ void MapState::addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFacto
   if (!guard.isValid(opc)) return;
   int4 step = guard.getStep();
   if (step == 0) return;		// No definitive sign of array access
-  Datatype *ct = guard.getOp()->getIn(1)->getType();
+  Datatype *ct = guard.getOp()->getIn(1)->getTypeReadFacing(guard.getOp());
   if (ct->getMetatype() == TYPE_PTR) {
     ct = ((TypePointer *) ct)->getPtrTo();
     while (ct->getMetatype() == TYPE_ARRAY)
@@ -1157,7 +1157,7 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
 void ScopeLocal::fakeInputSymbols(void)
 
 {
-  int4 lockedinputs = getCategorySize(0);
+  int4 lockedinputs = getCategorySize(Symbol::function_parameter);
   VarnodeDefSet::const_iterator iter,enditer;
 
   iter = fd->beginDef(Varnode::input);
@@ -1194,7 +1194,7 @@ void ScopeLocal::fakeInputSymbols(void)
 	uint4 vflags = 0;
 	SymbolEntry *entry = queryProperties(vn->getAddr(),vn->getSize(),usepoint,vflags);
 	if (entry != (SymbolEntry *)0) {
-	  if (entry->getSymbol()->getCategory()==0)
+	  if (entry->getSymbol()->getCategory()==Symbol::function_parameter)
 	    continue;		// Found a matching symbol
 	}
       }

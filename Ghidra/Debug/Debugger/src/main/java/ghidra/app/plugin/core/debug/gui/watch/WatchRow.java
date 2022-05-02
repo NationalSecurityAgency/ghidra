@@ -24,6 +24,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.services.DebuggerStateEditingService;
+import ghidra.app.services.DebuggerStateEditingService.StateEditor;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceBytesPcodeExecutorState;
@@ -32,14 +34,12 @@ import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
 
 public class WatchRow {
@@ -142,7 +142,7 @@ public class WatchRow {
 		MemBuffer buffer = new ByteMemBufferImpl(address, value, language.isBigEndian());
 		return dataType.getRepresentation(buffer, SettingsImpl.NO_SETTINGS, value.length);
 	}
-	
+
 	protected Object parseAsDataTypeObj() {
 		if (dataType == null || value == null) {
 			return null;
@@ -372,9 +372,20 @@ public class WatchRow {
 	public Object getValueObj() {
 		return valueObj;
 	}
-	
+
 	public boolean isValueEditable() {
-		return address != null && provider.isEditsEnabled();
+		if (!provider.isEditsEnabled()) {
+			return false;
+		}
+		if (address == null) {
+			return false;
+		}
+		DebuggerStateEditingService editingService = provider.editingService;
+		if (editingService == null) {
+			return false;
+		}
+		StateEditor editor = editingService.createStateEditor(coordinates);
+		return editor.isVariableEditable(address, getValueLength());
 	}
 
 	public void setRawValueString(String valueString) {
@@ -415,55 +426,16 @@ public class WatchRow {
 		if (bytes.length != value.length) {
 			throw new IllegalArgumentException("Byte array values must match length of variable");
 		}
-
-		// Allow writes to unmappable registers to fall through to trace
-		// However, attempts to write "weird" register addresses is forbidden
-		if (coordinates.isAliveAndPresent() && coordinates.getRecorder()
-				.isVariableOnTarget(coordinates.getThread(), address, bytes.length)) {
-			coordinates.getRecorder()
-					.writeVariable(coordinates.getThread(), coordinates.getFrame(), address, bytes)
-					.exceptionally(ex -> {
-						Msg.showError(this, null, "Write Failed",
-							"Could not modify watch value (on target)", ex);
-						return null;
-					});
-			// NB: if successful, recorder will write to trace
-			return;
+		DebuggerStateEditingService editingService = provider.editingService;
+		if (editingService == null) {
+			throw new AssertionError("No editing service");
 		}
-
-		/*try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Write watch at " + address, true)) {
-			final TraceMemorySpace space;
-			if (address.isRegisterAddress()) {
-				space = trace.getMemoryManager()
-						.getMemoryRegisterSpace(coordinates.getThread(), coordinates.getFrame(),
-							true);
-			}
-			else {
-				space = trace.getMemoryManager().getMemorySpace(address.getAddressSpace(), true);
-			}
-			space.putBytes(coordinates.getViewSnap(), address, ByteBuffer.wrap(bytes));
-		}*/
-		TraceSchedule time =
-			coordinates.getTime().patched(coordinates.getThread(), generateSleigh(bytes));
-		provider.goToTime(time);
-	}
-
-	protected String generateSleigh(byte[] bytes) {
-		BigInteger value = Utils.bytesToBigInteger(bytes, bytes.length,
-			trace.getBaseLanguage().isBigEndian(), false);
-		if (address.isMemoryAddress()) {
-			AddressSpace space = address.getAddressSpace();
-			return String.format("*[%s]:%d 0x%s:%d=0x%s",
-				space.getName(), bytes.length,
-				address.getOffsetAsBigInteger().toString(16), space.getPointerSize(),
-				value.toString(16));
-		}
-		Register register = trace.getBaseLanguage().getRegister(address, bytes.length);
-		if (register == null) {
-			throw new AssertionError("Can only modify memory or register");
-		}
-		return String.format("%s=0x%s", register, value.toString(16));
+		StateEditor editor = editingService.createStateEditor(coordinates);
+		editor.setVariable(address, bytes).exceptionally(ex -> {
+			Msg.showError(this, null, "Write Failed",
+				"Could not modify watch value (on target)", ex);
+			return null;
+		});
 	}
 
 	public int getValueLength() {

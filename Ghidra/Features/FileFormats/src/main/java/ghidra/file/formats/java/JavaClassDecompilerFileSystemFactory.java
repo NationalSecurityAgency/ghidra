@@ -15,6 +15,8 @@
  */
 package ghidra.file.formats.java;
 
+import java.util.Arrays;
+
 import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
@@ -26,7 +28,6 @@ import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import utilities.util.ArrayUtilities;
 
 /**
  * Creates instances of {@link JavaClassDecompilerFileSystem}.
@@ -42,8 +43,8 @@ public class JavaClassDecompilerFileSystemFactory implements
 	@Override
 	public boolean probeStartBytes(FSRL containerFSRL, byte[] startBytes) {
 		return JadProcessWrapper.isJadPresent() &&
-			ArrayUtilities.arrayRangesEquals(startBytes, 0, JavaClassConstants.MAGIC_BYTES, 0,
-				JavaClassConstants.MAGIC_BYTES.length) &&
+			Arrays.equals(startBytes, 0, JavaClassConstants.MAGIC_BYTES.length,
+				JavaClassConstants.MAGIC_BYTES, 0, JavaClassConstants.MAGIC_BYTES.length) &&
 			"class".equalsIgnoreCase(FilenameUtils.getExtension(containerFSRL.getName()));
 	}
 

@@ -79,13 +79,6 @@ public class RecorderSimpleMemory implements AbstractRecorderMemory {
 		}
 	}
 
-	/**
-	 * Get accessible memory, as viewed in the trace
-	 * 
-	 * @param pred an additional predicate applied via "AND" with accessibility
-	 * @param memMapper target-to-trace mapping utility
-	 * @return the computed set
-	 */
 	@Override
 	public AddressSet getAccessibleMemory(Predicate<TargetMemory> pred,
 			DebuggerMemoryMapper memMapper) {

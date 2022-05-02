@@ -24,6 +24,8 @@ import javax.swing.JTextPane;
 import javax.swing.text.*;
 
 import ghidra.app.merge.MergeConstants;
+import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.FunctionSignature;
@@ -75,6 +77,9 @@ class DataTypePanel extends JPanel {
 		}
 		else {
 			formatDataType(dataType);
+		}
+		if (dataType != null) {
+			formatDataTypeSettings(dataType);
 		}
 		textPane.setCaretPosition(0);
 	}
@@ -318,7 +323,23 @@ class DataTypePanel extends JPanel {
 		formatPath(td);
 		insertString(td.getDisplayName(), nameAttrSet);
 		insertString("\n", contentAttrSet);
-		insertString("     TypeDef on " + td.getDataType().getDisplayName(), contentAttrSet);
+		insertString("  TypeDef on " + td.getDataType().getDisplayName(), contentAttrSet);
+	}
+
+	private void formatDataTypeSettings(DataType dt) {
+		Settings settings = dt.getDefaultSettings();
+		SettingsDefinition[] defs =
+			SettingsDefinition.filterSettingsDefinitions(dt.getSettingsDefinitions(), def -> {
+				return (def instanceof TypeDefSettingsDefinition) && def.hasValue(settings);
+			});
+		if (defs.length == 0) {
+			return;
+		}
+		insertString("\n\nSettings\n", sourceAttrSet);
+		for (SettingsDefinition def : defs) {
+			insertString("  " + def.getName() + ": " + def.getValueString(settings) + "\n",
+				contentAttrSet);
+		}
 	}
 
 	private void formatFunctionDef(FunctionDefinition fd) {

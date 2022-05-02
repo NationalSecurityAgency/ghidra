@@ -29,12 +29,12 @@ src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/breakpoint-disab
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/breakpoint-enable.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/DebuggerBreakpointsPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-clear.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-disable.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-enable-ineff.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-enable.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-ineffective-d.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-ineffective-e.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-mixed-de.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-mixed-ed.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-mixed.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoint-overlay-inconsistent.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-clear-all.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-disable-all.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-enable-all.png||GHIDRA||||END|
@@ -105,6 +105,11 @@ src/main/help/help/topics/DebuggerRegistersPlugin/images/DebuggerRegistersPlugin
 src/main/help/help/topics/DebuggerRegistersPlugin/images/select-registers.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerStackPlugin/images/DebuggerStackPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerStateEditingPlugin/images/write-disabled.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerStateEditingPlugin/images/write-emulator.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerStateEditingPlugin/images/write-target.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerStateEditingPlugin/images/write-trace.png||Tango Icons - Public Domain||||END|
 src/main/help/help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerStaticMappingPlugin/images/DebuggerStaticMappingPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTargetsPlugin/DebuggerTargetsPlugin.html||GHIDRA||||END|
@@ -127,35 +132,21 @@ src/main/help/help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html||GHID
 src/main/help/help/topics/DebuggerWatchesPlugin/images/DebuggerWatchesPlugin.png||GHIDRA||||END|
 src/main/resources/defaultTools/Debugger.tool||GHIDRA||||END|
 src/main/resources/images/add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/alt-breakpoint-clear.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoint-disable.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoint-enable.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoint-ineffective-d.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoint-ineffective-e.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoint-mixed-de.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoint-mixed-ed.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoint-set.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoints-clear-all.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoints-disable-all.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoints-enable-all.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoints-make-effective.png||GHIDRA||||END|
-src/main/resources/images/alt-breakpoints.png||GHIDRA||||END|
 src/main/resources/images/attach.png||GHIDRA||||END|
 src/main/resources/images/autoread.png||GHIDRA||||END|
 src/main/resources/images/blank.png||GHIDRA||||END|
 src/main/resources/images/breakpoint-clear.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-disable-ineff.png||GHIDRA||||END|
 src/main/resources/images/breakpoint-disable.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-enable-ineff.png||GHIDRA||||END|
 src/main/resources/images/breakpoint-enable.png||GHIDRA||||END|
-src/main/resources/images/breakpoint-ineffective-d.png||GHIDRA||||END|
-src/main/resources/images/breakpoint-ineffective-e.png||GHIDRA||||END|
-src/main/resources/images/breakpoint-mixed-de.png||GHIDRA||||END|
-src/main/resources/images/breakpoint-mixed-ed.png||GHIDRA||||END|
-src/main/resources/images/breakpoint-set.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-mixed-ineff.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-mixed.png||GHIDRA||||END|
+src/main/resources/images/breakpoint-overlay-inconsistent.png||GHIDRA||||END|
 src/main/resources/images/breakpoints-clear-all.png||GHIDRA||||END|
 src/main/resources/images/breakpoints-disable-all.png||GHIDRA||||END|
 src/main/resources/images/breakpoints-enable-all.png||GHIDRA||||END|
 src/main/resources/images/breakpoints-make-effective.png||GHIDRA||||END|
-src/main/resources/images/breakpoints.png||GHIDRA||||END|
 src/main/resources/images/closedFolder.png||Modified Nuvola Icons - LGPL 2.1||||END|
 src/main/resources/images/conf.png||GHIDRA||||END|
 src/main/resources/images/connect.png||GHIDRA||||END|
@@ -192,21 +183,24 @@ src/main/resources/images/table_relationship.png||FAMFAMFAM Icons - CC 2.5||||EN
 src/main/resources/images/text-xml.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/thread.png||GHIDRA||||END|
 src/main/resources/images/time.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/write-disabled.png||GHIDRA||||END|
+src/main/resources/images/write-emulator.png||GHIDRA||||END|
+src/main/resources/images/write-target.png||GHIDRA||||END|
+src/main/resources/images/write-trace.png||Tango Icons - Public Domain||||END|
 src/main/svg/attach.svg||GHIDRA||||END|
 src/main/svg/blank.svg||GHIDRA||||END|
 src/main/svg/breakpoint-clear.svg||GHIDRA||||END|
+src/main/svg/breakpoint-disable-ineff.svg||GHIDRA||||END|
 src/main/svg/breakpoint-disable.svg||GHIDRA||||END|
+src/main/svg/breakpoint-enable-ineff.svg||GHIDRA||||END|
 src/main/svg/breakpoint-enable.svg||GHIDRA||||END|
-src/main/svg/breakpoint-ineffective-d.svg||GHIDRA||||END|
-src/main/svg/breakpoint-ineffective-e.svg||GHIDRA||||END|
-src/main/svg/breakpoint-mixed-de.svg||GHIDRA||||END|
-src/main/svg/breakpoint-mixed-ed.svg||GHIDRA||||END|
-src/main/svg/breakpoint-set.svg||GHIDRA||||END|
+src/main/svg/breakpoint-mixed-ineff.svg||GHIDRA||||END|
+src/main/svg/breakpoint-mixed.svg||GHIDRA||||END|
+src/main/svg/breakpoint-overlay-inconsistent.svg||GHIDRA||||END|
 src/main/svg/breakpoints-clear-all.svg||GHIDRA||||END|
 src/main/svg/breakpoints-disable-all.svg||GHIDRA||||END|
 src/main/svg/breakpoints-enable-all.svg||GHIDRA||||END|
 src/main/svg/breakpoints-make-effective.svg||GHIDRA||||END|
-src/main/svg/breakpoints.svg||GHIDRA||||END|
 src/main/svg/connect.svg||GHIDRA||||END|
 src/main/svg/console.svg||GHIDRA||||END|
 src/main/svg/continue.svg||GHIDRA||||END|
@@ -217,6 +211,7 @@ src/main/svg/kill.svg||GHIDRA||||END|
 src/main/svg/launch.svg||GHIDRA||||END|
 src/main/svg/memory.svg||GHIDRA||||END|
 src/main/svg/object-terminated.svg||GHIDRA||||END|
+src/main/svg/pencil.png||GHIDRA||||END|
 src/main/svg/process.svg||GHIDRA||||END|
 src/main/svg/recording.svg||GHIDRA||||END|
 src/main/svg/register-marker.svg||GHIDRA||||END|
@@ -230,3 +225,7 @@ src/main/svg/stepout.svg||GHIDRA||||END|
 src/main/svg/stepover.svg||GHIDRA||||END|
 src/main/svg/stop.svg||GHIDRA||||END|
 src/main/svg/thread.svg||GHIDRA||||END|
+src/main/svg/write-disabled.svg||GHIDRA||||END|
+src/main/svg/write-emulator.svg||GHIDRA||||END|
+src/main/svg/write-target.svg||GHIDRA||||END|
+src/main/svg/write-trace.svg||Tango Icons - Public Domain||||END|

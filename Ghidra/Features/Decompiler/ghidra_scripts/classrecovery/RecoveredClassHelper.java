@@ -73,8 +73,6 @@ public class RecoveredClassHelper {
 
 	private static final int NONE = -1;
 
-	private static int MIN_OPERATOR_NEW_REFS = 10;
-
 	private static final boolean DEBUG = false;
 
 	private Map<Address, RecoveredClass> vftableToClassMap = new HashMap<Address, RecoveredClass>();
@@ -106,7 +104,9 @@ public class RecoveredClassHelper {
 	Map<Function, List<OffsetPcodeOpPair>> functionToLoadPcodeOps =
 		new HashMap<Function, List<OffsetPcodeOpPair>>();
 
-	List<Function> allConstructorsAndDestructors = new ArrayList<Function>();
+	List<Function> allClassFunctionsContainingVftableReference = new ArrayList<Function>();
+	Set<Function> allPossibleConstructorsAndDestructors = new HashSet<Function>();
+	Set<Function> allVfunctions = new HashSet<Function>();
 	List<Function> allConstructors = new ArrayList<Function>();
 	List<Function> allDestructors = new ArrayList<Function>();
 	List<Function> allInlinedConstructors = new ArrayList<Function>();
@@ -120,14 +120,11 @@ public class RecoveredClassHelper {
 	List<Function> resolvedFIDFunctions = new ArrayList<Function>();
 	List<Function> fixedFIDFunctions = new ArrayList<Function>();
 
-	private static Function operator_delete = null;
-	private static Function operator_new = null;
+	List<Function> operatorNewFunctions = new ArrayList<Function>();
 	private static Function purecall = null;
 
 	private static Function atexit = null;
 	List<Function> atexitCalledFunctions = new ArrayList<Function>();
-
-	List<Function> deletingDestructorsThatCallDestructor = new ArrayList<Function>();
 
 	GlobalNamespace globalNamespace;
 	DataTypeManager dataTypeManager;
@@ -416,7 +413,7 @@ public class RecoveredClassHelper {
 			// if thunk, need to use the thunked function to see if it is on list of cds
 			// but always need to use the actual called function to get reference address
 			// need to used the thunked function on the hashmap
-			if (allConstructorsAndDestructors.contains(calledFunction)) {
+			if (allClassFunctionsContainingVftableReference.contains(calledFunction)) {
 				// get list of refs to this function from the calling function
 				List<Address> referencesToFunctionBFromFunctionA = extendedFlatAPI
 						.getReferencesToFunctionBFromFunctionA(function, referencedFunction);
@@ -434,6 +431,43 @@ public class RecoveredClassHelper {
 		functionToCalledConsDestRefAddrPairMap.put(function, referenceAddressPairs);
 
 	}
+
+	/**
+	 * Method to return a map of address to function calls for the given function
+	 * @param function given function
+	 * @return map of address to function calls for the given function or null if no called functions
+	 * @throws CancelledException when script is canceled
+	 */
+	public Map<Address, Function> getAddressToFunctionCallMap(Function function)
+			throws CancelledException {
+
+		Map<Address, Function> addressToFunctionCallMap = new HashMap<Address, Function>();
+
+		Set<Function> calledFunctions = function.getCalledFunctions(monitor);
+
+		if (calledFunctions.isEmpty()) {
+			return null;
+		}
+
+		for (Function calledFunction : calledFunctions) {
+			monitor.checkCanceled();
+
+			Function referencedFunction = calledFunction;
+
+			// get list of refs to this function from the calling function
+			List<Address> referencesToFunctionBFromFunctionA =
+				extendedFlatAPI.getReferencesToFunctionBFromFunctionA(function, referencedFunction);
+
+			// add them to list of ref address pairs
+			for (Address sourceRefAddr : referencesToFunctionBFromFunctionA) {
+				monitor.checkCanceled();
+				addressToFunctionCallMap.put(sourceRefAddr, calledFunction);
+			}
+		}
+		return addressToFunctionCallMap;
+
+	}
+
 
 	public List<ReferenceAddressPair> getCalledConstDestRefAddrPairs(Function function) {
 		return functionToCalledConsDestRefAddrPairMap.get(function);
@@ -469,12 +503,28 @@ public class RecoveredClassHelper {
 		return functionToLoadPcodeOps.get(function);
 	}
 
-	public void updateAllConstructorsAndDestructorsList(List<Function> functions) {
-		allConstructorsAndDestructors.addAll(functions);
+	public void updateAllVfunctionsSet(List<Function> vfunctions) {
+		allVfunctions.addAll(vfunctions);
 	}
 
-	public List<Function> getAllConstructorsAndDestructors() {
-		return allConstructorsAndDestructors;
+	public Set<Function> getAllVfunctions() {
+		return allVfunctions;
+	}
+
+	public void updateAllClassFunctionsWithVftableRefList(List<Function> functions) {
+		allClassFunctionsContainingVftableReference.addAll(functions);
+	}
+
+	public List<Function> getAllClassFunctionsWithVtableRef() {
+		return allClassFunctionsContainingVftableReference;
+	}
+
+	public void updateAllPossibleConstructorDestructorList(Function function) {
+		allPossibleConstructorsAndDestructors.add(function);
+	}
+
+	public Set<Function> getAllPossibleConstructorsAndDestructors() {
+		return allPossibleConstructorsAndDestructors;
 	}
 
 	public void addToAllConstructors(Function function) {
@@ -920,68 +970,6 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to retrieve a list of vftable symbols, from the given list of vftables, in the given
-	 * namespace
-	 * @param vftableSymbols the list of all vftable symbols
-	 * @param namespace the given namespace
-	 * @return a list of vftable symbols in the given namespace
-	 * @throws CancelledException if cancelled
-	 */
-	//TODO: update to use the one below this
-	public List<Symbol> getVftablesInNamespace(List<Symbol> vftableSymbols, Namespace namespace)
-			throws CancelledException {
-
-		List<Symbol> vftableSymbolsInNamespace = new ArrayList<Symbol>();
-
-		Iterator<Symbol> symbolsInNamespace = program.getSymbolTable().getSymbols(namespace);
-		while (symbolsInNamespace.hasNext()) {
-			monitor.checkCanceled();
-			Symbol symbol = symbolsInNamespace.next();
-			if (vftableSymbols.contains(symbol) &&
-				!isSymbolAddressOnList(vftableSymbolsInNamespace, symbol.getAddress())) {
-				vftableSymbolsInNamespace.add(symbol);
-			}
-		}
-		return vftableSymbolsInNamespace;
-	}
-
-	/**
-	 * Method to retrieve a list of vftable symbols in the given namespace
-	 * @param namespace the given namespace
-	 * @return a list of vftable symbols in the given namespace
-	 * @throws CancelledException if cancelled
-	 */
-	public List<Symbol> getVftablesInNamespace(Namespace namespace) throws CancelledException {
-
-		List<Symbol> vftableSymbolsInNamespace = new ArrayList<Symbol>();
-
-		Iterator<Symbol> symbolsInNamespace = program.getSymbolTable().getSymbols(namespace);
-		while (symbolsInNamespace.hasNext()) {
-			monitor.checkCanceled();
-			Symbol symbol = symbolsInNamespace.next();
-			if (symbol.getName().contains("vftable")) {
-				vftableSymbolsInNamespace.add(symbol);
-			}
-		}
-		return vftableSymbolsInNamespace;
-	}
-
-	private boolean isSymbolAddressOnList(List<Symbol> symbols, Address address)
-			throws CancelledException {
-
-		Iterator<Symbol> symbolIterator = symbols.iterator();
-		while (symbolIterator.hasNext()) {
-			monitor.checkCanceled();
-			Symbol symbol = symbolIterator.next();
-			if (symbol.getAddress().equals(address)) {
-				return true;
-			}
-
-		}
-		return false;
-	}
-
-	/**
 	 * Method to determine if the given function is an inlined destructor or indeterminate in any class
 	 * @param function the given function
 	 * @return true if the given function is an inlined function in any class, false if it is not an
@@ -1199,7 +1187,6 @@ public class RecoveredClassHelper {
 	 * @return the list of variables in the given function that store the vftable address
 	 * @throws CancelledException if cancelled
 	 */
-	//TODO: update to make sure it is getting any global memory variables
 	//TODO: Possibly refactor to use the same methodology as getAssignedAddressFrompcode or getStoredVftableAddress
 	private List<HighVariable> getVariableThatStoresVftablePointer(HighFunction highFunction,
 			Address vftableReference) throws CancelledException {
@@ -1366,6 +1353,11 @@ public class RecoveredClassHelper {
 	public Function getCalledFunctionFromCallPcodeOp(PcodeOp calledPcodeOp) {
 
 		Function calledFunction = api.getFunctionAt(calledPcodeOp.getInput(0).getAddress());
+
+		if (calledFunction == null) {
+			return null;
+		}
+
 		return calledFunction;
 	}
 
@@ -2522,7 +2514,8 @@ public class RecoveredClassHelper {
 			Address destructorReference = destructorIterator.next();
 			RecoveredClass recoveredClass = referenceToClassMap.get(destructorReference);
 
-			Function destructor = extendedFlatAPI.getReferencedFunction(destructorReference, true);
+			Function destructor =
+				extendedFlatAPI.getReferencedFunction(destructorReference, true);
 
 			if (recoveredClass.getIndeterminateList().contains(destructor)) {
 				addDestructorToClass(recoveredClass, destructor);
@@ -2756,8 +2749,11 @@ public class RecoveredClassHelper {
 			recoveredClass.addIndeterminateConstructorOrDestructorList(
 				possibleConstructorDestructorsForThisClass);
 
-			// Add them to the list of all constructors and destructors in program
-			updateAllConstructorsAndDestructorsList(possibleConstructorDestructorsForThisClass);
+			// Add them to the list of all possible constructors and destructors in program			
+			updateAllClassFunctionsWithVftableRefList(possibleConstructorDestructorsForThisClass);
+
+			// add virtualFunctions to the global list of them
+			updateAllVfunctionsSet(virtualFunctions);
 
 		} // end of looping over vfTables
 		return recoveredClasses;
@@ -2953,7 +2949,7 @@ public class RecoveredClassHelper {
 
 	}
 
-	private Data createVftableArray(Address vftableAddress, int numFunctionPointers)
+	public Data createVftableArray(Address vftableAddress, int numFunctionPointers)
 			throws CancelledException, AddressOutOfBoundsException {
 
 		api.clearListing(vftableAddress,
@@ -2980,7 +2976,7 @@ public class RecoveredClassHelper {
 	 * @return the created array of pointers Data or null
 	 * @throws CancelledException if cancelled
 	 */
-	private int createVftable(Address vftableAddress, boolean allowNullFunctionPtrs,
+	public int createVftable(Address vftableAddress, boolean allowNullFunctionPtrs,
 			boolean allowDefaultRefsInMiddle) throws CancelledException {
 
 		int numFunctionPointers = 0;
@@ -4147,73 +4143,62 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to determine if the given constructor function calls any non-parent constructors
+	 * Method to determine if the given constructor function calls any non-constructors 
 	 * before the vftable refererence
 	 * @param recoveredClass the given class
 	 * @param constructor the given constructor function
-	 * @param vftableReference the address of the reference to the class vftable
-	 * @return true if the given constructor function calls any non-parent constructors before the
+	 * @param vftableReference the address of the reference to the class vftable 
+	 * @return true if the given constructor function calls any non-constructors before the 
 	 * vftable refererence, false otherwise
 	 * @throws CancelledException if cancelled
 	 */
-	public boolean doesFunctionCallAnyNonParentConstructorsBeforeVtableReference(
+	public boolean doesFunctionCallAnyNonConstructorsBeforeVtableReference(
 			RecoveredClass recoveredClass, Function constructor, Address vftableReference)
 			throws CancelledException {
 
-		List<ReferenceAddressPair> orderedReferenceAddressPairsFromCallingFunction =
-			extendedFlatAPI.getOrderedReferenceAddressPairsFromCallingFunction(constructor);
+		InstructionIterator instructions =
+			constructor.getProgram().getListing().getInstructions(constructor.getBody(), true);
 
-		// if there are no calls from the function then return false
-		if (orderedReferenceAddressPairsFromCallingFunction.size() == 0) {
-			return false;
-		}
-
-		Iterator<ReferenceAddressPair> iterator =
-			orderedReferenceAddressPairsFromCallingFunction.iterator();
-		while (iterator.hasNext()) {
+		while (instructions.hasNext()) {
 			monitor.checkCanceled();
-			ReferenceAddressPair refPair = iterator.next();
-			int callRefCompareToVftableRef = refPair.getSource().compareTo(vftableReference);
-			// if call is after the vtable reference then return false
-			if (callRefCompareToVftableRef > 0) {
+			Instruction instruction = instructions.next();
+			Address instructionAddress = instruction.getAddress();
+			if (instructionAddress.compareTo(vftableReference) >= 0) {
 				return false;
 			}
+			if (instruction.getFlowType().isCall()) {
 
-			// if call is before vtable and is not an inherited constructor and not the operator_new
-			// then return true
-			Address calledAddress = refPair.getDestination();
-			Function calledFunction = api.getFunctionAt(calledAddress);
-			if (calledFunction.isThunk()) {
-				calledFunction = calledFunction.getThunkedFunction(true);
-			}
+				Function calledFunction =
+					extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), true);
 
-			if (calledFunction.equals(operator_new)) {
-				continue;
-			}
+				if (calledFunction == null) {
+					return true;
+				}
 
-			if (calledFunction.getName().contains("prolog")) {
-				continue;
-			}
+				if (calledFunction.getName().contains("prolog")) {
+					continue;
+				}
 
-			if (!getAllConstructors().contains(calledFunction)) {
-				return true;
+				if (!getAllConstructors().contains(calledFunction)) {
+					return true;
+				}
 			}
 
 		}
+
 		return false;
 
 	}
 
 	/**
-	 * Method to find class clone functions
-	 * @param recoveredClasses List of RecoveredClass objects
-	 * @throws CancelledException when script is cancelled
-	 * @throws Exception if issues making label
+	 * Method to find basic clone functions from given classes virtual functions
+	 * @param recoveredClasses list of classes to process
+	 * @throws CancelledException if cancelled
 	 */
-	public void findCloneFunctions(List<RecoveredClass> recoveredClasses)
-			throws CancelledException, Exception {
+	public void findBasicCloneFunctions(List<RecoveredClass> recoveredClasses)
+			throws CancelledException {
 
-		Map<Function, RecoveredClass> cloneToClassMap = new HashMap<Function, RecoveredClass>();
+		operatorNewFunctions = getOperatorNewFunctions(recoveredClasses);
 
 		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
 		while (recoveredClassIterator.hasNext()) {
@@ -4221,186 +4206,71 @@ public class RecoveredClassHelper {
 
 			RecoveredClass recoveredClass = recoveredClassIterator.next();
 
-			List<Function> allOtherConstructors = new ArrayList<Function>(getAllConstructors());
-			allOtherConstructors.removeAll(recoveredClass.getConstructorList());
+			List<Function> constructorList = recoveredClass.getConstructorList();
+			List<Function> allVirtualFunctions = recoveredClass.getAllVirtualFunctions();
 
-			// iterate through the vtable functions
-			List<Function> virtualFunctions = recoveredClass.getAllVirtualFunctions();
-			if (virtualFunctions == null) {
+			if (allVirtualFunctions.isEmpty()) {
 				continue;
 			}
-			Iterator<Function> vfunctionIterator = virtualFunctions.iterator();
-			while (vfunctionIterator.hasNext()) {
+			for (Function vfunction : allVirtualFunctions) {
+
 				monitor.checkCanceled();
 
-				Function vfunction = vfunctionIterator.next();
-				if (extendedFlatAPI.doesFunctionACallAnyListedFunction(vfunction,
-					recoveredClass.getConstructorList()) &&
-					!extendedFlatAPI.doesFunctionACallAnyListedFunction(vfunction,
-						allOtherConstructors)) {
-					cloneToClassMap.put(vfunction, recoveredClass);
+				if (!hasNCalls(vfunction, 2)) {
+					continue;
+				}
+
+				Function firstCalledFunction =
+					extendedFlatAPI.getCalledFunctionByCallOrder(vfunction, 1, false);
+
+				// skip computed calls (ie call eax)
+				if (firstCalledFunction == null) {
+					continue;
+				}
+
+				if (!operatorNewFunctions.contains(firstCalledFunction)) {
+					continue;
+				}
+
+				// not a clone if the second called function isn't a class constructor
+				Function secondFunction =
+					extendedFlatAPI.getCalledFunctionByCallOrder(vfunction, 2, true);
+
+				if (secondFunction == null) {
+					continue;
+				}
+
+				if (!constructorList.contains(secondFunction)) {
+					continue;
+				}
+
+				recoveredClass.addCloneFunction(vfunction);
+
+			}
+		}
+
+	}
+
+	private boolean hasNCalls(Function function, int n) throws CancelledException {
+
+		InstructionIterator instructions =
+			function.getProgram().getListing().getInstructions(function.getBody(), true);
+
+		int numCalls = 0;
+		while (instructions.hasNext()) {
+			monitor.checkCanceled();
+			Instruction instruction = instructions.next();
+			if (instruction.getFlowType().isCall()) {
+				numCalls++;
+				if (numCalls > n) {
+					return false;
 				}
 			}
-
 		}
-
-		// use the clone functions with only two calls (one to constructor and one to operator new)
-		Function operatorNew = identifyOperatorNewFunction(cloneToClassMap);
-
-		// use the operator new to accept only the good clones
-		// if more than one operator new remove
-		if (operatorNew != null) {
-			Set<Function> cloneFunctions = cloneToClassMap.keySet();
-			Iterator<Function> cloneIterator = cloneFunctions.iterator();
-			while (cloneIterator.hasNext()) {
-				monitor.checkCanceled();
-				Function cloneFunction = cloneIterator.next();
-				if (isBasicCloneFunction(cloneFunction, operator_new, cloneToClassMap)) {
-					RecoveredClass recoveredClass = cloneToClassMap.get(cloneFunction);
-					recoveredClass.addCloneFunction(cloneFunction);
-				}
-			}
+		if (numCalls == n) {
+			return true;
 		}
-
-	}
-
-	/**
-	 * Method to identify basic clone functions
-	 * @param caller possible clone function
-	 * @param firstCalled first function called by caller
-	 * @param cloneFunctionToClassMap map of possible clone functions to their parent class
-	 * @return true if caller function is a basic clone, else false
-	 * @throws CancelledException if cancelled
-	 */
-	private boolean isBasicCloneFunction(Function caller, Function firstCalled,
-			Map<Function, RecoveredClass> cloneFunctionToClassMap) throws CancelledException {
-
-		Set<Function> calledFunctions = caller.getCalledFunctions(monitor);
-		if (calledFunctions.size() != 2 && calledFunctions.size() != 3) {
-			return false;
-		}
-		if (!extendedFlatAPI.getCalledFunctionByCallOrder(caller, 1).equals(firstCalled)) {
-			return false;
-		}
-		RecoveredClass recoveredClass = cloneFunctionToClassMap.get(caller);
-		List<Function> constructorList = recoveredClass.getConstructorList();
-
-		Function secondFunction = extendedFlatAPI.getCalledFunctionByCallOrder(caller, 2);
-		if (secondFunction.isThunk()) {
-			secondFunction = secondFunction.getThunkedFunction(true);
-		}
-
-		if (!constructorList.contains(secondFunction)) {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Method to identify the operator_new function using found clone functions
-	 * @param cloneToClassMap Map of clone functions and their classes
-	 * @return the operator_new function or null if not identified
-	 * @throws CancelledException if cancelled
-	 * @throws Exception if issue making label
-	 */
-	private Function identifyOperatorNewFunction(Map<Function, RecoveredClass> cloneToClassMap)
-			throws CancelledException, Exception {
-
-		Map<Function, Integer> functionOccuranceMap = new HashMap<Function, Integer>();
-
-		Set<Function> cloneFunctions = cloneToClassMap.keySet();
-		Iterator<Function> cloneIterator = cloneFunctions.iterator();
-		while (cloneIterator.hasNext()) {
-			monitor.checkCanceled();
-			Function cloneFunction = cloneIterator.next();
-
-			// Easiest to find using those with only two calls so skip the bigger ones
-			Set<Function> calledFunctions = cloneFunction.getCalledFunctions(monitor);
-			if (calledFunctions.size() != 2) {
-				continue;
-			}
-			// get first called function which should be the operator_new function
-			// The second call is a class constructor and we know it is called
-			// from the cloneFunction or it wouldn't be a cloneFunction
-			Function firstCalledFunction =
-				extendedFlatAPI.getCalledFunctionByCallOrder(cloneFunction, 1);
-			if (firstCalledFunction == null) {
-				continue;
-			}
-			// skip any constructor or destructors that are called first
-			if (getAllConstructorsAndDestructors().contains(firstCalledFunction)) {
-				continue;
-			}
-
-			if (!functionOccuranceMap.keySet().contains(firstCalledFunction)) {
-				functionOccuranceMap.put(firstCalledFunction, 1);
-			}
-			else {
-				Integer numOccurances = functionOccuranceMap.get(firstCalledFunction);
-				functionOccuranceMap.replace(firstCalledFunction, numOccurances + 1);
-			}
-
-		}
-
-		Function probableOperatorNewFunction = getMostFrequentFunction(functionOccuranceMap);
-
-		if (probableOperatorNewFunction == null) {
-			return null;
-		}
-
-		Integer numOccurances = functionOccuranceMap.get(probableOperatorNewFunction);
-		if (functionOccuranceMap.get(probableOperatorNewFunction) < MIN_OPERATOR_NEW_REFS) {
-			Msg.debug(this, probableOperatorNewFunction.toString() +
-				" is a possible operator_new function but has less than the defined minimum number " +
-				"of matching calls " + numOccurances);
-
-			return null;
-		}
-
-		// If we get this far then we are sure the operator_new function
-		// is correct so assign the global variable to it
-		operator_new = probableOperatorNewFunction;
-		//If its symbol is not already named then name it
-		if (probableOperatorNewFunction.getSymbol().getSource() == SourceType.DEFAULT) {
-			Msg.debug(this,
-				"Found unlabeled operator new that matched in all found clone functions: " +
-					probableOperatorNewFunction.getEntryPoint().toString() +
-					". Creating label there.");
-			api.createLabel(probableOperatorNewFunction.getEntryPoint(), "operator_new", true);
-		}
-
-		return operator_new;
-
-	}
-
-	/**
-	 * Method to get the function in the map with the highest mapped Integer value
-	 * @param map the map containing function, count mappings
-	 * @return the function with the highest count mapped to it
-	 * @throws CancelledException if cancelled
-	 */
-	private Function getMostFrequentFunction(Map<Function, Integer> map) throws CancelledException {
-
-		Integer highest = null;
-		Function mostFrequentFunction = null;
-		Set<Function> keySet = map.keySet();
-		Iterator<Function> iterator = keySet.iterator();
-		while (iterator.hasNext()) {
-			monitor.checkCanceled();
-			Function function = iterator.next();
-			if (mostFrequentFunction == null) {
-				mostFrequentFunction = function;
-				highest = map.get(function);
-				continue;
-			}
-			Integer frequency = map.get(function);
-			if (frequency > highest) {
-				highest = frequency;
-				mostFrequentFunction = function;
-			}
-		}
-		return mostFrequentFunction;
+		return false;
 	}
 
 	/**
@@ -4466,9 +4336,6 @@ public class RecoveredClassHelper {
 			Structure badStructure = badStructureIterator.next();
 			ListAccumulator<LocationReference> accumulator = new ListAccumulator<>();
 
-			// TODO Discovering types can be very slow for large binaries.  Discovering types
-			// should not be needed.   Passing false here will still find all applied uses of the
-			// given structure.
 			boolean discoverTypes = true;
 			ReferenceUtils.findDataTypeReferences(accumulator, badStructure, program, discoverTypes,
 				monitor);
@@ -5255,6 +5122,22 @@ public class RecoveredClassHelper {
 		bookmarkMgr.setBookmark(address, BookmarkType.ANALYSIS, BOOKMARK_CATEGORY, bookmarkComment);
 	}
 
+	public void bookmarkAddress(Address address, String comment, String category) {
+
+		BookmarkManager bookmarkMgr = program.getBookmarkManager();
+
+		Bookmark bookmark = bookmarkMgr.getBookmark(address, BookmarkType.ANALYSIS, category);
+		String bookmarkComment;
+		if (bookmark != null && !bookmark.getComment().equals(comment) &&
+			!containsString(bookmark.getComment(), comment)) {
+			bookmarkComment = bookmark.getComment() + " + " + comment;
+		}
+		else {
+			bookmarkComment = comment;
+		}
+		bookmarkMgr.setBookmark(address, BookmarkType.ANALYSIS, category, bookmarkComment);
+	}
+
 	/**
 	 * Method to determine if the given comment string that has pieces separated by +'s has any
 	 * piece exactly equal to the given string.
@@ -5290,198 +5173,209 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to find the operator_delete function using the known deleting destructor functions
-	 * @param recoveredClasses List of RecoveredClass objects
-	 * @return operator_delete function or null if one cannot be determined
-	 * @throws CancelledException when cancelled
-	 * @throws Exception when issues creating labels
+	 * Method to find all class functions that are on both the vfunction list and the possible 
+	 * constructor/destructor list for the same class 
+	 * @param recoveredClasses the list of all known classes
+	 * @return all functions on both their class constructor/destructor list and virtual function 
+	 * list
+	 * @throws CancelledException if cancelled
 	 */
-	private Function findOperatorDeleteUsingKnownDeletingDestructors(
-			List<RecoveredClass> recoveredClasses) throws CancelledException, Exception {
+	private Set<Function> getTwoCallCommonFunctions(List<RecoveredClass> recoveredClasses)
+			throws CancelledException {
 
-		Function possibleOperatorDelete = null;
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-		while (recoveredClassIterator.hasNext()) {
+		Set<Function> twoCallCommonFunctions = new HashSet<Function>();
+
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
 
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
-			List<Function> deletingDestructors = recoveredClass.getDeletingDestructors();
-			Iterator<Function> deletingDestructorIterator = deletingDestructors.iterator();
-			while (deletingDestructorIterator.hasNext()) {
+			List<Function> virtualFunctions = recoveredClass.getAllVirtualFunctions();
+			List<Function> cdFunctions = recoveredClass.getConstructorOrDestructorFunctions();
+			for (Function cdFunction : cdFunctions) {
 				monitor.checkCanceled();
-				Function deletingDestructor = deletingDestructorIterator.next();
 
-				if (deletingDestructorsThatCallDestructor.contains(deletingDestructor)) {
-					Set<Function> calledFunctions = deletingDestructor.getCalledFunctions(monitor);
-
-					// just use the ones that call two functions to find operator_delete
-					if (calledFunctions.size() != 2) {
-						return null;
-					}
-					// get first called function and verify it is on cd list
-					Function firstCalledFunction =
-						extendedFlatAPI.getCalledFunctionByCallOrder(deletingDestructor, 1);
-					if (firstCalledFunction == null ||
-						!recoveredClass.getConstructorOrDestructorFunctions()
-								.contains(firstCalledFunction)) {
-						return null;
-					}
-
-					// get second one and if operator_delete has not been assigned yet, assign it
-					Function secondCalledFunction =
-						extendedFlatAPI.getCalledFunctionByCallOrder(deletingDestructor, 2);
-					if (secondCalledFunction == null) {
-						return null;
-					}
-
-					// if we didn't already have one, set it here
-					if (possibleOperatorDelete == null) {
-						possibleOperatorDelete = secondCalledFunction;
-					}
-					// if we find another possibility and they don't match return null
-					else if (!possibleOperatorDelete.equals(secondCalledFunction)) {
-						return null;
-					}
+				// if it isn't on both lists continue
+				if (!virtualFunctions.contains(cdFunction)) {
+					continue;
 				}
+
+				// if it doesn't have exactly two calls continue
+				if (!hasNCalls(cdFunction, 2)) {
+					continue;
+				}
+
+				// else add it to the set to return
+				twoCallCommonFunctions.add(cdFunction);
+
 			}
 		}
-		// If we get this far then we are sure the operator_delete function
-		// is correct so assign the global variable. If its symbol is not already named then name it
-		if (possibleOperatorDelete != null) {
-			operator_delete = possibleOperatorDelete;
-			if (possibleOperatorDelete.getSymbol().getSource() == SourceType.DEFAULT) {
-				Msg.debug(this,
-					"Found unlabeled operator delete that matched in all found deleting destructors: " +
-						possibleOperatorDelete.getEntryPoint().toString() +
-						". Creating label there.");
-				api.createLabel(operator_delete.getEntryPoint(), "operator_delete", true);
-			}
-		}
-
-		return possibleOperatorDelete;
-
+		return twoCallCommonFunctions;
 	}
 
 	/**
-	 *
-	 * @param recoveredClass the given class
-	 * @param virtualFunction the given virtual function
-	 * @param operatorDeleteFunction the operator delete function
+	 * Method to find operator delete function(s) using common called functions from class virtual
+	 * functions
+	 * @param recoveredClasses the list of classes
+	 * @return a Set of operator delete functions if found or an empty Set if not
 	 * @throws CancelledException if cancelled
-	 * @throws InvalidInputException if issues setting return type
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 */
-	private void processClassDeletingDestructorByOperatorDelete(RecoveredClass recoveredClass,
-			Function virtualFunction, Function operatorDeleteFunction)
-			throws CancelledException, InvalidInputException, DuplicateNameException {
+	private Set<Function> findOperatorDeletesUsingCalledCommonFunction(
+			List<RecoveredClass> recoveredClasses) throws CancelledException {
 
-		// don't continue checking if it doesn't call operator_delete
-		if (!extendedFlatAPI.doesFunctionACallFunctionB(virtualFunction, operatorDeleteFunction)) {
-			return;
+		Set<Function> operatorDeletes = new HashSet<Function>();
+		HashMap<Function, Integer> operatorDeleteCountMap = new HashMap<Function, Integer>();
+
+		// get all the functions that are on both the virtual function list and cd list for
+		// their respective class
+		Set<Function> twoCallCommonFunctions = getTwoCallCommonFunctions(recoveredClasses);
+		if (twoCallCommonFunctions.isEmpty()) {
+			return operatorDeletes;
 		}
 
-		List<Function> ownConstructorOrDestructorFunctions =
-			new ArrayList<Function>(recoveredClass.getConstructorOrDestructorFunctions());
+		// go through all the functions and update the maps if the function calls a constructor
+		// or destructor in either position
 
-		ownConstructorOrDestructorFunctions.removeAll(recoveredClass.getConstructorList());
-		ownConstructorOrDestructorFunctions.removeAll(recoveredClass.getInlinedConstructorList());
+		int numPossibleOpDeleteFunctions = 0;
+		int highestOpDeleteCount = 0;
+		Function mostCommonOpDelete = null;
 
-		Iterator<Function> functionIterator = ownConstructorOrDestructorFunctions.iterator();
-		while (functionIterator.hasNext()) {
+		for (Function function : twoCallCommonFunctions) {
 			monitor.checkCanceled();
-			Function function = functionIterator.next();
 
-			//Type 4 - class c/d called from other than first vfunction
-			if (extendedFlatAPI.doesFunctionACallFunctionB(virtualFunction, function)) {
-				recoveredClass.addDeletingDestructor(virtualFunction);
-				addDestructorToClass(recoveredClass, function);
-				recoveredClass.removeIndeterminateConstructorOrDestructor(function);
-				return;
+			// get first called function - get the thunked one if it is a thunk
+			Function firstCalledFunction =
+				extendedFlatAPI.getCalledFunctionByCallOrder(function, 1, true);
+
+			// skip if computed call (ie call eax)
+			if (firstCalledFunction == null) {
+				continue;
 			}
+
+			// get second called function - not the thunked one
+			// need the actual called function for the operator test
+			Function secondCalledFunction =
+				extendedFlatAPI.getCalledFunctionByCallOrder(function, 2, false);
+
+			if (secondCalledFunction == null) {
+				continue;
+			}
+
+			// if the first called function is on the global list of c/ds then update the
+			// operator delete count map with the second called function
+			if (allPossibleConstructorsAndDestructors.contains(firstCalledFunction)) {
+
+				numPossibleOpDeleteFunctions++;
+
+				int count = operatorDeleteCountMap.compute(firstCalledFunction,
+					(k, v) -> v == null ? 1 : v + 1);
+
+				if (highestOpDeleteCount < count) {
+					highestOpDeleteCount = count;
+					mostCommonOpDelete = secondCalledFunction;
+				}
+				continue;
+			}
+
 		}
 
-		// Type 4 inlined - inlined class c/d called from other than first function
-		// either just vftable ref before operator delete or vftableref followed by parent call
-		// before operator delete
-		Address vftableReference = getFirstClassVftableReference(recoveredClass, virtualFunction);
+		// TODO: set some percentage threshold given the number of good possibles
+		if (highestOpDeleteCount > numPossibleOpDeleteFunctions / 2) {
 
-		if (vftableReference == null) {
-			return;
+			Set<Function> thunkFamily = new HashSet<Function>();
+			thunkFamily.add(mostCommonOpDelete);
+			thunkFamily.addAll(getAllThunkFunctions(mostCommonOpDelete));
+
+			operatorDeletes.addAll(thunkFamily);
 		}
 
-		List<Function> possibleParentDestructors = getPossibleParentDestructors(virtualFunction);
+		return operatorDeletes;
+	}
 
-		boolean foundVftableRef = false;
-		Function parentDestructor = null;
+	private Set<Function> findOperatorNewsUsingCalledCommonFunction(
+			List<RecoveredClass> recoveredClasses) throws CancelledException {
 
-		AddressSetView virtualFunctionBody = virtualFunction.getBody();
-		CodeUnitIterator virtualFunctionCodeUnits =
-			program.getListing().getCodeUnits(virtualFunctionBody, true);
-		while (virtualFunctionCodeUnits.hasNext()) {
+		Set<Function> operatorNews = new HashSet<Function>();
+
+		HashMap<Function, Integer> operatorNewCountMap = new HashMap<Function, Integer>();
+
+		// get all the functions that are on both the virtual function list and cd list for
+		// their respective class
+		Set<Function> twoCallCommonFunctions = getTwoCallCommonFunctions(recoveredClasses);
+		if (twoCallCommonFunctions.isEmpty()) {
+			return operatorNews;
+		}
+
+		// get count map of all first called functions 
+		int numPossibleOpNewFunctions = 0;
+		int highestOpNewCount = 0;
+		Function mostCommonOpNew = null;
+
+		for (Function function : twoCallCommonFunctions) {
 			monitor.checkCanceled();
-			CodeUnit codeUnit = virtualFunctionCodeUnits.next();
-			Address codeUnitAddress = codeUnit.getAddress();
 
-			if (codeUnitAddress.equals(vftableReference)) {
-				foundVftableRef = true;
+			// get first called function - not the thunked
+			// need the actual called function for the operator new test
+			Function firstCalledFunction =
+				extendedFlatAPI.getCalledFunctionByCallOrder(function, 1, false);
+
+			if (firstCalledFunction == null) {
 				continue;
 			}
 
-			Function referencedFunction =
-				extendedFlatAPI.getReferencedFunction(codeUnitAddress, true);
-			if (referencedFunction == null) {
+			// get second called function - thunked function if a thunk
+			Function secondCalledFunction =
+				extendedFlatAPI.getCalledFunctionByCallOrder(function, 2, true);
+
+			if (secondCalledFunction == null) {
 				continue;
 			}
 
-			if (referencedFunction.equals(operatorDeleteFunction)) {
-				// if find operator delete call before vftable ref then not valid deleting destructor
-				if (!foundVftableRef) {
-					return;
+			// if the second called function is on the global list of c/ds then update the
+			// operator new count map with the first called function
+			if (allPossibleConstructorsAndDestructors.contains(secondCalledFunction)) {
+
+				numPossibleOpNewFunctions++;
+				int count = operatorNewCountMap.compute(firstCalledFunction,
+					(k, v) -> v == null ? 1 : v + 1);
+
+				if (highestOpNewCount < count) {
+					highestOpNewCount = count;
+					mostCommonOpNew = firstCalledFunction;
 				}
 
-				recoveredClass.addDeletingDestructor(virtualFunction);
-				if (recoveredClass.getDestructorList().contains(virtualFunction)) {
-					if (DEBUG) {
-						Msg.debug(this, "Already created vfunction as a destructor");
-					}
-				}
-				recoveredClass.removeFromConstructorDestructorList(virtualFunction);
-				recoveredClass.removeIndeterminateConstructorOrDestructor(virtualFunction);
-				recoveredClass.addInlinedDestructor(virtualFunction);
-
-				if (parentDestructor == null) {
-					return;
-				}
-				List<RecoveredClass> parentDestructorClasses = getClasses(parentDestructor);
-				if (parentDestructorClasses == null) {
-					return;
-				}
-				if (parentDestructorClasses.size() == 1) {
-					if (!parentDestructorClasses.get(0)
-							.getDestructorList()
-							.contains(parentDestructor)) {
-						addDestructorToClass(parentDestructorClasses.get(0), parentDestructor);
-						parentDestructorClasses.get(0)
-								.removeIndeterminateConstructorOrDestructor(parentDestructor);
-					}
-				}
-				// if more than one parent class for this function then let either inline or multi-class
-				// processing handle it later
-
-				return;
 			}
-
-			if (possibleParentDestructors.contains(referencedFunction)) {
-				// if find parent call before vftable ref then not valid deleting destructor
-				if (!foundVftableRef) {
-					return;
-				}
-				parentDestructor = referencedFunction;
-				continue;
-			}
-
 		}
 
+		// TODO: set some percentage threshold given the number of good possibles
+		if (highestOpNewCount > numPossibleOpNewFunctions / 2) {
+
+			Set<Function> thunkFamily = new HashSet<Function>();
+			thunkFamily.add(mostCommonOpNew);
+			thunkFamily.addAll(getAllThunkFunctions(mostCommonOpNew));
+			operatorNews.addAll(thunkFamily);
+		}
+
+		return operatorNews;
+	}
+
+	private Set<Function> getAllThunkFunctions(Function function) throws CancelledException {
+
+		FunctionManager functionManager = program.getFunctionManager();
+
+		Set<Function> thunkFunctions = new HashSet<Function>();
+
+		Address[] functionThunkAddresses = function.getFunctionThunkAddresses(true);
+		if (functionThunkAddresses == null) {
+			return thunkFunctions;
+		}
+
+		for (Address address : functionThunkAddresses) {
+			monitor.checkCanceled();
+
+			Function thunkFunction = functionManager.getFunctionAt(address);
+			thunkFunctions.add(thunkFunction);
+		}
+
+		return thunkFunctions;
 	}
 
 	/**
@@ -5786,54 +5680,6 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method to find deleting destructors that call a destructor but have no reference to a vftable
-	 * @param recoveredClasses the list of classes
-	 * @throws CancelledException if cancelled
-	 */
-	public void findDeletingDestructorsWithCallToDestructorWithNoVftableReference(
-			List<RecoveredClass> recoveredClasses) throws CancelledException {
-
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-
-		while (recoveredClassIterator.hasNext()) {
-			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
-
-			List<Function> virtualFunctions = recoveredClass.getAllVirtualFunctions();
-
-			if (virtualFunctions == null) {
-				continue;
-			}
-
-			Iterator<Function> vfIterator = virtualFunctions.iterator();
-			while (vfIterator.hasNext()) {
-				monitor.checkCanceled();
-				Function vFunction = vfIterator.next();
-
-				Set<Function> calledFunctions = vFunction.getCalledFunctions(monitor);
-				if (calledFunctions.size() != 2) {
-					continue;
-				}
-
-				// get first called function and verify is not a c/d function in current class or
-				// any class get second called function and verify it is operator delete
-				Function firstCalledFunction =
-					extendedFlatAPI.getCalledFunctionByCallOrder(vFunction, 1);
-				Function secondCalledFunction =
-					extendedFlatAPI.getCalledFunctionByCallOrder(vFunction, 2);
-				if (firstCalledFunction != null && secondCalledFunction != null &&
-					!recoveredClass.getConstructorOrDestructorFunctions()
-							.contains(firstCalledFunction) &&
-					secondCalledFunction.equals(operator_delete) &&
-					!getAllConstructorsAndDestructors().contains(vFunction)) {
-					recoveredClass.addDeletingDestructor(vFunction);
-					recoveredClass.setVBaseDestructor(firstCalledFunction);
-				}
-			}
-		}
-	}
-
-	/**
 	 * Method to find destructors that have no parameters or return type
 	 * @param recoveredClasses list of classes to process
 	 * @throws CancelledException if cancelled
@@ -5860,7 +5706,7 @@ public class RecoveredClassHelper {
 				}
 
 				String returnDataName = returnDataType.getDisplayName();
-				//ParameterDefinition[] params = getParametersFromDecompiler(indeterminateFunction);
+
 				ParameterDefinition[] params =
 					decompilerUtils.getParametersFromDecompiler(indeterminateFunction);
 				int numberParams = 0;
@@ -5946,13 +5792,12 @@ public class RecoveredClassHelper {
 						continue;
 					}
 
-					// if the first vftable reference is not in the first code block and the
-					// constructor calls any non-inherited constructors before the vtable reference,
-					// the constructor function is really another function with the constructor
+					// if the first vftable reference is not in the first code block and the 
+					// constructor calls any non-constructors before the vtable reference, 
+					// the constructor function is really another function with the constructor 
 					// function inlined in it
-
 					if (firstVftableReferenceAddress.compareTo(firstEndOfBlock) > 0) {
-						if (doesFunctionCallAnyNonParentConstructorsBeforeVtableReference(
+						if (doesFunctionCallAnyNonConstructorsBeforeVtableReference(
 							recoveredClass, constructor, firstVftableReferenceAddress)) {
 
 							// remove from the allConstructors too
@@ -6118,6 +5963,7 @@ public class RecoveredClassHelper {
 						Address functionReference = functionReferenceIterator.next();
 						Function function =
 							extendedFlatAPI.getReferencedFunction(functionReference, true);
+
 						if (function == null) {
 							continue;
 						}
@@ -6473,104 +6319,6 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Find deleting destructors using first vfunction on vtable
-	 * @param recoveredClasses List of RecoveredClass objects
-	 * @throws CancelledException if cancelled
-	 * @throws InvalidInputException if issues setting return type
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 */
-	private void findFirstDeletingDestructors(List<RecoveredClass> recoveredClasses)
-			throws CancelledException, InvalidInputException, DuplicateNameException {
-
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-		while (recoveredClassIterator.hasNext()) {
-			monitor.checkCanceled();
-
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
-
-			if (!recoveredClass.hasVftable()) {
-				continue;
-			}
-
-			List<Address> vftableAddresses = recoveredClass.getVftableAddresses();
-			Iterator<Address> vftableIterator = vftableAddresses.iterator();
-			while (vftableIterator.hasNext()) {
-				monitor.checkCanceled();
-				Address vftableAddress = vftableIterator.next();
-
-				// this gets the first function pointer in the vftable
-				Function firstVirtualFunction =
-					extendedFlatAPI.getReferencedFunction(vftableAddress);
-				processDeletingDestructor(recoveredClass, firstVirtualFunction);
-			}
-		}
-	}
-
-	/**
-	 * Find more deleting destructors by looking at other vfunctions to see if they call
-	 * their own cd and also call operator_delete
-	 * @param recoveredClasses List of RecoveredClass objects
-	 * @throws CancelledException when script cancelled
-	 * @throws InvalidInputException if issues setting return type
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws Exception if issues making label
-	 */
-	private void findMoreDeletingDestructors(List<RecoveredClass> recoveredClasses)
-			throws CancelledException, InvalidInputException, DuplicateNameException, Exception {
-
-		// first identify operator delete function
-		Function operatorDeleteFunction =
-			findOperatorDeleteUsingKnownDeletingDestructors(recoveredClasses);
-		if (operatorDeleteFunction == null) {
-			if (DEBUG) {
-				Msg.debug(this,
-					"Could not find operator delete function. Cannot process more deleting destructors.");
-			}
-			return;
-		}
-
-		// then use it to find more deleting destructors of type 3 (the ones that call their own
-		// destructor)
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-		while (recoveredClassIterator.hasNext()) {
-			monitor.checkCanceled();
-
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
-			if (!recoveredClass.hasVftable()) {
-				continue;
-			}
-
-			List<Address> vftableAddresses = recoveredClass.getVftableAddresses();
-			Iterator<Address> vftableAddressIterator = vftableAddresses.iterator();
-			while (vftableAddressIterator.hasNext()) {
-				monitor.checkCanceled();
-				Address vftableAddress = vftableAddressIterator.next();
-
-				Function firstVirtualFunction =
-					extendedFlatAPI.getReferencedFunction(vftableAddress);
-				List<Function> virtualFunctions =
-					recoveredClass.getVirtualFunctions(vftableAddress);
-
-				if (virtualFunctions == null) {
-					continue;
-				}
-
-				Iterator<Function> virtualFunctionsIterator = virtualFunctions.iterator();
-				while (virtualFunctionsIterator.hasNext()) {
-					monitor.checkCanceled();
-					Function virtualFunction = virtualFunctionsIterator.next();
-					if (virtualFunction.equals(firstVirtualFunction)) {
-						continue;
-					}
-					processClassDeletingDestructorByOperatorDelete(recoveredClass, virtualFunction,
-						operatorDeleteFunction);
-				}
-			}
-		}
-
-	}
-
-	/**
 	 * Method to find deleting destructors that do one of the following:
 	 * 	1. reference their own vftable (ie on own c/d list) which means function
 	 *       is both a deleting destructor and has inlined the class destructor
@@ -6579,27 +6327,26 @@ public class RecoveredClassHelper {
 	 *   3. do not reference a vftable but call own destructor (call func on own c/d list) which
 	 *       means it is just a deleting destructor for class but has no inlined destructor
 	 * @param recoveredClass the given class
-	 * @param firstVftableFunction the first vftableFunction a class vftable
 	 * @throws CancelledException if cancelled
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 * @throws InvalidInputException if issues setting return type
 	 */
-	private void processDeletingDestructor(RecoveredClass recoveredClass,
-			Function firstVftableFunction)
+	private boolean processDeletingDestructor(RecoveredClass recoveredClass, Function vfunction)
 			throws CancelledException, DuplicateNameException, InvalidInputException {
 
-		// if the first function on the vftable IS ALSO on the class constructor/destructor list
-		// then it is a deleting destructor with and inline destructor and we need to
+		// if the virtual function IS ALSO on the class constructor/destructor list
+		// then it is a deleting destructor with and inlined destructor and we need to 
 		// determine if the inline is the class or parent/grandparent class destructor
-		if (getAllConstructorsAndDestructors().contains(firstVftableFunction)) {
+		boolean isDeletingDestructor = false;
+		if (getAllClassFunctionsWithVtableRef().contains(vfunction)) {
 
-			recoveredClass.addDeletingDestructor(firstVftableFunction);
-			recoveredClass.removeFromConstructorDestructorList(firstVftableFunction);
-			recoveredClass.removeIndeterminateConstructorOrDestructor(firstVftableFunction);
+			recoveredClass.addDeletingDestructor(vfunction);
+			recoveredClass.removeFromConstructorDestructorList(vfunction);
+			recoveredClass.removeIndeterminateConstructorOrDestructor(vfunction);
 
-			List<Address> vftableReferences = getVftableReferences(firstVftableFunction);
+			List<Address> vftableReferences = getVftableReferences(vfunction);
 			if (vftableReferences == null) {
-				return;
+				return false;
 			}
 			Iterator<Address> vftableReferencesIterator = vftableReferences.iterator();
 			while (vftableReferencesIterator.hasNext()) {
@@ -6611,59 +6358,46 @@ public class RecoveredClassHelper {
 				}
 				// Type 1
 				if (recoveredClass.getVftableAddresses().contains(vftableAddress)) {
-					recoveredClass.addInlinedDestructor(firstVftableFunction);
+					recoveredClass.addInlinedDestructor(vfunction);
+
+					isDeletingDestructor = true;
 				}
 				// Type 2
 				else {
-					//RecoveredClass parentClass = vftableToClassMap.get(vftableAddress);
 					RecoveredClass parentClass = getVftableClass(vftableAddress);
-					parentClass.addInlinedDestructor(firstVftableFunction);
-					parentClass.removeFromConstructorDestructorList(firstVftableFunction);
-					parentClass.removeIndeterminateConstructorOrDestructor(firstVftableFunction);
+					parentClass.addInlinedDestructor(vfunction);
+
+					parentClass.removeFromConstructorDestructorList(vfunction);
+					parentClass.removeIndeterminateConstructorOrDestructor(vfunction);
+					isDeletingDestructor = true;
 				}
 			}
 
 		}
-		// else, if first function pointed to by the vftable CALLS a function on the constructor/destructor list
+		// else, if the virtual function CALLS a function on the current class constructor/destructor list
 		// then it is a deleting destructor and we have identified a destructor function for the class
 		else {
-			processClassDeletingDestructor(recoveredClass, firstVftableFunction);
-		}
+			List<Function> classConstructorOrDestructorFunctions =
+				recoveredClass.getConstructorOrDestructorFunctions();
 
-	}
+			Iterator<Function> functionIterator = classConstructorOrDestructorFunctions.iterator();
+			while (functionIterator.hasNext()) {
+				monitor.checkCanceled();
 
-	/**
-	 * Method to find deleting destructors that are the first function in the class vftable
-	 * and call the class destructor
-	 * @param recoveredClass the current class
-	 * @param firstVirtualFunction the first function referenced by the class virtual function table
-	 * @throws CancelledException when cancelled
-	 * @throws InvalidInputException if issue setting return type
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 */
-	private void processClassDeletingDestructor(RecoveredClass recoveredClass,
-			Function firstVirtualFunction)
-			throws CancelledException, InvalidInputException, DuplicateNameException {
+				Function function = functionIterator.next();
 
-		List<Function> classConstructorOrDestructorFunctions =
-			recoveredClass.getConstructorOrDestructorFunctions();
+				if (extendedFlatAPI.doesFunctionACallFunctionB(vfunction, function)) {
+					recoveredClass.addDeletingDestructor(vfunction);
 
-		Iterator<Function> functionIterator = classConstructorOrDestructorFunctions.iterator();
-		while (functionIterator.hasNext()) {
-			monitor.checkCanceled();
+					addDestructorToClass(recoveredClass, function);
 
-			Function function = functionIterator.next();
-
-			if (extendedFlatAPI.doesFunctionACallFunctionB(firstVirtualFunction, function)) {
-				recoveredClass.addDeletingDestructor(firstVirtualFunction);
-				addDestructorToClass(recoveredClass, function);
-				recoveredClass.removeIndeterminateConstructorOrDestructor(function);
-
-				if (!deletingDestructorsThatCallDestructor.contains(firstVirtualFunction)) {
-					deletingDestructorsThatCallDestructor.add(firstVirtualFunction);
+					recoveredClass.removeIndeterminateConstructorOrDestructor(function);
+					isDeletingDestructor = true;
 				}
 			}
 		}
+		return isDeletingDestructor;
+
 	}
 
 	/**
@@ -6915,21 +6649,489 @@ public class RecoveredClassHelper {
 	}
 
 	/**
-	 * Method that calls various methods to find deleting destructor functions which help
-	 * identify class destructors
-	 * @param recoveredClasses List of all class objects
+	 * Method to find deleting destructors in the virtual functions of the given list of classes. 
+	 * Method finds the following use cases (Note that in all cases operator_delete is called after
+	 *  the called destructor or inlined destructor):
+	 *    1. deleting destructors that reference their own vftable (ie on own c/d list) which means
+	 *    function is both a deleting destructor and has an inlined class destructor.
+	 *    2. deleting destructors that references a parent vftable (ie on parent c/d list) which
+	 *    means function is a deleting destructor in the class and contains an inlined destructor
+	 *    for the parent class.
+	 *    3. deleting destructors that do not reference a vftable but call their own destructor
+	 *    4. deleting destructors that do not reference a vftable with only two calls and that calls
+	 *      a destructor from another class
+	 *    5. deleting destructors that do not reference a vftable with only two calls tand that 
+	 *      calls a vbase destructor
+	 * @param recoveredClasses the given classes to process for deleting destructors
 	 * @throws CancelledException if cancelled
-	 * @throws InvalidInputException if issues setting return value
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws Exception if issues making label
+	 * @throws DuplicateNameException if duplicate name
+	 * @throws InvalidInputException  if invalid input
 	 */
 	public void findDeletingDestructors(List<RecoveredClass> recoveredClasses)
-			throws CancelledException, InvalidInputException, DuplicateNameException, Exception {
+			throws CancelledException, InvalidInputException, DuplicateNameException {
 
-		findFirstDeletingDestructors(recoveredClasses);
-		findMoreDeletingDestructors(recoveredClasses);
-		findDeletingDestructorsWithCallToDestructorWithNoVftableReference(recoveredClasses);
+		if (recoveredClasses.isEmpty()) {
+			return;
+		}
 
+		// try finding operator delete functions by name or if can't, by common function calls
+		List<Function> operatorDeletesList = getOperatorDeleteFunctions(recoveredClasses);
+		if (operatorDeletesList == null) {
+			return;
+		}
+
+		// iterate over all class virtual functions to find the ones that are deleting destructors
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.checkCanceled();
+
+			List<Function> vfunctions = recoveredClass.getAllVirtualFunctions();
+
+			if (vfunctions.isEmpty()) {
+				continue;
+			}
+
+			for (Function vfunction : vfunctions) {
+				monitor.checkCanceled();
+
+				// get the map of addresses in vfunction to the corresponding functions called
+				// from those addresses
+				Map<Address, Function> addressToFunctionCallMap =
+					getAddressToFunctionCallMap(vfunction);
+
+				if (addressToFunctionCallMap == null) {
+					continue;
+				}
+
+				List<Address> operatorDeleteCallingAddresses = getAddressesOfListedFunctionsInMap(
+					operatorDeletesList, addressToFunctionCallMap);
+
+				// only process vfunctions with at least one call to operator delete
+				if (operatorDeleteCallingAddresses.size() == 0) {
+					continue;
+				}
+
+				// get the first call to operator delete in the function 
+				Collections.sort(operatorDeleteCallingAddresses);
+
+				// get first vftable reference in vfuntion
+				List<Address> vftableReferences = getVftableReferences(vfunction);
+				Address firstVftableReference = null;
+				if (vftableReferences != null) {
+					Collections.sort(vftableReferences);
+					firstVftableReference = vftableReferences.get(0);
+				}
+
+				List<Function> possibleCalledDestructors =
+					getPossibleCalledDestructors(addressToFunctionCallMap,
+						operatorDeleteCallingAddresses, firstVftableReference);
+
+				// process deleting destructors if type 1, 2 or 3
+				boolean isDeletingDestructor = processDeletingDestructor(recoveredClass, vfunction);
+				if (isDeletingDestructor) {
+					processPossibleDestructors(possibleCalledDestructors, vfunction);
+					continue;
+				}
+
+				// process deleting destructors type 4 and 5
+				// if function has only two calls and one is a vetted possible destructor (ie on 
+				// list called after first vftable reference and  before operator delete) and the 
+				// other is a call to operator delete, then it is one of these two types
+				if (!allClassFunctionsContainingVftableReference.contains(vfunction) &&
+					operatorDeleteCallingAddresses.size() == 1 &&
+					addressToFunctionCallMap.keySet().size() == 2 &&
+					possibleCalledDestructors.size() == 1) {
+
+					recoveredClass.addDeletingDestructor(vfunction);
+					Function destructor = possibleCalledDestructors.get(0);
+
+					// if the called destructor isn't on the possible constructor/destructor 
+					// list then it is a vbase destructor
+					if (firstVftableReference == null &&
+						!allPossibleConstructorsAndDestructors.contains(destructor)) {
+
+						recoveredClass.setVBaseDestructor(destructor);
+						continue;
+					}
+
+					// else, if the vfunction CALLS a function on the constructor/destructor list
+					// it is a regular destructor for some class
+					if (allPossibleConstructorsAndDestructors.contains(destructor)) {
+						processFoundDestructor(destructor, vfunction);
+					}
+				}
+
+			}
+		}
+
+	}
+
+
+	/**
+	 * Method to find the operator delete functions in the current program either by name or
+	 * by common virtual function calls
+	 * @return a list of operator_delete functions or null if none could be determined
+	 * @throws CancelledException if cancelled
+	 */
+	private List<Function> getOperatorDeleteFunctions(List<RecoveredClass> recoveredClasses)
+			throws CancelledException {
+
+		// try finding operator delete functions by name or if can't, by common function calls
+		Set<Function> operatorDeletes = findOperatorDeletes();
+		if (operatorDeletes.isEmpty()) {
+			operatorDeletes = findOperatorDeletesUsingCalledCommonFunction(recoveredClasses);
+			if (operatorDeletes.isEmpty()) {
+				return null;
+			}
+		}
+
+		List<Function> operatorDeletesList = new ArrayList<Function>(operatorDeletes);
+		return operatorDeletesList;
+	}
+
+	/**
+	 * Method to find the operator delete functions in the current program either by name or
+	 * by common virtual function calls
+	 * @return a list of operator_delete functions or null if none could be determined
+	 * @throws CancelledException if cancelled
+	 */
+	private List<Function> getOperatorNewFunctions(List<RecoveredClass> recoveredClasses)
+			throws CancelledException {
+
+		// try finding operator delete functions by name or if can't, by common function calls
+		Set<Function> operatorNews = findOperatorNews();
+		if (operatorNews.isEmpty()) {
+			operatorNews = findOperatorNewsUsingCalledCommonFunction(recoveredClasses);
+			if (operatorNews.isEmpty()) {
+				return null;
+			}
+		}
+
+		List<Function> operatorNewsList = new ArrayList<Function>(operatorNews);
+		return operatorNewsList;
+	}
+
+	private List<Function> getPossibleCalledDestructors(
+			Map<Address, Function> addressToFunctionCallMap,
+			List<Address> operatorDeleteCallingAddresses, Address firstVftableReference)
+			throws CancelledException {
+
+		Set<Function> possibleCalledDestructorSet = new HashSet<Function>();
+
+		List<Address> callingAddresses = new ArrayList<Address>(addressToFunctionCallMap.keySet());
+
+		callingAddresses.removeAll(operatorDeleteCallingAddresses);
+
+		Collections.sort(operatorDeleteCallingAddresses);
+		Address operatorDeleteCallingAddress = operatorDeleteCallingAddresses.get(0);
+
+		Collections.sort(callingAddresses);
+		for (Address callingAddress : callingAddresses) {
+			monitor.checkCanceled();
+
+			// skip if the function call is after the operator delete
+			if (callingAddress.getOffset() > operatorDeleteCallingAddress.getOffset()) {
+				continue;
+			}
+
+			// skip if there is a vftableref and it is after the function call
+			if (firstVftableReference != null &&
+				firstVftableReference.getOffset() > callingAddress.getOffset()) {
+				continue;
+			}
+
+			// add the called function to the list if it is between the vftable ref and
+			// the operator delete or if there is no vftable ref, the call is before
+			// the operator delete call
+			Function calledFunction = addressToFunctionCallMap.get(callingAddress);
+			if (calledFunction.isThunk()) {
+				calledFunction.getThunkedFunction(true);
+			}
+			possibleCalledDestructorSet.add(calledFunction);
+		}
+		List<Function> possibleCalledDestructors =
+			new ArrayList<Function>(possibleCalledDestructorSet);
+		return possibleCalledDestructors;
+	}
+
+
+	private void processPossibleDestructors(List<Function> possibleDestructors,
+			Function calledFromFunction)
+			throws InvalidInputException, DuplicateNameException, CancelledException {
+
+		if (possibleDestructors.isEmpty()) {
+			return;
+		}
+
+		for (Function possibleDestructor : possibleDestructors) {
+			monitor.checkCanceled();
+			if (allPossibleConstructorsAndDestructors.contains(possibleDestructor)) {
+				processFoundDestructor(possibleDestructor, calledFromFunction);
+			}
+		}
+	}
+
+	private void processFoundDestructor(Function possibleDestructor, Function calledFromFunction)
+			throws InvalidInputException, DuplicateNameException {
+
+		List<RecoveredClass> classes = getClasses(possibleDestructor);
+		if (classes.size() == 1) {
+			RecoveredClass recoveredClass = classes.get(0);
+			addDestructorToClass(recoveredClass, possibleDestructor);
+			bookmarkAddress(possibleDestructor.getEntryPoint(),
+				recoveredClass.getName() +
+					" destructor found using last new called method - called from dd at " +
+					calledFromFunction.getEntryPoint(),
+				"TEST RC");
+			recoveredClass.removeIndeterminateConstructorOrDestructor(possibleDestructor);
+		}
+	}
+
+
+	/**
+	 * Method to return list of reference addresses for any of the given functions that are 
+	 * contained in the given map
+	 * @param functions the given functions
+	 * @param addressToCalledFunctions the given map of addresses to called functions
+	 * @return a list of function addresses for functions that are on both the given function list 
+	 * and in the given map entry set
+	 * @throws CancelledException if cancelled
+	 */
+	private List<Address> getAddressesOfListedFunctionsInMap(List<Function> functions,
+			Map<Address, Function> addressToCalledFunctions) throws CancelledException {
+
+		List<Address> calledFunctionsOnList = new ArrayList<Address>();
+		Set<Address> addresses = addressToCalledFunctions.keySet();
+		for (Address address : addresses) {
+			monitor.checkCanceled();
+
+			Function function = addressToCalledFunctions.get(address);
+			if (functions.contains(function)) {
+				calledFunctionsOnList.add(address);
+			}
+		}
+		return calledFunctionsOnList;
+	}
+
+	/**
+	 * Find operator_delete functions (including thunks) by name or by using calls to various 
+	 * named "free" functions
+	 * @return a Set of operator_delete functions
+	 * @throws CancelledException if cancelled
+	 */
+	public Set<Function> findOperatorDeletes() throws CancelledException {
+
+		Set<Function> operatorDeletesBySymbol = findFunctionsUsingSymbolName("operator_delete");
+
+		if (!operatorDeletesBySymbol.isEmpty()) {
+			return operatorDeletesBySymbol;
+		}
+
+		Set<Function> operatorDeletesByThunkToFree = new HashSet<Function>();
+
+		Set<Function> freesBySymbol = findFunctionsUsingSymbolName("_free");
+		Set<Function> freebasesBySymbol = findFunctionsUsingSymbolName("_free_base");
+
+		freesBySymbol.addAll(freebasesBySymbol);
+
+		if (!freesBySymbol.isEmpty()) {
+			for (Function function : freesBySymbol) {
+				monitor.checkCanceled();
+
+				Set<Function> thunksTo = getThunksTo(function);
+				operatorDeletesByThunkToFree.addAll(thunksTo);
+			}
+		}
+
+		if (!operatorDeletesByThunkToFree.isEmpty()) {
+			return operatorDeletesByThunkToFree;
+		}
+
+		// look for external free call
+		Set<Function> operatorDeletesByThunkToExternalFree = new HashSet<Function>();
+		Set<Function> externalFrees = findFunctionsUsingSymbolName("free");
+		if (!externalFrees.isEmpty()) {
+			for (Function externalFree : externalFrees) {
+				if (!externalFree.isExternal()) {
+					continue;
+				}
+
+				// get all thunks to external free
+				Address[] thunksToExternalFree = externalFree.getFunctionThunkAddresses(true);
+				if (thunksToExternalFree == null) {
+					continue;
+				}
+				for (Address address : thunksToExternalFree) {
+					monitor.checkCanceled();
+
+					Function function = api.getFunctionAt(address);
+					operatorDeletesByThunkToExternalFree.add(function);
+					Set<Function> thunksToThunk = getThunksTo(function);
+					if (thunksToThunk.isEmpty()) {
+						continue;
+					}
+					for (Function thunkToExternalFree : thunksToThunk) {
+						monitor.checkCanceled();
+						// in this case just want the true thunks not the single call functions - get unwinds that way
+						if (thunkToExternalFree.isThunk()) {
+							operatorDeletesByThunkToExternalFree.add(thunkToExternalFree);
+						}
+					}
+				}
+
+			}
+		}
+		return operatorDeletesByThunkToExternalFree;
+	}
+
+	/**
+	 * Find operator_new functions (including thunks) by name or by using calls to various 
+	 * named "new" or "malloc" functions
+	 * @return a Set of operator_new functions
+	 * @throws CancelledException if cancelled
+	 */
+	public Set<Function> findOperatorNews() throws CancelledException {
+
+		Set<Function> operatorDeletesBySymbol = findFunctionsUsingSymbolName("operator_new");
+
+		if (!operatorDeletesBySymbol.isEmpty()) {
+			return operatorDeletesBySymbol;
+		}
+
+		// if can't find it by name, look for function with call to malloc then __callnewh
+		Set<Function> operatorNewsByCallToMallocAndCallnewh = new HashSet<Function>();
+
+		Set<Function> callnewhBySymbol = findFunctionsUsingSymbolName("__callnewh");
+		callnewhBySymbol.addAll(findFunctionsUsingSymbolName("_callnewh"));
+
+		Set<Function> mallocBySymbol = findFunctionsUsingSymbolName("malloc");
+
+		// return emtpy list if no methods called __callnewh
+		if (callnewhBySymbol.isEmpty()) {
+			return operatorNewsByCallToMallocAndCallnewh;
+		}
+
+		if (mallocBySymbol.isEmpty()) {
+			return operatorNewsByCallToMallocAndCallnewh;
+		}
+
+		Set<Function> functionsThatCallCallnewh = new HashSet<Function>();
+		for (Function callnewh : callnewhBySymbol) {
+			monitor.checkCanceled();
+
+			Set<Function> callingFunctions =
+				new HashSet<Function>(callnewh.getCallingFunctions(monitor));
+			functionsThatCallCallnewh.addAll(callingFunctions);
+		}
+
+		for (Function malloc : mallocBySymbol) {
+			monitor.checkCanceled();
+
+			List<Function> callingFunctions =
+				new ArrayList<Function>(malloc.getCallingFunctions(monitor));
+
+			if (callingFunctions.isEmpty()) {
+				continue;
+			}
+			for (Function callingFunction : callingFunctions) {
+				monitor.checkCanceled();
+				if (functionsThatCallCallnewh.contains(callingFunction) &&
+					!operatorNewsByCallToMallocAndCallnewh.contains(callingFunction)) {
+					operatorNewsByCallToMallocAndCallnewh.add(callingFunction);
+				}
+			}
+
+		}
+
+		return operatorNewsByCallToMallocAndCallnewh;
+	}
+
+	private Set<Function> findFunctionsUsingSymbolName(String name) throws CancelledException {
+
+		Set<Function> functions = new HashSet<Function>();
+
+		FunctionManager functionManager = program.getFunctionManager();
+
+		SymbolIterator symbolIterator = symbolTable.getSymbolIterator();
+		while (symbolIterator.hasNext()) {
+			monitor.checkCanceled();
+			Symbol symbol = symbolIterator.next();
+			if (!symbol.getName().equals(name)) {
+				continue;
+			}
+			Address address = symbol.getAddress();
+
+			Function function = functionManager.getFunctionAt(address);
+			if (function != null) {
+				functions.add(function);
+			}
+		}
+		return functions;
+	}
+
+	private Set<Function> getThunksTo(Function function) throws CancelledException {
+
+		Set<Function> thunksToFunction = new HashSet<Function>();
+		if (function == null) {
+			return thunksToFunction;
+		}
+
+		Reference[] referencesTo = api.getReferencesTo(function.getEntryPoint());
+
+		if (referencesTo == null || referencesTo.length == 0) {
+			return thunksToFunction;
+		}
+
+		for (Reference ref : referencesTo) {
+			monitor.checkCanceled();
+			Address address = ref.getFromAddress();
+
+			Instruction instruction = program.getListing().getInstructionAt(address);
+			if (instruction == null) {
+				continue;
+			}
+
+			Function thunkFunction = api.getFunctionContaining(address);
+			if (thunkFunction == null) {
+				continue;
+			}
+
+			boolean isThunk = false;
+			if (instruction.getFlowType() == RefType.UNCONDITIONAL_JUMP &&
+				thunkFunction.isThunk()) {
+				isThunk = true;
+			}
+			if (!isThunk) {
+				FlowOverride flowOverride = instruction.getFlowOverride();
+				if (flowOverride.equals(FlowOverride.CALL) ||
+					flowOverride.equals(FlowOverride.CALL_RETURN)) {
+
+					// skip any that call more than one function to limit to only possible
+					// thunks
+					if (thunkFunction.getCalledFunctions(monitor).size() > 1) {
+						continue;
+					}
+					isThunk = true;
+				}
+			}
+
+			if (isThunk) {
+				thunksToFunction.add(thunkFunction);
+
+				// add thunks to this function too
+				Set<Function> thunksToThunk = getThunksTo(thunkFunction);
+				if (thunksToThunk.isEmpty()) {
+					continue;
+				}
+
+				for (Function thunk : thunksToThunk) {
+					monitor.checkCanceled();
+
+					thunksToFunction.add(thunk);
+				}
+
+			}
+		}
+		return thunksToFunction;
 	}
 
 	/**
@@ -7189,6 +7391,51 @@ public class RecoveredClassHelper {
 	}
 
 	/**
+	 * Remove functions that are on both vfunction and cd list from the cd lists and add the rest to
+	 * a more restrictive list
+	 * @param recoveredClasses List of RecoveredClass objects
+	 * @throws CancelledException if cancelled
+	 */
+	protected void trimConstructorDestructorLists(List<RecoveredClass> recoveredClasses)
+			throws CancelledException {
+
+		if (recoveredClasses.isEmpty()) {
+			return;
+		}
+
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+
+			monitor.checkCanceled();
+
+			List<Function> constructorOrDestructorFunctions =
+				recoveredClass.getConstructorOrDestructorFunctions();
+
+			if (constructorOrDestructorFunctions.isEmpty()) {
+				continue;
+			}
+
+			Iterator<Function> cdFunctionIterator = constructorOrDestructorFunctions.iterator();
+			while (cdFunctionIterator.hasNext()) {
+
+				monitor.checkCanceled();
+
+				Function cdFunction = cdFunctionIterator.next();
+
+				if (!getAllVfunctions().contains(cdFunction)) {
+					updateAllPossibleConstructorDestructorList(cdFunction);
+					continue;
+				}
+
+				// straight cd function will not also be a vfunction so remove it from the given 
+				// class cd list
+				cdFunctionIterator.remove();
+				recoveredClass.removeIndeterminateConstructorOrDestructor(cdFunction);
+			}
+		}
+
+	}
+
+	/**
 	 * Method to apply the function signature of the given function, if different, to the corresponding
 	 * function definition and call the method to update related structure fields and functions
 	 * @param vfunction the given function
@@ -7305,8 +7552,7 @@ public class RecoveredClassHelper {
 		ReferenceManager refMan = program.getReferenceManager();
 		List<Address> vftableAddresses = new ArrayList<Address>();
 
-		// TODO: need to look back recursively -- see ticket GP-1692 once finished
-		Address[] functionThunkAddresses = function.getFunctionThunkAddresses();
+		Address[] functionThunkAddresses = function.getFunctionThunkAddresses(true);
 
 		// add any thunk addresses to the list
 		List<Address> functionAddresses =
@@ -7644,7 +7890,7 @@ public class RecoveredClassHelper {
 		}
 
 		// get the vftable structures that contain the pointer to the function definition
-		Set<DataType> dataTypesContaining = dataTypeManager.getDataTypesContaining(pointer);
+		Collection<DataType> dataTypesContaining = pointer.getParents();
 
 		for (DataType dataTypeContaining : dataTypesContaining) {
 			monitor.checkCanceled();
@@ -8030,6 +8276,12 @@ public class RecoveredClassHelper {
 		return changedItems;
 	}
 
+	/**
+	 * Method to retrieve the vftable symbols in the given namespace
+	 * @param classNamespace the given namespace
+	 * @return a list of vftable symbols in the given namespace
+	 * @throws CancelledException if cancelled
+	 */
 	public List<Symbol> getClassVftableSymbols(Namespace classNamespace) throws CancelledException {
 
 		List<Symbol> vftableSymbols = new ArrayList<Symbol>();

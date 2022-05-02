@@ -17,7 +17,7 @@ package ghidra.app.services;
 
 import java.awt.Color;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.event.ChangeListener;
 
 import ghidra.app.plugin.core.marker.*;
@@ -166,7 +166,7 @@ public interface MarkerService {
 	 */
 	public MarkerSet createPointMarker(String name, String markerDescription, Program program,
 			int priority, boolean showMarkers, boolean showNavigation, boolean colorBackground,
-			Color color, ImageIcon icon);
+			Color color, Icon icon);
 
 	/**
 	 * Create a Marker display which shows point type markers.
@@ -186,7 +186,7 @@ public interface MarkerService {
 	 */
 	public MarkerSet createPointMarker(String name, String markerDescription, Program program,
 			int priority, boolean showMarkers, boolean showNavigation, boolean colorBackground,
-			Color color, ImageIcon icon, boolean isPreferred);
+			Color color, Icon icon, boolean isPreferred);
 
 	/**
 	 * Remove the marker set

@@ -23,18 +23,17 @@
     </TABLE>
 
     <P><A name="Toggle_Header"></A>The memory, or dynamic bytes, window is analogous to Ghidra's
-    bytes window for static analysis, but in the dynamic context. That is, it displays memory
-    contents from a target. More precisely, it displays recorded memory contents in a trace. In
-    most use cases, that trace is "at the present," meaning it is the most recent memory from a
-    live target. Multiple memory windows can be displayed simultaneously, using the same pattern as
-    many other Ghidra windows. The "primary" window is always displayed and generally tracks with
-    the rest of the tool. Any window can be "snapshotted," i.e., duplicated. This is where memory
-    windows differ from static bytes windows. Static snapshots remain in place; they do not
-    automatically navigate. Dynamic snapshots can still be configured to navigate, following the
-    rest of the tool. A common use is to configure a "snapshot" to follow the stack pointer. Still,
-    you can disable a window's automatic navigation, so it behaves like a true snapshot. A current
-    limitation is that you cannot use snapshots to display different points in time for the same
-    trace.</P>
+    bytes window for static analysis, but in the dynamic context. It displays memory contents from
+    a target. More precisely, it displays recorded memory contents in a trace. In most use cases,
+    that trace is "at the present," meaning it is the most recent memory from a live target.
+    Multiple memory windows can be displayed simultaneously, using the same pattern as many other
+    Ghidra windows. The "primary" window is always displayed and generally tracks with the rest of
+    the tool. Any window can be "snapshotted," i.e., cloned. This is where memory windows differ
+    from static bytes windows. Static clones remain in place; they do not automatically navigate.
+    Dynamic clones can still be configured to navigate, following the rest of the tool. A common
+    use is to configure a clone to follow the stack pointer. Still, you can disable a window's
+    automatic navigation, so it behaves like a true clone. A current limitation is that you cannot
+    use clones to display different points in time for the same trace.</P>
 
     <P>Because not all memory is recorded, some background coloring is used to indicate the state
     of attempted memory reads. Regardless of state, the most-recent contents, as recorded in the
@@ -45,11 +44,13 @@
     failed, the first address in the failed range is displayed with a pink background. Otherwise,
     up-to-date contents are displayed with the default background color.</P>
 
-    <P>NOTE: Modification of trace byte contents is a work in progress. At the moment, the feature
-    is simply disabled. In general, modifications to bytes when the window is "at the present" are
-    directed to the target. Otherwise, they simply modify the historical or emulated values stored
-    in the trace. A modification at a given time remains in effect, but stale, for all future times
-    up to but excluding the time of the next recorded value.</P>
+    <P>The dynamic listing supports editing memory via the <A href=
+    "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">Machine State Editing
+    Plugin and Service</A>. Such edits are performed as usual: Toggling edits and typing into the
+    editor, or by pasting byte strings. These edits may be directed toward a live target, the
+    trace, or the emulator. <B>NOTE:</B> Please be wary of hand-typing large edits into the
+    emulator, since every keystroke may produce a unique scratch snapshot. It is better to paste
+    such edits instead.</P>
 
     <H2>Actions</H2>
 
@@ -60,24 +61,24 @@
 
     <P>This action is always available in the <SPAN class="menu">Window &rarr; Debugger</SPAN>
     menu. It creates a new memory window with the same configuration as the primary memory window.
-    It is equivalent to "snapshotting" the primary memory window.</P>
+    It is equivalent to cloning the primary memory window.</P>
 
     <H3><A name="follows_thread"></A>Follows Selected Thread</H3>
 
-    <P>This action is only available on snapshot memory windows. The primary window always follows
-    the tool's current thread. Disabling this toggle causes the snapshot to remain on its own
-    current thread rather than following the tool's. The current thread is used when computing a
-    location to navigate to automatically. It is only applicable when "Track Location" is set to
-    something other than "Do Not Track."</P>
+    <P>This action is only available on cloned memory windows. The primary window always follows
+    the tool's current thread. Disabling this toggle causes the clone to remain on its own current
+    thread rather than following the tool's. The current thread is used when computing a location
+    to navigate to automatically. It is only applicable when "Track Location" is set to something
+    other than "Do Not Track."</P>
 
     <H3><A name="track_location"></A>Track Location</H3>
 
     <P>This action is always available on all memory windows. It configures automatic navigation
     for the window. When location tracking is enabled, the window is automatically navigated to an
-    address computed from the trace's or target's machine state. The address is also highlighted in
-    green. The computed address is affected by the tool's current "coordinates," that is the
-    selected thread, frame, and point in time. The options are pluggable, but currently consist
-    of:</P>
+    address computed from the trace's or target's machine state. <B>NOTE:</B> This feature is
+    disabled when the edit toggle is on. The address is also highlighted in green. The computed
+    address is affected by the tool's current "coordinates," that is the selected thread, frame,
+    and point in time. The options are pluggable, but currently consist of:</P>
 
     <UL>
       <LI>Do Not Track - disables automatic navigation.</LI>
@@ -143,8 +144,10 @@
 
     <H3><A name="Enable_Disable_Byteviewer_Editing"></A>Toggle Editing</H3>
 
-    <P>This action does the same as it does for the static context. NOTE: This feature is currently
-    disabled, as it is a work in progress.</P>
+    <P>This action does the same as it does for the static context. Edits may be rejected if the
+    trace's editing mode is set to Read-Only in the tool. <B>NOTE:</B> This toggle also disables
+    automatic navigation in order to prevent the cursor from being moved unexpectedly while typing
+    edits.</P>
 
     <H2><A name="colors"></A>Tool Options: Colors</H2>
 

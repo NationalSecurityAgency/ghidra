@@ -635,10 +635,10 @@ void PcodeLexer::initialize(istream *t)
   }
 }
 
-uintb PcodeSnippet::allocateTemp(void)
+uint4 PcodeSnippet::allocateTemp(void)
 
 { // Allocate a variable in the unique space and return the offset
-  uintb res = tempbase;
+  uint4 res = tempbase;
   tempbase += 16;
   return res;
 }

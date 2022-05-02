@@ -19,9 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import generic.continues.GenericFactory;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
 import ghidra.util.Conv;
 import ghidra.util.Msg;
@@ -80,9 +79,8 @@ public class SeparateDebugHeader implements OffsetValidator {
 	 * @param bp the byte provider
 	 * @throws IOException if an I/O error occurs.
 	 */
-	public SeparateDebugHeader(GenericFactory factory, ByteProvider bp) throws IOException {
-		FactoryBundledWithBinaryReader reader =
-			new FactoryBundledWithBinaryReader(factory, bp, true);
+	public SeparateDebugHeader(ByteProvider bp) throws IOException {
+		BinaryReader reader = new BinaryReader(bp, true);
 
 		reader.setPointerIndex(0);
 
@@ -133,8 +131,7 @@ public class SeparateDebugHeader implements OffsetValidator {
 
 		ptr += exportedNamesSize;
 
-		parser =
-			DebugDirectoryParser.createDebugDirectoryParser(reader, ptr, debugDirectorySize, this);
+		parser = new DebugDirectoryParser(reader, ptr, debugDirectorySize, sizeOfImage);
 	}
 
 	/**

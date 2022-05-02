@@ -45,6 +45,10 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 @DebuggerTargetObjectIface("BreakpointSpec")
 public interface TargetBreakpointSpec extends TargetObject, /*@Transitional*/ TargetTogglable {
 
+	/**
+	 * The kinds of breakpoints understood by Ghidra. Note these must match with those in
+	 * {@code TraceBreakpointKind}.
+	 */
 	public enum TargetBreakpointKind {
 		/**
 		 * A read breakpoint, likely implemented in hardware

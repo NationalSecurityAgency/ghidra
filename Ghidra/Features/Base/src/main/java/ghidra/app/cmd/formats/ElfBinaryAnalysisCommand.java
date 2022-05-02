@@ -17,7 +17,6 @@ package ghidra.app.cmd.formats;
 
 import java.util.Arrays;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.util.bin.*;
@@ -36,7 +35,8 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.StringUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -80,8 +80,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		ByteProvider provider = new MemoryByteProvider(currentProgram.getMemory(),
 			currentProgram.getAddressFactory().getDefaultAddressSpace());
 		try {
-			ElfHeader elf = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider,
-				msg -> messages.appendMsg(msg));
+			ElfHeader elf = new ElfHeader(provider, msg -> messages.appendMsg(msg));
 			elf.parse();
 
 			processElfHeader(elf, listing);
@@ -214,14 +213,14 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 
 	private void processProgramHeaders(ElfHeader elf, Listing listing) throws Exception {
 
-		int headerCount = elf.e_phnum();
+		int headerCount = elf.getProgramHeaderCount();
 		int size = elf.e_phentsize() * headerCount;
 		if (size == 0) {
 			return;
 		}
 
 		Structure phStructDt = (Structure) elf.getProgramHeaders()[0].toDataType();
-		phStructDt = (Structure) phStructDt.clone(listing.getDataTypeManager());
+		phStructDt = phStructDt.clone(listing.getDataTypeManager());
 		Array arrayDt = new ArrayDataType(phStructDt, headerCount, size);
 
 		Data array = createData(addr(elf.e_phoff()), arrayDt);
@@ -382,7 +381,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 				}
 
 				String name = symbols[j].getNameAsString();
-				long value = symbols[j].getValue() & Conv.INT_MASK;
+				long value = Integer.toUnsignedLong((int) symbols[j].getValue());
 
 				try {
 					Address currAddr = symbolTableAddr.add(j * symbolTable2.getEntrySize());

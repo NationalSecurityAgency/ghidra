@@ -74,6 +74,14 @@ public interface DebuggerTraceManagerService {
 	DebuggerCoordinates getCurrent();
 
 	/**
+	 * Get the current coordinates for a given trace
+	 * 
+	 * @param trace the trace
+	 * @return the current coordinates for the trace
+	 */
+	DebuggerCoordinates getCurrentFor(Trace trace);
+
+	/**
 	 * Get the active trace
 	 * 
 	 * @return the active trace, or null
@@ -212,13 +220,28 @@ public interface DebuggerTraceManagerService {
 	void closeDeadTraces();
 
 	/**
-	 * Activate the given coordinates
+	 * Activate the given coordinates with future notification
 	 * 
 	 * <p>
 	 * This operation may be completed asynchronously, esp., if emulation is required to materialize
-	 * the coordinates. The coordinates are "resolved" as a means of filling in missing parts. For
-	 * example, if the thread is not specified, the manager may activate the last-active thread for
-	 * the desired trace.
+	 * the coordinates. The returned future is completed when the coordinates are actually
+	 * materialized and active. The coordinates are "resolved" as a means of filling in missing
+	 * parts. For example, if the thread is not specified, the manager may activate the last-active
+	 * thread for the desired trace.
+	 * 
+	 * @param coordinates the desired coordinates
+	 * @param syncTargetFocus true synchronize the current target to the same coordinates
+	 * @return a future which completes when emulation and navigation is complete
+	 */
+	CompletableFuture<Void> activateAndNotify(DebuggerCoordinates coordinates,
+			boolean syncTargetFocus);
+
+	/**
+	 * Activate the given coordinates, synchronizing the current target, if possible
+	 * 
+	 * <p>
+	 * If asynchronous notification is needed, use
+	 * {@link #activateAndNotify(DebuggerCoordinates, boolean)}.
 	 * 
 	 * @param coordinates the desired coordinates
 	 */
@@ -382,6 +405,18 @@ public interface DebuggerTraceManagerService {
 	 * @return the complete resolved coordinates
 	 */
 	DebuggerCoordinates resolveCoordinates(DebuggerCoordinates coordinates);
+
+	/**
+	 * If the given coordinates are already materialized, get the snapshot
+	 * 
+	 * <p>
+	 * If the coordinates do not include a schedule, this simply returns the coordinates' snapshot.
+	 * Otherwise, it searches for the first snapshot whose schedule is the coordinates' schedule.
+	 * 
+	 * @param coordinates the coordinates
+	 * @return the materialized snapshot key, or null if not materialized.
+	 */
+	Long findSnapshot(DebuggerCoordinates coordinates);
 
 	/**
 	 * Materialize the given coordinates to a snapshot in the same trace
