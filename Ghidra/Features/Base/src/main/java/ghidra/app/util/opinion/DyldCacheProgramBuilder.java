@@ -32,6 +32,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.exception.CancelledException;
@@ -176,10 +177,11 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		if (endOfMappedOffset < bp.length()) {
 			monitor.setMessage("Processing DYLD unmapped memory block...");
-			MemoryBlockUtils.createInitializedBlock(program, true, "FILE",
+			MemoryBlock fileBlock = MemoryBlockUtils.createInitializedBlock(program, true, "FILE",
 				AddressSpace.OTHER_SPACE.getAddress(endOfMappedOffset), fb, endOfMappedOffset,
 				bp.length() - endOfMappedOffset, "Useful bytes that don't get mapped into memory",
 				"", false, false, false, log);
+			dyldCacheHeader.setFileBlock(fileBlock);
 		}
 	}
 
