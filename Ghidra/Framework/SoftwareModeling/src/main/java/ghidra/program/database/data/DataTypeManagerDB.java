@@ -1011,10 +1011,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return dataType;
 		}
 
-		if (dataType.isDeleted()) {
-			throw new IllegalArgumentException("can't resolve deleted datatype");
-		}
-
 		if (dataType instanceof BitFieldDataType) {
 			return resolveBitFieldDataType((BitFieldDataType) dataType, handler);
 		}
