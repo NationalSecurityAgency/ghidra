@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,5 +141,10 @@ public class InMemoryRangeMapAdapter implements RangeMapAdapter {
 			newRangeMap.setObject(range.getMinAddress(), range.getMaxAddress(), newBytes);
 		}
 		rangeMap = newRangeMap;
+	}
+
+	@Override
+	public void invalidate() {
+		rangeMap.clearCache();
 	}
 }

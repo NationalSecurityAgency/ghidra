@@ -200,7 +200,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private int languageMinorVersion;
 	private LanguageTranslator languageUpgradeTranslator;
 
-	private Address storedImageBase; // current image base maintained by addrMap
 	private boolean imageBaseOverride = false;
 	private boolean recordChanges;
 
@@ -1119,7 +1118,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	private void refreshImageBase() throws IOException {
 		long baseOffset = getStoredBaseImageOffset();
-		storedImageBase = addressFactory.getDefaultAddressSpace().getAddress(baseOffset);
+		Address storedImageBase = addressFactory.getDefaultAddressSpace().getAddress(baseOffset);
 		if (!imageBaseOverride) {
 			Address currentImageBase = getImageBase();
 			if (!currentImageBase.equals(storedImageBase)) {
@@ -1268,7 +1267,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			if (commit) {
 				try {
 					dataMap.put(IMAGE_OFFSET, Long.toHexString(base.getOffset()));
-					storedImageBase = base;
 					imageBaseOverride = false;
 
 					setChanged(ChangeManager.DOCR_IMAGE_BASE_CHANGED, oldBase, base);
@@ -1736,9 +1734,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			refreshName();
 			overlaySpaceAdapter.updateOverlaySpaces(addressFactory);
 			addrMap.invalidateCache();
-			if (!imageBaseOverride) {
-				refreshImageBase();
-			}
+			refreshImageBase();
 			for (int i = 0; i < NUM_MANAGERS; i++) {
 				managers[i].invalidateCache(all);
 			}

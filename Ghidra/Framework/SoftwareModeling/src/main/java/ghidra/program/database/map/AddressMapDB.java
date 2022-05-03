@@ -15,6 +15,8 @@
  */
 package ghidra.program.database.map;
 
+import static generic.util.UnsignedDataUtils.*;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -811,15 +813,16 @@ public class AddressMapDB implements AddressMap {
 	/**
 	 * Create all memory base segments within the specified range.
 	 * NOTE: minAddress and maxAddress must have the same address space!
-	 * @param minAddress
-	 * @param maxAddress
+	 * @param minAddress start address of the range
+	 * @param maxAddress last address of the range
+	 * @param absolute if the address are absolute and not relative
 	 */
-	private void createBaseSegments(Address minAddress, Address maxAddress) {
+	private void createBaseSegments(Address minAddress, Address maxAddress, boolean absolute) {
 
 		long minBase;
 		long maxBase;
 
-		if (isInDefaultAddressSpace(minAddress)) {
+		if (!absolute && isInDefaultAddressSpace(minAddress)) {
 			minBase = getNormalizedOffset(minAddress) & BASE_MASK;
 			maxBase = getNormalizedOffset(maxAddress) & BASE_MASK;
 		}
@@ -828,7 +831,15 @@ public class AddressMapDB implements AddressMap {
 			maxBase = maxAddress.getOffset() & BASE_MASK;
 		}
 
-		for (long base = minBase; base <= maxBase; base += (MAX_OFFSET + 1)) {
+		long numBases = (maxBase >>> 32) - (minBase >>> 32);
+
+		if (numBases > 2) {
+			throw new UnsupportedOperationException("Can't create address bases for a range that" +
+				"extends across more than two upper 32 bit segments!");
+		}
+
+		for (long base = minBase; unsignedLessThanOrEqual(base, maxBase); base +=
+			(MAX_OFFSET + 1)) {
 			getBaseAddressIndex(minAddress.getNewAddress(base), false, INDEX_CREATE);
 		}
 	}
@@ -836,17 +847,19 @@ public class AddressMapDB implements AddressMap {
 	/**
 	 * Add simple key ranges where the address range lies within a single base segment for a single space.
 	 * NOTE: start and end addresses must have the same address space!
-	 * @param keyRangeList
-	 * @param start
-	 * @param end
-	 * @param absolute
-	 * @param create
+	 * @param keyRangeList the list to store key ranges into
+	 * @param start the start address
+	 * @param end the end address
+	 * @param absolute true if the address are to be encoded as absolute (not relative to the
+	 *  image base
+	 * @param create if true, this method will add new address bases that are required to
+	 * store addresses in that database that have that address base
 	 */
 	private void addKeyRanges(List<KeyRange> keyRangeList, Address start, Address end,
 			boolean absolute, boolean create) {
 		if (start.isMemoryAddress()) {
 			if (create) {
-				createBaseSegments(start, end);
+				createBaseSegments(start, end, absolute);
 			}
 			Address normalizedStart = absolute ? start : getShiftedAddr(start);
 			Address normalizedEnd = absolute ? end : getShiftedAddr(end);
