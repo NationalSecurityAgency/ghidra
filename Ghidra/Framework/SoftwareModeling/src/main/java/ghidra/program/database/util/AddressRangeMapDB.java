@@ -252,7 +252,7 @@ public class AddressRangeMapDB implements DBListener {
 	 */
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {
-		if (length <= 0) {
+		if (length <= 0 || rangeMapTable == null) {
 			return;
 		}
 
@@ -337,6 +337,9 @@ public class AddressRangeMapDB implements DBListener {
 	 */
 	public AddressSet getAddressSet(Field value) {
 		AddressSet set = new AddressSet();
+		if (rangeMapTable == null) {
+			return set;
+		}
 		lock.acquire();
 		try {
 			RecordIterator it = rangeMapTable.indexIterator(VALUE_COL, value, value, true);
@@ -865,6 +868,9 @@ public class AddressRangeMapDB implements DBListener {
 	}
 
 	private DBRecord getRecordAfter(Address address) throws IOException {
+		if (rangeMapTable == null) {
+			return null;
+		}
 		RecordIterator it = new AddressKeyRecordIterator(rangeMapTable, addressMap, address, true);
 		if (it.hasNext()) {
 			return it.next();
@@ -873,6 +879,9 @@ public class AddressRangeMapDB implements DBListener {
 	}
 
 	private DBRecord getRecordAtOrBefore(Address address) throws IOException {
+		if (rangeMapTable == null) {
+			return null;
+		}
 		RecordIterator it = new AddressKeyRecordIterator(rangeMapTable, addressMap, address, false);
 		if (it.hasPrevious()) {
 			return it.previous();
@@ -881,6 +890,9 @@ public class AddressRangeMapDB implements DBListener {
 	}
 
 	private DBRecord getRecordBefore(Address address) throws IOException {
+		if (rangeMapTable == null) {
+			return null;
+		}
 		RecordIterator it = new AddressKeyRecordIterator(rangeMapTable, addressMap, address, true);
 		if (it.hasPrevious()) {
 			return it.previous();
