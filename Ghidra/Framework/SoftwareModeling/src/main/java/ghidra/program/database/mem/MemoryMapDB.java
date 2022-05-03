@@ -1221,7 +1221,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		if (monitor == null) {
 			monitor = TaskMonitor.DUMMY;
 		}
-		AddressSetView set = getLoadedAndInitializedAddressSet();
+		AddressSetView set = getAllInitializedAddressSet();
 		AddressIterator it = set.getAddresses(startAddr, forward);
 		byte[] b = new byte[bytes.length];
 		if (forward) {
