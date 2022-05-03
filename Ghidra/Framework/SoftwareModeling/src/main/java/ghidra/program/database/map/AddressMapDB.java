@@ -130,30 +130,9 @@ public class AddressMapDB implements AddressMap {
 			int comp = normalizedAddr.getAddressSpace().compareTo(space);
 			if (comp == 0) {
 				// Same address space - assumes unsigned space
-				long maxOffset = space.getMaxAddress().getOffset();
 				long otherOffset = addr.getOffset() - baseImageOffset;
 				long offset = normalizedAddr.getOffset();
-				if (space.getSize() == 64) {
-					// Address space offsets are 64-bit unsigned
-					// wrapping of otherOffset handled automatically
-					if (offset < 0 && otherOffset >= 0) {
-						return 1;
-					}
-					else if (offset >= 0 && otherOffset < 0) {
-						return -1;
-					}
-				}
-				else if (otherOffset < 0) {
-					// wrap normalized otherOffset within space for spaces smaller than 64-bits
-					otherOffset += maxOffset + 1;
-				}
-				long diff = offset - otherOffset;
-				if (diff > 0) {
-					return 1;
-				}
-				if (diff < 0) {
-					return -1;
-				}
+				return Long.compareUnsigned(offset, otherOffset);
 			}
 			return comp;
 		}
