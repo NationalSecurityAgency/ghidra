@@ -255,7 +255,7 @@ public class EquateTest extends AbstractDecompilerTest {
 		convertToken(EquateSymbol.FORMAT_HEX);
 		line = getLineContaining("x2e");
 		setDecompilerLocation(line.getLineNumber(), line.getText().indexOf("x2e"));
-		verifyMatch("0x2E", "'\\x2e'", 0x1003db9, true);
+		verifyMatch("0x2E", "0x2e", 0x1003db9, true);
 	}
 
 	@Test
