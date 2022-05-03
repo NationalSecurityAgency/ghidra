@@ -31,7 +31,6 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.services.ActionSource;
 import ghidra.app.services.TraceRecorder;
-import ghidra.async.AsyncTestUtils;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.model.*;
 import ghidra.dbg.target.*;
@@ -52,8 +51,7 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.util.task.TaskMonitor;
 
-public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements AsyncTestUtils {
+public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	DebuggerMappingOpinion opinion = new ObjectBasedDebuggerMappingOpinion();
 	TraceRecorder recorder;
 

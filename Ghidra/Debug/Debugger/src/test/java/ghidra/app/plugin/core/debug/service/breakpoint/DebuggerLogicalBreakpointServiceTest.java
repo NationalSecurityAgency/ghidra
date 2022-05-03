@@ -34,7 +34,6 @@ import ghidra.dbg.model.TestTargetMemoryRegion;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
-import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
@@ -49,8 +48,7 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.ListenerMap;
 
-public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements DebuggerModelTestUtils {
+public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
@@ -172,15 +170,6 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	public void startRecorder3() throws Throwable {
 		recorder3 = modelService.recordTarget(mb.testProcess3,
 			createTargetTraceMapper(mb.testProcess3), ActionSource.AUTOMATIC);
-	}
-
-	protected void waitRecorder(TraceRecorder recorder) throws Throwable {
-		if (recorder == null) {
-			return;
-		}
-		waitOn(recorder.getTarget().getModel().flushEvents());
-		waitOn(recorder.flushTransactions());
-		waitForDomainObject(recorder.getTrace());
 	}
 
 	@After
