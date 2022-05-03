@@ -921,6 +921,20 @@ public abstract class AbstractAddressRangeMapTest extends AbstractGhidraHeadedIn
 
 	}
 
+	@Test
+	public void testClearRangeThatEndsAtMaxAddress() {
+		AddressRange range1 = range(spaceMax.subtract(0x100), spaceMax);
+
+		map.paintRange(range1.getMinAddress(), range1.getMaxAddress(), ONE);
+		assertEquals(1, map.getRecordCount());
+		assertEquals(1, getMapRanges().size());
+		assertEquals(range1, getMapRanges().get(0));
+
+		map.clearRange(addr(0), spaceMax);
+		List<AddressRange> ranges = getMapRanges();
+		assertEquals(0, ranges.size());
+	}
+
 	private AddressRange range(Address start, Address end) {
 		return new AddressRangeImpl(start, end);
 	}

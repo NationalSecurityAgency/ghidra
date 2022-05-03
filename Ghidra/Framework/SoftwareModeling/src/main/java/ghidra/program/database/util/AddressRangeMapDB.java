@@ -752,15 +752,16 @@ public class AddressRangeMapDB implements DBListener {
 		while (it.hasNext()) {
 			DBRecord record = it.next();
 			it.delete(); // all the records that start in the paint region need to be deleted
-			Address endAddress = getEndAddress(record);
-			if (endAddress.compareTo(endAddr) >= 0) {
+			Address recordEndAddress = getEndAddress(record);
+			if (recordEndAddress.compareTo(endAddr) > 0) {
 				Field recordValue = getValue(record);
 				if (recordValue.equals(value)) {
 					// since the last record has same value, it extends our paintRange
-					return endAddress;
+					return recordEndAddress;
 				}
-				// the last record extended past the paint range, create a remainder record
-				createRecord(endAddr.add(1), endAddress, recordValue);
+				// the last record extended past the paint range with a different value,
+				// create a remainder record
+				createRecord(endAddr.add(1), recordEndAddress, recordValue);
 			}
 		}
 		return endAddr;
