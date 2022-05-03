@@ -571,7 +571,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		for (SubMemoryBlock subBlock : subBlocks) {
 			subBlock.delete();
 		}
-		adapter.deleteMemoryBlock(getID());
+		adapter.deleteMemoryBlock(this);
 		invalidate();
 	}
 
@@ -670,7 +670,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		subBlocks.addAll(memBlock2.subBlocks);
 		possiblyMergeSubBlocks(n - 1, n);
 		sequenceSubBlocks();
-		adapter.deleteMemoryBlock(memBlock2.id);
+		adapter.deleteMemoryBlock(memBlock2);
 		adapter.updateBlockRecord(record);
 
 	}

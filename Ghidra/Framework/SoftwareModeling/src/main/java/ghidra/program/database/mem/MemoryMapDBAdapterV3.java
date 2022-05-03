@@ -153,6 +153,14 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		memoryBlocks.add(-insertionIndex - 1, newBlock);
 	}
 
+	private void removeCachedBlock(MemoryBlockDB deletedBlock) {
+		int index = Collections.binarySearch(memoryBlocks, deletedBlock);
+		if (index < 0) {  // should not find direct hit
+			return;
+		}
+		memoryBlocks.remove(index);
+	}
+
 	@Override
 	MemoryBlockDB createInitializedBlock(String name, Address startAddr, InputStream is,
 			long length, int permissions) throws AddressOverflowException, IOException {
@@ -319,8 +327,9 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	void deleteMemoryBlock(long key) throws IOException {
-		memBlockTable.deleteRecord(key);
+	void deleteMemoryBlock(MemoryBlockDB block) throws IOException {
+		removeCachedBlock(block);
+		memBlockTable.deleteRecord(block.getID());
 	}
 
 	@Override
