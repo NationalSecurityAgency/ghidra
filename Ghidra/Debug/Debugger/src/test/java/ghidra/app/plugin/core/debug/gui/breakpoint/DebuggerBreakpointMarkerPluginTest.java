@@ -200,7 +200,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testBreakpointMarked() throws Exception {
+	public void testBreakpointMarked() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		traceManager.activateTrace(trace);
@@ -229,8 +229,8 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.INCONSISTENT_DISABLED),
 			getBackgroundColor(program, sAddr)));
 
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.disableForTrace(trace));
+		waitRecorder(recorder);
 
 		waitForPass(() -> assertEquals(State.DISABLED, lb.computeStateForTrace(trace)));
 		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.DISABLED),
@@ -293,7 +293,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testProgramBreakpointPopupMenus() throws Exception {
+	public void testProgramBreakpointPopupMenus() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
@@ -320,8 +320,8 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 				AbstractClearBreakpointAction.NAME));
 
 		pressEscape();
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.disableForTrace(trace));
+		waitRecorder(recorder);
 		waitForPass(
 			() -> assertEquals(State.DISABLED, lb.computeStateForProgram(program)));
 
@@ -348,7 +348,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testTraceBreakpointPopupMenus() throws Exception {
+	public void testTraceBreakpointPopupMenus() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
@@ -375,8 +375,8 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 				AbstractClearBreakpointAction.NAME));
 
 		pressEscape();
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.disableForTrace(trace));
+		waitRecorder(recorder);
 		waitForPass(
 			() -> assertEquals(State.DISABLED, lb.computeStateForTrace(trace)));
 

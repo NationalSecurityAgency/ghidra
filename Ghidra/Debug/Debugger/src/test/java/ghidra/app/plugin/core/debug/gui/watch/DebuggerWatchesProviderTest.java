@@ -37,7 +37,6 @@ import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServiceP
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
-import ghidra.async.AsyncTestUtils;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -55,8 +54,7 @@ import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
-public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements AsyncTestUtils {
+public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	protected static void assertNoErr(WatchRow row) {
 		Throwable error = row.getError();

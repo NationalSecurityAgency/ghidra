@@ -31,7 +31,6 @@ import ghidra.app.services.DebuggerStateEditingService;
 import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.DebuggerStateEditingService.StateEditor;
 import ghidra.app.services.TraceRecorder;
-import ghidra.async.AsyncTestUtils;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.pcode.exec.AsyncPcodeExecutor;
 import ghidra.pcode.exec.TracePcodeUtils;
@@ -43,8 +42,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 
-public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements AsyncTestUtils {
+public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
 	private DebuggerStateEditingService editingService;
 
 	private Register r0;

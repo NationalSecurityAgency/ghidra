@@ -37,7 +37,6 @@ import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServiceP
 import ghidra.app.services.DebuggerStateEditingService;
 import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.TraceRecorder;
-import ghidra.async.AsyncTestUtils;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -52,8 +51,7 @@ import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements AsyncTestUtils {
+public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	protected DebuggerRegistersPlugin registersPlugin;
 	protected DebuggerRegistersProvider registersProvider;
