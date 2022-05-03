@@ -16,8 +16,7 @@
 package ghidra.file.formats.ios.dyldcache;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
@@ -104,7 +103,7 @@ public class DyldCacheDylibExtractor {
 				if (segment.getSegmentName().equals(SegmentNames.SEG_TEXT) &&
 					segment.getFileOffset() == 0) {
 					segment.setFileOffset(dylibOffset);
-					packedSegmentAdjustments.put(segment, (int)dylibOffset);
+					packedSegmentAdjustments.put(segment, (int) dylibOffset);
 				}
 			}
 			
@@ -158,16 +157,18 @@ public class DyldCacheDylibExtractor {
 
 		/**
 		 * Fixes up the bytes at the given DYLD file offset to map to the correct offset in the
-		 * packed DYLIB
+		 * packed DYLIB.  The provided file offset is assumed to map to a field in in a load
+		 * command.
 		 *  
 		 * @param fileOffset The DYLD file offset to fix-up
 		 * @param adjustment An value to add to the bytes at the given DYLD file offset prior to 
 		 *   looking them up in the packed DYLIB
 		 * @param size The number of bytes to fix-up (must be 4 or 8)
+		 * @param segment The segment that the value at the file offset is associated with
 		 * @throws IOException If there was an IO-related error
 		 * @throws IllegalArgumentException if size is an unsupported value
 		 */
-		public void fixup(long fileOffset, long adjustment, int size)
+		public void fixup(long fileOffset, long adjustment, int size, SegmentCommand segment)
 				throws IOException, IllegalArgumentException {
 			if (size != 4 && size != 8) {
 				throw new IllegalArgumentException("Size must be 4 or 8 (got " + size + ")");
@@ -176,9 +177,10 @@ public class DyldCacheDylibExtractor {
 			value += adjustment;
 
 			try {
-				byte[] newBytes = toBytes(getPackedOffset(value), size);
-				System.arraycopy(newBytes, 0, packed, (int) getPackedOffset(fileOffset),
-					newBytes.length);
+				byte[] newBytes = toBytes(getPackedOffset(value, segment), size);
+				SegmentCommand textSegment = header.getSegment(SegmentNames.SEG_TEXT);
+				System.arraycopy(newBytes, 0, packed,
+					(int) getPackedOffset(fileOffset, textSegment), newBytes.length);
 			}
 			catch (NotFoundException e) {
 				Msg.warn(this, e.getMessage());
@@ -187,34 +189,33 @@ public class DyldCacheDylibExtractor {
 
 		/**
 		 * Fixes up the bytes at the given DYLD file offset to map to the correct offset in the
-		 * packed DYLIB
+		 * packed DYLIB. The provided file offset is assumed to map to a field in in a load
+		 * command.
 		 *  
 		 * @param fileOffset The DYLD file offset to fix-up
 		 * @param size The number of bytes to fix-up (must be 4 or 8)
+		 * @param segment The segment that the file offset is associated with
 		 * @throws IOException If there was an IO-related error
 		 * @throws IllegalArgumentException if size is an unsupported value
 		 */
-		public void fixup(long fileOffset, int size) throws IOException, IllegalArgumentException {
-			fixup(fileOffset, 0, size);
+		public void fixup(long fileOffset, int size, SegmentCommand segment)
+				throws IOException, IllegalArgumentException {
+			fixup(fileOffset, 0, size, segment);
 		}
 
 		/**
 		 * Converts the given DYLD file offset to an offset into the packed DYLIB
 		 * 
 		 * @param fileOffset The DYLD file offset to convert
+		 * @param segment The segment that contains the file offset; null if unknown
 		 * @return An offset into the packed DYLIB
 		 * @throws NotFoundException If there was no corresponding DYLIB offset
 		 */
-		private long getPackedOffset(long fileOffset) throws NotFoundException {
-			for (SegmentCommand segment : packedSegmentStarts.keySet()) {
-				long size = segment.getFileSize();
-				if (size == 0) {
-					size = segment.getVMsize();
-				}
-				if (fileOffset >= segment.getFileOffset() &&
-					fileOffset < segment.getFileOffset() + size) {
-					return fileOffset - segment.getFileOffset() + packedSegmentStarts.get(segment);
-				}
+		private long getPackedOffset(long fileOffset, SegmentCommand segment)
+				throws NotFoundException {
+			Integer segmentStart = packedSegmentStarts.get(segment);
+			if (segmentStart != null) {
+				return fileOffset - segment.getFileOffset() + segmentStart;
 			}
 			throw new NotFoundException(
 				"Failed to convert DYLD file offset to packed DYLIB offset: " +
@@ -321,7 +322,7 @@ public class DyldCacheDylibExtractor {
 			long adjustment = packedSegmentAdjustments.getOrDefault(segment, 0);
 			if (segment.getFileOffset() > 0) {
 				fixup(segment.getStartIndex() + (is64bit ? 0x28 : 0x20), adjustment,
-					is64bit ? 8 : 4);
+					is64bit ? 8 : 4, segment);
 			}
 			long sectionStartIndex = segment.getStartIndex() + (is64bit ? 0x48 : 0x38);
 			for (Section section : segment.getSections()) {
@@ -333,10 +334,10 @@ public class DyldCacheDylibExtractor {
 				// the adjustment despite the segment needed it.  We can expect to see warnings
 				// in that particular version.
 				if (section.getOffset() > 0 && section.getSize() > 0) {
-					fixup(sectionStartIndex + (is64bit ? 0x30 : 0x28), adjustment, 4);
+					fixup(sectionStartIndex + (is64bit ? 0x30 : 0x28), adjustment, 4, segment);
 				}
 				if (section.getRelocationOffset() > 0) {
-					fixup(sectionStartIndex + (is64bit ? 0x38 : 0x30), adjustment, 4);
+					fixup(sectionStartIndex + (is64bit ? 0x38 : 0x30), adjustment, 4, segment);
 				}
 				sectionStartIndex += is64bit ? 0x50 : 0x44;
 			}
@@ -350,11 +351,12 @@ public class DyldCacheDylibExtractor {
 		 * @throws IOException If there was an IO-related issue performing the fix-up
 		 */
 		private void fixupSymbolTable(SymbolTableCommand cmd) throws IOException {
+			SegmentCommand segment = header.getSegment(SegmentNames.SEG_LINKEDIT);
 			if (cmd.getSymbolOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x8, 4);
+				fixup(cmd.getStartIndex() + 0x8, 4, segment);
 			}
 			if (cmd.getStringTableOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x10, 4);
+				fixup(cmd.getStartIndex() + 0x10, 4, segment);
 			}
 		}
 
@@ -366,23 +368,24 @@ public class DyldCacheDylibExtractor {
 		 * @throws IOException If there was an IO-related issue performing the fix-up
 		 */
 		private void fixupDynamicSymbolTable(DynamicSymbolTableCommand cmd) throws IOException {
+			SegmentCommand segment = header.getSegment(SegmentNames.SEG_LINKEDIT);
 			if (cmd.getTableOfContentsOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x20, 4);
+				fixup(cmd.getStartIndex() + 0x20, 4, segment);
 			}
 			if (cmd.getModuleTableOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x28, 4);
+				fixup(cmd.getStartIndex() + 0x28, 4, segment);
 			}
 			if (cmd.getReferencedSymbolTableOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x30, 4);
+				fixup(cmd.getStartIndex() + 0x30, 4, segment);
 			}
 			if (cmd.getIndirectSymbolTableOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x38, 4);
+				fixup(cmd.getStartIndex() + 0x38, 4, segment);
 			}
 			if (cmd.getExternalRelocationOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x40, 4);
+				fixup(cmd.getStartIndex() + 0x40, 4, segment);
 			}
 			if (cmd.getLocalRelocationOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x48, 4);
+				fixup(cmd.getStartIndex() + 0x48, 4, segment);
 			}
 		}
 
@@ -394,20 +397,21 @@ public class DyldCacheDylibExtractor {
 		 * @throws IOException If there was an IO-related issue performing the fix-up
 		 */
 		private void fixupDyldInfo(DyldInfoCommand cmd) throws IOException {
+			SegmentCommand segment = header.getSegment(SegmentNames.SEG_LINKEDIT);
 			if (cmd.getRebaseOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x8, 4);
+				fixup(cmd.getStartIndex() + 0x8, 4, segment);
 			}
 			if (cmd.getBindOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x10, 4);
+				fixup(cmd.getStartIndex() + 0x10, 4, segment);
 			}
 			if (cmd.getWeakBindOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x18, 4);
+				fixup(cmd.getStartIndex() + 0x18, 4, segment);
 			}
 			if (cmd.getLazyBindOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x20, 4);
+				fixup(cmd.getStartIndex() + 0x20, 4, segment);
 			}
 			if (cmd.getExportOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x28, 4);
+				fixup(cmd.getStartIndex() + 0x28, 4, segment);
 			}
 		}
 
@@ -419,8 +423,9 @@ public class DyldCacheDylibExtractor {
 		 * @throws IOException If there was an IO-related issue performing the fix-up
 		 */
 		private void fixupLinkEditData(LinkEditDataCommand cmd) throws IOException {
+			SegmentCommand segment = header.getSegment(SegmentNames.SEG_LINKEDIT);
 			if (cmd.getDataOffset() > 0) {
-				fixup(cmd.getStartIndex() + 0x8, 4);
+				fixup(cmd.getStartIndex() + 0x8, 4, segment);
 			}
 		}
 	}
