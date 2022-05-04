@@ -1574,15 +1574,15 @@ macro negResFlags(result) {
 :ori "#"^d8,"CCR"			is opbig=0 & op37=7 & op02=4; d8			{ packflags(SR); SR=SR|d8; unpackflags(SR); }
 :ori "#"^d16,SR			is SR; opbig=0x00 & d8base=0x7c; d16			{ packflags(SR); SR=SR|d16; unpackflags(SR); }
 
-:pack Txw,Tyw,"#"d16		is op=8 & op48=20 & Txw & Tyw & rmbit=0; d16 {
-	local value = (Txw & 0x0F0F) + d16;
-	Tyw = (Tyw & 0xFF00) | ((value & 0x0F00) >> 4) | (value & 0x000F);
+:pack Tyw,Txw,"#"d16		is op=8 & op48=20 & Txw & Tyw & rmbit=0; d16 {
+	local value = (Tyw & 0x0F0F) + d16;
+	Txw = (Txw & 0xFF00) | ((value & 0x0F00) >> 4) | (value & 0x000F);
 }
 
-:pack Txw,Tyb,"#"d16		is op=8 & op48=20 & Txw & Tyb & rmbit=1; d16 {
-	local value = (Txw & 0x0F0F) + d16;
+:pack Tyw,Txb,"#"d16		is op=8 & op48=20 & Tyw & Txb & rmbit=1; d16 {
+	local value = (Tyw & 0x0F0F) + d16;
 	local result:2 = ((value & 0x0F00) >> 4) | (value & 0x000F);
-	Tyb = result:1;
+	Txb = result:1;
 }
 
 :pea eaptr			is (opbig=0x48 & op67=1 & $(CTL_ADDR_MODES))... & eaptr			{ SP = SP-4; *SP = eaptr; }
@@ -1812,14 +1812,14 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 
 :unlk regan			is opbig=0x4e & op37=11 & regan					{ SP = regan; regan = *SP; SP = SP+4; }
 
-:unpk Txw,Tyw,"#"^d16		is op=8 & Txw & op48=24 & Tyw & rmbit=0; d16 {
-	Tyw = (Tyw & 0xF0F0) | ((((zext(Txw) & 0x00F0) << 4) | (zext(Txw) & 0x000F)) + d16);
+:unpk Tyw,Txw,"#"^d16		is op=8 & Txw & op48=24 & Tyw & rmbit=0; d16 {
+	Txw = (Txw & 0xF0F0) | ((((zext(Tyw) & 0x00F0) << 4) | (zext(Tyw) & 0x000F)) + d16);
 }
 
-:unpk Txb,Tyw,"#"^d16		is op=8 & Txb & op48=24 & Tyw & rmbit=1; d16 {
-	local source:2 = zext(Txb);
+:unpk Tyb,Txw,"#"^d16		is op=8 & Tyb & op48=24 & Txw & rmbit=1; d16 {
+	local source:2 = zext(Tyb);
 	source = (((source & 0x00F0) << 4) | (source & 0x000F)) + d16;
-	Tyw = (Tyw & 0xF0F0) | source;
+	Txw = (Txw & 0xF0F0) | source;
 }
 
 # Floating Point Instructions
