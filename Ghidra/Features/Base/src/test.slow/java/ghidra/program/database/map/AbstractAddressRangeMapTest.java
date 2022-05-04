@@ -54,7 +54,7 @@ public abstract class AbstractAddressRangeMapTest extends AbstractGhidraHeadedIn
 		env = new TestEnv();
 
 		program = createProgram();
-		MemoryMapDB memory = (MemoryMapDB) program.getMemory();
+		MemoryMapDB memory = program.getMemory();
 		addrMap = (AddressMap) getInstanceField("addrMap", memory);
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		spaceMax = space.getMaxAddress();
@@ -112,8 +112,8 @@ public abstract class AbstractAddressRangeMapTest extends AbstractGhidraHeadedIn
 	}
 
 	@Test
-	public void testPaintCoallesceWithLowerExistingRange() {
-		map.paintRange(addr(0x100), addr(0x200), ONE);
+	public void testPaintCoallesceWithLowerSuccessorRange() {
+		map.paintRange(addr(0x100), addr(0x1ff), ONE);
 		map.paintRange(addr(0x200), addr(0x300), ONE);
 
 		List<AddressRange> ranges = getMapRanges();
@@ -126,11 +126,35 @@ public abstract class AbstractAddressRangeMapTest extends AbstractGhidraHeadedIn
 	@Test
 	public void testPaintCoallesceWithHigherExistingRange() {
 		map.paintRange(addr(0x200), addr(0x300), ONE);
-		map.paintRange(addr(0x100), addr(0x200), ONE);
+		map.paintRange(addr(0x100), addr(0x1ff), ONE);
 
 		List<AddressRange> ranges = getMapRanges();
 		assertEquals(1, ranges.size());
 		assertEquals(range(addr(0x100), addr(0x300)), ranges.get(0));
+
+		checkRange(ranges.get(0), ONE);
+	}
+
+	@Test
+	public void testPaintCoallesceWithLowerOverlappingRange() {
+		map.paintRange(addr(0x100), addr(0x300), ONE);
+		map.paintRange(addr(0x200), addr(0x400), ONE);
+
+		List<AddressRange> ranges = getMapRanges();
+		assertEquals(1, ranges.size());
+		assertEquals(range(addr(0x100), addr(0x400)), ranges.get(0));
+
+		checkRange(ranges.get(0), ONE);
+	}
+
+	@Test
+	public void testPaintCoallesceWithHigherOverlappingRange() {
+		map.paintRange(addr(0x200), addr(0x400), ONE);
+		map.paintRange(addr(0x100), addr(0x300), ONE);
+
+		List<AddressRange> ranges = getMapRanges();
+		assertEquals(1, ranges.size());
+		assertEquals(range(addr(0x100), addr(0x400)), ranges.get(0));
 
 		checkRange(ranges.get(0), ONE);
 	}
