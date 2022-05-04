@@ -19,9 +19,13 @@ import java.util.Observable;
 import java.util.Observer;
 
 /**
- * Extension of the Java {@link Observer} class that allows clients to send {@link FVEvent} 
+ * Extension of the Java {@link Observer} class that allows clients to send {@link FVEvent}
  * messages to subscribers.
  *
+ * <p>Note: this 'listener' class serves as an event 'hub', where clients can push events to this
+ * class and register to receive events from this class.   The events given to this listener are
+ * heterogeneous and serve as a general message passing system for this API.   This class should
+ * be replaced by simple object communication by using normal method calls.
  */
 public class FVEventListener extends Observable {
 
