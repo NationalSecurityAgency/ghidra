@@ -701,7 +701,7 @@ public class AddressRangeMapDB implements DBListener {
 				return null;
 			}
 
-			if (paintStart.isSuccessor(recordEnd) || paintStart.compareTo(recordEnd) <= 0) {
+			if (recordEnd.isSuccessor(paintStart) || paintStart.compareTo(recordEnd) <= 0) {
 				// otherwise, merge by deleting previous record and changing start to record's start
 				rangeMapTable.deleteRecord(record.getKey());
 				return recordStart;
