@@ -15,8 +15,6 @@
  */
 package ghidra.program.database.map;
 
-import static generic.util.UnsignedDataUtils.*;
-
 import java.io.IOException;
 import java.util.*;
 
@@ -831,16 +829,24 @@ public class AddressMapDB implements AddressMap {
 			maxBase = maxAddress.getOffset() & BASE_MASK;
 		}
 
-		long numBases = (maxBase >>> 32) - (minBase >>> 32);
+		long minSegment = minBase >>> 32;
+		long maxSegment = maxBase >>> 32;
+		long numBases;
+		if (minSegment <= maxSegment) {
+			numBases = maxSegment - minSegment + 1;
+		}
+		else {
+			numBases = maxSegment + (0x100000000L - minSegment) + 1;
+		}
 
 		if (numBases > 2) {
 			throw new UnsupportedOperationException("Can't create address bases for a range that" +
 				"extends across more than two upper 32 bit segments!");
 		}
 
-		for (long base = minBase; unsignedLessThanOrEqual(base, maxBase); base +=
-			(MAX_OFFSET + 1)) {
-			getBaseAddressIndex(minAddress.getNewAddress(base), false, INDEX_CREATE);
+		getBaseAddressIndex(minAddress.getNewAddress(minBase), false, INDEX_CREATE);
+		if (minBase != maxBase) {
+			getBaseAddressIndex(minAddress.getNewAddress(maxBase), false, INDEX_CREATE);
 		}
 	}
 
