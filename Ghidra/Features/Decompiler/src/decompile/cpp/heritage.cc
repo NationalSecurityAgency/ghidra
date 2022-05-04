@@ -1377,6 +1377,7 @@ void Heritage::guardReturns(uint4 fl,const Address &addr,int4 size,vector<Varnod
     vn->setAddrForce();
     vn->setActiveHeritage();
     fd->opSetOpcode(copyop,CPUI_COPY);
+    copyop->setStopCopyPropagation();
     Varnode *invn = fd->newVarnode(size,addr);
     invn->setActiveHeritage();
     fd->opSetInput(copyop,invn,0);

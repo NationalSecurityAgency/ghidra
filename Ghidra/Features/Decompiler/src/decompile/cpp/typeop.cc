@@ -807,7 +807,7 @@ Datatype *TypeOpCallother::getOutputLocal(const PcodeOp *op) const
 TypeOpReturn::TypeOpReturn(TypeFactory *t) : TypeOp(t,CPUI_RETURN,"return")
 
 {
-  opflags = PcodeOp::special|PcodeOp::returns|PcodeOp::nocollapse;
+  opflags = PcodeOp::special|PcodeOp::returns|PcodeOp::nocollapse|PcodeOp::no_copy_propagation;
   behave = new OpBehavior(CPUI_RETURN,false,true); // Dummy behavior
 }
 

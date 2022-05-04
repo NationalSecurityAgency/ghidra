@@ -3331,7 +3331,6 @@ int4 ActionDeterminedBranch::apply(Funcdata &data)
     cbranch = bb->lastOp();
     if ((cbranch == (PcodeOp *)0)||(cbranch->code() != CPUI_CBRANCH)) continue;
     if (!cbranch->getIn(1)->isConstant()) continue;
-    if (cbranch->isSplitting()) continue;	// Already tried to remove before
     uintb val = cbranch->getIn(1)->getOffset();
     int4 num = ((val!=0)!=cbranch->isBooleanFlip()) ? 0 : 1;
     data.removeBranch(bb,num);
@@ -4052,7 +4051,7 @@ int4 ActionPrototypeTypes::apply(Funcdata &data)
 {
   list<PcodeOp *>::const_iterator iter,iterend;
 
-  // Set the evalutation prototype if we are not already locked
+  // Set the evaluation prototype if we are not already locked
   ProtoModel *evalfp = data.getArch()->evalfp_current;
   if (evalfp == (ProtoModel *)0)
     evalfp = data.getArch()->defaultfp;
