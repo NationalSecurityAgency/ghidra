@@ -130,7 +130,7 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 		Rectangle lastBounds = boundsInfo.getEndBounds();
 		applySize(lastBounds); // apply the size before we try to center
 
-		Point initialLocation = component.getIntialLocation();
+		Point initialLocation = component.getInitialLocation();
 		if (initialLocation != null) {
 			// NOTE: have to call setLocation() twice because the first time the native peer
 			// component's location is not actually changed; calling setLocation() again
@@ -154,7 +154,7 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 	}
 
 	private void applySize(Rectangle savedBounds) {
-		boolean rememberSize = component.getRemberSize();
+		boolean rememberSize = component.getRememberSize();
 		if (rememberSize && savedBounds != null) {
 			setSize(savedBounds.width, savedBounds.height);
 			return;
@@ -258,7 +258,7 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 	}
 
 	private void cleanup() {
-		if (component.getRemberSize() || component.getRememberLocation()) {
+		if (component.getRememberSize() || component.getRememberLocation()) {
 			String key = getKey();
 			Rectangle rect = getBounds();
 			BoundsInfo boundsInfo = dialogBoundsMap.get(key);

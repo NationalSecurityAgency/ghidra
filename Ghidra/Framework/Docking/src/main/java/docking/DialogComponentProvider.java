@@ -1011,7 +1011,7 @@ public class DialogComponentProvider
 	 * Returns the help location for this dialog
 	 * @return the help location
 	 */
-	public HelpLocation getHelpLocatdion() {
+	public HelpLocation getHelpLocation() {
 		HelpService helpService = DockingWindowManager.getHelpService();
 		return helpService.getHelpLocation(rootPanel);
 	}
@@ -1129,7 +1129,7 @@ public class DialogComponentProvider
 	 * Returns the initial location for the dialog or null if none was set
 	 * @return the point
 	 */
-	public Point getIntialLocation() {
+	public Point getInitialLocation() {
 		return initialLocation;
 	}
 
@@ -1273,7 +1273,7 @@ public class DialogComponentProvider
 	 * Returns true if this dialog remembers its size from one invocation to the next.
 	 * @return true if this dialog remembers its size from one invocation to the next.
 	 */
-	public boolean getRemberSize() {
+	public boolean getRememberSize() {
 		return rememberSize;
 	}
 
