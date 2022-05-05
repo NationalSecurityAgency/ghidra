@@ -1523,15 +1523,14 @@ define pcodeop cos;
 	fraction = fraction & FPUL;			# extract sub-rotation
 	angle 	 = int2float(fraction);			# convert to float
 	
-	pi:4 = 0x40490fdb;				# 3.1415927.. as 32-bit float
-	pi2:4 = int2float(2 :4) f* pi;			# multiply pi by 2 (2pi)
-        angle = (pi2 f* angle) f/ int2float(65536 :4);  # convert to radian
+	pi:4 = 0x40c90fdb;				# 6.2831855.. as 32-bit float
+        angle = (pi f* angle) f/ int2float(65536 :4);   # convert to radian
     
 	local _sin:4 = sin(angle);			# call fake sin & cos
 	local _cos:4 = cos(angle);
 	
-	FRN_1 = _sin;					# _sin goes to FR[n]
-	FRN_2 = _cos;           			# _cos goes to FR[n+1]
+	FRN_1 = float2float(_sin);			# _sin goes to FR[n]
+	FRN_2 = float2float(_cos);           		# _cos goes to FR[n+1]
 }
 
 # Transfer from System Register
