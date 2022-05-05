@@ -32,13 +32,27 @@ import ghidra.util.task.TaskMonitor;
  * Represents a linkedit_data_command structure 
  */
 public class LinkEditDataCommand extends LoadCommand {
-	private int dataoff;
-	private int datasize;
+	protected int dataoff;
+	protected int datasize;
+	protected BinaryReader dataReader;
 
-	LinkEditDataCommand(BinaryReader reader) throws IOException {
-		super(reader);
-		dataoff = reader.readNextInt();
-		datasize = reader.readNextInt();
+	/**
+	 * Creates and parses a new {@link LinkEditDataCommand}.  Sets <code>dataReader</code> to the
+	 * data offset.
+	 * 
+	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
+	 *   command
+	 * @param dataReader A {@link BinaryReader reader} that can read the data that the load command
+	 *   references.  Note that this might be in a different underlying provider.
+	 * @throws IOException if an IO-related error occurs while parsing
+	 */
+	LinkEditDataCommand(BinaryReader loadCommandReader, BinaryReader dataReader)
+			throws IOException {
+		super(loadCommandReader);
+		this.dataoff = loadCommandReader.readNextInt();
+		this.datasize = loadCommandReader.readNextInt();
+		this.dataReader = dataReader;
+		this.dataReader.setPointerIndex(dataoff);
 	}
 
 	public int getDataOffset() {

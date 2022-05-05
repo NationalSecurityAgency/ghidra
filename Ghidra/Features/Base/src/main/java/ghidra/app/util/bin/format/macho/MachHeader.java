@@ -21,6 +21,7 @@ import java.util.List;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.commands.*;
+import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -135,14 +136,34 @@ public class MachHeader implements StructConverter {
 		_commandIndex = _reader.getPointerIndex();
 	}
 
+	/**
+	 * Parses this {@link MachHeader}'s {@link LoadCommand load commands}
+	 * 
+	 * @return This {@link MachHeader}, for convenience
+	 * @throws IOException If there was an IO-related error
+	 * @throws MachException if the load command is invalid
+	 */
 	public MachHeader parse() throws IOException, MachException {
+		return parse(null);
+	}
+	
+	/**
+	 * Parses this {@link MachHeader}'s {@link LoadCommand load commands}
+	 * 
+	 * @param splitDyldCache The {@link SplitDyldCache} that this header resides in.  Could be null
+	 *   if a split DYLD cache is not being used.
+	 * @return This {@link MachHeader}, for convenience
+	 * @throws IOException If there was an IO-related error
+	 * @throws MachException if the load command is invalid
+	 */
+	public MachHeader parse(SplitDyldCache splitDyldCache) throws IOException, MachException {
 		if (_parsed) {
 			return this;
 		}
 		long currentIndex = _commandIndex;
 		for (int i = 0; i < nCmds; ++i) {
 			_reader.setPointerIndex(currentIndex);
-			LoadCommand lc = LoadCommandFactory.getLoadCommand(_reader, this);
+			LoadCommand lc = LoadCommandFactory.getLoadCommand(_reader, this, splitDyldCache);
 			_commands.add(lc);
 			currentIndex += lc.getCommandSize();
 		}

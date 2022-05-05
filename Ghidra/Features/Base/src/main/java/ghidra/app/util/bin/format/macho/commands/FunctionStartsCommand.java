@@ -31,8 +31,18 @@ import ghidra.program.model.address.Address;
  */
 public class FunctionStartsCommand extends LinkEditDataCommand {
 	
-	FunctionStartsCommand(BinaryReader reader) throws IOException {
-		super(reader);
+	/**
+	 * Creates and parses a new {@link LinkEditDataCommand}
+	 * 
+	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
+	 *   command
+	 * @param dataReader A {@link BinaryReader reader} that can read the data that the load command
+	 *   references.  Note that this might be in a different underlying provider.
+	 * @throws IOException if an IO-related error occurs while parsing
+	 */
+	FunctionStartsCommand(BinaryReader loadCommandReader, BinaryReader dataReader)
+			throws IOException {
+		super(loadCommandReader, dataReader);
 	}
 
 	/**

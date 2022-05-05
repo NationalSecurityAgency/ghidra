@@ -63,69 +63,76 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 	private List<RelocationInfo> externalRelocations = new ArrayList<RelocationInfo>();
 	private List<RelocationInfo> localRelocations = new ArrayList<RelocationInfo>();
 
-	DynamicSymbolTableCommand(BinaryReader reader, MachHeader header) throws IOException {
-		super(reader);
+	/**
+	 * Creates and parses a new {@link DynamicSymbolTableCommand}
+	 * 
+	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
+	 *   command
+	 * @param dataReader A {@link BinaryReader reader} that can read the data that the load command
+	 *   references.  Note that this might be in a different underlying provider.
+	 * @param header The {@link MachHeader header} associated with this load command
+	 * @throws IOException if an IO-related error occurs while parsing
+	 */
+	DynamicSymbolTableCommand(BinaryReader loadCommandReader, BinaryReader dataReader,
+			MachHeader header) throws IOException {
+		super(loadCommandReader);
 
-		ilocalsym = reader.readNextInt();
-		nlocalsym = reader.readNextInt();
-		iextdefsym = reader.readNextInt();
-		nextdefsym = reader.readNextInt();
-		iundefsym = reader.readNextInt();
-		nundefsym = reader.readNextInt();
-		tocoff = reader.readNextInt();
-		ntoc = reader.readNextInt();
-		modtaboff = reader.readNextInt();
-		nmodtab = reader.readNextInt();
-		extrefsymoff = reader.readNextInt();
-		nextrefsyms = reader.readNextInt();
-		indirectsymoff = reader.readNextInt();
-		nindirectsyms = reader.readNextInt();
-		extreloff = reader.readNextInt();
-		nextrel = reader.readNextInt();
-		locreloff = reader.readNextInt();
-		nlocrel = reader.readNextInt();
-
-		long index = reader.getPointerIndex();
+		ilocalsym = loadCommandReader.readNextInt();
+		nlocalsym = loadCommandReader.readNextInt();
+		iextdefsym = loadCommandReader.readNextInt();
+		nextdefsym = loadCommandReader.readNextInt();
+		iundefsym = loadCommandReader.readNextInt();
+		nundefsym = loadCommandReader.readNextInt();
+		tocoff = loadCommandReader.readNextInt();
+		ntoc = loadCommandReader.readNextInt();
+		modtaboff = loadCommandReader.readNextInt();
+		nmodtab = loadCommandReader.readNextInt();
+		extrefsymoff = loadCommandReader.readNextInt();
+		nextrefsyms = loadCommandReader.readNextInt();
+		indirectsymoff = loadCommandReader.readNextInt();
+		nindirectsyms = loadCommandReader.readNextInt();
+		extreloff = loadCommandReader.readNextInt();
+		nextrel = loadCommandReader.readNextInt();
+		locreloff = loadCommandReader.readNextInt();
+		nlocrel = loadCommandReader.readNextInt();
 
 		if (tocoff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + tocoff);
+			dataReader.setPointerIndex(header.getStartIndex() + tocoff);
 			for (int i = 0; i < ntoc; ++i) {
-				tocList.add(new TableOfContents(reader));
+				tocList.add(new TableOfContents(dataReader));
 			}
 		}
 		if (modtaboff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + modtaboff);
+			dataReader.setPointerIndex(header.getStartIndex() + modtaboff);
 			for (int i = 0; i < nmodtab; ++i) {
-				moduleList.add(new DynamicLibraryModule(reader, header));
+				moduleList.add(new DynamicLibraryModule(dataReader, header));
 			}
 		}
 		if (extrefsymoff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + extrefsymoff);
+			dataReader.setPointerIndex(header.getStartIndex() + extrefsymoff);
 			for (int i = 0; i < nextrefsyms; ++i) {
-				referencedList.add(new DynamicLibraryReference(reader));
+				referencedList.add(new DynamicLibraryReference(dataReader));
 			}
 		}
 		if (indirectsymoff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + indirectsymoff);
+			dataReader.setPointerIndex(header.getStartIndex() + indirectsymoff);
 			indirectSymbols = new int[nindirectsyms];
 			for (int i = 0; i < nindirectsyms; ++i) {
-				indirectSymbols[i] = reader.readNextInt();
+				indirectSymbols[i] = dataReader.readNextInt();
 			}
 		}
 		if (extreloff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + extreloff);
+			dataReader.setPointerIndex(header.getStartIndex() + extreloff);
 			for (int i = 0; i < nextrel; ++i) {
-				externalRelocations.add(new RelocationInfo(reader));
+				externalRelocations.add(new RelocationInfo(dataReader));
 			}
 		}
 		if (locreloff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + locreloff);
+			dataReader.setPointerIndex(header.getStartIndex() + locreloff);
 			for (int i = 0; i < nlocrel; ++i) {
-				localRelocations.add(new RelocationInfo(reader));
+				localRelocations.add(new RelocationInfo(dataReader));
 			}
 		}
-
-		reader.setPointerIndex(index);
 	}
 
 	/**

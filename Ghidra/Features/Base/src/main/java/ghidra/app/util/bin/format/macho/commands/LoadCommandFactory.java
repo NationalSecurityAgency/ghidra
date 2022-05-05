@@ -22,7 +22,10 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
+import ghidra.app.util.bin.format.macho.dyld.DyldCacheMappingInfo;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
+import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.util.Msg;
 
 /**
@@ -31,22 +34,25 @@ import ghidra.util.Msg;
 public class LoadCommandFactory {
 
 	/**
-	 * Creates a {@link LoadCommand}
+	 * Create and parses a {@link LoadCommand}
 	 * 
-	 * @param reader A {@link BinaryReader} positioned at the start of the load command to create
-	 * @param header The {@link MachHeader} that contains the load command to create
-	 * @return A {@link LoadCommand}
-	 * @throws IOException if there was an IO-related error
-	 * @throws MachException if there was a problem parsing the load command
+	 * @param reader A {@link BinaryReader reader} that points to the start of the load command
+	 * @param header The {@link MachHeader header} associated with this load command	 
+	 * @param splitDyldCache The {@link SplitDyldCache} that this header resides in.  Could be null
+	 *   if a split DYLD cache is not being used.
+	 * @return A new {@link LoadCommand}
+	 * @throws IOException if an IO-related error occurs while parsing
+	 * @throws MachException if the load command is invalid
 	 */
-	public static LoadCommand getLoadCommand(BinaryReader reader, MachHeader header)
-			throws IOException, MachException {
+	public static LoadCommand getLoadCommand(BinaryReader reader, MachHeader header,
+			SplitDyldCache splitDyldCache) throws IOException, MachException {
 		int type = reader.peekNextInt();
 		switch (type) {
 			case LC_SEGMENT:
 				return new SegmentCommand(reader, header.is32bit());
 			case LC_SYMTAB:
-				return new SymbolTableCommand(reader, header);
+				return new SymbolTableCommand(reader,
+					getLinkEditReader(reader, header, splitDyldCache), header);
 			case LC_SYMSEG:
 				return new SymbolCommand(reader);
 			case LC_THREAD:
@@ -62,7 +68,8 @@ public class LoadCommandFactory {
 			case LC_PREPAGE:
 				return new UnsupportedLoadCommand(reader, type);
 			case LC_DYSYMTAB:
-				return new DynamicSymbolTableCommand(reader, header);
+				return new DynamicSymbolTableCommand(reader,
+					getLinkEditReader(reader, header, splitDyldCache), header);
 			case LC_LOAD_DYLIB:
 			case LC_ID_DYLIB:
 			case LC_LOAD_UPWARD_DYLIB:
@@ -102,7 +109,8 @@ public class LoadCommandFactory {
 			case LC_DATA_IN_CODE:
 			case LC_OPTIMIZATION_HINT:
 			case LC_DYLIB_CODE_SIGN_DRS:
-				return new LinkEditDataCommand(reader);
+				return new LinkEditDataCommand(reader,
+					getLinkEditReader(reader, header, splitDyldCache));
 			case LC_REEXPORT_DYLIB:
 				return new DynamicLibraryCommand(reader);
 			case LC_ENCRYPTION_INFO:
@@ -110,14 +118,16 @@ public class LoadCommandFactory {
 				return new EncryptedInformationCommand(reader, header.is32bit());
 			case LC_DYLD_INFO:
 			case LC_DYLD_INFO_ONLY:
-				return new DyldInfoCommand(reader);
+				return new DyldInfoCommand(reader,
+					getLinkEditReader(reader, header, splitDyldCache), header);
 			case LC_VERSION_MIN_MACOSX:
 			case LC_VERSION_MIN_IPHONEOS:
 			case LC_VERSION_MIN_TVOS:
 			case LC_VERSION_MIN_WATCHOS:
 				return new VersionMinCommand(reader);
 			case LC_FUNCTION_STARTS:
-				return new FunctionStartsCommand(reader);
+				return new FunctionStartsCommand(reader,
+					getLinkEditReader(reader, header, splitDyldCache));
 			case LC_MAIN:
 				return new EntryPointCommand(reader);
 			case LC_SOURCE_VERSION:
@@ -129,14 +139,51 @@ public class LoadCommandFactory {
 			case LC_BUILD_VERSION:
 				return new BuildVersionCommand(reader);
 			case LC_DYLD_EXPORTS_TRIE:
-				return new LinkEditDataCommand(reader);
+				return new DyldExportsTrieCommand(reader,
+					getLinkEditReader(reader, header, splitDyldCache));
 			case LC_DYLD_CHAINED_FIXUPS:
-				return new DyldChainedFixupsCommand(reader);
+				return new DyldChainedFixupsCommand(reader,
+					getLinkEditReader(reader, header, splitDyldCache));
 			case LC_FILESET_ENTRY:
 				return new FileSetEntryCommand(reader);
 			default:
 				Msg.warn(header, "Unsupported load command " + Integer.toHexString(type));
 				return new UnsupportedLoadCommand(reader, type);
 		}
+	}
+
+	/**
+	 * Gets a {@link BinaryReader} that points to the given {@link MachHeader Mach-O header's} 
+	 * __LINKEDIT segment.  Note that this segment may live in a different provider than
+	 * the Mach-O header if a {@link SplitDyldCache} is being used.
+	 * 
+	 * @param reader The {@link BinaryReader} used to read the given Mach-O header
+	 * @param header The {@link MachHeader Mach-O header}
+	 * @param splitDyldCache The {@link SplitDyldCache}, or null if that is not being used
+	 * @return A {@link BinaryReader} that points to the given {@link MachHeader Mach-O header's} 
+	 *   __LINKEDIT segment
+	 * @throws MachException If the __LINKEDIT segment was not found
+	 */
+	private static BinaryReader getLinkEditReader(BinaryReader reader, MachHeader header,
+			SplitDyldCache splitDyldCache) throws MachException {
+		SegmentCommand linkEdit = header.getSegment(SegmentNames.SEG_LINKEDIT);
+		if (linkEdit == null) {
+			throw new MachException("__LINKEDIT segment not found");
+		}
+		if (splitDyldCache == null) {
+			return reader.clone(linkEdit.getFileOffset());
+		}
+		for (int i = 0; i < splitDyldCache.size(); i++) {
+			DyldCacheHeader dyldCacheHeader = splitDyldCache.getDyldCacheHeader(i);
+			for (DyldCacheMappingInfo mappingInfo : dyldCacheHeader.getMappingInfos()) {
+				if (mappingInfo.contains(linkEdit.getVMaddress())) {
+					BinaryReader linkEditReader =
+						new BinaryReader(splitDyldCache.getProvider(i), true);
+					linkEditReader.setPointerIndex(linkEdit.getFileOffset());
+					return linkEditReader;
+				}
+			}
+		}
+		throw new MachException("__LINKEDIT segment not found in DYLD cache");
 	}
 }
