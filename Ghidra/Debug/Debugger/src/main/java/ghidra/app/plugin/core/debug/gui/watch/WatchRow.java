@@ -245,7 +245,7 @@ public class WatchRow {
 		Language newLanguage = trace.getBaseLanguage();
 		if (language != newLanguage) {
 			if (!(newLanguage instanceof SleighLanguage)) {
-				error = new RuntimeException("Not a sleigh-based langauge");
+				error = new RuntimeException("Not a sleigh-based language");
 				return;
 			}
 			language = (SleighLanguage) newLanguage;
