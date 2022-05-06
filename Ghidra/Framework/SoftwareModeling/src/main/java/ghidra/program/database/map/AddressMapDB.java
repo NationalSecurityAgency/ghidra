@@ -253,7 +253,10 @@ public class AddressMapDB implements AddressMap {
 		}
 	}
 
-	@Override
+	/**
+	 * Clears any cached values.
+	 * @throws IOException if an IO error occurs
+	 */
 	public synchronized void invalidateCache() throws IOException {
 		lastBaseAddress = null;
 		if (!readOnly) {
@@ -491,6 +494,7 @@ public class AddressMapDB implements AddressMap {
 	 * @param useMemorySegmentation if true and the program's default address space is segmented (i.e., SegmentedAddressSpace).
 	 * the address returned will be normalized to defined segmented memory blocks if possible.  This parameter should 
 	 * generally always be true except when used by the Memory map objects to avoid recursion problems.
+	 * @return decoded address
 	 */
 	public synchronized Address decodeAddress(long value, boolean useMemorySegmentation) {
 		Address addr;
@@ -616,28 +620,13 @@ public class AddressMapDB implements AddressMap {
 	 * stack space.  This makes bad stack addresses which previously existed
 	 * impossible to decode.  Instead of return NO_ADDRESS, we will simply truncate such 
 	 * bad stack offsets to the MIN or MAX offsets.
-	 * @param offset
-	 * @param stackSpace
-	 * @return
+	 * @param offset stack offset
+	 * @param stackSpace stack memory space
+	 * @return truncated stack offset
 	 */
 	private long truncateStackOffset(long offset, AddressSpace stackSpace) {
 		return offset < 0 ? stackSpace.getMinAddress().getOffset()
 				: stackSpace.getMaxAddress().getOffset();
-	}
-
-	@Override
-	public boolean hasSameKeyBase(long addrKey1, long addrKey2) {
-		return (addrKey1 >> ADDR_OFFSET_SIZE) == (addrKey2 >> ADDR_OFFSET_SIZE);
-	}
-
-	@Override
-	public boolean isKeyRangeMax(long addrKey) {
-		return (addrKey & ADDR_OFFSET_MASK) == MAX_OFFSET;
-	}
-
-	@Override
-	public boolean isKeyRangeMin(long addrKey) {
-		return (addrKey & ADDR_OFFSET_MASK) == 0;
 	}
 
 	private long encodeRelative(Address addr, boolean addrIsNormalized, int indexOperation) {
@@ -709,7 +698,10 @@ public class AddressMapDB implements AddressMap {
 		return addrFactory;
 	}
 
-	@Override
+	/**
+	 * Sets the image base, effectively changing the mapping between addresses and longs.
+	 * @param base the new base address.
+	 */
 	public void setImageBase(Address base) {
 		if (useOldAddrMap) {
 			throw new IllegalStateException();
@@ -721,11 +713,6 @@ public class AddressMapDB implements AddressMap {
 			}
 		}
 		baseImageOffset = base.getOffset();
-	}
-
-	@Override
-	public synchronized int getModCount() {
-		return baseAddrs.length;
 	}
 
 	@Override
@@ -952,7 +939,13 @@ public class AddressMapDB implements AddressMap {
 		return defaultAddrSpace.getAddress(baseImageOffset);
 	}
 
-	@Override
+	/**
+	 * Converts the current base addresses to addresses compatible with the new language.
+	 * @param newLanguage the new language to use.
+	 * @param addrFactory the new AddressFactory.
+	 * @param translator translates address spaces from the old language to the new language.
+	 * @throws IOException if IO error occurs
+	 */
 	public synchronized void setLanguage(Language newLanguage, AddressFactory addrFactory,
 			LanguageTranslator translator) throws IOException {
 
@@ -993,13 +986,22 @@ public class AddressMapDB implements AddressMap {
 		init(true);
 	}
 
-	@Override
+	/**
+	 * Rename an existing overlay space.
+	 * @param oldName old overlay name
+	 * @param newName new overlay name (must be unique among all space names within this map)
+	 * @throws IOException if IO error occurs
+	 */
 	public synchronized void renameOverlaySpace(String oldName, String newName) throws IOException {
 		adapter.renameOverlaySpace(oldName, newName);
 		invalidateCache();
 	}
 
-	@Override
+	/**
+	 * Delete the specified overlay space from this address map.
+	 * @param name overlay space name (must be unique among all space names within this map)
+	 * @throws IOException if IO error occurs
+	 */
 	public synchronized void deleteOverlaySpace(String name) throws IOException {
 		adapter.deleteOverlaySpace(name);
 		invalidateCache();
