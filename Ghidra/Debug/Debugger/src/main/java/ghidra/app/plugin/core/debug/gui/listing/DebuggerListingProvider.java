@@ -245,7 +245,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected SyncToStaticListingAction actionSyncToStaticListing;
 	protected FollowsCurrentThreadAction actionFollowsCurrentThread;
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoReadMemory;
-	protected DockingAction actionReadSelectedMemory;
+	protected DockingAction actionRefreshSelectedMemory;
 	protected DockingAction actionOpenProgram;
 	protected MultiStateDockingAction<LocationTrackingSpec> actionTrackLocation;
 
@@ -642,7 +642,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		actionGoTo = goToTrait.installAction();
 		actionTrackLocation = trackingTrait.installAction();
 		actionAutoReadMemory = readsMemTrait.installAutoReadAction();
-		actionReadSelectedMemory = readsMemTrait.installReadSelectedAction();
+		actionRefreshSelectedMemory = readsMemTrait.installRefreshSelectedAction();
 
 		actionOpenProgram = OpenProgramAction.builder(plugin)
 				.withContext(DebuggerOpenProgramActionContext.class)

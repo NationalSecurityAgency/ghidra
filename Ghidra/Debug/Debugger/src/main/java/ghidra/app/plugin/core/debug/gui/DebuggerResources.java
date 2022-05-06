@@ -133,8 +133,7 @@ public interface DebuggerResources {
 	ImageIcon ICON_AUTOREAD = ResourceManager.loadImage("images/autoread.png");
 
 	// TODO: Draw a real icon.
-	ImageIcon ICON_READ_MEMORY = ICON_REGIONS;
-	//ResourceManager.loadImage("images/read-memory.png");
+	ImageIcon ICON_REFRESH_MEMORY = ICON_REFRESH;
 
 	ImageIcon ICON_RENAME_SNAPSHOT = ICON_TIME;
 
@@ -789,12 +788,12 @@ public interface DebuggerResources {
 		}
 	}
 
-	abstract class AbstractReadSelectedMemoryAction extends DockingAction {
+	abstract class AbstractRefreshSelectedMemoryAction extends DockingAction {
 		public static final String NAME = "Read Selected Memory";
-		public static final Icon ICON = ICON_READ_MEMORY;
+		public static final Icon ICON = ICON_REFRESH_MEMORY;
 		public static final String HELP_ANCHOR = "read_memory";
 
-		public AbstractReadSelectedMemoryAction(Plugin owner) {
+		public AbstractRefreshSelectedMemoryAction(Plugin owner) {
 			super(NAME, owner.getName());
 			setDescription(
 				"(Re-)read and record memory for the selected addresses into the trace database");
