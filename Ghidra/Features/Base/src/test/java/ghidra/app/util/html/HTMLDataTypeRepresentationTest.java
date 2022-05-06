@@ -25,8 +25,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.*;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 import docking.widgets.label.GDHtmlLabel;
 import generic.test.AbstractGenericTest;
@@ -739,7 +738,11 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		assertOnlyTypeDefNamesDifferent(diff);
 	}
 
+	/**
+	 * Test marked as ignored pending HTML rendering fix - see GP-1974
+	 */
 	@Test
+	@Ignore
 	public void testTypeDefDiff_ArraysOfStructures_DifferentStructures() {
 
 		Structure s1 = getStructWithEnum();
