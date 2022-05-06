@@ -398,7 +398,7 @@ public class DynamicHash {
 				}
 				clear();
 				calcHash(tmpop, slot, method);
-				if (hash == tmphash) {	// Hash collision
+				if (getComparable(hash) == getComparable(tmphash)) {	// Hash collision
 					oplist2.add(tmpop);
 					if (oplist2.size() > maxduplicates) {
 						break;
@@ -461,7 +461,7 @@ public class DynamicHash {
 				Varnode tmpvn = vnlist.get(i);
 				clear();
 				calcHash(tmpvn, method);
-				if (hash == tmphash) {		// Hash collision
+				if (getComparable(hash) == getComparable(tmphash)) {		// Hash collision
 					vnlist2.add(tmpvn);
 					if (vnlist2.size() > maxduplicates) {
 						break;
@@ -600,7 +600,7 @@ public class DynamicHash {
 			Varnode tmpvn = vnlist.get(i);
 			dhash.clear();
 			dhash.calcHash(tmpvn, method);
-			if (dhash.getHash() == h) {
+			if (getComparable(dhash.getHash()) == getComparable(h)) {
 				vnlist2.add(tmpvn);
 			}
 		}
@@ -621,11 +621,12 @@ public class DynamicHash {
 		ArrayList<PcodeOp> oplist2 = new ArrayList<>();
 		gatherOpsAtAddress(oplist, fd, addr);
 		for (PcodeOp tmpop : oplist) {
-			if (slot >= tmpop.getNumInputs())
+			if (slot >= tmpop.getNumInputs()) {
 				continue;
+			}
 			dhash.clear();
 			dhash.calcHash(tmpop, slot, method);
-			if (dhash.getHash() == h) {
+			if (getComparable(dhash.getHash()) == getComparable(h)) {
 				oplist2.add(tmpop);
 			}
 		}
@@ -719,6 +720,10 @@ public class DynamicHash {
 		val = ~val;
 		h &= val;
 		return h;
+	}
+
+	public static int getComparable(long h) {
+		return (int) h;
 	}
 
 	/**

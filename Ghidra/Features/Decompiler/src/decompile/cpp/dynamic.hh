@@ -96,6 +96,7 @@ public:
   static uint4 getTotalFromHash(uint8 h);		///< Retrieve the encoded collision total from a hash
   static bool getIsNotAttached(uint8 h);		///< Retrieve the attachment boolean from a hash
   static void clearTotalPosition(uint8 &h);		///< Clear the collision total and position fields within a hash
+  static uint4 getComparable(uint8 h) { return (uint4)h; }	///< Get only the formal hash for comparing
   static uint4 transtable[];				///< Translation of op-codes to hash values
 };
 
