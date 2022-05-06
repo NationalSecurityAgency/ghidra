@@ -1079,7 +1079,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testEditLiveBytesWritesTarget() throws Exception {
+	public void testEditLiveBytesWritesTarget() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
@@ -1097,12 +1097,12 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		performAction(actionEdit);
 		triggerText(memBytesProvider.getByteViewerPanel().getCurrentComponent(), "42");
 		performAction(actionEdit);
+		waitForSwing();
+		waitRecorder(recorder);
 
 		byte[] data = new byte[4];
-		waitForPass(() -> {
-			mb.testProcess1.memory.getMemory(mb.addr(0x55550800), data);
-			assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
-		});
+		mb.testProcess1.memory.getMemory(mb.addr(0x55550800), data);
+		assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
 	}
 
 	@Test
