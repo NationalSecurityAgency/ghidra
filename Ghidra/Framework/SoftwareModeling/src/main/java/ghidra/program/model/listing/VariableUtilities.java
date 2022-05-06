@@ -43,7 +43,7 @@ public class VariableUtilities {
 	/**
 	 * Get a precedence value for the specified variable.
 	 * This value can be used to assist with LocalVariable.compareTo(Variable var)
-	 * @param var
+	 * @param var function variable
 	 * @return numeric precedence
 	 */
 	public static int getPrecedence(Variable var) {
@@ -76,8 +76,8 @@ public class VariableUtilities {
 	 * Compare storage varnodes for two lists of variables.  No check is done to ensure that
 	 * storage is considered good/valid (i.e., BAD_STORAGE, UNASSIGNED_STORAGE and VOID_STORAGE
 	 * all have an empty varnode list and would be considered a match)
-	 * @param vars
-	 * @param otherVars
+	 * @param vars function variables
+	 * @param otherVars other function variables
 	 * @return true if the exact sequence of variable storage varnodes matches across two lists of variables.
 	 */
 	public static boolean storageMatches(List<Variable> vars, List<Variable> otherVars) {
@@ -96,8 +96,8 @@ public class VariableUtilities {
 	 * Compare storage varnodes for two lists of variables.  No check is done to ensure that
 	 * storage is considered good/valid (i.e., BAD_STORAGE, UNASSIGNED_STORAGE and VOID_STORAGE
 	 * all have an empty varnode list and would be considered a match)
-	 * @param vars
-	 * @param otherVars
+	 * @param vars function variables
+	 * @param otherVars other function variables
 	 * @return true if the exact sequence of variable storage varnodes matches across two lists of variables.
 	 */
 	public static boolean storageMatches(List<? extends Variable> vars, Variable... otherVars) {
@@ -116,8 +116,8 @@ public class VariableUtilities {
 
 	/**
 	 * Compare two variables without using the instance specific compareTo method.
-	 * @param v1
-	 * @param v2
+	 * @param v1 a function variable
+	 * @param v2 another function variable
 	 * @return a negative value if v1 &lt; v2, 0 if equal, and
 	 * positive if v1 &gt; v2
 	 */
@@ -162,8 +162,8 @@ public class VariableUtilities {
 
 	/**
 	 * Determine the appropriate data type for an automatic parameter
-	 * @param function
-	 * @param returnDataType
+	 * @param function function whose auto param datatype is to be determined
+	 * @param returnDataType function's return datatype
 	 * @param storage variable storage for an auto-parameter (isAutoStorage should be true)
 	 * @return auto-parameter data type
 	 */
@@ -174,7 +174,7 @@ public class VariableUtilities {
 		if (autoParameterType == AutoParameterType.THIS) {
 			DataType classStruct = findOrCreateClassStruct(function);
 			if (classStruct == null) {
-				classStruct = DataType.VOID;
+				classStruct = VoidDataType.dataType;
 			}
 			return getPointer(function.getProgram(), classStruct, storage.size());
 		}
@@ -197,7 +197,7 @@ public class VariableUtilities {
 	 * @param storage variable storage whose size must match the specified data type size
 	 * @param dataType a datatype checked using {@link #checkDataType(DataType, boolean, int, Program)}
 	 * @param allowSizeMismatch if true size mismatch will be ignore
-	 * @throws InvalidInputException
+	 * @throws InvalidInputException if specified storage is not suitable for datatype 
 	 */
 	public static void checkStorage(VariableStorage storage, DataType dataType,
 			boolean allowSizeMismatch) throws InvalidInputException {
@@ -212,7 +212,7 @@ public class VariableUtilities {
 	 * @param dataType a datatype checked using {@link #checkDataType(DataType, boolean, int, Program)}
 	 * @param allowSizeMismatch if true size mismatch will be ignore
 	 * @return original storage or resized storage with the correct size.
-	 * @throws InvalidInputException
+	 * @throws InvalidInputException if specified storage is not suitable for datatype 
 	 */
 	public static VariableStorage checkStorage(Function function, VariableStorage storage,
 			DataType dataType, boolean allowSizeMismatch) throws InvalidInputException {
@@ -363,10 +363,10 @@ public class VariableUtilities {
 	 * Perform resize variable storage to desired newSize.  This method has limited ability to grow
 	 * storage if current storage does not have a stack component or if other space constraints
 	 * are exceeded.
-	 * @param curStorage
-	 * @param dataType
+	 * @param curStorage current variable storage
+	 * @param dataType variable datatype
 	 * @param alignStack if false no attempt is made to align stack usage for big-endian
-	 * @param function
+	 * @param function function which corresponds to resized variable storage
 	 * @return resize storage
 	 * @throws InvalidInputException if unable to resize storage to specified size.
 	 */
@@ -572,10 +572,10 @@ public class VariableUtilities {
 
 	/**
 	 * Check for variable storage conflict and optionally remove conflicting variables.
-	 * @param function
+	 * @param function function which corresponds to specified variable
 	 * @param var existing function variable or null for new variable
 	 * @param newStorage new/updated variable storage
-	 * @param deleteConflictingVariables
+	 * @param deleteConflictingVariables if true function's conflicting variables may be deleted
 	 * @throws VariableSizeException if deleteConflictingVariables is false and another variable conflicts
 	 */
 	public static void checkVariableConflict(Function function, Variable var,
@@ -616,9 +616,9 @@ public class VariableUtilities {
 	/**
 	 * Check for variable storage conflict and optionally remove conflicting variables.
 	 * @param existingVariables variables to check (may contain null entries)
-	 * @param var
-	 * @param newStorage
-	 * @throws VariableSizeException
+	 * @param var function variable
+	 * @param conflictHandler variable conflict handler
+	 * @param newStorage variable storage
 	 * @throws VariableSizeException if another variable conflicts
 	 */
 	public static void checkVariableConflict(List<? extends Variable> existingVariables,
@@ -685,7 +685,7 @@ public class VariableUtilities {
 
 	/**
 	 * Determine the minimum stack offset for parameters
-	 * @param function
+	 * @param function function whose stack use is to be examined
 	 * @return stack parameter offset or null if it could not be determined
 	 */
 	public static Integer getBaseStackParamOffset(Function function) {
@@ -712,7 +712,8 @@ public class VariableUtilities {
 
 	/**
 	 * Generate a suitable 'this' parameter for the specified function
-	 * @param function
+	 * @param function function for which a <code>this</code> parameter is to be generated
+	 * @param convention function calling convention
 	 * @return this parameter or null of calling convention is not a 'thiscall'
 	 * or some other error prevents it
 	 * @deprecated should rely on auto-param instead - try not to use this method which may be eliminated
@@ -769,10 +770,18 @@ public class VariableUtilities {
 	/**
 	 * Find the structure data type which corresponds to the specified class namespace
 	 * within the specified data type manager.
+	 * 
 	 * The preferred structure will utilize a namespace-based category path, however,
 	 * the match criteria can be fuzzy and relies primarily on the class name.
-	 * While a new empty structure may be returned, it will not be added to the program's data type
-	 * manager.
+	 * A properly named class structure must reside within a category whose trailing 
+	 * path either matches the class namespace or the class-parent's namespace.  
+	 * Preference is given to it residing within the class-parent's namespace.
+	 * 
+	 * If a match is not found an empty placeholder structure will be instantiated
+	 * and returned.  A newly instantiated structure will not be added to the data type manager
+	 * and may refer to a non-existing category path which corresponds to the class-parent's 
+	 * namespace.
+	 * 
 	 * @param classNamespace class namespace
 	 * @param dataTypeManager data type manager which should be searched and whose
 	 * data organization should be used.
@@ -789,9 +798,19 @@ public class VariableUtilities {
 
 	/**
 	 * Find the structure data type which corresponds to the specified function's class namespace
-	 * within the function's program.  One will be instantiated if not found.
+	 * within the function's program.
+	 * 
 	 * The preferred structure will utilize a namespace-based category path, however,
 	 * the match criteria can be fuzzy and relies primarily on the class name.
+	 * A properly named class structure must reside within a category whose trailing 
+	 * path either matches the class namespace or the class-parent's namespace.  
+	 * Preference is given to it residing within the class-parent's namespace.
+	 * 
+	 * If a match is not found an empty placeholder structure will be instantiated
+	 * and returned.  A newly instantiated structure will not be added to the data type manager
+	 * and may refer to a non-existing category path which corresponds to the class-parent's 
+	 * namespace.
+	 * 
 	 * @param function function's whose class namespace is the basis for the structure
 	 * @return new or existing structure whose name matches the function's class namespace or
 	 * null if function not contained within a class namespace.
@@ -807,9 +826,14 @@ public class VariableUtilities {
 
 	/**
 	 * Find the structure data type which corresponds to the specified class namespace
-	 * within the specified data type manager. .
+	 * within the specified data type manager.
+	 * 
 	 * The preferred structure will utilize a namespace-based category path, however,
 	 * the match criteria can be fuzzy and relies primarily on the class name.
+	 * A properly named class structure must reside within a category whose trailing 
+	 * path either matches the class namespace or the class-parent's namespace.  
+	 * Preference is given to it residing within the class-parent's namespace.
+	 * 
 	 * @param classNamespace class namespace
 	 * @param dataTypeManager data type manager which should be searched.
 	 * @return existing structure whose name matches the specified class namespace
@@ -817,15 +841,19 @@ public class VariableUtilities {
 	 */
 	public static Structure findExistingClassStruct(GhidraClass classNamespace,
 			DataTypeManager dataTypeManager) {
-		return (Structure) DataTypeUtilities.findDataType(dataTypeManager,
-			classNamespace.getParentNamespace(), classNamespace.getName(), Structure.class);
+		return DataTypeUtilities.findExistingClassStruct(dataTypeManager, classNamespace);
 	}
 
 	/**
 	 * Find the structure data type which corresponds to the specified function's class namespace
 	 * within the function's program.
+	 * 
 	 * The preferred structure will utilize a namespace-based category path, however,
 	 * the match criteria can be fuzzy and relies primarily on the class name.
+	 * A properly named class structure must reside within a category whose trailing 
+	 * path either matches the class namespace or the class-parent's namespace.  
+	 * Preference is given to it residing within the class-parent's namespace.
+	 * 
 	 * @param func the function.
 	 * @return existing structure whose name matches the specified function's class namespace
 	 * or null if not found.
