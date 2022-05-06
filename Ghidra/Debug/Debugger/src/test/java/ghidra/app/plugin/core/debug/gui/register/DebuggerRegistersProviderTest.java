@@ -19,6 +19,7 @@ import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -157,6 +158,11 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 	protected void setRowText(RegisterRow row, String text) {
 		assertTrue(row.isValueEditable());
 		row.setValue(new BigInteger(text, 16));
+	}
+
+	protected void setRowRepr(RegisterRow row, String repr) {
+		assertTrue(row.isRepresentationEditable());
+		row.setRepresentation(repr);
 	}
 
 	protected void assertRowValueEmpty(RegisterRow row) {
@@ -390,6 +396,48 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			assertEquals(BigInteger.valueOf(0x1234),
 				regVals.getValue(viewSnap, r0).getUnsignedValue());
 			assertEquals(BigInteger.valueOf(0x1234), row.getValue());
+		});
+	}
+
+	long encodeDouble(double value) {
+		ByteBuffer buf = ByteBuffer.allocate(Double.BYTES);
+		buf.putDouble(0, value);
+		return buf.getLong(0);
+	}
+
+	@Test
+	public void testModifyRepresentationEmu() throws Exception {
+		traceManager.openTrace(tb.trace);
+
+		TraceThread thread = addThread();
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
+
+		assertTrue(registersProvider.actionEnableEdits.isEnabled());
+		performAction(registersProvider.actionEnableEdits);
+
+		addRegisterValues(thread);
+		waitForDomainObject(tb.trace);
+
+		TraceMemoryRegisterSpace regVals =
+			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+
+		RegisterRow row = findRegisterRow(r0);
+		assertFalse(row.isRepresentationEditable());
+
+		row.setDataType(DoubleDataType.dataType);
+		waitForDomainObject(tb.trace);
+
+		setRowRepr(row, "1234");
+		waitForSwing();
+		waitForPass(() -> {
+			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			assertEquals(BigInteger.valueOf(encodeDouble(1234)),
+				regVals.getValue(viewSnap, r0).getUnsignedValue());
+			assertEquals(BigInteger.valueOf(encodeDouble(1234)), row.getValue());
 		});
 	}
 

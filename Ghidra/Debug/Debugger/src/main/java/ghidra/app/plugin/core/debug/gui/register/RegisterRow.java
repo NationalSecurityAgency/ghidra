@@ -91,7 +91,13 @@ public class RegisterRow {
 		return provider.getRegisterDataType(register);
 	}
 
-	// TODO: setValueRepresentation. Requires support from data types.
+	public void setRepresentation(String representation) {
+		provider.writeRegisterValueRepresentation(register, representation);
+	}
+
+	public boolean isRepresentationEditable() {
+		return provider.canWriteRegisterRepresentation(register);
+	}
 
 	public String getRepresentation() {
 		return provider.getRegisterValueRepresentation(register);
