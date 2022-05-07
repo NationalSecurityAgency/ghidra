@@ -86,9 +86,11 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	protected enum WatchTableColumns implements EnumeratedTableColumn<WatchTableColumns, WatchRow> {
 		EXPRESSION("Expression", String.class, WatchRow::getExpression, WatchRow::setExpression),
 		ADDRESS("Address", Address.class, WatchRow::getAddress),
-		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString, WatchRow::isValueEditable),
+		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString, //
+				WatchRow::isRawValueEditable),
 		TYPE("Type", DataType.class, WatchRow::getDataType, WatchRow::setDataType),
-		REPR("Repr", String.class, WatchRow::getValueString),
+		REPR("Repr", String.class, WatchRow::getValueString, WatchRow::setValueString, //
+				WatchRow::isValueEditable),
 		ERROR("Error", String.class, WatchRow::getErrorMessage);
 
 		private final String header;
