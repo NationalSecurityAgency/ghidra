@@ -414,6 +414,7 @@ public interface Memory extends AddressSetView {
 	/**
 	  * Finds a sequence of contiguous bytes that match the
 	  * given byte array at all bit positions where the mask contains an "on" bit.
+	  * Search is performed over loaded memory only.
 	  *
 	  * @param addr The beginning address in memory to search.
 	  * @param bytes the array of bytes to search for.

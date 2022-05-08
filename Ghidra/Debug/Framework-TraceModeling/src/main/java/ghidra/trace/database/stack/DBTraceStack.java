@@ -212,8 +212,8 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 			}
 			doUpdateFrameKeys();
 		}
-		manager.trace
-				.setChanged(new TraceChangeRecord<>(TraceStackChangeType.CHANGED, null, this));
+		manager.trace.setChanged(
+			new TraceChangeRecord<>(TraceStackChangeType.CHANGED, null, this, 0L, getSnap()));
 	}
 
 	@Override

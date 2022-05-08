@@ -38,7 +38,6 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.services.ActionSource;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.async.AsyncTestUtils;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.*;
@@ -53,8 +52,7 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.util.database.UndoableTransaction;
 
 @Category(NightlyCategory.class)
-public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements AsyncTestUtils {
+public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	DebuggerCopyActionsPlugin copyActionsPlugin;
 	DebuggerListingPlugin listingPlugin;

@@ -211,7 +211,7 @@ public abstract class AbstractModelHost implements ModelHost, DebuggerModelTestU
 		PathPredicates matcher = model.getRootSchema()
 				.getSuccessorSchema(seedPath)
 				.searchFor(cls, seedPath, true)
-				.applyIndices(index);
+				.applyKeys(index);
 		if (matcher.isEmpty()) {
 			return null;
 		}

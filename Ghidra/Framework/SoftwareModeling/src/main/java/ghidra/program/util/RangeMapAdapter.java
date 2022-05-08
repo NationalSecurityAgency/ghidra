@@ -109,4 +109,9 @@ public interface RangeMapAdapter {
 	 */
 	public void checkWritableState();
 
+	/**
+	 * Notification that something has changed that may affect internal caching
+	 */
+	public void invalidate();
+
 }

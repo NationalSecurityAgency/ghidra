@@ -80,7 +80,7 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 						"clone", global, SourceType.USER_DEFINED);
 			TraceSymbol childLabel = symbolManager
 					.labels()
-					.create(snap, null, tb.addr(0x00400034),
+					.create(snap, null, tb.addr(0x00400032),
 						"child", global, SourceType.USER_DEFINED);
 			@SuppressWarnings("unused")
 			TraceSymbol exitLabel = symbolManager

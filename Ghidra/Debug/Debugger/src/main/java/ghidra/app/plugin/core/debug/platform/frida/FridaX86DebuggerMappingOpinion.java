@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.debug.platform.frida;
 import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.dbg.target.TargetEnvironment;
-import ghidra.dbg.target.TargetProcess;
+import ghidra.dbg.target.*;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.util.Msg;
@@ -71,16 +70,22 @@ public class FridaX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetObject target,
 			boolean includeOverrides) {
+		if (!(target instanceof TargetProcess)) {
+			return Set.of();
+		}
+		TargetProcess process = (TargetProcess) target;
 		if (!env.getDebugger().toLowerCase().contains("frida")) {
 			return Set.of();
 		}
 		String arch = env.getArchitecture();
-		boolean is32Bit = arch.contains("ia32") ||arch.contains("x86-32") || arch.contains("i386") ||
-			arch.contains("x86_32");
-		boolean is64Bit = arch.contains("x64") ||arch.contains("x86-64") || arch.contains("x64-32") ||
-			arch.contains("x86_64") || arch.contains("x64_32") || arch.contains("i686");
+		boolean is32Bit =
+			arch.contains("ia32") || arch.contains("x86-32") || arch.contains("i386") ||
+				arch.contains("x86_32");
+		boolean is64Bit =
+			arch.contains("x64") || arch.contains("x86-64") || arch.contains("x64-32") ||
+				arch.contains("x86_64") || arch.contains("x64_32") || arch.contains("i686");
 		String os = env.getOperatingSystem();
 		if (os.contains("darwin")) {
 			if (is64Bit) {

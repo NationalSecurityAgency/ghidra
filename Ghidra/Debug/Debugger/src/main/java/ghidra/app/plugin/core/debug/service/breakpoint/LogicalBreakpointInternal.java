@@ -244,16 +244,18 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			return TraceBreakpointKindSet.encode(kinds) + ";" + Long.toUnsignedString(length);
 		}
 
-		public void enableWithComment(String comment) {
+		public void toggleWithComment(boolean enabled, String comment) {
+			String addType =
+				enabled ? BREAKPOINT_ENABLED_BOOKMARK_TYPE : BREAKPOINT_DISABLED_BOOKMARK_TYPE;
+			String delType =
+				enabled ? BREAKPOINT_DISABLED_BOOKMARK_TYPE : BREAKPOINT_ENABLED_BOOKMARK_TYPE;
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(program, "Enable breakpoint", false)) {
+				UndoableTransaction.start(program, "Enable breakpoint", true)) {
 				BookmarkManager manager = program.getBookmarkManager();
 				String catStr = computeCategory();
-				manager.setBookmark(address, BREAKPOINT_ENABLED_BOOKMARK_TYPE, catStr,
-					comment);
-				manager.removeBookmarks(new AddressSet(address), BREAKPOINT_DISABLED_BOOKMARK_TYPE,
-					catStr, TaskMonitor.DUMMY);
-				tid.commit();
+				manager.setBookmark(address, addType, catStr, comment);
+				manager.removeBookmarks(new AddressSet(address), delType, catStr,
+					TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
 				throw new AssertionError(e);
@@ -264,26 +266,14 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			if (isEnabled()) {
 				return;
 			}
-			enableWithComment(getComment());
+			toggleWithComment(true, getComment());
 		}
 
 		public void disable() {
 			if (isDisabled()) {
 				return;
 			}
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(program, "Disable breakpoint", false)) {
-				BookmarkManager manager = program.getBookmarkManager();
-				String catStr = computeCategory();
-				manager.setBookmark(address, BREAKPOINT_DISABLED_BOOKMARK_TYPE, catStr,
-					getComment());
-				manager.removeBookmarks(new AddressSet(address), BREAKPOINT_ENABLED_BOOKMARK_TYPE,
-					catStr, TaskMonitor.DUMMY);
-				tid.commit();
-			}
-			catch (CancelledException e) {
-				throw new AssertionError(e);
-			}
+			toggleWithComment(false, getComment());
 		}
 	}
 

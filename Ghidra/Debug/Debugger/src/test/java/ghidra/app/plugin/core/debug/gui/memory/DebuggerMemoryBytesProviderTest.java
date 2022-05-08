@@ -746,7 +746,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		byte[] data = incBlock();
 		byte[] zero = new byte[data.length];
 		ByteBuffer buf = ByteBuffer.allocate(data.length);
-		assertFalse(memBytesProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 		runSwing(() -> memBytesProvider.setAutoReadMemorySpec(readNone));
 
 		// To verify enabled requires live target
@@ -761,12 +761,12 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 		// Still
-		assertFalse(memBytesProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		memBytesProvider.setSelection(sel);
 		waitForSwing();
 		// Still
-		assertFalse(memBytesProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// Now, simulate the sequence that typically enables the action
 		createTestModel();
@@ -783,12 +783,12 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 
 		// NOTE: recordTargetContainerAndOpenTrace has already activated the trace
 		// Action is still disabled, because it requires a selection
-		assertFalse(memBytesProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		memBytesProvider.setSelection(sel);
 		waitForSwing();
 		// Now, it should be enabled
-		assertTrue(memBytesProvider.actionReadSelectedMemory.isEnabled());
+		assertTrue(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// First check nothing recorded yet
 		buf.clear();
@@ -797,7 +797,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		assertArrayEquals(zero, buf.array());
 
 		// Verify that the action performs the expected task
-		performAction(memBytesProvider.actionReadSelectedMemory);
+		performAction(memBytesProvider.actionRefreshSelectedMemory);
 		waitForBusyTool(tool);
 		waitForDomainObject(trace);
 
@@ -812,28 +812,28 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 
 		// Verify that setting the memory inaccessible disables the action
 		mb.testProcess1.memory.setAccessible(false);
-		waitForPass(() -> assertFalse(memBytesProvider.actionReadSelectedMemory.isEnabled()));
+		waitForPass(() -> assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled()));
 
 		// Verify that setting it accessible re-enables it (assuming we still have selection)
 		mb.testProcess1.memory.setAccessible(true);
-		waitForPass(() -> assertTrue(memBytesProvider.actionReadSelectedMemory.isEnabled()));
+		waitForPass(() -> assertTrue(memBytesProvider.actionRefreshSelectedMemory.isEnabled()));
 
 		// Verify that moving into the past disables the action
 		TraceSnapshot forced = recorder.forceSnapshot();
 		waitForSwing(); // UI Wants to sync with new snap. Wait....
 		traceManager.activateSnap(forced.getKey() - 1);
 		waitForSwing();
-		assertFalse(memBytesProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// Verify that advancing to the present enables the action (assuming a selection)
 		traceManager.activateSnap(forced.getKey());
 		waitForSwing();
-		assertTrue(memBytesProvider.actionReadSelectedMemory.isEnabled());
+		assertTrue(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// Verify that stopping the recording disables the action
 		recorder.stopRecording();
 		waitForSwing();
-		assertFalse(memBytesProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// TODO: When resume recording is implemented, verify action is enabled with selection
 	}
@@ -969,8 +969,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			thread = tb.getOrAddThread("Thread 1", 0);
 			DBTraceStackManager sm = tb.trace.getStackManager();
 			TraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00401234));
-			stack.getFrame(1, true).setProgramCounter(tb.addr(0x00404321));
+			stack.getFrame(0, true).setProgramCounter(Range.all(), tb.addr(0x00401234));
+			stack.getFrame(1, true).setProgramCounter(Range.all(), tb.addr(0x00404321));
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activateThread(thread);
@@ -1061,7 +1061,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
 			TraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00401234));
+			stack.getFrame(0, true).setProgramCounter(Range.all(), tb.addr(0x00401234));
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activateThread(thread);
@@ -1071,7 +1071,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00404321));
+			stack.getFrame(0, true).setProgramCounter(Range.all(), tb.addr(0x00404321));
 		}
 		waitForDomainObject(tb.trace);
 
@@ -1079,7 +1079,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testEditLiveBytesWritesTarget() throws Exception {
+	public void testEditLiveBytesWritesTarget() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
@@ -1097,12 +1097,12 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		performAction(actionEdit);
 		triggerText(memBytesProvider.getByteViewerPanel().getCurrentComponent(), "42");
 		performAction(actionEdit);
+		waitForSwing();
+		waitRecorder(recorder);
 
 		byte[] data = new byte[4];
-		waitForPass(() -> {
-			mb.testProcess1.memory.getMemory(mb.addr(0x55550800), data);
-			assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
-		});
+		mb.testProcess1.memory.getMemory(mb.addr(0x55550800), data);
+		assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
 	}
 
 	@Test

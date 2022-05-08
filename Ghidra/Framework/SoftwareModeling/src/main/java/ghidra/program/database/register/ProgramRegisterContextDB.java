@@ -175,6 +175,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 	@Override
 	public void invalidateCache(boolean all) throws IOException {
 		this.invalidateReadCache();
+		invalidateRegisterStores();
 	}
 
 	@Override
@@ -525,4 +526,12 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		}
 	}
 
+	private void invalidateRegisterStores() {
+		for (RegisterValueStore store : registerValueMap.values()) {
+			store.invalidate();
+		}
+		for (RegisterValueStore store : defaultRegisterValueMap.values()) {
+			store.invalidate();
+		}
+	}
 }

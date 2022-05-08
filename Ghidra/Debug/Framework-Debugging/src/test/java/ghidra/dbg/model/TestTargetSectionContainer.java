@@ -17,10 +17,12 @@ package ghidra.dbg.model;
 
 import java.util.List;
 
+import ghidra.dbg.target.TargetSectionContainer;
 import ghidra.program.model.address.AddressRange;
 
 public class TestTargetSectionContainer
-		extends DefaultTestTargetObject<TestTargetSection, TestTargetModule> {
+		extends DefaultTestTargetObject<TestTargetSection, TestTargetModule>
+		implements TargetSectionContainer {
 
 	public TestTargetSectionContainer(TestTargetModule parent) {
 		super(parent, "Sections", "SectionContainer");

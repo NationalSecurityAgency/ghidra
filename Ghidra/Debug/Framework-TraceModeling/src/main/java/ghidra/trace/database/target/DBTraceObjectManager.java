@@ -43,7 +43,6 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.database.target.DBTraceObjectValue.PrimaryTriple;
 import ghidra.trace.database.thread.DBTraceObjectThread;
-import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
@@ -61,6 +60,7 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
+import ghidra.util.Msg;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
 import ghidra.util.database.DBCachedObjectStoreFactory.PrimitiveCodec;
@@ -235,7 +235,12 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	}
 
 	protected Object validatePrimitive(Object child) {
-		PrimitiveCodec.getCodec(child.getClass());
+		try {
+			PrimitiveCodec.getCodec(child.getClass());
+		}
+		catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("Cannot encode " + child, e);
+		}
 		return child;
 	}
 
@@ -300,7 +305,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 			setSchema(schema);
 			DBTraceObject root = doCreateObject(TraceObjectKeyPath.of(), Range.all());
 			assert root.getKey() == 0;
-			InternalTraceObjectValue val = doCreateValue(Range.all(), null, null, root);
+			InternalTraceObjectValue val = doCreateValue(Range.all(), null, "", root);
 			assert val.getKey() == 0;
 			return val;
 		}
@@ -378,6 +383,14 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		Class<? extends TargetObject> targetIf = TraceObjectInterfaceUtils.toTargetIf(ifClass);
 		PathMatcher matcher = rootSchema.searchFor(targetIf, true);
 		return getValuePaths(span, matcher)
+				.filter(p -> {
+					TraceObject object = p.getLastChild(getRootObject());
+					if (object == null) {
+						Msg.error(this, "NULL VALUE! " + p.getLastEntry());
+						return false;
+					}
+					return true;
+				})
 				.map(p -> p.getLastChild(getRootObject()).queryInterface(ifClass));
 	}
 
@@ -561,15 +574,9 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		try (LockHold hold = trace.lockWrite()) {
 			TraceObjectMemoryRegion region = doAddWithInterface(path, lifespan,
 				TraceObjectMemoryRegion.class, ConflictResolution.TRUNCATE);
-			/**
-			 * TODO: Test that when the ADDED events hits, that it actually appears in queries. I
-			 * suspect this will work since the events and/or event processors should be delayed
-			 * until the write lock is released. Certainly, a query would require the read lock.
-			 */
 			region.setName(path);
 			region.setRange(range);
 			region.setFlags(flags);
-			trace.updateViewsAddRegionBlock(region);
 			return region;
 		}
 	}

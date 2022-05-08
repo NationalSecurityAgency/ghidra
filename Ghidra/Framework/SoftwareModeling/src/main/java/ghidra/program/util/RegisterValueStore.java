@@ -15,13 +15,13 @@
  */
 package ghidra.program.util;
 
+import java.util.*;
+
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.*;
 
 /**
  * This is a generalized class for storing register values over ranges.  The values include mask bits
@@ -322,6 +322,13 @@ public class RegisterValueStore {
 		flushWriteCache();
 
 		return rangeMap.getValueRangeContaining(addr);
+	}
+
+	/**
+	 * Notifies that something changed, may need to invalidate any caches
+	 */
+	public void invalidate() {
+		rangeMap.invalidate();
 	}
 
 }

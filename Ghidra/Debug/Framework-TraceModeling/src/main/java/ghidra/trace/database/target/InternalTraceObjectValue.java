@@ -71,9 +71,12 @@ interface InternalTraceObjectValue extends TraceObjectValue {
 				}
 			}
 			else {
-				entry.doTruncateOrDelete(range);
+				InternalTraceObjectValue created = entry.doTruncateOrDelete(range);
 				if (!entry.isDeleted()) {
 					kept.add(entry);
+				}
+				if (created != null) {
+					kept.add(created);
 				}
 			}
 		}

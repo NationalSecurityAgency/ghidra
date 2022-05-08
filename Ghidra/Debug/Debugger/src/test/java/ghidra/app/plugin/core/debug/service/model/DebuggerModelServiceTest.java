@@ -45,7 +45,6 @@ import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.model.TestDebuggerModelFactory;
 import ghidra.dbg.model.TestDebuggerObjectModel;
 import ghidra.dbg.target.TargetEnvironment;
-import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Swing;
@@ -61,8 +60,7 @@ import mockit.VerificationsInOrder;
  * TODO: Cover cases where multiple recorders are present
  */
 @Category(NightlyCategory.class)
-public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements DebuggerModelTestUtils {
+public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 

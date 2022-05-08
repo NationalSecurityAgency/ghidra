@@ -38,7 +38,6 @@ import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.State;
-import ghidra.async.AsyncTestUtils;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer;
@@ -57,8 +56,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements AsyncTestUtils {
+public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
@@ -71,6 +69,12 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		breakpointsPlugin = addPlugin(tool, DebuggerBreakpointsPlugin.class);
 		breakpointsProvider = waitForComponentProvider(DebuggerBreakpointsProvider.class);
 		mappingService = tool.getService(DebuggerStaticMappingService.class);
+	}
+
+	protected void waitAndFlush(TraceRecorder recorder) throws Throwable {
+		waitOn(recorder.getTarget().getModel().flushEvents());
+		waitOn(recorder.flushTransactions());
+		waitForDomainObject(recorder.getTrace());
 	}
 
 	protected void addMapping(Trace trace, Program prog) throws Exception {
@@ -206,7 +210,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testEnablementColumnMapped() throws Exception {
+	public void testEnablementColumnMapped() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
@@ -241,8 +245,8 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		waitForPass(() -> assertEquals(State.INCONSISTENT_DISABLED, row.getState()));
 
 		// NOTE: This acts on the corresponding target, not directly on trace
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.disableForTrace(trace));
+		waitAndFlush(recorder);
 
 		waitForPass(() -> assertEquals(State.DISABLED, row.getState()));
 
@@ -252,8 +256,8 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		waitForPass(() -> assertEquals(State.INCONSISTENT_ENABLED, row.getState()));
 
 		// This duplicates the initial case, but without it, I just feel incomplete
-		lb.enableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.enableForTrace(trace));
+		waitAndFlush(recorder);
 
 		waitForPass(() -> assertEquals(State.ENABLED, row.getState()));
 	}

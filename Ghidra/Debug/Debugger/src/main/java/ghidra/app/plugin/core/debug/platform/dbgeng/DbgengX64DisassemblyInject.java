@@ -96,7 +96,7 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 			try {
 				// This is on its own task thread, so whatever.
 				// Just don't hang it indefinitely.
-				recorder.captureProcessMemory(set, TaskMonitor.DUMMY, false)
+				recorder.readMemoryBlocks(set, TaskMonitor.DUMMY, false)
 						.get(1000, TimeUnit.MILLISECONDS);
 			}
 			catch (InterruptedException | ExecutionException | TimeoutException e) {

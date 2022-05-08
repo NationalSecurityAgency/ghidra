@@ -44,7 +44,21 @@ public class PatchStep implements Step {
 	protected String sleigh;
 	protected int hashCode;
 
-	public static String generateSleigh(Language language, Address address, byte[] data,
+	/**
+	 * Generate a single line of Sleigh
+	 * 
+	 * <p>
+	 * Note that when length is greater than 8, this will generate constants which are too large for
+	 * the Java implementation of Sleigh. Use {@link #generateSleigh(Language, Address, byte[])}
+	 * instead to write the variable in chunks.
+	 * 
+	 * @param language the target language
+	 * @param address the (start) address of the variable
+	 * @param data the bytes to write to the variable
+	 * @param length the length of the variable
+	 * @return the Sleigh code
+	 */
+	public static String generateSleighLine(Language language, Address address, byte[] data,
 			int length) {
 		BigInteger value = Utils.bytesToBigInteger(data, length, language.isBigEndian(), false);
 		if (address.isMemoryAddress()) {
@@ -67,8 +81,34 @@ public class PatchStep implements Step {
 		return String.format("%s=0x%s", register, value.toString(16));
 	}
 
-	public static String generateSleigh(Language language, Address address, byte[] data) {
-		return generateSleigh(language, address, data, data.length);
+	/**
+	 * Generate a single line of Sleigh
+	 * 
+	 * @see #generateSleighLine(Language, Address, byte[], int)
+	 */
+	public static String generateSleighLine(Language language, Address address, byte[] data) {
+		return generateSleighLine(language, address, data, data.length);
+	}
+
+	/**
+	 * Generate multiple lines of Sleigh, all to set a single variable
+	 * 
+	 * @param language the target language
+	 * @param address the (start) address of the variable
+	 * @param data the bytes to write to the variable
+	 * @return the lines of Sleigh code
+	 */
+	public static List<String> generateSleigh(Language language, Address address, byte[] data) {
+		List<String> result = new ArrayList<>();
+		generateSleigh(result, language, address, data);
+		return result;
+	}
+
+	protected static void generateSleigh(List<String> result, Language language, Address address,
+			byte[] data) {
+		SemisparseByteArray array = new SemisparseByteArray(); // TODO: Seems heavy-handed
+		array.putData(address.getOffset(), data);
+		generateSleigh(result, language, address.getAddressSpace(), array);
 	}
 
 	protected static List<String> generateSleigh(Language language,
@@ -102,7 +142,7 @@ public class PatchStep implements Step {
 				Address min = chunk.getMinAddress();
 				int length = (int) chunk.getLength();
 				array.getData(min.getOffset(), data, 0, length);
-				result.add(generateSleigh(language, min, data, length));
+				result.add(generateSleighLine(language, min, data, length));
 			}
 		}
 	}

@@ -33,6 +33,7 @@ import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeEncodeException;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
@@ -143,6 +144,8 @@ public class WatchRow {
 		return dataType.getRepresentation(buffer, SettingsImpl.NO_SETTINGS, value.length);
 	}
 
+	// TODO: DataType settings
+
 	protected Object parseAsDataTypeObj() {
 		if (dataType == null || value == null) {
 			return null;
@@ -245,7 +248,7 @@ public class WatchRow {
 		Language newLanguage = trace.getBaseLanguage();
 		if (language != newLanguage) {
 			if (!(newLanguage instanceof SleighLanguage)) {
-				error = new RuntimeException("Not a sleigh-based langauge");
+				error = new RuntimeException("Not a sleigh-based language");
 				return;
 			}
 			language = (SleighLanguage) newLanguage;
@@ -373,7 +376,7 @@ public class WatchRow {
 		return valueObj;
 	}
 
-	public boolean isValueEditable() {
+	public boolean isRawValueEditable() {
 		if (!provider.isEditsEnabled()) {
 			return false;
 		}
@@ -423,8 +426,13 @@ public class WatchRow {
 		if (address == null) {
 			throw new IllegalStateException("Cannot write to watch variable without an address");
 		}
-		if (bytes.length != value.length) {
-			throw new IllegalArgumentException("Byte array values must match length of variable");
+		if (bytes.length > value.length) {
+			throw new IllegalArgumentException("Byte arrays cannot exceed length of variable");
+		}
+		if (bytes.length < value.length) {
+			byte[] fillOld = Arrays.copyOf(value, value.length);
+			System.arraycopy(bytes, 0, fillOld, 0, bytes.length);
+			bytes = fillOld;
 		}
 		DebuggerStateEditingService editingService = provider.editingService;
 		if (editingService == null) {
@@ -436,6 +444,33 @@ public class WatchRow {
 				"Could not modify watch value (on target)", ex);
 			return null;
 		});
+	}
+
+	public void setValueString(String valueString) {
+		if (dataType == null || value == null) {
+			// isValueEditable should have been false
+			provider.getTool().setStatusInfo("Watch no value or no data type", true);
+			return;
+		}
+		try {
+			byte[] encoded = dataType.encodeRepresentation(valueString,
+				new ByteMemBufferImpl(address, value, language.isBigEndian()),
+				SettingsImpl.NO_SETTINGS, value.length);
+			setRawValueBytes(encoded);
+		}
+		catch (DataTypeEncodeException e) {
+			provider.getTool().setStatusInfo(e.getMessage(), true);
+		}
+	}
+
+	public boolean isValueEditable() {
+		if (!isRawValueEditable()) {
+			return false;
+		}
+		if (dataType == null) {
+			return false;
+		}
+		return dataType.isEncodable();
 	}
 
 	public int getValueLength() {

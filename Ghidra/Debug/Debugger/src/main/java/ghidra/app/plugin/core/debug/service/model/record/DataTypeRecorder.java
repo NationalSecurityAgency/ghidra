@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.service.model;
+package ghidra.app.plugin.core.debug.service.model.record;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import ghidra.app.plugin.core.debug.service.model.RecorderPermanentTransaction;
+import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.*;
@@ -27,13 +29,13 @@ import ghidra.program.model.data.*;
 import ghidra.trace.model.Trace;
 import ghidra.util.task.TaskMonitor;
 
-public class DefaultDataTypeRecorder {
+public class DataTypeRecorder {
 
-	//private DefaultTraceRecorder recorder;
-	private Trace trace;
+	//private TraceRecorder recorder;
+	private final Trace trace;
 	private final TargetDataTypeConverter typeConverter;
 
-	public DefaultDataTypeRecorder(DefaultTraceRecorder recorder) {
+	public DataTypeRecorder(TraceRecorder recorder) {
 		//this.recorder = recorder;
 		this.trace = recorder.getTrace();
 		this.typeConverter = new TargetDataTypeConverter(trace.getDataTypeManager());

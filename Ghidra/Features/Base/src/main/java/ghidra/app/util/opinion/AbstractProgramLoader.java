@@ -15,10 +15,11 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 import ghidra.app.plugin.processors.generic.MemoryBlockDefinition;
 import ghidra.app.util.Option;
@@ -29,6 +30,7 @@ import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
+import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
@@ -284,14 +286,7 @@ public abstract class AbstractProgramLoader implements Loader {
 		prog.setEventsEnabled(false);
 		int id = prog.startTransaction("Set program properties");
 		try {
-			prog.setExecutablePath(provider.getAbsolutePath());
-			if (executableFormatName != null) {
-				prog.setExecutableFormat(executableFormatName);
-			}
-			String md5 = computeBinaryMD5(provider);
-			prog.setExecutableMD5(md5);
-			String sha256 = computeBinarySHA256(provider);
-			prog.setExecutableSHA256(sha256);
+			setProgramProperties(prog, provider, executableFormatName);
 
 			if (shouldSetImageBase(prog, imageBase)) {
 				try {
@@ -309,6 +304,37 @@ public abstract class AbstractProgramLoader implements Loader {
 			prog.endTransaction(id, true);
 		}
 		return prog;
+	}
+
+	/**
+	 * Sets a program's Executable Path, Executable Format, MD5, SHA256, and FSRL properties.
+	 * <p>
+	 *  
+	 * @param prog {@link Program} (with active transaction)
+	 * @param provider {@link ByteProvider} that the program was created from
+	 * @param executableFormatName executable format string
+	 * @throws IOException if error reading from ByteProvider
+	 */
+	public static void setProgramProperties(Program prog, ByteProvider provider,
+			String executableFormatName) throws IOException {
+		prog.setExecutablePath(provider.getAbsolutePath());
+		if (executableFormatName != null) {
+			prog.setExecutableFormat(executableFormatName);
+		}
+		FSRL fsrl = provider.getFSRL();
+		String md5 = (fsrl != null && fsrl.getMD5() != null)
+				? fsrl.getMD5()
+				: computeBinaryMD5(provider);
+		if (fsrl != null) {
+			if (fsrl.getMD5() == null) {
+				fsrl = fsrl.withMD5(md5);
+			}
+			prog.getOptions(Program.PROGRAM_INFO)
+					.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
+		}
+		prog.setExecutableMD5(md5);
+		String sha256 = computeBinarySHA256(provider);
+		prog.setExecutableSHA256(sha256);
 	}
 
 	private String getProgramNameFromSourceData(ByteProvider provider, String domainFileName) {
@@ -529,13 +555,13 @@ public abstract class AbstractProgramLoader implements Loader {
 		}
 	}
 
-	private String computeBinaryMD5(ByteProvider provider) throws IOException {
+	private static String computeBinaryMD5(ByteProvider provider) throws IOException {
 		try (InputStream in = provider.getInputStream(0)) {
 			return MD5Utilities.getMD5Hash(in);
 		}
 	}
 
-	private String computeBinarySHA256(ByteProvider provider) throws IOException {
+	private static String computeBinarySHA256(ByteProvider provider) throws IOException {
 		try (InputStream in = provider.getInputStream(0)) {
 			return HashUtilities.getHash(HashUtilities.SHA256_ALGORITHM, in);
 		}

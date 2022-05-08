@@ -200,7 +200,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testBreakpointMarked() throws Exception {
+	public void testBreakpointMarked() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		traceManager.activateTrace(trace);
@@ -229,8 +229,8 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.INCONSISTENT_DISABLED),
 			getBackgroundColor(program, sAddr)));
 
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.disableForTrace(trace));
+		waitRecorder(recorder);
 
 		waitForPass(() -> assertEquals(State.DISABLED, lb.computeStateForTrace(trace)));
 		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.DISABLED),
@@ -293,14 +293,15 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testProgramBreakpointPopupMenus() throws Exception {
+	public void testProgramBreakpointPopupMenus() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
+		waitForPass(
+			() -> assertEquals(State.ENABLED, lb.computeStateForProgram(program)));
 
 		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
 			MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractDisableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
@@ -308,22 +309,24 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		pressEscape();
 		lb.disableForProgram();
 		waitForDomainObject(program);
+		waitForPass(
+			() -> assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForProgram(program)));
 
 		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
 			MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
 				AbstractClearBreakpointAction.NAME));
 
 		pressEscape();
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.disableForTrace(trace));
+		waitRecorder(recorder);
+		waitForPass(
+			() -> assertEquals(State.DISABLED, lb.computeStateForProgram(program)));
 
 		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
 			MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
@@ -331,10 +334,11 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		pressEscape();
 		lb.enableForProgram();
 		waitForDomainObject(program);
+		waitForPass(
+			() -> assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForProgram(program)));
 
 		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
 			MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
@@ -344,15 +348,16 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testTraceBreakpointPopupMenus() throws Exception {
+	public void testTraceBreakpointPopupMenus() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 		traceManager.activateTrace(trace);
 		waitForSwing();
+		waitForPass(
+			() -> assertEquals(State.ENABLED, lb.computeStateForTrace(trace)));
 
 		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractDisableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
@@ -360,20 +365,22 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		pressEscape();
 		lb.disableForProgram(); // Adds "enable", which will only affect bookmark
 		waitForDomainObject(program);
+		waitForPass(
+			() -> assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForTrace(trace)));
 
 		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
 				AbstractClearBreakpointAction.NAME));
 
 		pressEscape();
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.disableForTrace(trace));
+		waitRecorder(recorder);
+		waitForPass(
+			() -> assertEquals(State.DISABLED, lb.computeStateForTrace(trace)));
 
 		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
@@ -381,9 +388,10 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		pressEscape();
 		lb.enableForProgram(); // This time, adds "disable", which will only affect bookmark
 		waitForDomainObject(program);
+		waitForPass(
+			() -> assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForTrace(trace)));
 
 		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
@@ -423,7 +431,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 			staticCtx(addr(program, 0x00400123)), false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
@@ -450,7 +458,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 			staticCtx(addr(program, 0x00400123)), false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
@@ -526,7 +534,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
 		dialog.setName("Test name");
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(
@@ -545,7 +553,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		performAction(action, dynamicCtx(trace, addr(trace, 0x55550321)), false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique

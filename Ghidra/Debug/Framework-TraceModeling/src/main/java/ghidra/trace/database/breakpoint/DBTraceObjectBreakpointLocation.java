@@ -268,7 +268,9 @@ public class DBTraceObjectBreakpointLocation
 	@Override
 	public TraceObjectBreakpointSpec getSpecification() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return object.queryAncestorsInterface(getLifespan(), TraceObjectBreakpointSpec.class)
+			return object
+					.queryCanonicalAncestorsInterface(getLifespan(),
+						TraceObjectBreakpointSpec.class)
 					.findAny()
 					.orElseThrow();
 		}

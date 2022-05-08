@@ -57,9 +57,22 @@ public interface Trace extends DataTypeManagerDomainObject {
 	public static final class TraceObjectChangeType<T, U>
 			extends DefaultTraceChangeType<T, U> {
 		/**
-		 * An object was created, but not necessarily inserted.
+		 * An object was created, but not yet inserted.
+		 * 
+		 * <p>
+		 * Between the {@link #CREATED} and {@link #INSERTED} events, an object is considered
+		 * "incomplete," because it is likely missing its attributes. Thus, a trace client must take
+		 * care to ensure all attributes, especially fixed attributes, are added to the object
+		 * before it is inserted at its canonical path. Listeners may use
+		 * {@link TraceObject#getCanonicalParent(long)} to check if an object is complete for a
+		 * given snapshot.
 		 */
 		public static final TraceObjectChangeType<TraceObject, Void> CREATED =
+			new TraceObjectChangeType<>();
+		/**
+		 * An object was inserted at its canonical path.
+		 */
+		public static final TraceObjectChangeType<TraceObject, TraceObjectValue> INSERTED =
 			new TraceObjectChangeType<>();
 		/**
 		 * An object's lifespan changed.
@@ -75,9 +88,9 @@ public interface Trace extends DataTypeManagerDomainObject {
 		 * An object's value changed.
 		 * 
 		 * <p>
-		 * If the old value is uniform for the new value's lifespan, that value is passed as the old
-		 * value. Otherwise, {@code null} is passed for the old value. If the value was cleared,
-		 * {@code null} is passed for the new value.
+		 * If the old value was equal for the entirety of the new value's lifespan, that old value
+		 * is passed as the old value. Otherwise, {@code null} is passed for the old value. If the
+		 * value was cleared, {@code null} is passed for the new value.
 		 */
 		public static final TraceObjectChangeType<TraceObjectValue, Object> VALUE_CHANGED =
 			new TraceObjectChangeType<>();
@@ -307,7 +320,12 @@ public interface Trace extends DataTypeManagerDomainObject {
 	public static final class TraceStackChangeType<U>
 			extends DefaultTraceChangeType<TraceStack, U> {
 		public static final TraceStackChangeType<Void> ADDED = new TraceStackChangeType<>();
-		public static final TraceStackChangeType<Void> CHANGED = new TraceStackChangeType<>();
+		/**
+		 * NOTE: The "new value" is the (min) snap where the change occurred. For StackFrame, it's
+		 * Stack.getSnap(), for ObjectStackFrame, the min snap of the value entry. The "old value"
+		 * is always 0.
+		 */
+		public static final TraceStackChangeType<Long> CHANGED = new TraceStackChangeType<>();
 		public static final TraceStackChangeType<Void> DELETED = new TraceStackChangeType<>();
 	}
 

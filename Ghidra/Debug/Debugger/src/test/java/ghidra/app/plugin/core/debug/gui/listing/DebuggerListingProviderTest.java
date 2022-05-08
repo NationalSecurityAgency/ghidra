@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.awt.Color;
@@ -935,7 +935,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		byte[] data = incBlock();
 		byte[] zero = new byte[data.length];
 		ByteBuffer buf = ByteBuffer.allocate(data.length);
-		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled());
 		listingProvider.setAutoReadMemorySpec(readNone);
 
 		// To verify enabled requires live target
@@ -950,12 +950,12 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 		// Still
-		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled());
 
 		listingProvider.setSelection(sel);
 		waitForSwing();
 		// Still
-		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// Now, simulate the sequence that typically enables the action
 		createTestModel();
@@ -972,12 +972,12 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// NOTE: recordTargetContainerAndOpenTrace has already activated the trace
 		// Action is still disabled, because it requires a selection
-		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled());
 
 		listingProvider.setSelection(sel);
 		waitForSwing();
 		// Now, it should be enabled
-		assertTrue(listingProvider.actionReadSelectedMemory.isEnabled());
+		assertTrue(listingProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// First check nothing captured yet
 		buf.clear();
@@ -986,7 +986,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertArrayEquals(zero, buf.array());
 
 		// Verify that the action performs the expected task
-		performAction(listingProvider.actionReadSelectedMemory);
+		performAction(listingProvider.actionRefreshSelectedMemory);
 		waitForBusyTool(tool);
 		waitForDomainObject(trace);
 
@@ -1001,28 +1001,28 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// Verify that setting the memory inaccessible disables the action
 		mb.testProcess1.memory.setAccessible(false);
-		waitForPass(() -> assertFalse(listingProvider.actionReadSelectedMemory.isEnabled()));
+		waitForPass(() -> assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled()));
 
 		// Verify that setting it accessible re-enables it (assuming we still have selection)
 		mb.testProcess1.memory.setAccessible(true);
-		waitForPass(() -> assertTrue(listingProvider.actionReadSelectedMemory.isEnabled()));
+		waitForPass(() -> assertTrue(listingProvider.actionRefreshSelectedMemory.isEnabled()));
 
 		// Verify that moving into the past disables the action
 		TraceSnapshot forced = recorder.forceSnapshot();
 		waitForSwing(); // UI Wants to sync with new snap. Wait....
 		traceManager.activateSnap(forced.getKey() - 1);
 		waitForSwing();
-		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// Verify that advancing to the present enables the action (assuming a selection)
 		traceManager.activateSnap(forced.getKey());
 		waitForSwing();
-		assertTrue(listingProvider.actionReadSelectedMemory.isEnabled());
+		assertTrue(listingProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// Verify that stopping the recording disables the action
 		recorder.stopRecording();
 		waitForSwing();
-		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// TODO: When resume recording is implemented, verify action is enabled with selection
 	}
@@ -1254,8 +1254,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			thread = tb.getOrAddThread("Thread 1", 0);
 			DBTraceStackManager sm = tb.trace.getStackManager();
 			TraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00401234));
-			stack.getFrame(1, true).setProgramCounter(tb.addr(0x00404321));
+			stack.getFrame(0, true).setProgramCounter(Range.all(), tb.addr(0x00401234));
+			stack.getFrame(1, true).setProgramCounter(Range.all(), tb.addr(0x00404321));
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activateThread(thread);
@@ -1346,7 +1346,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
 			TraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00401234));
+			stack.getFrame(0, true).setProgramCounter(Range.all(), tb.addr(0x00401234));
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activateThread(thread);
@@ -1356,7 +1356,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00404321));
+			stack.getFrame(0, true).setProgramCounter(Range.all(), tb.addr(0x00404321));
 		}
 		waitForDomainObject(tb.trace);
 

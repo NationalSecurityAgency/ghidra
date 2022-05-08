@@ -15,6 +15,8 @@
  */
 package ghidra.pcode.exec.trace;
 
+import com.google.common.collect.Range;
+
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.AbstractPcodeEmulator;
 import ghidra.pcode.emu.PcodeThread;
@@ -96,7 +98,8 @@ public class TracePcodeEmulator extends AbstractPcodeEmulator {
 			ls.writeCacheDown(trace, destSnap, traceThread, 0);
 			if (synthesizeStacks) {
 				TraceStack stack = trace.getStackManager().getStack(traceThread, destSnap, true);
-				stack.getFrame(0, true).setProgramCounter(emuThread.getCounter());
+				stack.getFrame(0, true)
+						.setProgramCounter(Range.atLeast(destSnap), emuThread.getCounter());
 			}
 		}
 	}

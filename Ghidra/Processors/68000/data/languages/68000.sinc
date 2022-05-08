@@ -2054,10 +2054,10 @@ fdivrnd: "d"                   is fopmode=0x64        {}
 :flognp1.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x06; e2d  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
 :flognp1			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x06		    unimpl
 
-:fmod.^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_BWLS) & fopmode=0x2d; e2l  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:fmod.^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_XP) & fopmode=0x2d; e2x  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:fmod.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_D) & fopmode=0x2d; e2d  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:fmod			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x2d		    unimpl
+:fmod.^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_BWLS) & fopmode=0x21; e2l  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
+:fmod.^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_XP) & fopmode=0x21; e2x  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
+:fmod.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_D) & fopmode=0x21; e2d  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
+:fmod			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x21		    unimpl
 
 
 :fmove.b	e2b, fdst  is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fopmode=0x00 & ffmt=6; e2b

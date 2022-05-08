@@ -20,8 +20,11 @@ import ghidra.dbg.agent.SpiTargetObject;
 import ghidra.program.model.address.*;
 
 public class EmptyDebuggerObjectModel extends AbstractDebuggerObjectModel {
-	protected final AddressSpace ram = new GenericAddressSpace("ram", 64, AddressSpace.TYPE_RAM, 0);
-	protected final AddressFactory factory = new DefaultAddressFactory(new AddressSpace[] { ram });
+	public final AddressSpace ram = new GenericAddressSpace("ram", 64, AddressSpace.TYPE_RAM, 0);
+	public final AddressSpace ram3 =
+		new GenericAddressSpace("ram3", 64, AddressSpace.TYPE_RAM, 0);
+	protected final AddressFactory factory =
+		new DefaultAddressFactory(new AddressSpace[] { ram, ram3 });
 
 	@Override
 	public AddressFactory getAddressFactory() {

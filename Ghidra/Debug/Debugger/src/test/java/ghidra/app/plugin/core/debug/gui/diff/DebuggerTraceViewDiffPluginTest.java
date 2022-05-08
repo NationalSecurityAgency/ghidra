@@ -26,7 +26,6 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
-import ghidra.async.AsyncTestUtils;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
@@ -35,8 +34,7 @@ import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Swing;
 import ghidra.util.database.UndoableTransaction;
 
-public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements AsyncTestUtils {
+public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	protected DebuggerTraceViewDiffPlugin traceDiffPlugin;
 	protected DebuggerListingPlugin listingPlugin;

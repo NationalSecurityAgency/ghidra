@@ -76,7 +76,7 @@ public class TraceRecorderAsyncPcodeExecutorState
 			Address addr = space.getAddress(truncateOffset(space, offset));
 			AddressSet set = new AddressSet(addr, space.getAddress(offset + size - 1));
 			CompletableFuture<NavigableMap<Address, byte[]>> future =
-				recorder.captureProcessMemory(set, TaskMonitor.DUMMY, true);
+				recorder.readMemoryBlocks(set, TaskMonitor.DUMMY, true);
 			return future.thenApply(map -> {
 				return knitFromResults(map, addr, size);
 			});

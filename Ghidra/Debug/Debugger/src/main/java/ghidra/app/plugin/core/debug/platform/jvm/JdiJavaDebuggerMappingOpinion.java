@@ -64,8 +64,11 @@ public class JdiJavaDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetObject target,
 			boolean includeOverrides) {
+		if (!(target instanceof TargetProcess)) {
+			return Set.of();
+		}
 		if (!env.getDebugger().contains("Java Debug Interface")) {
 			return Set.of();
 		}
@@ -73,6 +76,6 @@ public class JdiJavaDebuggerMappingOpinion implements DebuggerMappingOpinion {
 			return Set.of();
 		}
 		// NOTE: Not worried about JRE version
-		return Set.of(new JavaDebuggerMappingOffer(process));
+		return Set.of(new JavaDebuggerMappingOffer((TargetProcess) target));
 	}
 }

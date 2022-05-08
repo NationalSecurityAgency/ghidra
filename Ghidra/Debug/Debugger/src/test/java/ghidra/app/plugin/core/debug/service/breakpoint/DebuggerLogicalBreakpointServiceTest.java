@@ -34,7 +34,6 @@ import ghidra.dbg.model.TestTargetMemoryRegion;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
-import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
@@ -49,8 +48,7 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.ListenerMap;
 
-public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements DebuggerModelTestUtils {
+public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
@@ -86,7 +84,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 			assertTrue(current.remove(lb));
 		}
 
-		public synchronized void assertAccurate() {
+		public synchronized void assertAgreesWithService() {
 			waitForPass(() -> {
 				assertEquals(breakpointService.getAllBreakpoints(), changeListener.current);
 			});
@@ -175,21 +173,32 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	}
 
 	@After
-	public void tearDownBreakpointServiceTest() {
-		assertConsistent();
-		changeListener.assertAccurate();
-		if (recorder1 != null && recorder1.isRecording()) {
-			waitForLock(recorder1.getTrace());
-			recorder1.stopRecording();
+	public void tearDownBreakpointServiceTest() throws Throwable {
+		Msg.debug(this, "Tearing down");
+		try {
+			waitRecorder(recorder1);
+			waitRecorder(recorder3);
+			waitForProgram(program);
+
+			assertServiceAgreesWithOpenProgramsAndTraces();
+			changeListener.assertAgreesWithService();
+			if (recorder1 != null && recorder1.isRecording()) {
+				waitForLock(recorder1.getTrace());
+				recorder1.stopRecording();
+			}
+			if (recorder3 != null && recorder3.isRecording()) {
+				waitForLock(recorder3.getTrace());
+				recorder3.stopRecording();
+			}
+			ListenerMap.checkErr();
 		}
-		if (recorder3 != null && recorder3.isRecording()) {
-			waitForLock(recorder3.getTrace());
-			recorder3.stopRecording();
+		catch (Throwable t) {
+			Msg.error(this, "Failed during tear down: " + t);
+			throw t;
 		}
-		ListenerMap.checkErr();
 	}
 
-	protected void assertConsistent() {
+	protected void assertServiceAgreesWithOpenProgramsAndTraces() {
 		Map<Trace, Set<LogicalBreakpoint>> breaksByTraceViaPer = new HashMap<>();
 		for (Trace trace : traceManager.getOpenTraces()) {
 			Set<LogicalBreakpoint> breaks = new HashSet<>();
@@ -243,8 +252,6 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 
 		assertEquals(breaksByProgramViaPer, breaksByProgramViaAll);
 		assertEquals(breaksByTraceViaPer, breaksByTraceViaAll);
-
-		changeListener.assertAccurate();
 	}
 
 	protected void addProgramTextBlock(Program p) throws Throwable {
@@ -659,7 +666,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		addProgramBreakpoints(program);
 		waitForSwing();
 
-		changeListener.assertAccurate();
+		changeListener.assertAgreesWithService();
 
 		expectMappingChange(() -> addTextMapping(recorder1, text, program));
 		waitForSwing();
@@ -704,7 +711,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		waitForPass(() -> {
 			assertLogicalBreakpointForLoneSoftwareBreakpoint(trace, 1);
 		});
-		changeListener.assertAccurate();
+		changeListener.assertAgreesWithService();
 
 		expectMappingChange(() -> addTextMapping(recorder1, text, program));
 		waitForSwing();
@@ -737,7 +744,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		waitForSwing();
 
 		assertLogicalBreakpointsForUnmappedBookmarks();
-		changeListener.assertAccurate();
+		changeListener.assertAgreesWithService();
 
 		traceManager.openTrace(trace);
 		// NOTE: Extraneous mappings-changed events can cause timing issues here.
@@ -905,7 +912,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		waitForSwing();
 
 		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
-		assertConsistent();
+		assertServiceAgreesWithOpenProgramsAndTraces();
 
 		removeTargetSoftwareBreakpoint(recorder1);
 
@@ -935,7 +942,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		waitForSwing();
 
 		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
-		assertConsistent();
+		assertServiceAgreesWithOpenProgramsAndTraces();
 
 		expectMappingChange(() -> removeTextMapping(recorder1, program));
 		waitForSwing();
@@ -1188,7 +1195,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		 */
 		waitForLock(trace);
 		waitForDomainObject(trace);
-		changeListener.assertAccurate();
+		changeListener.assertAgreesWithService();
 
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Will abort", false)) {
 			expectMappingChange(() -> addTextMapping(recorder1, text, program));

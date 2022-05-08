@@ -274,7 +274,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 
 	/**
 	 * Language specified by languageName was not found.  Check for
-	 * valid language translation/migration.  Old langauge version specified by
+	 * valid language translation/migration.  Old language version specified by
 	 * languageVersion.
 	 * @param openMode one of:
 	 * 		READ_ONLY: the original database will not be modified
