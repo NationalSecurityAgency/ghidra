@@ -17,6 +17,7 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessMode;
 import java.util.*;
 
 import ghidra.app.util.*;
@@ -104,6 +105,9 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 			MachoProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
 		}
+		catch (CancelledException e) {
+ 			return;
+ 		}
 		catch (IOException e) {
 			throw e;
 		}
@@ -142,7 +146,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			return false;
 		}
 
-		try (ByteProvider provider = new RandomAccessByteProvider(libFile)) {
+		try (ByteProvider provider = new FileByteProvider(libFile, null, AccessMode.READ)) {
 
 			FatHeader header = new FatHeader(provider);
 			List<FatArch> architectures = header.getArchitectures();

@@ -106,9 +106,9 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
 		markupSections();
 		processProgramVars();
-		loadSectionRelocations();
-		loadExternalRelocations();
-		loadLocalRelocations();
+		processSectionRelocations();
+		processExternalRelocations();
+		processLocalRelocations();
 	}
 
 	protected void fixPreLinkAddresses() throws MemoryAccessException, CancelledException,

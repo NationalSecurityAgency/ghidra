@@ -130,9 +130,9 @@ public class MachoProgramBuilder {
 		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
 		markupSections();
 		processProgramVars();
-		loadSectionRelocations();
-		loadExternalRelocations();
-		loadLocalRelocations();
+		processSectionRelocations();
+		processExternalRelocations();
+		processLocalRelocations();
 	}
 
 	private void setImageBase() throws Exception {
@@ -156,6 +156,11 @@ public class MachoProgramBuilder {
 		}
 	}
 	
+	/**
+	 * Logs encrypted block ranges
+	 * 
+	 * @throws Exception if there was a problem detecting the encrypted block ranges
+	 */
 	private void processEncryption() throws Exception {
 		monitor.setMessage("Processing encryption...");
 		for (EncryptedInformationCommand cmd : machoHeader
@@ -167,6 +172,11 @@ public class MachoProgramBuilder {
 		}
 	}
 
+	/**
+ 	 * Attempts to discover and set the entry point.
+ 	 * 
+ 	 * @throws Exception If there was a problem discovering or setting the entry point.
+ 	 */
 	private void processEntryPoint() throws Exception {
 		monitor.setMessage("Processing entry point...");
 		Address entryPointAddr = null;
@@ -374,13 +384,19 @@ public class MachoProgramBuilder {
 		return memory.getBlock(start);
 	}
 
-	private void processUnsupportedLoadCommands() throws Exception {
-		monitor.setMessage("Processing unsupported load commands...");
+	/**
+ 	 * Processes {@link LoadCommand}s that we haven't implemented yet.
+ 	 * 
+ 	 * @throws CancelledException if the operation was cancelled.
+ 	 */
+ 	private void processUnsupportedLoadCommands() throws CancelledException {
+ 		monitor.setMessage("Processing unsupported load commands...");
 
-		for (LoadCommand loadCommand : machoHeader.getLoadCommands(UnsupportedLoadCommand.class)) {
-			log.appendMsg(loadCommand.getCommandName());
-		}
-	}
+ 		for (LoadCommand loadCommand : machoHeader.getLoadCommands(UnsupportedLoadCommand.class)) {
+ 			monitor.checkCanceled();
+ 			log.appendMsg(loadCommand.getCommandName());
+ 		}
+ 	}
 
 	private void processSymbolTables() throws Exception {
 		monitor.setMessage("Processing symbol tables...");
@@ -873,6 +889,7 @@ public class MachoProgramBuilder {
 	 * 
 	 * @param segments A {@link Collection} of {@link SegmentCommand Mach-O segments}
 	 * @return The {@link Address} of {@link MachHeader} in memory
+	 * @throws AddressOverflowException if the address lies outside the address space
 	 */
 	protected Address setupHeaderAddr(Collection<SegmentCommand> segments)
 			throws AddressOverflowException {
@@ -1043,17 +1060,17 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	protected void loadSectionRelocations() {
+	/**
+ 	 * Processes the section relocations from all {@link Section}s.
+ 	 * 
+ 	 * @throws CancelledException if the operation was cancelled.
+ 	 */
+ 	protected void processSectionRelocations() throws CancelledException {
+ 		monitor.setMessage("Processing section relocations...");
 
-		monitor.setMessage("Processing relocation table...");
-
-		MachoRelocationHandler handler = MachoRelocationHandlerFactory.getHandler(machoHeader);
-
-		List<Section> sections = machoHeader.getAllSections();
-		for (Section section : sections) {
-			if (monitor.isCancelled()) {
-				return;
-			}
+		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
+ 		for (Section section : machoHeader.getAllSections()) {
+ 			monitor.checkCanceled();
 
 			MemoryBlock sectionMemoryBlock = getMemoryBlock(section);
 			if (sectionMemoryBlock == null) {
@@ -1064,150 +1081,120 @@ public class MachoProgramBuilder {
 				continue;
 			}
 
-			Iterator<RelocationInfo> iter = section.getRelocations().iterator();
-			while (iter.hasNext()) {
-				if (monitor.isCancelled()) {
-					return;
-				}
-
-				RelocationInfo relocationInfo = iter.next();
+			for (RelocationInfo relocationInfo : section.getRelocations()) {
+ 				monitor.checkCanceled();
 				Address address = sectionMemoryBlock.getStart().add(relocationInfo.getAddress());
-				byte[] origBytes = getOriginalRelocationBytes(relocationInfo, address);
-				MachoRelocation relocation = null;
-
-				if (handler == null) {
-					handleRelocationError(address, String.format(
-						"No relocation handler for machine type 0x%x to process relocation at %s with type 0x%x",
-						machoHeader.getCpuType(), address, relocationInfo.getType()));
-				}
-				else {
-					try {
-						relocation = handler.isPairedRelocation(relocationInfo)
-								? new MachoRelocation(program, machoHeader, address, relocationInfo,
-									iter.next())
-								: new MachoRelocation(program, machoHeader, address,
-									relocationInfo);
-						handler.relocate(relocation);
-					}
-					catch (MemoryAccessException e) {
-						handleRelocationError(address, String.format(
-							"Error accessing memory at address %s.  Relocation failed.", address));
-					}
-					catch (NotFoundException e) {
-						handleRelocationError(address,
-							String.format("Relocation type 0x%x at address %s is not supported: %s",
-								relocationInfo.getType(), address, e.getMessage()));
-					}
-					catch (AddressOutOfBoundsException e) {
-						handleRelocationError(address,
-							String.format("Error computing relocation at address %s.", address));
-					}
-				}
-
-				program.getRelocationTable()
-						.add(address, relocationInfo.getType(),
-							new long[] { relocationInfo.getValue(), relocationInfo.getLength(),
-								relocationInfo.isPcRelocated() ? 1 : 0,
-								relocationInfo.isExternal() ? 1 : 0,
-								relocationInfo.isScattered() ? 1 : 0 },
-							origBytes, relocation.getTargetDescription());
+				relocationMap.put(relocationInfo, address);
 			}
 		}
-	}
-
-	private void handleRelocationError(Address address, String message) {
-		program.getBookmarkManager()
-				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
-		log.appendMsg(message);
-	}
-
-	protected void loadExternalRelocations() {
-
-		monitor.setMessage("Processing external relocations...");
-
-		List<DynamicSymbolTableCommand> commands =
-			machoHeader.getLoadCommands(DynamicSymbolTableCommand.class);
-
-		for (DynamicSymbolTableCommand command : commands) {
-			if (monitor.isCancelled()) {
-				break;
-			}
-			List<RelocationInfo> relocs = command.getExternalRelocations();
-			for (RelocationInfo reloc : relocs) {
-				if (monitor.isCancelled()) {
-					break;
-				}
-				loadRelocation(reloc);
-			}
-		}
-	}
-
-	protected void loadLocalRelocations() {
-
-		monitor.setMessage("Processing local relocations...");
-
-		List<DynamicSymbolTableCommand> commands =
-			machoHeader.getLoadCommands(DynamicSymbolTableCommand.class);
-
-		for (DynamicSymbolTableCommand command : commands) {
-			if (monitor.isCancelled()) {
-				return;
-			}
-			List<RelocationInfo> relocs = command.getLocalRelocations();
-			for (RelocationInfo reloc : relocs) {
-				if (monitor.isCancelled()) {
-					return;
-				}
-				loadRelocation(reloc);
-			}
-		}
+ 		performRelocations(relocationMap);
 	}
 
 	/**
-	 * r_address is set to the offset from the vmaddr of the first LC_SEGMENT
-	 * command. For MH_SPLIT_SEGS images, r_address is set to the the offset
-	 * from the vmaddr of the first read-write LC_SEGMENT command.
+ 	 * Processes the external relocations from all {@link DynamicSymbolTableCommand}s.
+ 	 * 
+ 	 * @throws CancelledException if the operation was cancelled.
+ 	 */
+ 	protected void processExternalRelocations() throws CancelledException {
+
+		monitor.setMessage("Processing external relocations...");
+
+		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
+ 		for (DynamicSymbolTableCommand cmd : machoHeader
+ 				.getLoadCommands(DynamicSymbolTableCommand.class)) {
+ 			monitor.checkCanceled();
+ 			for (RelocationInfo relocationInfo : cmd.getExternalRelocations()) {
+ 				monitor.checkCanceled();
+ 				relocationMap.put(relocationInfo, space.getAddress(relocationInfo.getAddress()));
+ 			}
+ 		}
+ 		performRelocations(relocationMap);
+	}
+
+	/**
+ 	 * Processes the local relocations from all {@link DynamicSymbolTableCommand}s.
+ 	 * 
+ 	 * @throws CancelledException if the operation was cancelled.
+ 	 */
+ 	protected void processLocalRelocations() throws CancelledException {
+
+		monitor.setMessage("Processing local relocations...");
+
+		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
+ 		for (DynamicSymbolTableCommand cmd : machoHeader
+ 				.getLoadCommands(DynamicSymbolTableCommand.class)) {
+ 			monitor.checkCanceled();
+ 			for (RelocationInfo relocationInfo : cmd.getLocalRelocations()) {
+ 				monitor.checkCanceled();
+ 				relocationMap.put(relocationInfo, space.getAddress(relocationInfo.getAddress()));
+ 			}
+ 		}
+ 		performRelocations(relocationMap);
+	}
+
+	/**
+	 * Performs the given relocations.
 	 * 
-	 * @return The relocation base address.
+	 * @param relocationMap The relocations to perform, mapped to the addresses they should get
+ 	 *   performed at.  The relocations must be performed in their supplied order.
+ 	 * @throws CancelledException if the operation was cancelled.
 	 */
-	private Address getRelocationBaseAddress() {
-		List<SegmentCommand> segments = machoHeader.getAllSegments();
-		if (segments.isEmpty()) {
-			return space.getAddress(-1);
-		}
-		long relocBase = segments.get(0).getVMaddress();
-		if ((machoHeader.getFlags() & MachHeaderFlags.MH_SPLIT_SEGS) != 0) {
-			for (SegmentCommand segment : segments) {
-				if (monitor.isCancelled()) {
-					return space.getAddress(-1);
+	private void performRelocations(LinkedHashMap<RelocationInfo, Address> relocationMap)
+ 			throws CancelledException {
+ 		MachoRelocationHandler handler = MachoRelocationHandlerFactory.getHandler(machoHeader);
+ 		Iterator<RelocationInfo> iter = relocationMap.keySet().iterator();
+ 		while (iter.hasNext()) {
+ 			RelocationInfo relocationInfo = iter.next();
+ 			Address address = relocationMap.get(relocationInfo);
+ 			byte[] origBytes = getOriginalRelocationBytes(relocationInfo, address);
+ 			MachoRelocation relocation = null;
+
+ 			if (handler == null) {
+ 				handleRelocationError(address, String.format(
+ 					"No relocation handler for machine type 0x%x to process relocation at %s with type 0x%x",
+ 					machoHeader.getCpuType(), address, relocationInfo.getType()));
+ 			}
+ 			else {
+ 				try {
+ 					relocation = handler.isPairedRelocation(relocationInfo)
+ 							? new MachoRelocation(program, machoHeader, address, relocationInfo,
+ 								iter.next())
+ 							: new MachoRelocation(program, machoHeader, address, relocationInfo);
+ 					handler.relocate(relocation);
 				}
-				if (segment.isRead() && segment.isWrite()) {
-					relocBase = segment.getVMaddress();
-					break;
-				}
+				catch (MemoryAccessException e) {
+ 					handleRelocationError(address, String.format(
+ 						"Error accessing memory at address %s.  Relocation failed.", address));
+ 				}
+ 				catch (NotFoundException e) {
+ 					handleRelocationError(address,
+ 						String.format("Relocation type 0x%x at address %s is not supported: %s",
+ 							relocationInfo.getType(), address, e.getMessage()));
+ 				}
+ 				catch (AddressOutOfBoundsException e) {
+ 					handleRelocationError(address,
+ 						String.format("Error computing relocation at address %s.", address));
+ 				}
 			}
+			program.getRelocationTable()
+				.add(address, relocationInfo.getType(), new long[] { relocationInfo.getValue(),
+					relocationInfo.getLength(), relocationInfo.isPcRelocated() ? 1 : 0,
+					relocationInfo.isExternal() ? 1 : 0, relocationInfo.isScattered() ? 1 : 0 },
+					origBytes, relocation.getTargetDescription());
 		}
-		return space.getAddress(relocBase);
 	}
-
-	private void loadRelocation(RelocationInfo relocation) {
-
-		Address baseAddr = getRelocationBaseAddress();
-
-		Address relocationAddress = null;
-		try {
-			relocationAddress = baseAddr.add(relocation.getAddress() & 0xffffffffL);
-		}
-		catch (AddressOutOfBoundsException e) {
-			relocationAddress = baseAddr.getNewAddress(relocation.getAddress() & 0xffffffffL);
-		}
-
-		byte[] originalRelocationBytes = getOriginalRelocationBytes(relocation, relocationAddress);
-
-		program.getRelocationTable()
-				.add(relocationAddress, relocation.getType(), relocation.toValues(),
-					originalRelocationBytes, null);
-	}
+	
+	/**
+ 	 * Handles a relocation error by placing a bookmark and writing to the log
+ 	 * 
+ 	 * @param address The address of the relocation error
+ 	 * @param message The error message
+ 	 */
+ 	private void handleRelocationError(Address address, String message) {
+ 		program.getBookmarkManager()
+ 				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
+ 		log.appendMsg(message);
+ 	}
 
 	private void addLibrary(String library) {
 		library = library.replaceAll(" ", "_");
