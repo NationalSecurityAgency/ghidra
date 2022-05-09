@@ -402,9 +402,8 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			signedOffset = true;
 		}
 
-		Long offset = getStoredOffset(buf, size, signedOffset);
+		Long offset = getStoredOffset(buf, size, signedOffset, errorHandler);
 		if (offset == null) {
-			errorHandler.accept("Insufficient data");
 			return null;
 		}
 
@@ -541,9 +540,14 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * @param signed      true if signed offset or false for unsigned
 	 * @return stored offset value or null if unusable buf or data
 	 */
-	private static Long getStoredOffset(MemBuffer buf, int size, boolean signed) {
+	private static Long getStoredOffset(MemBuffer buf, int size, boolean signed,
+			Consumer<String> errorHandler) {
 		byte[] bytes = new byte[size];
-		if (buf.getBytes(bytes, 0) != size) {
+		int cnt = buf.getBytes(bytes, 0);
+		if (cnt != size) {
+			if (cnt != 0 && errorHandler != null) {
+				errorHandler.accept("Insufficient data");
+			}
 			return null;
 		}
 		DataConverter converter = DataConverter.getInstance(buf.isBigEndian());
@@ -569,10 +573,9 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return null;
 		}
 
-		Long offset = getStoredOffset(buf, size, false);
+		Long offset = getStoredOffset(buf, size, false, null);
 		if (offset == null) {
-			// Insufficient bytes
-			return null;
+			return null; // Insufficient bytes
 		}
 
 		if (targetSpace instanceof SegmentedAddressSpace) {
