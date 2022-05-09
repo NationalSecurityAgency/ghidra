@@ -348,6 +348,7 @@ define token instr(16)
 	FRN_0 = ( 8,11) # float register id
         FRN_1 = ( 8,10) # float register id
         FRN_2 = ( 8,10) # float register id
+        DRN_0 = ( 8,10) # double register id
 	DRN_1 = ( 9,11) # double register id
 	XDN_1 = ( 9,11) # double register id
 	XDRN  = ( 8,11) # float register id
@@ -373,15 +374,20 @@ attach variables [ FRN_0 FRM_0] [
 ];
 
 attach variables [ FRN_1 ] [
-  fr0 fr1  fr2  fr3  fr4  fr5  fr6  fr7
+  fr0 fr2  fr4  fr6  fr8  fr10  fr12  fr14
 ];
 
 attach variables [ FRN_2 ] [
-  fr1  fr2  fr3  fr4  fr5  fr6  fr7  fr8
+  fr1  fr3  fr5  fr7  fr9  fr11  fr13  fr15
 ];
 
 # attach double registers
 attach variables [ DRN_1 DRM_1 ] [
+  dr0 dr2 dr4 dr6 dr8 dr10 dr12 dr14
+];
+
+# attach double registers
+attach variables [ DRN_0 ] [
   dr0 dr2 dr4 dr6 dr8 dr10 dr12 dr14
 ];
 
@@ -1513,8 +1519,8 @@ define pcodeop cos;
 # pattern 1111nnn011111101
 # text	  fsca FPUL,<F_REG_N>
 # arch    # arch_sh2a_or_sh3e_up
-:fsca FPUL,FRN_1 is
-	OP_0=0xF & FPUL & FRN_1 & FRN_2  & OP_4=0xFD {
+:fsca FPUL,DRN_0 is
+	OP_0=0xF & FPUL & DRN_0 & FRN_1 & FRN_2  & OP_4=0xFD {
 	if (( $(FPSCR_PR) != 0 )) goto inst_next;       
 	
 	angle:4 = int2float(0 :4);    			# float
