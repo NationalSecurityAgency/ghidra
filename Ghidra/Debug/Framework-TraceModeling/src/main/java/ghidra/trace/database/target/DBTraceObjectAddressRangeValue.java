@@ -15,12 +15,9 @@
  */
 package ghidra.trace.database.target;
 
-import java.util.stream.Stream;
-
 import com.google.common.collect.Range;
 
 import db.DBRecord;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
@@ -125,6 +122,11 @@ public class DBTraceObjectAddressRangeValue
 	}
 
 	@Override
+	public DBTraceObject getChildOrNull() {
+		return null;
+	}
+
+	@Override
 	public boolean isCanonical() {
 		return false;
 	}
@@ -163,22 +165,6 @@ public class DBTraceObjectAddressRangeValue
 	}
 
 	@Override
-	public Stream<? extends DBTraceObjectValPath> doGetSuccessors(Range<Long> span,
-			DBTraceObjectValPath pre, PathPredicates predicates) {
-		DBTraceObjectValPath path = pre == null ? DBTraceObjectValPath.of() : pre.append(this);
-		if (predicates.matches(path.getKeyList())) {
-			return Stream.of(path);
-		}
-		return Stream.empty();
-	}
-
-	@Override
-	public Stream<? extends DBTraceObjectValPath> doGetOrderedSuccessors(Range<Long> span,
-			DBTraceObjectValPath pre, PathPredicates predicates, boolean forward) {
-		return doGetSuccessors(span, pre, predicates);
-	}
-
-	@Override
 	public void doDelete() {
 		manager.rangeValueMap.deleteData(this);
 	}
@@ -186,19 +172,14 @@ public class DBTraceObjectAddressRangeValue
 	@Override
 	public void delete() {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			doDelete();
+			doDeleteAndEmit();
 		}
-	}
-
-	@Override
-	public void deleteTree() {
-		delete();
 	}
 
 	@Override
 	public TraceObjectValue truncateOrDelete(Range<Long> span) {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			return doTruncateOrDelete(span);
+			return doTruncateOrDeleteAndEmitLifeChange(span);
 		}
 	}
 }

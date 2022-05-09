@@ -23,13 +23,13 @@ import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSectionChangeType;
-import ghidra.trace.model.modules.*;
+import ghidra.trace.model.modules.TraceObjectModule;
+import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.trace.util.TraceChangeType;
 import ghidra.util.LockHold;
-import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectInterface {
 
@@ -68,6 +68,9 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 	private final DBTraceObject object;
 	private final SectionTranslator translator;
 
+	// Keep copies here for when the object gets invalidated
+	private AddressRange range;
+
 	public DBTraceObjectSection(DBTraceObject object) {
 		this.object = object;
 
@@ -80,9 +83,9 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 	}
 
 	@Override
-	public TraceModule getModule() {
+	public TraceObjectModule getModule() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return object.queryAncestorsInterface(object.getLifespan(), TraceObjectModule.class)
+			return object.queryCanonicalAncestorsInterface(TraceObjectModule.class)
 					.findAny()
 					.orElseThrow();
 		}
@@ -94,30 +97,56 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 	}
 
 	@Override
-	public void setName(String name) throws DuplicateNameException {
-		object.setValue(object.getLifespan(), TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
+	public void setName(Range<Long> lifespan, String name) {
+		object.setValue(lifespan, TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
+	}
+
+	@Override
+	public void setName(String name) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setName(computeSpan(), name);
+		}
 	}
 
 	@Override
 	public String getName() {
-		return TraceObjectInterfaceUtils.getValue(object, object.getMinSnap(),
+		return TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
 			TargetObject.DISPLAY_ATTRIBUTE_NAME, String.class, "");
 	}
 
 	@Override
-	public void setRange(AddressRange range) {
-		object.setValue(object.getLifespan(), TargetModule.RANGE_ATTRIBUTE_NAME, range);
+	public void setRange(Range<Long> lifespan, AddressRange range) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.setValue(lifespan, TargetModule.RANGE_ATTRIBUTE_NAME, range);
+			this.range = range;
+		}
 	}
 
 	@Override
 	public AddressRange getRange() {
-		return TraceObjectInterfaceUtils.getValue(object, object.getMinSnap(),
-			TargetModule.RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
+		try (LockHold hold = object.getTrace().lockRead()) {
+			if (object.getLife().isEmpty()) {
+				return range;
+			}
+			return range = TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
+				TargetModule.RANGE_ATTRIBUTE_NAME, AddressRange.class, range);
+		}
+	}
+
+	@Override
+	public Range<Long> computeSpan() {
+		Range<Long> span = DBTraceObjectInterface.super.computeSpan();
+		if (span != null) {
+			return span;
+		}
+		return getModule().computeSpan();
 	}
 
 	@Override
 	public void delete() {
-		object.deleteTree();
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(computeSpan());
+		}
 	}
 
 	@Override

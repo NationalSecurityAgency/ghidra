@@ -98,6 +98,10 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	private final DBTraceObject object;
 	private final RegionChangeTranslator translator;
 
+	// Keep copies here for when the object gets invalidated
+	private AddressRange range;
+	private Range<Long> lifespan;
+
 	public DBTraceObjectMemoryRegion(DBTraceObject object) {
 		this.object = object;
 
@@ -115,9 +119,14 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
+	public void setName(Range<Long> lifespan, String name) {
+		object.setValue(lifespan, TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
+	}
+
+	@Override
 	public void setName(String name) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
+			setName(computeSpan(), name);
 		}
 	}
 
@@ -131,18 +140,21 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	@Override
 	public void setLifespan(Range<Long> newLifespan) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			Range<Long> oldLifespan = getLifespan();
-			if (Objects.equals(oldLifespan, newLifespan)) {
-				return;
-			}
 			TraceObjectInterfaceUtils.setLifespan(TraceObjectMemoryRegion.class, object,
 				newLifespan);
+			this.lifespan = newLifespan;
 		}
 	}
 
 	@Override
 	public Range<Long> getLifespan() {
-		return object.getLifespan();
+		try (LockHold hold = object.getTrace().lockRead()) {
+			Range<Long> computed = computeSpan();
+			if (computed != null) {
+				lifespan = computed;
+			}
+			return lifespan;
+		}
 	}
 
 	@Override
@@ -154,7 +166,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 
 	@Override
 	public long getCreationSnap() {
-		return object.getMinSnap();
+		return computeMinSnap();
 	}
 
 	@Override
@@ -166,25 +178,32 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 
 	@Override
 	public long getDestructionSnap() {
-		return object.getMaxSnap();
+		return computeMaxSnap();
+	}
+
+	@Override
+	public void setRange(Range<Long> lifespan, AddressRange newRange) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.setValue(lifespan, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, newRange);
+			this.range = newRange;
+		}
 	}
 
 	@Override
 	public void setRange(AddressRange newRange) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			AddressRange oldRange = getRange();
-			if (Objects.equals(oldRange, newRange)) {
-				return;
-			}
-			object.setValue(getLifespan(), TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, newRange);
+			setRange(computeSpan(), newRange);
 		}
 	}
 
 	@Override
 	public AddressRange getRange() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return TraceObjectInterfaceUtils.getValue(object, getCreationSnap(),
-				TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
+			if (object.getLife().isEmpty()) {
+				return range;
+			}
+			return range = TraceObjectInterfaceUtils.getValue(object, getCreationSnap(),
+				TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, AddressRange.class, range);
 		}
 	}
 
@@ -311,7 +330,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	@Override
 	public void delete() {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.deleteTree();
+			object.removeTree(computeSpan());
 		}
 	}
 
