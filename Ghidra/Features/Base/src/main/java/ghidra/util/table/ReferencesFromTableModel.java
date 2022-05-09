@@ -39,7 +39,7 @@ import ghidra.util.table.field.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Table model for showing the 'from' side of passed-in references. 
+ * Table model for showing the 'from' side of passed-in references.
  */
 public class ReferencesFromTableModel extends AddressBasedTableModel<ReferenceEndpoint> {
 
@@ -94,7 +94,8 @@ public class ReferencesFromTableModel extends AddressBasedTableModel<ReferenceEn
 			extends AbstractGColumnRenderer<ReferenceEndpoint> {
 
 		// " << OFFCUT >>"
-		private static final String OFFCUT_STRING = " &lt;&lt; OFFCUT &gt;&gt;";
+		private static final String PLAIN_OFFCUT_TEXT = "<< OFFCUT >>";
+		private static final String HTML_OFFCUT_TEXT = " &lt;&lt; OFFCUT &gt;&gt;";
 
 		ReferenceTypeTableCellRenderer() {
 			setHTMLRenderingEnabled(true);
@@ -113,21 +114,23 @@ public class ReferencesFromTableModel extends AddressBasedTableModel<ReferenceEn
 			return label;
 		}
 
-		private String asString(ReferenceEndpoint rowObject) {
-			RefType refType = rowObject.getReferenceType();
+		private String asString(ReferenceEndpoint t) {
+			RefType refType = t.getReferenceType();
 			String text = refType.getName();
-			if (rowObject.isOffcut()) {
-				text = "<html>" + HTMLUtilities.colorString(Color.RED, text + OFFCUT_STRING);
+			if (t.isOffcut()) {
+				text = "<html>" + HTMLUtilities.colorString(Color.RED, text + HTML_OFFCUT_TEXT);
 			}
 			return text;
 		}
 
 		@Override
 		public String getFilterString(ReferenceEndpoint t, Settings settings) {
-			String htmlString = asString(t);
-
-			// TODO verify this returns '<' instead of entity refs
-			return HTMLUtilities.fromHTML(htmlString);
+			RefType refType = t.getReferenceType();
+			String text = refType.getName();
+			if (t.isOffcut()) {
+				return text + PLAIN_OFFCUT_TEXT;
+			}
+			return text;
 		}
 	}
 }
