@@ -15,6 +15,8 @@
  */
 package ghidra.trace.model.breakpoint;
 
+import java.util.Collection;
+
 import com.google.common.collect.Range;
 
 import ghidra.dbg.target.TargetBreakpointLocation;
@@ -42,5 +44,13 @@ public interface TraceObjectBreakpointLocation extends TraceBreakpoint, TraceObj
 
 	void setLifespan(Range<Long> lifespan) throws DuplicateNameException;
 
-	void setRange(AddressRange range);
+	void setRange(Range<Long> lifespan, AddressRange range);
+
+	void setName(Range<Long> lifespan, String name);
+
+	void setKinds(Range<Long> lifespan, Collection<TraceBreakpointKind> kinds);
+
+	void setEnabled(Range<Long> lifespan, boolean enabled);
+
+	void setComment(Range<Long> lifespan, String comment);
 }

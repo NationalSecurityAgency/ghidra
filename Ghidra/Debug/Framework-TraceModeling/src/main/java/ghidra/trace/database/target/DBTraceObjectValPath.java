@@ -93,7 +93,7 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 	}
 
 	@Override
-	public TraceObject getFirstParent(TraceObject ifEmpty) {
+	public TraceObject getSource(TraceObject ifEmpty) {
 		InternalTraceObjectValue first = getFirstEntry();
 		return first == null ? ifEmpty : first.getParent();
 	}
@@ -107,13 +107,13 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 	}
 
 	@Override
-	public Object getLastValue(Object ifEmpty) {
+	public Object getDestinationValue(Object ifEmpty) {
 		InternalTraceObjectValue last = getLastEntry();
 		return last == null ? ifEmpty : last.getValue();
 	}
 
 	@Override
-	public TraceObject getLastChild(TraceObject ifEmpty) {
+	public TraceObject getDestination(TraceObject ifEmpty) {
 		InternalTraceObjectValue last = getLastEntry();
 		return last == null ? ifEmpty : last.getChild();
 	}

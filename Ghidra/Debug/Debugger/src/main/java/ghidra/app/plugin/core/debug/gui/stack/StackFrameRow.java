@@ -75,13 +75,13 @@ public class StackFrameRow {
 	}
 
 	public String getComment() {
-		return frame == null ? "" : frame.getComment();
+		return frame == null ? "" : frame.getComment(getSnap());
 	}
 
 	public void setComment(String comment) {
 		try (UndoableTransaction tid = UndoableTransaction
 				.start(frame.getStack().getThread().getTrace(), "Frame comment", true)) {
-			frame.setComment(comment);
+			frame.setComment(getSnap(), comment);
 		}
 	}
 
