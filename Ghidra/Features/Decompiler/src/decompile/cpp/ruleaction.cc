@@ -3552,13 +3552,8 @@ int4 RulePropagateCopy::applyOp(PcodeOp *op,Funcdata &data)
   int4 i;
   PcodeOp *copyop;
   Varnode *vn,*invn;
-  OpCode opc;
 
-  opc = op->code();
-  if (opc==CPUI_RETURN) return 0; // Preserve the address of return variable
-//   else if (opc == CPUI_INDIRECT) {
-//     if (op->Output()->isAddrForce()) return 0;
-//   }
+  if (op->stopsCopyPropagation()) return 0;
   for(i=0;i<op->numInput();++i) {
     vn = op->getIn(i);
     if (!vn->isWritten()) continue; // Varnode must be written to
@@ -6170,7 +6165,7 @@ void AddTreeState::buildTree(void)
     newop = data.newOpBefore(baseOp,CPUI_PTRSUB,multNode,data.newConstant(ptrsize,offset));
     data.inheritReadResolution(newop, 0, baseOp, baseSlot);
     if (size != 0)
-      newop->setStopPropagation();
+      newop->setStopTypePropagation();
     multNode = newop->getOut();
   }
 
@@ -6383,7 +6378,7 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
 
   PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,op->getIn(1),data.newConstant(op->getIn(1)->getSize(),0));
   data.inheritReadResolution(newop, 0, op, 1);
-  newop->setStopPropagation();
+  newop->setStopTypePropagation();
   data.opSetInput(op,newop->getOut(),1);
   return 1;
 }
@@ -6582,7 +6577,7 @@ int4 RulePtrsubUndo::applyOp(PcodeOp *op,Funcdata &data)
     return 0;
 
   data.opSetOpcode(op,CPUI_INT_ADD);
-  op->clearStopPropagation();
+  op->clearStopTypePropagation();
   return 1;
 }
   

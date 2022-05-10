@@ -280,7 +280,8 @@ void PcodeOp::setOpcode(TypeOp *t_op)
 {
   flags &= ~(PcodeOp::branch | PcodeOp::call | PcodeOp::coderef | PcodeOp::commutative |
 	     PcodeOp::returns | PcodeOp::nocollapse | PcodeOp::marker | PcodeOp::booloutput |
-	     PcodeOp::unary | PcodeOp::binary | PcodeOp::special);
+	     PcodeOp::unary | PcodeOp::binary | PcodeOp::ternary | PcodeOp::special |
+	     PcodeOp::has_callspec | PcodeOp::no_copy_propagation);
   opcode = t_op;
   flags |= t_op->getFlags();
 }
