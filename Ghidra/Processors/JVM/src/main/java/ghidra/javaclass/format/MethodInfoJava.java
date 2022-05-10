@@ -223,9 +223,11 @@ public class MethodInfoJava implements StructConverter {
 								stringBuffer.append(", ");
 							}
 							ConstantPoolUtf8Info parameterName =
-								(ConstantPoolUtf8Info) constantPool[localVariables[i].getNameIndex()];
+								(ConstantPoolUtf8Info) constantPool[localVariables[i]
+										.getNameIndex()];
 							ConstantPoolUtf8Info parameterDescriptor =
-								(ConstantPoolUtf8Info) constantPool[localVariables[i].getDescriptorIndex()];
+								(ConstantPoolUtf8Info) constantPool[localVariables[i]
+										.getDescriptorIndex()];
 
 							stringBuffer.append(DescriptorDecoder.getTypeNameFromDescriptor(
 								parameterDescriptor.getString(), false, true));
@@ -247,8 +249,8 @@ public class MethodInfoJava implements StructConverter {
 				int i = 0;
 				for (int k = 0; k < exceptionsAttribute.getNumberOfExceptions(); k++) {
 					ConstantPoolClassInfo exceptionClass =
-						(ConstantPoolClassInfo) constantPool[exceptionsAttribute.getExceptionIndexTableEntry(
-							k)];
+						(ConstantPoolClassInfo) constantPool[exceptionsAttribute
+								.getExceptionIndexTableEntry(k)];
 					ConstantPoolUtf8Info exceptionClassName =
 						(ConstantPoolUtf8Info) constantPool[exceptionClass.getNameIndex()];
 					String className = exceptionClassName.getString();
@@ -301,6 +303,15 @@ public class MethodInfoJava implements StructConverter {
 		for (AbstractAttributeInfo attributeInfo : attributes) {
 			if (attributeInfo instanceof ExceptionsAttribute) {
 				return (ExceptionsAttribute) attributeInfo;
+			}
+		}
+		return null;
+	}
+
+	public MethodParametersAttribute getMethodParameters() {
+		for (AbstractAttributeInfo attributeInfo : attributes) {
+			if (attributeInfo instanceof MethodParametersAttribute) {
+				return (MethodParametersAttribute) attributeInfo;
 			}
 		}
 		return null;
