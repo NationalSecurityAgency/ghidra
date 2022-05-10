@@ -393,7 +393,7 @@ void DynamicHash::uniqueHash(const Varnode *root,Funcdata *fd)
       Varnode *tmpvn = vnlist[i];
       clear();
       calcHash(tmpvn,method);
-      if (hash == tmphash) {	// Hash collision
+      if (getComparable(hash) == getComparable(tmphash)) {	// Hash collision
 	vnlist2.push_back(tmpvn);
 	if (vnlist2.size()>maxduplicates) break;
       }
@@ -449,7 +449,7 @@ void DynamicHash::uniqueHash(const PcodeOp *op,int4 slot,Funcdata *fd)
       if (slot >= tmpop->numInput()) continue;
       clear();
       calcHash(tmpop,slot,method);
-      if (hash == tmphash) {	// Hash collision
+      if (getComparable(hash) == getComparable(tmphash)) {	// Hash collision
 	oplist2.push_back(tmpop);
 	if (oplist2.size()>maxduplicates)
 	  break;
@@ -508,7 +508,7 @@ Varnode *DynamicHash::findVarnode(const Funcdata *fd,const Address &addr,uint8 h
     Varnode *tmpvn = vnlist[i];
     clear();
     calcHash(tmpvn,method);
-    if (hash == h)
+    if (getComparable(hash) == getComparable(h))
       vnlist2.push_back(tmpvn);
   }
   if (total != vnlist2.size()) return (Varnode *)0;
@@ -542,7 +542,7 @@ PcodeOp *DynamicHash::findOp(const Funcdata *fd,const Address &addr,uint8 h)
     if (slot >= tmpop->numInput()) continue;
     clear();
     calcHash(tmpop,slot,method);
-    if (hash == h)
+    if (getComparable(hash) == getComparable(h))
       oplist2.push_back(tmpop);
   }
   if (total != oplist2.size())
