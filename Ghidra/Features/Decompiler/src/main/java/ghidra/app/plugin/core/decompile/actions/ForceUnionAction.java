@@ -122,17 +122,21 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		int opcode = accessOp.getOpcode();
 		if (opcode == PcodeOp.PTRSUB) {
 			parentDt = typeIsUnionRelated(accessOp.getInput(0));
+			accessVn = accessOp.getInput(0);
+			accessSlot = 0;
 			if (accessOp.getInput(1).getOffset() == 0) {	// Artificial op
-				accessVn = accessOp.getOutput();
-				accessOp = accessVn.getLoneDescend();
-				if (accessOp == null) {
-					return;
+				do {
+					Varnode tmpVn = accessOp.getOutput();
+					PcodeOp tmpOp = tmpVn.getLoneDescend();
+					if (tmpOp == null) {
+						break;
+					}
+					accessOp = tmpOp;
+					accessVn = tmpVn;
+					accessSlot = accessOp.getSlot(accessVn);
 				}
-				accessSlot = accessOp.getSlot(accessVn);
-			}
-			else {
-				accessVn = accessOp.getInput(0);
-				accessSlot = 0;
+				while (accessOp.getOpcode() == PcodeOp.PTRSUB &&
+					accessOp.getInput(1).getOffset() == 0);
 			}
 		}
 		else {
@@ -179,6 +183,9 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		}
 		for (DataTypeComponent component : components) {
 			String nm = component.getFieldName();
+			if (nm == null || nm.length() == 0) {
+				nm = component.getDefaultFieldName();
+			}
 			allFields.add(nm);
 			if (size == 0 || component.getDataType().getLength() == size) {
 				res.add(nm);
