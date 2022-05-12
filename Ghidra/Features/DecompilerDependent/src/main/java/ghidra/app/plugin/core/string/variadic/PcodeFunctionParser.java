@@ -19,12 +19,12 @@ import java.util.*;
 
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.StringDataInstance;
-import ghidra.program.model.data.StringDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBufferImpl;
 import ghidra.program.model.pcode.PcodeOpAST;
 import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.symbol.SourceType;
 
 /**
  * Class for parsing functions' Pcode representations and finding variadic
@@ -84,7 +84,7 @@ public class PcodeFunctionParser {
 						boolean hasDefinedFormatString = searchForVariadicCallData(ast,
 							addressToCandidateData, functionCallDataList, functionName);
 						if (!hasDefinedFormatString) {
-							searchForHiddenFormatStrings(ast, functionCallDataList, functionName);
+							searchForHiddenFormatStrings(ast, functionCallDataList, function);
 						}
 					}
 				}
@@ -116,20 +116,28 @@ public class PcodeFunctionParser {
 	// If addrToCandidateData doesn't have format String data for this call
 	// and we are calling a variadic function, parse the String to determine
 	// whether it's a format String. 
-	private void searchForHiddenFormatStrings(PcodeOpAST ast,
-			List<FunctionCallData> functionCallDataList, String functionName) {
+	private void searchForHiddenFormatStrings(PcodeOpAST callOp,
+			List<FunctionCallData> functionCallDataList, Function function) {
 
-		Varnode[] inputs = ast.getInputs();
-		// Initialize i = 1 to skip first input
+		Varnode[] inputs = callOp.getInputs();
+		// Initialize i = 1 to skip first input, which is the call target
 		for (int i = 1; i < inputs.length; ++i) {
 			Varnode v = inputs[i];
-			String formatStringCandidate = findFormatString(v.getAddress());
+			Parameter param = function.getParameter(i - 1);
+			if (param == null || param.getSource().equals(SourceType.DEFAULT)) {
+				continue;
+			}
+			DataType type = param.getDataType();
+			if ((type == null) || !(type instanceof Pointer)) {
+				continue;
+			}
+			String formatStringCandidate = findFormatString(v.getAddress(), (Pointer) type);
 			if (formatStringCandidate == null) {
 				continue;
 			}
 			if (formatStringCandidate.contains("%")) {
-				functionCallDataList.add(new FunctionCallData(ast.getSeqnum().getTarget(),
-					functionName, formatStringCandidate));
+				functionCallDataList.add(new FunctionCallData(callOp.getSeqnum().getTarget(),
+					function.getName(), formatStringCandidate));
 			}
 			break;
 		}
@@ -145,9 +153,10 @@ public class PcodeFunctionParser {
 	 * Looks at bytes at given address and converts to format String
 	 * 
 	 * @param address Address of format String
+	 * @param pointer Pointer "type" of string
 	 * @return format String
 	 */
-	private String findFormatString(Address address) {
+	private String findFormatString(Address address, Pointer pointer) {
 
 		if (!address.getAddressSpace().isConstantSpace()) {
 			return null;
@@ -159,9 +168,11 @@ public class PcodeFunctionParser {
 		MemoryBufferImpl memoryBuffer =
 			new MemoryBufferImpl(this.program.getMemory(), ramSpaceAddress);
 
-		StringDataInstance stringDataInstance = StringDataInstance
-				.getStringDataInstance(new StringDataType(), memoryBuffer, SettingsImpl.NO_SETTINGS,
-					BUFFER_LENGTH);
+		DataType charType = pointer.getDataType();
+		//StringDataInstace.getStringDataInstance checks that charType is appropriate
+		//and returns StringDataInstace.NULL_INSTANCE if not
+		StringDataInstance stringDataInstance = StringDataInstance.getStringDataInstance(charType,
+			memoryBuffer, SettingsImpl.NO_SETTINGS, BUFFER_LENGTH);
 		String stringValue = stringDataInstance.getStringValue();
 		if (stringValue == null) {
 			return null;
