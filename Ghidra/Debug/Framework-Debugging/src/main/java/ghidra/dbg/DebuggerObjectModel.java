@@ -580,4 +580,12 @@ public interface DebuggerObjectModel {
 	 * @return a future which completes when all queued callbacks have been invoked
 	 */
 	CompletableFuture<Void> flushEvents();
+
+	/**
+	 * If the model permits, suppress automatic descent into containers
+	 */
+	default void setSuppressDescent(boolean suppressDescent) {
+		// Do nothing by default
+	}
+
 }

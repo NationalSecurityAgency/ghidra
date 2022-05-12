@@ -248,6 +248,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private ToggleDockingAction actionToggleSelectionOnly;
 	private ToggleDockingAction actionToggleIgnoreState;
 	private ToggleDockingAction actionToggleUpdateWhileRunning;
+	private ToggleDockingAction actionSuppressDescent;
 
 	@AutoConfigStateField
 	private boolean autoRecord = true;
@@ -259,6 +260,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private boolean ignoreState = false;
 	@AutoConfigStateField
 	private boolean updateWhileRunning = true;
+	@AutoConfigStateField
+	private boolean suppressDescent = false;
 
 	Set<TargetConfigurable> configurables = new HashSet<>();
 	private String lastMethod = "";
@@ -1002,6 +1005,17 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.enabled(true)
 			.buildAndInstallLocal(this);
 		
+		groupTargetIndex++;
+
+		actionSuppressDescent = new ToggleActionBuilder("Automatically populate containers", plugin.getName())
+			.menuPath("Maintenance","&Auto-populate")
+			.menuGroup(DebuggerResources.GROUP_TARGET, "M" + groupTargetIndex)
+			.helpLocation(new HelpLocation(plugin.getName(), "auto-populate containers"))
+			.onAction(ctx -> performToggleAutoPopulateContainers(ctx))
+			.selected(isUpdateWhileRunning())
+			.enabled(true)
+			.buildAndInstallLocal(this);
+		
 		groupTargetIndex = 0;
 
 		new ActionBuilder("Quick Launch", plugin.getName())
@@ -1431,6 +1445,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public void performToggleUpdateWhileRunning(ActionContext context) {
 		updateWhileRunning = actionToggleUpdateWhileRunning.isSelected();
+		refresh("");
+	}
+
+	public void performToggleAutoPopulateContainers(ActionContext context) {
+		suppressDescent = !actionSuppressDescent.isSelected();
+		if (currentModel != null) {
+			currentModel.setSuppressDescent(suppressDescent);
+		}
 		refresh("");
 	}
 

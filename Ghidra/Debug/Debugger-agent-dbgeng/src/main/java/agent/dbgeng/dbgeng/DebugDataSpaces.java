@@ -224,6 +224,8 @@ public interface DebugDataSpaces {
 
 	DebugMemoryBasicInformation queryVirtual(long offset);
 
+	long virtualToPhysical(long offset);
+
 	/**
 	 * A shortcut for iterating over virtual memory regions.
 	 * 
@@ -276,6 +278,9 @@ public interface DebugDataSpaces {
 					public DebugMemoryBasicInformation next() {
 						DebugMemoryBasicInformation ret = next;
 						next = getNext();
+						if (ret.equals(next)) {
+							next = null;
+						}
 						return ret;
 					}
 				};

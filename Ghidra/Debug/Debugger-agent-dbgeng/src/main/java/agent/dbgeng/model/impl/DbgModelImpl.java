@@ -54,21 +54,21 @@ public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectMode
 	protected final AddressFactory addressFactory =
 		new DefaultAddressFactory(new AddressSpace[] { space });
 
-	protected final DbgManager dbg;
+	protected final DbgManagerImpl dbg;
 	protected final DbgModelTargetRootImpl root;
 	protected final DbgModelTargetSessionImpl session;
 
 	protected final CompletableFuture<DbgModelTargetRootImpl> completedRoot;
 
 	protected Map<Object, TargetObject> objectMap = new HashMap<>();
+	private boolean suppressDescent = false;
 
 	public DbgModelImpl() {
-		this.dbg = DbgManager.newInstance();
+		this.dbg = (DbgManagerImpl) DbgManager.newInstance();
 		//System.out.println(XmlSchemaContext.serialize(SCHEMA_CTX));
 		this.root = new DbgModelTargetRootImpl(this, ROOT_SCHEMA);
 		this.completedRoot = CompletableFuture.completedFuture(root);
-		DbgSessionImpl s = new DbgSessionImpl((DbgManagerImpl) dbg, new DebugSessionId(0));
-		s.add();
+		DbgSessionImpl s = dbg.getSessionComputeIfAbsent(new DebugSessionId(0), true);
 		DbgModelTargetSessionContainer sessions = root.sessions;
 		this.session = (DbgModelTargetSessionImpl) sessions.getTargetSession(s);
 		addModelRoot(root);
@@ -179,5 +179,13 @@ public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectMode
 			}
 			return ExceptionUtils.rethrow(ex);
 		});
+	}
+
+	public boolean isSuppressDescent() {
+		return suppressDescent;
+	}
+
+	public void setSuppressDescent(boolean suppressDescent) {
+		this.suppressDescent = suppressDescent;
 	}
 }

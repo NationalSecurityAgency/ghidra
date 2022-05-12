@@ -55,10 +55,12 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 		super(thread.getModel(), thread, "Registers", "RegisterContainer");
 		this.thread = thread.getThread();
 
-		requestElements(false);
-		changeAttributes(List.of(), List.of(), Map.of( //
-			TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, this //
-		), "Initialized");
+		if (!getModel().isSuppressDescent()) {
+			requestElements(false);
+			changeAttributes(List.of(), List.of(), Map.of( //
+				TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, this //
+			), "Initialized");
+		}
 	}
 
 	@Override
@@ -129,7 +131,20 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 				BigInteger value = vals.get(dbgReg);
 				byte[] bytes = ConversionUtils.bigIntegerToBytes(dbgReg.getSize(), value);
 				result.put(dbgReg.getName(), bytes);
+<<<<<<< Upstream, based on origin/master
 				changeAttrs(reg, value);
+=======
+				reg.changeAttributes(List.of(), Map.of( //
+					VALUE_ATTRIBUTE_NAME, value.toString(16) //
+				), "Refreshed");
+				if (value.longValue() != 0) {
+					String newval = reg.getName() + " : " + Long.toHexString(value.longValue());
+					reg.changeAttributes(List.of(), Map.of( //
+						DISPLAY_ATTRIBUTE_NAME, newval //
+					), "Refreshed");
+					reg.setModified(!value.toString(16).equals(oldval));
+				}
+>>>>>>> 3de71f3 GP-2023 This is a combination of 15 commits. GP-2023: fix for endless region iterator
 			}
 			this.values = result;
 			listeners.fire.registersUpdated(getProxy(), result);

@@ -16,6 +16,7 @@
 package agent.dbgeng.impl.dbgeng.dataspaces;
 
 import com.sun.jna.platform.win32.WinDef.ULONGLONG;
+import com.sun.jna.platform.win32.WinDef.ULONGLONGByReference;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
@@ -40,6 +41,9 @@ public class DebugDataSpacesImpl2 extends DebugDataSpacesImpl1 {
 		if (hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
 			return null;
 		}
+		if (hr.equals(COMUtilsExtra.E_NOTIMPLEMENTED)) {
+			return null;
+		}
 		COMUtils.checkRC(hr);
 
 		return new DebugMemoryBasicInformation(pInfo.BaseAddress.longValue(),
@@ -48,5 +52,15 @@ public class DebugDataSpacesImpl2 extends DebugDataSpacesImpl1 {
 			pInfo.RegionSize.longValue(), PageState.byValue(pInfo.State.intValue()),
 			new BitmaskSet<>(PageProtection.class, pInfo.Protect.intValue()),
 			PageType.byValue(pInfo.Type.intValue()));
+	}
+
+	@Override
+	public long virtualToPhysical(long offsetV) {
+		ULONGLONG ullOffset = new ULONGLONG(offsetV);
+		ULONGLONGByReference pulOffset = new ULONGLONGByReference();
+		HRESULT hr = jnaData.VirtualToPhysical(ullOffset, pulOffset);
+		COMUtils.checkRC(hr);
+
+		return pulOffset.getValue().longValue();
 	}
 }

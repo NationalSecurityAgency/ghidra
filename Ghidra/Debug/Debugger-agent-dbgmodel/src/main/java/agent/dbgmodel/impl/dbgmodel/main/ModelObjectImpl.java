@@ -152,6 +152,10 @@ public class ModelObjectImpl implements ModelObjectInternal {
 			Msg.debug(this, searchKey + " scope not found");
 			return null;
 		}
+		if (hr.equals(COMUtilsExtra.E_CANNOT_READ)) {
+			Msg.debug(this, searchKey + " cannot be read");
+			return null;
+		}
 		COMUtils.checkRC(hr);
 
 		ModelObject retval = getObjectWithMetadata(ppObject, ppMetadata);

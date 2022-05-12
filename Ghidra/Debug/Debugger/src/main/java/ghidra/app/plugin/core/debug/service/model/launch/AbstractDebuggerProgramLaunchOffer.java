@@ -228,11 +228,13 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 					val);
 			}
 		}
-		ProgramUserData userData = program.getProgramUserData();
-		try (UndoableTransaction tid = UndoableTransaction.start(userData)) {
-			Element element = state.saveToXml();
-			userData.setStringProperty(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
-				XmlUtilities.toString(element));
+		if (program != null) {
+			ProgramUserData userData = program.getProgramUserData();
+			try (UndoableTransaction tid = UndoableTransaction.start(userData)) {
+				Element element = state.saveToXml();
+				userData.setStringProperty(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
+					XmlUtilities.toString(element));
+			}
 		}
 	}
 
@@ -253,6 +255,9 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 */
 	protected Map<String, ?> generateDefaultLauncherArgs(
 			Map<String, ParameterDescription<?>> params) {
+		if (program == null) {
+			return Map.of();
+		}
 		return Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, program.getExecutablePath());
 	}
 
@@ -303,34 +308,44 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		 * TODO: Supposedly, per-program, per-user config stuff is being generalized for analyzers.
 		 * Re-examine this if/when that gets merged
 		 */
-		ProgramUserData userData = program.getProgramUserData();
-		String property = userData.getStringProperty(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, null);
-		if (property != null) {
-			try {
-				Element element = XmlUtilities.fromString(property);
-				SaveState state = new SaveState(element);
-				Map<String, Object> args = new LinkedHashMap<>();
-				for (ParameterDescription<?> param : params.values()) {
-					args.put(param.name,
-						ConfigStateField.getState(state, param.type, param.name));
+		if (program != null) {
+			ProgramUserData userData = program.getProgramUserData();
+			String property =
+				userData.getStringProperty(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, null);
+			if (property != null) {
+				try {
+					Element element = XmlUtilities.fromString(property);
+					SaveState state = new SaveState(element);
+					Map<String, Object> args = new LinkedHashMap<>();
+					for (ParameterDescription<?> param : params.values()) {
+						Object configState =
+							ConfigStateField.getState(state, param.type, param.name);
+						if (configState != null) {
+							args.put(param.name, configState);
+						}
+					}
+					if (!args.isEmpty()) {
+						return args;
+					}
 				}
-				return args;
-			}
-			catch (JDOMException | IOException e) {
-				if (!forPrompt) {
-					throw new RuntimeException(
-						"Saved launcher args are corrupt, or launcher parameters changed. Not launching.",
+				catch (JDOMException | IOException e) {
+					if (!forPrompt) {
+						throw new RuntimeException(
+							"Saved launcher args are corrupt, or launcher parameters changed. Not launching.",
+							e);
+					}
+					Msg.error(this,
+						"Saved launcher args are corrup, or launcher parameters changed. Defaulting.",
 						e);
 				}
-				Msg.error(this,
-					"Saved launcher args are corrup, or launcher parameters changed. Defaulting.",
-					e);
 			}
+			Map<String, ?> args = generateDefaultLauncherArgs(params);
+			saveLauncherArgs(args, params);
+			return args;
 		}
 
-		Map<String, ?> args = generateDefaultLauncherArgs(params);
-		saveLauncherArgs(args, params);
-		return args;
+		return new LinkedHashMap<>();
+
 	}
 
 	/**

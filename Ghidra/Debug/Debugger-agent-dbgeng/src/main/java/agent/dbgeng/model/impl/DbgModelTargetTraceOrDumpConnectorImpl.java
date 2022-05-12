@@ -18,6 +18,7 @@ package agent.dbgeng.model.impl;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.DbgModelTargetConnector;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
@@ -66,8 +67,12 @@ public class DbgModelTargetTraceOrDumpConnectorImpl extends DbgModelTargetObject
 			true, ".opendump", "Cmd", "native loader command");
 		ParameterDescription<String> p2 = ParameterDescription.create(String.class, "TraceOrDump",
 			true, "", "File", "trace or dump to be loaded");
+		ParameterDescription<Boolean> p3 = ParameterDescription.create(Boolean.class,
+			"UseQueryVirtual", false, true, "QueryVirtual", "use QueryVirtual (vs. !address)");
 		map.put("CommandLine", p1);
 		map.put("TraceOrDump", p2);
+		// For the moment, we'll leave this out (deadlocks the GUI)
+		//map.put("UseQueryVirtual", p3);
 		return map;
 	}
 
@@ -79,7 +84,12 @@ public class DbgModelTargetTraceOrDumpConnectorImpl extends DbgModelTargetObject
 	@Override
 	public CompletableFuture<Void> launch(Map<String, ?> args) {
 		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			getManager().openFile(args).handle(seq::nextIgnore);
+			DbgManagerImpl manager = getManager();
+			Boolean qv = (Boolean) args.get("UseQueryVirtual");
+			if (qv != null) {
+				manager.setAltMemoryQuery(!qv);
+			}
+			manager.openFile(args).handle(seq::nextIgnore);
 		}).finish().exceptionally((exc) -> {
 			throw new DebuggerUserException("Launch failed for " + args);
 		});
