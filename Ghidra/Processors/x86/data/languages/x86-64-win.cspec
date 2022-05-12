@@ -42,7 +42,7 @@
   </returnaddress>
   <default_proto>
     <prototype name="__fastcall" extrapop="8" stackshift="8">
-      <input>
+      <input pointermax="8">
       <group>
         <pentry minsize="4" maxsize="8" metatype="float">
           <register name="XMM0_Qa"/>
