@@ -277,7 +277,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		private void breakpointDeleted(TraceBreakpoint tb) {
 			if (!tb.getLifespan().contains(info.recorder.getSnap())) {
 				// NOTE: User/script probably removed historical breakpoint
-				assert false;
+				// assert false;
 				return;
 			}
 			info.forgetTraceBreakpoint(c.r, tb);

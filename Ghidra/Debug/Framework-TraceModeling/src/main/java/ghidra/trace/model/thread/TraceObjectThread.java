@@ -15,6 +15,8 @@
  */
 package ghidra.trace.model.thread;
 
+import com.google.common.collect.Range;
+
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetThread;
 import ghidra.trace.model.target.TraceObjectInterface;
@@ -29,4 +31,6 @@ import ghidra.trace.model.target.annot.TraceObjectInfo;
 	})
 public interface TraceObjectThread extends TraceThread, TraceObjectInterface {
 	String KEY_COMMENT = "_comment";
+
+	void setName(Range<Long> lifespan, String name);
 }

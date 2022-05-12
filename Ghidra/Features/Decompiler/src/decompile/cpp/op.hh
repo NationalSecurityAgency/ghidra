@@ -86,7 +86,7 @@ public:
     binary = 0x10000,		///< Evaluate as binary expression
     special = 0x20000,		///< Cannot be evaluated (without special processing)
     ternary = 0x40000,		///< Evaluate as ternary operator (or higher)
-    splittingbranch = 0x80000,	///< Dead edge cannot be removed as it splits
+    no_copy_propagation = 0x80000,	///< Op does not allow COPY propagation through its inputs
     nonprinting = 0x100000,	///< Op should not be directly printed as source
     halt = 0x200000,		///< instruction causes processor or process to halt
     badinstruction = 0x400000,	///< placeholder for bad instruction data
@@ -107,7 +107,7 @@ public:
     warning = 8,		///< Warning has been generated for this op
     incidental_copy = 0x10,	///< Treat this as \e incidental for parameter recovery algorithms
     is_cpool_transformed = 0x20, ///< Have we checked for cpool transforms
-    stop_propagation = 0x40	///< Stop propagation into output from descendants
+    stop_type_propagation = 0x40	///< Stop data-type propagation into output from descendants
   };
 private:
   TypeOp *opcode;		///< Pointer to class providing behavioral details of the operation
@@ -195,7 +195,6 @@ public:
   void clearIndirectSource(void) { flags &= ~PcodeOp::indirect_source; } ///< Clear INDIRECT source flag
   bool isPtrFlow(void) const { return ((flags&PcodeOp::ptrflow)!=0); } ///< Return \b true if this produces/consumes ptrs
   void setPtrFlow(void) { flags |= PcodeOp::ptrflow; } ///< Mark this op as consuming/producing ptrs
-  bool isSplitting(void) const { return ((flags&PcodeOp::splittingbranch)!=0); } ///< Return \b true if this branch splits
   bool doesSpecialPropagation(void) const { return ((addlflags&PcodeOp::special_prop)!=0); } ///< Return \b true if this does datatype propagation
   bool doesSpecialPrinting(void) const { return ((addlflags&PcodeOp::special_print)!=0); } ///< Return \b true if this needs to special printing
   bool isIncidentalCopy(void) const { return ((addlflags&PcodeOp::incidental_copy)!=0); } ///< Return \b true if \b this COPY is \e incidental
@@ -204,9 +203,11 @@ public:
   /// \brief Return \b true if we have already examined this cpool
   bool isCpoolTransformed(void) const { return ((addlflags&PcodeOp::is_cpool_transformed)!=0); }
   bool isCollapsible(void) const; ///< Return \b true if this can be collapsed to a COPY of a constant
-  bool stopsPropagation(void) const { return ((addlflags&stop_propagation)!=0); }	///< Is propagation from below stopped
-  void setStopPropagation(void) { addlflags |= stop_propagation; }	///< Stop propagation from below
-  void clearStopPropagation(void) { addlflags &= ~stop_propagation; }	///< Allow propagation from below
+  bool stopsTypePropagation(void) const { return ((addlflags&stop_type_propagation)!=0); }	///< Is data-type propagation from below stopped
+  void setStopTypePropagation(void) { addlflags |= stop_type_propagation; }	///< Stop data-type propagation from below
+  void clearStopTypePropagation(void) { addlflags &= ~stop_type_propagation; }	///< Allow data-type propagation from below
+  bool stopsCopyPropagation(void) const { return ((flags&no_copy_propagation)!=0); }	///< Does \b this allow COPY propagation
+  void setStopCopyPropagation(void) { flags |= no_copy_propagation; }	///< Stop COPY propagation through inputs
   /// \brief Return \b true if this LOADs or STOREs from a dynamic \e spacebase pointer
   bool usesSpacebasePtr(void) const { return ((flags&PcodeOp::spacebase_ptr)!=0); }
   uintm getCseHash(void) const;	///< Return hash indicating possibility of common subexpression elimination

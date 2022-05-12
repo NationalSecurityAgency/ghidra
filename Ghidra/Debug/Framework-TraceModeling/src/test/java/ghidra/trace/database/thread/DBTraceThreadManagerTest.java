@@ -59,6 +59,7 @@ public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testAddThread() throws Exception {
 		addThreads();
 		try (UndoableTransaction tid = b.startTransaction()) {
+			// TODO: Let this work by expanding the life instead
 			threadManager.createThread("Threads[1]", 1);
 			fail();
 		}

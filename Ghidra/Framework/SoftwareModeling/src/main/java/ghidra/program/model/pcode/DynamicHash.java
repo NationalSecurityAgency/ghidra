@@ -84,7 +84,7 @@ public class DynamicHash {
 	 * in the sub-graph.  The edge can either be from an input Varnode to the PcodeOp
 	 * that reads it, or from a PcodeOp to the Varnode it defines.
 	 */
-	private class ToOpEdge implements Comparable<ToOpEdge> {
+	private static class ToOpEdge implements Comparable<ToOpEdge> {
 		private PcodeOp op;
 		private int slot;			// slot containing varnode we are coming from
 
@@ -222,17 +222,68 @@ public class DynamicHash {
 	}
 
 	/**
+	 * For a DynamicHash on a PcodeOp, the op must not be a CAST or other skipped opcode.
+	 * Test if the given op is a skip op, and if so follow data-flow indicated by the
+	 * slot to another PcodeOp until we find one that isn't a skip op. Return null, if
+	 * the initial op is not skipped, otherwise return a ToOpEdge indicating the
+	 * new (op,slot) pair.
+	 * @param op is the given PcodeOp
+	 * @param slot is the slot
+	 * @return null or a new (op,slot) pair
+	 */
+	private static ToOpEdge moveOffSkip(PcodeOp op, int slot) {
+		if (transtable[op.getOpcode()] != 0) {
+			return null;
+		}
+		do {
+			if (slot >= 0) {
+				Varnode vn = op.getOutput();
+				op = vn.getLoneDescend();
+				if (op == null) {
+					return new ToOpEdge(null, 0);	// Indicate the end of the data-flow path
+				}
+				slot = op.getSlot(vn);
+			}
+			else {
+				Varnode vn = op.getInput(0);
+				op = vn.getDef();
+				if (op == null) {
+					return new ToOpEdge(null, 0);	// Indicate the end of the data-flow path
+				}
+			}
+		}
+		while (transtable[op.getOpcode()] == 0);
+		return new ToOpEdge(op, slot);
+	}
+
+	/**
 	 * Encode a particular PcodeOp and slot
 	 * @param op is the PcodeOp to preserve
 	 * @param slot is the slot to preserve (-1 for output, >=0 for input)
 	 * @param method is the method to use for encoding (4, 5, or 6)
 	 */
 	private void calcHash(PcodeOp op, int slot, int method) {
+		Varnode root;
+		if (slot < 0) {
+			root = op.getOutput();
+			if (root == null) {
+				hash = 0;
+				addrresult = Address.NO_ADDRESS;
+				return;
+			}
+		}
+		else {
+			if (slot >= op.getNumInputs()) {
+				hash = 0;
+				addrresult = Address.NO_ADDRESS;
+				return;
+			}
+			root = op.getInput(slot);
+		}
 		vnproc = 0;
 		opproc = 0;
 		opedgeproc = 0;
 		markset = new HashSet<>();
-		Varnode root = (slot < 0) ? op.getOutput() : op.getInput(slot);
 		opedge.add(new ToOpEdge(op, slot));
 		switch (method) {
 			case 4:
@@ -382,6 +433,16 @@ public class DynamicHash {
 		Address tmpaddr = null;
 		int maxduplicates = 8;
 
+		ToOpEdge move = moveOffSkip(op, slot);
+		if (move != null) {
+			op = move.getOp();
+			slot = move.getSlot();
+			if (op == null) {
+				hash = 0;
+				addrresult = Address.NO_ADDRESS;
+				return;
+			}
+		}
 		gatherOpsAtAddress(oplist, fd, op.getSeqnum().getTarget());
 		for (method = 4; method < 7; ++method) {
 			clear();
@@ -398,7 +459,7 @@ public class DynamicHash {
 				}
 				clear();
 				calcHash(tmpop, slot, method);
-				if (hash == tmphash) {	// Hash collision
+				if (getComparable(hash) == getComparable(tmphash)) {	// Hash collision
 					oplist2.add(tmpop);
 					if (oplist2.size() > maxduplicates) {
 						break;
@@ -461,7 +522,7 @@ public class DynamicHash {
 				Varnode tmpvn = vnlist.get(i);
 				clear();
 				calcHash(tmpvn, method);
-				if (hash == tmphash) {		// Hash collision
+				if (getComparable(hash) == getComparable(tmphash)) {		// Hash collision
 					vnlist2.add(tmpvn);
 					if (vnlist2.size() > maxduplicates) {
 						break;
@@ -600,7 +661,7 @@ public class DynamicHash {
 			Varnode tmpvn = vnlist.get(i);
 			dhash.clear();
 			dhash.calcHash(tmpvn, method);
-			if (dhash.getHash() == h) {
+			if (getComparable(dhash.getHash()) == getComparable(h)) {
 				vnlist2.add(tmpvn);
 			}
 		}
@@ -621,11 +682,12 @@ public class DynamicHash {
 		ArrayList<PcodeOp> oplist2 = new ArrayList<>();
 		gatherOpsAtAddress(oplist, fd, addr);
 		for (PcodeOp tmpop : oplist) {
-			if (slot >= tmpop.getNumInputs())
+			if (slot >= tmpop.getNumInputs()) {
 				continue;
+			}
 			dhash.clear();
 			dhash.calcHash(tmpop, slot, method);
-			if (dhash.getHash() == h) {
+			if (getComparable(dhash.getHash()) == getComparable(h)) {
 				oplist2.add(tmpop);
 			}
 		}
@@ -719,6 +781,10 @@ public class DynamicHash {
 		val = ~val;
 		h &= val;
 		return h;
+	}
+
+	public static int getComparable(long h) {
+		return (int) h;
 	}
 
 	/**

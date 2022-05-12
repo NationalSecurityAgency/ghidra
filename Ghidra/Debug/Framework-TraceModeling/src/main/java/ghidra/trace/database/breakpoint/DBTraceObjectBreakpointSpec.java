@@ -99,12 +99,12 @@ public class DBTraceObjectBreakpointSpec
 
 	@Override
 	public Range<Long> getLifespan() {
-		return object.getLifespan();
+		return computeSpan();
 	}
 
 	@Override
 	public long getPlacedSnap() {
-		return object.getMinSnap();
+		return computeMinSnap();
 	}
 
 	@Override
@@ -116,7 +116,7 @@ public class DBTraceObjectBreakpointSpec
 
 	@Override
 	public long getClearedSnap() {
-		return object.getMaxSnap();
+		return computeMaxSnap();
 	}
 
 	@Override
@@ -144,13 +144,20 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public void setKinds(Collection<TraceBreakpointKind> kinds) {
+	public void setKinds(Range<Long> lifespan, Collection<TraceBreakpointKind> kinds) {
 		// TODO: More efficient encoding
 		// TODO: Target-Trace mapping is implied by encoded name. Seems bad.
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME,
+			object.setValue(lifespan, TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME,
 				TraceBreakpointKindSet.encode(kinds));
 			this.kinds = TraceBreakpointKindSet.copyOf(kinds);
+		}
+	}
+
+	@Override
+	public void setKinds(Collection<TraceBreakpointKind> kinds) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setKinds(getLifespan(), kinds);
 		}
 	}
 
@@ -187,7 +194,9 @@ public class DBTraceObjectBreakpointSpec
 
 	@Override
 	public void delete() {
-		object.deleteTree();
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(computeSpan());
+		}
 	}
 
 	@Override
@@ -206,9 +215,9 @@ public class DBTraceObjectBreakpointSpec
 
 	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceObjectChangeType.VALUE_CHANGED.getType()) {
-			TraceChangeRecord<TraceObjectValue, Object> cast =
-				TraceObjectChangeType.VALUE_CHANGED.cast(rec);
+		if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getType()) {
+			TraceChangeRecord<TraceObjectValue, Void> cast =
+				TraceObjectChangeType.VALUE_CREATED.cast(rec);
 			TraceObjectValue affected = cast.getAffectedObject();
 			String key = affected.getEntryKey();
 			boolean applies = TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME.equals(key) ||

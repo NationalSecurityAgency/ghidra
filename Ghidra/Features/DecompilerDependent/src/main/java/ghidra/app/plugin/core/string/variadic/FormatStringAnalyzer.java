@@ -99,8 +99,7 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 		return true;
 	}
 
-	private void run(AddressSetView selection, TaskMonitor monitor)
-			throws CancelledException {
+	private void run(AddressSetView selection, TaskMonitor monitor) throws CancelledException {
 
 		DefinedDataIterator dataIterator = DefinedDataIterator.definedStrings(currentProgram);
 		Map<Address, Data> stringsByAddress = new HashMap<>();
@@ -114,7 +113,8 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 
 		FunctionIterator functionIterator = currentProgram.getListing().getFunctions(true);
 		FunctionIterator externalIterator = currentProgram.getListing().getExternalFunctions();
-		Iterator<Function> programFunctionIterator = IteratorUtils.chainedIterator(functionIterator,externalIterator);
+		Iterator<Function> programFunctionIterator =
+			IteratorUtils.chainedIterator(functionIterator, externalIterator);
 		Map<String, List<DataType>> namesToParameters = new HashMap<>();
 
 		Map<String, DataType> namesToReturn = new HashMap<>();
@@ -124,22 +124,21 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 		// Find variadic function names and their parameter data types
 		for (Function function : IteratorUtils.asIterable(programFunctionIterator)) {
 			String name = function.getName().strip();
-            if (usesVariadicFormatString(function)) {
-                for (String variadicSubstring : VARIADIC_SUBSTRINGS) {
-                    if (name.contains(variadicSubstring)) {
-                        variadicFunctionNames.add(name);
-                        namesToParameters.put(name, getParameters(function));
-                        namesToReturn.put(name, function.getReturnType());
-                        break;
-                    }
-                }
-            }
+			if (usesVariadicFormatString(function)) {
+				for (String variadicSubstring : VARIADIC_SUBSTRINGS) {
+					if (name.contains(variadicSubstring)) {
+						variadicFunctionNames.add(name);
+						namesToParameters.put(name, getParameters(function));
+						namesToReturn.put(name, function.getReturnType());
+						break;
+					}
+				}
+			}
 			monitor.checkCanceled();
 		}
 
 		Iterator<Function> functionsToSearchIterator = selection != null
-				? currentProgram.getFunctionManager()
-						.getFunctionsOverlapping(selection)
+				? currentProgram.getFunctionManager().getFunctionsOverlapping(selection)
 				: currentProgram.getFunctionManager().getFunctionsNoStubs(true);
 
 		// Find functions that call variadic functions
@@ -157,14 +156,11 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 		}
 
 		decompile(currentProgram, monitor, stringsByAddress, variadicFunctionNames,
-			namesToParameters,
-			namesToReturn,
-			toDecompile);
+			namesToParameters, namesToReturn, toDecompile);
 	}
 
 	private void decompile(Program program, TaskMonitor monitor,
-			Map<Address, Data> stringsByAddress,
-			Set<String> variadicFunctionNames,
+			Map<Address, Data> stringsByAddress, Set<String> variadicFunctionNames,
 			Map<String, List<DataType>> namesToParameters, Map<String, DataType> namesToReturn,
 			Set<Function> toDecompile) {
 
@@ -187,11 +183,9 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 	}
 
 	private DecompilerCallback<Void> initDecompilerCallback(Program program,
-			Map<Address, Data> stringsByAddress,
-			Set<String> variadicFuncNames, Map<String, List<DataType>> namesToParameters,
-			Map<String, DataType> namesToReturn) {
-		return new DecompilerCallback<>(program,
-			new VariadicSignatureDecompileConfigurer()) {
+			Map<Address, Data> stringsByAddress, Set<String> variadicFuncNames,
+			Map<String, List<DataType>> namesToParameters, Map<String, DataType> namesToReturn) {
+		return new DecompilerCallback<>(program, new VariadicSignatureDecompileConfigurer()) {
 			@Override
 			public Void process(DecompileResults results, TaskMonitor tMonitor) throws Exception {
 				if (results == null) {
@@ -211,8 +205,8 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 						pcodeOpASTs.add(pcodeAST);
 					}
 				}
-				List<FunctionCallData> functionCallDataList = pcodeParser.parseFunctionForCallData(
-					pcodeOpASTs, stringsByAddress, variadicFuncNames);
+				List<FunctionCallData> functionCallDataList = pcodeParser
+						.parseFunctionForCallData(pcodeOpASTs, stringsByAddress, variadicFuncNames);
 				if (functionCallDataList != null && functionCallDataList.size() > 0) {
 					overrideCallList(program, function, functionCallDataList, namesToParameters,
 						namesToReturn);
@@ -256,7 +250,7 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 		// DecompInterface allows for control of decompilation processes
 		@Override
 		public void configure(DecompInterface decompiler) {
-			decompiler.toggleCCode(true); // Produce C code
+			decompiler.toggleCCode(false); //only need syntax tree
 			decompiler.toggleSyntaxTree(true); // Produce syntax tree
 			decompiler.openProgram(currentProgram);
 			decompiler.setSimplificationStyle("normalize");
@@ -266,8 +260,7 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 		}
 	}
 
-	private ParameterDefinition[] parseParameters(Function function,
-			Address address,
+	private ParameterDefinition[] parseParameters(Function function, Address address,
 			String callFunctionName, String formatString,
 			Map<String, List<DataType>> namesToParameters) {
 
@@ -347,8 +340,7 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 
 	private void overrideFunctionCall(Program program, Function function, Address address,
 			String callFunctionName, String formatString,
-			Map<String, List<DataType>> namesToParameters,
-			Map<String, DataType> namesToReturn) {
+			Map<String, List<DataType>> namesToParameters, Map<String, DataType> namesToReturn) {
 		if (formatString == null) {
 			return;
 		}
@@ -361,14 +353,14 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 		try {
 			if (createBookmarksEnabled) {
 				BookmarkManager bookmark = program.getBookmarkManager();
-				bookmark.setBookmark(address, BookmarkType.ANALYSIS,
-					"Function Signature Override",
+				bookmark.setBookmark(address, BookmarkType.ANALYSIS, "Function Signature Override",
 					"Override for call to function " + callFunctionName);
 			}
 			HighFunctionDBUtil.writeOverride(function, address, functionSignature);
 		}
 		catch (InvalidInputException e) {
-			Msg.error(this, "Error: invalid input given to writeOverride()", e);
+			Msg.warn(this,
+				"Error applying override to " + address.toString() + ": " + e.getMessage());
 		}
 	}
 

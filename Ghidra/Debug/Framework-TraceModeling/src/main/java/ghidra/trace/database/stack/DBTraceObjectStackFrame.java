@@ -17,12 +17,13 @@ package ghidra.trace.database.stack;
 
 import java.util.List;
 
-import com.google.common.collect.Range;
+import com.google.common.collect.*;
 
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
@@ -32,12 +33,14 @@ import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 
 public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceObjectInterface {
 	private final DBTraceObject object;
+	// TODO: Memorizing life is not optimal.
+	// GP-1887 means to expose multiple lifespans in, e.g., TraceThread
+	private RangeSet<Long> life = TreeRangeSet.create();
 
 	public DBTraceObjectStackFrame(DBTraceObject object) {
 		this.object = object;
@@ -46,8 +49,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	@Override
 	public TraceObjectStack getStack() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return object
-					.queryCanonicalAncestorsInterface(object.getLifespan(), TraceObjectStack.class)
+			return object.queryCanonicalAncestorsInterface(TraceObjectStack.class)
 					.findAny()
 					.orElseThrow();
 		}
@@ -85,16 +87,14 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 			if (pc == Address.NO_ADDRESS) {
 				pc = null;
 			}
-			object.setValue(object.getLifespan().intersection(span),
-				TargetStackFrame.PC_ATTRIBUTE_NAME, pc);
+			object.setValue(span, TargetStackFrame.PC_ATTRIBUTE_NAME, pc);
 		}
 	}
 
 	@Override
-	public String getComment() {
-		// TODO: Do I need to add a snap argument?
+	public String getComment(long snap) {
 		// TODO: One day, we'll have dynamic columns in the debugger
-		/**
+		/*
 		 * I don't use an attribute for this, because there's not a nice way track the "identity" of
 		 * a stack frame. If the frame is re-used (the recommendation for connector development),
 		 * the same comment may not necessarily apply. It'd be nice if the connector re-assigned
@@ -105,21 +105,23 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 		 * follow the "same frame" as its level changes.
 		 */
 		try (LockHold hold = object.getTrace().lockRead()) {
-			Address pc = getProgramCounter(object.getMaxSnap());
+			Address pc = getProgramCounter(snap);
 			return pc == null ? null
 					: object.getTrace()
 							.getCommentAdapter()
-							.getComment(object.getMaxSnap(), pc, CodeUnit.EOL_COMMENT);
+							.getComment(snap, pc, CodeUnit.EOL_COMMENT);
 		}
 	}
 
 	@Override
-	public void setComment(String comment) {
-		// TODO: Do I need to add a span argument?
+	public void setComment(long snap, String comment) {
+		/* See rant in getComment */
 		try (LockHold hold = object.getTrace().lockWrite()) {
+			TraceObjectValue pcAttr =
+				object.getValue(snap, TargetStackFrame.PC_ATTRIBUTE_NAME);
 			object.getTrace()
 					.getCommentAdapter()
-					.setComment(object.getLifespan(), getProgramCounter(object.getMaxSnap()),
+					.setComment(pcAttr.getLifespan(), (Address) pcAttr.getValue(),
 						CodeUnit.EOL_COMMENT, comment);
 		}
 	}
@@ -130,8 +132,8 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	}
 
 	protected boolean changeApplies(TraceChangeRecord<?, ?> rec) {
-		TraceChangeRecord<TraceObjectValue, Object> cast =
-			TraceObjectChangeType.VALUE_CHANGED.cast(rec);
+		TraceChangeRecord<TraceObjectValue, Void> cast =
+			TraceObjectChangeType.VALUE_CREATED.cast(rec);
 		TraceObjectValue affected = cast.getAffectedObject();
 		assert affected.getParent() == object;
 		if (!TargetStackFrame.PC_ATTRIBUTE_NAME.equals(affected.getEntryKey())) {
@@ -143,24 +145,45 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 		return true;
 	}
 
-	protected long snapFor(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceObjectChangeType.VALUE_CHANGED.getType()) {
-			return TraceObjectChangeType.VALUE_CHANGED.cast(rec).getAffectedObject().getMinSnap();
+	@Override
+	public Range<Long> computeSpan() {
+		Range<Long> span = DBTraceObjectInterface.super.computeSpan();
+		if (span != null) {
+			return span;
 		}
-		return object.getMinSnap();
+		return getStack().computeSpan();
+	}
+
+	protected long snapFor(TraceChangeRecord<?, ?> rec) {
+		if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getType()) {
+			return TraceObjectChangeType.VALUE_CREATED.cast(rec).getAffectedObject().getMinSnap();
+		}
+		return computeMinSnap();
+	}
+
+	protected TraceChangeRecord<?, ?> createChangeRecord() {
+		return new TraceChangeRecord<>(TraceStackChangeType.CHANGED, null, getStack(), 0L,
+			DBTraceUtils.lowerEndpoint(life.span()));
 	}
 
 	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceObjectChangeType.INSERTED.getType() ||
-			rec.getEventType() == TraceObjectChangeType.DELETED.getType() ||
-			rec.getEventType() == TraceObjectChangeType.VALUE_CHANGED.getType() &&
-				changeApplies(rec)) {
-			TraceAddressSpace space =
-				spaceForValue(object.getMinSnap(), TargetStackFrame.PC_ATTRIBUTE_NAME);
-			TraceObjectStack stack = getStack();
-			return new TraceChangeRecord<>(TraceStackChangeType.CHANGED, space, stack,
-				0L, snapFor(rec));
+		int type = rec.getEventType();
+		if (type == TraceObjectChangeType.LIFE_CHANGED.getType()) {
+			RangeSet<Long> newLife = object.getLife();
+			if (!newLife.isEmpty()) {
+				life = newLife;
+			}
+			return createChangeRecord();
+		}
+		else if (type == TraceObjectChangeType.VALUE_CREATED.getType() && changeApplies(rec)) {
+			return createChangeRecord();
+		}
+		else if (type == TraceObjectChangeType.DELETED.getType()) {
+			if (life.isEmpty()) {
+				return null;
+			}
+			return createChangeRecord();
 		}
 		return null;
 	}

@@ -122,17 +122,21 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		int opcode = accessOp.getOpcode();
 		if (opcode == PcodeOp.PTRSUB) {
 			parentDt = typeIsUnionRelated(accessOp.getInput(0));
+			accessVn = accessOp.getInput(0);
+			accessSlot = 0;
 			if (accessOp.getInput(1).getOffset() == 0) {	// Artificial op
-				accessVn = accessOp.getOutput();
-				accessOp = accessVn.getLoneDescend();
-				if (accessOp == null) {
-					return;
+				do {
+					Varnode tmpVn = accessOp.getOutput();
+					PcodeOp tmpOp = tmpVn.getLoneDescend();
+					if (tmpOp == null) {
+						break;
+					}
+					accessOp = tmpOp;
+					accessVn = tmpVn;
+					accessSlot = accessOp.getSlot(accessVn);
 				}
-				accessSlot = accessOp.getSlot(accessVn);
-			}
-			else {
-				accessVn = accessOp.getInput(0);
-				accessSlot = 0;
+				while (accessOp.getOpcode() == PcodeOp.PTRSUB &&
+					accessOp.getInput(1).getOffset() == 0);
 			}
 		}
 		else {
@@ -179,6 +183,9 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		}
 		for (DataTypeComponent component : components) {
 			String nm = component.getFieldName();
+			if (nm == null || nm.length() == 0) {
+				nm = component.getDefaultFieldName();
+			}
 			allFields.add(nm);
 			if (size == 0 || component.getDataType().getLength() == size) {
 				res.add(nm);
@@ -187,21 +194,6 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		String[] resArray = new String[res.size()];
 		res.toArray(resArray);
 		return resArray;
-	}
-
-	/**
-	 * Find the index of a given string, within an array of strings
-	 * @param list is the array of strings
-	 * @param value is the given string to find
-	 * @return the index of the given string within the array, or -1 if it isn't present
-	 */
-	private static int findStringIndex(ArrayList<String> list, String value) {
-		for (int i = 0; i < list.size(); ++i) {
-			if (list.get(i).equals(value)) {
-				return i;
-			}
-		}
-		return -1;
 	}
 
 	/**
@@ -224,7 +216,7 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 			OkDialog.show("No Field Choices", "Only one field fits the selected variable");
 			return false;
 		}
-		int currentChoice = findStringIndex(allFields, defaultFieldName);
+		int currentChoice = allFields.indexOf(defaultFieldName);
 		if (currentChoice < 0) {
 			defaultFieldName = null;
 		}
@@ -234,7 +226,7 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		if (userChoice == null) {
 			return false;		// User cancelled when making the choice
 		}
-		fieldNumber = findStringIndex(allFields, userChoice);
+		fieldNumber = allFields.indexOf(userChoice);
 		if (fieldNumber < 0 || fieldNumber == currentChoice) {
 			return false;	// User chose original value or something not in list, treat as cancel
 		}

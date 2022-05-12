@@ -76,6 +76,7 @@ class DynamicHash {
   void gatherUnmarkedVn(void);		///< Move staged Varnodes into the sub-graph and mark them
   void gatherUnmarkedOp(void);		///< Mark any new PcodeOps in the sub-graph
   void pieceTogetherHash(const Varnode *root,uint4 method);	///< Clean-up and piece together formal hash value
+  static void moveOffSkip(const PcodeOp *&op,int4 &slot);	///< Convert given PcodeOp to a non-skip op by following data-flow
 public:
   void clear(void);			///< Called for each additional hash (after the first)
   void calcHash(const Varnode *root,uint4 method);	///< Calculate the hash for given Varnode and method
@@ -96,7 +97,8 @@ public:
   static uint4 getTotalFromHash(uint8 h);		///< Retrieve the encoded collision total from a hash
   static bool getIsNotAttached(uint8 h);		///< Retrieve the attachment boolean from a hash
   static void clearTotalPosition(uint8 &h);		///< Clear the collision total and position fields within a hash
-  static uint4 transtable[];				///< Translation of op-codes to hash values
+  static uint4 getComparable(uint8 h) { return (uint4)h; }	///< Get only the formal hash for comparing
+  static const uint4 transtable[];				///< Translation of op-codes to hash values
 };
 
 #endif

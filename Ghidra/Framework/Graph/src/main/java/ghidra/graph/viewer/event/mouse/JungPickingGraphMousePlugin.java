@@ -1,5 +1,5 @@
 /* ###
- * IP: BSD
+ * IP: BSD-3-JUNG
  */
 /*
  * Copyright (c) 2005, The JUNG Authors 

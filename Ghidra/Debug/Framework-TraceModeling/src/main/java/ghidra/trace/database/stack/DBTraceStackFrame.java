@@ -122,12 +122,12 @@ public class DBTraceStackFrame extends DBAnnotatedObject
 	}
 
 	@Override
-	public String getComment() {
+	public String getComment(long snap) {
 		return comment;
 	}
 
 	@Override
-	public void setComment(String comment) {
+	public void setComment(long snap, String comment) {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			this.comment = comment;
 			update(COMMENT_COLUMN);

@@ -60,24 +60,22 @@ public interface Trace extends DataTypeManagerDomainObject {
 		 * An object was created, but not yet inserted.
 		 * 
 		 * <p>
-		 * Between the {@link #CREATED} and {@link #INSERTED} events, an object is considered
-		 * "incomplete," because it is likely missing its attributes. Thus, a trace client must take
-		 * care to ensure all attributes, especially fixed attributes, are added to the object
-		 * before it is inserted at its canonical path. Listeners may use
+		 * Between the {@link #CREATED} event and the first {@link #LIFE_CHANGED} event, an object
+		 * is considered "incomplete," because it is likely missing its attributes. Thus, a trace
+		 * client must take care to ensure all attributes, especially fixed attributes, are added to
+		 * the object before it is inserted at its canonical path. Listeners may use
 		 * {@link TraceObject#getCanonicalParent(long)} to check if an object is complete for a
 		 * given snapshot.
 		 */
 		public static final TraceObjectChangeType<TraceObject, Void> CREATED =
 			new TraceObjectChangeType<>();
 		/**
-		 * An object was inserted at its canonical path.
+		 * An object's life changed.
+		 * 
+		 * <p>
+		 * One of its canonical parents was created, deleted, or had its lifespan change.
 		 */
-		public static final TraceObjectChangeType<TraceObject, TraceObjectValue> INSERTED =
-			new TraceObjectChangeType<>();
-		/**
-		 * An object's lifespan changed.
-		 */
-		public static final TraceObjectChangeType<TraceObject, Range<Long>> LIFESPAN_CHANGED =
+		public static final TraceObjectChangeType<TraceObject, Void> LIFE_CHANGED =
 			new TraceObjectChangeType<>();
 		/**
 		 * An object was deleted.
@@ -85,27 +83,20 @@ public interface Trace extends DataTypeManagerDomainObject {
 		public static final TraceObjectChangeType<TraceObject, Void> DELETED =
 			new TraceObjectChangeType<>();
 		/**
-		 * An object's value changed.
-		 * 
-		 * <p>
-		 * If the old value was equal for the entirety of the new value's lifespan, that old value
-		 * is passed as the old value. Otherwise, {@code null} is passed for the old value. If the
-		 * value was cleared, {@code null} is passed for the new value.
+		 * A value entry was created.
 		 */
-		public static final TraceObjectChangeType<TraceObjectValue, Object> VALUE_CHANGED =
+		public static final TraceObjectChangeType<TraceObjectValue, Void> VALUE_CREATED =
 			new TraceObjectChangeType<>();
 		/**
-		 * An object's value changed in lifespan.
-		 * 
-		 * <p>
-		 * This is only called for the value on which {@link TraceObjectValue#setLifespan(Range)} or
-		 * similar is called. If other values are truncated or deleted, there is no event. Listeners
-		 * concerned about a single snap need only check if the snap is contained in the new and old
-		 * lifespans. Listeners concerned about the full timeline can refresh the parent object's
-		 * values, or compute the coalescing and truncation manually.
+		 * A value entry changed in lifespan.
 		 */
 		public static final TraceObjectChangeType<TraceObjectValue, Range<Long>> //
 		VALUE_LIFESPAN_CHANGED = new TraceObjectChangeType<>();
+		/**
+		 * A value entry was deleted.
+		 */
+		public static final TraceObjectChangeType<TraceObjectValue, Void> VALUE_DELETED =
+			new TraceObjectChangeType<>();
 	}
 
 	public static final class TraceBookmarkChangeType<T, U> extends DefaultTraceChangeType<T, U> {

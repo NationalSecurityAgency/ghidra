@@ -19,7 +19,7 @@
 
 // Table for how to hash opcodes, lumps certain operators (i.e. ADD SUB PTRADD PTRSUB) into one hash
 // zero indicates the operator should be skipped
-uint4 DynamicHash::transtable[] = {
+const uint4 DynamicHash::transtable[] = {
   0,
   CPUI_COPY,  CPUI_LOAD,  CPUI_STORE,  CPUI_BRANCH,  CPUI_CBRANCH,  CPUI_BRANCHIND,
 
@@ -199,11 +199,30 @@ void DynamicHash::clear(void)
 void DynamicHash::calcHash(const PcodeOp *op,int4 slot,uint4 method)
 
 {
+  const Varnode *root;
+
+  // slot may be from a hash unassociated with op
+  // we need to check that slot indicates a valid Varnode
+  if (slot < 0) {
+    root = op->getOut();
+    if (root == (const Varnode *)0) {
+      hash = 0;
+      addrresult = Address();
+      return;		// slot does not fit op
+    }
+  }
+  else {
+    if (slot >= op->numInput()) {
+      hash = 0;
+      addrresult = Address();
+      return;		// slot does not fit op
+    }
+    root = op->getIn(slot);
+  }
   vnproc = 0;
   opproc = 0;
   opedgeproc = 0;
 
-  const Varnode *root = (slot < 0) ? op->getOut() : op->getIn(slot);
   opedge.push_back(ToOpEdge(op,slot));
   switch(method) {
     case 4:
@@ -354,6 +373,32 @@ void DynamicHash::pieceTogetherHash(const Varnode *root,uint4 method)
   addrresult = op->getSeqNum().getAddr();
 }
 
+/// For a DynamicHash on a PcodeOp, the op must not be a CAST or other skipped opcode.
+/// Test if the given op is a skip op, and if so follow data-flow indicated by the
+/// slot to another PcodeOp until we find one that isn't a skip op. Pass back the new PcodeOp
+/// and slot. Pass back null if the data-flow path ends.
+/// \param op is the given PcodeOp to modify
+/// \param slot is the slot to modify
+void DynamicHash::moveOffSkip(const PcodeOp *&op,int4 &slot)
+
+{
+  while(transtable[op->code()] == 0) {
+    if (slot >= 0) {
+      const Varnode *vn = op->getOut();
+      op = vn->loneDescend();
+      if (op == (PcodeOp*)0) {
+	return;	// Indicate the end of the data-flow path
+      }
+      slot = op->getSlot(vn);
+    }
+    else {
+      const Varnode *vn = op->getIn(0);
+      if (!vn->isWritten()) return;	// Indicate the end of the data-flow path
+      op = vn->getDef();
+    }
+  }
+}
+
 /// Collect the set of Varnodes at the same address as the given Varnode.
 /// Starting with method 0, increment the method and calculate hashes
 /// of the Varnodes until the given Varnode has a unique hash within the set.
@@ -393,7 +438,7 @@ void DynamicHash::uniqueHash(const Varnode *root,Funcdata *fd)
       Varnode *tmpvn = vnlist[i];
       clear();
       calcHash(tmpvn,method);
-      if (hash == tmphash) {	// Hash collision
+      if (getComparable(hash) == getComparable(tmphash)) {	// Hash collision
 	vnlist2.push_back(tmpvn);
 	if (vnlist2.size()>maxduplicates) break;
       }
@@ -424,6 +469,12 @@ void DynamicHash::uniqueHash(const Varnode *root,Funcdata *fd)
   addrresult = tmpaddr;
 }
 
+/// Different hash methods are cycled through until a hash is found that distinguishes the given
+/// op from other PcodeOps at the same address. The final hash encoding and address of the PcodeOp are
+/// built for retrieval using getHash() and getAddress().
+/// \param op is the given PcodeOp
+/// \param slot is the particular slot to encode in the hash
+/// \param fd is the function containing the given PcodeOp
 void DynamicHash::uniqueHash(const PcodeOp *op,int4 slot,Funcdata *fd)
 
 {
@@ -435,6 +486,12 @@ void DynamicHash::uniqueHash(const PcodeOp *op,int4 slot,Funcdata *fd)
   Address tmpaddr;
   uint4 maxduplicates = 8;
 
+  moveOffSkip(op, slot);
+  if (op == (const PcodeOp *)0) {
+    hash = (uint8)0;
+    addrresult = Address();	// Hash cannot be calculated
+    return;
+  }
   gatherOpsAtAddress(oplist,fd,op->getAddr());
   for(method=4;method<7;++method) {
     clear();
@@ -449,7 +506,7 @@ void DynamicHash::uniqueHash(const PcodeOp *op,int4 slot,Funcdata *fd)
       if (slot >= tmpop->numInput()) continue;
       clear();
       calcHash(tmpop,slot,method);
-      if (hash == tmphash) {	// Hash collision
+      if (getComparable(hash) == getComparable(tmphash)) {	// Hash collision
 	oplist2.push_back(tmpop);
 	if (oplist2.size()>maxduplicates)
 	  break;
@@ -508,7 +565,7 @@ Varnode *DynamicHash::findVarnode(const Funcdata *fd,const Address &addr,uint8 h
     Varnode *tmpvn = vnlist[i];
     clear();
     calcHash(tmpvn,method);
-    if (hash == h)
+    if (getComparable(hash) == getComparable(h))
       vnlist2.push_back(tmpvn);
   }
   if (total != vnlist2.size()) return (Varnode *)0;
@@ -542,7 +599,7 @@ PcodeOp *DynamicHash::findOp(const Funcdata *fd,const Address &addr,uint8 h)
     if (slot >= tmpop->numInput()) continue;
     clear();
     calcHash(tmpop,slot,method);
-    if (hash == h)
+    if (getComparable(hash) == getComparable(h))
       oplist2.push_back(tmpop);
   }
   if (total != oplist2.size())

@@ -1,6 +1,13 @@
 ##VERSION: 2.0
 Apache_License_2.0.txt||LICENSE||||END|
 Apache_License_2.0_with_LLVM_Exceptions.txt||LICENSE||||END|
+BSD-2-ORACLE.txt||LICENSE||||END|
+BSD-3-GOOGLE.txt||LICENSE||||END|
+BSD-3-GRUVER.txt||LICENSE||||END|
+BSD-3-HAMCREST.txt||LICENSE||||END|
+BSD-3-JUNG.txt||LICENSE||||END|
+BSD-3-ORACLE.txt||LICENSE||||END|
+BSD-3-PARR-HARWELL.txt||LICENSE||||END|
 BSD.txt||LICENSE||||END|
 Bouncy_Castle_License.txt||LICENSE||||END|
 Creative_Commons_Attribution_2.5.html||LICENSE||||END|

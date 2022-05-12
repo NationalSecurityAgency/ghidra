@@ -755,6 +755,8 @@ public class HighFunctionDBUtil {
 	public static void writeUnionFacet(Function function, DataType dt, int fieldNum, Address addr,
 			long hash, SourceType source) throws InvalidInputException, DuplicateNameException {
 		int firstUseOffset = (int) addr.subtract(function.getEntryPoint());
+		String symbolName = UnionFacetSymbol.buildSymbolName(fieldNum, addr);
+		boolean nameCollision = false;
 		Variable[] localVariables =
 			function.getLocalVariables(VariableFilter.UNIQUE_VARIABLE_FILTER);
 		Variable preexistingVar = null;
@@ -762,10 +764,14 @@ public class HighFunctionDBUtil {
 			if (var.getFirstUseOffset() == firstUseOffset &&
 				var.getFirstStorageVarnode().getOffset() == hash) {
 				preexistingVar = var;
-				break;
+			}
+			else if (var.getName().startsWith(symbolName)) {
+				nameCollision = true;
 			}
 		}
-		String symbolName = UnionFacetSymbol.buildSymbolName(fieldNum, addr);
+		if (nameCollision) {	// Uniquify the name if necessary
+			symbolName = symbolName + '_' + Integer.toHexString(DynamicHash.getComparable(hash));
+		}
 		if (preexistingVar != null) {
 			if (preexistingVar.getName().equals(symbolName)) {
 				return;			// No change to make

@@ -15,12 +15,9 @@
  */
 package ghidra.program.database.map;
 
-import java.io.IOException;
 import java.util.List;
 
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Language;
-import ghidra.program.util.LanguageTranslator;
 
 /**
  * Address map interface add methods need by the program database implementation to manage its address map.
@@ -170,71 +167,8 @@ public interface AddressMap {
 	public boolean isUpgraded();
 
 	/**
-	 * Sets the image base, effectively changing the mapping between addresses and longs.
-	 * @param base the new base address.
-	 */
-	public void setImageBase(Address base);
-
-	/**
-	 * Returns a modification number that always increases when the address map base table has
-	 * changed.
-	 */
-	public int getModCount();
-
-	/**
 	 * Returns the current image base setting.
 	 */
 	public Address getImageBase();
 
-	/**
-	 * Converts the current base addresses to addresses compatible with the new language.
-	 * @param newLanguage the new language to use.
-	 * @param addrFactory the new AddressFactory.
-	 * @param translator translates address spaces from the old language to the new language.
-	 */
-	public void setLanguage(Language newLanguage, AddressFactory addrFactory,
-			LanguageTranslator translator) throws IOException;
-
-	/**
-	 * Clears any cached values.
-	 * @throws IOException
-	 */
-	public void invalidateCache() throws IOException;
-
-	/**
-	 * Rename an existing overlay space.
-	 * @param oldName old overlay name
-	 * @param newName new overlay name (must be unique among all space names within this map)
-	 * @throws IOException
-	 */
-	public void renameOverlaySpace(String oldName, String newName) throws IOException;
-
-	/**
-	 * Delete the specified overlay space from this address map.
-	 * @param name overlay space name (must be unique among all space names within this map)
-	 * @throws IOException
-	 */
-	public void deleteOverlaySpace(String name) throws IOException;
-
-	/**
-	 * Returns true if the two address keys share a common key base and can be 
-	 * used within a single key-range.
-	 * @param addrKey1
-	 * @param addrKey2
-	 */
-	public boolean hasSameKeyBase(long addrKey1, long addrKey2);
-
-	/**
-	 * Returns true if the specified addrKey is the minimum key within
-	 * its key-range.
-	 * @param addrKey
-	 */
-	public boolean isKeyRangeMin(long addrKey);
-
-	/**
-	 * Returns true if the specified addrKey is the maximum key within
-	 * its key-range.
-	 * @param addrKey
-	 */
-	public boolean isKeyRangeMax(long addrKey);
 }

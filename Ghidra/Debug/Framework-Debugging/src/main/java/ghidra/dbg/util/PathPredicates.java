@@ -54,6 +54,10 @@ public interface PathPredicates {
 		return new PathPattern(PathUtils.parse(pattern));
 	}
 
+	static PathPredicates all() {
+		return AllPathsMatcher.INSTANCE;
+	}
+
 	PathPredicates or(PathPredicates that);
 
 	/**

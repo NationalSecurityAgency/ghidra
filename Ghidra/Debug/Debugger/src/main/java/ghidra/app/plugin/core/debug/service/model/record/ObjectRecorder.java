@@ -82,11 +82,14 @@ class ObjectRecorder {
 			traceObject = objectManager.getRootObject();
 		}
 		else {
-			traceObject = objectManager
-					.createObject(TraceObjectKeyPath.of(object.getPath()), Range.atLeast(snap));
+			traceObject = objectManager.createObject(TraceObjectKeyPath.of(object.getPath()));
 		}
 		synchronized (objectMap) {
-			objectMap.put(new IDKeyed<>(object), new IDKeyed<>(traceObject));
+			IDKeyed<TraceObject> exists =
+				objectMap.put(new IDKeyed<>(object), new IDKeyed<>(traceObject));
+			if (exists != null) {
+				Msg.error(this, "Received created for an object that already exists: " + exists);
+			}
 		}
 	}
 
@@ -102,7 +105,7 @@ class ObjectRecorder {
 			Msg.error(this, "Unknown object was invalidated: " + object);
 			return;
 		}
-		traceObject.obj.truncateOrDelete(Range.atLeast(snap));
+		traceObject.obj.removeTree(Range.atLeast(snap));
 	}
 
 	protected String encodeEnum(Enum<?> e) {
@@ -269,7 +272,7 @@ class ObjectRecorder {
 		if (found == null) {
 			return null;
 		}
-		TraceObject last = found.getLastChild(null);
+		TraceObject last = found.getDestination(null);
 		if (last == null) {
 			return null;
 		}
@@ -284,7 +287,7 @@ class ObjectRecorder {
 			return List.of();
 		}
 		return seed.querySuccessorsTargetInterface(Range.singleton(recorder.getSnap()), targetIf)
-				.map(p -> toTarget(p.getLastChild(seed)).as(targetIf))
+				.map(p -> toTarget(p.getDestination(seed)).as(targetIf))
 				.collect(Collectors.toList());
 	}
 }

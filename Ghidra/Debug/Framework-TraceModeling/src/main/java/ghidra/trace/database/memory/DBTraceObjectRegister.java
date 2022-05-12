@@ -45,7 +45,7 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 
 	@Override
 	public TraceObjectThread getThread() {
-		return object.queryAncestorsInterface(object.getLifespan(), TraceObjectThread.class)
+		return object.queryCanonicalAncestorsInterface(TraceObjectThread.class)
 				.findAny()
 				.orElseThrow();
 	}
@@ -61,7 +61,7 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 
 	@Override
 	public int getLength() {
-		return TraceObjectInterfaceUtils.getValue(object, object.getMinSnap(),
+		return TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
 			TargetRegister.LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
 	}
 

@@ -787,7 +787,7 @@ Datatype *Varnode::getLocalType(bool &blockup) const
   ct = (Datatype *)0;
   if (def != (PcodeOp *)0) {
     ct = def->outputTypeLocal();
-    if (def->stopsPropagation()) {
+    if (def->stopsTypePropagation()) {
       blockup = true;
       return ct;
     }

@@ -531,6 +531,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		for (String line : sleigh) {
 			ticks.advance(new PatchStep(thread.getKey(), line));
 		}
+		ticks.coalescePatches(thread.getTrace().getBaseLanguage());
 		return new TraceSchedule(snap, ticks, new Sequence());
 	}
 }

@@ -91,6 +91,7 @@ public interface TraceObjectValue {
 	 * 
 	 * @param lifespan the new lifespan
 	 * @param resolution specifies how to resolve duplicate keys with intersecting lifespans
+	 * @throws DuplicateKeyException if there are denied duplicate keys
 	 */
 	void setLifespan(Range<Long> span, ConflictResolution resolution);
 
@@ -133,16 +134,8 @@ public interface TraceObjectValue {
 
 	/**
 	 * Delete this entry
-	 * 
-	 * <p>
-	 * If this entry is part of the child object's canonical path, then the child is also deleted.
 	 */
 	void delete();
-
-	/**
-	 * Delete this entry and, if it is canonical, its successors
-	 */
-	void deleteTree();
 
 	/**
 	 * Check if this value entry has been deleted

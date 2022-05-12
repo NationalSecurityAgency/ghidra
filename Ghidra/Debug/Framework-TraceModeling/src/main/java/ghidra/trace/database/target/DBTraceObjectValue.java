@@ -27,11 +27,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import com.google.common.collect.Range;
 
 import db.*;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.database.target.InternalTreeTraversal.Visitor;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectValPath;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
@@ -277,6 +276,11 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	}
 
 	@Override
+	public DBTraceObject getChildOrNull() {
+		return child;
+	}
+
+	@Override
 	public Range<Long> getLifespan() {
 		try (LockHold hold = manager.trace.lockRead()) {
 			return lifespan;
@@ -311,46 +315,9 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 		}
 	}
 
-	protected Stream<TraceObjectValPath> doGetAllPaths(Range<Long> span,
-			DBTraceObjectValPath post) {
-		return triple.parent.doGetAllPaths(span, post.prepend(this));
-	}
-
-	protected Stream<? extends DBTraceObjectValPath> doGetAncestors(Range<Long> span,
-			DBTraceObjectValPath post, PathPredicates predicates) {
-		return triple.parent.doGetAncestors(span, post.prepend(this), predicates);
-	}
-
-	@Override
-	public Stream<? extends DBTraceObjectValPath> doGetSuccessors(
-			Range<Long> span, DBTraceObjectValPath pre, PathPredicates predicates) {
-		DBTraceObjectValPath path = pre == null ? DBTraceObjectValPath.of() : pre.append(this);
-		boolean includeMe = predicates.matches(path.getKeyList());
-		boolean descend = child != null;
-		if (includeMe && descend) {
-			return Stream.concat(Stream.of(path), child.doGetSuccessors(span, path, predicates));
-		}
-		if (includeMe) {
-			return Stream.of(path);
-		}
-		if (descend) {
-			return child.doGetSuccessors(span, path, predicates);
-		}
-		return Stream.empty();
-	}
-
-	@Override
-	public Stream<? extends DBTraceObjectValPath> doGetOrderedSuccessors(Range<Long> span,
-			DBTraceObjectValPath pre, PathPredicates predicates, boolean forward) {
-		DBTraceObjectValPath path = pre == null ? DBTraceObjectValPath.of() : pre.append(this);
-		if (predicates.matches(path.getKeyList())) {
-			// Singleton path, so if I match, nothing below can
-			return Stream.of(path);
-		}
-		if (child == null) {
-			return Stream.of();
-		}
-		return child.doGetOrderedSuccessors(span, path, predicates, forward);
+	protected Stream<? extends DBTraceObjectValPath> doStreamVisitor(Range<Long> span,
+			Visitor visitor) {
+		return InternalTreeTraversal.INSTANCE.walkValue(visitor, this, span, null);
 	}
 
 	protected boolean doIsCanonical() {
@@ -370,13 +337,6 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 		}
 	}
 
-	protected void doDeleteSuccessors() {
-		if (!doIsCanonical()) {
-			return;
-		}
-		child.doDeleteTree();
-	}
-
 	@Override
 	public void doDelete() {
 		manager.doDeleteEdge(this);
@@ -388,19 +348,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 			if (triple.parent == null) {
 				throw new IllegalArgumentException("Cannot delete root value");
 			}
-			doDelete();
-		}
-	}
-
-	protected void doDeleteTree() {
-		doDeleteSuccessors();
-		doDelete();
-	}
-
-	@Override
-	public void deleteTree() {
-		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			doDeleteTree();
+			doDeleteAndEmit();
 		}
 	}
 
@@ -410,7 +358,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 			if (triple.parent == null) {
 				throw new IllegalArgumentException("Cannot truncate or delete root value");
 			}
-			return doTruncateOrDelete(span);
+			return doTruncateOrDeleteAndEmitLifeChange(span);
 		}
 	}
 }
