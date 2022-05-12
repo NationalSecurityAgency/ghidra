@@ -1198,7 +1198,11 @@ void Funcdata::buildDynamicSymbol(Varnode *vn)
   if (dhash.getHash() == 0)
     throw RecovError("Unable to find unique hash for varnode");
 
-  Symbol *sym = localmap->addDynamicSymbol("",high->getType(),dhash.getAddress(),dhash.getHash());
+  Symbol *sym;
+  if (vn->isConstant())
+    sym = localmap->addEquateSymbol("",Symbol::force_hex, vn->getOffset(), dhash.getAddress(), dhash.getHash());
+  else
+    sym = localmap->addDynamicSymbol("",high->getType(),dhash.getAddress(),dhash.getHash());
   vn->setSymbolEntry(sym->getFirstWholeMap());
 }
 
