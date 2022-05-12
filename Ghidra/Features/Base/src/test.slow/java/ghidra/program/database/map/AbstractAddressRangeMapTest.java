@@ -40,7 +40,7 @@ public abstract class AbstractAddressRangeMapTest extends AbstractGhidraHeadedIn
 
 	private TestEnv env; // needed to discover languages
 	private ProgramDB program;
-	private AddressMap addrMap;
+	private AddressMapDB addrMap;
 	private AddressSpace space;
 	private int txId;
 
@@ -55,7 +55,7 @@ public abstract class AbstractAddressRangeMapTest extends AbstractGhidraHeadedIn
 
 		program = createProgram();
 		MemoryMapDB memory = program.getMemory();
-		addrMap = (AddressMap) getInstanceField("addrMap", memory);
+		addrMap = (AddressMapDB) getInstanceField("addrMap", memory);
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		spaceMax = space.getMaxAddress();
 		ErrorHandler errHandler = e -> fail();
