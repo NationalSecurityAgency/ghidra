@@ -187,7 +187,7 @@ public class ObjectTree implements ObjectPane {
 	@Override
 	public TargetObject getSelectedObject() {
 		TreePath path = tree.getSelectionPath();
-		if (path == null && currentSelectionPaths.length > 0) {
+		if (path == null && currentSelectionPaths != null && currentSelectionPaths.length > 0) {
 			path = currentSelectionPaths[0];
 		}
 		if (path != null) {
