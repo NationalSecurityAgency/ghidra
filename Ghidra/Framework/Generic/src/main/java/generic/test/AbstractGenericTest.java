@@ -1795,14 +1795,17 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 		// ghidra.test.property.report.dir
 		// Possible Values:
-		// server:	     {share dir}/junits.new/JunitTest_version/reports
-		// local gradle: {user home}/git/{repo}/ghidra/build/JUnit/reports
-		// eclipse:      {module}/bin/
+		// server        {share dir}/reports/{type}/{branch}/{date}/
+		// local gradle: {repo}/Ghidra/{module}/build/JUnit/reports
+		// eclipse:      {repo}/Ghidra/{module}/bin/
 		// build:        unsupported
 
+		// we add to the above directory a single dir value of 'debug'
+
+		String debugDirName = "debug";
 		String dirPath = System.getProperty(GHIDRA_TEST_PROPERTY_REPORT_DIR);
 		if (dirPath != null) { // running from gradle
-			debugDirectory = new File(dirPath);
+			debugDirectory = new File(dirPath, debugDirName);
 		}
 		else { // running from Eclipse
 
@@ -1810,7 +1813,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			// reports, nor do we have a build directory.  'bin' is the closest thing to that.
 			ResourceFile moduleDir = Application.getMyModuleRootDirectory();
 			ResourceFile binDir = new ResourceFile(moduleDir, "bin");
-			debugDirectory = binDir.getFile(false);
+			debugDirectory = new File(binDir.getFile(false), debugDirName);
 		}
 
 		return debugDirectory;
