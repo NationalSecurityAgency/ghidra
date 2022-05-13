@@ -1699,19 +1699,20 @@ Symbol *Scope::addDynamicSymbol(const string &nm,Datatype *ct,const Address &cad
   return sym;
 }
 
-/// \brief Create a symbol that forces a constant display conversion
+/// \brief Create a symbol that forces display conversion on a constant
 ///
-/// \param format is the type of conversion (Symbol::force_hex, Symbol::force_dec, etc.)
+/// \param nm is the equate name to display, which may be empty for an integer conversion
+/// \param format is the type of integer conversion (Symbol::force_hex, Symbol::force_dec, etc.)
 /// \param value is the constant value being converted
 /// \param addr is the address of the p-code op reading the constant
 /// \param hash is the dynamic hash identifying the constant
 /// \return the new EquateSymbol
-Symbol *Scope::addConvertSymbol(uint4 format,uintb value,Address &addr,uint8 hash)
+Symbol *Scope::addEquateSymbol(const string &nm,uint4 format,uintb value,const Address &addr,uint8 hash)
 
 {
   Symbol *sym;
 
-  sym = new EquateSymbol(owner,"",format,value);
+  sym = new EquateSymbol(owner,nm,format,value);
   addSymbolInternal(sym);
   RangeList rnglist;
   if (!addr.isInvalid())

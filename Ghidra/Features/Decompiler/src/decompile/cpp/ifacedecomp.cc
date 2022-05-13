@@ -708,7 +708,7 @@ void IfcMapconvert::execute(istream &s)
 
   s >> hex >> hash;		// Parse the hash value
 
-  dcp->fd->getScopeLocal()->addConvertSymbol(format, value, addr, hash);
+  dcp->fd->getScopeLocal()->addEquateSymbol("", format, value, addr, hash);
 }
 
 /// \class IfcPrintdisasm
