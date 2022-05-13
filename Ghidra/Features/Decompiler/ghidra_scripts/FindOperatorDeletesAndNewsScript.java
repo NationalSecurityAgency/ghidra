@@ -33,7 +33,7 @@ public class FindOperatorDeletesAndNewsScript extends GhidraScript {
 		}
 
 		RecoveredClassHelper classHelper = new RecoveredClassHelper(currentProgram, currentLocation,
-			state.getTool(), this, false, false, false, false, monitor);
+			state.getTool(), this, false, false, false, monitor);
 		
 		List<Address> discoveredOperatorDeletes =
 				getFunctionAddressList(classHelper.findOperatorDeletes());

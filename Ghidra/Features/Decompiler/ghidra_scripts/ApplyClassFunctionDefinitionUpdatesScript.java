@@ -47,7 +47,7 @@ public class ApplyClassFunctionDefinitionUpdatesScript extends GhidraScript {
 		}
 
 		RecoveredClassHelper classHelper = new RecoveredClassHelper(currentProgram, currentLocation,
-			state.getTool(), this, false, false, false, false, monitor);
+			state.getTool(), this, false, false, false, monitor);
 
 		DataTypeManagerService dtms = state.getTool().getService(DataTypeManagerService.class);
 		List<DataType> selectedDatatypes = dtms.getSelectedDatatypes();

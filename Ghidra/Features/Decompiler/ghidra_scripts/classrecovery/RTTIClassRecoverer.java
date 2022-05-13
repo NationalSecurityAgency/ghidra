@@ -43,11 +43,9 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 
 	RTTIClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVfunctions, boolean hasDebugSymbols, boolean replaceClassStructures,
-			TaskMonitor monitor) throws Exception {
+			boolean nameVfunctions, boolean hasDebugSymbols, TaskMonitor monitor) throws Exception {
 
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
-			replaceClassStructures,
 			monitor);
 
 		this.program = program;
