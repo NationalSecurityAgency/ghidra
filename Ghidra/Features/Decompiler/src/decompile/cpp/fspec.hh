@@ -60,6 +60,12 @@ public:
     is_grouped = 512,		///< This entry is grouped with other entries
     overlapping = 0x100		///< Overlaps an earlier entry (and doesn't consume additional resource slots)
   };
+  enum {
+    no_containment,		///< Range neither contains nor is contained by a ParamEntry
+    contains_unjustified,	///< ParamEntry contains range, but the range does not cover the least significant bytes
+    contains_justified,		///< ParamEntry contains range, which covers the least significant bytes
+    contained_by		///< ParamEntry is contained by the range
+  };
 private:
   uint4 flags;			///< Boolean properties of the parameter
   type_metatype type;		///< Data-type class that this entry must match
@@ -85,6 +91,7 @@ public:
   int4 getSize(void) const { return size; }		///< Get the size of the memory range in bytes.
   int4 getMinSize(void) const { return minsize; }	///< Get the minimum size of a logical value contained in \b this
   int4 getAlign(void) const { return alignment; }	///< Get the alignment of \b this entry
+  JoinRecord *getJoinRecord(void) const { return joinrec; }
   type_metatype getType(void) const { return type; }	///< Get the data-type class associated with \b this
   bool isExclusion(void) const { return (alignment==0); }	///< Return \b true if this holds a single parameter exclusively
   bool isReverseStack(void) const { return ((flags & reverse_stack)!=0); }	///< Return \b true if parameters are allocated in reverse order
@@ -167,11 +174,13 @@ public:
     used = 2,			///< Trial is definitely used  (final verdict)
     defnouse = 4,		///< Trial is definitely not used
     active = 8,			///< Trial looks active (hint that it is used)
-    unref = 16,			///< There is no direct reference to this parameter trial
-    killedbycall = 32,		///< Data in this location is unlikely to flow thru a func and still be a param
-    rem_formed = 64,		///< The trial is built out of a remainder operation
-    indcreate_formed = 128,	///< The trial is built out of an indirect creation
-    condexe_effect = 256	///< This trial may be affected by conditional execution
+    unref = 0x10,		///< There is no direct reference to this parameter trial
+    killedbycall = 0x20,	///< Data in this location is unlikely to flow thru a func and still be a param
+    rem_formed = 0x40,		///< The trial is built out of a remainder operation
+    indcreate_formed = 0x80,	///< The trial is built out of an indirect creation
+    condexe_effect = 0x100,	///< This trial may be affected by conditional execution
+    ancestor_realistic = 0x200,	///< Trial has a realistic ancestor
+    ancestor_solid = 0x400	///< Solid movement into the Varnode
   };
 private:
   uint4 flags;			///< Boolean properties of the trial
@@ -208,6 +217,10 @@ public:
   bool isIndCreateFormed(void) const { return ((flags & indcreate_formed)!=0); }	///< Is \b this trial formed by \e indirect \e creation
   void setCondExeEffect(void) { flags |= condexe_effect; }	///< Mark \b this trial as possibly affected by conditional execution
   bool hasCondExeEffect(void) const { return ((flags & condexe_effect)!=0); }	///< Is \b this trial possibly affected by conditional execution
+  void setAncestorRealistic(void) { flags |= ancestor_realistic; }	///< Mark \b this as having a realistic ancestor
+  bool hasAncestorRealistic(void) const { return ((flags & ancestor_realistic)!=0); }	///< Does \b this have a realistic ancestor
+  void setAncestorSolid(void) { flags |= ancestor_solid; }	///< Mark \b this as showing solid movement into Varnode
+  bool hasAncestorSolid(void) const { return ((flags & ancestor_solid)!=0); }	///< Does \b this show solid movement into Varnode
   int4 slotGroup(void) const { return entry->getSlot(addr,size-1); }	///< Get position of \b this within its parameter \e group
   void setAddress(const Address &ad,int4 sz) { addr=ad; size=sz; }	///< Reset the memory range of \b this trial
   ParamTrial splitHi(int4 sz) const;			///< Create a trial representing the first part of \b this
@@ -403,10 +416,11 @@ public:
   /// \brief Characterize whether the given range overlaps parameter storage
   ///
   /// Does the range naturally fit inside a potential parameter entry from this list or does
-  /// it contain a parameter entry. Return one of three values indicating this characterization:
-  ///   - 0 means there is no intersection between the range and any parameter in this list
-  ///   - 1 means that at least one parameter contains the range in a properly justified manner
-  ///   - 2 means no parameter contains the range, but the range contains at least one ParamEntry
+  /// it contain a parameter entry. Return one of four enumerations indicating this characterization:
+  ///   - no_containment - there is no containment between the range and any parameter in this list
+  ///   - contains_unjustified - at least one parameter contains the range
+  ///   - contains_justified - at least one parameter contains this range as its least significant bytes
+  ///   - contained_by - no parameter contains this range, but the range contains at least one parameter
   /// \param loc is the starting address of the given range
   /// \param size is the number of bytes in the given range
   /// \return the characterization code
@@ -514,12 +528,16 @@ protected:
   AddrSpace *spacebase;			///< Address space containing relative offset parameters
   const ParamEntry *findEntry(const Address &loc,int4 size) const;	///< Given storage location find matching ParamEntry
   Address assignAddress(const Datatype *tp,vector<int4> &status) const;	///< Assign storage for given parameter data-type
+  const ParamEntry *selectUnreferenceEntry(int4 grp,type_metatype prefType) const;	///< Select entry to fill an unreferenced param
   void buildTrialMap(ParamActive *active) const;	///< Build map from parameter trials to model ParamEntrys
   void separateSections(ParamActive *active,int4 &oneStart,int4 &oneStop,int4 &twoStart,int4 &twoStop) const;
-  void forceExclusionGroup(ParamActive *active) const;
-  void forceNoUse(ParamActive *active,int4 start,int4 stop) const;
-  void forceInactiveChain(ParamActive *active,int4 maxchain,int4 start,int4 stop,int4 groupstart) const;
+  static void markGroupNoUse(ParamActive *active,int4 groupUpper,int4 groupStart,int4 index);
+  static void markBestInactive(ParamActive *active,int4 group,int4 groupStart,type_metatype prefType);
+  static void forceExclusionGroup(ParamActive *active);
+  static void forceNoUse(ParamActive *active,int4 start,int4 stop);
+  static void forceInactiveChain(ParamActive *active,int4 maxchain,int4 start,int4 stop,int4 groupstart);
   void calcDelay(void);		///< Calculate the maximum heritage delay for any potential parameter in this list
+  void addResolverRange(AddrSpace *spc,uintb first,uintb last,ParamEntry *paramEntry,int4 position);
   void populateResolver(void);	///< Build the ParamEntry resolver maps
   void parsePentry(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
 		   int4 groupid,bool normalstack,bool autokill,bool splitFloat,bool grouped);
@@ -738,18 +756,35 @@ public:
   vector<EffectRecord>::const_iterator effectEnd(void) const { return effectlist.end(); }	///< Get an iterator to the last EffectRecord
   vector<VarnodeData>::const_iterator trashBegin(void) const { return likelytrash.begin(); }	///< Get an iterator to the first \e likelytrash
   vector<VarnodeData>::const_iterator trashEnd(void) const { return likelytrash.end(); }	///< Get an iterator to the last \e likelytrash
+
   /// \brief Characterize whether the given range overlaps parameter storage
   ///
   /// Does the range naturally fit inside a potential parameter entry from this model or does
-  /// it contain a parameter entry. Return one of three values indicating this characterization:
-  ///   - 0 means there is no intersection between the range and any ParamEntry
-  ///   - 1 means that at least one ParamEntry contains the range in a properly justified manner
-  ///   - 2 means no ParamEntry contains the range, but the range contains at least one ParamEntry
+  /// it contain a parameter entry. Return one of four values indicating this characterization:
+  ///   - no_containment - there is no containment between the range and any parameter in this list
+  ///   - contains_unjustified - at least one parameter contains the range
+  ///   - contains_justified - at least one parameter contains this range as its least significant bytes
+  ///   - contained_by - no parameter contains this range, but the range contains at least one parameter
   /// \param loc is the starting address of the given range
   /// \param size is the number of bytes in the given range
   /// \return the characterization code
   int4 characterizeAsInputParam(const Address &loc,int4 size) const {
     return input->characterizeAsParam(loc, size);
+  }
+
+  /// \brief Characterize whether the given range overlaps output storage
+  ///
+  /// Does the range naturally fit inside a potential output entry from this model or does
+  /// it contain an output entry. Return one of four values indicating this characterization:
+  ///   - no_containment - there is no containment between the range and any parameter in this list
+  ///   - contains_unjustified - at least one parameter contains the range
+  ///   - contains_justified - at least one parameter contains this range as its least significant bytes
+  ///   - contained_by - no parameter contains this range, but the range contains at least one parameter
+  /// \param loc is the starting address of the given range
+  /// \param size is the number of bytes in the given range
+  /// \return the characterization code
+  int4 characterizeAsOutput(const Address &loc,int4 size) const {
+    return output->characterizeAsParam(loc, size);
   }
 
   /// \brief Does the given storage location make sense as an input parameter
@@ -840,6 +875,16 @@ public:
   /// \return \b true if there is at least one parameter contained in the range
   bool getBiggestContainedInputParam(const Address &loc,int4 size,VarnodeData &res) const {
     return input->getBiggestContainedParam(loc, size, res);
+  }
+
+  /// \brief Pass-back the biggest possible output parameter contained within the given range
+  ///
+  /// \param loc is the starting address of the given range
+  /// \param size is the number of bytes in the range
+  /// \param res will hold the storage description being passed back
+  /// \return \b true if there is at least one possible output parameter contained in the range
+  bool getBiggestContainedOutput(const Address &loc,int4 size,VarnodeData &res) const {
+    return output->getBiggestContainedParam(loc, size, res);
   }
 
   AddrSpace *getSpacebase(void) const { return input->getSpacebase(); }	///< Get the stack space associated with \b this model
@@ -1393,6 +1438,7 @@ public:
   vector<VarnodeData>::const_iterator trashBegin(void) const;	///< Get iterator to front of \e likelytrash list
   vector<VarnodeData>::const_iterator trashEnd(void) const;	///< Get iterator to end of \e likelytrash list
   int4 characterizeAsInputParam(const Address &addr,int4 size) const;
+  int4 characterizeAsOutput(const Address &addr,int4 size) const;
   bool possibleInputParam(const Address &addr,int4 size) const;
   bool possibleOutputParam(const Address &addr,int4 size) const;
 
@@ -1442,6 +1488,9 @@ public:
 
   /// \brief Pass-back the biggest potential input parameter contained within the given range
   bool getBiggestContainedInputParam(const Address &loc,int4 size,VarnodeData &res) const;
+
+  /// \brief Pass-back the biggest potential output storage location contained within the given range
+  bool getBiggestContainedOutput(const Address &loc,int4 size,VarnodeData &res) const;
 
   bool isCompatible(const FuncProto &op2) const;
   AddrSpace *getSpacebase(void) const { return model->getSpacebase(); }		///< Get the \e stack address space

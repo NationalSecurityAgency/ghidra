@@ -571,33 +571,38 @@ int4 ParamListStandard::characterizeAsParam(const Address &loc,int4 size) const
 {
   int4 index = loc.getSpace()->getIndex();
   if (index >= resolverMap.size())
-    return 0;
+    return ParamEntry::no_containment;
   ParamEntryResolver *resolver = resolverMap[index];
   if (resolver == (ParamEntryResolver *)0)
-    return 0;
+    return ParamEntry::no_containment;
   pair<ParamEntryResolver::const_iterator,ParamEntryResolver::const_iterator> iterpair;
   iterpair = resolver->find(loc.getOffset());
-  int4 res = 0;
+  bool resContains = false;
+  bool resContainedBy = false;
   while(iterpair.first != iterpair.second) {
     const ParamEntry *testEntry = (*iterpair.first).getParamEntry();
-    if (testEntry->getMinSize() <= size && testEntry->justifiedContain(loc, size)==0)
-      return 1;
+    int4 off = testEntry->justifiedContain(loc, size);
+    if (off == 0)
+      return ParamEntry::contains_justified;
+    else if (off > 0)
+      resContains = true;
     if (testEntry->isExclusion() && testEntry->containedBy(loc, size))
-      res = 2;
+      resContainedBy = true;
     ++iterpair.first;
   }
-  if (res != 2 && iterpair.first != resolver->end()) {
+  if (resContains) return ParamEntry::contains_unjustified;
+  if (resContainedBy) return ParamEntry::contained_by;
+  if (iterpair.first != resolver->end()) {
     iterpair.second = resolver->find_end(loc.getOffset() + (size-1));
     while(iterpair.first != iterpair.second) {
       const ParamEntry *testEntry = (*iterpair.first).getParamEntry();
       if (testEntry->isExclusion() && testEntry->containedBy(loc, size)) {
-	res = 2;
-	break;
+	return ParamEntry::contained_by;
       }
       ++iterpair.first;
     }
   }
-  return res;
+  return ParamEntry::no_containment;
 }
 
 /// Given the next data-type and the status of previously allocated slots,
@@ -664,6 +669,34 @@ void ParamListStandard::assignMap(const vector<Datatype *> &proto,TypeFactory &t
   }
 }
 
+/// From among the ParamEntrys matching the given \e group, return the one that best matches
+/// the given \e metatype attribute. If there are no ParamEntrys in the group, null is returned.
+/// \param grp is the given \e group number
+/// \param prefType is the preferred \e metatype attribute to match
+const ParamEntry *ParamListStandard::selectUnreferenceEntry(int4 grp,type_metatype prefType) const
+
+{
+  int4 bestScore = -1;
+  const ParamEntry *bestEntry = (const ParamEntry *)0;
+  list<ParamEntry>::const_iterator iter;
+  for(iter=entry.begin();iter!=entry.end();++iter) {
+    const ParamEntry *curEntry = &(*iter);
+    if (curEntry->getGroup() != grp) continue;
+    int4 curScore;
+    if (curEntry->getType() == prefType)
+      curScore = 2;
+    else if (prefType == TYPE_UNKNOWN)
+      curScore = 1;
+    else
+      curScore = 0;
+    if (curScore > bestScore) {
+      bestScore = curScore;
+      bestEntry = curEntry;
+    }
+  }
+  return bestEntry;
+}
+
 /// Given a set of \b trials (putative Varnode parameters) as ParamTrial objects,
 /// associate each trial with a model ParamEntry within \b this list. Trials for
 /// for which there are no matching entries are marked as unused. Any holes
@@ -673,8 +706,8 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
 
 {
   vector<const ParamEntry *> hitlist; // List of groups for which we have a representative
-  bool seenfloattrial = false;
-  bool seeninttrial = false;
+  int4 floatCount = 0;
+  int4 intCount = 0;
 
   for(int4 i=0;i<active->getNumTrials();++i) {
     ParamTrial &paramtrial(active->getTrial(i));
@@ -686,10 +719,12 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
     else {
       paramtrial.setEntry( entrySlot, 0 ); // Keep track of entry recovered for this trial
 
-      if (entrySlot->getType() == TYPE_FLOAT)
-	seenfloattrial = true;
-      else
-	seeninttrial = true;
+      if (paramtrial.isActive()) {
+	if (entrySlot->getType() == TYPE_FLOAT)
+	  floatCount += 1;
+	else
+	  intCount += 1;
+      }
 
       // Make sure we list that the entries group is marked
       int4 grp = entrySlot->getGroup();
@@ -701,22 +736,16 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
     }
   }
 
-  // Created unreferenced (unref) ParamTrial for any group that we don't have a representive for
+  // Created unreferenced (unref) ParamTrial for any group that we don't have a representative for
   // if that group occurs before one where we do have a representative
 
   for(int4 i=0;i<hitlist.size();++i) {
     const ParamEntry *curentry = hitlist[i];
     
     if (curentry == (const ParamEntry *)0) {
-      list<ParamEntry>::const_iterator iter;
-      for(iter=entry.begin();iter!=entry.end();++iter) {
-	curentry = &(*iter);
-	if (curentry->getGroup() == i) break; // Find first entry of the missing group
-      }
-      if ((!seenfloattrial)&&(curentry->getType()==TYPE_FLOAT))
-	continue;		// Don't fill in unreferenced floats if we haven't seen any floats
-      if ((!seeninttrial)&&(curentry->getType()!=TYPE_FLOAT))
-	continue;		// Don't fill in unreferenced int if all we have seen is floats
+      curentry = selectUnreferenceEntry(i, (floatCount > intCount) ? TYPE_FLOAT : TYPE_UNKNOWN);
+      if (curentry == (const ParamEntry *)0)
+	continue;
       int4 sz = curentry->isExclusion() ? curentry->getSize() : curentry->getAlign();
       int4 nextslot = 0;
       Address addr = curentry->getAddrBySlot(nextslot,sz);
@@ -798,30 +827,98 @@ void ParamListStandard::separateSections(ParamActive *active,int4 &oneStart,int4
   twoStop = numtrials;
 }
 
+/// \brief Mark all the trials within the indicated groups as \e not \e used, except for one specified index
+///
+/// Only one trial within an exclusion group can have active use, mark all others as unused.
+/// \param active is the set of trials, which must be sorted on group
+/// \param groupUper is the biggest group number to be marked
+/// \param groupStart is the index of the first trial in the smallest group to be marked
+/// \param index is the specified trial index that is \e not to be marked
+void ParamListStandard::markGroupNoUse(ParamActive *active,int4 groupUpper,int4 groupStart,int4 index)
+
+{
+  int4 numTrials = active->getNumTrials();
+  for(int4 i=groupStart;i<numTrials;++i) {		// Mark entries in the group range as definitely not used
+    if (i == index) continue;		// The trial NOT to mark
+    ParamTrial &othertrial(active->getTrial(i));
+    if (othertrial.isDefinitelyNotUsed()) continue;
+    if (othertrial.getEntry()->getGroup() > groupUpper) break;
+    othertrial.markNoUse();
+  }
+}
+
+/// \brief From among multiple \e inactive trials, select the most likely to be active and mark others as not used
+///
+/// There can be at most one \e inactive trial in an exclusion group for the fill algorithms to work.
+/// Score all the trials and pick the one that is the most likely to actually be an active param.
+/// Mark all the others as definitely not used.
+/// \param active is the sorted set of trials
+/// \param group is the group number
+/// \param groupStart is the index of the first trial in the group
+/// \param prefType is a preferred entry to type to use in scoring
+void ParamListStandard::markBestInactive(ParamActive *active,int4 group,int4 groupStart,type_metatype prefType)
+
+{
+  int4 numTrials = active->getNumTrials();
+  int4 bestTrial = -1;
+  int4 bestScore = -1;
+  for(int4 i=groupStart;i<numTrials;++i) {
+    ParamTrial &trial(active->getTrial(i));
+    if (trial.isDefinitelyNotUsed()) continue;
+    const ParamEntry *entry = trial.getEntry();
+    int4 grp = entry->getGroup();
+    if (grp != group) break;
+    if (entry->getGroupSize() > 1) continue;	// Covering multiple slots automatically give low score
+    int4 score = 0;
+    if (trial.hasAncestorRealistic()) {
+      score += 5;
+      if (trial.hasAncestorSolid())
+	score += 5;
+    }
+    if (entry->getType() == prefType)
+      score += 1;
+    if (score > bestScore) {
+      bestScore = score;
+      bestTrial = i;
+    }
+  }
+  if (bestTrial >= 0)
+    markGroupNoUse(active, group, groupStart, bestTrial);
+}
+
 /// \brief Enforce exclusion rules for the given set of parameter trials
 ///
 /// If there are more than one active trials in a single group,
-/// and if that group is an exclusion group, mark all but the first trial to \e inactive.
+/// and if that group is an exclusion group, mark all but the first trial to \e defnouse.
 /// \param active is the set of trials
-void ParamListStandard::forceExclusionGroup(ParamActive *active) const
+void ParamListStandard::forceExclusionGroup(ParamActive *active)
 
 {
-  int4 curupper = -1;
-  bool exclusion = false;
-  int4 numtrials = active->getNumTrials();
-  for(int4 i=0;i<numtrials;++i) {
+  int4 numTrials = active->getNumTrials();
+  int4 curGroup = -1;
+  int4 groupStart = -1;
+  int4 inactiveCount = 0;
+  for(int4 i=0;i<numTrials;++i) {
     ParamTrial &curtrial(active->getTrial(i));
-    if (curtrial.isActive()) {
-      int4 grp = curtrial.getEntry()->getGroup();
-      exclusion = curtrial.getEntry()->isExclusion();
-      if (grp <= curupper) {	// If curtrial's group falls below highest group where we have seen an active
-	if (exclusion)
-	  curtrial.markInactive(); // mark inactive if it is an exclusion group
-      }
-      else
-	curupper = grp + curtrial.getEntry()->getGroupSize() - 1; // This entry covers some number of groups
+    int4 grp = curtrial.getEntry()->getGroup();
+    if (grp != curGroup) {
+      if (inactiveCount > 1)
+	markBestInactive(active, curGroup, groupStart, TYPE_UNKNOWN);
+      curGroup = grp;
+      groupStart = i;
+      inactiveCount = 0;
+    }
+    if (curtrial.isDefinitelyNotUsed() || !curtrial.getEntry()->isExclusion())
+      continue;
+    else if (!curtrial.isActive())
+      inactiveCount += 1;
+    else if (curtrial.isActive()) {
+      int4 groupUpper = grp + curtrial.getEntry()->getGroupSize() - 1; // This entry covers some number of groups
+      markGroupNoUse(active, groupUpper, groupStart, i);
     }
   }
+  if (inactiveCount > 1)
+    markBestInactive(active, curGroup, groupStart, TYPE_UNKNOWN);
 }
 
 /// \brief Mark every trial above the first "definitely not used" as \e inactive.
@@ -831,7 +928,7 @@ void ParamListStandard::forceExclusionGroup(ParamActive *active) const
 /// \param active is the set of trials, which must already be ordered
 /// \param start is the index of the first trial in the range to consider
 /// \param stop is the index (+1) of the last trial in the range to consider
-void ParamListStandard::forceNoUse(ParamActive *active, int4 start, int4 stop) const
+void ParamListStandard::forceNoUse(ParamActive *active, int4 start, int4 stop)
 
 {
   bool seendefnouse = false;
@@ -873,7 +970,7 @@ void ParamListStandard::forceNoUse(ParamActive *active, int4 start, int4 stop) c
 /// \param start is the first index in the range of trials to consider
 /// \param stop is the last index (+1) in the range of trials to consider
 /// \param groupstart is the smallest group id in the particular section
-void ParamListStandard::forceInactiveChain(ParamActive *active,int4 maxchain,int4 start,int4 stop,int4 groupstart) const
+void ParamListStandard::forceInactiveChain(ParamActive *active,int4 maxchain,int4 start,int4 stop,int4 groupstart)
 
 {
   bool seenchain = false;
@@ -881,7 +978,7 @@ void ParamListStandard::forceInactiveChain(ParamActive *active,int4 maxchain,int
   int4 max = -1;
   for(int4 i=start;i<stop;++i) {
     ParamTrial &trial(active->getTrial(i));
-    if (trial.getEntry() == (const ParamEntry *)0) continue; // Already know not used
+    if (trial.isDefinitelyNotUsed()) continue; // Already know not used
     if (!trial.isActive()) {
       if (trial.isUnref()&&active->isRecoverSubcall()) {
 	// If there is no reference to the trial within the function, the only real possibility
@@ -927,32 +1024,56 @@ void ParamListStandard::calcDelay(void)
   }
 }
 
+/// \brief Internal method for adding a single address range to the ParamEntryResolvers
+///
+/// Specify the contiguous address range, the ParamEntry to map to it, and a position recording
+/// the order in which ranges are added.
+/// \param spc is address space of the memory range
+/// \param first is the starting offset of the memory range
+/// \param last is the ending offset of the memory range
+/// \param paramEntry is the ParamEntry to associate with the memory range
+/// \param position is the ordering position
+void ParamListStandard::addResolverRange(AddrSpace *spc,uintb first,uintb last,ParamEntry *paramEntry,int4 position)
+
+{
+  int4 index = spc->getIndex();
+  while(resolverMap.size() <= index) {
+    resolverMap.push_back((ParamEntryResolver *)0);
+  }
+  ParamEntryResolver *resolver = resolverMap[index];
+  if (resolver == (ParamEntryResolver *)0) {
+    resolver = new ParamEntryResolver();
+    resolverMap[spc->getIndex()] = resolver;
+  }
+  ParamEntryResolver::inittype initData(position,paramEntry);
+  resolver->insert(initData,first,last);
+}
+
 /// Enter all the ParamEntry objects into an interval map (based on address space)
 void ParamListStandard::populateResolver(void)
 
 {
-  int4 maxid = -1;
   list<ParamEntry>::iterator iter;
-  for(iter=entry.begin();iter!=entry.end();++iter) {
-    int4 id = (*iter).getSpace()->getIndex();
-    if (id > maxid)
-      maxid = id;
-  }
-  resolverMap.resize(maxid+1, (ParamEntryResolver *)0);
   int4 position = 0;
   for(iter=entry.begin();iter!=entry.end();++iter) {
     ParamEntry *paramEntry = &(*iter);
-    int4 spaceId = paramEntry->getSpace()->getIndex();
-    ParamEntryResolver *resolver = resolverMap[spaceId];
-    if (resolver == (ParamEntryResolver *)0) {
-      resolver = new ParamEntryResolver();
-      resolverMap[spaceId] = resolver;
+    AddrSpace *spc = paramEntry->getSpace();
+    if (spc->getType() == IPTR_JOIN) {
+      JoinRecord *joinRec = paramEntry->getJoinRecord();
+      for(int4 i=0;i<joinRec->numPieces();++i) {
+	// Individual pieces making up the join are mapped to the ParamEntry
+        const VarnodeData &vData(joinRec->getPiece(i));
+        uintb last = vData.offset + (vData.size - 1);
+        addResolverRange(vData.space,vData.offset,last,paramEntry,position);
+        position += 1;
+      }
     }
-    uintb first = paramEntry->getBase();
-    uintb last = first + (paramEntry->getSize() - 1);
-    ParamEntryResolver::inittype initData(position,paramEntry);
-    position += 1;
-    resolver->insert(initData,first,last);
+    else {
+      uintb first = paramEntry->getBase();
+      uintb last = first + (paramEntry->getSize() - 1);
+      addResolverRange(spc,first,last,paramEntry,position);
+      position += 1;
+    }
   }
 }
 
@@ -972,7 +1093,7 @@ void ParamListStandard::parsePentry(const Element *el,const AddrSpaceManager *ma
   entry.emplace_back(groupid);
   entry.back().restoreXml(el,manage,normalstack,grouped,entry);
   if (splitFloat) {
-    if (entry.back().getType() == TYPE_FLOAT) {
+    if (!grouped && entry.back().getType() == TYPE_FLOAT) {
       if (resourceTwoStart >= 0)
 	throw LowlevelError("parameter list floating-point entries must come first");
     }
@@ -3837,9 +3958,10 @@ vector<VarnodeData>::const_iterator FuncProto::trashEnd(void) const
 /// If the input is locked, check if the location overlaps one of the current parameters.
 /// Otherwise, check if the location overlaps an entry in the prototype model.
 /// Return:
-///   - 0 if the location neither contains or is contained by a parameter storage location
-///   - 1 if the location is contained by a parameter storage location
-///   - 2 if the location contains a parameter storage location
+///   - no_containment - there is no containment between the range and any input parameter
+///   - contains_unjustified - at least one parameter contains the range
+///   - contains_justified - at least one parameter contains this range as its least significant bytes
+///   - contained_by - no parameter contains this range, but the range contains at least one parameter
 /// \param addr is the starting address of the given storage location
 /// \param size is the number of bytes in the storage
 /// \return the characterization code
@@ -3851,7 +3973,8 @@ int4 FuncProto::characterizeAsInputParam(const Address &addr,int4 size) const
     int4 num = numParams();
     if (num > 0) {
       bool locktest = false;	// Have tested against locked symbol
-      int4 characterCode = 0;
+      bool resContains = false;
+      bool resContainedBy = false;
       for(int4 i=0;i<num;++i) {
 	ProtoParameter *param = getParam(i);
 	if (!param->isTypeLocked()) continue;
@@ -3859,15 +3982,56 @@ int4 FuncProto::characterizeAsInputParam(const Address &addr,int4 size) const
 	Address iaddr = param->getAddress();
 	// If the parameter already exists, the varnode must be justified in the parameter relative
 	// to the endianness of the space, irregardless of the forceleft flag
-	if (iaddr.justifiedContain(param->getSize(),addr,size,false)==0)
-	  return 1;
+	int4 off = iaddr.justifiedContain(param->getSize(), addr, size, false);
+	if (off == 0)
+	  return ParamEntry::contains_justified;
+	else if (off > 0)
+	  resContains = true;
 	if (iaddr.containedBy(param->getSize(), addr, size))
-	  characterCode = 2;
+	  resContainedBy = true;
       }
-      if (locktest) return characterCode;
+      if (locktest) {
+	if (resContains) return ParamEntry::contains_unjustified;
+	if (resContainedBy) return ParamEntry::contained_by;
+	return ParamEntry::no_containment;
+      }
     }
   }
   return model->characterizeAsInputParam(addr, size);
+}
+
+/// \brief Decide whether a given storage location could be, or could hold, the return value
+///
+/// If the output is locked, check if the location overlaps the current return storage.
+/// Otherwise, check if the location overlaps an entry in the prototype model.
+/// Return:
+///   - no_containment - there is no containment between the range and any output storage
+///   - contains_unjustified - at least one output storage contains the range
+///   - contains_justified - at least one output storage contains this range as its least significant bytes
+///   - contained_by - no output storage contains this range, but the range contains at least one output storage
+/// \param addr is the starting address of the given storage location
+/// \param size is the number of bytes in the storage
+/// \return the characterization code
+int4 FuncProto::characterizeAsOutput(const Address &addr,int4 size) const
+
+{
+  if (isOutputLocked()) {
+    ProtoParameter *outparam = getOutput();
+    if (outparam->getType()->getMetatype() == TYPE_VOID)
+      return ParamEntry::no_containment;
+    Address iaddr = outparam->getAddress();
+    // If the output is locked, the varnode must be justified in the location relative
+    // to the endianness of the space, irregardless of the forceleft flag
+    int4 off = iaddr.justifiedContain(outparam->getSize(),addr,size,false);
+    if (off == 0)
+      return ParamEntry::contains_justified;
+    else if (off > 0)
+      return ParamEntry::contains_unjustified;
+    if (iaddr.containedBy(outparam->getSize(),addr,size))
+      return ParamEntry::contained_by;
+    return ParamEntry::no_containment;
+  }
+  return model->characterizeAsOutput(addr, size);
 }
 
 /// \brief Decide whether a given storage location could be an input parameter
@@ -3967,8 +4131,6 @@ bool FuncProto::unjustifiedInputParam(const Address &addr,int4 size,VarnodeData 
   return model->unjustifiedInputParam(addr,size,res);
 }
 
-/// \brief Pass-back the biggest input parameter contained within the given range
-///
 /// \param loc is the starting address of the given range
 /// \param size is the number of bytes in the range
 /// \param res will hold the parameter storage description being passed back
@@ -4000,6 +4162,29 @@ bool FuncProto::getBiggestContainedInputParam(const Address &loc,int4 size,Varno
     }
   }
   return model->getBiggestContainedInputParam(loc,size,res);
+}
+
+/// \param loc is the starting address of the given range
+/// \param size is the number of bytes in the range
+/// \param res will hold the output storage description being passed back
+/// \return \b true if there is at least one possible output contained in the range
+bool FuncProto::getBiggestContainedOutput(const Address &loc,int4 size,VarnodeData &res) const
+
+{
+  if (isOutputLocked()) {
+    ProtoParameter *outparam = getOutput();
+    if (outparam->getType()->getMetatype() == TYPE_VOID)
+      return false;
+    Address iaddr = outparam->getAddress();
+    if (iaddr.containedBy(outparam->getSize(), loc, size)) {
+      res.space = iaddr.getSpace();
+      res.offset = iaddr.getOffset();
+      res.size = outparam->getSize();
+      return true;
+    }
+    return false;
+  }
+  return model->getBiggestContainedOutput(loc,size,res);
 }
 
 /// \brief Decide if \b this can be safely restricted to match another prototype
@@ -5043,7 +5228,7 @@ void FuncCallSpecs::checkInputTrialUse(Funcdata &data,AliasChecker &aliascheck)
 	  trial.markNoUse();
       }
       else if (ancestorReal.execute(op,slot,&trial,false)) {
-	if (data.ancestorOpUse(maxancestor,vn,op,trial,0))
+	if (data.ancestorOpUse(maxancestor,vn,op,trial,0,0))
 	  trial.markActive();
 	else
 	  trial.markInactive();
@@ -5053,7 +5238,7 @@ void FuncCallSpecs::checkInputTrialUse(Funcdata &data,AliasChecker &aliascheck)
     }
     else {
       if (ancestorReal.execute(op,slot,&trial,true)) {
-	if (data.ancestorOpUse(maxancestor,vn,op,trial,0)) {
+	if (data.ancestorOpUse(maxancestor,vn,op,trial,0,0)) {
 	  trial.markActive();
 	  if (trial.hasCondExeEffect())
 	    activeinput.markNeedsFinalCheck();
