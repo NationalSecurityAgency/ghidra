@@ -422,6 +422,33 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	@Override
+	public String getDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
+			DataTypeDisplayOptions options) {
+		if (isAutoNamed()) {
+			return getDataType().getDefaultLabelPrefix(buf, settings, len, options);
+		}
+		return super.getDefaultLabelPrefix(buf, settings, len, options);
+	}
+
+	@Override
+	public String getDefaultAbbreviatedLabelPrefix() {
+		if (isAutoNamed()) {
+			return getDataType().getDefaultAbbreviatedLabelPrefix();
+		}
+		return super.getDefaultAbbreviatedLabelPrefix();
+	}
+
+	@Override
+	public String getDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
+			DataTypeDisplayOptions options, int offcutLength) {
+		if (isAutoNamed()) {
+			return getDataType().getDefaultOffcutLabelPrefix(buf, settings, len, options,
+				offcutLength);
+		}
+		return super.getDefaultOffcutLabelPrefix(buf, settings, len, options, offcutLength);
+	}
+
+	@Override
 	public long getLastChangeTime() {
 		return record.getLongValue(TypedefDBAdapter.TYPEDEF_LAST_CHANGE_TIME_COL);
 	}
