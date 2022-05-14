@@ -26,6 +26,7 @@ import ghidra.program.database.IntRangeMap;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
@@ -373,6 +374,16 @@ public class ProgramTestDouble implements Program {
 
 	@Override
 	public void setCompiler(String compiler) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public CategoryPath getPreferredRootNamespaceCategoryPath() {
+		return null;
+	}
+
+	@Override
+	public void setPreferredRootNamespaceCategoryPath(String categoryPath) {
 		throw new UnsupportedOperationException();
 	}
 

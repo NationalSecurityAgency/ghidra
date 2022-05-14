@@ -60,8 +60,12 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	private ArrayList<Object> consumers;
 	protected Map<String, String> metadata = new LinkedHashMap<String, String>();
 
-	// A flag indicating whether the domain object has changed.  Any methods of this domain object
-	// which cause its state to change must set this flag to true
+	// FIXME: (see GP-2003) "changed" flag is improperly manipulated by various methods.  
+	// In general, comitted transactions will trigger all valid cases of setting flag to true, 
+	// there may be a few cases where setting it to false may be appropriate.  Without a transation 
+	// it's unclear why it should ever need to get set true.
+
+	// A flag indicating whether the domain object has changed.
 	protected boolean changed = false;
 
 	// a flag indicating that this object is temporary

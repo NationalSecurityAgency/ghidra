@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.DBConstants;
 import db.DBHandle;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -46,6 +48,7 @@ import ghidra.program.database.reloc.RelocationManager;
 import ghidra.program.database.symbol.*;
 import ghidra.program.database.util.AddressSetPropertyMapDB;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
@@ -208,6 +211,11 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private Map<String, AddressSetPropertyMapDB> addrSetPropertyMap = new HashMap<>();
 	private Map<String, IntRangeMapDB> intRangePropertyMap = new HashMap<>();
 
+	// cached program information properties
+	private static final String PREFERRED_ROOT_NAMESPACE_CATEGORY_PROPERTY_PATHNAME =
+		PROGRAM_INFO + "." + PREFERRED_ROOT_NAMESPACE_CATEGORY_PROPERTY;
+	private CategoryPath preferredRootNamespaceCategory; // value of PREFERRED_ROOT_NAMESPACE_CATEGORY_PROPERTY
+
 	/**
 	 * Constructs a new ProgramDB
 	 * @param name the name of the program
@@ -247,7 +255,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			listing = new ListingDB();
 			changeSet = new ProgramDBChangeSet(addrMap, NUM_UNDOS);
 			initManagers(CREATE, TaskMonitor.DUMMY);
-			propertiesCreate();
+			createProgramInformationOptions();
 			programUserData = new ProgramUserDataDB(this);
 			endTransaction(id, true);
 			clearUndo(false);
@@ -369,7 +377,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				changed = true;
 			}
 
-			propertiesRestore();
+			registerProgramInformationOptions();
+			restoreProgramInformationOptions();
 			recordChanges = true;
 			endTransaction(id, true);
 			clearUndo(false);
@@ -433,25 +442,59 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		recordChanges = true;
 	}
 
-	private void propertiesRestore() {
+	private void registerProgramInformationOptions() {
 		Options pl = getOptions(PROGRAM_INFO);
-		boolean origChangeState = changed;
 		pl.registerOption(EXECUTABLE_PATH, UNKNOWN, null, "Original import path of program image");
 		pl.registerOption(EXECUTABLE_FORMAT, UNKNOWN, null, "Original program image format");
 		pl.registerOption(CREATED_WITH_GHIDRA_VERSION, "3.0 or earlier", null,
 			"Version of Ghidra used to create this program.");
 		pl.registerOption(DATE_CREATED, JANUARY_1_1970, null, "Date this program was created");
-		changed = origChangeState;
+		pl.registerOption(PREFERRED_ROOT_NAMESPACE_CATEGORY_PROPERTY, "", null,
+			"Preferred data type category path of root namespace");
 	}
 
-	private void propertiesCreate() {
+	private void createProgramInformationOptions() {
+		registerProgramInformationOptions();
 		Options pl = getOptions(PROGRAM_INFO);
-		boolean origChangeState = changed;
 		pl.setString(EXECUTABLE_PATH, UNKNOWN);
 		pl.setString(EXECUTABLE_FORMAT, UNKNOWN);
 		pl.setString(CREATED_WITH_GHIDRA_VERSION, Application.getApplicationVersion());
 		pl.setDate(DATE_CREATED, new Date());
-		changed = origChangeState;
+	}
+
+	private void restoreProgramInformationOptions() {
+		Options pl = getOptions(PROGRAM_INFO);
+		updatePreferredRootNamespaceCategory(
+			pl.getString(PREFERRED_ROOT_NAMESPACE_CATEGORY_PROPERTY, null));
+	}
+
+	protected boolean propertyChanged(String propertyName, Object oldValue, Object newValue) {
+		if (propertyName.equals(PREFERRED_ROOT_NAMESPACE_CATEGORY_PROPERTY_PATHNAME)) {
+			String path = (String) newValue;
+			if (!updatePreferredRootNamespaceCategory(path)) {
+				return false;
+			}
+		}
+		super.propertyChanged(propertyName, oldValue, newValue);
+		return true;
+	}
+
+	private boolean updatePreferredRootNamespaceCategory(String path) {
+		if (path != null) {
+			path = path.trim();
+		}
+		preferredRootNamespaceCategory = null;
+		if (!StringUtils.isBlank(path)) {
+			try {
+				preferredRootNamespaceCategory = new CategoryPath(path);
+			}
+			catch (Exception e) {
+				// ignore invalid path
+				Msg.error(this, "Ignoring invalid preferred root namespace category path: " + path);
+				return false;
+			}
+		}
+		return true;
 	}
 
 	void setProgramUserData(ProgramUserDataDB programUserData) {
@@ -556,7 +599,17 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	public void setCompiler(String compiler) {
 		Options pl = getOptions(PROGRAM_INFO);
 		pl.setString(COMPILER, compiler);
-		changed = true;
+	}
+
+	@Override
+	public CategoryPath getPreferredRootNamespaceCategoryPath() {
+		return preferredRootNamespaceCategory;
+	}
+
+	@Override
+	public void setPreferredRootNamespaceCategoryPath(String categoryPath) {
+		Options pl = getOptions(PROGRAM_INFO);
+		pl.setString(PREFERRED_ROOT_NAMESPACE_CATEGORY_PROPERTY, categoryPath);
 	}
 
 	@Override
@@ -571,7 +624,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	public void setExecutablePath(String path) {
 		Options pl = getOptions(PROGRAM_INFO);
 		pl.setString(EXECUTABLE_PATH, path);
-		changed = true;
 	}
 
 	@Override
@@ -591,7 +643,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	public void setExecutableFormat(String format) {
 		Options pl = getOptions(PROGRAM_INFO);
 		pl.setString(EXECUTABLE_FORMAT, format);
-		changed = true;
 	}
 
 	@Override
@@ -611,7 +662,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	public void setExecutableMD5(String md5) {
 		Options pl = getOptions(PROGRAM_INFO);
 		pl.setString(EXECUTABLE_MD5, md5);
-		changed = true;
 	}
 
 	@Override
@@ -631,7 +681,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	public void setExecutableSHA256(String sha256) {
 		Options pl = getOptions(PROGRAM_INFO);
 		pl.setString(EXECUTABLE_SHA256, sha256);
-		changed = true;
 	}
 
 	@Override
@@ -1738,6 +1787,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			for (int i = 0; i < NUM_MANAGERS; i++) {
 				managers[i].invalidateCache(all);
 			}
+			restoreProgramInformationOptions();
 			installExtensions(); // Reload any extensions
 		}
 		catch (IOException e) {

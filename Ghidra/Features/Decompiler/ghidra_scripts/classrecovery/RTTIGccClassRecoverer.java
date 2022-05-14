@@ -76,13 +76,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	public RTTIGccClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVfunctions, boolean isDwarfLoaded, boolean replaceExistingClassStructures,
+			boolean nameVfunctions, boolean isDwarfLoaded,
 			TaskMonitor monitor) throws Exception {
 
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
-			replaceExistingClassStructures, isDwarfLoaded, monitor);
+			isDwarfLoaded, monitor);
 		this.isDwarfLoaded = isDwarfLoaded;
-		this.replaceClassStructs = replaceExistingClassStructures;
 	}
 
 	@Override
