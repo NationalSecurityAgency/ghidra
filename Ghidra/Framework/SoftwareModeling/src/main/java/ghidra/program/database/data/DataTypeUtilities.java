@@ -485,11 +485,11 @@ public class DataTypeUtilities {
 		StringBuilder buf = new StringBuilder();
 		for (String n : namespace.getParentNamespace().getPathList(true)) {
 			buf.append(CategoryPath.DELIMITER_STRING);
-			buf.append(n);
+			buf.append(CategoryPath.escapeString(n));
 		}
 		paths[PARENT_NAMESPACE_PATH_INDEX] = buf.toString();
 		buf.append(CategoryPath.DELIMITER_STRING);
-		buf.append(namespace.getName());
+		buf.append(CategoryPath.escapeString(namespace.getName()));
 		paths[NAMESPACE_PATH_INDEX] = buf.toString();
 		return paths;
 	}
