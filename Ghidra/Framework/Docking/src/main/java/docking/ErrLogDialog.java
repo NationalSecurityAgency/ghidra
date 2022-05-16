@@ -18,8 +18,6 @@ package docking;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.List;
 
@@ -143,18 +141,6 @@ public class ErrLogDialog extends AbstractErrDialog {
 		}
 
 		return "Workstation: " + name;
-	}
-
-	private Object getHostname() {
-		String hostname = "<unknown>";
-		try {
-			InetAddress addr = InetAddress.getLocalHost();
-			hostname = addr.getCanonicalHostName();
-		}
-		catch (UnknownHostException e) {
-			// ignore
-		}
-		return hostname;
 	}
 
 	public static void setErrorReporter(ErrorReporter errorReporter) {
