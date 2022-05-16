@@ -77,7 +77,7 @@ public class ImportDataDirectory extends DataDirectory {
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
 			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
-			DataTypeConflictException, IOException, MemoryAccessException {
+			IOException, MemoryAccessException {
 
 		if (imports == null || descriptors == null) {
 			return;

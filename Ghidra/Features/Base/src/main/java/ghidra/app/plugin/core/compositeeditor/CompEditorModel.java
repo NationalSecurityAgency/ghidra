@@ -527,12 +527,10 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 *
 	 * @throws InvalidDataTypeException if the structure being edited is part
 	 *         of the data type being inserted or if inserting isn't allowed.
-	 * @throws DataTypeConflictException if creating the data type or one of
-	 *         its sub-parts conflicted with an existing data type.
 	 */
 	@Override
 	public DataTypeComponent insert(int rowIndex, DataType datatype, int length)
-			throws UsrException {
+			throws InvalidDataTypeException, UsrException {
 
 		if (isEditingField()) {
 			endFieldEditing();
@@ -999,8 +997,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public abstract void clearComponents(int[] rows) throws UsrException;
 
 	@Override
-	protected void createArray(int numElements)
-			throws InvalidDataTypeException, DataTypeConflictException, UsrException {
+	protected void createArray(int numElements) throws InvalidDataTypeException, UsrException {
 		if (selection.getNumRanges() != 1) {
 			throw new UsrException("Can only create arrays on a contiguous selection.");
 		}

@@ -279,9 +279,6 @@ public abstract class PCodeTestAbstractControlBlock {
 //		catch (CodeUnitInsertionException e) {
 //			// ignore
 //		}
-//		catch (DataTypeConflictException e) {
-//			// ignore
-//		}
 //	}
 
 	protected void applyU4Data(Address addr) {
@@ -289,9 +286,6 @@ public abstract class PCodeTestAbstractControlBlock {
 			program.getListing().createData(addr, DWordDataType.dataType);
 		}
 		catch (CodeUnitInsertionException e) {
-			// ignore
-		}
-		catch (DataTypeConflictException e) {
 			// ignore
 		}
 	}

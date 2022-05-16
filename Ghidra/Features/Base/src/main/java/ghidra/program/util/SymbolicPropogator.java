@@ -2399,9 +2399,6 @@ public class SymbolicPropogator {
 		catch (CodeUnitInsertionException e) {
 			data = program.getListing().getDefinedDataAt(address);
 		}
-		catch (DataTypeConflictException e) {
-			// do nothing
-		}
 		int addrByteSize = dt.getLength();
 
 		return addrByteSize;

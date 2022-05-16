@@ -502,9 +502,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			catch (CodeUnitInsertionException e) {
 				// ignore
 			}
-			catch (DataTypeConflictException e) {
-				// ignore
-			}
 
 			if (cu == null) {
 				cu = listing.getCodeUnitAt(nextAddr);
@@ -2099,9 +2096,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		catch (CodeUnitInsertionException e) {
 			log("ELF data markup conflict at " + address);
 		}
-		catch (DataTypeConflictException e) {
-			throw new AssertException("unexpected", e);
-		}
 		return null;
 	}
 
@@ -2117,9 +2111,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 		catch (CodeUnitInsertionException e) {
 			log("ELF data markup conflict while applying " + dt.getName() + " at " + address);
-		}
-		catch (DataTypeConflictException e) {
-			log("ELF data type conflict:" + getMessage(e));
 		}
 		return null;
 	}
@@ -2556,8 +2547,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private int createString(Address address)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+	private int createString(Address address) throws CodeUnitInsertionException {
 		Data d = listing.getDataAt(address);
 		if (d == null || !TerminatedStringDataType.dataType.isEquivalent(d.getDataType())) {
 			d = listing.createData(address, TerminatedStringDataType.dataType, -1);

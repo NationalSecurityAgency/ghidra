@@ -62,7 +62,8 @@ import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeEncodeException;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.*;
@@ -840,7 +841,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			}
 			tid.commit();
 		}
-		catch (CodeUnitInsertionException | DataTypeConflictException | CancelledException e) {
+		catch (CodeUnitInsertionException | CancelledException e) {
 			throw new AssertionError(e);
 		}
 	}

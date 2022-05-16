@@ -118,10 +118,6 @@ public class CFStringAnalyzer extends AbstractAnalyzer {
 				log.appendException(e);
 				return false;
 			}
-			catch (DataTypeConflictException e) {
-				log.appendException(e);
-				return false;
-			}
 			catch (InvalidInputException e) {
 				log.appendException(e);
 				// return false;

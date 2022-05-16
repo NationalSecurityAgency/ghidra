@@ -85,7 +85,8 @@ public abstract class GccAnalysisClass {
 			// try creating without clearing, the code units should be clear
 			program.getListing().createData(addr, dt);
 		}
-		catch (CodeUnitInsertionException | DataTypeConflictException e) {
+		catch (CodeUnitInsertionException e) {
+			// TODO: not sure what this accomplishes since no clearing will be done
 			CreateDataCmd dataCmd = new CreateDataCmd(addr, dt);
 			dataCmd.applyTo(program);
 		}

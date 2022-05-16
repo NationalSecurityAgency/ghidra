@@ -139,7 +139,7 @@ public final class ObjectiveC1_Utilities {
 	 * Applies the data type at the specified address.
 	 */
 	public static void applyData(Program program, DataType dt, Address address)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 		Data data = program.getListing().getDefinedDataAt(address);
 		if (data != null && data.getDataType().isEquivalent(dt)) {
 			return;
@@ -176,24 +176,10 @@ public final class ObjectiveC1_Utilities {
 	 * Applies a pointer data type at the specified address and returns the address being referenced.
 	 */
 	public static Address createPointerAndReturnAddressBeingReferenced(Program program,
-			Address address) throws CodeUnitInsertionException, DataTypeConflictException {
+			Address address) throws CodeUnitInsertionException {
 		program.getListing().createData(address, new PointerDataType());
 		Data data = program.getListing().getDefinedDataAt(address);
 		return (Address) data.getValue();
-	}
-
-	/**
-	 * Applies a pointer data type at the specified address and returns the newly created data object.
-	 */
-	public static Data createPointer(Program program, Address address) {
-		try {
-			program.getListing().createData(address, new PointerDataType());
-			Data data = program.getListing().getDefinedDataAt(address);
-			return data;
-		}
-		catch (Exception e) {
-		}
-		return null;
 	}
 
 	/**
