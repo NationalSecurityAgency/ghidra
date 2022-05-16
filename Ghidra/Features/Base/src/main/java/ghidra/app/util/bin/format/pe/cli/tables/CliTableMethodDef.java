@@ -456,9 +456,6 @@ public class CliTableMethodDef extends CliAbstractTable {
 			catch (CodeUnitInsertionException e) {
 				// Ignore, something there already
 			}
-			catch (DataTypeConflictException e) {
-				// Ignore, something there already
-			}
 			catch (NullPointerException e) {
 				Msg.warn(this, "Error processing function \"" + funcName + "\" (" + methodRowIndex +
 					"): Bad parameters provided");

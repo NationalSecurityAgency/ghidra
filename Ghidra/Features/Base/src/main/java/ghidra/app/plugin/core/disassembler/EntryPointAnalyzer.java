@@ -30,7 +30,6 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataTypeConflictException;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -360,9 +359,6 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 			}
 		}
 		catch (CodeUnitInsertionException e) {
-			// couldn't create
-		}
-		catch (DataTypeConflictException e) {
 			// couldn't create
 		}
 	}

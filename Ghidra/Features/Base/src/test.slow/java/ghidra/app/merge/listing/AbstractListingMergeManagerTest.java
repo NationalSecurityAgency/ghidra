@@ -43,7 +43,8 @@ import ghidra.program.database.*;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.disassemble.DisassemblerMessageListener;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -134,8 +135,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 						program.getMemory().setBytes(addr, bytes);
 						listing.createData(addr, dt);
 					}
-					catch (CodeUnitInsertionException | DataTypeConflictException
-							| MemoryAccessException e) {
+					catch (CodeUnitInsertionException | MemoryAccessException e) {
 						Assert.fail(e.getMessage());
 					}
 					Data data = listing.getDataAt(addr);

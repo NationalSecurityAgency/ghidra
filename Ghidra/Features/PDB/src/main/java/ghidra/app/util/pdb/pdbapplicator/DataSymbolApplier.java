@@ -180,7 +180,7 @@ public class DataSymbolApplier extends MsSymbolApplier {
 					applicator.getProgram().getListing().createData(address, dataType);
 				}
 			}
-			catch (CodeUnitInsertionException | DataTypeConflictException e) {
+			catch (CodeUnitInsertionException e) {
 				applicator.appendLogMsg("Unable to create " + dataType.getDisplayName() + " at 0x" +
 					address + ": " + e.getMessage());
 			}
@@ -191,7 +191,7 @@ public class DataSymbolApplier extends MsSymbolApplier {
 					address.add(dataTypeLength - 1), false);
 				applicator.getProgram().getListing().createData(address, dataType, dataTypeLength);
 			}
-			catch (CodeUnitInsertionException | DataTypeConflictException e) {
+			catch (CodeUnitInsertionException e) {
 				applicator.appendLogMsg("Unable to replace " + dataType.getDisplayName() +
 					" at 0x" + address + ": " + e.getMessage());
 			}

@@ -636,9 +636,6 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 		catch (CodeUnitInsertionException e) {
 			data = program.getListing().getDefinedDataAt(address);
 		}
-		catch (DataTypeConflictException e) {
-			// ignore data type conflict
-		}
 		int addrByteSize = dt.getLength();
 		//data = program.getListing().getDefinedDataAt(address);
 		if (data != null) {

@@ -41,7 +41,6 @@ import ghidra.app.plugin.core.symtable.SymbolTablePlugin;
 import ghidra.app.plugin.debug.MemoryUsagePlugin;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.data.DataTypeConflictException;
 import ghidra.program.model.data.Undefined4DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -78,7 +77,7 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	@Ignore
 	public void testManual01() throws PluginException, CodeUnitInsertionException,
-			DataTypeConflictException, AddressOverflowException, DuplicateNameException,
+			AddressOverflowException, DuplicateNameException,
 			TraceOverlappedRegionException, InterruptedException {
 		addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
 

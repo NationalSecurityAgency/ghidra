@@ -22,8 +22,9 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
+import ghidra.program.model.data.PointerTypedef;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -90,7 +91,7 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 			DataUtilities.createData(program, addr, dt, -1, false,
 				ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 		}
-		catch (CodeUnitInsertionException | DataTypeConflictException e) {
+		catch (CodeUnitInsertionException e) {
 			Msg.error(ElfRelocationHandler.class,
 				"Failed to apply component-offset pointer at " + addr);
 		}

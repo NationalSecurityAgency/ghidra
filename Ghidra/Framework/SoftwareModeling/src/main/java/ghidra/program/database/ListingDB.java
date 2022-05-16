@@ -279,13 +279,13 @@ class ListingDB implements Listing {
 
 	@Override
 	public Data createData(Address addr, DataType dataType)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 		return codeMgr.createCodeUnit(addr, dataType, dataType.getLength());
 	}
 
 	@Override
 	public Data createData(Address addr, DataType dataType, int length)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 		return codeMgr.createCodeUnit(addr, dataType, length);
 	}
 

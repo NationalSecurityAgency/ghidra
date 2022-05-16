@@ -459,9 +459,6 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		catch (CodeUnitInsertionException e) {
 			// don't care; we tried
 		}
-		catch (DataTypeConflictException e) {
-			// don't care; we tried
-		}
 	}
 
 	@Override

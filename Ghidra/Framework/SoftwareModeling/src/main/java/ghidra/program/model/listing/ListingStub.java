@@ -299,13 +299,13 @@ public class ListingStub implements Listing {
 
 	@Override
 	public Data createData(Address addr, DataType dataType, int length)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Data createData(Address addr, DataType dataType)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 		throw new UnsupportedOperationException();
 	}
 

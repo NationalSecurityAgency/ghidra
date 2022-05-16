@@ -160,9 +160,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 		catch (CodeUnitInsertionException e) {
 			throw new IOException(e);
 		}
-		catch (DataTypeConflictException e) {
-			throw new IOException(e);
-		}
 		catch (MemoryAccessException e) {
 			throw new IOException(e);
 		}
