@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.symbol;
 
+import java.util.*;
+
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.util.exception.DuplicateNameException;
@@ -24,6 +26,7 @@ import ghidra.util.exception.InvalidInputException;
  * The Namespace interface
  */
 public interface Namespace {
+
 	static final long GLOBAL_NAMESPACE_ID = 0;
 	/**
 	 * The delimiter that is used to separate namespace nodes in a namespace
@@ -64,6 +67,24 @@ public interface Namespace {
 	public String getName(boolean includeNamespacePath);
 
 	/**
+	 * Get the namespace path as a list of namespace names.
+	 * @param omitLibrary if true Library name (if applicable) will be 
+	 * omitted from returned list and treated same as global namespace.
+	 * @return namespace path list or empty list for global namespace
+	 */
+	public default List<String> getPathList(boolean omitLibrary) {
+		if (isGlobal()) {
+			return Collections.emptyList();
+		}
+		ArrayDeque<String> list = new ArrayDeque<>();
+		for (Namespace n = this; !n.isGlobal() && !(omitLibrary && n.isLibrary()); n =
+			n.getParentNamespace()) {
+			list.addFirst(n.getName());
+		}
+		return List.copyOf(list);
+	}
+
+	/**
 	 * Return the namespace id
 	 * @return the namespace id
 	 */
@@ -96,11 +117,20 @@ public interface Namespace {
 			throws DuplicateNameException, InvalidInputException, CircularDependencyException;
 
 	/**
-	 * Return true if this is the global namespace;
-	 * @return  true if this is the global namespace;
+	 * Return true if this is the global namespace
+	 * @return  true if this is the global namespace
 	 */
 	public default boolean isGlobal() {
 		return getID() == GLOBAL_NAMESPACE_ID;
+	}
+
+	/**
+	 * Return true if this is a library
+	 * @return  true if this is a library
+	 */
+	public default boolean isLibrary() {
+		Symbol s = getSymbol();
+		return s != null && s.getSymbolType() == SymbolType.LIBRARY;
 	}
 
 }

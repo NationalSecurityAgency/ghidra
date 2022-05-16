@@ -25,7 +25,7 @@
   <com>map addr r0x301020 octint4 globalbin</com>
   <com>lo fu setglobals</com>
   <com>decompile</com>
-  <com>force varnode #0xaa(0x100625:0x12) bin</com>
+  <com>force varnode #0xaa(0x100619:7) bin</com>
   <com>print C</com>
   <com>quit</com>
 </script>

@@ -26,6 +26,7 @@ import ghidra.framework.store.LockException;
 import ghidra.program.database.IntRangeMap;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
@@ -139,6 +140,16 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	@Override
 	public void setCompiler(String compiler) {
 		view.setCompiler(compiler);
+	}
+
+	@Override
+	public CategoryPath getPreferredRootNamespaceCategoryPath() {
+		return view.getPreferredRootNamespaceCategoryPath();
+	}
+
+	@Override
+	public void setPreferredRootNamespaceCategoryPath(String categoryPath) {
+		view.setPreferredRootNamespaceCategoryPath(categoryPath);
 	}
 
 	@Override

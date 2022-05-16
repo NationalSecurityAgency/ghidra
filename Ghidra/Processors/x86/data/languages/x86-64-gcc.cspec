@@ -27,6 +27,9 @@
     <range space="ram"/>
   </global>
   <stackpointer register="RSP" space="ram"/>
+  <returnaddress>
+    <varnode space="stack" offset="0" size="8"/>
+  </returnaddress>
   <default_proto>
     <prototype name="__stdcall" extrapop="8" stackshift="8">
       <!-- Derived from "System V Application Binary Interface AMD64 Architecture Processor Supplement" April 2016 -->
