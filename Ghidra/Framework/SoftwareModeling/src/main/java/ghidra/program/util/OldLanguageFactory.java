@@ -279,7 +279,7 @@ public class OldLanguageFactory {
 				Element fieldElement = new Element("field");
 				fieldElement.setAttribute("name", bitReg.getName());
 				int fieldBitLength = bitReg.getBitLength();
-				int lsb = bitReg.getLeastSignificatBitInBaseRegister();
+				int lsb = bitReg.getLeastSignificantBitInBaseRegister();
 				int msb = lsb + fieldBitLength - 1;
 
 				// Transpose bit numbering to agree with Sleigh context bit numbering
