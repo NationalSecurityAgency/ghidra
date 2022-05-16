@@ -119,8 +119,7 @@ public class ErrLogDialog extends AbstractErrDialog {
 
 		String hostname = getHostnameString();
 		if (hostname != null) {
-			sb.append("Workstation: ");
-			sb.append(getHostname());
+			sb.append(hostname);
 			sb.append(EOL);
 		}
 		return sb.toString();
