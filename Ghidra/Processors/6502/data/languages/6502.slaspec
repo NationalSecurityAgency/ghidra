@@ -31,6 +31,7 @@ define token data (16)
 ;
 
 macro popSR() {
+	SP = SP + 1;
 	local ccr = *:1 SP;
 	N = ccr[7,1];
 	V = ccr[6,1];
@@ -399,10 +400,10 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	OP2 = tmp;
 	resultFlags(tmp);	
 }
+
 :RTI      is op=0x40
 {
 	popSR();
-	SP = SP+1;
 	
     SP = SP+1;
 	tmp:2 = *:2 SP;
