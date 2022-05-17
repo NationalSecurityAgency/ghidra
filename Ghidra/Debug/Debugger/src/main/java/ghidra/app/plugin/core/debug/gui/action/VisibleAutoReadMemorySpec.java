@@ -55,8 +55,9 @@ public class VisibleAutoReadMemorySpec implements AutoReadMemorySpec {
 			return AsyncUtils.NIL;
 		}
 		TraceRecorder recorder = coordinates.getRecorder();
-		AddressSet visibleAccessible =
-			recorder.getAccessibleMemory().intersect(visible);
+		boolean ffv = coordinates.getView().getMemory().isForceFullView();
+		AddressSetView visibleAccessible =
+			ffv ? visible : recorder.getAccessibleMemory().intersect(visible);
 		TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();
 		AddressSetView alreadyKnown =
 			mm.getAddressesWithState(coordinates.getSnap(), visibleAccessible,

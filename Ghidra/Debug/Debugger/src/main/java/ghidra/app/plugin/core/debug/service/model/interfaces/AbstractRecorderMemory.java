@@ -24,7 +24,11 @@ import ghidra.program.model.address.*;
 
 public interface AbstractRecorderMemory {
 
+	public void addMemory(TargetMemory memory);
+
 	public void addRegion(TargetMemoryRegion region, TargetMemory memory);
+
+	public void removeMemory(TargetMemory invalid);
 
 	public boolean removeRegion(TargetObject invalid);
 
@@ -43,5 +47,4 @@ public interface AbstractRecorderMemory {
 			DebuggerMemoryMapper memMapper);
 
 	public AddressRange alignAndLimitToFloor(Address targetAddress, int length);
-
 }
