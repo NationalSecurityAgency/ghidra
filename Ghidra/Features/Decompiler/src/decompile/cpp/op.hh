@@ -20,6 +20,8 @@
 
 #include "typeop.hh"
 
+extern ElementId ELEM_IOP;		///< Marshaling element \<iop>
+
 /// \brief Space for storing internal PcodeOp pointers as addresses
 ///
 /// It is convenient and efficient to replace the formally encoded
@@ -32,11 +34,11 @@
 class IopSpace : public AddrSpace {
 public:
   IopSpace(AddrSpaceManager *m,const Translate *t,int4 ind);
-  virtual void saveXmlAttributes(ostream &s,uintb offset) const { s << " space=\"iop\""; }
-  virtual void saveXmlAttributes(ostream &s,uintb offset,int4 size) const { s << " space=\"iop\""; }
+  virtual void encodeAttributes(Encoder &encoder,uintb offset) const { encoder.writeString(ATTRIB_SPACE, "iop"); }
+  virtual void encodeAttributes(Encoder &encoder,uintb offset,int4 size) const { encoder.writeString(ATTRIB_SPACE, "iop"); }
   virtual void printRaw(ostream &s,uintb offset) const;
   virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
   static const string NAME;			///< Reserved name for the iop space
 };
 
@@ -226,7 +228,7 @@ public:
   void printRaw(ostream &s) const { opcode->printRaw(s,this); }	///< Print raw info about this op to stream
   const string &getOpName(void) const { return opcode->getName(); } ///< Return the name of this op
   void printDebug(ostream &s) const; ///< Print debug description of this op to stream
-  void saveXml(ostream &s) const; ///< Write an XML description of this op to stream
+  void encode(Encoder &encoder) const; ///< Encode a description of \b this op to stream
   /// \brief Retrieve the PcodeOp encoded as the address \e addr
   static PcodeOp *getOpFromConst(const Address &addr) { return (PcodeOp *)(uintp)addr.getOffset(); }
 

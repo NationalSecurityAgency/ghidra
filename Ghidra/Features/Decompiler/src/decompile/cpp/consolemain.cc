@@ -132,7 +132,8 @@ void IfcSave::execute(istream &s)
   if (!fs)
     throw IfaceExecutionError("Unable to open file: "+savefile);
 
-  dcp->conf->saveXml(fs);
+  XmlEncode encoder(fs);
+  dcp->conf->encode(encoder);
   fs.close();
 }
 

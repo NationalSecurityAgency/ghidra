@@ -28,6 +28,14 @@
 
 class FlowInfo;
 
+extern AttributeId ATTRIB_NOCODE;	///< Marshaling attribute "nocode"
+
+extern ElementId ELEM_AST;		///< Marshaling element \<ast>
+extern ElementId ELEM_FUNCTION;		///< Marshaling element \<function>
+extern ElementId ELEM_HIGHLIST;		///< Marshaling element \<highlist>
+extern ElementId ELEM_JUMPTABLELIST;	///< Marshaling element \<jumptablelist>
+extern ElementId ELEM_VARNODES;		///< Marshaling element \<varnodes>
+
 /// \brief Container for data structures associated with a single function
 ///
 /// This class holds the primary data structures for decompiling a function. In particular it holds
@@ -120,7 +128,7 @@ class Funcdata {
   void nodeSplitRawDuplicate(BlockBasic *b,BlockBasic *bprime);
   void nodeSplitInputPatch(BlockBasic *b,BlockBasic *bprime,int4 inedge);
   static bool descendantsOutside(Varnode *vn);
-  static void saveVarnodeXml(ostream &s,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer);
+  static void encodeVarnode(Encoder &encoder,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer);
   static bool checkIndirectUse(Varnode *vn);
   static PcodeOp *findPrimaryBranch(PcodeOpTree::const_iterator iter,PcodeOpTree::const_iterator enditer,
 				    bool findbranch,bool findcall,bool findreturn);
@@ -177,12 +185,12 @@ public:
   void printVarnodeTree(ostream &s) const;		///< Print a description of all Varnodes to a stream
   void printBlockTree(ostream &s) const;		///< Print a description of control-flow structuring to a stream
   void printLocalRange(ostream &s) const;		///< Print description of memory ranges associated with local scopes
-  void saveXml(ostream &s,uint8 id,bool savetree) const;	///< Emit an XML description of \b this function to stream
-  uint8 restoreXml(const Element *el);			///< Restore the state of \b this function from an XML description
-  void saveXmlJumpTable(ostream &s) const;		///< Emit an XML description of jump-tables to stream
-  void restoreXmlJumpTable(const Element *el);		///< Restore jump-tables from an XML description
-  void saveXmlTree(ostream &s) const;			///< Save an XML description of the p-code tree to stream
-  void saveXmlHigh(ostream &s) const;			///< Save an XML description of all HighVariables to stream
+  void encode(Encoder &encoder,uint8 id,bool savetree) const;	///< Encode a description of \b this function to stream
+  uint8 decode(Decoder &decoder);			///< Restore the state of \b this function from an XML description
+  void encodeJumpTable(Encoder &encoder) const;		///< Encode a description of jump-tables to stream
+  void decodeJumpTable(Decoder &decoder);		///< Decode jump-tables from a stream
+  void encodeTree(Encoder &encoder) const;		///< Encode a description of the p-code tree to stream
+  void encodeHigh(Encoder &encoder) const;		///< Encode a description of all HighVariables to stream
 
   Override &getOverride(void) { return localoverride; }	///< Get the Override object for \b this function
 

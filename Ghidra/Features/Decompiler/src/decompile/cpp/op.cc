@@ -16,6 +16,8 @@
 #include "op.hh"
 #include "funcdata.hh"
 
+ElementId ELEM_IOP = ElementId("iop",110);
+
 const string IopSpace::NAME = "iop";
 
 /// Constructor for the \b iop space.
@@ -56,13 +58,13 @@ void IopSpace::printRaw(ostream &s,uintb offset) const
 void IopSpace::saveXml(ostream &s) const
 
 {
-  throw LowlevelError("Should never save iop space to XML");
+  throw LowlevelError("Should never encode iop space to stream");
 }
 
-void IopSpace::restoreXml(const Element *el)
+void IopSpace::decode(Decoder &decoder)
 
 {
-  throw LowlevelError("Should never restore iop space from XML");
+  throw LowlevelError("Should never decode iop space from stream");
 }
 
 /// Construct a completely unattached PcodeOp.  Space is reserved for input and output Varnodes
@@ -385,50 +387,62 @@ void PcodeOp::printDebug(ostream &s) const
     printRaw(s);
 }
 
-/// Write a description including: the opcode name, the sequence number, and separate xml tags
+/// Encode a description including: the opcode name, the sequence number, and separate elements
 /// providing a reference number for each input and output Varnode
-/// \param s is the stream to write to
-void PcodeOp::saveXml(ostream &s) const
+/// \param encoder is the stream encoder
+void PcodeOp::encode(Encoder &encoder) const
 
 {
-  s << "<op";
-  a_v_i(s,"code",(int4)code());
-  s << ">\n";
-  start.saveXml(s);
-  s << '\n';
-  if (output==(Varnode *)0)
-    s << "<void/>\n";
-  else
-    s << "<addr ref=\"0x" << hex << output->getCreateIndex() << "\"/>\n";
+  encoder.openElement(ELEM_OP);
+  encoder.writeSignedInteger(ATTRIB_CODE, (int4)code());
+  start.encode(encoder);
+  if (output==(Varnode *)0) {
+    encoder.openElement(ELEM_VOID);
+    encoder.closeElement(ELEM_VOID);
+  }
+  else {
+    encoder.openElement(ELEM_ADDR);
+    encoder.writeUnsignedInteger(ATTRIB_REF, output->getCreateIndex());
+    encoder.closeElement(ELEM_ADDR);
+  }
   for(int4 i=0;i<inrefs.size();++i) {
     const Varnode *vn = getIn(i);
-    if (vn == (const Varnode *)0)
-      s << "<void/>\n";
+    if (vn == (const Varnode *)0) {
+      encoder.openElement(ELEM_VOID);
+      encoder.closeElement(ELEM_VOID);
+    }
     else if (vn->getSpace()->getType()==IPTR_IOP) {
       if ((i==1)&&(code()==CPUI_INDIRECT)) {
 	PcodeOp *indop = PcodeOp::getOpFromConst(vn->getAddr());
-	s << "<iop";
-	a_v_u(s,"value",indop->getSeqNum().getTime());
-	s << "/>\n";
+	encoder.openElement(ELEM_IOP);
+	encoder.writeUnsignedInteger(ATTRIB_VALUE, indop->getSeqNum().getTime());
+	encoder.closeElement(ELEM_IOP);
       }
-      else
-	s << "<void/>\n";
+      else {
+	encoder.openElement(ELEM_VOID);
+	encoder.closeElement(ELEM_VOID);
+      }
     }
     else if (vn->getSpace()->getType()==IPTR_CONSTANT) {
       if ((i==0)&&((code()==CPUI_STORE)||(code()==CPUI_LOAD))) {
 	AddrSpace *spc = vn->getSpaceFromConst();
-	s << "<spaceid";
-	a_v(s,"name",spc->getName());
-	s << "/>\n";
+	encoder.openElement(ELEM_SPACEID);
+	encoder.writeString(ATTRIB_NAME, spc->getName());
+	encoder.closeElement(ELEM_SPACEID);
       }
-      else
-	s << "<addr ref=\"0x" << hex << vn->getCreateIndex() << "\"/>\n";
+      else {
+	encoder.openElement(ELEM_ADDR);
+	encoder.writeUnsignedInteger(ATTRIB_REF, vn->getCreateIndex());
+	encoder.closeElement(ELEM_ADDR);
+      }
     }
     else {
-      s << "<addr ref=\"0x" << hex << vn->getCreateIndex() << "\"/>\n";
+      encoder.openElement(ELEM_ADDR);
+      encoder.writeUnsignedInteger(ATTRIB_REF, vn->getCreateIndex());
+      encoder.closeElement(ELEM_ADDR);
     }
   }
-  s << "</op>\n";
+  encoder.closeElement(ELEM_OP);
 }
 
 /// Assuming all the inputs to this op are constants, compute the constant result of evaluating

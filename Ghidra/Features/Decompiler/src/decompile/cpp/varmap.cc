@@ -16,6 +16,11 @@
 #include "varmap.hh"
 #include "funcdata.hh"
 
+AttributeId ATTRIB_LOCK = AttributeId("lock",129);
+AttributeId ATTRIB_MAIN = AttributeId("main",130);
+
+ElementId ELEM_LOCALDB = ElementId("localdb",206);
+
 /// \brief Can the given intersecting RangeHint coexist with \b this at their given offsets
 ///
 /// Determine if the data-type information in the two ranges \e line \e up
@@ -364,27 +369,30 @@ void ScopeLocal::resetLocalWindow(void)
   glb->symboltab->setRange(this,newrange);
 }
 
-void ScopeLocal::saveXml(ostream &s) const
+void ScopeLocal::encode(Encoder &encoder) const
 
 {
-  s << "<localdb";
-  a_v(s,"main",space->getName());
-  a_v_b(s,"lock",rangeLocked);
-  s << ">\n";
-  ScopeInternal::saveXml(s);
-  s << "</localdb>\n";
+  encoder.openElement(ELEM_LOCALDB);
+  encoder.writeString(ATTRIB_MAIN, space->getName());
+  encoder.writeBool(ATTRIB_LOCK, rangeLocked);
+  ScopeInternal::encode(encoder);
+  encoder.closeElement(ELEM_LOCALDB);
 }
 
-void ScopeLocal::restoreXml(const Element *el)
+void ScopeLocal::decode(Decoder &decoder)
+
+{
+  ScopeInternal::decode( decoder );
+  collectNameRecs();
+}
+
+void ScopeLocal::decodeWrappingAttributes(Decoder &decoder)
 
 {
   rangeLocked = false;
-  if (xml_readbool(el->getAttributeValue("lock")))
+  if (decoder.readBool(ATTRIB_LOCK))
     rangeLocked = true;
-  space = glb->getSpaceByName(el->getAttributeValue("main"));
-  
-  ScopeInternal::restoreXml( *(el->getChildren().begin()) );
-  collectNameRecs();
+  space = glb->getSpaceByName(decoder.readString(ATTRIB_MAIN));
 }
 
 /// The given range can no longer hold a \e mapped local variable. This indicates the range

@@ -15,15 +15,31 @@
  */
 #include "translate.hh"
 
-/// Read a \<truncate_space> XML tag to configure \b this object
-/// \param el is the XML element
-void TruncationTag::restoreXml(const Element *el)
+AttributeId ATTRIB_CODE = AttributeId("code",104);
+AttributeId ATTRIB_CONTAIN = AttributeId("contain",105);
+AttributeId ATTRIB_DEFAULTSPACE = AttributeId("defaultspace",106);
+AttributeId ATTRIB_UNIQBASE = AttributeId("uniqbase",107);
+
+ElementId ELEM_OP = ElementId("op",180);
+ElementId ELEM_SLEIGH = ElementId("sleigh",181);
+ElementId ELEM_SPACE = ElementId("space",182);
+ElementId ELEM_SPACEID = ElementId("spaceid",183);
+ElementId ELEM_SPACES = ElementId("spaces",184);
+ElementId ELEM_SPACE_BASE = ElementId("space_base",185);
+ElementId ELEM_SPACE_OTHER = ElementId("space_other",186);
+ElementId ELEM_SPACE_OVERLAY = ElementId("space_overlay",187);
+ElementId ELEM_SPACE_UNIQUE = ElementId("space_unique",188);
+ElementId ELEM_TRUNCATE_SPACE = ElementId("truncate_space",189);
+
+/// Parse a \<truncate_space> element to configure \b this object
+/// \param decoder is the stream decoder
+void TruncationTag::decode(Decoder &decoder)
 
 {
-  spaceName = el->getAttributeValue("space");
-  istringstream s(el->getAttributeValue("size"));
-  s.unsetf(ios::dec | ios::hex | ios::oct);
-  s >> size;
+  uint4 elemId = decoder.openElement(ELEM_TRUNCATE_SPACE);
+  spaceName = decoder.readString(ATTRIB_SPACE);
+  size = decoder.readUnsignedInteger(ATTRIB_SIZE);
+  decoder.closeElement(elemId);
 }
 
 /// Construct a virtual space.  This is usually used for the stack
@@ -45,7 +61,7 @@ SpacebaseSpace::SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const stri
 }
 
 /// This is a partial constructor, which must be followed up
-/// with restoreXml in order to fillin the rest of the spaces
+/// with decode in order to fillin the rest of the spaces
 /// attributes
 /// \param m is the associated address space manager
 /// \param t is the associated processor translator
@@ -111,11 +127,13 @@ void SpacebaseSpace::saveXml(ostream &s) const
   s << "/>\n";
 }
 
-void SpacebaseSpace::restoreXml(const Element *el)
+void SpacebaseSpace::decode(Decoder &decoder)
 
 {
-  AddrSpace::restoreXml(el);	// Restore basic attributes
-  contain = getManager()->getSpaceByName(el->getAttributeValue("contain"));
+  uint4 elemId = decoder.openElement(ELEM_SPACE_BASE);
+  decodeBasicAttributes(decoder);
+  contain = getManager()->getSpaceByName(decoder.readString(ATTRIB_CONTAIN));
+  decoder.closeElement(elemId);
 }
 
 /// The \e join space range maps to the underlying pieces in a natural endian aware way.
@@ -191,55 +209,53 @@ AddrSpaceManager::AddrSpaceManager(void)
 
 /// The initialization of address spaces is the same across all
 /// variants of the Translate object.  This routine initializes
-/// a single address space from a parsed XML tag.  It knows
+/// a single address space from a decoder element.  It knows
 /// which class derived from AddrSpace to instantiate based on
-/// the tag name.
-/// \param el is the parsed XML tag
+/// the ElementId.
+/// \param decoder is the stream decoder
 /// \param trans is the translator object to be associated with the new space
 /// \return a pointer to the initialized AddrSpace
-AddrSpace *AddrSpaceManager::restoreXmlSpace(const Element *el,const Translate *trans)
+AddrSpace *AddrSpaceManager::decodeSpace(Decoder &decoder,const Translate *trans)
 
 {
+  uint4 elemId = decoder.peekElement();
   AddrSpace *res;
-  const string &tp(el->getName());
-  if (tp == "space_base")
+  if (elemId == ELEM_SPACE_BASE)
     res = new SpacebaseSpace(this,trans);
-  else if (tp == "space_unique")
+  else if (elemId == ELEM_SPACE_UNIQUE)
     res = new UniqueSpace(this,trans);
-  else if (tp == "space_other")
+  else if (elemId == ELEM_SPACE_OTHER)
     res = new OtherSpace(this,trans);
-  else if (tp == "space_overlay")
+  else if (elemId == ELEM_SPACE_OVERLAY)
     res = new OverlaySpace(this,trans);
   else
     res = new AddrSpace(this,trans,IPTR_PROCESSOR);
 
-  res->restoreXml(el);
+  res->decode(decoder);
   return res;
 }
 
 /// This routine initializes (almost) all the address spaces used
-/// for a particular processor by using a \b \<spaces\> tag,
-/// which contains subtags for the specific address spaces.
+/// for a particular processor by using a \b \<spaces\> element,
+/// which contains child elements for the specific address spaces.
 /// This also instantiates the builtin \e constant space. It
 /// should probably also instantiate the \b iop, \b fspec, and \b join
 /// spaces, but this is currently done by the Architecture class.
-/// \param el is the parsed \b \<spaces\> tag
+/// \param decoder is the stream decoder
 /// \param trans is the processor translator to be associated with the spaces
-void AddrSpaceManager::restoreXmlSpaces(const Element *el,const Translate *trans)
+void AddrSpaceManager::decodeSpaces(Decoder &decoder,const Translate *trans)
 
 {
   // The first space should always be the constant space
   insertSpace(new ConstantSpace(this,trans));
 
-  string defname(el->getAttributeValue("defaultspace"));
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  while(iter!=list.end()) {
-    AddrSpace *spc = restoreXmlSpace(*iter,trans);
+  uint4 elemId = decoder.openElement(ELEM_SPACES);
+  string defname = decoder.readString(ATTRIB_DEFAULTSPACE);
+  while(decoder.peekElement() != 0) {
+    AddrSpace *spc = decodeSpace(decoder,trans);
     insertSpace(spc);
-    ++iter;
   }
+  decoder.closeElement(elemId);
   AddrSpace *spc = getSpaceByName(defname);
   if (spc == (AddrSpace *)0)
     throw LowlevelError("Bad 'defaultspace' attribute: "+defname);
@@ -887,44 +903,48 @@ const FloatFormat *Translate::getFloatFormat(int4 size) const
   return (const FloatFormat *)0;
 }
 
-/// A convenience method for passing around pcode operations via
-/// XML.  A single pcode operation is parsed from an XML tag and
+/// A convenience method for passing around pcode operations via stream.
+/// A single pcode operation is parsed from an \<op> element and
 /// returned to the application via the PcodeEmit::dump method.
-/// \param el is the pcode operation XML tag
+/// \param decoder is the stream decoder
 /// \param manage is the AddrSpace manager object of the associated processor
-void PcodeEmit::restoreXmlOp(const Element *el,const AddrSpaceManager *manage)
+void PcodeEmit::decodeOp(Decoder &decoder,const AddrSpaceManager *manage)
 
-{ // Read a raw pcode op from DOM (and dump it)
+{
   int4 opcode;
   VarnodeData outvar;
   VarnodeData invar[30];
   VarnodeData *outptr;
 
-  istringstream i(el->getAttributeValue("code"));
-  i >> opcode;
-  const List &list(el->getChildren());
-  List::const_iterator iter = list.begin();
-  Address pc = Address::restoreXml(*iter,manage);
-  ++iter;
-  if ((*iter)->getName() == "void") 
+  uint4 elemId = decoder.openElement(ELEM_OP);
+  opcode = decoder.readSignedInteger(ATTRIB_CODE);
+  Address pc = Address::decode(decoder,manage);
+  uint4 subId = decoder.peekElement();
+  if (subId == ELEM_VOID) {
+    decoder.openElement();
+    decoder.closeElement(subId);
     outptr = (VarnodeData *)0;
+  }
   else {
-    outvar.restoreXml(*iter,manage);
+    outvar.decode(decoder,manage);
     outptr = &outvar;
   }
-  ++iter;
   int4 isize = 0;
-  while(iter != list.end() && isize < 30) {
-    if ((*iter)->getName() == "spaceid") {
+  while(isize < 30) {
+    subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_SPACEID) {
+      decoder.openElement();
       invar[isize].space = manage->getConstantSpace();
-      invar[isize].offset = (uintb)(uintp)manage->getSpaceByName( (*iter)->getAttributeValue("name") );
+      invar[isize].offset = (uintb)(uintp)manage->getSpaceByName( decoder.readString(ATTRIB_NAME) );
       invar[isize].size = sizeof(void *);
+      decoder.closeElement(subId);
     }
     else
-      invar[isize].restoreXml(*iter,manage);
+      invar[isize].decode(decoder,manage);
     isize += 1;
-    ++iter;
   }
+  decoder.closeElement(elemId);
   dump(pc,(OpCode)opcode,outptr,invar,isize);
 }
 

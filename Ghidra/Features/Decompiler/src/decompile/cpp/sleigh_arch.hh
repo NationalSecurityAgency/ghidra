@@ -23,6 +23,21 @@
 #include "architecture.hh"
 #include "sleigh.hh"
 
+extern AttributeId ATTRIB_DEPRECATED;	///< Marshaling attribute "deprecated"
+extern AttributeId ATTRIB_ENDIAN;	///< Marshaling attribute "endian"
+extern AttributeId ATTRIB_PROCESSOR;	///< Marshaling attribute "processor"
+extern AttributeId ATTRIB_PROCESSORSPEC;	///< Marshaling attribute "processorspec"
+extern AttributeId ATTRIB_SLAFILE;	///< Marshaling attribute "slafile"
+extern AttributeId ATTRIB_SPEC;		///< Marshaling attribute "spec"
+extern AttributeId ATTRIB_TARGET;	///< Marshaling attribute "target"
+extern AttributeId ATTRIB_VARIANT;	///< Marshaling attribute "variant"
+extern AttributeId ATTRIB_VERSION;	///< Marshaling attribute "version"
+
+extern ElementId ELEM_COMPILER;		///< Marshaling element \<compiler>
+extern ElementId ELEM_DESCRIPTION;	///< Marshaling element \<description>
+extern ElementId ELEM_LANGUAGE;		///< Marshaling element \<language>
+extern ElementId ELEM_LANGUAGE_DEFINITIONS;	///< Marshaling element \<language_definitions>
+
 /// \brief Contents of a \<compiler> tag in a .ldefs file
 ///
 /// This class describes a compiler specification file as referenced by the Sleigh language subsystem.
@@ -32,7 +47,7 @@ class CompilerTag {
   string id;            ///< Unique id for this compiler
 public:
   CompilerTag(void) {}	///< Constructor
-  void restoreXml(const Element *el);	///< Restore the record from an XML stream
+  void decode(Decoder &decoder);	///< Restore the record from an XML stream
   const string &getName(void) const { return name; }	///< Get the human readable name of the spec
   const string &getSpec(void) const { return spec; }	///< Get the file-name
   const string &getId(void) const { return id; }	///< Get the string used as part of \e language \e id
@@ -61,7 +76,7 @@ class LanguageDescription {
   vector<TruncationTag> truncations;	///< Address space truncations required by this processor
 public:
   LanguageDescription(void) {}					///< Constructor
-  void restoreXml(const Element *el);				///< Read the XML tag from stream
+  void decode(Decoder &decoder);				///< Parse \b this description from a stream
   const string &getProcessor(void) const { return processor; }	///< Get the name of the processor
   bool isBigEndian(void) const { return isbigendian; }		///< Return \b true if the processor is big-endian
   int4 getSize(void) const { return size; }			///< Get the size of the address bus
@@ -73,6 +88,8 @@ public:
   const string &getDescription(void) const { return description; }	///< Get a description of the processor
   bool isDeprecated(void) const { return deprecated; }		///< Return \b true if this specification is deprecated
   const CompilerTag &getCompiler(const string &nm) const;	///< Get compiler specification of the given name
+  int4 numCompilers(void) const { return compilers.size(); }	///< Get the number of compiler records
+  const CompilerTag &getCompiler(int4 i) const { return compilers[i]; }	///< Get the i-th compiler record
   int4 numTruncations(void) const { return truncations.size(); }	///< Get the number of truncation records
   const TruncationTag &getTruncation(int4 i) const { return truncations[i]; }	///< Get the i-th truncation record
 };
@@ -107,18 +124,19 @@ public:
   SleighArchitecture(const string &fname,const string &targ,ostream *estream);	///< Construct given executable file
   const string &getFilename(void) const { return filename; }	///< Get the executable filename
   const string &getTarget(void) const { return target; }	///< Get the \e language \e id of the active processor
-  void saveXmlHeader(ostream &s) const;				///< Write out (as XML) basic attributes of the active executable
-  void restoreXmlHeader(const Element *el);			///< Restore from XML basic attributes of an executable
+  void encodeHeader(Encoder &encoder) const;			///< Encode basic attributes of the active executable
+  void restoreXmlHeader(const Element *el);			///< Restore from basic attributes of an executable
   virtual void printMessage(const string &message) const { *errorstream << message << endl; }
   virtual ~SleighArchitecture(void);
   virtual string getDescription(void) const;
-  
+
   static string normalizeProcessor(const string &nm);		///< Try to recover a \e language \e id processor field
   static string normalizeEndian(const string &nm);		///< Try to recover a \e language \e id endianess field
   static string normalizeSize(const string &nm);		///< Try to recover a \e language \e id size field
   static string normalizeArchitecture(const string &nm);	///< Try to recover a \e language \e id string
   static void scanForSleighDirectories(const string &rootpath);
-  static void shutdown(void);					///< Shutdown this SleighArchitecture and free all resources.
+  static const vector<LanguageDescription> &getDescriptions(void);	///< Get list of all known language descriptions
+  static void shutdown(void);					///< Shutdown all Translate objects and free global resources.
   static FileManage specpaths;					///< Known directories that contain .ldefs files.
 };
 

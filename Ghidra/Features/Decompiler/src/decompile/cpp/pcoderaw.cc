@@ -16,28 +16,43 @@
 #include "pcoderaw.hh"
 #include "translate.hh"
 
-/// Build this VarnodeData from an \b \<addr\> tag
-/// \param el is the parsed tag
+/// Build this VarnodeData from an \<addr>, \<register>, or \<varnode> element.
+/// \param decoder is the stream decoder
 /// \param manage is the address space manager
-void VarnodeData::restoreXml(const Element *el,const AddrSpaceManager *manage)
+void VarnodeData::decode(Decoder &decoder,const AddrSpaceManager *manage)
+
+{
+  uint4 elemId = decoder.openElement();
+  decodeFromAttributes(decoder,manage);
+  decoder.closeElement(elemId);
+}
+
+/// Collect attributes for the VarnodeData possibly from amidst other attributes
+/// \param decoder is the stream decoder
+/// \param manage is the address space manager
+void VarnodeData::decodeFromAttributes(Decoder &decoder,const AddrSpaceManager *manage)
 
 {
   space = (AddrSpace *)0;
   size = 0;
-  int4 num = el->getNumAttributes();
-  for(int4 i=0;i<num;++i) {
-    if (el->getAttributeName(i)=="space") {
-      space = manage->getSpaceByName(el->getAttributeValue(i));
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0)
+      break;		// Its possible to have no attributes in an <addr/> tag
+    if (attribId == ATTRIB_SPACE) {
+      string nm = decoder.readString();
+      space = manage->getSpaceByName(nm);
       if (space == (AddrSpace *)0)
-	throw LowlevelError("Unknown space name: "+el->getAttributeValue(i));
-      offset = space->restoreXmlAttributes(el,size);
-      return;
+	throw LowlevelError("Unknown space name: "+nm);
+      decoder.rewindAttributes();
+      offset = space->decodeAttributes(decoder,size);
+      break;
     }
-    else if (el->getAttributeName(i)=="name") {
+    else if (attribId == ATTRIB_NAME) {
       const Translate *trans = manage->getDefaultCodeSpace()->getTrans();
-      const VarnodeData &point(trans->getRegister(el->getAttributeValue(i)));
+      const VarnodeData &point(trans->getRegister(decoder.readString()));
       *this = point;
-      return;
+      break;
     }
   }
 }
