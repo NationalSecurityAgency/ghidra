@@ -53,6 +53,11 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 	}
 
 	@Override
+	public void offerProcessMemory(TargetMemory memory) {
+		recorder.getProcessMemory().addMemory(memory);
+	}
+
+	@Override
 	public void offerProcessRegion(TargetMemoryRegion region) {
 		TargetMemory mem = region.getMemory();
 		recorder.getProcessMemory().addRegion(region, mem);
@@ -79,6 +84,11 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 				Msg.error(this, "Failed to create region due to duplicate: " + e);
 			}
 		}, path);
+	}
+
+	@Override
+	public void removeProcessMemory(TargetMemory memory) {
+		recorder.getProcessMemory().removeMemory(memory);
 	}
 
 	@Override

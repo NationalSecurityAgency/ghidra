@@ -54,10 +54,7 @@ public enum RecorderUtils {
 
 		int blockSize = 1 << blockBits;
 		int total = 0;
-		AddressSetView expSet = quantize(blockBits, set)
-				.intersect(recorder.getTrace()
-						.getMemoryManager()
-						.getRegionsAddressSet(recorder.getSnap()));
+		AddressSetView expSet = quantize(blockBits, set);
 		for (AddressRange r : expSet) {
 			total += Long.divideUnsigned(r.getLength() + blockSize - 1, blockSize);
 		}

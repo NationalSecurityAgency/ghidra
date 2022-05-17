@@ -38,12 +38,30 @@ public class RecorderSimpleMemory implements AbstractRecorderMemory {
 	}
 
 	@Override
+	public void addMemory(TargetMemory memory) {
+		synchronized (this) {
+			if (this.memory == null) {
+				this.memory = memory;
+			}
+		}
+	}
+
+	@Override
 	public void addRegion(TargetMemoryRegion region, TargetMemory memory) {
 		synchronized (this) {
 			if (this.memory == null) {
 				this.memory = memory;
 			}
 			byMin.put(region.getRange().getMinAddress(), region);
+		}
+	}
+
+	@Override
+	public void removeMemory(TargetMemory invalid) {
+		synchronized (this) {
+			if (this.memory == invalid) {
+				this.memory = null;
+			}
 		}
 	}
 
