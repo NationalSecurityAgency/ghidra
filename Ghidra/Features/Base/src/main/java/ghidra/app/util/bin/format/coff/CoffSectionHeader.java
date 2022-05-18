@@ -400,6 +400,10 @@ public class CoffSectionHeader implements StructConverter {
 	public static Address getAddress(Language language, long offset, CoffSectionHeader section) {
 		boolean isData = section == null || section.isData();
 		AddressSpace space = isData ? language.getDefaultDataSpace() : language.getDefaultSpace();
+		if (offset > space.getMaxAddress().getAddressableWordOffset()) {
+			// offset too big to fit, try the opposite space, so at least the blocks will load
+			space = !isData ? language.getDefaultDataSpace() : language.getDefaultSpace();
+		}
 		return space.getAddress(offset * getOffsetUnitSize(language, section));
 	}
 
