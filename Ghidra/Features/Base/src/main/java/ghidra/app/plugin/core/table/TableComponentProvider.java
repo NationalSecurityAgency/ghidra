@@ -149,16 +149,8 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private void createActions(final Plugin plugin) {
 
 		GhidraTable table = threadedPanel.getTable();
-		selectAction = new MakeProgramSelectionAction(tableServicePlugin, table) {
-			@Override
-			protected ProgramSelection makeSelection(ActionContext context) {
-				ProgramSelection selection = table.getProgramSelection();
-				navigatable.goTo(program, new ProgramLocation(program, selection.getMinAddress()));
-				navigatable.setSelection(selection);
-				navigatable.requestFocus();
-				return selection;
-			}
-		};
+		selectAction =
+			new MakeProgramSelectionAction(navigatable, tableServicePlugin.getName(), table);
 		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
 
 		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
