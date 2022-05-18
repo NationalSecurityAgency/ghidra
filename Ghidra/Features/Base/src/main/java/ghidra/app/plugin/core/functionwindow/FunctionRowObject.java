@@ -62,4 +62,9 @@ public class FunctionRowObject implements Comparable<FunctionRowObject> {
 	public int compareTo(FunctionRowObject o) {
 		return ((Long) function.getID()).compareTo(o.function.getID());
 	}
+
+	@Override
+	public String toString() {
+		return "[id=" + function.getID() + ", name=" + function.getSignature() + "]";
+	}
 }
