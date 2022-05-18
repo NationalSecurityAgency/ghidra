@@ -61,9 +61,9 @@ public class UnknownProgressWrappingTaskMonitor extends TaskMonitorAdapter {
 		long currentMaximum = delegate.getMaximum();
 		long progress = delegate.getProgress();
 
-		int _75_percent = (int) (currentMaximum * .75);
+		long _75_percent = currentMaximum - (currentMaximum / 4);
 		if (progress > _75_percent) {
-			delegate.setMaximum(currentMaximum + (currentMaximum - _75_percent));
+			delegate.setMaximum(Math.max(progress, currentMaximum + currentMaximum / 4));
 		}
 	}
 
