@@ -18,6 +18,8 @@ package ghidra.app.util.bin.format.coff;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverterUtil;
+import ghidra.program.model.data.*;
 
 /**
  * A 0x30 byte COFF section header
@@ -42,6 +44,25 @@ class CoffSectionHeader2 extends CoffSectionHeader {
 		s_flags    = reader.readNextInt();
 		s_reserved = reader.readNextShort();
 		s_page     = reader.readNextShort();
+	}
+
+	@Override
+	public DataType toDataType() throws IOException {
+		Structure struct = new StructureDataType(StructConverterUtil.parseName(getClass()), 0);
+		struct.add(new ArrayDataType(ASCII, CoffConstants.SECTION_NAME_LENGTH, ASCII.getLength()),
+			"s_name", null);
+		struct.add(DWORD, "s_paddr", null);
+		struct.add(DWORD, "s_vaddr", null);
+		struct.add(DWORD, "s_size", null);
+		struct.add(DWORD, "s_scnptr", null);
+		struct.add(DWORD, "s_relptr", null);
+		struct.add(DWORD, "s_lnnoptr", null);
+		struct.add(DWORD, "s_nreloc", null);
+		struct.add(DWORD, "s_nlnno", null);
+		struct.add(DWORD, "s_flags", null);
+		struct.add(WORD, "s_reserved", null);
+		struct.add(WORD, "s_page", null);
+		return struct;
 	}
 
 }

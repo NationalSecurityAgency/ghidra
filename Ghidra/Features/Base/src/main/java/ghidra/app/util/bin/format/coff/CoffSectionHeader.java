@@ -65,8 +65,8 @@ public class CoffSectionHeader implements StructConverter {
 		s_scnptr = reader.readNextInt();
 		s_relptr = reader.readNextInt();
 		s_lnnoptr = reader.readNextInt();
-		s_nreloc = reader.readNextShort() & 0xffff;
-		s_nlnno = reader.readNextShort() & 0xffff;
+		s_nreloc = reader.readNextUnsignedShort();
+		s_nlnno = reader.readNextUnsignedShort();
 		s_flags = reader.readNextInt();
 		s_reserved = 0;
 		s_page = 0;
@@ -306,14 +306,6 @@ public class CoffSectionHeader implements StructConverter {
 		struct.add(WORD, "s_nreloc", null);
 		struct.add(WORD, "s_nlnno", null);
 		struct.add(DWORD, "s_flags", null);
-		if (_header.getMagic() == CoffMachineType.TICOFF1MAGIC) {
-			struct.add(BYTE, "s_reserved", null);
-			struct.add(BYTE, "s_page", null);
-		}
-		else if (_header.getMagic() == CoffMachineType.TICOFF2MAGIC) {
-			struct.add(WORD, "s_reserved", null);
-			struct.add(WORD, "s_page", null);
-		}
 		return struct;
 	}
 
