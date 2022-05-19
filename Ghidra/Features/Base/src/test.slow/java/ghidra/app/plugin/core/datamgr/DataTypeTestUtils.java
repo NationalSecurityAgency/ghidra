@@ -110,9 +110,9 @@ public class DataTypeTestUtils {
 
 	public static ArchiveNode openArchive(String archiveName, boolean checkout,
 			DataTypeManagerPlugin plugin) throws Exception {
-		ArchiveNode openArchive = openArchive(archiveName, checkout, false, plugin);
+		ArchiveNode archiveNode = openArchive(archiveName, checkout, false, plugin);
 		waitForTree(plugin);
-		return openArchive;
+		return archiveNode;
 	}
 
 	private static void waitForTree(DataTypeManagerPlugin plugin) {

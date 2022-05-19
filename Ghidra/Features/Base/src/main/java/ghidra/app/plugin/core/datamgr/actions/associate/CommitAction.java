@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.datamgr.actions;
+package ghidra.app.plugin.core.datamgr.actions.associate;
 
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypeSyncInfo;
+import java.util.List;
+
+import docking.action.MenuData;
+import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.SourceArchive;
 import ghidra.util.HelpLocation;
 
-import java.util.List;
+public class CommitAction extends SyncAction {
 
-import docking.action.MenuData;
+	public static final String MENU_NAME = "Commit Data Types To";
 
-public class RevertAction extends SyncAction {
+	public CommitAction(DataTypeManagerPlugin plugin, DataTypeManagerHandler dataTypeManagerHandler,
+			DataTypeManager dtm, ArchiveNode archiveNode, SourceArchive sourceArchive,
+			boolean isEnabled) {
 
-	public static final String MENU_NAME = "Revert Datatypes From";
-
-	public RevertAction(DataTypeManagerPlugin plugin,
-			DataTypeManagerHandler dataTypeManagerHandler, DataTypeManager dtm,
-			ArchiveNode archiveNode, SourceArchive sourceArchive, boolean isEnabled) {
-
-		super("Revert Datatype Changes", plugin, dataTypeManagerHandler, dtm, archiveNode,
+		super("Commit Changes To Archive", plugin, dataTypeManagerHandler, dtm, archiveNode,
 			sourceArchive, isEnabled);
 		setPopupMenuData(new MenuData(new String[] { MENU_NAME, sourceArchive.getName() }));
 		setHelpLocation(new HelpLocation(plugin.getName(), getHelpTopic()));
@@ -44,12 +42,12 @@ public class RevertAction extends SyncAction {
 
 	@Override
 	protected int getMenuOrder() {
-		return 3;
+		return 2;
 	}
 
 	@Override
 	protected String getHelpTopic() {
-		return "Revert_Data_Types";
+		return "Commit_Data_Types";
 	}
 
 	@Override
@@ -58,6 +56,7 @@ public class RevertAction extends SyncAction {
 		switch (info.getSyncState()) {
 			case COMMIT:
 			case CONFLICT:
+			case ORPHAN:
 				return true;
 			default:
 				return false;
@@ -66,34 +65,38 @@ public class RevertAction extends SyncAction {
 
 	@Override
 	protected boolean isPreselectedForAction(DataTypeSyncInfo info) {
-		return false;
+		return info.getSyncState() == DataTypeSyncState.COMMIT;
 	}
 
 	@Override
 	protected String getOperationName() {
-		return "Revert";
+		return "Commit";
 	}
 
 	@Override
 	protected void applyOperation(DataTypeSyncInfo info) {
-		info.revert();
+		info.commit();
 	}
 
 	@Override
-	protected String getConfirmationMessage(List<DataTypeSyncInfo> selectedInfos) {
-		return "This will permanently discard the changes to these datatypes in this program or archive.\n\n" +
-			"Are you sure you want to REVERT " + selectedInfos.size() + " datatype(s)?";
+	protected String getConfirmationMessage(List<DataTypeSyncInfo> infos) {
+		StringBuffer buf = new StringBuffer();
+		if (containsConflicts(infos)) {
+			buf.append("You are committing one or more conflicts which will OVERWRITE\n");
+			buf.append("changes in the source archive!\n\n");
+		}
+		buf.append("Are you sure you want to COMMIT " + infos.size() + " datatype(s)?");
+		return buf.toString();
 	}
 
 	@Override
 	protected boolean requiresArchiveOpenForEditing() {
-		return false;
+		return true;
 	}
 
 	@Override
 	protected String getTitle(String sourceName, String clientName) {
-		return "Revert Datatype Changes In \"" + clientName + "\" From Archive \"" + sourceName +
+		return "Commit Datatype Changes From \"" + clientName + "\" To Archive \"" + sourceName +
 			"\"";
 	}
-
 }

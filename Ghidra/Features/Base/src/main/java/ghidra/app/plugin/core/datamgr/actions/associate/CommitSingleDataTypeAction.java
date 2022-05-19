@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.datamgr.actions;
+package ghidra.app.plugin.core.datamgr.actions.associate;
 
 import javax.swing.ImageIcon;
 import javax.swing.tree.TreePath;

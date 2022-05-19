@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.datamgr.actions;
+package ghidra.app.plugin.core.datamgr.actions.associate;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -28,7 +28,8 @@ import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.*;
 import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.archive.*;
+import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
+import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
@@ -56,10 +57,8 @@ public class DisassociateDataTypeAction extends DockingAction {
 			return false;
 		}
 
-		Object contextObject = context.getContextObject();
-		GTree gTree = (GTree) contextObject;
-		TreePath[] selectionPaths = gTree.getSelectionPaths();
-		List<DataTypeNode> nodes = getDisassociatableNodes(selectionPaths);
+		DataTypesActionContext dtContext = (DataTypesActionContext) context;
+		List<DataTypeNode> nodes = dtContext.getDisassociatableNodes();
 		return !nodes.isEmpty();
 	}
 
@@ -127,11 +126,11 @@ public class DisassociateDataTypeAction extends DockingAction {
 		}
 
 		//@formatter:off
-		MonitoredRunnable r = 
+		MonitoredRunnable r =
 			monitor -> doDisassociate(nodes, monitor);
 		new TaskBuilder("Disassociate From Archive", r)
 			.setStatusTextAlignment(SwingConstants.LEADING)
-			.launchModal();		
+			.launchModal();
 		//@formatter:on
 	}
 
@@ -159,10 +158,10 @@ public class DisassociateDataTypeAction extends DockingAction {
 			nodes.stream().map(node -> node.getDataType()).collect(Collectors.toList());
 
 		//
-		// Note: we collapse the node before performing this work because there is a 
+		// Note: we collapse the node before performing this work because there is a
 		//       potential for a large number of events to be generated.  Further, if the
 		//       given archive node has many children (like 10s of thousands), then the
-		//       copious events generated herein could lock the UI.  By closing the node, 
+		//       copious events generated herein could lock the UI.  By closing the node,
 		//       the tree is not invalidating/validating its cache as a result of these
 		//       events.
 		//
@@ -189,7 +188,7 @@ public class DisassociateDataTypeAction extends DockingAction {
 		monitor.initialize(dataTypes.size());
 
 		//@formatter:off
-		Map<DataTypeManager, List<DataType>> managersToTypes = 
+		Map<DataTypeManager, List<DataType>> managersToTypes =
 			dataTypes.stream()
 				     .collect(
 				    	     Collectors.groupingBy(dt -> dt.getDataTypeManager()))
@@ -209,7 +208,7 @@ public class DisassociateDataTypeAction extends DockingAction {
 		// we must process these by their source
 
 		//@formatter:off
-		Map<SourceArchive, List<DataType>> sourceToTypes = 
+		Map<SourceArchive, List<DataType>> sourceToTypes =
 			dataTypes.stream()
 					 .collect(
 					     Collectors.groupingBy(dt -> dt.getSourceArchive()))

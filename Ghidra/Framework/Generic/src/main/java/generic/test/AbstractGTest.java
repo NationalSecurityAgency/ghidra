@@ -15,8 +15,9 @@
  */
 package generic.test;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.StringContains.*;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.*;
@@ -296,6 +297,15 @@ public abstract class AbstractGTest {
 				"Expected collection had these entries not found in the actual collection: " +
 					expectedSet);
 		}
+	}
+
+	public static <T> void assertContainsString(String expected, String actual) {
+		assertThat(actual, containsString(expected));
+	}
+
+	public static <T> void assertContainsStringIgnoringCase(String expected, String actual) {
+		// newer hamcrest versions have containsStringIgnoringCase()
+		assertThat(actual.toLowerCase(), containsString(expected.toLowerCase()));
 	}
 
 	private static String printListFailureMessage(String message, List<?> expected,
