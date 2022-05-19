@@ -173,9 +173,6 @@ public class ThreadEnvironmentBlock {
 			catch (CodeUnitInsertionException e) {
 				Msg.warn(this, "Unable to insert TEB field: " + name);
 			}
-			catch (DataTypeConflictException e) {
-				Msg.warn(this, "TEB data-type conflicts with existing data-type: " + dat.getName());
-			}
 			catch (InvalidInputException e) {
 				Msg.warn(this, "Unable to create TEB symbol name: " + name);
 			}
@@ -706,13 +703,12 @@ public class ThreadEnvironmentBlock {
 	 * @throws AddressOverflowException for problems with block's start Address
 	 * @throws IllegalArgumentException for problems with the block name or the TEB data-type
 	 * @throws LockException if it cannot get an exclusive lock on the program
-	 * @throws DataTypeConflictException for conflicts with other data-types
 	 * @throws CodeUnitInsertionException for problems laying down the structure on the block
 	 * @throws InvalidInputException for problems with the symbol name attached to the TEB
 	 */
 	public void createBlockAndStructure() throws MemoryConflictException, LockException,
 			IllegalArgumentException, AddressOverflowException, CodeUnitInsertionException,
-			DataTypeConflictException, InvalidInputException {
+			InvalidInputException {
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.getBlock(BLOCK_NAME);
 		if (block != null) {

@@ -65,7 +65,7 @@ public class DebugDataDirectory extends DataDirectory {
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
 			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
-			DataTypeConflictException, IOException {
+			IOException {
 
 		monitor.setMessage(program.getName()+": debug...");
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);

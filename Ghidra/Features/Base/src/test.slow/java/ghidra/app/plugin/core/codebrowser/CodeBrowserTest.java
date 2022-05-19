@@ -193,7 +193,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testSelectionOnStructureInOffcutView_SCR_8089() throws DataTypeConflictException {
+	public void testSelectionOnStructureInOffcutView_SCR_8089() {
 		// create offcut view, the view will contain 3 bytes, but the structure will be 4 bytes
 		cb.getListingPanel().setView(new AddressSet(addr("0100101c"), addr("0100101e")));
 

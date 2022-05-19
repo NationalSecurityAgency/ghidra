@@ -29,7 +29,8 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.database.util.ProgramTransaction;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeEncodeException;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -146,7 +147,7 @@ public class PatchDataAction extends AbstractPatchAction {
 		catch (MemoryAccessException e) {
 			Msg.showError(this, null, "Patch Failure", e.getMessage(), e);
 		}
-		catch (CodeUnitInsertionException | DataTypeConflictException e) {
+		catch (CodeUnitInsertionException e) {
 			throw new AssertionError(); // Should have been cleared first
 		}
 	}

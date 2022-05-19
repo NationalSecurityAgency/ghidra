@@ -195,10 +195,7 @@ public class DyldCacheUtils {
 			if (file != null && shouldCombineSplitFiles) {
 				String baseName = file.getName();
 				File[] splitFiles = file.getParentFile().listFiles(f -> {
-					if (!f.getName().startsWith(baseName)) {
-						return false;
-					}
-					if (f.getName().equals(baseName)) {
+					if (!f.getName().startsWith(baseName + ".")) {
 						return false;
 					}
 					if (f.getName().toLowerCase().endsWith(".map")) {

@@ -24,12 +24,12 @@ import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.ne.*;
-import ghidra.app.util.bin.format.ne.Resource;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -375,8 +375,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 							listing.createData(straddr, new StringDataType(),
 								Conv.byteToInt(string.getLength()));
 						}
-						catch (AddressOverflowException | CodeUnitInsertionException
-								| DataTypeConflictException e) {
+						catch (AddressOverflowException | CodeUnitInsertionException e) {
 							log.appendMsg("Error creating data");
 							log.appendException(e);
 						}
