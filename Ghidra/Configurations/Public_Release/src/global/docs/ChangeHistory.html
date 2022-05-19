@@ -7,6 +7,25 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.1.4 Change History (May 2022)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Debugger:Listing</I>. Refresh button in Debugger's Dynamic Listing and Memory Bytes views now operates without a selection and is more thorough with respect to cache invalidation. (GP-1930)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed an exception that occurred when loading programs created in previous versions where the analysis option's type had changed (String to Long). (GP-1738)</li>
+    <li><I>Analysis</I>. Constant reference propagation now uses pcode injection for segment and all userops.  This affects 16-bit code and the HCS12 processor. (GP-1987, Issue #4252)</li>
+    <li><I>C Parsing</I>. Added C-Parser support for <code>static_assert<code> and </code>_Static_assert</code> keywords. (GP-1958, Issue #4038)</li>
+    <li><I>C Parsing</I>. Corrected C-Parser to parse <code><B>sizeof</B></code> structure members, both <code>sizeof(ptr->member)</code> and <code>sizeof(struct.member)</code>. (GP-1964, Issue #4173)</li>
+    <li><I>Decompiler</I>. Fixed bug causing the Decompiler to not label pointer references to the first parameter on the stack. (GP-2018)</li>
+    <li><I>GUI</I>. Fixed bug that caused some edited functions to appear twice in the Functions window. (GP-2025)</li>
+    <li><I>GUI</I>. Fixed potentially slow computer name lookup in the Error Dialog. (GP-2034)</li>
+    <li><I>Importer:COFF</I>. Fixed importing of non-Microsoft COFF files when any section crosses address 0x80. COFF sections marked as data that won't fit into the default data address space will be loaded in the code address space. (GP-2045)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.1.3 Change History (April 2022)</H1>
 <blockquote><p><u>Improvements</u></p>
 <ul>
