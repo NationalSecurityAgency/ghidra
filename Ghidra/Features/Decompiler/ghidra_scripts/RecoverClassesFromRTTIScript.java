@@ -326,6 +326,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			return ("There is no open program");
 		}
 
+		CategoryPath path =
+			new CategoryPath(CategoryPath.ROOT, RecoveredClassHelper.DTM_CLASS_DATA_FOLDER_NAME);
+		if (currentProgram.getDataTypeManager().containsCategory(path)) {
+			return ("This script has already been run on this program");
+		}
+
 		if (!checkGhidraVersion()) {
 			return ("This script only works with Ghidra version 9.2, 9.2.2 and later. It does not work on Ghidra 9.2.1 or on versions prior to 9.2");
 		}

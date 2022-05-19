@@ -208,6 +208,7 @@ class ScopeLocal : public ScopeInternal {
   void fakeInputSymbols(void);		///< Make sure all stack inputs have an associated Symbol
   void addRecommendName(Symbol *sym);	///< Convert the given symbol to a name recommendation
   void collectNameRecs(void);		///< Collect names of unlocked Symbols on the stack
+  void annotateRawStackPtr(void);	///< Generate placeholder PTRSUB off of stack pointer
 public:
   ScopeLocal(uint8 id,AddrSpace *spc,Funcdata *fd,Architecture *g);	///< Constructor
   virtual ~ScopeLocal(void) {}	///< Destructor

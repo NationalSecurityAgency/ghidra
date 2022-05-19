@@ -358,6 +358,7 @@ public class TraceObjectManager {
 		if (memMapper != null) {
 			return;
 		}
+		recorder.memoryRecorder.offerProcessMemory((TargetMemory) added);
 		mapper.offerMemory((TargetMemory) added).thenAccept(mm -> {
 			synchronized (this) {
 				memMapper = mm;
@@ -371,7 +372,7 @@ public class TraceObjectManager {
 	}
 
 	public void removeMemory(TargetObject removed) {
-		// Nothing for now
+		recorder.memoryRecorder.removeProcessMemory((TargetMemory) removed);
 	}
 
 	public void addMemoryRegion(TargetObject added) {

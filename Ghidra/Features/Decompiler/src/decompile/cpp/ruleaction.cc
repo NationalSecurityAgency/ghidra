@@ -4176,9 +4176,11 @@ int4 RuleSubCommute::applyOp(PcodeOp *op,Funcdata &data)
     break;
   }
   case CPUI_INT_ADD:
+    if (offset != 0) return 0;	// Only commutes with least significant SUBPIECE
+    if (longform->getIn(0)->isSpacebase()) return 0;	// Deconflict with RulePtrArith
+    break;
   case CPUI_INT_MULT:
-				// These only commute with least significant SUBPIECE
-    if (offset != 0) return 0;
+    if (offset != 0) return 0;	// Only commutes with least significant SUBPIECE
     break;
 				// Bitwise ops, type of subpiece doesnt matter
   case CPUI_INT_NEGATE:

@@ -15,15 +15,18 @@
  */
 package ghidra.app.plugin.core.debug.service.model.interfaces;
 
+import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 
 public interface ManagedMemoryRecorder {
+	void offerProcessMemory(TargetMemory memory);
 
 	void offerProcessRegion(TargetMemoryRegion region);
+
+	void removeProcessMemory(TargetMemory memory);
 
 	void removeProcessRegion(TargetMemoryRegion region);
 
 	TraceMemoryRegion getTraceMemoryRegion(TargetMemoryRegion region);
-
 }

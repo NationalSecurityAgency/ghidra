@@ -132,7 +132,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 			List<QueryResult> results =
 				QueryOpinionService.query(getName(), header.getMachineName(), secondary);
 			for (QueryResult result : results) {
-				loadSpecs.add(new LoadSpec(this, header.getImageBase(true), result));
+				loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
 			}
 			if (loadSpecs.isEmpty()) {
 				loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));

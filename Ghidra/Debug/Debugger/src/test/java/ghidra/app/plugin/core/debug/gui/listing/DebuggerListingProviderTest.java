@@ -38,6 +38,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractFollowsCurrentThreadAction;
+import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToDialog;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.BoundAction;
@@ -687,6 +688,52 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		});
 	}
 
+	public void runTestAutoReadMemoryReadsWithForceFullView(AutoReadMemorySpec spec)
+			throws Throwable {
+		byte[] data = incBlock();
+		byte[] zero = new byte[data.length];
+		ByteBuffer buf = ByteBuffer.allocate(data.length);
+		listingProvider.setAutoReadMemorySpec(spec);
+
+		createTestModel();
+		mb.createTestProcessesAndThreads();
+
+		// NOTE: Do not add a region. Depend on Force full view!
+		// Populate target memory before recording
+		mb.testProcess1.memory.setMemory(mb.addr(0x55550000), data);
+
+		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
+			createTargetTraceMapper(mb.testProcess1));
+		Trace trace = recorder.getTrace();
+		waitRecorder(recorder);
+		traceManager.activateTrace(trace);
+		waitForSwing();
+
+		buf.clear();
+		assertEquals(data.length,
+			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
+		assertArrayEquals(zero, buf.array());
+
+		runSwing(() -> trace.getProgramView().getMemory().setForceFullView(true));
+		goToDyn(addr(trace, 0x55550000));
+		waitRecorder(recorder);
+
+		buf.clear();
+		assertEquals(data.length,
+			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
+		assertArrayEquals(data, buf.array());
+	}
+
+	@Test
+	public void testAutoReadMemoryVisROOnceReadsWithForceFullView() throws Throwable {
+		runTestAutoReadMemoryReadsWithForceFullView(readVisROOnce);
+	}
+
+	@Test
+	public void testAutoReadMemoryVisibleReadsWithForceFullView() throws Throwable {
+		runTestAutoReadMemoryReadsWithForceFullView(readVisible);
+	}
+
 	@Test
 	public void testMemoryStateBackgroundColors() throws Exception {
 		createAndOpenTrace();
@@ -1067,6 +1114,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 			traceManager.activateTrace(tb.trace);
 		}
+		waitForDomainObject(tb.trace);
 
 		// In the module, but not in its section
 		listingPlugin.goTo(tb.addr(0x00411234), true);
@@ -1096,6 +1144,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 			traceManager.activateTrace(tb.trace);
 		}
+		waitForDomainObject(tb.trace);
 
 		// In the module, but not in its section
 		listingPlugin.goTo(tb.addr(0x00411234), true);
