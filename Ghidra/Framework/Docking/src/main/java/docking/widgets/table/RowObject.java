@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,15 @@
  */
 package docking.widgets.table;
 
-import ghidra.util.SystemUtilities;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.table.TableModel;
 
+import ghidra.util.SystemUtilities;
+
 /**
- * An object that represents a row in a table.  Most tables used in the system create tables that
+ * An object that represents a row in a table.  Most tables used in the system create models that
  * use their own row objects (see {@link AbstractSortedTableModel}).  This class exists to 
  * compensate for those models that do not do this, but instead rely on the classic Java 
  * {@link TableModel} method {@link TableModel#getValueAt(int, int)}.
@@ -36,14 +35,18 @@ import javax.swing.table.TableModel;
  * row objects that created for non-{@link AbstractSortedTableModel}s will not be equal to 
  * those created before the data change.  This causes some features to break, such as selection
  * restoration after user edits.
+ * 
+ * @deprecated this class is no longer used and will be removed
  */
+@Deprecated(forRemoval = true, since = "10.1")
 public class RowObject {
 
 	/**
 	 * Factory method to create and initialize a row object.
 	 * 
 	 * @param model the model required to gather data for the row object.
-	 * @param row the row for which to create a row object	 * @return
+	 * @param row the row for which to create a row object	
+	 * @return the row object
 	 */
 	public static RowObject createRowObject(TableModel model, int row) {
 		RowObject rowObject = new RowObject();
@@ -54,7 +57,7 @@ public class RowObject {
 		return rowObject;
 	}
 
-	List<Object> values = new ArrayList<Object>();
+	List<Object> values = new ArrayList<>();
 	int hash = -1;
 
 	void addElement(Object object) {
