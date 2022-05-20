@@ -101,10 +101,7 @@ public class NextPrevSelectionHighlightTest extends AbstractGhidraHeadedIntegrat
 	}
 
 	private void setSelection(FieldPanel fp, FieldSelection sel) {
-		fp.setSelection(sel);
-		Class<?>[] argClasses = new Class<?>[] { EventTrigger.class };
-		Object[] args = new Object[] { EventTrigger.GUI_ACTION };
-		invokeInstanceMethod("notifySelectionChanged", fp, argClasses, args);
+		runSwing(() -> fp.setSelection(sel, EventTrigger.GUI_ACTION));
 	}
 
 	@Test

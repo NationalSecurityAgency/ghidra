@@ -21,6 +21,7 @@ import java.awt.event.KeyEvent;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.KeyBindingData;
+import docking.widgets.EventTrigger;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.util.HelpTopics;
 import ghidra.util.HelpLocation;
@@ -41,7 +42,6 @@ public class SelectAllAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		panel.selectAll();
+		panel.selectAll(EventTrigger.GUI_ACTION);
 	}
-
 }

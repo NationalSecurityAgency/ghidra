@@ -833,20 +833,68 @@ public interface DebuggerResources {
 			String ownerName = owner.getName();
 			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
 					.menuPath(NAME)
+					.menuGroup("a")
 					.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_G, 0))
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
-	abstract class AbstractSyncToStaticListingAction extends ToggleDockingAction {
-		public static final String NAME = "Sync to Static Listing";
-		public static final String HELP_ANCHOR = "sync_static";
+	interface AutoSyncCursorWithStaticListingAction {
+		String NAME = "Auto-Sync Cursor with Static Listing";
+		String DESCRIPTION = "Automatically synchronize the static and dynamic listings' cursors";
+		String HELP_ANCHOR = "auto_sync_cursor_static";
 
-		public AbstractSyncToStaticListingAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription("Synchronize the static listing (and related providers)" +
-				" to the dynamic listing (and related providers) where a mapping is" + " known");
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface AutoSyncSelectionWithStaticListingAction {
+		String NAME = "Auto-Sync Selection with Static Listing";
+		String DESCRIPTION =
+			"Automatically synchronize the static and dynamic listings' selections";
+		String HELP_ANCHOR = "auto_sync_selection_static";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface SyncSelectionIntoStaticListingAction {
+		String NAME = "Sync Selection into Static Listing";
+		String DESCRIPTION =
+			"Change the static listing's selection to synchronize with this component's selection";
+		String HELP_ANCHOR = "sync_selection_into_static";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface SyncSelectionFromStaticListingAction {
+		String NAME = "Sync Selection from Static Listing";
+		String DESCRIPTION =
+			"Change this component's selection to synchronize with the static listing's selection";
+		String HELP_ANCHOR = "sync_selection_from_static";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
@@ -884,15 +932,18 @@ public interface DebuggerResources {
 		}
 	}
 
-	abstract class AbstractFollowsCurrentThreadAction extends ToggleDockingAction {
-		public static final String NAME = "Follows Selected Thread";
-		public static final String HELP_ANCHOR = "follows_thread";
+	interface FollowsCurrentThreadAction {
+		String NAME = "Follows Selected Thread";
+		String DESCRIPTION = "Register tracking follows selected thread (and contents" +
+			" follow selected trace)";
+		String HELP_ANCHOR = "follows_thread";
 
-		public AbstractFollowsCurrentThreadAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription("Register tracking follows selected thread (and contents" +
-				" follow selected trace)");
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
