@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.datamgr.actions;
+package ghidra.app.plugin.core.datamgr.actions.associate;
 
 import java.util.*;
 
@@ -35,7 +35,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
 public class DisassociateAction extends DockingAction {
-	public static final String MENU_NAME = "Disassociate Datatypes From";
+	public static final String MENU_NAME = "Disassociate Data Types From";
 
 	private final SourceArchive sourceArchive;
 	private final DataTypeManager dtm;
@@ -96,12 +96,12 @@ public class DisassociateAction extends DockingAction {
 		}
 
 		//@formatter:off
-		MonitoredRunnable r = 
+		MonitoredRunnable r =
 			monitor -> doDisassociate(synchronizer, typesToDisassociate, allAssociatedTypes, monitor);
 		new TaskBuilder("Disassociate From Archive", r)
 			.setStatusTextAlignment(SwingConstants.LEADING)
 			.launchModal()
-			;		
+			;
 		//@formatter:on
 	}
 
@@ -110,10 +110,10 @@ public class DisassociateAction extends DockingAction {
 			TaskMonitor monitor) {
 
 		//
-		// Note: we collapse the node before performing this work because there is a 
+		// Note: we collapse the node before performing this work because there is a
 		//       potential for a large number of events to be generated.  Further, if the
 		//       given archive node has many children (like 10s of thousands), then the
-		//       copious events generated herein could lock the UI.  By closing the node, 
+		//       copious events generated herein could lock the UI.  By closing the node,
 		//       the tree is not invalidating/validating its cache as a result of these
 		//       events.
 		//

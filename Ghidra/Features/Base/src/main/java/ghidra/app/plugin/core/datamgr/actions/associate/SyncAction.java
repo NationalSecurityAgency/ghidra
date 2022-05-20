@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.datamgr.actions;
+package ghidra.app.plugin.core.datamgr.actions.associate;
 
 import java.util.*;
 
@@ -83,7 +83,6 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		DataTypeSynchronizer synchronizer = new DataTypeSynchronizer(handler, dtm, sourceArchive);
 
 		if (!dtm.isUpdatable()) {
 			showRequiresArchiveOpenMessage(dtm.getName());
@@ -103,6 +102,8 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 			return;
 		}
 
+		DataTypeSynchronizer synchronizer = new DataTypeSynchronizer(handler, dtm, sourceArchive);
+
 		//@formatter:off
 		TaskBuilder.withTask(new SyncTask(synchronizer))
 			.setStatusTextAlignment(SwingConstants.LEADING)
@@ -114,10 +115,10 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 	private void doSync(DataTypeSynchronizer synchronizer, TaskMonitor monitor) {
 
 		//
-		// Note: we collapse the node before performing this work because there is a 
+		// Note: we collapse the node before performing this work because there is a
 		//       potential for a large number of events to be generated.  Further, if the
 		//       given archive node has many children (like 10s of thousands), then the
-		//       copious events generated herein could lock the UI.  By closing the node, 
+		//       copious events generated herein could lock the UI.  By closing the node,
 		//       the tree is not invalidating/validating its cache as a result of these
 		//       events.
 		//
@@ -248,7 +249,7 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 			Set<DataTypeSyncInfo> outOfSyncInfos) {
 		String status = getStatusMessage(outOfSyncInfos);
 		Msg.showInfo(getClass(), plugin.getTool().getToolFrame(), "No Data Type Changes",
-			"No datatypes found to " + getOperationName() + " for archive \"" + archiveName +
+			"No data types found to " + getOperationName() + " for archive \"" + archiveName +
 				"\".\n\n" + status);
 	}
 
@@ -279,7 +280,7 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 				case UNKNOWN:
 			}
 		}
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		if (updateCount > 0) {
 			buf.append("\nNumber of UPDATES remaining:   " + updateCount);
 		}
@@ -298,7 +299,7 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 
 	private void showNoDataTypesToSyncMessage() {
 		Msg.showInfo(getClass(), plugin.getTool().getToolFrame(), "No Data Type Changes",
-			"No out of sync datatypes found. Updating sync time.");
+			"No out of sync data types found. Updating sync time.");
 	}
 
 	@Override
@@ -340,7 +341,7 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 	private void autoUpdateDataTypesThatHaveNoRealChanges(DataTypeSynchronizer synchronizer,
 			List<DataTypeSyncInfo> outOfSynchInTimeOnlyList, boolean markArchiveSynchronized) {
 
-		int transactionID = dtm.startTransaction("auto sync datatypes");
+		int transactionID = dtm.startTransaction("Auto-sync data types");
 		try {
 			for (DataTypeSyncInfo dataTypeSyncInfo : outOfSynchInTimeOnlyList) {
 				dataTypeSyncInfo.syncTimes();

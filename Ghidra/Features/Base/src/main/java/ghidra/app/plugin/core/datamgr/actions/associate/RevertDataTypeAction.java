@@ -13,14 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.datamgr.actions;
-
-import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
-import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
-import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
-import ghidra.program.model.data.*;
-import ghidra.util.Msg;
+package ghidra.app.plugin.core.datamgr.actions.associate;
 
 import javax.swing.tree.TreePath;
 
@@ -29,6 +22,12 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.datamgr.*;
+import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
+import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
+import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
+import ghidra.program.model.data.*;
+import ghidra.util.Msg;
 
 public class RevertDataTypeAction extends DockingAction {
 
@@ -37,7 +36,7 @@ public class RevertDataTypeAction extends DockingAction {
 	public RevertDataTypeAction(DataTypeManagerPlugin plugin) {
 		super("Revert Data Type", plugin.getName());
 		this.plugin = plugin;
-		setPopupMenuData(new MenuData(new String[] { "Revert" }, "Sync"));
+		setPopupMenuData(new MenuData(new String[] { "Revert Changes" }, "Sync"));
 		setEnabled(true);
 	}
 
@@ -68,8 +67,8 @@ public class RevertDataTypeAction extends DockingAction {
 			case UNKNOWN:
 				return false;
 			case COMMIT:
-				return true;
 			case CONFLICT:
+				return true;
 			case IN_SYNC:
 			case ORPHAN:
 			case UPDATE:
@@ -88,29 +87,26 @@ public class RevertDataTypeAction extends DockingAction {
 		}
 
 		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
-		if (node instanceof DataTypeNode) {
-			DataTypeNode dataTypeNode = (DataTypeNode) node;
-			DataType dataType = dataTypeNode.getDataType();
-			DataTypeManager dtm = dataType.getDataTypeManager();
-			DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
-			SourceArchive sourceArchive = dataType.getSourceArchive();
-			if (!dtm.isUpdatable()) {
-				DataTypeUtils.showUnmodifiableArchiveErrorMessage(gTree, "Revert Failed", dtm);
-				return;
-			}
-			DataTypeManager sourceDTM = handler.getDataTypeManager(sourceArchive);
-			if (sourceDTM == null) {
-				Msg.showInfo(getClass(), gTree, "Revert Failed", "Source Archive not open: " +
-					sourceArchive.getName());
-				return;
-			}
-			plugin.revert(dataType);
-
-			// Source archive data type manager was already checked for null above.
-			DataTypeSynchronizer synchronizer =
-				new DataTypeSynchronizer(handler, dtm, sourceArchive);
-			synchronizer.reSyncOutOfSyncInTimeOnlyDataTypes();
+		DataTypeNode dataTypeNode = (DataTypeNode) node;
+		DataType dataType = dataTypeNode.getDataType();
+		DataTypeManager dtm = dataType.getDataTypeManager();
+		DataTypeManagerHandler handler = plugin.getDataTypeManagerHandler();
+		SourceArchive sourceArchive = dataType.getSourceArchive();
+		if (!dtm.isUpdatable()) {
+			DataTypeUtils.showUnmodifiableArchiveErrorMessage(gTree, "Revert Failed", dtm);
+			return;
 		}
+		DataTypeManager sourceDTM = handler.getDataTypeManager(sourceArchive);
+		if (sourceDTM == null) {
+			Msg.showInfo(getClass(), gTree, "Revert Failed",
+				"Source Archive not open: " + sourceArchive.getName());
+			return;
+		}
+		plugin.revert(dataType);
+
+		// Source archive data type manager was already checked for null above.
+		DataTypeSynchronizer synchronizer = new DataTypeSynchronizer(handler, dtm, sourceArchive);
+		synchronizer.reSyncOutOfSyncInTimeOnlyDataTypes();
 	}
 
 }
