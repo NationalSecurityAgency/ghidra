@@ -15,10 +15,9 @@
  */
 package ghidra.file.formats.ios.prelink;
 
-import java.util.*;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.*;
 
 import org.apache.commons.collections4.BidiMap;
 import org.jdom.JDOMException;
@@ -76,18 +75,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 
 	@Override
 	public boolean isValid(TaskMonitor monitor) throws IOException {
-		try {
-			return MachHeader.isMachHeader(provider) &&
-				!MachoPrelinkUtils.parsePrelinkXml(provider, monitor).isEmpty();
-		}
-		catch (JDOMException e) {
-			Msg.warn(this, e.getMessage());
-			return true; // use KModInfo technique to open
-		}
-		catch (IOException e) {
-			Msg.warn(this, e.getMessage());
-			return false;
-		}
+		return MachoPrelinkUtils.isMachoPrelink(provider, monitor);
 	}
 
 	@Override

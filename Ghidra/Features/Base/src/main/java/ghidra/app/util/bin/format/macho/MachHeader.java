@@ -139,11 +139,12 @@ public class MachHeader implements StructConverter {
 		if (_parsed) {
 			return this;
 		}
+		long currentIndex = _commandIndex;
 		for (int i = 0; i < nCmds; ++i) {
-			_reader.setPointerIndex(_commandIndex);
+			_reader.setPointerIndex(currentIndex);
 			LoadCommand lc = LoadCommandTypes.getLoadCommand(_reader, this);
 			_commands.add(lc);
-			_commandIndex += lc.getCommandSize();
+			currentIndex += lc.getCommandSize();
 		}
 		_parsed = true;
 		return this;
@@ -287,6 +288,15 @@ public class MachHeader implements StructConverter {
 
 	public boolean isLittleEndian() {//TODO -- if intel it is LE
 		return magic == MachConstants.MH_CIGAM || magic == MachConstants.MH_CIGAM_64;
+	}
+
+	/**
+	 * Gets the size of this {@link MachHeader} in bytes
+	 * 
+	 * @return The size of this {@link MachHeader} in bytes
+	 */
+	public long getSize() {
+		return _commandIndex - _machHeaderStartIndexInProvider;
 	}
 
 	public String getDescription() {//TODO
