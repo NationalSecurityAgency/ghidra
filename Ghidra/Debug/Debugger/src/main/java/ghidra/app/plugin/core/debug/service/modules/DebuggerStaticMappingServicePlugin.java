@@ -926,7 +926,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		synchronized (lock) {
 			InfoPerProgram info = requireTrackedInfo(program);
 			if (info == null) {
-				return null;
+				return Map.of();
 			}
 			return info.getOpenMappedViews(set);
 		}

@@ -724,7 +724,10 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	 * which displays P2.
 	 */
 	@Override
-	public void programSelectionChanged(ProgramSelection newP2Selection) {
+	public void programSelectionChanged(ProgramSelection newP2Selection, EventTrigger trigger) {
+		if (trigger != EventTrigger.GUI_ACTION) {
+			return;
+		}
 		setProgram2Selection(newP2Selection);
 	}
 
@@ -1831,7 +1834,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 				MarkerSet selectionMarkers = getSelectionMarkers();
 				selectionMarkers.clearAll();
 
-				programSelectionChanged(new ProgramSelection(p2AddressFactory, set));
+				programSelectionChanged(new ProgramSelection(p2AddressFactory, set),
+					EventTrigger.GUI_ACTION);
 				updatePgm2Enablement();
 			}
 		}

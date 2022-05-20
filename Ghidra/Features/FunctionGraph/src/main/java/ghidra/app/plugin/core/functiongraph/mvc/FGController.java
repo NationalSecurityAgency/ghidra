@@ -288,6 +288,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 	/**
 	 * Sets the message that will appear in the lower part of the graph.
+	 * 
 	 * @param message the message to display
 	 */
 	public void setStatusMessage(String message) {
@@ -336,7 +337,10 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 	}
 
 	@Override
-	public void programSelectionChanged(ProgramSelection selection) {
+	public void programSelectionChanged(ProgramSelection selection, EventTrigger trigger) {
+		if (trigger != EventTrigger.GUI_ACTION) {
+			return;
+		}
 		// We need to translate the given selection (which is from a single vertex) to the current
 		// overall selection for the graph (which includes the selection from all vertices).  We
 		// do this so that a selection change in one vertex does not clear the selection in
@@ -785,12 +789,13 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 	}
 
 	/**
-	 * Signals that something major has changed for the program and we don't know where, so
-	 * clear all cached functions for the given program.
+	 * Signals that something major has changed for the program and we don't know where, so clear
+	 * all cached functions for the given program.
 	 *
 	 * BLEH!: I don't like clearing the cache this way...another options is to mark all cached
-	 *       values as stale, somehow.  If we did this, then when the view reuses the cached
-	 *       data, it could signal to the user that the graph is out-of-date.
+	 * values as stale, somehow. If we did this, then when the view reuses the cached data, it could
+	 * signal to the user that the graph is out-of-date.
+	 * 
 	 * @param program the program
 	 */
 	public void invalidateAllCacheForProgram(Program program) {
@@ -997,8 +1002,8 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 	}
 
 	/**
-	 * Update the graph's notion of the current location based upon that of the Tool.  This
-	 * method is meant to be called from internal mutative operations.
+	 * Update the graph's notion of the current location based upon that of the Tool. This method is
+	 * meant to be called from internal mutative operations.
 	 */
 	public void synchronizeProgramLocationAfterEdit() {
 		// It is assumed that the provider's location is the correct location.
@@ -1007,6 +1012,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 	/**
 	 * Will broadcast the given vertex location to the external system
+	 * 
 	 * @param location the location coming from the vertex
 	 */
 	public void synchronizeProgramLocationToVertex(ProgramLocation location) {

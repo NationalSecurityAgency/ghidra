@@ -15,7 +15,7 @@
  */
 package docking.widgets.fieldpanel;
 
-import static docking.widgets.EventTrigger.*;
+import static docking.widgets.EventTrigger.INTERNAL_ONLY;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -392,6 +392,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the default background color.
+	 * 
 	 * @return the default background color.
 	 * @see #getBackground()
 	 */
@@ -433,6 +434,7 @@ public class FieldPanel extends JPanel
 	/**
 	 *
 	 * Returns the foreground color.
+	 * 
 	 * @return the foreground color.
 	 */
 	public Color getForegroundColor() {
@@ -441,6 +443,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the color used as the background for selected items.
+	 * 
 	 * @return the color used as the background for selected items.
 	 */
 	public Color getSelectionColor() {
@@ -449,6 +452,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the color color used as the background for highlighted items.
+	 * 
 	 * @return the color color used as the background for highlighted items.
 	 */
 	public Color getHighlightColor() {
@@ -457,6 +461,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the cursor color when this field panel is focused.
+	 * 
 	 * @return the cursor color when this field panel is focused.
 	 */
 	public Color getFocusedCursorColor() {
@@ -465,6 +470,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the cursor color when this field panel is not focused.
+	 * 
 	 * @return the cursor color when this field panel is not focused.
 	 */
 	public Color getNonFocusCursorColor() {
@@ -495,6 +501,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the point in pixels of where the cursor is located.
+	 * 
 	 * @return the point in pixels of where the cursor is located.
 	 */
 	public Point getCursorPoint() {
@@ -542,6 +549,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Adds a selection listener that will be notified while the selection is being created
+	 * 
 	 * @param listener the listener to be notified
 	 */
 	public void addLiveFieldSelectionListener(FieldSelectionListener listener) {
@@ -550,6 +558,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Removes the selection listener from being notified when the selection is being created
+	 * 
 	 * @param listener the listener to be removed from being notified
 	 */
 	public void removeLiveFieldSelectionListener(FieldSelectionListener listener) {
@@ -691,6 +700,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the current selection.
+	 * 
 	 * @return the current selection.
 	 */
 	public FieldSelection getSelection() {
@@ -699,6 +709,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the current highlight (marked area).
+	 * 
 	 * @return the current highlight (marked area).
 	 */
 	public FieldSelection getHighlight() {
@@ -711,12 +722,22 @@ public class FieldPanel extends JPanel
 	 * @param sel the selection to set.
 	 */
 	public void setSelection(FieldSelection sel) {
+		setSelection(sel, EventTrigger.API_CALL);
+	}
+
+	/**
+	 * Sets the current selection.
+	 *
+	 * @param sel the selection to set.
+	 * @param trigger the cause of the change
+	 */
+	public void setSelection(FieldSelection sel, EventTrigger trigger) {
 		if (!selectionHandler.isSelectionOn()) {
 			return;
 		}
 		selection = new FieldSelection(sel);
 		repaint();
-		notifySelectionChanged(EventTrigger.API_CALL);
+		notifySelectionChanged(trigger);
 	}
 
 	/**
@@ -774,6 +795,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the state of the cursor. True if on, false if off.
+	 * 
 	 * @return the state of the cursor. True if on, false if off.
 	 */
 	public boolean isCursorOn() {
@@ -871,6 +893,7 @@ public class FieldPanel extends JPanel
 	 * that layout. For example, if the layout is completely displayed, yPos will be 0. If part of
 	 * the layout is off the top off the screen, then yPos will have a negative value (indicating
 	 * that it begins above the displayable part of the screen.
+	 * 
 	 * @return the position
 	 */
 	public ViewerPosition getViewerPosition() {
@@ -1057,6 +1080,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the offset of the cursor from the top of the screen
+	 * 
 	 * @return the offset of the cursor from the top of the screen
 	 */
 	public int getCursorOffset() {
@@ -1253,6 +1277,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Finds the layout containing the given y position.
+	 * 
 	 * @param y the y position.
 	 * @return the layout.
 	 */

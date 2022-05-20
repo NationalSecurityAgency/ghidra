@@ -18,9 +18,9 @@ package ghidra.app.plugin.core.debug.gui.watch;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -44,7 +44,6 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegisterActionContext;
 import ghidra.app.plugin.core.debug.gui.register.RegisterRow;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
@@ -603,21 +602,14 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 		if (set == null) {
 			return null;
 		}
-		AddressSet result = new AddressSet();
-		for (Entry<TraceSpan, Collection<MappedAddressRange>> ent : mappingService
-				.getOpenMappedViews(program, set)
-				.entrySet()) {
-			if (ent.getKey().getTrace() != current.getTrace()) {
-				continue;
-			}
-			if (!ent.getKey().getSpan().contains(current.getSnap())) {
-				continue;
-			}
-			for (MappedAddressRange rng : ent.getValue()) {
-				result.add(rng.getDestinationAddressRange());
-			}
-		}
-		return result;
+		return mappingService.getOpenMappedViews(program, set)
+				.entrySet()
+				.stream()
+				.filter(e -> e.getKey().getTrace() == current.getTrace())
+				.filter(e -> e.getKey().getSpan().contains(current.getSnap()))
+				.flatMap(e -> e.getValue().stream())
+				.map(r -> r.getDestinationAddressRange())
+				.collect(AddressCollectors.toAddressSet());
 	}
 
 	private boolean hasDynamicLocation(ProgramLocationActionContext context) {

@@ -47,7 +47,7 @@ import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractFollowsCurrentThreadAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToDialog;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
@@ -725,8 +725,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		// Verify it has immediately tracked on creation
 		assertEquals(tb.trace.getProgramView(), extraProvider.getProgram());
 		assertEquals(thread1, extraProvider.current.getThread());
-		assertNull(getLocalAction(memBytesProvider, AbstractFollowsCurrentThreadAction.NAME));
-		assertNotNull(getLocalAction(extraProvider, AbstractFollowsCurrentThreadAction.NAME));
+		assertNull(getLocalAction(memBytesProvider, FollowsCurrentThreadAction.NAME));
+		assertNotNull(getLocalAction(extraProvider, FollowsCurrentThreadAction.NAME));
 
 		performAction(extraProvider.actionFollowsCurrentThread);
 		traceManager.activateThread(thread2);
