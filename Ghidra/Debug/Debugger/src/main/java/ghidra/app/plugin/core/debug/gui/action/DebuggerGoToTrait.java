@@ -88,11 +88,11 @@ public abstract class DebuggerGoToTrait {
 		if (space == null) {
 			throw new IllegalArgumentException("No such address space: " + spaceName);
 		}
-		SleighExpression expr = SleighProgramCompiler.compileExpression(slang, expression);
+		PcodeExpression expr = SleighProgramCompiler.compileExpression(slang, expression);
 		return goToSleigh(space, expr);
 	}
 
-	public CompletableFuture<Boolean> goToSleigh(AddressSpace space, SleighExpression expression) {
+	public CompletableFuture<Boolean> goToSleigh(AddressSpace space, PcodeExpression expression) {
 		AsyncPcodeExecutor<byte[]> executor = TracePcodeUtils.executorForCoordinates(current);
 		CompletableFuture<byte[]> result = expression.evaluate(executor);
 		return result.thenApply(offset -> {

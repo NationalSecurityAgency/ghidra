@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.util;
+package ghidra.program.model.mem;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;

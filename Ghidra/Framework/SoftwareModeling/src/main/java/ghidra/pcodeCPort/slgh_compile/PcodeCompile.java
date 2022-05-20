@@ -80,6 +80,7 @@ public abstract class PcodeCompile {
 
 	/**
 	 * Handle a sleigh 'macro' invocation, returning the resulting p-code op templates (OpTpl)
+	 * 
 	 * @param location is the file/line where the macro is invoked
 	 * @param sym MacroSymbol is the macro symbol
 	 * @param param is the parsed list of operand expressions
@@ -143,7 +144,8 @@ public abstract class PcodeCompile {
 				if (vn.getOffset().equals(vt.getOffset())) {
 					if ((size.getType() == ConstTpl.const_type.real) &&
 						(vn.getSize().getType() == ConstTpl.const_type.real) &&
-						(vn.getSize().getReal() != 0) && (vn.getSize().getReal() != size.getReal())) {
+						(vn.getSize().getReal() != 0) &&
+						(vn.getSize().getReal() != size.getReal())) {
 						throw new SleighError(String.format("Localtemp size mismatch: %d vs %d",
 							vn.getSize().getReal(), size.getReal()), op.location);
 					}
@@ -155,7 +157,8 @@ public abstract class PcodeCompile {
 				if (vn.isLocalTemp() && (vn.getOffset().equals(vt.getOffset()))) {
 					if ((size.getType() == ConstTpl.const_type.real) &&
 						(vn.getSize().getType() == ConstTpl.const_type.real) &&
-						(vn.getSize().getReal() != 0) && (vn.getSize().getReal() != size.getReal())) {
+						(vn.getSize().getReal() != 0) &&
+						(vn.getSize().getReal() != size.getReal())) {
 						throw new SleighError(String.format("Input size mismatch: %d vs %d",
 							vn.getSize().getReal(), size.getReal()), op.location);
 					}
@@ -194,10 +197,10 @@ public abstract class PcodeCompile {
 		labsym.setPlaced();
 		VectorSTL<OpTpl> res = new VectorSTL<OpTpl>();
 		OpTpl op = new OpTpl(location, OpCode.CPUI_PTRADD);
-		VarnodeTpl idvn =
-			new VarnodeTpl(location, new ConstTpl(getConstantSpace()), new ConstTpl(
-				ConstTpl.const_type.real, labsym.getIndex()), new ConstTpl(
-				ConstTpl.const_type.real, 4));
+		VarnodeTpl idvn = new VarnodeTpl(location,
+			new ConstTpl(getConstantSpace()),
+			new ConstTpl(ConstTpl.const_type.real, labsym.getIndex()),
+			new ConstTpl(ConstTpl.const_type.real, 4));
 		op.addInput(idvn);
 		res.push_back(op);
 		return res;
@@ -346,7 +349,8 @@ public abstract class PcodeCompile {
 		return res;
 	}
 
-	public VectorSTL<OpTpl> createOpNoOut(Location location, OpCode opc, ExprTree vn1, ExprTree vn2) {
+	public VectorSTL<OpTpl> createOpNoOut(Location location, OpCode opc, ExprTree vn1,
+			ExprTree vn2) {
 		// Create new expression by creating op with given -opc-
 		// and inputs vn1 and vn2. Free the input expressions
 		entry("createOpNoOut", opc, vn1, vn2);
@@ -438,14 +442,14 @@ public abstract class PcodeCompile {
 		return ExprTree.appendParams(op, param);
 	}
 
-	public ExprTree createVariadic(Location location,OpCode opc,VectorSTL<ExprTree> param) {
+	public ExprTree createVariadic(Location location, OpCode opc, VectorSTL<ExprTree> param) {
 		entry("createVariadic", location, opc, param);
 		VarnodeTpl outvn = buildTemporary(location);
 		ExprTree res = new ExprTree(location);
 		OpTpl op = new OpTpl(location, opc);
 		res.ops = ExprTree.appendParams(op, param);
 		res.ops.back().setOutput(outvn);
-		res.outvn = new VarnodeTpl(location,outvn);
+		res.outvn = new VarnodeTpl(location, outvn);
 		return res;
 	}
 
@@ -602,7 +606,8 @@ public abstract class PcodeCompile {
 	// The result is truncated to the smallest byte size that can
 	// contain the indicated number of bits. The result has the
 	// desired bits shifted all the way to the right
-	public ExprTree createBitRange(Location location, SpecificSymbol sym, int bitoffset, int numbits) {
+	public ExprTree createBitRange(Location location, SpecificSymbol sym, int bitoffset,
+			int numbits) {
 		entry("createBitRange", location, sym, bitoffset, numbits);
 		String errmsg = "";
 		if (numbits == 0) {
@@ -841,12 +846,12 @@ public abstract class PcodeCompile {
 				break;
 			case CPUI_CPOOLREF:
 				if (op.getOut().isZeroSize() && (!op.getIn(0).isZeroSize())) {
-					force_size(op.getOut(),op.getIn(0).getSize(),ops);
+					force_size(op.getOut(), op.getIn(0).getSize(), ops);
 				}
 				if (op.getIn(0).isZeroSize() && (!op.getOut().isZeroSize())) {
-					force_size(op.getIn(0),op.getOut().getSize(),ops);
+					force_size(op.getIn(0), op.getOut().getSize(), ops);
 				}
-				for(i=1;i<op.numInput();++i) {
+				for (i = 1; i < op.numInput(); ++i) {
 					force_size(op.getIn(i), new ConstTpl(ConstTpl.const_type.real, 8), ops);
 				}
 			default:
@@ -923,15 +928,17 @@ public abstract class PcodeCompile {
 	}
 
 	/**
-	 * EXTREMELY IMPORTANT: keep this up to date with isInternalFunction below!!!
-	 * Lookup the given identifier as part of parsing p-code with functional syntax.
-	 * Build the resulting p-code expression object from the parsed operand expressions.
+	 * EXTREMELY IMPORTANT: keep this up to date with isInternalFunction below!!! Lookup the given
+	 * identifier as part of parsing p-code with functional syntax. Build the resulting p-code
+	 * expression object from the parsed operand expressions.
+	 * 
 	 * @param location identifies the file/line where the p-code is parsed from
 	 * @param name is the given functional identifier
 	 * @param operands is the ordered list of operand expressions
 	 * @return the new expression (ExprTree) object
 	 */
-	public Object findInternalFunction(Location location, String name, VectorSTL<ExprTree> operands) {
+	public Object findInternalFunction(Location location, String name,
+			VectorSTL<ExprTree> operands) {
 		ExprTree r = null;
 		ExprTree s = null;
 		if (operands.size() > 0) {
@@ -990,13 +997,13 @@ public abstract class PcodeCompile {
 			if (operands.size() >= 2) {
 				return createVariadic(location, OpCode.CPUI_CPOOLREF, operands);
 			}
-			reportError(location,name+"() expects at least two arguments");
+			reportError(location, name + "() expects at least two arguments");
 		}
 		if ("newobject".equals(name)) {
 			if (operands.size() >= 1) {
 				return createVariadic(location, OpCode.CPUI_NEW, operands);
 			}
-			reportError(location,name+"() expects at least one argument");
+			reportError(location, name + "() expects at least one argument");
 		}
 		if ("popcount".equals(name) && hasOperands(1, operands, location, name)) {
 			return createOp(location, OpCode.CPUI_POPCOUNT, r);
@@ -1016,9 +1023,10 @@ public abstract class PcodeCompile {
 	}
 
 	/**
-	 * EXTREMELY IMPORTANT: keep this up to date with findInternalFunction above!!!
-	 * Determine if the given identifier is a sleigh internal function. Used to
-	 * prevent user-defined p-code names from colliding with internal names
+	 * EXTREMELY IMPORTANT: keep this up to date with findInternalFunction above!!! Determine if the
+	 * given identifier is a sleigh internal function. Used to prevent user-defined p-code names
+	 * from colliding with internal names
+	 * 
 	 * @param name is the given identifier to check
 	 * @return true if the identifier is a reserved internal function
 	 */

@@ -26,6 +26,14 @@ import ghidra.program.model.mem.MemBuffer;
  * A paired executor state
  * 
  * <p>
+ * This composes two delegate states "left" and "write" creating a single state which instead stores
+ * pairs of values, where the left component has the value type of the left state, and the right
+ * component has the value type of the right state. Note that both states are addressed using only
+ * the left "control" component. Otherwise, every operation on this state is decomposed into
+ * operations upon the delegate states, and the final result composed from the results of those
+ * operations.
+ * 
+ * <p>
  * Where a response cannot be composed of both states, the paired state defers to the left. In this
  * way, the left state controls the machine, while the right is computed in tandem. The right never
  * directly controls the machine; however, by overriding
@@ -43,6 +51,12 @@ public class PairedPcodeExecutorState<L, R>
 	private final PcodeExecutorStatePiece<L, L> left;
 	private final PcodeExecutorStatePiece<L, R> right;
 
+	/**
+	 * Compose a paired state from the given left and right states
+	 * 
+	 * @param left the state backing the left side of paired values ("control")
+	 * @param right the state backing the right side of paired values ("rider")
+	 */
 	public PairedPcodeExecutorState(PcodeExecutorStatePiece<L, L> left,
 			PcodeExecutorStatePiece<L, R> right) {
 		super(new PairedPcodeExecutorStatePiece<>(left, right));
@@ -65,10 +79,20 @@ public class PairedPcodeExecutorState<L, R>
 		return left.getConcreteBuffer(address);
 	}
 
+	/**
+	 * Get the delegate backing the left side of paired values
+	 * 
+	 * @return the left state
+	 */
 	public PcodeExecutorStatePiece<L, L> getLeft() {
 		return left;
 	}
 
+	/**
+	 * Get the delegate backing the right side of paired values
+	 * 
+	 * @return the right state
+	 */
 	public PcodeExecutorStatePiece<L, R> getRight() {
 		return right;
 	}

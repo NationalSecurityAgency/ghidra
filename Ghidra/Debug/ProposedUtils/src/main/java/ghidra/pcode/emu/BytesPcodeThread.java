@@ -17,7 +17,21 @@ package ghidra.pcode.emu;
 
 import ghidra.program.model.address.AddressSpace;
 
+/**
+ * A simple p-code thread that operates on concrete bytes
+ *
+ * <p>
+ * For a complete example of a p-code emulator, see {@link PcodeEmulator}. This is the default
+ * thread for that emulator.
+ */
 public class BytesPcodeThread extends AbstractModifiedPcodeThread<byte[]> {
+	/**
+	 * Construct a new thread
+	 * 
+	 * @see PcodeMachine#newThread(String)
+	 * @param name the thread's name
+	 * @param machine the machine to which the thread belongs
+	 */
 	public BytesPcodeThread(String name, AbstractPcodeMachine<byte[]> machine) {
 		super(name, machine);
 	}

@@ -22,13 +22,39 @@ import ghidra.pcode.opbehavior.UnaryOpBehavior;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.lang.Language;
 
+/**
+ * A p-code arithmetic that operates on byte array values
+ * 
+ * <p>
+ * The arithmetic interprets the arrays as big- or little-endian values, then performs the
+ * arithmetic as specified by the p-code operation.
+ */
 public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
-	BIG_ENDIAN(true), LITTLE_ENDIAN(false);
+	/**
+	 * The instance which interprets arrays as big-endian values
+	 */
+	BIG_ENDIAN(true),
+	/**
+	 * The instance which interprets arrays as little-endian values
+	 */
+	LITTLE_ENDIAN(false);
 
+	/**
+	 * Obtain the instance for the given endianness
+	 * 
+	 * @param bigEndian true for {@link #BIG_ENDIAN}, false of {@link #LITTLE_ENDIAN}
+	 * @return the arithmetic
+	 */
 	public static BytesPcodeArithmetic forEndian(boolean bigEndian) {
 		return bigEndian ? BIG_ENDIAN : LITTLE_ENDIAN;
 	}
 
+	/**
+	 * Obtain the instance for the given language's endianness
+	 * 
+	 * @param language the language
+	 * @return the arithmetic
+	 */
 	public static BytesPcodeArithmetic forLanguage(Language language) {
 		return forEndian(language.isBigEndian());
 	}
@@ -93,5 +119,10 @@ public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 	@Override
 	public BigInteger toConcrete(byte[] value, boolean isContextreg) {
 		return Utils.bytesToBigInteger(value, value.length, isBigEndian || isContextreg, false);
+	}
+
+	@Override
+	public byte[] sizeOf(byte[] value) {
+		return fromConst(value.length, SIZEOF_SIZEOF);
 	}
 }

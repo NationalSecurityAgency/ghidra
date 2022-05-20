@@ -85,9 +85,9 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 
 	public void exec(long snap, int frame, TraceThread thread, List<String> sleigh) {
 		PcodeProgram program = SleighProgramCompiler.compileProgram((SleighLanguage) language,
-			"builder", sleigh, SleighUseropLibrary.nil());
+			"builder", sleigh, PcodeUseropLibrary.nil());
 		TraceSleighUtils.buildByteExecutor(trace, snap, thread, frame)
-				.execute(program, SleighUseropLibrary.nil());
+				.execute(program, PcodeUseropLibrary.nil());
 	}
 
 	public Address addr(AddressSpace space, long offset) {

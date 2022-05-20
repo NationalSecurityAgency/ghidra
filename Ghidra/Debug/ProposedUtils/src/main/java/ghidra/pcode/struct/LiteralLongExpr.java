@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pcode.exec.trace;
+package ghidra.pcode.struct;
 
-public interface BytesPcodeExecutorStateMixin<A, T> {
-	T fromConstant(long constant);
+import ghidra.program.model.data.AbstractIntegerDataType;
+import ghidra.program.model.data.DataType;
 
-	long offsetToLong(A offset);
+public class LiteralLongExpr extends LiteralExpr {
+	private LiteralLongExpr(StructuredSleigh ctx, long val, int size, DataType type) {
+		super(ctx, val, size, type);
+	}
 
-	byte[] toBytes(T val, int size);
-
-	T fromBytes(byte[] data);
+	protected LiteralLongExpr(StructuredSleigh ctx, long val, int size) {
+		this(ctx, val, size, AbstractIntegerDataType.getSignedDataType(size, ctx.dtm));
+	}
 }

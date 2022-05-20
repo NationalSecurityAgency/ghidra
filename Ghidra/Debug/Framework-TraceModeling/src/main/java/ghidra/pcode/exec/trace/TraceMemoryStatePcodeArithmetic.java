@@ -59,4 +59,9 @@ public enum TraceMemoryStatePcodeArithmetic implements PcodeArithmetic<TraceMemo
 	public BigInteger toConcrete(TraceMemoryState value, boolean isContextreg) {
 		throw new AssertionError("Cannot make TraceMemoryState a 'concrete value'");
 	}
+
+	@Override
+	public TraceMemoryState sizeOf(TraceMemoryState value) {
+		throw new AssertionError("Cannot get size of a TraceMemoryState");
+	}
 }

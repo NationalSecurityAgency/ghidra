@@ -36,16 +36,12 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorState
 		@Override
 		public byte[] read(long offset, int size) {
 			RangeSet<UnsignedLong> uninitialized =
-				cache.getUninitialized(offset, offset + size - 1);
-
+				bytes.getUninitialized(offset, offset + size - 1);
 			if (!uninitialized.isEmpty()) {
-				size = checkUninitialized(source, space.getAddress(offset), size,
+				size = checkUninitialized(backing, space.getAddress(offset), size,
 					addrSet(uninitialized));
-				if (source != null) {
-					readUninitializedFromSource(uninitialized);
-				}
 			}
-			return readCached(offset, size);
+			return super.read(offset, size);
 		}
 	}
 
@@ -55,10 +51,10 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorState
 	}
 
 	@Override
-	protected CachedSpace newSpace(AddressSpace space, TraceMemorySpace source, long snap) {
-		return new CheckedCachedSpace(language, space, source, snap);
+	protected CachedSpace newSpace(AddressSpace space, TraceMemorySpace backing) {
+		return new CheckedCachedSpace(language, space, backing, snap);
 	}
 
-	protected abstract int checkUninitialized(TraceMemorySpace source, Address start, int size,
+	protected abstract int checkUninitialized(TraceMemorySpace backing, Address start, int size,
 			AddressSet uninitialized);
 }

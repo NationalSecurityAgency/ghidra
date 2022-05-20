@@ -48,8 +48,8 @@ public class PcodeFrameTest extends AbstractGhidraHeadlessIntegrationTest {
 	static final List<String> SAMPLE_LIB_USEROP = List.of(
 		"__lib_userop(r0);");
 
-	static class MyLib extends AnnotatedSleighUseropLibrary<Void> {
-		@SleighUserop
+	static class MyLib extends AnnotatedPcodeUseropLibrary<Void> {
+		@PcodeUserop
 		void __lib_userop() {
 		}
 	}
