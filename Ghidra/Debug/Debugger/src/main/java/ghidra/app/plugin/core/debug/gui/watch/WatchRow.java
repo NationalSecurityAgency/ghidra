@@ -58,7 +58,7 @@ public class WatchRow {
 	private String typePath;
 	private DataType dataType;
 
-	private SleighExpression compiled;
+	private PcodeExpression compiled;
 	private TraceMemoryState state;
 	private Address address;
 	private AddressSet reads;
@@ -208,7 +208,7 @@ public class WatchRow {
 
 		@Override
 		public PcodeFrame execute(PcodeProgram program,
-				SleighUseropLibrary<Pair<byte[], Address>> library) {
+				PcodeUseropLibrary<Pair<byte[], Address>> library) {
 			depsState.reset();
 			return super.execute(program, library);
 		}

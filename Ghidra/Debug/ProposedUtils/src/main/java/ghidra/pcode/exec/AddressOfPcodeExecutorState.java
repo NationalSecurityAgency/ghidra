@@ -23,11 +23,26 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.mem.MemBuffer;
 
+/**
+ * A rider state piece that reports the address of the control value
+ * 
+ * <p>
+ * This is intended for use as the right side of a {@link PairedPcodeExecutorState} or
+ * {@link PairedPcodeExecutorStatePiece}. Except for unique spaces, sets are ignored, and gets
+ * simply echo back the address of the requested read. In unique spaces, the "address of" is treated
+ * as the value, so that values transiting unique space can correctly have their source addresses
+ * reported.
+ */
 public class AddressOfPcodeExecutorState
 		implements PcodeExecutorStatePiece<byte[], Address> {
 	private final boolean isBigEndian;
 	private Map<Long, Address> unique = new HashMap<>();
 
+	/**
+	 * Construct an "address of" state piece
+	 * 
+	 * @param isBigEndian true if the control language is big endian
+	 */
 	public AddressOfPcodeExecutorState(boolean isBigEndian) {
 		this.isBigEndian = isBigEndian;
 	}
