@@ -15,23 +15,23 @@
  */
 package ghidra.app.plugin.core.symtable;
 
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.util.ProgramLocation;
-import ghidra.util.table.ProgramLocationTableRowMapper;
 
-public class SymbolRowObjectToProgramLocationTableRowMapper
-		extends ProgramLocationTableRowMapper<SymbolRowObject, ProgramLocation> {
+/**
+ * <code>DeletedSymbolRowObject</code> provides a lightweight {@link Symbol}
+ * table row object which may be used for a deleted symbol when attempting 
+ * to update table model.
+ */
+class DeletedSymbolRowObject extends SymbolRowObject {
+
+	DeletedSymbolRowObject(Program program, long symbolId) {
+		super(program, symbolId);
+	}
 
 	@Override
-	public ProgramLocation map(SymbolRowObject rowObject, Program data,
-			ServiceProvider serviceProvider) {
-		Symbol s = rowObject.getSymbol();
-		if (s != null && !s.isDeleted()) {
-			return s.getProgramLocation();
-		}
-		return null;
+	public Symbol getSymbol() {
+		return null; // symbol no longer exists
 	}
 
 }
