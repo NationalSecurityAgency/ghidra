@@ -992,7 +992,9 @@ TOKEN :
 	|
 	<ASM : ( [ "_" ] )* "asm" ( [ "_" ] )*  >
 	|
-	<INLINE : ( [ "_" ] )* ("inline" | "forceinline") ( [ "_" ] )*> 
+	<INLINE : ( [ "_" ] )* ("inline" | "forceinline") ( [ "_" ] )*>
+	|
+	<STATICASSERT : ("_S" | "s") "tatic_assert">
 	|
 	<FLOAT : "float"> 
 	|
@@ -1720,6 +1722,12 @@ Token PragmaConstant() : {
   }
 }
 
+void StaticAssert() : {
+}
+{
+  ( ( <STATICASSERT> ) "(" ConstantExpression() [ "," <STRING_LITERAL> ] ")" )
+}
+
 
 DataType StructOrUnionSpecifier() : {
 	Token t;
@@ -2378,6 +2386,8 @@ void Statement() : {}
 		AsmStatement()
 		|
 		PragmaSpec()
+		|
+		StaticAssert()
 	)
 }
 
@@ -2646,7 +2656,6 @@ Object CastExpression() : {
 Object UnaryExpression() : {
      Object obj = null;
      Token op = null;
-     Token id = null;
 	 Declaration dec = null;
 }
 {
@@ -2670,7 +2679,7 @@ Object UnaryExpression() : {
 		| 
 		<SIZEOF> 
 		(
-			"(" ( dec = TypeName() | id = <IDENTIFIER> | obj = ConstantExpression() ) ")"
+			"(" ( dec = TypeName() | obj = UnaryExpression() ) ")"
 			{
 			    if (obj != null && obj instanceof String) {
 			        obj = Long.valueOf(((String) obj).length() - 1); // will include "" plus \0
@@ -2678,7 +2687,7 @@ Object UnaryExpression() : {
 			    else if (dec != null) {
 			        obj = Long.valueOf(dec.getDataType().getLength());
 			    }
-			    else if (id != null) {
+			    else if (obj != null) {
 			       // TODO: try to look up the type of the identifier
 			       // TODO: Throw error if identifier is not defined
 			       //       may need to actually track declarations!
