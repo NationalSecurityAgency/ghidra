@@ -568,9 +568,6 @@ public class DemangledFunction extends DemangledObject {
 		catch (CodeUnitInsertionException e) {
 			// ignore
 		}
-		catch (DataTypeConflictException e) {
-			// ignore - should not happen
-		}
 	}
 
 	private DataType resolveReturnType(Program program, Function function,

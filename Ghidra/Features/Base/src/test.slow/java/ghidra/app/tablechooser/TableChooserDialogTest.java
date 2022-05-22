@@ -35,6 +35,7 @@ import docking.actions.ToolActions;
 import docking.tool.util.DockingToolConstants;
 import docking.widgets.table.TableSortState;
 import ghidra.app.nav.Navigatable;
+import ghidra.app.nav.TestDummyNavigatable;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.DummyPluginTool;
 import ghidra.program.database.ProgramBuilder;
@@ -96,7 +97,7 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		addresses.add(f.getEntryPoint());
 
 		Program program = builder.getProgram();
-		Navigatable navigatable = null;
+		Navigatable navigatable = new TestDummyNavigatable();
 		runSwing(() -> dialog =
 			new TableChooserDialog(tool, executor, program, "Dialog Title", navigatable));
 

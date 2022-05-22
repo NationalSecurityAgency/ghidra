@@ -60,7 +60,6 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeConflictException;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -528,7 +527,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 					listing.clearCodeUnits(row.getAddress(), row.getRange().getMaxAddress(), false);
 					listing.createData(address, dataType, size);
 				}
-				catch (CodeUnitInsertionException | DataTypeConflictException e) {
+				catch (CodeUnitInsertionException e) {
 					errs.add(address + " " + dataType + "(" + size + "): " + e.getMessage());
 				}
 			}

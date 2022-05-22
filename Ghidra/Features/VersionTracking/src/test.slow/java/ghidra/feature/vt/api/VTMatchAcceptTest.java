@@ -15,9 +15,8 @@
  */
 package ghidra.feature.vt.api;
 
-import static ghidra.feature.vt.db.VTTestUtils.addr;
-import static ghidra.feature.vt.db.VTTestUtils.createMatchSetWithOneDataMatch;
-import static org.junit.Assert.assertEquals;
+import static ghidra.feature.vt.db.VTTestUtils.*;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -157,7 +156,7 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private Data setData(DataType dataType, int dtLength, Address address, Program program)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 
 		Listing listing = program.getListing();
 		Data data = null;

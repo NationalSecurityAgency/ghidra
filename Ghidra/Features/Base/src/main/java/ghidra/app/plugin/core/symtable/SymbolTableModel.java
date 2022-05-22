@@ -60,6 +60,8 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 	private ReferenceManager refMgr;
 	private Symbol lastSymbol;
 	private SymbolFilter filter;
+
+	// TODO this can be removed after GP-2030 is finished
 	private TableAddRemoveStrategy<Symbol> deletedDbObjectAddRemoveStrategy =
 		new SymbolTableAddRemoveStrategy();
 

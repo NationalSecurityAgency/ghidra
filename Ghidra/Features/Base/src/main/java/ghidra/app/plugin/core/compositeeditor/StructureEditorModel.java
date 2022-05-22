@@ -1091,7 +1091,7 @@ class StructureEditorModel extends CompEditorModel {
 	}
 
 	public void createInternalStructure(TaskMonitor monitor)
-			throws InvalidDataTypeException, DataTypeConflictException, UsrException {
+			throws InvalidDataTypeException, UsrException {
 
 		if (selection.getNumRanges() != 1) {
 			throw new UsrException("Can only create structure on a contiguous selection.");

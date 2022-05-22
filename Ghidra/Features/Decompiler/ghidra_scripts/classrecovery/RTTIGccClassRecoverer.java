@@ -112,6 +112,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			Msg.debug(this, "Could not recover gcc rtti classes");
 			return null;
 		}
+		
+		if (recoveredClasses.isEmpty()) {
+			return recoveredClasses;
+		}
 
 		createCalledFunctionMap(recoveredClasses);
 
@@ -781,6 +785,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			return false;
 		}
 
+		// This has to be "contains" to get all types of class structures some begin and end
+		// with other things
 		Structure structure = (Structure) baseDataType;
 		if (structure.getName().contains(CLASS_TYPE_INFO_STRUCTURE)) {
 			return true;
@@ -1403,9 +1409,17 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		if (typeinfoAddresses.isEmpty()) {
 			return typeinfoAddresses;
 		}
+		
+		List<Address> typeinfoAddressesToProcess = new ArrayList<Address>();
 
 		for (Address typeinfoAddress : typeinfoAddresses) {
 
+			monitor.checkCanceled();
+
+			if (hasExistingTypeinfoStructure(typeinfoAddress)) {
+				continue;
+			}
+			
 			Address specialTypeinfoRef =
 				extendedFlatAPI.getSingleReferencedAddress(typeinfoAddress);
 			if (specialTypeinfoRef == null) {
@@ -1457,6 +1471,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				throw new Exception(
 					"ERROR: Could not apply typeinfo structure to " + typeinfoAddress);
 			}
+			
+			typeinfoAddressesToProcess.add(typeinfoAddress);
 
 			// check for existing symbol and if none, demangle the name and apply
 			Symbol typeinfoSymbol = api.getSymbolAt(typeinfoAddress);
@@ -1474,7 +1490,40 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			}
 
 		}
-		return typeinfoAddresses;
+		return typeinfoAddressesToProcess;
+	}
+	
+	/**
+	 * Method to determine if the given address has one of the ClassTypeinfoDataType types applied
+	 * @param address the given address
+	 * @return true if already has a class data type applied or false if not
+	 */
+	private boolean hasExistingTypeinfoStructure(Address address) {
+
+
+		Data dataAt = api.getDataAt(address);
+
+		if (dataAt == null) {
+			return false;
+		}
+
+		DataType dataType = dataAt.getDataType();
+
+		if (!(dataType instanceof Structure)) {
+			return false;
+		}
+
+		// This has to be "contains" to get all types of class structures some begin and end
+		// with other things
+		if (!dataType.getName().contains(CLASS_TYPE_INFO_STRUCTURE)) {
+			return false;
+		}
+
+		if (!dataType.getPathName().startsWith(DTM_CLASS_DATA_FOLDER_PATH)) {
+			return false;
+		}
+		return true;
+
 	}
 
 	private Data applyTypeinfoStructure(Structure typeInfoStructure, Address typeinfoAddress)

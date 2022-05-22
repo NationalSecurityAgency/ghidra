@@ -30,7 +30,8 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Undefined;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -131,7 +132,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 			List<QueryResult> results =
 				QueryOpinionService.query(getName(), header.getMachineName(), secondary);
 			for (QueryResult result : results) {
-				loadSpecs.add(new LoadSpec(this, header.getImageBase(true), result));
+				loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
 			}
 			if (loadSpecs.isEmpty()) {
 				loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));
@@ -384,7 +385,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private Data createUndefined(Listing listing, Memory memory, Address addr, int size)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 		MemoryBlock block = memory.getBlock(addr);
 		if (block == null || !block.isInitialized()) {
 			return null;

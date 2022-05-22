@@ -509,8 +509,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 	}
 
-	protected void createArray(int numElements)
-			throws InvalidDataTypeException, DataTypeConflictException, UsrException {
+	protected void createArray(int numElements) throws InvalidDataTypeException, UsrException {
 		if (selection.getNumRanges() != 1) {
 			throw new UsrException("Can only create arrays on a contiguous selection.");
 		}

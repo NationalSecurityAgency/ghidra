@@ -15,12 +15,14 @@
  */
 package ghidra.macosx.analyzers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.MachoLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.DataTypeConflictException;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
@@ -28,9 +30,6 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MachoConstructorDestructorAnalyzer extends AbstractAnalyzer {
 	private static final String NAME = "Mach-O Constructor/Destructor";
@@ -65,9 +64,6 @@ public class MachoConstructorDestructorAnalyzer extends AbstractAnalyzer {
 					currentAddress = currentAddress.add(data.getLength());
 				}
 				catch (CodeUnitInsertionException e) {
-					break;
-				}
-				catch (DataTypeConflictException e) {
 					break;
 				}
 			}

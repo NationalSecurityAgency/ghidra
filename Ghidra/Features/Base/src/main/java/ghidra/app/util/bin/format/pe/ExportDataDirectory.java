@@ -146,7 +146,7 @@ public class ExportDataDirectory extends DataDirectory {
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
 			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
-			DataTypeConflictException, IOException {
+			IOException {
 		monitor.setMessage("[" + program.getName() + "]: exports...");
 
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);

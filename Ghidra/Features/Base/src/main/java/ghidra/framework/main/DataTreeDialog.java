@@ -277,6 +277,11 @@ public class DataTreeDialog extends DialogComponentProvider
 		pendingNameText = name;
 	}
 
+	/**
+	 * Sets a domain folder as the initially selected folder when the dialog is first shown.
+	 *  
+	 * @param folder {@link DomainFolder} to select when showing the dialog
+	 */
 	public void setSelectedFolder(DomainFolder folder) {
 		pendingDomainFolder = folder;
 	}
