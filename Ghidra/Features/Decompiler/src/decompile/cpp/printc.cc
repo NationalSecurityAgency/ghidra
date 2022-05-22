@@ -1191,7 +1191,7 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
   else if ((mods & force_hex)!=0) {
     displayFormat = Symbol::force_hex;
   }
-  else if ((val<=10)||((mods & force_dec))) {
+  else if ((val<=9)||((mods & force_dec))) {
     displayFormat = Symbol::force_dec;
   }
   else {			// Otherwise decide if dec or hex is more natural
