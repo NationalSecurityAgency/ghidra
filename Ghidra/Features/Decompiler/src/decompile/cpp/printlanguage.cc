@@ -724,7 +724,7 @@ int4 PrintLanguage::mostNaturalBase(uintb val)
   case 0:
     return 16;
   case 1:
-    if ((tmp>1)||(setdig==9)) return 16;
+    if ((tmp>=1)||(setdig==9)) return 16;
     break;
   case 2:
     if (tmp>10) return 16;
