@@ -162,6 +162,7 @@ public class DataTypeNode extends DataTypeTreeNode {
 	/**
 	 * Returns true if this dataType node uses and editor that is different than Java's default
 	 * editor.
+	 * 
 	 * @return true if this dataType node has a custom editor.
 	 */
 	public boolean hasCustomEditor() {
@@ -194,7 +195,7 @@ public class DataTypeNode extends DataTypeTreeNode {
 	@Override
 	public void setNodeCut(boolean isCut) {
 		this.isCut = isCut;
-		fireNodeChanged(getParent(), this);
+		fireNodeChanged();
 	}
 
 	@Override
@@ -234,12 +235,12 @@ public class DataTypeNode extends DataTypeTreeNode {
 	}
 
 	public void dataTypeStatusChanged() {
-		fireNodeChanged(getParent(), this);
+		fireNodeChanged();
 	}
 
 	public void dataTypeChanged() {
 		toolTipText = null;
-		fireNodeChanged(getParent(), this);
+		fireNodeChanged();
 		GTree tree = getTree();
 		if (tree != null) {
 			tree.repaint(); // need to repaint in case related datatypes changes mod status.
@@ -253,7 +254,7 @@ public class DataTypeNode extends DataTypeTreeNode {
 		String currentDisplayText = getCurrentDisplayText();
 		if (!displayText.equals(currentDisplayText)) {
 			displayText = currentDisplayText;
-			fireNodeChanged(getParent(), this);
+			fireNodeChanged();
 		}
 		return displayText;
 	}

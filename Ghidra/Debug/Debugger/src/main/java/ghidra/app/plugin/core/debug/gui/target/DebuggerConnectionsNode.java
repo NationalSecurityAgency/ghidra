@@ -46,7 +46,7 @@ public class DebuggerConnectionsNode extends AbstractDebuggerConnectionsNode
 
 		@Override
 		public void elementModified(DebuggerObjectModel element) {
-			fireNodeChanged(DebuggerConnectionsNode.this, models.get(element));
+			fireNodeChanged();
 		}
 
 		@Override
