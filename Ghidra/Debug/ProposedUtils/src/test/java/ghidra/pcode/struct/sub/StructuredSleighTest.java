@@ -65,7 +65,7 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 			}
 		};
 		SleighPcodeUseropDefinition<Object> myUserop = ss.generate().get("my_userop");
-		assertEquals(List.of("__op_output = (param_1 * (0x2:4));\n"), myUserop.getLines());
+		assertEquals(List.of("__op_output = (param_1 * 0x2:4);\n"), myUserop.getLines());
 	}
 
 	@Test(expected = SleighException.class)
@@ -90,7 +90,7 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 			}
 		};
 		SleighPcodeUseropDefinition<Object> myUserop = ss.generate().get("my_userop");
-		assertEquals(List.of("__op_output = (r0 * (0x2:4));\n"), myUserop.getLines());
+		assertEquals(List.of("__op_output = (r0 * 0x2:4);\n"), myUserop.getLines());
 	}
 
 	@Test
@@ -105,7 +105,7 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 		SleighPcodeUseropDefinition<Object> myUserop = ss.generate().get("my_userop");
 		assertEquals(List.of("" +
 			"local my_var:4;\n" +
-			"__op_output = (my_var * (0x2:4));\n"),
+			"__op_output = (my_var * 0x2:4);\n"),
 			myUserop.getLines());
 		// Verify the source compiles
 		myUserop.programFor(new Varnode(r0.getAddress(), r0.getNumBytes()), List.of(),
@@ -138,11 +138,11 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 		};
 		SleighPcodeUseropDefinition<Object> myUserop = ss.generate().get("my_userop");
 		assertEquals(List.of("" +
-			"if (0x1:1) goto <L1>;\n" +
-			"tmp = (0x2:4);\n" +
+			"if 0x1:1 goto <L1>;\n" +
+			"tmp = 0x2:4;\n" +
 			"goto <L2>;\n" +
 			"<L1>\n" +
-			"tmp = (0x1:4);\n" +
+			"tmp = 0x1:4;\n" +
 			"<L2>\n"),
 			myUserop.getLines());
 	}
@@ -159,8 +159,8 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 		};
 		SleighPcodeUseropDefinition<Object> myUserop = ss.generate().get("my_userop");
 		assertEquals(List.of("" +
-			"if (!(0x1:1)) goto <L1>;\n" +
-			"tmp = (0x1:4);\n" +
+			"if (!0x1:1) goto <L1>;\n" +
+			"tmp = 0x1:4;\n" +
 			"<L1>\n"),
 			myUserop.getLines());
 	}
@@ -181,11 +181,11 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 		SleighPcodeUseropDefinition<Object> myUserop = ss.generate().get("my_userop");
 		assertEquals(List.of("" + "local i:4;\n" +
 			"local sum:4;\n" +
-			"i = (0x0:4);\n" +
+			"i = 0x0:4;\n" +
 			"<L2>\n" +
 			"if (i >= n) goto <L1>;\n" +
 			"sum = (sum + i);\n" +
-			"i = (i + (0x1:4));\n" +
+			"i = (i + 0x1:4);\n" +
 			"goto <L2>;\n" +
 			"<L1>\n" +
 			"__op_output = sum;\n"),
@@ -212,12 +212,12 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 		assertEquals(List.of("" +
 			"local i:4;\n" +
 			"local sum:4;\n" +
-			"i = (0x0:4);\n" +
+			"i = 0x0:4;\n" +
 			"<L2>\n" +
 			"if (i >= n) goto <L1>;\n" +
 			"sum = (sum + i);\n" +
-			"if (sum >= (0x3e8:4)) goto <L1>;\n" +
-			"i = (i + (0x1:4));\n" +
+			"if (sum >= 0x3e8:4) goto <L1>;\n" +
+			"i = (i + 0x1:4);\n" +
 			"goto <L2>;\n" +
 			"<L1>\n" +
 			"__op_output = sum;\n"),
@@ -233,7 +233,7 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 			}
 		};
 		SleighPcodeUseropDefinition<Object> myUserop = ss.generate().get("my_userop");
-		assertEquals(List.of("return (* (0xdeadbeef:8));\n"), myUserop.getLines());
+		assertEquals(List.of("return (* 0xdeadbeef:8);\n"), myUserop.getLines());
 		// TODO: Test that the generated code compiles in a slaspec file.
 		// It's rejected for injects because "return" is not valid there.
 	}
