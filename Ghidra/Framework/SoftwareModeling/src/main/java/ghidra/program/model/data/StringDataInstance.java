@@ -353,8 +353,7 @@ public class StringDataInstance {
 		return StringLayoutEnum.NULL_TERMINATED_BOUNDED;
 	}
 
-	static String getCharsetNameFromDataTypeOrSettings(DataType dataType,
-			Settings settings) {
+	static String getCharsetNameFromDataTypeOrSettings(DataType dataType, Settings settings) {
 		if (dataType instanceof BitFieldDataType) {
 			dataType = ((BitFieldDataType) dataType).getBaseDataType();
 		}
@@ -639,9 +638,9 @@ public class StringDataInstance {
 		}
 
 		byte[] unpaddedBytes = new byte[(paddedBytes.length / paddedCharSize) * charSize];
-		for (int srcOffset = buf.isBigEndian() ? paddedCharSize - charSize : 0, destOffset =
-			0; srcOffset < paddedBytes.length; srcOffset += paddedCharSize, destOffset +=
-				charSize) {
+		for (int srcOffset = buf.isBigEndian() ? paddedCharSize - charSize : 0,
+				destOffset = 0; srcOffset < paddedBytes.length; srcOffset +=
+					paddedCharSize, destOffset += charSize) {
 			System.arraycopy(paddedBytes, srcOffset, unpaddedBytes, destOffset, charSize);
 		}
 
@@ -961,8 +960,7 @@ public class StringDataInstance {
 			return false;
 		}
 		long origCodePointValue = DataConverter.getInstance(buf.isBigEndian())
-				.getValue(stringBytes,
-					byteOffset, charSize);
+				.getValue(stringBytes, byteOffset, charSize);
 		return origCodePointValue == StringUtilities.UNICODE_REPLACEMENT;
 	}
 
@@ -1023,12 +1021,12 @@ public class StringDataInstance {
 	 * Returns a new {@link StringDataInstance} that points to the string characters that start at
 	 * {@code byteOffset} from the start of this instance.
 	 * <p>
-	 * If the requested offset is not valid, the base string instance (itself) will be returned
-	 * instead of a new instance.
+	 * If the requested offset is not valid, StringDataInstance.NULL_INSTANCE is returned.
 	 * <p>
 	 * 
 	 * @param byteOffset number of bytes from start of data instance to start new instance.
-	 * @return new StringDataInstance, or <code>this</code> if offset not valid.
+	 * @return new StringDataInstance, or <code>StringDataInstance.NULL_INSTANCE</code> if 
+	 * offset not valid.
 	 */
 	public StringDataInstance getByteOffcut(int byteOffset) {
 		if (isBadCharSize() || isProbe() || !isValidOffcutOffset(byteOffset)) {
