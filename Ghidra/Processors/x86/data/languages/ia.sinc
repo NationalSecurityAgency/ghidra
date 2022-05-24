@@ -893,6 +893,9 @@ Reg32_m8:     m8        is m8                                { local tmp:4 = zex
 Reg32_m16:    Rmr32     is mod=3 & Rmr32                     { export Rmr32; }
 Reg32_m16:    m16       is m16                               { local tmp:4 = zext(m16); export tmp; }
 
+mmxreg2_m64:  mmxreg2   is mod=3 & mmxreg2                   { export mmxreg2; }
+mmxreg2_m64:  m64       is m64                               { export m64; }
+
 XmmReg2_m8:   XmmReg2   is mod=3 & XmmReg2                   { export XmmReg2; }
 XmmReg2_m8:   m8        is m8                                { local tmp:16 = zext(m8); export tmp; }
 XmmReg2_m16:  XmmReg2   is mod=3 & XmmReg2                   { export XmmReg2; }
