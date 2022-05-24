@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
   set<string> dataTestNames;
   string dirname("../datatests");
   string sleighdirname("../../../../../../..");
-  if (argc > 0) {
+  while (argc > 0) {
     string command(argv[0]);
     if (command == "-path") {
       dirname = argv[1];
@@ -109,21 +109,21 @@ int main(int argc, char **argv) {
       argv += 1;
       argc -= 1;
     }
-  }
-  if (argc > 0) {
-    string command(argv[0]);
-    if (command == "unittests") {
+    else if (command == "unittests") {
       runUnitTests = true;
       runDataTests = false;	// Run only unit tests
       unitTestNames.insert(argv + 1,argv + argc);
+      break;
     }
     else if (command == "datatests") {
       runUnitTests = false;	// Run only data-tests
       runDataTests = true;
       dataTestNames.insert(argv + 1,argv + argc);
+      break;
     }
     else {
-      cout << "USAGE: ghidra_test [-path <datatestdir>] [[unittests|datatests] [testname1 testname2 ...]]" << endl;
+      cout << "USAGE: ghidra_test [-usesleighenv] [-sleighpath <sleighdir>] [-path <datatestdir>] [[unittests|datatests] [testname1 testname2 ...]]" << endl;
+      return -1;
     }
   }
   startDecompilerLibrary(sleighdirname.c_str());
