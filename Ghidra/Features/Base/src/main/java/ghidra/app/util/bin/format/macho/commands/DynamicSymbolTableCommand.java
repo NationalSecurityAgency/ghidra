@@ -34,8 +34,6 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Represents a dysymtab_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
  */
 public class DynamicSymbolTableCommand extends LoadCommand {
 
@@ -66,7 +64,7 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 	private List<RelocationInfo> localRelocations = new ArrayList<RelocationInfo>();
 
 	DynamicSymbolTableCommand(BinaryReader reader, MachHeader header) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 
 		ilocalsym = reader.readNextInt();
 		nlocalsym = reader.readNextInt();

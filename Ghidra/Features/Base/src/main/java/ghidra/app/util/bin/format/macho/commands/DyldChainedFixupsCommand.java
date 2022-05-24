@@ -30,7 +30,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a LC_DYLD_CHAINED_FIXUPS command.
+ * Represents a dyld_chained_fixups_command structure
  * 
  * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
  */

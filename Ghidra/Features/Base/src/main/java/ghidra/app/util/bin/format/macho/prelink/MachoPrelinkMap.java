@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.prelink;
 
 import java.util.*;
 
-public class PrelinkMap {
+public class MachoPrelinkMap {
 
 	private Map<String, Object> map = new HashMap<String, Object>();
 
@@ -30,12 +30,12 @@ public class PrelinkMap {
 	public void put( String key, boolean value ) {
 		map.put( key, value );
 	}
-	public void put( String key, PrelinkMap value ) {
+	public void put( String key, MachoPrelinkMap value ) {
 		map.put( key, value );
 	}
 
 	public String getPrelinkBundlePath() {
-		Object value = map.get( PrelinkConstants.kPrelinkBundlePathKey );
+		Object value = map.get( MachoPrelinkConstants.kPrelinkBundlePathKey );
 		if ( value instanceof String ) {
 			return (String)value;
 		}
@@ -43,7 +43,7 @@ public class PrelinkMap {
 	}
 
 	public String getPrelinkUUID() {
-		Object value = map.get( PrelinkConstants.kPrelinkInterfaceUUIDKey );
+		Object value = map.get( MachoPrelinkConstants.kPrelinkInterfaceUUIDKey );
 		if ( value instanceof String ) {
 			return (String)value;
 		}
@@ -51,7 +51,7 @@ public class PrelinkMap {
 	}
 
 	public long getPrelinkKmodInfo() {
-		Object value = map.get( PrelinkConstants.kPrelinkKmodInfoKey );
+		Object value = map.get( MachoPrelinkConstants.kPrelinkKmodInfoKey );
 		if ( value instanceof Long ) {
 			return (Long)value;
 		}
@@ -62,7 +62,7 @@ public class PrelinkMap {
 	}
 
 	public long getPrelinkExecutable() {
-		Object value = map.get( PrelinkConstants.kPrelinkExecutableKey );
+		Object value = map.get( MachoPrelinkConstants.kPrelinkExecutableKey );
 		if ( value instanceof Long ) {
 			return (Long)value;
 		}
@@ -73,7 +73,7 @@ public class PrelinkMap {
 	}
 
 	public long getPrelinkExecutableSize() {
-		Object value = map.get( PrelinkConstants.kPrelinkExecutableSizeKey );
+		Object value = map.get( MachoPrelinkConstants.kPrelinkExecutableSizeKey );
 		if ( value instanceof Long ) {
 			return (Long)value;
 		}
@@ -84,7 +84,7 @@ public class PrelinkMap {
 	}
 
 	public long getPrelinkExecutableLoadAddr() {
-		Object value = map.get( PrelinkConstants.kPrelinkExecutableLoadKey );
+		Object value = map.get( MachoPrelinkConstants.kPrelinkExecutableLoadKey );
 		if ( value instanceof Long ) {
 			return (Long)value;
 		}
@@ -95,7 +95,7 @@ public class PrelinkMap {
 	}
 
 	public long getPrelinkModuleIndex() {
-		Object value = map.get(PrelinkConstants.kPrelinkModuleIndexKey);
+		Object value = map.get(MachoPrelinkConstants.kPrelinkModuleIndexKey);
 		if (value instanceof Long) {
 			return (Long) value;
 		}

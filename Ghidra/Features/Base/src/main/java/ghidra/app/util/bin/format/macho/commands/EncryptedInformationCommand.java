@@ -29,9 +29,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents an encryption_info_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents an encryption_info_command structure
  */
 public class EncryptedInformationCommand extends LoadCommand {
 	private int cryptoff;
@@ -41,7 +39,7 @@ public class EncryptedInformationCommand extends LoadCommand {
 	private boolean is32bit;
 
 	EncryptedInformationCommand(BinaryReader reader, boolean is32bit) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 		this.is32bit = is32bit;
 
 		cryptoff = reader.readNextInt();

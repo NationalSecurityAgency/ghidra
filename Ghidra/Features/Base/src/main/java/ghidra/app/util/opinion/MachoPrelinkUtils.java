@@ -76,12 +76,12 @@ public class MachoPrelinkUtils {
 	 * 
 	 * @param provider The provider to parse.
 	 * @param monitor A monitor.
-	 * @return A list of discovered {@link PrelinkMap}s.  An empty list indicates that the provider
+	 * @return A list of discovered {@link MachoPrelinkMap}s.  An empty list indicates that the provider
 	 *   did not represent valid Mach-O PRELINK binary.
 	 * @throws IOException if there was an IO-related issue.
 	 * @throws JDOMException if there was a issue parsing the PRELINK XML.
 	 */
-	public static List<PrelinkMap> parsePrelinkXml(ByteProvider provider, TaskMonitor monitor)
+	public static List<MachoPrelinkMap> parsePrelinkXml(ByteProvider provider, TaskMonitor monitor)
 			throws IOException, JDOMException {
 
 		try {
@@ -89,36 +89,10 @@ public class MachoPrelinkUtils {
 			mainHeader.parse(); // make sure first Mach-O header is valid....
 
 			monitor.setMessage("Parsing PRELINK XML...");
-			return new PrelinkParser(mainHeader, provider).parse(monitor);
+			return new MachoPrelinkParser(mainHeader, provider).parse(monitor);
 		}
 		catch (NoPreLinkSectionException | MachException e) {
 			return Collections.emptyList();
-		}
-	}
-
-	/**
-	 * Check if the Macho has a DYLD_CHAINED_FIXUPS_COMMAND
-	 * 
-	 * @param provider The provider to parse.
-	 * @param monitor A monitor.
-	 * @return A list of discovered {@link PrelinkMap}s.  An empty list indicates that the provider
-	 *   did not represent valid Mach-O PRELINK binary.
-	 * @throws IOException if there was an IO-related issue.
-	 * @throws JDOMException if there was a issue parsing the PRELINK XML.
-	 */
-	public static boolean hasChainedLoadCommand(ByteProvider provider, TaskMonitor monitor)
-			throws IOException, JDOMException {
-
-		try {
-			MachHeader mainHeader = new MachHeader(provider);
-			mainHeader.parse(); // make sure first Mach-O header is valid....
-
-			DyldChainedFixupsCommand cmd =
-				mainHeader.getFirstLoadCommand(DyldChainedFixupsCommand.class);
-			return cmd != null;
-		}
-		catch (MachException e) {
-			return false;
 		}
 	}
 
@@ -166,7 +140,7 @@ public class MachoPrelinkUtils {
 	 * Forms a bidirectional mapping of PRELINK XML to Mach-O header offset in the given provider.
 	 * 
 	 * @param provider The PRELINK Mach-O provider.
-	 * @param prelinkList A list of {@link PrelinkMap}s.
+	 * @param prelinkList A list of {@link MachoPrelinkMap}s.
 	 * @param machoHeaderOffsets A list of provider offsets where PRELINK Mach-O headers start (not 
 	 *   including the "System" Mach-O at offset 0).
 	 * @param monitor A monitor
@@ -174,14 +148,14 @@ public class MachoPrelinkUtils {
 	 * @throws MachException If there was a problem parsing a Mach-O header.
 	 * @throws IOException If there was an IO-related issue mapping PRELINK XML to Mach-O headers.
 	 */
-	public static BidiMap<PrelinkMap, Long> matchPrelinkToMachoHeaderOffsets(ByteProvider provider,
-			List<PrelinkMap> prelinkList, List<Long> machoHeaderOffsets, TaskMonitor monitor)
+	public static BidiMap<MachoPrelinkMap, Long> matchPrelinkToMachoHeaderOffsets(ByteProvider provider,
+			List<MachoPrelinkMap> prelinkList, List<Long> machoHeaderOffsets, TaskMonitor monitor)
 			throws MachException, IOException {
 
 		monitor.setMessage("Matching PRELINK to Mach-O headers...");
 		monitor.initialize(prelinkList.size());
 
-		BidiMap<PrelinkMap, Long> map = new DualHashBidiMap<>();
+		BidiMap<MachoPrelinkMap, Long> map = new DualHashBidiMap<>();
 
 		// For pre-iOS 12, we can use the PrelinkExecutableLoadAddr field to match PrelinkMap
 		// entries to Mach-O offsets.  For iOS 12, PrelinkExecutableLoadAddr is gone so we use
@@ -199,7 +173,7 @@ public class MachoPrelinkUtils {
 						maxModuleIndex + 1, machoHeaderOffsets.size()));
 			}
 
-			for (PrelinkMap info : prelinkList) {
+			for (MachoPrelinkMap info : prelinkList) {
 				if (monitor.isCancelled()) {
 					break;
 				}
@@ -222,7 +196,7 @@ public class MachoPrelinkUtils {
 			MachHeader machoHeader = new MachHeader(provider, 0, true);
 			machoHeader.parse();
 			long prelinkStart = MachoPrelinkUtils.getPrelinkStartAddr(machoHeader);
-			for (PrelinkMap info : prelinkList) {
+			for (MachoPrelinkMap info : prelinkList) {
 				if (monitor.isCancelled()) {
 					break;
 				}

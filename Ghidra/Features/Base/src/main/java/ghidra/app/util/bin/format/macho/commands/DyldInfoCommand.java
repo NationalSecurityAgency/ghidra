@@ -29,9 +29,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a dyld_info_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a dyld_info_command structure
  */
 public class DyldInfoCommand extends LoadCommand {
 	private int rebase_off;
@@ -46,7 +44,7 @@ public class DyldInfoCommand extends LoadCommand {
 	private int export_size;
 
 	DyldInfoCommand(BinaryReader reader) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 
 		rebase_off = reader.readNextInt();
 		rebase_size = reader.readNextInt();

@@ -48,12 +48,12 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	/** Default value for loader option to create memory blocks for DYLIB sections */
 	static final boolean CREATE_DYLIB_SECTIONS_OPTION_DEFAULT = false;
 
-	/** Loader option to add relocation entries for each fixed chain pointer */
-	static final String ADD_RELOCATION_ENTRIES_OPTION_NAME =
-		"Add relocation entries for fixed chain pointers";
+	/** Loader option to add relocation entries for chained fixups */
+	static final String ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME =
+		"Add relocation entries for chained fixups";
 
-	/** Default value for loader option add relocation entries */
-	static final boolean ADD_RELOCATION_ENTRIES_OPTION_DEFAULT = false;
+	/** Default value for loader option add chained fixups relocation entries */
+	static final boolean ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT = false;
 	
 	/** Loader option to combine split DYLD Cache files (.1, .2, .symbol, etc) into one program */
 	static final String COMBINE_SPLIT_FILES_OPTION_NAME =
@@ -98,7 +98,7 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 			DyldCacheProgramBuilder.buildProgram(program, provider,
 				MemoryBlockUtils.createFileBytes(program, provider, monitor),
 				shouldProcessSymbols(options), shouldCreateDylibSections(options),
-				shouldAddRelocationEntries(options), shouldCombineSplitFiles(options), log,
+				shouldAddChainedFixupsRelocations(options), shouldCombineSplitFiles(options), log,
 				monitor);
 		}
 		catch (CancelledException e) {
@@ -120,9 +120,9 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 			list.add(
 				new Option(CREATE_DYLIB_SECTIONS_OPTION_NAME, CREATE_DYLIB_SECTIONS_OPTION_DEFAULT,
 					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-createDylibSections"));
-			list.add(new Option(ADD_RELOCATION_ENTRIES_OPTION_NAME,
-				ADD_RELOCATION_ENTRIES_OPTION_DEFAULT, Boolean.class,
-				Loader.COMMAND_LINE_ARG_PREFIX + "-addRelocationEntries"));
+			list.add(new Option(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME,
+				ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT, Boolean.class,
+				Loader.COMMAND_LINE_ARG_PREFIX + "-addChainedFixupsRelocations"));
 			list.add(new Option(COMBINE_SPLIT_FILES_OPTION_NAME, COMBINE_SPLIT_FILES_OPTION_DEFAULT,
 				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-combineSplitFiles"));
 		}
@@ -139,9 +139,9 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 			CREATE_DYLIB_SECTIONS_OPTION_DEFAULT);
 	}
 
-	private boolean shouldAddRelocationEntries(List<Option> options) {
-		return OptionUtils.getOption(ADD_RELOCATION_ENTRIES_OPTION_NAME, options,
-			ADD_RELOCATION_ENTRIES_OPTION_DEFAULT);
+	private boolean shouldAddChainedFixupsRelocations(List<Option> options) {
+		return OptionUtils.getOption(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME, options,
+			ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT);
 	}
 
 	private boolean shouldCombineSplitFiles(List<Option> options) {

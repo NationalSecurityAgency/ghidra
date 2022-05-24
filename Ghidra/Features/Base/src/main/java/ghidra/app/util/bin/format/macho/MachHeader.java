@@ -27,7 +27,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a mach_header structure.
  * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
  */
 public class MachHeader implements StructConverter {
 	private int magic;
@@ -142,7 +142,7 @@ public class MachHeader implements StructConverter {
 		long currentIndex = _commandIndex;
 		for (int i = 0; i < nCmds; ++i) {
 			_reader.setPointerIndex(currentIndex);
-			LoadCommand lc = LoadCommandTypes.getLoadCommand(_reader, this);
+			LoadCommand lc = LoadCommandFactory.getLoadCommand(_reader, this);
 			_commands.add(lc);
 			currentIndex += lc.getCommandSize();
 		}
