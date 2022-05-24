@@ -25,7 +25,6 @@ import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
 import ghidra.framework.plugintool.PluginEvent;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Swing;
 
@@ -127,13 +126,4 @@ public interface DebuggerModelServiceInternal extends DebuggerModelService {
 			fireModelActivatedEvent(model);
 		}
 	}
-
-	/**
-	 * Implement {@link #recordTargetPromptOffers(TargetObject)} using the given plugin tool
-	 * 
-	 * @param t the plugin tool (front-end or tool containing proxy)
-	 * @param target the target to record
-	 * @return a future which completes with the resulting recorder, unless cancelled
-	 */
-	TraceRecorder doRecordTargetPromptOffers(PluginTool t, TargetObject target);
 }
