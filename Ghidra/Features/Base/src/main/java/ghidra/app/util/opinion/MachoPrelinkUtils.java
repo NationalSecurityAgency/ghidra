@@ -22,8 +22,7 @@ import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.jdom.JDOMException;
 
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.ByteProviderWrapper;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.commands.*;
@@ -35,6 +34,42 @@ import ghidra.util.task.TaskMonitor;
  * Utilities methods for working with Mach-O PRELINK binaries.
  */
 public class MachoPrelinkUtils {
+
+	/**
+	 * Check to see if the given {@link ByteProvider} is a Mach-O PRELINK binary
+	 * 
+	 * @param provider The {@link ByteProvider} to check
+	 * @param monitor A monitor
+	 * @return True if the given {@link ByteProvider} is a Mach-O PRELINK binary; otherwise, false
+	 */
+	public static boolean isMachoPrelink(ByteProvider provider, TaskMonitor monitor) {
+		try {
+			MachHeader header = new MachHeader(provider);
+			BinaryReader reader = new BinaryReader(provider, header.isLittleEndian());
+			reader.setPointerIndex(header.getSize());
+
+			// Doing a full header parse is too slow...we really just need to see if a segment
+			// exists that starts with __PRELINK.  Parse the minimal amount to do that check.
+			for (int i = 0; i < header.getNumberOfCommands(); i++) {
+				int type = reader.peekNextInt();
+				if (type == LoadCommandTypes.LC_SEGMENT || type == LoadCommandTypes.LC_SEGMENT_64) {
+					SegmentCommand segment = new SegmentCommand(reader, header.is32bit());
+					if (segment.getSegmentName().startsWith("__PRELINK")) {
+						return true;
+					}
+				}
+				else {
+					type = reader.readNextInt();
+					int size = reader.readNextInt();
+					reader.setPointerIndex(reader.getPointerIndex() + size - 8);
+				}
+			}
+		}
+		catch (MachException | IOException e) {
+			// Assume it's not a Mach-O PRELINK...fall through
+		}
+		return false;
+	}
 
 	/**
 	 * Parses the provider looking for PRELINK XML.
