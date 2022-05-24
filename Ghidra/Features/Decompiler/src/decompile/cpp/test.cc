@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 #include "test.hh"
+
+#include <algorithm>
+
 #include "libdecomp.hh"
 
 vector<UnitTest *> UnitTest::tests;
@@ -21,7 +24,8 @@ vector<UnitTest *> UnitTest::tests;
 /// Run all the tests unless a non-empty set of names is passed in.
 /// In which case, only the named tests in the set are run.
 /// \param testNames is the set of names
-void UnitTest::run(set<string> &testNames)
+/// \return number of failed tests
+int UnitTest::run(set<string> &testNames)
 
 {
   int total = 0;
@@ -42,6 +46,7 @@ void UnitTest::run(set<string> &testNames)
   }
   std::cerr << "==============================" << std::endl;
   std::cerr << passed << "/" << total << " tests passed." << std::endl;
+  return total - passed;
 }
 
 /// Create list of the absolute path of all tests to be run
@@ -73,6 +78,24 @@ void gatherDataTests(const string &dirname,set<string> &testNames,vector<string>
       testFiles.push_back(allTestFiles[i]);
     }
   }
+}
+
+/// \brief This function performs a saturating add on two numbers where the
+/// result is to be used as an exit code for a CLI application.
+///
+/// \param current The current return code
+/// \param add A number to add to the current return code
+/// \return A number that can be used as an exit code up to 255.
+int add_exit_code(int current, int add) {
+  const int CLAMP = 255;
+  int ret = current + add;
+  if (current < 0 ||  	// Sanity checks
+      current > CLAMP ||
+      ret < current ||	// Can only happen due to overflow
+      ret > CLAMP) {  	// Check clamp value
+    ret = CLAMP;	// Set to max exit code
+  }
+  return ret;
 }
 
 int main(int argc, char **argv) {
@@ -127,12 +150,21 @@ int main(int argc, char **argv) {
     }
   }
   startDecompilerLibrary(sleighdirname.c_str());
-  if (runUnitTests)
-    UnitTest::run(unitTestNames);
+
+  // Keep track of failed tests as return code to indicate failures, clamped at
+  // max exit code value in add_exit_code
+  int failedTests = 0;
+  if (runUnitTests) {
+    int errors = UnitTest::run(unitTestNames);
+    failedTests = add_exit_code(failedTests, errors);
+  }
   if (runDataTests) {
     vector<string> testFiles;
     gatherDataTests(dirname,dataTestNames,testFiles);
     cout << endl << endl;
-    FunctionTestCollection::runTestFiles(testFiles,cout);
+    int errors = FunctionTestCollection::runTestFiles(testFiles,cout);
+    failedTests = add_exit_code(failedTests, errors);
   }
+
+  return failedTests;
 }

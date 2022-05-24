@@ -91,7 +91,7 @@ public:
   void restoreXml(DocumentStorage &store,const Element *el);	///< Load tests from a \<decompilertest> tag.
   void restoreXmlOldForm(DocumentStorage &store,const Element *el);	///< Load tests from \<binaryimage> tag.
   void runTests(list<string> &lateStream);	///< Run the script and perform the tests
-  static void runTestFiles(const vector<string> &testFiles,ostream &s);	///< Run tests for each listed file
+  static int runTestFiles(const vector<string> &testFiles,ostream &s);	///< Run tests for each listed file
 };
 
 #endif
