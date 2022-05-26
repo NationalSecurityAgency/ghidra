@@ -99,7 +99,7 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 		FieldElement[] aStrings = new FieldElement[valuesThisLine];
 		for (int i = 0; i < valuesThisLine; i++) {
 			Data child = parent.getComponent(index++);
-			String value = getDisplayValue(child, i != valuesThisLine - 1);
+			String value = getDisplayValue(child, remaining > valuesThisLine || i != valuesThisLine - 1);
 			AttributedString as = new AttributedString(value, color, getMetrics());
 			aStrings[i] = new TextFieldElement(as, i, 0);
 		}
