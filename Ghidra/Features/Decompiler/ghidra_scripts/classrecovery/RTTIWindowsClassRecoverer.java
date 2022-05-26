@@ -131,14 +131,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			return recoveredClasses;
 		}
 
-		//TODO: decide whether to update to only include possible cds not all functions that
-		// have ref to vftable
-		// if decide to be more restrictive then need to move the method that weeds out inlines and
-		// from the class cd lists
-		createCalledFunctionMap(recoveredClasses);
-
 		// figure out class hierarchies using either RTTI or vftable refs
-
 		monitor.setMessage("Assigning class inheritance and hierarchies");
 		assignClassInheritanceAndHierarchies(recoveredClasses);
 
@@ -1283,11 +1276,16 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private void processConstructorAndDestructors(List<RecoveredClass> recoveredClasses)
 			throws CancelledException, InvalidInputException, DuplicateNameException, Exception {
 
-		// update the global lists and class lists to narrow the cd lists
-		trimConstructorDestructorLists(recoveredClasses);
+		List<Address> allVftables = getAllVftables();
+
+		// update the class lists to narrow the class objects possible cd lists and indeterminate 
+		// lists to remove functions that are also on vfunction lists
+		trimConstructorDestructorLists(recoveredClasses, allVftables);
+
+		determineOperatorDeleteAndNewFunctions(allVftables);
 
 		// find deleting destructors 
-		findDeletingDestructors(recoveredClasses);
+		findDeletingDestructors(recoveredClasses, allVftables);
 
 		// use atexit param list to find more destructors
 		findDestructorsUsingAtexitCalledFunctions(recoveredClasses);

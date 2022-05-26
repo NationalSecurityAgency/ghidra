@@ -117,8 +117,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			return recoveredClasses;
 		}
 
-		createCalledFunctionMap(recoveredClasses);
-
 		createClassHierarchyListAndMapForGcc();
 
 		if (isDwarfLoaded) {
@@ -1848,12 +1846,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 */
 	private void processConstructorAndDestructors()
 			throws CancelledException, InvalidInputException, DuplicateNameException, Exception {
-
-		// find deleting destructors using various mechanisms
-		//	findDeletingDestructors(recoveredClasses);
-
-		// use atexit param list to find more destructors
-		//	findDestructorsUsingAtexitCalledFunctions(recoveredClasses);
 
 		// figure out which are inlined and put on separate list to be processed later
 		separateInlinedConstructorDestructors(recoveredClasses);
