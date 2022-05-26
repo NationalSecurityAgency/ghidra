@@ -13,7 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-# Imports a file with lines in the form "symbolName 0xADDRESS function_or_label" where "f" indicates a function and "l" a label
+# Imports a text file containing symbol definitions, with a maximum of one symbol defined per line. Each symbol definition is in the form of "symbol_name address function_or_label", where "symbol_name" is the name of the symbol, "address" is the address of the symbol in one of the forms listed below, and "function_or_label" is either "f" or "l", with "f" indicating that a function is to be created and "l" indicating that a label is to be created.
+# Address formats are the same as those that can be used with the "Go to address" function. For example:
+# - 1234abcd
+# - 0x1234abcd
+# - ADDRESS_SPACE:1234abcd
+# - ADDRESS_SPACE:0x1234abcd
+# - MEMORY_REGION:1234abcd
+# - MEMORY_REGION:0x1234abcd
+# Omitting the address space or memory region specifier from the address will result in the function or label being created in the default address space.
 # @author unkown; edited by matedealer <git@matedealer.de>
 # @category Data
 #
@@ -29,7 +37,7 @@ for line in file(f.absolutePath):  # note, cannot use open(), since that is in G
     pieces = line.split()
 
     name = pieces[0]
-    address = toAddr(long(pieces[1], 16))
+    address = toAddr(pieces[1])
 
     try:
         function_or_label = pieces[2]
