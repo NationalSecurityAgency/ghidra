@@ -29,15 +29,13 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a uuid_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a uuid_command structure 
  */
 public class UuidCommand extends LoadCommand {
 	private byte[] uuid;
 
 	UuidCommand(BinaryReader reader) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 		uuid = reader.readNextByteArray(16);
 	}
 

@@ -26,11 +26,10 @@ import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.Section;
 import ghidra.app.util.bin.format.macho.commands.SegmentCommand;
 import ghidra.util.NumericUtilities;
-import ghidra.util.SystemUtilities;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.XmlUtilities;
 
-public class PrelinkParser {
+public class MachoPrelinkParser {
 
 	private static final String TAG_DATA = "data";
 	private static final String TAG_FALSE = "false";
@@ -47,12 +46,12 @@ public class PrelinkParser {
 	private MachHeader mainHeader;
 	private ByteProvider provider;
 
-	public PrelinkParser(MachHeader mainHeader, ByteProvider provider) {
+	public MachoPrelinkParser(MachHeader mainHeader, ByteProvider provider) {
 		this.mainHeader = mainHeader;
 		this.provider = provider;
 	}
 
-	public List<PrelinkMap> parse(TaskMonitor monitor)
+	public List<MachoPrelinkMap> parse(TaskMonitor monitor)
 			throws IOException, JDOMException, NoPreLinkSectionException {
 		InputStream inputStream = findPrelinkInputStream();
 
@@ -62,7 +61,7 @@ public class PrelinkParser {
 		Document doc = sax.build(inputStream);
 		Element root = doc.getRootElement();
 
-		List<PrelinkMap> list = new ArrayList<PrelinkMap>();
+		List<MachoPrelinkMap> list = new ArrayList<MachoPrelinkMap>();
 
 		if (root.getName().equals(TAG_ARRAY)) { // iOS version before 4.x
 			process(root.getChildren(), list, monitor);
@@ -87,7 +86,7 @@ public class PrelinkParser {
 		return list;
 	}
 	
-	private void processTopDict(TaskMonitor monitor, List<PrelinkMap> list,
+	private void processTopDict(TaskMonitor monitor, List<MachoPrelinkMap> list,
 		Element dictRootElement) {
 		Iterator<?> iterator = dictRootElement.getChildren().iterator();
 		while (iterator.hasNext()) {
@@ -101,22 +100,22 @@ public class PrelinkParser {
 		}
 	}
 
-	private void processKey(TaskMonitor monitor, List<PrelinkMap> list, Iterator<?> iterator,
+	private void processKey(TaskMonitor monitor, List<MachoPrelinkMap> list, Iterator<?> iterator,
 			Element element) {
 		String value = element.getValue();
-		if (value.equals(PrelinkConstants.kPrelinkPersonalitiesKey)) {
+		if (value.equals(MachoPrelinkConstants.kPrelinkPersonalitiesKey)) {
 			Element arrayElement = (Element) iterator.next();
 			if (arrayElement.getChildren().size() == 0) {
 				//should be empty...
 			}
 		}
-		else if (value.equals(PrelinkConstants.kPrelinkInfoDictionaryKey)) {
+		else if (value.equals(MachoPrelinkConstants.kPrelinkInfoDictionaryKey)) {
 			Element arrayElement = (Element) iterator.next();
 			process(arrayElement.getChildren(), list, monitor);
 		}
 	}
 
-	private void process(List<?> children, List<PrelinkMap> list, TaskMonitor monitor) {
+	private void process(List<?> children, List<MachoPrelinkMap> list, TaskMonitor monitor) {
 		monitor.setMessage("Processing prelink information...");
 
 		for (int i = 0; i < children.size(); ++i) {
@@ -125,14 +124,14 @@ public class PrelinkParser {
 			}
 			Element element = (Element) children.get(i);
 			if (element.getName().equals(TAG_DICT)) {
-				PrelinkMap map = processElement(element, monitor);
+				MachoPrelinkMap map = processElement(element, monitor);
 				list.add(map);
 			}
 		}
 	}
 
-	private PrelinkMap processElement(Element parentElement, TaskMonitor monitor) {
-		PrelinkMap map = new PrelinkMap();
+	private MachoPrelinkMap processElement(Element parentElement, TaskMonitor monitor) {
+		MachoPrelinkMap map = new MachoPrelinkMap();
 		Iterator<?> iterator = parentElement.getChildren().iterator();
 		while (iterator.hasNext()) {
 			if (monitor.isCancelled()) {
@@ -150,7 +149,7 @@ public class PrelinkParser {
 		return map;
 	}
 
-	private String processValue(Element keyElement, Element valueElement, PrelinkMap map,
+	private String processValue(Element keyElement, Element valueElement, MachoPrelinkMap map,
 			TaskMonitor monitor) {
 		String key = keyElement.getValue();
 		if (valueElement.getName().equals(TAG_STRING)) {
@@ -172,7 +171,7 @@ public class PrelinkParser {
 			return valueElement.getValue();
 		}
 		else if (valueElement.getName().equals(TAG_DICT)) {
-			PrelinkMap dictMap = processElement(valueElement, monitor);
+			MachoPrelinkMap dictMap = processElement(valueElement, monitor);
 			map.put(key, dictMap);
 			return dictMap.toString();
 		}
@@ -187,7 +186,7 @@ public class PrelinkParser {
 		}
 	}
 
-	private String processString(PrelinkMap map, String key, Element valueElement) {
+	private String processString(MachoPrelinkMap map, String key, Element valueElement) {
 		String value = valueElement.getValue();
 		String id = valueElement.getAttributeValue("ID");
 		String idref = valueElement.getAttributeValue("IDREF");
@@ -204,7 +203,7 @@ public class PrelinkParser {
 		return value;
 	}
 
-	private String processInteger(PrelinkMap map, String key, Element valueElement) {
+	private String processInteger(MachoPrelinkMap map, String key, Element valueElement) {
 		String value = valueElement.getValue();
 		String id = valueElement.getAttributeValue("ID");
 		String idref = valueElement.getAttributeValue("IDREF");
@@ -214,6 +213,7 @@ public class PrelinkParser {
 			numericValue = NumericUtilities.parseHexLong(value);
 		}
 		catch (Exception e) {
+			// do nothing
 		}
 
 		if (id != null) {
@@ -229,7 +229,7 @@ public class PrelinkParser {
 		return value;
 	}
 
-	private String processArray(Element arrayElement, PrelinkMap map, TaskMonitor monitor) {
+	private String processArray(Element arrayElement, MachoPrelinkMap map, TaskMonitor monitor) {
 		if (!arrayElement.getName().equals(TAG_ARRAY)) {
 			throw new RuntimeException("not an array element");
 		}
@@ -257,9 +257,9 @@ public class PrelinkParser {
 		InputStream prelinkInputStream = null;
 		List<SegmentCommand> segments = mainHeader.getLoadCommands(SegmentCommand.class);
 		for (SegmentCommand segment : segments) {
-			if (segment.getSegmentName().equals(PrelinkConstants.kPrelinkSegment_iOS_1x) ||
-				segment.getSegmentName().equals(PrelinkConstants.kPrelinkInfoSegment)) {
-				Section section = segment.getSectionByName(PrelinkConstants.kPrelinkInfoSection);
+			if (segment.getSegmentName().equals(MachoPrelinkConstants.kPrelinkSegment_iOS_1x) ||
+				segment.getSegmentName().equals(MachoPrelinkConstants.kPrelinkInfoSegment)) {
+				Section section = segment.getSectionByName(MachoPrelinkConstants.kPrelinkInfoSection);
 				if (section != null && section.getSize() > 0) {
 					byte[] bytes = provider.readBytes(section.getOffset(), section.getSize() - 1);
 
@@ -283,8 +283,6 @@ public class PrelinkParser {
 					}
 					// <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 
-					debug(bytes);
-
 					//fix bytes so XML will parse...
 
 					prelinkInputStream = new ByteArrayInputStream(trimmed.getBytes());
@@ -296,22 +294,5 @@ public class PrelinkParser {
 				"Unable to locate __info section in __PRELINK segment inside mach-o header for COMPLZSS file system.");
 		}
 		return prelinkInputStream;
-	}
-
-	private void debug(byte[] bytes) {
-		try {
-			if (SystemUtilities.isInDevelopmentMode()) {
-				File file = File.createTempFile("__PRELINK_INFO", ".xml");
-				OutputStream out = new FileOutputStream(file);
-				try {
-					out.write(bytes);
-				}
-				finally {
-					out.close();
-				}
-			}
-		}
-		catch (Exception e) {
-		}
 	}
 }

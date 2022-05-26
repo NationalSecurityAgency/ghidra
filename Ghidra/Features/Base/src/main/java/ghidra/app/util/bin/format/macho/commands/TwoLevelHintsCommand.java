@@ -32,9 +32,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a twolevel_hints_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a twolevel_hints_command structure 
  */
 public class TwoLevelHintsCommand extends LoadCommand {
 	private int offset;
@@ -42,7 +40,7 @@ public class TwoLevelHintsCommand extends LoadCommand {
 	private List<TwoLevelHint> hints = new ArrayList<TwoLevelHint>();
 
 	TwoLevelHintsCommand(BinaryReader reader) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 		offset = reader.readNextInt();
 		nhints = reader.readNextInt();
 

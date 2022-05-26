@@ -29,15 +29,13 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a rpath_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a rpath_command structure
  */
 public class RunPathCommand extends LoadCommand {
 	private LoadCommandString path;
 
 	RunPathCommand(BinaryReader reader) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 		path = new LoadCommandString(reader, this);
 	}
 

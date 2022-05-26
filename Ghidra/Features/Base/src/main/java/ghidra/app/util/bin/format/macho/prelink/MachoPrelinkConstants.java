@@ -20,7 +20,7 @@ package ghidra.app.util.bin.format.macho.prelink;
  * http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/libkern/libkern/prelink.h
  * 
  */
-public final class PrelinkConstants {
+public final class MachoPrelinkConstants {
 
 	public static final String TITLE                            = "iOS Prelink";
 

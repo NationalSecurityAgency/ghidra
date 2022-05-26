@@ -32,7 +32,7 @@ public class UnsupportedLoadCommand extends LoadCommand {
 	private int type;
 
 	UnsupportedLoadCommand(BinaryReader reader, int type) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 		this.type = type;
 	}
 

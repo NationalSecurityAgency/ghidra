@@ -29,16 +29,14 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a linkedit_data_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a linkedit_data_command structure 
  */
 public class LinkEditDataCommand extends LoadCommand {
 	private int dataoff;
 	private int datasize;
 
 	LinkEditDataCommand(BinaryReader reader) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 		dataoff = reader.readNextInt();
 		datasize = reader.readNextInt();
 	}
@@ -66,7 +64,7 @@ public class LinkEditDataCommand extends LoadCommand {
 				Address address = baseAddress.getNewAddress(getStartIndex());
 				api.createData(address, toDataType());
 				api.setPlateComment(address,
-					LoadCommandTypes.getLoadCommentTypeName(getCommandType()));
+					LoadCommandTypes.getLoadCommandName(getCommandType()));
 
 //TODO markup actual data
 

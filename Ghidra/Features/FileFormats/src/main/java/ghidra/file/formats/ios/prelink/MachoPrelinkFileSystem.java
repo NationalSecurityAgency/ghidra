@@ -26,8 +26,8 @@ import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
-import ghidra.app.util.bin.format.macho.prelink.PrelinkConstants;
-import ghidra.app.util.bin.format.macho.prelink.PrelinkMap;
+import ghidra.app.util.bin.format.macho.prelink.MachoPrelinkConstants;
+import ghidra.app.util.bin.format.macho.prelink.MachoPrelinkMap;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
@@ -49,19 +49,19 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
 
-@FileSystemInfo(type = PrelinkFileSystem.IOS_PRELINK_FSTYPE, description = PrelinkConstants.TITLE, priority = FileSystemInfo.PRIORITY_HIGH, factory = GFileSystemBaseFactory.class)
-public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemProgramProvider {
+@FileSystemInfo(type = MachoPrelinkFileSystem.IOS_PRELINK_FSTYPE, description = MachoPrelinkConstants.TITLE, priority = FileSystemInfo.PRIORITY_HIGH, factory = GFileSystemBaseFactory.class)
+public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSystemProgramProvider {
 
 	public final static String IOS_PRELINK_FSTYPE = "iosprelink";
 	private final static String SYSTEM_KEXT = "System.kext";
 
-	private Map<GFile, PrelinkMap> fileToPrelinkInfoMap = new HashMap<>();
+	private Map<GFile, MachoPrelinkMap> fileToPrelinkInfoMap = new HashMap<>();
 	private Map<Long, GFileImpl> unnamedMachoFileMap = new HashMap<>();
 	private Map<GFile, Long> fileToMachoOffsetMap = new HashMap<>();
 	private GFileImpl systemKextFile;
 	private GFileImpl kernelCacheDirectory;
 
-	public PrelinkFileSystem(String fileSystemName, ByteProvider provider) {
+	public MachoPrelinkFileSystem(String fileSystemName, ByteProvider provider) {
 		super(fileSystemName, provider);
 	}
 
@@ -89,7 +89,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 		List<Long> machoHeaderOffsets =
 			MachoPrelinkUtils.findPrelinkMachoHeaderOffsets(provider, monitor);
 		try {
-			List<PrelinkMap> prelinkList = MachoPrelinkUtils.parsePrelinkXml(provider, monitor);
+			List<MachoPrelinkMap> prelinkList = MachoPrelinkUtils.parsePrelinkXml(provider, monitor);
 			if (!prelinkList.isEmpty()) {
 				processPrelinkWithMacho(prelinkList, machoHeaderOffsets, monitor);
 			}
@@ -110,7 +110,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 
 	@Override
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
-		PrelinkMap info = fileToPrelinkInfoMap.get(file);
+		MachoPrelinkMap info = fileToPrelinkInfoMap.get(file);
 		return FileAttributes.of(info != null
 				? FileAttribute.create(FileAttributeType.COMMENT_ATTR, info.toString())
 				: null);
@@ -181,8 +181,8 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 				provider.length() - offset, monitor);
 			ByteProvider providerWrapper =
 				new ByteProviderWrapper(provider, offset, provider.length() - offset);
-			MachoProgramBuilder.buildProgram(program, providerWrapper, fileBytes, new MessageLog(),
-				monitor);
+			MachoProgramBuilder.buildProgram(program, providerWrapper, fileBytes, false,
+				new MessageLog(), monitor);
 
 			AbstractProgramLoader.setProgramProperties(program, providerWrapper,
 				MachoLoader.MACH_O_NAME);
@@ -237,22 +237,22 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 	 * Processes PRELINK and Macho-O offsets in order to map files to their Mach-O offsets in the 
 	 * providers.
 	 * 
-	 * @param prelinkList The list of discovered {@link PrelinkMap}s.
+	 * @param prelinkList The list of discovered {@link MachoPrelinkMap}s.
 	 * @param machoHeaderOffsets The list of provider offsets where prelinked Mach-O headers start.
 	 * @param monitor A monitor
 	 * @throws IOException if an IO-related problem occurred.
 	 * @throws MachException if there was a problem parsing Mach-O headers.
 	 */
-	private void processPrelinkWithMacho(List<PrelinkMap> prelinkList,
+	private void processPrelinkWithMacho(List<MachoPrelinkMap> prelinkList,
 			List<Long> machoHeaderOffsets, TaskMonitor monitor) throws IOException, MachException {
 
 		monitor.setMessage("Processing PRELINK with found Mach-O headers...");
 		monitor.initialize(prelinkList.size());
 
-		BidiMap<PrelinkMap, Long> map = MachoPrelinkUtils.matchPrelinkToMachoHeaderOffsets(provider,
+		BidiMap<MachoPrelinkMap, Long> map = MachoPrelinkUtils.matchPrelinkToMachoHeaderOffsets(provider,
 			prelinkList, machoHeaderOffsets, monitor);
 
-		for (PrelinkMap info : map.keySet()) {
+		for (MachoPrelinkMap info : map.keySet()) {
 
 			if (monitor.isCancelled()) {
 				break;
@@ -293,7 +293,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 				continue;
 			}
 
-			PrelinkMap prelinkMap = fileToPrelinkInfoMap.get(file);
+			MachoPrelinkMap prelinkMap = fileToPrelinkInfoMap.get(file);
 			if (prelinkMap == null || prelinkMap.getPrelinkExecutableLoadAddr() == -1) {
 				continue;
 			}
@@ -331,7 +331,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 		}
 	}
 
-	private GFileImpl storeFile(GFileImpl file, PrelinkMap info) {
+	private GFileImpl storeFile(GFileImpl file, MachoPrelinkMap info) {
 		if (file == null) {
 			return file;
 		}
@@ -359,7 +359,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 		}
 		else if (fileToPrelinkInfoMap.containsKey(asFile) &&
 			fileToPrelinkInfoMap.get(asFile) != null && file.isDirectory()) {
-			PrelinkMap value = fileToPrelinkInfoMap.remove(asFile);
+			MachoPrelinkMap value = fileToPrelinkInfoMap.remove(asFile);
 			fileToPrelinkInfoMap.put(asDir, value);
 			Long offset = fileToMachoOffsetMap.remove(asFile);
 			fileToMachoOffsetMap.put(asDir, offset);
@@ -392,7 +392,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 	private void processKModInfoStructures(List<Long> machoHeaderOffsets, TaskMonitor monitor)
 			throws IOException {
 
-		Map<PrelinkMap, Long> infoToMachoMap = new HashMap<>();
+		Map<MachoPrelinkMap, Long> infoToMachoMap = new HashMap<>();
 
 		kernelCacheDirectory = GFileImpl.fromFilename(this, root, "kernelcache", true, -1, null);
 
