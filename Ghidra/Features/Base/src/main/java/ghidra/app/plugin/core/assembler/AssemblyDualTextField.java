@@ -704,7 +704,7 @@ public class AssemblyDualTextField {
 	 * @param existing the instruction, if any, currently under the user's cursor
 	 * @return a preference
 	 */
-	protected int computePreference(AssemblyResolvedConstructor rc, Instruction existing) {
+	protected int computePreference(AssemblyResolvedPatterns rc, Instruction existing) {
 		if (existing == null) {
 			return 0;
 		}
@@ -763,7 +763,7 @@ public class AssemblyDualTextField {
 						//result.add(new AssemblyError("", ar.toString()));
 						continue;
 					}
-					AssemblyResolvedConstructor rc = (AssemblyResolvedConstructor) ar;
+					AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) ar;
 					for (byte[] ins : rc.possibleInsVals(ctx)) {
 						result.add(new AssemblyInstruction(text, Arrays.copyOf(ins, ins.length),
 							computePreference(rc, existing)));

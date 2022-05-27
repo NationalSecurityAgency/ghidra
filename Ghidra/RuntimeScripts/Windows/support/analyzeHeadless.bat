@@ -16,10 +16,13 @@ set LAUNCH_MODE=fg
 :: NOTE: This variable is ignored if not launching in a debugging mode.
 set DEBUG_ADDRESS=127.0.0.1:13002
 
+:: Run Java in headless mode
+set VMARG_LIST=-Djava.awt.headless=true
+
 :: Limit the # of garbage collection and JIT compiler threads in case many headless
 :: instances are run in parallel.  By default, Java will assign one thread per core
 :: which does not scale well on servers with many cores.
-set VMARG_LIST=-XX:ParallelGCThreads=2
+set VMARG_LIST=%VMARG_LIST% -XX:ParallelGCThreads=2
 set VMARG_LIST=%VMARG_LIST% -XX:CICompilerCount=2
 
 :: Store current path (%0 gets modified below by SHIFT)
@@ -28,6 +31,7 @@ set "SCRIPT_DIR=%~dp0"
 :: Loop through parameters (if there aren't any, just continue) and store
 ::   in params variable.
 
+setlocal EnableDelayedExpansion
 set params=
 
 :Loop
@@ -35,7 +39,6 @@ if "%~1" == "" goto cont
 
 :: If -import is found and Windows has not done proper wildcard expansion, force
 :: this to happen and save expansion to params variable.
-setlocal EnableDelayedExpansion
 if "%~1" == "-import" (	
 	set params=!params! -import
 	for %%f in ("%~2") DO (
@@ -45,11 +48,12 @@ if "%~1" == "-import" (
 ) else (
 	set params=!params! "%~1"
 )
-setlocal DisableDelayedExpansion
 
 shift
 goto Loop
 
 :cont
+
+setlocal DisableDelayedExpansion
 
 call "%SCRIPT_DIR%launch.bat" %LAUNCH_MODE% Ghidra-Headless "%MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%

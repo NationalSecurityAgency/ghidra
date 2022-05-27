@@ -104,7 +104,8 @@ public class GdbModelTargetStackFrame extends DefaultTargetObject<TargetObject, 
 		), Map.of( //
 			PC_ATTRIBUTE_NAME, pc, //
 			FUNC_ATTRIBUTE_NAME, func, //
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame) //
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame), //
+			VALUE_ATTRIBUTE_NAME, pc //
 		), "Refreshed");
 	}
 

@@ -1249,6 +1249,9 @@ public class AddressSet implements AddressSetView {
 		@Override
 		public AddressRange next() {
 			RedBlackEntry<Address, Address> next = iterator.next();
+			if (next == null) {
+				throw new NoSuchElementException();
+			}
 			return new AddressRangeImpl(next.getKey(), next.getValue());
 		}
 

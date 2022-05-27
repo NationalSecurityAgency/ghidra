@@ -15,12 +15,14 @@
  */
 package ghidra.trace.util;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -120,6 +122,23 @@ public enum TraceRegisterUtils {
 			return "NaP";
 		}
 		return addr.toString();
+	}
+
+	public static RegisterValue encodeValueRepresentationHackPointer(Register register,
+			TraceData data, String representation) throws DataTypeEncodeException {
+		DataType dataType = data.getBaseDataType();
+		if (data.getValueClass() != Address.class) {
+			byte[] bytes =
+				dataType.encodeRepresentation(representation, data, data, data.getLength());
+			BigInteger value = Utils.bytesToBigInteger(bytes, register.getMinimumByteSize(),
+				register.isBigEndian(), false);
+			return new RegisterValue(register, value);
+		}
+		Address addr = data.getTrace().getBaseAddressFactory().getAddress(representation);
+		if (addr == null) {
+			throw new DataTypeEncodeException("Invalid address", representation, dataType);
+		}
+		return new RegisterValue(register, addr.getOffsetAsBigInteger());
 	}
 
 	public static RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv, long snap,

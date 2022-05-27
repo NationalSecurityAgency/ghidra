@@ -46,6 +46,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.layout.HorizontalLayout;
 
 public class ListingPanel extends JPanel implements FieldMouseListener, FieldLocationListener,
@@ -95,7 +96,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Constructs a new ListingPanel using the given FormatManager and ServiceProvider.
-	 * 
+	 *
 	 * @param manager the FormatManager to use.
 	 */
 	public ListingPanel(FormatManager manager) {
@@ -125,7 +126,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Constructs a new ListingPanel for the given program.
-	 * 
+	 *
 	 * @param mgr the FormatManager to use.
 	 * @param program the program for which to create a new ListingPanel
 	 */
@@ -136,7 +137,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Constructs a new ListingPanel with the given FormatManager and ListingLayoutModel
-	 * 
+	 *
 	 * @param mgr the FormatManager to use
 	 * @param model the ListingLayoutModel to use.
 	 */
@@ -182,7 +183,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the ProgramLocationListener. Only one listener is supported
-	 * 
+	 *
 	 * @param listener the ProgramLocationListener to use.
 	 */
 	public void setProgramLocationListener(ProgramLocationListener listener) {
@@ -191,7 +192,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the ProgramSelectionListener. Only one listener is supported
-	 * 
+	 *
 	 * @param listener the ProgramSelectionListener to use.
 	 */
 	public void setProgramSelectionListener(ProgramSelectionListener listener) {
@@ -204,7 +205,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the ListingLayoutModel to use.
-	 * 
+	 *
 	 * @param newModel the model to use.
 	 */
 	public void setListingModel(ListingModel newModel) {
@@ -224,7 +225,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets whether or not the field header component is visible at the top of the listing panel
-	 * 
+	 *
 	 * @param show if true, the header component will be show, otherwise it will be hidden.
 	 */
 	public void showHeader(boolean show) {
@@ -260,7 +261,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	private void updateProviders() {
 		AddressIndexMap addressIndexMap = layoutModel.getAddressIndexMap();
 		for (OverviewProvider element : overviewProviders) {
-			element.setAddressIndexMap(addressIndexMap);
+			element.setProgram(getProgram(), addressIndexMap);
 		}
 		for (ChangeListener indexMapChangeListener : indexMapChangeListeners) {
 			indexMapChangeListener.stateChanged(null);
@@ -283,7 +284,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Adds the MarginProvider to this panel
-	 * 
+	 *
 	 * @param provider the MarginProvider that will provide components to display in this panel's
 	 *            left margin area.
 	 */
@@ -294,7 +295,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		else {
 			marginProviders.add(provider);
 		}
-		provider.setPixelMap(pixmap);
+		provider.setProgram(getProgram(), layoutModel.getAddressIndexMap(), pixmap);
 		buildPanels();
 	}
 
@@ -375,7 +376,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Add a change listener to be notified whenever the indexMap changes.
-	 * 
+	 *
 	 * @param listener the listener to be added.
 	 */
 	public void addIndexMapChangeListener(ChangeListener listener) {
@@ -384,7 +385,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Removes the change listener to be notified when the indexMap changes.
-	 * 
+	 *
 	 * @param listener the listener to be removed.
 	 */
 	public void removeIndexMapChangeListener(ChangeListener listener) {
@@ -393,7 +394,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Removes the given margin provider from this panel
-	 * 
+	 *
 	 * @param provider the MarginProvider to remove.
 	 */
 	public void removeMarginProvider(MarginProvider provider) {
@@ -403,18 +404,18 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Adds the given OverviewProvider with will be displayed in this panels right margin area.
-	 * 
+	 *
 	 * @param provider the OverviewProvider to display.
 	 */
 	public void addOverviewProvider(OverviewProvider provider) {
 		overviewProviders.add(provider);
-		provider.setAddressIndexMap(layoutModel.getAddressIndexMap());
+		provider.setProgram(getProgram(), layoutModel.getAddressIndexMap());
 		buildPanels();
 	}
 
 	/**
 	 * Removes the given OverviewProvider from this panel
-	 * 
+	 *
 	 * @param provider the OverviewProvider to remove.
 	 */
 	public void removeOverviewProvider(OverviewProvider provider) {
@@ -425,7 +426,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	/**
 	 * Adds a ButtonPressedListener to be notified when the user presses the mouse button while over
 	 * this panel
-	 * 
+	 *
 	 * @param listener the ButtonPressedListener to add.
 	 */
 	public void addButtonPressedListener(ButtonPressedListener listener) {
@@ -436,7 +437,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Removes the given ButtonPressedListener.
-	 * 
+	 *
 	 * @param listener the ButtonPressedListener to remove.
 	 */
 	public void removeButtonPressedListener(ButtonPressedListener listener) {
@@ -474,9 +475,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	@Override
 	public void layoutsChanged(List<AnchoredLayout> layouts) {
-		this.pixmap = new VerticalPixelAddressMapImpl(layouts, layoutModel.getAddressIndexMap());
+		AddressIndexMap addrMap = layoutModel.getAddressIndexMap();
+		this.pixmap = new VerticalPixelAddressMapImpl(layouts, addrMap);
 		for (MarginProvider element : marginProviders) {
-			element.setPixelMap(pixmap);
+			element.setProgram(getProgram(), addrMap, pixmap);
 		}
 
 		for (AddressSetDisplayListener listener : displayListeners) {
@@ -507,7 +509,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the divider location between the left margin areas and the main display.
-	 * 
+	 *
 	 * @param dividerLocation the location to set on the divider.
 	 */
 	public void setDividerLocation(int dividerLocation) {
@@ -555,7 +557,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	/**
 	 * Moves the cursor to the given program location and repositions the scrollbar to show that
 	 * location in the screen.
-	 * 
+	 *
 	 * @param loc the location to move to.
 	 */
 	public boolean goTo(ProgramLocation loc) {
@@ -573,6 +575,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 *            screen will be scrolled only enough to show the cursor.
 	 */
 	public boolean goTo(ProgramLocation loc, boolean centerWhenNotVisible) {
+
+		Swing.assertSwingThread("goTo() must be called on the Swing thread");
+
 		final FieldLocation floc = getFieldLocation(loc);
 		if (floc == null) {
 			return false;
@@ -622,9 +627,6 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		if (programAddressSpace != locAddressSpace) {
 			FieldLocation compatibleLocation =
 				getFieldLocationForDifferingAddressSpaces(loc, program);
-			if (compatibleLocation == null) {
-				return null;
-			}
 			return compatibleLocation;
 		}
 
@@ -711,7 +713,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Positions the ListingPanel to the given address.
-	 * 
+	 *
 	 * @param addr the address at which to position the listing.
 	 */
 	public boolean goTo(Address addr) {
@@ -724,7 +726,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Positions the ListingPanel to the given address.
-	 * 
+	 *
 	 * @param currentAddress used to determine which symbol to goto if the goto address has more
 	 *            than one
 	 * @param gotoAddress the address at which to position to listing.
@@ -767,7 +769,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the program to be displayed by this listing panel
-	 * 
+	 *
 	 * @param program the program to display.
 	 */
 	public void setProgram(Program program) {
@@ -801,7 +803,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Restricts the program's view to the given address set
-	 * 
+	 *
 	 * @param view the set of address to include in the view.
 	 */
 	public void setView(AddressSetView view) {
@@ -831,6 +833,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			layeredColorModel = null;
 		}
 		else {
+			colorModel.modelDataChanged(this);
 			layeredColorModel = new LayeredColorModel(colorModel, propertyBasedColorModel);
 			fieldPanel.setBackgroundColorModel(layeredColorModel);
 		}
@@ -874,7 +877,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Get a program location for the given point.
-	 * 
+	 *
 	 * @return program location, or null if point does not correspond to a program location
 	 */
 	public ProgramLocation getProgramLocation(Point point) {
@@ -910,7 +913,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the cursor to the given program location.
-	 * 
+	 *
 	 * @param loc the location at which to move the cursor.
 	 */
 	public void setCursorPosition(ProgramLocation loc) {
@@ -919,10 +922,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the cursor to the given program location with a given trigger
-	 * 
+	 *
 	 * This method should only be used in automated testing to programmatically simulate a user
 	 * navigating within the listing panel.
-	 * 
+	 *
 	 * @param loc the location at which to move the cursor.
 	 * @param trigger the event trigger
 	 */
@@ -1039,12 +1042,22 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the selection.
-	 * 
+	 *
 	 * @param sel the new selection
 	 */
 	public void setSelection(ProgramSelection sel) {
+		setSelection(sel, EventTrigger.API_CALL);
+	}
+
+	/**
+	 * Sets the selection.
+	 *
+	 * @param sel the new selection
+	 * @param trigger the cause of the change
+	 */
+	public void setSelection(ProgramSelection sel, EventTrigger trigger) {
 		if (sel == null) {
-			fieldPanel.setSelection(layoutModel.getFieldSelection(null));
+			fieldPanel.setSelection(layoutModel.getFieldSelection(null), trigger);
 			return;
 		}
 
@@ -1061,7 +1074,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 				}
 
 				Layout layout2 = layoutModel.getLayout(loc2.getIndex());
-				
+
 				if (fieldNum1 >= 0 && layout2 != null) {
 					BigInteger index2 = loc2.getIndex();
 					int fieldNum2 = layout.getEndRowFieldNum(loc2.getFieldNum());
@@ -1071,17 +1084,17 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 					}
 					fieldSel.addRange(new FieldLocation(loc1.getIndex(), fieldNum1, 0, 0),
 						new FieldLocation(index2, fieldNum2, 0, 0));
-					fieldPanel.setSelection(fieldSel);
+					fieldPanel.setSelection(fieldSel, trigger);
 					return;
 				}
 			}
 		}
-		fieldPanel.setSelection(layoutModel.getFieldSelection(sel));
+		fieldPanel.setSelection(layoutModel.getFieldSelection(sel), trigger);
 	}
 
 	/**
 	 * Sets the highlight.
-	 * 
+	 *
 	 * @param highlight the new highlight.
 	 */
 	public void setHighlight(ProgramSelection highlight) {
@@ -1110,20 +1123,19 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			return;
 		}
 
-		if (trigger != EventTrigger.API_CALL) {
-			if (listingModel.getProgram() == null || programSelectionListener == null) {
-				return;
-			}
-			ProgramSelection ps = layoutModel.getProgramSelection(selection);
-			if (ps != null) {
-				programSelectionListener.programSelectionChanged(ps);
-			}
+		if (listingModel.getProgram() == null || programSelectionListener == null) {
+			return;
+		}
+		ProgramSelection ps = layoutModel.getProgramSelection(selection);
+		if (ps != null) {
+			programSelectionListener.programSelectionChanged(ps, trigger);
 		}
 	}
 
 	/**
-	 * Returns the currently selected text.   The value will only be non-null for selections within
-	 * a single field. 
+	 * Returns the currently selected text. The value will only be non-null for selections within a
+	 * single field.
+	 * 
 	 * @return the selected text or null
 	 */
 	public String getTextSelection() {

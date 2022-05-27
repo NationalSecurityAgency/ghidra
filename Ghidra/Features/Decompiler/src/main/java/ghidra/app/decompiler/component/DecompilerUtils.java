@@ -755,6 +755,17 @@ public class DecompilerUtils {
 			token = context.getTokenAtCursor();
 		}
 
+		return getDataType(token);
+	}
+
+	/**
+	 * Returns the data type for the given  token
+	 * 
+	 * @param token the token
+	 * @return the data type or null
+	 */
+	public static DataType getDataType(ClangToken token) {
+
 		Varnode varnode = DecompilerUtils.getVarnodeRef(token);
 		if (varnode != null) {
 			HighVariable highVariable = varnode.getHigh();

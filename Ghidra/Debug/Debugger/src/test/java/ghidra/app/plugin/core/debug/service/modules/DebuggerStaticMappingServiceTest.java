@@ -611,4 +611,27 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 			DebuggerStaticMappingProposals.groupRegionsByLikelyModule(mm.getAllRegions());
 		assertEquals(Set.of(Set.of(echoText, echoData), Set.of(libText, libData)), actual);
 	}
+
+	protected void assertMapsTwoWay(long stOff, long dynOff) {
+		TraceLocation dynLoc =
+			new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(dynOff));
+		ProgramLocation stLoc = new ProgramLocation(program, stSpace.getAddress(stOff));
+		assertEquals(stLoc, mappingService.getOpenMappedLocation(dynLoc));
+		assertEquals(dynLoc, mappingService.getOpenMappedLocation(tb.trace, stLoc, 0));
+	}
+
+	@Test
+	public void testMapFullSpace() throws Exception {
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			TraceLocation traceLoc =
+				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0));
+			ProgramLocation progLoc = new ProgramLocation(program, stSpace.getAddress(0));
+			// NB. 0 indicates 1 << 64
+			mappingService.addMapping(traceLoc, progLoc, 0, true);
+		}
+		waitForPass(() -> assertMapsTwoWay(0L, 0L));
+		assertMapsTwoWay(-1L, -1L);
+		assertMapsTwoWay(Long.MAX_VALUE, Long.MAX_VALUE);
+		assertMapsTwoWay(Long.MIN_VALUE, Long.MIN_VALUE);
+	}
 }

@@ -100,7 +100,7 @@ public abstract class PdbDebugInfo {
 
 	/**
 	 * Deserializes the {@link PdbDebugInfo}-based instance.
-	 * The pdb is updated with dbiAge and targetProcessor during deserialization 
+	 * The pdb is updated with dbiAge and targetProcessor during deserialization
 	 * of new DBI header.
 	 * @param headerOnly if true only the DBI header fields will be parsed
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
@@ -187,7 +187,7 @@ public abstract class PdbDebugInfo {
 	}
 
 	/**
-	 * Returns the {@link AbstractMsSymbol} from the main symbols for the 
+	 * Returns the {@link AbstractMsSymbol} from the main symbols for the
 	 *  actual symbol record offset (which is past the length and symbol type fields).
 	 * @param offset the offset of the symbol (beyond length and symbol type fields); this is the
 	 *  offset value specified by many symbol type records.
@@ -480,14 +480,6 @@ public abstract class PdbDebugInfo {
 
 		if (totalCount != numRefs) {
 			PdbLog.message("totalRefs != numRefs, using totalRefs");
-		}
-		int previousIndex = totalCount;
-		for (int moduleIndex = numInformationModules - 1; moduleIndex >= 0; moduleIndex--) {
-			monitor.checkCanceled();
-			int numFilesContributing = previousIndex - index[moduleIndex];
-			previousIndex = index[moduleIndex];
-			AbstractModuleInformation module = moduleInformationList.get(moduleIndex);
-			module.setNumFilesContributing(numFilesContributing);
 		}
 
 		PdbByteReader offsetReader = fileInfoReader.getSubPdbByteReader(totalCount * 4);

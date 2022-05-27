@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.app.util.bin.format.ne;
 
-import ghidra.app.util.bin.format.*;
-import ghidra.util.Conv;
-
 import java.io.IOException;
 import java.util.ArrayList;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.util.Conv;
 
 /**
  * A class to represent the new-executable module reference table.
@@ -38,7 +37,8 @@ public class ModuleReferenceTable {
      * @param count the count of modules referenced
      * @param imp the imported name table
      */
-    ModuleReferenceTable(FactoryBundledWithBinaryReader reader, short index, short count, ImportedNameTable imp) throws IOException {
+	ModuleReferenceTable(BinaryReader reader, short index, short count, ImportedNameTable imp)
+			throws IOException {
         long oldIndex = reader.getPointerIndex();
         reader.setPointerIndex(Conv.shortToInt(index));
 

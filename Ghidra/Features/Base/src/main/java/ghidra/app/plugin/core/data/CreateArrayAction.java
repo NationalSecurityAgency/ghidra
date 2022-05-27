@@ -19,13 +19,13 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.KeyStroke;
 
-import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.app.cmd.data.CreateArrayCmd;
 import ghidra.app.cmd.data.CreateArrayInStructureCmd;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ListingContextAction;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -34,7 +34,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.*;
 
-class CreateArrayAction extends DockingAction {
+class CreateArrayAction extends ListingContextAction {
 
 	private static final KeyStroke DEFAULT_KEY_STROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_OPEN_BRACKET, 0);
@@ -62,12 +62,10 @@ class CreateArrayAction extends DockingAction {
 	}
 
 	@Override
-	public void actionPerformed(ActionContext context) {
-		ListingActionContext programActionContext =
-			(ListingActionContext) context.getContextObject();
-		Program program = programActionContext.getProgram();
-		ProgramLocation loc = programActionContext.getLocation();
-		ProgramSelection sel = programActionContext.getSelection();
+	protected void actionPerformed(ListingActionContext context) {
+		Program program = context.getProgram();
+		ProgramLocation loc = context.getLocation();
+		ProgramSelection sel = context.getSelection();
 
 		if (sel != null && !sel.isEmpty()) {
 			InteriorSelection interiorSel = sel.getInteriorSelection();
@@ -322,12 +320,8 @@ class CreateArrayAction extends DockingAction {
 	}
 
 	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		Object contextObject = context.getContextObject();
-		if (contextObject instanceof ListingActionContext) {
-			return plugin.isCreateDataAllowed(((ListingActionContext) contextObject));
-		}
-		return false;
+	protected boolean isEnabledForContext(ListingActionContext context) {
+		return plugin.isCreateDataAllowed(context);
 	}
 
 }

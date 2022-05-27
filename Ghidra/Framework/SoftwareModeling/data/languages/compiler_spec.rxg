@@ -263,6 +263,13 @@
           </element>
         </zeroOrMore>
 
+		<zeroOrMore>
+		  <element name="modelalias">
+		    <attribute name="name"/>
+		    <attribute name="parent"/>
+		  </element>
+		</zeroOrMore>
+
         <optional>
           <element name="eval_current_prototype">
             <attribute name="name"/>

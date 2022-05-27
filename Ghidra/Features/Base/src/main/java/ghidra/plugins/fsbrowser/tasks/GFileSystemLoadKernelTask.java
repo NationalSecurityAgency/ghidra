@@ -15,8 +15,9 @@
  */
 package ghidra.plugins.fsbrowser.tasks;
 
-import java.io.IOException;
 import java.util.List;
+
+import java.io.IOException;
 
 import ghidra.app.services.ProgramManager;
 import ghidra.formats.gfilesystem.*;
@@ -24,7 +25,6 @@ import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.ProjectDataUtils;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.plugin.importer.ImporterUtilities;
 import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.program.model.lang.LanguageService;
 import ghidra.program.model.listing.Program;
@@ -141,7 +141,6 @@ public class GFileSystemLoadKernelTask extends Task {
 				String fileName = ProjectDataUtils.getUniqueName(folder, program.getName());
 
 				GhidraProgramUtilities.setAnalyzedFlag(program, true);
-				ImporterUtilities.setProgramProperties(program, file.getFSRL(), monitor);
 
 				folder.createFile(fileName, program, monitor);
 

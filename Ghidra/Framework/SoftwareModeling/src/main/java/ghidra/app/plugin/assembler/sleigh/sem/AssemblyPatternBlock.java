@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.assembler.sleigh.expr.SolverException;
-import ghidra.app.plugin.assembler.sleigh.util.SleighUtil;
+import ghidra.app.plugin.assembler.sleigh.util.AsmUtil;
 import ghidra.app.plugin.processors.sleigh.ContextOp;
 import ghidra.app.plugin.processors.sleigh.expression.ContextField;
 import ghidra.app.plugin.processors.sleigh.expression.TokenField;
@@ -31,15 +31,16 @@ import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
 import ghidra.app.plugin.processors.sleigh.pattern.PatternBlock;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.util.NumericUtilities;
-import ghidra.util.StringUtilities;
 
 /**
  * The analog of {@link PatternBlock}, designed for use by the assembler
  * 
+ * <p>
  * It is suitable for the assembler because it is represented byte-by-byte, and it offers a number
  * of useful conversions and operations.
  * 
- * TODO A lot of this could probably be factored into the {@link PatternBlock} class, but it was
+ * <p>
+ * TODO: A lot of this could probably be factored into the {@link PatternBlock} class, but it was
  * best to experiment in another class altogether to avoid breaking things.
  */
 public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
@@ -53,9 +54,10 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Construct a new pattern block with the given mask, values, and offset
+	 * 
 	 * @param offset an offset (0-up, left-to-right) where the pattern actually starts
-	 * @param mask a mask: only {@code 1} bits are included in the pattern
-	 * @param vals the value, excluding corresponding {@code 0} bits in the mask
+	 * @param mask a mask: only 1 bits are included in the pattern
+	 * @param vals the value, excluding corresponding 0 bits in the mask
 	 */
 	protected AssemblyPatternBlock(int offset, byte[] mask, byte[] vals) {
 		assert mask.length == vals.length;
@@ -66,6 +68,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Construct a new empty pattern block at the given offset, prepared with the given capacity
+	 * 
 	 * @param offset an offset (0-up, left-to-right) where the pattern will start
 	 * @param capacity the space to allocate for the mask and values
 	 */
@@ -77,6 +80,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Get an empty pattern block
+	 * 
 	 * @return the pattern block
 	 */
 	public static AssemblyPatternBlock nop() {
@@ -85,6 +89,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Get a pattern block with the given (fully-included) values at the given offset
+	 * 
 	 * @param offset the offset (0-up, left-to-right)
 	 * @param vals the values
 	 * @return a pattern block (having a full mask)
@@ -100,7 +105,10 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Convert the given long to a pattern block (having offset 0 and a full mask)
-	 * NOTE: The result will be 8 bytes in length
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> The result will be 8 bytes in length
+	 * 
 	 * @param value the value to convert
 	 * @return the pattern block containing the big-endian representation of the value
 	 */
@@ -118,7 +126,10 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Convert the given masked long to a pattern block (having offset 0)
-	 * NOTE: The result will be 8 bytes in length
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> The result will be 8 bytes in length
+	 * 
 	 * @param ml the masked long, whose values and mask to convert
 	 * @return the pattern block containing the big-endian representation of the value
 	 */
@@ -139,7 +150,9 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Convert a string representation to a pattern block
-	 * @see NumericUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String)
+	 * 
+	 * @see NumericUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int,
+	 *      String)
 	 * @param str the string to convert
 	 * @return the resulting pattern block
 	 */
@@ -187,7 +200,8 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	}
 
 	/**
-	 * Convert a block from a disjoint pattern into an assembly pattern block 
+	 * Convert a block from a disjoint pattern into an assembly pattern block
+	 * 
 	 * @param pat the pattern to convert
 	 * @param context true to select the context block, false to select the instruction block
 	 * @return the converted pattern block
@@ -229,6 +243,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Encode the given masked long into a pattern block as specified by a given token field
+	 * 
 	 * @param tf the token field specifying the location of the value to encode
 	 * @param val the value to encode
 	 * @return the pattern block with the encoded value
@@ -262,6 +277,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Encode the given masked long into a pattern block as specified by a given context field
+	 * 
 	 * @param cf the context field specifying the location of the value to encode
 	 * @param val the value to encode
 	 * @return the pattern block with the encoded value
@@ -293,11 +309,12 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Convert a register value into a pattern block
-	 * @param rv the register value
-	 * @return the pattern block
 	 * 
 	 * This is used primarily to compute default context register values, and pass them into an
 	 * assembler.
+	 * 
+	 * @param rv the register value
+	 * @return the pattern block
 	 */
 	public static AssemblyPatternBlock fromRegisterValue(RegisterValue rv) {
 		byte[] mb = rv.toBytes();
@@ -310,6 +327,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Allocate a fully-undefined pattern block of the given length
+	 * 
 	 * @param length the length in bytes
 	 * @return the block of all unknown bits
 	 */
@@ -321,6 +339,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Duplicate this pattern block
+	 * 
 	 * @return the duplicate
 	 */
 	public AssemblyPatternBlock copy() {
@@ -330,6 +349,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Get the length (plus the offset) of this pattern block
+	 * 
 	 * @return the total length
 	 */
 	public int length() {
@@ -338,6 +358,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Shift, i.e., increase the offset of, this pattern block
+	 * 
 	 * @param amt the amount to shift right
 	 * @return the shifted pattern block
 	 */
@@ -350,6 +371,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Truncate (unshift) this pattern block by removing bytes from the left
+	 * 
 	 * @param amt the amount to truncate or shift left
 	 * @return the truncated pattern block
 	 */
@@ -373,12 +395,13 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Combine this pattern block with another given block
 	 * 
+	 * <p>
 	 * Two blocks can be combined in their corresponding defined bits agree. When blocks are
 	 * combined, their bytes are aligned according to their shifts, and the defined bits are taken
-	 * from either block. If neither block defines a bit (i.e., the mask bit at that position is
-	 * {@code 0} for both input blocks, then the output has an undefined bit in the corresponding
-	 * position. If both blocks define the bit, but they have opposite values, then the result is
-	 * an error.
+	 * from either block. If neither block defines a bit (i.e., the mask bit at that position is 0
+	 * for both input blocks, then the output has an undefined bit in the corresponding position. If
+	 * both blocks define the bit, but they have opposite values, then the result is an error.
+	 * 
 	 * @param that the other block
 	 * @return the new combined block, or null if the blocks disagree for any bit
 	 */
@@ -487,12 +510,12 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 			return result;
 		}
 
-		result = SleighUtil.compareArrays(this.mask, that.mask);
+		result = AsmUtil.compareArrays(this.mask, that.mask);
 		if (result != 0) {
 			return result;
 		}
 
-		result = SleighUtil.compareArrays(this.vals, that.vals);
+		result = AsmUtil.compareArrays(this.vals, that.vals);
 		if (result != 0) {
 			return result;
 		}
@@ -501,6 +524,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Read an array, returning a default if the index is out of bounds
+	 * 
 	 * @param arr the array to read
 	 * @param idx the index
 	 * @param def the default value
@@ -517,11 +541,12 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Encode the given value into a copy of this pattern block as specified by a context operation
 	 * 
-	 * NOTE: this method is given as a special operation, instead of a conversion factory method,
-	 * because this is a write operation, not a combine operation. As such, the bits (including
-	 * undefined bits) replace the bits in the existing pattern block. Were this a conversion
-	 * method, we would lose the distinction between unknown bits being written, and bits whose
-	 * values are simply not included in the write.
+	 * <p>
+	 * <b>NOTE:</b> this method is given as a special operation, instead of a conversion factory
+	 * method, because this is a write operation, not a combine operation. As such, the bits
+	 * (including undefined bits) replace the bits in the existing pattern block. Were this a
+	 * conversion method, we would lose the distinction between unknown bits being written, and bits
+	 * whose values are simply not included in the write.
 	 * 
 	 * @param cop the context operation specifying the location of the value to encode
 	 * @param val the value to encode
@@ -565,6 +590,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Read the input of a context operation from this pattern block
+	 * 
 	 * @param cop the context operation
 	 * @return the decoded input, as a masked value
 	 */
@@ -595,12 +621,14 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Set all bits read by a given context operation to unknown
+	 * 
+	 * <p>
+	 * This is used during resolution to remove a context requirement passed upward by a child. When
+	 * a parent constructor writes the required value to the context register, that requirement need
+	 * not be passed further upward, since the write satisfies the requirement.
+	 * 
 	 * @param cop the context operation
 	 * @return the result
-	 * 
-	 * This is used during resolution to remove a context requirement passed upward by a child.
-	 * When a parent constructor writes the required value to the context register, that
-	 * requirement need not be passed further upward, since the write satisfies the requirement.
 	 */
 	public AssemblyPatternBlock maskOut(ContextOp cop) {
 		byte[] newMask = Arrays.copyOf(this.mask, this.mask.length);
@@ -623,6 +651,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Get the values array
+	 * 
 	 * @return the array
 	 */
 	public byte[] getVals() {
@@ -631,6 +660,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Get the mask array
+	 * 
 	 * @return the array
 	 */
 	public byte[] getMask() {
@@ -639,6 +669,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Get the number of undefined bytes preceding the mask and values arrays
+	 * 
 	 * @return the offset
 	 */
 	public int getOffset() {
@@ -646,7 +677,8 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	}
 
 	/**
-	 * Decode {@code} len value bytes in big-endian format, beginning at {@code start}
+	 * Decode {@code len} value bytes in big-endian format, beginning at {@code start}
+	 * 
 	 * @param start the first byte to decode
 	 * @param len the number of bytes to decode
 	 * @return the decoded long
@@ -664,7 +696,8 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	}
 
 	/**
-	 * Decode {@code} len mask bytes in big-endian format, beginning at {@code start}
+	 * Decode {@code len} mask bytes in big-endian format, beginning at {@code start}
+	 * 
 	 * @param start the first byte to decode
 	 * @param len the number of bytes to decode
 	 * @return the decoded long
@@ -682,7 +715,8 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	}
 
 	/**
-	 * Decode {@code} len bytes (values and mask) in big-endian format, beginning at {@code start}
+	 * Decode {@code len} bytes (values and mask) in big-endian format, beginning at {@code start}
+	 * 
 	 * @param start the first byte to decode
 	 * @param len the number of bytes to decode
 	 * @return the decoded masked long
@@ -692,7 +726,8 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	}
 
 	/**
-	 * Fill all unknown bits with {@code 0} bits 
+	 * Fill all unknown bits with 0 bits
+	 * 
 	 * @return the result
 	 */
 	public AssemblyPatternBlock fillMask() {
@@ -705,6 +740,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Check if there are any unknown bits
+	 * 
 	 * @return true if no unknown bits are present, false otherwise
 	 */
 	public boolean isFullMask() {
@@ -720,8 +756,9 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	}
 
 	/**
-	 * Check if all bits are {@code 0} bits
-	 * @return true if all are {@code 0}, false otherwise
+	 * Check if all bits are 0 bits
+	 * 
+	 * @return true if all are 0, false otherwise
 	 */
 	public boolean isZero() {
 		if (!isFullMask()) {
@@ -738,8 +775,10 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Decode the values array into a {@link BigInteger} of length {@code n} bytes
 	 * 
+	 * <p>
 	 * The array is either truncated or zero-extended <em>on the right</em> to match the requested
 	 * number of bytes, then decoded in big-endian format as an unsigned value.
+	 * 
 	 * @param n the number of bytes (left-to-right) to decode
 	 * @return the decoded big integer
 	 */
@@ -757,7 +796,9 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Counts the total number of known bits in the pattern
 	 * 
+	 * <p>
 	 * At a slightly lower level, counts the number of 1-bits in the mask.
+	 * 
 	 * @return the count
 	 */
 	public int getSpecificity() {
@@ -785,19 +826,21 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Get an iterable over all the possible fillings of the value, given a partial mask
 	 * 
+	 * <p>
 	 * This is meant to be used idiomatically, as in an enhanced for loop:
 	 * 
 	 * <pre>
-	 * {@code
 	 * for (byte[] val : pattern.possibleVals()) {
-	 *     System.out.println(format(val));
-	 * }
+	 * 	System.out.println(format(val));
 	 * }
 	 * </pre>
 	 * 
-	 * NOTE: A single byte array is instantiated with the call to {@link Iterable#iterator()}. Each
-	 * call to {@link Iterator#next()} modifies the one byte array and returns it. As such, if you
-	 * intend to preserve the value in the array for later use, you <em>must</em> make a copy.
+	 * <p>
+	 * <b>NOTE:</b> A single byte array is instantiated with the call to
+	 * {@link Iterable#iterator()}. Each call to {@link Iterator#next()} modifies the one byte array
+	 * and returns it. As such, if you intend to preserve the value in the array for later use, you
+	 * <em>must</em> make a copy.
+	 * 
 	 * @return the iterable.
 	 */
 	public Iterable<byte[]> possibleVals() {

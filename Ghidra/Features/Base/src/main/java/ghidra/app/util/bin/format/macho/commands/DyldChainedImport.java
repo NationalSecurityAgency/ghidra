@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -40,25 +40,10 @@ public class DyldChainedImport implements StructConverter {
 	private long addend;
 	private String symbolName;
 
-	static DyldChainedImport createDyldChainedImport(FactoryBundledWithBinaryReader reader,
-			DyldChainedFixupHeader cfh, int imports_format) throws IOException {
-		DyldChainedImport dyldChainedImport =
-			(DyldChainedImport) reader.getFactory().create(DyldChainedImport.class);
-		dyldChainedImport.initDyldChainedImport(reader, cfh, imports_format);
-		return dyldChainedImport;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DyldChainedImport() {
-	}
-
-	private void initDyldChainedImport(FactoryBundledWithBinaryReader reader,
-			DyldChainedFixupHeader cfh, int format) throws IOException {
-
-		this.imports_format = format;
-		switch (format) {
+	DyldChainedImport(BinaryReader reader, DyldChainedFixupHeader cfh, int imports_format)
+			throws IOException {
+		this.imports_format = imports_format;
+		switch (imports_format) {
 			case DYLD_CHAINED_IMPORT: {
 				int ival = reader.readNextInt();
 				lib_ordinal = ival & 0xff;
@@ -83,7 +68,7 @@ public class DyldChainedImport implements StructConverter {
 				break;
 			}
 			default:
-				throw new IOException("Bad Chained import format: " + format);
+				throw new IOException("Bad Chained import format: " + imports_format);
 		}
 	}
 
@@ -142,7 +127,7 @@ public class DyldChainedImport implements StructConverter {
 		return symbolName;
 	}
 
-	public void initString(FactoryBundledWithBinaryReader reader) throws IOException {
+	public void initString(BinaryReader reader) throws IOException {
 		symbolName = reader.readNextNullTerminatedAsciiString();
 	}
 

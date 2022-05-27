@@ -1721,19 +1721,18 @@ Default:"default" addr is defaultbyte1; defaultbyte2; defaultbyte3; defaultbyte4
 # lookupswitch
 ##################################################################################################
 
-LookupSwitch_match:match _offset is matchbyte1; matchbyte2; matchbyte3; matchbyte4; offsetbyte1; offsetbyte2; offsetbyte3; offsetbyte4 [match = (matchbyte1 << 24) | (matchbyte2 << 16) | (matchbyte3 << 8) | (matchbyte4); _offset = (offsetbyte1 << 24) | (offsetbyte2 << 16) | (offsetbyte3 << 8) | (offsetbyte4); ]
+#compute and display one match,offset pair
+LookupSwitch_match:match _offset is matchbyte1; matchbyte2; matchbyte3; matchbyte4; offsetbyte1; offsetbyte2; offsetbyte3; offsetbyte4 [match = (matchbyte1 << 24) | (matchbyte2 << 16) | (matchbyte3 << 8) | (matchbyte4); _offset = inst_start + ((offsetbyte1 << 24) | (offsetbyte2 << 16) | (offsetbyte3 << 8) | (offsetbyte4)); ]
 {
 }
 
-LookupSwitch_case:"lscase" lscase is (in_lookup_switch=1 & in_table_switch=0) [ lscase = switch_num; switch_num = switch_num - 1;]
+#consume one match,offset pair and decrement the switch number
+:^LookupSwitch_match, instruction is (in_lookup_switch=1 & in_table_switch=0); LookupSwitch_match; instruction [switch_num = switch_num - 1;]
 {
 }
 
-:^LookupSwitch_case LookupSwitch_match, instruction is (in_lookup_switch=1 & in_table_switch=0); LookupSwitch_case; LookupSwitch_match; instruction
-{
-}
-
-:"lscase" lscase LookupSwitch_match is (in_lookup_switch=1 & switch_num=1 & in_table_switch=0); LookupSwitch_match [in_lookup_switch=0; lscase=switch_num; ]
+#leave the switch statement
+:""LookupSwitch_match is (in_lookup_switch=1 & switch_num=1 & in_table_switch=0); LookupSwitch_match [in_lookup_switch=0;]
 {
 }
 
@@ -1744,14 +1743,14 @@ padSwitch: "" is alignmentPad = 2 & padVal & op ; pad1; pad2		{ export *[const]:
 padSwitch: "" is alignmentPad = 1 & padVal & op ; pad1				{ export *[const]:1 padVal; }
 padSwitch: "" is alignmentPad = 0 & padVal & op					    { export *[const]:1 padVal; }
 
-dolookupswitch: _default, npairs is alignmentPad & defaultbyte1; defaultbyte2; defaultbyte3; defaultbyte4; npairsbyte1; npairsbyte2; npairsbyte3; npairsbyte4 [ npairs = (npairsbyte1 << 24) | (npairsbyte2 << 16) | (npairsbyte3 << 8) | npairsbyte4; _default = (defaultbyte1 << 24) | (defaultbyte2 << 16) | (defaultbyte3 << 8) | (defaultbyte4); switch_num = npairs; in_lookup_switch = 1;]
+#Note: "Default" constructor does not play nice with switchAssist injection...
+dolookupswitch: _default, npairs is alignmentPad & defaultbyte1; defaultbyte2; defaultbyte3; defaultbyte4; npairsbyte1; npairsbyte2; npairsbyte3; npairsbyte4 [ npairs = (npairsbyte1 << 24) | (npairsbyte2 << 16) | (npairsbyte3 << 8) | npairsbyte4; _default = inst_start + ((defaultbyte1 << 24) | (defaultbyte2 << 16) | (defaultbyte3 << 8) | defaultbyte4); switch_num = npairs; in_lookup_switch = 1;]
 {
-    _padding:1 = alignmentPad;
-    _opcodeAddr:$(SIZE) = inst_start;
-    _defaultAddr:$(SIZE) = inst_start + _default;
-    _key:$(SIZE) = 0;
+    local _padding:1 = alignmentPad;
+    local _opcodeAddr:$(SIZE) = inst_start;
+    local _key:$(SIZE) = 0;
     pop(_key);
-    _address:$(SIZE) = switchAssist(_key,_opcodeAddr,_padding,_defaultAddr,npairs:$(SIZE));
+    local _address:$(SIZE) = switchAssist(_key,_opcodeAddr,_padding,_default:$(SIZE),npairs:$(SIZE));
     goto [ _address ];
 }
 
@@ -2013,20 +2012,29 @@ _value :$(DOUBLE_SIZE) = 0;
 # tableswitch
 ########################################################################################################################
 
+#compute and display one switch offset
 Switch_offset:_offset is offsetbyte1; offsetbyte2; offsetbyte3; offsetbyte4 [ _offset = inst_start + ((offsetbyte1<<24) | (offsetbyte2<<16) | (offsetbyte3<<8) | offsetbyte4); ]
 {
 }
 
-Switch_case:"case" case is (in_table_switch=1) [ case = switch_high-switch_num; switch_num=switch_num-1; ]
+# Switch entry that's not the last one.
+# no pcode def - this construction is just for consuming all of the bytes of a tableswitch instructions
+# decrements the switch number
+:^Switch_offset, instruction is (in_table_switch=1 & in_lookup_switch=0); Switch_offset; instruction [switch_num = switch_num - 1;]
+{
+}
+
+#Last switch entry. Get out of switch context.
+:""Switch_offset is (in_table_switch=1 & in_lookup_switch=0 &switch_num=0); Switch_offset [ in_table_switch=0;  ]
 {
 }
 
 dotableswitch: Default, low, high is alignmentPad & Default;lowbyte1; lowbyte2; lowbyte3; lowbyte4; highbyte1; highbyte2; highbyte3; highbyte4 [ low = (lowbyte1 << 24) | (lowbyte2 << 16) | (lowbyte3 << 8) | lowbyte4; high = (highbyte1 << 24) | (highbyte2 << 16) | (highbyte3 << 8) | highbyte4; switch_low = low; switch_num = high - low; switch_high = high; in_table_switch = 1; ]
 
 {
-	_offset :$(SIZE) = 0;
-    idx :$(SIZE) = 0;
-    padding:$(SIZE) = alignmentPad;
+	local _offset :$(SIZE) = 0;
+    local idx :$(SIZE) = 0;
+    local padding:$(SIZE) = alignmentPad;
     
     pop(idx);
     if (idx s< low) goto Default;
@@ -2036,7 +2044,6 @@ dotableswitch: Default, low, high is alignmentPad & Default;lowbyte1; lowbyte2; 
     switch_target = inst_start + *:$(SIZE)(_offset);
     goto [switch_target];
 }
-
 
 :tableswitch dotableswitch, instruction is in_table_switch=0 & in_lookup_switch=0 & op=0xaa & alignmentPad=0; dotableswitch; instruction 
 {
@@ -2053,18 +2060,6 @@ dotableswitch: Default, low, high is alignmentPad & Default;lowbyte1; lowbyte2; 
 :tableswitch dotableswitch, instruction is in_table_switch=0 & in_lookup_switch=0 & op=0xaa & alignmentPad=3; pad1; pad2; pad3; dotableswitch; instruction 
 {
 	build dotableswitch;
-}
-
-# Switch entry that's not the last one.
-# no pcode def - this construction is just for consuming all of the bytes of a tableswitch instructions
-# decrements the switch number
-:^Switch_case Switch_offset, instruction is (in_table_switch=1 & in_lookup_switch=0); Switch_case; Switch_offset; instruction 
-{
-}
-
-#Last switch entry. Get out of switch context.
-:"case" case Switch_offset is (in_table_switch=1 & in_lookup_switch=0 &switch_num=0); Switch_offset [ in_table_switch=0; case=switch_high-switch_num; ]
-{
 }
 
 #wide loads 

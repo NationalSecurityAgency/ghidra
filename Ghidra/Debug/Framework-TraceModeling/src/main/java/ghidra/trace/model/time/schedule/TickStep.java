@@ -15,9 +15,11 @@
  */
 package ghidra.trace.model.time.schedule;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import ghidra.pcode.emu.PcodeThread;
+import ghidra.program.model.lang.Language;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -193,5 +195,10 @@ public class TickStep implements Step {
 			monitor.checkCanceled();
 			stepAction.accept(emuThread);
 		}
+	}
+
+	@Override
+	public long coalescePatches(Language language, List<Step> steps) {
+		return 0;
 	}
 }

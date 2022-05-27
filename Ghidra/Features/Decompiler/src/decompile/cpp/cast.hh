@@ -61,8 +61,9 @@ public:
   /// \brief Decide on integer promotion by examining just local properties of the given Varnode
   ///
   /// \param vn is the given Varnode
+  /// \param op is the PcodeOp reading the Varnode
   /// \return an IntPromotionCode (excluding NO_PROMOTION)
-  virtual int4 localExtensionType(const Varnode *vn) const=0;
+  virtual int4 localExtensionType(const Varnode *vn,const PcodeOp *op) const=0;
 
   /// \brief Calculate the integer promotion code of a given Varnode
   ///
@@ -152,12 +153,29 @@ public:
   /// \param intype is the input data-type
   /// \return \b true if the INT_ZEXT should be represented as a cast
   virtual bool isZextCast(Datatype *outtype,Datatype *intype) const=0;
+
+  /// \brief Check if a constant input should be explicitly labeled as an \e unsigned token
+  bool markExplicitUnsigned(PcodeOp *op,int4 slot) const;
+
+  /// \brief Check is a constant input should be explicitly labeled as a \e long integer token
+  bool markExplicitLongSize(PcodeOp *op,int4 slot) const;
+
+  /// \brief For the given PcodeOp, does it matter if a constant operand is presented as a character or integer
+  ///
+  /// In most languages, character constants are promoted to integers as a matter of course, so it
+  /// doesn't matter if the constant is represented as an integer (a string of digits) or a character
+  /// (surrounded by quotes). But its possible that a particular operator does care. If the operator
+  /// needs an explicit character representation for an operand with a character data-type, return \b true.
+  /// \param vn is the constant with character data-type
+  /// \param op is the given PcodeOp which reads the constant (may be null)
+  /// \return \b true if the constant must be represented as an explicit character
+  bool caresAboutCharRepresentation(const Varnode *vn,const PcodeOp *op) const { return false; }
 };
 
 /// \brief Casting strategies that are specific to the C language
 class CastStrategyC : public CastStrategy {
 public:
-  virtual int4 localExtensionType(const Varnode *vn) const;
+  virtual int4 localExtensionType(const Varnode *vn,const PcodeOp *op) const;
   virtual int4 intPromotionType(const Varnode *vn) const;
   virtual bool checkIntPromotionForCompare(const PcodeOp *op,int4 slot) const;
   virtual bool checkIntPromotionForExtension(const PcodeOp *op) const;

@@ -209,4 +209,9 @@ public class DatabaseRangeMapAdapter implements RangeMapAdapter {
 		}
 	}
 
+	@Override
+	public void invalidate() {
+		rangeMap.invalidate();
+	}
+
 }

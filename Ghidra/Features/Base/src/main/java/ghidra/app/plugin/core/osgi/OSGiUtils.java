@@ -281,5 +281,4 @@ public class OSGiUtils {
 			Msg.error(OSGiUtils.class, "Error while collecting packages from jar", e);
 		}
 	}
-
 }

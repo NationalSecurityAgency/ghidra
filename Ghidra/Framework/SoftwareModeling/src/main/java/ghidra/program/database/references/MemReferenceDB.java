@@ -15,11 +15,10 @@
  */
 package ghidra.program.database.references;
 
-import ghidra.program.model.address.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.*;
-import ghidra.util.task.TaskMonitor;
+import ghidra.program.util.SimpleDiffUtility;
 
 class MemReferenceDB extends ReferenceDB {
 
@@ -44,6 +43,10 @@ class MemReferenceDB extends ReferenceDB {
 		this(program, from, to, type, opIndex, sourceType, isPrimary, symbolID, false, false, 0);
 	}
 
+	protected boolean isExternalBlockReference() {
+		return program.getMemory().isExternalBlockAddress(getToAddress());
+	}
+
 	public boolean isOffset() {
 		return isOffset;
 	}
@@ -54,12 +57,6 @@ class MemReferenceDB extends ReferenceDB {
 
 	public long getOffsetOrShift() {
 		return offsetOrShift;
-	}
-
-	/**
-	 * @see ghidra.program.database.references.ReferenceDB#setProgram(ghidra.program.model.listing.Program)
-	 */
-	void setProgram(Program program) {
 	}
 
 	/**

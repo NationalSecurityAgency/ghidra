@@ -306,6 +306,33 @@ void ScopeLocal::collectNameRecs(void)
   }
 }
 
+/// For any read of the input stack pointer by a non-additive p-code op, assume this constitutes a
+/// a zero offset reference into the stack frame.  Replace the raw Varnode with the standard
+/// spacebase placeholder, PTRSUB(sp,#0), so that the data-type system can treat it as a reference.
+void ScopeLocal::annotateRawStackPtr(void)
+
+{
+  if (!fd->isTypeRecoveryOn()) return;
+  Varnode *spVn = fd->findSpacebaseInput(space);
+  if (spVn == (Varnode *)0) return;
+  list<PcodeOp *>::const_iterator iter;
+  vector<PcodeOp *> refOps;
+  for(iter=spVn->beginDescend();iter!=spVn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->getEvalType() == PcodeOp::special && !op->isCall()) continue;
+    OpCode opc = op->code();
+    if (opc == CPUI_INT_ADD || opc == CPUI_PTRSUB || opc == CPUI_PTRADD)
+      continue;
+    refOps.push_back(op);
+  }
+  for(int4 i=0;i<refOps.size();++i) {
+    PcodeOp *op = refOps[i];
+    int4 slot = op->getSlot(spVn);
+    PcodeOp *ptrsub = fd->newOpBefore(op,CPUI_PTRSUB,spVn,fd->newConstant(spVn->getSize(),0));
+    fd->opSetInput(op, ptrsub->getOut(), slot);
+  }
+}
+
 /// This resets the discovery process for new local variables mapped to the scope's address space.
 /// Any analysis removing specific ranges from the mapped set (via markNotMapped()) is cleared.
 void ScopeLocal::resetLocalWindow(void)
@@ -395,7 +422,7 @@ void ScopeLocal::markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool parameter
       // If the symbol and the use are both as parameters
       // this is likely the special case of a shared return call sharing the parameter location
       // of the original function in which case we don't print a warning
-      if ((!parameter) || (sym->getCategory() != 0))
+      if ((!parameter) || (sym->getCategory() != Symbol::function_parameter))
 	fd->warningHeader("Variable defined which should be unmapped: "+sym->getName());
       return;
     }
@@ -814,7 +841,7 @@ void MapState::reconcileDatatypes(void)
   maplist.swap(newList);
 }
 
-/// The given LoadGuard, which may be a LOAD or STORE is converted into an appropriate
+/// The given LoadGuard, which may be a LOAD or STORE, is converted into an appropriate
 /// RangeHint, attempting to make use of any data-type or index information.
 /// \param guard is the given LoadGuard
 /// \param opc is the expected op-code (CPUI_LOAD or CPUI_STORE)
@@ -825,7 +852,7 @@ void MapState::addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFacto
   if (!guard.isValid(opc)) return;
   int4 step = guard.getStep();
   if (step == 0) return;		// No definitive sign of array access
-  Datatype *ct = guard.getOp()->getIn(1)->getType();
+  Datatype *ct = guard.getOp()->getIn(1)->getTypeReadFacing(guard.getOp());
   if (ct->getMetatype() == TYPE_PTR) {
     ct = ((TypePointer *) ct)->getPtrTo();
     while (ct->getMetatype() == TYPE_ARRAY)
@@ -1024,6 +1051,8 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
   state.sortAlias();
   if (aliasyes)
     markUnaliased(state.getAlias());
+  if (!state.getAlias().empty() && state.getAlias()[0] == 0)	// If a zero offset use of the stack pointer exists
+    annotateRawStackPtr();					// Add a special placeholder PTRSUB
 }
 
 /// Define stack Symbols based on HighVariables.
@@ -1157,7 +1186,7 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
 void ScopeLocal::fakeInputSymbols(void)
 
 {
-  int4 lockedinputs = getCategorySize(0);
+  int4 lockedinputs = getCategorySize(Symbol::function_parameter);
   VarnodeDefSet::const_iterator iter,enditer;
 
   iter = fd->beginDef(Varnode::input);
@@ -1194,7 +1223,7 @@ void ScopeLocal::fakeInputSymbols(void)
 	uint4 vflags = 0;
 	SymbolEntry *entry = queryProperties(vn->getAddr(),vn->getSize(),usepoint,vflags);
 	if (entry != (SymbolEntry *)0) {
-	  if (entry->getSymbol()->getCategory()==0)
+	  if (entry->getSymbol()->getCategory()==Symbol::function_parameter)
 	    continue;		// Found a matching symbol
 	}
       }

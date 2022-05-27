@@ -29,7 +29,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.scalar.Scalar;
@@ -75,7 +74,6 @@ public class SymbolicPropogator {
 		new NotFoundException("Divide by zero");
 
 	private long pointerMask;
-	private AddressRange externalBlockRange;
 
 	protected static final int MAX_EXACT_INSTRUCTIONS = 100;
 
@@ -90,16 +88,19 @@ public class SymbolicPropogator {
 
 	// Cache instructions looked up by containing
 	Map<Address, Instruction> instructionContainingCache = new LRUMap<>(LRU_SIZE);
+	
+	// cache for pcode callother injection payloads
+	HashMap<Long, InjectPayload> injectPayloadCache = new HashMap<Long, InjectPayload>();
 
 	public SymbolicPropogator(Program program) {
 		this.program = program;
 
 		Language language = program.getLanguage();
+
 		programContext = new ProgramContextImpl(language);
 		spaceContext = new ProgramContextImpl(language);
 
 		setPointerMask(program);
-		setExternalRange(program);
 
 		context = new VarnodeContext(program, programContext, spaceContext);
 		context.setDebug(debug);
@@ -120,18 +121,6 @@ public class SymbolicPropogator {
 			ptrSize = 8;
 		}
 		pointerMask = maskSize[ptrSize];
-	}
-
-	/**
-	 * Identify EXTERNAL block range which should not be disassembled.
-	 * @param program
-	 * @return EXTERNAL block range or null if not found
-	 */
-	private void setExternalRange(Program program) {
-		MemoryBlock block = program.getMemory().getBlock(MemoryBlock.EXTERNAL_BLOCK_NAME);
-		if (block != null) {
-			externalBlockRange = new AddressRangeImpl(block.getStart(), block.getEnd());
-		}
 	}
 
 	/**
@@ -792,16 +781,17 @@ public class SymbolicPropogator {
 
 			mustClearAll = pcodeIndex < mustClearAllUntil_PcodeIndex;
 
-			ptype = ops[pcodeIndex].getOpcode();
-			Varnode out = ops[pcodeIndex].getOutput();
-			Varnode[] in = ops[pcodeIndex].getInputs();
+			PcodeOp pcodeOp = ops[pcodeIndex];
+			ptype = pcodeOp.getOpcode();
+			Varnode out = pcodeOp.getOutput();
+			Varnode[] in = pcodeOp.getInputs();
 
 			Varnode val1, val2, val3, result;
 			long lval1, lval2;
 			long lresult;
 			Varnode vt;
 			if (debug) {
-				Msg.info(this, "   " + ops[pcodeIndex]);
+				Msg.info(this, "   " + pcodeOp);
 			}
 
 			try {
@@ -974,12 +964,12 @@ public class SymbolicPropogator {
 
 					// for callother, could be an interrupt, need to look at it like a call
 					case PcodeOp.CALLOTHER:
-						// HACK ALERT!
-						// if this is a segment op, emulate the segmenting for now.
-						String opName = this.program.getLanguage()
-								.getUserDefinedOpName((int) in[0].getOffset());
-						if (opName.equals("segment") && in.length > 2) {
-							checkSegmented(out, in[1], in[2], mustClearAll);
+						PcodeOp[] callOtherPcode = doCallOtherPcodeInjection(instruction, in, out);
+						
+						if (callOtherPcode != null) {
+							ops = injectPcode(ops, pcodeIndex, callOtherPcode);
+							pcodeIndex = -1;
+							injected = true;
 						}
 						else if (out != null) {
 							// clear out settings for the output from call other.
@@ -1636,27 +1626,73 @@ public class SymbolicPropogator {
 		return currentPcode;
 	}
 
-	private void checkSegmented(Varnode out, Varnode in1, Varnode in2, boolean mustClearAll)
-			throws NotFoundException {
-		Varnode vval1 = context.getValue(in1, evaluator);
-		Varnode vval2 = context.getValue(in2, evaluator);
-		if (vval1.isConstant() && vval2.isConstant()) {
-			int bitsize = program.getAddressFactory().getDefaultAddressSpace().getSize();
-			long segBase;
-			if (bitsize > 24) {
-				segBase = context.getConstant(vval1, evaluator) << 16;
-			}
-			else if (bitsize == 24) {
-				segBase = context.getConstant(vval1, evaluator) << 8;
-			}
-			else {
-				segBase = context.getConstant(vval1, evaluator) << 4;
-			}
-			vval1 = context.createConstantVarnode(segBase, out.getSize());
-			vval2 = context.createConstantVarnode(vval2.getOffset(), out.getSize());
-			Varnode segmentedValue = context.add(vval1, vval2, evaluator);
-			context.putValue(out, segmentedValue, mustClearAll);
+	/**
+	 * Check for pcode replacement for a callother pcode op
+	 * 
+	 * @param instr instruction whose pcodeop we might replace
+	 * @param ins input varnodes to callother pcodeop, ins[0] is callother nameindex
+	 * @param out output varnode for pcodeop
+	 * @return pcode that should replace callother, null otherwise
+	 * 
+	 * @throws NotFoundException
+	 */
+	private PcodeOp[] doCallOtherPcodeInjection(Instruction instr, Varnode ins[], Varnode out) throws NotFoundException {
+		Program prog = instr.getProgram();
+
+		PcodeInjectLibrary snippetLibrary = prog.getCompilerSpec().getPcodeInjectLibrary();
+		InjectPayload payload = findPcodeInjection(prog, snippetLibrary, ins[0].getOffset());
+		// no injection defined for this call-other pcodeop
+		if (payload == null) {
+			return null;
 		}
+
+		ArrayList<Varnode> inputs = new ArrayList<Varnode>();
+		for (int i = 1; i < ins.length; i++) {
+			Varnode vval = context.getValue(ins[i], evaluator);
+			if (!vval.isConstant()) {
+				return null;
+			}
+			inputs.add(vval);
+		}
+
+		InjectContext con = snippetLibrary.buildInjectContext();
+		con.baseAddr = instr.getMinAddress();
+		con.nextAddr = con.baseAddr.add(instr.getDefaultFallThroughOffset());
+		con.callAddr = null;
+		con.refAddr = con.callAddr;
+		con.inputlist = inputs;
+		con.output = new ArrayList<Varnode>();
+		con.output.add(out);
+		return payload.getPcode(prog, con);
+	}
+	
+	private InjectPayload findPcodeInjection(Program prog, PcodeInjectLibrary snippetLibrary, long callOtherIndex) {
+		InjectPayload payload = (InjectPayload) injectPayloadCache.get(callOtherIndex);
+		
+		// has a payload value for the pcode callother index
+		if (payload != null) {
+			return payload;
+		}
+		
+		// value null, if contains the key, then already looked up
+		if (injectPayloadCache.containsKey(callOtherIndex)) {
+			return null;
+		}
+		
+		String opName = prog.getLanguage().getUserDefinedOpName((int) callOtherIndex);
+		
+		// segment is special named injection
+		if ("segment".equals(opName)) {	
+			payload =
+				snippetLibrary.getPayload(InjectPayload.EXECUTABLEPCODE_TYPE, "segment_pcode");
+		}
+		else {
+			payload = snippetLibrary.getPayload(InjectPayload.CALLOTHERFIXUP_TYPE, opName);
+		}
+		
+		// save payload in cache for next lookup
+		injectPayloadCache.put(callOtherIndex, payload);
+		return payload;
 	}
 
 	/**
@@ -2329,7 +2365,7 @@ public class SymbolicPropogator {
 		}
 
 		if (refType.isFlow() && !refType.isIndirect() &&
-			(externalBlockRange == null || !externalBlockRange.contains(target))) {
+			!program.getMemory().isExternalBlockAddress(target)) {
 			Data udata = program.getListing().getUndefinedDataAt(target);
 			if (udata != null) {
 				DisassembleCommand cmd = new DisassembleCommand(target, null, true);
@@ -2413,9 +2449,6 @@ public class SymbolicPropogator {
 		}
 		catch (CodeUnitInsertionException e) {
 			data = program.getListing().getDefinedDataAt(address);
-		}
-		catch (DataTypeConflictException e) {
-			// do nothing
 		}
 		int addrByteSize = dt.getLength();
 

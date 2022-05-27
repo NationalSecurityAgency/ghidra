@@ -121,7 +121,7 @@ public:
   virtual void tagOp(const char *ptr,syntax_highlight hl,const PcodeOp *op);
   virtual void tagFuncName(const char *ptr,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op);
   virtual void tagType(const char *ptr,syntax_highlight hl,const Datatype *ct);
-  virtual void tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 off);
+  virtual void tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
   virtual void tagComment(const char *ptr,syntax_highlight hl,const AddrSpace *spc,uintb off);
   virtual void tagLabel(const char *ptr,syntax_highlight hl,const AddrSpace *spc,uintb off);
   virtual void print(const char *str,syntax_highlight hl=no_color);
@@ -270,7 +270,7 @@ public:
     *s << ptr; }
   virtual void tagType(const char *ptr,syntax_highlight hl,const Datatype *ct) {
     *s << ptr; }
-  virtual void tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 off) {
+  virtual void tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op) {
     *s << ptr; }
   virtual void tagComment(const char *ptr,syntax_highlight hl,
 			   const AddrSpace *spc,uintb off) {
@@ -504,9 +504,10 @@ public:
   /// \param h indicates how the identifier should be highlighted
   /// \param ct is the data-type associated with the field
   /// \param o is the (byte) offset of the field within its structured data-type
-  void tagField(const char *ptr,EmitXml::syntax_highlight h,const Datatype *ct,int4 o) {
+  /// \param inOp is the PcodeOp associated with the field (usually PTRSUB or SUBPIECE)
+  void tagField(const char *ptr,EmitXml::syntax_highlight h,const Datatype *ct,int4 o,const PcodeOp *inOp) {
     tok = ptr; size = tok.size();
-    tagtype=field_t; delimtype=tokenstring; hl=h; ptr_second.ct=ct; off=(uintb)o; }
+    tagtype=field_t; delimtype=tokenstring; hl=h; ptr_second.ct=ct; off=(uintb)o; op=inOp; }
 
   /// \brief Create a comment string in the generated source code
   ///
@@ -773,7 +774,7 @@ public:
   virtual void tagOp(const char *ptr,syntax_highlight hl,const PcodeOp *op);
   virtual void tagFuncName(const char *ptr,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op);
   virtual void tagType(const char *ptr,syntax_highlight hl,const Datatype *ct);
-  virtual void tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 off);
+  virtual void tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
   virtual void tagComment(const char *ptr,syntax_highlight hl,
 			  const AddrSpace *spc,uintb off);
   virtual void tagLabel(const char *ptr,syntax_highlight hl,

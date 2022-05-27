@@ -38,6 +38,7 @@ import docking.widgets.textpane.GHtmlTextPane;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import ghidra.app.plugin.core.datamgr.actions.*;
+import ghidra.app.plugin.core.datamgr.actions.associate.*;
 import ghidra.app.plugin.core.datamgr.archive.*;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
@@ -148,6 +149,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new CutAction(plugin));
 		addLocalAction(new CopyAction(plugin));
 		addLocalAction(new PasteAction(plugin));
+		addLocalAction(new ReplaceDataTypeAction(plugin));
 		addLocalAction(new DeleteAction(plugin));
 		addLocalAction(new DeleteArchiveAction(plugin));
 		addLocalAction(new RenameAction(plugin));
@@ -181,8 +183,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new FindDataTypesBySizeAction(plugin, "2"));
 		addLocalAction(new FindStructuresByOffsetAction(plugin, "3"));
 		addLocalAction(new FindStructuresBySizeAction(plugin, "4"));
-		includeDataMembersInSearchAction =
-			new IncludeDataTypesInFilterAction(plugin, this, "5");
+		includeDataMembersInSearchAction = new IncludeDataTypesInFilterAction(plugin, this, "5");
 		addLocalAction(includeDataMembersInSearchAction);
 
 		addLocalAction(new ApplyFunctionDataTypesAction(plugin)); // Tree
@@ -220,6 +221,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		// key binding only
 		addLocalAction(new ClearCutAction(plugin)); // Common
 
+		addLocalAction(new AssociateDataTypeAction(plugin));
 		addLocalAction(new CommitSingleDataTypeAction(plugin));
 		addLocalAction(new UpdateSingleDataTypeAction(plugin));
 		addLocalAction(new RevertDataTypeAction(plugin));
@@ -800,8 +802,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	}
 
 	// this is a callback from the action--we need this to prevent callbacks, as the other
-	// version of this method will try to get the method, which will lazily created it, which
-	// will trigger a callback...
+	// version of this method will update the action, which would trigger a callback
 	public void setIncludeDataTypeMembersInFilterCallback(boolean newValue) {
 		includeDataMembersInFilter = newValue;
 		archiveGTree.setIncludeDataTypeMembersInSearch(includeDataMembersInFilter);
@@ -817,6 +818,14 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		if (selected != includeDataMembersInFilter) {
 			action.setSelected(includeDataMembersInFilter);
 		}
+	}
+
+	public void setFilteringArrays(boolean b) {
+		archiveGTree.enableArrayFilter(b);
+	}
+
+	public void setFilteringPointers(boolean b) {
+		archiveGTree.enablePointerFilter(b);
 	}
 
 	boolean includeDataMembersInSearch() {

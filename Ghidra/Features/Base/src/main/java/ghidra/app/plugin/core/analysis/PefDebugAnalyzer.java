@@ -20,7 +20,8 @@ import ghidra.app.util.bin.format.pef.PefDebug;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PefLoader;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
@@ -69,8 +70,8 @@ public class PefDebugAnalyzer extends AbstractAnalyzer {
 	}
 
 	private void applyStructure(Program program, Address address) throws MemoryAccessException,
-			AddressOutOfBoundsException, CodeUnitInsertionException, DataTypeConflictException,
-			DuplicateNameException, InvalidInputException, CircularDependencyException {
+			AddressOutOfBoundsException, CodeUnitInsertionException, DuplicateNameException,
+			InvalidInputException, CircularDependencyException {
 
 		Listing listing = program.getListing();
 		Memory memory = program.getMemory();

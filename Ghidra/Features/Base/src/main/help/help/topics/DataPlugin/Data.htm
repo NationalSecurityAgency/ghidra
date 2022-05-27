@@ -218,11 +218,11 @@
               <TD colspan="4" bgcolor="#c0c0c0" height="21" align="left">
                 Settings
                 <ul>
-                		<li>Endian (*default, big, little)
-                		<li>Format (*hex, decimal, octal, binary, ascii)
-                		<li>Mnemonic-style (default, *assembly, C)
+                		<li>Endian (default, big, little)
+                		<li>Format (hex, decimal, octal, binary, ascii)
+                		<li>Mnemonic-style (default, assembly, C)
                 		<li>Mutability (normal, volatile, constant)
-                		<li>Padding (*unpadded, padded)
+                		<li>Padding (unpadded, padded)
                 </ul>
               </TD>
         
@@ -295,6 +295,18 @@
               <TH width="50%">Signed/Unsigned</TD>
             </TR>
             <TR>
+              <TD align="left">char</TD>
+              <TD align="left">(determined by data organziation)*</TD>
+            </TR>
+            <TR>
+              <TD align="left">schar</TD>
+              <TD align="left">Signed*</TD>
+            </TR>
+            <TR>
+              <TD align="left">uchar</TD>
+              <TD align="left">Unsigned*</TD>
+            </TR>
+            <TR>
               <TD align="left">short</TD>
               <TD align="left">Signed</TD>
             </TR>
@@ -332,11 +344,16 @@
             <TD colspan="4" bgcolor="#c0c0c0" height="21" align="left">
                 Settings <i>(may vary)</i>
                 <ul>
-                		<li>Endian (*default, big, little)
-                		<li>Format (*hex, decimal, octal, binary, ascii)
-                		<li>Mnemonic-style (default, *assembly, C)
-                		<li>Mutability (normal, volatile, constant)
-                		<li>Padding (*unpadded, padded)
+                		<li>Endian (default, big, little)</li>
+                		<li>Format (hex, decimal, octal, binary, ascii)</li>
+                		<li>Mnemonic-style (default, assembly, C)</li>
+                		<li>Mutability (normal, volatile, constant)</li>
+                		<li>Padding (unpadded, padded)</li>
+                </ul>
+                *Additional character type <A href="#StringSettings">Settings</A>:
+                <ul>
+                		<li>Charset (defaults to US-ASCII if user settable)</li>
+                		<li>Render non-ASCII Unicode (all, byte sequence, escape sequence)</li>
                 </ul>
               </TD>
    
@@ -361,16 +378,8 @@
               <TH width="75%">Description</TD>
             </TR>
             <TR>
-              <TD align="left">char</TD>
-              <TD>Signed ASCII character</TD>
-            </TR>
-            <TR>
-              <TD align="left">uchar</TD>
-              <TD>Unsigned ASCII character</TD>
-            </TR>
-            <TR>
               <TD align="left">wchar_t</TD>
-              <TD>Signed Wide Character</TD>
+              <TD>Signed Wide Character*</TD>
             </TR>
             <TR>
               <TD align="left">pointer</TD>
@@ -391,9 +400,9 @@
             <TR>
             
                <TD colspan="4" bgcolor="#c0c0c0" height="21" align="left">
-                Settings
+                Settings <i>(may vary)</i>
                 <ul>
-                		<li>Mutability (normal, volatile, constant)
+                		<li>Mutability (normal, volatile, constant)</li>
                 </ul>
               </TD>
  
@@ -483,7 +492,7 @@
                 <A href="#StringSettings">Settings</A>
                 <ul>
                 		<li>Charset (defaults to US-ASCII if user settable)
-                		<li>Render Unicode (all, byte sequence, escape sequence)
+                		<li>Render non-ASCII Unicode (all, byte sequence, escape sequence)
                 		<li>Translation
                 		<li>Mutability (normal, volatile, constant)
                 </ul>
@@ -770,7 +779,7 @@
       press <B>OK</B>.&nbsp; To reset a setting to its default value, set the <B>Use Default</B>
       checkbox.</P>
 
-      <P><A name="Default_Data_Settings"></A>The <I>default</I> settings for a given data type can
+      <P><A name="Default_Settings"></A>The <I>default</I> settings for a given data type can
       be changed.&nbsp; When a default setting has been changed, every data item <I>currently</I>
       using the default setting for that data type will use the new default value.&nbsp; Data items
       that have a modified value for that setting will not be affected.</P>
@@ -1173,9 +1182,14 @@
     <BLOCKQUOTE>
       <P>A typedef is an alias for another data type. It is useful for giving a more meaningful
       name to a data type.&nbsp; For example, you might typedef <I>dword</I> to be
-      <I>int</I>.&nbsp; Typedefs are <A href=
-      "../DataTypeManagerPlugin/data_type_manager_description.htm#CreateDataTypes">created</A>
-      using the Data Type Manager and applied like any other data type.</P>
+      <I>int</I>.&nbsp; 
+      In addition, a typedef may be based upon a pointer with additional Settings which can influence
+      how such a pointer should be interpretted.
+      Typedefs are created</A>
+      using the Data Type Manager and applied like any other data type (See 
+      <A href="../DataTypeManagerPlugin/data_type_manager_description.htm#CreateDataTypes">Creating New
+      User Defined Data Types</A>).</P>
+      
     </BLOCKQUOTE>
 
     <H3>Void</H3>

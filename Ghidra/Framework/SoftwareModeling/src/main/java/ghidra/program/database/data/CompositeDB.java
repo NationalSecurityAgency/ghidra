@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
@@ -99,6 +100,11 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	@Override
 	protected long doGetCategoryID() {
 		return record.getLongValue(CompositeDBAdapter.COMPOSITE_CAT_COL);
+	}
+
+	@Override
+	protected Settings doGetDefaultSettings() {
+		return SettingsImpl.NO_SETTINGS;
 	}
 
 	/**

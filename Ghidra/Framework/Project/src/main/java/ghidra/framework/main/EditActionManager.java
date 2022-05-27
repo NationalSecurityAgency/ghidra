@@ -16,7 +16,6 @@
 package ghidra.framework.main;
 
 import java.io.File;
-import java.io.IOException;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -26,7 +25,6 @@ import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.net.ApplicationKeyManagerFactory;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
 
 /**
  * Helper class to manage the actions on the Edit menu.
@@ -121,14 +119,8 @@ class EditActionManager {
 			return;
 		}
 
-		try {
-			ApplicationKeyManagerFactory.setKeyStore(null, true);
-			clearCertPathAction.setEnabled(false);
-		}
-		catch (IOException e) {
-			Msg.error(this,
-				"Error occurred while clearing PKI certificate setting: " + e.getMessage());
-		}
+		ApplicationKeyManagerFactory.setKeyStore(null, true);
+		clearCertPathAction.setEnabled(false);
 	}
 
 	private void editCertPath() {
@@ -167,16 +159,9 @@ class EditActionManager {
 			if (file == null) {
 				return; // cancelled
 			}
-			try {
-				ApplicationKeyManagerFactory.setKeyStore(file.getAbsolutePath(), true);
-				clearCertPathAction.setEnabled(true);
-				validInput = true;
-			}
-			catch (IOException e) {
-				Msg.showError(this, tool.getToolFrame(), "Certificate Failure",
-					"Failed to initialize key manager.\n" + e.getMessage(), e);
-				file = null;
-			}
+			ApplicationKeyManagerFactory.setKeyStore(file.getAbsolutePath(), true);
+			clearCertPathAction.setEnabled(true);
+			validInput = true;
 		}
 	}
 

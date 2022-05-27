@@ -4,12 +4,12 @@ To do this:
 (1) check the version for your copy of lldb:
 	lldb --version
 	
-If you have a version other than the most current (release/13.x), you will need to either 
-install v13 or generate the JNI interface for the version you have.
+If you have a version other than the most current (release/14.x), you will need to either 
+install v14 or generate the JNI interface for the version you have.
 
-(2a) To install LLVM/lldb version 13:
+(2a) To install LLVM/lldb version 14:
 	- git clone https://github.com/llvm/llvm-project.git
-	- git checkout release/13.x
+	- git checkout release/14.x
 	- cd llvm-project
 	- mkdir build && cd build
 	- cmake -G Ninja -DLLVM_ENABLE_PROJECTS="clang;libcxx;lldb" -DCMAKE_BUILD_TYPE=Release -DLLVM_USE_LINKER=gold ../llvm
@@ -37,8 +37,8 @@ If you have the most current version or have completed step (2), you can:
 	- gradle build
 	
 (4) To run:
-	- add -Djava.library.path=/path_to/liblldb:/path_to/liblldb-java:etc in support/launch.properties or,
-	  if you're running out of Eclipse, to the arguments in the Run/Debug Configuration
+	- add -Djava.library.path=/path_to_liblldb:/path_to_liblldb-java:etc (not including the actual library name)
+	  in support/launch.properties or, if you're running out of Eclipse, to the arguments in the Run/Debug Configuration
 	  
 TROUBLESHOOTING:
 (1) If you are trying to execute "gradle buildGhidra" with LLVM_HOME already set, you are likely 
@@ -51,6 +51,10 @@ TROUBLESHOOTING:
 (4) If you get an "Unsatisfied Link Error" when you start the debugger,  make sure both liblldb
     and liblldb-java are in the path described by java.library.path.
 (5) Link errors can also be caused by different architectures or platforms for the libraries.
+(6) You may need to set up the development environment before running gradle:
+		gradle -I gradle/support/fetchDependencies.gradle init
+(7) If you are using the homebrew installation of lldb, you may need to modify buildNatives.gradle 
+    to reflect the homebrew directory structure, e.g. $llvm_dir/lldb/include -> $llvm_dir/include.
     
     
     

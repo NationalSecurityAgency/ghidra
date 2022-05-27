@@ -94,12 +94,12 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 			stack.setDepth(2, false);
 
 			TraceStackFrame frame = stack.getFrame(0, false);
-			frame.setProgramCounter(tb.addr(0x00400100));
-			frame.setComment("Hello");
+			frame.setProgramCounter(Range.all(), tb.addr(0x00400100));
+			frame.setComment(stack.getSnap(), "Hello");
 
 			frame = stack.getFrame(1, false);
-			frame.setProgramCounter(tb.addr(0x00400200));
-			frame.setComment("World");
+			frame.setProgramCounter(Range.all(), tb.addr(0x00400200));
+			frame.setComment(stack.getSnap(), "World");
 		}
 	}
 

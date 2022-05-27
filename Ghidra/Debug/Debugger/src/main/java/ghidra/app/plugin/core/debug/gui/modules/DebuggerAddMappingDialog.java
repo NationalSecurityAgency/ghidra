@@ -29,6 +29,7 @@ import docking.DialogComponentProvider;
 import docking.widgets.model.GAddressRangeField;
 import docking.widgets.model.GLifespanField;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -357,7 +358,15 @@ public class DebuggerAddMappingDialog extends DialogComponentProvider {
 	public void setProgram(Program program) {
 		this.program = program;
 		if (program != null) {
-			labelProg.setText(program.getName());
+			String name;
+			DomainFile df = program.getDomainFile();
+			if (df != null) {
+				name = df.getName();
+			}
+			else {
+				name = program.getName();
+			}
+			labelProg.setText(name);
 			fieldProgRange.setAddressFactory(program.getAddressFactory());
 		}
 		else {

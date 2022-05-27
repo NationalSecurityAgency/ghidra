@@ -30,6 +30,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramContext;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
 /**
@@ -78,7 +79,7 @@ public class ProgramContextTest extends AbstractGhidraHeadedIntegrationTest {
 		int id = program.startTransaction("Test");
 		try {
 
-			Address start = getAddress(0);
+			Address start = addr(0);
 			try {
 				mem.createInitializedBlock("first", start, 100, (byte) 0,
 					TaskMonitorAdapter.DUMMY_MONITOR, false);
@@ -91,7 +92,7 @@ public class ProgramContextTest extends AbstractGhidraHeadedIntegrationTest {
 			boolean didSomething = false;
 
 			Address startAddress = start;
-			Address endAddress = getAddress(0x30);
+			Address endAddress = addr(0x30);
 
 			// stick a value into each one!
 			BigInteger value = BigInteger.valueOf(255);
@@ -157,8 +158,38 @@ public class ProgramContextTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private Address getAddress(long offset) {
-		return space.getAddress(offset);
+	@Test
+	public void testImageBaseChange() throws Exception {
+		int id = program.startTransaction("Test");
+		Address start = addr(0x10);
+		Address end = addr(0x20);
+
+		mem.createInitializedBlock("first", addr(0), 0x100, (byte) 0, TaskMonitor.DUMMY, false);
+
+		ProgramContext programContext = program.getProgramContext();
+
+		Register register = programContext.getRegisters().get(0);
+		BigInteger value = BigInteger.valueOf(0x11);
+
+		programContext.setValue(register, addr(0x10), addr(0x20), value);
+		assertNull(programContext.getValue(register, start.subtract(1), true));
+		assertEquals(value, programContext.getValue(register, start, true));
+		assertEquals(value, programContext.getValue(register, end, true));
+		assertNull(programContext.getValue(register, end.add(1), true));
+
+		long imageOffset = 0x5;
+		Address imageBase = addr(imageOffset);
+		program.setImageBase(imageBase, true);
+
+		assertNull(programContext.getValue(register, start.add(imageOffset - 1), true));
+		assertEquals(value, programContext.getValue(register, start.add(imageOffset), true));
+		assertEquals(value, programContext.getValue(register, end.add(imageOffset), true));
+		assertNull(programContext.getValue(register, end.add(imageOffset + 1), true));
+
+		program.endTransaction(id, false);
 	}
 
+	private Address addr(long offset) {
+		return space.getAddress(offset);
+	}
 }

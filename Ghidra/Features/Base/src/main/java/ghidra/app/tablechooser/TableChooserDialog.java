@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 
-import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.table.*;
@@ -36,8 +35,6 @@ import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -159,19 +156,7 @@ public class TableChooserDialog extends DialogComponentProvider
 	private void createActions() {
 		String owner = getClass().getSimpleName();
 
-		DockingAction selectAction = new MakeProgramSelectionAction(owner, table) {
-			@Override
-			protected ProgramSelection makeSelection(ActionContext context) {
-				ProgramSelection selection = table.getProgramSelection();
-				if (navigatable != null) {
-					navigatable.goTo(program,
-						new ProgramLocation(program, selection.getMinAddress()));
-					navigatable.setSelection(selection);
-					navigatable.requestFocus();
-				}
-				return selection;
-			}
-		};
+		DockingAction selectAction = new MakeProgramSelectionAction(navigatable, owner, table);
 
 		DockingAction selectionNavigationAction = new SelectionNavigationAction(owner, table);
 		selectionNavigationAction
@@ -378,6 +363,7 @@ public class TableChooserDialog extends DialogComponentProvider
 		return rowObjects;
 	}
 
+	@Override
 	public void dispose() {
 		table.dispose();
 		workers.forEach(w -> w.cancel(true));
@@ -421,24 +407,30 @@ public class TableChooserDialog extends DialogComponentProvider
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
-			Component superRenderer;
-			if (delegate instanceof GTableCellRenderer) {
-				superRenderer = super.getTableCellRendererComponent(data);
+			Component renderer;
+			if (delegate == null) {
+				renderer = super.getTableCellRendererComponent(data);
 			}
 			else {
-				superRenderer = super.getTableCellRendererComponent(data.getTable(),
-					data.getValue(), data.isSelected(), data.hasFocus(), data.getRowViewIndex(),
-					data.getColumnViewIndex());
+				if (delegate instanceof GTableCellRenderer) {
+					renderer =
+						((GTableCellRenderer) delegate).getTableCellRendererComponent(data);
+				}
+				else {
+					renderer = delegate.getTableCellRendererComponent(data.getTable(),
+						data.getValue(), data.isSelected(), data.hasFocus(), data.getRowViewIndex(),
+						data.getColumnViewIndex());
+				}
 			}
 
 			AddressableRowObject ro = (AddressableRowObject) data.getRowObject();
 			if (sharedPending.contains(ro)) {
-				superRenderer.setBackground(pendingColor);
-				superRenderer.setForeground(data.getTable().getSelectionForeground());
-				superRenderer.setForeground(Color.BLACK);
+				renderer.setBackground(pendingColor);
+				renderer.setForeground(data.getTable().getSelectionForeground());
+				renderer.setForeground(Color.BLACK);
 			}
 
-			return superRenderer;
+			return renderer;
 		}
 
 		void setDelegate(TableCellRenderer delegate) {

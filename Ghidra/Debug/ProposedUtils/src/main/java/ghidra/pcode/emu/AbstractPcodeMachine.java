@@ -25,13 +25,16 @@ import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * An abstract implementation of {@link PcodeMachine} suitable as a base for most implementations
+ * 
+ * <p>
+ * For a complete example of a p-code emulator, see {@link PcodeEmulator}.
  */
 public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	protected final SleighLanguage language;
 	protected final PcodeArithmetic<T> arithmetic;
-	protected final SleighUseropLibrary<T> library;
+	protected final PcodeUseropLibrary<T> library;
 
-	protected final SleighUseropLibrary<T> stubLibrary;
+	protected final PcodeUseropLibrary<T> stubLibrary;
 
 	/* for abstract thread access */ PcodeStateInitializer initializer;
 	private PcodeExecutorState<T> sharedState;
@@ -41,12 +44,17 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 
 	protected final Map<Address, PcodeProgram> injects = new HashMap<>();
 
-	public AbstractPcodeMachine(SleighLanguage language, PcodeArithmetic<T> arithmetic,
-			SleighUseropLibrary<T> library) {
+	/**
+	 * Construct a p-code machine with the given language and arithmetic
+	 * 
+	 * @param language the processor language to be emulated
+	 * @param arithmetic the definition of arithmetic p-code ops to be used in emulation
+	 */
+	public AbstractPcodeMachine(SleighLanguage language, PcodeArithmetic<T> arithmetic) {
 		this.language = language;
 		this.arithmetic = arithmetic;
-		this.library = library;
 
+		this.library = createUseropLibrary();
 		this.stubLibrary = createThreadStubLibrary().compose(library);
 
 		/**
@@ -56,6 +64,13 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 
 		this.initializer = getPluggableInitializer(language);
 	}
+
+	/**
+	 * A factory method to create the userop library shared by all threads in this machine
+	 * 
+	 * @return the library
+	 */
+	protected abstract PcodeUseropLibrary<T> createUseropLibrary();
 
 	@Override
 	public SleighLanguage getLanguage() {
@@ -68,26 +83,50 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	}
 
 	@Override
-	public SleighUseropLibrary<T> getUseropLibrary() {
+	public PcodeUseropLibrary<T> getUseropLibrary() {
 		return library;
 	}
 
 	@Override
-	public SleighUseropLibrary<T> getStubUseropLibrary() {
+	public PcodeUseropLibrary<T> getStubUseropLibrary() {
 		return stubLibrary;
 	}
 
+	/**
+	 * A factory method to create the (memory) state shared by all threads in this machine
+	 * 
+	 * @return the shared state
+	 */
 	protected abstract PcodeExecutorState<T> createSharedState();
 
+	/**
+	 * A factory method to create the (register) state local to the given thread
+	 * 
+	 * @param thread the thread
+	 * @return the thread-local state
+	 */
 	protected abstract PcodeExecutorState<T> createLocalState(PcodeThread<T> thread);
 
-	protected SleighUseropLibrary<T> createThreadStubLibrary() {
-		return new DefaultPcodeThread.SleighEmulationLibrary<T>(null);
+	/**
+	 * A factory method to create a stub library for compiling thread-local SLEIGH source
+	 * 
+	 * <p>
+	 * Because threads may introduce p-code userops using libraries unique to that thread, it
+	 * becomes necessary to at least export stub symbols, so that p-code programs can be compiled
+	 * from SLEIGH source before the thread has necessarily been created. A side effect of this
+	 * strategy is that all threads, though they may have independent libraries, must export
+	 * identically-named symbols.
+	 * 
+	 * @return the stub library for all threads
+	 */
+	protected PcodeUseropLibrary<T> createThreadStubLibrary() {
+		return new DefaultPcodeThread.PcodeEmulationLibrary<T>(null);
 	}
 
 	/**
-	 * Extension point to override construction of this machine's threads
+	 * A factory method to create a new thread in this machine
 	 * 
+	 * @see #newThread(String)
 	 * @param name the name of the new thread
 	 * @return the new thread
 	 */
@@ -95,6 +134,26 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		return new DefaultPcodeThread<>(name, this);
 	}
 
+	/**
+	 * Search the classpath for an applicable state initializer
+	 * 
+	 * <p>
+	 * If found, the initializer is executed immediately upon creating this machine's shared state
+	 * and upon creating each thread.
+	 * 
+	 * <p>
+	 * TODO: This isn't really being used. At one point in development it was used to initialize
+	 * x86's FS_OFFSET and GS_OFFSET registers. Those only exist in p-code, not the real processor,
+	 * and replace what might have been {@code segment(FS)}. There seems more utility in detecting
+	 * when those registers are uninitialized, requiring the user to initialize them, than it is to
+	 * silently initialize them to 0. Unless we find utility in this, it will likely be removed in
+	 * the near future.
+	 * 
+	 * @see #doPluggableInitialization()
+	 * @see DefaultPcodeThread#doPluggableInitialization()
+	 * @param language the language requiring pluggable initialization
+	 * @return the initializer
+	 */
 	protected static PcodeStateInitializer getPluggableInitializer(Language language) {
 		for (PcodeStateInitializer init : ClassSearcher.getInstances(PcodeStateInitializer.class)) {
 			if (init.isApplicable(language)) {
@@ -104,6 +163,11 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		return null;
 	}
 
+	/**
+	 * Execute the initializer upon this machine, if applicable
+	 * 
+	 * @see #getPluggableInitializer(Language)
+	 */
 	protected void doPluggableInitialization() {
 		if (initializer != null) {
 			initializer.initializeMachine(this);
@@ -148,6 +212,12 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		return sharedState;
 	}
 
+	/**
+	 * Check for a p-code injection (override) at the given address
+	 * 
+	 * @param address the address, usually the program counter
+	 * @return the injected program, most likely {@code null}
+	 */
 	protected PcodeProgram getInject(Address address) {
 		return injects.get(address);
 	}
@@ -184,7 +254,9 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		/**
 		 * TODO: The template build idea is probably more pertinent here. If a user places a
 		 * breakpoint with the purpose of single-stepping the p-code of that instruction, it won't
-		 * work, because that p-code is occluded by emu_exec_decoded().
+		 * work, because that p-code is occluded by emu_exec_decoded(). I suppose this could also be
+		 * addressed by formalizing and better exposing the notion of p-code stacks (of p-code
+		 * frames)
 		 */
 		PcodeProgram pcode = compileSleigh("breakpoint:" + address, List.of(
 			"if (!(" + sleighCondition + ")) goto <nobreak>;",

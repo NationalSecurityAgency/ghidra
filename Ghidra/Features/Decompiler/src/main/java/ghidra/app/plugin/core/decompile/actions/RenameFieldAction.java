@@ -24,6 +24,7 @@ import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.listing.Function;
 import ghidra.util.*;
@@ -59,7 +60,7 @@ public class RenameFieldAction extends AbstractDecompilerAction {
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		PluginTool tool = context.getTool();
 		ClangToken tokenAtCursor = context.getTokenAtCursor();
-		Structure dt = getStructDataType(tokenAtCursor);
+		Composite dt = getCompositeDataType(tokenAtCursor);
 		if (dt == null) {
 			Msg.showError(this, tool.getToolFrame(), "Rename Failed",
 				"Could not find structure datatype");
@@ -73,9 +74,15 @@ public class RenameFieldAction extends AbstractDecompilerAction {
 			return;
 		}
 
-		RenameStructureFieldTask nameTask =
-			new RenameStructureFieldTask(tool, context.getProgram(), context.getComponentProvider(),
-				tokenAtCursor, dt, offset);
+		RenameTask nameTask;
+		if (dt instanceof Structure) {
+			nameTask = new RenameStructFieldTask(tool, context.getProgram(),
+				context.getComponentProvider(), tokenAtCursor, (Structure) dt, offset);
+		}
+		else {
+			nameTask = new RenameUnionFieldTask(tool, context.getProgram(),
+				context.getComponentProvider(), tokenAtCursor, dt, offset);
+		}
 		nameTask.runTask(true);
 	}
 }

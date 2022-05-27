@@ -19,7 +19,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetEnvironment;
+import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 
@@ -54,7 +55,7 @@ public class OverridesDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetObject target,
 			boolean includeOverrides) {
 		if (!includeOverrides) {
 			return Set.of();
@@ -65,7 +66,7 @@ public class OverridesDebuggerMappingOpinion implements DebuggerMappingOpinion {
 			// ALL THE SPECS!!!
 			new LanguageCompilerSpecQuery(null, null, null, null, null))
 				.stream()
-				.map(lcsp -> offerForLanguageAndCSpec(process, endian, lcsp))
+				.map(lcsp -> offerForLanguageAndCSpec(target, endian, lcsp))
 				.collect(Collectors.toSet());
 	}
 }

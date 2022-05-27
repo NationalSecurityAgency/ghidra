@@ -120,7 +120,9 @@ public class GdbModelTargetThreadContainer
 	protected void invalidateRegisterCaches() {
 		for (GdbThread thread : inferior.getKnownThreads().values()) {
 			GdbModelTargetThread targetThread = (GdbModelTargetThread) impl.getModelObject(thread);
-			targetThread.invalidateRegisterCaches();
+			if (targetThread != null) {
+				targetThread.invalidateRegisterCaches();
+			}
 		}
 	}
 
@@ -147,7 +149,9 @@ public class GdbModelTargetThreadContainer
 		for (GdbThread thread : inferior.getKnownThreads().values()) {
 			GdbModelTargetThread targetThread =
 				(GdbModelTargetThread) impl.getModelObject(thread);
-			fence.include(targetThread.stateChanged(sco));
+			if (targetThread != null) {
+				fence.include(targetThread.stateChanged(sco));
+			}
 		}
 		return fence.ready();
 	}

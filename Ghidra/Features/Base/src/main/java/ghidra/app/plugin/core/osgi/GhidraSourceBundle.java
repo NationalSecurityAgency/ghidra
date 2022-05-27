@@ -35,8 +35,7 @@ import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
 
 import org.apache.felix.framework.util.manifestparser.ManifestParser;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleException;
+import org.osgi.framework.*;
 import org.osgi.framework.Constants;
 import org.osgi.framework.wiring.*;
 import org.phidias.compile.BundleJavaManager;
@@ -47,17 +46,16 @@ import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
 import ghidra.app.script.*;
 import ghidra.util.Msg;
+import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
 /**
- * {@link GhidraSourceBundle} represents a Java source directory that is compiled on build to an OSGi bundle.
+ * Represents a Java source directory that is compiled on build to an OSGi bundle.
  * 
  * <p>A manifest and {@link BundleActivator} are generated if not already present.
  */
-/**
- *
- */
 public class GhidraSourceBundle extends GhidraBundle {
+	private static final String INSTRCTION_ACTIVATOR = "org.osgi.framework.BundleActivator";
 	private static final String GENERATED_ACTIVATOR_CLASSNAME = "GeneratedActivator";
 	private static final String GENERATED_VERSION = "1.0";
 
@@ -70,43 +68,53 @@ public class GhidraSourceBundle extends GhidraBundle {
 	private static final Predicate<String> IS_CLASS_FILE =
 		Pattern.compile("(\\$.*)?\\.class", Pattern.CASE_INSENSITIVE).asMatchPredicate();
 
-	protected interface DiscrepencyCallback {
+	/**
+	 * Used to report source and class file deviation
+	 */
+	protected interface DiscrepancyCallback {
 		/**
-		 * Invoked when there is a discrepancy between {@code sourceFile} and its
-		 * corresponding class file(s), {@code classFiles}
+		 * Invoked when there is a discrepancy between {@code sourceFile} and its corresponding 
+		 * class file(s), {@code classFiles}
 		 * 
-		 * @param sourceFile the source file or null to indicate the class files have no corresponding source
+		 * @param sourceFile the source file or null to indicate the class files have no 
+		 * corresponding source
 		 * @param classFiles corresponding class file(s)
 		 * @throws Throwable an exception
 		 */
 		void found(ResourceFile sourceFile, Collection<Path> classFiles) throws Throwable;
 	}
 
+	// This is a hash; it is used to create a unique directory name for this bundle
 	private final String symbolicName;
 	private final Path binaryDir;
-	private final String bundleLoc;
 
+	/**
+	 *  The bundle location id
+	 *  @see #getLocationIdentifier()
+	 */
+	private final String bundleLocationId;
+
+	// These 2 lists are updated to track source file to class file changes; newSources are those
+	// that need to be compiled; oldBinaries are those that no longer have source files (such as
+	// when a source file is deleted)
 	private final List<ResourceFile> newSources = new ArrayList<>();
 	private final List<Path> oldBinaries = new ArrayList<>();
 
 	private JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
-	//// information indexed by source file
+	// information indexed by source file
 	private final Map<ResourceFile, BuildError> buildErrors = new HashMap<>();
 	private final Map<ResourceFile, List<BundleRequirement>> sourceFileToRequirements =
 		new HashMap<>();
 
 	private final Map<String, List<ResourceFile>> requirementToSourceFileMap = new HashMap<>();
+	private final Set<String> missedRequirements = new HashSet<>();
 	private final Set<String> importPackageValues = new HashSet<>();
-
-	private Set<String> missedRequirements = new HashSet<>();
-
-	private long lastCompileAttempt;
 
 	/**
 	 * Create a new GhidraSourceBundle.
 	 * 
-	 * @param bundleHost the {@link BundleHost} instance this bundle will belong to
+	 * @param bundleHost the instance this bundle will belong to
 	 * @param sourceDirectory the source bundle directory
 	 * @param enabled true to start enabled
 	 * @param systemBundle true if this is a Ghidra system bundle
@@ -115,18 +123,18 @@ public class GhidraSourceBundle extends GhidraBundle {
 			boolean systemBundle) {
 		super(bundleHost, sourceDirectory, enabled, systemBundle);
 
-		this.symbolicName = GhidraSourceBundle.sourceDirHash(getSourceDirectory());
-		this.binaryDir = GhidraSourceBundle.getCompiledBundlesDir().resolve(symbolicName);
-
-		this.bundleLoc = "reference:file://" + binaryDir.toAbsolutePath().normalize().toString();
+		this.symbolicName = sourceDirHash(getSourceDirectory());
+		this.binaryDir = getCompiledBundlesDir().resolve(symbolicName);
+		this.bundleLocationId =
+			"reference:file://" + binaryDir.toAbsolutePath().normalize().toString();
 	}
 
 	/**
 	 * (alias of {@link #getFile} for readability)
 	 * @return the source directory this bundle represents
 	 */
-	protected final ResourceFile getSourceDirectory() {
-		return file;
+	private final ResourceFile getSourceDirectory() {
+		return bundleFile;
 	}
 
 	/**
@@ -142,8 +150,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * When a source bundle doesn't have a manifest, Ghidra computes the bundle's 
-	 * symbolic name as a hash of the source directory path.
+	 * When a source bundle doesn't have a manifest, Ghidra computes the bundle's symbolic name as 
+	 * a hash of the source directory path.
 	 * 
 	 * <p>This hash is also used as the final path component of the compile destination:
 	 * <br/>&nbsp;{@code $USERHOME/.ghidra/.ghidra_<ghidra version>/osgi/compiled-bundles/<sourceDirHash> }
@@ -155,18 +163,6 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 */
 	public static String sourceDirHash(ResourceFile sourceDir) {
 		return Integer.toHexString(sourceDir.getAbsolutePath().hashCode());
-	}
-
-	/**
-	 * for testing only!!!
-	 * 
-	 * @param sourceFile a ghidra script file
-	 * @return the directory its class is compiled to
-	 */
-	public static Path getBindirFromScriptFile(ResourceFile sourceFile) {
-		ResourceFile tmpSourceDir = sourceFile.getParentFile();
-		String tmpSymbolicName = GhidraSourceBundle.sourceDirHash(tmpSourceDir);
-		return GhidraSourceBundle.getCompiledBundlesDir().resolve(tmpSymbolicName);
 	}
 
 	/**
@@ -188,16 +184,16 @@ public class GhidraSourceBundle extends GhidraBundle {
 		return relativePath.replace(File.separatorChar, '.');
 	}
 
-	void clearBuildErrors(ResourceFile sourceFile) {
+	private void clearBuildErrors(ResourceFile sourceFile) {
 		buildErrors.remove(sourceFile);
 	}
 
 	/**
-	 * append build error 
+	 * Append the given build error. 
 	 * @param sourceFile the file w/ errors 
 	 * @param err an error string
 	 */
-	protected void buildError(ResourceFile sourceFile, String err) {
+	private void buildError(ResourceFile sourceFile, String err) {
 		BuildError error = buildErrors.computeIfAbsent(sourceFile, BuildError::new);
 		error.append(err);
 	}
@@ -206,7 +202,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 * Get any errors associated with building the given source file.
 	 * 
 	 * @param sourceFile the source file
-	 * @return a {@link BuildError} object
+	 * @return the build error or null if no errors
 	 */
 	public BuildError getErrors(ResourceFile sourceFile) {
 		return buildErrors.get(sourceFile);
@@ -233,9 +229,10 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * update buildReqs based on \@importpackage tag in java files in the default(unnamed) package
+	 * Update build requirements based on {@code @importpackage} tag in java files in the 
+	 * default (unnamed) package.
 	 * 
-	 * @throws GhidraBundleException on failure to parse the \@importpackage tag
+	 * @throws GhidraBundleException on failure to parse the {@code @importpackage} tag
 	 */
 	private void updateRequirementsFromMetadata() throws GhidraBundleException {
 		sourceFileToRequirements.clear();
@@ -243,38 +240,42 @@ public class GhidraSourceBundle extends GhidraBundle {
 		importPackageValues.clear();
 
 		for (ResourceFile rootSourceFile : getSourceDirectory().listFiles()) {
-			if (rootSourceFile.getName().endsWith(".java")) {
-				// without GhidraScriptComponentProvider.updateAvailableScriptFilesForDirectory, 
-				// or GhidraScriptComponentProvider.newScript this might be the earliest need for
-				// ScriptInfo, so allow construction.
+			if (!rootSourceFile.getName().endsWith(".java")) {
+				continue;
+			}
 
-				// NB: ScriptInfo will update field values if lastModified has changed since last time they were computed
-				String importPackage = parseImportPackageMetadata(rootSourceFile);
-				if (importPackage != null && !importPackage.isEmpty()) {
-					importPackageValues.addAll(
-						ManifestParser.parseDelimitedString(importPackage.strip(), ","));
+			// Without GhidraScriptComponentProvider.updateAvailableScriptFilesForDirectory, or 
+			// GhidraScriptComponentProvider.newScript this might be the earliest need for
+			// ScriptInfo, so allow construction.
 
-					List<BundleRequirement> requirements;
-					try {
-						requirements = OSGiUtils.parseImportPackage(importPackage);
-					}
-					catch (BundleException e) {
-						throw new GhidraBundleException(getLocationIdentifier(),
-							"@importpackage error", e);
-					}
-					sourceFileToRequirements.put(rootSourceFile, requirements);
-					for (BundleRequirement requirement : requirements) {
-						requirementToSourceFileMap
-								.computeIfAbsent(requirement.toString(), x -> new ArrayList<>())
-								.add(rootSourceFile);
-					}
-				}
+			// NB: ScriptInfo will update field values if lastModified has changed since last time 
+			// they were computed
+			String importPackage = parseImportPackageMetadata(rootSourceFile);
+			if (importPackage == null || importPackage.isEmpty()) {
+				continue;
+			}
+
+			List<String> parts = ManifestParser.parseDelimitedString(importPackage.strip(), ",");
+			importPackageValues.addAll(parts);
+			List<BundleRequirement> requirements;
+			try {
+				requirements = OSGiUtils.parseImportPackage(importPackage);
+			}
+			catch (BundleException e) {
+				throw new GhidraBundleException(getLocationIdentifier(),
+					"@importpackage error", e);
+			}
+			sourceFileToRequirements.put(rootSourceFile, requirements);
+			for (BundleRequirement requirement : requirements) {
+				requirementToSourceFileMap
+						.computeIfAbsent(requirement.toString(), x -> new ArrayList<>())
+						.add(rootSourceFile);
 			}
 		}
 	}
 
 	/**
-	 * assumes that {@link #updateRequirementsFromMetadata()} has been called recently
+	 * Assumes that {@link #updateRequirementsFromMetadata()} has been called recently
 	 * 
 	 * @return deduped requirements
 	 */
@@ -288,30 +289,31 @@ public class GhidraSourceBundle extends GhidraBundle {
 		return dedupedReqs;
 	}
 
-	protected ManifestParser createSourceManifestParser() {
+	private ManifestParser createSourceManifestParser() {
 		ResourceFile manifestFile = getSourceManifestFile();
-		if (manifestFile.exists()) {
-			try (InputStream manifestInputStream = manifestFile.getInputStream()) {
-				Manifest manifest = new Manifest(manifestInputStream);
-				Attributes mainAttributes = manifest.getMainAttributes();
-				Map<String, Object> headerMap = mainAttributes.entrySet()
-						.stream()
-						.collect(Collectors.toMap(e -> e.getKey().toString(),
-							e -> e.getValue().toString()));
-				return new ManifestParser(null, null, null, headerMap);
-			}
-			catch (IOException | BundleException e) {
-				throw new RuntimeException(e);
-			}
+		if (!manifestFile.exists()) {
+			return null;
 		}
-		return null;
+
+		try (InputStream is = manifestFile.getInputStream()) {
+			Manifest manifest = new Manifest(is);
+			Attributes mainAttributes = manifest.getMainAttributes();
+			Map<String, Object> headerMap = mainAttributes.entrySet()
+					.stream()
+					.collect(Collectors.toMap(e -> e.getKey().toString(),
+						e -> e.getValue().toString()));
+			return new ManifestParser(null, null, null, headerMap);
+		}
+		catch (IOException | BundleException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	public List<BundleRequirement> getAllRequirements() throws GhidraBundleException {
-		ManifestParser manifestParser = createSourceManifestParser();
-		if (manifestParser != null) {
-			return manifestParser.getRequirements();
+		ManifestParser parser = createSourceManifestParser();
+		if (parser != null) {
+			return parser.getRequirements();
 		}
 
 		updateRequirementsFromMetadata();
@@ -319,17 +321,17 @@ public class GhidraSourceBundle extends GhidraBundle {
 		return new ArrayList<>(reqs.values());
 	}
 
-	protected static void findPackageDirs(List<String> packages, ResourceFile directory) {
-		for (ResourceFile file : directory
-				.listFiles(f -> f.isDirectory() || f.getName().endsWith(".java"))) {
+	private static void findPackageDirs(List<String> packages, ResourceFile dir) {
+		boolean added = false;
+		ResourceFile[] files = dir.listFiles(f -> f.isDirectory() || f.getName().endsWith(".java"));
+		for (ResourceFile file : files) {
 			if (!file.getName().matches("internal|private")) {
-				boolean added = false;
 				if (file.isDirectory()) {
 					findPackageDirs(packages, file);
 				}
 				else if (!added) {
 					added = true;
-					packages.add(directory.getAbsolutePath());
+					packages.add(dir.getAbsolutePath());
 				}
 			}
 		}
@@ -363,21 +365,23 @@ public class GhidraSourceBundle extends GhidraBundle {
 			return OSGiUtils.parseExportPackage(sb.substring(1));
 		}
 		catch (BundleException e) {
-			throw new GhidraBundleException(getLocationIdentifier(), "exports error", e);
+			throw new GhidraBundleException(getLocationIdentifier(), "Exports error", e);
 		}
 	}
 
 	/**
-	 * look for new sources, metadata, manifest file.
+	 * Look for new sources, metadata, manifest file.  This will find files that need to be 
+	 * compiled and files that need to be removed.
 	 * 
-	 * <p>if files had errors last time, haven't changed, and no new requirements are available, remove them.
+	 * <p>If files had errors last time, haven't changed, and no new requirements are available, 
+	 * remove them.
 	 * 
 	 * @param writer for reporting status to user
 	 * @throws IOException while accessing manifest file
 	 * @throws OSGiException while parsing imports
 	 */
-	void updateFromFilesystem(PrintWriter writer) throws IOException, OSGiException {
-		// look for new source files
+	private void updateFromFilesystem(PrintWriter writer) throws IOException, OSGiException {
+
 		newSources.clear();
 		oldBinaries.clear();
 
@@ -395,13 +399,13 @@ public class GhidraSourceBundle extends GhidraBundle {
 			}
 		});
 
-		// we don't want to rebuild source files that had errors last time and haven't changed,
-		// so remove them from newSources.  Also remove old error messages.
-		Iterator<ResourceFile> newSourceIterator = newSources.iterator();
-		while (newSourceIterator.hasNext()) {
-			ResourceFile newSourceFile = newSourceIterator.next();
+		// we don't want to rebuild source files that had errors last time and haven't changed, so 
+		// remove them from newSources.  Also remove old error messages.
+		Iterator<ResourceFile> it = newSources.iterator();
+		while (it.hasNext()) {
+			ResourceFile newSourceFile = it.next();
 			if (stillHasErrors(newSourceFile)) {
-				newSourceIterator.remove();
+				it.remove();
 			}
 			else {
 				// any errors are old, so remove them 
@@ -421,46 +425,40 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	private void deleteOldBinaries() throws IOException {
-		// dedupe and omit files that don't exist
+		// dedup and omit files that don't exist
 		oldBinaries.sort(null);
-		Iterable<Path> paths =
-			() -> oldBinaries.stream().distinct().filter(Files::exists).iterator();
 
-		for (Path path : paths) {
+		Iterator<Path> toDelete =
+			oldBinaries.stream().distinct().filter(Files::exists).sorted().iterator();
+		for (Path path : CollectionUtils.asIterable(toDelete)) {
 			Files.delete(path);
 		}
+
+		oldBinaries.clear();
 	}
 
-	int getBuildErrorCount() {
+	private int getBuildErrorCount() {
 		return buildErrors.size();
 	}
 
-	int getNewSourcesCount() {
+	private int getNewSourcesCount() {
 		return newSources.size();
 	}
 
 	/**
-	 * used just after {@link #build} to get the newly compiled source files 
+	 * Used just after {@link #build} to get the newly compiled source files.
 	 * @return new source files
 	 */
 	public List<ResourceFile> getNewSources() {
-		return newSources;
-	}
-
-	void compileAttempted() {
-		lastCompileAttempt = System.currentTimeMillis();
-	}
-
-	long getLastCompileAttempt() {
-		return lastCompileAttempt;
+		return Collections.unmodifiableList(newSources);
 	}
 
 	@Override
 	public String getLocationIdentifier() {
-		return bundleLoc;
+		return bundleLocationId;
 	}
 
-	ResourceFile getSourceManifestFile() {
+	private ResourceFile getSourceManifestFile() {
 		return new ResourceFile(getSourceDirectory(), "META-INF" + File.separator + "MANIFEST.MF");
 	}
 
@@ -468,19 +466,20 @@ public class GhidraSourceBundle extends GhidraBundle {
 		return binaryDir.resolve("META-INF").resolve("MANIFEST.MF");
 	}
 
-	boolean hasSourceManifest() {
+	private boolean hasSourceManifest() {
 		return getSourceManifestFile().exists();
 	}
 
-	boolean hasNewManifest() {
+	private boolean hasNewManifest() {
 		ResourceFile sourceManifest = getSourceManifestFile();
 		Path binaryManifest = getBinaryManifestPath();
 
-		return sourceManifest.exists() && (Files.notExists(binaryManifest) ||
-			sourceManifest.lastModified() > binaryManifest.toFile().lastModified());
+		boolean oldOrMissingBinaryManifest = Files.notExists(binaryManifest) ||
+			sourceManifest.lastModified() > binaryManifest.toFile().lastModified();
+		return sourceManifest.exists() && oldOrMissingBinaryManifest;
 	}
 
-	protected static boolean wipeContents(Path path) throws IOException {
+	private static boolean wipeContents(Path path) throws IOException {
 		if (Files.exists(path)) {
 			boolean anythingDeleted = false;
 			try (Stream<Path> walk = Files.walk(path)) {
@@ -498,12 +497,12 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * if source with a previous requirement error now resolves, add it to newSources.
+	 * If source with a previous requirement error now resolves, add it to newSources.
 	 *
-	 * <p>The reason for the previous build error isn't necessarily a missing requirement,
-	 * but this shouldn't be too expensive.
+	 * <p>The reason for the previous build error isn't necessarily a missing requirement, but this 
+	 * shouldn't be too expensive.
 	 */
-	private void addSourcesIfResolutionWillPass() {
+	private void addSourcesThatNoLongerHaveMissingRequirements() {
 		for (ResourceFile sourceFile : buildErrors.keySet()) {
 			List<BundleRequirement> requirements = sourceFileToRequirements.get(sourceFile);
 			if (requirements != null && !requirements.isEmpty() &&
@@ -519,10 +518,10 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * if a file that previously built without errors is now missing some requirements,
-	 * rebuild it to capture errors (if any). 
+	 * If a file that previously built without errors is now missing some requirements, rebuild it 
+	 * to capture errors (if any). 
 	 */
-	void addSourcesIfResolutionWillFail() {
+	private void addSourcesThatNowHaveMissingRequirements() {
 		// if previous successes no longer resolve, (cleanup) and try again
 		for (Entry<ResourceFile, List<BundleRequirement>> e : sourceFileToRequirements.entrySet()) {
 			ResourceFile sourceFile = e.getKey();
@@ -542,39 +541,42 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	@Override
 	public boolean build(PrintWriter writer) throws Exception {
-		if (writer == null) {
-			writer = new NullPrintWriter();
-		}
 
+		writer = NullPrintWriter.dummyIfNull(writer);
 		boolean needsCompile = false;
 
 		if (hasSourceManifest()) {
 			sourceFileToRequirements.clear();
 			requirementToSourceFileMap.clear();
-			ArrayList<BundleRequirement> reqs = new ArrayList<>(getAllRequirements());
+			List<BundleRequirement> reqs = new ArrayList<>(getAllRequirements());
 			bundleHost.resolve(reqs);
-			HashSet<String> newMissedRequirements = new HashSet<>();
+			Set<String> newMissedRequirements = new HashSet<>();
 			for (BundleRequirement req : reqs) {
 				newMissedRequirements.add(req.toString());
 			}
 			if (hasNewManifest() || !newMissedRequirements.equals(missedRequirements)) {
-				missedRequirements = newMissedRequirements;
+				missedRequirements.clear();
+				missedRequirements.addAll(newMissedRequirements);
 				wipeBinDir();
 				buildErrors.clear();
 			}
 			updateFromFilesystem(writer);
 		}
 		else {
-			updateFromFilesystem(writer);
 
+			// this gets all source files from the file system that we know need to be compiled 
+			// based upon missing or outdated class files
+			updateFromFilesystem(writer);
 			updateRequirementsFromMetadata();
-			addSourcesIfResolutionWillPass();
-			addSourcesIfResolutionWillFail();
+
+			// these 2 calls handle source files that need to be compiled based upon changes in 
+			// added or removed bundles / requirements
+			addSourcesThatNoLongerHaveMissingRequirements();
+			addSourcesThatNowHaveMissingRequirements();
 		}
 
 		int buildErrorsLastTime = getBuildErrorCount();
 		int newSourceCount = getNewSourcesCount();
-
 		if (newSourceCount == 0) {
 			if (buildErrorsLastTime > 0) {
 				writer.printf("%s hasn't changed, with %d file%s failing in previous build(s):\n",
@@ -600,7 +602,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 				bundleHost.deactivateSynchronously(osgiBundle);
 			}
 
-			// once we've committed to recompile and regenerate generated classes, delete the old stuff
+			// once we've committed to recompile and regenerate classes, delete the old stuff
 			deleteOldBinaries();
 
 			String summary = compileToExplodedBundle(writer);
@@ -635,16 +637,19 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	private ResourceFile[] correspondingBinaries(ResourceFile source) {
 		String parentPath = source.getParentFile().getAbsolutePath();
-		String relPath = parentPath.substring(getSourceDirectory().getAbsolutePath().length());
-		if (relPath.startsWith(File.separator)) {
-			relPath = relPath.substring(1);
+		int sourceDirLength = getSourceDirectory().getAbsolutePath().length();
+		String relativePath = parentPath.substring(sourceDirLength);
+		if (relativePath.startsWith(File.separator)) {
+			relativePath = relativePath.substring(1);
 		}
-		String className0 = source.getName();
-		String className = className0.substring(0, className0.length() - 5);// drop ".java"
-		ResourceFile binarySubdir = new ResourceFile(binaryDir.resolve(relPath).toFile());
+
+		String javaFileName = source.getName();
+		String className = javaFileName.substring(0, javaFileName.length() - 5); // drop ".java"
+		ResourceFile binarySubdir = new ResourceFile(binaryDir.resolve(relativePath).toFile());
 		if (!binarySubdir.exists() || !binarySubdir.isDirectory()) {
 			return new ResourceFile[] {};
 		}
+
 		return binarySubdir.listFiles(f -> {
 			String fileName = f.getName();
 			return fileName.startsWith(className) &&
@@ -674,23 +679,23 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 *   	binary_root/com/blah/Blah$Inner$Innerer.class
 	 *   	...
 	 * </pre>
-	 * @param callback callback
+	 * @param discrepancy the discrepancy callback
 	 */
-	protected void visitDiscrepancies(DiscrepencyCallback callback) {
+	protected void visitDiscrepancies(DiscrepancyCallback discrepancy) {
 		try {
-			Deque<ResourceFile> stack = new ArrayDeque<>();
-			// start in the source directory root
-			stack.add(getSourceDirectory());
 
+			Deque<ResourceFile> stack = new ArrayDeque<>();
+			ResourceFile sourceDir = getSourceDirectory();
+			stack.add(sourceDir); // start in the source directory root
 			while (!stack.isEmpty()) {
 				ResourceFile sourceSubdir = stack.pop();
 				String relPath = sourceSubdir.getAbsolutePath()
-						.substring(getSourceDirectory().getAbsolutePath().length());
+						.substring(sourceDir.getAbsolutePath().length());
 				if (relPath.startsWith(File.separator)) {
 					relPath = relPath.substring(1);
 				}
-				Path binarySubdir = binaryDir.resolve(relPath);
 
+				Path binarySubdir = binaryDir.resolve(relPath);
 				ClassMapper mapper = new ClassMapper(binarySubdir);
 
 				// for each source file, lookup class files by class name 
@@ -701,13 +706,13 @@ public class GhidraSourceBundle extends GhidraBundle {
 					else {
 						List<Path> classFiles = mapper.findAndRemove(sourceFile);
 						if (classFiles != null) {
-							callback.found(sourceFile, classFiles);
+							discrepancy.found(sourceFile, classFiles);
 						}
 					}
 				}
 				// any remaining .class files are missing .java files
 				if (mapper.hasExtraClassFiles()) {
-					callback.found(null, mapper.extraClassFiles());
+					discrepancy.found(null, mapper.extraClassFiles());
 				}
 			}
 		}
@@ -716,12 +721,15 @@ public class GhidraSourceBundle extends GhidraBundle {
 		}
 	}
 
-	/* requirements that resolve internally are never "missing", but will only resolve _after_ build/install */
+	/* 
+	 * Requirements that resolve internally are never "missing", but resolve _after_ build/install
+	 */
 	private boolean resolveInternally(List<BundleRequirement> requirements)
 			throws GhidraBundleException {
 		if (requirements.isEmpty()) {
 			return true;
 		}
+
 		List<BundleCapability> capabilities = getAllCapabilities();
 		Iterator<BundleRequirement> requirementIterator = requirements.iterator();
 		boolean anyMissing = false;
@@ -738,73 +746,79 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/*
-	 * when calling the java compiler programmatically, we map import requests to files with
-	 * a custom {@link JavaFileManager}.  We wrap the system JavaFileManager with one that
-	 * handles ResourceFiles then wrap that with Phidia, which handles imports based on 
-	 * bundle requirements.
+	 * When calling the java compiler programmatically, we map import requests to files with a 
+	 * custom {@link JavaFileManager}.  We wrap the system JavaFileManager with one that handles 
+	 * ResourceFiles then wrap that with phidias, which handles imports based on bundle 
+	 * requirements.
 	 */
 	private BundleJavaManager createBundleJavaManager(PrintWriter writer, Summary summary,
 			List<String> options) throws IOException, GhidraBundleException {
-		final ResourceFileJavaFileManager resourceFileJavaManager = new ResourceFileJavaFileManager(
-			Collections.singletonList(getSourceDirectory()), buildErrors.keySet());
 
+		ResourceFileJavaFileManager resourceFileJavaManager = new ResourceFileJavaFileManager(
+			Collections.singletonList(getSourceDirectory()), buildErrors.keySet());
 		BundleJavaManager bundleJavaManager = new MyBundleJavaManager(bundleHost.getHostFramework(),
 			resourceFileJavaManager, options);
 
 		// The phidias BundleJavaManager is for compiling from within a bundle -- it makes the
-		// bundle dependencies available to the compiler classpath.  Here, we are compiling in an as-yet 
-		// non-existing bundle, so we forge the wiring based on @importpackage metadata.
+		// bundle dependencies available to the compiler classpath.  Here, we are compiling in an 
+		// as-yet non-existing bundle, so we forge the wiring based on @importpackage metadata.
 
 		// get wires for currently active bundles to satisfy all requirements
 		List<BundleRequirement> requirements = getAllRequirements();
 		List<BundleWiring> bundleWirings = bundleHost.resolve(requirements);
-
 		if (!resolveInternally(requirements)) {
-			writer.printf("%d import requirement%s remain%s unresolved:\n", requirements.size(),
-				requirements.size() > 1 ? "s" : "", requirements.size() > 1 ? "" : "s");
-			for (BundleRequirement requirement : requirements) {
-				List<ResourceFile> requiringFiles =
-					requirementToSourceFileMap.get(requirement.toString());
-				if (requiringFiles != null && requiringFiles.size() > 0) {
-					writer.printf("  %s, from %s\n", requirement.toString(),
-						requiringFiles.stream()
-								.map(generic.util.Path::toPathString)
-								.collect(Collectors.joining(",")));
-					for (ResourceFile sourceFile : requiringFiles) {
-						buildError(sourceFile,
-							generic.util.Path.toPathString(sourceFile) + " : failed import " +
-								OSGiUtils.extractPackageNamesFromFailedResolution(
-									requirement.toString()));
-					}
-				}
-				else {
-					writer.printf("  %s\n", requirement.toString());
-				}
-			}
-
-			summary.printf("%d missing package import%s:%s", requirements.size(),
-				requirements.size() > 1 ? "s" : "",
-				requirements.stream()
-						.flatMap(
-							r -> OSGiUtils.extractPackageNamesFromFailedResolution(r.toString())
-									.stream())
-						.distinct()
-						.collect(Collectors.joining(",")));
+			writeErrorUnresolved(writer, summary, requirements);
 		}
+
 		// send the capabilities to phidias
 		bundleWirings.forEach(bundleJavaManager::addBundleWiring);
 		return bundleJavaManager;
 	}
 
+	private void writeErrorUnresolved(PrintWriter writer, Summary summary,
+			List<BundleRequirement> requirements) {
+
+		writer.printf("%d import requirement%s remain%s unresolved:\n", requirements.size(),
+			requirements.size() > 1 ? "s" : "", requirements.size() > 1 ? "" : "s");
+		for (BundleRequirement requirement : requirements) {
+			List<ResourceFile> requiringFiles =
+				requirementToSourceFileMap.get(requirement.toString());
+			if (requiringFiles != null && requiringFiles.size() > 0) {
+				writer.printf("  %s, from %s\n", requirement.toString(),
+					requiringFiles.stream()
+							.map(generic.util.Path::toPathString)
+							.collect(Collectors.joining(",")));
+
+				for (ResourceFile sourceFile : requiringFiles) {
+					buildError(sourceFile,
+						generic.util.Path.toPathString(sourceFile) + " : failed import " +
+							OSGiUtils.extractPackageNamesFromFailedResolution(
+								requirement.toString()));
+				}
+			}
+			else {
+				writer.printf("  %s\n", requirement.toString());
+			}
+		}
+
+		String singularity = requirements.size() > 1 ? "s" : "";
+		String missing = requirements.stream()
+				.flatMap(
+					r -> OSGiUtils.extractPackageNamesFromFailedResolution(r.toString()).stream())
+				.distinct()
+				.collect(Collectors.joining(","));
+		summary.printf("%d missing package import%s:%s", requirements.size(), singularity, missing);
+	}
+
 	/*
-	 * Try building sourcefiles.. on success return true.
+	 * Try building source files. On success return true.
 	 * 
 	 * If build fails, collect errors, remove files that caused 
 	 * errors from source files, and return false.
 	 */
 	private boolean tryBuild(PrintWriter writer, BundleJavaManager bundleJavaManager,
 			List<ResourceFileJavaFileObject> sourceFiles, List<String> options) throws IOException {
-		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
 		JavaCompiler.CompilationTask task =
 			compiler.getTask(writer, bundleJavaManager, diagnostics, options, null, sourceFiles);
 
@@ -812,6 +826,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 		if (successfulCompilation) {
 			return true;
 		}
+
 		Set<ResourceFileJavaFileObject> filesWithErrors = new HashSet<>();
 		for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
 			String error = diagnostic.toString() + "\n";
@@ -836,9 +851,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * generate a manifest (and an activator)
+	 * Generate a manifest (and an activator)
 	 * 
-	 * assumes that {@link #updateRequirementsFromMetadata()} has been called recently
+	 * <p>Assumes that {@link #updateRequirementsFromMetadata()} has been called recently
 	 */
 	private String generateManifest(PrintWriter writer, Summary summary, Path binaryManifest)
 			throws OSGiException, IOException {
@@ -849,13 +864,13 @@ public class GhidraSourceBundle extends GhidraBundle {
 			GhidraSourceBundle.sourceDirHash(getSourceDirectory()));
 		analyzer.setProperty("Bundle-Version", GENERATED_VERSION);
 
-		if (!importPackageValues.isEmpty()) {
+		if (importPackageValues.isEmpty()) {
+			analyzer.setProperty("Import-Package", "*");
+		}
+		else {
 			// constrain analyzed imports according to what's declared in @importpackage tags
 			analyzer.setProperty("Import-Package",
 				importPackageValues.stream().collect(Collectors.joining(",")) + ",*");
-		}
-		else {
-			analyzer.setProperty("Import-Package", "*");
 		}
 
 		analyzer.setProperty("Export-Package", "!*.private.*,!*.internal.*,*");
@@ -866,44 +881,13 @@ public class GhidraSourceBundle extends GhidraBundle {
 				manifest = analyzer.calcManifest();
 			}
 			catch (Exception e) {
-				summary.print("bad manifest");
-				throw new OSGiException("failed to calculate manifest by analyzing code", e);
+				summary.print("Bad manifest");
+				throw new OSGiException("Failed to calculate manifest by analyzing code", e);
 			}
 
-			String activatorClassName = null;
-			try {
-				for (Clazz clazz : analyzer.getClassspace().values()) {
-					if (clazz.is(QUERY.IMPLEMENTS,
-						new Instruction("org.osgi.framework.BundleActivator"), analyzer)) {
-						System.err.printf("found BundleActivator class %s\n", clazz);
-						activatorClassName = clazz.toString();
-					}
-				}
+			if (!addActivatorClass(writer, analyzer, manifest, summary)) {
+				return summary.getValue();
 			}
-			catch (Exception e) {
-				summary.print("failed bnd analysis");
-				throw new OSGiException("failed to query classes while searching for activator", e);
-			}
-
-			Attributes manifestAttributes = manifest.getMainAttributes();
-			if (activatorClassName == null) {
-				activatorClassName = GENERATED_ACTIVATOR_CLASSNAME;
-				if (!buildDefaultActivator(binaryDir, activatorClassName, writer)) {
-					summary.print("failed to build generated activator");
-					return summary.getValue();
-				}
-				// since we add the activator after bndtools built the imports, we should add its imports too
-				String imps = manifestAttributes.getValue(Constants.IMPORT_PACKAGE);
-				if (imps == null) {
-					manifestAttributes.putValue(Constants.IMPORT_PACKAGE,
-						GhidraBundleActivator.class.getPackageName());
-				}
-				else {
-					manifestAttributes.putValue(Constants.IMPORT_PACKAGE,
-						imps + "," + GhidraBundleActivator.class.getPackageName());
-				}
-			}
-			manifestAttributes.putValue(Constants.BUNDLE_ACTIVATOR, activatorClassName);
 
 			// write the manifest
 			Files.createDirectories(binaryManifest.getParent());
@@ -917,6 +901,50 @@ public class GhidraSourceBundle extends GhidraBundle {
 		return summary.getValue();
 	}
 
+	private boolean addActivatorClass(PrintWriter writer, Analyzer analyzer, Manifest manifest,
+			Summary summary) throws OSGiException, IOException {
+
+		String activatorClassName = null;
+		try {
+			for (Clazz clazz : analyzer.getClassspace().values()) {
+				if (clazz.is(QUERY.IMPLEMENTS,
+					new Instruction(INSTRCTION_ACTIVATOR), analyzer)) {
+					Msg.trace(this, "Found BundleActivator class " + clazz);
+					activatorClassName = clazz.toString();
+				}
+			}
+		}
+		catch (Exception e) {
+			summary.print("Failed bnd analysis");
+			throw new OSGiException("Failed to query classes while searching for activator", e);
+		}
+
+		Attributes manifestAttributes = manifest.getMainAttributes();
+		if (activatorClassName != null) {
+			manifestAttributes.putValue(Constants.BUNDLE_ACTIVATOR, activatorClassName);
+			return true;
+		}
+
+		activatorClassName = GENERATED_ACTIVATOR_CLASSNAME;
+		if (!buildDefaultActivator(binaryDir, activatorClassName, writer)) {
+			summary.print("Failed to build generated activator");
+			return false;
+		}
+
+		// since we add the activator after bndtools built the imports, add its imports too
+		String imports = manifestAttributes.getValue(Constants.IMPORT_PACKAGE);
+		String activatorPackageName = GhidraBundleActivator.class.getPackageName();
+		if (imports == null) {
+			manifestAttributes.putValue(Constants.IMPORT_PACKAGE, activatorPackageName);
+		}
+		else {
+			manifestAttributes.putValue(Constants.IMPORT_PACKAGE, imports + "," +
+				activatorPackageName);
+		}
+		manifestAttributes.putValue(Constants.BUNDLE_ACTIVATOR, activatorClassName);
+		return true;
+	}
+
 	/**
 	 * create and compile a default bundle activator
 	 * 
@@ -928,8 +956,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 */
 	private boolean buildDefaultActivator(Path bindir, String activatorClassName, Writer writer)
 			throws IOException {
-		Path activatorSourceFileName = bindir.resolve(activatorClassName + ".java");
 
+		Path activatorSourceFileName = bindir.resolve(activatorClassName + ".java");
 		try (PrintWriter activatorWriter = new PrintWriter(
 			Files.newBufferedWriter(activatorSourceFileName, Charset.forName("UTF-8")))) {
 			activatorWriter.println("import " + GhidraBundleActivator.class.getName() + ";");
@@ -959,35 +987,36 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 		try (StandardJavaFileManager javaFileManager =
 			compiler.getStandardFileManager(null, null, null);
-				BundleJavaManager bundleJavaManager = new MyBundleJavaManager(
+				BundleJavaManager bundleManager = new MyBundleJavaManager(
 					bundleHost.getHostFramework(), javaFileManager, options);) {
 			Iterable<? extends JavaFileObject> sourceFiles =
 				javaFileManager.getJavaFileObjectsFromPaths(List.of(activatorSourceFileName));
 			DiagnosticCollector<JavaFileObject> diagnostics =
-				new DiagnosticCollector<JavaFileObject>();
-			JavaCompiler.CompilationTask task = compiler.getTask(writer, bundleJavaManager,
+				new DiagnosticCollector<>();
+			JavaCompiler.CompilationTask task = compiler.getTask(writer, bundleManager,
 				diagnostics, options, null, sourceFiles);
-			if (!task.call()) {
-				for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics
-						.getDiagnostics()) {
-					writer.write(diagnostic.getSource().toString() + ": " +
-						diagnostic.getMessage(null) + "\n");
-				}
-				return false;
+			if (task.call()) {
+				return true;
 			}
-			return true;
+
+			for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics
+					.getDiagnostics()) {
+				writer.write(diagnostic.getSource().toString() + ": " +
+					diagnostic.getMessage(null) + "\n");
+			}
+			return false;
 		}
 	}
 
 	/**
-	 *  compile a source directory to an exploded bundle
+	 * Compile a source directory to an exploded bundle.
 	 *  
 	 * @param writer for updating the user during compilation
+	 * @return a summary of the work performed
 	 * @throws IOException for source/manifest file reading/generation and binary deletion/creation
 	 * @throws OSGiException if generation of bundle metadata fails
 	 */
 	private String compileToExplodedBundle(PrintWriter writer) throws IOException, OSGiException {
-		compileAttempted();
 
 		Files.createDirectories(binaryDir);
 
@@ -1047,8 +1076,12 @@ public class GhidraSourceBundle extends GhidraBundle {
 		}
 	}
 
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
+
 	private static class MyBundleJavaManager extends BundleJavaManager {
-		static URL[] EMPTY_URL_ARRAY = new URL[0];
+		private static URL[] EMPTY_URL_ARRAY = new URL[0];
 
 		MyBundleJavaManager(Bundle bundle, JavaFileManager javaFileManager, List<String> options)
 				throws IOException {
@@ -1056,20 +1089,19 @@ public class GhidraSourceBundle extends GhidraBundle {
 		}
 
 		/**
-		 * since the JavaCompiler tasks can close the class loader returned by this
-		 * method, make sure we're returning a copy.
+		 * Since the JavaCompiler tasks can close the class loader returned by this method, make 
+		 * sure we're returning a copy.
 		 */
 		@Override
 		public ClassLoader getClassLoader() {
 			return new URLClassLoader(EMPTY_URL_ARRAY, super.getClassLoader());
 		}
-
 	}
 
 	private static class Summary {
-		static String SEPERATOR = ", ";
-		final StringWriter stringWriter = new StringWriter();
-		final PrintWriter printWriter = new PrintWriter(stringWriter, true);
+		private static final String SEPERATOR = ", ";
+		private final StringWriter stringWriter = new StringWriter();
+		private final PrintWriter printWriter = new PrintWriter(stringWriter, true);
 
 		void printf(String format, Object... args) {
 			if (stringWriter.getBuffer().length() > 0) {
@@ -1096,12 +1128,12 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 *    "B" -> [directory/B.class, directory/B$inner.class]
 	 * </pre>
 	 * 
-	 * <p>A list of classes are then processed one at a time with {@link ClassMapper#findAndRemove}.
+	 * <p>A list of classes are then processed with {@link ClassMapper#findAndRemove}.
 	 * 
 	 * <p>After processing, "extras" are handled with {@link ClassMapper#extraClassFiles}.
 	 */
 	private static class ClassMapper {
-		final Map<String, List<Path>> classToClassFilesMap;
+		private final Map<String, List<Path>> classToClassFilesMap;
 
 		/**
 		 * Map classes in {@code directory} with {@link ClassMapper}.
@@ -1129,8 +1161,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 			if (money >= 0) {
 				return fileName.substring(0, money);
 			}
-			// drop ".class"
-			return fileName.substring(0, fileName.length() - 6);
+			return fileName.substring(0, fileName.length() - 6); // drop ".class"
 		}
 
 		List<Path> findAndRemove(ResourceFile sourceFile) {
@@ -1139,7 +1170,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 				return null;
 			}
 
-			className = className.substring(0, className.length() - 5);
+			className = className.substring(0, className.length() - 5); // drop ".java"
 			long lastModifiedSource = sourceFile.lastModified();
 			List<Path> classFiles = classToClassFilesMap.remove(className);
 			if (classFiles == null) {
@@ -1158,17 +1189,15 @@ public class GhidraSourceBundle extends GhidraBundle {
 			return null;
 		}
 
-		public boolean hasExtraClassFiles() {
+		boolean hasExtraClassFiles() {
 			return !classToClassFilesMap.isEmpty();
 		}
 
-		public Collection<Path> extraClassFiles() {
+		Collection<Path> extraClassFiles() {
 			return classToClassFilesMap.values()
 					.stream()
 					.flatMap(l -> l.stream())
 					.collect(Collectors.toList());
 		}
-
 	}
-
 }

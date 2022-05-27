@@ -21,11 +21,7 @@ import javax.lang.model.element.*;
 import javax.lang.model.type.*;
 import javax.tools.Diagnostic.Kind;
 
-import db.DBHandle;
-import ghidra.util.database.DBCachedDomainObjectAdapter;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.database.annot.DBAnnotatedField;
-import ghidra.util.task.TaskMonitor;
 
 public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 	final VariableElement field;
@@ -127,30 +123,7 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 		return codecElem;
 	}
 
-	class A extends DBCachedDomainObjectAdapter {
-
-		protected A(DBHandle dbh, DBOpenMode openMode, TaskMonitor monitor, String name,
-				int timeInterval, int bufSize, Object consumer) {
-			super(dbh, openMode, monitor, name, timeInterval, bufSize, consumer);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public boolean isChangeable() {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		@Override
-		public String getDescription() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-	}
-
 	protected void checkCodecTypes(TypeElement objectType) {
-
-		//experiment(new Blargh(null, null));
 
 		TypeElement codecType = getCodecTypeElement();
 		if (codecType == null) {
@@ -169,13 +142,13 @@ public class DBAnnotatedFieldValidator extends AbstractDBAnnotationValidator {
 		//   3) FieldType is non-abstract
 		//   4) The codec has an appropriate constructor
 
-		for (Element enc : codecType.getEnclosedElements()) {
-			if (enc.getKind() == ElementKind.CONSTRUCTOR) {
-				ExecutableElement exe = (ExecutableElement) enc;
-				ExecutableType exeType = (ExecutableType) exe.asType();
-				//throw new RuntimeException();
-			}
-		}
+//		for (Element enc : codecType.getEnclosedElements()) {
+//			if (enc.getKind() == ElementKind.CONSTRUCTOR) {
+//				ExecutableElement exe = (ExecutableElement) enc;
+//				ExecutableType exeType = (ExecutableType) exe.asType();
+//				//throw new RuntimeException();
+//			}
+//		}
 
 		Map<String, TypeMirror> args = ctx.getArguments(codecType, ctx.DB_FIELD_CODEC_ELEM);
 

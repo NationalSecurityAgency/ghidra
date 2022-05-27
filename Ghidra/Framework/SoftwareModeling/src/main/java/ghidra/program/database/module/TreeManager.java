@@ -46,78 +46,25 @@ public class TreeManager implements ManagerDB {
 
 	private AddressMap addrMap;
 	private Map<String, ModuleManager> treeMap; // name mapped to ModuleManager
-	private TreeDBAdapter adapter;
+	private ProgramTreeDBAdapter treeAdapter;
 	private ProgramDB program;
 	private DBHandle handle;
 	private ErrorHandler errHandler;
-	private int openMode;
 	private Lock lock;
-
-	static final String TREE_TABLE_NAME = "Trees";
-	static final int TREE_NAME_COL = 0;
-	static final int MODIFICATION_NUM_COL = 1;
-
-	static final String MODULE_TABLE_NAME = "Module Table";
-	static final int MODULE_NAME_COL = 0;
-	static final int MODULE_COMMENTS_COL = 1;
-
-	static final String FRAGMENT_TABLE_NAME = "Fragment Table";
-	static final int FRAGMENT_NAME_COL = 0;
-	static final int FRAGMENT_COMMENTS_COL = 1;
-
-	static final String PARENT_CHILD_TABLE_NAME = "Parent/Child Relationships";
-	static final int PARENT_ID_COL = 0;
-	static final int CHILD_ID_COL = 1;
-	static final int ORDER_COL = 2;
-
-	static final String FRAGMENT_ADDRESS_TABLE_NAME = "Fragment Addresses";
-
-	static final Schema TREE_SCHEMA = createTreeSchema();
-	static final Schema MODULE_SCHEMA = createModuleSchema();
-	static final Schema FRAGMENT_SCHEMA = createFragmentSchema();
-	static final Schema PARENT_CHILD_SCHEMA = createParentChildSchema();
-
-	private static Schema createTreeSchema() {
-		return new Schema(0, "Key", new Field[] { StringField.INSTANCE, LongField.INSTANCE },
-			new String[] { "Name", "Modification Number" });
-	}
-
-	private static Schema createModuleSchema() {
-		return new Schema(0, "Key", new Field[] { StringField.INSTANCE, StringField.INSTANCE },
-			new String[] { "Name", "Comments" });
-	}
-
-	private static Schema createFragmentSchema() {
-		return new Schema(0, "Key", new Field[] { StringField.INSTANCE, StringField.INSTANCE },
-			new String[] { "Name", "Comments" });
-	}
-
-	private static Schema createParentChildSchema() {
-		return new Schema(0, "Key",
-			new Field[] { LongField.INSTANCE, LongField.INSTANCE, IntField.INSTANCE },
-			new String[] { "Parent ID", "Child ID", "Child Index" });
-	}
 
 	/**
 	 *
 	 * Construct a new TreeManager.
 	 *
-	 * @param handle
-	 *            database handle
-	 * @param errHandler
-	 *            error handler
-	 * @param addrMap
-	 *            map to convert addresses to longs and longs to addresses
-	 * @param openMode
-	 *            the open mode for the program.
-	 * @param lock
-	 *            the program synchronization lock
-	 * @param monitor
-	 *            Task monitor for upgrading
-	 * @throws IOException
-	 *             if a database io error occurs.
-	 * @throws VersionException
-	 *             if the database version is different from the expected version
+	 * @param handle database handle
+	 * @param errHandler error handler
+	 * @param addrMap map to convert addresses to longs and longs to addresses
+	 * @param openMode the open mode for the program.
+	 * @param lock the program synchronization lock
+	 * @param monitor Task monitor for upgrading
+	 * @throws IOException if a database io error occurs.
+	 * @throws VersionException if the database version is different from the expected version
+	 * @throws CancelledException if instantiation has been cancelled
 	 */
 	public TreeManager(DBHandle handle, ErrorHandler errHandler, AddressMap addrMap, int openMode,
 			Lock lock, TaskMonitor monitor)
@@ -126,65 +73,26 @@ public class TreeManager implements ManagerDB {
 		this.handle = handle;
 		this.errHandler = errHandler;
 		this.addrMap = addrMap;
-		this.openMode = openMode;
 		this.lock = lock;
-		if (openMode == DBConstants.CREATE) {
-			createDBTables(handle);
-		}
-		findAdapters(handle);
-		treeMap = new HashMap<>();
 
-		if (addrMap.isUpgraded()) {
-			if (openMode == DBConstants.UPDATE) {
-				throw new VersionException(true);
-			}
-			if (openMode == DBConstants.UPGRADE) {
-				addressUpgrade(monitor);
-			}
-		}
+		treeAdapter = ProgramTreeDBAdapter.getAdapter(handle, openMode);
+
+		initTreeMap(openMode, monitor);
 	}
 
-	/**
-	 * Set the program.
-	 */
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.program = program;
-		try {
-			populateTreeMap(false);
-			if (openMode == DBConstants.CREATE) {
-				createDefaultTree();
-				openMode = -1; // clear openMode flag
-			}
-		}
-		catch (IOException e) {
-			program.dbError(e);
+
+		if (treeMap.isEmpty()) {
+			createDefaultTree();
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#programReady(int, int, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void programReady(int openMode1, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
-	}
-
-	/**
-	 * Upgrade the address maps associated with each program tree.
-	 * @param monitor
-	 * @throws CancelledException
-	 * @throws IOException
-	 */
-	private void addressUpgrade(TaskMonitor monitor) throws CancelledException, IOException {
-		RecordIterator iter = adapter.getRecords();
-		while (iter.hasNext()) {
-			DBRecord rec = iter.next();
-			long key = rec.getKey();
-			String treeName = rec.getString(TREE_NAME_COL);
-			ModuleManager.addressUpgrade(this, key, treeName, addrMap, monitor);
-		}
 	}
 
 	public void imageBaseChanged(boolean commit) {
@@ -216,11 +124,13 @@ public class TreeManager implements ManagerDB {
 				throw new DuplicateNameException(
 					"Root module named " + treeName + " already exists");
 			}
-			DBRecord record = adapter.createRecord(treeName);
-			ModuleManager m = new ModuleManager(this, record, program, true);
+			DBRecord record = treeAdapter.createRecord(treeName);
+			ModuleManager m =
+				new ModuleManager(this, record, DBConstants.CREATE, TaskMonitor.DUMMY);
 			treeMap.put(treeName, m);
 			addMemoryBlocks(m);
-			if (openMode != DBConstants.CREATE) {
+			if (program != null) {
+				// no notification for initial default tree
 				program.programTreeAdded(record.getKey(), ChangeManager.DOCR_TREE_CREATED, null,
 					treeName);
 			}
@@ -228,7 +138,9 @@ public class TreeManager implements ManagerDB {
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
-
+		}
+		catch (VersionException | CancelledException e) {
+			throw new RuntimeException(e); // unexpected exception
 		}
 		finally {
 			lock.release();
@@ -238,6 +150,7 @@ public class TreeManager implements ManagerDB {
 
 	/**
 	 * Get the root module of the tree with the given name.
+	 * @param treeName tree name
 	 * @return root module, or null if there is no tree with the
 	 * given name
 	 */
@@ -265,10 +178,10 @@ public class TreeManager implements ManagerDB {
 	 */
 	public ProgramModule getDefaultRootModule() {
 		try {
-			RecordIterator iter = adapter.getRecords();
+			RecordIterator iter = treeAdapter.getRecords();
 			while (iter.hasNext()) {
 				DBRecord record = iter.next();
-				String name = record.getString(TREE_NAME_COL);
+				String name = record.getString(ProgramTreeDBAdapter.TREE_NAME_COL);
 				return getRootModule(name);
 			}
 		}
@@ -285,12 +198,12 @@ public class TreeManager implements ManagerDB {
 	public String[] getTreeNames() {
 		String[] names = new String[treeMap.size()];
 		try {
-			RecordIterator iter = adapter.getRecords();
+			RecordIterator iter = treeAdapter.getRecords();
 
 			int index = 0;
 			while (iter.hasNext()) {
 				DBRecord record = iter.next();
-				names[index] = record.getString(TREE_NAME_COL);
+				names[index] = record.getString(ProgramTreeDBAdapter.TREE_NAME_COL);
 				++index;
 			}
 			return names;
@@ -334,14 +247,15 @@ public class TreeManager implements ManagerDB {
 
 	/**
 	 * Remove the tree with the given name.
+	 * @param treeName tree name
 	 * @return true if the tree was removed
 	 */
 	public boolean removeTree(String treeName) {
 		lock.acquire();
 		try {
 			if (treeMap.containsKey(treeName)) {
-				DBRecord rec = adapter.getRecord(treeName);
-				adapter.deleteRecord(rec.getKey());
+				DBRecord rec = treeAdapter.getRecord(treeName);
+				treeAdapter.deleteRecord(rec.getKey());
 				ModuleManager mm = treeMap.remove(treeName);
 				mm.dispose();
 				program.programTreeChanged(rec.getKey(), ChangeManager.DOCR_TREE_REMOVED, null,
@@ -439,6 +353,8 @@ public class TreeManager implements ManagerDB {
 
 	/**
 	 * Add a memory block with the given range.
+	 * @param name memory block name (name of new fragment)
+	 * @param range memory block address range
 	 */
 	public void addMemoryBlock(String name, AddressRange range) {
 		lock.acquire();
@@ -457,10 +373,6 @@ public class TreeManager implements ManagerDB {
 		}
 	}
 
-	/**
-	 * Remove a memory block with the given range
-	 * @throws CancelledException
-	 */
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
@@ -484,15 +396,6 @@ public class TreeManager implements ManagerDB {
 		}
 	}
 
-	/**
-	 * Move a memory block to new place.
-	 * @param fromAddr old place
-	 * @param toAddr new place
-	 * @param length the length of the address range to move
-	 * @param monitor the current task monitor
-	 * @throws AddressOverflowException if an address overflow occurs.
-	 * @throws CancelledException if the task is cancelled.
-	 */
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws AddressOverflowException, CancelledException {
@@ -510,7 +413,7 @@ public class TreeManager implements ManagerDB {
 			}
 			// rebuild the map
 			treeMap.clear();
-			populateTreeMap(false);
+			refreshTreeMap(false);
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -530,9 +433,9 @@ public class TreeManager implements ManagerDB {
 
 	String getTreeName(long treeID) {
 		try {
-			DBRecord record = adapter.getRecord(treeID);
+			DBRecord record = treeAdapter.getRecord(treeID);
 			if (record != null) {
-				return record.getString(TREE_NAME_COL);
+				return record.getString(ProgramTreeDBAdapter.TREE_NAME_COL);
 			}
 		}
 		catch (IOException e) {
@@ -543,22 +446,6 @@ public class TreeManager implements ManagerDB {
 
 	ErrorHandler getErrorHandler() {
 		return errHandler;
-	}
-
-	static String getModuleTableName(long treeID) {
-		return MODULE_TABLE_NAME + treeID;
-	}
-
-	static String getFragmentTableName(long treeID) {
-		return FRAGMENT_TABLE_NAME + treeID;
-	}
-
-	static String getParentChildTableName(long treeID) {
-		return PARENT_CHILD_TABLE_NAME + treeID;
-	}
-
-	static String getFragAddressTableName(long treeID) {
-		return FRAGMENT_ADDRESS_TABLE_NAME + treeID;
 	}
 
 	/////////////////////////////////////////////////////////////////////
@@ -583,17 +470,37 @@ public class TreeManager implements ManagerDB {
 
 	/**
 	 * Populate the map with existing tree views.
+	 * @throws VersionException if a DB schema version differs from expected version
+	 * @throws CancelledException if operation cancelled
 	 */
-	private void populateTreeMap(boolean ignoreModificationNumber) throws IOException {
+	private void initTreeMap(int openMode, TaskMonitor monitor)
+			throws IOException, CancelledException, VersionException {
+		treeMap = new HashMap<>();
+		RecordIterator iter = treeAdapter.getRecords();
+		while (iter.hasNext()) {
+			DBRecord rec = iter.next();
+			String treeName = rec.getString(ProgramTreeDBAdapter.TREE_NAME_COL);
+			ModuleManager mm = new ModuleManager(this, rec, openMode, monitor);
+			treeMap.put(treeName, mm);
+		}
+	}
+
+	/**
+	 * Re-Populate the map with existing tree views following an invalidation (e.g., undo, redo, memory movement).
+	 * @param ignoreModificationNumber if true all existing module managers will be invalidated, otherwise 
+	 * only those module managers whose modification number does not match the corresponding tree modification
+	 * number will be invalidated.
+	 */
+	private void refreshTreeMap(boolean ignoreModificationNumber) throws IOException {
 		Map<String, ModuleManager> oldTreeMap = treeMap;
 		treeMap = new HashMap<>();
 
-		RecordIterator iter = adapter.getRecords();
+		RecordIterator iter = treeAdapter.getRecords();
 		while (iter.hasNext()) {
 			DBRecord rec = iter.next();
 			long key = rec.getKey();
-			String treeName = rec.getString(TREE_NAME_COL);
-			long modNumber = rec.getLongValue(MODIFICATION_NUM_COL);
+			String treeName = rec.getString(ProgramTreeDBAdapter.TREE_NAME_COL);
+			long modNumber = rec.getLongValue(ProgramTreeDBAdapter.MODIFICATION_NUM_COL);
 			ModuleManager mm = oldTreeMap.get(treeName);
 			if (mm != null) {
 				oldTreeMap.remove(treeName);
@@ -608,7 +515,12 @@ public class TreeManager implements ManagerDB {
 				}
 			}
 			if (mm == null) {
-				mm = new ModuleManager(this, rec, program, false);
+				try {
+					mm = new ModuleManager(this, rec, DBConstants.UPDATE, TaskMonitor.DUMMY);
+				}
+				catch (VersionException | CancelledException e) {
+					throw new RuntimeException(e); // unexpected exception
+				}
 			}
 			treeMap.put(treeName, mm);
 		}
@@ -619,19 +531,11 @@ public class TreeManager implements ManagerDB {
 		}
 	}
 
-	private void findAdapters(DBHandle dbHandle) throws VersionException {
-		adapter = new TreeDBAdapterV0(dbHandle);
-	}
-
-	private void createDBTables(DBHandle dbHandle) throws IOException {
-		dbHandle.createTable(TREE_TABLE_NAME, TREE_SCHEMA, new int[] { TREE_NAME_COL });
-	}
-
 	@Override
 	public void invalidateCache(boolean all) throws IOException {
 		lock.acquire();
 		try {
-			populateTreeMap(all);
+			refreshTreeMap(all);
 		}
 		finally {
 			lock.release();
@@ -659,10 +563,10 @@ public class TreeManager implements ManagerDB {
 	void updateTreeRecord(DBRecord record, boolean updateModificationNumber) {
 		try {
 			if (updateModificationNumber) {
-				record.setLongValue(MODIFICATION_NUM_COL,
-					record.getLongValue(MODIFICATION_NUM_COL) + 1);
+				record.setLongValue(ProgramTreeDBAdapter.MODIFICATION_NUM_COL,
+					record.getLongValue(ProgramTreeDBAdapter.MODIFICATION_NUM_COL) + 1);
 			}
-			adapter.updateRecord(record);
+			treeAdapter.updateRecord(record);
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -671,7 +575,7 @@ public class TreeManager implements ManagerDB {
 
 	DBRecord getTreeRecord(long treeID) {
 		try {
-			return adapter.getRecord(treeID);
+			return treeAdapter.getRecord(treeID);
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -684,6 +588,7 @@ public class TreeManager implements ManagerDB {
 			createRootModule(DEFAULT_TREE_NAME);
 		}
 		catch (DuplicateNameException e) {
+			throw new RuntimeException(e); // unexpected exception
 		}
 	}
 
@@ -699,6 +604,10 @@ public class TreeManager implements ManagerDB {
 
 	Lock getLock() {
 		return lock;
+	}
+
+	ProgramDB getProgram() {
+		return program;
 	}
 
 }

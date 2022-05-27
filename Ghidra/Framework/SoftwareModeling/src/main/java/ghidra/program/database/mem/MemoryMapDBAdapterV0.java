@@ -35,22 +35,30 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 
 	private final static int VERSION = 0;
 
-	protected final static int V0_NAME_COL = 0;
-	protected final static int V0_BUFFER_ID_COL = 1;
-	protected final static int V0_COMMENTS_COL = 2;
-	protected final static int V0_DESCRIPTION_COL = 3;
-	protected final static int V0_SOURCE_NAME_COL = 4;
-	protected final static int V0_SOURCE_OFFSET_COL = 5;
-	protected final static int V0_IS_READ_COL = 6;
-	protected final static int V0_IS_WRITE_COL = 7;
-	protected final static int V0_IS_EXECUTE_COL = 8;
-	protected final static int V0_START_ADDR_COL = 9;
-	protected final static int V0_LENGTH_COL = 10;
-	protected final static int V0_TYPE_COL = 11;
-	protected final static int V0_BASE_ADDR_COL = 12;
-	protected final static int V0_SOURCE_BLOCK_ID_COL = 13;
-	protected final static int V0_SEGMENT_COL = 14;	// added in version 1
+	private final static int V0_NAME_COL = 0;
+	private final static int V0_BUFFER_ID_COL = 1;
+	private final static int V0_COMMENTS_COL = 2;
+	//private final static int V0_DESCRIPTION_COL = 3; // deprecated/ignored column
+	private final static int V0_SOURCE_NAME_COL = 4;
+	//private final static int V0_SOURCE_OFFSET_COL = 5; // deprecated/ignored column
+	private final static int V0_IS_READ_COL = 6;
+	private final static int V0_IS_WRITE_COL = 7;
+	private final static int V0_IS_EXECUTE_COL = 8;
+	private final static int V0_START_ADDR_COL = 9;
+	private final static int V0_LENGTH_COL = 10;
+	private final static int V0_TYPE_COL = 11;
+	private final static int V0_BASE_ADDR_COL = 12;
+	//private final static int V0_SOURCE_BLOCK_ID_COL = 13; // deprecated/ignored column
+	private final static int V0_SEGMENT_COL = 14;	// added in version 1
 
+	// Enumerated block type values
+	private static final int INITIALIZED = 0;
+	private static final int UNINITIALIZED = 1;
+	private static final int BIT_MAPPED = 2;
+	private static final int BYTE_MAPPED = 4;
+
+//  The following schema definition documents the schema used in version 0
+//
 //	private Schema SCHEMA = new Schema(0, "Key", 
 //			new Class[] {StringField.class, 
 //			IntField.class, StringField.class,
@@ -111,10 +119,10 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 			Address start = addrFactory.oldGetAddressFromLong(rec.getLongValue(V0_START_ADDR_COL));
 			long startAddr = addrMap.getKey(start, false);
 			long length = rec.getLongValue(V0_LENGTH_COL);
-			long bufID = rec.getIntValue(V0_BUFFER_ID_COL);
+			int bufID = rec.getIntValue(V0_BUFFER_ID_COL);
 			int segment = 0;
 			if (expectedVersion == 1 && (start instanceof SegmentedAddress)) {
-				segment = rec.getIntValue(V0_SEGMENT_COL);
+				segment = rec.getIntValue(V0_SEGMENT_COL); // introduced with V1
 			}
 
 			DBRecord blockRecord = BLOCK_SCHEMA.createRecord(key);
@@ -136,29 +144,29 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 			long overlayAddr = rec.getLongValue(V0_BASE_ADDR_COL);
 			overlayAddr = updateOverlayAddr(addrMap, addrFactory, overlayAddr, type);
 
-			SubMemoryBlock subBlock = getSubBlock(memMap, bufID, subBlockRecord, type, overlayAddr);
+			SubMemoryBlock subBlock = getSubBlock(bufID, subBlockRecord, type, overlayAddr);
 
 			blocks.add(new MemoryBlockDB(this, blockRecord, Arrays.asList(subBlock)));
 		}
 		Collections.sort(blocks);
 	}
 
-	private SubMemoryBlock getSubBlock(MemoryMapDB memMap, long bufID, DBRecord record, int type,
-			long overlayAddr) throws IOException {
+	private SubMemoryBlock getSubBlock(int bufID, DBRecord record, int type, long overlayAddr)
+			throws IOException {
 		switch (type) {
-			case MemoryMapDBAdapterV2.BIT_MAPPED:
+			case BIT_MAPPED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_BIT_MAPPED);
-				record.setLongValue(MemoryMapDBAdapterV2.V2_OVERLAY_ADDR_COL, overlayAddr);
+				record.setLongValue(MemoryMapDBAdapter.SUB_LONG_DATA2_COL, overlayAddr);
 				return new BitMappedSubMemoryBlock(this, record);
-			case MemoryMapDBAdapterV2.BYTE_MAPPED:
+			case BYTE_MAPPED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_BYTE_MAPPED);
-				record.setLongValue(MemoryMapDBAdapterV2.V2_OVERLAY_ADDR_COL, overlayAddr);
+				record.setLongValue(MemoryMapDBAdapter.SUB_LONG_DATA2_COL, overlayAddr);
 				return new ByteMappedSubMemoryBlock(this, record);
-			case MemoryMapDBAdapterV2.INITIALIZED:
+			case INITIALIZED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_BUFFER);
-				record.setLongValue(SUB_LONG_DATA2_COL, bufID);
+				record.setIntValue(SUB_INT_DATA1_COL, bufID);
 				return new BufferSubMemoryBlock(this, record);
-			case MemoryMapDBAdapterV2.UNINITIALIZED:
+			case UNINITIALIZED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_UNITIALIZED);
 				return new UninitializedSubMemoryBlock(this, record);
 			default:
@@ -168,7 +176,7 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 
 	private long updateOverlayAddr(AddressMap addrMap, AddressFactory addrFactory, long overlayAddr,
 			int type) {
-		if (type == MemoryMapDBAdapterV2.BIT_MAPPED || type == MemoryMapDBAdapterV2.BYTE_MAPPED) {
+		if (type == BIT_MAPPED || type == BYTE_MAPPED) {
 			Address ov = addrFactory.oldGetAddressFromLong(overlayAddr);
 			overlayAddr = addrMap.getKey(ov, false);
 		}
@@ -202,7 +210,7 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	void deleteMemoryBlock(long key) throws IOException {
+	void deleteMemoryBlock(MemoryBlockDB block) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -239,7 +247,7 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 
 	@Override
 	MemoryMapDB getMemoryMap() {
-		return null;
+		return memMap;
 	}
 
 	@Override

@@ -23,7 +23,6 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.AlignmentDataType;
-import ghidra.program.model.data.DataTypeConflictException;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -208,12 +207,6 @@ public class CondenseFillerBytesAnalyzer extends AbstractAnalyzer {
 			listing.createData(fillerAddress, new AlignmentDataType(), fillerLength);
 		}
 		catch (CodeUnitInsertionException e) {
-			// shouldn't happen if we have true filler bytes
-			Msg.error(this,
-				"Unable to condense filler bytes (bad filler value?) at " + fillerAddress, e);
-			return;
-		}
-		catch (DataTypeConflictException e) {
 			// shouldn't happen if we have true filler bytes
 			Msg.error(this,
 				"Unable to condense filler bytes (bad filler value?) at " + fillerAddress, e);

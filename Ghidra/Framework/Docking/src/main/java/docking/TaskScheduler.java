@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +19,7 @@ import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Calls a method on the Ghidra Dialog to get a TaskManager.
- * The dialog shows a progress bar; this class schedules a task to run;
- * when the task completes notify the dialog to hide the progress bar.
- * 
- * 
- * 
+ * Schedules tasks to be run in the {@link DialogComponentProvider}.
  */
 public class TaskScheduler implements Runnable {
 
@@ -37,17 +31,15 @@ public class TaskScheduler implements Runnable {
 	private Thread taskThread;
 
 	/**
-	 * Constructs a new TaskScheduler
-	 * @param comp the 
+	 * Constructor
+	 * @param comp the dialog provider.
 	 */
-
 	TaskScheduler(DialogComponentProvider comp) {
 		this.comp = comp;
 	}
 
 	/**
-	 * Set the next task to run; does not affect a currently running
-	 * task.
+	 * Set the next task to run; does not affect a currently running task.
 	 * @param task the next task to run.
 	 * @param delay time in milliseconds to delay showing progress or activity.
 	 */
@@ -61,9 +53,6 @@ public class TaskScheduler implements Runnable {
 		}
 	}
 
-	/**
-	 * @see java.lang.Runnable#run()
-	 */
 	@Override
 	public void run() {
 
@@ -84,7 +73,6 @@ public class TaskScheduler implements Runnable {
 
 	/**
 	 * Blocks until the current task completes.
-	 *
 	 */
 	public void waitForCurrentTask() {
 		Thread t = getCurrentThread();
@@ -100,17 +88,14 @@ public class TaskScheduler implements Runnable {
 
 	/**
 	 * Clear the scheduled task; does not affect the currently running task.
-	 *
 	 */
 	synchronized void clearScheduledTask() {
 		scheduledTask = null;
 	}
 
 	/**
-	 * Returns true if this task scheduler is in the process of running a task or has a pending
-	 * task.
-	 * @return true if this task scheduler is in the process of running a task or has a pending
-	 * task.
+	 * Returns true if this task scheduler is running a task or has a pending task.
+	 * @return true if this task scheduler is running a task or has a pending task.
 	 */
 	public synchronized boolean isBusy() {
 		return taskThread != null || scheduledTask != null;

@@ -90,12 +90,10 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 	 * @param timeInterval the time (in milliseconds) to wait before the
 	 * event queue is flushed.  If a new event comes in before the time expires,
 	 * the timer is reset.
-	 * @param bufSize initial size of event buffer
 	 * @param consumer the object that created this domain object
 	 */
-	protected DomainObjectAdapterDB(DBHandle dbh, String name, int timeInterval, int bufSize,
-			Object consumer) {
-		super(name, timeInterval, bufSize, consumer);
+	protected DomainObjectAdapterDB(DBHandle dbh, String name, int timeInterval, Object consumer) {
+		super(name, timeInterval, consumer);
 		this.dbh = dbh;
 		options = new OptionsDB(this);
 		transactionMgr = new DomainObjectTransactionManager(this);
@@ -216,9 +214,6 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		return changeSet;
 	}
 
-	/**
-	 * @see db.util.ErrorHandler#dbError(java.io.IOException)
-	 */
 	@Override
 	public void dbError(IOException e) {
 		fatalErrorOccurred = true;
@@ -240,9 +235,6 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		return names;
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#getOptions(java.lang.String)
-	 */
 	@Override
 	public Options getOptions(String propertyListName) {
 		return new SubOptions(options, propertyListName, propertyListName + Options.DELIMITER);
@@ -261,25 +253,16 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		options.performAlterations(propertyAlterations);
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#canLock()
-	 */
 	@Override
 	public boolean canLock() {
 		return transactionMgr.getCurrentTransaction() == null && !closed;
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#isLocked()
-	 */
 	@Override
 	public boolean isLocked() {
 		return transactionMgr.isLocked();
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#lock(String)
-	 */
 	@Override
 	public boolean lock(String reason) {
 		return transactionMgr.lock(reason);
@@ -310,17 +293,11 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		return transactionMgr.lockForSnapshot(this, hasProgress, title);
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#forceLock(boolean, String)
-	 */
 	@Override
 	public void forceLock(boolean rollback, String reason) {
 		transactionMgr.forceLock(rollback, reason);
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#unlock()
-	 */
 	@Override
 	public void unlock() {
 		transactionMgr.unlock();
@@ -338,9 +315,6 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		return startTransaction(description, null);
 	}
 
-	/**
-	 * @see ghidra.framework.model.UndoableDomainObject#startTransaction(java.lang.String)
-	 */
 	@Override
 	public int startTransaction(String description, AbortedTransactionListener listener) {
 		int id = -1;
@@ -361,9 +335,6 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		return id;
 	}
 
-	/**
-	 * @see ghidra.framework.model.UndoableDomainObject#endTransaction(int, boolean)
-	 */
 	@Override
 	public void endTransaction(int transactionID, boolean commit) {
 		transactionMgr.endTransaction(this, transactionID, commit, true);
@@ -397,65 +368,41 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		return transactionMgr.getUndoStackDepth();
 	}
 
-	/**
-	 * @see ghidra.framework.model.Undoable#canRedo()
-	 */
 	@Override
 	public boolean canRedo() {
 		return transactionMgr.canRedo();
 	}
 
-	/**
-	 * @see ghidra.framework.model.Undoable#canUndo()
-	 */
 	@Override
 	public boolean canUndo() {
 		return transactionMgr.canUndo();
 	}
 
-	/**
-	 * @see ghidra.framework.model.Undoable#getRedoName()
-	 */
 	@Override
 	public String getRedoName() {
 		return transactionMgr.getRedoName();
 	}
 
-	/**
-	 * @see ghidra.framework.model.Undoable#getUndoName()
-	 */
 	@Override
 	public String getUndoName() {
 		return transactionMgr.getUndoName();
 	}
 
-	/**
-	 * @see ghidra.framework.model.UndoableDomainObject#getCurrentTransaction()
-	 */
 	@Override
 	public Transaction getCurrentTransaction() {
 		return transactionMgr.getCurrentTransaction();
 	}
 
-	/**
-	 * @see ghidra.framework.model.Undoable#redo()
-	 */
 	@Override
 	public void redo() throws IOException {
 		transactionMgr.redo();
 	}
 
-	/**
-	 * @see ghidra.framework.model.Undoable#undo()
-	 */
 	@Override
 	public void undo() throws IOException {
 		transactionMgr.undo();
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#isChanged()
-	 */
 	@Override
 	public boolean isChanged() {
 		if (dbh == null) {
@@ -486,9 +433,6 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.model.Undoable#clearUndo()
-	 */
 	@Override
 	public void clearUndo() {
 		clearUndo(true);
@@ -502,9 +446,6 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		options.clearCache();
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#canSave()
-	 */
 	@Override
 	public synchronized boolean canSave() {
 		DomainFile df = getDomainFile();
@@ -514,9 +455,6 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		return dbh.canUpdate();
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#save(java.lang.String, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void save(String comment, TaskMonitor monitor) throws IOException, CancelledException {
 		if (!canSave()) {
@@ -556,9 +494,6 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#saveToPackedFile(java.io.File, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void saveToPackedFile(File outputFile, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -604,6 +539,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		DomainObjectAdapterDB userData = getUserData();
 		if (userData != null && userData.isChanged() && (getDomainFile() instanceof GhidraFile)) {
 			try {
+				userData.prepareToSave();
 				userData.save(null, TaskMonitorAdapter.DUMMY_MONITOR);
 			}
 			catch (CancelledException e) {
@@ -621,17 +557,11 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#isClosed()
-	 */
 	@Override
 	public boolean isClosed() {
 		return closed;
 	}
 
-	/**
-	 * @see ghidra.framework.model.UndoableDomainObject#hasTerminatedTransaction()
-	 */
 	@Override
 	public boolean hasTerminatedTransaction() {
 		return transactionMgr.hasTerminatedTransaction();

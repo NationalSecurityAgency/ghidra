@@ -63,7 +63,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private static final ImageIcon C_SOURCE_ICON =
 		ResourceManager.loadImage("images/decompileFunction.gif");
 
-	private DockingAction graphASTControlFlowAction;
+	private DockingAction pcodeGraphAction;
+	private DockingAction astGraphAction;
 
 	private final DecompilePlugin plugin;
 	private ClipboardService clipboardService;
@@ -462,7 +463,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	@Override
 	public String getTextSelection() {
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		return decompilerPanel.getTextSelection();
+		return decompilerPanel.getSelectedText();
 	}
 
 	boolean isBusy() {
@@ -808,8 +809,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		RenameFieldAction renameFieldAction = new RenameFieldAction();
 		setGroupInfo(renameFieldAction, variableGroup, subGroupPosition++);
 
+		ForceUnionAction forceUnionAction = new ForceUnionAction();
+		setGroupInfo(forceUnionAction, variableGroup, subGroupPosition++);
+
 		RetypeLocalAction retypeLocalAction = new RetypeLocalAction();
 		setGroupInfo(retypeLocalAction, variableGroup, subGroupPosition++);
+
+		CreatePointerRelative createRelativeAction = new CreatePointerRelative();
+		setGroupInfo(createRelativeAction, variableGroup, subGroupPosition++);
 
 		RetypeGlobalAction retypeGlobalAction = new RetypeGlobalAction();
 		setGroupInfo(retypeGlobalAction, variableGroup, subGroupPosition++);
@@ -978,6 +985,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(renameLocalAction);
 		addLocalAction(renameGlobalAction);
 		addLocalAction(renameFieldAction);
+		addLocalAction(forceUnionAction);
 		addLocalAction(setSecondaryHighlightAction);
 		addLocalAction(setSecondaryHighlightColorChooserAction);
 		addLocalAction(removeSecondaryHighlightAction);
@@ -990,6 +998,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(setEquateAction);
 		addLocalAction(removeEquateAction);
 		addLocalAction(retypeLocalAction);
+		addLocalAction(createRelativeAction);
 		addLocalAction(retypeGlobalAction);
 		addLocalAction(retypeReturnAction);
 		addLocalAction(retypeFieldAction);
@@ -1023,21 +1032,26 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	private void graphServiceRemoved() {
-		if (graphASTControlFlowAction == null) {
+		if (pcodeGraphAction == null) {
 			return;
 		}
 		if (tool.getService(GraphDisplayBroker.class) == null) {
-			tool.removeAction(graphASTControlFlowAction);
-			graphASTControlFlowAction.dispose();
-			graphASTControlFlowAction = null;
+			tool.removeAction(pcodeGraphAction);
+			tool.removeAction(astGraphAction);
+			astGraphAction.dispose();
+			pcodeGraphAction.dispose();
+			pcodeGraphAction = null;
+			astGraphAction = null;
 		}
 	}
 
 	private void graphServiceAdded() {
 		GraphDisplayBroker service = tool.getService(GraphDisplayBroker.class);
 		if (service != null && service.getDefaultGraphDisplayProvider() != null) {
-			graphASTControlFlowAction = new GraphASTControlFlowAction();
-			addLocalAction(graphASTControlFlowAction);
+			pcodeGraphAction = new PCodeCfgAction();
+			addLocalAction(pcodeGraphAction);
+			astGraphAction = new PCodeDfgAction();
+			addLocalAction(astGraphAction);
 		}
 	}
 

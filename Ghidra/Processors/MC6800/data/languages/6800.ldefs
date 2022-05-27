@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_definitions>
+  <language processor="6809"
+            endian="big"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="6809.sla"
+            processorspec="6809.pspec"
+            manualindexfile="../manuals/6809.idx"
+            id="6809:BE:16:default">
+    <description>6809 Microprocessor</description>
+    <compiler name="default" spec="6809.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="6809"/>
+    <external_name tool="IDA-PRO" name="6800"/>
+	<external_name tool="IDA-PRO" name="6801"/>
+	<external_name tool="IDA-PRO" name="6803"/>
+	<external_name tool="IDA-PRO" name="6808"/>
+  </language>
+  <language processor="H6309"
+            endian="big"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="H6309.sla"
+            processorspec="6809.pspec"
+            manualindexfile="../manuals/6809.idx"
+            id="H6309:BE:16:default">
+    <description>Hitachi 6309 Microprocessor, extension of 6809, 6309 addressing modes, missing many instructions</description>
+    <compiler name="default" spec="6809.cspec" id="default"/>
+    <external_name tool="IDA-PRO" name="6309"/>
+  </language>
+</language_definitions>

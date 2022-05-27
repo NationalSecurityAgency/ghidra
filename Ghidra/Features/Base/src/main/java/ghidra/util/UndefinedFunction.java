@@ -555,7 +555,7 @@ public class UndefinedFunction implements Function {
 	}
 
 	@Override
-	public Address[] getFunctionThunkAddresses() {
+	public Address[] getFunctionThunkAddresses(boolean recursive) {
 		return null;
 	}
 

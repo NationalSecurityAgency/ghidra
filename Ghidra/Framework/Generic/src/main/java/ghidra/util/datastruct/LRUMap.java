@@ -21,23 +21,25 @@ import ghidra.util.SystemUtilities;
 
 /**
  * A LRU (Least Recently Used) map that maintains <i>access-order</i> (newest to oldest)
- *  iteration over the elements.  
- * This map is limited to the given size.  
+ *  iteration over the elements.
+ * This map is limited to the given size.
  * As new items are added, the older items will be removed from this map.
  * <p>
- * If you need to be notified of removals, then you can override 
+ * If you need to be notified of removals, then you can override
  *  {@link #eldestEntryRemoved(java.util.Map.Entry)}.
  * <p>
- * If you don't want the eldest removed, override  
+ * If you don't want the eldest removed, override
  *  {@link #removeEldestEntry(java.util.Map.Entry)} and return false;
  * <p>
- * If you would like to have the iteration order of your LRU structure be based upon access, 
+ * If you would like to have the iteration order of your LRU structure be based upon access,
  * but want it to iterate from least recently used to most recently used, then you should see
  * {@link FixedSizeHashMap}.
- *  
- * @param <K> the key type 
+ * <p>
+ * Note: this class is not thread safe.
+ *
+ * @param <K> the key type
  * @param <V> the value type
- * 
+ *
  * @see LinkedHashMap
  * @see FixedSizeHashMap
  */
@@ -76,7 +78,7 @@ public class LRUMap<K, V> implements Map<K, V> {
 	@Override
 	public boolean containsValue(Object value) {
 		for (V mapValue : values()) {
-			if (SystemUtilities.isEqual(value, mapValue)) {
+			if (Objects.equals(value, mapValue)) {
 				return true;
 			}
 		}

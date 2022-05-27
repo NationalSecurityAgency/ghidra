@@ -27,7 +27,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class PdbDebugInfoParser {
 
-	private static final int DATABASE_INTERFACE_STREAM_NUMBER = 3;
+	private static final int DEBUG_INFO_STREAM_NUMBER = 3;
 
 	//==============================================================================================
 	public static final int DBIHDR700_SIG = 0xffffffff;
@@ -106,7 +106,7 @@ public class PdbDebugInfoParser {
 	 * @return Stream number that contains the Database Interface.
 	 */
 	protected int getStreamNumber() {
-		return DATABASE_INTERFACE_STREAM_NUMBER;
+		return DEBUG_INFO_STREAM_NUMBER;
 	}
 
 }

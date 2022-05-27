@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,9 @@
  */
 package ghidra.app.util.bin.format.ne;
 
-import ghidra.app.util.bin.format.*;
-
 import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * A class to represent a new-executable segment relocation.
@@ -102,7 +101,7 @@ public class SegmentRelocation {
 	 * Constucts a new segment relocation.
 	 * @param reader the binary reader
 	 */
-    SegmentRelocation(FactoryBundledWithBinaryReader reader, int segment) throws IOException {
+	SegmentRelocation(BinaryReader reader, int segment) throws IOException {
     	this.segment  = segment;
         type          = reader.readNextByte();
         flagbyte      = reader.readNextByte();

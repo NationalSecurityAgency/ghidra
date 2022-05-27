@@ -53,6 +53,7 @@ public class MemSearcherAlgorithm implements MemorySearchAlgorithm {
 		int progressCount = 0;
 
 		while (addressRanges.hasNext() && !monitor.isCancelled()) {
+
 			AddressRange range = addressRanges.next();
 			searchRange(accumulator, range, monitor, progressCount);
 			progressCount += range.getLength();
@@ -73,6 +74,7 @@ public class MemSearcherAlgorithm implements MemorySearchAlgorithm {
 		while (startAddress != null && !monitor.isCancelled()) {
 			Address matchAddress = mem.findBytes(startAddress, endAddress, searchData.getBytes(),
 				searchData.getMask(), forwardSearch, monitor);
+
 			if (isMatchingAddress(matchAddress)) {
 				MemSearchResult result = new MemSearchResult(matchAddress, length);
 				accumulator.add(result);

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,5 +54,10 @@ class ShiftedReferenceDB extends MemReferenceDB implements ShiftedReference {
 		}
 		ShiftedReference ref = (ShiftedReference) obj;
 		return offsetOrShift == ref.getShift();
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + " Shift: 0x" + Long.toHexString(offsetOrShift);
 	}
 }

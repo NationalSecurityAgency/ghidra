@@ -18,10 +18,9 @@ package ghidra.app.util.bin.format.dwarf4.next;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import java.io.IOException;
 
 import ghidra.app.cmd.comments.AppendCommentCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
@@ -976,7 +975,7 @@ public class DWARFFunctionImporter {
 			}
 			return result;
 		}
-		catch (CodeUnitInsertionException | DataTypeConflictException e) {
+		catch (CodeUnitInsertionException e) {
 			Msg.error(this, "Error creating data object at " + address, e);
 		}
 		return null;

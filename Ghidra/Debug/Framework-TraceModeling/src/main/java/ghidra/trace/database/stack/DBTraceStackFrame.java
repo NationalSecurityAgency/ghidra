@@ -18,6 +18,8 @@ package ghidra.trace.database.stack;
 import java.io.IOException;
 import java.util.Objects;
 
+import com.google.common.collect.Range;
+
 import db.DBRecord;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.Address;
@@ -98,12 +100,12 @@ public class DBTraceStackFrame extends DBAnnotatedObject
 	}
 
 	@Override
-	public Address getProgramCounter() {
+	public Address getProgramCounter(long snap) {
 		return pc;
 	}
 
 	@Override
-	public void setProgramCounter(Address pc) {
+	public void setProgramCounter(Range<Long> span, Address pc) {
 		//System.err.println("setPC(threadKey=" + stack.getThread().getKey() + ",snap=" +
 		//	stack.getSnap() + ",level=" + level + ",pc=" + pc + ");");
 		manager.trace.assertValidAddress(pc);
@@ -115,22 +117,24 @@ public class DBTraceStackFrame extends DBAnnotatedObject
 			update(PC_COLUMN);
 		}
 		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceStackChangeType.CHANGED, null, stack));
+			new TraceChangeRecord<>(TraceStackChangeType.CHANGED, null, stack, 0L,
+				stack.getSnap()));
 	}
 
 	@Override
-	public String getComment() {
+	public String getComment(long snap) {
 		return comment;
 	}
 
 	@Override
-	public void setComment(String comment) {
+	public void setComment(long snap, String comment) {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			this.comment = comment;
 			update(COMMENT_COLUMN);
 		}
 		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceStackChangeType.CHANGED, null, stack));
+			new TraceChangeRecord<>(TraceStackChangeType.CHANGED, null, stack, 0L,
+				stack.getSnap()));
 	}
 
 	@Internal

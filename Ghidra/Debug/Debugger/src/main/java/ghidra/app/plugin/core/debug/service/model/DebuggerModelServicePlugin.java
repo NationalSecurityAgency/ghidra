@@ -75,7 +75,7 @@ public class DebuggerModelServicePlugin extends Plugin
 
 	private static final String PREFIX_FACTORY = "Factory_";
 
-	// Since used for naming, no : allowed.
+	// Since used for naming, no ':' allowed.
 	public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss-z");
 
 	protected class ListenersForRemovalAndFocus {
@@ -368,9 +368,8 @@ public class DebuggerModelServicePlugin extends Plugin
 		}
 	}
 
-	@Override
 	@Internal
-	public TraceRecorder doRecordTargetPromptOffers(PluginTool t, TargetObject target) {
+	protected TraceRecorder doRecordTargetPromptOffers(PluginTool t, TargetObject target) {
 		synchronized (recordersByTarget) {
 			TraceRecorder recorder = recordersByTarget.get(target);
 			if (recorder != null) {
@@ -671,11 +670,16 @@ public class DebuggerModelServicePlugin extends Plugin
 		connectDialog.readConfigState(saveState);
 	}
 
-	@Override
-	public Stream<DebuggerProgramLaunchOffer> getProgramLaunchOffers(Program program) {
+	protected Stream<DebuggerProgramLaunchOffer> doGetProgramLaunchOffers(PluginTool tool,
+			Program program) {
 		return ClassSearcher.getInstances(DebuggerProgramLaunchOpinion.class)
 				.stream()
 				.flatMap(opinion -> opinion.getOffers(program, tool, this).stream());
+	}
+
+	@Override
+	public Stream<DebuggerProgramLaunchOffer> getProgramLaunchOffers(Program program) {
+		return doGetProgramLaunchOffers(tool, program);
 	}
 
 	protected CompletableFuture<DebuggerObjectModel> doShowConnectDialog(PluginTool tool,

@@ -48,3 +48,40 @@ dependencies {
 	// include code from src/test/slow in Base
 	testImplementation project(path: ':Base', configuration: 'integrationTestArtifacts')	
 }
+
+// ***********************************************************************************************
+// Sevenzip native library extract task
+// ***********************************************************************************************
+// The following extracts native libraries from upstream's sevenzipjbinding allPlatform jar
+// and places the uncompressed native libraries into a ghidra folder so that they can be used to
+// initialize the sevenzipjbinding library without needing to extract the native libraries at run time.
+// This is necessary due to bugs in upstream's initSevenZipFromPlatformJAR() that can cause core
+// dumps in java processes that have previously loaded the native library.  See comments
+// at the top of ghidra.file.formats.sevenzip.SevenZipCustomInitializer.
+// This gradle task can be removed when SevenZipCustomInitializer is no longer needed.
+String getSevenZipJarPath() {
+    List<String> libs = getExternalRuntimeDependencies(project);
+    for(String lib: libs) {
+        if (lib.contains("sevenzipjbinding-all-platforms")) {
+            return lib;
+        }
+    }
+    return null
+}
+
+task extractSevenZipNativeLibs(type: Copy) {
+    String jarPath = getSevenZipJarPath();
+    from zipTree(jarPath)
+    include  "Linux-amd64/*.so"
+    include  "Windows-amd64/*.dll"
+    include  "Mac-x86_64/*.dylib"
+    exclude "META-INF"
+    exclude "Linux-i386"
+    exclude "Windows-x86"
+    into ("build/data/sevenzipnativelibs")    
+}
+
+rootProject.prepDev.dependsOn extractSevenZipNativeLibs
+jar.dependsOn extractSevenZipNativeLibs
+// end of sevenzip native library extract task code
+

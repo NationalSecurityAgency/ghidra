@@ -78,6 +78,6 @@ public abstract class AbstractModelForDbgengProcessActivationTest
 				.collect(Collectors.toList())).trim();
 		String procId = getIdFromCapture(line);
 		assertEquals(expected.getPath(),
-			getProcessPattern().applyIndices(procId).getSingletonPath());
+			getProcessPattern().applyKeys(procId).getSingletonPath());
 	}
 }

@@ -52,10 +52,7 @@ public class MarkerServiceBackgroundColorModel implements ListingBackgroundColor
 		Address addr = indexMap.getAddress(index);
 		Color color = null;
 		if (addr != null) {
-			if (program == null) {
-				color = markerService.getBackgroundColor(addr);
-			}
-			else {
+			if (program != null) {
 				color = markerService.getBackgroundColor(program, addr);
 			}
 		}

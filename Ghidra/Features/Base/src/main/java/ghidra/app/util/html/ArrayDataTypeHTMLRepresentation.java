@@ -17,6 +17,8 @@ package ghidra.app.util.html;
 
 import java.awt.Color;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.diff.DataTypeDiff;
 import ghidra.app.util.html.diff.DataTypeDiffBuilder;
@@ -72,16 +74,22 @@ public class ArrayDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation 
 		StringBuilder buffy = new StringBuilder();
 
 		DataType baseDataType = getBaseDataType();
-		buffy.append("Array Base Data Type: ").append(BR);
-		buffy.append(INDENT_OPEN);
 
 		if (baseDataType instanceof BuiltInDataType) {
-			String simpleName = baseDataType.getClass().getSimpleName();
-			buffy.append(simpleName);
-			addDataTypeLength(baseDataType, buffy);
+			String simpleName = baseDataType.getDisplayName();
+			buffy.append(TT_OPEN).append(simpleName).append(TT_CLOSE);
+			buffy.append(BR).append(INDENT_OPEN);
+
+			String description = baseDataType.getDescription();
+			if (!StringUtils.isBlank(description)) {
+				String encodedDescription =
+					HTMLUtilities.friendlyEncodeHTML(description);
+				buffy.append(encodedDescription).append(BR);
+			}
+			addDataTypeLengthAndAlignment(baseDataType, buffy);
+			buffy.append(INDENT_CLOSE);
 		}
 		else {
-
 			HTMLDataTypeRepresentation representation =
 				ToolTipUtils.getHTMLRepresentation(baseDataType);
 
@@ -93,18 +101,15 @@ public class ArrayDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation 
 			buffy.append(baseHTML);
 
 			if (baseHTML.indexOf(LENGTH_PREFIX) < 0) {
-				addDataTypeLength(baseDataType, buffy);
+				addDataTypeLengthAndAlignment(baseDataType, buffy);
 			}
 		}
-
-		buffy.append(INDENT_CLOSE);
 
 		return buffy.toString();
 	}
 
 	private ValidatableLine buildHeaderContent() {
 		StringBuilder buffy = new StringBuilder();
-		buffy.append(FORWARD_SLASH).append(FORWARD_SLASH).append(HTML_SPACE);
 		buffy.append(HTMLUtilities.friendlyEncodeHTML(array.getName()));
 		return new TextLine(buffy.toString());
 	}
@@ -112,9 +117,9 @@ public class ArrayDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation 
 	private ValidatableLine buildFooterContent() {
 		int len = array.getLength();
 		if (array.isZeroLength()) {
-			return new TextLine("Size: 0 (reported size is " + len + ")");
+			return new TextLine(LENGTH_PREFIX + "0 (reported length is " + len + ")");
 		}
-		return new TextLine("Size: " + len);
+		return new TextLine(LENGTH_PREFIX + len);
 	}
 
 	private String buildHTMLText(ValidatableLine header, String body, ValidatableLine info,
@@ -130,13 +135,13 @@ public class ArrayDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation 
 		headerText = wrapStringInColor(headerText, headerLine.getTextColor());
 		buffy.append(headerText);
 
-		buffy.append(BR);
-		TextLine infoLine = (TextLine) info;
+		buffy.append(INDENT_OPEN);
+		TextLine infoLine = (TextLine) info; // TODO: Should include Alignment as well as Length (using footer prevents this)
 		String infoText = info.getText();
 		infoText = wrapStringInColor(infoText, infoLine.getTextColor());
 		buffy.append(infoText);
 
-		buffy.append(BR).append(BR);
+		buffy.append(BR).append(BR).append(INDENT_CLOSE);
 		buffy.append(body);
 
 		return buffy.toString();

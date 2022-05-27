@@ -26,7 +26,7 @@ public class FunctionInlineSettingsDefinition implements BooleanSettingsDefiniti
 	private static final String INLINE = "Show inline";
 	private static final String NAME = INLINE;
 	private static final String DESCRIPTION =
-		"On siganls to show the inline " + "function attribute when present";
+		"On signals to show the inline " + "function attribute when present";
 	private static final boolean DEFAULT = false;
 
 	@Override
@@ -39,6 +39,11 @@ public class FunctionInlineSettingsDefinition implements BooleanSettingsDefiniti
 			return DEFAULT;
 		}
 		return Boolean.parseBoolean(value);
+	}
+
+	@Override
+	public String getValueString(Settings settings) {
+		return Boolean.toString(getValue(settings));
 	}
 
 	@Override
@@ -70,6 +75,11 @@ public class FunctionInlineSettingsDefinition implements BooleanSettingsDefiniti
 	@Override
 	public String getName() {
 		return NAME;
+	}
+
+	@Override
+	public String getStorageKey() {
+		return INLINE;
 	}
 
 	@Override

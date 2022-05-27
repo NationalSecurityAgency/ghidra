@@ -26,13 +26,13 @@ import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.commands.NList;
 import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.exception.CancelledException;
@@ -177,10 +177,11 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		if (endOfMappedOffset < bp.length()) {
 			monitor.setMessage("Processing DYLD unmapped memory block...");
-			MemoryBlockUtils.createInitializedBlock(program, true, "FILE",
+			MemoryBlock fileBlock = MemoryBlockUtils.createInitializedBlock(program, true, "FILE",
 				AddressSpace.OTHER_SPACE.getAddress(endOfMappedOffset), fb, endOfMappedOffset,
 				bp.length() - endOfMappedOffset, "Useful bytes that don't get mapped into memory",
 				"", false, false, false, log);
+			dyldCacheHeader.setFileBlock(fileBlock);
 		}
 	}
 
@@ -211,9 +212,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		monitor.initialize(dyldCacheHeader.getBranchPoolAddresses().size());
 		for (Long addr : dyldCacheHeader.getBranchPoolAddresses()) {
 			try {
-				MachHeader header =
-					MachHeader.createMachHeader(MessageLogContinuesFactory.create(log), bp,
-						addr - dyldCacheHeader.getBaseAddress());
+				MachHeader header = new MachHeader(bp, addr - dyldCacheHeader.getBaseAddress());
 				header.parse();
 				super.markupHeaders(header, space.getAddress(addr));
 			}
@@ -359,8 +358,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		public DyldCacheMachoInfo(ByteProvider provider, long offset, Address headerAddr,
 				String path) throws Exception {
 			this.headerAddr = headerAddr;
-			this.header = MachHeader.createMachHeader(MessageLogContinuesFactory.create(log),
-				provider, offset, false);
+			this.header = new MachHeader(provider, offset, false);
 			this.header.parse();
 			this.path = path;
 			this.name = new File(path).getName();

@@ -18,7 +18,8 @@ package ghidra.app.cmd.data;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Swing;
@@ -126,8 +127,7 @@ public class CreateDataBackgroundCmd extends BackgroundCommand {
 	}
 
 	private void createData(Address start, Address end, DataType dataType, Program p,
-			TaskMonitor monitor)
-			throws AddressOverflowException, CodeUnitInsertionException, DataTypeConflictException {
+			TaskMonitor monitor) throws AddressOverflowException, CodeUnitInsertionException {
 
 		Listing listing = p.getListing();
 		listing.clearCodeUnits(start, end, false);

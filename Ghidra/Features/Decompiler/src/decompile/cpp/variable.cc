@@ -51,7 +51,7 @@ void HighVariable::setSymbol(Varnode *vn) const
   symbol = entry->getSymbol();
   if (entry->isDynamic())	// Dynamic symbols match whole variable
     symboloffset = -1;
-  else if (symbol->getCategory() == 1)
+  else if (symbol->getCategory() == Symbol::equate)
     symboloffset = -1;			// For equates, we don't care about size
   else if (symbol->getType()->getSize() == vn->getSize() &&
       entry->getAddr() == vn->getAddr() && !entry->isPiece())
@@ -466,7 +466,7 @@ void HighVariable::saveXml(ostream &s) const
   else if (isConstant())
     a_v(s,"class",string("constant"));
   else if (!isPersist() && (symbol != (Symbol *)0)) {
-    if (symbol->getCategory() == 0)
+    if (symbol->getCategory() == Symbol::function_parameter)
       a_v(s,"class",string("param"));
     else
       a_v(s,"class",string("local"));

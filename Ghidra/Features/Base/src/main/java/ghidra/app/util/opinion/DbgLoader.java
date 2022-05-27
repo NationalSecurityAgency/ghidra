@@ -19,15 +19,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import generic.continues.GenericFactory;
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.RandomAccessByteProvider;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Conv;
@@ -56,8 +53,7 @@ public class DbgLoader extends AbstractPeDebugLoader {
 		if (provider.length() < MIN_BYTE_LENGTH) {
 			return loadSpecs;
 		}
-		SeparateDebugHeader debug =
-			new SeparateDebugHeader(RethrowContinuesFactory.INSTANCE, provider);
+		SeparateDebugHeader debug = new SeparateDebugHeader(provider);
 		if (debug.getSignature() == SeparateDebugHeader.IMAGE_SEPARATE_DEBUG_SIGNATURE) {
 			long imageBase = Conv.intToLong(debug.getImageBase());
 			String machineName = debug.getMachineName();
@@ -76,14 +72,12 @@ public class DbgLoader extends AbstractPeDebugLoader {
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program prog,
 			TaskMonitor monitor, MessageLog log) throws IOException {
 
-		GenericFactory factory = MessageLogContinuesFactory.create(log);
-
 		if (!prog.getExecutableFormat().equals(PeLoader.PE_NAME)) {
 			throw new IOException("Loading of DBG file may only be 'added' to existing " +
 				PeLoader.PE_NAME + " Program");
 		}
 
-		SeparateDebugHeader debug = new SeparateDebugHeader(factory, provider);
+		SeparateDebugHeader debug = new SeparateDebugHeader(provider);
 
 		String parentPath = prog.getExecutablePath();
 		File parentFile = new File(parentPath);
@@ -91,8 +85,7 @@ public class DbgLoader extends AbstractPeDebugLoader {
 		RandomAccessByteProvider provider2 = null;
 		try {
 			provider2 = new RandomAccessByteProvider(parentFile);
-			PortableExecutable parentPE =
-				PortableExecutable.createPortableExecutable(factory, provider2, SectionLayout.FILE);
+			PortableExecutable parentPE = new PortableExecutable(provider2, SectionLayout.FILE);
 			Address imageBase = prog.getImageBase();
 			Map<SectionHeader, Address> sectionToAddress = new HashMap<>();
 			FileHeader fileHeader = parentPE.getNTHeader().getFileHeader();
@@ -101,7 +94,8 @@ public class DbgLoader extends AbstractPeDebugLoader {
 				sectionToAddress.put(sectionHeader,
 					imageBase.add(sectionHeader.getVirtualAddress()));
 			}
-			processDebug(debug.getParser(), fileHeader, sectionToAddress, prog, monitor);
+			processDebug(debug.getParser(), parentPE.getNTHeader(), sectionToAddress, prog,
+				monitor);
 		}
 		finally {
 			if (provider2 != null) {

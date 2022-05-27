@@ -49,6 +49,7 @@ public class DebuggerLocationLabel extends JLabel {
 			listenFor(TraceMemoryRegionChangeType.LIFESPAN_CHANGED, this::regionChanged);
 			listenFor(TraceMemoryRegionChangeType.DELETED, this::regionChanged);
 
+			listenFor(TraceModuleChangeType.ADDED, this::moduleChanged);
 			listenFor(TraceModuleChangeType.CHANGED, this::moduleChanged);
 			listenFor(TraceModuleChangeType.LIFESPAN_CHANGED, this::moduleChanged);
 			listenFor(TraceModuleChangeType.DELETED, this::moduleChanged);
@@ -196,6 +197,7 @@ public class DebuggerLocationLabel extends JLabel {
 	}
 
 	public void updateLabel() {
-		setText(computeLocationString());
+		String label = computeLocationString();
+		setText(label);
 	}
 }

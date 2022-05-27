@@ -29,12 +29,12 @@ public class DBTraceUserData extends DomainObjectAdapterDB implements TraceUserD
 	}
 
 	protected DBTraceUserData(DBTrace trace) throws IOException {
-		super(new DBHandle(), getName(trace), 500, 1000, trace);
+		super(new DBHandle(), getName(trace), 500, trace);
 		// TODO: Create database and such
 	}
 
 	public DBTraceUserData(DBHandle dbh, DBTrace trace, TaskMonitor monitor) {
-		super(dbh, getName(trace), 500, 1000, trace);
+		super(dbh, getName(trace), 500, trace);
 		// TODO Auto-generated constructor stub
 	}
 

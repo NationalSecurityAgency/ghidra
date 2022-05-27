@@ -16,7 +16,6 @@
 package ghidra.program.model.data;
 
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.Collection;
 
 import ghidra.docking.settings.Settings;
@@ -56,6 +55,11 @@ public class StubDataType implements DataType {
 
 	@Override
 	public SettingsDefinition[] getSettingsDefinitions() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public TypeDefSettingsDefinition[] getTypeDefSettingsDefinitions() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -231,11 +235,6 @@ public class StubDataType implements DataType {
 
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setDefaultSettings(Settings settings) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -615,292 +615,293 @@ Rn_exclaim_WB: 	is Rn0810 & thc0810=7 & thc0707=1			{ }
 Rn_exclaim_WB: 	is Rn0810 & thc0810							{ Rn0810 = mult_addr; }
 
 # ldlist  is the list of registers to be loaded or popped
-LdRtype0: " "^r0			is            thc0000=1 & r0 & thc0107=0	{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype0: " "^r0^","		is            thc0000=1 & r0 			{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype0: r0				is            thc0000=1 & r0 & thc0107=0	{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype0: r0,				is            thc0000=1 & r0 				{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
 LdRtype0: 					is            thc0000=0				{ }
-LdRtype1: LdRtype0 r1		is LdRtype0 & thc0101=1 & r1 & thc0207=0	{ r1 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype1: LdRtype0 r1^","	is LdRtype0 & thc0101=1 & r1			{ r1 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype1: LdRtype0		is LdRtype0 & thc0101=0				{ }
-LdRtype2: LdRtype1 r2		is LdRtype1 & thc0202=1 & r2 & thc0307=0	{ r2 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype2: LdRtype1 r2^","	is LdRtype1 & thc0202=1 & r2			{ r2 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype2: LdRtype1		is LdRtype1 & thc0202=0				{ }
-LdRtype3: LdRtype2 r3		is LdRtype2 & thc0303=1 & r3 & thc0407=0	{ r3 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype3: LdRtype2 r3^","	is LdRtype2 & thc0303=1 & r3			{ r3 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype3: LdRtype2		is LdRtype2 & thc0303=0				{ }
-LdRtype4: LdRtype3 r4		is LdRtype3 & thc0404=1 & r4 & thc0507=0	{ r4 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype4: LdRtype3 r4^","	is LdRtype3 & thc0404=1 & r4			{ r4 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype4: LdRtype3		is LdRtype3 & thc0404=0				{ }
-LdRtype5: LdRtype4 r5		is LdRtype4 & thc0505=1 & r5 & thc0607=0	{ r5 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype5: LdRtype4 r5^","	is LdRtype4 & thc0505=1 & r5			{ r5 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype5: LdRtype4		is LdRtype4 & thc0505=0				{ }
-LdRtype6: LdRtype5 r6		is LdRtype5 & thc0606=1 & r6 & thc0707=0	{ r6 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype6: LdRtype5 r6^","	is LdRtype5 & thc0606=1 & r6			{ r6 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype6: LdRtype5		is LdRtype5 & thc0606=0				{ }
-ldlist:   LdRtype6 r7		is LdRtype6 & thc0707=1 & r7			{ r7 = *mult_addr; mult_addr = mult_addr + 4; }
-ldlist:   LdRtype6		is LdRtype6 & thc0707=0				{ }
+LdRtype1: LdRtype0^r1		is LdRtype0 & thc0101=1 & r1 & thc0207=0	{ r1 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype1: LdRtype0^r1,		is LdRtype0 & thc0101=1 & r1				{ r1 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype1: LdRtype0			is LdRtype0 & thc0101=0				{ }
+LdRtype2: LdRtype1^r2		is LdRtype1 & thc0202=1 & r2 & thc0307=0	{ r2 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype2: LdRtype1^r2,		is LdRtype1 & thc0202=1 & r2				{ r2 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype2: LdRtype1			is LdRtype1 & thc0202=0				{ }
+LdRtype3: LdRtype2^r3		is LdRtype2 & thc0303=1 & r3 & thc0407=0	{ r3 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype3: LdRtype2^r3,		is LdRtype2 & thc0303=1 & r3				{ r3 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype3: LdRtype2			is LdRtype2 & thc0303=0				{ }
+LdRtype4: LdRtype3^r4		is LdRtype3 & thc0404=1 & r4 & thc0507=0	{ r4 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype4: LdRtype3^r4,		is LdRtype3 & thc0404=1 & r4				{ r4 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype4: LdRtype3			is LdRtype3 & thc0404=0				{ }
+LdRtype5: LdRtype4^r5		is LdRtype4 & thc0505=1 & r5 & thc0607=0	{ r5 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype5: LdRtype4^r5,		is LdRtype4 & thc0505=1 & r5				{ r5 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype5: LdRtype4			is LdRtype4 & thc0505=0				{ }
+LdRtype6: LdRtype5^r6		is LdRtype5 & thc0606=1 & r6 & thc0707=0	{ r6 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype6: LdRtype5^r6,		is LdRtype5 & thc0606=1 & r6				{ r6 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype6: LdRtype5			is LdRtype5 & thc0606=0				{ }
+ldlist:   LdRtype6^r7		is LdRtype6 & thc0707=1 & r7				{ r7 = *mult_addr; mult_addr = mult_addr + 4; }
+ldlist:   LdRtype6			is LdRtype6 & thc0707=0				{ }
 
 #strlist is the list of registers to be stored
-StrType0: " "^r0			is thc0000=1 & r0 & thc0107=0			{ *mult_addr = r0; mult_addr = mult_addr + 4; }
-StrType0: " "^r0^","		is thc0000=1 & r0				{ *mult_addr = r0; mult_addr = mult_addr + 4; }
-StrType0:			is thc0000=0					{ }
-StrType1: StrType0 r1		is StrType0 & thc0101=1 & r1 & thc0207=0	{ *mult_addr = r1; mult_addr = mult_addr + 4; }
-StrType1: StrType0 r1^","	is StrType0 & thc0101=1 & r1			{ *mult_addr = r1; mult_addr = mult_addr + 4; }
-StrType1: StrType0		is StrType0 & thc0101=0				{ }
-StrType2: StrType1 r2		is StrType1 & thc0202=1 & r2 & thc0307=0	{ *mult_addr = r2; mult_addr = mult_addr + 4; }
-StrType2: StrType1 r2^","	is StrType1 & thc0202=1 & r2			{ *mult_addr = r2; mult_addr = mult_addr + 4; }
-StrType2: StrType1		is StrType1 & thc0202=0				{ }
-StrType3: StrType2 r3		is StrType2 & thc0303=1 & r3 & thc0407=0	{ *mult_addr = r3; mult_addr = mult_addr + 4; }
-StrType3: StrType2 r3^","	is StrType2 & thc0303=1 & r3			{ *mult_addr = r3; mult_addr = mult_addr + 4; }
-StrType3: StrType2		is StrType2 & thc0303=0				{ }
-StrType4: StrType3 r4		is StrType3 & thc0404=1 & r4 & thc0507=0	{ *mult_addr = r4; mult_addr = mult_addr + 4; }
-StrType4: StrType3 r4^","	is StrType3 & thc0404=1 & r4			{ *mult_addr = r4; mult_addr = mult_addr + 4; }
-StrType4: StrType3		is StrType3 & thc0404=0				{ }
-StrType5: StrType4 r5		is StrType4 & thc0505=1 & r5 & thc0607=0	{ *mult_addr = r5; mult_addr = mult_addr + 4; }
-StrType5: StrType4 r5^","	is StrType4 & thc0505=1 & r5			{ *mult_addr = r5; mult_addr = mult_addr + 4; }
-StrType5: StrType4		is StrType4 & thc0505=0				{ }
-StrType6: StrType5 r6		is StrType5 & thc0606=1 & r6 & thc0707=0	{ *mult_addr = r6; mult_addr = mult_addr + 4; }
-StrType6: StrType5 r6^","	is StrType5 & thc0606=1 & r6			{ *mult_addr = r6; mult_addr = mult_addr + 4; }
-StrType6: StrType5		is StrType5 & thc0606=0				{ }
-StrType7: StrType6 r7		is StrType6 & thc0707=1 & r7	{ *mult_addr = r7; mult_addr = mult_addr + 4; }
-StrType7: StrType6      is StrType6 & thc0707=0		{ }
-strlist:  StrType7	is StrType7 { }
+StrType0: r0				is thc0000=1 & r0 & thc0107=0				{ *mult_addr = r0; mult_addr = mult_addr + 4; }
+StrType0: r0,				is thc0000=1 & r0							{ *mult_addr = r0; mult_addr = mult_addr + 4; }
+StrType0:					is thc0000=0						{ }
+StrType1: StrType0^r1		is StrType0 & thc0101=1 & r1 & thc0207=0	{ *mult_addr = r1; mult_addr = mult_addr + 4; }
+StrType1: StrType0^r1,		is StrType0 & thc0101=1 & r1				{ *mult_addr = r1; mult_addr = mult_addr + 4; }
+StrType1: StrType0			is StrType0 & thc0101=0				{ }
+StrType2: StrType1^r2		is StrType1 & thc0202=1 & r2 & thc0307=0	{ *mult_addr = r2; mult_addr = mult_addr + 4; }
+StrType2: StrType1^r2,		is StrType1 & thc0202=1 & r2				{ *mult_addr = r2; mult_addr = mult_addr + 4; }
+StrType2: StrType1			is StrType1 & thc0202=0				{ }
+StrType3: StrType2^r3		is StrType2 & thc0303=1 & r3 & thc0407=0	{ *mult_addr = r3; mult_addr = mult_addr + 4; }
+StrType3: StrType2^r3,		is StrType2 & thc0303=1 & r3				{ *mult_addr = r3; mult_addr = mult_addr + 4; }
+StrType3: StrType2			is StrType2 & thc0303=0				{ }
+StrType4: StrType3^r4		is StrType3 & thc0404=1 & r4 & thc0507=0	{ *mult_addr = r4; mult_addr = mult_addr + 4; }
+StrType4: StrType3^r4,		is StrType3 & thc0404=1 & r4				{ *mult_addr = r4; mult_addr = mult_addr + 4; }
+StrType4: StrType3			is StrType3 & thc0404=0				{ }
+StrType5: StrType4^r5		is StrType4 & thc0505=1 & r5 & thc0607=0	{ *mult_addr = r5; mult_addr = mult_addr + 4; }
+StrType5: StrType4^r5,		is StrType4 & thc0505=1 & r5				{ *mult_addr = r5; mult_addr = mult_addr + 4; }
+StrType5: StrType4			is StrType4 & thc0505=0				{ }
+StrType6: StrType5^r6		is StrType5 & thc0606=1 & r6 & thc0707=0	{ *mult_addr = r6; mult_addr = mult_addr + 4; }
+StrType6: StrType5^r6,		is StrType5 & thc0606=1 & r6				{ *mult_addr = r6; mult_addr = mult_addr + 4; }
+StrType6: StrType5			is StrType5 & thc0606=0				{ }
+StrType7: StrType6^r7		is StrType6 & thc0707=1 & r7				{ *mult_addr = r7; mult_addr = mult_addr + 4; }
+StrType7: StrType6			is StrType6 & thc0707=0			{ }
+strlist:  StrType7			is StrType7						{ }
 
 # pshlist is the list registers to be pushed to memory
 # SCR 10921, fix the order in which the regs appear in the disassembled insn, to be in line with objdump
 # Also add commas between regs
 #
-PshType7: ""				is thc0707=0					{ }
-PshType7: r7				is thc0707=1 & r7				{ mult_addr = mult_addr - 4; *mult_addr = r7; }
+PshType7: ""				is thc0707=0						{ }
+PshType7: r7				is thc0707=1 & r7							{ mult_addr = mult_addr - 4; *mult_addr = r7; }
 PshType6: PshType7			is PshType7 & thc0606=0				{ }
-PshType6: r6 				is PshType7 & thc0606=1 & r6 & thc0707=0	{ mult_addr = mult_addr - 4; *mult_addr = r6; }
-PshType6: r6^"," PshType7	is PshType7 & thc0606=1 & r6			{ mult_addr = mult_addr - 4; *mult_addr = r6; }
+PshType6: r6				is thc0606=1 & r6 & thc0707=0	{ mult_addr = mult_addr - 4; *mult_addr = r6; }
+PshType6: r6,PshType7		is PshType7 & thc0606=1 & r6				{ mult_addr = mult_addr - 4; *mult_addr = r6; }
 PshType5: PshType6			is PshType6 & thc0505=0				{ }
-PshType5: r5 				is PshType6 & thc0505=1 & r5 & thc0607=0	{ mult_addr = mult_addr - 4; *mult_addr = r5; }
-PshType5: r5^"," PshType6	is PshType6 & thc0505=1 & r5			{ mult_addr = mult_addr - 4; *mult_addr = r5; }
+PshType5: r5				is thc0505=1 & r5 & thc0607=0	{ mult_addr = mult_addr - 4; *mult_addr = r5; }
+PshType5: r5,PshType6		is PshType6 & thc0505=1 & r5				{ mult_addr = mult_addr - 4; *mult_addr = r5; }
 PshType4: PshType5			is PshType5 & thc0404=0				{ }
-PshType4: r4 				is PshType5 & thc0404=1 & r4 & thc0507=0	{ mult_addr = mult_addr - 4; *mult_addr = r4; }
-PshType4: r4^"," PshType5	is PshType5 & thc0404=1 & r4			{ mult_addr = mult_addr - 4; *mult_addr = r4; }
+PshType4: r4				is thc0404=1 & r4 & thc0507=0	{ mult_addr = mult_addr - 4; *mult_addr = r4; }
+PshType4: r4,PshType5		is PshType5 & thc0404=1 & r4				{ mult_addr = mult_addr - 4; *mult_addr = r4; }
 PshType3: PshType4			is PshType4 & thc0303=0				{ }
-PshType3: r3 				is PshType4 & thc0303=1 & r3 & thc0407=0	{ mult_addr = mult_addr - 4; *mult_addr = r3; }
-PshType3: r3^"," PshType4	is PshType4 & thc0303=1 & r3			{ mult_addr = mult_addr - 4; *mult_addr = r3; }
+PshType3: r3				is thc0303=1 & r3 & thc0407=0	{ mult_addr = mult_addr - 4; *mult_addr = r3; }
+PshType3: r3,PshType4		is PshType4 & thc0303=1 & r3				{ mult_addr = mult_addr - 4; *mult_addr = r3; }
 PshType2: PshType3			is PshType3 & thc0202=0				{ }
-PshType2: r2				is PshType3 & thc0202=1 & r2 & thc0307=0	{ mult_addr = mult_addr - 4; *mult_addr = r2; }
-PshType2: r2^"," PshType3	is PshType3 & thc0202=1 & r2			{ mult_addr = mult_addr - 4; *mult_addr = r2; }
+PshType2: r2				is thc0202=1 & r2 & thc0307=0	{ mult_addr = mult_addr - 4; *mult_addr = r2; }
+PshType2: r2,PshType3		is PshType3 & thc0202=1 & r2				{ mult_addr = mult_addr - 4; *mult_addr = r2; }
 PshType1: PshType2			is PshType2 & thc0101=0				{ }
-PshType1: r1				is PshType2 & thc0101=1 & r1 & thc0207=0	{ mult_addr = mult_addr - 4; *mult_addr = r1; }
-PshType1: r1^"," PshType2	is PshType2 & thc0101=1 & r1			{ mult_addr = mult_addr - 4; *mult_addr = r1; }
+PshType1: r1				is thc0101=1 & r1 & thc0207=0	{ mult_addr = mult_addr - 4; *mult_addr = r1; }
+PshType1: r1,PshType2		is PshType2 & thc0101=1 & r1				{ mult_addr = mult_addr - 4; *mult_addr = r1; }
 pshlist:  PshType1			is PshType1 & thc0000=0				{ }
-pshlist:  r0				is PshType1 & thc0000=1 & r0 & thc0107=0	{ mult_addr = mult_addr - 4; *mult_addr = r0; }
-pshlist:  r0^"," PshType1	is PshType1 & thc0000=1 & r0			{ mult_addr = mult_addr - 4; *mult_addr = r0; }
+pshlist:  r0				is thc0000=1 & r0 & thc0107=0	{ mult_addr = mult_addr - 4; *mult_addr = r0; }
+pshlist:  r0,PshType1		is PshType1 & thc0000=1 & r0				{ mult_addr = mult_addr - 4; *mult_addr = r0; }
 
 # ldlist_inc  is the list of registers to be loaded for pop instructions
-thrlist15: r0  		        is thc0000=1 & r0 & thc0115=0			{ r0 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist15: r0^","		is thc0000=1 & r0				{ r0 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist15:			is thc0000=0					{ }
-thrlist14: thrlist15 r1  	is thc0101=1 & thrlist15 & r1 & thc0215=0	{ r1 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist14: thrlist15 r1^","	is thc0101=1 & thrlist15 & r1			{ r1 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist14: thrlist15  	    	is thc0101=0 & thrlist15			{ }
-thrlist13: thrlist14 r2  	is thc0202=1 & thrlist14 & r2 & thc0315=0	{ r2 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist13: thrlist14 r2^","	is thc0202=1 & thrlist14 & r2   		{ r2 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist13: thrlist14  	    	is thc0202=0 & thrlist14			{ }
-thrlist12: thrlist13 r3  	is thc0303=1 & thrlist13 & r3 & thc0415=0	{ r3 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist12: thrlist13 r3^","	is thc0303=1 & thrlist13 & r3			{ r3 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist12: thrlist13  	    	is thc0303=0 & thrlist13			{ }
-thrlist11: thrlist12 r4  	is thc0404=1 & thrlist12 & r4 & thc0515=0	{ r4 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist11: thrlist12 r4^","	is thc0404=1 & thrlist12 & r4   		{ r4 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist11: thrlist12		is thc0404=0 & thrlist12			{ }
-thrlist10: thrlist11 r5  	is thc0505=1 & thrlist11 & r5 & thc0615=0	{ r5 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist10: thrlist11 r5^","	is thc0505=1 & thrlist11 & r5   		{ r5 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist10: thrlist11  	    	is thc0505=0 & thrlist11			{ }
-thrlist9: thrlist10 r6  	is thc0606=1 & thrlist10 & r6 & thc0715=0	{ r6 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist9: thrlist10 r6^","	is thc0606=1 & thrlist10 & r6			{ r6 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist9: thrlist10  		is thc0606=0 & thrlist10			{ }
-thrlist8: thrlist9 r7		is thc0707=1 & thrlist9 & r7 & thc0815=0	{ r7 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist8: thrlist9 r7^","       is thc0707=1 & thrlist9 & r7        		{ r7 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist8: thrlist9  		is thc0707=0 & thrlist9		    		{ }
-thrlist7: thrlist8 r8		is thc0808=1 & thrlist8 & r8 & thc0915=0	{ r8 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist7: thrlist8 r8^","	is thc0808=1 & thrlist8 & r8			{ r8 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist7: thrlist8  		is thc0808=0 & thrlist8				{ }
-thrlist6: thrlist7 r9		is thc0909=1 & thrlist7 & r9 & thc1015=0	{ r9 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist6: thrlist7 r9^","	is thc0909=1 & thrlist7 & r9		        { r9 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist6: thrlist7  		is thc0909=0 & thrlist7				{ }
-thrlist5: thrlist6 r10  	is thc1010=1 & thrlist6 & r10 & thc1115=0	{ r10 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist5: thrlist6 r10^","	is thc1010=1 & thrlist6 & r10   		{ r10 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist5: thrlist6  		is thc1010=0 & thrlist6				{ }
-thrlist4: thrlist5 r11  	is thc1111=1 & thrlist5 & r11 & thc1215=0	{ r11 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist4: thrlist5 r11^","	is thc1111=1 & thrlist5 & r11   		{ r11 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist4: thrlist5  		is thc1111=0 & thrlist5				{ }
-thrlist3: thrlist4 r12  	is thc1212=1 & thrlist4 & r12 & thc1315=0	{ r12 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist3: thrlist4 r12^","	is thc1212=1 & thrlist4 & r12   		{ r12 = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist3: thrlist4  		is thc1212=0 & thrlist4				{ }
-thrlist2: thrlist3 sp		is thc1313=1 & thrlist3 & sp & thc1415=0	{ sp = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist2: thrlist3 sp^","       is thc1313=1 & thrlist3 & sp			{ sp = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist2: thrlist3  		is thc1313=0 & thrlist3				{ }
-thrlist1: thrlist2 lr  	 	is thc1414=1 & thrlist2 & lr & thc1515=0	{ lr = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist1: thrlist2 lr^","       is thc1414=1 & thrlist2 & lr        		{ lr = * mult_addr; mult_addr = mult_addr + 4; }
-thrlist1: thrlist2  		is thc1414=0 & thrlist2				{ }
-thldrlist_inc: {thrlist1 pc }	is thc1515=1 & thrlist1 & pc			{ pc = * mult_addr; mult_addr = mult_addr + 4; }
-thldrlist_inc: {thrlist1 }	is thc1515=0 & thrlist1				{ }
+thrlist15: r0				is thc0000=1 & r0 & thc0115=0				{ r0 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist15: r0,				is thc0000=1 & r0							{ r0 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist15:					is thc0000=0								{ }
+thrlist14: thrlist15^r1		is thc0101=1 & thrlist15 & r1 & thc0215=0	{ r1 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist14: thrlist15^r1,	is thc0101=1 & thrlist15 & r1				{ r1 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist14: thrlist15		is thc0101=0 & thrlist15					{ }
+thrlist13: thrlist14^r2		is thc0202=1 & thrlist14 & r2 & thc0315=0	{ r2 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist13: thrlist14^r2,	is thc0202=1 & thrlist14 & r2				{ r2 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist13: thrlist14		is thc0202=0 & thrlist14					{ }
+thrlist12: thrlist13^r3		is thc0303=1 & thrlist13 & r3 & thc0415=0	{ r3 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist12: thrlist13^r3,	is thc0303=1 & thrlist13 & r3				{ r3 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist12: thrlist13		is thc0303=0 & thrlist13					{ }
+thrlist11: thrlist12^r4		is thc0404=1 & thrlist12 & r4 & thc0515=0	{ r4 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist11: thrlist12^r4,	is thc0404=1 & thrlist12 & r4				{ r4 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist11: thrlist12		is thc0404=0 & thrlist12					{ }
+thrlist10: thrlist11^r5		is thc0505=1 & thrlist11 & r5 & thc0615=0	{ r5 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist10: thrlist11^r5,	is thc0505=1 & thrlist11 & r5				{ r5 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist10: thrlist11		is thc0505=0 & thrlist11					{ }
+thrlist9: thrlist10^r6		is thc0606=1 & thrlist10 & r6 & thc0715=0	{ r6 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist9: thrlist10^r6,		is thc0606=1 & thrlist10 & r6				{ r6 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist9: thrlist10			is thc0606=0 & thrlist10					{ }
+thrlist8: thrlist9^r7		is thc0707=1 & thrlist9 & r7 & thc0815=0	{ r7 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist8: thrlist9^r7,		is thc0707=1 & thrlist9 & r7				{ r7 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist8: thrlist9			is thc0707=0 & thrlist9						{ }
+thrlist7: thrlist8^r8		is thc0808=1 & thrlist8 & r8 & thc0915=0	{ r8 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist7: thrlist8^r8,		is thc0808=1 & thrlist8 & r8				{ r8 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist7: thrlist8			is thc0808=0 & thrlist8						{ }
+thrlist6: thrlist7^r9		is thc0909=1 & thrlist7 & r9 & thc1015=0	{ r9 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist6: thrlist7^r9,		is thc0909=1 & thrlist7 & r9				{ r9 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist6: thrlist7			is thc0909=0 & thrlist7						{ }
+thrlist5: thrlist6^r10		is thc1010=1 & thrlist6 & r10 & thc1115=0	{ r10 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist5: thrlist6^r10,		is thc1010=1 & thrlist6 & r10				{ r10 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist5: thrlist6			is thc1010=0 & thrlist6						{ }
+thrlist4: thrlist5^r11		is thc1111=1 & thrlist5 & r11 & thc1215=0	{ r11 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist4: thrlist5^r11,		is thc1111=1 & thrlist5 & r11				{ r11 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist4: thrlist5			is thc1111=0 & thrlist5						{ }
+thrlist3: thrlist4^r12		is thc1212=1 & thrlist4 & r12 & thc1315=0	{ r12 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist3: thrlist4^r12,		is thc1212=1 & thrlist4 & r12				{ r12 = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist3: thrlist4			is thc1212=0 & thrlist4						{ }
+thrlist2: thrlist3^sp		is thc1313=1 & thrlist3 & sp & thc1415=0	{ sp = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist2: thrlist3^sp,		is thc1313=1 & thrlist3 & sp				{ sp = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist2: thrlist3			is thc1313=0 & thrlist3						{ }
+thrlist1: thrlist2^lr		is thc1414=1 & thrlist2 & lr & thc1515=0	{ lr = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist1: thrlist2^lr,		is thc1414=1 & thrlist2 & lr				{ lr = * mult_addr; mult_addr = mult_addr + 4; }
+thrlist1: thrlist2			is thc1414=0 & thrlist2						{ }
+thldrlist_inc: {thrlist1^pc}	is thc1515=1 & thrlist1 & pc			{ pc = * mult_addr; mult_addr = mult_addr + 4; }
+thldrlist_inc: {thrlist1}		is thc1515=0 & thrlist1					{ }
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
 # thstrlist_inc  is the list of registers to be stored using IA or IB in Addressing Mode 4
-thsinc15: r0			is thc0000=1 & r0				{ * mult_addr = r0; mult_addr = mult_addr + 4; }
-thsinc15: 			is thc0000=0					{ }
-thsinc14: thsinc15 r1		is thc0101=1 & thsinc15 & r1 & thc0215=0	{ * mult_addr = r1; mult_addr = mult_addr + 4; }
-thsinc14: thsinc15 r1^","	is thc0101=1 & thsinc15 & r1    		{ * mult_addr = r1; mult_addr = mult_addr + 4; }
-thsinc14: thsinc15  		is thc0101=0 & thsinc15				{ }
-thsinc13: thsinc14 r2  		is thc0202=1 & thsinc14 & r2 & thc0315=0	{ * mult_addr = r2; mult_addr = mult_addr + 4; }
-thsinc13: thsinc14 r2^","	is thc0202=1 & thsinc14 & r2			{ * mult_addr = r2; mult_addr = mult_addr + 4; }
-thsinc13: thsinc14  		is thc0202=0 & thsinc14				{ }
-thsinc12: thsinc13 r3  		is thc0303=1 & thsinc13 & r3 & thc0415=0	{ * mult_addr = r3; mult_addr = mult_addr + 4; }
-thsinc12: thsinc13 r3^","	is thc0303=1 & thsinc13 & r3			{ * mult_addr = r3; mult_addr = mult_addr + 4; }
-thsinc12: thsinc13  		is thc0303=0 & thsinc13				{ }
-thsinc11: thsinc12 r4  		is thc0404=1 & thsinc12 & r4 & thc0515=0	{ * mult_addr = r4; mult_addr = mult_addr + 4; }
-thsinc11: thsinc12 r4^","	is thc0404=1 & thsinc12 & r4			{ * mult_addr = r4; mult_addr = mult_addr + 4; }
-thsinc11: thsinc12  		is thc0404=0 & thsinc12				{ }
-thsinc10: thsinc11 r5  		is thc0505=1 & thsinc11 & r5 & thc0615=0	{ * mult_addr = r5; mult_addr = mult_addr + 4; }
-thsinc10: thsinc11 r5^","	is thc0505=1 & thsinc11 & r5			{ * mult_addr = r5; mult_addr = mult_addr + 4; }
-thsinc10: thsinc11  		is thc0505=0 & thsinc11				{ }
-thsinc9: thsinc10 r6  		is thc0606=1 & thsinc10 & r6 & thc0715=0	{ * mult_addr = r6; mult_addr = mult_addr + 4; }
-thsinc9: thsinc10 r6^","	is thc0606=1 & thsinc10 & r6    		{ * mult_addr = r6; mult_addr = mult_addr + 4; }
-thsinc9: thsinc10  		is thc0606=0 & thsinc10				{ }
-thsinc8: thsinc9 r7  		is thc0707=1 & thsinc9 & r7 & thc0815=0		{ * mult_addr = r7; mult_addr = mult_addr + 4; }
-thsinc8: thsinc9 r7^","		is thc0707=1 & thsinc9 & r7             	{ * mult_addr = r7; mult_addr = mult_addr + 4; }
-thsinc8: thsinc9  		is thc0707=0 & thsinc9				{ }
-thsinc7: thsinc8 r8  		is thc0808=1 & thsinc8 & r8 & thc0915=0		{ * mult_addr = r8; mult_addr = mult_addr + 4; }
-thsinc7: thsinc8 r8^","		is thc0808=1 & thsinc8 & r8             	{ * mult_addr = r8; mult_addr = mult_addr + 4; }
-thsinc7: thsinc8  		is thc0808=0 & thsinc8				{ }
-thsinc6: thsinc7 r9  		is thc0909=1 & thsinc7 & r9 & thc1015=0		{ * mult_addr = r9; mult_addr = mult_addr + 4; }
-thsinc6: thsinc7 r9^","		is thc0909=1 & thsinc7 & r9             	{ * mult_addr = r9; mult_addr = mult_addr + 4; }
-thsinc6: thsinc7  		is thc0909=0 & thsinc7				{ }
-thsinc5: thsinc6 r10  		is thc1010=1 & thsinc6 & r10 & thc1115=0	{ * mult_addr = r10; mult_addr = mult_addr + 4; }
-thsinc5: thsinc6 r10^","	is thc1010=1 & thsinc6 & r10    		{ * mult_addr = r10; mult_addr = mult_addr + 4; }
-thsinc5: thsinc6  		is thc1010=0 & thsinc6				{ }
-thsinc4: thsinc5 r11  		is thc1111=1 & thsinc5 & r11 & thc1215=0	{ * mult_addr = r11; mult_addr = mult_addr + 4; }
-thsinc4: thsinc5 r11^","	is thc1111=1 & thsinc5 & r11    		{ * mult_addr = r11; mult_addr = mult_addr + 4; }
-thsinc4: thsinc5  		is thc1111=0 & thsinc5				{ }
-thsinc3: thsinc4 r12  		is thc1212=1 & thsinc4 & r12 & thc1315=0	{ * mult_addr = r12; mult_addr = mult_addr + 4; }
-thsinc3: thsinc4 r12^","	is thc1212=1 & thsinc4 & r12    		{ * mult_addr = r12; mult_addr = mult_addr + 4; }
-thsinc3: thsinc4  		is thc1212=0 & thsinc4				{ }
-thsinc2: thsinc3 sp  		is thc1313=1 & thsinc3 & sp & thc1415=0		{ * mult_addr = sp; mult_addr = mult_addr + 4; }
-thsinc2: thsinc3 sp^","		is thc1313=1 & thsinc3 & sp             	{ * mult_addr = sp; mult_addr = mult_addr + 4; }
-thsinc2: thsinc3  		is thc1313=0 & thsinc3				{ }
-thsinc1: thsinc2 lr  		is thc1414=1 & thsinc2 & lr & thc1515=0		{ * mult_addr = lr; mult_addr = mult_addr + 4; }
-thsinc1: thsinc2 lr^","		is thc1414=1 & thsinc2 & lr             	{ * mult_addr = lr; mult_addr = mult_addr + 4; }
-thsinc1: thsinc2  		is thc1414=0 & thsinc2				{ }
-thstrlist_inc: {thsinc1 pc } 	is thc1515=1 & thsinc1 & pc			{ *:4 mult_addr = inst_start+4; mult_addr = mult_addr + 4; }
-thstrlist_inc: {thsinc1 }	is thc1515=0 & thsinc1				{ }
+thsinc15: r0					is thc0000=1 & r0 & thc0115=0					{ * mult_addr = r0; mult_addr = mult_addr + 4; }
+thsinc15: r0,					is thc0000=1 & r0								{ * mult_addr = r0; mult_addr = mult_addr + 4; }
+thsinc15: 						is thc0000=0						{ }
+thsinc14: thsinc15^r1			is thc0101=1 & thsinc15 & r1 & thc0215=0	{ * mult_addr = r1; mult_addr = mult_addr + 4; }
+thsinc14: thsinc15^r1,			is thc0101=1 & thsinc15 & r1				{ * mult_addr = r1; mult_addr = mult_addr + 4; }
+thsinc14: thsinc15				is thc0101=0 & thsinc15				{ }
+thsinc13: thsinc14^r2			is thc0202=1 & thsinc14 & r2 & thc0315=0	{ * mult_addr = r2; mult_addr = mult_addr + 4; }
+thsinc13: thsinc14^r2,			is thc0202=1 & thsinc14 & r2				{ * mult_addr = r2; mult_addr = mult_addr + 4; }
+thsinc13: thsinc14				is thc0202=0 & thsinc14				{ }
+thsinc12: thsinc13^r3			is thc0303=1 & thsinc13 & r3 & thc0415=0	{ * mult_addr = r3; mult_addr = mult_addr + 4; }
+thsinc12: thsinc13^r3,			is thc0303=1 & thsinc13 & r3				{ * mult_addr = r3; mult_addr = mult_addr + 4; }
+thsinc12: thsinc13				is thc0303=0 & thsinc13				{ }
+thsinc11: thsinc12^r4			is thc0404=1 & thsinc12 & r4 & thc0515=0	{ * mult_addr = r4; mult_addr = mult_addr + 4; }
+thsinc11: thsinc12^r4,			is thc0404=1 & thsinc12 & r4				{ * mult_addr = r4; mult_addr = mult_addr + 4; }
+thsinc11: thsinc12				is thc0404=0 & thsinc12				{ }
+thsinc10: thsinc11^r5			is thc0505=1 & thsinc11 & r5 & thc0615=0	{ * mult_addr = r5; mult_addr = mult_addr + 4; }
+thsinc10: thsinc11^r5,			is thc0505=1 & thsinc11 & r5				{ * mult_addr = r5; mult_addr = mult_addr + 4; }
+thsinc10: thsinc11				is thc0505=0 & thsinc11				{ }
+thsinc9: thsinc10^r6			is thc0606=1 & thsinc10 & r6 & thc0715=0	{ * mult_addr = r6; mult_addr = mult_addr + 4; }
+thsinc9: thsinc10^r6,			is thc0606=1 & thsinc10 & r6				{ * mult_addr = r6; mult_addr = mult_addr + 4; }
+thsinc9: thsinc10				is thc0606=0 & thsinc10				{ }
+thsinc8: thsinc9^r7				is thc0707=1 & thsinc9 & r7 & thc0815=0		{ * mult_addr = r7; mult_addr = mult_addr + 4; }
+thsinc8: thsinc9^r7,			is thc0707=1 & thsinc9 & r7					{ * mult_addr = r7; mult_addr = mult_addr + 4; }
+thsinc8: thsinc9				is thc0707=0 & thsinc9				{ }
+thsinc7: thsinc8^r8				is thc0808=1 & thsinc8 & r8 & thc0915=0		{ * mult_addr = r8; mult_addr = mult_addr + 4; }
+thsinc7: thsinc8^r8,			is thc0808=1 & thsinc8 & r8					{ * mult_addr = r8; mult_addr = mult_addr + 4; }
+thsinc7: thsinc8				is thc0808=0 & thsinc8				{ }
+thsinc6: thsinc7^r9				is thc0909=1 & thsinc7 & r9 & thc1015=0		{ * mult_addr = r9; mult_addr = mult_addr + 4; }
+thsinc6: thsinc7^r9,			is thc0909=1 & thsinc7 & r9					{ * mult_addr = r9; mult_addr = mult_addr + 4; }
+thsinc6: thsinc7				is thc0909=0 & thsinc7				{ }
+thsinc5: thsinc6^r10			is thc1010=1 & thsinc6 & r10 & thc1115=0	{ * mult_addr = r10; mult_addr = mult_addr + 4; }
+thsinc5: thsinc6^r10,			is thc1010=1 & thsinc6 & r10				{ * mult_addr = r10; mult_addr = mult_addr + 4; }
+thsinc5: thsinc6				is thc1010=0 & thsinc6				{ }
+thsinc4: thsinc5^r11			is thc1111=1 & thsinc5 & r11 & thc1215=0	{ * mult_addr = r11; mult_addr = mult_addr + 4; }
+thsinc4: thsinc5^r11,			is thc1111=1 & thsinc5 & r11				{ * mult_addr = r11; mult_addr = mult_addr + 4; }
+thsinc4: thsinc5				is thc1111=0 & thsinc5				{ }
+thsinc3: thsinc4^r12			is thc1212=1 & thsinc4 & r12 & thc1315=0	{ * mult_addr = r12; mult_addr = mult_addr + 4; }
+thsinc3: thsinc4^r12,			is thc1212=1 & thsinc4 & r12				{ * mult_addr = r12; mult_addr = mult_addr + 4; }
+thsinc3: thsinc4				is thc1212=0 & thsinc4				{ }
+thsinc2: thsinc3^sp				is thc1313=1 & thsinc3 & sp & thc1415=0		{ * mult_addr = sp; mult_addr = mult_addr + 4; }
+thsinc2: thsinc3^sp,			is thc1313=1 & thsinc3 & sp					{ * mult_addr = sp; mult_addr = mult_addr + 4; }
+thsinc2: thsinc3				is thc1313=0 & thsinc3				{ }
+thsinc1: thsinc2^lr				is thc1414=1 & thsinc2 & lr & thc1515=0		{ * mult_addr = lr; mult_addr = mult_addr + 4; }
+thsinc1: thsinc2^lr,			is thc1414=1 & thsinc2 & lr					{ * mult_addr = lr; mult_addr = mult_addr + 4; }
+thsinc1: thsinc2				is thc1414=0 & thsinc2				{ }
+thstrlist_inc: {thsinc1^pc}		is thc1515=1 & thsinc1 & pc					{ *:4 mult_addr = inst_start+4; mult_addr = mult_addr + 4; }
+thstrlist_inc: {thsinc1}		is thc1515=0 & thsinc1				{ }
 
 # thldrlist_dec  is the list of registers to be loaded using DA or DB in Addressing Mode 4
-thrldec15: pc			is thc1515=1 & pc				{ pc = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec15:			is thc1515=0					{ }
-thrldec14: lr thrldec15  	is thc1414=1 & thrldec15 & lr & thc1515=0	{ lr = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec14: lr^"," thrldec15	is thc1414=1 & thrldec15 & lr			{ lr = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec14: thrldec15  		is thc1414=0 & thrldec15			{ }
-thrldec13: sp thrldec14  	is thc1313=1 & thrldec14 & sp & thc1415=0	{ sp = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec13: sp^"," thrldec14     is thc1313=1 & thrldec14 & sp   		{ sp = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec13: thrldec14  		is thc1313=0 & thrldec14			{ }
-thrldec12: r12 thrldec13  	is thc1212=1 & thrldec13 & r12 & thc1315=0	{ r12 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec12: r12^"," thrldec13    is thc1212=1 & thrldec13 & r12  		{ r12 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec12: thrldec13  		is thc1212=0 & thrldec13			{ }
-thrldec11: r11 thrldec12  	is thc1111=1 & thrldec12 & r11 & thc1215=0	{ r11 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec11: r11^"," thrldec12    is thc1111=1 & thrldec12 & r11  		{ r11 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec11: thrldec12  		is thc1111=0 & thrldec12			{ }
-thrldec10: r10 thrldec11  	is thc1010=1 & thrldec11 & r10 & thc1115=0	{ r10 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec10: r10^"," thrldec11    is thc1010=1 & thrldec11 & r10  		{ r10 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec10: thrldec11  		is thc1010=0 & thrldec11			{ }
-thrldec9: r9 thrldec10  	is thc0909=1 & thrldec10 & r9 & thc1015=0	{ r9 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec9: r9^"," thrldec10      is thc0909=1 & thrldec10 & r9   		{ r9 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec9: thrldec10  		is thc0909=0 & thrldec10			{ }
-thrldec8: r8 thrldec9 	 	is thc0808=1 & thrldec9 & r8 & thc0915=0	{ r8 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec8: r8^"," thrldec9       is thc0808=1 & thrldec9 & r8            	{ r8 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec8: thrldec9  		is thc0808=0 & thrldec9				{ }
-thrldec7: r7 thrldec8 	 	is thc0707=1 & thrldec8 & r7 & thc0815=0	{ r7 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec7: r7^"," thrldec8       is thc0707=1 & thrldec8 & r7            	{ r7 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec7: thrldec8  		is thc0707=0 & thrldec8				{ }
-thrldec6: r6 thrldec7 	 	is thc0606=1 & thrldec7 & r6 & thc0715=0	{ r6 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec6: r6^"," thrldec7       is thc0606=1 & thrldec7 & r6            	{ r6 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec6: thrldec7  		is thc0606=0 & thrldec7				{ }
-thrldec5: r5 thrldec6 	 	is thc0505=1 & thrldec6 & r5 & thc0615=0	{ r5 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec5: r5^"," thrldec6       is thc0505=1 & thrldec6 & r5            	{ r5 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec5: thrldec6  		is thc0505=0 & thrldec6				{ }
-thrldec4: r4 thrldec5 	 	is thc0404=1 & thrldec5 & r4 & thc0515=0	{ r4 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec4: r4^"," thrldec5       is thc0404=1 & thrldec5 & r4            	{ r4 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec4: thrldec5  		is thc0404=0 & thrldec5				{ }
-thrldec3: r3 thrldec4 	 	is thc0303=1 & thrldec4 & r3 & thc0415=0	{ r3 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec3: r3^"," thrldec4       is thc0303=1 & thrldec4 & r3            	{ r3 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec3: thrldec4  		is thc0303=0 & thrldec4				{ }
-thrldec2: r2 thrldec3  		is thc0202=1 & thrldec3 & r2 & thc0315=0	{ r2 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec2: r2^"," thrldec3       is thc0202=1 & thrldec3 & r2            	{ r2 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec2: thrldec3  		is thc0202=0 & thrldec3				{ }
-thrldec1: r1 thrldec2  		is thc0101=1 & thrldec2 & r1 & thc0215=0	{ r1 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec1: r1^"," thrldec2       is thc0101=1 & thrldec2 & r1            	{ r1 = * mult_addr; mult_addr = mult_addr - 4; }
-thrldec1: thrldec2  		is thc0101=0 & thrldec2				{ }
-thldrlist_dec: { r0 thrldec1 }	is thc0000=1 & thrldec1 & r0 & thc0115=0	{ r0 = * mult_addr; mult_addr = mult_addr - 4; }
-thldrlist_dec: { r0^"," thrldec1 } is thc0000=1 & thrldec1 & r0            	{ r0 = * mult_addr; mult_addr = mult_addr - 4; }
-thldrlist_dec: { thrldec1 }  	is thc0000=0 & thrldec1				{ }
+thrldec15: pc						is thc1515=1 & pc							{ pc = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec15:							is thc1515=0						{ }
+thrldec14: lr^thrldec15				is thc1414=1 & thrldec15 & lr & thc1515=0	{ lr = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec14: lr,thrldec15				is thc1414=1 & thrldec15 & lr				{ lr = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec14: thrldec15				is thc1414=0 & thrldec15			{ }
+thrldec13: sp^thrldec14				is thc1313=1 & thrldec14 & sp & thc1415=0	{ sp = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec13: sp,thrldec14				is thc1313=1 & thrldec14 & sp				{ sp = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec13: thrldec14				is thc1313=0 & thrldec14			{ }
+thrldec12: r12^thrldec13			is thc1212=1 & thrldec13 & r12 & thc1315=0	{ r12 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec12: r12,thrldec13			is thc1212=1 & thrldec13 & r12				{ r12 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec12: thrldec13				is thc1212=0 & thrldec13			{ }
+thrldec11: r11^thrldec12			is thc1111=1 & thrldec12 & r11 & thc1215=0	{ r11 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec11: r11,thrldec12			is thc1111=1 & thrldec12 & r11				{ r11 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec11: thrldec12				is thc1111=0 & thrldec12			{ }
+thrldec10: r10^thrldec11			is thc1010=1 & thrldec11 & r10 & thc1115=0	{ r10 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec10: r10,thrldec11			is thc1010=1 & thrldec11 & r10				{ r10 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec10: thrldec11				is thc1010=0 & thrldec11			{ }
+thrldec9: r9^thrldec10				is thc0909=1 & thrldec10 & r9 & thc1015=0	{ r9 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec9: r9,thrldec10				is thc0909=1 & thrldec10 & r9				{ r9 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec9: thrldec10					is thc0909=0 & thrldec10			{ }
+thrldec8: r8^thrldec9				is thc0808=1 & thrldec9 & r8 & thc0915=0	{ r8 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec8: r8,thrldec9				is thc0808=1 & thrldec9 & r8				{ r8 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec8: thrldec9					is thc0808=0 & thrldec9				{ }
+thrldec7: r7^thrldec8				is thc0707=1 & thrldec8 & r7 & thc0815=0	{ r7 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec7: r7,thrldec8				is thc0707=1 & thrldec8 & r7				{ r7 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec7: thrldec8					is thc0707=0 & thrldec8				{ }
+thrldec6: r6^thrldec7				is thc0606=1 & thrldec7 & r6 & thc0715=0	{ r6 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec6: r6,thrldec7				is thc0606=1 & thrldec7 & r6				{ r6 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec6: thrldec7					is thc0606=0 & thrldec7				{ }
+thrldec5: r5^thrldec6				is thc0505=1 & thrldec6 & r5 & thc0615=0	{ r5 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec5: r5,thrldec6				is thc0505=1 & thrldec6 & r5				{ r5 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec5: thrldec6					is thc0505=0 & thrldec6				{ }
+thrldec4: r4^thrldec5				is thc0404=1 & thrldec5 & r4 & thc0515=0	{ r4 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec4: r4,thrldec5				is thc0404=1 & thrldec5 & r4				{ r4 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec4: thrldec5					is thc0404=0 & thrldec5				{ }
+thrldec3: r3^thrldec4				is thc0303=1 & thrldec4 & r3 & thc0415=0	{ r3 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec3: r3,thrldec4				is thc0303=1 & thrldec4 & r3				{ r3 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec3: thrldec4					is thc0303=0 & thrldec4				{ }
+thrldec2: r2^thrldec3				is thc0202=1 & thrldec3 & r2 & thc0315=0	{ r2 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec2: r2,thrldec3				is thc0202=1 & thrldec3 & r2				{ r2 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec2: thrldec3					is thc0202=0 & thrldec3				{ }
+thrldec1: r1^thrldec2				is thc0101=1 & thrldec2 & r1 & thc0215=0	{ r1 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec1: r1,thrldec2				is thc0101=1 & thrldec2 & r1				{ r1 = * mult_addr; mult_addr = mult_addr - 4; }
+thrldec1: thrldec2					is thc0101=0 & thrldec2				{ }
+thldrlist_dec: {r0^thrldec1}		is thc0000=1 & thrldec1 & r0 & thc0115=0	{ r0 = * mult_addr; mult_addr = mult_addr - 4; }
+thldrlist_dec: {r0,thrldec1}		is thc0000=1 & thrldec1 & r0				{ r0 = * mult_addr; mult_addr = mult_addr - 4; }
+thldrlist_dec: {thrldec1}			is thc0000=0 & thrldec1				{ }
 
 @endif # defined(VERSION_6T2) || defined(VERSION_7)
 
 # thstrlist_dec is the list of registers to be pushed
-thsdec15: pc			is thc1515=1 & pc				{ *:4 mult_addr = inst_start+4; mult_addr = mult_addr - 4; }
-thsdec15: 			is thc1515=0					{ }
-thsdec14: lr thsdec15		is thc1414=1 & thsdec15 & lr & thc1515=0	{ * mult_addr=lr; mult_addr = mult_addr - 4; }
-thsdec14: lr^"," thsdec15	is thc1414=1 & thsdec15 & lr			{ * mult_addr=lr; mult_addr = mult_addr - 4; }
-thsdec14: thsdec15  		is thc1414=0 & thsdec15				{ }
-thsdec13: sp thsdec14  		is thc1313=1 & thsdec14 & sp & thc1415=0	{ * mult_addr=sp; mult_addr = mult_addr - 4; }
-thsdec13: sp^"," thsdec14 	is thc1313=1 & thsdec14 & sp    		{ * mult_addr=sp; mult_addr = mult_addr - 4; }
-thsdec13: thsdec14  		is thc1313=0 & thsdec14				{ }
-thsdec12: r12 thsdec13  	is thc1212=1 & thsdec13 & r12 & thc1315=0	{ * mult_addr=r12; mult_addr = mult_addr - 4; }
-thsdec12: r12^"," thsdec13  	is thc1212=1 & thsdec13 & r12   		{ * mult_addr=r12; mult_addr = mult_addr - 4; }
-thsdec12: thsdec13  		is thc1212=0 & thsdec13				{ }
-thsdec11: r11 thsdec12  	is thc1111=1 & thsdec12 & r11 & thc1215=0	{ * mult_addr=r11; mult_addr = mult_addr - 4; }
-thsdec11: r11^"," thsdec12  	is thc1111=1 & thsdec12 & r11   		{ * mult_addr=r11; mult_addr = mult_addr - 4; }
-thsdec11: thsdec12  		is thc1111=0 & thsdec12				{ }
-thsdec10: r10 thsdec11  	is thc1010=1 & thsdec11 & r10 & thc1115=0	{ * mult_addr=r10; mult_addr = mult_addr - 4; }
-thsdec10: r10^"," thsdec11  	is thc1010=1 & thsdec11 & r10   		{ * mult_addr=r10; mult_addr = mult_addr - 4; }
-thsdec10: thsdec11  		is thc1010=0 & thsdec11				{ }
-thsdec9: r9 thsdec10  		is thc0909=1 & thsdec10 & r9 & thc1015=0	{ * mult_addr=r9; mult_addr = mult_addr - 4; }
-thsdec9: r9^"," thsdec10    	is thc0909=1 & thsdec10 & r9    		{ * mult_addr=r9; mult_addr = mult_addr - 4; }
-thsdec9: thsdec10  		is thc0909=0 & thsdec10				{ }
-thsdec8: r8 thsdec9  		is thc0808=1 & thsdec9 & r8 & thc0915=0		{ * mult_addr=r8; mult_addr = mult_addr - 4; }
-thsdec8: r8^"," thsdec9     	is thc0808=1 & thsdec9 & r8             	{ * mult_addr=r8; mult_addr = mult_addr - 4; }
-thsdec8: thsdec9  		is thc0808=0 & thsdec9				{ }
-thsdec7: r7 thsdec8  		is thc0707=1 & thsdec8 & r7 & thc0815=0		{ * mult_addr=r7; mult_addr = mult_addr - 4; }
-thsdec7: r7^"," thsdec8     	is thc0707=1 & thsdec8 & r7             	{ * mult_addr=r7; mult_addr = mult_addr - 4; }
-thsdec7: thsdec8  		is thc0707=0 & thsdec8				{ }
-thsdec6: r6 thsdec7  		is thc0606=1 & thsdec7 & r6 & thc0715=0		{ * mult_addr=r6; mult_addr = mult_addr - 4; }
-thsdec6: r6^"," thsdec7     	is thc0606=1 & thsdec7 & r6             	{ * mult_addr=r6; mult_addr = mult_addr - 4; }
-thsdec6: thsdec7  		is thc0606=0 & thsdec7				{ }
-thsdec5: r5 thsdec6  		is thc0505=1 & thsdec6 & r5 & thc0615=0		{ * mult_addr=r5; mult_addr = mult_addr - 4; }
-thsdec5: r5^"," thsdec6     	is thc0505=1 & thsdec6 & r5             	{ * mult_addr=r5; mult_addr = mult_addr - 4; }
-thsdec5: thsdec6  		is thc0505=0 & thsdec6				{ }
-thsdec4: r4 thsdec5  		is thc0404=1 & thsdec5 & r4 & thc0515=0		{ * mult_addr=r4; mult_addr = mult_addr - 4; }
-thsdec4: r4^"," thsdec5     	is thc0404=1 & thsdec5 & r4             	{ * mult_addr=r4; mult_addr = mult_addr - 4; }
-thsdec4: thsdec5  		is thc0404=0 & thsdec5				{ }
-thsdec3: r3 thsdec4  		is thc0303=1 & thsdec4 & r3 & thc0415=0		{ * mult_addr=r3; mult_addr = mult_addr - 4; }
-thsdec3: r3^"," thsdec4     	is thc0303=1 & thsdec4 & r3             	{ * mult_addr=r3; mult_addr = mult_addr - 4; }
-thsdec3: thsdec4  		is thc0303=0 & thsdec4				{ }
-thsdec2: r2 thsdec3  		is thc0202=1 & thsdec3 & r2 & thc0415=0		{ * mult_addr=r2; mult_addr = mult_addr - 4; }
-thsdec2: r2^"," thsdec3     	is thc0202=1 & thsdec3 & r2             	{ * mult_addr=r2; mult_addr = mult_addr - 4; }
-thsdec2: thsdec3  		is thc0202=0 & thsdec3				{ }
-thsdec1: r1 thsdec2  		is thc0101=1 & thsdec2 & r1 & thc0215=0		{ * mult_addr=r1; mult_addr = mult_addr - 4; }
-thsdec1: r1^"," thsdec2     	is thc0101=1 & thsdec2 & r1             	{ * mult_addr=r1; mult_addr = mult_addr - 4; }
-thsdec1: thsdec2  		is thc0101=0 & thsdec2				{ }
-thstrlist_dec: { r0 thsdec1 } 	is thc0000=1 & thsdec1 & r0 & thc0115=0		{ * mult_addr=r0; mult_addr = mult_addr - 4; }
-thstrlist_dec: { r0^"," thsdec1 } is thc0000=1 & thsdec1 & r0                	{ * mult_addr=r0; mult_addr = mult_addr - 4; }
-thstrlist_dec: { thsdec1 }  	is thc0000=0 & thsdec1				{ }
+thsdec15: pc						is thc1515=1 & pc							{ *:4 mult_addr = inst_start+4; mult_addr = mult_addr - 4; }
+thsdec15: 							is thc1515=0						{ }
+thsdec14: lr						is thc1414=1 & thsdec15 & lr & thc1515=0	{ * mult_addr=lr; mult_addr = mult_addr - 4; }
+thsdec14: lr,thsdec15				is thc1414=1 & thsdec15 & lr				{ * mult_addr=lr; mult_addr = mult_addr - 4; }
+thsdec14: thsdec15					is thc1414=0 & thsdec15				{ }
+thsdec13: sp						is thc1313=1 & sp & thc1415=0	{ * mult_addr=sp; mult_addr = mult_addr - 4; }
+thsdec13: sp,thsdec14				is thc1313=1 & thsdec14 & sp				{ * mult_addr=sp; mult_addr = mult_addr - 4; }
+thsdec13: thsdec14					is thc1313=0 & thsdec14				{ }
+thsdec12: r12						is thc1212=1 & r12 & thc1315=0	{ * mult_addr=r12; mult_addr = mult_addr - 4; }
+thsdec12: r12,thsdec13				is thc1212=1 & thsdec13 & r12				{ * mult_addr=r12; mult_addr = mult_addr - 4; }
+thsdec12: thsdec13					is thc1212=0 & thsdec13				{ }
+thsdec11: r11						is thc1111=1 & r11 & thc1215=0	{ * mult_addr=r11; mult_addr = mult_addr - 4; }
+thsdec11: r11,thsdec12				is thc1111=1 & thsdec12 & r11				{ * mult_addr=r11; mult_addr = mult_addr - 4; }
+thsdec11: thsdec12					is thc1111=0 & thsdec12				{ }
+thsdec10: r10						is thc1010=1 & r10 & thc1115=0	{ * mult_addr=r10; mult_addr = mult_addr - 4; }
+thsdec10: r10,thsdec11				is thc1010=1 & thsdec11 & r10				{ * mult_addr=r10; mult_addr = mult_addr - 4; }
+thsdec10: thsdec11					is thc1010=0 & thsdec11				{ }
+thsdec9: r9							is thc0909=1 & r9 & thc1015=0	{ * mult_addr=r9; mult_addr = mult_addr - 4; }
+thsdec9: r9,thsdec10				is thc0909=1 & thsdec10 & r9				{ * mult_addr=r9; mult_addr = mult_addr - 4; }
+thsdec9: thsdec10					is thc0909=0 & thsdec10				{ }
+thsdec8: r8							is thc0808=1 & r8 & thc0915=0		{ * mult_addr=r8; mult_addr = mult_addr - 4; }
+thsdec8: r8,thsdec9					is thc0808=1 & thsdec9 & r8					{ * mult_addr=r8; mult_addr = mult_addr - 4; }
+thsdec8: thsdec9					is thc0808=0 & thsdec9				{ }
+thsdec7: r7							is thc0707=1 & r7 & thc0815=0		{ * mult_addr=r7; mult_addr = mult_addr - 4; }
+thsdec7: r7,thsdec8					is thc0707=1 & thsdec8 & r7					{ * mult_addr=r7; mult_addr = mult_addr - 4; }
+thsdec7: thsdec8					is thc0707=0 & thsdec8				{ }
+thsdec6: r6							is thc0606=1 & r6 & thc0715=0		{ * mult_addr=r6; mult_addr = mult_addr - 4; }
+thsdec6: r6,thsdec7					is thc0606=1 & thsdec7 & r6					{ * mult_addr=r6; mult_addr = mult_addr - 4; }
+thsdec6: thsdec7					is thc0606=0 & thsdec7				{ }
+thsdec5: r5							is thc0505=1 & r5 & thc0615=0		{ * mult_addr=r5; mult_addr = mult_addr - 4; }
+thsdec5: r5,thsdec6					is thc0505=1 & thsdec6 & r5					{ * mult_addr=r5; mult_addr = mult_addr - 4; }
+thsdec5: thsdec6					is thc0505=0 & thsdec6				{ }
+thsdec4: r4							is thc0404=1 & r4 & thc0515=0		{ * mult_addr=r4; mult_addr = mult_addr - 4; }
+thsdec4: r4,thsdec5					is thc0404=1 & thsdec5 & r4					{ * mult_addr=r4; mult_addr = mult_addr - 4; }
+thsdec4: thsdec5					is thc0404=0 & thsdec5				{ }
+thsdec3: r3							is thc0303=1 & r3 & thc0415=0		{ * mult_addr=r3; mult_addr = mult_addr - 4; }
+thsdec3: r3,thsdec4					is thc0303=1 & thsdec4 & r3					{ * mult_addr=r3; mult_addr = mult_addr - 4; }
+thsdec3: thsdec4					is thc0303=0 & thsdec4				{ }
+thsdec2: r2							is thc0202=1 & r2 & thc0415=0		{ * mult_addr=r2; mult_addr = mult_addr - 4; }
+thsdec2: r2,thsdec3					is thc0202=1 & thsdec3 & r2					{ * mult_addr=r2; mult_addr = mult_addr - 4; }
+thsdec2: thsdec3					is thc0202=0 & thsdec3				{ }
+thsdec1: r1							is thc0101=1  & r1 & thc0215=0		{ * mult_addr=r1; mult_addr = mult_addr - 4; }
+thsdec1: r1,thsdec2					is thc0101=1 & thsdec2 & r1					{ * mult_addr=r1; mult_addr = mult_addr - 4; }
+thsdec1: thsdec2					is thc0101=0 & thsdec2				{ }
+thstrlist_dec: {r0}					is thc0000=1 & r0 & thc0115=0				{ * mult_addr=r0; mult_addr = mult_addr - 4; }
+thstrlist_dec: {r0,thsdec1}			is thc0000=1 & thsdec1 & r0					{ * mult_addr=r0; mult_addr = mult_addr - 4; }
+thstrlist_dec: {thsdec1^}			is thc0000=0 & thsdec1				{ }
 
-ldbrace: {ldlist }	is ldlist			{ }
-stbrace: {strlist }	is strlist			{ }
-psbrace: { pshlist }	is pshlist			{ }
+ldbrace: {ldlist}	is ldlist			{ }
+stbrace: {strlist}	is strlist			{ }
+psbrace: {pshlist}	is pshlist			{ }
 
 # Some extra subconstructors for the push and pop instructions
-pclbrace:{ldlist^"," pc }	is ldlist & pc			{ build ldlist; pc = *mult_addr; mult_addr = mult_addr + 4; }
-pclbrace:{ pc }	is thc0007=0 & pc					{ pc = *mult_addr; mult_addr = mult_addr + 4; }
-pcpbrace:{ pshlist^"," lr }	is pshlist & lr			{ mult_addr = mult_addr - 4; *mult_addr = lr; build pshlist; }
-pcpbrace:{ lr }	is thc0007=0 & lr					{ mult_addr = mult_addr - 4; *mult_addr = lr; }
+pclbrace:{ldlist,pc}	is ldlist & pc			{ build ldlist; pc = *mult_addr; mult_addr = mult_addr + 4; }
+pclbrace:{pc}	is thc0007=0 & pc					{ pc = *mult_addr; mult_addr = mult_addr + 4; }
+pcpbrace:{pshlist,lr}	is pshlist & lr			{ mult_addr = mult_addr - 4; *mult_addr = lr; build pshlist; }
+pcpbrace:{lr}	is thc0007=0 & lr					{ mult_addr = mult_addr - 4; *mult_addr = lr; }
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 RnIndirect12: [Rn0003,"#"^offset12]	is Rn0003; offset12	 { local tmp = Rn0003 + offset12; export tmp; }
@@ -1344,12 +1345,13 @@ macro th_set_carry_for_asr(op1,shift_count) {
 	Rd0811 = Rd0811 & clearMask;
 }
 
-:bfi^ItCond	Rd0811,Rn0003,thLsbImm,thBitWidth 		is TMode=1 & ItCond & op4=0xf36 & Rn0003; thc1515=0 & Rd0811 & thc0505=0 & thLsbImm & thMsbImm & thBitWidth
+:bfi^ItCond	Rd0811,Rn0003,thLsbImm,thBitWidth 		is TMode=1 & ItCond & op4=0xf36 & Rn0003; thc1515=0 & Rd0811 & thc0505=0 & thLsbImm & thBitWidth
 {
     build ItCond;
-	clearMask:4 = (-1 << (thMsbImm + 1)) | (-1 >> (32 - thLsbImm));
-	bits:4 = (Rn0003 << thLsbImm) & ~clearMask;
-	Rd0811 = (Rd0811 & clearMask) | bits;
+    vmask:4 = (1 << thBitWidth) - 1;
+    clear:4 = ~(vmask << thLsbImm);
+    bits:4 = (Rn0003 & vmask) << thLsbImm;
+    Rd0811 = (Rd0811 & clear) | bits;
 }
 
 @endif # VERSION_6T2 || VERSION_7

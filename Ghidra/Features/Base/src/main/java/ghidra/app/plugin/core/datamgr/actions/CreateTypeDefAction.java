@@ -113,16 +113,15 @@ public class CreateTypeDefAction extends AbstractTypeDefAction {
 		DataTypeNode dataTypeNode = (DataTypeNode) selectionPaths[0].getLastPathComponent();
 		DataType dataType = dataTypeNode.getDataType();
 
-		String baseName = getBaseName(dataType) + "Typedef";
+
 		DerivativeDataTypeInfo info =
 			new DerivativeDataTypeInfo(plugin, gTree, dataTypeNode, dataType);
 
 		DataTypeManager dataTypeManager = info.getDataTypeManager();
-		String name = dataTypeManager.getUniqueName(dataType.getCategoryPath(), baseName);
 
 		CategoryPath categoryPath = info.getCategoryPath();
 		DataType newTypeDef = createTypeDef(dataTypeManager, dataType, categoryPath, context,
-			dataTypeNode.getParent(), name);
+			dataTypeNode.getParent(), null);
 		if (newTypeDef == null) {
 			return;
 		}
@@ -133,15 +132,5 @@ public class CreateTypeDefAction extends AbstractTypeDefAction {
 		gTree.startEditing(finalParentNode, newNodeName);
 	}
 
-	private static String getBaseName(DataType dt) {
-		if (dt instanceof Pointer) {
-			DataType dataType = ((Pointer) dt).getDataType();
-			if (dataType == null) {
-				// must be a generic pointer type
-				return dt.getName();
-			}
-			return getBaseName(dataType) + "Ptr";
-		}
-		return dt.getDisplayName();
-	}
+
 }

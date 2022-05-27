@@ -487,9 +487,14 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		return new TraceSchedule(snap, steps.clone(), pTicks);
 	}
 
+	private long keyOf(TraceThread thread) {
+		return thread == null ? -1 : thread.getKey();
+	}
+
 	/**
 	 * Returns the equivalent of executing this schedule then performing a given patch
 	 * 
+	 * @param thread the thread context for the patch; cannot be null
 	 * @param sleigh a single line of sleigh, excluding the terminating semicolon.
 	 * @return the resulting schedule
 	 */
@@ -497,10 +502,36 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		if (!this.pSteps.isNop()) {
 			Sequence pTicks = this.pSteps.clone();
 			pTicks.advance(new PatchStep(thread.getKey(), sleigh));
+			pTicks.coalescePatches(thread.getTrace().getBaseLanguage());
 			return new TraceSchedule(snap, steps.clone(), pTicks);
 		}
 		Sequence ticks = this.steps.clone();
-		ticks.advance(new PatchStep(thread.getKey(), sleigh));
+		ticks.advance(new PatchStep(keyOf(thread), sleigh));
+		ticks.coalescePatches(thread.getTrace().getBaseLanguage());
+		return new TraceSchedule(snap, ticks, new Sequence());
+	}
+
+	/**
+	 * Returns the equivalent of executing this schedule then performing the given patches
+	 * 
+	 * @param thread the thread context for the patch; cannot be null
+	 * @param sleigh the lines of sleigh, excluding the terminating semicolons.
+	 * @return the resulting schedule
+	 */
+	public TraceSchedule patched(TraceThread thread, List<String> sleigh) {
+		if (!this.pSteps.isNop()) {
+			Sequence pTicks = this.pSteps.clone();
+			for (String line : sleigh) {
+				pTicks.advance(new PatchStep(thread.getKey(), line));
+			}
+			pTicks.coalescePatches(thread.getTrace().getBaseLanguage());
+			return new TraceSchedule(snap, steps.clone(), pTicks);
+		}
+		Sequence ticks = this.steps.clone();
+		for (String line : sleigh) {
+			ticks.advance(new PatchStep(thread.getKey(), line));
+		}
+		ticks.coalescePatches(thread.getTrace().getBaseLanguage());
 		return new TraceSchedule(snap, ticks, new Sequence());
 	}
 }

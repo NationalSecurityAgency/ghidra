@@ -44,8 +44,8 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.DefaultTraceTimeViewport;
 import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceViewportSpanIterator;
 import ghidra.util.*;
 import ghidra.util.AddressIteratorAdapter;
 import ghidra.util.database.*;
@@ -93,6 +93,8 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			.build()
 			.asMap();
 
+	protected final DefaultTraceTimeViewport viewport;
+
 	public DBTraceMemorySpace(DBTraceMemoryManager manager, DBHandle dbh, AddressSpace space,
 			DBTraceSpaceEntry ent) throws IOException, VersionException {
 		this.manager = manager;
@@ -127,6 +129,8 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			true);
 		this.blocksByOffset =
 			blockStore.getIndex(OffsetSnap.class, DBTraceMemoryBlockEntry.LOCATION_COLUMN);
+
+		this.viewport = new DefaultTraceTimeViewport(trace);
 	}
 
 	private void regionCacheEntryRemoved(
@@ -375,9 +379,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 
 	@Override
 	public Entry<Long, TraceMemoryState> getViewState(long snap, Address address) {
-		TraceViewportSpanIterator spit = new TraceViewportSpanIterator(trace, snap);
-		while (spit.hasNext()) {
-			Range<Long> span = spit.next();
+		for (Range<Long> span : viewport.getOrderedSpans(snap)) {
 			TraceMemoryState state = getState(span.upperEndpoint(), address);
 			switch (state) {
 				case KNOWN:
@@ -403,9 +405,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 	@Override
 	public Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
 			Address address) {
-		TraceViewportSpanIterator spit = new TraceViewportSpanIterator(trace, snap);
-		while (spit.hasNext()) {
-			Range<Long> span = spit.next();
+		for (Range<Long> span: viewport.getOrderedSpans(snap)) {
 			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
 				stateMapSpace.reduce(TraceAddressSnapRangeQuery.mostRecent(address, span))
 						.firstEntry();
@@ -738,9 +738,8 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		}
 		Map<AddressRange, Long> sources = new TreeMap<>();
 		AddressSet remains = new AddressSet(toRead);
-		TraceViewportSpanIterator spit = new TraceViewportSpanIterator(trace, snap);
-		spans: while (spit.hasNext()) {
-			Range<Long> span = spit.next();
+
+		spans: for (Range<Long> span : viewport.getOrderedSpans(snap)) {
 			Iterator<AddressRange> arit =
 				getAddressesWithState(span, s -> s == TraceMemoryState.KNOWN).iterator(start, true);
 			while (arit.hasNext()) {
@@ -765,7 +764,9 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			int offset = (int) rng.getMinAddress().subtract(toRead.getMinAddress());
 			int length = (int) rng.getLength();
 			buf.limit(pos + offset + length);
-			buf.position(pos + offset);
+			while (buf.position() < pos + offset) {
+				buf.put((byte) 0); // fill gaps with 0
+			}
 			int read = getBytes(ent.getValue(), rng.getMinAddress(), buf);
 			if (read < length) {
 				break;
@@ -773,7 +774,9 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		}
 		// We "got it all", even if there were gaps in "KNOWN"
 		buf.limit(lim);
-		buf.position(pos + len);
+		while (buf.position() < pos + len) {
+			buf.put((byte) 0); // fill final gap with 0
+		}
 		return len;
 	}
 

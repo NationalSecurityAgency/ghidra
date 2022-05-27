@@ -3375,7 +3375,7 @@ const Datatype *BlockSwitch::getSwitchType(void) const
 
 {
   PcodeOp *op = jump->getIndirectOp();
-  return op->getIn(0)->getHigh()->getType();
+  return op->getIn(0)->getHighTypeReadFacing(op);
 }
 
 void BlockSwitch::markUnstructured(void)

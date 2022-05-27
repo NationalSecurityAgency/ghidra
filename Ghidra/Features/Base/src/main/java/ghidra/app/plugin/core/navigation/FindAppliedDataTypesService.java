@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.navigation;
 
+import ghidra.app.services.FieldMatcher;
 import ghidra.program.model.data.DataType;
 
 /**
@@ -25,7 +26,7 @@ public interface FindAppliedDataTypesService {
 	/**
 	 * Tells this service to find all places where the given datatype is applied <b>and</b> will
 	 * display the results of the search.
-	 * 
+	 *
 	 * @param dataType The datatype which to base the search upon.
 	 */
 	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType);
@@ -33,9 +34,23 @@ public interface FindAppliedDataTypesService {
 	/**
 	 * Tells this service to find all places where the given datatype is applied <b>and</b> will
 	 * display the results of the search.
-	 * 
+	 *
 	 * @param dataType The datatype which to base the search upon.
 	 * @param fieldName the sub-field for which to search
 	 */
 	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType, String fieldName);
+
+	/**
+	 * Tells this service to find all places where the given datatype is applied <b>and</b> will
+	 * display the results of the search.
+	 * <p>
+	 * The supplied field matcher will be used to restrict matches to the given field.  The matcher
+	 * may be 'empty', supplying only the data type for which to search.  In this case, all uses
+	 * of the type will be matched, regardless of field.
+	 *
+	 * @param dataType The datatype which to base the search upon.
+	 * @param fieldMatcher the field matcher.
+	 */
+	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType,
+			FieldMatcher fieldMatcher);
 }

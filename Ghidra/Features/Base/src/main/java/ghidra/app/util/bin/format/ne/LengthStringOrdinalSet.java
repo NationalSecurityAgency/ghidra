@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,7 @@ package ghidra.app.util.bin.format.ne;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.*;
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * A class to hold a length/string/ordinal set.
@@ -30,7 +29,7 @@ public class LengthStringOrdinalSet extends LengthStringSet {
      * Constructs a new length/string/ordinal set.
      * @param reader the binary reader
      */
-    LengthStringOrdinalSet(FactoryBundledWithBinaryReader reader) throws IOException {
+	LengthStringOrdinalSet(BinaryReader reader) throws IOException {
         super(reader);
 
         if (getLength() == 0) return;

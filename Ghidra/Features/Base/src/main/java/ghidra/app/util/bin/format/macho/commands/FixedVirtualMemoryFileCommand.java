@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -37,23 +37,7 @@ public class FixedVirtualMemoryFileCommand extends LoadCommand {
 	private LoadCommandString name;
 	private int header_addr;
 
-	public static FixedVirtualMemoryFileCommand createFixedVirtualMemoryFileCommand(
-			FactoryBundledWithBinaryReader reader) throws IOException {
-		FixedVirtualMemoryFileCommand command =
-			(FixedVirtualMemoryFileCommand) reader.getFactory().create(
-				FixedVirtualMemoryFileCommand.class);
-		command.initFixedVirtualMemoryFileCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public FixedVirtualMemoryFileCommand() {
-	}
-
-	private void initFixedVirtualMemoryFileCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	public FixedVirtualMemoryFileCommand(BinaryReader reader) throws IOException {
 		initLoadCommand(reader);
 	}
 

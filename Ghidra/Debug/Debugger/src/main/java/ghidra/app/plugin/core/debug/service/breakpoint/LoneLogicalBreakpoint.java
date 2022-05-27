@@ -90,6 +90,11 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
+	public void removeTrace(Trace trace) {
+		throw new AssertionError();
+	}
+
+	@Override
 	public Set<TraceBreakpoint> getTraceBreakpoints() {
 		return new HashSet<>(breaks.getBreakpoints());
 	}
@@ -131,21 +136,29 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public Enablement computeEnablementForProgram(Program program) {
-		return Enablement.NONE;
+	public State computeStateForProgram(Program program) {
+		return State.NONE;
 	}
 
 	@Override
-	public Enablement computeEnablementForTrace(Trace trace) {
+	public State computeStateForTrace(Trace trace) {
 		if (trace != breaks.getTrace()) {
-			return Enablement.NONE;
+			return State.NONE;
 		}
-		return ProgramEnablement.NONE.combineTrace(breaks.computeEnablement());
+		return ProgramMode.NONE.combineTrace(breaks.computeMode(), Perspective.TRACE);
 	}
 
 	@Override
-	public Enablement computeEnablement() {
-		return ProgramEnablement.NONE.combineTrace(breaks.computeEnablement());
+	public State computeStateForLocation(TraceBreakpoint loc) {
+		if (!breaks.getBreakpoints().contains(loc)) {
+			return State.NONE;
+		}
+		return ProgramMode.NONE.combineTrace(breaks.computeMode(loc), Perspective.TRACE);
+	}
+
+	@Override
+	public State computeState() {
+		return ProgramMode.NONE.combineTrace(breaks.computeMode(), Perspective.LOGICAL);
 	}
 
 	@Override

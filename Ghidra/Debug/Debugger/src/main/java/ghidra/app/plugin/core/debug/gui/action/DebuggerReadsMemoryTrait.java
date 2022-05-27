@@ -16,7 +16,9 @@
 package ghidra.app.plugin.core.debug.gui.action;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -27,12 +29,16 @@ import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractReadSelectedMemoryAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractRefreshSelectedMemoryAction;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
 import ghidra.app.services.TraceRecorder;
 import ghidra.app.services.TraceRecorderListener;
 import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
+import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.target.TargetMemory;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.util.PathMatcher;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
@@ -49,10 +55,10 @@ public abstract class DebuggerReadsMemoryTrait {
 	protected static final AutoConfigState.ClassHandler<DebuggerReadsMemoryTrait> CONFIG_STATE_HANDLER =
 		AutoConfigState.wireHandler(DebuggerReadsMemoryTrait.class, MethodHandles.lookup());
 
-	protected class ReadSelectedMemoryAction extends AbstractReadSelectedMemoryAction {
+	protected class RefreshSelectedMemoryAction extends AbstractRefreshSelectedMemoryAction {
 		public static final String GROUP = DebuggerResources.GROUP_GENERAL;
 
-		public ReadSelectedMemoryAction() {
+		public RefreshSelectedMemoryAction() {
 			super(plugin);
 			setToolBarData(new ToolBarData(ICON, GROUP));
 			setEnabled(false);
@@ -60,25 +66,43 @@ public abstract class DebuggerReadsMemoryTrait {
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			AddressSetView selection = getSelection();
-			if (selection == null || selection.isEmpty() || !current.isAliveAndReadsPresent()) {
+			if (!current.isAliveAndReadsPresent()) {
 				return;
 			}
+			AddressSetView selection = getSelection();
+			if (selection == null || selection.isEmpty()) {
+				selection = visible;
+			}
+			final AddressSetView sel = selection;
 			Trace trace = current.getTrace();
 			TraceRecorder recorder = current.getRecorder();
-			BackgroundUtils.async(tool, trace, NAME, true, true, false,
-				(__, monitor) -> recorder.captureProcessMemory(selection, monitor, false));
+			BackgroundUtils.async(tool, trace, NAME, true, true, false, (_t, monitor) -> {
+				TargetObject target = recorder.getTarget();
+				DebuggerObjectModel model = target.getModel();
+				model.invalidateAllLocalCaches();
+				PathMatcher memMatcher = target.getSchema().searchFor(TargetMemory.class, true);
+				Collection<TargetObject> memories = memMatcher.getCachedSuccessors(target).values();
+				CompletableFuture<?>[] requests = memories.stream()
+						.map(TargetObject::invalidateCaches)
+						.toArray(CompletableFuture[]::new);
+				return CompletableFuture.allOf(requests).thenCompose(_r -> {
+					return recorder.readMemoryBlocks(sel, monitor, false);
+				});
+			});
 		}
 
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
-			AddressSetView selection = getSelection();
-			if (selection == null || selection.isEmpty() || !current.isAliveAndReadsPresent()) {
+			if (!current.isAliveAndReadsPresent()) {
 				return false;
+			}
+			AddressSetView selection = getSelection();
+			if (selection == null || selection.isEmpty()) {
+				selection = visible;
 			}
 			TraceRecorder recorder = current.getRecorder();
 			// TODO: Either allow partial, or provide action to intersect with accessible
-			if (!recorder.getAccessibleProcessMemory().contains(selection)) {
+			if (!recorder.getAccessibleMemory().contains(selection)) {
 				return false;
 			}
 			return true;
@@ -96,7 +120,7 @@ public abstract class DebuggerReadsMemoryTrait {
 		}
 
 		private void snapshotAdded(TraceSnapshot snapshot) {
-			actionReadSelected.updateEnabled(null);
+			actionRefreshSelected.updateEnabled(null);
 		}
 
 		private void memStateChanged(TraceAddressSnapRange range, TraceMemoryState oldIsNull,
@@ -120,7 +144,7 @@ public abstract class DebuggerReadsMemoryTrait {
 		@Override
 		public void processMemoryAccessibilityChanged(TraceRecorder recorder) {
 			Swing.runIfSwingOrRunLater(() -> {
-				actionReadSelected.updateEnabled(null);
+				actionRefreshSelected.updateEnabled(null);
 			});
 		}
 	}
@@ -137,7 +161,7 @@ public abstract class DebuggerReadsMemoryTrait {
 	}
 
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoRead;
-	protected ReadSelectedMemoryAction actionReadSelected;
+	protected RefreshSelectedMemoryAction actionRefreshSelected;
 
 	private final AutoReadMemorySpec defaultAutoSpec =
 		AutoReadMemorySpec.fromConfigName(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
@@ -257,10 +281,10 @@ public abstract class DebuggerReadsMemoryTrait {
 		}
 	}
 
-	public DockingAction installReadSelectedAction() {
-		actionReadSelected = new ReadSelectedMemoryAction();
-		provider.addLocalAction(actionReadSelected);
-		return actionReadSelected;
+	public DockingAction installRefreshSelectedAction() {
+		actionRefreshSelected = new RefreshSelectedMemoryAction();
+		provider.addLocalAction(actionRefreshSelected);
+		return actionRefreshSelected;
 	}
 
 	public AddressSetDisplayListener getDisplayListener() {

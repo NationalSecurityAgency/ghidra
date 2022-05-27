@@ -66,7 +66,8 @@ public interface ProgramModule extends Group {
 	 * @return int index or -1 if this Module does not have a child
 	 * with the given name
 	 */
-	public int getIndex(String name);  
+	public int getIndex(String name);
+
 	/**
 	 * Adds the given module as a child of this module.
 	 * <P>

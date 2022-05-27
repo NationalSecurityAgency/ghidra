@@ -38,7 +38,7 @@ public class AssemblyEOI extends AssemblyTerminal {
 
 	@Override
 	public Collection<AssemblyParseToken> match(String buffer, int pos, AssemblyGrammar grammar,
-			Map<String, Long> labels) {
+			AssemblyNumericSymbols symbols) {
 		if (pos == buffer.length()) {
 			return Collections.singleton(new AssemblyParseToken(grammar, this, ""));
 		}
@@ -46,7 +46,7 @@ public class AssemblyEOI extends AssemblyTerminal {
 	}
 
 	@Override
-	public Collection<String> getSuggestions(String got, Map<String, Long> labels) {
+	public Collection<String> getSuggestions(String got, AssemblyNumericSymbols symbols) {
 		return Collections.singleton("");
 	}
 }

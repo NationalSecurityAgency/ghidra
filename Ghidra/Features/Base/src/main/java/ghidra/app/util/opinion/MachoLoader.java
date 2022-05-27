@@ -17,9 +17,9 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessMode;
 import java.util.*;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
@@ -64,8 +64,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 		}
 
 		try {
-			MachHeader machHeader =
-				MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider);
+			MachHeader machHeader = new MachHeader(provider);
 			String magic =
 				CpuTypes.getMagicString(machHeader.getCpuType(), machHeader.getCpuSubType());
 			List<QueryResult> results = QueryOpinionService.query(getName(), magic, null);
@@ -106,6 +105,9 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 			MachoProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
 		}
+		catch (CancelledException e) {
+ 			return;
+ 		}
 		catch (IOException e) {
 			throw e;
 		}
@@ -144,10 +146,9 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			return false;
 		}
 
-		try (ByteProvider provider = new RandomAccessByteProvider(libFile)) {
+		try (ByteProvider provider = new FileByteProvider(libFile, null, AccessMode.READ)) {
 
-			FatHeader header =
-				FatHeader.createFatHeader(RethrowContinuesFactory.INSTANCE, provider);
+			FatHeader header = new FatHeader(provider);
 			List<FatArch> architectures = header.getArchitectures();
 
 			if (architectures.isEmpty()) {

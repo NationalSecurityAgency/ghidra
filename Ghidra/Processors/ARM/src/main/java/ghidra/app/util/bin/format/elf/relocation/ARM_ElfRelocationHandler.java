@@ -91,15 +91,16 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				if (elfRelocationContext.extractAddend()) {
 					addend = memory.getInt(relocationAddress);
 				}
-				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
-					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
-					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
-				}
 				newValue = (int) (symbolValue + addend);
 				if (isThumb) {
 					newValue |= 1;
 				}
 				memory.setInt(relocationAddress, newValue);
+				if (addend != 0) {
+					warnExternalOffsetRelocation(program, relocationAddress,
+						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+					applyComponentOffsetPointer(program, relocationAddress, addend);
+				}
 				break;
 			}
 			case ARM_ElfRelocationConstants.R_ARM_REL32: { // Target class: Data
@@ -380,21 +381,48 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 			case ARM_ElfRelocationConstants.R_ARM_MOVW_PREL_NC: {
 				break;
 			}
-			case ARM_ElfRelocationConstants.R_ARM_MOVT_PREL: {
+*/
+			case ARM_ElfRelocationConstants.R_ARM_THM_MOVW_ABS_NC:
+			case ARM_ElfRelocationConstants.R_ARM_THM_MOVT_ABS:
+			case ARM_ElfRelocationConstants.R_ARM_THM_MOVW_PREL_NC:
+			case ARM_ElfRelocationConstants.R_ARM_THM_MOVT_PREL:
+			case ARM_ElfRelocationConstants.R_ARM_THM_MOVW_BREL_NC:
+			case ARM_ElfRelocationConstants.R_ARM_THM_MOVW_BREL:
+			case ARM_ElfRelocationConstants.R_ARM_THM_MOVT_BREL: {
+
+				oldValue = memory.getShort(relocationAddress, instructionBigEndian) << 16;
+				oldValue |= memory.getShort(relocationAddress.add(2), instructionBigEndian);
+
+				if (elfRelocationContext.extractAddend()) {
+					addend = ((oldValue >> 4)  & 0xf000);
+					addend |= ((oldValue >> 15) & 0x0800);
+					addend |= ((oldValue >> 4) & 0x0700);
+					addend |= (oldValue & 0x00ff);
+					addend = (addend ^ 0x8000) - 0x8000;
+				}
+				int value = (int) (symbolValue + addend);
+				
+				if (type == ARM_ElfRelocationConstants.R_ARM_THM_MOVW_PREL_NC ||
+					type == ARM_ElfRelocationConstants.R_ARM_THM_MOVT_PREL) {
+					value -= (offset + 4);   // PC relative, PC will be 4 bytes past inst start
+				}
+				if (type == ARM_ElfRelocationConstants.R_ARM_THM_MOVT_ABS ||
+					type == ARM_ElfRelocationConstants.R_ARM_THM_MOVT_PREL ||
+					type == ARM_ElfRelocationConstants.R_ARM_THM_MOVT_BREL) {
+					value >>= 16;
+				}
+
+				newValue = oldValue & 0xfbf08f00;
+				newValue |= (value & 0xf000) << 4;
+				newValue |= (value & 0x0800) << 15;
+				newValue |= (value & 0x0700) << 4;
+				newValue |= (value & 0x00ff);
+				
+				memory.setShort(relocationAddress, (short)(newValue >> 16), instructionBigEndian);
+				memory.setShort(relocationAddress.add(2), (short)newValue, instructionBigEndian);
 				break;
 			}
-			case ARM_ElfRelocationConstants.R_ARM_THM_MOVW_ABS_NC: {
-				break;
-			}
-			case ARM_ElfRelocationConstants.R_ARM_THM_MOVT_ABS: {
-				break;
-			}
-			case ARM_ElfRelocationConstants.R_ARM_THM_MOVW_PREL_NC: {
-				break;
-			}
-			case ARM_ElfRelocationConstants.R_ARM_THM_MOVT_PREL: {
-				break;
-			}
+/*
 			case ARM_ElfRelocationConstants.R_ARM_THM_JUMP19: {
 				break;
 			}
@@ -503,15 +531,6 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 			case ARM_ElfRelocationConstants.R_ARM_MOVW_BREL: {
 				break;
 			}
-			case ARM_ElfRelocationConstants.R_ARM_THM_MOVW_BREL_NC: {
-				break;
-			}
-			case ARM_ElfRelocationConstants.R_ARM_THM_MOVT_BREL: {
-				break;
-			}
-			case ARM_ElfRelocationConstants.R_ARM_THM_MOVW_BREL: {
-				break;
-			}
 			case ARM_ElfRelocationConstants.R_ARM_TLS_GOTDESC: {
 				break;
 			}
@@ -548,12 +567,30 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 			case ARM_ElfRelocationConstants.R_ARM_GNU_VTINHERIT: {
 				break;
 			}
+			*/
 			case ARM_ElfRelocationConstants.R_ARM_THM_JUMP11: {
+				oldValue = memory.getShort(relocationAddress, instructionBigEndian);
+				if (elfRelocationContext.extractAddend()) {
+					addend = (oldValue << 21 >> 20); // extract addend and sign-extend with *2 factor
+				}
+				newValue = (int) (symbolValue + addend);
+				newValue -= offset;   // PC relative
+				newValue = (oldValue & 0x0000f800) | ((newValue >> 1) & 0x000007ff);
+				memory.setShort(relocationAddress, (short) newValue, instructionBigEndian);
 				break;
 			}
 			case ARM_ElfRelocationConstants.R_ARM_THM_JUMP8: {
+				oldValue = memory.getShort(relocationAddress, instructionBigEndian);
+				if (elfRelocationContext.extractAddend()) {
+					addend = (oldValue << 24 >> 23); // extract addend and sign-extend with *2 factor
+				}
+				newValue = (int) (symbolValue + addend);
+				newValue -= offset;   // PC relative
+				newValue = (oldValue & 0x0000ff00) | ((newValue >> 1) & 0x000000ff);
+				memory.setShort(relocationAddress, (short) newValue, instructionBigEndian);
 				break;
 			}
+			/*
 			case ARM_ElfRelocationConstants.R_ARM_TLS_GD32: {
 				break;
 			}

@@ -1784,7 +1784,7 @@ extImm: "#"^thv_c0811	is TMode=1 & thv_c0811	{ tmp:1 = thv_c0811; export tmp; }
 }
 
 
-:vraddhn.i^esize2021x2 Dd,Qn,Qm    is (($(AMODE) & cond=15 & c2527=1 & c2323=0 & c2021<3  & c0811=4 & Q6=0 & c0404=0) |
+:vraddhn.i^esize2021x2 Dd,Qn,Qm    is (($(AMODE) & cond=15 & c2527=1 & c2323=1 & c2021<3  & c0811=4 & Q6=0 & c0404=0) |
 	                                   ($(TMODE_F) & thv_c2327=0x1f & thv_c2021<3  & thv_c0811=4 & thv_Q6=0 & thv_c0404=0) ) & Qm & esize2021x2 & Qn & Dd
 {
 	Dd = VectorRoundAddAndNarrow(Qn,Qm,esize2021x2);
@@ -4560,7 +4560,7 @@ define pcodeop VectorSubAndNarrow;
 
 @if defined(VFPv2) || defined(VFPv3)
 
-:vsub^COND^".f32" Sd,Sm		is COND & ( ($(AMODE) & ARMcond=1 & c2327=0x1c & c2021=3 & c0811=10 & c0606=1 & c0404=0) |
+:vsub^COND^".f32" Sd,Sn,Sm		is COND & ( ($(AMODE) & ARMcond=1 & c2327=0x1c & c2021=3 & c0811=10 & c0606=1 & c0404=0) |
                                         ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=3 & thv_c0811=10 & thv_c0606=1 & thv_c0404=0) ) & Sm & Sn & Sd
 {
 	build COND;
@@ -4570,7 +4570,7 @@ define pcodeop VectorSubAndNarrow;
 	Sd = Sn f- Sm;
 }
 
-:vsub^COND^".f64" Dd,Dm		is COND & ( ($(AMODE) & ARMcond=1 & c2327=0x1c & c2021=3 & c0811=11 & c0606=1 & c0404=0 ) |
+:vsub^COND^".f64" Dd,Dn,Dm		is COND & ( ($(AMODE) & ARMcond=1 & c2327=0x1c & c2021=3 & c0811=11 & c0606=1 & c0404=0 ) |
                                         ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=3 & thv_c0811=11 & thv_c0606=1 & thv_c0404=0) ) & Dm & Dn & Dd
 {
 	build COND;

@@ -165,23 +165,36 @@ public class FunctionDB extends DatabaseObject implements Function {
 		}
 	}
 
+	private List<Address> getFunctionThunkAddresses(long functionId, boolean recursive) {
+		List<Long> functionIds = manager.getThunkFunctionIds(functionId);
+		if (functionIds == null) {
+			return null;
+		}
+		SymbolTable symMgr = program.getSymbolTable();
+		List<Address> thunkAddrList = new ArrayList<>();
+		for (long id : functionIds) {
+			Symbol s = symMgr.getSymbol(id);
+			thunkAddrList.add(s.getAddress());
+			if (recursive) {
+				List<Address> thunkAddrs = getFunctionThunkAddresses(id, true);
+				if (thunkAddrs != null) {
+					thunkAddrList.addAll(thunkAddrs);
+				}
+			}
+		}
+		return thunkAddrList;
+	}
+
 	@Override
-	public Address[] getFunctionThunkAddresses() {
+	public Address[] getFunctionThunkAddresses(boolean recursive) {
 		manager.lock.acquire();
 		try {
 			checkIsValid();
-			List<Long> functionIds = manager.getThunkFunctionIds(key);
-			if (functionIds == null) {
+			List<Address> thunkAddrList = getFunctionThunkAddresses(key, recursive);
+			if (thunkAddrList == null) {
 				return null;
 			}
-			SymbolTable symMgr = program.getSymbolTable();
-			Address[] addresses = new Address[functionIds.size()];
-			int index = 0;
-			for (long functionId : functionIds) {
-				Symbol s = symMgr.getSymbol(functionId);
-				addresses[index++] = s.getAddress();
-			}
-			return addresses;
+			return thunkAddrList.toArray(new Address[thunkAddrList.size()]);
 		}
 		finally {
 			manager.lock.release();
@@ -1239,6 +1252,10 @@ public class FunctionDB extends DatabaseObject implements Function {
 	/**
 	 * Resolve a variable's type and storage.
 	 * @param var variable to be resolved
+	 * @param voidOK if true the use of a 0-length {@link VoidDataType} for the specified
+	 * variable is allowed (i.e., {@link ReturnParameterDB}), else false should be specifed.
+	 * @param useUnassignedStorage if true storage should be set to {@link VariableStorage#UNASSIGNED_STORAGE}
+	 * else an attempt should be made to adjust the storage.
 	 * @return resolved variable
 	 * @throws InvalidInputException if unable to resize variable storage due to
 	 * resolved datatype size change
@@ -1855,8 +1872,8 @@ public class FunctionDB extends DatabaseObject implements Function {
 	/**
 	 * Return the Variable for the given symbol.
 	 *
-	 * @param symbol
-	 *            variable symbol
+	 * @param symbol variable symbol
+	 * @return Variable which corresponds to specified symbol
 	 */
 	public Variable getVariable(VariableSymbolDB symbol) {
 		manager.lock.acquire();
@@ -1902,10 +1919,6 @@ public class FunctionDB extends DatabaseObject implements Function {
 		}
 	}
 
-	/**
-	 * @throws InvalidInputException
-	 * @see ghidra.program.model.listing.Function#moveParameter(int, int)
-	 */
 	@Override
 	public Parameter moveParameter(int fromOrdinal, int toOrdinal) throws InvalidInputException {
 		if (toOrdinal < 0) {
@@ -2220,8 +2233,8 @@ public class FunctionDB extends DatabaseObject implements Function {
 	 * Remove 'this' parameter if using __thiscall and first non-auto parameter is
 	 * a pointer and named 'this'.
 	 * @param params list of parameters to search and affect
-	 * @param callingConventionName
-	 * @return true if 'this' parameter removed
+	 * @param callingConventionName current function calling convention
+	 * @return true if 'this' parameter removed (applies to __thiscall callingConventionName only), else false
 	 */
 	private static boolean removeExplicitThisParameter(List<? extends Variable> params,
 			String callingConventionName) {

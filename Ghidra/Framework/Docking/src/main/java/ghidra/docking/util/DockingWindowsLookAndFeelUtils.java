@@ -56,9 +56,14 @@ public class DockingWindowsLookAndFeelUtils {
 	private final static String SYSTEM_LOOK_AND_FEEL = "System";
 
 	/**
-	 * The most stable Linux LaF.
+	 * The most stable Linux LaF, based on anecdotal observation.
 	 */
 	private static final String NIMBUS_LOOK_AND_FEEL = "Nimbus";
+
+	/**
+	 * The Motif LaF name.
+	 */
+	private static final String MOTIF_LOOK_AND_FEEL = "CDE/Motif";
 
 	private static RepaintManager defaultSwingRepaintManager = null;
 
@@ -90,8 +95,8 @@ public class DockingWindowsLookAndFeelUtils {
 	}
 
 	/**
-	 * Returns the {@link Preferences} value for whether to use inverted colors when paiting.
-	 * @return the {@link Preferences} value for whether to use inverted colors when paiting.
+	 * Returns the {@link Preferences} value for whether to use inverted colors when painting.
+	 * @return the {@link Preferences} value for whether to use inverted colors when painting.
 	 */
 	public static boolean getUseInvertedColorsPreference() {
 		boolean useHistoricalValue = true;
@@ -110,9 +115,9 @@ public class DockingWindowsLookAndFeelUtils {
 	}
 
 	/**
-	 * Set the look and feel (LAF) indicated by the string passed in as a parameter.  
-	 * The string value can be either the class name of the LAF, as returned by 
-	 * <code>LookAndFeelInfo.getClassName()</code> or the name as returned by 
+	 * Set the look and feel (LAF) indicated by the string passed in as a parameter.
+	 * The string value can be either the class name of the LAF, as returned by
+	 * <code>LookAndFeelInfo.getClassName()</code> or the name as returned by
 	 * <code>LookAndFeelInfo.getName()</code>.
 	 * <p>
 	 * Note: to be effective, this call needs to be made before any components have been created
@@ -139,7 +144,7 @@ public class DockingWindowsLookAndFeelUtils {
 	}
 
 	/**
-	 * Returns all installed LaFs.  This will vary by OS. 
+	 * Returns all installed LaFs.  This will vary by OS.
 	 * @return all installed LaFs.
 	 */
 	public static List<String> getLookAndFeelNames() {
@@ -209,7 +214,29 @@ public class DockingWindowsLookAndFeelUtils {
 
 				// (see NimbusDefaults for key values that can be changed here)
 				break;
+			case MOTIF_LOOK_AND_FEEL:
+
+				doFixupMissingCopyPasteKeyBindings();
+
+				// (see MotifDefaults for key values that can be changed here)
+				break;
 		}
+	}
+
+	private static void doFixupMissingCopyPasteKeyBindings() {
+
+		//
+		// The Motif LaF does not bind copy/paste/cut to Control-C/V/X by default.  Rather, they
+		// only use the COPY/PASTE/CUT keys.  The other LaFs bind both shortcuts.
+		//
+
+		// these prefixes are for text components
+		String[] UIPrefixValues =
+			{ "TextField", "FormattedTextField", "TextArea", "TextPane", "EditorPane" };
+
+		setKeyBinding("COPY", "ctrl C", UIPrefixValues);
+		setKeyBinding("PASTE", "ctrl V", UIPrefixValues);
+		setKeyBinding("CUT", "ctrl X", UIPrefixValues);
 	}
 
 	private static void installGlobalLookAndFeelAttributes() {
@@ -275,6 +302,22 @@ public class DockingWindowsLookAndFeelUtils {
 		}
 	}
 
+	private static void setKeyBinding(String existingKsText, String newKsText,
+			String[] prefixValues) {
+
+		KeyStroke existingKs = KeyStroke.getKeyStroke(existingKsText);
+		KeyStroke newKs = KeyStroke.getKeyStroke(newKsText);
+
+		for (String properyPrefix : prefixValues) {
+
+			UIDefaults defaults = UIManager.getDefaults();
+			Object object = defaults.get(properyPrefix + ".focusInputMap");
+			InputMap inputMap = (InputMap) object;
+			Object action = inputMap.get(existingKs);
+			inputMap.put(newKs, action);
+		}
+	}
+
 	/** Allows you to globally set the font size (don't use this method!) */
 	private static void setGlobalFontSizeOverride(int fontSize) {
 		UIDefaults defaults = UIManager.getDefaults();
@@ -307,7 +350,7 @@ public class DockingWindowsLookAndFeelUtils {
 	}
 
 	/**
-	 * Returns true if the given UI object is using the Aqua Look and Feel.  
+	 * Returns true if the given UI object is using the Aqua Look and Feel.
 	 * @param UI the UI to examine.
 	 * @return true if the UI is using Aqua
 	 */
@@ -318,11 +361,16 @@ public class DockingWindowsLookAndFeelUtils {
 	}
 
 	/**
-	 * Returns true if 'Nimbus' is the current Look and Feel  
+	 * Returns true if 'Nimbus' is the current Look and Feel
 	 * @return true if 'Nimbus' is the current Look and Feel
 	 */
 	public static boolean isUsingNimbusUI() {
 		LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
 		return NIMBUS_LOOK_AND_FEEL.equals(lookAndFeel.getName());
+	}
+
+	public static boolean isUsingMotifUI() {
+		LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+		return MOTIF_LOOK_AND_FEEL.equals(lookAndFeel.getName());
 	}
 }

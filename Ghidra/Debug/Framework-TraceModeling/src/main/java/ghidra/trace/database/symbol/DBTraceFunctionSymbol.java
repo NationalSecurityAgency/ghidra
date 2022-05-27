@@ -1847,12 +1847,31 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 		}
 	}
 
+	private List<Address> getFunctionThunkAddresses(long functionKey, boolean recursive) {
+		Collection<DBTraceFunctionSymbol> thunkSymbols =
+			manager.functionsByThunked.get(getKey());
+		if (thunkSymbols == null || thunkSymbols.isEmpty()) {
+			return null;
+		}
+		List<Address> result = new ArrayList<>();
+		for (DBTraceFunctionSymbol thunkSymbol : thunkSymbols) {
+			result.add(thunkSymbol.entryPoint);
+			if (recursive) {
+				List<Address> thunkAddrs = getFunctionThunkAddresses(thunkSymbol.getKey(), true);
+				if (thunkAddrs != null) {
+					result.addAll(thunkAddrs);
+				}
+			}
+		}
+		return result;
+	}
+
 	@Override
-	public Address[] getFunctionThunkAddresses() {
+	public Address[] getFunctionThunkAddresses(boolean recursive) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			List<Address> result = new ArrayList<>();
-			for (DBTraceFunctionSymbol thunk : manager.functionsByThunked.get(getKey())) {
-				result.add(thunk.entryPoint);
+			List<Address> result = getFunctionThunkAddresses(getKey(), recursive);
+			if (result == null) {
+				return null;
 			}
 			return result.toArray(new Address[result.size()]);
 		}

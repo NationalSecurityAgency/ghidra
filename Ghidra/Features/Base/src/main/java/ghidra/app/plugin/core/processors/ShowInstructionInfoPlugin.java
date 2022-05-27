@@ -60,6 +60,7 @@ import ghidra.util.*;
 public class ShowInstructionInfoPlugin extends ProgramPlugin {
 
 	private static final String CURRENT_INSTRUCTION_PREPEND_STRING = "Current Instruction: ";
+	private static final String CURRENT_DATA_PREPEND_STRING = "Current Datatype: ";
 	private static final String CURRENT_FUNCTION_APPEND_STRING =
 		" (double-click to go to function entry)";
 
@@ -70,8 +71,8 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 	private List<InstructionInfoProvider> disconnectedProviders = new ArrayList<>();
 	private DockingAction showProcessorManualAction;
 
-	private JLabel instructionLabel;
-	private JPanel instructionPanel;
+	private JLabel codeUnitLabel;
+	private JPanel codeUnitPanel;
 	private JLabel functionLabel;
 	private JPanel functionPanel;
 	private JLabel addressLabel;
@@ -94,14 +95,14 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 	}
 
 	private void createStatusPanels() {
-		instructionPanel = new JPanel(new BorderLayout());
-		instructionLabel = new GDLabel("                         ");
-		instructionPanel.setPreferredSize(
-			new Dimension(200, instructionLabel.getPreferredSize().height));
-		instructionLabel.setToolTipText(CURRENT_INSTRUCTION_PREPEND_STRING);
-		instructionPanel.add(instructionLabel);
-		instructionPanel.setName("Current Instruction");
-		tool.addStatusComponent(instructionPanel, true, false);
+		codeUnitPanel = new JPanel(new BorderLayout());
+		codeUnitLabel = new GDLabel("                         ");
+		codeUnitPanel.setPreferredSize(
+			new Dimension(200, codeUnitLabel.getPreferredSize().height));
+		codeUnitLabel.setToolTipText(CURRENT_INSTRUCTION_PREPEND_STRING);
+		codeUnitPanel.add(codeUnitLabel);
+		codeUnitPanel.setName("Current Instruction");
+		tool.addStatusComponent(codeUnitPanel, true, false);
 
 		functionPanel = new JPanel(new BorderLayout());
 		functionLabel = new GDLabel("                   ");
@@ -300,7 +301,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 			provider.dispose();
 		}
 		disconnectedProviders.clear();
-		tool.removeStatusComponent(instructionPanel);
+		tool.removeStatusComponent(codeUnitPanel);
 		tool.removeStatusComponent(addressPanel);
 		tool.removeStatusComponent(functionPanel);
 		super.dispose();
@@ -309,7 +310,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 	/**
 	 * Remove this InstructionProvider from list of managed dialogs
 	 *
-	 * @param provider
+	 * @param provider the provider to remove
 	 */
 	public void remove(InstructionInfoProvider provider) {
 		if (provider == connectedProvider) {
@@ -322,7 +323,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 	}
 
 	JLabel getInstructionLabel() {
-		return instructionLabel;
+		return codeUnitLabel;
 	}
 
 	/**
@@ -355,19 +356,27 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 			functionLabel.setToolTipText("");
 		}
 
-		/// code added //
-		Instruction instr = getInstructionForCurrentProgram();
-		if (instr == null) {
-			instructionLabel.setText("");
-			instructionLabel.setToolTipText("");
+		// update instruction/Data field
+		CodeUnit codeUnit = getCodeUnitForCurrentProgram();
+		if (codeUnit == null) {
+			codeUnitLabel.setText("");
+			codeUnitLabel.setToolTipText("");
 			return;
 		}
-
-		String representation = instr.toString();
-		instructionLabel.setText(" " + representation + " ");
-		instructionLabel.setToolTipText(CURRENT_INSTRUCTION_PREPEND_STRING + representation);
-
-		// end code added ///
+		if (codeUnit instanceof Instruction) {
+			String representation = codeUnit.toString();
+			codeUnitLabel.setText(" " + representation + " ");
+			codeUnitLabel.setToolTipText(CURRENT_INSTRUCTION_PREPEND_STRING + representation);
+		}
+		else {
+			Data data = (Data) codeUnit;
+			String dataTypeName = data.getDataType().getName();
+			int size = data.getLength();
+			String displayText = dataTypeName + "  (" + size + ")";
+			String toolTipText = CURRENT_DATA_PREPEND_STRING + dataTypeName + "  Size = " + size;
+			codeUnitLabel.setText(displayText);
+			codeUnitLabel.setToolTipText(toolTipText);
+		}
 	}
 
 	@Override
@@ -388,8 +397,8 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 
 	@Override
 	protected void programDeactivated(Program program) {
-		instructionLabel.setText("");
-		instructionLabel.setToolTipText("");
+		codeUnitLabel.setText("");
+		codeUnitLabel.setToolTipText("");
 		if (connectedProvider != null) {
 			connectedProvider.setProgram(null);
 		}
@@ -406,14 +415,14 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 		return listing.getInstructionContaining(addr);
 	}
 
-	private Instruction getInstructionForCurrentProgram() {
+	private CodeUnit getCodeUnitForCurrentProgram() {
 		Address addr = currentLocation.getAddress();
 		if (addr == null) {
 			return null;
 		}
 
 		Listing listing = currentProgram.getListing();
-		return listing.getInstructionContaining(addr);
+		return listing.getCodeUnitContaining(addr);
 	}
 
 	void goToSurroundingFunction() {

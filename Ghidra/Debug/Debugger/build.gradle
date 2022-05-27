@@ -33,6 +33,7 @@ dependencies {
 	helpPath project(path: ':Base', configuration: 'helpPath')
 	helpPath project(path: ':ProgramDiff', configuration: 'helpPath')
 
+    testImplementation project(path: ':Base', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')

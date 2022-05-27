@@ -19,9 +19,12 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Instruction;
 
+/**
+ * A means of decoding machine instructions from the bytes contained in the machine state
+ */
 public interface InstructionDecoder {
 	/**
-	 * Decode the instruction at the given address using the given context
+	 * Decode the instruction starting at the given address using the given context
 	 * 
 	 * <p>
 	 * This method cannot return null. If a decode error occurs, it must throw an exception.

@@ -24,6 +24,7 @@ import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.UniversalID;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Database implementation for a Typedef data type.
@@ -36,13 +37,84 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	private SettingsDefinition[] settingsDef;
 
 	/**
-	 * Constructor
-	 * @param key
+	 * Construct TypeDefDB instance
+	 * @param dataMgr datatype manager
+	 * @param cache DataTypeDB cache
+	 * @param adapter TypeDef record adapter
+	 * @param record TypeDefDB record
 	 */
 	public TypedefDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
 			TypedefDBAdapter adapter, DBRecord record) {
 		super(dataMgr, cache, record);
 		this.adapter = adapter;
+		this.defaultSettings = null; // ensure lazy initialization
+	}
+
+	private void setFlags(int flags) {
+		record.setShortValue(TypedefDBAdapter.TYPEDEF_FLAGS_COL, (short) flags);
+	}
+
+	private int getFlags() {
+		return record.getShortValue(TypedefDBAdapter.TYPEDEF_FLAGS_COL);
+	}
+
+	@Override
+	public void enableAutoNaming() {
+		if (isAutoNamed()) {
+			return;
+		}
+		lock.acquire();
+		try {
+			checkDeleted();
+
+			String oldName = getName();
+
+			setFlags(getFlags() | TypedefDBAdapter.TYPEDEF_FLAG_AUTONAME);
+			adapter.updateRecord(record, true);
+
+			// auto-named typedef follows category of associated datatype 
+			CategoryPath oldPath = getCategoryPath();
+			CategoryPath currentPath = getDataType().getCategoryPath();
+
+			String newName = generateTypedefName(currentPath);
+			record.setString(TypedefDBAdapter.TYPEDEF_NAME_COL, newName);
+			adapter.updateRecord(record, true);
+			refreshName();
+
+			if (!currentPath.equals(oldPath)) {
+				// update category for typedef
+				try {
+					super.setCategoryPath(currentPath);
+				}
+				catch (DuplicateNameException e) {
+					// should not happen
+				}
+			}
+
+			notifyNameChanged(oldName);
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public boolean isAutoNamed() {
+		int flags = getFlags();
+		if (isInvalid()) {
+			lock.acquire();
+			try {
+				checkIsValid();
+				flags = getFlags();
+			}
+			finally {
+				lock.release();
+			}
+		}
+		return (flags & TypedefDBAdapter.TYPEDEF_FLAG_AUTONAME) != 0;
 	}
 
 	@Override
@@ -63,6 +135,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	@Override
 	protected void doSetNameRecord(String name) throws IOException {
 		record.setString(TypedefDBAdapter.TYPEDEF_NAME_COL, name);
+		setFlags(getFlags() & ~TypedefDBAdapter.TYPEDEF_FLAG_AUTONAME); // clear auto-name flag if name is set
 		adapter.updateRecord(record, true);
 	}
 
@@ -98,9 +171,7 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
-		checkIsValid();
-		TypedefSettings ts = new TypedefSettings(super.getDefaultSettings(), settings);
-		return getDataType().getRepresentation(buf, ts, length);
+		return getDataType().getRepresentation(buf, settings, length);
 	}
 
 	@Override
@@ -163,15 +234,13 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	@Override
-	public DataType clone(DataTypeManager dtm) {
-		return new TypedefDataType(getCategoryPath(), getName(), getDataType(), getUniversalID(),
-			getSourceArchive(), getLastChangeTime(), getLastChangeTimeInSourceArchive(), dtm);
-
+	public TypeDef clone(DataTypeManager dtm) {
+		return TypedefDataType.clone(this, dtm);
 	}
 
 	@Override
-	public DataType copy(DataTypeManager dtm) {
-		return new TypedefDataType(getCategoryPath(), getName(), getDataType(), dtm);
+	public TypedefDataType copy(DataTypeManager dtm) {
+		return TypedefDataType.copy(this, dtm);
 	}
 
 	@Override
@@ -183,11 +252,26 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 			return false;
 		}
 		TypeDef td = (TypeDef) obj;
-		checkIsValid();
-		if (!DataTypeUtilities.equalsIgnoreConflict(getName(), td.getName())) {
+		validate(lock);
+
+		boolean autoNamed = isAutoNamed();
+		if (autoNamed != td.isAutoNamed()) {
+			return false;
+		}
+		if (!autoNamed && !DataTypeUtilities.equalsIgnoreConflict(getName(), td.getName())) {
+			return false;
+		}
+		if (!hasSameTypeDefSettings(td)) {
 			return false;
 		}
 		return DataTypeUtilities.isSameOrEquivalentDataType(getDataType(), td.getDataType());
+	}
+
+	public void setCategoryPath(CategoryPath path) throws DuplicateNameException {
+		if (isAutoNamed()) {
+			return; // ignore category change if auto-naming enabled
+		}
+		super.setCategoryPath(path);
 	}
 
 	@Override
@@ -204,6 +288,8 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		lock.acquire();
 		try {
 			if (checkIsValid() && getDataType() == oldDt) {
+				settingsDef = null;
+				defaultSettings = null;
 				oldDt.removeParent(this);
 				newDt = resolve(newDt);
 				newDt.addParent(this);
@@ -240,6 +326,9 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 
 	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
+		if (getDataType() == dt) {
+			updateAutoName(true);
+		}
 	}
 
 	@Override
@@ -253,8 +342,8 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		try {
 			DBRecord rec = adapter.getRecord(key);
 			if (rec != null) {
+				settingsDef = null;
 				record = rec;
-//				super.getDefaultSettings();  // not sure why it was doing this - no one else does.
 				return super.refresh();
 			}
 		}
@@ -271,7 +360,15 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 			checkIsValid();
 			if (settingsDef == null) {
 				DataType dt = getDataType();
-				settingsDef = dt.getSettingsDefinitions();
+				SettingsDefinition[] settingsDefinitions = dt.getSettingsDefinitions();
+				TypeDefSettingsDefinition[] typeDefSettingsDefinitions =
+					dt.getTypeDefSettingsDefinitions();
+				settingsDef = new SettingsDefinition[settingsDefinitions.length +
+					typeDefSettingsDefinitions.length];
+				System.arraycopy(settingsDefinitions, 0, settingsDef, 0,
+					settingsDefinitions.length);
+				System.arraycopy(typeDefSettingsDefinitions, 0, settingsDef,
+					settingsDefinitions.length, typeDefSettingsDefinitions.length);
 			}
 			return settingsDef;
 		}
@@ -281,13 +378,74 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	@Override
+	public TypeDefSettingsDefinition[] getTypeDefSettingsDefinitions() {
+		return getDataType().getTypeDefSettingsDefinitions();
+	}
+
+	protected Settings doGetDefaultSettings() {
+		DataTypeSettingsDB settings = new DataTypeSettingsDB(dataMgr, this, key);
+		settings.setLock(dataMgr instanceof BuiltInDataTypeManager);
+		settings.setAllowedSettingPredicate(n -> isAllowedSetting(n));
+		settings.setDefaultSettings(getDataType().getDefaultSettings());
+		return settings;
+	}
+
+	private boolean isAllowedSetting(String settingName) {
+		if (dataMgr instanceof ProgramBasedDataTypeManager) {
+			// any setting permitted within a program DTM
+			return true;
+		}
+		// non-TypeDefSettingsDefinition settings are not permitted in non-program DTM
+		// since they will be discarded during resolve and ignored for equivalence checks
+		for (TypeDefSettingsDefinition def : getTypeDefSettingsDefinitions()) {
+			if (def.getStorageKey().equals(settingName)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
 	public String toString() {
+		if (isAutoNamed()) {
+			return getName();
+		}
 		return "typedef " + this.getName() + " " + getDataType().getName();
 	}
 
 	@Override
 	public String getDefaultLabelPrefix() {
+		if (isAutoNamed()) {
+			return getDataType().getDefaultLabelPrefix();
+		}
 		return getName();
+	}
+
+	@Override
+	public String getDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
+			DataTypeDisplayOptions options) {
+		if (isAutoNamed()) {
+			return getDataType().getDefaultLabelPrefix(buf, settings, len, options);
+		}
+		return super.getDefaultLabelPrefix(buf, settings, len, options);
+	}
+
+	@Override
+	public String getDefaultAbbreviatedLabelPrefix() {
+		if (isAutoNamed()) {
+			return getDataType().getDefaultAbbreviatedLabelPrefix();
+		}
+		return super.getDefaultAbbreviatedLabelPrefix();
+	}
+
+	@Override
+	public String getDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
+			DataTypeDisplayOptions options, int offcutLength) {
+		if (isAutoNamed()) {
+			return getDataType().getDefaultOffcutLabelPrefix(buf, settings, len, options,
+				offcutLength);
+		}
+		return super.getDefaultOffcutLabelPrefix(buf, settings, len, options, offcutLength);
 	}
 
 	@Override
@@ -384,9 +542,100 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 		if (!(dataType instanceof TypeDef)) {
 			throw new UnsupportedOperationException();
 		}
-		if (dataType != this) {
-			dataTypeReplaced(getDataType(), ((TypeDef) dataType).getDataType());
+		if (dataType == this) {
+			return;
 		}
+		lock.acquire();
+		try {
+			TypeDef td = (TypeDef) dataType;
+			dataTypeReplaced(getDataType(), td.getDataType());
+			TypedefDataType.copyTypeDefSettings(td, this, true);
+			// NOTE: as with the name, auto-name setting is left unchanged
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	protected void updatePath(DataTypeDB dt) {
+		if (isAutoNamed() && dt == getDataType()) {
+			// auto-named typedef follows category of associated datatype 
+			CategoryPath oldPath = getCategoryPath();
+			CategoryPath currentPath = dt.getCategoryPath();
+			if (!currentPath.equals(oldPath)) {
+				try {
+					boolean nameChanged = false;
+					String oldName = getName();
+					String newName = generateTypedefName(currentPath);
+					if (!newName.equals(oldName)) {
+						nameChanged = true;
+						record.setString(TypedefDBAdapter.TYPEDEF_NAME_COL, newName);
+						refreshName();
+					}
+					super.setCategoryPath(currentPath);
+					if (nameChanged) {
+						notifyNameChanged(oldName);
+					}
+				}
+				catch (DuplicateNameException e) {
+					// should not happen
+				}
+			}
+		}
+	}
+
+	private String generateTypedefName(CategoryPath path) {
+		String newName = TypedefDataType.generateTypedefName(this);
+		DataType dt = dataMgr.getDataType(path, newName);
+		if (dt == null || dt == this) {
+			return newName;
+		}
+
+		String baseName = newName + DataType.CONFLICT_SUFFIX;
+		newName = baseName;
+		int count = 0;
+		while (true) {
+			dt = dataMgr.getDataType(path, newName);
+			if (dt == null || dt == this) {
+				break;
+			}
+			count++;
+			newName = baseName + count;
+		}
+		return newName;
+	}
+
+	boolean updateAutoName(boolean notify) {
+		lock.acquire();
+		try {
+			checkIsValid();
+
+			if (!isAutoNamed()) {
+				return false;
+			}
+
+			String oldName = getName();
+			String newName = generateTypedefName(getCategoryPath());
+			if (oldName.equals(newName)) {
+				return false;
+			}
+
+			record.setString(TypedefDBAdapter.TYPEDEF_NAME_COL, newName);
+			adapter.updateRecord(record, false);
+			refreshName();
+
+			if (notify) {
+				notifyNameChanged(oldName);
+			}
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+		return true;
 	}
 
 }

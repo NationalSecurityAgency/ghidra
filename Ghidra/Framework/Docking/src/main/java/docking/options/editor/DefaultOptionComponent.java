@@ -81,4 +81,8 @@ public class DefaultOptionComponent extends GenericOptionsComponent {
 		int maxHeight = Math.max(dimension.height, component.getPreferredSize().height);
 		return new Dimension(dimension.width, maxHeight);
 	}
+
+	public String getLabelText() {
+		return label.getText();
+	}
 }

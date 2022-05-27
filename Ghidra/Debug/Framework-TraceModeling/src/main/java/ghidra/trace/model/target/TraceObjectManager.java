@@ -53,13 +53,12 @@ public interface TraceObjectManager {
 	TraceObjectValue createRootObject(TargetObjectSchema schema);
 
 	/**
-	 * Create an object with the given canonical path having the given lifespan
+	 * Create (or get) an object with the given canonical path
 	 * 
 	 * @param path the object's canonical path
-	 * @param lifespan the initial lifespan
 	 * @return the new object
 	 */
-	TraceObject createObject(TraceObjectKeyPath path, Range<Long> lifespan);
+	TraceObject createObject(TraceObjectKeyPath path);
 
 	/**
 	 * Get the schema of the root object
@@ -93,7 +92,7 @@ public interface TraceObjectManager {
 	 * @param path the canonical path of the desired objects
 	 * @return the collection of objects
 	 */
-	Collection<? extends TraceObject> getObjectsByCanonicalPath(TraceObjectKeyPath path);
+	TraceObject getObjectByCanonicalPath(TraceObjectKeyPath path);
 
 	/**
 	 * Get objects in the database having the given path intersecting the given span
@@ -130,6 +129,13 @@ public interface TraceObjectManager {
 	Collection<? extends TraceObject> getAllObjects();
 
 	/**
+	 * Get all the values (edges) in the database
+	 * 
+	 * @return the collect of all values
+	 */
+	Collection<? extends TraceObjectValue> getAllValues();
+
+	/**
 	 * Get all address-ranged values intersecting the given span and address range
 	 * 
 	 * @param span the span that desired values lifespans must intersect
@@ -149,6 +155,15 @@ public interface TraceObjectManager {
 	 */
 	<I extends TraceObjectInterface> Stream<I> queryAllInterface(Range<Long> span,
 			Class<I> ifClass);
+
+	/**
+	 * For maintenance, remove all disconnected objects
+	 * 
+	 * <p>
+	 * An object is disconnected if it is neither the child nor parent of any value for any span. In
+	 * other words, it's unused.
+	 */
+	void cullDisconnectedObjects();
 
 	/**
 	 * Delete the <em>entire object model</em>, including the schema

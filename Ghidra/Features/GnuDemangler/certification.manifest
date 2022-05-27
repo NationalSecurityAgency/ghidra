@@ -1,4 +1,3 @@
 ##VERSION: 2.0
-##MODULE IP: BSD
 Module.manifest||GHIDRA||||END|
 src/test/resources/ghidra/app/util/demangler/gnu_mangled_names.txt||GHIDRA||reviewed||END|

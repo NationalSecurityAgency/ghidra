@@ -53,8 +53,6 @@ public abstract class AbstractModuleInformation {
 	protected long nameIndexSourceFile; // unsigned 32-bit
 	protected long nameIndexCompilerPdbPath; // unsigned 32-bit
 
-	protected boolean adjustedNumbFilesContributing;
-
 	//==============================================================================================
 	private Map<Integer, String> filenameByOffset = new HashMap<>();
 
@@ -70,24 +68,6 @@ public abstract class AbstractModuleInformation {
 	 */
 	public int getNumFilesContributing() {
 		return numFilesContributing;
-	}
-
-	/**
-	 * Back-door method to set an adjusted {@code numFilesContributing}.
-	 * @param numFilesContributing the value to be set.
-	 */
-	void setNumFilesContributing(int numFilesContributing) {
-		this.numFilesContributing = numFilesContributing;
-		adjustedNumbFilesContributing = true;
-	}
-
-	/**
-	 * Returns {@code true} if we adjusted the {@link #numFilesContributing} value from {@code 0}
-	 * to {@code 1}.  Suspect this is an issue with a particular non-MSFT compiler tool chain.
-	 * @return {@code true} if we changed the {@link #numFilesContributing} value.
-	 */
-	public boolean isAdjustedNumFilesContributing() {
-		return adjustedNumbFilesContributing;
 	}
 
 	/**
@@ -186,7 +166,7 @@ public abstract class AbstractModuleInformation {
 	//==============================================================================================
 	/**
 	 * Deserializes the Additionals.  Abstract method filled in by instances to parse additional
-	 *  data pertinent to themselves. 
+	 *  data pertinent to themselves.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
 	 * @throws PdbException upon error parsing a string name.
 	 */

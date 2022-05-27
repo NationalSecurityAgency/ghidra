@@ -20,10 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.CpuTypes;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.commands.NList;
@@ -146,15 +144,15 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 	}
 
 	private void parseNList(MessageLog log, TaskMonitor monitor) throws CancelledException {
-		FactoryBundledWithBinaryReader nListReader = new FactoryBundledWithBinaryReader(
-			RethrowContinuesFactory.INSTANCE, reader.getByteProvider(), reader.isLittleEndian());
+		BinaryReader nListReader =
+			new BinaryReader(reader.getByteProvider(), reader.isLittleEndian());
 		monitor.setMessage("Parsing DYLD nlist symbol table...");
 		monitor.initialize(nlistCount * 2);
 		nListReader.setPointerIndex(startIndex + nlistOffset);
 		try {
 
 			for (int i = 0; i < nlistCount; ++i) {
-				nlistList.add(NList.createNList(nListReader, is32bit));
+				nlistList.add(new NList(nListReader, is32bit));
 				monitor.checkCanceled();
 				monitor.incrementProgress(1);
 			}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,17 +27,17 @@ class OffsetReferenceDB extends MemReferenceDB implements OffsetReference {
 			offset);
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.OffsetReference#getOffset()
-	 */
+	@Override
 	public long getOffset() {
 		return offsetOrShift;
 	}
 
-	/**
-	 * @see ghidra.program.model.symbol.OffsetReference#getBaseAddress()
-	 */
+	@Override
 	public Address getBaseAddress() {
+		if (isExternalBlockReference()) {
+			// EXTERNAL block: must report toAddr and base as the same regardless of offset
+			return toAddr;
+		}
 		return toAddr.subtractWrap(offsetOrShift);
 	}
 
@@ -56,4 +55,10 @@ class OffsetReferenceDB extends MemReferenceDB implements OffsetReference {
 		OffsetReference ref = (OffsetReference) obj;
 		return offsetOrShift == ref.getOffset();
 	}
+
+	@Override
+	public String toString() {
+		return super.toString() + " Offset: 0x" + Long.toHexString(offsetOrShift);
+	}
+
 }

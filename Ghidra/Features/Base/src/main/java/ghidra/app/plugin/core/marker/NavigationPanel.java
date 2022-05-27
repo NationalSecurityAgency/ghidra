@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +15,35 @@
  */
 package ghidra.app.plugin.core.marker;
 
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.*;
 
 import javax.swing.JPanel;
 
+import docking.widgets.fieldpanel.FieldPanel;
+import ghidra.app.nav.Navigatable;
+import ghidra.app.util.viewer.util.AddressIndexMap;
+import ghidra.program.model.listing.Program;
+
 /**
- * Panel to display an overview of all markers placed within a scrolled
- * FieldPanel.
- * Normally placed to the right of the scrolled panel.
+ * Panel to display an overview of all markers placed within a scrolled {@link FieldPanel}. Normally
+ * placed to the right of the scrolled panel.
  */
 public class NavigationPanel extends JPanel {
 
 	private MarkerManager manager;
 
+	private Navigatable navigatable;
+	private Program program;
+	private AddressIndexMap addrMap;
+
 	NavigationPanel(MarkerManager manager) {
 		super();
 		this.manager = manager;
+
+		this.setPreferredSize(new Dimension(16, 1));
+
 		init();
 	}
 
@@ -41,12 +52,11 @@ public class NavigationPanel extends JPanel {
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
-
-				if ((e.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
-					manager.navigateTo(e.getX(), e.getY());
+				if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) != 0) {
+					manager.navigateTo(navigatable, program, e.getX(), e.getY(), getViewHeight(),
+						addrMap);
 				}
 			}
-
 		});
 	}
 
@@ -56,7 +66,23 @@ public class NavigationPanel extends JPanel {
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		manager.paintNavigation(g, this);
+		paintNavigation(g);
 	}
 
+	void paintNavigation(Graphics g) {
+		manager.paintNavigation(program, g, this, addrMap);
+	}
+
+	void setNavigatable(Navigatable navigatable) {
+		this.navigatable = navigatable;
+	}
+
+	void setProgram(Program program, AddressIndexMap map) {
+		this.program = program;
+		this.addrMap = map;
+	}
+
+	public int getViewHeight() {
+		return getHeight() - MarkerSetImpl.MARKER_HEIGHT;
+	}
 }

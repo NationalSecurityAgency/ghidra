@@ -85,8 +85,6 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	protected final DbgModelTargetMemoryContainer memory;
 	protected final DbgModelTargetModuleContainer modules;
 	protected final DbgModelTargetThreadContainer threads;
-	// Note: not sure section info is available from the dbgeng
-	//protected final DbgModelTargetProcessSectionContainer sections;
 
 	private Integer base = 16;
 
@@ -99,19 +97,16 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		this.debug = new DbgModelTargetDebugContainerImpl(this);
 		this.memory = new DbgModelTargetMemoryContainerImpl(this);
 		this.modules = new DbgModelTargetModuleContainerImpl(this);
-		//this.sections = new DbgModelTargetProcessSectionContainerImpl(this);
 		this.threads = new DbgModelTargetThreadContainerImpl(this);
 
 		changeAttributes(List.of(), List.of( //
 			debug, //
 			memory, //
 			modules, //
-			//sections, //
 			threads //
 		), Map.of( //
 			ACCESSIBLE_ATTRIBUTE_NAME, accessible = false, //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //
-			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, PARAMETERS, //
 			SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
 			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, DbgModelTargetThreadImpl.SUPPORTED_KINDS //
 		), "Initialized");
@@ -143,11 +138,6 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	public void threadStateChangedSpecific(DbgThread thread, DbgState state) {
 		TargetExecutionState targetState = convertState(state);
 		setExecutionState(targetState, "ThreadStateChanged");
-	}
-
-	@Override
-	public CompletableFuture<Void> launch(List<String> args) {
-		return model.gateFuture(DbgModelImplUtils.launch(getModel(), process, args));
 	}
 
 	@Override
@@ -268,4 +258,13 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 			DISPLAY_ATTRIBUTE_NAME, getDisplay()//
 		), "Started");
 	}
+
+	@Override
+	public CompletableFuture<Void> resync(boolean refreshAttributes, boolean refreshElements) {
+		if (memory != null) {
+			memory.requestElements(true);
+		}
+		return super.resync(refreshAttributes, refreshElements);
+	}
+
 }

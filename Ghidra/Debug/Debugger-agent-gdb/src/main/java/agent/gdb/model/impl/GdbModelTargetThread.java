@@ -109,6 +109,7 @@ public class GdbModelTargetThread
 			this.info = res;
 			changeAttributes(List.of(), Map.of( //
 				SHORT_DISPLAY_ATTRIBUTE_NAME, shortDisplay = computeShortDisplay(), //
+				TID_ATTRIBUTE_NAME, info.getTid(), //
 				DISPLAY_ATTRIBUTE_NAME, display = computeDisplay() //
 			), "Initialized");
 		});

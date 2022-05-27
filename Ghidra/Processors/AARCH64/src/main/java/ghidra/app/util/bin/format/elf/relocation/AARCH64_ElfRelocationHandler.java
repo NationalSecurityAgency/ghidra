@@ -71,12 +71,13 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 		switch (type) {
 			// .xword: (S+A)
 			case AARCH64_ElfRelocationConstants.R_AARCH64_ABS64: {
-				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
-					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
-					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
-				}
 				newValue = (symbolValue + addend);
 				memory.setLong(relocationAddress, newValue);
+				if (addend != 0) {
+					warnExternalOffsetRelocation(program, relocationAddress,
+						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+					applyComponentOffsetPointer(program, relocationAddress, addend);
+				}
 				break;
 			}
 

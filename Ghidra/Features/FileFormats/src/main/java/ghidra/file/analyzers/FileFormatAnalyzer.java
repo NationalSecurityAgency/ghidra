@@ -21,7 +21,8 @@ import ghidra.app.cmd.data.CreateStringCmd;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.docking.settings.*;
+import ghidra.docking.settings.FormatSettingsDefinition;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -140,8 +141,6 @@ public abstract class FileFormatAnalyzer implements Analyzer {
 	}
 
 	protected void changeFormatToString(Data data) {
-		SettingsImpl settings = new SettingsImpl(data);
-		settings.setDefaultSettings(settings);
 		SettingsDefinition[] settingsDefinitions = data.getDataType().getSettingsDefinitions();
 		for (SettingsDefinition settingsDefinition : settingsDefinitions) {
 			if (settingsDefinition instanceof FormatSettingsDefinition) {

@@ -114,7 +114,7 @@ public interface MemBuffer {
 	/**
 	 * Get the Memory object actually used by the MemBuffer.
 	 *
-	 * @return the Memory used by this MemBuffer.
+	 * @return the Memory used by this MemBuffer or null if not available.
 	 */
 	public Memory getMemory();
 

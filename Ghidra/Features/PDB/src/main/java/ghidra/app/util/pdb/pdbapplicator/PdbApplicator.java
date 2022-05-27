@@ -18,6 +18,9 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
+import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
@@ -374,12 +377,16 @@ public class PdbApplicator {
 
 	private List<SymbolGroup> createSymbolGroups() throws CancelledException, PdbException {
 		List<SymbolGroup> mySymbolGroups = new ArrayList<>();
-		int num = pdb.getDebugInfo().getNumModules();
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return mySymbolGroups;
+		}
+
+		int num = debugInfo.getNumModules();
 		// moduleNumber zero is our global/public group.
 		for (int moduleNumber = 0; moduleNumber <= num; moduleNumber++) {
 			monitor.checkCanceled();
-			Map<Long, AbstractMsSymbol> symbols =
-				pdb.getDebugInfo().getModuleSymbolsByOffset(moduleNumber);
+			Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(moduleNumber);
 			SymbolGroup symbolGroup = new SymbolGroup(symbols, moduleNumber);
 			mySymbolGroups.add(symbolGroup);
 		}
@@ -582,11 +589,16 @@ public class PdbApplicator {
 			throws CancelledException, PdbException {
 
 		List<String> categoryNames = new ArrayList<>();
-		int num = pdb.getDebugInfo().getNumModules();
-		for (int index = 1; index <= num; index++) {
-			monitor.checkCanceled();
-			String moduleName = pdb.getDebugInfo().getModuleInformation(index).getModuleName();
-			categoryNames.add(moduleName);
+
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo != null) {
+
+			int num = debugInfo.getNumModules();
+			for (int index = 1; index <= num; index++) {
+				monitor.checkCanceled();
+				String moduleName = debugInfo.getModuleInformation(index).getModuleName();
+				categoryNames.add(moduleName);
+			}
 		}
 
 		int index = pdbFilename.lastIndexOf("\\");
@@ -652,7 +664,13 @@ public class PdbApplicator {
 	//==============================================================================================
 	//==============================================================================================
 	int findModuleNumberBySectionOffsetContribution(int section, long offset) throws PdbException {
-		for (AbstractSectionContribution sectionContribution : pdb.getDebugInfo().getSectionContributionList()) {
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			throw new PdbException("PDB: DebugInfo is null");
+		}
+
+		for (AbstractSectionContribution sectionContribution : debugInfo
+				.getSectionContributionList()) {
 			int sectionContributionOffset = sectionContribution.getOffset();
 			int maxSectionContributionOffset =
 				sectionContributionOffset + sectionContribution.getLength();
@@ -672,8 +690,8 @@ public class PdbApplicator {
 		int num = tpi.getTypeIndexMaxExclusive() - tpi.getTypeIndexMin();
 		monitor.initialize(num);
 		setMonitorMessage("PDB: Processing " + num + " data type components...");
-		for (int indexNumber =
-			tpi.getTypeIndexMin(); indexNumber < tpi.getTypeIndexMaxExclusive(); indexNumber++) {
+		for (int indexNumber = tpi.getTypeIndexMin(); indexNumber < tpi
+				.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCanceled();
 			//PdbResearch.checkBreak(indexNumber);
 			MsTypeApplier applier = getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
@@ -739,8 +757,8 @@ public class PdbApplicator {
 		int num = ipi.getTypeIndexMaxExclusive() - ipi.getTypeIndexMin();
 		monitor.initialize(num);
 		setMonitorMessage("PDB: Processing " + num + " item type components...");
-		for (int indexNumber =
-			ipi.getTypeIndexMin(); indexNumber < ipi.getTypeIndexMaxExclusive(); indexNumber++) {
+		for (int indexNumber = ipi.getTypeIndexMin(); indexNumber < ipi
+				.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCanceled();
 			MsTypeApplier applier = getTypeApplier(RecordNumber.itemRecordNumber(indexNumber));
 			applier.apply();
@@ -782,8 +800,8 @@ public class PdbApplicator {
 		setMonitorMessage("PDB: Resolving " + num + " data type components...");
 		Date start = new Date();
 		long longStart = start.getTime();
-		for (int indexNumber =
-			tpi.getTypeIndexMin(); indexNumber < tpi.getTypeIndexMaxExclusive(); indexNumber++) {
+		for (int indexNumber = tpi.getTypeIndexMin(); indexNumber < tpi
+				.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCanceled();
 			//PdbResearch.checkBreak(indexNumber);
 			MsTypeApplier applier = getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
@@ -819,6 +837,9 @@ public class PdbApplicator {
 	}
 
 	SymbolGroup getSymbolGroupForModule(int moduleNumber) {
+		if (moduleNumber < 0 || moduleNumber >= symbolGroups.size()) {
+			return null;
+		}
 		return symbolGroups.get(moduleNumber);
 	}
 
@@ -989,7 +1010,7 @@ public class PdbApplicator {
 	@SuppressWarnings("unused") // for method not being called.
 	/**
 	 * Process all symbols.  User should not then call other methods:
-	 * {@link #processGlobalSymbols()}, (@link #processPublicSymbols()}, and
+	 * {@link #processGlobalSymbolsNoTypedefs()}, (@link #processPublicSymbols()}, and
 	 * {@link #processNonPublicOrGlobalSymbols()}.
 	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException upon issue processing the request
@@ -1004,6 +1025,9 @@ public class PdbApplicator {
 	private void processMainSymbols() throws CancelledException, PdbException {
 		// Get a count
 		SymbolGroup symbolGroup = getSymbolGroup();
+		if (symbolGroup == null) {
+			return;
+		}
 		int totalCount = symbolGroup.size();
 		setMonitorMessage("PDB: Applying " + totalCount + " main symbol components...");
 		monitor.initialize(totalCount);
@@ -1013,11 +1037,19 @@ public class PdbApplicator {
 
 	//==============================================================================================
 	private void processModuleSymbols() throws CancelledException {
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+
 		int totalCount = 0;
-		int num = pdb.getDebugInfo().getNumModules();
+		int num = debugInfo.getNumModules();
 		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
 			monitor.checkCanceled();
 			SymbolGroup symbolGroup = getSymbolGroupForModule(moduleNumber);
+			if (symbolGroup == null) {
+				continue; // should not happen
+			}
 			totalCount += symbolGroup.size();
 		}
 		setMonitorMessage("PDB: Applying " + totalCount + " module symbol components...");
@@ -1028,6 +1060,9 @@ public class PdbApplicator {
 			monitor.checkCanceled();
 			// Process module symbols list
 			SymbolGroup symbolGroup = getSymbolGroupForModule(moduleNumber);
+			if (symbolGroup == null) {
+				continue; // should not happen
+			}
 			AbstractMsSymbolIterator iter = symbolGroup.iterator();
 			processSymbolGroup(moduleNumber, iter);
 //			catelogSymbols(index, symbolGroup);
@@ -1070,10 +1105,17 @@ public class PdbApplicator {
 	 */
 	private void processPublicSymbols() throws CancelledException, PdbException {
 
-		SymbolGroup symbolGroup = getSymbolGroup();
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
 
-		PublicSymbolInformation publicSymbolInformation =
-			pdb.getDebugInfo().getPublicSymbolInformation();
+		SymbolGroup symbolGroup = getSymbolGroup();
+		if (symbolGroup == null) {
+			return;
+		}
+
+		PublicSymbolInformation publicSymbolInformation = debugInfo.getPublicSymbolInformation();
 		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		setMonitorMessage("PDB: Applying " + offsets.size() + " public symbol components...");
 		monitor.initialize(offsets.size());
@@ -1100,10 +1142,17 @@ public class PdbApplicator {
 	 */
 	private void processGlobalSymbolsNoTypedefs() throws CancelledException, PdbException {
 
-		SymbolGroup symbolGroup = getSymbolGroup();
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
 
-		GlobalSymbolInformation globalSymbolInformation =
-			pdb.getDebugInfo().getGlobalSymbolInformation();
+		SymbolGroup symbolGroup = getSymbolGroup();
+		if (symbolGroup == null) {
+			return;
+		}
+
+		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
 		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		setMonitorMessage("PDB: Applying global symbols...");
 		monitor.initialize(offsets.size());
@@ -1131,10 +1180,17 @@ public class PdbApplicator {
 	 */
 	private void processGlobalTypdefSymbols() throws CancelledException, PdbException {
 
-		SymbolGroup symbolGroup = getSymbolGroup();
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
 
-		GlobalSymbolInformation globalSymbolInformation =
-			pdb.getDebugInfo().getGlobalSymbolInformation();
+		SymbolGroup symbolGroup = getSymbolGroup();
+		if (symbolGroup == null) {
+			return;
+		}
+
+		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
 		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		setMonitorMessage("PDB: Applying typedefs...");
 		monitor.initialize(offsets.size());
@@ -1163,12 +1219,24 @@ public class PdbApplicator {
 	 */
 	@SuppressWarnings("unused") // for method not being called.
 	private void processNonPublicOrGlobalSymbols() throws CancelledException, PdbException {
-		Set<Long> offsetsRemaining = getSymbolGroup().getOffsets();
-		for (long off : pdb.getDebugInfo().getPublicSymbolInformation().getModifiedHashRecordSymbolOffsets()) {
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+
+		SymbolGroup symbolGroup = getSymbolGroup();
+		if (symbolGroup == null) {
+			return;
+		}
+
+		Set<Long> offsetsRemaining = symbolGroup.getOffsets();
+		for (long off : debugInfo.getPublicSymbolInformation()
+				.getModifiedHashRecordSymbolOffsets()) {
 			monitor.checkCanceled();
 			offsetsRemaining.remove(off);
 		}
-		for (long off : pdb.getDebugInfo().getGlobalSymbolInformation().getModifiedHashRecordSymbolOffsets()) {
+		for (long off : debugInfo.getGlobalSymbolInformation()
+				.getModifiedHashRecordSymbolOffsets()) {
 			monitor.checkCanceled();
 			offsetsRemaining.remove(off);
 		}
@@ -1178,7 +1246,6 @@ public class PdbApplicator {
 		monitor.initialize(offsetsRemaining.size());
 		//getCategoryUtils().setModuleTypedefsCategory(null);
 
-		SymbolGroup symbolGroup = getSymbolGroup();
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
 		for (long offset : offsetsRemaining) {
 			monitor.checkCanceled();
@@ -1191,9 +1258,10 @@ public class PdbApplicator {
 
 	//==============================================================================================
 	private int findLinkerModuleNumber() {
-		if (pdb.getDebugInfo() != null) {
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo != null) {
 			int num = 1;
-			for (AbstractModuleInformation module : pdb.getDebugInfo().getModuleInformationList()) {
+			for (AbstractModuleInformation module : debugInfo.getModuleInformationList()) {
 				if (isLinkerModule(module.getModuleName())) {
 					return num;
 				}
@@ -1239,16 +1307,24 @@ public class PdbApplicator {
 	//==============================================================================================
 	private void processThunkSymbolsFromNonLinkerModules() throws CancelledException {
 
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+
 		int linkerModuleNumber = findLinkerModuleNumber();
 
 		int totalCount = 0;
-		int num = pdb.getDebugInfo().getNumModules();
+		int num = debugInfo.getNumModules();
 		for (int index = 1; index <= num; index++) {
 			monitor.checkCanceled();
 			if (index == linkerModuleNumber) {
 				continue;
 			}
 			SymbolGroup symbolGroup = getSymbolGroupForModule(index);
+			if (symbolGroup == null) {
+				continue; // should not happen
+			}
 			totalCount += symbolGroup.size();
 		}
 		setMonitorMessage("PDB: Processing module thunks...");
@@ -1261,6 +1337,9 @@ public class PdbApplicator {
 				continue;
 			}
 			SymbolGroup symbolGroup = getSymbolGroupForModule(index);
+			if (symbolGroup == null) {
+				continue; // should not happen
+			}
 			AbstractMsSymbolIterator iter = symbolGroup.iterator();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
@@ -1517,6 +1596,11 @@ public class PdbApplicator {
 	//==============================================================================================
 	Symbol createSymbol(Address address, String symbolPathString,
 			boolean forcePrimaryIfExistingIsMangled) {
+		return createSymbol(address, symbolPathString, forcePrimaryIfExistingIsMangled, null);
+	}
+
+	Symbol createSymbol(Address address, String symbolPathString,
+			boolean forcePrimaryIfExistingIsMangled, String plateAddition) {
 
 		// Must get existing info before creating new symbol, as we do not want "existing"
 		//  to include the new one
@@ -1549,7 +1633,28 @@ public class PdbApplicator {
 			setExistingPrimarySymbolInfo(address, primarySymbolInfo);
 		}
 
+		addToPlateUnique(address, plateAddition);
+
 		return newSymbol;
+	}
+
+	private boolean addToPlateUnique(Address address, String comment) {
+		if (StringUtils.isBlank(comment)) {
+			return false;
+		}
+		String plate = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
+		if (plate == null) {
+			plate = "";
+		}
+		else if (plate.contains(comment)) {
+			return true;
+		}
+		else if (!plate.endsWith("\n")) {
+			plate += '\n';
+		}
+		plate += comment;
+		SetCommentCmd.createComment(program, address, comment, CodeUnit.PLATE_COMMENT);
+		return true;
 	}
 
 	private static boolean isMangled(String name) {

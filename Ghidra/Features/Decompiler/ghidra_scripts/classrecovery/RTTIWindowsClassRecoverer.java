@@ -69,11 +69,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	public RTTIWindowsClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVFunctions, boolean isPDBLoaded, boolean replaceClassStructures,
-			TaskMonitor monitor) throws Exception {
+			boolean nameVFunctions, boolean isPDBLoaded, TaskMonitor monitor) throws Exception {
 
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVFunctions,
-			isPDBLoaded, replaceClassStructures, monitor);
+			isPDBLoaded, monitor);
 
 		this.isPDBLoaded = isPDBLoaded;
 
@@ -132,6 +131,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			return recoveredClasses;
 		}
 
+		//TODO: decide whether to update to only include possible cds not all functions that
+		// have ref to vftable
+		// if decide to be more restrictive then need to move the method that weeds out inlines and
+		// from the class cd lists
 		createCalledFunctionMap(recoveredClasses);
 
 		// figure out class hierarchies using either RTTI or vftable refs
@@ -154,9 +157,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// otherwise figure everything out from scratch
 		else {
 			monitor.setMessage("Figuring out class method types");
-			//			println(
-//				"Figuring out class method types (constructor, destructor, inline constructor, " +
-//					"inline destructor, deleting destructor, clone) ...");
 			processConstructorAndDestructors(recoveredClasses);
 
 		}
@@ -171,7 +171,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// using all the information found above, create the class structures, add the constructor,
 		// destructor, vfunctions to class which finds the appropriate class structure and assigns 
 		// to "this" param
-		//println("Creating class data types and applying class structures...");
 		monitor.setMessage("Creating class data types and applying class structures");
 		figureOutClassDataMembers(recoveredClasses);
 
@@ -184,7 +183,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		if (!isPDBLoaded) {
 			// create better vftable labels for multi vftable classes
 			updateMultiVftableLabels(recoveredClasses);
-			//println("Removing erroneous FID namespaces and corresponding class data types");
 			removeEmptyClassesAndStructures();
 		}
 
@@ -463,10 +461,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 							num1 + "," + num2 + "," + num3 + "," + num4 + ")",
 						classNamespace, SourceType.ANALYSIS);
 				}
-//				else {
-//					println(
-//						"Failed to create a baseClassDescArray structure at " + address.toString());
-//				}
 			}
 		}
 	}
@@ -553,8 +547,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		classHierarchyStructure = createClassHierarchyStructure(classHierarchyDescriptorAddress);
 
 		if (classHierarchyStructure == null) {
-//			println("Failed to create a classHierarchyDescriptor structure at " +
-//				classHierarchyDescriptorAddress.toString());
 			symbolTable.removeSymbolSpecial(classHierarchySymbol);
 			return null;
 		}
@@ -729,12 +721,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			for (Reference refTo : referencesTo) {
 				Address vftableMetaPointer = refTo.getFromAddress();
 				if (vftableMetaPointer == null) {
-					//println("can't retrieve meta address");
 					continue;
 				}
 				Address vftableAddress = vftableMetaPointer.add(defaultPointerSize);
 				if (vftableAddress == null) {
-					//println("can't retrieve vftable address");
 					continue;
 				}
 
@@ -895,6 +885,14 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			// Get class name from class vftable is in
 			Namespace classNamespace = classHierarchyDescriptorSymbol.getParentNamespace();
 
+			// get the data type category associated with the given class namespace
+			Category category = getDataTypeCategory(classNamespace);
+
+			// if it already exists, continue since this class has already been recovered
+			if (category != null) {
+				continue;
+			}
+
 			if (classNamespace.getSymbol().getSymbolType() != SymbolType.CLASS) {
 				classNamespace = promoteToClassNamespace(classNamespace);
 				if (classNamespace.getSymbol().getSymbolType() != SymbolType.CLASS) {
@@ -905,20 +903,16 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				}
 			}
 
-			List<Symbol> vftableSymbolsInNamespace =
-				getVftablesInNamespace(vftableSymbols, classNamespace);
+			List<Symbol> vftableSymbolsInNamespace = getClassVftableSymbols(classNamespace);
 
 			//if there are no vftables in this class then create a new class object and make it 
 			// non-vftable class
 			if (vftableSymbolsInNamespace.size() == 0) {
 				String className = classNamespace.getName();
-				String classNameWithNamespace = classNamespace.getName(true);
 
-				// Create Data Type Manager Category for given class
-				// TODO: make this global and check it for null
-				CategoryPath classPath =
-					extendedFlatAPI.createDataTypeCategoryPath(classDataTypesCategoryPath,
-						classNameWithNamespace);
+				// Make a CategoryPath for given class
+				CategoryPath classPath = extendedFlatAPI
+						.createDataTypeCategoryPath(classDataTypesCategoryPath, classNamespace);
 
 				RecoveredClass nonVftableClass =
 					new RecoveredClass(className, classPath, classNamespace, dataTypeManager);
@@ -1020,12 +1014,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 * Method to figure out the class hierarchies either with RTTI if it is present or with vftable 
 	 * references
 	 * @param recoveredClasses List of classes to process
-	 * @throws CancelledException if cancelled
-	 * @throws AddressOutOfBoundsException AddressOutOfBoundsException
-	 * @throws MemoryAccessException if memory cannot be read
+	 * @throws Exception various exceptions
 	 */
 	private void assignClassInheritanceAndHierarchies(List<RecoveredClass> recoveredClasses)
-			throws CancelledException, MemoryAccessException, AddressOutOfBoundsException {
+			throws Exception {
 
 		// Use RTTI information to determine inheritance type and 
 		// class hierarchy
@@ -1204,7 +1196,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		}
 		else if (symbols.size() > 1) {
 			//TODO: throw exception?
-			//println(recoveredClass.getName() + " has more than one base class array");
 		}
 		return classHierarchy;
 	}
@@ -1292,7 +1283,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private void processConstructorAndDestructors(List<RecoveredClass> recoveredClasses)
 			throws CancelledException, InvalidInputException, DuplicateNameException, Exception {
 
-		// find deleting destructors using various mechanisms
+		// update the global lists and class lists to narrow the cd lists
+		trimConstructorDestructorLists(recoveredClasses);
+
+		// find deleting destructors 
 		findDeletingDestructors(recoveredClasses);
 
 		// use atexit param list to find more destructors
@@ -1316,9 +1310,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// ones that could not be determined in earlier stages
 		processRemainingIndeterminateConstructorsAndDestructors(recoveredClasses);
 
-		// use the known constructors and known vfunctions to figure out 
-		// clone functions
-		findCloneFunctions(recoveredClasses);
+		// use the known constructors and known vfunctions to figure out basic clone functions
+		findBasicCloneFunctions(recoveredClasses);
 
 		// This has to be here. It needs all the info from the previously run methods to do this.
 		// Finds the constructors that have multiple basic blocks, reference the vftable not in the 
@@ -1333,7 +1326,12 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		findRealVBaseFunctions(recoveredClasses);
 
+		// make constructors and destructors _thiscalls 
+		makeConstructorsAndDestructorsThiscalls(recoveredClasses);
+
 	}
+
+
 
 	/**
 	 * Method to recover parent information, including class offsets, vbase structure and its offset and address if applicable, and whether
@@ -1842,11 +1840,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			getParentOrderMap(recoveredClass, ancestorsAllowedToMap);
 
 		if (sortedOrder.size() != parentOrderMap.size()) {
-//			if (DEBUG) {
-//				println(recoveredClass.getName() +
-//					" has mismatch between vftable and parent order map sizes " +
-//					sortedOrder.size() + " vs " + parentOrderMap.size());
-//			}
+			Msg.debug(this,
+				recoveredClass.getName() +
+					" has mismatch between vftable and parent order map sizes " +
+					sortedOrder.size() + " vs " + parentOrderMap.size());
 			return;
 		}
 
@@ -1952,6 +1949,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 					Function referencedFunction =
 						extendedFlatAPI.getReferencedFunction(classReferenceAddress, true);
+
 					if (referencedFunction == null) {
 						continue;
 					}

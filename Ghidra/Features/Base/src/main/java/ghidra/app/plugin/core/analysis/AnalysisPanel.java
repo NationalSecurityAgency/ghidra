@@ -40,6 +40,7 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import ghidra.GhidraOptions;
+import ghidra.app.plugin.core.analysis.AnalysisOptionsUpdater.ReplaceableOption;
 import ghidra.app.services.Analyzer;
 import ghidra.framework.Application;
 import ghidra.framework.GenericRunInfo;
@@ -70,13 +71,15 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	// preference which retains last used analyzer_options file name 
 	public static final String LAST_USED_OPTIONS_CONFIG = "LAST_USED_OPTIONS_CONFIG";
 
+	static final String ANALYZER_OPTIONS_PANEL_NAME = "analyzer.options.panel";
+
 	private List<Program> programs;
 	private PropertyChangeListener propertyChangeListener;
 	private Options analysisOptions;
 	private Options currentProgramOptions; // this will have all the non-default options from the program
 	private Options selectedOptions = STANDARD_DEFAULT_OPTIONS;
 
-	private JTable table;
+	private GTable table;
 	private AnalysisEnablementTableModel model;
 	private JTextArea descriptionComponent;
 	private JPanel analyzerOptionsPanel;
@@ -130,6 +133,9 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		currentProgramOptions = getNonDefaultProgramOptions();
 		setName("Analysis Panel");
 		build();
+
+		replaceOldOptions();
+
 		load();
 		loadCurrentOptionsIntoEditors();
 	}
@@ -169,13 +175,13 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		Program program = programs.get(0);
 		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(program);
 
-		List<String> propertyNames = analysisOptions.getOptionNames();
-		Collections.sort(propertyNames, (o1, o2) -> o1.compareToIgnoreCase(o2));
-		for (String analyzerName : propertyNames) {
+		List<String> optionNames = analysisOptions.getOptionNames();
+		Collections.sort(optionNames, (o1, o2) -> o1.compareToIgnoreCase(o2));
+		for (String analyzerName : optionNames) {
 			if (analyzerName.indexOf('.') == -1) {
 				if (analysisOptions.getType(analyzerName) != OptionType.BOOLEAN_TYPE) {
 					throw new AssertException(
-						"Analyzer enable property that is not boolean - " + analyzerName);
+						"Analyzer 'enable' property that is not boolean - " + analyzerName);
 				}
 
 				Analyzer analyzer = manager.getAnalyzer(analyzerName);
@@ -408,7 +414,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 	private void reloadOptionsCombo(Options newDefaultOptions) {
 		optionConfigurationChoices = loadPossibleOptionsChoicesForComboBox();
-		optionsComboBox.setModel(new DefaultComboBoxModel<Options>(optionConfigurationChoices));
+		optionsComboBox.setModel(new DefaultComboBoxModel<>(optionConfigurationChoices));
 		Options selected = findOptionsByName(newDefaultOptions.getName());
 		optionsComboBox.setSelectedItem(selected);
 	}
@@ -587,6 +593,66 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		}
 	}
 
+	private void replaceOldOptions() {
+
+		for (Program program : programs) {
+
+			boolean commit = false;
+			int id = program.startTransaction("Replacing old analysis properties");
+			try {
+				doReplaceOldOptions(program);
+				commit = true;
+			}
+			finally {
+				program.endTransaction(id, commit);
+			}
+		}
+	}
+
+	private void doReplaceOldOptions(Program program) {
+
+		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(program);
+
+		Options programAnalysisOptions = program.getOptions(Program.ANALYSIS_PROPERTIES);
+		List<Options> allAnalyzersOptions = programAnalysisOptions.getChildOptions();
+		for (Options analyzerOptions : allAnalyzersOptions) {
+			String analyzerName = analyzerOptions.getName();
+			Analyzer analyzer = manager.getAnalyzer(analyzerName);
+			if (analyzer == null) {
+				// can be null if an analyzer no longer exists
+				continue;
+			}
+			AnalysisOptionsUpdater updater = analyzer.getOptionsUpdater();
+			if (updater == null) {
+				continue;
+			}
+
+			applyOptionUpdater(analyzerOptions, updater);
+		}
+	}
+
+	private void applyOptionUpdater(Options analyzerOptions, AnalysisOptionsUpdater updater) {
+
+		Set<ReplaceableOption> replaceableOptions = updater.getReplaceableOptions();
+		for (ReplaceableOption ro : replaceableOptions) {
+			String newName = ro.getNewName();
+			String oldName = ro.getOldName();
+			if (!analyzerOptions.contains(oldName)) {
+				continue; // the old option was never saved or has been removed
+			}
+
+			if (!analyzerOptions.contains(newName)) {
+				Msg.error(this,
+					"Found an option replacer without having the new option registered" +
+						"new option: '" + newName + "'; old option: '" + oldName + "'");
+				continue;
+			}
+
+			ro.replace(analyzerOptions);
+			analyzerOptions.removeOption(ro.getOldName());
+		}
+	}
+
 	private void loadAnalyzerOptionsPanels() {
 		List<Options> optionGroups = analysisOptions.getChildOptions();
 		noOptionsPanel = new JPanel(new VerticalLayout(5));
@@ -599,6 +665,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			String analyzerName = optionsGroup.getName();
 
 			JPanel optionsContainer = new JPanel(new VerticalLayout(5));
+			optionsContainer.setName(ANALYZER_OPTIONS_PANEL_NAME);
 			optionsContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
 
 			JScrollPane scrollPane = new JScrollPane(optionsContainer);
@@ -645,11 +712,17 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		List<String> subOptions = optionsGroup.getLeafOptionNames();
 		Iterator<String> it = subOptions.iterator();
 		while (it.hasNext()) {
-			String next = it.next();
-			if (!isEditable(optionsGroup, next)) {
+			String name = it.next();
+			if (!isEditable(optionsGroup, name)) {
+				it.remove();
+			}
+
+			// also filter out unregistered options
+			if (!optionsGroup.isRegistered(name)) {
 				it.remove();
 			}
 		}
+
 		return subOptions;
 	}
 

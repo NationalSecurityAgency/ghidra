@@ -99,6 +99,23 @@ bool castPrinted(OpCode opc,Datatype *t1,Datatype *t2) {
   return (inst->getInputCast(op, 0, strategy) != (Datatype *)0);
 }
 
+bool longPrinted(OpCode opc,Datatype *t1,uintb val)
+
+{
+  PcodeOp *op;
+  Address addr(glb->getDefaultCodeSpace(),0x1000);
+  op = dummyFunc->newOp(2, addr);
+  Datatype *sa = glb->types->getBase(4,TYPE_INT);
+  Varnode *vn1 = dummyFunc->newConstant(t1->getSize(), val);
+  vn1->updateType(t1, false, true);
+  Varnode *vn2 = dummyFunc->newUnique(sa->getSize(), sa);
+  dummyFunc->opSetOpcode(op, opc);
+  dummyFunc->opSetInput(op, vn1, 0);
+  dummyFunc->opSetInput(op, vn2, 1);
+  dummyFunc->newUniqueOut(vn1->getSize(), op);
+  return glb->print->getCastStrategy()->markExplicitLongSize(op, 0);
+}
+
 TEST(cast_basic) {
   TypeTestEnvironment::build();
   ASSERT(castPrinted(CPUI_COPY,parse("int4"),parse("int2")));
@@ -180,4 +197,15 @@ TEST(type_ordering) {
   ASSERT(parse("enum2 *")->compare(*parse("int8 *"),10) < 0);
   ASSERT(parse("int4 *")->compare(*parse("void *"),10) < 0);
   ASSERT(parse("int2 *")->compare(*parse("xunknown2 *"),10) < 0);
+}
+
+TEST(cast_integertoken) {
+  TypeTestEnvironment::build();
+  ASSERT(longPrinted(CPUI_INT_LEFT,parse("int8"),10));
+  ASSERT(!longPrinted(CPUI_INT_LEFT,parse("int8"),0x100000000));
+  ASSERT(longPrinted(CPUI_INT_SRIGHT,parse("int8"),-3));
+  ASSERT(!longPrinted(CPUI_INT_SRIGHT,parse("int8"),0xffffffff7fffffff));
+  ASSERT(longPrinted(CPUI_INT_SRIGHT,parse("int8"),0xffffffff80000000));
+  ASSERT(longPrinted(CPUI_INT_RIGHT,parse("uint8"),0xffffffff));
+  ASSERT(!longPrinted(CPUI_INT_RIGHT,parse("uint8"),0x100000000));
 }

@@ -49,14 +49,17 @@ public class LldbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 
 	protected static class LldbAarch64MacosOffer extends DefaultDebuggerMappingOffer {
 		public LldbAarch64MacosOffer(TargetProcess process) {
-			super(process, 50, "AARCH64/LLDB on macos", LANG_ID_AARCH64,COMP_ID_DEFAULT,
+			super(process, 50, "AARCH64/LLDB on macos", LANG_ID_AARCH64, COMP_ID_DEFAULT,
 				Set.of("cpsr"));
 		}
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetObject target,
 			boolean includesOverrides) {
+		if (!(target instanceof TargetProcess)) {
+			return Set.of();
+		}
 		if (!env.getDebugger().toLowerCase().contains("lldb")) {
 			return Set.of();
 		}
@@ -66,7 +69,7 @@ public class LldbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		if (os.contains("macos")) {
 			if (is64Bit) {
 				Msg.info(this, "Using os=" + os + " arch=" + arch);
-				return Set.of(new LldbAarch64MacosOffer(process));
+				return Set.of(new LldbAarch64MacosOffer((TargetProcess) target));
 			}
 		}
 		return Set.of();

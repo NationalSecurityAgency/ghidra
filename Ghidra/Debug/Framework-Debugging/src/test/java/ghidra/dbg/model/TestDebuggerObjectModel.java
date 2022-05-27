@@ -20,9 +20,11 @@ import java.util.concurrent.*;
 
 import org.jdom.JDOMException;
 
+import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.program.model.address.AddressSpace;
 
 // TODO: Refactor with other Fake and Test model stuff.
 public class TestDebuggerObjectModel extends EmptyDebuggerObjectModel {
@@ -89,7 +91,15 @@ public class TestDebuggerObjectModel extends EmptyDebuggerObjectModel {
 	}
 
 	public TestTargetProcess addProcess(int pid) {
-		return session.addProcess(pid);
+		return addProcess(pid, ram);
+	}
+
+	public TestTargetProcess addProcess(int pid, AddressSpace space) {
+		return session.addProcess(pid, space);
+	}
+
+	public void removeProcess(TestTargetProcess process) {
+		session.removeProcess(process);
 	}
 
 	public <T> CompletableFuture<T> future(T t) {
@@ -109,5 +119,9 @@ public class TestDebuggerObjectModel extends EmptyDebuggerObjectModel {
 		int result = invalidateCachesCount;
 		invalidateCachesCount = 0;
 		return result;
+	}
+
+	public DebuggerModelListener fire() {
+		return listeners.fire;
 	}
 }

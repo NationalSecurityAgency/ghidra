@@ -565,7 +565,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	 * @throws IllegalArgumentException if the specified data type is not allowed to be added to
 	 *             this composite data type or an invalid length is specified.
 	 */
-	private DataTypeComponent doAdd(DataType dataType, int length, String componentName,
+	private DataTypeComponentImpl doAdd(DataType dataType, int length, String componentName,
 			String comment, boolean packAndNotify)
 			throws IllegalArgumentException {
 
@@ -1107,7 +1107,6 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		struct.setDescription(getDescription());
 		struct.replaceWith(this);
 		return struct;
-
 	}
 
 	@Override
@@ -1169,7 +1168,6 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		notifySizeChanged();
 	}
 
-// TODO: Rename
 	private void doReplaceWithPacked(Structure struct) {
 		// assumes components is clear and that alignment characteristics have been set
 		DataTypeComponent[] otherComponents = struct.getDefinedComponents();
@@ -1180,7 +1178,6 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		}
 	}
 
-// TODO: Rename
 	private void doReplaceWithNonPacked(Structure struct) throws IllegalArgumentException {
 		// assumes components is clear and that alignment characteristics have been set.
 		if (struct.isNotYetDefined()) {
@@ -1319,6 +1316,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 
 		comp.getDataType().removeParent(this);
 		comp.setDataType(newDt);
+		comp.invalidateSettings();
 		newDt.addParent(this);
 
 		if (isPackingEnabled()) {

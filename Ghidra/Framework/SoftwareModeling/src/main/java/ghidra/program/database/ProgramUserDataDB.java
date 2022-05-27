@@ -122,7 +122,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	}
 
 	public ProgramUserDataDB(ProgramDB program) throws IOException {
-		super(new DBHandle(), getName(program), 500, 1000, program);
+		super(new DBHandle(), getName(program), 500, program);
 		this.program = program;
 		this.language = program.getLanguage();
 		languageID = language.getLanguageID();
@@ -162,7 +162,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	public ProgramUserDataDB(DBHandle dbh, ProgramDB program, TaskMonitor monitor)
 			throws IOException, VersionException, LanguageNotFoundException, CancelledException {
 
-		super(dbh, getName(program), 500, 1000, program);
+		super(dbh, getName(program), 500, program);
 		this.program = program;
 		if (monitor == null) {
 			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
@@ -242,8 +242,9 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 
 			Language newLanguage = language;
 
-			Language oldLanguage = OldLanguageFactory.getOldLanguageFactory().getOldLanguage(
-				languageID, languageVersion);
+			Language oldLanguage = OldLanguageFactory.getOldLanguageFactory()
+					.getOldLanguage(
+						languageID, languageVersion);
 			if (oldLanguage == null) {
 				// Assume minor version behavior - old language does not exist for current major version
 				Msg.error(this, "Old language specification not found: " + languageID +
@@ -253,8 +254,9 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 
 			// Ensure that we can upgrade the language
 			languageUpgradeTranslator =
-				LanguageTranslatorFactory.getLanguageTranslatorFactory().getLanguageTranslator(
-					oldLanguage, newLanguage);
+				LanguageTranslatorFactory.getLanguageTranslatorFactory()
+						.getLanguageTranslator(
+							oldLanguage, newLanguage);
 			if (languageUpgradeTranslator == null) {
 				throw new LanguageNotFoundException(language.getLanguageID(),
 					"(Ver " + languageVersion + ".x" + " -> " + newLanguage.getVersion() + "." +
@@ -272,7 +274,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 
 	/**
 	 * Language specified by languageName was not found.  Check for
-	 * valid language translation/migration.  Old langauge version specified by
+	 * valid language translation/migration.  Old language version specified by
 	 * languageVersion.
 	 * @param openMode one of:
 	 * 		READ_ONLY: the original database will not be modified
@@ -285,8 +287,9 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			throws LanguageNotFoundException {
 
 		languageUpgradeTranslator =
-			LanguageTranslatorFactory.getLanguageTranslatorFactory().getLanguageTranslator(
-				languageID, languageVersion);
+			LanguageTranslatorFactory.getLanguageTranslatorFactory()
+					.getLanguageTranslator(
+						languageID, languageVersion);
 		if (languageUpgradeTranslator == null) {
 			throw e;
 		}
@@ -372,6 +375,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		if (storedVersion < UPGRADE_REQUIRED_BEFORE_VERSION) {
 			requiresUpgrade = true;
 		}
+		loadMetadata();
 		return requiresUpgrade ? new VersionException(true) : null;
 	}
 
@@ -684,6 +688,29 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		}
 
 		// fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_SAVED));
+	}
+
+	@Override
+	public void setStringProperty(String propertyName, String value) {
+		metadata.put(propertyName, value);
+		changed = true;
+	}
+
+	@Override
+	public String getStringProperty(String propertyName, String defaultValue) {
+		String value = metadata.get(propertyName);
+		return value == null ? defaultValue : value;
+	}
+
+	@Override
+	public Set<String> getStringPropertyNames() {
+		return metadata.keySet();
+	}
+
+	@Override
+	public String removeStringProperty(String propertyName) {
+		changed = true;
+		return metadata.remove(propertyName);
 	}
 
 }

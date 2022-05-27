@@ -68,7 +68,7 @@ public interface DataTypeManager {
 	/**
 	 * Returns a unique name not currently used by any other dataType or category
 	 * with the same baseName
-	 * 
+	 *
 	 * @param path the path of the name
 	 * @param baseName the base name to be made unique
 	 * @return a unique name starting with baseName
@@ -90,7 +90,7 @@ public interface DataTypeManager {
 	 * Returns a data type after adding it to this data manager.
 	 * The returned dataType will be in a category in this dataTypeManager
 	 * that is equivalent to the category of the passed in dataType.
-	 * 
+	 *
 	 * @param dataType the dataType to be resolved.
 	 * @param handler used to resolve conflicts with existing dataTypes.
 	 * @return an equivalent dataType that "belongs" to this dataTypeManager.
@@ -120,7 +120,7 @@ public interface DataTypeManager {
 
 	/**
 	 * Adds all data types to the specified list.]
-	 * 
+	 *
 	 * @param list the result list into which the types will be placed
 	 */
 	public void getAllDataTypes(List<DataType> list);
@@ -181,7 +181,7 @@ public interface DataTypeManager {
 	 * there is also a category "b" under category "a".  A better solution is to use
 	 * the {@link #getDataType(DataTypePath)} method because the DataTypePath keeps the
 	 * category and datatype name separate.
-	 * 
+	 *
 	 * @param dataTypePath path
 	 * @return the dataType or null if it isn't found
 	 */
@@ -206,7 +206,7 @@ public interface DataTypeManager {
 	/**
 	* Returns the dataTypeId for the given dataType.  If the dataType is not
 	* currently in the dataTypeManger, it will be added
-	* 
+	*
 	 * @param dt the data type
 	 * @return the ID of the resolved type
 	*/
@@ -215,7 +215,7 @@ public interface DataTypeManager {
 	/**
 	 * Returns the dataTypeId for the given dataType.  If the dataType does not exist,
 	 * a -1 will be returned
-	 * 
+	 *
 	 * @param dt the datatype to get an id for
 	 * @return the ID of the type
 	 */
@@ -224,7 +224,7 @@ public interface DataTypeManager {
 	/**
 	 * Returns the dataType associated with the given dataTypeId or null if the dataTypeId is
 	 * not valid
-	 * 
+	 *
 	 * @param dataTypeID the ID
 	 * @return the type
 	 */
@@ -232,7 +232,7 @@ public interface DataTypeManager {
 
 	/**
 	 * Returns the Category with the given id
-	 * 
+	 *
 	 * @param categoryID id of the desired category
 	 * @return the category
 	 */
@@ -240,19 +240,11 @@ public interface DataTypeManager {
 
 	/**
 	 * Get the category that has the given path
-	 * 
+	 *
 	 * @param path the path
 	 * @return the category if defined, otherwise null
 	 */
 	public Category getCategory(CategoryPath path);
-
-	/**
-	 * Notification when data type is changed.
-	 * @param dataType data type that is changed
-	 * @param isAutoChange true if change was an automatic change in response to
-	 * another datatype's change (e.g., size, alignment).
-	 */
-	public void dataTypeChanged(DataType dataType, boolean isAutoChange);
 
 	/**
 	 * Add a listener that is notified when the dataTypeManger changes.
@@ -290,7 +282,7 @@ public interface DataTypeManager {
 
 	/**
 	 * Return true if the given dataType exists in this data type manager
-	 * 
+	 *
 	 * @param dataType the type
 	 * @return true if the type is in this manager
 	 */
@@ -298,7 +290,7 @@ public interface DataTypeManager {
 
 	/**
 	 * Create a category for the given path; returns the current category if it already exits
-	 * 
+	 *
 	 * @param path the path
 	 * @return the category
 	 */
@@ -359,7 +351,7 @@ public interface DataTypeManager {
 	/**
 	 * Returns a default sized pointer to the given datatype.  The pointer size is established
 	 * dynamically based upon the data organization established by the compiler specification.
-	 * 
+	 *
 	 * @param datatype the pointed to data type
 	 * @return the pointer
 	 */
@@ -369,7 +361,7 @@ public interface DataTypeManager {
 	 * Returns a pointer of the given size to the given datatype.
 	 * Note: It is preferred to use default sized pointers when possible (i.e., size=-1,
 	 * see {@link #getPointer(DataType)}) instead of explicitly specifying the size value.
-	 * 
+	 *
 	 * @param datatype the pointed to data type
 	 * @param size the size of the pointer to be created or -1 for a default sized pointer
 	 * @return the pointer
@@ -424,6 +416,14 @@ public interface DataTypeManager {
 	 */
 	public void findEnumValueNames(long value, Set<String> enumValueNames);
 
+	/**
+	 * Finds the data type using the given source archive and id.
+	 *
+	 * @param sourceArchive the optional source archive; required when the type is associated with
+	 * that source archive
+	 * @param datatypeID the type's id
+	 * @return the type or null
+	 */
 	public DataType getDataType(SourceArchive sourceArchive, UniversalID datatypeID);
 
 	/**
@@ -441,7 +441,7 @@ public interface DataTypeManager {
 
 	/**
 	 * Returns the source archive for the given ID
-	 * 
+	 *
 	 * @param sourceID the ID
 	 * @return the archive; null if the ID is null; null if the archive does not exist
 	 */
@@ -455,7 +455,7 @@ public interface DataTypeManager {
 
 	/**
 	 * Returns all data types within this manager that have as their source the given archive
-	 * 
+	 *
 	 * @param sourceArchive the archive
 	 * @return the types
 	 */
@@ -469,7 +469,7 @@ public interface DataTypeManager {
 
 	/**
 	 * Change the given data type so that its source archive is the given archive
-	 * 
+	 *
 	 * @param datatype the type
 	 * @param archive the archive
 	 */
@@ -516,7 +516,7 @@ public interface DataTypeManager {
 	/**
 	 * Removes the source archive from this manager.  This will disassociate all data types in
 	 * this manager from the given archive.
-	 * 
+	 *
 	 * @param sourceArchive the archive
 	 */
 	public void removeSourceArchive(SourceArchive sourceArchive);
@@ -537,5 +537,20 @@ public interface DataTypeManager {
 	 * @deprecated the method {@link DataType#getParents()} should be used instead.
 	 * Use of {@link Set} implementations for containing DataTypes is also inefficient.
 	 */
+	@Deprecated
 	public Set<DataType> getDataTypesContaining(DataType dataType);
+
+	/**
+	 * Determine if settings are supported for BuiltIn datatypes within this
+	 * datatype manager.
+	 * @return true if BuiltIn Settings are permitted
+	 */
+	public boolean allowsDefaultBuiltInSettings();
+
+	/**
+	 * Determine if settings are supported for datatype components within this
+	 * datatype manager (i.e., for structure and union components).
+	 * @return true if BuiltIn Settings are permitted
+	 */
+	public boolean allowsDefaultComponentSettings();
 }

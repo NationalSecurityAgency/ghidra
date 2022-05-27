@@ -40,7 +40,6 @@ import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.util.ProgramSelection;
 import ghidra.program.util.string.FoundString;
 import ghidra.program.util.string.FoundString.DefinedState;
 import ghidra.util.*;
@@ -302,19 +301,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		makeCharArrayAction.setHelpLocation(makeStringHelp);
 		addLocalAction(makeCharArrayAction);
 
-		DockingAction selectAction = new MakeProgramSelectionAction(plugin, table) {
-			@Override
-			protected ProgramSelection makeSelection(ActionContext context) {
-				ProgramSelection selection = super.makeSelection(context);
-
-				// Also make sure this plugin keeps track of the new selection, since it will
-				// not receive this new event.
-				// TODO this should not be necessary; old code perhaps?
-				plugin.setSelection(selection);
-				return selection;
-			}
-		};
-
+		DockingAction selectAction = new MakeProgramSelectionAction(plugin, table);
 		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
 
 		addLocalAction(selectionNavigationAction);

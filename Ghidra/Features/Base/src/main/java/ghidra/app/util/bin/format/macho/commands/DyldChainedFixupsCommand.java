@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.macho.commands;
 import java.io.IOException;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -38,24 +38,13 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 
 	private DyldChainedFixupHeader chainHeader;
 
-	static LinkEditDataCommand createDyldChainedFixupsCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		DyldChainedFixupsCommand command =
-			(DyldChainedFixupsCommand) reader.getFactory().create(DyldChainedFixupsCommand.class);
-		command.initLinkEditDataCommand(reader);
+	DyldChainedFixupsCommand(BinaryReader reader) throws IOException {
+		super(reader);
 
 		long ptrIndex = reader.getPointerIndex();
-		reader.setPointerIndex(command.getDataOffset());
-		command.chainHeader = DyldChainedFixupHeader.createDyldChainedFixupHeader(reader);
+		reader.setPointerIndex(getDataOffset());
+		chainHeader = new DyldChainedFixupHeader(reader);
 		reader.setPointerIndex(ptrIndex);
-
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DyldChainedFixupsCommand() {
 	}
 
 	@Override

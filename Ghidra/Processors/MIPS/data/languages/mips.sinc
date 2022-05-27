@@ -357,6 +357,18 @@ define register offset=0x2700 size=$(REGSIZE) [
 # Some other internal registers
 define register offset=0x3000 size=$(REGSIZE) [ hi lo hi1 lo1 hi2 lo2 hi3 lo3 tsp ];
 
+
+define register offset=0x3200 size=$(REGSIZE) [
+	HW_CPUNUM	HW_SYNCI_STEP	HW_CC		HW_CCRe
+	HW_PerfCtr	HW_XNP			HW_RES6		HW_RES7
+	HW_RES8		HW_RES9			HW_RES10	HW_RES11
+	HW_RES12	HW_RES13		HW_RES14	HW_RES15
+	HW_RES16	HW_RES17		HW_RES18	HW_RES19
+	HW_RES20	HW_RES21		HW_RES22	HW_RES23
+	HW_RES24	HW_RES25		HW_RES26	HW_RES27
+	HW_RES28	HW_ULR			HW_RESIM30	HW_RESIM31
+];
+
 define register offset=0x3F00 size=1 [ ISAModeSwitch ];
 
 # Define context bits
@@ -435,6 +447,7 @@ define context contextreg
 ;
 
 
+
 # Instruction fields
 
 define token instr(32)
@@ -493,6 +506,7 @@ define token instr(32)
     rd0_5       = (11,15)
     rd0_6       = (11,15)
     rd0_7       = (11,15)
+    rd_hw       = (11,15)
     cp2cprSel0	= (11,15)
     cp2cprSel1	= (11,15)
     cp2cprSel2	= (11,15)
@@ -524,6 +538,7 @@ define token instr(32)
     zero5       = (6,10)
     wsbh        = (6,10)
     bp3			= (6,8)
+    sel_0608    = (6,8)
     sa2			= (6,7)
     bp2			= (6,7)
     zero6       = (3,10)
@@ -549,6 +564,17 @@ attach variables [ rs rt rd base index baser6 ] [
     t0    t1  t2  t3  t4  t5  t6  t7
     s0    s1  s2  s3  s4  s5  s6  s7
     t8    t9  k0  k1  gp  sp  s8  ra 
+];
+
+attach variables [ rd_hw ] [
+	HW_CPUNUM	HW_SYNCI_STEP	HW_CC		HW_CCRe
+	HW_PerfCtr	HW_XNP			HW_RES6		HW_RES7
+	HW_RES8		HW_RES9			HW_RES10	HW_RES11
+	HW_RES12	HW_RES13		HW_RES14	HW_RES15
+	HW_RES26	HW_RES17		HW_RES18	HW_RES19
+	HW_RES20	HW_RES21		HW_RES22	HW_RES23
+	HW_RES24	HW_RES25		HW_RES26	HW_RES27
+	HW_RES28	HW_ULR			HW_RESIM30	HW_RESIM31
 ];
 
 @ifdef MIPS64
@@ -887,11 +913,11 @@ define pcodeop countLeadingZeros;
 # extractField(value, msbd, lsb)
 define pcodeop extractField;
 
-# getHWRegister(regnum)
-define pcodeop getHWRegister;
-
 # setShadow(sgpr, value)
 define pcodeop setShadow;
+
+# getHWRegister(reg, sel)
+define pcodeop getHWRegister;
 
 # gpr = getShadow(sgpr)
 define pcodeop getShadow;

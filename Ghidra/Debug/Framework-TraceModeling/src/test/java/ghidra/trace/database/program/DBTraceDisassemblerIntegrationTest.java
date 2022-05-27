@@ -143,7 +143,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 			UndoableTransaction.start(b.getProgram(), "Disassemble (THUMB)", true)) {
 			MemoryBlock text = b.createMemory(".text", "b6fa2cd0", 32, "Sample", (byte) 0);
 			text.putBytes(b.addr(0xb6fa2cdc), new byte[] {
-				// GDB: stmdb sp!,  {r4, r5, r6, r7, r8, lr}
+				// GDB: stmdb sp!,  {r4,r5,r6,r7,r8,lr}
 				(byte) 0x2d, (byte) 0xe9, (byte) 0xf0, (byte) 0x41,
 				// GDB: sub sp, #472  ; 0x1d8
 				(byte) 0xf6, (byte) 0xb0 });
@@ -154,7 +154,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 			thumbDis.applyTo(b.getProgram(), TaskMonitor.DUMMY);
 
 			CodeUnit cu1 = b.getProgram().getListing().getCodeUnitAt(b.addr(0xb6fa2cdc));
-			assertEquals("push { r4, r5, r6, r7, r8, lr  }", cu1.toString());
+			assertEquals("push {r4,r5,r6,r7,r8,lr}", cu1.toString());
 			CodeUnit cu2 = b.getProgram().getListing().getCodeUnitAt(b.addr(0xb6fa2ce0));
 			assertEquals("sub sp,#0x1d8", cu2.toString());
 		}
@@ -171,7 +171,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 			memory.createRegion(".text", 0, b.range(0xb6fa2cd0, 0xb6fa2cef),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 			memory.putBytes(0, b.addr(0xb6fa2cdc), b.buf(
-				// GDB: stmdb sp!,  {r4, r5, r6, r7, r8, lr}
+				// GDB: stmdb sp!,  {r4,r5,r6,r7,r8,lr}
 				0x2d, 0xe9, 0xf0, 0x41,
 				// GDB: sub sp, #472  ; 0x1d8
 				0xf6, 0xb0));
@@ -183,7 +183,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 
 			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
 			CodeUnit cu1 = cuManager.getAt(0, b.addr(0xb6fa2cdc));
-			assertEquals("push { r4, r5, r6, r7, r8, lr  }", cu1.toString());
+			assertEquals("push {r4,r5,r6,r7,r8,lr}", cu1.toString());
 			CodeUnit cu2 = cuManager.getAt(0, b.addr(0xb6fa2ce0));
 			assertEquals("sub sp,#0x1d8", cu2.toString());
 		}

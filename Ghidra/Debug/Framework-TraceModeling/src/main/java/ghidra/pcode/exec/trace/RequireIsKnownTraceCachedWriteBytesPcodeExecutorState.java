@@ -39,16 +39,16 @@ public class RequireIsKnownTraceCachedWriteBytesPcodeExecutorState
 	}
 
 	@Override
-	protected int checkUninitialized(TraceMemorySpace source, Address start, int size,
+	protected int checkUninitialized(TraceMemorySpace backing, Address start, int size,
 			AddressSet uninitialized) {
-		if (source == null) {
+		if (backing == null) {
 			if (!uninitialized.contains(start)) {
 				return (int) uninitialized.getMinAddress().subtract(start);
 			}
 			throw excFor(uninitialized);
 		}
 		// TODO: Could find first instead?
-		AddressSetView unknown = uninitialized.subtract(getKnown(source));
+		AddressSetView unknown = uninitialized.subtract(getKnown(backing));
 		if (unknown.isEmpty()) {
 			return size;
 		}

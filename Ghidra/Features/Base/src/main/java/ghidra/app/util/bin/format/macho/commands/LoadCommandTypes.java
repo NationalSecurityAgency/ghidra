@@ -19,7 +19,7 @@ package ghidra.app.util.bin.format.macho.commands;
 import java.io.IOException;
 import java.lang.reflect.Field;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
@@ -30,143 +30,143 @@ import ghidra.util.Msg;
  */
 public final class LoadCommandTypes {
 
-	public static LoadCommand getLoadCommand(FactoryBundledWithBinaryReader reader,
-			MachHeader header) throws IOException, MachException {
+	public static LoadCommand getLoadCommand(BinaryReader reader, MachHeader header)
+			throws IOException, MachException {
 		int type = reader.peekNextInt();
 		switch (type) {
 			case LC_SEGMENT: {
-				return SegmentCommand.createSegmentCommand(reader, header.is32bit());
+				return new SegmentCommand(reader, header.is32bit());
 			}
 			case LC_SYMTAB: {
-				return SymbolTableCommand.createSymbolTableCommand(reader, header);
+				return new SymbolTableCommand(reader, header);
 			}
 			case LC_SYMSEG: {
-				return SymbolCommand.createSymbolCommand(reader);
+				return new SymbolCommand(reader);
 			}
 			case LC_THREAD:
 			case LC_UNIXTHREAD: {
-				return ThreadCommand.createThreadCommand(reader, header);
+				return new ThreadCommand(reader, header);
 			}
 			case LC_LOADFVMLIB:
 			case LC_IDFVMLIB: {
-				return FixedVirtualMemorySharedLibraryCommand
-						.createFixedVirtualMemorySharedLibraryCommand(reader);
+				return new FixedVirtualMemorySharedLibraryCommand(reader);
 			}
 			case LC_IDENT: {
-				return IdentCommand.createIdentCommand(reader);
+				return new IdentCommand(reader);
 			}
 			case LC_FVMFILE: {
-				return FixedVirtualMemoryFileCommand.createFixedVirtualMemoryFileCommand(reader);
+				return new FixedVirtualMemoryFileCommand(reader);
 			}
 			case LC_PREPAGE: {
-				return UnsupportedLoadCommand.createUnsupportedLoadCommand(reader, type);
+				return new UnsupportedLoadCommand(reader, type);
 			}
 			case LC_DYSYMTAB: {
-				return DynamicSymbolTableCommand.createDynamicSymbolTableCommand(reader, header);
+				return new DynamicSymbolTableCommand(reader, header);
 			}
 			case LC_LOAD_DYLIB:
 			case LC_ID_DYLIB:
 			case LC_LOAD_UPWARD_DYLIB:
 			case LC_DYLD_ENVIRONMENT: {
-				return DynamicLibraryCommand.createDynamicLibraryCommand(reader);
+				return new DynamicLibraryCommand(reader);
 			}
 			case LC_LOAD_DYLINKER:
 			case LC_ID_DYLINKER: {
-				return DynamicLinkerCommand.createDynamicLinkerCommand(reader);
+				return new DynamicLinkerCommand(reader);
 			}
 			case LC_PREBOUND_DYLIB: {
-				return PreboundDynamicLibraryCommand.createPreboundDynamicLibraryCommand(reader);
+				return new PreboundDynamicLibraryCommand(reader);
 			}
 			case LC_ROUTINES: {
-				return RoutinesCommand.createRoutinesCommand(reader, header.is32bit());
+				return new RoutinesCommand(reader, header.is32bit());
 			}
 			case LC_SUB_FRAMEWORK: {
-				return SubFrameworkCommand.createSubFrameworkCommand(reader);
+				return new SubFrameworkCommand(reader);
 			}
 			case LC_SUB_UMBRELLA: {
-				return SubUmbrellaCommand.createSubUmbrellaCommand(reader);
+				return new SubUmbrellaCommand(reader);
 			}
 			case LC_SUB_CLIENT: {
-				return SubClientCommand.createSubClientCommand(reader);
+				return new SubClientCommand(reader);
 			}
 			case LC_SUB_LIBRARY: {
-				return SubLibraryCommand.createSubLibraryCommand(reader);
+				return new SubLibraryCommand(reader);
 			}
 			case LC_TWOLEVEL_HINTS: {
-				return TwoLevelHintsCommand.createTwoLevelHintsCommand(reader);
+				return new TwoLevelHintsCommand(reader);
 			}
 			case LC_PREBIND_CKSUM: {
-				return PrebindChecksumCommand.createPrebindChecksumCommand(reader);
+				return new PrebindChecksumCommand(reader);
 			}
 			case LC_LOAD_WEAK_DYLIB: {
-				return DynamicLibraryCommand.createDynamicLibraryCommand(reader);
+				return new DynamicLibraryCommand(reader);
 			}
 			case LC_SEGMENT_64: {
-				return SegmentCommand.createSegmentCommand(reader, header.is32bit());
+				return new SegmentCommand(reader, header.is32bit());
 			}
 			case LC_ROUTINES_64: {
-				return RoutinesCommand.createRoutinesCommand(reader, header.is32bit());
+				return new RoutinesCommand(reader, header.is32bit());
 			}
 			case LC_UUID: {
-				return UuidCommand.createUuidCommand(reader);
+				return new UuidCommand(reader);
 			}
 			case LC_RPATH: {
-				return RunPathCommand.createRunPathCommand(reader);
+				return new RunPathCommand(reader);
 			}
 			case LC_CODE_SIGNATURE:
 			case LC_SEGMENT_SPLIT_INFO:
-			case LC_FUNCTION_STARTS:
 			case LC_DATA_IN_CODE:
 			case LC_OPTIMIZATION_HINT:
 			case LC_DYLIB_CODE_SIGN_DRS: {
-				return LinkEditDataCommand.createLinkEditDataCommand(reader);
+				return new LinkEditDataCommand(reader);
 			}
 			case LC_REEXPORT_DYLIB: {
-				return DynamicLibraryCommand.createDynamicLibraryCommand(reader);
+				return new DynamicLibraryCommand(reader);
 			}
 			case LC_ENCRYPTION_INFO: 
 			case LC_ENCRYPTION_INFO_64: {
-				return EncryptedInformationCommand.createEncryptedInformationCommand(reader,
-					header.is32bit());
+				return new EncryptedInformationCommand(reader, header.is32bit());
 			}
 			case LC_DYLD_INFO:
 			case LC_DYLD_INFO_ONLY: {
-				return DyldInfoCommand.createDyldInfoCommand(reader);
+				return new DyldInfoCommand(reader);
 			}
 			case LC_VERSION_MIN_MACOSX:
 			case LC_VERSION_MIN_IPHONEOS:
 			case LC_VERSION_MIN_TVOS:
 			case LC_VERSION_MIN_WATCHOS: {
-				return VersionMinCommand.createVersionMinCommand(reader);
+				return new VersionMinCommand(reader);
+			}
+			case LC_FUNCTION_STARTS: {
+				return new FunctionStartsCommand(reader);
 			}
 			case LC_MAIN: {
-				return EntryPointCommand.createEntryPointCommand(reader);
+				return new EntryPointCommand(reader);
 			}
 			case LC_SOURCE_VERSION: {
-				return SourceVersionCommand.createSourceVersionCommand(reader);
+				return new SourceVersionCommand(reader);
 			}
 			case LC_LAZY_LOAD_DYLIB: {
-				return DynamicLibraryCommand.createDynamicLibraryCommand(reader);
+				return new DynamicLibraryCommand(reader);
 			}
 			case LC_BUILD_VERSION: {
-				return BuildVersionCommand.createBuildVersionCommand(reader);
+				return new BuildVersionCommand(reader);
 			}
 			case LC_LINKER_OPTIONS: {
-				return LinkerOptionCommand.createLinkerOptionCommand(reader);
+				return new LinkerOptionCommand(reader);
 			}
 
 			case LC_DYLD_EXPORTS_TRIE:
-				return LinkEditDataCommand.createLinkEditDataCommand(reader);
+				return new LinkEditDataCommand(reader);
 
 			case LC_DYLD_CHAINED_FIXUPS:
-				return DyldChainedFixupsCommand.createDyldChainedFixupsCommand(reader);
+				return new DyldChainedFixupsCommand(reader);
 
 			case LC_FILESET_ENTRY:
-				return FileSetEntryCommand.createFileSetEntryCommand(reader, header.is32bit());
+				return new FileSetEntryCommand(reader, header.is32bit());
 
 			default: {
 				Msg.warn(header, "Unsupported load command " + Integer.toHexString(type));
-				return UnsupportedLoadCommand.createUnsupportedLoadCommand(reader, type);
+				return new UnsupportedLoadCommand(reader, type);
 			}
 		}
 	}

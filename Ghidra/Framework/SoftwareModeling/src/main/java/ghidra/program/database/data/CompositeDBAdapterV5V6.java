@@ -113,7 +113,7 @@ class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 		if (compositeTable.getSchema().getVersion() == V5_VERSION) {
 			throw new UnsupportedOperationException();
 		}
-		if (packValue < CompositeInternal.DEFAULT_ALIGNMENT) {
+		if (packValue < CompositeInternal.DEFAULT_PACKING) {
 			packValue = CompositeInternal.NO_PACKING;
 		}
 		else {

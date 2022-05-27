@@ -26,7 +26,8 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.AbstractIntegerDataType;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Equate;
@@ -89,8 +90,7 @@ public class ConvertCommand extends BackgroundCommand {
 		return msg == null;
 	}
 
-	private boolean applyDataSettings(Data data)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+	private boolean applyDataSettings(Data data) throws CodeUnitInsertionException {
 
 		DataType dt = data.getBaseDataType();
 		Settings settings = data;
@@ -130,7 +130,7 @@ public class ConvertCommand extends BackgroundCommand {
 	}
 
 	private void createData(Data data, DataType unsignedDataType)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 		Listing listing = data.getProgram().getListing();
 		Address addr = data.getAddress();
 		listing.clearCodeUnits(addr, data.getMaxAddress(), false);

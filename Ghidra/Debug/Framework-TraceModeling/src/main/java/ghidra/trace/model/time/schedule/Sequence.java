@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.PcodeThread;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
@@ -122,7 +123,7 @@ public class Sequence implements Comparable<Sequence> {
 			return;
 		}
 		if (steps.isEmpty()) {
-			steps.add(step);
+			steps.add(step.clone());
 			return;
 		}
 		Step last = steps.get(steps.size() - 1);
@@ -155,6 +156,17 @@ public class Sequence implements Comparable<Sequence> {
 		}
 		advance(clone.get(1));
 		steps.addAll(clone.subList(2, size));
+	}
+
+	public void coalescePatches(Language language) {
+		if (steps.isEmpty()) {
+			return;
+		}
+		Step last = steps.get(steps.size() - 1);
+		long toRemove = last.coalescePatches(language, steps);
+		for (; toRemove > 0; toRemove--) {
+			steps.remove(steps.size() - 1);
+		}
 	}
 
 	/**

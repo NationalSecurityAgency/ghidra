@@ -63,7 +63,8 @@ macro acrflags(OP1, tmpC, RES) {
 # 010 1110 00100 dddd	(Opcode Form)
 # 0101 1100 0100 dddd	(Byte half Form)
 :ABS rd0 is rd0 & op13_3=0x2 & op9_4=0xe & op4_5=0x4 {
-	rd0 = abs(rd0);	
+	local ztst:1 = rd0 s< 0;
+	rd0 = (zext(!ztst)*rd0) + (zext(ztst)*(-rd0));
 	ZSTATUS(rd0); 
 }
 
@@ -193,13 +194,17 @@ macro acrflags(OP1, tmpC, RES) {
 
 :ADDABS erd0, RX9A, RY0A is (op13_3=7 & op4_5=0 & RX9A & RY0A; eop4_12=0xe4 & erd0)
 {
-        erd0 = RX9A + abs(RY0A);
+		local ztst:1 = RY0A s< 0;
+		local ary0:4 = (zext(!ztst)*RY0A) + (zext(ztst)*(-RY0A));
+        erd0 = RX9A + ary0;
         ZSTATUS(erd0);
 }
 
 :ADDABS erd0, RX9A, RY0A is (op13_3=7 & op4_5=0 & RX9A & RY0A; eop4_12=0xe4 & erd0 & erd0=0xf)
 {
-        PC = RX9A + abs(RY0A);
+		local ztst:1 = RY0A s< 0;
+		local ary0:4 = (zext(!ztst)*RY0A) + (zext(ztst)*(-RY0A));
+        PC = RX9A + ary0;
         ZSTATUS(PC);
         goto [PC];
 }

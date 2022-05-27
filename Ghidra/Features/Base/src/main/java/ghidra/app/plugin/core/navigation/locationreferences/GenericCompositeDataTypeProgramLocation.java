@@ -17,28 +17,39 @@ package ghidra.app.plugin.core.navigation.locationreferences;
 
 import java.util.Objects;
 
+import ghidra.app.services.FieldMatcher;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
+import ghidra.util.exception.AssertException;
 
 /**
  * A class to signal that the ProgramLocation is used for data types and is not really
  * connected to the listing.  This is a subclass is designed for data types that have fields, such
  * as {@link Composite} types and {@link Enum} types.
- * 
+ *
  * @see GenericCompositeDataTypeLocationDescriptor
  */
 public class GenericCompositeDataTypeProgramLocation extends GenericDataTypeProgramLocation {
 
-	private String fieldName;
+	private FieldMatcher fieldMatcher;
 
 	GenericCompositeDataTypeProgramLocation(Program program, DataType dataType, String fieldName) {
+		this(program, dataType, new FieldMatcher(dataType, fieldName));
+	}
+
+	GenericCompositeDataTypeProgramLocation(Program program, DataType dataType,
+			FieldMatcher fieldMatcher) {
 		super(program, dataType);
-		this.fieldName = Objects.requireNonNull(fieldName);
+		this.fieldMatcher = Objects.requireNonNull(fieldMatcher);
+
+		// sanity check
+		if (!Objects.equals(dataType, fieldMatcher.getDataType())) {
+			throw new AssertException("Data type does not match the FieldMatcher type");
+		}
 	}
 
-	public String getFieldName() {
-		return fieldName;
+	public FieldMatcher getFieldMatcher() {
+		return fieldMatcher;
 	}
-
 }

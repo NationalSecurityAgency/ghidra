@@ -35,6 +35,12 @@ public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {
 		@Override
 		protected String normalizeName(String name) {
 			name = super.normalizeName(name);
+			if ("efl".equals(name)) {
+				return "eflags";
+			}
+			if ("rfl".equals(name)) {
+				return "eflags";
+			}
 			if ("rflags".equals(name)) {
 				return "eflags";
 			}
@@ -69,15 +75,18 @@ public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetObject target,
 			boolean includeOverrides) {
+		if (!(target instanceof TargetProcess)) {
+			return Set.of();
+		}
 		if (env == null || !env.getDebugger().toLowerCase().contains("dbg")) {
 			return Set.of();
 		}
 		boolean is64Bit =
 			env.getArchitecture().contains("x86_64") || env.getArchitecture().contains("x64_32");
 		if (is64Bit) {
-			return Set.of(new DbgI386X86_64WindowsOffer(process));
+			return Set.of(new DbgI386X86_64WindowsOffer((TargetProcess) target));
 		}
 		return null;
 	}

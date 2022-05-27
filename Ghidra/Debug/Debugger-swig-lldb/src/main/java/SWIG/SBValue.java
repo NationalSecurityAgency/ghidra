@@ -360,6 +360,10 @@ public class SBValue {
     return lldbJNI.SBValue_SetData(swigCPtr, this, SBData.getCPtr(data), data, SBError.getCPtr(error), error);
   }
 
+  public SBValue Clone(String new_name) {
+    return new SBValue(lldbJNI.SBValue_Clone(swigCPtr, this, new_name), true);
+  }
+
   public java.math.BigInteger GetLoadAddress() {
     return lldbJNI.SBValue_GetLoadAddress(swigCPtr, this);
   }

@@ -17,6 +17,7 @@ package ghidra.dbg.util;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.*;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.target.TargetObject;
@@ -51,6 +52,10 @@ public interface PathPredicates {
 
 	static PathPredicates parse(String pattern) {
 		return new PathPattern(PathUtils.parse(pattern));
+	}
+
+	static PathPredicates all() {
+		return AllPathsMatcher.INSTANCE;
 	}
 
 	PathPredicates or(PathPredicates that);
@@ -278,24 +283,36 @@ public interface PathPredicates {
 	}
 
 	/**
-	 * Substitute wildcards from left to right for the given list of indices
+	 * Substitute wildcards from left to right for the given list of keys
 	 * 
 	 * <p>
 	 * Takes each pattern and substitutes its wildcards for the given indices, starting from the
 	 * left and working right. This object is unmodified, and the result is returned.
 	 * 
 	 * <p>
-	 * If there are fewer wildcards in a pattern than given, only the left-most indices are taken.
-	 * If there are fewer indices than wildcards in a pattern, then the right-most wildcards are
-	 * left in the resulting pattern. Note while rare, attribute wildcards are substituted, too.
+	 * If there are fewer wildcards in a pattern than given, only the left-most keys are taken. If
+	 * there are fewer keys than wildcards in a pattern, then the right-most wildcards are left in
+	 * the resulting pattern.
 	 * 
-	 * @param indices the indices to substitute
+	 * @param keys the keys to substitute
 	 * @return the pattern or matcher with the applied substitutions
 	 */
-	PathPredicates applyKeys(List<String> indices);
+	PathPredicates applyKeys(List<String> keys);
 
-	default PathPredicates applyIndices(String... indices) {
-		return applyKeys(List.of(indices));
+	default PathPredicates applyKeys(Stream<String> keys) {
+		return applyKeys(keys.collect(Collectors.toList()));
+	}
+
+	default PathPredicates applyKeys(String... keys) {
+		return applyKeys(List.of(keys));
+	}
+
+	default PathPredicates applyIntKeys(int radix, List<Integer> keys) {
+		return applyKeys(keys.stream().map(k -> Integer.toString(k, radix)));
+	}
+
+	default PathPredicates applyIntKeys(int... keys) {
+		return applyKeys(IntStream.of(keys).mapToObj(k -> Integer.toString(k)));
 	}
 
 	/**

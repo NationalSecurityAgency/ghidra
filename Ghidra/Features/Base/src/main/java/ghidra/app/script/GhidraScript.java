@@ -94,8 +94,8 @@ import ghidra.util.task.TaskMonitor;
  * </pre>
  * <h3>Ghidra Script State</h3>
  * <blockquote>
- * 
- * <p>All scripts, when run, will be handed the current state in the form of class instance 
+ *
+ * <p>All scripts, when run, will be handed the current state in the form of class instance
  * variable. These variables are:
  * <ol>
  *   <li><code>currentProgram</code>: the active program</li>
@@ -140,6 +140,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	// Stores any parameters in a .properties file sharing the same base name as this GhidraScript
 	protected GhidraScriptProperties propertiesFileParams;
 	protected List<ResourceFile> potentialPropertiesFileLocs = new ArrayList<>();
+	private boolean reusePreviousChoices = true;
 	private CodeUnitFormat cuFormat;
 
 	// Stores any script-specific arguments
@@ -181,7 +182,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 	/**
 	 * Set the context for this script.
-	 * 
+	 *
 	 * @param state state object
 	 * @param monitor the monitor to use during run
 	 * @param writer the target of script "print" statements
@@ -194,8 +195,27 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	/**
+	 * Sets whether the user's previously selected values should be used when showing the various
+	 * {@code ask} methods.   This is true by default, meaning that previous choices will be shown
+	 * instead of any provided default value.
+	 * @param reuse true to reuse values; false to not reuse previous values
+	 */
+	public void setReusePreviousChoices(boolean reuse) {
+		this.reusePreviousChoices = reuse;
+	}
+
+	/**
+	 * Returns whether scripts will reuse previously selected values when showing the various
+	 * {@code ask} methods.
+	 * @return true to reuse values; false to not reuse previous values
+	 */
+	public boolean getReusePreviousChoices() {
+		return reusePreviousChoices;
+	}
+
+	/**
 	 * Execute/run script and {@link #doCleanup} afterwards.
-	 * 
+	 *
 	 * @param runState state object
 	 * @param runMonitor the monitor to use during run
 	 * @param runWriter the target of script "print" statements
@@ -490,7 +510,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 	/**
 	 * Set the script {@link #currentAddress}, {@link #currentLocation}, and update state object.
-	 * 
+	 *
 	 * @param address the new address
 	 */
 	public final void setCurrentLocation(Address address) {
@@ -1707,7 +1727,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * action from a selection in the table.
 	 * <p>
 	 * This method is unavailable in headless mode.
-	 * 
+	 *
 	 * @param title the title of the dialog
 	 * @param executor the TableChooserExecuter to be used to apply operations on table entries.
 	 * @return a new TableChooserDialog.
@@ -1725,7 +1745,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * action from a selection in the table.
 	 * <p>
 	 * This method is unavailable in headless mode.
-	 * 
+	 *
 	 * @param title of the dialog
 	 * @param executor the TableChooserExecuter to be used to apply operations on table entries.
 	 * @param isModal indicates whether the dialog should be modal or not
@@ -1954,7 +1974,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		Map<Class<?>, Object> map = getScriptMap(key1, key2);
 
 		T mappedValue = null;
-		if (clazz != null) {
+		if (clazz != null && reusePreviousChoices) {
 			mappedValue = (T) map.get(clazz);
 		}
 
@@ -2402,7 +2422,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *			.properties value (if it exists), or throws an Exception if there is an invalid or
 	 *			missing .properties	value.</li>
 	 * </ol>
-	 * 
+	 *
 	 *
 	 * @param title the title of the dialog (in GUI mode) or the first part of the variable name
 	 * 			(in headless mode or when using .properties file)
@@ -2475,7 +2495,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *			.properties value (if it exists), or throws an Exception if there is an invalid or
 	 *			missing .properties value.</li>
 	 * </ol>
-	 * 
+	 *
 	 *
 	 * @param title the title of the dialog (in GUI mode) or the first part of the variable name
 	 * 			(in headless mode or when using .properties file)
@@ -2549,7 +2569,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *			.properties byte pattern value (if it exists), or throws an Exception if there is
 	 *			an invalid or missing .properties value.</li>
 	 * </ol>
-	 * 
+	 *
 	 *
 	 * @param title the title of the dialog (in GUI mode) or the first part of the variable
 	 * 			name (in headless mode or when using .properties file)
@@ -2608,7 +2628,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *			then that value	is returned. Otherwise, an Exception is thrown if there is an
 	 *			invalid or missing .properties value.</li>
 	 * </ol>
-	 * 
+	 *
 	 *
 	 * @param title the title of the pop-up dialog (in GUI mode) or the variable name (in
 	 * 			headless mode)
@@ -2694,7 +2714,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *			then that value is returned. Otherwise, an Exception is thrown if there is an invalid
 	 *			or missing .properties value.</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param title the title of the pop-up dialog (in GUI mode) or the variable name (in headless
 	 * 		mode or when using .properties file)
 	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid	domain
@@ -2831,7 +2851,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *			.properties value (if it exists), or throws an Exception if there is an invalid or
 	 *			missing .properties value.</li>
 	 * </ol>
-	 * 
+	 *
 	 *
 	 * @param title the title of the dialog (in GUI mode) or the first part of the variable	name
 	 * 			(in headless mode or when using .properties file)
@@ -2874,7 +2894,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *			not null or an empty String, it is returned. In all other cases, an exception
 	 *			is thrown.</li>
 	 * </ol>
-	 * 
+	 *
 	 *
 	 * @param title the title of the dialog (in GUI mode) or the first part of the variable name
 	 * 			(in headless mode or when using .properties file)
@@ -2948,7 +2968,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *			.properties value (if it exists and is a valid choice), or throws an Exception if
 	 *			there is an invalid or missing .properties value.</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param title the title of the dialog (in GUI mode) or the first part of the variable name
 	 * 			(in headless mode or when using .properties file)
 	 * @param message the message to display next to the input field (in GUI mode) or the second
@@ -3088,7 +3108,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *
 	 * @throws CancelledException if the user hits the 'cancel' button
 	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid	set of
-	 * 			choices specified in the .properties file 
+	 * 			choices specified in the .properties file
 	 */
 	public <T> List<T> askChoices(String title, String message, List<T> choices)
 			throws CancelledException {
@@ -3160,8 +3180,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @return the user-selected value(s); null if no selection was made
 	 *
 	 * @throws CancelledException if the user hits the 'cancel' button
-	 * @throws IllegalArgumentException if choices is empty; if in headless mode, 
-	 *         there was a missing or invalid set of choices	specified in the .properties file 
+	 * @throws IllegalArgumentException if choices is empty; if in headless mode,
+	 *         there was a missing or invalid set of choices	specified in the .properties file
 	 */
 	public <T> List<T> askChoices(String title, String message, List<T> choices,
 			List<String> choiceLabels) throws CancelledException {
@@ -3232,7 +3252,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 			then that value	is returned. Otherwise, an Exception is thrown if there is an
 	 * 			invalid or missing .properties value.</li>
 	 * </ol>
-	 * 
+	 *
 	 *
 	 * @param title the title of the dialog (in GUI mode) or the first part of the variable name
 	 * 			(in headless mode)

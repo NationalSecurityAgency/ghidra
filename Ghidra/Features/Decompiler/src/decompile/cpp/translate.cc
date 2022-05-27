@@ -345,8 +345,7 @@ void AddrSpaceManager::insertSpace(AddrSpace *spc)
     // fallthru
   case IPTR_PROCESSOR:
     if (spc->isOverlay()) {	// If this is a new overlay space
-      OverlaySpace *ospc = (OverlaySpace *)spc;
-      ospc->getBaseSpace()->setFlags(AddrSpace::overlaybase); // Mark the base as being overlayed
+      spc->getContain()->setFlags(AddrSpace::overlaybase); // Mark the base as being overlayed
     }
     else if (spc->isOtherSpace()) {
       if (spc->index != OtherSpace::INDEX)
@@ -365,16 +364,18 @@ void AddrSpaceManager::insertSpace(AddrSpace *spc)
   }
 
   if (nameTypeMismatch || duplicateName || duplicateId) {
+    string errMsg = "Space " + spc->getName();
+    if (nameTypeMismatch)
+      errMsg = errMsg + " was initialized with wrong type";
+    if (duplicateName)
+      errMsg = errMsg + " was initialized more than once";
+    if (duplicateId)
+      errMsg = errMsg + " was assigned as id duplicating: "+baselist[spc->index]->getName();
     if (spc->refcount == 0)
       delete spc;
     spc = (AddrSpace *)0;
+    throw LowlevelError(errMsg);
   }
-  if (nameTypeMismatch)
-    throw LowlevelError("Space "+spc->getName()+" was initialized with wrong type");
-  if (duplicateName)
-    throw LowlevelError("Space "+spc->getName()+" was initialized more than once");
-  if (duplicateId)
-    throw LowlevelError("Space "+spc->getName()+" was assigned as id duplicating: "+baselist[spc->index]->getName());
   baselist[spc->index] = spc;
   spc->refcount += 1;
   assignShortcut(spc);

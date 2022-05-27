@@ -169,14 +169,13 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 		clickComponentProvider(provider);
 
 		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
-		performAction(openTableAction, false);
+		performAction(openTableAction, provider, false);
 
 		Window selectWindow = waitForWindowByTitleContaining("Select Functions");
 		assertNotNull(selectWindow);
 		selectWindow.setVisible(false);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testAddFunctionToExistingCompare() {
 		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo);
@@ -189,10 +188,12 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 		assertTrue(provider.getModel().getSourceFunctions().contains(foo));
 
 		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
-		performAction(openTableAction, false);
+		performAction(openTableAction, provider, false);
 
+		@SuppressWarnings("unchecked")
 		TableSelectionDialog<FunctionTableModel> chooser =
 			waitForDialogComponent(TableSelectionDialog.class);
+		@SuppressWarnings("unchecked")
 		GFilterTable<FunctionRowObject> table =
 			(GFilterTable<FunctionRowObject>) getInstanceField("gFilterTable", chooser);
 

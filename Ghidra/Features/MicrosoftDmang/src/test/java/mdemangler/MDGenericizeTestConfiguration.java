@@ -41,13 +41,10 @@ public class MDGenericizeTestConfiguration extends MDBaseTestConfiguration {
 		outputInfo.append(mangledGeneric);
 		outputInfo.append("\n");
 		MDMang mdmGeneric = new MDMang();
-		MDParsableItem demangItemGeneric = mdmGeneric.demangle(mangledGeneric, false);
-		String demangledGeneric;
+		MDParsableItem demangItemGeneric = doDemangleSymbol(mdmGeneric, mangledGeneric);
+		String demangledGeneric = (demangItemGeneric == null) ? "" : demangItemGeneric.toString();
 		if (demangItemGeneric == null) {
-			demangledGeneric = "";
-		}
-		else {
-			demangledGeneric = demangItemGeneric.toString();
+			demangled = ""; // Make sure test value is set properly when failure
 		}
 		outputInfo.append("GDemang: ");
 		outputInfo.append(demangledGeneric);

@@ -1867,7 +1867,7 @@ class FunctionMerger extends AbstractFunctionMerger implements ListingMerger {
 			}
 			return isEquivalent(thunkedFunction1, thunkedFunction2);
 		}
-		else if (thunkedFunction1 != null) {
+		else if (thunkedFunction2 != null) {
 			return false;
 		}
 

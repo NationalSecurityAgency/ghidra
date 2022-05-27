@@ -38,7 +38,7 @@ public abstract class DBDomainObjectSupport extends DomainObjectAdapterDB {
 
 	protected DBDomainObjectSupport(DBHandle dbh, DBOpenMode openMode, TaskMonitor monitor,
 			String name, int timeInterval, int bufSize, Object consumer) {
-		super(dbh, name, timeInterval, bufSize, consumer);
+		super(dbh, name, timeInterval, consumer);
 		this.openMode = openMode;
 		this.monitor = monitor;
 	}

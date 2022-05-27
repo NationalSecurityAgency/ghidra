@@ -22,24 +22,23 @@ import java.util.regex.Pattern;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.GTreeState;
-import ghidra.app.plugin.core.datamgr.DataTypeSyncInfo;
-import ghidra.app.plugin.core.datamgr.DataTypeSynchronizer;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.ProgramArchive;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.program.model.data.*;
 import ghidra.util.*;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Task for handling drop operations.
+ * Task for copying and moving data type nodes within the Data Types tree.
  */
 public class DataTypeTreeCopyMoveTask extends Task {
 
 	// If the total number of nodes is small, we won't need to collapse the tree before deleting
-	// the nodes to avoid excess tree events.  This number is very arbitrary.  This number is 
+	// the nodes to avoid excess tree events.  This number is very arbitrary.  This number is
 	// used to compare the number of dragged nodes, which may include categories whose child
 	// count is not reflected in this number.  This could mean that thousands of nodes will be
 	// processed, but the actual drag count could be much less.
@@ -50,11 +49,11 @@ public class DataTypeTreeCopyMoveTask extends Task {
 	}
 
 	private DataTypeArchiveGTree gTree;
-	private GTreeNode destinationNode;
-	private List<GTreeNode> droppedNodes;
+	private Category destinationCategory;
+	private List<GTreeNode> copyMoveNodes;
 	private Archive sourceArchive;
 	private Archive destinationArchive;
-
+	private boolean promptToAssociateTypes = true;
 	private ActionType actionType;
 	private DataTypeConflictHandler conflictHandler;
 	private List<String> errors = new ArrayList<>();
@@ -64,22 +63,29 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		super("Drag/Drop", true, true, true);
 	}
 
-	public DataTypeTreeCopyMoveTask(GTreeNode destinationNode, List<GTreeNode> droppedNodeList,
+	public DataTypeTreeCopyMoveTask(CategoryNode destinationNode, List<GTreeNode> droppedNodeList,
 			ActionType actionType, DataTypeArchiveGTree gTree,
 			DataTypeConflictHandler conflictHandler) {
+		this(findArchive(destinationNode), destinationNode.getCategory(), droppedNodeList,
+			actionType, gTree, conflictHandler);
+	}
+
+	public DataTypeTreeCopyMoveTask(Archive destinationArchive, Category destinationCategory,
+			List<GTreeNode> droppedNodeList, ActionType actionType, DataTypeArchiveGTree gTree,
+			DataTypeConflictHandler conflictHandler) {
 		super("Drag/Drop", true, true, true);
-		this.destinationNode = destinationNode;
-		this.droppedNodes = droppedNodeList;
+		this.destinationCategory = destinationCategory;
+		this.copyMoveNodes = droppedNodeList;
 		this.actionType = actionType;
 		this.gTree = gTree;
 		this.conflictHandler = conflictHandler;
-		this.destinationArchive = findArchive(destinationNode);
+		this.destinationArchive = destinationArchive;
 
-		GTreeNode firstNode = droppedNodes.get(0);
+		GTreeNode firstNode = copyMoveNodes.get(0);
 		this.sourceArchive = findArchive(firstNode);
 	}
 
-	private Archive findArchive(GTreeNode node) {
+	private static Archive findArchive(GTreeNode node) {
 		while (node != null) {
 			if (node instanceof ArchiveNode) {
 				return ((ArchiveNode) node).getArchive();
@@ -89,10 +95,22 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		return null;
 	}
 
+	/**
+	 * Any types being newly copied/moved to a suitable archive are eligible for 'association',
+	 * which means changes between the two archives will be tracked.  True, the default, signals to
+	 * prompt before associating types; false signals not to prompt the user, but to always
+	 * associate types.
+	 *
+	 * @param prompt true to prompt; false to not prompt
+	 */
+	public void setPromptToAssociateTypes(boolean prompt) {
+		this.promptToAssociateTypes = prompt;
+	}
+
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
 
-		int nodeCount = droppedNodes.size();
+		int nodeCount = copyMoveNodes.size();
 		filterRedundantNodes();
 
 		if (checkForDifferentSourceArchives()) {
@@ -100,10 +118,10 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		}
 
 		//
-		// Note: we collapse the node before performing this work because there is a 
+		// Note: we collapse the node before performing this work because there is a
 		//       potential for a large number of events to be generated.  Further, if the
 		//       given archive node has many children (like 10s of thousands), then the
-		//       copious events generated herein could lock the UI.  By closing the node, 
+		//       copious events generated herein could lock the UI.  By closing the node,
 		//       the tree is not invalidating/validating its cache as a result of these
 		//       events.
 		//
@@ -118,7 +136,6 @@ public class DataTypeTreeCopyMoveTask extends Task {
 			}
 
 			doCopy(monitor);
-
 		}
 		catch (CancelledException e) {
 			return; // nothing to report
@@ -146,10 +163,10 @@ public class DataTypeTreeCopyMoveTask extends Task {
 
 	private boolean checkForDifferentSourceArchives() {
 
-		for (GTreeNode node : droppedNodes) {
+		for (GTreeNode node : copyMoveNodes) {
 			if (sourceArchive != findArchive(node)) {
 				Msg.showError(this, gTree, "Copy Failed",
-					"All dragged data types must be from the same archive!");
+					"All data types must be from the same archive!");
 				return true;
 			}
 		}
@@ -161,12 +178,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		DataTypeManager dtm = destinationArchive.getDataTypeManager();
 		int txId = dtm.startTransaction("Copy/Move Category/DataType");
 		try {
-			if (destinationNode instanceof DataTypeNode) {
-				dragNodeToDataType();
-			}
-			else {
-				dragNodesToCategory(monitor);
-			}
+			copyOrMoveNodesToCategory(monitor);
 		}
 		finally {
 			dtm.endTransaction(txId, true);
@@ -189,20 +201,19 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		}
 	}
 
-	private void associateDataTypes(TaskMonitor monitor)
-			throws CancelledException {
+	private void associateDataTypes(TaskMonitor monitor) throws CancelledException {
 
 		if (!promptToAssociateTypes(monitor)) {
 			return;
 		}
 
-		monitor.initialize(droppedNodes.size());
+		monitor.initialize(copyMoveNodes.size());
 
 		SourceArchive destination = destinationArchive.getDataTypeManager().getLocalSourceArchive();
 		DataTypeManager dtm = sourceArchive.getDataTypeManager();
-		int txId = dtm.startTransaction("Associate DataTypes");
+		int txId = dtm.startTransaction("Associate Data Types");
 		try {
-			for (GTreeNode node : droppedNodes) {
+			for (GTreeNode node : copyMoveNodes) {
 				monitor.checkCanceled();
 
 				if (node instanceof DataTypeNode) {
@@ -224,6 +235,10 @@ public class DataTypeTreeCopyMoveTask extends Task {
 
 	private boolean promptToAssociateTypes(TaskMonitor monitor) throws CancelledException {
 
+		if (!promptToAssociateTypes) {
+			return true; // do not prompt; always associate
+		}
+
 		if (!containsUnassociatedTypes(monitor)) {
 			return false; // nothing to associate
 		}
@@ -239,8 +254,8 @@ public class DataTypeTreeCopyMoveTask extends Task {
 	private boolean containsUnassociatedTypes(TaskMonitor monitor) throws CancelledException {
 
 		monitor.setMessage("Checking for types to associate");
-		monitor.initialize(droppedNodes.size());
-		for (GTreeNode node : droppedNodes) {
+		monitor.initialize(copyMoveNodes.size());
+		for (GTreeNode node : copyMoveNodes) {
 			monitor.checkCanceled();
 
 			if (node instanceof DataTypeNode) {
@@ -305,13 +320,13 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		}
 	}
 
-	private void dragNodesToCategory(TaskMonitor monitor) {
+	private void copyOrMoveNodesToCategory(TaskMonitor monitor) {
 
 		monitor.setMessage("Drag/Drop Categories/Data Types");
-		monitor.initialize(droppedNodes.size());
+		monitor.initialize(copyMoveNodes.size());
 
-		Category toCategory = getCategory(destinationNode);
-		for (GTreeNode node : droppedNodes) {
+		Category toCategory = destinationCategory;
+		for (GTreeNode node : copyMoveNodes) {
 			if (monitor.isCancelled()) {
 				break;
 			}
@@ -347,29 +362,32 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		DataTypeManager nodeDtm = dataType.getDataTypeManager();
 		boolean sameManager = (dtm == nodeDtm);
 		DataType newDt = !sameManager ? dataType.clone(nodeDtm) : dataType.copy(nodeDtm);
-		if (sameManager &&
-			newDt.getCategoryPath().equals(toCategory.getCategoryPath())) {
+
+		if (!sameManager && toCategory.isRoot()) {
+			// preserve use of source category when copy to root
+			toCategory = dtm.createCategory(dataType.getCategoryPath());
+		}
+
+		if (sameManager && newDt.getCategoryPath().equals(toCategory.getCategoryPath())) {
 			renameAsCopy(toCategory, newDt);
 		}
 
 		DataType resolvedDt = toCategory.addDataType(newDt, conflictHandler);
 		if (resolvedDt instanceof Pointer || resolvedDt instanceof Array ||
-			resolvedDt instanceof BuiltInDataType ||
-			resolvedDt instanceof MissingBuiltInDataType) {
+			resolvedDt instanceof BuiltInDataType || resolvedDt instanceof MissingBuiltInDataType) {
 			return;
 		}
 
 		if (!resolvedDt.getCategoryPath().equals(toCategory.getCategoryPath())) {
-			errors.add(
-				"Data type copy failed.  Another copy of this data type already exists at " +
-					resolvedDt.getPathName());
+			errors.add("Data type copy failed.  Another copy of this data type already exists at " +
+				resolvedDt.getPathName());
 		}
 	}
 
-	private void renameAsCopy(Category destinationCategory, DataType dataType) {
+	private void renameAsCopy(Category toCategory, DataType dataType) {
 		String dtName = dataType.getName();
 		String baseName = getBaseName(dtName);
-		String copyName = getNextCopyName(destinationCategory, baseName);
+		String copyName = getNextCopyName(toCategory, baseName);
 		try {
 			dataType.setName(copyName);
 		}
@@ -392,12 +410,12 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		return baseName;
 	}
 
-	String getNextCopyName(Category destinationCategory, String baseName) {
+	String getNextCopyName(Category toCategory, String baseName) {
 
 		String format = "Copy_%d_of_" + baseName;
 		for (int i = 1; i < 100; i++) {
 			String copyName = String.format(format, i);
-			if (destinationCategory.getDataType(copyName) == null) {
+			if (toCategory.getDataType(copyName) == null) {
 				return copyName;
 			}
 		}
@@ -406,28 +424,26 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		return String.format(format, System.currentTimeMillis());
 	}
 
-	private void moveNode(Category destinationCategory, GTreeNode node, TaskMonitor monitor) {
+	private void moveNode(Category toCategory, GTreeNode node, TaskMonitor monitor) {
 		if (node instanceof DataTypeNode) {
 			DataType dataType = ((DataTypeNode) node).getDataType();
-			moveDataType(destinationCategory, dataType);
+			moveDataType(toCategory, dataType);
 		}
 		else if (node instanceof CategoryNode) {
 			Category category = ((CategoryNode) node).getCategory();
-			moveCategory(destinationCategory, category, monitor);
+			moveCategory(toCategory, category, monitor);
 		}
 	}
 
-	private void moveCategory(Category toCategory, Category category,
-			TaskMonitor monitor) {
+	private void moveCategory(Category toCategory, Category category, TaskMonitor monitor) {
 		if (category.getParent() == toCategory) { // moving to same place
 			return;
 		}
 		try {
 			CategoryPath path = toCategory.getCategoryPath();
 			if (path.isAncestorOrSelf(category.getCategoryPath())) {
-				errors.add(
-					"Cannot move a parent node onto a child node.  Moving " + category + " to " +
-						toCategory);
+				errors.add("Cannot move a parent node onto a child node.  Moving " + category +
+					" to " + toCategory);
 				return;
 			}
 
@@ -441,72 +457,35 @@ public class DataTypeTreeCopyMoveTask extends Task {
 
 	private void moveDataType(Category toCategory, DataType dataType) {
 		if (dataType.getCategoryPath().equals(toCategory.getCategoryPath())) {
-			errors.add(
-				"Move failed.  DataType is already in this category.  Category " + toCategory +
-					"; Data type: " + dataType);
+			errors.add("Move failed.  DataType is already in this category.  Category " +
+				toCategory + "; Data type: " + dataType.getName());
 			return;
 		}
 		try {
 			toCategory.moveDataType(dataType, conflictHandler);
 		}
 		catch (DataTypeDependencyException e) {
-			errors.add(
-				"Move failed.  DataType is already in this category.  Category " + toCategory +
-					"; Data type: " + dataType + ". " + e.getMessage());
+			errors.add("Move failed.  DataType is already in this category.  Category " +
+				toCategory + "; Data type: " + dataType.getName() + ". " + e.getMessage());
 		}
 	}
 
-	private void copyCategory(Category toCategory, Category category,
-			TaskMonitor monitor) {
+	private void copyCategory(Category toCategory, Category category, TaskMonitor monitor) {
 		CategoryPath toPath = toCategory.getCategoryPath();
-		boolean sameManager =
-			(toCategory.getDataTypeManager() == category.getDataTypeManager());
+		boolean sameManager = (toCategory.getDataTypeManager() == category.getDataTypeManager());
 		if (sameManager && toPath.isAncestorOrSelf(category.getCategoryPath())) {
-			errors.add("Copy failed.  " +
-				"Cannot copy a parent node onto a child node. Moving " + category + " to " +
-				toCategory);
+			errors.add("Copy failed.  " + "Cannot copy a parent node onto a child node. Moving " +
+				category + " to " + toCategory);
 			return;
 		}
 		toCategory.copyCategory(category, conflictHandler, monitor);
 	}
 
-	private Category getCategory(GTreeNode node) {
-		if (node instanceof ArchiveNode) {
-			return ((ArchiveNode) node).getArchive().getDataTypeManager().getRootCategory();
-		}
-		if (node instanceof CategoryNode) {
-			return ((CategoryNode) node).getCategory();
-		}
-		throw new AssertException(
-			"Expected node to be either an ArchiveNode or CategoryNode but was " + node.getClass());
-	}
-
-	private boolean isAssociatedEitherWay(DataType dt1, DataType dt2) {
-		return isAssociated(dt1, dt2) || isAssociated(dt2, dt1);
-	}
-
-	private boolean isAssociated(DataType sourceDt, DataType destinationDt) {
-		UniversalID destinationID = destinationDt.getUniversalID();
-		if (destinationID == null || !destinationID.equals(sourceDt.getUniversalID())) {
-			return false;
-		}
-		if (!haveSameSourceArchive(sourceDt, destinationDt)) {
-			return false;
-		}
-		return isLocal(sourceDt);
-	}
-
-	private boolean haveSameSourceArchive(DataType dt1, DataType dt2) {
-		SourceArchive s1 = dt1.getSourceArchive();
-		SourceArchive s2 = dt2.getSourceArchive();
-		return s1.getSourceArchiveID().equals(s2.getSourceArchiveID());
-	}
-
 	/**
 	 * Returns true if the given data type's source archive is the same as it's current data
-	 * type manager.  This is false if copying a new type from the program to an 
-	 * external archive.  
-	 * 
+	 * type manager.  This is false if copying a new type from the program to an
+	 * external archive.
+	 *
 	 * @param dt the type
 	 * @return true if the given type already lives in its source archive
 	 */
@@ -516,99 +495,15 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		return sourceId.equals(dtmId);
 	}
 
-	private void dragNodeToDataType() {
-		DataType destinationDt = ((DataTypeNode) destinationNode).getDataType();
-
-		// there must be exactly one and it must be a dataTypeNode, because of isValidDropSite()
-		GTreeNode node = droppedNodes.get(0);
-		DataType replacementDt = ((DataTypeNode) node).getDataType();
-		if (sourceArchive != destinationArchive) {
-			if (isAssociatedEitherWay(replacementDt, destinationDt)) {
-				handleAssociatedType(destinationDt, replacementDt);
-				return;
-			}
-
-			replacementDt = replacementDt.clone(replacementDt.getDataTypeManager());
-		}
-		else if (actionType == ActionType.COPY) { // Copy within a single data type manager.
-			replacementDt = replacementDt.copy(replacementDt.getDataTypeManager());
-		}
-
-		replaceDataType(destinationDt, replacementDt);
-	}
-
-	private void handleAssociatedType(DataType destinationDt, DataType replacementDt) {
-		if (isLocal(destinationDt)) {
-			DataTypeSyncInfo syncInfo = new DataTypeSyncInfo(replacementDt,
-				destinationDt.getDataTypeManager());
-			if (!syncInfo.canCommit()) {
-				Msg.showInfo(getClass(), gTree, "Commit Data Type",
-					"No changes to commit");
-			}
-			// destination data-type is local to an archive
-			else if (confirmCommit()) {
-				// if the destination dataType is local to its dataTypeManager 
-				// then we are committing.
-				DataTypeSynchronizer.commit(destinationDt.getDataTypeManager(), replacementDt);
-			}
-		}
-		else { // else we are updating
-			DataTypeSyncInfo syncInfo = new DataTypeSyncInfo(destinationDt,
-				replacementDt.getDataTypeManager());
-			if (!syncInfo.canUpdate()) {
-				Msg.showInfo(getClass(), gTree, "Update Data Type", "No changes to copy");
-			}
-			else if (confirmUpdate()) {
-				DataTypeSynchronizer.update(destinationDt.getDataTypeManager(), replacementDt);
-			}
-		}
-	}
-
-	private boolean confirmCommit() {
-		return confirm("Commit Data Type?",
-			"Do you want to commit the changes to this data type back to the source Archive? \n" +
-				"(Warning: any changes in the source archive will be overwritten.)");
-	}
-
-	private boolean confirmUpdate() {
-		return confirm("Update Data Type?",
-			"Do you want to update this data type with the changes in the source Archive?\n" +
-				"(Warning: any local changes will be overwritten.)");
-	}
-
-	private boolean confirm(String title, String message) {
-		int choice = OptionDialog.showYesNoDialog(gTree, title, message);
-		return choice == OptionDialog.YES_OPTION;
-	}
-
 	private int askToAssociateDataTypes() {
-		return OptionDialog.showYesNoCancelDialog(gTree, "Associate DataTypes?",
-			"Do you want to associate local datatypes with the target archive?");
+		return OptionDialog.showYesNoCancelDialog(gTree, "Associate Data Types?",
+			"Do you want to associate local data types with the target archive?");
 	}
 
-	private void replaceDataType(DataType existingDt, DataType replacementDt) {
-
-		int choice =
-			OptionDialog.showYesNoDialog(gTree, "Replace Data Type?", "Replace " +
-				existingDt.getPathName() + "\nwith " + replacementDt.getPathName() +
-				"?");
-
-		if (choice == OptionDialog.YES_OPTION) {
-			try {
-				DataTypeManager dtMgr = existingDt.getDataTypeManager();
-				dtMgr.replaceDataType(existingDt, replacementDt, true);
-			}
-			catch (DataTypeDependencyException e) {
-				errors.add("Replace failed.  Existing type " + existingDt + "; replacment type " +
-					replacementDt + ". " + e.getMessage());
-			}
-		}
-	}
-
-	// filters out nodes with categories in their path 
+	// filters out nodes with categories in their path
 	private void filterRedundantNodes() {
 
-		Set<GTreeNode> nodeSet = new HashSet<>(droppedNodes);
+		Set<GTreeNode> nodeSet = new HashSet<>(copyMoveNodes);
 		List<GTreeNode> filteredList = new ArrayList<>();
 
 		for (GTreeNode node : nodeSet) {
@@ -617,7 +512,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 			}
 		}
 
-		droppedNodes = filteredList;
+		copyMoveNodes = filteredList;
 	}
 
 	private boolean containsAncestor(Set<GTreeNode> nodeSet, GTreeNode node) {

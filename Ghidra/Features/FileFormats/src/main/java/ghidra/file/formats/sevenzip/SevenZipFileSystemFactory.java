@@ -27,7 +27,6 @@ import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 
 public class SevenZipFileSystemFactory
@@ -90,7 +89,7 @@ public class SevenZipFileSystemFactory
 	 */
 	public static boolean initNativeLibraries() {
 		try {
-			SevenZip.initSevenZipFromPlatformJAR(); // calling this multiple times is ok
+			SevenZipCustomInitializer.initSevenZip();
 			return true;
 		}
 		catch (SevenZipNativeInitializationException e) {

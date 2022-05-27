@@ -32,6 +32,7 @@ import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
+import ghidra.app.services.FieldMatcher;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -98,15 +99,27 @@ public class FindReferencesToFieldAction extends DockingAction {
 			choices = ((Enum) dt).getNames();
 		}
 
-		String userChoice = OptionDialog.showInputChoiceDialog(null, "Choose Field",
-			"Find uses of '" + dt.getName() + "' field", choices, null,
-			OptionDialog.QUESTION_MESSAGE);
+		String message = "Find uses of '" + dt.getName() + "' field by name or offset";
+		String userChoice = OptionDialog.showEditableInputChoiceDialog(null, "Choose Field",
+			message, choices, null, OptionDialog.QUESTION_MESSAGE);
 		if (userChoice == null) {
 			return;
 		}
 
-		Swing.runLater(
-			() -> service.findAndDisplayAppliedDataTypeAddresses(dt, userChoice));
+		FieldMatcher fieldMatcher;
+		Long longChoice = parseInt(userChoice);
+		if (longChoice != null) {
+			fieldMatcher = new FieldMatcher(dt, longChoice.intValue());
+		}
+		else {
+			fieldMatcher = new FieldMatcher(dt, userChoice);
+		}
+
+		Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(dt, fieldMatcher));
+	}
+
+	private Long parseInt(String s) {
+		return NumericUtilities.parseNumber(s, null);
 	}
 
 	private String[] getCompisiteFieldNames(Composite composite) {

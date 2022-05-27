@@ -89,6 +89,11 @@ public class EndianSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getValueString(Settings settings) {
+		return choices[getChoice(settings)];
+	}
+
+	@Override
 	public void setChoice(Settings settings, int value) {
 		settings.setLong(ENDIAN_SETTING_NAME, value);
 	}
@@ -101,6 +106,11 @@ public class EndianSettingsDefinition implements EnumSettingsDefinition {
 	@Override
 	public String getName() {
 		return "Endian";
+	}
+
+	@Override
+	public String getStorageKey() {
+		return ENDIAN_SETTING_NAME;
 	}
 
 	@Override

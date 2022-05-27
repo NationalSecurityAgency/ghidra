@@ -25,9 +25,14 @@ import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(name = "RegisterDescriptor", elements = {
-	@TargetElementType(type = Void.class) }, attributes = {
-		@TargetAttributeType(name = TargetRegister.CONTAINER_ATTRIBUTE_NAME, type = DbgModelTargetRegisterContainerImpl.class),
+@TargetObjectSchemaInfo(
+	name = "RegisterDescriptor",
+	elements = {
+		@TargetElementType(type = Void.class) },
+	attributes = {
+		@TargetAttributeType(
+			name = TargetRegister.CONTAINER_ATTRIBUTE_NAME,
+			type = DbgModelTargetRegisterContainerImpl.class),
 		@TargetAttributeType(type = Void.class) })
 public class DbgModelTargetRegisterImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetRegister {

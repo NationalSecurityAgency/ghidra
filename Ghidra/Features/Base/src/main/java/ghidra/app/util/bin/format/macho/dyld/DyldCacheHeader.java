@@ -25,6 +25,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
@@ -101,6 +102,7 @@ public class DyldCacheHeader implements StructConverter {
 	private List<DyldCacheImageTextInfo> imageTextInfoList;
 	private DyldArchitecture architecture;
 	private List<DyldCacheMappingAndSlideInfo> cacheMappingAndSlideInfoList;
+	private MemoryBlock fileBlock;
 
 	/**
 	 * Create a new {@link DyldCacheHeader}.
@@ -279,7 +281,7 @@ public class DyldCacheHeader implements StructConverter {
 			parseImageTextInfo(log, monitor);
 		}
 		parseCacheMappingSlideInfo(log, monitor);
-		if (haSlideInfo()) {
+		if (hasSlideInfo()) {
 			parseSlideInfos(log, monitor);
 		}
 	}
@@ -902,6 +904,15 @@ public class DyldCacheHeader implements StructConverter {
 				"Failed to markup dyld_cache_image_text_info.");
 		}
 	}
+	
+	/**
+	 * Sets the {@link MemoryBlock} associated with this header's FILE block.
+	 * 
+	 * @param block The {@link MemoryBlock} associated with this header's FILE block
+	 */
+	public void setFileBlock(MemoryBlock block) {
+		fileBlock = block;
+	}
 
 	/**
 	 * Gets the given file offset's corresponding memory address.
@@ -923,10 +934,10 @@ public class DyldCacheHeader implements StructConverter {
 			}
 		}
 
-		// Now check the special memory block that contains bytes that weren't supposed to get
+		// Now check the special FILE memory block that contains bytes that weren't supposed to get
 		// mapped in to memory
-		AddressSpace fileSpace = program.getAddressFactory().getAddressSpace("FILE");
-		if (fileSpace != null) {
+		if (fileBlock != null) {
+			AddressSpace fileSpace = fileBlock.getStart().getAddressSpace();
 			try {
 				return fileSpace.getAddress(offset);
 			}
@@ -943,7 +954,7 @@ public class DyldCacheHeader implements StructConverter {
 	 * 
 	 * @return True if any slide info exists; otherwise, false
 	 */
-	public boolean haSlideInfo() {
+	public boolean hasSlideInfo() {
 		if (slideInfoSize != 0) {
 			// this is no longer used, but if non-zero, is older format and has slide-info
 			return true;

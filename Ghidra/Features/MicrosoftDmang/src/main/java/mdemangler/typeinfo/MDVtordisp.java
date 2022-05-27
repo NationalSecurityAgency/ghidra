@@ -33,8 +33,10 @@ public class MDVtordisp extends MDMemberFunctionInfo {
 
 	@Override
 	protected void parseInternal() throws MDException {
+		// 20200507: Believe this to be <offset-to-vtordisp>
 		MDEncodedNumber vtorDisplacement = new MDEncodedNumber(dmang);
 		vtorDisplacement.parse();
+		// 20200507: Believe this to be <static-offset>
 		MDEncodedNumber adjustment = new MDEncodedNumber(dmang);
 		adjustment.parse();
 		nameModifier = "`vtordisp{" + vtorDisplacement + "," + adjustment + "}' ";

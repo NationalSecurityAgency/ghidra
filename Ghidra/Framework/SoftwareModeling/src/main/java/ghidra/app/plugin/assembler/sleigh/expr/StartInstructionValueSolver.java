@@ -24,6 +24,7 @@ import ghidra.app.plugin.processors.sleigh.expression.StartInstructionValue;
 /**
  * "Solves" expression of {@code inst_start}
  * 
+ * <p>
  * Works like the constant solver, but takes the value of {@code inst_start}, which is given by the
  * assembly address.
  */
@@ -35,28 +36,26 @@ public class StartInstructionValueSolver extends AbstractExpressionSolver<StartI
 
 	@Override
 	public AssemblyResolution solve(StartInstructionValue iv, MaskedLong goal,
-			Map<String, Long> vals, Map<Integer, Object> res, AssemblyResolvedConstructor cur,
-			Set<SolverHint> hints, String description) {
+			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
+			String description) {
 		throw new AssertionError(
 			"INTERNAL: Should never be asked to solve for " + AssemblyTreeResolver.INST_START);
 	}
 
 	@Override
 	public MaskedLong getValue(StartInstructionValue iv, Map<String, Long> vals,
-			Map<Integer, Object> res, AssemblyResolvedConstructor cur) {
+			AssemblyResolvedPatterns cur) {
 		return MaskedLong.fromLong(vals.get(AssemblyTreeResolver.INST_START));
 	}
 
 	@Override
-	public int getInstructionLength(StartInstructionValue exp, Map<Integer, Object> res) {
+	public int getInstructionLength(StartInstructionValue exp) {
 		return 0;
 	}
 
 	@Override
-	public MaskedLong valueForResolution(StartInstructionValue exp,
-			AssemblyResolvedConstructor rc) {
-		// Would need to pass in symbol values.
-		throw new UnsupportedOperationException(
-			"The solver should never ask for this value given a resolved constructor.");
+	public MaskedLong valueForResolution(StartInstructionValue exp, Map<String, Long> vals,
+			AssemblyResolvedPatterns rc) {
+		return MaskedLong.fromLong(vals.get(AssemblyTreeResolver.INST_START));
 	}
 }

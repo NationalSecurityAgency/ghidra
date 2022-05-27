@@ -564,6 +564,58 @@ Varnode::~Varnode(void)
   }
 }
 
+/// This generally just returns the data-type of the Varnode itself unless it is a \e union data-type.
+/// In this case, the data-type of the resolved field of the \e union, associated with writing to the Varnode,
+/// is returned. The Varnode \b must be written to, to call this method.
+/// \return the resolved data-type
+Datatype *Varnode::getTypeDefFacing(void) const
+
+{
+  if (!type->needsResolution())
+    return type;
+  return type->findResolve(def,-1);
+}
+
+/// This generally just returns the data-type of the Varnode itself unless it is a \e union data-type.
+/// In this case, the data-type of the resolved field of the \e union, associated with reading the Varnode,
+/// is returned.
+/// \param op is the PcodeOp reading \b this Varnode
+/// \return the resolved data-type
+Datatype *Varnode::getTypeReadFacing(const PcodeOp *op) const
+
+{
+  if (!type->needsResolution())
+    return type;
+  return type->findResolve(op, op->getSlot(this));
+}
+
+/// This generally just returns the data-type of the HighVariable associated with \b this, unless it is a
+/// \e union data-type. In this case, the data-type of the resolved field of the \e union, associated with
+/// writing to the Varnode, is returned.
+/// \return the resolved data-type
+Datatype *Varnode::getHighTypeDefFacing(void) const
+
+{
+  Datatype *ct = high->getType();
+  if (!ct->needsResolution())
+    return ct;
+  return ct->findResolve(def,-1);
+}
+
+/// This generally just returns the data-type of the HighVariable associated with \b this, unless it is a
+/// \e union data-type. In this case, the data-type of the resolved field of the \e union, associated with
+/// reading the Varnode, is returned.
+/// \param op is the PcodeOp reading \b this Varnode
+/// \return the resolved data-type
+Datatype *Varnode::getHighTypeReadFacing(const PcodeOp *op) const
+
+{
+  Datatype *ct = high->getType();
+  if (!ct->needsResolution())
+    return ct;
+  return ct->findResolve(op, op->getSlot(this));
+}
+
 /// This is a convenience method for quickly finding the unique PcodeOp that reads this Varnode
 /// \return only descendant (if there is 1 and ONLY 1) or \b null otherwise
 PcodeOp *Varnode::loneDescend(void) const
@@ -735,7 +787,7 @@ Datatype *Varnode::getLocalType(bool &blockup) const
   ct = (Datatype *)0;
   if (def != (PcodeOp *)0) {
     ct = def->outputTypeLocal();
-    if (def->stopsPropagation()) {
+    if (def->stopsTypePropagation()) {
       blockup = true;
       return ct;
     }
@@ -1579,6 +1631,30 @@ void VarnodeBank::verifyIntegrity(void) const
   }
 }
 #endif
+
+/// \brief Return \b true if the alternate path looks more valid than the main path.
+///
+/// Two different paths from a common Varnode each terminate at a CALL, CALLIND, or RETURN.
+/// Evaluate which path most likely represents actual parameter/return value passing,
+/// based on traversal information about each path.
+/// \param vn is the Varnode terminating the \e alternate path
+/// \param flags indicates traversals for both paths
+/// \return \b true if the alternate path is preferred
+bool TraverseNode::isAlternatePathValid(const Varnode *vn,uint4 flags)
+
+{
+  if ((flags & (indirect | indirectalt)) == indirect)
+    // If main path traversed an INDIRECT but the alternate did not
+    return true;	// Main path traversed INDIRECT, alternate did not
+  if ((flags & (indirect | indirectalt)) == indirectalt)
+    return false;	// Alternate path traversed INDIRECT, main did not
+  if ((flags & actionalt) != 0)
+    return true;	// Alternate path traversed a dedicated COPY
+  if (vn->loneDescend() == (PcodeOp*)0) return false;
+  const PcodeOp *op = vn->getDef();
+  if (op == (PcodeOp*)0) return true;
+  return !op->isMarker();	// MULTIEQUAL or INDIRECT indicates multiple values
+}
 
 /// Return true if \b vn1 contains the high part and \b vn2 the low part
 /// of what was(is) a single value.

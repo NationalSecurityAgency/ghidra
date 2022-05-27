@@ -75,15 +75,21 @@ class DynamicHash {
   void buildOpDown(const PcodeOp *op);	///< Move the output Varnode for the given PcodeOp into staging
   void gatherUnmarkedVn(void);		///< Move staged Varnodes into the sub-graph and mark them
   void gatherUnmarkedOp(void);		///< Mark any new PcodeOps in the sub-graph
+  void pieceTogetherHash(const Varnode *root,uint4 method);	///< Clean-up and piece together formal hash value
+  static void moveOffSkip(const PcodeOp *&op,int4 &slot);	///< Convert given PcodeOp to a non-skip op by following data-flow
 public:
   void clear(void);			///< Called for each additional hash (after the first)
   void calcHash(const Varnode *root,uint4 method);	///< Calculate the hash for given Varnode and method
+  void calcHash(const PcodeOp *op,int4 slot,uint4 method);	///< Calculate hash for given PcodeOp, slot, and method
   void uniqueHash(const Varnode *root,Funcdata *fd);	///< Select a unique hash for the given Varnode
+  void uniqueHash(const PcodeOp *op,int4 slot,Funcdata *fd);	///< Select unique hash for given PcodeOp and slot
   Varnode *findVarnode(const Funcdata *fd,const Address &addr,uint8 h);
+  PcodeOp *findOp(const Funcdata *fd,const Address &addr,uint8 h);
   uint8 getHash(void) const { return hash; }		///< Get the (current) hash
   
   const Address &getAddress(void) const { return addrresult; }	///< Get the (current) address
   static void gatherFirstLevelVars(vector<Varnode *> &varlist,const Funcdata *fd,const Address &addr,uint8 h);
+  static void gatherOpsAtAddress(vector<PcodeOp *> &opList,const Funcdata *fd,const Address &addr);
   static int4 getSlotFromHash(uint8 h);			///< Retrieve the encoded slot from a hash
   static uint4 getMethodFromHash(uint8 h);		///< Retrieve the encoded method from a hash
   static OpCode getOpCodeFromHash(uint8 h);		///< Retrieve the encoded op-code from a hash
@@ -91,7 +97,8 @@ public:
   static uint4 getTotalFromHash(uint8 h);		///< Retrieve the encoded collision total from a hash
   static bool getIsNotAttached(uint8 h);		///< Retrieve the attachment boolean from a hash
   static void clearTotalPosition(uint8 &h);		///< Clear the collision total and position fields within a hash
-  static uint4 transtable[];				///< Translation of op-codes to hash values
+  static uint4 getComparable(uint8 h) { return (uint4)h; }	///< Get only the formal hash for comparing
+  static const uint4 transtable[];				///< Translation of op-codes to hash values
 };
 
 #endif

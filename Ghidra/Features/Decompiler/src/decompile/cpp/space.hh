@@ -178,8 +178,8 @@ public:
   virtual void printRaw(ostream &s,uintb offset) const;
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el);
-  static const string NAME;		// Reserved name for the address space
-  static const int4 INDEX;		// Reserved index for constant space
+  static const string NAME;		///< Reserved name for the address space
+  static const int4 INDEX;		///< Reserved index for constant space
 };
 
 /// \brief Special AddrSpace for special/user-defined address spaces
@@ -189,8 +189,8 @@ public:
   OtherSpace(AddrSpaceManager *m, const Translate *t);	///< For use with restoreXml
   virtual void printRaw(ostream &s, uintb offset) const;
   virtual void saveXml(ostream &s) const;
-  static const string NAME;		// Reserved name for the address space
-  static const int4 INDEX;		// Reserved index for the other space
+  static const string NAME;		///< Reserved name for the address space
+  static const int4 INDEX;		///< Reserved index for the other space
 };
 
 /// \brief The pool of temporary storage registers
@@ -244,7 +244,7 @@ class OverlaySpace : public AddrSpace {
   AddrSpace *baseSpace;		///< Space being overlayed
 public:
   OverlaySpace(AddrSpaceManager *m,const Translate *t);	///< Constructor
-  AddrSpace *getBaseSpace(void) const;			///< Get the address space being overlayed
+  virtual AddrSpace *getContain(void) const { return baseSpace; }
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el);
 };

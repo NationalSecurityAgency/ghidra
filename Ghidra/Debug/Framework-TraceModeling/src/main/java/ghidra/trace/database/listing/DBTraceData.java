@@ -37,7 +37,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		implements DBTraceDefinedDataAdapter {
 	private static final String TABLE_NAME = "Data";
 
-	static final String LANGUAGE_COLUMN_NAME = "Langauge";
+	static final String LANGUAGE_COLUMN_NAME = "Language";
 	static final String DATATYPE_COLUMN_NAME = "DataType";
 
 	@DBAnnotatedColumn(LANGUAGE_COLUMN_NAME)
@@ -75,7 +75,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		}
 		language = space.manager.languageManager.getLanguageByKey(langKey);
 		if (language == null) {
-			throw new IOException("Data table is corrupt. Missing langauge: " + langKey);
+			throw new IOException("Data table is corrupt. Missing language: " + langKey);
 		}
 		dataType = space.dataTypeManager.getDataType(dataTypeID);
 		if (dataType == null) {
