@@ -334,12 +334,6 @@ public class MachoProgramBuilder {
 			long dataLength, String comment, String source, boolean r, boolean w, boolean x,
 			boolean zeroFill) throws Exception {
 
-		// iOS 12 chained pointer address fixup (does not apply to x86)
-		if (!program.getLanguageID().getIdAsString().startsWith("x86") &&
-			(start.getOffset() & 0xfff000000000L) != 0) {
-			start = space.getAddress(start.getOffset() | 0xffff000000000000L);
-		}
-
 		// Get a list of all blocks that intersect with the block we wish to create.  There may be
 		// more that one if the containing memory has both initialized and uninitialized pieces.
 		List<MemoryBlock> intersectingBlocks = new ArrayList<>();

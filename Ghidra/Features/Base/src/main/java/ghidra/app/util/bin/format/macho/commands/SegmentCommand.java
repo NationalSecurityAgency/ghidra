@@ -105,6 +105,10 @@ public class SegmentCommand extends LoadCommand {
 	}
 
 	public long getVMaddress() {
+		// Mask off possible chained fixup found in kernelcache segment addresses
+		if ((vmaddr & 0xfff000000000L) == 0xfff000000000L) {
+			return vmaddr | 0xffff000000000000L;
+		}
 		return vmaddr;
 	}
 

@@ -169,6 +169,10 @@ public class Section implements StructConverter {
 	}
 
 	public long getAddress() {
+		// Mask off possible chained fixup found in kernelcache section addresses
+		if ((addr & 0xfff000000000L) == 0xfff000000000L) {
+			return addr | 0xffff000000000000L;
+		}
 		return addr;
 	}
 
