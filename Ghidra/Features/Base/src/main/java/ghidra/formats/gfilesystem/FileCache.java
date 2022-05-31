@@ -15,11 +15,12 @@
  */
 package ghidra.formats.gfilesystem;
 
+import java.util.*;
+import java.util.regex.Pattern;
+
 import java.io.*;
 import java.nio.file.*;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
-import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.map.ReferenceMap;
 
@@ -102,7 +103,7 @@ public class FileCache {
 			throw new IOException("Unable to initialize cache dir " + cacheDir);
 		}
 
-		cacheDirFileStore = Files.getFileStore(cacheDir.toPath());
+		cacheDirFileStore = getFileStore(cacheDir);
 		cleanDaemon = performCacheMaintIfNeeded(cacheDir, 1 /* current nesting level */);
 	}
 
@@ -131,7 +132,7 @@ public class FileCache {
 	}
 
 	private void ensureAvailableSpace(long sizeHint) throws IOException {
-		if ( sizeHint > MAX_INMEM_FILESIZE ) {
+		if (cacheDirFileStore != null && sizeHint > MAX_INMEM_FILESIZE) {
 			long usableSpace = cacheDirFileStore.getUsableSpace();
 			if (usableSpace >= 0 && usableSpace < sizeHint + FREESPACE_RESERVE_BYTES) {
 				throw new IOException("Not enough storage available in " + cacheDir +
@@ -595,5 +596,16 @@ public class FileCache {
 			return Objects.equals(md5, other.md5);
 		}
 
+	}
+
+	private FileStore getFileStore(File cacheDir) {
+		try {
+			return Files.getFileStore(cacheDir.toPath());
+		}
+		catch (IOException e) {
+			Msg.error(this, "Failed to get java FileStore for path " + cacheDir +
+				", will be unable to check free/available space.");
+			return null;
+		}
 	}
 }
