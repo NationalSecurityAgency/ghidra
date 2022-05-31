@@ -1870,6 +1870,26 @@ void TypePointerRel::printRaw(ostream &s) const
   s << ']';
 }
 
+int4 TypePointerRel::compare(const Datatype &op,int4 level) const
+
+{
+  int4 res = TypePointer::compare(op,level);	// Compare as plain pointers first
+  if (res != 0) return res;
+  // Both must be relative pointers
+  TypePointerRel *tp = (TypePointerRel *) &op;
+  // Its possible a formal relative pointer gets compared to its equivalent ephemeral version.
+  // In which case, we prefer the formal version.
+  if (stripped == (TypePointer *)0) {
+    if (tp->stripped != (TypePointer *)0)
+      return -1;
+  }
+  else {
+    if (tp->stripped == (TypePointer *)0)
+      return 1;
+  }
+  return 0;
+}
+
 int4 TypePointerRel::compareDependency(const Datatype &op) const
 
 {
