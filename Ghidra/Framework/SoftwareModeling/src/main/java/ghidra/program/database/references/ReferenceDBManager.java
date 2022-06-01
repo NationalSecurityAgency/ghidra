@@ -26,7 +26,8 @@ import db.util.ErrorHandler;
 import ghidra.program.database.*;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.map.AddressMap;
-import ghidra.program.database.symbol.*;
+import ghidra.program.database.symbol.SymbolDB;
+import ghidra.program.database.symbol.SymbolManager;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -1245,24 +1246,16 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 	@Override
 	public void setAssociation(Symbol s, Reference ref) {
-		if (s.getSymbolType() != SymbolType.LABEL || s.isDynamic()) {
+		// Only valid for non-dynamic memory label symbols
+		if (s.getSymbolType() != SymbolType.LABEL || s.isDynamic() || s.isExternal()) {
 			return;
 		}
 		lock.acquire();
 		try {
-			if (s instanceof VariableSymbolDB) {
-				VariableStorage storage = ((VariableSymbolDB) s).getVariableStorage();
-				if (!storage.contains(ref.getToAddress())) {
-					throw new IllegalArgumentException("Variable symbol " + s.getName() +
-						" does not contain referenced address: " + ref.getToAddress() + ")");
-				}
-			}
-			else {
-				Address symAddr = s.getAddress();
-				if (!symAddr.equals(ref.getToAddress())) {
-					throw new IllegalArgumentException("Symbol address(" + symAddr +
-						") not equal to reference's To address(" + ref.getToAddress() + ")");
-				}
+			Address symAddr = s.getAddress();
+			if (!symAddr.equals(ref.getToAddress())) {
+				throw new IllegalArgumentException("Symbol address(" + symAddr +
+					") not equal to reference's To address(" + ref.getToAddress() + ")");
 			}
 			try {
 				setSymbolID(ref, s.getID());
