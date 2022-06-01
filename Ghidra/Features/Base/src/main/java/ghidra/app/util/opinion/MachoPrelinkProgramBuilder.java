@@ -16,14 +16,15 @@
 package ghidra.app.util.opinion;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.collections4.BidiMap;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.Section;
-import ghidra.app.util.bin.format.macho.commands.FileSetEntryCommand;
+import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.prelink.MachoPrelinkMap;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.mem.FileBytes;
@@ -89,20 +90,23 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		if (machoInfoList.isEmpty()) {
 			machoInfoList = processPrelinkXml();
 		}
-		Collections.sort(machoInfoList);
 		monitor.initialize(machoInfoList.size());
-		for (int i = 0; i < machoInfoList.size(); i++) {
-			MachoInfo info = machoInfoList.get(i);
-			MachoInfo next = null;
-			if (i < machoInfoList.size() - 1) {
-				next = machoInfoList.get(i + 1);
-			}
-
+		for (MachoInfo info : machoInfoList) {
 			info.processMemoryBlocks();
 			info.markupHeaders();
-			info.addToProgramTree(next); // assumes list is sorted
-
+			info.addToProgramTree();
 			monitor.incrementProgress(1);
+		}
+
+		// Remove empty entries from Program Tree
+		ProgramModule rootModule = listing.getDefaultRootModule();
+		for (Group group : rootModule.getChildren()) {
+			if (group instanceof ProgramFragment) {
+				ProgramFragment fragment = (ProgramFragment) group;
+				if (fragment.isEmpty()) {
+					rootModule.removeChild(fragment.getName());
+				}
+			}
 		}
 
 		// Do things that needed to wait until after the inner Mach-O's are processed
@@ -158,7 +162,6 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		}
 
 		// Create an "info" object for each PRELINK Mach-O, which will make processing them easier
-
 		for (Long machoHeaderOffset : machoHeaderOffsets) {
 			String name = "";
 			MachoPrelinkMap prelink = map.getKey(machoHeaderOffset);
@@ -191,7 +194,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	/**
 	 * Convenience class to store information we need about an individual inner Mach-O
 	 */
-	private class MachoInfo implements Comparable<MachoInfo> {
+	private class MachoInfo {
 
 		private Address headerAddr;
 		private MachHeader header;
@@ -242,33 +245,54 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		/**
 		 * Adds an entry to the program tree for this Mach-O.
 		 * 
-		 * @param next The Mach-O that comes directly after this one.  Could be null if this is the 
-		 *   last one.
 		 * @throws Exception If there was a problem adding this Mach-O to the program tree.
 		 */
-		public void addToProgramTree(MachoInfo next) throws Exception {
-			if (!name.isEmpty()) {
-				ProgramFragment fragment = listing.getDefaultRootModule().createFragment(name);
-				if (next != null) {
-					fragment.move(headerAddr, next.headerAddr.subtract(1));
+		public void addToProgramTree() throws Exception {
+			if (name.isEmpty()) {
+				return;
+			}
+			ProgramModule module;
+			try {
+				module = listing.getDefaultRootModule().createModule(name);
+			}
+			catch (DuplicateNameException e) {
+				log.appendMsg("Failed to add duplicate module to program tree: " + name);
+				return;
+			}
+
+			// Add the segments, because things like the header are not included in any section
+			for (SegmentCommand segment : header.getAllSegments()) {
+				if (segment.getVMsize() == 0) {
+					continue;
 				}
-				else {
-					// This is the last Mach-O, so we'll assume it ends where the section that 
-					// contains it ends.
-					for (Section section : machoHeader.getAllSections()) {
-						Address sectionAddr = space.getAddress(section.getAddress());
-						if (headerAddr.compareTo(sectionAddr) >= 0 &&
-							headerAddr.compareTo(sectionAddr.add(section.getSize() - 1)) <= 0) {
-							fragment.move(headerAddr, sectionAddr.add(section.getSize() - 1));
-						}
+				if (segment.getSegmentName().equals(SegmentNames.SEG_LINKEDIT)) {
+					continue; // __LINKEDIT segment is shared across all modules
+				}
+				Address segmentStart = space.getAddress(segment.getVMaddress());
+				Address segmentEnd = segmentStart.add(segment.getVMsize() - 1);
+				if (!memory.contains(segmentEnd)) {
+					segmentEnd = memory.getBlock(segmentStart).getEnd();
+				}
+				ProgramFragment segmentFragment =
+					module.createFragment(String.format("%s - %s", segment.getSegmentName(), name));
+				segmentFragment.move(segmentStart, segmentEnd);
+
+				// Add the sections, which will remove overlapped ranges from the segment fragment
+				for (Section section : segment.getSections()) {
+					if (section.getSize() == 0) {
+						continue;
 					}
+					Address sectionStart = space.getAddress(section.getAddress());
+					Address sectionEnd = sectionStart.add(section.getSize() - 1);
+					if (!memory.contains(sectionEnd)) {
+						sectionEnd = memory.getBlock(sectionStart).getEnd();
+					}
+					ProgramFragment sectionFragment =
+						module.createFragment(String.format("%s %s - %s", section.getSegmentName(),
+							section.getSectionName(), name));
+					sectionFragment.move(sectionStart, sectionEnd);
 				}
 			}
-		}
-
-		@Override
-		public int compareTo(MachoInfo o) {
-			return headerAddr.compareTo(o.headerAddr);
 		}
 	}
 }

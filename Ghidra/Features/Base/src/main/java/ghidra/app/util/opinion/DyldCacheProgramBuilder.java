@@ -17,13 +17,13 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.TreeSet;
 
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.macho.MachException;
-import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.commands.NList;
+import ghidra.app.util.bin.format.macho.*;
+import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
@@ -307,22 +307,10 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		// Add DyldCache Mach-O's to program tree
 		monitor.setMessage("Adding DYLIB's to program tree...");
 		monitor.initialize(infoSet.size());
-		Iterator<DyldCacheMachoInfo> iter = infoSet.iterator();
-		if (iter.hasNext()) {
-			DyldCacheMachoInfo curr = iter.next();
-			do {
-				DyldCacheMachoInfo next = iter.hasNext() ? iter.next() : null;
-				try {
-					curr.addToProgramTree(dyldCacheHeader, next);
-				}
-				catch (DuplicateNameException exc) {
-					log.appendException(exc);
-				}
-				curr = next;
-				monitor.checkCanceled();
-				monitor.incrementProgress(1);
-			}
-			while (iter.hasNext());
+		for (DyldCacheMachoInfo info : infoSet) {
+			info.addToProgramTree();
+			monitor.checkCanceled();
+			monitor.incrementProgress(1);
 		}
 
 		// Process DyldCache DYLIB memory blocks.
@@ -389,28 +377,58 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		}
 
 		/**
-		 * Adds an entry to the program tree for this Mach-O
+		 * Adds an entry to the program tree for this Mach-O.  An entry consists of a 
+		 * {@link ProgramModule module} named the path of this Mach-O in the DYLD Cache, and
+		 * {@link ProgramFragment fragments} for each of this Mach-O's segments and sections.
 		 * 
-		 * @param dyldCacheHeader The DYLD Cache header
-		 * @param next The Mach-O that comes directly after this one.  Could be null if this
-		 *   is the last one.
 		 * @throws Exception If there was a problem adding this Mach-O to the program tree
 		 */
-		public void addToProgramTree(DyldCacheHeader dyldCacheHeader, DyldCacheMachoInfo next)
-				throws Exception {
-			ProgramFragment fragment = listing.getDefaultRootModule().createFragment(path);
-			if (next != null) {
-				fragment.move(headerAddr, next.headerAddr.subtract(1));
+		public void addToProgramTree() throws Exception {
+			ProgramModule module;
+			try {
+				module = listing.getDefaultRootModule().createModule(path);
 			}
-			else {
-				// This is the last Mach-O, so we'll assume it ends where the mapping that contains 
-				// it ends.
-				for (DyldCacheMappingInfo mappingInfo : dyldCacheHeader.getMappingInfos()) {
-					Address mappingAddr = space.getAddress(mappingInfo.getAddress());
-					if (headerAddr.compareTo(mappingAddr) >= 0 &&
-						headerAddr.compareTo(mappingAddr.add(mappingInfo.getSize() - 1)) <= 0) {
-						fragment.move(headerAddr, mappingAddr.add(mappingInfo.getSize() - 1));
+			catch (DuplicateNameException e) {
+				log.appendMsg("Failed to add duplicate module to program tree: " + path);
+				return;
+			}
+
+			// Add the segments, because things like the header are not included in any section
+			for (SegmentCommand segment : header.getAllSegments()) {
+				if (segment.getVMsize() == 0) {
+					continue;
+				}
+				if (segment.getSegmentName().equals(SegmentNames.SEG_LINKEDIT)) {
+					continue; // __LINKEDIT segment is shared across all modules
+				}
+				Address segmentStart = space.getAddress(segment.getVMaddress());
+				Address segmentEnd = segmentStart.add(segment.getVMsize() - 1);
+				if (!memory.contains(segmentEnd)) {
+					segmentEnd = memory.getBlock(segmentStart).getEnd();
+				}
+				ProgramFragment segmentFragment =
+					module.createFragment(String.format("%s - %s", segment.getSegmentName(), path));
+				segmentFragment.move(segmentStart, segmentEnd);
+
+				// Add the sections, which will remove overlapped ranges from the segment fragment
+				for (Section section : segment.getSections()) {
+					if (section.getSize() == 0) {
+						continue;
 					}
+					Address sectionStart = space.getAddress(section.getAddress());
+					Address sectionEnd = sectionStart.add(section.getSize() - 1);
+					if (!memory.contains(sectionEnd)) {
+						sectionEnd = memory.getBlock(sectionStart).getEnd();
+					}
+					ProgramFragment sectionFragment =
+						module.createFragment(String.format("%s %s - %s", section.getSegmentName(),
+							section.getSectionName(), path));
+					sectionFragment.move(sectionStart, sectionEnd);
+				}
+
+				// If the sections fully filled the segment, we can remove the now-empty segment
+				if (segmentFragment.isEmpty()) {
+					module.removeChild(segmentFragment.getName());
 				}
 			}
 		}
