@@ -1345,7 +1345,7 @@ void Heritage::guardStores(const Address &addr,int4 size,vector<Varnode *> &writ
   for(iter=fd->beginOp(CPUI_STORE);iter!=iterend;++iter) {
     op = *iter;
     if (op->isDead()) continue;
-    AddrSpace *storeSpace = Address::getSpaceFromConst(op->getIn(0)->getAddr());
+    AddrSpace *storeSpace = op->getIn(0)->getSpaceFromConst();
     if ((container == storeSpace && op->usesSpacebasePtr()) ||
 	(spc == storeSpace)) {
       indop = fd->newIndirectOp(op,addr,size,PcodeOp::indirect_store);

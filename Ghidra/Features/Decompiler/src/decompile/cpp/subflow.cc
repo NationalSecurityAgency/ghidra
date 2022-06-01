@@ -2196,7 +2196,7 @@ bool LaneDivide::buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes)
   if (inVars == (TransformVar *)0) return false;
   uintb spaceConst = op->getIn(0)->getOffset();
   int4 spaceConstSize = op->getIn(0)->getSize();
-  AddrSpace *spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());	// Address space being stored to
+  AddrSpace *spc = op->getIn(0)->getSpaceFromConst();	// Address space being stored to
   Varnode *origPtr = op->getIn(1);
   if (origPtr->isFree()) {
     if (!origPtr->isConstant()) return false;
@@ -2244,7 +2244,7 @@ bool LaneDivide::buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 
 {
   uintb spaceConst = op->getIn(0)->getOffset();
   int4 spaceConstSize = op->getIn(0)->getSize();
-  AddrSpace *spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());	// Address space being stored to
+  AddrSpace *spc = op->getIn(0)->getSpaceFromConst();	// Address space being stored to
   Varnode *origPtr = op->getIn(1);
   if (origPtr->isFree()) {
     if (!origPtr->isConstant()) return false;
