@@ -17,6 +17,7 @@ package ghidra.pcode.emu;
 
 import java.lang.reflect.Constructor;
 
+import ghidra.app.emulator.Emulator;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emulate.*;
 import ghidra.pcode.exec.*;
@@ -29,9 +30,23 @@ import ghidra.util.Msg;
 
 /**
  * A p-code thread which incorporates per-architecture state modifiers on concrete bytes
+ * 
+ * <p>
+ * For a complete example of a p-code emulator, see {@link PcodeEmulator}.
+ * 
+ * <p>
+ * TODO: "State modifiers" are a feature of the older {@link Emulator}. They are crudely
+ * incorporated into threads extended from this abstract class, so that they do not yet need to be
+ * ported to this emulator.
  */
 public abstract class AbstractModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 
+	/**
+	 * Glue for incorporating state modifiers
+	 * 
+	 * <p>
+	 * This allows the modifiers to change the context and counter of the thread.
+	 */
 	protected class GlueEmulate extends Emulate {
 		public GlueEmulate(SleighLanguage lang, MemoryState s, BreakTable b) {
 			super(lang, s, b);
@@ -63,6 +78,12 @@ public abstract class AbstractModifiedPcodeThread<T> extends DefaultPcodeThread<
 		}
 	}
 
+	/**
+	 * Glue for incorporating state modifiers
+	 * 
+	 * <p>
+	 * This allows the modifiers to access the thread's state (memory and registers).
+	 */
 	protected class GlueMemoryState extends MemoryState {
 		public GlueMemoryState(Language language) {
 			super(language);
@@ -85,6 +106,12 @@ public abstract class AbstractModifiedPcodeThread<T> extends DefaultPcodeThread<
 		}
 	}
 
+	/**
+	 * Glue for incorporating state modifiers
+	 * 
+	 * <p>
+	 * This allows the modifiers to provider userop definitions.
+	 */
 	protected class GluePcodeThreadExecutor extends PcodeThreadExecutor {
 		public GluePcodeThreadExecutor(SleighLanguage language, PcodeArithmetic<T> arithmetic,
 				PcodeExecutorStatePiece<T, T> state) {
@@ -93,7 +120,7 @@ public abstract class AbstractModifiedPcodeThread<T> extends DefaultPcodeThread<
 
 		@Override
 		public void executeCallother(PcodeOp op, PcodeFrame frame,
-				SleighUseropLibrary<T> library) {
+				PcodeUseropLibrary<T> library) {
 			// Prefer one in the library. Fall-back to state modifier's impl
 			try {
 				super.executeCallother(op, frame, library);
@@ -112,12 +139,19 @@ public abstract class AbstractModifiedPcodeThread<T> extends DefaultPcodeThread<
 
 	protected Address savedCounter;
 
+	/**
+	 * Construct a new thread with the given name belonging to the given machine
+	 * 
+	 * @see PcodeMachine#newThread(String)
+	 * @param name the name of the new thread
+	 * @param machine the machine to which the new thread belongs
+	 */
 	public AbstractModifiedPcodeThread(String name, AbstractPcodeMachine<T> machine) {
 		super(name, machine);
 
 		/**
 		 * These two exist as a way to integrate the language-specific injects that are already
-		 * written for the established concrete emulator.
+		 * written for {@link Emulator}.
 		 */
 		emulate = new GlueEmulate(language, new GlueMemoryState(language),
 			new BreakTableCallBack(language));
@@ -162,7 +196,7 @@ public abstract class AbstractModifiedPcodeThread<T> extends DefaultPcodeThread<
 	}
 
 	/**
-	 * Called by the legacy state modifier to retrieve concrete bytes from the thread's state
+	 * Called by a state modifier to read concrete bytes from the thread's state
 	 * 
 	 * @see {@link MemoryState#getChunk(byte[], AddressSpace, long, int, boolean)}
 	 */
@@ -170,7 +204,7 @@ public abstract class AbstractModifiedPcodeThread<T> extends DefaultPcodeThread<
 			boolean stopOnUnintialized);
 
 	/**
-	 * Called by the legacy state modifier to set concrete bytes in the thread's state
+	 * Called by a state modifier to write concrete bytes to the thread's state
 	 * 
 	 * @see {@link MemoryState#setChunk(byte[], AddressSpace, long, int)}
 	 */

@@ -256,7 +256,8 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests navigation of offcut ranges when coloring is set from a GUI/API point-of-view.
-	 * @throws Exception 
+	 * 
+	 * @throws Exception
 	 */
 	@Test
 	public void testNavigateTopBottomOffcutColorRanges() throws Exception {
@@ -321,7 +322,8 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests navigation of offcut ranges when coloring is set from a plugin point-of-view.
-	 * @throws Exception 
+	 * 
+	 * @throws Exception
 	 */
 	@Test
 	public void testPluginNavigateTopBottomOffcutColorRanges() throws Exception {
@@ -625,13 +627,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void setSelection(FieldPanel fp, FieldSelection sel) {
-		fp.setSelection(sel);
-		Class<?>[] argClasses = new Class<?>[] { EventTrigger.class };
-		Object[] args = new Object[] { EventTrigger.GUI_ACTION };
-
-		runSwing(() -> {
-			invokeInstanceMethod("notifySelectionChanged", fp, argClasses, args);
-		});
+		runSwing(() -> fp.setSelection(sel, EventTrigger.GUI_ACTION));
 	}
 
 	private ActionContext getActionContext() {

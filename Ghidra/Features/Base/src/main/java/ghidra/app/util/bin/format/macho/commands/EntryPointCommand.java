@@ -29,16 +29,14 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents an entry_point_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents an entry_point_command structure 
  */
 public class EntryPointCommand extends LoadCommand {
 	private long entryOffset;
 	private long stackSize;
 
 	EntryPointCommand(BinaryReader reader) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 		entryOffset = reader.readNextLong();
 		stackSize = reader.readNextLong();
 	}

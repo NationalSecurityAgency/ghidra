@@ -30,7 +30,7 @@ import ghidra.util.task.TaskMonitor;
 public abstract class ObsoleteCommand extends LoadCommand {
 
 	public ObsoleteCommand(BinaryReader reader) throws IOException, MachException {
-		initLoadCommand(reader);
+		super(reader);
 		throw new ObsoleteException();
 	}
 

@@ -370,7 +370,7 @@ public class PatchStep implements Step {
 
 	protected Map<AddressSpace, SemisparseByteArray> getPatches(Language language) {
 		PcodeProgram prog = SleighProgramCompiler.compileProgram((SleighLanguage) language,
-			"schedule", List.of(sleigh + ";"), SleighUseropLibrary.nil());
+			"schedule", List.of(sleigh + ";"), PcodeUseropLibrary.nil());
 		// SemisparseArray is a bit overkill, no?
 		Map<AddressSpace, SemisparseByteArray> result = new TreeMap<>();
 		for (PcodeOp op : prog.getCode()) {

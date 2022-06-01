@@ -36,9 +36,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a symtab_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a symtab_command structure 
  */
 public class SymbolTableCommand extends LoadCommand {
 	private int symoff;
@@ -49,7 +47,7 @@ public class SymbolTableCommand extends LoadCommand {
 	private List<NList> symbols = new ArrayList<NList>();
 
 	public SymbolTableCommand(BinaryReader reader, MachHeader header) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 
 		symoff = reader.readNextInt();
 		nsyms = reader.readNextInt();

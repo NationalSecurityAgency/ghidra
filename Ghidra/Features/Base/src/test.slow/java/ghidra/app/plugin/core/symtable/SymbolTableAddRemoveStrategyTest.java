@@ -25,16 +25,21 @@ import org.junit.Test;
 
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.TestTableData;
+import ghidra.program.model.ProgramTestDouble;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.TestAddress;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.*;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.task.TaskMonitor;
 
 public class SymbolTableAddRemoveStrategyTest {
 
+	private static Program DUMMY_PROGRAM = new ProgramTestDouble();
+
 	private SymbolTableAddRemoveStrategy strategy;
 	private SpyTableData spyTableData;
-	private List<Symbol> modelData;
+	private List<SymbolRowObject> modelData;
 
 	@Before
 	public void setUp() throws Exception {
@@ -44,11 +49,11 @@ public class SymbolTableAddRemoveStrategyTest {
 	}
 
 	private SpyTableData createTableData() {
-		Comparator<Symbol> comparator = (s1, s2) -> {
-			return s1.getName().compareTo(s2.getName());
+		Comparator<SymbolRowObject> comparator = (s1, s2) -> {
+			return s1.toString().compareTo(s2.toString()); // based on symbol name
 		};
 		TableSortState sortState = TableSortState.createDefaultSortState(0);
-		TableSortingContext<Symbol> sortContext =
+		TableSortingContext<SymbolRowObject> sortContext =
 			new TableSortingContext<>(sortState, comparator);
 
 		modelData.sort(comparator);
@@ -56,21 +61,21 @@ public class SymbolTableAddRemoveStrategyTest {
 		return new SpyTableData(modelData, sortContext);
 	}
 
-	private List<Symbol> createModelData() {
-		List<Symbol> data = new ArrayList<>();
-		data.add(new TestSymbol(1, new TestAddress(101)));
-		data.add(new TestSymbol(2, new TestAddress(102)));
-		data.add(new TestSymbol(3, new TestAddress(103)));
-		data.add(new TestSymbol(4, new TestAddress(104)));
+	private List<SymbolRowObject> createModelData() {
+		List<SymbolRowObject> data = new ArrayList<>();
+		data.add(new TestSymbolRowObject(new TestSymbol(1, new TestAddress(101))));
+		data.add(new TestSymbolRowObject(new TestSymbol(2, new TestAddress(102))));
+		data.add(new TestSymbolRowObject(new TestSymbol(3, new TestAddress(103))));
+		data.add(new TestSymbolRowObject(new TestSymbol(4, new TestAddress(104))));
 		return data;
 	}
 
 	@Test
 	public void testRemove_DifferentInstance_SameId() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		TestSymbol s = new TestSymbol(1, new TestAddress(101));
+		SymbolRowObject s = new TestSymbolRowObject(new TestSymbol(1, new TestAddress(101)));
 		addRemoves.add(new AddRemoveListItem<>(REMOVE, s));
 
 		strategy.process(addRemoves, spyTableData, TaskMonitor.DUMMY);
@@ -82,9 +87,10 @@ public class SymbolTableAddRemoveStrategyTest {
 	@Test
 	public void testInsert_NewSymbol() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		TestSymbol newSymbol = new TestSymbol(10, new TestAddress(1010));
+		SymbolRowObject newSymbol =
+			new TestSymbolRowObject(new TestSymbol(10, new TestAddress(1010)));
 		addRemoves.add(new AddRemoveListItem<>(ADD, newSymbol));
 
 		strategy.process(addRemoves, spyTableData, TaskMonitor.DUMMY);
@@ -95,9 +101,10 @@ public class SymbolTableAddRemoveStrategyTest {
 	@Test
 	public void testInsertAndRemove_NewSymbol() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		TestSymbol newSymbol = new TestSymbol(10, new TestAddress(1010));
+		SymbolRowObject newSymbol =
+			new TestSymbolRowObject(new TestSymbol(10, new TestAddress(1010)));
 		addRemoves.add(new AddRemoveListItem<>(ADD, newSymbol));
 		addRemoves.add(new AddRemoveListItem<>(REMOVE, newSymbol));
 
@@ -110,9 +117,10 @@ public class SymbolTableAddRemoveStrategyTest {
 
 	@Test
 	public void testChange_NewSymbol() throws Exception {
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		TestSymbol newSymbol = new TestSymbol(10, new TestAddress(1010));
+		SymbolRowObject newSymbol =
+			new TestSymbolRowObject(new TestSymbol(10, new TestAddress(1010)));
 		addRemoves.add(new AddRemoveListItem<>(CHANGE, newSymbol));
 
 		strategy.process(addRemoves, spyTableData, TaskMonitor.DUMMY);
@@ -124,9 +132,9 @@ public class SymbolTableAddRemoveStrategyTest {
 
 	@Test
 	public void testChange_ExisingSymbol() throws Exception {
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		Symbol s = modelData.get(0);
+		SymbolRowObject s = modelData.get(0);
 		addRemoves.add(new AddRemoveListItem<>(CHANGE, s));
 
 		strategy.process(addRemoves, spyTableData, TaskMonitor.DUMMY);
@@ -139,9 +147,10 @@ public class SymbolTableAddRemoveStrategyTest {
 	@Test
 	public void testRemoveAndInsert_NewSymbol() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		TestSymbol newSymbol = new TestSymbol(10, new TestAddress(1010));
+		SymbolRowObject newSymbol =
+			new TestSymbolRowObject(new TestSymbol(10, new TestAddress(1010)));
 		addRemoves.add(new AddRemoveListItem<>(REMOVE, newSymbol));
 		addRemoves.add(new AddRemoveListItem<>(ADD, newSymbol));
 
@@ -155,9 +164,9 @@ public class SymbolTableAddRemoveStrategyTest {
 	@Test
 	public void testRemoveAndInsert_ExistingSymbol() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		Symbol s = modelData.get(0);
+		SymbolRowObject s = modelData.get(0);
 		addRemoves.add(new AddRemoveListItem<>(REMOVE, s));
 		addRemoves.add(new AddRemoveListItem<>(ADD, s));
 
@@ -171,9 +180,9 @@ public class SymbolTableAddRemoveStrategyTest {
 	@Test
 	public void testChangeAndInsert_ExistingSymbol() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		Symbol s = modelData.get(0);
+		SymbolRowObject s = modelData.get(0);
 		addRemoves.add(new AddRemoveListItem<>(CHANGE, s));
 		addRemoves.add(new AddRemoveListItem<>(ADD, s));
 
@@ -187,9 +196,9 @@ public class SymbolTableAddRemoveStrategyTest {
 	@Test
 	public void testChangeAndRemove_ExistingSymbol() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		Symbol s = modelData.get(0);
+		SymbolRowObject s = modelData.get(0);
 		addRemoves.add(new AddRemoveListItem<>(CHANGE, s));
 		addRemoves.add(new AddRemoveListItem<>(REMOVE, s));
 
@@ -203,9 +212,9 @@ public class SymbolTableAddRemoveStrategyTest {
 	@Test
 	public void testChangeAndChange_ExistingSymbol() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		Symbol s = modelData.get(0);
+		SymbolRowObject s = modelData.get(0);
 		addRemoves.add(new AddRemoveListItem<>(CHANGE, s));
 		addRemoves.add(new AddRemoveListItem<>(CHANGE, s));
 
@@ -219,9 +228,9 @@ public class SymbolTableAddRemoveStrategyTest {
 	@Test
 	public void testRemoveAndRemove_ExistingSymbol() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		Symbol s = modelData.get(0);
+		SymbolRowObject s = modelData.get(0);
 		addRemoves.add(new AddRemoveListItem<>(REMOVE, s));
 		addRemoves.add(new AddRemoveListItem<>(REMOVE, s));
 
@@ -235,9 +244,9 @@ public class SymbolTableAddRemoveStrategyTest {
 	@Test
 	public void testInsertAndInsert_ExistingSymbol() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		Symbol s = modelData.get(0);
+		SymbolRowObject s = modelData.get(0);
 		addRemoves.add(new AddRemoveListItem<>(ADD, s));
 		addRemoves.add(new AddRemoveListItem<>(ADD, s));
 
@@ -251,9 +260,9 @@ public class SymbolTableAddRemoveStrategyTest {
 	@Test
 	public void testInsertAndChange_ExistingSymbol() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		Symbol s = modelData.get(0);
+		SymbolRowObject s = modelData.get(0);
 		addRemoves.add(new AddRemoveListItem<>(ADD, s));
 		addRemoves.add(new AddRemoveListItem<>(CHANGE, s));
 
@@ -267,9 +276,9 @@ public class SymbolTableAddRemoveStrategyTest {
 	@Test
 	public void testRemoveAndChange_ExistingSymbol() throws Exception {
 
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		Symbol s = modelData.get(0);
+		SymbolRowObject s = modelData.get(0);
 		addRemoves.add(new AddRemoveListItem<>(REMOVE, s));
 		addRemoves.add(new AddRemoveListItem<>(CHANGE, s));
 
@@ -287,11 +296,11 @@ public class SymbolTableAddRemoveStrategyTest {
 		// Test that symbols get removed when the data up on which they are sorted changes before
 		// the removal takes place
 		//
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		TestSymbol symbol = (TestSymbol) modelData.get(0);
+		TestSymbol symbol = (TestSymbol) modelData.get(0).getSymbol();
 		symbol.setName("UpdatedName");
-		addRemoves.add(new AddRemoveListItem<>(REMOVE, symbol));
+		addRemoves.add(new AddRemoveListItem<>(REMOVE, new TestSymbolRowObject(symbol)));
 
 		strategy.process(addRemoves, spyTableData, TaskMonitor.DUMMY);
 
@@ -307,11 +316,11 @@ public class SymbolTableAddRemoveStrategyTest {
 		// Test that symbols get removed when the data up on which they are sorted changes before
 		// the removal takes place
 		//
-		List<AddRemoveListItem<Symbol>> addRemoves = new ArrayList<>();
+		List<AddRemoveListItem<SymbolRowObject>> addRemoves = new ArrayList<>();
 
-		TestSymbol symbol = (TestSymbol) modelData.get(0);
+		TestSymbol symbol = (TestSymbol) modelData.get(0).getSymbol();
 		symbol.setName("UpdatedName");
-		addRemoves.add(new AddRemoveListItem<>(CHANGE, symbol));
+		addRemoves.add(new AddRemoveListItem<>(CHANGE, new TestSymbolRowObject(symbol)));
 
 		strategy.process(addRemoves, spyTableData, TaskMonitor.DUMMY);
 
@@ -324,23 +333,23 @@ public class SymbolTableAddRemoveStrategyTest {
 // Inner Classes
 //==================================================================================================	
 
-	private class SpyTableData extends TestTableData<Symbol> {
+	private class SpyTableData extends TestTableData<SymbolRowObject> {
 
 		private int removeCount;
 		private int insertCount;
 
-		SpyTableData(List<Symbol> data, TableSortingContext<Symbol> sortContext) {
+		SpyTableData(List<SymbolRowObject> data, TableSortingContext<SymbolRowObject> sortContext) {
 			super(data, sortContext);
 		}
 
 		@Override
-		public boolean remove(Symbol t) {
+		public boolean remove(SymbolRowObject t) {
 			removeCount++;
 			return super.remove(t);
 		}
 
 		@Override
-		public void insert(Symbol value) {
+		public void insert(SymbolRowObject value) {
 			insertCount++;
 			super.insert(value);
 		}
@@ -354,13 +363,41 @@ public class SymbolTableAddRemoveStrategyTest {
 		}
 	}
 
-	private class TestSymbol extends ProxySymbol {
+	private class TestSymbolRowObject extends SymbolRowObject {
 
+		private TestSymbol sym;
+
+		public TestSymbolRowObject(TestSymbol s) {
+			super(s);
+			this.sym = s;
+		}
+
+		@Override
+		public Symbol getSymbol() {
+			return sym;
+		}
+	}
+
+	private class TestSymbol implements Symbol {
+
+		private long id;
+		private Address address;
 		private String name;
 
 		TestSymbol(long id, Address address) {
-			super(id, address);
+			this.id = id;
+			this.address = address;
 			name = id + "@" + address;
+		}
+
+		@Override
+		public long getID() {
+			return id;
+		}
+
+		@Override
+		public Address getAddress() {
+			return address;
 		}
 
 		void setName(String name) {
@@ -370,6 +407,161 @@ public class SymbolTableAddRemoveStrategyTest {
 		@Override
 		public String getName() {
 			return name;
+		}
+
+		@Override
+		public boolean isDeleted() {
+			return false;
+		}
+
+		@Override
+		public String toString() {
+			return name;
+		}
+
+		@Override
+		public Program getProgram() {
+			return DUMMY_PROGRAM;
+		}
+
+		@Override
+		public SymbolType getSymbolType() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ProgramLocation getProgramLocation() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isExternal() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Object getObject() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isPrimary() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isValidParent(Namespace parent) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String[] getPath() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String getName(boolean includeNamespace) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Namespace getParentNamespace() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Symbol getParentSymbol() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isDescendant(Namespace namespace) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public int getReferenceCount() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean hasMultipleReferences() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean hasReferences() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Reference[] getReferences(TaskMonitor monitor) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Reference[] getReferences() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void setName(String newName, SourceType source) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void setNamespace(Namespace newNamespace) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void setNameAndNamespace(String newName, Namespace newNamespace, SourceType source) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean delete() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isPinned() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void setPinned(boolean pinned) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isDynamic() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean setPrimary() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isExternalEntryPoint() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean isGlobal() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void setSource(SourceType source) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public SourceType getSource() {
+			throw new UnsupportedOperationException();
 		}
 	}
 }

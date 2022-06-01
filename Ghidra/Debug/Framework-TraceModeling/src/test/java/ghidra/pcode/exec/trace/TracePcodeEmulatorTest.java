@@ -94,8 +94,8 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				TraceSleighUtils.buildByteExecutor(tb.trace, 0, thread, 0);
 			PcodeProgram initProg = SleighProgramCompiler.compileProgram(
 				(SleighLanguage) tb.language, "test", stateInit,
-				SleighUseropLibrary.nil());
-			exec.execute(initProg, SleighUseropLibrary.nil());
+				PcodeUseropLibrary.nil());
+			exec.execute(initProg, PcodeUseropLibrary.nil());
 		}
 		return thread;
 	}
@@ -476,13 +476,13 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	public void testInject() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
 			final StringBuilder dumped = new StringBuilder();
-			SleighUseropLibrary<byte[]> library = new AnnotatedSleighUseropLibrary<byte[]>() {
+			PcodeUseropLibrary<byte[]> hexLib = new AnnotatedPcodeUseropLibrary<byte[]>() {
 				@Override
 				protected Lookup getMethodLookup() {
 					return MethodHandles.lookup();
 				}
 
-				@SleighUserop
+				@PcodeUserop
 				public void hexdump(byte[] in) {
 					dumped.append(NumericUtilities.convertBytesToString(in));
 				}
@@ -495,7 +495,12 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 					"PUSH 0xdeadbeef",
 					"PUSH 0xbaadf00d"));
 
-			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0, library);
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0) {
+				@Override
+				protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
+					return hexLib;
+				}
+			};
 			emu.inject(tb.addr(0x00400006), List.of("hexdump(RSP);"));
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.overrideContextWithDefault();
@@ -519,13 +524,13 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	public void testInjectedInterrupt() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
 			final StringBuilder dumped = new StringBuilder();
-			SleighUseropLibrary<byte[]> library = new AnnotatedSleighUseropLibrary<byte[]>() {
+			PcodeUseropLibrary<byte[]> hexLib = new AnnotatedPcodeUseropLibrary<byte[]>() {
 				@Override
 				protected Lookup getMethodLookup() {
 					return MethodHandles.lookup();
 				}
 
-				@SleighUserop
+				@PcodeUserop
 				public void hexdump(byte[] in) {
 					dumped.append(NumericUtilities.convertBytesToString(in));
 				}
@@ -538,7 +543,12 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 					"PUSH 0xdeadbeef",
 					"PUSH 0xbaadf00d"));
 
-			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0, library);
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0) {
+				@Override
+				protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
+					return hexLib;
+				}
+			};
 			emu.inject(tb.addr(0x00400006), List.of(
 				"hexdump(RSP);",
 				"emu_swi();",

@@ -36,8 +36,8 @@ public abstract class AbstractReadsTargetPcodeExecutorState
 
 	abstract class AbstractReadsTargetCachedSpace extends CachedSpace {
 		public AbstractReadsTargetCachedSpace(Language language, AddressSpace space,
-				TraceMemorySpace source, long snap) {
-			super(language, space, source, snap);
+				TraceMemorySpace backing, long snap) {
+			super(language, space, backing, snap);
 		}
 
 		protected abstract void fillUninitialized(AddressSet uninitialized);
@@ -47,15 +47,15 @@ public abstract class AbstractReadsTargetPcodeExecutorState
 		}
 
 		protected AddressSet computeUnknown(AddressSet uninitialized) {
-			return uninitialized.subtract(source.getAddressesWithState(snap, uninitialized,
+			return uninitialized.subtract(backing.getAddressesWithState(snap, uninitialized,
 				s -> s != null && s != TraceMemoryState.UNKNOWN));
 		}
 
 		@Override
 		public byte[] read(long offset, int size) {
-			if (source != null) {
+			if (backing != null) {
 				AddressSet uninitialized =
-					addrSet(cache.getUninitialized(offset, offset + size - 1));
+					addrSet(bytes.getUninitialized(offset, offset + size - 1));
 				if (uninitialized.isEmpty()) {
 					return super.read(offset, size);
 				}
@@ -63,7 +63,7 @@ public abstract class AbstractReadsTargetPcodeExecutorState
 				fillUninitialized(uninitialized);
 
 				AddressSet unknown =
-					computeUnknown(addrSet(cache.getUninitialized(offset, offset + size - 1)));
+					computeUnknown(addrSet(bytes.getUninitialized(offset, offset + size - 1)));
 				if (!unknown.isEmpty()) {
 					warnUnknown(unknown);
 				}

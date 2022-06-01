@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -334,7 +335,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * <p>
 	 * <b>Note: </b>See the usage note at the header of this class concerning how tree state
 	 * is used relative to the <code>equals()</code> method.
-	 * 
+	 *
 	 * @param state the state to restore
 	 *
 	 * @see #getTreeState()
@@ -582,7 +583,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * been replaced by a new node that is equal, but a different instance.  One way this happens
 	 * is if the tree is filtered and therefor the displayed nodes are clones of the model nodes.
 	 * This can also happen if the tree nodes are rebuilt for some reason.
-	 * 
+	 *
 	 * @param node the node
 	 * @return the corresponding model node in the tree.  If the tree is filtered the viewed node
 	 *         will be a clone of the corresponding model node.
@@ -596,7 +597,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * been replaced by a new node that is equal, but a different instance.  One way this happens
 	 * is if the tree is filtered and therefor the displayed nodes are clones of the model nodes.
 	 * This can also happen if the tree nodes are rebuilt for some reason.
-	 * 
+	 *
 	 * @param path the path of the node
 	 * @return the corresponding model node in the tree.  If the tree is filtered the viewed node
 	 *         will be a clone of the corresponding model node.
@@ -609,7 +610,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * Gets the view node for the given node. This is useful to translate to a tree path that is
 	 * valid for the currently displayed tree.  (Remember that if the tree is filtered, then the
 	 * displayed nodes are clones of the model nodes.)
-	 * 
+	 *
 	 * @param node the node
 	 * @return the current node in the displayed (possibly filtered) tree
 	 */
@@ -621,7 +622,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * Gets the view node for the given path. This is useful to translate to a tree path that is
 	 * valid for the currently displayed tree.  (Remember that if the tree is filtered, then the
 	 * displayed nodes are clones of the model nodes.)
-	 * 
+	 *
 	 * @param path the path of the node
 	 * @return the current node in the displayed (possibly filtered) tree
 	 */
@@ -760,7 +761,7 @@ public class GTree extends JPanel implements BusyListener {
 
 	/**
 	 * Returns true if the given JTree is the actual JTree used by this GTree.
-	 * 
+	 *
 	 * @param jTree the tree to test
 	 * @return true if the given JTree is the actual JTree used by this GTree.
 	 */
@@ -773,7 +774,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * <P>
 	 * NOTE: if this method is not called from the Swing thread, then the root node will be set
 	 * later on the Swing thread.  That is, this method will return before the work has been done.
-	 * 
+	 *
 	 * @param rootNode The node to set as the new root.
 	 */
 	public void setRootNode(GTreeNode rootNode) {
@@ -916,6 +917,13 @@ public class GTree extends JPanel implements BusyListener {
 		return paths;
 	}
 
+	public List<GTreeNode> getSelectedNodes() {
+		TreePath[] paths = getSelectionPaths();
+		return Arrays.stream(paths)
+				.map(tp -> (GTreeNode) tp.getLastPathComponent())
+				.collect(Collectors.toList());
+	}
+
 	public boolean isExpanded(TreePath treePath) {
 		return tree.isExpanded(treePath);
 	}
@@ -1023,20 +1031,20 @@ public class GTree extends JPanel implements BusyListener {
 	 * becomes available to the model.  This method will ensure that the named child passes any
 	 * current filter in order for the child to appear in the tree.  This effect is temporary and
 	 * will be undone when next the filter changes.
-	 * 
+	 *
 	 * <p>This method is intended to be used by clients using an asynchronous node model, where
 	 * new nodes will get created by application-level events.  Such clients may wish to perform
 	 * work when newly created nodes become available.  This method simplifies the concurrent
 	 * nature of the GTree, asynchronous nodes and the processing of asynchronous application-level
 	 * events by providing a callback mechanism for clients.  <b>This method is non-blocking.</b>
-	 * 
+	 *
 	 * <p>Note: this method assumes that the given parent node is in the view and not filtered
 	 * out of the view.  This method makes no attempt to ensure the given parent node passes any
 	 * existing filter.
-	 * 
+	 *
 	 * <p>Note: this method will not wait forever for the given node to appear.  It will eventually
 	 * give up if the node never arrives.
-	 * 
+	 *
 	 * @param parent the model's parent node.  If the view's parent node is passed, it will
 	 *               be translated to the model node.
 	 * @param childName the name of the desired child
@@ -1046,17 +1054,17 @@ public class GTree extends JPanel implements BusyListener {
 			Consumer<GTreeNode> consumer) {
 
 		/*
-		
+
 			If the GTree were to use Java's CompletableStage API, then the code below
 			could be written thusly:
-			
+
 			tree.getNewNode(modelParent, newName)
 				.thenCompose(newModelChild -> {
 			 		tree.ignoreFilter(newModelChild);
 			 		return tree.getNewNode(viewParent, newName);
 			 	))
 			 	.thenAccept(consumer);
-		
+
 		*/
 
 		// ensure we operate on the model node which will always have the given child not the view
@@ -1075,7 +1083,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * Requests that the node with the given name, in the given parent, be edited.  This operation
 	 * is asynchronous.  This request will be buffered as needed to wait for the given node to be
 	 * added to the parent, up to a timeout period.
-	 * 
+	 *
 	 * @param parent the parent node
 	 * @param childName the name of the child to edit
 	 */
@@ -1101,7 +1109,7 @@ public class GTree extends JPanel implements BusyListener {
 
 	/**
 	 * Requests that the node be edited.  This operation is asynchronous.
-	 * 
+	 *
 	 * @param node the node to edit
 	 */
 	public void startEditing(GTreeNode node) {
@@ -1269,7 +1277,7 @@ public class GTree extends JPanel implements BusyListener {
 	/**
 	 * Used to run tree tasks.  This method is not meant for general clients of this tree, but
 	 * rather for tasks to tell the tree to perform subtasks.
-	 * 
+	 *
 	 * @param task the task to run
 	 */
 	public void runTask(GTreeTask task) {

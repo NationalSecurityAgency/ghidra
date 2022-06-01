@@ -169,7 +169,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 	protected List<PcodeRow> format(List<String> sleigh) {
 		SleighLanguage language = (SleighLanguage) getToyBE64Language();
 		PcodeProgram prog = SleighProgramCompiler.compileProgram(language, "test", sleigh,
-			SleighUseropLibrary.nil());
+			PcodeUseropLibrary.nil());
 		PcodeExecutor<byte[]> executor =
 			new PcodeExecutor<>(language, PcodeArithmetic.BYTES_BE, null);
 		PcodeFrame frame = executor.begin(prog);

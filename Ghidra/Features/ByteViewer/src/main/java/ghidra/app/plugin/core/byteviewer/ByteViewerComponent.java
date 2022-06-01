@@ -178,7 +178,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	 */
 	@Override
 	public void selectionChanged(FieldSelection selection, EventTrigger trigger) {
-
 		if (blockSet == null || doingRefresh) {
 			return;
 		}

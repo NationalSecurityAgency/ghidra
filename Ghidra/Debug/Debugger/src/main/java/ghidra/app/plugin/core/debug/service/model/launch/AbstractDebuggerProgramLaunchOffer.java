@@ -17,31 +17,38 @@ package ghidra.app.plugin.core.debug.service.model.launch;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
-import ghidra.app.services.DebuggerModelService;
-import ghidra.async.AsyncUtils;
-import ghidra.async.SwingExecutorService;
+import ghidra.app.services.*;
+import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.async.*;
 import ghidra.dbg.*;
-import ghidra.dbg.target.TargetLauncher;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
-import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ProgramUserData;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.util.ProgramLocation;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceLocation;
+import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
+import ghidra.util.datastruct.CollectionChangeListener;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.XmlUtilities;
 
@@ -69,6 +76,146 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 
 	protected List<String> getLauncherPath() {
 		return PathUtils.parse("");
+	}
+
+	protected long getTimeoutMillis() {
+		return 10000;
+	}
+
+	/**
+	 * Listen for the launched target in the model
+	 * 
+	 * <p>
+	 * The abstract offer will invoke this before invoking the launch command, so there should be no
+	 * need to replay. Once the target has been found, the listener must remove itself. The default
+	 * is to just listen for the first live {@link TargetProcess} that appears. See
+	 * {@link DebugModelConventions#isProcessAlive(TargetProcess)}.
+	 * 
+	 * @param model the model
+	 * @return a future that completes with the target object
+	 */
+	protected CompletableFuture<TargetObject> listenForTarget(DebuggerObjectModel model) {
+		var result = new CompletableFuture<TargetObject>() {
+			DebuggerModelListener listener = new DebuggerModelListener() {
+				protected void checkObject(TargetObject object) {
+					if (DebugModelConventions.liveProcessOrNull(object) == null) {
+						return;
+					}
+					complete(object);
+					model.removeModelListener(this);
+				}
+
+				@Override
+				public void created(TargetObject object) {
+					checkObject(object);
+				}
+
+				@Override
+				public void attributesChanged(TargetObject object, Collection<String> removed,
+						Map<String, ?> added) {
+					if (!added.containsKey(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)) {
+						return;
+					}
+					checkObject(object);
+				}
+			};
+		};
+		model.addModelListener(result.listener);
+		result.exceptionally(ex -> {
+			model.removeModelListener(result.listener);
+			return null;
+		});
+		return result;
+	}
+
+	/**
+	 * Listen for the recording of a given target
+	 * 
+	 * @param service the model service
+	 * @param target the expected target
+	 * @return a future that completes with the recorder
+	 */
+	protected CompletableFuture<TraceRecorder> listenForRecorder(DebuggerModelService service,
+			TargetObject target) {
+		var result = new CompletableFuture<TraceRecorder>() {
+			CollectionChangeListener<TraceRecorder> listener = new CollectionChangeListener<>() {
+				@Override
+				public void elementAdded(TraceRecorder element) {
+					if (element.getTarget() == target) {
+						complete(element);
+						service.removeTraceRecordersChangedListener(this);
+					}
+				}
+			};
+		};
+		service.addTraceRecordersChangedListener(result.listener);
+		result.exceptionally(ex -> {
+			service.removeTraceRecordersChangedListener(result.listener);
+			return null;
+		});
+		return result;
+	}
+
+	protected Address getMappingProbeAddress() {
+		AddressIterator eepi = program.getSymbolTable().getExternalEntryPointIterator();
+		if (eepi.hasNext()) {
+			return eepi.next();
+		}
+		InstructionIterator ii = program.getListing().getInstructions(true);
+		if (ii.hasNext()) {
+			return ii.next().getAddress();
+		}
+		AddressSetView es = program.getMemory().getExecuteSet();
+		if (!es.isEmpty()) {
+			return es.getMinAddress();
+		}
+		if (!program.getMemory().isEmpty()) {
+			return program.getMinAddress();
+		}
+		return null; // There's no hope
+	}
+
+	protected CompletableFuture<Void> listenForMapping(
+			DebuggerStaticMappingService mappingService, TraceRecorder recorder) {
+		ProgramLocation probe = new ProgramLocation(program, getMappingProbeAddress());
+		Trace trace = recorder.getTrace();
+		var result = new CompletableFuture<Void>() {
+			DebuggerStaticMappingChangeListener listener = (affectedTraces, affectedPrograms) -> {
+				if (!affectedPrograms.contains(program) &&
+					!affectedTraces.contains(trace)) {
+					return;
+				}
+				check();
+			};
+
+			protected void check() {
+				TraceLocation result =
+					mappingService.getOpenMappedLocation(trace, probe, recorder.getSnap());
+				if (result == null) {
+					return;
+				}
+				complete(null);
+				mappingService.removeChangeListener(listener);
+			}
+		};
+		mappingService.addChangeListener(result.listener);
+		result.check();
+		result.exceptionally(ex -> {
+			mappingService.removeChangeListener(result.listener);
+			return null;
+		});
+		return result;
+	}
+
+	protected Collection<ModuleMapEntry> invokeMapper(TaskMonitor monitor,
+			DebuggerStaticMappingService mappingService, TraceRecorder recorder)
+			throws CancelledException {
+		Map<TraceModule, ModuleMapProposal> map =
+			mappingService.proposeModuleMaps(recorder.getTrace().getModuleManager().getAllModules(),
+				List.of(program));
+		Collection<ModuleMapEntry> proposal = MapProposal.flatten(map.values());
+		mappingService.addModuleMappings(proposal, monitor, true);
+		return proposal;
 	}
 
 	private void saveLauncherArgs(Map<String, ?> args,
@@ -259,8 +406,8 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		}
 	}
 
-	protected CompletableFuture<DebuggerObjectModel> connect(boolean prompt) {
-		DebuggerModelService service = tool.getService(DebuggerModelService.class);
+	protected CompletableFuture<DebuggerObjectModel> connect(DebuggerModelService service,
+			boolean prompt) {
 		DebuggerModelFactory factory = getModelFactory();
 		if (prompt) {
 			return service.showConnectDialog(factory);
@@ -271,30 +418,114 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		});
 	}
 
+	protected CompletableFuture<TargetLauncher> findLauncher(DebuggerObjectModel m) {
+		List<String> launcherPath = getLauncherPath();
+		TargetObjectSchema schema = m.getRootSchema().getSuccessorSchema(launcherPath);
+		if (!schema.getInterfaces().contains(TargetLauncher.class)) {
+			throw new AssertionError("LaunchOffer / model implementation error: " +
+				"The given launcher path is not a TargetLauncher, according to its schema");
+		}
+		return new ValueExpecter(m, launcherPath).thenApply(o -> (TargetLauncher) o);
+	}
+
+	// Eww.
+	protected CompletableFuture<Void> launch(TargetLauncher launcher,
+			boolean prompt) {
+		Map<String, ?> args = getLauncherArgs(launcher.getParameters(), prompt);
+		if (args == null) {
+			throw new CancellationException();
+		}
+		return launcher.launch(args);
+	}
+
+	protected TargetObject onTimedOutTarget(TaskMonitor monitor) {
+		monitor.setMessage("Timed out waiting for target. Aborting.");
+		Msg.showError(this, null, getButtonTitle(), "Timed out waiting for target.");
+		throw new CancellationException("Timed out");
+	}
+
+	protected CompletableFuture<TraceRecorder> waitRecorder(DebuggerModelService service,
+			TargetObject target) {
+		CompletableFuture<TraceRecorder> futureRecorder = listenForRecorder(service, target);
+		TraceRecorder recorder = service.getRecorder(target);
+		if (recorder != null) {
+			futureRecorder.cancel(true);
+			return CompletableFuture.completedFuture(recorder);
+		}
+		return futureRecorder;
+	}
+
+	protected TraceRecorder onTimedOutRecorder(TaskMonitor monitor, DebuggerModelService service,
+			TargetObject target) {
+		monitor.setMessage("Timed out waiting for recording. Invoking the recorder.");
+		return service.recordTargetPromptOffers(target);
+	}
+
+	protected Void onTimedOutMapping(TaskMonitor monitor,
+			DebuggerStaticMappingService mappingService, TraceRecorder recorder) {
+		monitor.setMessage("Timed out waiting for module map. Invoking the mapper.");
+		Collection<ModuleMapEntry> mapped;
+		try {
+			mapped = invokeMapper(monitor, mappingService, recorder);
+		}
+		catch (CancelledException e) {
+			throw new CancellationException(e.getMessage());
+		}
+		if (mapped.isEmpty()) {
+			monitor.setMessage(
+				"Could not formulate a mapping with the target program. " +
+					"Continuing without one.");
+			Msg.showWarn(this, null, "Launch " + program,
+				"The resulting target process has no mapping to the static image " +
+					program + ". Intervention is required before static and dynamic " +
+					"addresses can be translated. Check the target's module list.");
+		}
+		return null;
+	}
+
 	@Override
 	public CompletableFuture<Void> launchProgram(TaskMonitor monitor, boolean prompt) {
-		monitor.initialize(2);
+		DebuggerModelService service = tool.getService(DebuggerModelService.class);
+		DebuggerStaticMappingService mappingService =
+			tool.getService(DebuggerStaticMappingService.class);
+		monitor.initialize(4);
 		monitor.setMessage("Connecting");
-		return connect(prompt).thenComposeAsync(m -> {
-			List<String> launcherPath = getLauncherPath();
-			TargetObjectSchema schema = m.getRootSchema().getSuccessorSchema(launcherPath);
-			if (!schema.getInterfaces().contains(TargetLauncher.class)) {
-				throw new AssertionError("LaunchOffer / model implementation error: " +
-					"The given launcher path is not a TargetLauncher, according to its schema");
-			}
-			return new ValueExpecter(m, launcherPath);
+		var locals = new Object() {
+			CompletableFuture<TargetObject> futureTarget;
+		};
+		return connect(service, prompt).thenComposeAsync(m -> {
+			monitor.incrementProgress(1);
+			monitor.setMessage("Finding Launcher");
+			return findLauncher(m);
 		}, SwingExecutorService.LATER).thenCompose(l -> {
 			monitor.incrementProgress(1);
 			monitor.setMessage("Launching");
-			TargetLauncher launcher = (TargetLauncher) l;
-			Map<String, ?> args = getLauncherArgs(launcher.getParameters(), prompt);
-			if (args == null) {
-				// Cancelled
-				return AsyncUtils.NIL;
-			}
-			return launcher.launch(args);
-		}).thenRun(() -> {
+			locals.futureTarget = listenForTarget(l.getModel());
+			return launch(l, prompt);
+		}).thenCompose(__ -> {
 			monitor.incrementProgress(1);
+			monitor.setMessage("Waiting for target");
+			return AsyncTimer.DEFAULT_TIMER.mark()
+					.timeOut(locals.futureTarget, getTimeoutMillis(),
+						() -> onTimedOutTarget(monitor));
+		}).thenCompose(t -> {
+			monitor.incrementProgress(1);
+			monitor.setMessage("Waiting for recorder");
+			return AsyncTimer.DEFAULT_TIMER.mark()
+					.timeOut(waitRecorder(service, t), getTimeoutMillis(),
+						() -> onTimedOutRecorder(monitor, service, t));
+		}).thenCompose(r -> {
+			monitor.incrementProgress(1);
+			monitor.setMessage("Confirming program is mapped to target");
+			CompletableFuture<Void> futureMapped = listenForMapping(mappingService, r);
+			return AsyncTimer.DEFAULT_TIMER.mark()
+					.timeOut(futureMapped, getTimeoutMillis(),
+						() -> onTimedOutMapping(monitor, mappingService, r));
+		}).exceptionally(ex -> {
+			if (AsyncUtils.unwrapThrowable(ex) instanceof CancellationException) {
+				return null;
+			}
+			return ExceptionUtils.rethrow(ex);
 		});
 	}
 }

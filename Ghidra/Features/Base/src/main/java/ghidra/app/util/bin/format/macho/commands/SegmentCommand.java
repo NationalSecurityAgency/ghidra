@@ -31,9 +31,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a segment_command and segment_command_64 structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a segment_command and segment_command_64 structure 
  */
 public class SegmentCommand extends LoadCommand {
 
@@ -51,7 +49,7 @@ public class SegmentCommand extends LoadCommand {
 	private List<Section> sections = new ArrayList<Section>();
 
 	public SegmentCommand(BinaryReader reader, boolean is32bit) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 		this.is32bit = is32bit;
 
 		segname = reader.readNextAsciiString(MachConstants.NAME_LENGTH);
@@ -107,6 +105,10 @@ public class SegmentCommand extends LoadCommand {
 	}
 
 	public long getVMaddress() {
+		// Mask off possible chained fixup found in kernelcache segment addresses
+		if ((vmaddr & 0xfff000000000L) == 0xfff000000000L) {
+			return vmaddr | 0xffff000000000000L;
+		}
 		return vmaddr;
 	}
 

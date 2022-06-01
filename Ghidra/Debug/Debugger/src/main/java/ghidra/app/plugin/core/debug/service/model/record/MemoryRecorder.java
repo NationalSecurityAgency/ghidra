@@ -18,8 +18,6 @@ package ghidra.app.plugin.core.debug.service.model.record;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import ghidra.dbg.error.DebuggerMemoryAccessException;
@@ -137,43 +135,11 @@ class MemoryRecorder {
 		return true;
 	}
 
-	protected Collector<AddressRange, AddressSet, AddressSet> toAddressSet() {
-		return new Collector<>() {
-			@Override
-			public Supplier<AddressSet> supplier() {
-				return AddressSet::new;
-			}
-
-			@Override
-			public BiConsumer<AddressSet, AddressRange> accumulator() {
-				return AddressSet::add;
-			}
-
-			@Override
-			public BinaryOperator<AddressSet> combiner() {
-				return (s1, s2) -> {
-					s1.add(s2);
-					return s1;
-				};
-			}
-
-			@Override
-			public Function<AddressSet, AddressSet> finisher() {
-				return Function.identity();
-			}
-
-			@Override
-			public Set<Characteristics> characteristics() {
-				return Set.of();
-			}
-		};
-	}
-
 	public AddressSetView getAccessible() {
 		synchronized (regions) {
 			return regions.values()
 					.stream()
-					.collect(toAddressSet());
+					.collect(AddressCollectors.toAddressSet());
 		}
 	}
 }

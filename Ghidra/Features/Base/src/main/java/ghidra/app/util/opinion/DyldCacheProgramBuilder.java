@@ -46,7 +46,6 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 	private boolean shouldProcessSymbols;
 	private boolean shouldCreateDylibSections;
-	private boolean shouldAddRelocationEntries;
 	private boolean shouldCombineSplitFiles;
 
 	/**
@@ -58,8 +57,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
 	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections; 
 	 *   otherwise, false
-	 * @param shouldAddRelocationEntries True to create a relocation entry for each fixed up pointer
-	 *   in pointer chain
+	 * @param shouldAddChainedFixupsRelocations True if relocations should be added for chained 
+	 *   fixups; otherwise, false
 	 * @param shouldCombineSplitFiles True if split DYLD Cache files should be automatically 
 	 *   imported and combined into 1 program; otherwise, false
 	 * @param log The log
@@ -67,12 +66,11 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 */
 	protected DyldCacheProgramBuilder(Program program, ByteProvider provider, FileBytes fileBytes,
 			boolean shouldProcessSymbols, boolean shouldCreateDylibSections,
-			boolean shouldAddRelocationEntries, boolean shouldCombineSplitFiles, MessageLog log,
-			TaskMonitor monitor) {
-		super(program, provider, fileBytes, log, monitor);
+			boolean shouldAddChainedFixupsRelocations, boolean shouldCombineSplitFiles,
+			MessageLog log, TaskMonitor monitor) {
+		super(program, provider, fileBytes, shouldAddChainedFixupsRelocations, log, monitor);
 		this.shouldProcessSymbols = shouldProcessSymbols;
 		this.shouldCreateDylibSections = shouldCreateDylibSections;
-		this.shouldAddRelocationEntries = shouldAddRelocationEntries;
 		this.shouldCombineSplitFiles = shouldCombineSplitFiles;
 	}
 
@@ -85,8 +83,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
 	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections; 
 	 *   otherwise, false
-	 * @param addRelocationEntries True to create a relocation entry for each fixed up pointer in 
-	 *   pointer chain; otherwise, false
+	 * @param shouldAddChainedFixupsRelocations True if relocations should be added for chained 
+	 *   fixups; otherwise, false
 	 * @param shouldCombineSplitFiles True if split DYLD Cache files should be automatically 
 	 *   imported and combined into 1 program; otherwise, false
 	 * @param log The log
@@ -95,11 +93,11 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
 			boolean shouldProcessSymbols, boolean shouldCreateDylibSections,
-			boolean addRelocationEntries, boolean shouldCombineSplitFiles, MessageLog log,
-			TaskMonitor monitor) throws Exception {
+			boolean shouldAddChainedFixupsRelocations, boolean shouldCombineSplitFiles,
+			MessageLog log, TaskMonitor monitor) throws Exception {
 		DyldCacheProgramBuilder dyldCacheProgramBuilder = new DyldCacheProgramBuilder(program,
 			provider, fileBytes, shouldProcessSymbols, shouldCreateDylibSections,
-			addRelocationEntries, shouldCombineSplitFiles, log, monitor);
+			shouldAddChainedFixupsRelocations, shouldCombineSplitFiles, log, monitor);
 		dyldCacheProgramBuilder.build();
 	}
 
@@ -268,7 +266,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			int version = info.getVersion();
 
 			log.appendMsg("Fixing page chains version: " + version);
-			info.fixPageChains(program, dyldCacheHeader, shouldAddRelocationEntries, log, monitor);
+			info.fixPageChains(program, dyldCacheHeader, shouldAddChainedFixupsRelocations, log,
+				monitor);
 		}
 	}
 

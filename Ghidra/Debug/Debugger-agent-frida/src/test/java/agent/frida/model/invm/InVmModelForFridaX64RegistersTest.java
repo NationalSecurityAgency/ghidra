@@ -15,13 +15,17 @@
  */
 package agent.frida.model.invm;
 
-import agent.frida.model.AbstractModelForFridaX64RegistersTest;
+import org.junit.experimental.categories.Category;
 
+import agent.frida.model.AbstractModelForFridaX64RegistersTest;
+import generic.test.category.NightlyCategory;
+
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class InVmModelForFridaX64RegistersTest extends AbstractModelForFridaX64RegistersTest {
 
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmFridaModelHost();
 	}
-	
+
 }

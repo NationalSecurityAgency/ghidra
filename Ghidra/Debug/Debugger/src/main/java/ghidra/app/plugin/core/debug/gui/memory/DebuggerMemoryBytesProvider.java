@@ -22,16 +22,15 @@ import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.ActionContext;
 import docking.action.DockingAction;
-import docking.action.MenuData;
+import docking.action.ToggleDockingAction;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.plugin.core.byteviewer.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractFollowsCurrentThreadAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.app.plugin.core.format.ByteBlock;
@@ -74,21 +73,6 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 			return false; // for reg/pc tracking
 		}
 		return true;
-	}
-
-	protected class FollowsCurrentThreadAction extends AbstractFollowsCurrentThreadAction {
-		public FollowsCurrentThreadAction() {
-			super(plugin);
-			setMenuBarData(new MenuData(new String[] { NAME }));
-			setSelected(true);
-			addLocalAction(this);
-			setEnabled(true);
-		}
-
-		@Override
-		public void actionPerformed(ActionContext context) {
-			doSetFollowsCurrentThread(isSelected());
-		}
 	}
 
 	protected class ForMemoryBytesGoToTrait extends DebuggerGoToTrait {
@@ -150,7 +134,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	private final AutoService.Wiring autoServiceWiring;
 
 	protected DockingAction actionGoTo;
-	protected FollowsCurrentThreadAction actionFollowsCurrentThread;
+	protected ToggleDockingAction actionFollowsCurrentThread;
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoReadMemory;
 	protected DockingAction actionRefreshSelectedMemory;
 	protected MultiStateDockingAction<LocationTrackingSpec> actionTrackLocation;
@@ -280,7 +264,12 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		initTraits();
 
 		if (!isMainViewer()) {
-			actionFollowsCurrentThread = new FollowsCurrentThreadAction();
+			actionFollowsCurrentThread = FollowsCurrentThreadAction.builder(plugin)
+					.enabled(true)
+					.selected(true)
+					.onAction(
+						ctx -> doSetFollowsCurrentThread(actionFollowsCurrentThread.isSelected()))
+					.buildAndInstallLocal(this);
 		}
 
 		actionGoTo = goToTrait.installAction();

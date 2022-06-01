@@ -390,6 +390,9 @@ public interface ReferenceManager {
 
 	/**
 	 * Associates the given reference with the given symbol.
+	 * Applies to memory references only where a specified label symbol must have 
+	 * an address which matches the reference to-address.  Stack and register 
+	 * reference associations to variable symbols are always inferred.
 	 * @param s the symbol to associate with the given reference.
 	 * @param ref the reference to associate with the given symbol
 	 * @throws IllegalArgumentException If the given reference does not already

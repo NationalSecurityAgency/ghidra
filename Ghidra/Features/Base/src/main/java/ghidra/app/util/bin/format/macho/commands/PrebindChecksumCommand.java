@@ -29,15 +29,13 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a prebind_cksum_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a prebind_cksum_command structure 
  */
 public class PrebindChecksumCommand extends LoadCommand {
 	private int cksum;
 
 	PrebindChecksumCommand(BinaryReader reader) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 		cksum = reader.readNextInt();
 	}
 
