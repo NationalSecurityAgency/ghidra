@@ -15,10 +15,14 @@
  */
 package ghidra.util.filechooser;
 
+import java.util.List;
+
 import java.io.File;
 import java.io.FileFilter;
 
 import javax.swing.Icon;
+
+import utility.function.Callback;
 
 /**
  * Interface for the GhidraFileChooser data model.
@@ -28,13 +32,15 @@ import javax.swing.Icon;
  */
 public interface GhidraFileChooserModel {
 	/**
-	 * Set the model listener.
-	 * @param l the new model listener
+	 * Set the model update callback.
+	 * 
+	 * @param callback the new model update callback handler
 	 */
-	public void setListener(GhidraFileChooserListener l);
+	public void setModelUpdateCallback(Callback callback);
 
 	/**
 	 * Returns the home directory.
+	 * 
 	 * @return the home directory
 	 */
 	public File getHomeDirectory();
@@ -43,12 +49,13 @@ public interface GhidraFileChooserModel {
 	 * Returns the user's desktop directory, as defined by their operating system and/or their windowing environment, or
 	 * null if there is no desktop directory.<p>
 	 * Example: "/home/the_user/Desktop" or "c:/Users/the_user/Desktop"
+	 * 
 	 * @return desktop directory
 	 */
 	public File getDesktopDirectory();
 
 	/**
-	 * Returns the root drives/directories.
+	 * Returns a list of the root drives/directories.
 	 * <p>
 	 * On windows, "C:\", "D:\", etc.
 	 * <p>
@@ -57,18 +64,20 @@ public interface GhidraFileChooserModel {
 	 * @param forceUpdate if true, request a fresh listing, if false allow a cached result 
 	 * @return the root drives
 	 */
-	public File[] getRoots(boolean forceUpdate);
+	public List<File> getRoots(boolean forceUpdate);
 
 	/**
 	 * Returns an array of the files that 
 	 * exist in the specified directory.
+	 * 
 	 * @param directory the directory
-	 * @return an array of files
+	 * @return list of files
 	 */
-	public File[] getListing(File directory, FileFilter filter);
+	public List<File> getListing(File directory, FileFilter filter);
 
 	/**
 	 * Returns an icon for the specified file.
+	 * 
 	 * @param file the file
 	 * @return an icon for the specified file
 	 */

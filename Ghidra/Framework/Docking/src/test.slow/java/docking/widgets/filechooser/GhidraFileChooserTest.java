@@ -1338,8 +1338,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		DirectoryList dirlist = getListView();
 		DirectoryListModel listModel = (DirectoryListModel) dirlist.getModel();
-		File[] roots = chooser.getModel().getRoots(false);
-		assertEquals(roots.length, listModel.getSize());
+		List<File> roots = chooser.getModel().getRoots(false);
+		assertEquals(roots.size(), listModel.getSize());
 		for (File element : roots) {
 			listModel.contains(element);
 		}
@@ -1450,8 +1450,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		// check the chooser contents
 		DirectoryList dirlist = getListView();
 		DirectoryListModel listModel = (DirectoryListModel) dirlist.getModel();
-		File[] listing = chooser.getModel().getListing(homeDir, null);
-		assertEquals(listing.length, listModel.getSize());
+		List<File> listing = chooser.getModel().getListing(homeDir, null);
+		assertEquals(listing.size(), listModel.getSize());
 		for (File element : listing) {
 			listModel.contains(element);
 		}
