@@ -90,7 +90,8 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) || (action instanceof PointerAction) ||
-				(action instanceof HexNumbersAction)) {
+				(action instanceof HexNumbersAction) ||
+				(action instanceof ShowDataTypeInTreeAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -113,7 +114,8 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 				(action instanceof DuplicateAction) ||
 				(action instanceof DuplicateMultipleAction) || (action instanceof DeleteAction) ||
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
-				(action instanceof HexNumbersAction)) {
+				(action instanceof HexNumbersAction) ||
+				(action instanceof ShowDataTypeInTreeAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -136,7 +138,8 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 				(action instanceof MoveDownAction) || (action instanceof DuplicateAction) ||
 				(action instanceof DuplicateMultipleAction) || (action instanceof DeleteAction) ||
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
-				(action instanceof HexNumbersAction)) {
+				(action instanceof HexNumbersAction) ||
+				(action instanceof ShowDataTypeInTreeAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -159,7 +162,8 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 				(action instanceof DuplicateAction) ||
 				(action instanceof DuplicateMultipleAction) || (action instanceof DeleteAction) ||
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
-				(action instanceof HexNumbersAction)) {
+				(action instanceof HexNumbersAction) ||
+				(action instanceof ShowDataTypeInTreeAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -179,7 +183,8 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction)// enabled to show message
 				|| (action instanceof MoveDownAction) || (action instanceof MoveUpAction) ||
 				(action instanceof DeleteAction) || (action instanceof PointerAction) ||
-				(action instanceof HexNumbersAction)) {
+				(action instanceof HexNumbersAction) ||
+				(action instanceof ShowDataTypeInTreeAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -198,7 +203,8 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		setSelection(new int[] { 2, 3, 6, 7 });
 		for (CompositeEditorTableAction action : actions) {
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
-				(action instanceof DeleteAction) || (action instanceof HexNumbersAction)) {
+				(action instanceof DeleteAction) || (action instanceof HexNumbersAction) ||
+				(action instanceof ShowDataTypeInTreeAction)) {
 				checkEnablement(action, true);
 			}
 			else {
