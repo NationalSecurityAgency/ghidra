@@ -108,9 +108,6 @@ class FSBActionManager {
 		this.textEditorService = textEditorService;
 		this.gTree = gTree;
 
-		chooserExport = new GhidraFileChooser(provider.getComponent());
-		chooserExportAll = new GhidraFileChooser(provider.getComponent());
-
 		createActions();
 	}
 
@@ -343,11 +340,14 @@ class FSBActionManager {
 						if (fsrl == null) {
 							return;
 						}
+						if (chooserExport == null) {
+							chooserExport = new GhidraFileChooser(provider.getComponent());
+							chooserExport.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
+							chooserExport.setTitle("Select Where To Export File");
+							chooserExport.setApproveButtonText("Export");
+						}
 						File selectedFile =
 							new File(chooserExport.getCurrentDirectory(), fsrl.getName());
-						chooserExport.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
-						chooserExport.setTitle("Select Where To Export File");
-						chooserExport.setApproveButtonText("Export");
 						chooserExport.setSelectedFile(selectedFile);
 						File outputFile = chooserExport.getSelectedFile();
 						if (outputFile == null) {
@@ -384,11 +384,13 @@ class FSBActionManager {
 						if (fsrl instanceof FSRLRoot) {
 							fsrl = fsrl.appendPath("/");
 						}
-
-						chooserExportAll
-								.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
-						chooserExportAll.setTitle("Select Export Directory");
-						chooserExportAll.setApproveButtonText("Export All");
+						if (chooserExportAll == null) {
+							chooserExportAll = new GhidraFileChooser(provider.getComponent());
+							chooserExportAll
+									.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
+							chooserExportAll.setTitle("Select Export Directory");
+							chooserExportAll.setApproveButtonText("Export All");
+						}
 						chooserExportAll.setSelectedFile(null);
 						File outputFile = chooserExportAll.getSelectedFile();
 						if (outputFile == null) {
