@@ -15,8 +15,12 @@
  */
 package ghidra.app.plugin.core.analysis;
 
+import java.io.IOException;
+import java.util.*;
+
 import ghidra.app.services.*;
 import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.format.macho.dyld.LibObjcOptimization;
 import ghidra.app.util.bin.format.objc2.*;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Utilities;
@@ -32,8 +36,6 @@ import ghidra.program.model.symbol.Namespace;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-import java.io.IOException;
-
 public class ObjectiveC2_ClassAnalyzer extends AbstractAnalyzer {
 	private static final String NAME = "Objective-C 2 Class";
 	private static final String DESCRIPTION =
@@ -47,11 +49,13 @@ public class ObjectiveC2_ClassAnalyzer extends AbstractAnalyzer {
 		setPriority(AnalysisPriority.FORMAT_ANALYSIS);
 	}
 
+	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 		return processObjectiveC2(program, monitor, log);
 	}
 
+	@Override
 	public boolean canAnalyze(Program program) {
 		return ObjectiveC2_Constants.isObjectiveC2(program);
 	}
@@ -60,27 +64,52 @@ public class ObjectiveC2_ClassAnalyzer extends AbstractAnalyzer {
 	/* ************************************************************************** */
 
 	private boolean processObjectiveC2(Program program, TaskMonitor monitor, MessageLog log) {
-		ByteProvider provider =
-			new MemoryByteProvider(program.getMemory(),
-				program.getAddressFactory().getDefaultAddressSpace());
-		BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
-
 		ObjectiveC2_State state =
 			new ObjectiveC2_State(program, monitor, ObjectiveC2_Constants.CATEGORY_PATH);
 
-		try {
-			processImageInfo(state, reader);
+		try (ByteProvider provider = new MemoryByteProvider(program.getMemory(),
+			program.getAddressFactory().getDefaultAddressSpace())) {
+			BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
 
-			processClassList(state, reader);
-			processCategoryList(state, reader);
-			processProtocolList(state, reader);
+			// Create a map of Objective-C specific memory blocks.  If this is a dyld_shared_cache
+			// file, there will be many of each type.
+			Map<String, List<MemoryBlock>> objcBlockMap = new HashMap<>();
+			for (MemoryBlock block : program.getMemory().getBlocks()) {
+				String name = block.getName();
+				if (name.startsWith(ObjectiveC2_Constants.OBJC2_PREFIX)) {
+					List<MemoryBlock> list = objcBlockMap.get(name);
+					if (list == null) {
+						list = new ArrayList<>();
+						objcBlockMap.put(name, list);
+					}
+					list.add(block);
+				}
+				if (name.equals(LibObjcOptimization.SECTION_NAME)) {
+					// If this is a dyld_shared_cache, there should one of these.  We'll need to 
+					// save it so we can later extract selector/method names.
+					try {
+						state.libObjcOptimization =
+							new LibObjcOptimization(program, block.getStart());
+					}
+					catch (IOException e) {
+						log.appendMsg(
+							"Failed to parse libobjc. Method names may not be recoverable.");
+					}
+				}
+			}
 
-			processClassReferences(state);
-			processSuperReferences(state);
-			processProtocolReferences(state);
-			processNonLazyClassReferences(state);
-			processSelectorReferences(state);
-			processMessageReferences(state, reader);
+			processImageInfo(state, reader, objcBlockMap);
+
+			processClassList(state, reader, objcBlockMap);
+			processCategoryList(state, reader, objcBlockMap);
+			processProtocolList(state, reader, objcBlockMap);
+
+			processClassReferences(state, objcBlockMap);
+			processSuperReferences(state, objcBlockMap);
+			processProtocolReferences(state, objcBlockMap);
+			processNonLazyClassReferences(state, objcBlockMap);
+			processSelectorReferences(state, objcBlockMap);
+			processMessageReferences(state, reader, objcBlockMap);
 
 			ObjectiveC1_Utilities.createMethods(state);
 			ObjectiveC1_Utilities.createInstanceVariablesC2_OBJC2(state);
@@ -96,12 +125,6 @@ public class ObjectiveC2_ClassAnalyzer extends AbstractAnalyzer {
 		}
 		finally {
 			state.dispose();
-
-			try {
-				provider.close();
-			}
-			catch (IOException e) {
-			}
 		}
 		return true;
 	}
@@ -139,289 +162,313 @@ public class ObjectiveC2_ClassAnalyzer extends AbstractAnalyzer {
 		}
 	}
 
-	private void processProtocolReferences(ObjectiveC2_State state) throws Exception {
+	private void processProtocolReferences(ObjectiveC2_State state,
+			Map<String, List<MemoryBlock>> objcBlockMap) throws Exception {
 		state.monitor.setMessage("Objective-C 2.0 Protocol References...");
 
-		MemoryBlock block =
-			state.program.getMemory().getBlock(ObjectiveC2_Constants.OBJC2_PROTOCOL_REFS);
-		if (block == null) {
+		List<MemoryBlock> blocks = objcBlockMap.get(ObjectiveC2_Constants.OBJC2_PROTOCOL_REFS);
+		if (blocks == null) {
 			return;
 		}
-		ObjectiveC1_Utilities.clear(state, block);
 
-		long count = block.getSize() / state.pointerSize;
+		for (MemoryBlock block : blocks) {
+			ObjectiveC1_Utilities.clear(state, block);
 
-		state.monitor.initialize((int) count);
+			long count = block.getSize() / state.pointerSize;
 
-		Address address = block.getStart();
+			state.monitor.initialize((int) count);
 
-		for (int i = 0; i < count; ++i) {
-			if (state.monitor.isCancelled()) {
-				break;
+			Address address = block.getStart();
+
+			for (int i = 0; i < count; ++i) {
+				if (state.monitor.isCancelled()) {
+					break;
+				}
+				state.monitor.setProgress(i);
+				ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
+					address);
+				address = address.add(state.pointerSize);
 			}
-			state.monitor.setProgress(i);
-			ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
-				address);
-			address = address.add(state.pointerSize);
 		}
 	}
 
-	private void processClassReferences(ObjectiveC2_State state) throws Exception {
+	private void processClassReferences(ObjectiveC2_State state,
+			Map<String, List<MemoryBlock>> objcBlockMap) throws Exception {
 		state.monitor.setMessage("Objective-C 2.0 Class References...");
 
-		MemoryBlock block =
-			state.program.getMemory().getBlock(ObjectiveC2_Constants.OBJC2_CLASS_REFS);
-		if (block == null) {
+		List<MemoryBlock> blocks = objcBlockMap.get(ObjectiveC2_Constants.OBJC2_CLASS_REFS);
+		if (blocks == null) {
 			return;
 		}
-		ObjectiveC1_Utilities.clear(state, block);
 
-		long count = block.getSize() / state.pointerSize;
+		for (MemoryBlock block : blocks) {
+			ObjectiveC1_Utilities.clear(state, block);
 
-		state.monitor.initialize((int) count);
+			long count = block.getSize() / state.pointerSize;
 
-		Address address = block.getStart();
+			state.monitor.initialize((int) count);
 
-		for (int i = 0; i < count; ++i) {
-			if (state.monitor.isCancelled()) {
-				break;
+			Address address = block.getStart();
+
+			for (int i = 0; i < count; ++i) {
+				if (state.monitor.isCancelled()) {
+					break;
+				}
+				state.monitor.setProgress(i);
+				ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
+					address);
+				address = address.add(state.pointerSize);
 			}
-			state.monitor.setProgress(i);
-			ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
-				address);
-			address = address.add(state.pointerSize);
 		}
 	}
 
-	private void processNonLazyClassReferences(ObjectiveC2_State state) throws Exception {
+	private void processNonLazyClassReferences(ObjectiveC2_State state,
+			Map<String, List<MemoryBlock>> objcBlockMap) throws Exception {
 		state.monitor.setMessage("Objective-C 2.0 Non-lazy Class Lists...");
 
-		MemoryBlock block =
-			state.program.getMemory().getBlock(ObjectiveC2_Constants.OBJC2_NON_LAZY_CLASS_LIST);
-		if (block == null) {
+		List<MemoryBlock> blocks =
+			objcBlockMap.get(ObjectiveC2_Constants.OBJC2_NON_LAZY_CLASS_LIST);
+		if (blocks == null) {
 			return;
 		}
-		ObjectiveC1_Utilities.clear(state, block);
 
-		long count = block.getSize() / state.pointerSize;
+		for (MemoryBlock block : blocks) {
+			ObjectiveC1_Utilities.clear(state, block);
 
-		state.monitor.initialize((int) count);
+			long count = block.getSize() / state.pointerSize;
 
-		Address address = block.getStart();
+			state.monitor.initialize((int) count);
 
-		for (int i = 0; i < count; ++i) {
-			if (state.monitor.isCancelled()) {
-				break;
+			Address address = block.getStart();
+
+			for (int i = 0; i < count; ++i) {
+				if (state.monitor.isCancelled()) {
+					break;
+				}
+				state.monitor.setProgress(i);
+				ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
+					address);
+				address = address.add(state.pointerSize);
 			}
-			state.monitor.setProgress(i);
-			ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
-				address);
-			address = address.add(state.pointerSize);
 		}
 	}
 
-	private void processSuperReferences(ObjectiveC2_State state) throws Exception {
+	private void processSuperReferences(ObjectiveC2_State state,
+			Map<String, List<MemoryBlock>> objcBlockMap) throws Exception {
 		state.monitor.setMessage("Objective-C 2.0 Super References...");
 
-		MemoryBlock block =
-			state.program.getMemory().getBlock(ObjectiveC2_Constants.OBJC2_SUPER_REFS);
-		if (block == null) {
+		List<MemoryBlock> blocks = objcBlockMap.get(ObjectiveC2_Constants.OBJC2_SUPER_REFS);
+		if (blocks == null) {
 			return;
 		}
-		ObjectiveC1_Utilities.clear(state, block);
 
-		long count = block.getSize() / state.pointerSize;
+		for (MemoryBlock block : blocks) {
+			ObjectiveC1_Utilities.clear(state, block);
 
-		state.monitor.initialize((int) count);
+			long count = block.getSize() / state.pointerSize;
 
-		Address address = block.getStart();
+			state.monitor.initialize((int) count);
 
-		for (int i = 0; i < count; ++i) {
-			if (state.monitor.isCancelled()) {
-				break;
+			Address address = block.getStart();
+
+			for (int i = 0; i < count; ++i) {
+				if (state.monitor.isCancelled()) {
+					break;
+				}
+				state.monitor.setProgress(i);
+				ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
+					address);
+				address = address.add(state.pointerSize);
 			}
-			state.monitor.setProgress(i);
-			ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
-				address);
-			address = address.add(state.pointerSize);
 		}
 	}
 
-	private void processCategoryList(ObjectiveC2_State state, BinaryReader reader) throws Exception {
+	private void processCategoryList(ObjectiveC2_State state, BinaryReader reader,
+			Map<String, List<MemoryBlock>> objcBlockMap) throws Exception {
 		state.monitor.setMessage("Objective-C 2.0 Category Information...");
 
-		MemoryBlock block =
-			state.program.getMemory().getBlock(ObjectiveC2_Constants.OBJC2_CATEGORY_LIST);
-		if (block == null) {
+		List<MemoryBlock> blocks = objcBlockMap.get(ObjectiveC2_Constants.OBJC2_CATEGORY_LIST);
+		if (blocks == null) {
 			return;
 		}
-		ObjectiveC1_Utilities.clear(state, block);
+		for (MemoryBlock block : blocks) {
+			ObjectiveC1_Utilities.clear(state, block);
 
-		long count = block.getSize() / state.pointerSize;
+			long count = block.getSize() / state.pointerSize;
 
-		state.monitor.initialize((int) count);
+			state.monitor.initialize((int) count);
 
-		Address address = block.getStart();
+			Address address = block.getStart();
 
-		for (int i = 0; i < count; ++i) {
-			if (state.monitor.isCancelled()) {
-				break;
+			for (int i = 0; i < count; ++i) {
+				if (state.monitor.isCancelled()) {
+					break;
+				}
+				state.monitor.setProgress(i);
+				Address categoryAddress = ObjectiveC1_Utilities
+						.createPointerAndReturnAddressBeingReferenced(state.program, address);
+				reader.setPointerIndex(categoryAddress.getOffset());
+				ObjectiveC2_Category category = new ObjectiveC2_Category(state, reader);
+				category.applyTo();
+				address = address.add(state.pointerSize);
 			}
-			state.monitor.setProgress(i);
-			Address categoryAddress =
-				ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
-					address);
-			reader.setPointerIndex(categoryAddress.getOffset());
-			ObjectiveC2_Category category = new ObjectiveC2_Category(state, reader);
-			category.applyTo();
-			address = address.add(state.pointerSize);
 		}
 	}
 
-	private void processImageInfo(ObjectiveC2_State state, BinaryReader reader) throws Exception {
+	private void processImageInfo(ObjectiveC2_State state, BinaryReader reader,
+			Map<String, List<MemoryBlock>> objcBlockMap) throws Exception {
 		state.monitor.setMessage("Objective-C 2.0 Image Information...");
 
-		MemoryBlock block =
-			state.program.getMemory().getBlock(ObjectiveC2_Constants.OBJC2_IMAGE_INFO);
-		if (block == null) {
+		List<MemoryBlock> blocks = objcBlockMap.get(ObjectiveC2_Constants.OBJC2_IMAGE_INFO);
+		if (blocks == null) {
 			return;
 		}
-		Address address = block.getStart();
-		reader.setPointerIndex(address.getOffset());
-		ObjectiveC2_ImageInfo imageInfo = new ObjectiveC2_ImageInfo(state, reader);
-		imageInfo.applyTo();
+		for (MemoryBlock block : blocks) {
+			Address address = block.getStart();
+			reader.setPointerIndex(address.getOffset());
+			ObjectiveC2_ImageInfo imageInfo = new ObjectiveC2_ImageInfo(state, reader);
+			imageInfo.applyTo();
+		}
 	}
 
-	private void processProtocolList(ObjectiveC2_State state, BinaryReader reader) throws Exception {
+	private void processProtocolList(ObjectiveC2_State state, BinaryReader reader,
+			Map<String, List<MemoryBlock>> objcBlockMap) throws Exception {
 		state.monitor.setMessage("Objective-C 2.0 Protocol Information...");
 
-		MemoryBlock block =
-			state.program.getMemory().getBlock(ObjectiveC2_Constants.OBJC2_PROTOCOL_LIST);
-		if (block == null) {
+		List<MemoryBlock> blocks = objcBlockMap.get(ObjectiveC2_Constants.OBJC2_PROTOCOL_LIST);
+		if (blocks == null) {
 			return;
 		}
-		ObjectiveC1_Utilities.clear(state, block);
+		for (MemoryBlock block : blocks) {
+			ObjectiveC1_Utilities.clear(state, block);
 
-		long count = block.getSize() / state.pointerSize;
+			long count = block.getSize() / state.pointerSize;
 
-		state.monitor.initialize((int) count);
+			state.monitor.initialize((int) count);
 
-		Address address = block.getStart();
+			Address address = block.getStart();
 
-		for (int i = 0; i < count; ++i) {
-			if (state.monitor.isCancelled()) {
-				break;
-			}
-			state.monitor.setProgress(i);
+			for (int i = 0; i < count; ++i) {
+				if (state.monitor.isCancelled()) {
+					break;
+				}
+				state.monitor.setProgress(i);
 
-			Address protocolAddress =
-				ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
-					address);
-			reader.setPointerIndex(protocolAddress.getOffset());
+				Address protocolAddress = ObjectiveC1_Utilities
+						.createPointerAndReturnAddressBeingReferenced(state.program, address);
+				reader.setPointerIndex(protocolAddress.getOffset());
 
-			ObjectiveC2_Protocol protocol = new ObjectiveC2_Protocol(state, reader);
-			Namespace namespace =
-				ObjectiveC1_Utilities.createNamespace(state.program,
+				ObjectiveC2_Protocol protocol = new ObjectiveC2_Protocol(state, reader);
+				Namespace namespace = ObjectiveC1_Utilities.createNamespace(state.program,
 					ObjectiveC1_Constants.NAMESPACE, "Protocols", protocol.getName());
-			protocol.applyTo(namespace);
-			address = address.add(state.pointerSize);
+				protocol.applyTo(namespace);
+				address = address.add(state.pointerSize);
+			}
 		}
 	}
 
-	private void processClassList(ObjectiveC2_State state, BinaryReader reader) throws Exception {
+	private void processClassList(ObjectiveC2_State state, BinaryReader reader,
+			Map<String, List<MemoryBlock>> objcBlockMap) throws Exception {
 		state.monitor.setMessage("Objective-C 2.0 Class Information...");
 
-		MemoryBlock block =
-			state.program.getMemory().getBlock(ObjectiveC2_Constants.OBJC2_CLASS_LIST);
-		if (block == null) {
+		List<MemoryBlock> blocks = objcBlockMap.get(ObjectiveC2_Constants.OBJC2_CLASS_LIST);
+		if (blocks == null) {
 			return;
 		}
-		ObjectiveC1_Utilities.clear(state, block);
+		for (MemoryBlock block : blocks) {
+			ObjectiveC1_Utilities.clear(state, block);
 
-		long count = block.getSize() / state.pointerSize;
+			long count = block.getSize() / state.pointerSize;
 
-		state.monitor.initialize((int) count);
+			state.monitor.initialize((int) count);
 
-		Address address = block.getStart();
+			Address address = block.getStart();
 
-		for (int i = 0; i < count; ++i) {
-			if (state.monitor.isCancelled()) {
-				break;
+			for (int i = 0; i < count; ++i) {
+				if (state.monitor.isCancelled()) {
+					break;
+				}
+				state.monitor.setProgress(i);
+
+				Address classAddress = ObjectiveC1_Utilities
+						.createPointerAndReturnAddressBeingReferenced(state.program, address);
+				reader.setPointerIndex(classAddress.getOffset() & 0xfffffffffffL);
+
+				ObjectiveC2_Class clazz = new ObjectiveC2_Class(state, reader);
+				clazz.applyTo();
+				address = address.add(state.pointerSize);
 			}
-			state.monitor.setProgress(i);
-
-			Address classAddress =
-				ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
-					address);
-			reader.setPointerIndex(classAddress.getOffset());
-
-			ObjectiveC2_Class clazz = new ObjectiveC2_Class(state, reader);
-			clazz.applyTo();
-			address = address.add(state.pointerSize);
 		}
+
 	}
 
-	private void processMessageReferences(ObjectiveC2_State state, BinaryReader reader)
+	private void processMessageReferences(ObjectiveC2_State state, BinaryReader reader,
+			Map<String, List<MemoryBlock>> objcBlockMap)
 			throws Exception {
 		state.monitor.setMessage("Objective-C 2.0 Message References...");
 
-		MemoryBlock block =
-			state.program.getMemory().getBlock(ObjectiveC2_Constants.OBJC2_MESSAGE_REFS);
-		if (block == null) {
+		List<MemoryBlock> blocks = objcBlockMap.get(ObjectiveC2_Constants.OBJC2_MESSAGE_REFS);
+		if (blocks == null) {
 			return;
 		}
-		ObjectiveC1_Utilities.clear(state, block);
 
-		long count = block.getSize() / ObjectiveC2_MessageReference.SIZEOF(state);
+		for (MemoryBlock block : blocks) {
+			ObjectiveC1_Utilities.clear(state, block);
 
-		state.monitor.initialize((int) count);
+			long count = block.getSize() / ObjectiveC2_MessageReference.SIZEOF(state);
 
-		Address address = block.getStart();
+			state.monitor.initialize((int) count);
 
-		for (int i = 0; i < count; ++i) {
-			if (state.monitor.isCancelled()) {
-				break;
+			Address address = block.getStart();
+
+			for (int i = 0; i < count; ++i) {
+				if (state.monitor.isCancelled()) {
+					break;
+				}
+				state.monitor.setProgress(i);
+				reader.setPointerIndex(address.getOffset());
+				ObjectiveC2_MessageReference messageRef =
+					new ObjectiveC2_MessageReference(state, reader);
+				DataType dt = messageRef.toDataType();
+				Data messageRefData = state.program.getListing().createData(address, dt);
+				Data selData = messageRefData.getComponent(1);
+				Object selAddress = selData.getValue();
+				Data selStringData = state.program.getListing().getDataAt((Address) selAddress);
+				Object selString = selStringData.getValue();
+				ObjectiveC1_Utilities.createSymbol(state.program, null,
+					selString + "_" + ObjectiveC2_MessageReference.NAME, address);
+				address = address.add(dt.getLength());
 			}
-			state.monitor.setProgress(i);
-			reader.setPointerIndex(address.getOffset());
-			ObjectiveC2_MessageReference messageRef =
-				new ObjectiveC2_MessageReference(state, reader);
-			DataType dt = messageRef.toDataType();
-			Data messageRefData = state.program.getListing().createData(address, dt);
-			Data selData = messageRefData.getComponent(1);
-			Object selAddress = selData.getValue();
-			Data selStringData = state.program.getListing().getDataAt((Address) selAddress);
-			Object selString = selStringData.getValue();
-			ObjectiveC1_Utilities.createSymbol(state.program, null, selString + "_" +
-				ObjectiveC2_MessageReference.NAME, address);
-			address = address.add(dt.getLength());
 		}
 	}
 
-	private void processSelectorReferences(ObjectiveC2_State state) throws Exception {
+	private void processSelectorReferences(ObjectiveC2_State state,
+			Map<String, List<MemoryBlock>> objcBlockMap) throws Exception {
 		state.monitor.setMessage("Objective-C 2.0 Selector References...");
 
-		MemoryBlock block =
-			state.program.getMemory().getBlock(ObjectiveC2_Constants.OBJC2_SELECTOR_REFS);
-		if (block == null) {
+		List<MemoryBlock> blocks = objcBlockMap.get(ObjectiveC2_Constants.OBJC2_SELECTOR_REFS);
+		if (blocks == null) {
 			return;
 		}
-		ObjectiveC1_Utilities.clear(state, block);
 
-		long count = block.getSize() / state.pointerSize;
+		for (MemoryBlock block : blocks) {
+			ObjectiveC1_Utilities.clear(state, block);
 
-		state.monitor.initialize((int) count);
+			long count = block.getSize() / state.pointerSize;
 
-		Address address = block.getStart();
+			state.monitor.initialize((int) count);
 
-		for (int i = 0; i < count; ++i) {
-			if (state.monitor.isCancelled()) {
-				break;
+			Address address = block.getStart();
+
+			for (int i = 0; i < count; ++i) {
+				if (state.monitor.isCancelled()) {
+					break;
+				}
+				state.monitor.setProgress(i);
+				ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
+					address);
+				address = address.add(state.pointerSize);
 			}
-			state.monitor.setProgress(i);
-			ObjectiveC1_Utilities.createPointerAndReturnAddressBeingReferenced(state.program,
-				address);
-			address = address.add(state.pointerSize);
 		}
 	}
 

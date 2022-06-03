@@ -42,7 +42,20 @@ public class ObjectiveC2_Method extends ObjectiveC_Method {
 				namePtr = reader.readInt(_index + nameOffset);
 			}
 			else {
-				namePtr = reader.readLong(_index + nameOffset);
+				if (state.libObjcOptimization != null) {
+					// We are in a DYLD Cache
+					if (state.libObjcOptimization.getRelativeSelectorBaseAddressOffset() > 0) {
+						namePtr = state.libObjcOptimization.getAddr() +
+							state.libObjcOptimization.getRelativeSelectorBaseAddressOffset() +
+							nameOffset;
+					}
+					else {
+						namePtr = _index + nameOffset;
+					}
+				}
+				else {
+					namePtr = reader.readLong(_index + nameOffset);
+				}
 			}
 
 			name = reader.readAsciiString(namePtr);
