@@ -38,6 +38,7 @@ import docking.widgets.textpane.GHtmlTextPane;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import ghidra.app.plugin.core.datamgr.actions.*;
+import ghidra.app.plugin.core.datamgr.actions.associate.*;
 import ghidra.app.plugin.core.datamgr.archive.*;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
@@ -220,6 +221,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		// key binding only
 		addLocalAction(new ClearCutAction(plugin)); // Common
 
+		addLocalAction(new AssociateDataTypeAction(plugin));
 		addLocalAction(new CommitSingleDataTypeAction(plugin));
 		addLocalAction(new UpdateSingleDataTypeAction(plugin));
 		addLocalAction(new RevertDataTypeAction(plugin));

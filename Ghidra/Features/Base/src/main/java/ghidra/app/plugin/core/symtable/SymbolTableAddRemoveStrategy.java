@@ -70,13 +70,14 @@ import ghidra.util.task.TaskMonitor;
  * are coded such that the {@code hashCode()} and {@code equals()} methods will match those 
  * methods of the data's real objects.
  */
-public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symbol> {
+public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<SymbolRowObject> {
 
 	@Override
-	public void process(List<AddRemoveListItem<Symbol>> addRemoveList, TableData<Symbol> tableData,
+	public void process(List<AddRemoveListItem<SymbolRowObject>> addRemoveList,
+			TableData<SymbolRowObject> tableData,
 			TaskMonitor monitor) throws CancelledException {
 
-		Set<AddRemoveListItem<Symbol>> items = coalesceAddRemoveItems(addRemoveList);
+		Set<AddRemoveListItem<SymbolRowObject>> items = coalesceAddRemoveItems(addRemoveList);
 
 		// 
 		// Hash map the existing values so that we can use any object inside the add/remove list
@@ -85,28 +86,28 @@ public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symb
 		// existing item still has the data used to sort it.  If the sort data has changed, then
 		// even this step will not allow the TableData to find the item in a search.
 		//
-		Map<Symbol, Symbol> hashed = new HashMap<>();
-		for (Symbol symbol : tableData) {
-			hashed.put(symbol, symbol);
+		Map<SymbolRowObject, SymbolRowObject> hashed = new HashMap<>();
+		for (SymbolRowObject rowObject : tableData) {
+			hashed.put(rowObject, rowObject);
 		}
 
-		Set<Symbol> failedToRemove = new HashSet<>();
+		Set<SymbolRowObject> failedToRemove = new HashSet<>();
 
 		int n = items.size();
 		monitor.setMessage("Removing " + n + " items...");
 		monitor.initialize(n);
 
-		Iterator<AddRemoveListItem<Symbol>> it = items.iterator();
+		Iterator<AddRemoveListItem<SymbolRowObject>> it = items.iterator();
 		while (it.hasNext()) {
-			AddRemoveListItem<Symbol> item = it.next();
-			Symbol value = item.getValue();
+			AddRemoveListItem<SymbolRowObject> item = it.next();
+			SymbolRowObject value = item.getValue();
 			if (item.isChange()) {
-				Symbol toRemove = hashed.remove(value);
+				SymbolRowObject toRemove = hashed.remove(value);
 				remove(tableData, toRemove, failedToRemove);
 				monitor.incrementProgress(1);
 			}
 			else if (item.isRemove()) {
-				Symbol toRemove = hashed.remove(value);
+				SymbolRowObject toRemove = hashed.remove(value);
 				remove(tableData, toRemove, failedToRemove);
 				it.remove();
 			}
@@ -127,8 +128,8 @@ public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symb
 		monitor.setMessage("Adding " + n + " items...");
 		it = items.iterator();
 		while (it.hasNext()) {
-			AddRemoveListItem<Symbol> item = it.next();
-			Symbol value = item.getValue();
+			AddRemoveListItem<SymbolRowObject> item = it.next();
+			SymbolRowObject value = item.getValue();
 			if (item.isChange()) {
 				tableData.insert(value);
 				hashed.put(value, value);
@@ -144,12 +145,12 @@ public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symb
 		monitor.setMessage("Done adding/removing");
 	}
 
-	private Set<AddRemoveListItem<Symbol>> coalesceAddRemoveItems(
-			List<AddRemoveListItem<Symbol>> addRemoveList) {
+	private Set<AddRemoveListItem<SymbolRowObject>> coalesceAddRemoveItems(
+			List<AddRemoveListItem<SymbolRowObject>> addRemoveList) {
 
-		Map<Long, AddRemoveListItem<Symbol>> map = new HashMap<>();
+		Map<Long, AddRemoveListItem<SymbolRowObject>> map = new HashMap<>();
 
-		for (AddRemoveListItem<Symbol> item : addRemoveList) {
+		for (AddRemoveListItem<SymbolRowObject> item : addRemoveList) {
 
 			if (item.isChange()) {
 				handleChange(item, map);
@@ -165,11 +166,11 @@ public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symb
 		return new HashSet<>(map.values());
 	}
 
-	private void handleAdd(AddRemoveListItem<Symbol> item,
-			Map<Long, AddRemoveListItem<Symbol>> map) {
+	private void handleAdd(AddRemoveListItem<SymbolRowObject> item,
+			Map<Long, AddRemoveListItem<SymbolRowObject>> map) {
 
 		long id = item.getValue().getID();
-		AddRemoveListItem<Symbol> existing = map.get(id);
+		AddRemoveListItem<SymbolRowObject> existing = map.get(id);
 		if (existing == null) {
 			map.put(id, item);
 			return;
@@ -186,11 +187,11 @@ public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symb
 		map.put(id, new AddRemoveListItem<>(CHANGE, existing.getValue()));
 	}
 
-	private void handleRemove(AddRemoveListItem<Symbol> item,
-			Map<Long, AddRemoveListItem<Symbol>> map) {
+	private void handleRemove(AddRemoveListItem<SymbolRowObject> item,
+			Map<Long, AddRemoveListItem<SymbolRowObject>> map) {
 
 		long id = item.getValue().getID();
-		AddRemoveListItem<Symbol> existing = map.get(id);
+		AddRemoveListItem<SymbolRowObject> existing = map.get(id);
 		if (existing == null) {
 			map.put(id, item);
 			return;
@@ -208,11 +209,11 @@ public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symb
 		map.remove(id);
 	}
 
-	private void handleChange(AddRemoveListItem<Symbol> item,
-			Map<Long, AddRemoveListItem<Symbol>> map) {
+	private void handleChange(AddRemoveListItem<SymbolRowObject> item,
+			Map<Long, AddRemoveListItem<SymbolRowObject>> map) {
 
 		long id = item.getValue().getID();
-		AddRemoveListItem<Symbol> existing = map.get(id);
+		AddRemoveListItem<SymbolRowObject> existing = map.get(id);
 		if (existing == null) {
 			map.put(id, item);
 			return;
@@ -226,7 +227,8 @@ public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symb
 		// otherwise, we had a change followed by a change; keep just 1 change
 	}
 
-	private void remove(TableData<Symbol> tableData, Symbol symbol, Set<Symbol> failedToRemove) {
+	private void remove(TableData<SymbolRowObject> tableData, SymbolRowObject symbol,
+			Set<SymbolRowObject> failedToRemove) {
 		if (symbol == null) {
 			return;
 		}
@@ -243,8 +245,9 @@ public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symb
 	 * cannot locate the item in the table data.   This algorithm will check the given set of 
 	 * items against the entire list of table data, locating the item to be removed.   
 	 */
-	private List<Symbol> expungeLostItems(Set<Symbol> toRemove, List<Symbol> data,
-			TableSortingContext<Symbol> sortContext) {
+	private List<SymbolRowObject> expungeLostItems(Set<SymbolRowObject> toRemove,
+			List<SymbolRowObject> data,
+			TableSortingContext<SymbolRowObject> sortContext) {
 
 		if (sortContext.isUnsorted()) {
 			// this can happen if the data is unsorted and we were asked to remove an item that 
@@ -254,9 +257,9 @@ public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symb
 
 		// Copy to a new list those items that are not marked for removal.  This saves the 
 		// list move its items every time a remove takes place
-		List<Symbol> newList = new ArrayList<>(data.size() - toRemove.size());
+		List<SymbolRowObject> newList = new ArrayList<>(data.size() - toRemove.size());
 		for (int i = 0; i < data.size(); i++) {
-			Symbol rowObject = data.get(i);
+			SymbolRowObject rowObject = data.get(i);
 			if (!toRemove.contains(rowObject)) {
 				newList.add(rowObject);
 			}

@@ -17,11 +17,14 @@ package agent.frida.model.invm;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import agent.frida.model.AbstractModelForFridaInterpreterTest;
+import generic.test.category.NightlyCategory;
 import ghidra.dbg.test.ProvidesTargetViaLaunchSpecimen;
 
-public class InVmModelForFridaInterpreterTest extends AbstractModelForFridaInterpreterTest 
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
+public class InVmModelForFridaInterpreterTest extends AbstractModelForFridaInterpreterTest
 		implements ProvidesTargetViaLaunchSpecimen {
 	@Override
 	public ModelHost modelHost() throws Throwable {
@@ -61,4 +64,3 @@ public class InVmModelForFridaInterpreterTest extends AbstractModelForFridaInter
 	}
 
 }
-

@@ -41,6 +41,9 @@ struct VarnodeData {
   /// Get the location of the varnode as an address
   Address getAddr(void) const;
 
+  /// Treat \b this as a constant and recover encoded address space
+  AddrSpace *getSpaceFromConst(void) const;
+
   /// Recover this object from an XML tag
   void restoreXml(const Element *el,const AddrSpaceManager *manage);
 
@@ -84,6 +87,11 @@ inline bool VarnodeData::operator!=(const VarnodeData &op2) const {
 /// \return the address of the varnode
 inline Address VarnodeData::getAddr(void) const {
   return Address(space,offset);
+}
+
+/// \return the encoded AddrSpace
+inline AddrSpace *VarnodeData::getSpaceFromConst(void) const {
+  return (AddrSpace *)(uintp)offset;
 }
 
 /// \brief A low-level representation of a single pcode operation

@@ -23,7 +23,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  * 
  * <p>
  * As much as possible, it's highly-recommended to use SLEIGH execution to perform any
- * modifications. This will help it remain portable to various state types.
+ * modifications. This will help it remain agnostic to various state types.
  * 
  * <p>
  * TODO: Implement annotation-based {@link #isApplicable(Language)}?
@@ -39,8 +39,8 @@ public interface PcodeStateInitializer extends ExtensionPoint {
 	boolean isApplicable(Language language);
 
 	/**
-	 * The machine's memory state has just been initialized from a "real" target, and additional
-	 * initialization is needed for SLEIGH execution
+	 * The machine's memory state has just been initialized, and additional initialization is needed
+	 * for SLEIGH execution
 	 * 
 	 * <p>
 	 * There's probably not much preparation of memory
@@ -52,8 +52,8 @@ public interface PcodeStateInitializer extends ExtensionPoint {
 	}
 
 	/**
-	 * The thread's register state has just been initialized from a "real" target, and additional
-	 * initialization is needed for SLEIGH execution
+	 * The thread's register state has just been initialized, and additional initialization is
+	 * needed for SLEIGH execution
 	 * 
 	 * <p>
 	 * Initialization generally consists of setting "virtual" registers using data from the real

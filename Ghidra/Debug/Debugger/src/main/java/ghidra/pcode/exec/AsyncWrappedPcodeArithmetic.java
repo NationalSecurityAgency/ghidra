@@ -83,4 +83,9 @@ public class AsyncWrappedPcodeArithmetic<T> implements PcodeArithmetic<Completab
 		}
 		return arithmetic.toConcrete(cond.getNow(null), isContextreg);
 	}
+
+	@Override
+	public CompletableFuture<T> sizeOf(CompletableFuture<T> value) {
+		return value.thenApply(v -> arithmetic.sizeOf(v));
+	}
 }

@@ -109,6 +109,25 @@ public class PcodeFunctionParser {
 					functionName, data.getDefaultValueRepresentation()));
 				hasDefinedFormatString = true;
 			}
+			else {
+				//check for offcut references into a larger defined string
+				Data containing = program.getListing().getDataContaining(ramSpaceAddress);
+				if (containing == null) {
+					continue;
+				}
+				if (addressToCandidateData.containsKey(containing.getAddress())) {
+					StringDataInstance entire =
+						StringDataInstance.getStringDataInstance(containing);
+					String subString = entire.getByteOffcut(
+						(int) (ramSpaceAddress.getOffset() - containing.getAddress().getOffset()))
+							.getStringValue();
+					if (subString != null) {
+						functionCallDataList.add(new FunctionCallData(ast.getSeqnum().getTarget(),
+							functionName, subString));
+						hasDefinedFormatString = true;
+					}
+				}
+			}
 		}
 		return hasDefinedFormatString;
 	}

@@ -17,6 +17,12 @@ package ghidra.pcode.exec;
 
 import ghidra.program.model.lang.Language;
 
+/**
+ * A device in the type hierarchy that turns a suitable state piece into a state
+ *
+ * @param <T> the type of values and addresses in the state
+ * @param <S> the type of an execute state space, internally associated with an address space
+ */
 public abstract class AbstractLongOffsetPcodeExecutorState<T, S>
 		extends AbstractLongOffsetPcodeExecutorStatePiece<T, T, S>
 		implements PcodeExecutorState<T> {
@@ -24,5 +30,4 @@ public abstract class AbstractLongOffsetPcodeExecutorState<T, S>
 	public AbstractLongOffsetPcodeExecutorState(Language language, PcodeArithmetic<T> arithmetic) {
 		super(language, arithmetic);
 	}
-
 }

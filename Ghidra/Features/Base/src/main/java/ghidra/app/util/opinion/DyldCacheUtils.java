@@ -15,14 +15,16 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.*;
-import java.nio.file.AccessMode;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.dyld.DyldArchitecture;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.formats.gfilesystem.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -101,8 +103,9 @@ public class DyldCacheUtils {
 	 */
 	public static class SplitDyldCache implements Closeable {
 
-		List<ByteProvider> providers = new ArrayList<>();
-		List<DyldCacheHeader> headers = new ArrayList<>();
+		private List<ByteProvider> providers = new ArrayList<>();
+		private List<DyldCacheHeader> headers = new ArrayList<>();
+		private FileSystemService fsService;
 
 		/**
 		 * Creates a new {@link SplitDyldCache}
@@ -127,17 +130,23 @@ public class DyldCacheUtils {
 			headers.add(baseHeader);
 
 			// Setup additional "split" DYLD Caches (if applicable)
-			for (File splitFile : getSplitDyldCacheFiles(baseProvider, shouldCombineSplitFiles)) {
-				monitor.setMessage("Parsing " + splitFile.getName() + " headers...");
-				ByteProvider provider = new FileByteProvider(splitFile, null, AccessMode.READ);
-				if (!DyldCacheUtils.isDyldCache(provider)) {
+			if (!shouldCombineSplitFiles) {
+				return;
+			}
+			fsService = FileSystemService.getInstance();
+			for (FSRL splitFSRL : findSplitDyldCacheFiles(baseProvider.getFSRL(), monitor)) {
+				monitor.setMessage("Parsing " + splitFSRL.getName() + " headers...");
+				ByteProvider splitProvider = fsService.getByteProvider(splitFSRL, false, monitor);
+				if (!DyldCacheUtils.isDyldCache(splitProvider)) {
+					splitProvider.close();
 					continue;
 				}
-				providers.add(provider);
-				DyldCacheHeader splitHeader = new DyldCacheHeader(new BinaryReader(provider, true));
+				providers.add(splitProvider);
+				DyldCacheHeader splitHeader =
+					new DyldCacheHeader(new BinaryReader(splitProvider, true));
 				splitHeader.parseFromFile(shouldProcessSymbols, log, monitor);
 				headers.add(splitHeader);
-				log.appendMsg("Including split DYLD: " + splitFile.getName());
+				log.appendMsg("Including split DYLD: " + splitProvider.getName());
 			}
 		}
 
@@ -180,36 +189,37 @@ public class DyldCacheUtils {
 		}
 
 		/**
-		 * Gets a {@link List} of extra split DYLD Cache files to load, sorted by name (base 
-		 * DYLD Cache file not included)
+		 * Finds a {@link List} of extra split DYLD Cache {@link FSRL files} to load, sorted by 
+		 * name (base DYLD Cache file not included)
 		 * 
-		 * @param baseProvider The base {@link ByteProvider} that contains the DYLD Cache bytes
-		 * @param shouldCombineSplitFiles True if split DYLD Cache files should be automatically 
-		 *   combined into one DYLD Cache; false if only the base file should be processed
-		 * @return A {@link List} of extra split DYLD Cache files to load, sorted by name (base 
-		 *   DYLD Cache file not included).
+		 * @param baseFSRL The {@link FSRL} that contains the base DYLD Cache
+		 * @return A {@link List} of extra split DYLD Cache {@link FSRL files} to load, sorted by 
+		 *   name (base DYLD Cache provider not included).
+		 * @throws IOException If there was an IO-related issue finding the files
+		 * @throws CancelledException If the user canceled the operation
 		 */
-		private List<File> getSplitDyldCacheFiles(ByteProvider baseProvider,
-				boolean shouldCombineSplitFiles) {
-			File file = baseProvider.getFile();
-			if (file != null && shouldCombineSplitFiles) {
-				String baseName = file.getName();
-				File[] splitFiles = file.getParentFile().listFiles(f -> {
+		private List<FSRL> findSplitDyldCacheFiles(FSRL baseFSRL, TaskMonitor monitor)
+				throws CancelledException, IOException {
+			if (baseFSRL == null) {
+				return Collections.emptyList();
+			}
+			try (FileSystemRef fsRef = fsService.getFilesystem(baseFSRL.getFS(), monitor)) {
+				GFileSystem fs = fsRef.getFilesystem();
+				GFile baseFile = fs.lookup(baseFSRL.getPath());
+				String baseName = baseFile.getName();
+				List<FSRL> ret = new ArrayList<>();
+				for (GFile f : fs.getListing(baseFile.getParentFile())) {
 					if (!f.getName().startsWith(baseName + ".")) {
-						return false;
+						continue;
 					}
 					if (f.getName().toLowerCase().endsWith(".map")) {
-						return false;
+						continue;
 					}
-					return true;
-				});
-				if (splitFiles != null) {
-					List<File> list = Arrays.asList(splitFiles);
-					Collections.sort(list);
-					return list;
+					ret.add(f.getFSRL());
 				}
+				ret.sort((f1, f2) -> f1.getName().compareTo(f2.getName()));
+				return ret;
 			}
-			return Collections.emptyList();
 		}
 	}
 }

@@ -97,7 +97,7 @@ class SymbolProvider extends ComponentProviderAdapter {
 	}
 
 	Symbol getSymbolForRow(int row) {
-		return symbolKeyModel.getRowObject(row);
+		return symbolKeyModel.getRowObject(row).getSymbol();
 	}
 
 	void setCurrentSymbol(Symbol symbol) {
@@ -126,9 +126,9 @@ class SymbolProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	void symbolRemoved(Symbol s) {
+	void symbolRemoved(long symbolId) {
 		if (isVisible()) {
-			symbolKeyModel.symbolRemoved(s);
+			symbolKeyModel.symbolRemoved(symbolId);
 		}
 	}
 

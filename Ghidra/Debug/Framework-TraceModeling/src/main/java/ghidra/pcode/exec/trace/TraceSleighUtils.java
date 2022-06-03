@@ -73,7 +73,7 @@ public enum TraceSleighUtils {
 			paired);
 	}
 
-	public static byte[] evaluateBytes(SleighExpression expr, Trace trace, long snap,
+	public static byte[] evaluateBytes(PcodeExpression expr, Trace trace, long snap,
 			TraceThread thread, int frame) {
 		SleighLanguage language = expr.getLanguage();
 		if (trace.getBaseLanguage() != language) {
@@ -84,14 +84,14 @@ public enum TraceSleighUtils {
 		return expr.evaluate(executor);
 	}
 
-	public static BigInteger evaluate(SleighExpression expr, Trace trace, long snap,
+	public static BigInteger evaluate(PcodeExpression expr, Trace trace, long snap,
 			TraceThread thread, int frame) {
 		byte[] bytes = evaluateBytes(expr, trace, snap, thread, frame);
 		return Utils.bytesToBigInteger(bytes, bytes.length, expr.getLanguage().isBigEndian(),
 			false);
 	}
 
-	public static Pair<byte[], TraceMemoryState> evaluateBytesWithState(SleighExpression expr,
+	public static Pair<byte[], TraceMemoryState> evaluateBytesWithState(PcodeExpression expr,
 			Trace trace, long snap, TraceThread thread, int frame) {
 		SleighLanguage language = expr.getLanguage();
 		if (trace.getBaseLanguage() != language) {
@@ -104,7 +104,7 @@ public enum TraceSleighUtils {
 		return expr.evaluate(executor);
 	}
 
-	public static Pair<BigInteger, TraceMemoryState> evaluateWithState(SleighExpression expr,
+	public static Pair<BigInteger, TraceMemoryState> evaluateWithState(PcodeExpression expr,
 			Trace trace, long snap, TraceThread thread, int frame) {
 		Pair<byte[], TraceMemoryState> bytesPair =
 			evaluateBytesWithState(expr, trace, snap, thread, frame);

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +15,19 @@
  */
 package ghidra.app.util.viewer.listingpanel;
 
+import docking.widgets.EventTrigger;
 import ghidra.program.util.ProgramSelection;
 
 /**
- *
  * Listener that is notified when the program selection changes
- *  
- * 
  */
 public interface ProgramSelectionListener {
 
 	/**
-	 * Called whenever the program slection changes.
+	 * Called whenever the program selection changes.
+	 * 
 	 * @param selection the new program selection.
+	 * @param trigger the cause of the change
 	 */
-	public void programSelectionChanged(ProgramSelection selection);
+	public void programSelectionChanged(ProgramSelection selection, EventTrigger trigger);
 }

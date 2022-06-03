@@ -26,6 +26,12 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 
+/**
+ * A p-code program to be executed by a {@link PcodeExecutor}
+ * 
+ * <p>
+ * This is a list of p-code operations together with a map of expected userops.
+ */
 public class PcodeProgram {
 	protected static class MyAppender extends AbstractAppender<String> {
 		protected final PcodeProgram program;
@@ -82,6 +88,12 @@ public class PcodeProgram {
 		}
 	}
 
+	/**
+	 * Generate a p-code program from the given instruction
+	 * 
+	 * @param instruction the instruction
+	 * @return the p-code program.
+	 */
 	public static PcodeProgram fromInstruction(Instruction instruction) {
 		Language language = instruction.getPrototype().getLanguage();
 		if (!(language instanceof SleighLanguage)) {
@@ -96,6 +108,13 @@ public class PcodeProgram {
 	protected final List<PcodeOp> code;
 	protected final Map<Integer, String> useropNames = new HashMap<>();
 
+	/**
+	 * Construct a p-code program with the given bindings
+	 * 
+	 * @param language the language that generated the p-code
+	 * @param code the list of p-code ops
+	 * @param useropSymbols a map of expected userop symbols
+	 */
 	protected PcodeProgram(SleighLanguage language, List<PcodeOp> code,
 			Map<Integer, UserOpSymbol> useropSymbols) {
 		this.language = language;
@@ -112,6 +131,11 @@ public class PcodeProgram {
 		}
 	}
 
+	/**
+	 * Get the language generating this program
+	 * 
+	 * @return the language
+	 */
 	public SleighLanguage getLanguage() {
 		return language;
 	}
@@ -120,10 +144,22 @@ public class PcodeProgram {
 		return code;
 	}
 
-	public <T> void execute(PcodeExecutor<T> executor, SleighUseropLibrary<T> library) {
+	/**
+	 * Execute this program using the given executor and library
+	 * 
+	 * @param <T> the type of values to be operated on
+	 * @param executor the executor
+	 * @param library the library
+	 */
+	public <T> void execute(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library) {
 		executor.execute(this, library);
 	}
 
+	/**
+	 * For display purposes, get the header above the frame, usually the class name
+	 * 
+	 * @return the frame's display header
+	 */
 	protected String getHead() {
 		return getClass().getSimpleName();
 	}

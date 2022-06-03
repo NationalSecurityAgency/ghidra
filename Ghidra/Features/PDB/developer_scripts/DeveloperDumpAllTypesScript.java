@@ -93,7 +93,7 @@ public class DeveloperDumpAllTypesScript extends GhidraScript {
 		}
 		String userChoice =
 			OptionDialog.showInputChoiceDialog(null, "Choose a Data Type Manager or Cancel",
-				"Choose", names, initialDtmChoice, OptionDialog.CANCEL_OPTION);
+				"Choose", names, initialDtmChoice, OptionDialog.PLAIN_MESSAGE);
 		if (userChoice == null) {
 			return null;
 		}

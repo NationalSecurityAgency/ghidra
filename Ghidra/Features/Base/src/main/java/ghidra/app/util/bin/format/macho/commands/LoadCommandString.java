@@ -24,9 +24,9 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents an lc_str union.
+ * Represents an lc_str union
  * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * @see LoadCommand
  */
 public class LoadCommandString implements StructConverter {
 	private int offset;

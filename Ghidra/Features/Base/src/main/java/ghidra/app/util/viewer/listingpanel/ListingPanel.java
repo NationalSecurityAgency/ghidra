@@ -1046,8 +1046,18 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 * @param sel the new selection
 	 */
 	public void setSelection(ProgramSelection sel) {
+		setSelection(sel, EventTrigger.API_CALL);
+	}
+
+	/**
+	 * Sets the selection.
+	 *
+	 * @param sel the new selection
+	 * @param trigger the cause of the change
+	 */
+	public void setSelection(ProgramSelection sel, EventTrigger trigger) {
 		if (sel == null) {
-			fieldPanel.setSelection(layoutModel.getFieldSelection(null));
+			fieldPanel.setSelection(layoutModel.getFieldSelection(null), trigger);
 			return;
 		}
 
@@ -1074,12 +1084,12 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 					}
 					fieldSel.addRange(new FieldLocation(loc1.getIndex(), fieldNum1, 0, 0),
 						new FieldLocation(index2, fieldNum2, 0, 0));
-					fieldPanel.setSelection(fieldSel);
+					fieldPanel.setSelection(fieldSel, trigger);
 					return;
 				}
 			}
 		}
-		fieldPanel.setSelection(layoutModel.getFieldSelection(sel));
+		fieldPanel.setSelection(layoutModel.getFieldSelection(sel), trigger);
 	}
 
 	/**
@@ -1113,14 +1123,12 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			return;
 		}
 
-		if (trigger != EventTrigger.API_CALL) {
-			if (listingModel.getProgram() == null || programSelectionListener == null) {
-				return;
-			}
-			ProgramSelection ps = layoutModel.getProgramSelection(selection);
-			if (ps != null) {
-				programSelectionListener.programSelectionChanged(ps);
-			}
+		if (listingModel.getProgram() == null || programSelectionListener == null) {
+			return;
+		}
+		ProgramSelection ps = layoutModel.getProgramSelection(selection);
+		if (ps != null) {
+			programSelectionListener.programSelectionChanged(ps, trigger);
 		}
 	}
 

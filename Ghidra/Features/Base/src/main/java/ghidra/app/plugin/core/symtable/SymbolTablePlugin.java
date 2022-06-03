@@ -237,11 +237,12 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 					break;
 
 				case ChangeManager.DOCR_SYMBOL_ADDED:
-
-					Address addAddr = rec.getStart();
+					// NOTE: DOCR_SYMBOL_ADDED events are never generated for reference-based 
+					// dynamic label symbols.  Reference events must be used to check for existence 
+					// of a dynamic label symbol.
 					Symbol symbol = (Symbol) rec.getNewValue();
 					domainObjectWorker.schedule(
-						new SymbolAddedJob(currentProgram, symbol, addAddr));
+						new SymbolAddedJob(currentProgram, symbol));
 					break;
 
 				case ChangeManager.DOCR_SYMBOL_REMOVED:
@@ -567,30 +568,16 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 	private class SymbolAddedJob extends AbstractSymbolUpdateJob {
 
 		private Symbol symbol;
-		private Address address;
 
-		SymbolAddedJob(Program program, Symbol symbol, Address address) {
+		SymbolAddedJob(Program program, Symbol symbol) {
 			super(program);
 			this.symbol = symbol;
-			this.address = address;
 		}
 
 		@Override
 		protected void doRun() {
-
 			symProvider.symbolAdded(symbol);
 			refProvider.symbolAdded(symbol);
-
-			if (!symProvider.isShowingDynamicSymbols()) {
-				return;
-			}
-
-			SymbolTable symbolTable = program.getSymbolTable();
-			Symbol primaryAtAdd = symbolTable.getPrimarySymbol(address);
-			if (primaryAtAdd != null && primaryAtAdd.isDynamic()) {
-				symProvider.symbolRemoved(primaryAtAdd);
-				refProvider.symbolRemoved(primaryAtAdd);
-			}
 		}
 	}
 
@@ -607,20 +594,19 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 
 		@Override
 		protected void doRun() {
-
-			SymbolTable symbolTable = currentProgram.getSymbolTable();
-			Symbol removedSymbol = new ProxySymbol(symbolId, address);
-			symProvider.symbolRemoved(removedSymbol);
-			refProvider.symbolRemoved(removedSymbol);
+			symProvider.symbolRemoved(symbolId);
+			refProvider.symbolRemoved(symbolId);
 
 			if (!symProvider.isShowingDynamicSymbols()) {
 				return;
 			}
 
+			SymbolTable symbolTable = currentProgram.getSymbolTable();
 			Symbol primaryAtRemove = symbolTable.getPrimarySymbol(address);
 			if (primaryAtRemove != null && primaryAtRemove.isDynamic()) {
-				symProvider.symbolAdded(primaryAtRemove);
-				refProvider.symbolAdded(primaryAtRemove);
+				// 
+				symProvider.symbolChanged(primaryAtRemove);
+				refProvider.symbolChanged(primaryAtRemove);
 			}
 		}
 	}
@@ -636,9 +622,6 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 
 		@Override
 		protected void doRun() {
-
-			// Note: should not need this check--the provider should be built to handle this
-			// if (symbol.checkIsValid()) 
 			symProvider.symbolChanged(symbol);
 			refProvider.symbolChanged(symbol);
 		}
@@ -704,12 +687,10 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 				return;
 			}
 
-			if (!symProvider.isShowingDynamicSymbols() && symbol.isDynamic()) {
-				return;
+			if (!symbol.isDynamic() || symProvider.isShowingDynamicSymbols()) {
+				symProvider.symbolChanged(symbol);
+				refProvider.symbolChanged(symbol);
 			}
-
-			symProvider.symbolChanged(symbol);
-			refProvider.symbolChanged(symbol);
 		}
 	}
 
@@ -734,15 +715,15 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 			SymbolTable symbolTable = program.getSymbolTable();
 			Symbol symbol = symbolTable.getSymbol(reference);
 			if (symbol != null) {
-				symProvider.symbolChanged(symbol);
-				refProvider.symbolChanged(symbol);
+				if (!symbol.isDynamic() || symProvider.isShowingDynamicSymbols()) {
+					symProvider.symbolChanged(symbol);
+					refProvider.symbolChanged(symbol);
+				}
 			}
-
-			if (symProvider.isShowingDynamicSymbols()) {
-				long id = symbolTable.getDynamicSymbolID(reference.getToAddress());
-				Symbol removedSymbol = new ProxySymbol(id, toAddr);
-				symProvider.symbolRemoved(removedSymbol);
-				refProvider.symbolRemoved(removedSymbol);
+			else if (toAddr.isMemoryAddress() && symProvider.isShowingDynamicSymbols()) {
+				long dynamicSymbolId = symbolTable.getDynamicSymbolID(reference.getToAddress());
+				symProvider.symbolRemoved(dynamicSymbolId);
+				refProvider.symbolRemoved(dynamicSymbolId);
 			}
 		}
 	}

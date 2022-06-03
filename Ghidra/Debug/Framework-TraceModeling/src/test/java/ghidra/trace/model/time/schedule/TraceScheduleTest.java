@@ -367,7 +367,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		@Override
 		public PcodeExecutor<Void> getExecutor() {
 			return new PcodeExecutor<>(TOY_BE_64_LANG, machine.getArithmetic(), getState()) {
-				public PcodeFrame execute(PcodeProgram program, SleighUseropLibrary<Void> library) {
+				public PcodeFrame execute(PcodeProgram program, PcodeUseropLibrary<Void> library) {
 					machine.record.add("x:" + name);
 					// TODO: Verify the actual effect
 					return null; //super.execute(program, library);
@@ -376,7 +376,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 
 		@Override
-		public SleighUseropLibrary<Void> getUseropLibrary() {
+		public PcodeUseropLibrary<Void> getUseropLibrary() {
 			return null;
 		}
 
@@ -402,7 +402,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		protected final List<String> record = new ArrayList<>();
 
 		public TestMachine() {
-			super(TOY_BE_64_LANG, null, null);
+			super(TOY_BE_64_LANG, null);
 		}
 
 		@Override
@@ -418,6 +418,11 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		@Override
 		protected PcodeExecutorState<Void> createLocalState(PcodeThread<Void> thread) {
 			return null;
+		}
+
+		@Override
+		protected PcodeUseropLibrary<Void> createUseropLibrary() {
+			return PcodeUseropLibrary.nil();
 		}
 	}
 

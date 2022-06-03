@@ -29,9 +29,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a routines_command and routines_command_64 structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a routines_command and routines_command_64 structure 
  */
 public class RoutinesCommand extends LoadCommand {
     private long init_address;
@@ -46,7 +44,7 @@ public class RoutinesCommand extends LoadCommand {
 	private boolean is32bit;
 
 	RoutinesCommand(BinaryReader reader, boolean is32bit) throws IOException {
-		initLoadCommand(reader);
+		super(reader);
 		this.is32bit = is32bit;
 		if (is32bit) {
 			init_address = reader.readNextUnsignedInt();

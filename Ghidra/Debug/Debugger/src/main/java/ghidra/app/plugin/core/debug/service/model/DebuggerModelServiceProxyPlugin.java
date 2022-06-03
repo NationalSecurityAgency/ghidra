@@ -274,7 +274,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 
 	@Override
 	public Stream<DebuggerProgramLaunchOffer> getProgramLaunchOffers(Program program) {
-		return orderOffers(delegate.getProgramLaunchOffers(program), program);
+		return orderOffers(delegate.doGetProgramLaunchOffers(tool, program), program);
 	}
 
 	protected List<String> readMostRecentLaunches(Program program) {
@@ -330,11 +330,11 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	}
 
 	private void debugProgram(DebuggerProgramLaunchOffer offer, Program program, boolean prompt) {
-		BackgroundUtils.async(tool, program, offer.getButtonTitle(), true, true, true, (p, m) -> {
-			List<String> mrl = new ArrayList<>(readMostRecentLaunches(program));
-			mrl.remove(offer.getConfigName());
-			mrl.add(offer.getConfigName());
-			writeMostRecentLaunches(program, mrl);
+		BackgroundUtils.asyncModal(tool, offer.getButtonTitle(), true, true, m -> {
+			List<String> recent = new ArrayList<>(readMostRecentLaunches(program));
+			recent.remove(offer.getConfigName());
+			recent.add(offer.getConfigName());
+			writeMostRecentLaunches(program, recent);
 			CompletableFuture.runAsync(() -> {
 				updateActionDebugProgram();
 			}, AsyncUtils.SWING_EXECUTOR).exceptionally(ex -> {
@@ -521,13 +521,8 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	}
 
 	@Override
-	public TraceRecorder doRecordTargetPromptOffers(PluginTool t, TargetObject target) {
-		return delegate.doRecordTargetPromptOffers(t, target);
-	}
-
-	@Override
 	public TraceRecorder recordTargetPromptOffers(TargetObject target) {
-		return doRecordTargetPromptOffers(tool, target);
+		return delegate.doRecordTargetPromptOffers(tool, target);
 	}
 
 	@Override

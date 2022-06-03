@@ -15,6 +15,12 @@
  */
 package ghidra.pcode.exec;
 
+import ghidra.pcode.emu.DefaultPcodeThread.PcodeEmulationLibrary;
+
+/**
+ * Exception thrown by {@link PcodeEmulationLibrary#emu_swi()}, a p-code userop exported by
+ * emulators for implementing breakpoints.
+ */
 public class InterruptPcodeExecutionException extends PcodeExecutionException {
 	public InterruptPcodeExecutionException(PcodeFrame frame, Throwable cause) {
 		super("Execution hit breakpoint", frame, cause);
