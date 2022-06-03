@@ -119,7 +119,7 @@ public class StructureEditorUnlockedActions4Test
 		invoke(duplicateAction);
 		assertEquals(num, model.getNumComponents());
 		assertEquals(len, model.getLength());
-		checkSelection(new int[] { 1 });
+		checkSelection(new int[] { 2 });
 		assertEquals(getDataType(1), dt1);
 		assertEquals(getDataType(2), dt1);
 		assertEquals(getDataType(3), dt2);
