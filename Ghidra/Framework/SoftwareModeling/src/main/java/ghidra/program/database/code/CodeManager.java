@@ -624,26 +624,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 		Register contextReg = contextMgr.getBaseContextRegister();
 		if (contextReg != Register.NO_CONTEXT) {
-			try {
-				RegisterValue contextValue = context.getRegisterValue(contextReg);
-				Address start = address;
-				if (SystemUtilities.isEqual(contextValue,
-					contextMgr.getDefaultValue(contextReg, start))) {
-					contextMgr.setValue(contextReg, start, endAddr, null);
-				}
-				else {
-					// Do not save non-flowing context beyond
-					RegisterValue ctx = contextValue;
-					if (contextMgr.hasNonFlowingContext() && !start.equals(endAddr)) {
-						contextMgr.setRegisterValue(start, start, ctx);
-						ctx = contextMgr.getFlowValue(ctx);
-						start = start.next();
-					}
-					contextMgr.setRegisterValue(start, endAddr, ctx);
-				}
-			}
-			catch (ContextChangeException e) {
-				throw new AssertException(e.getMessage()); // Unexpected
+			RegisterValue contextValue = context.getRegisterValue(contextReg);
+			if (contextValue != null && contextValue.hasAnyValue()) {
+				saveInstructionContext(address, endAddr, contextValue);
 			}
 		}
 
@@ -663,6 +646,31 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 		addReferencesForInstruction(inst);
 		return inst;
+	}
+
+	private void saveInstructionContext(Address address, Address endAddr,
+			RegisterValue contextValue) {
+		try {
+			Address start = address;
+			Register contextReg = contextValue.getRegister();
+			if (SystemUtilities.isEqual(contextValue,
+				contextMgr.getDefaultValue(contextReg, start))) {
+				contextMgr.setValue(contextReg, start, endAddr, null);
+			}
+			else {
+				// Do not save non-flowing context beyond
+				RegisterValue ctx = contextValue;
+				if (contextMgr.hasNonFlowingContext() && !start.equals(endAddr)) {
+					contextMgr.setRegisterValue(start, start, ctx);
+					ctx = contextMgr.getFlowValue(ctx);
+					start = start.next();
+				}
+				contextMgr.setRegisterValue(start, endAddr, ctx);
+			}
+		}
+		catch (ContextChangeException e) {
+			throw new AssertException(e.getMessage()); // Unexpected
+		}
 	}
 
 	RegisterValue getOriginalPrototypeContext(InstructionPrototype prototype,
