@@ -306,7 +306,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	/**
-	 * @return the bundle host used for scripting, ultimately from {@link GhidraScriptUtil#getBundleHost()}
+	 * @return the bundle host used for scripting, ultimately from
+	 *         {@link GhidraScriptUtil#getBundleHost()}
 	 */
 	public BundleHost getBundleHost() {
 		return bundleHost;
@@ -756,7 +757,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		trimUnusedTreeCategories();
 
-		scriptRoot.fireNodeStructureChanged(scriptRoot);
+		scriptRoot.fireNodeStructureChanged();
 		if (preRefreshSelectionPath != null) {
 			scriptCategoryTree.setSelectionPath(preRefreshSelectionPath);
 		}

@@ -248,7 +248,7 @@ public class ObjectTree implements ObjectPane {
 			ObjectNode node = nodeMap.get(path(container));
 			if (node != null) {
 				node.setContainer(this, container.getParent(), container);
-				node.fireNodeChanged(node.getParent(), node);
+				node.fireNodeChanged();
 			}
 		});
 	}
