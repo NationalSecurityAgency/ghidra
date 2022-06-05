@@ -25,6 +25,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
+import ghidra.app.util.bin.format.macho.commands.ExportTrie.ExportEntry;
 import ghidra.app.util.bin.format.macho.commands.dyld.*;
 import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr;
 import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
@@ -125,7 +126,8 @@ public class MachoProgramBuilder {
 		processEntryPoint();
 		processMemoryBlocks(machoHeader, provider.getName(), true, true);
 		processUnsupportedLoadCommands();
-		processSymbolTables();
+		boolean exportsFound = processExports(machoHeader);
+		processSymbolTables(machoHeader, !exportsFound);
 		processIndirectSymbols();
 		setRelocatableProperty();
 		processLibraries();
@@ -405,10 +407,48 @@ public class MachoProgramBuilder {
  			log.appendMsg(loadCommand.getCommandName());
  		}
  	}
+ 	
+	protected boolean processExports(MachHeader header) throws Exception {
+		List<ExportEntry> exports = new ArrayList<>();
+ 		SegmentCommand textSegment = header.getSegment(SegmentNames.SEG_TEXT);
+ 		if (textSegment == null) {
+ 			log.appendMsg("Cannot process exports, __TEXT segment not found!");
+			return false;
+ 		}
 
-	protected void processSymbolTables() throws Exception {
+		// Old way - export tree in DyldInfoCommand
+		List<DyldInfoCommand> dyldInfoCommands = header.getLoadCommands(DyldInfoCommand.class);
+		for (DyldInfoCommand dyldInfoCommand : dyldInfoCommands) {
+			exports.addAll(dyldInfoCommand.getExportTrie().getExports(e -> !e.isReExport()));
+
+		}
+
+		// New way - export tree in DyldExportsTrieCommand
+		List<DyldExportsTrieCommand> dyldExportsTrieCommands =
+			header.getLoadCommands(DyldExportsTrieCommand.class);
+		for (DyldExportsTrieCommand dyldExportsTreeCommand : dyldExportsTrieCommands) {
+			exports.addAll(dyldExportsTreeCommand.getExportTrie().getExports(e -> !e.isReExport()));
+		}
+
+		Address baseAddr = space.getAddress(textSegment.getVMaddress());
+		for (ExportEntry export : exports) {
+			String name = SymbolUtilities.replaceInvalidChars(export.getName(), true);
+			Address exportAddr = baseAddr.add(export.getAddress());
+			program.getSymbolTable().addExternalEntryPoint(exportAddr);
+			try {
+				program.getSymbolTable().createLabel(exportAddr, name, SourceType.IMPORTED);
+			}
+			catch (Exception e) {
+				log.appendMsg("Unable to create symbol: " + e.getMessage());
+			}
+		}
+
+		return !exports.isEmpty();
+ 	}
+
+	protected void processSymbolTables(MachHeader header, boolean processExports) throws Exception {
 		monitor.setMessage("Processing symbol tables...");
-		List<SymbolTableCommand> commands = machoHeader.getLoadCommands(SymbolTableCommand.class);
+		List<SymbolTableCommand> commands = header.getLoadCommands(SymbolTableCommand.class);
 		for (SymbolTableCommand symbolTableCommand : commands) {
 			List<NList> symbols = symbolTableCommand.getSymbols();
 			for (NList symbol : symbols) {
@@ -440,7 +480,7 @@ public class MachoProgramBuilder {
 					continue;
 				}
 
-				if (symbol.isExternal() || symbol.isPrivateExternal()) {
+				if (processExports && symbol.isExternal()) {
 					program.getSymbolTable().addExternalEntryPoint(addr);
 				}
 
@@ -458,7 +498,12 @@ public class MachoProgramBuilder {
 					continue;
 				}
 				try {
-					program.getSymbolTable().createLabel(addr, string, SourceType.IMPORTED);
+					if (!symbol.isExternal() || processExports) {
+						program.getSymbolTable().createLabel(addr, string, SourceType.IMPORTED);
+						if (symbol.isExternal()) {
+							program.getSymbolTable().addExternalEntryPoint(addr);
+						}
+					}
 				}
 				catch (Exception e) {
 					log.appendMsg("Unable to create symbol: " + e.getMessage());
