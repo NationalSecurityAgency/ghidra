@@ -564,7 +564,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	}
 
-	private void goToToken(ClangToken token) {
+	public void goToToken(ClangToken token) {
 
 		ClangLine line = token.getLineParent();
 
