@@ -30,8 +30,11 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotEmptyException;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class FileFormatAnalyzer implements Analyzer {
@@ -151,7 +154,7 @@ public abstract class FileFormatAnalyzer implements Analyzer {
 	}
 
 	protected ProgramFragment createFragment(Program program, String fragmentName, Address start,
-			Address end) throws Exception {
+			Address end) throws DuplicateNameException, NotFoundException  {
 		ProgramModule module = program.getListing().getDefaultRootModule();
 		ProgramFragment fragment = getFragment(module, fragmentName);
 		if (fragment == null) {
@@ -187,18 +190,17 @@ public abstract class FileFormatAnalyzer implements Analyzer {
 		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
 	}
 
-	protected Data createData(Program program, Address address, DataType datatype)
-			throws Exception {
+	protected Data createData(Program program, Address address, DataType datatype) throws CodeUnitInsertionException {
 		if (datatype instanceof StringDataType) {
 			CreateStringCmd cmd = new CreateStringCmd(address);
 			if (!cmd.applyTo(program)) {
-				throw new RuntimeException(cmd.getStatusMsg());
+				throw new CodeUnitInsertionException(cmd.getStatusMsg());
 			}
 		}
 		else {
 			CreateDataCmd cmd = new CreateDataCmd(address, datatype);
 			if (!cmd.applyTo(program)) {
-				throw new RuntimeException(cmd.getStatusMsg());
+				throw new CodeUnitInsertionException(cmd.getStatusMsg());
 			}
 		}
 		return program.getListing().getDefinedDataAt(address);

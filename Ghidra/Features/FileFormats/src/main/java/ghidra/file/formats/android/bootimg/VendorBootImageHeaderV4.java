@@ -16,15 +16,19 @@
 package ghidra.file.formats.android.bootimg;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.util.InvalidNameException;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
  * https://android.googlesource.com/platform/system/tools/mkbootimg/+/refs/heads/master/include/bootimg/bootimg.h#401
+ * 
  * <pre>
  * The structure of the vendor boot image version 4, which is required to be
  * present when a version 4 boot image is used, is as follows:
@@ -101,12 +105,40 @@ public class VendorBootImageHeaderV4 extends VendorBootImageHeaderV3 {
 	private int vendor_ramdisk_table_entry_size;
 	private int bootconfig_size;
 
+	private List<VendorRamdiskTableEntryV4> ramdiskTableEntryList = new ArrayList<>();
+
 	public VendorBootImageHeaderV4(BinaryReader reader) throws IOException {
 		super(reader);
 		vendor_ramdisk_table_size = reader.readNextInt();
 		vendor_ramdisk_table_entry_num = reader.readNextInt();
 		vendor_ramdisk_table_entry_size = reader.readNextInt();
 		bootconfig_size = reader.readNextInt();
+
+		BinaryReader cloneReader = reader.clone(getVendorRamdiskTableOffset());
+		for (int i = 0; i < vendor_ramdisk_table_entry_num; ++i) {
+			ramdiskTableEntryList.add(new VendorRamdiskTableEntryV4(cloneReader));
+		}
+	}
+
+	@Override
+	public long getNestedVendorRamdiskCount() {
+		return vendor_ramdisk_table_entry_num;
+	}
+
+	@Override
+	public long getNestedVendorRamdiskOffset(int index) throws IOException {
+		return getVendorRamdiskOffset() +
+			ramdiskTableEntryList.get(index).getRamdiskOffset();
+	}
+
+	@Override
+	public int getNestedVendorRamdiskSize(int index) throws IOException {
+		return ramdiskTableEntryList.get(index).getRamdiskSize();
+	}
+
+	public long getVendorRamdiskTableOffset() {
+		long value = getDtbOffset() + getDtbSize();
+		return NumericUtilities.getUnsignedAlignedValue(value, getPageSize());
 	}
 
 	/**
@@ -133,12 +165,21 @@ public class VendorBootImageHeaderV4 extends VendorBootImageHeaderV3 {
 		return vendor_ramdisk_table_entry_size;
 	}
 
+	public long getBootConfigOffset() {
+		long value = getVendorRamdiskTableOffset() + getVendorRamdiskTableSize();
+		return NumericUtilities.getUnsignedAlignedValue(value, getPageSize());
+	}
+
 	/**
 	 * Size in bytes for the bootconfig section
 	 * @return size in bytes for the bootconfig section
 	 */
 	public int getBootConfigSize() {
 		return bootconfig_size;
+	}
+
+	public List<VendorRamdiskTableEntryV4> getVendorRamdiskTableEntryList() {
+		return ramdiskTableEntryList;
 	}
 
 	@Override
@@ -148,7 +189,7 @@ public class VendorBootImageHeaderV4 extends VendorBootImageHeaderV3 {
 			structure.setName("vendor_boot_img_hdr_v4");
 		}
 		catch (InvalidNameException e) {
-			//ignore
+			// ignore
 		}
 		structure.add(DWORD, "vendor_ramdisk_table_size", null);
 		structure.add(DWORD, "vendor_ramdisk_table_entry_num", null);

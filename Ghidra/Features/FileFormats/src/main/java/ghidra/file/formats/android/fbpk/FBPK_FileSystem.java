@@ -26,8 +26,11 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
 
-@FileSystemInfo(type = "androidbootloaderfbpk", // ([a-z0-9]+ only)
-		description = "Android Boot Loader Image (FBPK)", factory = GFileSystemBaseFactory.class)
+@FileSystemInfo(
+	type = "androidbootloaderfbpk", // ([a-z0-9]+ only)
+	description = "Android Boot Loader Image (FBPK)",
+	factory = GFileSystemBaseFactory.class
+)
 
 public class FBPK_FileSystem extends GFileSystemBase {
 	private List<GFileImpl> fileList = new ArrayList<>();
@@ -46,7 +49,7 @@ public class FBPK_FileSystem extends GFileSystemBase {
 	@Override
 	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
 		BinaryReader reader = new BinaryReader(provider, true /*might not always be LE*/ );
-		FBPK header = new FBPK(reader);
+		FBPK header = FBPK_Factory.getFBPK(reader);
 		List<FBPK_Partition> partitions = header.getPartitions();
 		for (FBPK_Partition partition : partitions) {
 			if (partition.isFile()) {
