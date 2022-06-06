@@ -42,6 +42,7 @@ public final class OatQuickMethodHeaderFactory {
 			case OatConstants.VERSION_11_RELEASE:
 				return 8;
 			case OatConstants.VERSION_12_RELEASE:
+			case OatConstants.VERSION_S_V2_PREVIEW:
 				return 4;
 		}
 		throw new IOException("OatQuickMethodHeader unsupported OAT version: " + oatVersion);
