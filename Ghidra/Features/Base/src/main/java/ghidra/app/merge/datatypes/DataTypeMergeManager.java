@@ -75,9 +75,11 @@ public class DataTypeMergeManager implements MergeResolver {
 	private DataTypeMergePanel dtMergePanel;
 	private int totalConflictCount;
 	private int currentConflictIndex;
-	private Map<Long, DataType> myResolvedDts; // maps My data type key -> resolved Data type
-	private Map<Long, DataType> latestResolvedDts; // maps Latest data type key -> resolved Data type
-	private Map<Long, DataType> origResolvedDts; // maps Original data type key -> resolved Data type
+
+	private MyIdentityHashMap<Long, DataType> myResolvedDts; // maps My data type key -> resolved Data type
+	private MyIdentityHashMap<Long, DataType> latestResolvedDts; // maps Latest data type key -> resolved Data type
+	private MyIdentityHashMap<Long, DataType> origResolvedDts; // maps Original data type key -> resolved Data type
+
 	private List<FixUpInfo> fixUpList; // FixUpInfo objects that must be resolved after
 	private HashSet<Long> fixUpIDSet; // track types with fixups
 	// data types have been added and conflicts resolved.
@@ -696,7 +698,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * the data type existed
 	 */
 	private DataType updateDataTypeName(long id, DataType dt,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		DataType resultDt = dtms[RESULT].getDataType(id);
 		DataType newDt = null;
 		if (resultDt != null) {
@@ -767,7 +769,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private DataType updateDataType(long id, DataTypeManager dtm,
-			Map<Long, DataType> resolvedDataTypes, boolean updatePath) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes, boolean updatePath) {
 		DataType resultDt = dtms[RESULT].getDataType(id);
 		DataType myDt = dtm.getDataType(id);
 
@@ -812,7 +814,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private DataType updateDataTypeSource(long id, DataTypeManager dtm,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		DataType resultDt = dtms[RESULT].getDataType(id);
 		DataType myDt = dtm.getDataType(id);
 		SourceArchive mySourceArchive = myDt.getSourceArchive();
@@ -847,7 +849,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * @return the resulting data type in this data type manager.
 	 */
 	private DataType addDataType(long dataTypeID, DataType dataType,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 
 		DataType existingDt = resolvedDataTypes.get(dataTypeID);
 		if (existingDt != null) {
@@ -896,7 +898,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * @return resolved data type that corresponds to id
 	 */
 	private DataType getResolvedBaseType(long id, DataType dt,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		DataTypeManager dtm = dt.getDataTypeManager();
 		DataType baseDt = getBaseDataType(dt);
 		if (baseDt == DataType.DEFAULT) {
@@ -933,7 +935,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private DataType createPointer(long id, Pointer pointerDt,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		DataType innerDt = pointerDt.getDataType();
 		if (innerDt == DataType.DEFAULT) {
 			return pointerDt;
@@ -954,7 +956,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private DataType createTypeDef(long id, TypeDef originalTypeDef,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		DataType innerDataType = originalTypeDef.getDataType();
 		if (innerDataType == DataType.DEFAULT) {
 			return originalTypeDef;
@@ -985,7 +987,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private DataType createArray(long id, Array array,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		DataType dt = array.getDataType();
 		if (dt == DataType.DEFAULT) {
 			return array;
@@ -1006,7 +1008,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private DataType addComposite(long id, Composite myDt,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 
 		long oldLastChangeTime = myDt.getLastChangeTime();
 		long oldLastChangeTimeInSourceArchive = myDt.getLastChangeTimeInSourceArchive();
@@ -1026,7 +1028,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private DataType addFunctionDef(long id, FunctionDefinition myDt,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		FunctionDefinition newDt = (FunctionDefinition) myDt.clone(dtms[RESULT]);
 		setCategoryPath(newDt, myDt.getCategoryPath());
 		updateFunctionDef(id, myDt, newDt, resolvedDataTypes);
@@ -1095,7 +1097,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private void updateStructure(long sourceDtID, Structure sourceDt, Structure destStruct,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 
 		// NOTE: it is possible for the same destStruct to be updated more than once;
 		// therefor we must cleanup any previous obsolete fixups
@@ -1313,7 +1315,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private void updateUnion(long sourceDtID, Union sourceDt, Union destUnion,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 
 		// NOTE: it is possible for the same destUnion to be updated more than once;
 		// therefor we must cleanup any previous obsolete fixups
@@ -1444,7 +1446,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private void updateComposite(long sourceDtID, Composite sourceDt, Composite destDt,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 
 		if (sourceDt instanceof Structure) {
 			updateStructure(sourceDtID, (Structure) sourceDt, (Structure) destDt,
@@ -1458,7 +1460,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private void updateFunctionDef(long sourceFunctionDefDtID,
 			FunctionDefinition sourceFunctionDefDt, FunctionDefinition destDt,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 
 		// NOTE: it is possible for the same function def to be updated more than once;
 		// therefor we must cleanup any previous obsolete fixups
@@ -1507,7 +1509,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * has not been resolved yet
 	 */
 	private DataType getResolvedParam(long id, long paramDatatypeID, int index,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		DataType resolvedDt = getResolvedComponent(paramDatatypeID, resolvedDataTypes);
 		if (resolvedDt == null) {
 			if (!myDtAddedList.contains(Long.valueOf(paramDatatypeID))) {
@@ -2537,7 +2539,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	private void addToCleanupList(FixUpInfo info) {
 		long id = info.id;
 		int index = info.index;
-		Map<Long, DataType> ht = info.ht;
+		MyIdentityHashMap<Long, DataType> ht = info.ht;
 		CleanUpInfo cleanUpInfo = cleanupPlaceHolderList.get(id);
 		if (cleanUpInfo == null) {
 			cleanUpInfo = new CleanUpInfo(id);
@@ -2651,7 +2653,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	private DataType resolve(long id, DataTypeManager dtm,
-			Map<Long, DataType> resolvedDataTypes) {
+			MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 		DataType dt = getResolvedComponent(id, resolvedDataTypes);
 		if (dt == null) {
 			DataType otherDt = dtm.getDataType(id);
@@ -2927,9 +2929,9 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		origDtConflictList = new ArrayList<>(dtConflictList);
 
-		myResolvedDts = new HashMap<>();
-		latestResolvedDts = new HashMap<>();
-		origResolvedDts = new HashMap<>();
+		myResolvedDts = new MyIdentityHashMap<>();
+		latestResolvedDts = new MyIdentityHashMap<>();
+		origResolvedDts = new MyIdentityHashMap<>();
 
 		fixUpList = new ArrayList<>();
 		fixUpIDSet = new HashSet<>();
@@ -3204,7 +3206,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		long id;
 		long compID;
 		int index; // TODO: index as offset could be problematic with shared offset
-		Map<Long, DataType> ht;
+		MyIdentityHashMap<Long, DataType> ht;
 
 		// bitfield info
 		int bitOffset = -1;
@@ -3220,7 +3222,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
 		FixUpInfo(long id, long compID, int index,
-				Map<Long, DataType> resolvedDataTypes) {
+				MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 			this.id = id;
 			this.compID = compID;
 			this.index = index;
@@ -3236,7 +3238,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
 		FixUpInfo(long id, long compID, DataTypeComponent sourceDtc,
-				Map<Long, DataType> resolvedDataTypes) {
+				MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 			this(id, compID, getComponentFixupIndex(sourceDtc), resolvedDataTypes);
 			if (sourceDtc.isBitFieldComponent()) {
 				BitFieldDataType bfDt = (BitFieldDataType) sourceDtc.getDataType();
@@ -3306,13 +3308,34 @@ public class DataTypeMergeManager implements MergeResolver {
 			return dtms[MY];
 		}
 	}
+	
+	/**
+	 * <code>MyIdentityHashMap</code> extends {@link HashMap} with the only difference being its 
+	 * implementation of {@link #hashCode()} and {@link #equals(Object)} which are based purely on 
+	 * the map instance identity and not its content.
+	 * <p>
+	 * This unique implementation was created due to the use of this map as a key within another
+	 * {@code Map}.
+	 */
+	private static class MyIdentityHashMap<K, V> extends HashMap<K, V> {
+		
+		@Override
+		public int hashCode() {
+			return System.identityHashCode(this);
+		}
+		
+		@Override
+		public boolean equals(Object o) {
+			return o == this;
+		}
+	}
 
 	/**
 	 * CleanUpInfo .
 	 */
 	private class CleanUpInfo {
 		long id;
-		Map<Map<Long, DataType>, int[]> map; // resolvedDataTypesMap, indexArray
+		Map<MyIdentityHashMap<Long, DataType>, int[]> map; // resolvedDataTypesMap, indexArray
 
 		/**
 		 * Construct info needed to clean up place holder data types after base types
@@ -3329,7 +3352,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		 * structure; for other data types, offset is not used (specify -1)
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
-		public void add(int index, Map<Long, DataType> resolvedDataTypes) {
+		public void add(int index, MyIdentityHashMap<Long, DataType> resolvedDataTypes) {
 			if (map == null) {
 				map = new HashMap<>();
 			}
@@ -3348,8 +3371,8 @@ public class DataTypeMergeManager implements MergeResolver {
 			if (map == null) {
 				return;
 			}
-			Set<Map<Long, DataType>> keySet = map.keySet();
-			Iterator<Map<Long, DataType>> iterator = keySet.iterator();
+			Set<MyIdentityHashMap<Long, DataType>> keySet = map.keySet();
+			Iterator<MyIdentityHashMap<Long, DataType>> iterator = keySet.iterator();
 			while (iterator.hasNext()) {
 				Map<Long, DataType> ht = iterator.next();
 				DataType dt = ht.get(id);
