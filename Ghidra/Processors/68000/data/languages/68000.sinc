@@ -1229,9 +1229,13 @@ macro shiftCXFlags(cntreg) {
 
 :sats.l regdn			is opbig=0x4c & op37=0x10 & regdn	{ if (VF == 0) goto inst_next; regdn = (zext(regdn == 0 ) * 0x80000000) + (zext(regdn != 0) * 0x7fffffff); VF=0; CF=0; }
 
-:tpf					is opbig=0x51 & op37=0x1f & op02=4			{ } # nop
-:tpf.w const16			is opbig=0x51 & op37=0x1f & op02=2; const16			{ } # nop + 1 word
-:tpf.l const32			is opbig=0x51 & op37=0x1f & op02=3; const32			{ } # nop + 2 word
+skip_addr: skipAddr is op02=2 [skipAddr = inst_next + 2;] { export *[ram]:4 skipAddr; }
+skip_addr: skipAddr is op02=3 [skipAddr = inst_next + 4;] { export *[ram]:4 skipAddr; }
+
+# TPF.w/l is occassionally used as a branch over a valid instruction.
+:tpf			is opbig=0x51 & op37=0x1f & op02=4	{ } # nop
+:tpf.w			is opbig=0x51 & op37=0x1f & op02=2 & skip_addr	{ goto skip_addr; } # nop + 1 word
+:tpf.l			is opbig=0x51 & op37=0x1f & op02=3 & skip_addr	{ goto skip_addr; } # nop + 2 word
 @endif # COLDFIRE
 
 # Tables for register lists, for the movem instruction
