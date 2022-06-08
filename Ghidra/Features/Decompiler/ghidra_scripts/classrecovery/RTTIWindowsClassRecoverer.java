@@ -65,6 +65,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private static final int NONE = -1;
 	private static final int UNKNOWN = -2;
 
+	private static final String DELETING_DESTRUCTOR = "deleting_destructor";
+	private static final String SCALAR_DELETING_DESCTRUCTOR = "scalar_deleting_destructor";
+	private static final String VECTOR_DELETING_DESCTRUCTOR = "vector_deleting_destructor";
+
 	boolean isPDBLoaded;
 
 	public RTTIWindowsClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
@@ -177,6 +181,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			// create better vftable labels for multi vftable classes
 			updateMultiVftableLabels(recoveredClasses);
 			removeEmptyClassesAndStructures();
+
+			// fix up deleting destructors to have vector and scalar names and to split 
+			// non-contiguous ones into two seaparate functions
+			fixUpDeletingDestructors(recoveredClasses);
 		}
 
 		return recoveredClasses;
@@ -2660,4 +2668,172 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		}
 	}
 
+	/**
+	 * Method to fixup previously found deleting destructors's symbols to determine if they are
+	 * scalar or vector ones and name appropriately. In the non-contiguous case, split into two
+	 * functions and name accordingly.
+	 * @param recoveredClasses the list of classes to processes
+	 * @throws CancelledException if cancelled
+	 */
+	private void fixUpDeletingDestructors(List<RecoveredClass> recoveredClasses)
+			throws CancelledException {
+
+		List<Function> processedFunctions = new ArrayList<>();
+
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.checkCanceled();
+
+			List<Function> deletingDestructors = recoveredClass.getDeletingDestructors();
+
+			if (deletingDestructors.isEmpty()) {
+				continue;
+			}
+
+			for (Function function : deletingDestructors) {
+				monitor.checkCanceled();
+
+				if (processedFunctions.contains(function)) {
+					continue;
+				}
+
+				AddressSetView body = function.getBody();
+				int numAddressRanges = body.getNumAddressRanges();
+
+				// fixup contigous dd function
+				if (numAddressRanges == 1) {
+					fixupContiguousDeletingDestructorSymbols(function);
+					processedFunctions.add(function);
+				}
+				else if (numAddressRanges == 2) {
+					// else fixup split dd function 
+					Function scalarDeletingDestructor = createSplitDeletingDestructorFunction(body);
+					if (scalarDeletingDestructor == null) {
+						Msg.debug(this, "Could not fixup split deleting destructor function: " +
+							function.getEntryPoint());
+						continue;
+					}
+					fixupSplitDeletingDestructorSymbols(function, scalarDeletingDestructor);
+					processedFunctions.add(function);
+				}
+				// else if > 2 do nothing - not sure how to handle or even if they exist
+			}
+		}
+	}
+
+	/**
+	 * Method to fixup the given functoin as a contiguous deleting destructor which means it is 
+	 * both a scalar and vector deleting destructor and needs both names. Some functions are deleting
+	 * destructors for multiple classes so all of the symbols need to be updated.
+	 * @param function the given function
+	 * @throws CancelledException if cancelled
+	 */
+	private void fixupContiguousDeletingDestructorSymbols(Function function)
+			throws CancelledException {
+
+		Symbol[] functionSymbols = symbolTable.getSymbols(function.getEntryPoint());
+
+		Address functionAddress = function.getEntryPoint();
+
+		api.createBookmark(functionAddress, "Deleting Destructor Fixup",
+			"Scalar and Vector Deleting Destructor");
+
+		try {
+			for (Symbol functionSymbol : functionSymbols) {
+				monitor.checkCanceled();
+
+				// skip any symbols at function that are not dds ie fid mangled names
+				if (!functionSymbol.getName().contains(DELETING_DESTRUCTOR)) {
+					continue;
+				}
+
+				functionSymbol.setName(SCALAR_DELETING_DESCTRUCTOR, functionSymbol.getSource());
+
+				Symbol secondaryLabel = symbolTable.createLabel(functionAddress,
+					VECTOR_DELETING_DESCTRUCTOR, SourceType.ANALYSIS);
+				secondaryLabel.setNamespace(functionSymbol.getParentNamespace());
+
+			}
+		}
+		catch (DuplicateNameException | InvalidInputException | CircularDependencyException e) {
+			Msg.debug(this,
+				"Could not fixup one or more deleting destructor symbols for function: " +
+					functionAddress);
+		}
+	}
+
+	/**
+	 * Method to create a second function in the case where a deleting destructor is of the type
+	 * vector dd function jumps to scalar dd function and fixup the jump to be a call return flow
+	 * override
+	 * @param body the given function body
+	 * @return the newly created jumped to function or null if it cannot be created
+	 */
+	private Function createSplitDeletingDestructorFunction(AddressSetView body) {
+		
+		if (body.getNumAddressRanges() != 2) {
+			return null;
+		}
+		AddressRange firstRange = body.getFirstRange();
+		Address maxAddressofFirstRange = firstRange.getMaxAddress();
+		Instruction instructionContaining =
+			api.getInstructionContaining(maxAddressofFirstRange);
+		if (!instructionContaining.getFlowType().isJump()) {
+			return null;
+		}
+		AddressRange lastRange = body.getLastRange();
+		Address minAddressOfLastRange = lastRange.getMinAddress();
+		Reference reference =
+			api.getReference(instructionContaining, minAddressOfLastRange);
+		if (reference == null) {
+			return null;
+		}
+		instructionContaining.setFlowOverride(FlowOverride.CALL_RETURN);	
+		Function newFunction = api.createFunction(minAddressOfLastRange, null);
+		return newFunction;
+	}
+
+	/**
+	 * Method to fixup the deleting destructor symbols in a split deleting destructor case given 
+	 * the two functions split earlier from the original function. Some functions are deleting
+	 * destructors for multiple classes so all of the symbols need to be updated.
+	 * @param vectorDDFunction the vector deleting destructor function
+	 * @param scalarDDFunction the scalar deleting destructor function
+	 * @throws CancelledException if cancelled
+	 */
+	private void fixupSplitDeletingDestructorSymbols(Function vectorDDFunction,
+			Function scalarDDFunction) throws CancelledException {
+
+		Symbol[] functionSymbols = symbolTable.getSymbols(vectorDDFunction.getEntryPoint());
+
+		try {
+			for (Symbol functionSymbol : functionSymbols) {
+				monitor.checkCanceled();
+
+				// skip any symbols at function that are not dds ie fid mangled names
+				if (!functionSymbol.getName().contains(DELETING_DESTRUCTOR)) {
+					continue;
+				}
+
+				functionSymbol.setName(VECTOR_DELETING_DESCTRUCTOR, functionSymbol.getSource());
+
+				Symbol secondaryLabel = symbolTable.createLabel(scalarDDFunction.getEntryPoint(),
+					SCALAR_DELETING_DESCTRUCTOR, SourceType.ANALYSIS);
+				secondaryLabel.setNamespace(functionSymbol.getParentNamespace());
+
+			}
+		}
+		catch (DuplicateNameException | InvalidInputException | CircularDependencyException e) {
+			Msg.debug(this,
+				"Could not fixup one or more deleting destructor symbols for split functions: " +
+					vectorDDFunction.getEntryPoint() + " and " + scalarDDFunction.getEntryPoint());
+		}
+
+		api.createBookmark(scalarDDFunction.getEntryPoint(), "Deleting Destructor Fixup",
+			"Scalar Deleting Destructor");
+		api.createBookmark(vectorDDFunction.getEntryPoint(), "Deleting Destructor Fixup",
+			"Vector Deleting Destructor");
+
+	}
+
 }
+
