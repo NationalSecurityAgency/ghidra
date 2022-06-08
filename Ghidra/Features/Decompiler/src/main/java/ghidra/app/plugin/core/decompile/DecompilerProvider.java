@@ -972,6 +972,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		DebugDecompilerAction debugFunctionAction = new DebugDecompilerAction(controller);
 		ExportToCAction convertAction = new ExportToCAction();
 		CloneDecompilerAction cloneDecompilerAction = new CloneDecompilerAction();
+		GoToNextBraceAction goToNextBraceAction = new GoToNextBraceAction();
+		GoToPreviousBraceAction goToPreviousBraceAction = new GoToPreviousBraceAction();
 
 		addLocalAction(refreshAction);
 		addLocalAction(selectAllAction);
@@ -1018,6 +1020,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(findReferencesAction);
 		addLocalAction(propertiesAction);
 		addLocalAction(cloneDecompilerAction);
+		addLocalAction(goToNextBraceAction);
+		addLocalAction(goToPreviousBraceAction);
 
 		graphServiceAdded();
 	}
