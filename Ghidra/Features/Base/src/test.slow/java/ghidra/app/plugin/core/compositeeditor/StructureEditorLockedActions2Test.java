@@ -220,7 +220,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		invoke(duplicateAction);
 		assertEquals(num - 1, getModel().getNumComponents());
 		assertEquals(len, getModel().getLength());
-		checkSelection(new int[] { 2 });
+		checkSelection(new int[] { 3 });
 		assertEquals(getDataType(2), dt2);
 		assertEquals(getDataType(3), dt2);
 		assertEquals(getDataType(4), dt3);
@@ -255,7 +255,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorLo
 		waitForBusyTool(tool); // the 'Duplicate Multiple' action uses a task
 
 		assertEquals(num - 2, getModel().getNumComponents());
-		checkSelection(new int[] { 2 });
+		checkSelection(new int[] { 4 });
 		assertEquals(getDataType(2), dt2);
 		assertEquals(getDataType(3), dt2);
 		assertEquals(getDataType(4), dt2);

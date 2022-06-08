@@ -989,6 +989,9 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 		insertComponentMultiple(rowIndex + 1, dt, dtLen, multiple, monitor);
 
+		// Adjust the selection since we added some components. Select last component added.
+		setSelection(new int[] { rowIndex + multiple });
+
 		componentEdited();
 		lastNumDuplicates = multiple;
 	}

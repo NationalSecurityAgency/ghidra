@@ -569,7 +569,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		num++;
 		assertEquals(num, model.getNumComponents());
 		assertEquals(len, model.getLength());
-		checkSelection(new int[] { 0 });
+		checkSelection(new int[] { 1 });
 		assertEquals(getDataType(0), dt0);
 		assertEquals(getDataType(1), dt0);
 		assertEquals(getDataType(2), dt1);
@@ -582,7 +582,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		num++;
 		assertEquals(num, model.getNumComponents());
 		assertEquals(len, model.getLength());
-		checkSelection(new int[] { 6 });
+		checkSelection(new int[] { 7 });
 		assertEquals(getDataType(6), dt0);
 		assertEquals(getDataType(7), dt0);
 		assertEquals(getDataType(8), dt1);

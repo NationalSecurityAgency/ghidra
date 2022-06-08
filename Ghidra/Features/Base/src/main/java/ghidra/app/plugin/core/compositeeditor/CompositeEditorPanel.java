@@ -581,7 +581,9 @@ public abstract class CompositeEditorPanel extends JPanel
 				return;
 			}
 			model.setSelection(table.getSelectedRows());
-
+			if (table.getAutoscrolls()) {
+				table.scrollToSelectedRow();
+			}
 		});
 
 		table.getColumnModel().getSelectionModel().addListSelectionListener(e -> {
