@@ -486,9 +486,18 @@ public class DecompilerUtils {
 		if (lineNumber >= lines.length) {
 			return;
 		}
+
 		ClangTextField textLine = (ClangTextField) lines[lineNumber];
 		int startIndex = getStartIndex(textLine, start);
 		int endIndex = getEndIndex(textLine, end);
+		if (startIndex >= endIndex) {
+			// There is a bug in how the start and end field location get created when a line
+			// wraps.  This is likely something we can fix if we can get an example that shows this
+			// state.  For now, we are adding this error checking to prevent an exception in the
+			// call below.
+			return;
+		}
+
 		tokenList.addAll(textLine.getTokens().subList(startIndex, endIndex));
 	}
 
