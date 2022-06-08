@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import generic.Unique;
@@ -44,6 +45,8 @@ import ghidra.dbg.util.PathPattern;
  */
 public abstract class AbstractModelForFridaActivationTest extends AbstractDebuggerModelActivationTest {
 
+	@Override
+	@Ignore
 	@Test
 	public void testDefaultFocusIsAsExpected() throws Throwable {
 		List<String> expectedDefaultFocus = getExpectedDefaultActivePath();
@@ -62,6 +65,8 @@ public abstract class AbstractModelForFridaActivationTest extends AbstractDebugg
 		}
 	}
 
+	@Override
+	@Ignore
 	@Test
 	public void testActivateEachOnce() throws Throwable {
 		m.build();
@@ -78,6 +83,8 @@ public abstract class AbstractModelForFridaActivationTest extends AbstractDebugg
 
 	}
 
+	@Override
+	@Ignore
 	@Test
 	public void testActivateEachTwice() throws Throwable {
 		m.build();
@@ -98,6 +105,8 @@ public abstract class AbstractModelForFridaActivationTest extends AbstractDebugg
 		}
 	}
 
+	@Override
+	@Ignore
 	@Test
 	public void testActivateEachViaInterpreter() throws Throwable {
 		assumeTrue(m.hasInterpreter());
