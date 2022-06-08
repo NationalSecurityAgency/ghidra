@@ -50,6 +50,8 @@ public class m68kEmulateInstructionStateModifier extends EmulateInstructionState
 
 		registerPcodeOpBehavior("countLeadingZeros", new CountLeadingZerosOpBehavior());
 		registerPcodeOpBehavior("findFirstOne", new FindFirstOneOpBehavior());
+		registerPcodeOpBehavior("bitReverse", new BitReverseOpBehavior());
+		registerPcodeOpBehavior("byteReverse", new ByteReverseOpBehavior());
 	}
 
 	/**
@@ -139,6 +141,60 @@ public class m68kEmulateInstructionStateModifier extends EmulateInstructionState
 			}
 
 			memoryState.setValue(out, count >= 0 ? count : size);
+		}
+
+	}
+
+	private static class BitReverseOpBehavior implements OpBehaviorOther {
+
+		@Override
+		public void evaluate(Emulate emu, Varnode out, Varnode[] inputs) {
+			if (out == null) {
+				throw new LowlevelError("CALLOTHER: Bit Reverse op missing required output");
+			}
+
+			if (inputs.length != 2 || inputs[1].getSize() == 0 || !inputs[1].isRegister()) {
+				throw new LowlevelError(
+					"CALLOTHER: Bit Reverse op requires one register varnode input");
+			}
+
+			Varnode in = inputs[1];
+			MemoryState memoryState = emu.getMemoryState();
+
+			long value = memoryState.getValue(in);
+			long size = in.getSize() * 8;
+			long bitFrom = size - 1;
+			long bitTo = 0;
+			long reversed = 0;
+			while (bitFrom >= 0) {
+				reversed |= ((value >> bitFrom) & 1L) << bitTo;
+				bitTo++;
+			}
+
+			memoryState.setValue(out, reversed);
+		}
+
+	}
+
+	private static class ByteReverseOpBehavior implements OpBehaviorOther {
+
+		@Override
+		public void evaluate(Emulate emu, Varnode out, Varnode[] inputs) {
+			if (out == null) {
+				throw new LowlevelError("CALLOTHER: Byte Reverse op missing required output");
+			}
+
+			if (inputs.length != 2 || inputs[1].getSize() == 0 || !inputs[1].isRegister()) {
+				throw new LowlevelError(
+					"CALLOTHER: Byte Reverse op requires one register varnode input");
+			}
+
+			Varnode in = inputs[1];
+			MemoryState memoryState = emu.getMemoryState();
+
+			long value = memoryState.getValue(in);
+			memoryState.setValue(out, ((value & 0x000000FF) << 24) | ((value & 0x0000FF00) << 8) |
+					((value & 0x00FF0000) >> 8) | ((value & 0xFF000000) >> 24));
 		}
 
 	}
