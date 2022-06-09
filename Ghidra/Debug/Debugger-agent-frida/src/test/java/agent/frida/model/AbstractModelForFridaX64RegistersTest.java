@@ -61,22 +61,23 @@ public abstract class AbstractModelForFridaX64RegistersTest
 	public DebuggerTestSpecimen getLaunchSpecimen() {
 		return FridaLinuxSpecimen.SPIN_STRIPPED;
 	}
-	
+
 	@Override
 	protected TargetObject maybeSubstituteThread(TargetObject target) throws Throwable {
 		FridaModelTargetProcess fproc = (FridaModelTargetProcess) target;
 		waitOn(fproc.resume());
-		FridaModelTargetThreadContainerImpl threads = (FridaModelTargetThreadContainerImpl) fproc.getCachedAttribute("Threads");
+		FridaModelTargetThreadContainerImpl threads =
+			(FridaModelTargetThreadContainerImpl) fproc.getCachedAttribute("Threads");
 		waitOn(threads.fetchElements());
 		TargetThread thread = findAnyThread(target.getPath());
 		return thread == null ? target : thread;
 	}
 
-
 	@Override
 	@Ignore
 	@Test
 	public void testRegistersHaveExpectedSizes() throws Throwable {
+		// Disabled as of 220609
 		m.build();
 
 		TargetObject target = maybeSubstituteThread(obtainTarget());
@@ -98,6 +99,7 @@ public abstract class AbstractModelForFridaX64RegistersTest
 	@Ignore
 	@Test
 	public void testRegisterBankIsWhereExpected() throws Throwable {
+		// Disabled as of 220609
 		m.build();
 
 		TargetObject target = maybeSubstituteThread(obtainTarget());
@@ -116,6 +118,7 @@ public abstract class AbstractModelForFridaX64RegistersTest
 	@Ignore
 	@Test
 	public void testReadRegisters() throws Throwable {
+		// Disabled as of 220609
 		m.build();
 
 		TargetObject target = maybeSubstituteThread(obtainTarget());
@@ -172,5 +175,5 @@ public abstract class AbstractModelForFridaX64RegistersTest
 		assertEquals("Not all registers were read, or extras were read", write.keySet(),
 			read.keySet());
 	}
-	
+
 }
