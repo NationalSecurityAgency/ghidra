@@ -348,7 +348,15 @@ def initTestJVM(Task task, String rootDirName) {
 			'-javaagent:' + jmockitPath,
 			'-noverify',
 			'-XX:TieredStopAtLevel=1',
-			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort
+			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort,
+
+			// Allow illegal reflective accesses
+			'--add-opens=java.base/java.util.concurrent=ALL-UNNAMED',
+			'--add-opens=java.desktop/sun.awt=ALL-UNNAMED',
+			'--add-opens=java.desktop/sun.swing=ALL-UNNAMED',
+			'--add-opens=java.desktop/java.awt=ALL-UNNAMED',
+			'--add-opens=java.desktop/javax.swing=ALL-UNNAMED',			
+			'--add-opens=java.desktop/javax.swing.text=ALL-UNNAMED'
 			
 			// Note: this args are used to speed-up the tests, but are not safe for production code
 			// -noverify and -XX:TieredStopAtLevel=1			
