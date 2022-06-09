@@ -15,6 +15,8 @@
  */
 package agent.dbgmodel;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgmodel.model.impl.DbgModel2Impl;
@@ -32,10 +34,22 @@ import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 )
 public class DbgModelInJvmDebuggerModelFactory implements DebuggerModelFactory {
 
+	protected String remote = "none"; // Require user to start server
+	@FactoryOption("DebugConnect options (.server)")
+	public final Property<String> agentRemoteOption =
+		Property.fromAccessors(String.class, this::getAgentRemote, this::setAgentRemote);
+
+	protected String transport = "none"; // Require user to start server
+	@FactoryOption("Remote process server options (untested)")
+	public final Property<String> agentTransportOption =
+		Property.fromAccessors(String.class, this::getAgentTransport, this::setAgentTransport);
+
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {
 		DbgModel2Impl model = new DbgModel2Impl();
-		return model.startDbgEng(new String[] {}).thenApply(__ -> model);
+		List<String> cmds = new ArrayList<>();
+		completeCommandLine(cmds);
+		return model.startDbgEng(cmds.toArray(new String[cmds.size()])).thenApply(__ -> model);
 	}
 
 	@Override
@@ -43,4 +57,28 @@ public class DbgModelInJvmDebuggerModelFactory implements DebuggerModelFactory {
 		return System.getProperty("os.name").toLowerCase().contains("windows");
 	}
 
+	public String getAgentTransport() {
+		return transport;
+	}
+
+	public void setAgentTransport(String transport) {
+		this.transport = transport;
+	}
+
+	public String getAgentRemote() {
+		return remote;
+	}
+
+	public void setAgentRemote(String remote) {
+		this.remote = remote;
+	}
+
+	protected void completeCommandLine(List<String> cmd) {
+		if (!remote.equals("none")) {
+			cmd.addAll(List.of(remote));
+		}
+		if (!transport.equals("none")) {
+			cmd.addAll(List.of(transport));
+		}
+	}
 }
