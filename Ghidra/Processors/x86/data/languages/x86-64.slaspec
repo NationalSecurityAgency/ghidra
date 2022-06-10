@@ -1,4 +1,6 @@
 @define IA64 "IA64"
 @include "x86.slaspec"
+with : lockprefx=0 {
 @include "sgx.sinc"
 @include "fma.sinc"
+}
