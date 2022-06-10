@@ -581,6 +581,9 @@ class StructureEditorModel extends CompEditorModel {
 		// set actions based on number of items selected
 		int rowIndex = getRow();
 		DataTypeComponent comp = getComponent(rowIndex);
+		if (comp == null) {
+			return false;
+		}
 		DataType dt = comp.getDataType();
 		if (viewComposite.isPackingEnabled()) {
 			return true;
