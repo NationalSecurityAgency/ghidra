@@ -301,6 +301,18 @@ void FlowBlock::setGotoBranch(int4 i)
   outofthis[i].point->flags |= f_interior_gotoin;
 }
 
+/// The switch can have exactly 1 default edge, so we make sure other edges are not marked.
+/// \param pos is the index of the \e out edge that should be the default
+void FlowBlock::setDefaultSwitch(int4 pos)
+
+{
+  for(int4 i=0;i<outofthis.size();++i) {
+    if (isDefaultBranch(i))
+      clearOutEdgeFlag(i, f_defaultswitch_edge);	// Clear any previous flag
+  }
+  setOutEdgeFlag(pos,f_defaultswitch_edge);
+}
+
 /// \b return \b true if block is the target of a jump
 bool FlowBlock::isJumpTarget(void) const
 
