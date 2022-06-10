@@ -204,6 +204,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private LanguageTranslator languageUpgradeTranslator;
 
 	private boolean imageBaseOverride = false;
+	private Address effectiveImageBase = null;
 	private boolean recordChanges;
 
 	private OverlaySpaceAdapterDB overlaySpaceAdapter;
@@ -1264,7 +1265,16 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	@Override
 	public Address getImageBase() {
+		if (effectiveImageBase != null) {
+			return effectiveImageBase;
+		}
 		return addrMap.getImageBase();
+	}
+
+	// TODO: We need a more global solution for this.
+	@Deprecated
+	public void setEffectiveImageBase(Address imageBase) {
+		effectiveImageBase = imageBase;
 	}
 
 	@Override
