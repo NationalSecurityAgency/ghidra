@@ -23,6 +23,7 @@ import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
+import ghidra.file.formats.dump.apport.Apport;
 import ghidra.file.formats.dump.mdmp.Minidump;
 import ghidra.file.formats.dump.pagedump.Pagedump;
 import ghidra.file.formats.dump.userdump.Userdump;
@@ -30,6 +31,7 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.database.mem.MemoryMapDB;
+import ghidra.program.database.register.AddressRangeObjectMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.data.ProgramBasedDataTypeManager;
@@ -64,7 +66,7 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 	public static final boolean ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT = false;  // must be off by default
 	public static final String MEMORY = "Memory";
 
-	private Map<AddressRange, String> ranges = new HashMap<>();
+	private AddressRangeObjectMap<String> rangeMap = new AddressRangeObjectMap<>();
 
 	private MessageLog log;
 	private boolean joinBlocks;
@@ -104,6 +106,8 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 					return Userdump.getMachineType(reader);
 				case Minidump.SIGNATURE:
 					return Minidump.getMachineType(reader);
+				case Apport.SIGNATURE:
+					return Apport.getMachineType(reader);
 			}
 		}
 		catch (IOException e) {
@@ -117,13 +121,12 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			Program program, TaskMonitor monitor, MessageLog log)
 			throws CancelledException, IOException {
-
 		this.log = log;
-		parseDumpFile(provider, program, options, monitor);
+		parseDumpFile(provider, program, options, loadSpec, monitor);
 	}
 
 	private void parseDumpFile(ByteProvider provider, Program program, List<Option> options,
-			TaskMonitor monitor) throws IOException, CancelledException {
+			LoadSpec loadSpec, TaskMonitor monitor) throws IOException, CancelledException {
 		Language language = program.getLanguage();
 		int size = language.getDefaultSpace().getSize();
 		DumpFileReader reader = new DumpFileReader(provider, true, size);
@@ -144,31 +147,38 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 			case Minidump.SIGNATURE:
 				df = new Minidump(reader, dtm, options, monitor);
 				break;
+			case Apport.SIGNATURE:
+				df = new Apport(reader, dtm, options, monitor, loadSpec, log);
+				break;
 		}
 		if (df != null) {
-			groupRanges(program, provider, df.getExteriorAddressRanges(), monitor);
-			loadRanges(program, provider, df.getInteriorAddressRanges(), monitor);
+			groupRanges(program, df, monitor);
+			loadRanges(program, df, monitor);
 			applyStructures(program, df, monitor);
 			df.analyze(monitor);
 		}
 	}
 
-	public void loadRanges(Program program, ByteProvider provider,
-			Map<Address, DumpAddressObject> daos, TaskMonitor monitor) {
+	public void loadRanges(Program program, DumpFile df, TaskMonitor monitor) {
+		Map<Address, DumpAddressObject> daos = df.getInteriorAddressRanges();
+		if (daos.isEmpty()) {
+			return;
+		}
 		try {
-			monitor.setMessage("Creating file bytes");
-			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+			FileBytes fileBytes = df.getFileBytes(monitor);
+			if (fileBytes == null) {
+				Msg.error(this,
+					"File bytes not provided by DumpFile: " + df.getClass().getSimpleName());
+				return;
+			}
 			int count = 0;
 			monitor.setMessage("Tagging blocks");
 			monitor.initialize(daos.size());
 			for (Address address : daos.keySet()) {
 				DumpAddressObject d = daos.get(address);
-				String name = d.getProviderId();
-				for (AddressRange range : ranges.keySet()) {
-					if (range.contains(address)) {
-						name = ranges.get(range);
-						break;
-					}
+				String name = rangeMap.getObject(address);
+				if (name == null) {
+					name = d.getProviderId();
 				}
 				d.setRangeName(name);
 				monitor.setProgress(count++);
@@ -237,27 +247,31 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	public void groupRanges(Program program, ByteProvider provider,
-			Map<Address, DumpAddressObject> daos, TaskMonitor monitor) throws CancelledException {
+	public void groupRanges(Program program, DumpFile df, TaskMonitor monitor)
+			throws CancelledException {
+		Map<Address, DumpAddressObject> daos = df.getExteriorAddressRanges();
+		if (daos.isEmpty()) {
+			return;
+		}
 		monitor.setMessage("Assigning ranges");
 		monitor.initialize(daos.size());
 		int count = 0;
 		for (Entry<Address, DumpAddressObject> entry : daos.entrySet()) {
+			monitor.checkCanceled();
+			monitor.setProgress(count++);
 			DumpAddressObject d = entry.getValue();
 			Address address = entry.getKey();
 			if (d.getBase() == 0) {
 				continue;
 			}
 			try {
-				AddressRangeImpl range = new AddressRangeImpl(address, d.getLength());
-				ranges.put(range, d.getProviderId());
+				rangeMap.setObject(address, address.addNoWrap(d.getLength() - 1),
+					d.getProviderId());
 			}
 			catch (AddressOverflowException | AddressOutOfBoundsException
 					| IllegalArgumentException e) {
 				Msg.warn(this, e.getMessage());
 			}
-			monitor.setProgress(count++);
-			monitor.checkCanceled();
 		}
 	}
 
@@ -266,9 +280,14 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 		SymbolTable symbolTable = program.getSymbolTable();
 		monitor.setMessage("Applying data structures");
 		List<DumpData> data = df.getData();
+		if (data.isEmpty()) {
+			return;
+		}
 		monitor.initialize(data.size());
 		int count = 0;
 		for (DumpData dd : data) {
+			monitor.checkCanceled();
+			monitor.setProgress(count++);
 			Address address = program.getImageBase().addWrap(dd.getOffset());
 			try {
 				if (dd.getDataType() == null) {
@@ -289,8 +308,6 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 				Msg.error(this,
 					"Could not create " + dd.getDataType().getName() + " at " + address);
 			}
-			monitor.setProgress(count++);
-			monitor.checkCanceled();
 		}
 	}
 

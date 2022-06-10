@@ -23,7 +23,9 @@ import java.util.Map.Entry;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.*;
@@ -31,10 +33,12 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class DumpFile {
 
+	// If data defined so must intAddressRanges which are used to create memory blocks
 	protected List<DumpData> data = new ArrayList<DumpData>();
 	// Interior ranges are actual defined memory ranges.
 	// Exterior ranges are aggregates of interior ranges, typically corresponding to a module
@@ -61,6 +65,8 @@ public class DumpFile {
 	protected List<String> threads = new ArrayList<String>();
 
 	protected Map<String, DataTypeManager> managerList = new HashMap<>();
+
+	private FileBytes fileBytes;
 
 	public DumpFile(DumpFileReader reader, ProgramBasedDataTypeManager dtm, List<Option> options,
 			TaskMonitor monitor) {
@@ -255,6 +261,22 @@ public class DumpFile {
 			}
 		}
 
+	}
+
+	/**
+	 * Get or create FileBytes within program
+	 * @param monitor task monitor
+	 * @return file bytes object to be used for block creation or null
+	 * @throws IOException if error occurs reading source file or writing to program database
+	 * @throws CancelledException if operation cancelled by user
+	 */
+	public FileBytes getFileBytes(TaskMonitor monitor) throws IOException, CancelledException {
+		if (fileBytes == null) {
+			monitor.setMessage("Creating file bytes");
+			fileBytes =
+				MemoryBlockUtils.createFileBytes(program, reader.getByteProvider(), monitor);
+		}
+		return fileBytes;
 	}
 
 	public void analyze(TaskMonitor monitor) {
