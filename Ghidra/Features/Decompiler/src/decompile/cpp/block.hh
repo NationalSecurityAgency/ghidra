@@ -190,7 +190,7 @@ public:
   void setVisitCount(int4 i) { visitcount = i; }	///< Set the number of times this block has been visited
   int4 getVisitCount(void) const { return visitcount; }	///< Get the count of visits
   void setGotoBranch(int4 i);				///< Mark a \e goto branch
-  void setDefaultSwitch(int4 i) { setOutEdgeFlag(i,f_defaultswitch_edge); }	///< Mark an edge as the switch default
+  void setDefaultSwitch(int4 pos);			///< Mark an edge as the switch default
   bool isMark(void) const { return ((flags&f_mark)!=0); }	///< Return \b true if \b this block has been marked
   void setMark(void) { flags |= f_mark; }			///< Mark \b this block
   void clearMark(void) { flags &= ~f_mark; }			///< Clear any mark on \b this block
