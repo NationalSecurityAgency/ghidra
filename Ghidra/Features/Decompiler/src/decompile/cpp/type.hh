@@ -461,6 +461,7 @@ public:
   /// \return the offset value in \e address \e units
   int4 getPointerOffset(void) const { return AddrSpace::byteToAddressInt(offset, wordsize); }
   virtual void printRaw(ostream &s) const;
+  virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePointerRel(*this); }
   virtual void saveXml(ostream &s) const;
