@@ -63,8 +63,7 @@ public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
 	}
 
 	/**
-	 * Get the domain folder; returns null if this node represents a
-	 * domain file.
+	 * Get the domain folder; returns null if this node represents a domain file.
 	 *
 	 * @return DomainFolder
 	 */
@@ -81,13 +80,12 @@ public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
 	}
 
 	/**
-	 * Set this node to be deleted so that it can be
-	 * rendered as such.
+	 * Set this node to be deleted so that it can be rendered as such.
 	 */
 	@Override
 	public void setIsCut(boolean isCut) {
 		this.isCut = isCut;
-		fireNodeChanged(getParent(), this);
+		fireNodeChanged();
 	}
 
 	/**

@@ -65,6 +65,7 @@ public abstract class AbstractModelForFridaRootAttacherTest
 	}
 
 	@Override
+	@Ignore
 	@After
 	public void tearDownDebuggerModelTest() throws Throwable {
 		/**

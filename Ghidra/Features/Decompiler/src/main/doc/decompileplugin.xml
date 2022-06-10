@@ -3981,7 +3981,8 @@
       <listitem><para>
 	Double-clicking a '{' or '}' token, causes the window to navigate to the <emphasis>matching</emphasis> brace
 	within the window. The cursor is set and the window view is adjusted if
-	necessary to ensure that the matching brace is visible.
+	necessary to ensure that the matching brace is visible.  Braces may also be navigated via
+	the keyboard.
       </para></listitem>
     </varlistentry>
     </variablelist>
@@ -4318,6 +4319,19 @@
     each time the <emphasis role="bold">Next</emphasis> button is hit, or backward for the
     <emphasis role="bold">Previous</emphasis> button. Any match is highlighted in the window,
     and the cursor is set to the start of the match.
+  </para>
+</sect2>
+
+<sect2 id="GoToBrace">
+  <title>Go To Next/Previous Brace</title>
+  <para>
+    These actions are available from the keyboard.  
+    <emphasis role="bold">Shift-Open Bracket</emphasis> will go to the previous enclosing
+    open brace.   <emphasis role="bold">Shift-Close Bracket</emphasis> will go to the
+    next enclosing closing brace.   These key bindings can be changes via the tool options.
+  </para>
+  <para>
+	Paired braces can also be navigated by double-clicking.
   </para>
 </sect2>
 

@@ -27,6 +27,8 @@ import ghidra.util.exception.DuplicateNameException;
  * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/oat.h#125
  * 
  * https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/oat.h#125
+ * 
+ * https://android.googlesource.com/platform/art/+/refs/heads/android-s-v2-preview-1/runtime/oat.h#125
  */
 public class OatHeader_12 extends OatHeader {
 	protected int oat_checksum_;

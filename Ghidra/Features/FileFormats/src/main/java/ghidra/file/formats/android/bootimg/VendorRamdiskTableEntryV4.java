@@ -35,13 +35,14 @@ public class VendorRamdiskTableEntryV4 implements StructConverter {
 		ramdisk_size = reader.readNextInt();
 		ramdisk_offset = reader.readNextInt();
 		ramdisk_type = reader.readNextInt();
-		ramdisk_name = reader.readNextAsciiString(BootImageConstants.VENDOR_RAMDISK_NAME_SIZE);
-		board_id =
-			reader.readNextIntArray(BootImageConstants.VENDOR_RAMDISK_TABLE_ENTRY_BOARD_ID_SIZE);
+		ramdisk_name = reader.readNextAsciiString(
+			BootImageConstants.VENDOR_RAMDISK_NAME_SIZE);
+		board_id = reader.readNextIntArray(
+			BootImageConstants.VENDOR_RAMDISK_TABLE_ENTRY_BOARD_ID_SIZE);
 	}
 
 	/**
-	 * Size in bytes for the ramdisk image
+	 * Size in bytes for the ramdisk image 
 	 * @return ramdisk size
 	 */
 	public int getRamdiskSize() {
@@ -57,7 +58,7 @@ public class VendorRamdiskTableEntryV4 implements StructConverter {
 	}
 
 	/**
-	 * Type of the ramdisk
+	 * Type of the ramdisk 
 	 * @return ramdisk type
 	 */
 	public int getRamdiskType() {
@@ -65,7 +66,7 @@ public class VendorRamdiskTableEntryV4 implements StructConverter {
 	}
 
 	/**
-	 * Ascii ramdisk name
+	 * Ascii ramdisk name 
 	 * @return the ascii ramdisk name
 	 */
 	public String getRamdiskName() {
@@ -73,8 +74,8 @@ public class VendorRamdiskTableEntryV4 implements StructConverter {
 	}
 
 	/**
-	 * Hardware identifiers describing the board, soc or platform 
-	 * which this ramdisk is intended to be loaded on.
+	 * Hardware identifiers describing the board, soc or platform which this ramdisk
+	 * is intended to be loaded on. 
 	 * @return the board ID
 	 */
 	public int[] getBoardID() {

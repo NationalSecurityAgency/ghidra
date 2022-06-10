@@ -10,6 +10,7 @@
 @define VERSION_7M ""
 @define SIMD ""
 @define VFPv3 ""
+@define VFPv4 ""
 
 @include "ARM.sinc"
 

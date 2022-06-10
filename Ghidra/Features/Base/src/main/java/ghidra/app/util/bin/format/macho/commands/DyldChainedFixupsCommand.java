@@ -38,13 +38,20 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 
 	private DyldChainedFixupHeader chainHeader;
 
-	DyldChainedFixupsCommand(BinaryReader reader) throws IOException {
-		super(reader);
+	/**
+	 * Creates and parses a new {@link DyldChainedFixupsCommand}
+	 * 
+	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
+	 *   command
+	 * @param dataReader A {@link BinaryReader reader} that can read the data that the load command
+	 *   references.  Note that this might be in a different underlying provider.
+	 * @throws IOException if an IO-related error occurs while parsing
+	 */
+	DyldChainedFixupsCommand(BinaryReader loadCommandReader, BinaryReader dataReader)
+			throws IOException {
+		super(loadCommandReader, dataReader);
 
-		long ptrIndex = reader.getPointerIndex();
-		reader.setPointerIndex(getDataOffset());
-		chainHeader = new DyldChainedFixupHeader(reader);
-		reader.setPointerIndex(ptrIndex);
+		chainHeader = new DyldChainedFixupHeader(dataReader);
 	}
 
 	@Override

@@ -799,7 +799,7 @@
               </P>
               
             <P>A Typedef created with a Pointer base type will allow additional Settings to be made
-            which can influence how such a pointer should be interpretted 
+            which can influence how such a pointer should be interpreted 
             (see <A href="#Pointer_Typedef_Settings">Pointer-Typedef Settings</A>).
             If no name is assigned to a new Pointer-Typedef is will be treated as an "auto-typedef"
             where a dynamic name will be assigned based upon the underlying pointer and assigned
@@ -1072,7 +1072,7 @@
         <P>On occasion there may be the need to add stipulate additional attributes on a pointer
         type to stipulate how the associated pointer should be interpreted or processed during analysis.
         Such pointer attributes may only be specified when such a pointer in in the form of a Typedef
-        which enables the datatype to preserve these attributes during type resolution and propogation. 
+        which enables the datatype to preserve these attributes during type resolution and propagation. 
         This includes preservation of such Typedef Settings within a data type archive, and through 
         merge processing, which normal Data Settings do not support.</P>
         
@@ -1080,7 +1080,7 @@
         are changed for listing Data (see <A href="../DataPlugin/Data.htm#Default_Settings">Changing Default Settings for Data</A>).
         In addition to this popup action on listing Data, the dialog may be displayed from the <I>Data Type Manager</I>
         tree by right-clicking on a data type and selecting the <B>Settings...</B> action.  Typedef-specific settings
-        are only supported as default settings for a typedef and may not be overriden at the component or data level.</A>
+        are only supported as default settings for a typedef and may not be overridden at the component or data level.</A>
         
         <P>The following Pointer-Typedef settings are currently supported:</P>
         <UL>
@@ -1094,7 +1094,7 @@
         <LI><B>Offset Shift</B> (-64..0..64) - Allows a bit-shift (left=negative, right=positive) to be applied to a
         stored value when computing the absolute memory offset.  Auto name attribute format: __((shift(<i>bitshift_amount</i>))</LI>
         <LI><B>Pointer Type</B> (<I>default, image-base-relative, relative, file-offset</I>) - allows the overall interpretation of a
-        pointer to be specified.  The <I>relative</I> pointer type has limited applicabaility and is only 
+        pointer to be specified.  The <I>relative</I> pointer type has limited applicability and is only 
         intended to be applied to pointers stored in memory since their storage location is used in computing 
         the absolute address that the pointer refers to.</LI>
         </UL>

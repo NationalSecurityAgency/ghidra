@@ -298,11 +298,13 @@ public abstract class AbstractGTest {
 	}
 
 	public static <T> void assertContainsString(String expected, String actual) {
-		assertTrue(actual.contains(expected));
+		assertTrue("String not contained.  Found: '" + actual + "'\n\tExpected to contain: '" +
+			expected + "'", actual.contains(expected));
 	}
 
 	public static <T> void assertContainsStringIgnoringCase(String expected, String actual) {
-		assertTrue(expected.toLowerCase().contains(actual.toLowerCase()));
+		assertTrue("String not contained.  Found: '" + actual + "'\n\tExpected to contain: '" +
+			expected + "'", actual.toLowerCase().contains(expected.toLowerCase()));
 	}
 
 	private static String printListFailureMessage(String message, List<?> expected,

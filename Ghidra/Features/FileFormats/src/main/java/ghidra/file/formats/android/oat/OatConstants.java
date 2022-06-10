@@ -16,12 +16,6 @@
 package ghidra.file.formats.android.oat;
 
 import ghidra.app.util.bin.format.elf.ElfSectionHeaderConstants;
-import ghidra.app.util.opinion.ElfLoader;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
 
 /**
  * https://android.googlesource.com/platform/art/+/marshmallow-mr3-release/runtime/oat.h
@@ -46,6 +40,28 @@ public final class OatConstants {
 	public final static String OAT_SECTION_NAME = ElfSectionHeaderConstants.dot_rodata;
 
 	public final static String DOT_OAT_PATCHES_SECTION_NAME = ".oat_patches";
+
+	/* Keys from the OAT header "key/value" store. */
+	public final static String kApexVersionsKey           = "apex-versions";
+	public final static String kBootClassPathKey          = "bootclasspath";
+	public final static String kBootClassPathChecksumsKey = "bootclasspath-checksums";
+	public final static String kClassPathKey              = "classpath";
+	public final static String kCompilationReasonKey      = "compilation-reason";
+	public final static String kCompilerFilter            = "compiler-filter";
+	public final static String kConcurrentCopying         = "concurrent-copying";	
+	public final static String kDebuggableKey             = "debuggable";
+	public final static String kDex2OatCmdLineKey         = "dex2oat-cmdline";
+	public final static String kDex2OatHostKey            = "dex2oat-host";
+	public final static String kHasPatchInfoKey           = "has-patch-info";
+	public final static String kImageLocationKey          = "image-location";
+	public final static String kNativeDebuggableKey       = "native-debuggable";
+	public final static String kPicKey                    = "pic";
+	public final static String kRequiresImage             = "requires-image";
+
+	/** Boolean value used in the Key/Value store for TRUE. */
+	public final static String kTrueValue  = "true";
+	/** Boolean value used in the Key/Value store for FALSE. */
+	public final static String kFalseValue = "false";
 
 	// * * * * * * * * * * * * * * * * * * * * * * * *
 	// NOTE: we plan to only support RELEASE versions...
@@ -78,17 +94,13 @@ public final class OatConstants {
 	public final static String VERSION_10_RELEASE                 = "170";
 	public final static String VERSION_11_RELEASE                 = "183";
 	public final static String VERSION_12_RELEASE                 = "195";
+	public final static String VERSION_S_V2_PREVIEW               = "199";
 
-	public final static int VERSION_LENGTH = 3;//3 bytes in length
-
-	// * * * * * * * * * * * * * * * * * * * * * * * *
-
-	
 	/**
-	 * This array contains version that have been actively tested and verified.
-	 * All other version will be considered unsupported until tested on exemplar firmware.
+	 * This array contains versions that have been actively tested and verified.
+	 * All other versions will be considered unsupported until tested on exemplar firmware.
 	 */
-	public final static String [ ] SUPPORTED_VERSIONS = new String [ ] {
+	public final static String [] SUPPORTED_VERSIONS = new String [] {
 		VERSION_KITKAT_RELEASE,
 		VERSION_LOLLIPOP_RELEASE,
 		VERSION_LOLLIPOP_MR1_FI_RELEASE,
@@ -103,27 +115,8 @@ public final class OatConstants {
 		VERSION_10_RELEASE,
 		VERSION_11_RELEASE,
 		VERSION_12_RELEASE,
+		VERSION_S_V2_PREVIEW,
 	};
-
-	/** Keys from the OAT header "key/value" store. */
-	public final static String kImageLocationKey          = "image-location";
-	public final static String kDex2OatCmdLineKey         = "dex2oat-cmdline";
-	public final static String kDex2OatHostKey            = "dex2oat-host";
-	public final static String kPicKey                    = "pic";
-	public final static String kHasPatchInfoKey           = "has-patch-info";
-	public final static String kDebuggableKey             = "debuggable";
-	public final static String kNativeDebuggableKey       = "native-debuggable";
-	public final static String kCompilerFilter            = "compiler-filter";
-	public final static String kClassPathKey              = "classpath";
-	public final static String kBootClassPathKey          = "bootclasspath";
-	public final static String kBootClassPathChecksumsKey = "bootclasspath-checksums";
-	public final static String kConcurrentCopying         = "concurrent-copying";
-	public final static String kCompilationReasonKey      = "compilation-reason";
-
-	/** Boolean value used in the Key/Value store for TRUE. */
-	public final static String kTrueValue  = "true";
-	/** Boolean value used in the Key/Value store for FALSE. */
-	public final static String kFalseValue = "false";
 
 	//@formatter:on
 
@@ -141,46 +134,4 @@ public final class OatConstants {
 		return false;
 	}
 
-	/**
-	 * Returns true if the given program contain OAT information.
-	 * Checks for the program being an ELF, and containing the three magic OAT symbols.
-	 * @param program the program to inspect
-	 * @return true if the program is OAT
-	 */
-	public final static boolean isOAT(Program program) {
-		if (program != null) {
-			String executableFormat = program.getExecutableFormat();
-			if (ElfLoader.ELF_NAME.equals(executableFormat)) {
-				MemoryBlock roDataBlock =
-					program.getMemory().getBlock(ElfSectionHeaderConstants.dot_rodata);
-				if (roDataBlock != null) {
-					SymbolTable symbolTable = program.getSymbolTable();
-					Symbol oatDataSymbol = symbolTable.getPrimarySymbol(roDataBlock.getStart());
-					return oatDataSymbol != null && oatDataSymbol.getName().equals(SYMBOL_OAT_DATA);
-				}
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Returns the version string from the OAT program, or "unknown" if not found/valid.
-	 * @param program the program to inspect
-	 * @return the OAT version
-	 */
-	final static String getOatVersion(Program program) {
-		if (OatConstants.isOAT(program)) {
-			Symbol symbol = OatUtilities.getOatDataSymbol(program);
-			Address address = symbol.getAddress().add(MAGIC.length());
-			byte[] versionBytes = new byte[VERSION_LENGTH];
-			try {
-				program.getMemory().getBytes(address, versionBytes);
-				return new String(versionBytes).trim();
-			}
-			catch (Exception e) {
-				//ignore
-			}
-		}
-		return "unknown";
-	}
 }

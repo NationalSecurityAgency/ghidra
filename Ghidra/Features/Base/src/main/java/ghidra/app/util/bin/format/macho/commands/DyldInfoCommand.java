@@ -42,20 +42,41 @@ public class DyldInfoCommand extends LoadCommand {
 	private int lazy_bind_size;
 	private int export_off;
 	private int export_size;
+	
+	private ExportTrie exportTrie;
 
-	DyldInfoCommand(BinaryReader reader) throws IOException {
-		super(reader);
+	/**
+	 * Creates and parses a new {@link DyldInfoCommand}
+	 * 
+	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
+	 *   command
+	 * @param dataReader A {@link BinaryReader reader} that can read the data that the load command
+	 *   references.  Note that this might be in a different underlying provider.
+	 * @param header The {@link MachHeader header} associated with this load command
+	 * @throws IOException if an IO-related error occurs while parsing
+	 */
+	DyldInfoCommand(BinaryReader loadCommandReader, BinaryReader dataReader, MachHeader header)
+			throws IOException {
+		super(loadCommandReader);
 
-		rebase_off = reader.readNextInt();
-		rebase_size = reader.readNextInt();
-		bind_off = reader.readNextInt();
-		bind_size = reader.readNextInt();
-		weak_bind_off = reader.readNextInt();
-		weak_bind_size = reader.readNextInt();
-		lazy_bind_off = reader.readNextInt();
-		lazy_bind_size = reader.readNextInt();
-		export_off = reader.readNextInt();
-		export_size = reader.readNextInt();
+		rebase_off = loadCommandReader.readNextInt();
+		rebase_size = loadCommandReader.readNextInt();
+		bind_off = loadCommandReader.readNextInt();
+		bind_size = loadCommandReader.readNextInt();
+		weak_bind_off = loadCommandReader.readNextInt();
+		weak_bind_size = loadCommandReader.readNextInt();
+		lazy_bind_off = loadCommandReader.readNextInt();
+		lazy_bind_size = loadCommandReader.readNextInt();
+		export_off = loadCommandReader.readNextInt();
+		export_size = loadCommandReader.readNextInt();
+		
+		if (export_off > 0 && export_size > 0) {
+			dataReader.setPointerIndex(header.getStartIndex() + export_off);
+			exportTrie = new ExportTrie(dataReader);
+		}
+		else {
+			exportTrie = new ExportTrie();
+		}
 	}
 
 	@Override
@@ -201,5 +222,14 @@ public class DyldInfoCommand extends LoadCommand {
 	 */
 	public int getExportSize() {
 		return export_size;
+	}
+	
+	/**
+	 * Gets the {@link ExportTrie}
+	 * 
+	 * @return The {@link ExportTrie}
+	 */
+	public ExportTrie getExportTrie() {
+		return exportTrie;
 	}
 }

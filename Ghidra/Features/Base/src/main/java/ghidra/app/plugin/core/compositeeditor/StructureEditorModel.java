@@ -381,7 +381,10 @@ class StructureEditorModel extends CompEditorModel {
 		}
 		insertComponentMultiple(startIndex, dt, originalComp.getLength(), multiple, monitor);
 
-		// Adjust the selection since we added some
+		// Adjust the selection since we added some components. Select last component added.
+		// Ensure that last added component is selected to allow for repeated duplication
+		setSelection(new int[] { index + multiple });
+
 		componentEdited();
 		lastNumDuplicates = multiple;
 	}

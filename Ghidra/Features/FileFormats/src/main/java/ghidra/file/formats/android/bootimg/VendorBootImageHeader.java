@@ -15,10 +15,12 @@
  */
 package ghidra.file.formats.android.bootimg;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.StructConverter;
 
 /**
- * 
+ * Base class to represent a Vendor Boot Image header.
  */
 public abstract class VendorBootImageHeader implements StructConverter {
 
@@ -31,4 +33,17 @@ public abstract class VendorBootImageHeader implements StructConverter {
 	public abstract long getDtbOffset();
 
 	public abstract int getDtbSize();
+
+	public long getNestedVendorRamdiskCount() {
+		return 1;
+	}
+
+	public long getNestedVendorRamdiskOffset(int index) throws IOException {
+		return getVendorRamdiskOffset();
+	}
+
+	public int getNestedVendorRamdiskSize(int index) throws IOException {
+		return getVendorRamdiskSize();
+	}
+
 }

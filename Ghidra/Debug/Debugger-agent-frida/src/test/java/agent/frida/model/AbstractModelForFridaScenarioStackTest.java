@@ -63,6 +63,7 @@ public abstract class AbstractModelForFridaScenarioStackTest
 
 	@Override
 	//@Ignore // Fails for distributed version
+	@Ignore
 	@Test
 	public void testScenario() throws Throwable {
 		DebuggerTestSpecimen specimen = getSpecimen();

@@ -74,6 +74,7 @@ public abstract class AbstractModelForFridaX64RegistersTest
 
 
 	@Override
+	@Ignore
 	@Test
 	public void testRegistersHaveExpectedSizes() throws Throwable {
 		m.build();
@@ -94,6 +95,7 @@ public abstract class AbstractModelForFridaX64RegistersTest
 	}
 
 	@Override
+	@Ignore
 	@Test
 	public void testRegisterBankIsWhereExpected() throws Throwable {
 		m.build();
@@ -111,6 +113,7 @@ public abstract class AbstractModelForFridaX64RegistersTest
 	}
 
 	@Override
+	@Ignore
 	@Test
 	public void testReadRegisters() throws Throwable {
 		m.build();
