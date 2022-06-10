@@ -581,11 +581,4 @@ public interface DebuggerObjectModel {
 	 */
 	CompletableFuture<Void> flushEvents();
 
-	/**
-	 * If the model permits, suppress automatic descent into containers
-	 */
-	default void setSuppressDescent(boolean suppressDescent) {
-		// Do nothing by default
-	}
-
 }

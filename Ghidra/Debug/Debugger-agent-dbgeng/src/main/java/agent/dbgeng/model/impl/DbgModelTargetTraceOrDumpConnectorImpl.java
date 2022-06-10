@@ -67,12 +67,8 @@ public class DbgModelTargetTraceOrDumpConnectorImpl extends DbgModelTargetObject
 			true, ".opendump", "Cmd", "native loader command");
 		ParameterDescription<String> p2 = ParameterDescription.create(String.class, "TraceOrDump",
 			true, "", "File", "trace or dump to be loaded");
-		ParameterDescription<Boolean> p3 = ParameterDescription.create(Boolean.class,
-			"UseQueryVirtual", false, true, "QueryVirtual", "use QueryVirtual (vs. !address)");
 		map.put("CommandLine", p1);
 		map.put("TraceOrDump", p2);
-		// For the moment, we'll leave this out (deadlocks the GUI)
-		//map.put("UseQueryVirtual", p3);
 		return map;
 	}
 

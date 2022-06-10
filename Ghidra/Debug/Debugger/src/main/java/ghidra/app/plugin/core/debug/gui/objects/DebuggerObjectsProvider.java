@@ -1007,6 +1007,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		
 		groupTargetIndex++;
 
+		/*
 		actionSuppressDescent = new ToggleActionBuilder("Automatically populate containers", plugin.getName())
 			.menuPath("Maintenance","&Auto-populate")
 			.menuGroup(DebuggerResources.GROUP_TARGET, "M" + groupTargetIndex)
@@ -1015,6 +1016,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.selected(isUpdateWhileRunning())
 			.enabled(true)
 			.buildAndInstallLocal(this);
+		*/
 		
 		groupTargetIndex = 0;
 
@@ -1448,6 +1450,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		refresh("");
 	}
 
+	/*
 	public void performToggleAutoPopulateContainers(ActionContext context) {
 		suppressDescent = !actionSuppressDescent.isSelected();
 		if (currentModel != null) {
@@ -1455,6 +1458,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}
 		refresh("");
 	}
+	*/
 
 	protected <T extends TargetObject> void performAction(ActionContext context,
 			boolean fallbackRoot, Class<T> cls,

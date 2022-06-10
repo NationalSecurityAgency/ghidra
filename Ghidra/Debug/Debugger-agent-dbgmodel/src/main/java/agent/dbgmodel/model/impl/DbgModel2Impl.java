@@ -200,6 +200,7 @@ public class DbgModel2Impl extends AbstractDbgModel
 		});
 	}
 
+	@Override
 	public boolean isSuppressDescent() {
 		return suppressDescent;
 	}

@@ -65,7 +65,7 @@ public class KeyEnumeratorImpl implements KeyEnumeratorInternal {
 			}
 			COMUtils.checkRC(hr);
 		}
-		catch (RuntimeException e) {
+		catch (Error e) {
 			Msg.error(this, e.getMessage());
 		}
 
