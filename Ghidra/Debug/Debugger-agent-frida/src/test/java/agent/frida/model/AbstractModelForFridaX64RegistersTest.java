@@ -176,4 +176,11 @@ public abstract class AbstractModelForFridaX64RegistersTest
 			read.keySet());
 	}
 
+	@Override
+	@Ignore
+	@Test
+	public void testBanksAreContainersConventionIsAsExpected() throws Throwable {
+		// Disabled as of 220609
+	}
+
 }
