@@ -900,6 +900,8 @@ void ParamListStandard::forceExclusionGroup(ParamActive *active)
   int4 inactiveCount = 0;
   for(int4 i=0;i<numTrials;++i) {
     ParamTrial &curtrial(active->getTrial(i));
+    if (curtrial.getEntry() == (const ParamEntry *) 0)
+      continue;
     int4 grp = curtrial.getEntry()->getGroup();
     if (grp != curGroup) {
       if (inactiveCount > 1)
