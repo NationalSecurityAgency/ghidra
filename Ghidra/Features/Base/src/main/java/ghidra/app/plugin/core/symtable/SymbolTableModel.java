@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.symtable;
 import java.util.*;
 
 import docking.widgets.table.*;
-import docking.widgets.table.threaded.TableAddRemoveStrategy;
 import ghidra.app.cmd.function.DeleteFunctionCmd;
 import ghidra.app.cmd.label.DeleteLabelCmd;
 import ghidra.app.cmd.label.RenameLabelCmd;
@@ -61,9 +60,6 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 	private SymbolRowObject lastSymbol;
 	private SymbolFilter filter;
 
-	private TableAddRemoveStrategy<SymbolRowObject> deletedDbObjectAddRemoveStrategy =
-		new SymbolTableAddRemoveStrategy();
-
 	SymbolTableModel(SymbolProvider provider, PluginTool tool) {
 		super("Symbols", tool, null, null);
 		this.provider = provider;
@@ -89,11 +85,6 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 		descriptor.addHiddenColumn(new OriginalNameColumn());
 
 		return descriptor;
-	}
-
-	@Override
-	protected TableAddRemoveStrategy<SymbolRowObject> getAddRemoveStrategy() {
-		return deletedDbObjectAddRemoveStrategy;
 	}
 
 	void setFilter(SymbolFilter filter) {
@@ -364,12 +355,12 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 	protected Comparator<SymbolRowObject> createSortComparator(int columnIndex) {
 		DynamicTableColumn<SymbolRowObject, ?, ?> column = getColumn(columnIndex);
 		if (column instanceof NameTableColumn) {
-			// note: we use our own name comparator to increase sorting speed for the name 
-			//       column.  This works because this comparator is called for each *row object* 
-			//       allowing the comparator to compare the Symbols based on name instead of 
+			// note: we use our own name comparator to increase sorting speed for the name
+			//       column.  This works because this comparator is called for each *row object*
+			//       allowing the comparator to compare the Symbols based on name instead of
 			//       having to use the table model's code for getting a column value for the
 			//       row object.   The code for retrieving a column value is slower than just
-			//       working with the row object directly.  See 
+			//       working with the row object directly.  See
 			//       ThreadedTableModel.getCachedColumnValueForRow for more info.
 			return NAME_COL_COMPARATOR;
 		}
@@ -436,16 +427,14 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 
 		@Override
 		public AddressBasedLocation getValue(SymbolRowObject rowObject, Settings settings,
-				Program p,
-				ServiceProvider svcProvider) throws IllegalArgumentException {
+				Program p, ServiceProvider svcProvider) throws IllegalArgumentException {
 			Symbol symbol = rowObject.getSymbol();
 			return getSymbolLocation(symbol);
 		}
 
 		@Override
 		public ProgramLocation getProgramLocation(SymbolRowObject rowObject, Settings settings,
-				Program p,
-				ServiceProvider svcProvider) {
+				Program p, ServiceProvider svcProvider) {
 			Symbol symbol = rowObject.getSymbol();
 			if (symbol == null || symbol.isDeleted()) {
 				return null;

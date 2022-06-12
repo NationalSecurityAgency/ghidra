@@ -15,21 +15,19 @@
  */
 package agent.frida.model;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Ignore;
+import org.junit.Test;
+
 import ghidra.dbg.DebugModelConventions.AsyncState;
-import ghidra.dbg.target.TargetDetachable;
-import ghidra.dbg.target.TargetEnvironment;
-import ghidra.dbg.target.TargetExecutionStateful;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
-import ghidra.dbg.target.TargetProcess;
-import ghidra.dbg.target.TargetResumable;
 import ghidra.dbg.test.AbstractDebuggerModelLauncherTest;
 import ghidra.dbg.util.PathUtils;
 
@@ -60,6 +58,7 @@ public abstract class AbstractModelForFridaRootLauncherTest
 		assertTrue(environment.getDebugger().toLowerCase().contains("frida"));
 	}
 
+	@Override
 	protected void runTestDetach(DebuggerTestSpecimen specimen)
 			throws Throwable {
 		TargetProcess process = retryForProcessRunning(specimen, this);
@@ -67,7 +66,8 @@ public abstract class AbstractModelForFridaRootLauncherTest
 		waitAcc(detachable);
 		waitOn(detachable.detach());
 	}
-	
+
+	@Override
 	protected void runTestResumeTerminates(DebuggerTestSpecimen specimen) throws Throwable {
 		TargetProcess process = retryForProcessRunning(specimen, this);
 		TargetResumable resumable = m.suitable(TargetResumable.class, process.getPath());
@@ -76,6 +76,55 @@ public abstract class AbstractModelForFridaRootLauncherTest
 		TargetExecutionState st = waitOn(state.waitUntil(s -> s == TargetExecutionState.STOPPED));
 		assertTrue(st.isAlive());
 		waitOn(resumable.resume());
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testLauncherIsWhereExpected() throws Throwable {
+		// Disabled as of 220609
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testLaunchParameters() throws Throwable {
+		// Disabled as of 220609		
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testLaunch() throws Throwable {
+		// Disabled as of 220609
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testLaunchThenDetach() throws Throwable {
+		// Disabled as of 220609
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testLaunchThenKill() throws Throwable {
+		// Disabled as of 220609
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testLaunchThenResume() throws Throwable {
+		// Disabled as of 220609
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testLaunchShowsInProcessContainer() throws Throwable {
+		// Disabled as of 220609
 	}
 
 }

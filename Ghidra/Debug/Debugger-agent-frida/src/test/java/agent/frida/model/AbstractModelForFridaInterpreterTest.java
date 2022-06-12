@@ -17,6 +17,9 @@ package agent.frida.model;
 
 import java.util.List;
 
+import org.junit.Ignore;
+import org.junit.Test;
+
 import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.test.*;
 import ghidra.dbg.util.PathUtils;
@@ -79,6 +82,20 @@ public abstract class AbstractModelForFridaInterpreterTest
 	@Override
 	public DebuggerTestSpecimen getLaunchSpecimen() {
 		return FridaLinuxSpecimen.PRINT;
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testExecute() throws Throwable {
+		// Disabled as of 220609
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testExecuteCapture() throws Throwable {
+		// Disabled as of 220609
 	}
 
 }

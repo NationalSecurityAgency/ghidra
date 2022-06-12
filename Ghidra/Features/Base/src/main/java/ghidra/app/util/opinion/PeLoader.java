@@ -76,7 +76,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return loadSpecs;
 		}
 
-		PortableExecutable pe = new PortableExecutable(provider, SectionLayout.FILE, false, false);
+		PortableExecutable pe = new PortableExecutable(provider, getSectionLayout(), false, false);
 		NTHeader ntHeader = pe.getNTHeader();
 		if (ntHeader != null && ntHeader.getOptionalHeader() != null) {
 			long imageBase = ntHeader.getOptionalHeader().getImageBase();
@@ -102,7 +102,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		PortableExecutable pe = new PortableExecutable(provider, SectionLayout.FILE, false,
+		PortableExecutable pe = new PortableExecutable(provider, getSectionLayout(), false,
 			shouldParseCliHeaders(options));
 
 		NTHeader ntHeader = pe.getNTHeader();
@@ -113,7 +113,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		FileHeader fileHeader = ntHeader.getFileHeader();
 
 		monitor.setMessage("Completing PE header parsing...");
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+		FileBytes fileBytes = createFileBytes(provider, program, monitor);
 		try {
 			Map<SectionHeader, Address> sectionToAddress =
 				processMemoryBlocks(pe, program, fileBytes, monitor, log);
@@ -166,6 +166,16 @@ public class PeLoader extends AbstractPeDebugLoader {
 		monitor.setMessage("[" + program.getName() + "]: done!");
 	}
 
+	protected SectionLayout getSectionLayout() {
+		return SectionLayout.FILE;
+	}
+
+	protected FileBytes createFileBytes(ByteProvider provider, Program program, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+		return fileBytes;
+	}
+
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean loadIntoProgram) {
@@ -211,7 +221,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 		return PARSE_CLI_HEADERS_OPTION_DEFAULT;
 	}
 
-	private void layoutHeaders(Program program, PortableExecutable pe, NTHeader ntHeader,
+	private void layoutHeaders(Program program, PortableExecutable pe,
+			NTHeader ntHeader,
 			DataDirectory[] datadirs) {
 		try {
 			DataType dt = pe.getDOSHeader().toDataType();
@@ -419,7 +430,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 		AddressSpace space = af.getDefaultAddressSpace();
 
 		Listing listing = program.getListing();
-		ReferenceManager refManager = program.getReferenceManager();
 
 		ImportInfo[] imports = idd.getImports();
 		for (ImportInfo importInfo : imports) {
@@ -441,27 +451,30 @@ public class PeLoader extends AbstractPeDebugLoader {
 			setComment(CodeUnit.PRE_COMMENT, address, importInfo.getComment());
 
 			Data data = listing.getDefinedDataAt(address);
-			if (data == null || !(data.getValue() instanceof Address)) {
-				continue;
+			if (data != null && data.isPointer()) {
+				addExternalReference(data, importInfo, log);
 			}
+		}
+	}
 
-			Address extAddr = (Address) data.getValue();
-			if (extAddr != null) {
-				// remove the existing mem reference that was created
-				// when making a pointer
-				data.removeOperandReference(0, extAddr);
+	protected void addExternalReference(Data pointerData, ImportInfo importInfo, MessageLog log) {
+		Address extAddr = (Address) pointerData.getValue();
+		if (extAddr != null) {
+			// remove the existing mem reference that was created when making a pointer
+			pointerData.removeOperandReference(0, extAddr);
 //	            symTable.removeSymbol(symTable.getDynamicSymbol(extAddr));
 
-				try {
-					refManager.addExternalReference(address, importInfo.getDLL().toUpperCase(),
-						importInfo.getName(), extAddr, SourceType.IMPORTED, 0, RefType.DATA);
-				}
-				catch (DuplicateNameException e) {
-					log.appendMsg("External location not created: " + e.getMessage());
-				}
-				catch (InvalidInputException e) {
-					log.appendMsg("External location not created: " + e.getMessage());
-				}
+			try {
+				ReferenceManager refManager = pointerData.getProgram().getReferenceManager();
+				refManager.addExternalReference(pointerData.getAddress(),
+					importInfo.getDLL().toUpperCase(),
+					importInfo.getName(), extAddr, SourceType.IMPORTED, 0, RefType.DATA);
+			}
+			catch (DuplicateNameException e) {
+				log.appendMsg("External location not created: " + e.getMessage());
+			}
+			catch (InvalidInputException e) {
+				log.appendMsg("External location not created: " + e.getMessage());
 			}
 		}
 	}
@@ -544,11 +557,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	/**
-	 * Mark this location as code in the CodeMap.
-	 * The analyzers will pick this up and disassemble the code.
+	 * Mark this location as code in the CodeMap. The analyzers will pick this up and disassemble
+	 * the code.
 	 *
-	 * TODO: this should be in a common place, so all importers can communicate that something
-	 * is code or data.
+	 * TODO: this should be in a common place, so all importers can communicate that something is
+	 * code or data.
 	 *
 	 * @param program The program to mark up.
 	 * @param address The location.
@@ -687,7 +700,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
-	private Map<SectionHeader, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
+	protected Map<SectionHeader, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
 			FileBytes fileBytes, TaskMonitor monitor, MessageLog log)
 			throws AddressOverflowException {
 
@@ -803,7 +816,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		return sectionToAddress;
 	}
 
-	private int getVirtualSize(PortableExecutable pe, SectionHeader[] sections,
+	protected int getVirtualSize(PortableExecutable pe, SectionHeader[] sections,
 			AddressSpace space) {
 		DOSHeader dosHeader = pe.getDOSHeader();
 		OptionalHeader optionalHeader = pe.getNTHeader().getOptionalHeader();
@@ -1019,6 +1032,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 		/**
 		 * Return true if chararray appears in full, starting at offset bytestart in bytearray
+		 * 
 		 * @param bytearray the array of bytes containing the potential match
 		 * @param bytestart the potential start of the match
 		 * @param chararray the array of characters to match

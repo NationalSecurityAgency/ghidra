@@ -269,6 +269,8 @@ public class OptionalHeaderImpl implements OptionalHeader {
 
 	@Override
 	public void processDataDirectories(TaskMonitor monitor) throws IOException {
+		reader.setPointerIndex(startOfDataDirs);
+
 		dataDirectory = new DataDirectory[numberOfRvaAndSizes];
 		if (numberOfRvaAndSizes == 0) {
 			return;
@@ -513,7 +515,7 @@ public class OptionalHeaderImpl implements OptionalHeader {
 		if (is64bit()) {
 			baseOfData = -1;//not used
 			imageBase = reader.readNextLong();
-			if (imageBase <= 0) {
+			if (imageBase <= 0 && !is64bit()) {
 				Msg.warn(this, "Non-standard image base: 0x" + Long.toHexString(imageBase));
 				originalImageBase = imageBase;
 				imageBase = 0x10000;

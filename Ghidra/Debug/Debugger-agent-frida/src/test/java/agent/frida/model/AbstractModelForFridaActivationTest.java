@@ -43,17 +43,19 @@ import ghidra.dbg.util.PathPattern;
  * result in the containing thread or frame becoming active instead. Or, activating a thread may
  * result in its innermost frame becoming active as well.
  */
-public abstract class AbstractModelForFridaActivationTest extends AbstractDebuggerModelActivationTest {
+public abstract class AbstractModelForFridaActivationTest
+		extends AbstractDebuggerModelActivationTest {
 
 	@Override
 	@Ignore
 	@Test
 	public void testDefaultFocusIsAsExpected() throws Throwable {
+		// Disabled as of 220609
 		List<String> expectedDefaultFocus = getExpectedDefaultActivePath();
 		assumeNotNull(expectedDefaultFocus);
 		m.build();
 
-		PathPattern pathPattern = new PathPattern(expectedDefaultFocus);		
+		PathPattern pathPattern = new PathPattern(expectedDefaultFocus);
 		Set<TargetObject> activatable = getActivatableThings();
 		// The default must be one of the activatable objects
 		TargetObject obj = Unique.assertOne(activatable.stream()
@@ -69,6 +71,7 @@ public abstract class AbstractModelForFridaActivationTest extends AbstractDebugg
 	@Ignore
 	@Test
 	public void testActivateEachOnce() throws Throwable {
+		// Disabled as of 220609
 		m.build();
 
 		TargetActiveScope activeScope = findActiveScope();
@@ -87,6 +90,7 @@ public abstract class AbstractModelForFridaActivationTest extends AbstractDebugg
 	@Ignore
 	@Test
 	public void testActivateEachTwice() throws Throwable {
+		// Disabled as of 220609
 		m.build();
 
 		TargetActiveScope activeScope = findActiveScope();
@@ -109,6 +113,7 @@ public abstract class AbstractModelForFridaActivationTest extends AbstractDebugg
 	@Ignore
 	@Test
 	public void testActivateEachViaInterpreter() throws Throwable {
+		// Disabled as of 220609
 		assumeTrue(m.hasInterpreter());
 		m.build();
 

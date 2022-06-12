@@ -17,6 +17,9 @@ package agent.frida.model;
 
 import java.util.Map;
 
+import org.junit.Ignore;
+import org.junit.Test;
+
 import ghidra.dbg.test.AbstractDebuggerModelFactoryTest;
 
 public abstract class AbstractModelForFridaFactoryTest extends AbstractDebuggerModelFactoryTest {
@@ -24,4 +27,47 @@ public abstract class AbstractModelForFridaFactoryTest extends AbstractDebuggerM
 	protected Map<String, Object> getFailingFactoryOptions() {
 		return Map.ofEntries();
 	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testBuildAndClose() throws Throwable {
+		// Disabled as of 220609
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testBuildFailingOptionsErr() throws Throwable {
+		// Disabled as of 220609
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testPing() throws Throwable {
+		// Disabled as of 220609
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testWaitRootAccess() throws Throwable {
+		// Disabled as of 220609
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testHasNonEnumerableRootSchema() throws Throwable {
+		// Disabled as of 220609
+	}
+
+	@Override
+	@Ignore
+	@Test
+	public void testNonExistentPathGivesNull() throws Throwable {
+		// Disabled as of 220609
+	}
+
 }

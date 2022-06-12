@@ -97,6 +97,7 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 			List.of(AssertionError.class));
 	}
 
+	@Override
 	protected void runTestKill(DebuggerTestSpecimen specimen) throws Throwable {
 		TargetProcess process = retryForProcessRunning(specimen, this);
 		TargetKillable killable = m.suitable(TargetKillable.class, process.getPath());
@@ -110,8 +111,10 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		runTestResumeTerminates(specimen);
 	}
 
+	@Ignore
 	@Test
 	public void testLaunchResumeKill() throws Throwable {
+		// Disabled as of 220609
 		assumeTrue(m.hasKillableProcesses());
 		m.build();
 
@@ -126,6 +129,7 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 	@Ignore
 	@Test
 	public void testScan() throws Throwable {
+		// Disabled as of 220609
 		assumeTrue(m.hasKillableProcesses());
 		m.build();
 
@@ -192,8 +196,10 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		runTestKill(specimen);
 	}
 
+	@Ignore
 	@Test
 	public void testInterceptor() throws Throwable {
+		// Disabled as of 220609
 		assumeTrue(m.hasKillableProcesses());
 		m.build();
 
@@ -222,8 +228,10 @@ public abstract class AbstractModelForFridaMethodsTest extends AbstractDebuggerM
 		runTestKill(specimen);
 	}
 
+	@Ignore
 	@Test
 	public void testStalker() throws Throwable {
+		// Disabled as of 220609
 		assumeTrue(m.hasKillableProcesses());
 		m.build();
 

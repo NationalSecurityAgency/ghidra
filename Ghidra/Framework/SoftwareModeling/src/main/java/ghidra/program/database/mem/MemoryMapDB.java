@@ -1015,7 +1015,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			MemoryBlock newBlock = null;
 			try {
 				memBlock1.join(memBlock2);
-				reloadAll();
 				newBlock = getBlockDB(block1Addr);
 				fireBlocksJoined(newBlock, block2Addr);
 			}
