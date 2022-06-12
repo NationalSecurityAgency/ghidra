@@ -18,8 +18,8 @@ import groovy.io.FileType;
 apply plugin:'jacoco'
 
 dependencies {
-   jacocoAnt 'org.jacoco:org.jacoco.ant:0.8.2'
-   jacocoAgent 'org.jacoco:org.jacoco.agent:0.8.2'
+   jacocoAnt 'org.jacoco:org.jacoco.ant:0.8.8'
+   jacocoAgent 'org.jacoco:org.jacoco.agent:0.8.8'
 }
 
 def String jacocoRootExecPath = "$buildDir/jacoco/jacocoMerge.exec"
