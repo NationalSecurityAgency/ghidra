@@ -22,7 +22,8 @@ import java.util.*;
 import ghidra.framework.model.DomainObjectChangeRecord;
 
 public class DefaultTraceChangeType<T, U> implements TraceChangeType<T, U> {
-	private static int nextType = 0x3ACE0000; // Stay far away from manually-assigned types
+	private static int nextType = 0x3ACE; // Stay far away from manually-assigned types
+	// But not too far, since it makes the bit set for events gigantic.
 
 	private static final Map<Integer, String> TYPE_NAMES = new HashMap<>();
 	private static final Set<Field> FIELD_BACKLOG = new HashSet<>();
