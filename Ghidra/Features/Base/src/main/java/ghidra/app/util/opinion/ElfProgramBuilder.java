@@ -25,8 +25,7 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
-import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.Option;
+import ghidra.app.util.*;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.bin.format.elf.*;
@@ -92,6 +91,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		this.log = log;
 		memory = program.getMemory();
 		listing = program.getListing();
+	}
+
+	@Override
+	public <T> T getOption(String optionName, T defaultValue) {
+		return OptionUtils.getOption(optionName, options, defaultValue);
 	}
 
 	@Override

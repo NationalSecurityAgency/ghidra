@@ -22,6 +22,8 @@ import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.ElfException;
 import ghidra.app.util.bin.format.elf.ElfHeader;
+import ghidra.app.util.bin.format.elf.extend.ElfExtensionFactory;
+import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.util.NumericUtilities;
@@ -87,6 +89,12 @@ public class ElfLoaderOptionsFactory {
 		options.add(
 			new Option(RESOLVE_EXTERNAL_SYMBOLS_OPTION_NAME, RESOLVE_EXTERNAL_SYMBOLS_DEFAULT,
 				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-resolveExternalSymbols"));
+
+		ElfLoadAdapter extensionAdapter = ElfExtensionFactory.getLoadAdapter(elf);
+		if (extensionAdapter != null) {
+			extensionAdapter.addLoadOptions(elf, options);
+		}
+
 	}
 	
 	private static boolean includeDataImageBaseOption(ElfHeader elf, Language language) {
