@@ -4524,20 +4524,21 @@
     </para>
   </sect3>
   <sect3 id="ActionFindReferences">
-    <title>Find References to &lt;function&gt;</title>
+    <title>Find References to &lt;function/global variable&gt;</title>
     <para>
-      Display locations in the Program that reference the <emphasis role="bold">function</emphasis>
-      associated with the token under the cursor. Results are collected in a
+      Display locations in the Program that reference the <emphasis role="bold">function</emphasis> or
+      <emphasis role="bold">global variable</emphasis> associated with the token under the cursor. 
+      Results are collected in a 
       <link xlink:href="help/topics/LocationReferencesPlugin/Location_References.html">Location References Dialog</link>,
       which displays a row for each reference with its address and other context.
     </para>
     <para>
-      References include both instructions and data referring to the <emphasis>entry point</emphasis>
+      In the case of a function, references include both instructions and data referring to the <emphasis>entry point</emphasis>
       address of the function.
     </para>
   </sect3>
   <sect3 id="ActionShowReferences">
-    <title>Show References to Address</title>
+    <title>Show References to &lt;address&gt;</title>
     <para>
       Display locations in the Program that reference the <emphasis role="bold">address</emphasis>
       associated with the token under the cursor.  Results are collected in a
