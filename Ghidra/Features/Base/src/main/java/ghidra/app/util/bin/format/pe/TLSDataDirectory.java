@@ -69,9 +69,9 @@ public class TLSDataDirectory extends DataDirectory {
 		createDirectoryBookmark(program, addr);
 		PeUtils.createData(program, addr, tls.toDataType(), log);
 
-		// Markup TLS callback functions
+		// Markup TLS callback functions and index
+		AddressSpace space = program.getImageBase().getAddressSpace();
 		if (tls.getAddressOfCallBacks() != 0) {
-			AddressSpace space = program.getImageBase().getAddressSpace();
 			DataType pointerDataType = PointerDataType.dataType.clone(program.getDataTypeManager());
 			try {
 				for (int i = 0; i < 20; i++) { // cap # of TLS callbacks as a precaution (1 is the norm)
@@ -91,6 +91,16 @@ public class TLSDataDirectory extends DataDirectory {
 			}
 			catch (InvalidInputException e) {
 				log.appendMsg("TLS", "Failed to markup TLS callback functions: " + e.getMessage());
+			}
+		}
+		if (tls.getAddressOfIndex() != 0) {
+			try {
+				Address indexPtrAddr = space.getAddress(tls.getAddressOfIndex());
+				program.getSymbolTable()
+						.createLabel(indexPtrAddr, "_tls_index", SourceType.IMPORTED);
+			}
+			catch (InvalidInputException e) {
+				log.appendMsg("TLS", "Failed to markup TLS index: " + e.getMessage());
 			}
 		}
 	}
