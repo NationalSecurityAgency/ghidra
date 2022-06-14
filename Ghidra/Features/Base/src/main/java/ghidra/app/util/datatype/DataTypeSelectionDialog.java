@@ -65,7 +65,7 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 	private void buildEditor() {
 		removeWorkPanel();
 
-		editor = new DataTypeSelectionEditor(pluginTool, allowedTypes);
+		editor = createEditor(pluginTool, allowedTypes);
 		editor.setPreferredDataTypeManager(dtm);
 		editor.setConsumeEnterKeyPress(false); // we want to handle Enter key presses
 		editor.addCellEditorListener(new CellEditorListener() {
@@ -106,6 +106,11 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 		addWorkPanel(mainPanel);
 
 		rootPanel.validate();
+	}
+
+	protected DataTypeSelectionEditor createEditor(PluginTool tool,
+			AllowedDataTypes allowedDataTypes) {
+		return new DataTypeSelectionEditor(tool, allowedDataTypes);
 	}
 
 	protected JComponent createEditorPanel(DataTypeSelectionEditor dtEditor) {
@@ -168,7 +173,7 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 
 	/**
 	 * If true then a Tab key press will work the same as pressing the Enter key.  If false, then
-	 * a Tab key press will trigger navigation, as is normally done in Java.  
+	 * a Tab key press will trigger navigation, as is normally done in Java.
 	 * <p>
 	 * This method is useful for widgets that have embedded editors that launch this dialog.  For
 	 * these editors, like tables, it is nice to be able to tab through various editors.  This
