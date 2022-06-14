@@ -16,39 +16,39 @@
 package ghidra.app.plugin.core.decompile.actions;
 
 import docking.action.MenuData;
+import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
 import ghidra.app.util.HelpTopics;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.pcode.HighSymbol;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.LabelFieldLocation;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 
 /**
- * An action to show all references to the symbol under the cursor in the Decompiler
+ * An action to show all references to the {@link HighSymbol} under the cursor in the Decompiler.
+ * A HighSymbol is a symbol recovered by the decompiler during decompilation and is generally 
+ * distinct from a {@link Symbol} stored in the Ghidra database (for more details see the
+ * "HighSymbol" entry in the "Decompiler Concepts" section of the Ghidra help).  For this action
+ * to be enabled, the HighSymbol must represent a function or global variable (not a local variable 
+ * or a parameter)
  */
-public class FindReferencesToSymbolAction extends AbstractDecompilerAction {
+public class FindReferencesToHighSymbolAction extends AbstractDecompilerAction {
 
 	private static final String MENU_ITEM_TEXT = "Find References to";
 	public static final String NAME = "Find References to Symbol";
 
-	public FindReferencesToSymbolAction() {
+	public FindReferencesToHighSymbolAction() {
 		super(NAME);
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFindReferences"));
 		setPopupMenuData(
 			new MenuData(new String[] { LocationReferencesService.MENU_GROUP, MENU_ITEM_TEXT }));
 	}
 
-	private void updateMenuName(Symbol symbol) {
-
-		if (symbol == null) {
-			return; // not sure if this can happen
-		}
-
-		String symbolName = symbol.getName(false);
-		String menuName = MENU_ITEM_TEXT + ' ' + symbolName;
-
+	private void updateMenuName(String newName) {
+		String menuName = MENU_ITEM_TEXT + ' ' + newName;
 		MenuData data = getPopupMenuData().cloneData();
 		data.setMenuPath(new String[] { LocationReferencesService.MENU_GROUP, menuName });
 		setPopupMenuData(data);
@@ -56,13 +56,22 @@ public class FindReferencesToSymbolAction extends AbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		Symbol symbol = getSymbol(context);
-		if (symbol == null) {
+		Function function = getFunction(context);
+		if (function != null && !(function instanceof UndefinedFunction)) {
+			updateMenuName(function.getName());
+			return true;
+		}
+		ClangToken token = context.getTokenAtCursor();
+		if (token == null) {
 			return false;
 		}
+		HighSymbol highSymbol = findHighSymbolFromToken(token, context.getHighFunction());
 
-		updateMenuName(symbol);
-
+		if (highSymbol == null || highSymbol.getStorage().isBadStorage() ||
+			!highSymbol.isGlobal()) {
+			return false;
+		}
+		updateMenuName(highSymbol.getName());
 		return true;
 	}
 
@@ -76,9 +85,17 @@ public class FindReferencesToSymbolAction extends AbstractDecompilerAction {
 					"Please add the plugin implementing this service.");
 			return;
 		}
-
-		Symbol symbol = getSymbol(context);
-		LabelFieldLocation location = new LabelFieldLocation(symbol);
+		LabelFieldLocation location = null;
+		Function function = getFunction(context);
+		if (function != null && !(function instanceof UndefinedFunction)) {
+			location = new LabelFieldLocation(function.getSymbol());
+		}
+		else {
+			HighSymbol highSymbol =
+				findHighSymbolFromToken(context.getTokenAtCursor(), context.getHighFunction());
+			location = new LabelFieldLocation(context.getProgram(),
+				highSymbol.getStorage().getMinAddress(), highSymbol.getName());
+		}
 		DecompilerProvider provider = context.getComponentProvider();
 		service.showReferencesToLocation(location, provider);
 	}

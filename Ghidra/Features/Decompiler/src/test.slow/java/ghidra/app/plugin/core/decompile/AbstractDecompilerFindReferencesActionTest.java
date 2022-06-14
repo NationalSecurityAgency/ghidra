@@ -28,7 +28,7 @@ import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.app.actions.AbstractFindReferencesDataTypeAction;
 import ghidra.app.actions.AbstractFindReferencesToAddressAction;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.plugin.core.decompile.actions.FindReferencesToSymbolAction;
+import ghidra.app.plugin.core.decompile.actions.FindReferencesToHighSymbolAction;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesProvider;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
 import ghidra.app.services.*;
@@ -54,7 +54,7 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 		super.setUp();
 
 		findReferencesAction = getAction(decompiler, AbstractFindReferencesDataTypeAction.NAME);
-		findReferencesToSymbolAction = getAction(decompiler, FindReferencesToSymbolAction.NAME);
+		findReferencesToSymbolAction = getAction(decompiler, FindReferencesToHighSymbolAction.NAME);
 		findReferencesToAddressAction =
 			getAction(decompiler, AbstractFindReferencesToAddressAction.NAME);
 
