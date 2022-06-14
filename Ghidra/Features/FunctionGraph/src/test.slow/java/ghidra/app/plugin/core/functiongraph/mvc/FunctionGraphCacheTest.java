@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.functiongraph;
+package ghidra.app.plugin.core.functiongraph.mvc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -25,69 +24,53 @@ import org.junit.Test;
 
 import com.google.common.cache.*;
 
-import ghidra.app.plugin.core.functiongraph.mvc.FGController;
-import ghidra.app.plugin.core.functiongraph.mvc.FGData;
+import ghidra.app.plugin.core.functiongraph.AbstractFunctionGraphTest;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
-import mockit.*;
 
 public class FunctionGraphCacheTest extends AbstractFunctionGraphTest {
 	private Cache<Function, FGData> cache;
 	private List<Address> disposedFunctionData = Collections.synchronizedList(new ArrayList<>());
 	private List<Address> evictedFromCache = Collections.synchronizedList(new ArrayList<>());
 
-	// partial fake of FGController to take control of the buildCache() method and spy
-	// on the two methods that might dispose a FunctionGrahpData object.
-	public class FakeFunctionGraphController extends MockUp<FGController> {
-
-		@Mock
-		public Cache<Function, FGData> buildCache(RemovalListener<Function, FGData> listener) {
-
-			//@formatter:off
-			cache = CacheBuilder
-				.newBuilder()
-				.maximumSize(3)
-				.removalListener(listener)
-				.recordStats()
-				.build()
-				;
-			//@formatter:on
-			return cache;
-		}
-
-		@Mock
-		boolean disposeIfNotInCache(Invocation invocation, FGData data) {
-			boolean result = invocation.proceed(data);
-			Function function = data.getFunction();
-			if (function == null) {
-				return result;
-			}
-			Address address = data.getFunction().getEntryPoint();
-			if (result) {
-				disposedFunctionData.add(address);
-			}
-			return result;
-		}
-
-		@Mock
-		boolean disposeGraphDataIfNotInUse(Invocation invocation, FGData data) {
-			boolean result = invocation.proceed(data);
-			evictedFromCache.add(data.getFunction().getEntryPoint());
-			if (result) {
-				disposedFunctionData.add(data.getFunction().getEntryPoint());
-			}
-			return result;
-		}
-	}
-
 	@Override
 	@Before
 	public void setUp() throws Exception {
-		// the magic of JMockit will cause our FakeDecompilerController to get used instead
-		// of the real one, regardless of where it gets constructed.
-		new FakeFunctionGraphController();
-
 		super.setUp();
+
+		FGController controller = getFunctionGraphController();
+
+		// go to an function address that is not used by this test (all tests use functions 0-2)
+		goToAddress(functionAddrs.get(3));
+		controller.clear();
+		waitForSwing();
+
+		RemovalListener<Function, FGData> listener = controller::cacheValueRemoved;
+
+		//@formatter:off
+		cache = CacheBuilder
+			.newBuilder()
+			.maximumSize(3)
+			.removalListener(listener)
+			.recordStats()
+			.build()
+			;
+		//@formatter:on
+
+		controller.setCache(cache);
+		controller.setFGDataDisposedListener((data, evicted) -> {
+			Function function = data.getFunction();
+			if (function == null) {
+				return;
+			}
+			Address address = data.getFunction().getEntryPoint();
+			disposedFunctionData.add(address);
+			if (evicted) {
+				evictedFromCache.add(address);
+			}
+		});
+
+		goToAddress(getStartingAddress());
 	}
 
 	@Test
@@ -103,6 +86,7 @@ public class FunctionGraphCacheTest extends AbstractFunctionGraphTest {
 
 	@Test
 	public void testBackToOldFunctionIsCacheHit() {
+
 		goToAddress(functionAddrs.get(0));
 		goToAddress(functionAddrs.get(1));
 		CacheStats stats1 = cache.stats();
@@ -141,10 +125,11 @@ public class FunctionGraphCacheTest extends AbstractFunctionGraphTest {
 		goToAddress(functionAddrs.get(0));
 		goToAddress(functionAddrs.get(1));
 		goToAddress(functionAddrs.get(2));
+		assertEquals(3, cache.size());
 
 		cache.invalidateAll();
 
-		assertEquals(3, evictedFromCache.size());
+		assertEquals(2, evictedFromCache.size());
 		assertEquals(2, disposedFunctionData.size());
 		assertTrue(disposedFunctionData.contains(getAddress(functionAddrs.get(0))));
 		assertTrue(disposedFunctionData.contains(getAddress(functionAddrs.get(1))));

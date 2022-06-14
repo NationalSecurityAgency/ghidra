@@ -33,7 +33,6 @@ import org.junit.*;
 
 import docking.*;
 import docking.action.*;
-import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.test.AbstractDockingTest;
 import docking.widgets.EventTrigger;
@@ -75,7 +74,6 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.AssertException;
 import ghidra.util.task.RunManager;
 
 public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedIntegrationTest {
@@ -541,13 +539,13 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	protected void waitForBusyRunManager(FGController controller) {
 		FGModel model = controller.getModel();
 
-		long start = System.nanoTime();
+//		long start = System.nanoTime();
 		waitForSwing();
 		RunManager runManager = (RunManager) TestUtils.getInstanceField("runManager", model);
 
 		waitForCondition(() -> !runManager.isInProgress());
-		long end = System.nanoTime();
-		long total = end - start;
+//		long end = System.nanoTime();
+//		long total = end - start;
 //		Msg.debug(this,
 //			"Run manager wait time: " + TimeUnit.MILLISECONDS.convert(total, TimeUnit.NANOSECONDS));
 	}
@@ -1997,26 +1995,6 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		pressButtonByText(window, "OK");
 
 		waitForSwing();
-	}
-
-	private void setMinCrossLayout() {
-		Object actionManager = getInstanceField("actionManager", graphProvider);
-		@SuppressWarnings("unchecked")
-		final MultiStateDockingAction<FGLayoutProvider> action =
-			(MultiStateDockingAction<FGLayoutProvider>) getInstanceField("layoutAction",
-				actionManager);
-		runSwing(() -> {
-			List<ActionState<FGLayoutProvider>> states = action.getAllActionStates();
-			for (ActionState<FGLayoutProvider> state : states) {
-				FGLayoutProvider layoutProvider = state.getUserData();
-				if (layoutProvider.getLayoutName().contains("MinCross")) {
-					action.setCurrentActionState(state);
-					return;
-				}
-			}
-
-			throw new AssertException("Unable to find MinCross layout");
-		});
 	}
 
 	protected FGData triggerPersistenceAndReload(String functionAddress) {

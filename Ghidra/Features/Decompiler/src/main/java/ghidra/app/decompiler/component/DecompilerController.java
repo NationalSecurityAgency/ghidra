@@ -309,6 +309,12 @@ public class DecompilerController {
 		//@formatter:on
 	}
 
+	// for testing
+	void setCache(Cache<Function, DecompileResults> cache) {
+		this.decompilerCache.invalidateAll();
+		this.decompilerCache = cache;
+	}
+
 	public void clearCache() {
 		decompilerCache.invalidateAll();
 	}
