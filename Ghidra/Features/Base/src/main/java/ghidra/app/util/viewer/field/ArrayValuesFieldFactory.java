@@ -102,14 +102,14 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 		int numComponents = parent.getNumComponents();
 		int index = data.getComponentIndex();
 		int remaining = numComponents - index;
-		int valuesThisLine = Math.min(remaining, valuesPerLine);
-		boolean isLastLine = remaining <= valuesThisLine;
+		int itemCount = Math.min(remaining, valuesPerLine);
+		boolean isLastLine = remaining <= itemCount;
 
-		FieldElement[] aStrings = new FieldElement[valuesThisLine];
-		for (int i = 0; i < valuesThisLine; i++) {
+		FieldElement[] aStrings = new FieldElement[itemCount];
+		for (int i = 0; i < itemCount; i++) {
 			Data child = parent.getComponent(index++);
-			boolean isLastItemOfParent = isLastLine && (i == valuesThisLine - 1);
-			String value = getDisplayValue(child, !isLastItemOfParent);
+			boolean isLastItem = isLastLine && (i == itemCount - 1);
+			String value = getDisplayValue(child, !isLastItem);
 			AttributedString as = new AttributedString(value, color, getMetrics());
 			aStrings[i] = new TextFieldElement(as, i, 0);
 		}
