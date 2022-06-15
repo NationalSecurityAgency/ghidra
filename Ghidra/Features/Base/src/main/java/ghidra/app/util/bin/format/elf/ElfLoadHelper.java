@@ -38,6 +38,15 @@ public interface ElfLoadHelper {
 	Program getProgram();
 
 	/**
+	 * Get an import processing option value
+	 * @param <T> class of option value (e.g., String, Boolean, etc.)
+	 * @param optionName option name
+	 * @param defaultValue default option value which also establishes expected value type
+	 * @return option value
+	 */
+	<T> T getOption(String optionName, T defaultValue);
+
+	/**
 	 * Get ELF Header object
 	 * @return ELF Header object
 	 */
