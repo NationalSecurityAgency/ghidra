@@ -23,6 +23,7 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
 import com.google.common.collect.Range;
 
+import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKind;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
@@ -75,6 +76,23 @@ class ObjectRecorder {
 		return targetObject == null ? null : targetObject.obj;
 	}
 
+	/**
+	 * List the names of interfaces on the object not already covered by the schema
+	 * 
+	 * @param object the object
+	 * @return the comma-separated list of interface names
+	 */
+	protected String computeExtraInterfaces(TargetObject object) {
+		Set<String> result = new LinkedHashSet<>(object.getInterfaceNames());
+		for (Class<? extends TargetObject> iface : object.getSchema().getInterfaces()) {
+			result.remove(DebuggerObjectModel.requireIfaceName(iface));
+		}
+		if (result.isEmpty()) {
+			return null;
+		}
+		return result.stream().collect(Collectors.joining(","));
+	}
+
 	protected void recordCreated(long snap, TargetObject object) {
 		TraceObject traceObject;
 		if (object.isRoot()) {
@@ -91,6 +109,10 @@ class ObjectRecorder {
 				Msg.error(this, "Received created for an object that already exists: " + exists);
 			}
 		}
+		String extras = computeExtraInterfaces(object);
+		// Note: null extras will erase previous value, if necessary.
+		traceObject.setAttribute(Range.atLeast(snap),
+			TraceObject.EXTRA_INTERFACES_ATTRIBUTE_NAME, extras);
 	}
 
 	protected void recordInvalidated(long snap, TargetObject object) {

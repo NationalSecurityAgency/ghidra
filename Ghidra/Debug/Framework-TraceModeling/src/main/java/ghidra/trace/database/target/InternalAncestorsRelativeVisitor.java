@@ -22,68 +22,45 @@ import java.util.stream.Stream;
 import com.google.common.collect.Range;
 
 import ghidra.dbg.util.PathPredicates;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.InternalTreeTraversal.SpanIntersectingVisitor;
 import ghidra.trace.database.target.InternalTreeTraversal.VisitResult;
 
-public class InternalSuccessorsVisitor implements SpanIntersectingVisitor {
+public class InternalAncestorsRelativeVisitor implements SpanIntersectingVisitor {
 
 	protected final PathPredicates predicates;
 
-	public InternalSuccessorsVisitor(PathPredicates predicates) {
+	public InternalAncestorsRelativeVisitor(PathPredicates predicates) {
 		this.predicates = predicates;
 	}
 
 	@Override
 	public DBTraceObjectValPath composePath(DBTraceObjectValPath pre,
 			InternalTraceObjectValue value) {
-		return pre == null ? DBTraceObjectValPath.of() : pre.append(value);
+		return pre == null ? DBTraceObjectValPath.of() : pre.prepend(value);
 	}
 
 	@Override
 	public VisitResult visitValue(InternalTraceObjectValue value, DBTraceObjectValPath path) {
 		List<String> keyList = path.getKeyList();
 		return VisitResult.result(predicates.matches(keyList),
-			predicates.successorCouldMatch(keyList, true) && value.getChildOrNull() != null);
+			predicates.ancestorCouldMatchRight(keyList, true) && value.getChildOrNull() != null);
 	}
 
 	@Override
 	public DBTraceObject continueObject(InternalTraceObjectValue value) {
-		return value.getChildOrNull();
+		return value.getParent();
 	}
 
 	@Override
 	public Stream<? extends InternalTraceObjectValue> continueValues(DBTraceObject object,
 			Range<Long> span, DBTraceObjectValPath pre) {
-		Set<String> nextKeys = predicates.getNextKeys(pre.getKeyList());
-		if (nextKeys.isEmpty()) {
+		Set<String> prevKeys = predicates.getPrevKeys(pre.getKeyList());
+		if (prevKeys.isEmpty()) {
 			return Stream.empty();
 		}
 
-		Stream<? extends DBTraceObjectValue> attrStream;
-		if (nextKeys.contains("")) {
-			attrStream = object.doGetAttributes()
-					.stream()
-					.filter(v -> DBTraceUtils.intersect(span, v.getLifespan()));
-		}
-		else {
-			attrStream = Stream.empty();
-		}
-
-		Stream<? extends DBTraceObjectValue> elemStream;
-		if (nextKeys.contains("[]")) {
-			elemStream = object.doGetElements()
-					.stream()
-					.filter(v -> DBTraceUtils.intersect(span, v.getLifespan()));
-		}
-		else {
-			elemStream = Stream.empty();
-		}
-
-		Stream<InternalTraceObjectValue> restStream = nextKeys.stream()
-				.filter(k -> !"".equals(k) && !"[]".equals(k))
-				.flatMap(k -> object.doGetValues(span, k).stream());
-
-		return Stream.concat(Stream.concat(attrStream, elemStream), restStream);
+		return object.doGetParents()
+				.stream()
+				.filter(v -> PathPredicates.anyMatches(prevKeys, v.getEntryKey()));
 	}
 }

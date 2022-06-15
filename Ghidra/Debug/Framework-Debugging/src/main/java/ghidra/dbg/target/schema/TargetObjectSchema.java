@@ -414,7 +414,8 @@ public interface TargetObjectSchema {
 	 * 
 	 * <p>
 	 * If this is the schema of the root object, then this gives the schema of the object at the
-	 * given path in the model.
+	 * given path in the model. This will always give a non-null result, though that result might be
+	 * {@link EnumerableTargetObjectSchema#VOID}.
 	 * 
 	 * @param path the relative path from an object having this schema to the desired successor
 	 * @return the schema for the successor

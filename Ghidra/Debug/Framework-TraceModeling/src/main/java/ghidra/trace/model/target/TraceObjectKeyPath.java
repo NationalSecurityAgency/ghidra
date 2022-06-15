@@ -225,9 +225,26 @@ public final class TraceObjectKeyPath implements Comparable<TraceObjectKeyPath> 
 		if (!predicates.ancestorMatches(keyList, false)) {
 			return Stream.of();
 		}
+		Stream<TraceObjectKeyPath> ancestry =
+			isRoot() ? Stream.of() : parent().streamMatchingAncestry(predicates);
 		if (predicates.matches(keyList)) {
-			return Stream.concat(Stream.of(this), parent().streamMatchingAncestry(predicates));
+			return Stream.concat(Stream.of(this), ancestry);
 		}
-		return parent().streamMatchingAncestry(predicates);
+		return ancestry;
+	}
+
+	/**
+	 * Check if this path is an ancestor of the given path
+	 * 
+	 * <p>
+	 * Equivalently, check if the given path is a successor of this path. A path is considered an
+	 * ancestor of itself. To check for a strict ancestor, use
+	 * {@code this.isAncestor(that) && !this.equals(that)}.
+	 * 
+	 * @param that the supposed successor to this path
+	 * @return true if the given path is in fact a successor
+	 */
+	public boolean isAncestor(TraceObjectKeyPath that) {
+		return PathUtils.isAncestor(keyList, that.keyList);
 	}
 }

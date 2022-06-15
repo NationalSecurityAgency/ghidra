@@ -31,6 +31,7 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.InternalTreeTraversal.Visitor;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
@@ -276,6 +277,11 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	}
 
 	@Override
+	public boolean isObject() {
+		return child != null;
+	}
+
+	@Override
 	public DBTraceObject getChildOrNull() {
 		return child;
 	}
@@ -320,6 +326,10 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 		return InternalTreeTraversal.INSTANCE.walkValue(visitor, this, span, null);
 	}
 
+	protected TraceObjectKeyPath doGetCanonicalPath() {
+		return triple.parent.getCanonicalPath().extend(triple.key);
+	}
+
 	protected boolean doIsCanonical() {
 		if (child == null) {
 			return false;
@@ -327,7 +337,14 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 		if (triple.parent == null) {
 			return true;
 		}
-		return triple.parent.getCanonicalPath().extend(triple.key).equals(child.getCanonicalPath());
+		return doGetCanonicalPath().equals(child.getCanonicalPath());
+	}
+
+	@Override
+	public TraceObjectKeyPath getCanonicalPath() {
+		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
+			return doGetCanonicalPath();
+		}
 	}
 
 	@Override

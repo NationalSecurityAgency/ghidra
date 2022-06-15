@@ -39,6 +39,7 @@ import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerMemoryBytesPlugin;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPlugin;
+import ghidra.app.plugin.core.debug.gui.model.DebuggerModelPlugin;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPlugin;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerStaticMappingPlugin;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsPlugin;
@@ -131,6 +132,9 @@ public interface DebuggerResources {
 	ImageIcon ICON_FILTER = ResourceManager.loadImage("images/filter_off.png"); // Eww.
 	ImageIcon ICON_SELECT_ROWS = ResourceManager.loadImage("images/table_go.png");
 	ImageIcon ICON_AUTOREAD = ResourceManager.loadImage("images/autoread.png");
+
+	ImageIcon ICON_OBJECT_POPULATED = ResourceManager.loadImage("images/object-populated.png");
+	ImageIcon ICON_OBJECT_UNPOPULATED = ResourceManager.loadImage("images/object-unpopulated.png");
 
 	// TODO: Draw a real icon.
 	ImageIcon ICON_REFRESH_MEMORY = ICON_REFRESH;
@@ -255,6 +259,11 @@ public interface DebuggerResources {
 	HelpLocation HELP_PROVIDER_OBJECTS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerObjectsPlugin.class), HELP_ANCHOR_PLUGIN);
 
+	String TITLE_PROVIDER_MODEL = "Model"; // TODO: An icon
+	ImageIcon ICON_PROVIDER_MODEL = ResourceManager.loadImage("images/function_graph.png");
+	HelpLocation HELP_PROVIDER_MODEL = new HelpLocation(
+		PluginUtils.getPluginNameFromClass(DebuggerModelPlugin.class), HELP_ANCHOR_PLUGIN);
+
 	String TITLE_PROVIDER_WATCHES = "Watches";
 	ImageIcon ICON_PROVIDER_WATCHES = ICON_AUTOREAD; // TODO: Another icon?
 	HelpLocation HELP_PROVIDER_WATCHES = new HelpLocation(
@@ -275,6 +284,9 @@ public interface DebuggerResources {
 	Color DEFAULT_COLOR_REGISTER_MARKERS = new Color(0.75f, 0.875f, 0.75f);
 	ImageIcon ICON_REGISTER_MARKER = ResourceManager.loadImage("images/register-marker.png");
 
+	ImageIcon ICON_EVENT_MARKER = ICON_REGISTER_MARKER; // TODO: Another icon?
+	// At least rename to "marker-arrow", and then have both ref it.
+
 	String OPTION_NAME_COLORS_REGISTER_STALE = "Colors.Stale Registers";
 	Color DEFAULT_COLOR_REGISTER_STALE = Color.GRAY;
 	String OPTION_NAME_COLORS_REGISTER_STALE_SEL = "Colors.Stale Registers (selected)";
@@ -292,6 +304,11 @@ public interface DebuggerResources {
 	Color DEFAULT_COLOR_WATCH_CHANGED = Color.RED;
 	String OPTION_NAME_COLORS_WATCH_CHANGED_SEL = "Colors.Changed Watches (selected)";
 	Color DEFAULT_COLOR_WATCH_CHANGED_SEL = ColorUtils.blend(Color.RED, Color.WHITE, 0.5f);
+
+	String OPTION_NAME_COLORS_VALUE_CHANGED = "Colors.Changed Values";
+	Color DEFAULT_COLOR_VALUE_CHANGED = Color.RED;
+	String OPTION_NAME_COLORS_VALUE_CHANGED_SEL = "Colors.Changed Values (selected)";
+	Color DEFAULT_COLOR_VALUE_CHANGED_SEL = ColorUtils.blend(Color.RED, Color.WHITE, 0.5f);
 
 	String OPTION_NAME_COLORS_PCODE_COUNTER = "Colors.Pcode Counter";
 	Color DEFAULT_COLOR_PCODE_COUNTER = new Color(0.75f, 0.875f, 0.75f);
@@ -994,12 +1011,12 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface CreateSnapshotAction {
-		String NAME = "Create Snapshot";
-		String DESCRIPTION = "Create a (disconnected) snapshot copy of this window";
+	interface CloneWindowAction {
+		String NAME = "Clone Window";
+		String DESCRIPTION = "Create a disconnected copy of this window";
 		String GROUP = "zzzz";
 		Icon ICON = ResourceManager.loadImage("images/camera-photo.png");
-		String HELP_ANCHOR = "snapshot_window";
+		String HELP_ANCHOR = "clone_window";
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
@@ -1624,14 +1641,31 @@ public interface DebuggerResources {
 		}
 	}
 
+	interface StepSnapForwardAction {
+		String NAME = "Step Trace Snap Forward";
+		String DESCRIPTION = "Navigate the recording forward one snap";
+		Icon ICON = ICON_SNAP_FORWARD;
+		String GROUP = GROUP_CONTROL;
+		String HELP_ANCHOR = "step_trace_snap_forward";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, "4")
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
 	abstract class AbstractStepSnapForwardAction extends DockingAction {
-		public static final String NAME = "Step Trace Snap Forward";
-		public static final Icon ICON = ICON_SNAP_FORWARD;
-		public static final String HELP_ANCHOR = "step_trace_snap_forward";
+		public static final String NAME = StepSnapForwardAction.NAME;
+		public static final Icon ICON = StepSnapForwardAction.ICON;
+		public static final String HELP_ANCHOR = StepSnapForwardAction.HELP_ANCHOR;
 
 		public AbstractStepSnapForwardAction(Plugin owner) {
 			super(NAME, owner.getName());
-			setDescription("Navigate the recording forward one snap");
+			setDescription(StepSnapForwardAction.DESCRIPTION);
 			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
 		}
 	}
@@ -1677,14 +1711,31 @@ public interface DebuggerResources {
 		}
 	}
 
+	interface StepSnapBackwardAction {
+		String NAME = "Step Trace Snap Backward";
+		String DESCRIPTION = "Navigate the recording backward one snap";
+		Icon ICON = ICON_SNAP_BACKWARD;
+		String GROUP = GROUP_CONTROL;
+		String HELP_ANCHOR = "step_trace_snap_backward";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, "1")
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
 	abstract class AbstractStepSnapBackwardAction extends DockingAction {
-		public static final String NAME = "Step Trace Snap Backward";
-		public static final Icon ICON = ICON_SNAP_BACKWARD;
-		public static final String HELP_ANCHOR = "step_trace_snap_backward";
+		public static final String NAME = StepSnapBackwardAction.NAME;
+		public static final Icon ICON = StepSnapBackwardAction.ICON;;
+		public static final String HELP_ANCHOR = StepSnapBackwardAction.HELP_ANCHOR;
 
 		public AbstractStepSnapBackwardAction(Plugin owner) {
 			super(NAME, owner.getName());
-			setDescription("Navigate the recording backward one snap");
+			setDescription(StepSnapBackwardAction.DESCRIPTION);
 			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
 		}
 	}
@@ -2104,6 +2155,87 @@ public interface DebuggerResources {
 					.addStates(Stream.of(StateEditingMode.values())
 							.map(m -> new ActionState<>(m.name, m.icon, m))
 							.collect(Collectors.toList()));
+		}
+	}
+
+	interface LimitToCurrentSnapAction {
+		String NAME = "Limit to Current Snap";
+		String DESCRIPTION = "Choose whether displayed objects must be alive at the current snap";
+		String GROUP = GROUP_GENERAL;
+		Icon ICON = ICON_TIME; // TODO
+		String HELP_ANCHOR = "limit_to_current_snap";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarGroup(GROUP)
+					.toolBarIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ShowHiddenAction {
+		String NAME = "Show Hidden";
+		String DESCRIPTION = "Choose whether to display hidden children";
+		String GROUP = GROUP_GENERAL;
+		String HELP_ANCHOR = "show_hidden";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ShowPrimitivesInTreeAction {
+		String NAME = "Show Primitives in Tree";
+		String DESCRIPTION = "Choose whether to display primitive values in the tree";
+		String GROUP = GROUP_GENERAL;
+		String HELP_ANCHOR = "show_primitives";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ShowMethodsInTreeAction {
+		String NAME = "Show Methods in Tree";
+		String DESCRIPTION = "Choose whether to display methods in the tree";
+		String GROUP = GROUP_GENERAL;
+		String HELP_ANCHOR = "show_methods";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface FollowLinkAction {
+		String NAME = "Follow Link";
+		String DESCRIPTION = "Navigate to the link target";
+		String GROUP = GROUP_GENERAL;
+		String HELP_ANCHOR = "follow_link";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.popupMenuPath(NAME)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 

@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 
+import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathPredicates;
@@ -38,6 +39,8 @@ import ghidra.trace.model.TraceUniqueObject;
  * In many cases, such interfaces are just wrappers.
  */
 public interface TraceObject extends TraceUniqueObject {
+	String EXTRA_INTERFACES_ATTRIBUTE_NAME = "_extra_ifs";
+
 	/**
 	 * Get the trace containing this object
 	 * 
@@ -79,8 +82,9 @@ public interface TraceObject extends TraceUniqueObject {
 	 * 
 	 * @param the minimum lifespan of edges from the root to this object
 	 * @param resolution the rule for handling duplicate keys when setting values.
+	 * @return the value path from root to the newly inserted object
 	 */
-	void insert(Range<Long> lifespan, ConflictResolution resolution);
+	TraceObjectValPath insert(Range<Long> lifespan, ConflictResolution resolution);
 
 	/**
 	 * Remove this object from its canonical path for the given lifespan
@@ -97,9 +101,9 @@ public interface TraceObject extends TraceUniqueObject {
 	 * Remove this object and its successors from their canonical paths for the given span
 	 * 
 	 * <p>
-	 * Truncate the lifespans of this object's canonical parent value and all canonical values
-	 * succeeding this object. If a truncated value's lifespan is contained in the given span, the
-	 * value will be deleted.
+	 * Truncate the lifespans of this object's parent values and all canonical values succeeding
+	 * this object. If a truncated value's lifespan is contained in the given span, the value will
+	 * be deleted.
 	 * 
 	 * @param span the span during which this object and its canonical successors should be removed
 	 */
@@ -282,8 +286,19 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @param rootPredicates the predicates for matching path keys, relative to the root
 	 * @return the stream of matching paths to values
 	 */
-	Stream<? extends TraceObjectValPath> getAncestors(Range<Long> span,
+	Stream<? extends TraceObjectValPath> getAncestorsRoot(Range<Long> span,
 			PathPredicates rootPredicates);
+
+	/**
+	 * Stream all ancestor values of this object matching the given predicates, intersecting the
+	 * given span
+	 * 
+	 * @param span a span which values along the path must intersect
+	 * @param relativePredicates the predicates for matching path keys, relative to this object
+	 * @return the stream of matching paths to values
+	 */
+	Stream<? extends TraceObjectValPath> getAncestors(Range<Long> span,
+			PathPredicates relativePredicates);
 
 	/**
 	 * Stream all successor values of this object matching the given predicates, intersecting the
@@ -466,4 +481,30 @@ public interface TraceObject extends TraceUniqueObject {
 	 */
 	@Override
 	boolean isDeleted();
+
+	/**
+	 * Check if the child represents a method at the given snap
+	 * 
+	 * @param snap the snap
+	 * @return true if a method
+	 */
+	default boolean isMethod(long snap) {
+		if (getTargetSchema().getInterfaces().contains(TargetMethod.class)) {
+			return true;
+		}
+		TraceObjectValue extras = getAttribute(snap, TraceObject.EXTRA_INTERFACES_ATTRIBUTE_NAME);
+		if (extras == null) {
+			return false;
+		}
+		Object val = extras.getValue();
+		if (!(val instanceof String)) {
+			return false;
+		}
+		String valStr = (String) val;
+		// Not ideal, but it's not a substring of any other schema interface....
+		if (valStr.contains("Method")) {
+			return true;
+		}
+		return false;
+	}
 }
