@@ -15,15 +15,13 @@
  */
 package ghidra.feature.vt.api.markupitem;
 
-import static ghidra.feature.vt.db.VTTestUtils.createProgramCorrelator;
-import static ghidra.feature.vt.db.VTTestUtils.createRandomMarkupItemStub;
-import static org.junit.Assert.assertEquals;
+import static ghidra.feature.vt.db.VTTestUtils.*;
+import static org.junit.Assert.*;
 
 import java.util.Collection;
 
 import org.junit.*;
 
-import ghidra.feature.vt.api.db.AssociationDatabaseManager;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
 import ghidra.feature.vt.api.util.VersionTrackingApplyException;
@@ -31,18 +29,15 @@ import ghidra.feature.vt.db.VTBaseTestCase;
 import ghidra.feature.vt.db.VTTestUtils;
 import ghidra.program.model.address.Address;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class VTMarkupItemResetTest extends VTBaseTestCase {
 
 	private int testTransactionID;
-	private AssociationDatabaseManager associationDBM;
 
 	@Override
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		associationDBM = db.getAssociationManagerDBM();
 		testTransactionID = db.startTransaction("Test Match Set Setup");
 	}
 
@@ -217,7 +212,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 	@Test
 	public void testDBMarkupItemStorageResetDoesntHappen_ClearDestinationAddress() {
 		//
-		// Test that the markup item storage is not removed when the destination address is 
+		// Test that the markup item storage is not removed when the destination address is
 		// cleared, but the considered status was set.
 		//
 		VTMatchSet matchSet = db.createMatchSet(
@@ -246,14 +241,14 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@SuppressWarnings("unchecked")
 	private Collection<VTMarkupItem> getStoredMarkupItems(VTAssociation association) {
 		Object markupItemManager = getInstanceField("markupManager", association);
 		return (Collection<VTMarkupItem>) invokeInstanceMethod("getStoredMarkupItems",
 			markupItemManager, new Class[] { TaskMonitor.class },
-			new Object[] { TaskMonitorAdapter.DUMMY_MONITOR });
+			new Object[] { TaskMonitor.DUMMY });
 	}
 
 	private VTMarkupItemApplyActionType createRandomApplyAction(VTMarkupItem item) {

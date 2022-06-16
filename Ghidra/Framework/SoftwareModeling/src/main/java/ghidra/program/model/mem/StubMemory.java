@@ -32,15 +32,15 @@ import ghidra.util.task.TaskMonitor;
  * for all methods in the Memory interface. Any method that is needed for your test can then
  * be overridden so it can provide its own test implementation and return value.
  */
-public class MemoryStub extends AddressSet implements Memory {
+public class StubMemory extends AddressSet implements Memory {
 	byte[] myMemoryBytes;
 	MemoryBlock myMemoryBlock;
 
-	public MemoryStub() {
+	public StubMemory() {
 		this(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 });
 	}
 
-	public MemoryStub(byte[] bytes) {
+	public StubMemory(byte[] bytes) {
 		super();
 		this.myMemoryBytes = bytes;
 		AddressSpace space = new GenericAddressSpace("Mem", 32, AddressSpace.TYPE_RAM, 0);
