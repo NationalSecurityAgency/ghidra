@@ -203,6 +203,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public RangeSet<Long> getLife() {
+		// TODO: This should really be cached
 		try (LockHold hold = manager.trace.lockRead()) {
 			RangeSet<Long> result = TreeRangeSet.create();
 			// NOTE: connected ranges should already be coalesced
@@ -220,19 +221,20 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		return manager.doGetObject(path.parent());
 	}
 
-	protected void doInsert(Range<Long> lifespan, ConflictResolution resolution) {
+	protected DBTraceObjectValPath doInsert(Range<Long> lifespan, ConflictResolution resolution) {
 		if (path.isRoot()) {
-			return;
+			return DBTraceObjectValPath.of();
 		}
 		DBTraceObject parent = doCreateCanonicalParentObject();
-		parent.setValue(lifespan, path.key(), this, resolution);
-		parent.doInsert(lifespan, resolution);
+		InternalTraceObjectValue value = parent.setValue(lifespan, path.key(), this, resolution);
+		DBTraceObjectValPath path = parent.doInsert(lifespan, resolution);
+		return path.append(value);
 	}
 
 	@Override
-	public void insert(Range<Long> lifespan, ConflictResolution resolution) {
+	public DBTraceObjectValPath insert(Range<Long> lifespan, ConflictResolution resolution) {
 		try (LockHold hold = manager.trace.lockWrite()) {
-			doInsert(lifespan, resolution);
+			return doInsert(lifespan, resolution);
 		}
 	}
 
@@ -253,6 +255,9 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	protected void doRemoveTree(Range<Long> span) {
+		for (DBTraceObjectValue parent : getParents()) {
+			parent.doTruncateOrDeleteAndEmitLifeChange(span);
+		}
 		for (InternalTraceObjectValue value : getValues()) {
 			value.doTruncateOrDeleteAndEmitLifeChange(span);
 			if (value.isCanonical()) {
@@ -264,7 +269,6 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	@Override
 	public void removeTree(Range<Long> span) {
 		try (LockHold hold = manager.trace.lockWrite()) {
-			getCanonicalParents(span).forEach(v -> v.doTruncateOrDeleteAndEmitLifeChange(span));
 			doRemoveTree(span);
 		}
 	}
@@ -327,10 +331,14 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		return ifCls.cast(ifaces.get(ifCls));
 	}
 
+	protected Collection<? extends DBTraceObjectValue> doGetParents() {
+		return manager.valuesByChild.get(this);
+	}
+
 	@Override
 	public Collection<? extends DBTraceObjectValue> getParents() {
 		try (LockHold hold = manager.trace.lockRead()) {
-			return manager.valuesByChild.get(this);
+			return doGetParents();
 		}
 	}
 
@@ -626,23 +634,35 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public Stream<? extends DBTraceObjectValPath> getAncestors(
+	public Stream<? extends TraceObjectValPath> getAncestors(Range<Long> span,
+			PathPredicates relativePredicates) {
+		try (LockHold hold = manager.trace.lockRead()) {
+			Stream<? extends DBTraceObjectValPath> ancestors =
+				doStreamVisitor(span, new InternalAncestorsRelativeVisitor(relativePredicates));
+			if (relativePredicates.matches(List.of())) {
+				return Stream.concat(Stream.of(DBTraceObjectValPath.of()), ancestors);
+			}
+			return ancestors;
+		}
+	}
+
+	@Override
+	public Stream<? extends DBTraceObjectValPath> getAncestorsRoot(
 			Range<Long> span, PathPredicates rootPredicates) {
 		try (LockHold hold = manager.trace.lockRead()) {
-			return doStreamVisitor(span, new InternalAncestorsVisitor(rootPredicates));
+			return doStreamVisitor(span, new InternalAncestorsRootVisitor(rootPredicates));
 		}
 	}
 
 	@Override
 	public Stream<? extends DBTraceObjectValPath> getSuccessors(
 			Range<Long> span, PathPredicates relativePredicates) {
-		DBTraceObjectValPath empty = DBTraceObjectValPath.of();
 		try (LockHold hold = manager.trace.lockRead()) {
 			Stream<? extends DBTraceObjectValPath> succcessors =
-				doStreamVisitor(span, new InternalSuccessorsVisitor(relativePredicates));
+				doStreamVisitor(span, new InternalSuccessorsRelativeVisitor(relativePredicates));
 			if (relativePredicates.matches(List.of())) {
 				// Pre-cat the empty path (not the empty stream)
-				return Stream.concat(Stream.of(empty), succcessors);
+				return Stream.concat(Stream.of(DBTraceObjectValPath.of()), succcessors);
 			}
 			return succcessors;
 		}
@@ -794,7 +814,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 			Class<? extends TargetObject> targetIf) {
 		// This is a sort of meet-in-the-middle. The type search must originate from the root
 		PathMatcher matcher = getManager().getRootSchema().searchFor(targetIf, false);
-		return getAncestors(span, matcher);
+		return getAncestorsRoot(span, matcher);
 	}
 
 	@Override

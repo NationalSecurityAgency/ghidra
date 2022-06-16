@@ -19,18 +19,18 @@ import java.awt.Component;
 import java.awt.Graphics;
 
 import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
 
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
-public class RangeTableCellRenderer<N extends Number & Comparable<N>>
-		extends AbstractGColumnRenderer<Range<N>> implements RangedRenderer<N> {
-
+public class RangeSetTableCellRenderer<N extends Number & Comparable<N>>
+		extends AbstractGColumnRenderer<RangeSet<N>> implements RangedRenderer<N> {
 	protected Range<Double> fullRangeDouble = Range.closed(0d, 1d);
 	protected double span = 1;
 
 	protected Range<N> fullRange;
-	protected Range<N> dataRange;
+	protected RangeSet<N> dataRangeSet;
 
 	@Override
 	public void setFullRange(Range<N> fullRange) {
@@ -40,14 +40,14 @@ public class RangeTableCellRenderer<N extends Number & Comparable<N>>
 	}
 
 	@Override
-	public String getFilterString(Range<N> t, Settings settings) {
+	public String getFilterString(RangeSet<N> t, Settings settings) {
 		return "";
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-		this.dataRange = (Range<N>) data.getValue();
+		this.dataRangeSet = (RangeSet<N>) data.getValue();
 		super.getTableCellRendererComponent(data);
 		setText("");
 		return this;
@@ -56,13 +56,15 @@ public class RangeTableCellRenderer<N extends Number & Comparable<N>>
 	@Override
 	protected void paintComponent(Graphics parentG) {
 		super.paintComponent(parentG);
-		if (dataRange == null) {
+		if (dataRangeSet == null || dataRangeSet.isEmpty()) {
 			return;
 		}
 
 		Graphics g = parentG.create();
 		g.setColor(getForeground());
-		paintRange(g, dataRange);
+		for (Range<N> range : dataRangeSet.asRanges()) {
+			paintRange(g, range);
+		}
 	}
 
 	@Override

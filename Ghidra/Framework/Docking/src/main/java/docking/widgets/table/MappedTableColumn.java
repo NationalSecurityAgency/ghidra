@@ -23,15 +23,15 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.table.column.GColumnRenderer;
 
 /**
- * A class that is an Adapter in order to allow for the use of existing 
- * {@link DynamicTableColumn}s when the actual row type of the table is
- * not the same as the row type that the {@link DynamicTableColumn} supports. 
+ * A class that is an Adapter in order to allow for the use of existing {@link DynamicTableColumn}s
+ * when the actual row type of the table is not the same as the row type that the
+ * {@link DynamicTableColumn} supports.
  *
  * @param <ROW_TYPE> The table's actual row type
  * @param <EXPECTED_ROW_TYPE> The row type expected by the given {@link DynamicTableColumn}
  * @param <COLUMN_TYPE> The column type provided by the given {@link DynamicTableColumn}
- * @param <DATA_SOURCE> the type of the data for each column; can be Object for columns that
- *                      do not have a data source
+ * @param <DATA_SOURCE> the type of the data for each column; can be Object for columns that do not
+ *            have a data source
  */
 public class MappedTableColumn<ROW_TYPE, EXPECTED_ROW_TYPE, COLUMN_TYPE, DATA_SOURCE>
 		extends AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOURCE> {
@@ -110,8 +110,9 @@ public class MappedTableColumn<ROW_TYPE, EXPECTED_ROW_TYPE, COLUMN_TYPE, DATA_SO
 	}
 
 	@Override
-	public Comparator<COLUMN_TYPE> getComparator() {
-		return tableColumn.getComparator();
+	public Comparator<COLUMN_TYPE> getComparator(DynamicColumnTableModel<?> model,
+			int columnIndex) {
+		return tableColumn.getComparator(model, columnIndex);
 	}
 
 	@Override

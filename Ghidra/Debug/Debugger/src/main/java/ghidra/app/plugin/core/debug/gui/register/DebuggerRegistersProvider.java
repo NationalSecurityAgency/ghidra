@@ -608,9 +608,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				.onAction(c -> selectRegistersActivated())
 				.buildAndInstallLocal(this);
 		if (!isClone) {
-			actionCreateSnapshot = DebuggerResources.CreateSnapshotAction.builder(plugin)
+			actionCreateSnapshot = DebuggerResources.CloneWindowAction.builder(plugin)
 					.enabledWhen(c -> current.getThread() != null)
-					.onAction(c -> createSnapshotActivated())
+					.onAction(c -> cloneWindowActivated())
 					.buildAndInstallLocal(this);
 		}
 		actionEnableEdits = DebuggerResources.EnableEditsAction.builder(plugin)
@@ -639,7 +639,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		tool.showDialog(availableRegsDialog);
 	}
 
-	private void createSnapshotActivated() {
+	private void cloneWindowActivated() {
 		DebuggerRegistersProvider clone = cloneAsDisconnected();
 		clone.setIntraGroupPosition(WindowPosition.RIGHT);
 		tool.showComponentProvider(clone, true);
@@ -961,8 +961,14 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	public static LinkedHashSet<Register> collectCommonRegisters(CompilerSpec cSpec) {
 		Language lang = cSpec.getLanguage();
 		LinkedHashSet<Register> result = new LinkedHashSet<>();
-		result.add(cSpec.getStackPointer());
-		result.add(lang.getProgramCounter());
+		Register sp = cSpec.getStackPointer();
+		if (sp != null) {
+			result.add(sp);
+		}
+		Register pc = lang.getProgramCounter();
+		if (pc != null) {
+			result.add(pc);
+		}
 		for (Register reg : lang.getRegisters()) {
 			//if (reg.getGroup() != null) {
 			//	continue;

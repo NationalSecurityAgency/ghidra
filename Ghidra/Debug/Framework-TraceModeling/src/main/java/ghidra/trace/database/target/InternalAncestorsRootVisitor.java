@@ -23,11 +23,11 @@ import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.database.target.InternalTreeTraversal.SpanIntersectingVisitor;
 import ghidra.trace.database.target.InternalTreeTraversal.VisitResult;
 
-public class InternalAncestorsVisitor implements SpanIntersectingVisitor {
+public class InternalAncestorsRootVisitor implements SpanIntersectingVisitor {
 
 	protected final PathPredicates predicates;
 
-	public InternalAncestorsVisitor(PathPredicates predicates) {
+	public InternalAncestorsRootVisitor(PathPredicates predicates) {
 		this.predicates = predicates;
 	}
 

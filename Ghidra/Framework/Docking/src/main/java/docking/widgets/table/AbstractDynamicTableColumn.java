@@ -24,18 +24,17 @@ import ghidra.util.table.column.GColumnRenderer;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**
- * An Table Column is an interface that should be implemented by each class that provides
- * a field (column) of an object based table (each row relates to a particular type of object).
- * It determines the appropriate cell object for use by the table column this field represents.
- * It can then return the appropriate object to display in the table cell for the indicated
- * row object.
+ * An Table Column is an interface that should be implemented by each class that provides a field
+ * (column) of an object based table (each row relates to a particular type of object). It
+ * determines the appropriate cell object for use by the table column this field represents. It can
+ * then return the appropriate object to display in the table cell for the indicated row object.
  *
  * Implementations of this interface must provide a public default constructor.
  * 
  * @param <ROW_TYPE> The row object class supported by this column
  * @param <COLUMN_TYPE> The column object class supported by this column
- * @param <DATA_SOURCE> The object class type that will be passed to 
- * 						see <code>getValue(ROW_TYPE, Settings, DATA_SOURCE, ServiceProvider)</code>
+ * @param <DATA_SOURCE> The object class type that will be passed to see
+ *            <code>getValue(ROW_TYPE, Settings, DATA_SOURCE, ServiceProvider)</code>
  */
 public abstract class AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOURCE>
 		implements DynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOURCE> {
@@ -80,9 +79,14 @@ public abstract class AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOU
 		return -1;
 	}
 
-	@Override
 	public Comparator<COLUMN_TYPE> getComparator() {
 		return null;
+	}
+
+	@Override
+	public Comparator<COLUMN_TYPE> getComparator(DynamicColumnTableModel<?> model,
+			int columnIndex) {
+		return getComparator();
 	}
 
 	@Override
