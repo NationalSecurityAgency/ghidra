@@ -364,6 +364,19 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		}
 	}
 
+	@Override
+	public void skipPcodeOp() {
+		if (frame == null) {
+			beginInstructionOrInject();
+		}
+		else if (!frame.isFinished()) {
+			executor.skip(frame);
+		}
+		else {
+			advanceAfterFinished();
+		}
+	}
+
 	/**
 	 * Start execution of the instruction or inject at the program counter
 	 */

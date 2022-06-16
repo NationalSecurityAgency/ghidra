@@ -19,50 +19,50 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-/**
- * A step of a given thread in a schedule: repeating some number of ticks
- */
-public class TickStep extends AbstractStep {
+public class SkipStep extends AbstractStep {
 
-	public static TickStep parse(long threadKey, String stepSpec) {
+	public static SkipStep parse(long threadKey, String stepSpec) {
+		if (!stepSpec.startsWith("s")) {
+			throw new IllegalArgumentException("Cannot parse skip step: '" + stepSpec + "'");
+		}
 		try {
-			return new TickStep(threadKey, Long.parseLong(stepSpec));
+			return new SkipStep(threadKey, Long.parseLong(stepSpec.substring(1)));
 		}
 		catch (NumberFormatException e) {
-			throw new IllegalArgumentException("Cannot parse tick step: '" + stepSpec + "'");
+			throw new IllegalArgumentException("Cannot parse skip step: '" + stepSpec + "'");
 		}
 	}
 
 	/**
-	 * Construct a tick step for the given thread with the given tick count
+	 * Construct a skip step for the given thread with the given tick count
 	 * 
 	 * @param threadKey the key of the thread in the trace, -1 for the "last thread"
-	 * @param tickCount the number of ticks to step on the thread
+	 * @param tickCount the number of ticks to skip on the thread
 	 */
-	public TickStep(long threadKey, long tickCount) {
+	public SkipStep(long threadKey, long tickCount) {
 		super(threadKey, tickCount);
 	}
 
 	@Override
 	public StepType getType() {
-		return StepType.TICK;
+		return StepType.SKIP;
 	}
 
 	@Override
 	protected String toStringStepPart() {
-		return Long.toString(tickCount);
+		return String.format("s%d", tickCount);
 	}
 
 	@Override
-	public TickStep clone() {
-		return new TickStep(threadKey, tickCount);
+	public AbstractStep clone() {
+		return new SkipStep(threadKey, tickCount);
 	}
 
 	@Override
 	public Step subtract(Step step) {
 		assert isCompatible(step);
-		TickStep that = (TickStep) step;
-		return new TickStep(this.threadKey, this.tickCount - that.tickCount);
+		SkipStep that = (SkipStep) step;
+		return new SkipStep(this.threadKey, this.tickCount - that.tickCount);
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public class TickStep extends AbstractStep {
 		for (int i = 0; i < tickCount; i++) {
 			monitor.incrementProgress(1);
 			monitor.checkCanceled();
-			stepper.tick(emuThread);
+			stepper.skip(emuThread);
 		}
 	}
 }

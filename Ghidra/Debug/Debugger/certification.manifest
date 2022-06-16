@@ -120,6 +120,7 @@ src/main/help/help/topics/DebuggerTargetsPlugin/images/disconnect.png||GHIDRA|||
 src/main/help/help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerThreadsPlugin/images/DebuggerThreadsPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerThreadsPlugin/images/continue.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerThreadsPlugin/images/skipover.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerThreadsPlugin/images/stepback.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerThreadsPlugin/images/stepinto.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html||GHIDRA||||END|

@@ -185,6 +185,18 @@ public interface PcodeThread<T> {
 	}
 
 	/**
+	 * Skip emulation of a single p-code operation
+	 * 
+	 * <p>
+	 * If there is no current frame, this behaves as in {@link #stepPcodeOp()}. Otherwise, this
+	 * skips the current pcode op, advancing as if a fall-through op. If no ops remain in the frame,
+	 * this behaves as in {@link #stepPcodeOp()}. Please note to skip an extranal branch, the op
+	 * itself must be skipped. "Skipping" the following op, which disposes the frame, cannot prevent
+	 * the branch.
+	 */
+	void skipPcodeOp();
+
+	/**
 	 * Get the current frame, if present
 	 * 
 	 * <p>

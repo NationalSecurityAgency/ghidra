@@ -125,6 +125,18 @@
     the next tick, using emulation. Note that emulation does not affect the target. Furthermore,
     emulation may halt early if it encounters certain instructions or causes an exception.</P>
 
+    <H3><A name="emu_trace_skip_tick_forward"></A><IMG alt="" src="images/skipover.png">Emulate
+    Trace Skip Tick Forward</H3>
+
+    <P>This action is available when a thread is selected. It steps the current thread forward by
+    skipping the next instruction, using emulation. Note that emulation does not affect the target.
+    Furthermore, emulation may halt early if it encounters certain instructions or causes an
+    exception. This action may be used skip subroutines; <B>however</B>, the stack may require
+    additional patching, e.g., to clean up stack parameters, depending on the calling convention.
+    This action <EM>does not</EM> perform those patches automatically. It only advances the program
+    counter. You may use <A href="#goto_time">Go To Time</A> to append the require stack patch,
+    e.g., <CODE>t0-{RSP=RSP+8}</CODE>.</P>
+
     <H3><A name="seek_trace_present"></A><IMG alt="" src="images/continue.png">Seek Trace to
     Present</H3>
 
