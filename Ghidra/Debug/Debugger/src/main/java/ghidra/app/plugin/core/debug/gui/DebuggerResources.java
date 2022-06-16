@@ -87,6 +87,7 @@ public interface DebuggerResources {
 
 	ImageIcon ICON_STEP_INTO = ResourceManager.loadImage("images/stepinto.png");
 	ImageIcon ICON_STEP_OVER = ResourceManager.loadImage("images/stepover.png");
+	ImageIcon ICON_SKIP_OVER = ResourceManager.loadImage("images/skipover.png");
 	ImageIcon ICON_STEP_FINISH = ResourceManager.loadImage("images/stepout.png");
 	ImageIcon ICON_STEP_BACK = ResourceManager.loadImage("images/stepback.png");
 	// TODO: Draw new icons?
@@ -1641,81 +1642,12 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface StepSnapForwardAction {
-		String NAME = "Step Trace Snap Forward";
-		String DESCRIPTION = "Navigate the recording forward one snap";
-		Icon ICON = ICON_SNAP_FORWARD;
-		String GROUP = GROUP_CONTROL;
-		String HELP_ANCHOR = "step_trace_snap_forward";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, "4")
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	abstract class AbstractStepSnapForwardAction extends DockingAction {
-		public static final String NAME = StepSnapForwardAction.NAME;
-		public static final Icon ICON = StepSnapForwardAction.ICON;
-		public static final String HELP_ANCHOR = StepSnapForwardAction.HELP_ANCHOR;
-
-		public AbstractStepSnapForwardAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription(StepSnapForwardAction.DESCRIPTION);
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
-		}
-	}
-
-	abstract class AbstractEmulateTickForwardAction extends DockingAction {
-		public static final String NAME = "Emulate Trace Tick Forward";
-		public static final Icon ICON = ICON_STEP_INTO;
-		public static final String HELP_ANCHOR = "emu_trace_tick_forward";
-
-		public AbstractEmulateTickForwardAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription("Emulate the recording forward one tick");
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
-		}
-	}
-
-	interface EmulatePcodeForwardAction {
-		String NAME = "Emulate Trace p-code Forward";
-		String DESCRIPTION = "Navigate the recording forward one p-code tick";
-		Icon ICON = ICON_STEP_INTO;
-		String GROUP = GROUP_CONTROL;
-		String HELP_ANCHOR = "emu_trace_pcode_forward";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	abstract class AbstractEmulateTickBackwardAction extends DockingAction {
-		public static final String NAME = "Emulate Trace Tick Backward";
-		public static final Icon ICON = ICON_STEP_BACK;
-		public static final String HELP_ANCHOR = "emu_trace_tick_backward";
-
-		public AbstractEmulateTickBackwardAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription("Emulate the recording backward one tick");
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
-		}
-	}
-
 	interface StepSnapBackwardAction {
 		String NAME = "Step Trace Snap Backward";
 		String DESCRIPTION = "Navigate the recording backward one snap";
 		Icon ICON = ICON_SNAP_BACKWARD;
 		String GROUP = GROUP_CONTROL;
+		String ORDER = "1";
 		String HELP_ANCHOR = "step_trace_snap_backward";
 
 		static ActionBuilder builder(Plugin owner) {
@@ -1723,20 +1655,80 @@ public interface DebuggerResources {
 			return new ActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
 					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, "1")
+					.toolBarGroup(GROUP, ORDER)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
-	abstract class AbstractStepSnapBackwardAction extends DockingAction {
-		public static final String NAME = StepSnapBackwardAction.NAME;
-		public static final Icon ICON = StepSnapBackwardAction.ICON;;
-		public static final String HELP_ANCHOR = StepSnapBackwardAction.HELP_ANCHOR;
+	interface StepSnapForwardAction {
+		String NAME = "Step Trace Snap Forward";
+		String DESCRIPTION = "Navigate the recording forward one snap";
+		Icon ICON = ICON_SNAP_FORWARD;
+		String GROUP = GROUP_CONTROL;
+		String ORDER = "5";
+		String HELP_ANCHOR = "step_trace_snap_forward";
 
-		public AbstractStepSnapBackwardAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription(StepSnapBackwardAction.DESCRIPTION);
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, ORDER)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface EmulateTickBackwardAction {
+		String NAME = "Emulate Trace Tick Backward";
+		String DESCRIPTION = "Emulate the recording backward one tick";
+		Icon ICON = ICON_STEP_BACK;
+		String GROUP = GROUP_CONTROL;
+		String ORDER = "2";
+		String HELP_ANCHOR = "emu_trace_tick_backward";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, ORDER)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface EmulateTickForwardAction {
+		String NAME = "Emulate Trace Tick Forward";
+		String DESCRIPTION = "Emulate the recording forward one instruction";
+		Icon ICON = ICON_STEP_INTO;
+		String GROUP = GROUP_CONTROL;
+		String ORDER = "3";
+		String HELP_ANCHOR = "emu_trace_tick_forward";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, ORDER)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface EmulateSkipTickForwardAction {
+		String NAME = "Emulate Trace Skip Tick Forward";
+		String DESCRIPTION = "Emulate the recording forward by skipping one instruction";
+		Icon ICON = ICON_SKIP_OVER;
+		String GROUP = GROUP_CONTROL;
+		String ORDER = "4";
+		String HELP_ANCHOR = "emu_trace_skip_tick_forward";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, ORDER)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
@@ -1745,7 +1737,44 @@ public interface DebuggerResources {
 		String DESCRIPTION = "Navigate the recording backward one p-code tick";
 		Icon ICON = ICON_STEP_BACK;
 		String GROUP = GROUP_CONTROL;
+		String ORDER = "2";
 		String HELP_ANCHOR = "emu_trace_pcode_backward";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, ORDER)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface EmulatePcodeForwardAction {
+		String NAME = "Emulate Trace p-code Forward";
+		String DESCRIPTION = "Emulate the recording forward one p-code tick";
+		Icon ICON = ICON_STEP_INTO;
+		String GROUP = GROUP_CONTROL;
+		String ORDER = "3";
+		String HELP_ANCHOR = "emu_trace_pcode_forward";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, ORDER)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface EmulateSkipPcodeForwardAction {
+		String NAME = "Emulate Trace Skip P-code Forward";
+		String DESCRIPTION = "Emulate the recording forward by skipping one p-code op";
+		Icon ICON = ICON_SKIP_OVER;
+		String GROUP = GROUP_CONTROL;
+		String ORDER = "4";
+		String HELP_ANCHOR = "emu_trace_skip_pcode_forward";
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
@@ -1757,15 +1786,20 @@ public interface DebuggerResources {
 		}
 	}
 
-	abstract class AbstractSeekTracePresentAction extends ToggleDockingAction {
-		public static final String NAME = "Seek Trace Present";
-		public static final Icon ICON = ICON_SEEK_PRESENT;
-		public static final String HELP_ANCHOR = "seek_trace_present";
+	interface SeekTracePresentAction {
+		String NAME = "Seek Trace Present";
+		String DESCRIPTION = "Track the tool to the latest snap";
+		Icon ICON = ICON_SEEK_PRESENT;
+		String GROUP = "zz";
+		String HELP_ANCHOR = "seek_trace_present";
 
-		public AbstractSeekTracePresentAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription("Track the tool to the latest snap");
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 

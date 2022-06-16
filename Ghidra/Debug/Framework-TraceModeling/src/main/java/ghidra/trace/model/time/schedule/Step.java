@@ -16,7 +16,6 @@
 package ghidra.trace.model.time.schedule;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.PcodeThread;
@@ -27,6 +26,12 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public interface Step extends Comparable<Step> {
+	enum StepType {
+		TICK,
+		SKIP,
+		PATCH,
+	}
+
 	/**
 	 * Parse a step, possibly including a thread prefix, e.g., {@code "t1-..."}
 	 * 
@@ -69,6 +74,9 @@ public interface Step extends Comparable<Step> {
 	 * @throws IllegalArgumentException if the specification is of the wrong form
 	 */
 	static Step parse(long threadKey, String stepSpec) {
+		if (stepSpec.startsWith("s")) {
+			return SkipStep.parse(threadKey, stepSpec);
+		}
 		if (stepSpec.startsWith("{")) {
 			return PatchStep.parse(threadKey, stepSpec);
 		}
@@ -79,7 +87,11 @@ public interface Step extends Comparable<Step> {
 		return new TickStep(-1, 0);
 	}
 
-	int getTypeOrder();
+	StepType getType();
+
+	default int getTypeOrder() {
+		return getType().ordinal();
+	}
 
 	boolean isNop();
 
@@ -159,7 +171,7 @@ public interface Step extends Comparable<Step> {
 	}
 
 	default <T> TraceThread execute(TraceThreadManager tm, TraceThread eventThread,
-			PcodeMachine<T> machine, Consumer<PcodeThread<T>> stepAction, TaskMonitor monitor)
+			PcodeMachine<T> machine, Stepper<T> stepper, TaskMonitor monitor)
 			throws CancelledException {
 		TraceThread thread = getThread(tm, eventThread);
 		if (machine == null) {
@@ -167,12 +179,12 @@ public interface Step extends Comparable<Step> {
 			return thread;
 		}
 		PcodeThread<T> emuThread = machine.getThread(thread.getPath(), true);
-		execute(emuThread, stepAction, monitor);
+		execute(emuThread, stepper, monitor);
 		return thread;
 	}
 
-	<T> void execute(PcodeThread<T> emuThread, Consumer<PcodeThread<T>> stepAction,
-			TaskMonitor monitor) throws CancelledException;
+	<T> void execute(PcodeThread<T> emuThread, Stepper<T> stepper, TaskMonitor monitor)
+			throws CancelledException;
 
 	long coalescePatches(Language language, List<Step> steps);
 }

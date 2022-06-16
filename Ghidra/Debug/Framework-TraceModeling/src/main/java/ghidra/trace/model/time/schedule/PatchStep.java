@@ -18,7 +18,6 @@ package ghidra.trace.model.time.schedule;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import javax.help.UnsupportedOperationException;
@@ -234,9 +233,8 @@ public class PatchStep implements Step {
 	}
 
 	@Override
-	public int getTypeOrder() {
-		// When comparing sequences, those with sleigh steps are ordered after those with ticks
-		return 10;
+	public StepType getType() {
+		return StepType.PATCH;
 	}
 
 	@Override
@@ -314,8 +312,8 @@ public class PatchStep implements Step {
 	}
 
 	@Override
-	public <T> void execute(PcodeThread<T> emuThread, Consumer<PcodeThread<T>> stepAction,
-			TaskMonitor monitor) throws CancelledException {
+	public <T> void execute(PcodeThread<T> emuThread, Stepper<T> stepper, TaskMonitor monitor)
+			throws CancelledException {
 		PcodeProgram prog = emuThread.getMachine().compileSleigh("schedule", List.of(sleigh + ";"));
 		emuThread.getExecutor().execute(prog, emuThread.getUseropLibrary());
 	}
