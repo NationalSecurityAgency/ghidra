@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.*;
 
 import org.junit.*;
 
@@ -46,12 +46,15 @@ public class DBTest extends AbstractGenericTest {
 	private BufferFileManager fileMgr;
 	private DBHandle dbh;
 	private BufferFile bfile;
+	private MyDbListener listener;
 
 	@Before
 	public void setUp() throws Exception {
 
 		testDir = createTempDirectory(getClass().getSimpleName());
 		dbh = new DBHandle(BUFFER_SIZE, CACHE_SIZE);
+		listener = new MyDbListener();
+		dbh.addListener(listener);
 	}
 
 	@After
@@ -546,6 +549,110 @@ public class DBTest extends AbstractGenericTest {
 		}
 
 		assertNotNull(t1prime.getRecord(1));
+
+	}
+
+	@Test
+	public void testEvents() throws IOException {
+
+		createIndexedTables(false);
+
+		// Verify table added events
+		Table[] tables = dbh.getTables();
+		assertEquals(11, tables.length);
+		assertEquals(tables.length, listener.events.size());
+		int ix = 0;
+		for (DbEvent evt : listener.events) {
+			assertEquals(DbNotifyType.TABLE_ADDED, evt.type);
+			assertEquals("TABLE" + ix, evt.table.getName());
+			++ix;
+		}
+
+		listener.events.clear();
+
+		// Verify table deleted event
+		long txId = dbh.startTransaction();
+		Table t = dbh.getTable("TABLE5");
+		dbh.deleteTable("TABLE5");
+		dbh.endTransaction(txId, true);
+		assertEquals(1, listener.events.size());
+		DbEvent evt = listener.events.get(0);
+		assertEquals(DbNotifyType.TABLE_DELETED, evt.type);
+		assertTrue(t == evt.table);
+
+		listener.events.clear();
+
+		dbh.undo();
+
+		assertEquals(1, listener.events.size());
+		evt = listener.events.get(0);
+		assertEquals(DbNotifyType.RESTORED, evt.type);
+
+		listener.events.clear();
+
+		dbh.redo();
+
+		assertEquals(1, listener.events.size());
+		evt = listener.events.get(0);
+		assertEquals(DbNotifyType.RESTORED, evt.type);
+
+		listener.events.clear();
+
+		dbh.close();
+		dbh = null;
+
+		assertEquals(1, listener.events.size());
+		evt = listener.events.get(0);
+		assertEquals(DbNotifyType.CLOSED, evt.type);
+
+	}
+
+	private enum DbNotifyType {
+		RESTORED, CLOSED, TABLE_DELETED, TABLE_ADDED;
+	}
+
+	private static class DbEvent {
+
+		final DbNotifyType type;
+		final Table table;
+
+		DbEvent(DbNotifyType type, Table table) {
+			this.type = type;
+			this.table = table;
+		}
+
+		@Override
+		public String toString() {
+			if (type != DbNotifyType.TABLE_ADDED) {
+				return type.toString();
+			}
+			return type + ": " + table.getName();
+		}
+	}
+
+	private static class MyDbListener implements DBListener {
+
+		private List<DbEvent> events = new ArrayList<>();
+
+		@Override
+		public void dbRestored(DBHandle dbh) {
+			events.add(new DbEvent(DbNotifyType.RESTORED, null));
+		}
+
+		@Override
+		public void dbClosed(DBHandle dbh) {
+			events.add(new DbEvent(DbNotifyType.CLOSED, null));
+		}
+
+		@Override
+		public void tableDeleted(DBHandle dbh, Table table) {
+			events.add(new DbEvent(DbNotifyType.TABLE_DELETED, table));
+		}
+
+		@Override
+		public void tableAdded(DBHandle dbh, Table table) {
+			events.add(new DbEvent(DbNotifyType.TABLE_ADDED, table));
+		}
 
 	}
 }
