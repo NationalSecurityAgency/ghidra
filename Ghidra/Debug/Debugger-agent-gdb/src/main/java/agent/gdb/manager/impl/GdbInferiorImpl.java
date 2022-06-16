@@ -40,12 +40,22 @@ import ghidra.util.Msg;
  * The implementation of {@link GdbInferior}
  */
 public class GdbInferiorImpl implements GdbInferior {
-	protected static final Pattern MEMORY_MAPPING_LINE_PATTERN = Pattern.compile("\\s*" + //
-		"0x(?<start>[0-9,A-F,a-f]+)\\s+" + //
-		"0x(?<end>[0-9,A-F,a-f]+)\\s+" + //
-		"0x(?<size>[0-9,A-F,a-f]+)\\s+" + //
-		"0x(?<offset>[0-9,A-F,a-f]+)\\s*" + //
-		"(?<file>\\S*)\\s*");
+	protected static final Pattern MEMORY_MAPPING_WOUT_FLAGS_LINE_PATTERN =
+		Pattern.compile("\\s*" +
+			"0x(?<start>[0-9,A-F,a-f]+)\\s+" +
+			"0x(?<end>[0-9,A-F,a-f]+)\\s+" +
+			"0x(?<size>[0-9,A-F,a-f]+)\\s+" +
+			"0x(?<offset>[0-9,A-F,a-f]+)\\s+" +
+			"(?<file>\\S*)\\s*");
+
+	protected static final Pattern MEMORY_MAPPING_LINE_PATTERN =
+		Pattern.compile("\\s*" + //
+			"0x(?<start>[0-9,A-F,a-f]+)\\s+" +
+			"0x(?<end>[0-9,A-F,a-f]+)\\s+" +
+			"0x(?<size>[0-9,A-F,a-f]+)\\s+" +
+			"0x(?<offset>[0-9,A-F,a-f]+)\\s+" +
+			"(?<flags>[rwsxp\\-]+)\\s+" +
+			"(?<file>\\S*)\\s*");
 
 	private final GdbManagerImpl manager;
 	private final int id;
@@ -367,21 +377,47 @@ public class GdbInferiorImpl implements GdbInferior {
 				.thenApply(this::parseMappings);
 	}
 
+	protected GdbMemoryMapping parseMappingLine(String line) throws NumberFormatException {
+		Matcher mappingMatcher = MEMORY_MAPPING_LINE_PATTERN.matcher(line);
+		if (!mappingMatcher.matches()) {
+			return null;
+		}
+		BigInteger start = new BigInteger(mappingMatcher.group("start"), 16);
+		BigInteger end = new BigInteger(mappingMatcher.group("end"), 16);
+		BigInteger size = new BigInteger(mappingMatcher.group("size"), 16);
+		BigInteger offset = new BigInteger(mappingMatcher.group("offset"), 16);
+		String flags = mappingMatcher.group("flags");
+		String objfile = mappingMatcher.group("file");
+		return new GdbMemoryMapping(start, end, size, offset, flags, objfile);
+	}
+
+	protected GdbMemoryMapping parseMappingsLineWOutFlags(String line)
+			throws NumberFormatException {
+		Matcher mappingMatcher = MEMORY_MAPPING_WOUT_FLAGS_LINE_PATTERN.matcher(line);
+		if (!mappingMatcher.matches()) {
+			return null;
+		}
+		BigInteger start = new BigInteger(mappingMatcher.group("start"), 16);
+		BigInteger end = new BigInteger(mappingMatcher.group("end"), 16);
+		BigInteger size = new BigInteger(mappingMatcher.group("size"), 16);
+		BigInteger offset = new BigInteger(mappingMatcher.group("offset"), 16);
+		String objfile = mappingMatcher.group("file");
+		return new GdbMemoryMapping(start, end, size, offset, "rwx", objfile);
+	}
+
 	protected Map<BigInteger, GdbMemoryMapping> parseMappings(String out) {
 		Set<BigInteger> startsSeen = new TreeSet<>();
 		for (String line : out.split("\n")) {
-			Matcher mappingMatcher = MEMORY_MAPPING_LINE_PATTERN.matcher(line);
-			if (!mappingMatcher.matches()) {
-				continue;
-			}
 			try {
-				BigInteger start = new BigInteger(mappingMatcher.group("start"), 16);
-				BigInteger end = new BigInteger(mappingMatcher.group("end"), 16);
-				BigInteger size = new BigInteger(mappingMatcher.group("size"), 16);
-				BigInteger offset = new BigInteger(mappingMatcher.group("offset"), 16);
-				String objfile = mappingMatcher.group("file");
-				startsSeen.add(start);
-				mappings.put(start, new GdbMemoryMapping(start, end, size, offset, objfile));
+				GdbMemoryMapping mapping = parseMappingLine(line);
+				if (mapping == null) {
+					mapping = parseMappingsLineWOutFlags(line);
+				}
+				if (mapping == null) { // still, so it matches neither pattern
+					continue; // It's just a throw-away line, or the format changed again.
+				}
+				startsSeen.add(mapping.getStart());
+				mappings.put(mapping.getStart(), mapping);
 			}
 			catch (NumberFormatException e) {
 				Msg.error(this, "Could not parse mapping entry: " + line, e);
