@@ -21,21 +21,37 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.trace.model.guest.TraceGuestPlatform;
 
 public interface TraceInstructionsView extends TraceBaseDefinedUnitsView<TraceInstruction> {
-	TraceInstruction create(Range<Long> lifespan, Address address, InstructionPrototype prototype,
-			ProcessorContextView context) throws CodeUnitInsertionException;
+	/**
+	 * Create an instruction
+	 * 
+	 * @param lifespan the lifespan for the instruction unit
+	 * @param address the starting address of the instruction
+	 * @param platform the optional guest platform, null for the host
+	 * @param prototype the instruction prototype
+	 * @param context the input disassembly context for the instruction
+	 * @return the new instruction
+	 * @throws CodeUnitInsertionException if the instruction cannot be created
+	 */
+	TraceInstruction create(Range<Long> lifespan, Address address, TraceGuestPlatform platform,
+			InstructionPrototype prototype, ProcessorContextView context)
+			throws CodeUnitInsertionException;
 
 	/**
-	 * TODO
+	 * Create several instructions
 	 * 
-	 * NOTE: Does not throw {@link CodeUnitInsertionException}. Conflicts are instead recorded in
-	 * the {@code instructionSet}
+	 * <p>
+	 * <b>NOTE:</b> This does not throw {@link CodeUnitInsertionException}. Conflicts are instead
+	 * recorded in the {@code instructionSet}.
 	 * 
+	 * @param lifespan the lifespan for all instruction units
+	 * @param platform the optional guest platform, null for the host
 	 * @param instructionSet the set of instructions to add
-	 * @param overwrite {@code true} to replace conflicting instructions
-	 * @return the address set of instructions actually added
+	 * @param overwrite true to replace conflicting instructions
+	 * @return the (host) address set of instructions actually added
 	 */
-	AddressSetView addInstructionSet(Range<Long> lifespan, InstructionSet instructionSet,
-			boolean overwrite);
+	AddressSetView addInstructionSet(Range<Long> lifespan, TraceGuestPlatform platform,
+			InstructionSet instructionSet, boolean overwrite);
 }

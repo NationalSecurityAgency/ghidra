@@ -181,10 +181,16 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 	protected TraceStackFrame doGetFrame(int level) {
 		TargetObjectSchema schema = object.getTargetSchema();
 		PathPredicates matcher = schema.searchFor(TargetStackFrame.class, true);
-		matcher = matcher.applyKeys(PathUtils.makeIndex(level));
-		return object.getSuccessors(computeSpan(), matcher)
+		PathPredicates decMatcher = matcher.applyKeys(PathUtils.makeIndex(level));
+		PathPredicates hexMatcher = matcher.applyKeys("0x" + Integer.toHexString(level));
+		Range<Long> span = computeSpan();
+		return object.getSuccessors(span, decMatcher)
 				.findAny()
 				.map(p -> p.getDestination(object).queryInterface(TraceObjectStackFrame.class))
+				.or(() -> object.getSuccessors(span, hexMatcher)
+						.findAny()
+						.map(p -> p.getDestination(object)
+								.queryInterface(TraceObjectStackFrame.class)))
 				.orElse(null);
 	}
 

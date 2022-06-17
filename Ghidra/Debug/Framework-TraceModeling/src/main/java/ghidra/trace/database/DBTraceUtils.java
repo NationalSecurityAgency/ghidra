@@ -29,6 +29,7 @@ import com.google.common.collect.*;
 
 import db.*;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.RefTypeFactory;
@@ -157,6 +158,43 @@ public enum DBTraceUtils {
 			}
 			else {
 				setValue(obj, new LanguageID(id));
+			}
+		}
+	}
+
+	public static class CompilerSpecIDDBFieldCodec<OT extends DBAnnotatedObject>
+			extends AbstractDBFieldCodec<CompilerSpecID, OT, StringField> {
+
+		public CompilerSpecIDDBFieldCodec(Class<OT> objectType, Field field, int column) {
+			super(CompilerSpecID.class, objectType, StringField.class, field, column);
+		}
+
+		@Override
+		public void store(CompilerSpecID value, StringField f) {
+			f.setString(value == null ? null : value.getIdAsString());
+		}
+
+		@Override
+		protected void doStore(OT obj, DBRecord record)
+				throws IllegalArgumentException, IllegalAccessException {
+			CompilerSpecID id = getValue(obj);
+			if (id == null) {
+				record.setString(column, null);
+			}
+			else {
+				record.setString(column, id.getIdAsString());
+			}
+		}
+
+		@Override
+		protected void doLoad(OT obj, DBRecord record)
+				throws IllegalArgumentException, IllegalAccessException {
+			String id = record.getString(column);
+			if (id == null) {
+				setValue(obj, null);
+			}
+			else {
+				setValue(obj, new CompilerSpecID(id));
 			}
 		}
 	}

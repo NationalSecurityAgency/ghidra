@@ -76,6 +76,7 @@ public interface DebuggerResources {
 	ImageIcon ICON_TRACE = Trace.TRACE_ICON;
 	ImageIcon ICON_THREAD = ResourceManager.loadImage("images/thread.png");
 	ImageIcon ICON_PROGRAM = ProgramContentHandler.PROGRAM_ICON;
+	ImageIcon ICON_PROCESSOR = ResourceManager.loadImage("images/kcmprocessor.png");
 
 	ImageIcon ICON_LAUNCH = ResourceManager.loadImage("images/launch.png");
 	ImageIcon ICON_ATTACH = ResourceManager.loadImage("images/attach.png");
@@ -791,6 +792,24 @@ public interface DebuggerResources {
 					.description(DESCRIPTION)
 					.toolBarIcon(ICON)
 					.keyBinding("CTRL I")
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ChoosePlatformAction {
+		String NAME = "Choose Platform";
+		String GROUP = GROUP_MAPPING;
+		String DESCRIPTION = "Manually select the target platform";
+		Icon ICON = ICON_PROCESSOR;
+		String HELP_ANCHOR = "choose_platform";
+
+		public static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(ownerName, NAME)
+					.description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuGroup(GROUP)
+					.menuIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

@@ -71,7 +71,7 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 	 * 
 	 * @param target the target to be recorded, usually a process
 	 * @param includeOverrides true to include offers with negative confidence
-	 * @return a future which completes with the set of offers
+	 * @return a list of offers ordered highest confidence first
 	 */
 	public static List<DebuggerMappingOffer> queryOpinions(TargetObject target,
 			boolean includeOverrides) {

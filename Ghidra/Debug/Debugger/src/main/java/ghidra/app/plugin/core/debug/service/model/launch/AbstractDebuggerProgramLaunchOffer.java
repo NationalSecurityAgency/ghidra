@@ -516,6 +516,9 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 						() -> onTimedOutRecorder(monitor, service, t));
 		}).thenCompose(r -> {
 			monitor.incrementProgress(1);
+			if (r == null) {
+				throw new CancellationException();
+			}
 			monitor.setMessage("Confirming program is mapped to target");
 			CompletableFuture<Void> futureMapped = listenForMapping(mappingService, r);
 			return AsyncTimer.DEFAULT_TIMER.mark()

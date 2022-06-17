@@ -65,7 +65,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 			}
 			String index = PathUtils.parseIndex(k);
 			try {
-				return Integer.parseInt(index, 10); // TODO: How to know the radix?
+				return Integer.decode(index);
 				// TODO: Perhaps just have an attribute that is its level?
 			}
 			catch (NumberFormatException e) {

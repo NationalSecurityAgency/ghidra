@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.database.language;
+package ghidra.trace.database.guest;
 
 import static org.junit.Assert.*;
 
@@ -23,24 +23,21 @@ import java.util.*;
 
 import org.junit.*;
 
-import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.model.language.TraceGuestLanguage;
+import ghidra.trace.database.guest.*;
+import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.util.database.UndoableTransaction;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
 import ghidra.util.task.ConsoleTaskMonitor;
 
-public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegrationTest {
+public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 	protected ToyDBTraceBuilder b;
-	protected DBTraceLanguageManager manager;
+	protected DBTracePlatformManager manager;
 
 	@Before
 	public void setUpLanguageManagerTest() throws IOException {
 		b = new ToyDBTraceBuilder("Testing", "Toy:BE:64:default");
-		manager = b.trace.getLanguageManager();
+		manager = b.trace.getPlatformManager();
 	}
 
 	@After
@@ -55,82 +52,108 @@ public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegratio
 	}
 
 	@Test
-	public void testAddGuestLanguage() throws LanguageNotFoundException {
+	public void testGetBaseCompilerSpec() {
+		assertEquals("default", manager.getBaseCompilerSpec().getCompilerSpecID().getIdAsString());
+	}
+
+	@Test
+	public void testAddGuestPlatform() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
 			assertEquals(0, manager.languageStore.getRecordCount());
-			manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			assertEquals(0, manager.platformStore.getRecordCount());
+			manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			assertEquals(1, manager.languageStore.getRecordCount());
-
-			try { // Cannot add base language as guest
-				manager.addGuestLanguage(b.getLanguage("Toy:BE:64:default"));
-				fail();
-			}
-			catch (IllegalArgumentException e) {
-				// pass
-			}
+			assertEquals(1, manager.platformStore.getRecordCount());
 		}
 	}
 
 	@Test
-	public void testGetGuestLanguages() throws LanguageNotFoundException {
-		DBTraceGuestLanguage guest;
+	public void testAddGuestPlatformHostCompilerErr() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			assertTrue(manager.getGuestLanguages().isEmpty());
-			guest = manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			manager.addGuestPlatform(b.getLanguage("Toy:BE:64:default").getDefaultCompilerSpec());
+			fail();
+		}
+		catch (IllegalArgumentException e) {
+			// pass, pending consistency check
 		}
 
-		assertEquals(Set.of(guest), new HashSet<>(manager.getGuestLanguages()));
+		assertEquals(0, manager.languageStore.getRecordCount());
+		assertEquals(0, manager.platformStore.getRecordCount());
+		assertTrue(manager.getGuestPlatforms().isEmpty());
 	}
 
 	@Test
-	public void testAddLanguageThenUndo() throws IOException {
+	public void testAddGuestPlatformHostLanguage() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			assertEquals(0, manager.languageStore.getRecordCount());
+			assertEquals(0, manager.platformStore.getRecordCount());
+			manager.addGuestPlatform(b.getCompiler("Toy:BE:64:default", "long8"));
+			assertEquals(0, manager.languageStore.getRecordCount());
+			assertEquals(1, manager.platformStore.getRecordCount());
+		}
+	}
+
+	@Test
+	public void testGetGuestPlatforms() throws Throwable {
+		DBTraceGuestPlatform guest;
+		try (UndoableTransaction tid = b.startTransaction()) {
+			assertTrue(manager.getGuestPlatforms().isEmpty());
+			guest = manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
+		}
+
+		assertEquals(Set.of(guest), new HashSet<>(manager.getGuestPlatforms()));
+	}
+
+	@Test
+	public void testAddPlatformThenUndo() throws Throwable {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 		}
 
 		b.trace.undo();
 
-		assertTrue(manager.getGuestLanguages().isEmpty());
+		assertTrue(manager.getGuestPlatforms().isEmpty());
 	}
 
 	@Test
-	public void testAddLanguageThenSaveAndLoad()
-			throws CancelledException, IOException, VersionException {
+	public void testAddPlatformThenSaveAndLoad() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 		}
 
 		File saved = b.save();
 
 		try (ToyDBTraceBuilder r = new ToyDBTraceBuilder(saved)) {
-			Collection<TraceGuestLanguage> guestLanguages =
-				r.trace.getLanguageManager().getGuestLanguages();
-			assertEquals(1, guestLanguages.size());
+			Collection<TraceGuestPlatform> guestPlatforms =
+				r.trace.getPlatformManager().getGuestPlatforms();
+			assertEquals(1, guestPlatforms.size());
+			TraceGuestPlatform platform = guestPlatforms.iterator().next();
 			assertEquals("x86:LE:32:default",
-				guestLanguages.iterator().next().getLanguage().getLanguageID().getIdAsString());
+				platform.getLanguage().getLanguageID().getIdAsString());
+			assertEquals("gcc", platform.getCompilerSpec().getCompilerSpecID().getIdAsString());
 		}
 	}
 
 	@Test
-	public void testDeleteGuestLanguage() throws LanguageNotFoundException, CancelledException {
-		DBTraceGuestLanguage guest;
+	public void testDeleteGuestPlatform() throws Throwable {
+		DBTraceGuestPlatform guest;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			guest = manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			guest = manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 		}
 
 		try (UndoableTransaction tid = b.startTransaction()) {
 			guest.delete(new ConsoleTaskMonitor());
 		}
 
-		assertEquals(0, manager.languageStore.getRecordCount());
-		assertTrue(manager.entriesByLanguage.isEmpty());
+		assertEquals(0, manager.platformStore.getRecordCount());
+		assertTrue(manager.platformsByCompiler.isEmpty());
 	}
 
 	@Test
-	public void testAddMappedRange() throws LanguageNotFoundException, AddressOverflowException {
+	public void testAddMappedRange() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceGuestLanguage guest =
-				manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			DBTraceGuestPlatform guest =
+				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 
 			assertEquals(0, manager.rangeMappingStore.getRecordCount());
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
@@ -155,11 +178,10 @@ public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegratio
 	}
 
 	@Test
-	public void testGetHostAndGuestAddressSet()
-			throws LanguageNotFoundException, AddressOverflowException {
+	public void testGetHostAndGuestAddressSet() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceGuestLanguage guest =
-				manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			DBTraceGuestPlatform guest =
+				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			assertEquals(b.set(), guest.getHostAddressSet());
 
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
@@ -169,10 +191,10 @@ public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegratio
 	}
 
 	@Test
-	public void testMapHostToGuest() throws LanguageNotFoundException, AddressOverflowException {
+	public void testMapHostToGuest() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceGuestLanguage guest =
-				manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			DBTraceGuestPlatform guest =
+				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 
 			assertNull(guest.mapHostToGuest(b.addr(0x00000000)));
@@ -185,10 +207,10 @@ public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegratio
 	}
 
 	@Test
-	public void testMapGuestToHost() throws LanguageNotFoundException, AddressOverflowException {
+	public void testMapGuestToHost() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceGuestLanguage guest =
-				manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			DBTraceGuestPlatform guest =
+				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 
 			assertNull(guest.mapGuestToHost(b.addr(0x00000000)));
@@ -201,30 +223,28 @@ public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegratio
 	}
 
 	@Test
-	public void testAddMappedRangeThenSaveAndLoad()
-			throws AddressOverflowException, CancelledException, IOException, VersionException {
+	public void testAddMappedRangeThenSaveAndLoad() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceGuestLanguage guest =
-				manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			DBTraceGuestPlatform guest =
+				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 		}
 
 		File saved = b.save();
 
 		try (ToyDBTraceBuilder r = new ToyDBTraceBuilder(saved)) {
-			TraceGuestLanguage guest =
-				r.trace.getLanguageManager().getGuestLanguages().iterator().next();
+			TraceGuestPlatform guest =
+				r.trace.getPlatformManager().getGuestPlatforms().iterator().next();
 			assertEquals(b.addr(guest, 0x02000800), guest.mapHostToGuest(b.addr(0x01000800)));
 		}
 	}
 
 	@Test
-	public void testMappedRangeGetHostLanguage()
-			throws LanguageNotFoundException, AddressOverflowException {
+	public void testMappedRangeGetHostLanguage() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceGuestLanguage guest =
-				manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
-			DBTraceGuestLanguageMappedRange range =
+			DBTraceGuestPlatform guest =
+				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
+			DBTraceGuestPlatformMappedRange range =
 				guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 			assertEquals("Toy:BE:64:default",
 				range.getHostLanguage().getLanguageID().getIdAsString());
@@ -232,49 +252,44 @@ public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegratio
 	}
 
 	@Test
-	public void testMappedRangeGetHostRange()
-			throws LanguageNotFoundException, AddressOverflowException {
+	public void testMappedRangeGetHostRange() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceGuestLanguage guest =
-				manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
-			DBTraceGuestLanguageMappedRange range =
+			DBTraceGuestPlatform guest =
+				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
+			DBTraceGuestPlatformMappedRange range =
 				guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 			assertEquals(b.range(0x01000000, 0x01000fff), range.getHostRange());
 		}
 	}
 
 	@Test
-	public void testMappedRangeGetGuestLanguage()
-			throws LanguageNotFoundException, AddressOverflowException {
+	public void testMappedRangeGetGuestPlatform() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceGuestLanguage guest =
-				manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
-			DBTraceGuestLanguageMappedRange range =
+			DBTraceGuestPlatform guest =
+				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
+			DBTraceGuestPlatformMappedRange range =
 				guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
-			assertEquals("x86:LE:32:default",
-				range.getGuestLanguage().getLanguageID().getIdAsString());
+			assertEquals(guest, range.getGuestPlatform());
 		}
 	}
 
 	@Test
-	public void testMappedRangeGetGuestRange()
-			throws LanguageNotFoundException, AddressOverflowException {
+	public void testMappedRangeGetGuestRange() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceGuestLanguage guest =
-				manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
-			DBTraceGuestLanguageMappedRange range =
+			DBTraceGuestPlatform guest =
+				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
+			DBTraceGuestPlatformMappedRange range =
 				guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 			assertEquals(b.range(guest, 0x02000000, 0x02000fff), range.getGuestRange());
 		}
 	}
 
 	@Test
-	public void testDeleteMappedRange()
-			throws LanguageNotFoundException, AddressOverflowException, CancelledException {
+	public void testDeleteMappedRange() throws Throwable {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceGuestLanguage guest =
-				manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
-			DBTraceGuestLanguageMappedRange range =
+			DBTraceGuestPlatform guest =
+				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
+			DBTraceGuestPlatformMappedRange range =
 				guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 			assertNotNull(guest.mapHostToGuest(b.addr(0x01000800))); // Sanity check
 			assertNotNull(guest.mapGuestToHost(b.addr(guest, 0x02000800))); // Sanity check
@@ -291,12 +306,11 @@ public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegratio
 	}
 
 	@Test
-	public void testDeleteMappedRangeThenUndo()
-			throws AddressOverflowException, IOException, CancelledException {
-		DBTraceGuestLanguage guest;
-		DBTraceGuestLanguageMappedRange range;
+	public void testDeleteMappedRangeThenUndo() throws Throwable {
+		DBTraceGuestPlatform guest;
+		DBTraceGuestPlatformMappedRange range;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			guest = manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			guest = manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			range = guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 			assertNotNull(guest.mapHostToGuest(b.addr(0x01000800))); // Sanity check
 			assertNotNull(guest.mapGuestToHost(b.addr(guest, 0x02000800))); // Sanity check
@@ -310,19 +324,17 @@ public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegratio
 
 		b.trace.undo();
 
-		guest = manager.getGuestLanguage(b.getLanguage("x86:LE:32:default"));
-
+		guest = manager.getGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 		assertNotNull(guest.mapHostToGuest(b.addr(0x01000800)));
 		assertNotNull(guest.mapGuestToHost(b.addr(guest, 0x02000800)));
 	}
 
 	@Test
-	public void testDeleteGuestLanguageDeletesMappedRanges()
-			throws LanguageNotFoundException, AddressOverflowException, CancelledException {
+	public void testDeleteGuestPlatformDeletesMappedRanges() throws Throwable {
 		// TODO: Check that it also deletes code units
-		DBTraceGuestLanguage guest;
+		DBTraceGuestPlatform guest;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			guest = manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			guest = manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 		}
 
@@ -333,12 +345,11 @@ public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegratio
 	}
 
 	@Test
-	public void testDeleteGuestLanguageThenUndo()
-			throws AddressOverflowException, CancelledException, IOException {
+	public void testDeleteGuestPlatformThenUndo() throws Throwable {
 		// TODO: Check that it also deletes code units
-		DBTraceGuestLanguage guest;
+		DBTraceGuestPlatform guest;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			guest = manager.addGuestLanguage(b.getLanguage("x86:LE:32:default"));
+			guest = manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 		}
 
@@ -348,7 +359,7 @@ public class DBTraceLanguageManagerTest extends AbstractGhidraHeadlessIntegratio
 
 		b.trace.undo();
 
-		guest = manager.getGuestLanguage(b.getLanguage("x86:LE:32:default"));
+		guest = manager.getGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 		assertEquals(b.addr(guest, 0x02000800), guest.mapHostToGuest(b.addr(0x01000800)));
 	}
 }

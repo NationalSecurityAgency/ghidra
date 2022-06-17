@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.register;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
@@ -31,7 +32,7 @@ public class RegisterRow {
 	public RegisterRow(DebuggerRegistersProvider provider, int number, Register register) {
 		this.provider = provider;
 		this.number = number;
-		this.register = register;
+		this.register = Objects.requireNonNull(register);
 		this.favorite = provider.isFavorite(register);
 	}
 

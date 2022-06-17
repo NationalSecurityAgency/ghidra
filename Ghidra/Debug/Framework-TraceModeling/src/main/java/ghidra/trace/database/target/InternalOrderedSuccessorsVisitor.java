@@ -50,7 +50,7 @@ public class InternalOrderedSuccessorsVisitor implements SpanIntersectingVisitor
 			// Singleton path, so if I match, no successor can
 			return VisitResult.INCLUDE_FINISH;
 		}
-		if (value.getChildOrNull() == null || predicates.successorCouldMatch(keyList, true)) {
+		if (value.getChildOrNull() == null || !predicates.successorCouldMatch(keyList, true)) {
 			return VisitResult.EXCLUDE_FINISH;
 		}
 		return VisitResult.EXCLUDE_CONTINUE;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.platform.arm;
+package ghidra.app.plugin.core.debug.platform.lldb;
 
 import java.util.Set;
 
@@ -23,16 +23,16 @@ import ghidra.program.model.lang.*;
 import ghidra.util.Msg;
 
 /**
- * TODO: How does Frida name its target architectures? If same as GNU, use that. If not, maybe we
+ * TODO: How does LLDB name its target architectures? If same as GNU, use that. If not, maybe we
  * should add those external names to .ldefs? It'd be nice to have an .ldefs-based opinion that this
  * can be refactored onto.
  */
-public class FridaArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
+public class LldbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final LanguageID LANG_ID_AARCH64 = new LanguageID("AARCH64:LE:64:v8A");
 	protected static final CompilerSpecID COMP_ID_DEFAULT = new CompilerSpecID("default");
 
-	protected static class FridaI386X86_64RegisterMapper extends DefaultDebuggerRegisterMapper {
-		public FridaI386X86_64RegisterMapper(CompilerSpec cSpec,
+	protected static class LldbI386X86_64RegisterMapper extends DefaultDebuggerRegisterMapper {
+		public LldbI386X86_64RegisterMapper(CompilerSpec cSpec,
 				TargetRegisterContainer targetRegContainer) {
 			super(cSpec, targetRegContainer, false);
 		}
@@ -47,9 +47,9 @@ public class FridaArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		}
 	}
 
-	protected static class FridaAarch64MacosOffer extends DefaultDebuggerMappingOffer {
-		public FridaAarch64MacosOffer(TargetProcess process) {
-			super(process, 50, "AARCH64/Frida on macos", LANG_ID_AARCH64, COMP_ID_DEFAULT,
+	protected static class LldbAarch64MacosOffer extends DefaultDebuggerMappingOffer {
+		public LldbAarch64MacosOffer(TargetProcess process) {
+			super(process, 50, "AARCH64/LLDB on macos", LANG_ID_AARCH64, COMP_ID_DEFAULT,
 				Set.of("cpsr"));
 		}
 	}
@@ -60,17 +60,16 @@ public class FridaArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		if (!(target instanceof TargetProcess)) {
 			return Set.of();
 		}
-		if (!env.getDebugger().toLowerCase().contains("frida")) {
+		if (!env.getDebugger().toLowerCase().contains("lldb")) {
 			return Set.of();
 		}
 		String arch = env.getArchitecture();
-		boolean is64Bit =
-			arch.contains("AARCH64") || arch.contains("arm64") || arch.contains("arm");
+		boolean is64Bit = arch.contains("AARCH64") || arch.contains("arm64");
 		String os = env.getOperatingSystem();
 		if (os.contains("macos")) {
 			if (is64Bit) {
 				Msg.info(this, "Using os=" + os + " arch=" + arch);
-				return Set.of(new FridaAarch64MacosOffer((TargetProcess) target));
+				return Set.of(new LldbAarch64MacosOffer((TargetProcess) target));
 			}
 		}
 		return Set.of();

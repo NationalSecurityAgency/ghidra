@@ -266,7 +266,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Returns a new list of all DockingWindowManager instances know to exist.
+	 * Returns a new list of all DockingWindowManager instances known to exist, ordered from least
+	 * to most-recently active.
 	 * 
 	 * @return a new list of all DockingWindowManager instances know to exist.
 	 */

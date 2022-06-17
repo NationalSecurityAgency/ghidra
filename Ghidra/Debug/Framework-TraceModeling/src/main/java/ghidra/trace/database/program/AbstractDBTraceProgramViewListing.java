@@ -725,27 +725,25 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	public Instruction createInstruction(Address addr, InstructionPrototype prototype,
 			MemBuffer memBuf, ProcessorContextView context) throws CodeUnitInsertionException {
 		// TODO: Why memBuf? Can it vary from program memory?
-		try (LockHold hold = program.trace.lockWrite()) {
-			return codeOperations.instructions()
-					.create(Range.atLeast(program.snap), addr,
-						prototype, context);
-		}
+		// TODO: Per-platform views?
+		return codeOperations.instructions()
+				.create(Range.atLeast(program.snap), addr, null, prototype, context);
 	}
 
 	@Override
 	public AddressSetView addInstructions(InstructionSet instructionSet, boolean overwrite)
 			throws CodeUnitInsertionException {
+		// TODO: Per-platform views?
 		return codeOperations.instructions()
-				.addInstructionSet(Range.atLeast(program.snap),
-					instructionSet, overwrite);
+				.addInstructionSet(Range.atLeast(program.snap), null, instructionSet,
+					overwrite);
 	}
 
 	@Override
 	public Data createData(Address addr, DataType dataType, int length)
 			throws CodeUnitInsertionException {
 		return codeOperations.definedData()
-				.create(Range.atLeast(program.snap), addr, dataType,
-					length);
+				.create(Range.atLeast(program.snap), addr, dataType, length);
 	}
 
 	@Override

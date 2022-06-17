@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.model.language;
+package ghidra.app.plugin.core.debug.mapping;
 
-import java.util.Collection;
+import ghidra.program.model.lang.CompilerSpec;
 
-import ghidra.program.model.lang.InstructionSet;
-import ghidra.program.model.lang.Language;
+public abstract class AbstractDebuggerPlatformOffer implements DebuggerPlatformOffer {
+	private final String description;
+	protected final CompilerSpec cSpec;
 
-public interface TraceLanguageManager {
-	Language getBaseLanguage();
+	public AbstractDebuggerPlatformOffer(String description, CompilerSpec cSpec) {
+		this.description = description;
+		this.cSpec = cSpec;
+	}
 
-	TraceGuestLanguage addGuestLanguage(Language language);
+	@Override
+	public String getDescription() {
+		return description;
+	}
 
-	Collection<TraceGuestLanguage> getGuestLanguages();
-
-	InstructionSet mapGuestInstructionAddressesToHost(InstructionSet instructionSet);
+	@Override
+	public CompilerSpec getCompilerSpec() {
+		return cSpec;
+	}
 }

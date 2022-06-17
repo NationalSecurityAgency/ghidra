@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.platform.jvm;
+package ghidra.app.plugin.core.debug.platform.jdi;
 
 import java.util.Collection;
 import java.util.Set;
@@ -22,7 +22,7 @@ import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.dbg.target.*;
 import ghidra.program.model.lang.*;
 
-public class JdiJavaDebuggerMappingOpinion implements DebuggerMappingOpinion {
+public class JdiJvmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final LanguageID LANG_ID_JAVA = new LanguageID("JVM:BE:32:default");
 	protected static final CompilerSpecID COMP_ID_VS = new CompilerSpecID("default");
 
