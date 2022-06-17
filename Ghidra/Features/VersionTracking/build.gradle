@@ -31,4 +31,5 @@ dependencies {
 	
 	testImplementation "org.jmockit:jmockit:1.44"
 	testImplementation project(path: ':Project', configuration: 'testArtifacts')
+	testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 }
