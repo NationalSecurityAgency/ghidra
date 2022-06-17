@@ -59,7 +59,7 @@ public final class OperandType {
 	public final static int DATA = 0x00000080;
 
 	/**
-	 * Bit set if the operand is a register.
+	 * Bit set if the operand is a port.
 	 */
 	public final static int PORT = 0x00000100;
 	/**
@@ -67,7 +67,7 @@ public final class OperandType {
 	 */
 	public final static int REGISTER = 0x00000200;
 	/**
-	 * Bit set if the operand is a register.
+	 * Bit set if the operand is a list.
 	 */
 	public final static int LIST = 0x00000400;
 	/**
