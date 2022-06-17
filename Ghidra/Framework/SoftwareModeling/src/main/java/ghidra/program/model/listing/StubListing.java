@@ -20,7 +20,8 @@ import java.util.List;
 
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.symbol.Namespace;
@@ -35,7 +36,7 @@ import ghidra.util.task.TaskMonitor;
  * for all methods in the Listing interface. Any method that is needed for your test can then
  * be overridden so it can provide its own test implementation and return value.
  */
-public class ListingStub implements Listing {
+public class StubListing implements Listing {
 
 	@Override
 	public CodeUnit getCodeUnitAt(Address addr) {
@@ -304,8 +305,7 @@ public class ListingStub implements Listing {
 	}
 
 	@Override
-	public Data createData(Address addr, DataType dataType)
-			throws CodeUnitInsertionException {
+	public Data createData(Address addr, DataType dataType) throws CodeUnitInsertionException {
 		throw new UnsupportedOperationException();
 	}
 

@@ -39,7 +39,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
-public class ProgramTestDouble implements Program {
+public class StubProgram implements Program {
 
 	@Override
 	public int startTransaction(String description) {

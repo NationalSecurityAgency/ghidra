@@ -284,7 +284,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 	}
 
 	private FunctionManager createFunctionManager() {
-		return new FunctionManagerTestDouble() {
+		return new StubFunctionManager() {
 			@Override
 			public Function getFunctionAt(Address addr) {
 				return functionMap.get(addr);
@@ -294,7 +294,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 
 	private Program createProgram() {
 		final FunctionManager funMgr = createFunctionManager();
-		return new ProgramTestDouble() {
+		return new StubProgram() {
 			@Override
 			public ReferenceManager getReferenceManager() {
 				return refState;

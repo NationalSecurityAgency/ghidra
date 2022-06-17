@@ -31,7 +31,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
-public class FunctionManagerTestDouble implements FunctionManager {
+public class StubFunctionManager implements FunctionManager {
 
 	@Override
 	public ProgramDB getProgram() {
