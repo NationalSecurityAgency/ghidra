@@ -877,7 +877,6 @@ public class RStarTreeMapTest {
 			try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddRandom", true)) {
 				int i = 0;
 				for (Entry<IntRect, String> ent : list) {
-					System.err.println("Adding (sub) " + i++);
 					obj.map.put(ent.getKey(), ent.getValue());
 					// Note, underlying tree is not synchronized, but map is
 					try (LockHold hold = LockHold.lock(obj.getReadWriteLock().readLock())) {
@@ -906,7 +905,6 @@ public class RStarTreeMapTest {
 	public void testIntegrityWith2000VerticallyStackedRects() throws Exception {
 		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddVertical", true)) {
 			for (int i = 0; i < 2000; i++) {
-				System.err.println("Adding " + i);
 				obj.map.put(rect(0, 10, i, i + 1), "Ent" + i);
 				// Note, underlying tree is not synchronized, but map is
 				/*try (LockHold hold = LockHold.lock(obj.getReadWriteLock().readLock())) {
