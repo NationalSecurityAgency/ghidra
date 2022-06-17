@@ -40,7 +40,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskMonitor;
-import mockit.Mock;
 
 public abstract class AbstractDecompilerFindReferencesActionTest extends AbstractDecompilerTest {
 
@@ -189,7 +188,6 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 		}
 
 		@Override
-		@Mock
 		public void findReferences(Program p, DataType dataType,
 				Consumer<DataTypeReference> callback, TaskMonitor monitor) {
 
@@ -197,7 +195,6 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 		}
 
 		@Override
-		@Mock
 		public void findReferences(Program p, DataType dt, String fieldName,
 				Consumer<DataTypeReference> callback, TaskMonitor monitor) {
 
@@ -205,7 +202,6 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 		}
 
 		@Override
-		@Mock
 		public void findReferences(Program p, FieldMatcher fieldMatcher,
 				Consumer<DataTypeReference> callback, TaskMonitor monitor) {
 
