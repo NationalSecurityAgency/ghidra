@@ -301,6 +301,10 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 			else {
 				debugWriter = new NullPrintWriter();
 			}
+
+			// TODO Disabling the debug output for now, as we have not seen the sporadic test
+			//      failure.  This code can be deleted if the test failures do not reappear.
+			debugWriter = new NullPrintWriter();
 		}
 
 		List<DataTypeReference> findUsage() {
@@ -445,9 +449,8 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 					else {
 						if (access == null || access.getVariable() != null) {
 
-							debugWriter
-									.println("f: " + function + "\n\t\tcreating variable access: " +
-										line);
+							debugWriter.println(
+								"f: " + function + "\n\t\tcreating variable access: " + line);
 
 							access = new VariableAccessDR(line);
 							results.add(access);
@@ -480,9 +483,8 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 					ClangFieldToken field = (ClangFieldToken) token;
 					if (typesDoNotMatch(access, field)) {
 
-						debugWriter.println(
-							"f: " + function + "\n\t\tcreating an anonymous variable access: " +
-								line);
+						debugWriter.println("f: " + function +
+							"\n\t\tcreating an anonymous variable access: " + line);
 
 						// this can happen when a field is used anonymously, such as directly
 						// after a nested array index operation
