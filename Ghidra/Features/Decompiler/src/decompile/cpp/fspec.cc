@@ -4187,6 +4187,28 @@ bool FuncProto::getBiggestContainedOutput(const Address &loc,int4 size,VarnodeDa
   return model->getBiggestContainedOutput(loc,size,res);
 }
 
+/// A likely pointer data-type for "this" pointer is passed in, which can be pointer to void. As the
+/// storage of "this" may depend on the full prototype, if the prototype is not already locked in, we
+/// assume the prototype returns void and takes the given data-type as the single input parameter.
+/// \param dt is the given input data-type
+/// \return the starting address of storage for the "this" pointer
+Address FuncProto::getThisPointerStorage(Datatype *dt)
+
+{
+  if (!model->hasThisPointer())
+    return Address();
+  vector<Datatype *> typelist;
+  typelist.push_back(getOutputType());
+  typelist.push_back(dt);
+  vector<ParameterPieces> res;
+  model->assignParameterStorage(typelist, res, true);
+  for(int4 i=1;i<res.size();++i) {
+    if ((res[i].flags & ParameterPieces::hiddenretparm) != 0) continue;
+    return res[i].addr;
+  }
+  return Address();
+}
+
 /// \brief Decide if \b this can be safely restricted to match another prototype
 ///
 /// Do \b this and another given function prototype share enough of
