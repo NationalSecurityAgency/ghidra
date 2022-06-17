@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.database.language;
+package ghidra.trace.database.guest;
 
 import static ghidra.lifecycle.Unfinished.TODO;
 
@@ -32,6 +32,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
+import ghidra.util.MathUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
@@ -39,15 +40,16 @@ import ghidra.util.task.TaskMonitor;
 /**
  * TODO: Document me
  * 
+ * <p>
  * Note this is the bare minimum to support {@link DumbMemBufferImpl}
  */
-public class DBTraceGuestLanguageMappedMemory implements Memory {
+public class DBTraceGuestPlatformMappedMemory implements Memory {
 	protected final DBTraceMemoryManager manager;
-	protected final DBTraceGuestLanguage guest;
+	protected final DBTraceGuestPlatform guest;
 	protected final long snap;
 
-	public DBTraceGuestLanguageMappedMemory(DBTraceMemoryManager manager,
-			DBTraceGuestLanguage guest, long snap) {
+	public DBTraceGuestPlatformMappedMemory(DBTraceMemoryManager manager,
+			DBTraceGuestPlatform guest, long snap) {
 		this.manager = manager;
 		this.guest = guest;
 		this.snap = snap;
@@ -358,17 +360,17 @@ public class DBTraceGuestLanguageMappedMemory implements Memory {
 		while (buffer.hasRemaining()) {
 			int offset = buffer.position() - startPos;
 			Address guestCur = guestStart.add(offset);
-			Entry<Address, DBTraceGuestLanguageMappedRange> floorEntry =
+			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				guest.rangesByGuestAddress.floorEntry(guestCur);
 			if (floorEntry == null) {
 				return offset;
 			}
-			DBTraceGuestLanguageMappedRange range = floorEntry.getValue();
+			DBTraceGuestPlatformMappedRange range = floorEntry.getValue();
 			Address hostCur = range.mapGuestToHost(guestCur);
 			if (hostCur == null) {
 				return offset;
 			}
-			int lenToRead = (int) Math.min(buffer.remaining(),
+			int lenToRead = MathUtilities.unsignedMin(buffer.remaining(),
 				range.getGuestRange().getMaxAddress().subtract(guestStart) + 1);
 			DBTraceMemorySpace hostSpace = manager.getMemorySpace(hostCur.getAddressSpace(), false);
 			if (hostSpace == null) {

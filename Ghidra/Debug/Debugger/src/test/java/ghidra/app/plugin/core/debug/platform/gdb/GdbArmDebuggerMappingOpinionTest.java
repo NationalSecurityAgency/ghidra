@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.platform.arm;
+package ghidra.app.plugin.core.debug.platform.gdb;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -25,8 +25,8 @@ import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOffer;
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOpinion;
-import ghidra.app.plugin.core.debug.platform.arm.GdbArmDebuggerMappingOpinion.GdbAArch64Offer;
-import ghidra.app.plugin.core.debug.platform.arm.GdbArmDebuggerMappingOpinion.GdbArmOffer;
+import ghidra.app.plugin.core.debug.platform.gdb.GdbArmDebuggerMappingOpinion.GdbAArch64Offer;
+import ghidra.app.plugin.core.debug.platform.gdb.GdbArmDebuggerMappingOpinion.GdbArmOffer;
 import ghidra.dbg.model.TestDebuggerObjectModel;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.program.model.lang.LanguageID;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.platform.jvm;
+package ghidra.app.plugin.core.debug.platform.jdi;
 
 import java.util.Collection;
 import java.util.Set;

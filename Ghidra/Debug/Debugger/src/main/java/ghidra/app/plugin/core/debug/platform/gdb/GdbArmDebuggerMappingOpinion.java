@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.platform.arm;
+package ghidra.app.plugin.core.debug.platform.gdb;
 
 import java.util.Collection;
 import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOffer;
-import ghidra.app.plugin.core.debug.platform.gdb.DefaultGdbDebuggerMappingOpinion;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;

@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.database.language;
+package ghidra.trace.database.guest;
 
 import java.io.IOException;
 
 import db.DBRecord;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
-import ghidra.trace.model.language.TraceGuestLanguageMappedRange;
+import ghidra.trace.model.guest.TraceGuestPlatformMappedRange;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 @DBAnnotatedObjectInfo(version = 0)
-public class DBTraceGuestLanguageMappedRange extends DBAnnotatedObject
-		implements TraceGuestLanguageMappedRange {
+public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
+		implements TraceGuestPlatformMappedRange {
 	public static final String TABLE_NAME = "LanguageMappings";
 
 	static final String HOST_SPACE_COLUMN_NAME = "HostSpace";
@@ -56,7 +57,7 @@ public class DBTraceGuestLanguageMappedRange extends DBAnnotatedObject
 	@DBAnnotatedField(column = HOST_OFFSET_COLUMN_NAME)
 	private long hostOffset;
 	@DBAnnotatedField(column = GUEST_LANGUAGE_COLUMN_NAME)
-	int guestLangKey;
+	int guestPlatformKey;
 	@DBAnnotatedField(column = GUEST_SPACE_COLUMN_NAME)
 	private int guestSpace;
 	@DBAnnotatedField(column = GUEST_OFFSET_COLUMN_NAME)
@@ -64,13 +65,13 @@ public class DBTraceGuestLanguageMappedRange extends DBAnnotatedObject
 	@DBAnnotatedField(column = LENGTH_COLUMN_NAME)
 	private long length;
 
-	private DBTraceLanguageManager manager;
+	private DBTracePlatformManager manager;
 
 	private AddressRangeImpl hostRange;
-	private Language guestLanguage;
+	private DBTraceGuestPlatform guestPlatform;
 	private AddressRangeImpl guestRange;
 
-	public DBTraceGuestLanguageMappedRange(DBTraceLanguageManager manager, DBCachedObjectStore<?> s,
+	public DBTraceGuestPlatformMappedRange(DBTracePlatformManager manager, DBCachedObjectStore<?> s,
 			DBRecord r) {
 		super(s, r);
 		this.manager = manager;
@@ -88,9 +89,9 @@ public class DBTraceGuestLanguageMappedRange extends DBAnnotatedObject
 			Address hostEnd = hostStart.addNoWrap(length - 1);
 			this.hostRange = new AddressRangeImpl(hostStart, hostEnd);
 
-			this.guestLanguage = manager.getLanguageByKey(guestLangKey);
+			this.guestPlatform = manager.getPlatformByKey(guestPlatformKey);
 			Address guestStart =
-				guestLanguage.getAddressFactory().getAddress(guestSpace, guestOffset);
+				guestPlatform.getAddressFactory().getAddress(guestSpace, guestOffset);
 			Address guestEnd = guestStart.addNoWrap(length - 1);
 			this.guestRange = new AddressRangeImpl(guestStart, guestEnd);
 		}
@@ -99,19 +100,21 @@ public class DBTraceGuestLanguageMappedRange extends DBAnnotatedObject
 		}
 	}
 
-	void set(Address hostStart, Language guestLanguage, Address guestStart, long length) {
-		this.hostRange = new AddressRangeImpl(hostStart, hostStart.add(length - 1));
-		this.guestLanguage = guestLanguage;
-		this.guestRange = new AddressRangeImpl(guestStart, guestStart.add(length - 1));
-
+	void set(Address hostStart, DBTraceGuestPlatform guestPlatform, Address guestStart,
+			long length) {
 		this.hostSpace = hostStart.getAddressSpace().getSpaceID();
 		this.hostOffset = hostStart.getOffset();
-		this.guestLangKey = manager.getKeyForLanguage(guestLanguage);
+		this.guestPlatformKey = (int) guestPlatform.getKey();
 		this.guestSpace = guestStart.getAddressSpace().getSpaceID();
 		this.guestOffset = guestStart.getOffset();
 		this.length = length;
 		update(HOST_SPACE_COLUMN, HOST_OFFSET_COLUMN, GUEST_LANGUAGE_COLUMN, GUEST_SPACE_COLUMN,
 			GUEST_OFFSET_COLUMN, LENGTH_COLUMN);
+
+		this.hostRange = new AddressRangeImpl(hostStart, hostStart.addWrap(length - 1));
+		this.guestPlatform = guestPlatform;
+		this.guestRange = new AddressRangeImpl(guestStart, guestStart.addWrap(length - 1));
+
 	}
 
 	@Override
@@ -120,13 +123,18 @@ public class DBTraceGuestLanguageMappedRange extends DBAnnotatedObject
 	}
 
 	@Override
+	public CompilerSpec getHostCompilerSpec() {
+		return manager.getBaseCompilerSpec();
+	}
+
+	@Override
 	public AddressRange getHostRange() {
 		return hostRange;
 	}
 
 	@Override
-	public Language getGuestLanguage() {
-		return guestLanguage;
+	public DBTraceGuestPlatform getGuestPlatform() {
+		return guestPlatform;
 	}
 
 	@Override
@@ -154,6 +162,6 @@ public class DBTraceGuestLanguageMappedRange extends DBAnnotatedObject
 
 	@Override
 	public void delete(TaskMonitor monitor) throws CancelledException {
-		manager.languageStore.getObjectAt(guestLangKey).deleteMappedRange(this, monitor);
+		manager.platformStore.getObjectAt(guestPlatformKey).deleteMappedRange(this, monitor);
 	}
 }

@@ -26,7 +26,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 import com.google.common.collect.Range;
 
@@ -45,13 +46,12 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.database.bookmark.*;
-import ghidra.trace.database.language.DBTraceGuestLanguage;
 import ghidra.trace.database.listing.*;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.*;
-import ghidra.trace.model.language.TraceGuestLanguage;
+import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 import ghidra.util.database.DBOpenMode;
@@ -102,7 +102,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		return addr(language, offset);
 	}
 
-	public Address addr(TraceGuestLanguage lang, long offset) {
+	public Address addr(TraceGuestPlatform lang, long offset) {
 		return lang.getLanguage().getDefaultSpace().getAddress(offset);
 	}
 
@@ -114,7 +114,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		return data(language, offset);
 	}
 
-	public Address data(TraceGuestLanguage lang, long offset) {
+	public Address data(TraceGuestPlatform lang, long offset) {
 		return data(lang.getLanguage(), offset);
 	}
 
@@ -150,11 +150,11 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		return drng(language, start, end);
 	}
 
-	public AddressRange range(TraceGuestLanguage lang, long start, long end) {
+	public AddressRange range(TraceGuestPlatform lang, long start, long end) {
 		return range(lang.getLanguage(), start, end);
 	}
 
-	public AddressRange drng(TraceGuestLanguage lang, long start, long end) {
+	public AddressRange drng(TraceGuestPlatform lang, long start, long end) {
 		return drng(lang.getLanguage(), start, end);
 	}
 
@@ -246,9 +246,10 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	public DBTraceInstruction addInstruction(long snap, Address start,
-			@SuppressWarnings("hiding") Language language) throws CodeUnitInsertionException {
+			TraceGuestPlatform guest) throws CodeUnitInsertionException {
 		DBTraceMemoryManager memory = trace.getMemoryManager();
 		DBTraceCodeManager code = trace.getCodeManager();
+		Language language = guest == null ? this.language : guest.getLanguage();
 		Disassembler dis = Disassembler.getDisassembler(language, language.getAddressFactory(),
 			new ConsoleTaskMonitor(), msg -> Msg.info(this, "Listener: " + msg));
 		RegisterValue defaultContextValue = trace.getRegisterContextManager()
@@ -256,27 +257,25 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 				.getDefaultDisassemblyContext();
 
 		MemBuffer memBuf;
-		if (language == null || Objects.equals(this.language, language)) {
+		if (guest == null) {
 			memBuf = memory.getBufferAt(snap, start);
 		}
 		else {
-			DBTraceGuestLanguage guest = trace.getLanguageManager().getGuestLanguage(language);
 			memBuf = guest.getMappedMemBuffer(snap, guest.mapHostToGuest(start));
 		}
 		InstructionBlock block = dis.pseudoDisassembleBlock(memBuf, defaultContextValue, 1);
 		Instruction pseudoIns = block.iterator().next();
 		return code.instructions()
-				.create(Range.atLeast(snap), start, pseudoIns.getPrototype(),
-					pseudoIns);
+				.create(Range.atLeast(snap), start, guest, pseudoIns.getPrototype(), pseudoIns);
 	}
 
 	public DBTraceInstruction addInstruction(long snap, Address start,
-			@SuppressWarnings("hiding") Language language, ByteBuffer buf)
+			TraceGuestPlatform guest, ByteBuffer buf)
 			throws CodeUnitInsertionException {
 		int length = buf.remaining();
 		DBTraceMemoryManager memory = trace.getMemoryManager();
 		memory.putBytes(snap, start, buf);
-		DBTraceInstruction instruction = addInstruction(snap, start, language);
+		DBTraceInstruction instruction = addInstruction(snap, start, guest);
 		assertEquals(length, instruction.getLength());
 		return instruction;
 	}
@@ -344,5 +343,10 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 
 	public Language getLanguage(String id) throws LanguageNotFoundException {
 		return languageService.getLanguage(new LanguageID(id));
+	}
+
+	public CompilerSpec getCompiler(String langID, String compID)
+			throws CompilerSpecNotFoundException, LanguageNotFoundException {
+		return getLanguage(langID).getCompilerSpecByID(new CompilerSpecID(compID));
 	}
 }

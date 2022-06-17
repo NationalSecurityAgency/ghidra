@@ -106,7 +106,7 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	 * may need the DB's lock, esp., considering user callbacks, then it must <em>first</em> acquire
 	 * the DB lock.
 	 */
-	protected final List<Range<Long>> ordered = new ArrayList<>(List.of(Range.singleton(0L)));
+	protected final List<Range<Long>> ordered = new ArrayList<>();
 	protected final RangeSet<Long> spanSet = TreeRangeSet.create();
 	protected final ForSnapshotsListener listener = new ForSnapshotsListener();
 	protected final ListenerSet<Runnable> changeListeners = new ListenerSet<>(Runnable.class);
@@ -114,6 +114,10 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	protected long snap = 0;
 
 	public DefaultTraceTimeViewport(Trace trace) {
+		Range<Long> zero = Range.singleton(0L);
+		spanSet.add(zero);
+		ordered.add(zero);
+
 		this.trace = trace;
 		trace.addCloseListener(listener);
 		trace.addListener(listener);

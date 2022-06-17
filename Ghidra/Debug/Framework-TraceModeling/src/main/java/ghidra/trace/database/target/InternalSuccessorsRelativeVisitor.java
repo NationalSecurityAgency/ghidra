@@ -60,7 +60,7 @@ public class InternalSuccessorsRelativeVisitor implements SpanIntersectingVisito
 			return Stream.empty();
 		}
 
-		Stream<? extends DBTraceObjectValue> attrStream;
+		Stream<? extends InternalTraceObjectValue> attrStream;
 		if (nextKeys.contains("")) {
 			attrStream = object.doGetAttributes()
 					.stream()
@@ -70,7 +70,7 @@ public class InternalSuccessorsRelativeVisitor implements SpanIntersectingVisito
 			attrStream = Stream.empty();
 		}
 
-		Stream<? extends DBTraceObjectValue> elemStream;
+		Stream<? extends InternalTraceObjectValue> elemStream;
 		if (nextKeys.contains("[]")) {
 			elemStream = object.doGetElements()
 					.stream()

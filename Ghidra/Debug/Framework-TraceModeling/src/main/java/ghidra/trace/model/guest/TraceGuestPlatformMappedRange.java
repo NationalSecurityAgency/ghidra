@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.model.language;
+package ghidra.trace.model.guest;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public interface TraceGuestLanguageMappedRange {
+public interface TraceGuestPlatformMappedRange {
 	Language getHostLanguage();
+
+	CompilerSpec getHostCompilerSpec();
 
 	AddressRange getHostRange();
 
-	Language getGuestLanguage();
+	TraceGuestPlatform getGuestPlatform();
 
 	AddressRange getGuestRange();
 

@@ -32,11 +32,13 @@ import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
-import ghidra.trace.database.language.DBTraceGuestLanguage;
+import ghidra.trace.database.guest.DBTraceGuestPlatform;
+import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.database.symbol.DBTraceReferenceSpace;
 import ghidra.trace.model.Trace.TraceInstructionChangeType;
+import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.listing.TraceInstruction;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.util.*;
@@ -59,9 +61,12 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	private static final byte FLOWOVERRIDE_CLEAR_MASK = ~FLOWOVERRIDE_SET_MASK;
 	private static final int FLOWOVERRIDE_SHIFT = 1;
 
+	static final String PLATFORM_COLUMN_NAME = "Platform";
 	static final String PROTOTYPE_COLUMN_NAME = "Prototype";
 	static final String FLAGS_COLUMN_NAME = "Flags";
 
+	@DBAnnotatedColumn(PLATFORM_COLUMN_NAME)
+	static DBObjectColumn PLATFORM_COLUMN;
 	@DBAnnotatedColumn(PROTOTYPE_COLUMN_NAME)
 	static DBObjectColumn PROTOTYPE_COLUMN;
 	@DBAnnotatedColumn(FLAGS_COLUMN_NAME)
@@ -100,6 +105,8 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		}
 	}
 
+	@DBAnnotatedField(column = PLATFORM_COLUMN_NAME)
+	private int platformKey;
 	@DBAnnotatedField(column = PROTOTYPE_COLUMN_NAME)
 	private int prototypeKey;
 	@DBAnnotatedField(column = FLAGS_COLUMN_NAME)
@@ -111,7 +118,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	protected FlowOverride flowOverride;
 
 	protected ParserContext parserContext;
-	protected DBTraceGuestLanguage guest;
+	protected DBTraceGuestPlatform guest;
 	protected InstructionContext instructionContext;
 
 	public DBTraceInstruction(DBTraceCodeSpace space,
@@ -120,15 +127,30 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		super(space, tree, store, record);
 	}
 
-	protected void doSetGuestMapping() {
-		if (Objects.equals(prototype.getLanguage(), space.baseLanguage)) {
-			guest = null;
+	protected void doSetGuestMapping(final DBTraceGuestPlatform guest) {
+		this.guest = guest;
+		if (guest == null) {
 			instructionContext = this;
 		}
 		else {
-			guest = space.trace.getLanguageManager().getGuestLanguage(prototype.getLanguage());
 			instructionContext = new GuestInstructionContext();
 		}
+	}
+
+	protected void set(DBTraceGuestPlatform guest, InstructionPrototype prototype,
+			ProcessorContextView context) {
+		this.platformKey = (int) (guest == null ? -1 : guest.getKey());
+		// NOTE: Using "this" for the MemBuffer seems a bit precarious.
+		DBTraceGuestLanguage languageEntry = guest == null ? null : guest.getLanguageEntry();
+		this.prototypeKey = (int) space.manager
+				.findOrRecordPrototype(prototype, languageEntry, this, context)
+				.getKey();
+		this.flowOverride = FlowOverride.NONE; // flags field is already consistent
+		update(PLATFORM_COLUMN, PROTOTYPE_COLUMN, FLAGS_COLUMN);
+
+		// TODO: Can there be more in this context than the context register???
+		doSetGuestMapping(guest);
+		this.prototype = prototype;
 	}
 
 	@Override
@@ -138,9 +160,12 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			// Wait for something to set prototype
 			return;
 		}
+		guest = space.manager.platformManager.getPlatformByKey(platformKey);
+		if (guest == null && platformKey != -1) {
+			throw new IOException("Instruction table is corrupt. Missing platform: " + platformKey);
+		}
 		prototype = space.manager.getPrototypeByKey(prototypeKey);
 		if (prototype == null) {
-			// TODO: Better to just load a sentinel? Why bail on the whole thing?
 			Msg.error(this,
 				"Instruction table is corrupt for address " + getMinAddress() +
 					". Missing prototype " + prototypeKey);
@@ -148,7 +173,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		}
 		flowOverride = FlowOverride.values()[(flags & FLOWOVERRIDE_SET_MASK) >> FLOWOVERRIDE_SHIFT];
 
-		doSetGuestMapping();
+		doSetGuestMapping(guest);
 	}
 
 	@Override
@@ -159,17 +184,6 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	@Override
 	protected DBTraceInstruction getRecordValue() {
 		return this;
-	}
-
-	protected void set(InstructionPrototype prototype, ProcessorContextView context) {
-		// TODO: Can there be more in this context than the context register???
-		this.prototype = prototype;
-		// NOTE: Using "this" for the MemBuffer seems a bit precarious.
-		this.prototypeKey = space.manager.findOrRecordPrototype(prototype, this, context);
-		this.flowOverride = FlowOverride.NONE;
-		update(PROTOTYPE_COLUMN, FLAGS_COLUMN);
-
-		doSetGuestMapping();
 	}
 
 	@Override
@@ -189,6 +203,11 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			super.setEndSnap(endSnap);
 		}
 		space.instructions.unitSpanChanged(oldSpan, this);
+	}
+
+	@Override
+	public TraceGuestPlatform getGuestPlatform() {
+		return guest;
 	}
 
 	@Override

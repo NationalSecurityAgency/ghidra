@@ -353,6 +353,32 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		}
 	}
 
+	protected void collectNonRangedAttributes(List<? super DBTraceObjectValue> result) {
+		for (DBTraceObjectValue val : manager.valuesByTriple
+				.sub(new PrimaryTriple(this, "", Long.MIN_VALUE), true,
+					new PrimaryTriple(this, "[", Long.MIN_VALUE), false)
+				.values()) {
+			result.add(val);
+		}
+		for (DBTraceObjectValue val : manager.valuesByTriple
+				.tail(new PrimaryTriple(this, "\\", Long.MIN_VALUE), true)
+				.values()) {
+			if (val.getParent() != this) {
+				break;
+			}
+			result.add(val);
+		}
+	}
+
+	protected void collectNonRangedElements(List<? super DBTraceObjectValue> result) {
+		for (DBTraceObjectValue val : manager.valuesByTriple
+				.sub(new PrimaryTriple(this, "[", Long.MIN_VALUE), true,
+					new PrimaryTriple(this, "\\", Long.MIN_VALUE), false)
+				.values()) {
+			result.add(val);
+		}
+	}
+
 	protected boolean doHasAnyNonRangedValues() {
 		for (DBTraceObjectValue val : manager.valuesByTriple
 				.tail(new PrimaryTriple(this, "", Long.MIN_VALUE), true)
@@ -370,6 +396,38 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		: manager.rangeValueMap.getActiveMemorySpaces()) {
 			for (DBTraceObjectAddressRangeValue val : space.values()) {
 				if (val.getParent() != this) {
+					continue;
+				}
+				result.add(val);
+			}
+		}
+	}
+
+	protected void collectRangedAttributes(
+			Collection<? super DBTraceObjectAddressRangeValue> result) {
+		for (DBTraceAddressSnapRangePropertyMapSpace<DBTraceObjectAddressRangeValue, ?> space //
+		: manager.rangeValueMap.getActiveMemorySpaces()) {
+			for (DBTraceObjectAddressRangeValue val : space.values()) {
+				if (val.getParent() != this) {
+					continue;
+				}
+				if (!PathUtils.isName(val.getEntryKey())) {
+					continue;
+				}
+				result.add(val);
+			}
+		}
+	}
+
+	protected void collectRangedElements(
+			Collection<? super DBTraceObjectAddressRangeValue> result) {
+		for (DBTraceAddressSnapRangePropertyMapSpace<DBTraceObjectAddressRangeValue, ?> space //
+		: manager.rangeValueMap.getActiveMemorySpaces()) {
+			for (DBTraceObjectAddressRangeValue val : space.values()) {
+				if (val.getParent() != this) {
+					continue;
+				}
+				if (!PathUtils.isIndex(val.getEntryKey())) {
 					continue;
 				}
 				result.add(val);
@@ -415,45 +473,29 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		}
 	}
 
-	protected Collection<? extends DBTraceObjectValue> doGetElements() {
-		List<DBTraceObjectValue> result = new ArrayList<>();
-		for (DBTraceObjectValue val : manager.valuesByTriple
-				.sub(new PrimaryTriple(this, "[", Long.MIN_VALUE), true,
-					new PrimaryTriple(this, "\\", Long.MIN_VALUE), false)
-				.values()) {
-			result.add(val);
-		}
+	protected Collection<? extends InternalTraceObjectValue> doGetElements() {
+		List<InternalTraceObjectValue> result = new ArrayList<>();
+		collectNonRangedElements(result);
+		collectRangedElements(result);
 		return result;
 	}
 
 	@Override
-	public Collection<? extends DBTraceObjectValue> getElements() {
+	public Collection<? extends InternalTraceObjectValue> getElements() {
 		try (LockHold hold = manager.trace.lockRead()) {
 			return doGetElements();
 		}
 	}
 
-	protected Collection<? extends DBTraceObjectValue> doGetAttributes() {
-		List<DBTraceObjectValue> result = new ArrayList<>();
-		for (DBTraceObjectValue val : manager.valuesByTriple
-				.sub(new PrimaryTriple(this, "", Long.MIN_VALUE), true,
-					new PrimaryTriple(this, "[", Long.MIN_VALUE), false)
-				.values()) {
-			result.add(val);
-		}
-		for (DBTraceObjectValue val : manager.valuesByTriple
-				.tail(new PrimaryTriple(this, "\\", Long.MIN_VALUE), true)
-				.values()) {
-			if (val.getParent() != this) {
-				break;
-			}
-			result.add(val);
-		}
+	protected Collection<? extends InternalTraceObjectValue> doGetAttributes() {
+		List<InternalTraceObjectValue> result = new ArrayList<>();
+		collectNonRangedAttributes(result);
+		collectRangedAttributes(result);
 		return result;
 	}
 
 	@Override
-	public Collection<? extends DBTraceObjectValue> getAttributes() {
+	public Collection<? extends InternalTraceObjectValue> getAttributes() {
 		try (LockHold hold = manager.trace.lockRead()) {
 			return doGetAttributes();
 		}
@@ -525,7 +567,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		return floor;
 	}
 
-	protected Stream<DBTraceObjectValue> doGetNonRangedValues(Range<Long> span, String key,
+	protected Stream<DBTraceObjectValue> doGetOrderedNonRangedValues(Range<Long> span, String key,
 			boolean forward) {
 		DBCachedObjectIndex<PrimaryTriple, DBTraceObjectValue> sub = manager.valuesByTriple.sub(
 			new PrimaryTriple(this, key, DBTraceUtils.lowerEndpoint(span)), true,
@@ -552,7 +594,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		return null;
 	}
 
-	protected Stream<DBTraceObjectAddressRangeValue> doGetRangedValues(Range<Long> span,
+	protected Stream<DBTraceObjectAddressRangeValue> doGetOrderedRangedValues(Range<Long> span,
 			String key, boolean forward) {
 		Rectangle2DDirection dir = forward
 				? Rectangle2DDirection.BOTTOMMOST
@@ -590,8 +632,8 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	protected Stream<InternalTraceObjectValue> doGetOrderedValues(Range<Long> span, String key,
 			boolean forward) {
-		Stream<DBTraceObjectValue> nrVals = doGetNonRangedValues(span, key, forward);
-		Stream<DBTraceObjectAddressRangeValue> rVals = doGetRangedValues(span, key, forward);
+		Stream<DBTraceObjectValue> nrVals = doGetOrderedNonRangedValues(span, key, forward);
+		Stream<DBTraceObjectAddressRangeValue> rVals = doGetOrderedRangedValues(span, key, forward);
 		Comparator<Long> order = forward ? Comparator.naturalOrder() : Comparator.reverseOrder();
 		Comparator<InternalTraceObjectValue> comparator =
 			Comparator.comparing(v -> v.getMinSnap(), order);
@@ -883,9 +925,14 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		manager.trace.setChanged(rec);
 		for (TraceObjectInterface iface : ifaces.values()) {
 			DBTraceObjectInterface dbIface = (DBTraceObjectInterface) iface;
-			TraceChangeRecord<?, ?> evt = dbIface.translateEvent(rec);
-			if (evt != null) {
-				manager.trace.setChanged(evt);
+			try {
+				TraceChangeRecord<?, ?> evt = dbIface.translateEvent(rec);
+				if (evt != null) {
+					manager.trace.setChanged(evt);
+				}
+			}
+			catch (Throwable t) {
+				Msg.error(this, "Error while translating event " + rec + " for interface " + iface);
 			}
 		}
 	}

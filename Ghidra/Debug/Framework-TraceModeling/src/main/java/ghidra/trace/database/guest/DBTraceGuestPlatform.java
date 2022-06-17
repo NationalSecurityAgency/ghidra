@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.database.language;
+package ghidra.trace.database.guest;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -22,13 +23,17 @@ import com.google.common.collect.Range;
 
 import db.DBRecord;
 import ghidra.app.util.PseudoInstruction;
+import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.program.util.DefaultLanguageService;
+import ghidra.trace.database.DBTraceUtils.CompilerSpecIDDBFieldCodec;
 import ghidra.trace.database.DBTraceUtils.LanguageIDDBFieldCodec;
-import ghidra.trace.model.language.TraceGuestLanguage;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -37,59 +42,129 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 @DBAnnotatedObjectInfo(version = 0)
-public class DBTraceGuestLanguage extends DBAnnotatedObject implements TraceGuestLanguage {
-	public static final String TABLE_NAME = "Languages";
+public class DBTraceGuestPlatform extends DBAnnotatedObject implements TraceGuestPlatform {
+	public static final String TABLE_NAME = "Platforms";
 
-	static final String LANGID_COLUMN_NAME = "ID";
-	static final String VERSION_COLUMN_NAME = "Version";
-	static final String MINOR_VERSION_COLUMN_NAME = "MinorVersion";
+	@DBAnnotatedObjectInfo(version = 0)
+	public static class DBTraceGuestLanguage extends DBAnnotatedObject {
+		public static final String TABLE_NAME = "Languages";
 
-	@DBAnnotatedColumn(LANGID_COLUMN_NAME)
-	static DBObjectColumn LANGID_COLUMN;
-	@DBAnnotatedColumn(VERSION_COLUMN_NAME)
-	static DBObjectColumn VERSION_COLUMN;
-	@DBAnnotatedColumn(MINOR_VERSION_COLUMN_NAME)
-	static DBObjectColumn MINOR_VERSION_COLUMN;
+		static final String LANGID_COLUMN_NAME = "Lang";
+		static final String VERSION_COLUMN_NAME = "Version";
+		static final String MINOR_VERSION_COLUMN_NAME = "MinorVersion";
 
-	@DBAnnotatedField(column = LANGID_COLUMN_NAME, codec = LanguageIDDBFieldCodec.class)
-	private LanguageID langID;
-	@DBAnnotatedField(column = VERSION_COLUMN_NAME)
-	private int version;
-	@DBAnnotatedField(column = MINOR_VERSION_COLUMN_NAME)
-	private int minorVersion;
+		@DBAnnotatedColumn(LANGID_COLUMN_NAME)
+		static DBObjectColumn LANGID_COLUMN;
+		@DBAnnotatedColumn(VERSION_COLUMN_NAME)
+		static DBObjectColumn VERSION_COLUMN;
+		@DBAnnotatedColumn(MINOR_VERSION_COLUMN_NAME)
+		static DBObjectColumn MINOR_VERSION_COLUMN;
 
-	private final DBTraceLanguageManager manager;
+		@DBAnnotatedField(column = LANGID_COLUMN_NAME, codec = LanguageIDDBFieldCodec.class)
+		private LanguageID langID;
+		@DBAnnotatedField(column = VERSION_COLUMN_NAME)
+		private int version;
+		@DBAnnotatedField(column = MINOR_VERSION_COLUMN_NAME)
+		private int minorVersion;
 
-	private Language guestLanguage;
+		private Language language;
 
-	protected final NavigableMap<Address, DBTraceGuestLanguageMappedRange> rangesByHostAddress =
+		public DBTraceGuestLanguage(DBCachedObjectStore<?> store, DBRecord record) {
+			super(store, record);
+		}
+
+		@Override
+		protected void fresh(boolean created) throws IOException {
+			super.fresh(created);
+			if (created) {
+				return;
+			}
+			LanguageService langServ = DefaultLanguageService.getLanguageService();
+			language = langServ.getLanguage(langID);
+			if (version != language.getVersion() || minorVersion != language.getMinorVersion()) {
+				throw new IOException(new VersionException()); // TODO Upgrade
+			}
+		}
+
+		void set(Language language) {
+			this.langID = language.getLanguageID();
+			this.version = language.getVersion();
+			this.minorVersion = language.getMinorVersion();
+			update(LANGID_COLUMN, VERSION_COLUMN, MINOR_VERSION_COLUMN);
+			this.language = language;
+		}
+
+		public Language getLanguage() {
+			return language;
+		}
+	}
+
+	static final String LANGKEY_COLUMN_NAME = "Lang";
+	static final String CSPECID_COLUMN_NAME = "CSpec";
+
+	@DBAnnotatedColumn(LANGKEY_COLUMN_NAME)
+	static DBObjectColumn LANGKEY_COLUMN;
+	@DBAnnotatedColumn(CSPECID_COLUMN_NAME)
+	static DBObjectColumn CSPECID_COLUMN;
+
+	@DBAnnotatedField(column = LANGKEY_COLUMN_NAME)
+	private int langKey;
+	@DBAnnotatedField(column = CSPECID_COLUMN_NAME, codec = CompilerSpecIDDBFieldCodec.class)
+	private CompilerSpecID cSpecID;
+
+	private DBTraceGuestLanguage languageEntry;
+	private CompilerSpec compilerSpec;
+
+	final DBTracePlatformManager manager;
+	protected final NavigableMap<Address, DBTraceGuestPlatformMappedRange> rangesByHostAddress =
 		new TreeMap<>();
 	protected final AddressSet hostAddressSet = new AddressSet();
 
-	protected final NavigableMap<Address, DBTraceGuestLanguageMappedRange> rangesByGuestAddress =
+	protected final NavigableMap<Address, DBTraceGuestPlatformMappedRange> rangesByGuestAddress =
 		new TreeMap<>();
 	protected final AddressSet guestAddressSet = new AddressSet();
 
-	public DBTraceGuestLanguage(DBTraceLanguageManager manager, DBCachedObjectStore<?> store,
+	public DBTraceGuestPlatform(DBTracePlatformManager manager, DBCachedObjectStore<?> store,
 			DBRecord record) {
 		super(store, record);
 		this.manager = manager;
 	}
 
-	void setLanguage(Language language) {
-		this.guestLanguage = language;
-		this.langID = language.getLanguageID();
-		this.version = language.getVersion();
-		this.minorVersion = language.getMinorVersion();
-		update(LANGID_COLUMN, VERSION_COLUMN, MINOR_VERSION_COLUMN);
+	void set(CompilerSpec compilerSpec) {
+		this.languageEntry = manager.getOrCreateLanguage(compilerSpec.getLanguage());
+		this.langKey = (int) (languageEntry == null ? -1 : languageEntry.getKey());
+		this.cSpecID = compilerSpec.getCompilerSpecID();
+		update(LANGKEY_COLUMN, CSPECID_COLUMN);
+		this.compilerSpec = compilerSpec;
 	}
 
-	protected void deleteMappedRange(DBTraceGuestLanguageMappedRange range, TaskMonitor monitor)
+	@Override
+	protected void fresh(boolean created) throws IOException {
+		super.fresh(created);
+		if (created) {
+			return;
+		}
+		this.languageEntry = manager.getLanguageByKey(langKey);
+		if (languageEntry == null && langKey != -1) {
+			throw new IOException("Platform table is corrupt. Missing language " + langKey);
+		}
+		compilerSpec = getLanguage().getCompilerSpecByID(cSpecID);
+		if (compilerSpec == null) {
+			throw new IOException(
+				"Platform table is corrupt. Invalid compiler spec " + compilerSpec);
+		}
+	}
+
+	@Override
+	public Trace getTrace() {
+		return manager.trace;
+	}
+
+	protected void deleteMappedRange(DBTraceGuestPlatformMappedRange range, TaskMonitor monitor)
 			throws CancelledException {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			manager.trace.getCodeManager()
-					.clearLanguage(Range.all(), range.getHostRange(),
-						(int) getKey(), monitor);
+					.clearPlatform(Range.all(), range.getHostRange(), this, monitor);
 			manager.rangeMappingStore.delete(range);
 			AddressRange hostRange = range.getHostRange();
 			AddressRange guestRange = range.getGuestRange();
@@ -100,41 +175,43 @@ public class DBTraceGuestLanguage extends DBAnnotatedObject implements TraceGues
 		}
 	}
 
-	protected void doGetLanguage(LanguageService langServ)
-			throws LanguageNotFoundException, VersionException {
-		this.guestLanguage = langServ.getLanguage(langID);
-		if (version != guestLanguage.getVersion() ||
-			minorVersion != guestLanguage.getMinorVersion()) {
-			throw new VersionException(); // TODO Upgrade
-		}
+	@Internal
+	public DBTraceGuestLanguage getLanguageEntry() {
+		return languageEntry;
 	}
 
 	@Override
 	public Language getLanguage() {
-		return guestLanguage;
+		return languageEntry == null ? manager.baseLanguage : languageEntry.getLanguage();
+	}
+
+	@Override
+	public CompilerSpec getCompilerSpec() {
+		return compilerSpec;
 	}
 
 	@Override
 	public void delete(TaskMonitor monitor) throws CancelledException {
-		manager.deleteGuestLanguage(this, monitor);
+		manager.deleteGuestPlatform(this, monitor);
+		// TODO: Delete language once no platform uses it?
 	}
 
 	@Override
-	public DBTraceGuestLanguageMappedRange addMappedRange(Address hostStart, Address guestStart,
+	public DBTraceGuestPlatformMappedRange addMappedRange(Address hostStart, Address guestStart,
 			long length) throws AddressOverflowException {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			Address hostEnd = hostStart.addNoWrap(length - 1);
+			Address hostEnd = hostStart.addWrap(length - 1);
 			if (hostAddressSet.intersects(hostStart, hostEnd)) {
 				// TODO: Check for compatibility and extend?
 				throw new IllegalArgumentException(
 					"Range overlaps existing host mapped range(s) for this guest language");
 			}
-			Address guestEnd = guestStart.addNoWrap(length - 1);
+			Address guestEnd = guestStart.addWrap(length - 1);
 			if (guestAddressSet.intersects(guestStart, guestEnd)) {
 				throw new IllegalArgumentException("Range overlaps existing guest mapped range(s)");
 			}
-			DBTraceGuestLanguageMappedRange mappedRange = manager.rangeMappingStore.create();
-			mappedRange.set(hostStart, guestLanguage, guestStart, length);
+			DBTraceGuestPlatformMappedRange mappedRange = manager.rangeMappingStore.create();
+			mappedRange.set(hostStart, this, guestStart, length);
 			rangesByHostAddress.put(hostStart, mappedRange);
 			rangesByGuestAddress.put(guestStart, mappedRange);
 			hostAddressSet.add(mappedRange.getHostRange());
@@ -156,7 +233,7 @@ public class DBTraceGuestLanguage extends DBAnnotatedObject implements TraceGues
 	@Override
 	public Address mapHostToGuest(Address hostAddress) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			Entry<Address, DBTraceGuestLanguageMappedRange> floorEntry =
+			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByHostAddress.floorEntry(hostAddress);
 			if (floorEntry == null) {
 				return null;
@@ -168,7 +245,7 @@ public class DBTraceGuestLanguage extends DBAnnotatedObject implements TraceGues
 	@Override
 	public Address mapGuestToHost(Address guestAddress) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			Entry<Address, DBTraceGuestLanguageMappedRange> floorEntry =
+			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByGuestAddress.floorEntry(guestAddress);
 			if (floorEntry == null) {
 				return null;
@@ -186,12 +263,12 @@ public class DBTraceGuestLanguage extends DBAnnotatedObject implements TraceGues
 	 */
 	public Address mapGuestToHost(Address guestMin, Address guestMax) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			Entry<Address, DBTraceGuestLanguageMappedRange> floorEntry =
+			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByGuestAddress.floorEntry(guestMin);
 			if (floorEntry == null) {
 				return null;
 			}
-			DBTraceGuestLanguageMappedRange range = floorEntry.getValue();
+			DBTraceGuestPlatformMappedRange range = floorEntry.getValue();
 			if (!range.getGuestRange().contains(guestMax)) {
 				return null;
 			}
@@ -204,7 +281,7 @@ public class DBTraceGuestLanguage extends DBAnnotatedObject implements TraceGues
 		/*return new DBTraceGuestLanguageMappedMemBuffer(manager.trace.getMemoryManager(), this, snap,
 			guestAddress);*/
 		return new DumbMemBufferImpl(
-			new DBTraceGuestLanguageMappedMemory(manager.trace.getMemoryManager(), this, snap),
+			new DBTraceGuestPlatformMappedMemory(manager.trace.getMemoryManager(), this, snap),
 			guestAddress);
 	}
 
@@ -212,7 +289,7 @@ public class DBTraceGuestLanguage extends DBAnnotatedObject implements TraceGues
 	public InstructionSet mapGuestInstructionAddressesToHost(InstructionSet instructionSet) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Map<Address, InstructionBlock> blocksByNext = new HashMap<>();
-			InstructionSet mappedSet = new InstructionSet(guestLanguage.getAddressFactory());
+			InstructionSet mappedSet = new InstructionSet(getAddressFactory());
 			for (InstructionBlock block : instructionSet) {
 				for (Instruction instruction : block) {
 					Address hostAddr =
