@@ -341,6 +341,16 @@ public final class OperandType {
 	public static boolean isCoProcessor(int operandType) {
 		return (operandType & COP) != 0;
 	}
+	
+    /**
+	 * check the DYNAMIC flag.
+	 * @param operandType the bit field to examine.
+	 *
+	 * @return true if the DYNAMIC flag is set.
+	 */
+	public static boolean isDynamic(int operandType) {
+		return (operandType & DYNAMIC) != 0;
+	}
 
 	/**
 	 * check if both a scalar and an address
@@ -457,6 +467,10 @@ public final class OperandType {
 		if (isCoProcessor(operandType)) {
 			append(buf, "COP ");
 		}
+
+        if (isDynamic(operandType)) {
+            append(buf, "DYN ");
+        }
 
 		return buf.toString();
 	}
