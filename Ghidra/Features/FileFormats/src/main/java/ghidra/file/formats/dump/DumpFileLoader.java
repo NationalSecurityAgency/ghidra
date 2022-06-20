@@ -286,7 +286,8 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 			}
 			catch (CodeUnitInsertionException e) {
-				Msg.error(this, "Could not create " + dd.getDataType().getName() + " at " + address);
+				Msg.error(this,
+					"Could not create " + dd.getDataType().getName() + " at " + address);
 			}
 			monitor.setProgress(count++);
 			monitor.checkCanceled();
