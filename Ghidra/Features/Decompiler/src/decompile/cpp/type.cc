@@ -3753,7 +3753,7 @@ void TypeFactory::decodeCoreTypes(Decoder &decoder)
 void TypeFactory::decodeDataOrganization(Decoder &decoder)
 
 {
-  uint elemId = decoder.openElement(ELEM_DATA_ORGANIZATION);
+  uint4 elemId = decoder.openElement(ELEM_DATA_ORGANIZATION);
   for(;;) {
     uint4 subId = decoder.openElement();
     if (subId == 0) break;

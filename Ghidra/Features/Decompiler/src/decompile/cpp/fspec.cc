@@ -3185,7 +3185,7 @@ void ProtoStoreInternal::decode(Decoder &decoder,ProtoModel *model)
 
   uint4 elemId = decoder.openElement(ELEM_INTERNALLIST);
   for(;;) { // This is only the input params
-    uint subId = decoder.openElement();		// <retparam> or <param>
+    uint4 subId = decoder.openElement();		// <retparam> or <param>
     if (subId == 0) break;
     string name;
     uint4 flags = 0;
