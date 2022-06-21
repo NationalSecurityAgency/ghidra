@@ -696,9 +696,8 @@ public class DyldCacheHeader implements StructConverter {
 		}
 		monitor.setMessage("Parsing DYLD accelerateor info...");
 		monitor.initialize(imagesTextCount);
-		try {
-			Address addr = space.getAddress(accelerateInfoAddr);
-			ByteProvider bytes = new MemoryByteProvider(program.getMemory(), addr);
+		Address addr = space.getAddress(accelerateInfoAddr);
+		try (ByteProvider bytes = new MemoryByteProvider(program.getMemory(), addr)) {
 			BinaryReader memoryReader =
 				new BinaryReader(bytes, !program.getLanguage().isBigEndian());
 			accelerateInfo = new DyldCacheAccelerateInfo(memoryReader);

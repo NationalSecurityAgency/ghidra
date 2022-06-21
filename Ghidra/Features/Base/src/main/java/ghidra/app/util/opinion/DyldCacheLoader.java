@@ -45,9 +45,6 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	/** Loader option to create memory blocks for DYLIB sections */
 	static final String CREATE_DYLIB_SECTIONS_OPTION_NAME = "Create DYLIB section memory blocks";
 
-	/** Default value for loader option to create memory blocks for DYLIB sections */
-	static final boolean CREATE_DYLIB_SECTIONS_OPTION_DEFAULT = false;
-
 	/** Loader option to add relocation entries for chained fixups */
 	static final String ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME =
 		"Add relocation entries for chained fixups";
@@ -97,9 +94,8 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 		try {
 			DyldCacheProgramBuilder.buildProgram(program, provider,
 				MemoryBlockUtils.createFileBytes(program, provider, monitor),
-				shouldProcessSymbols(options), shouldCreateDylibSections(options),
-				shouldAddChainedFixupsRelocations(options), shouldCombineSplitFiles(options), log,
-				monitor);
+				shouldProcessSymbols(options), shouldAddChainedFixupsRelocations(options),
+				shouldCombineSplitFiles(options), log, monitor);
 		}
 		catch (CancelledException e) {
 			return;
@@ -117,9 +113,6 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 		if (!loadIntoProgram) {
 			list.add(new Option(PROCESS_SYMBOLS_OPTION_NAME, PROCESS_SYMBOLS_OPTION_DEFAULT,
 				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processSymbols"));
-			list.add(
-				new Option(CREATE_DYLIB_SECTIONS_OPTION_NAME, CREATE_DYLIB_SECTIONS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-createDylibSections"));
 			list.add(new Option(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME,
 				ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT, Boolean.class,
 				Loader.COMMAND_LINE_ARG_PREFIX + "-addChainedFixupsRelocations"));
@@ -132,11 +125,6 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	private boolean shouldProcessSymbols(List<Option> options) {
 		return OptionUtils.getOption(PROCESS_SYMBOLS_OPTION_NAME, options,
 			PROCESS_SYMBOLS_OPTION_DEFAULT);
-	}
-
-	private boolean shouldCreateDylibSections(List<Option> options) {
-		return OptionUtils.getOption(CREATE_DYLIB_SECTIONS_OPTION_NAME, options,
-			CREATE_DYLIB_SECTIONS_OPTION_DEFAULT);
 	}
 
 	private boolean shouldAddChainedFixupsRelocations(List<Option> options) {
