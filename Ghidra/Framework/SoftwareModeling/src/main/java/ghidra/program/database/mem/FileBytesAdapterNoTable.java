@@ -21,6 +21,7 @@ import java.util.List;
 
 import db.DBBuffer;
 import db.DBHandle;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Version of the FileBytesAdapter used to access older databases for read-only and upgrade purposes.
@@ -32,7 +33,8 @@ class FileBytesAdapterNoTable extends FileBytesAdapter {
 	}
 
 	@Override
-	FileBytes createFileBytes(String filename, long offset, long size, InputStream is) {
+	FileBytes createFileBytes(String filename, long offset, long size, InputStream is,
+			TaskMonitor monitor) {
 		throw new UnsupportedOperationException();
 	}
 
