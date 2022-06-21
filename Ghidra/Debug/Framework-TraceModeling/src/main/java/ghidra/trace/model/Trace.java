@@ -38,6 +38,7 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
+import ghidra.trace.model.property.TraceAddressPropertyManager;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackManager;
 import ghidra.trace.model.symbol.*;
@@ -387,6 +388,8 @@ public interface Trace extends DataTypeManagerDomainObject {
 	CompilerSpec getBaseCompilerSpec();
 
 	AddressFactory getBaseAddressFactory();
+
+	TraceAddressPropertyManager getAddressPropertyManager();
 
 	TraceBookmarkManager getBookmarkManager();
 

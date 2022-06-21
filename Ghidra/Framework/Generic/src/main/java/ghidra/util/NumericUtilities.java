@@ -59,6 +59,7 @@ public final class NumericUtilities {
 	/**
 	 * Parses the given string as a numeric value, detecting whether or not it begins with a Hex
 	 * prefix, and if not, parses as a long int value.
+	 * 
 	 * @param numStr the number string
 	 * @return the long value or 0
 	 *
@@ -238,15 +239,15 @@ public final class NumericUtilities {
 	}
 
 	/**
-	 * Converts a <strong>unsigned</strong> long value, which is currently stored in a
-	 * java <strong>signed</strong> long, into a {@link BigInteger}.
+	 * Converts a <strong>unsigned</strong> long value, which is currently stored in a java
+	 * <strong>signed</strong> long, into a {@link BigInteger}.
 	 * <p>
-	 * In other words, the full 64 bits of the primitive java <strong>signed</strong>
-	 * long is being used to store an <strong>unsigned</strong> value.  This
-	 * method converts this into a positive BigInteger value.
+	 * In other words, the full 64 bits of the primitive java <strong>signed</strong> long is being
+	 * used to store an <strong>unsigned</strong> value. This method converts this into a positive
+	 * BigInteger value.
 	 *
-	 * @param value java <strong>unsigned</strong> long value stuffed into a
-	 * java <strong>signed</strong> long
+	 * @param value java <strong>unsigned</strong> long value stuffed into a java
+	 *            <strong>signed</strong> long
 	 * @return new {@link BigInteger} with the positive value of the unsigned long value
 	 */
 	public static BigInteger unsignedLongToBigInteger(long value) {
@@ -261,6 +262,20 @@ public final class NumericUtilities {
 			return value.longValue();
 		}
 		return value.subtract(MAX_UNSIGNED_LONG).longValue() - 1;
+	}
+
+	/**
+	 * Convert a long, treated as unsigned, to a double
+	 * 
+	 * @param val the long to treat as unsigned and convert
+	 * @return the double
+	 */
+	public static double unsignedLongToDouble(long val) {
+		double dVal = val & 0x7FFF_FFFF_FFFF_FFFFL;
+		if (val < 0) {
+			dVal += 0x1.0p63;
+		}
+		return dVal;
 	}
 
 	/**
