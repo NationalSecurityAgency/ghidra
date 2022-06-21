@@ -2196,11 +2196,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		}
 		lock.acquire();
 		try {
-			if (monitor != null && is != null) {
-				is = new MonitoredInputStream(is, monitor);
-				monitor.initialize(size);
-			}
-			return fileBytesAdapter.createFileBytes(filename, offset, size, is);
+			return fileBytesAdapter.createFileBytes(filename, offset, size, is, monitor);
 		}
 		catch (IOCancelledException e) {
 			throw new CancelledException();
