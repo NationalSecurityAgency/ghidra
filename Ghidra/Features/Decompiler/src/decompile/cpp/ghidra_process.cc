@@ -274,12 +274,9 @@ void DecompileAt::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  Document *doc;
-  doc = ArchitectureGhidra::readXMLStream(sin);	// Read XML of address directly from in stream
-  addr = Address::restoreXml(doc->getRoot(),ghidra); // Parse XML for functions address
-  addr.toPhysical(); 		// Only for backward compatibility
-                                // with SLED
-  delete doc;
+  XmlDecode decoder;
+  ArchitectureGhidra::readStream(sin,decoder);	// Read encoded address directly from in stream
+  addr = Address::decode(decoder,ghidra); 	// Decode for functions address
 }
 
 void DecompileAt::rawAction(void) 
@@ -305,25 +302,18 @@ void DecompileAt::rawAction(void)
   sout.write("\000\000\001\016",4);
 				// Write output XML directly to outstream
   if (fd->isProcComplete()) {
-    //bool v1 = ghidra->getSendParamMeasures();
-    //sout << "value: " << ghidra->getSendParamMeasures() << "\n";
-    //bool v2 = (ghidra->allacts.getCurrentName() == "paramid");
-    //sout << "value: " << (ghidra->allacts.getCurrentName() == "paramid") << "\n";
-    //bool v3 = v1 && v2;
-
     sout << "<doc>\n";
-    //sout << (v1?"1":"0") << "(" << (int4)v1 << ")\n" << (v2?"1":"0") << "\n" << (v3?"1":"0") << "\n";
-
+    XmlEncode encoder(sout);
     if (ghidra->getSendParamMeasures() && (ghidra->allacts.getCurrentName() == "paramid")) {
       ParamIDAnalysis pidanalysis( fd, true ); // Only send back final prototype
-      pidanalysis.saveXml( sout, true );
+      pidanalysis.encode( encoder, true );
     }
     else {
       if (ghidra->getSendParamMeasures()) {
 	ParamIDAnalysis pidanalysis( fd, false );
-	pidanalysis.saveXml( sout, true );
+	pidanalysis.encode( encoder, true );
       }
-      fd->saveXml(sout,0,ghidra->getSendSyntaxTree());
+      fd->encode(encoder,0,ghidra->getSendSyntaxTree());
       if (ghidra->getSendCCode()&&
 	  (ghidra->allacts.getCurrentName() == "decompile"))
         ghidra->print->docFunction(fd);
@@ -337,10 +327,10 @@ void StructureGraph::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  Document *doc;
-  doc = ArchitectureGhidra::readXMLStream(sin);
-  ingraph.restoreXml(doc->getRoot(),ghidra);
-  delete doc;
+
+  XmlDecode decoder;
+  ArchitectureGhidra::readStream(sin,decoder);
+  ingraph.decode(decoder,ghidra);
 }
 
 void StructureGraph::rawAction(void)
@@ -358,7 +348,8 @@ void StructureGraph::rawAction(void)
   resultgraph.orderBlocks();
 
   sout.write("\000\000\001\016",4);
-  resultgraph.saveXml(sout);
+  XmlEncode encoder(sout);
+  resultgraph.encode(encoder);
   sout.write("\000\000\001\017",4);
   ingraph.clear();
 }
@@ -413,28 +404,12 @@ void SetAction::sendResult(void)
   GhidraCommand::sendResult();
 }
 
-SetOptions::SetOptions(void) : GhidraCommand()
-
-{
-  doc = (Document *)0;
-}
-
-SetOptions::~SetOptions(void)
-
-{
-  if (doc != (Document *)0)
-    delete doc;
-}
-
 void SetOptions::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  if (doc != (Document *)0) {
-    delete doc;
-    doc = (Document *)0;
-  }
-  doc = ArchitectureGhidra::readXMLStream(sin);
+  decoder.clear();
+  ArchitectureGhidra::readStream(sin,decoder);
 }
 
 void SetOptions::rawAction(void)
@@ -443,9 +418,8 @@ void SetOptions::rawAction(void)
   res = false;
 
   ghidra->resetDefaults();
-  ghidra->options->restoreXml(doc->getRoot());
-  delete doc;
-  doc = (Document *)0;
+  ghidra->options->decode(decoder);
+  decoder.clear();
   res = true;
 }
 
@@ -514,6 +488,8 @@ int main(int argc,char **argv)
 
 {
   signal(SIGSEGV, &ArchitectureGhidra::segvHandler);  // Exit on SEGV errors
+  AttributeId::initialize();
+  ElementId::initialize();
   CapabilityPoint::initializeAll();
   int4 status = 0;
   while(status == 0) {

@@ -18,6 +18,10 @@
 
 #include "funcdata.hh"
 
+extern ElementId ELEM_PARAMMEASURES;	///< Marshaling element \<parammeasures>
+extern ElementId ELEM_PROTO;		///< Marshaling element \<proto>
+extern ElementId ELEM_RANK;		///< Marshaling element \<rank>
+
 class ParamMeasure {
 public:
   enum ParamIDIO {
@@ -56,7 +60,7 @@ public:
   ParamMeasure( const Address &addr, int4 sz, Datatype *dt, ParamIDIO io_in) {
     vndata.space=addr.getSpace(); vndata.offset=addr.getOffset(); vndata.size = sz; vntype=dt; io = io_in; rank=WORSTRANK; }
   void calculateRank(bool best,Varnode *basevn,PcodeOp *ignoreop);
-  void saveXml( ostream &s,string tag,bool moredetail ) const;
+  void encode( Encoder &encoder,ElementId &tag,bool moredetail ) const;
   void savePretty( ostream &s,bool moredetail ) const;
   int4 getMeasure(void) const { return (int4) rank; }
 };
@@ -68,7 +72,7 @@ class ParamIDAnalysis
   list<ParamMeasure> OutputParamMeasures;
 public:
   ParamIDAnalysis( Funcdata *fd_in, bool justproto );
-  void saveXml( ostream &s, bool moredetail ) const;
+  void encode( Encoder &encoder, bool moredetail ) const;
   void savePretty( ostream &s, bool moredetail ) const;
 };
 

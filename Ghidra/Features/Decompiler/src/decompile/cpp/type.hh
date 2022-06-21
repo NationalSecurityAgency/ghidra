@@ -21,6 +21,34 @@
 
 #include "address.hh"
 
+extern AttributeId ATTRIB_ALIGNMENT;	///< Marshaling attribute "alignment"
+extern AttributeId ATTRIB_ARRAYSIZE;	///< Marshaling attribute "arraysize"
+extern AttributeId ATTRIB_CHAR;		///< Marshaling attribute "char"
+extern AttributeId ATTRIB_CORE;		///< Marshaling attribute "core"
+extern AttributeId ATTRIB_ENUM;		///< Marshaling attribute "enum"
+extern AttributeId ATTRIB_ENUMSIGNED;	///< Marshaling attribute "enumsigned"
+extern AttributeId ATTRIB_ENUMSIZE;	///< Marshaling attribute "enumsize"
+extern AttributeId ATTRIB_INTSIZE;	///< Marshaling attribute "intsize"
+extern AttributeId ATTRIB_LONGSIZE;	///< Marshaling attribute "longsize"
+extern AttributeId ATTRIB_OPAQUESTRING;	///< Marshaling attribute "opaquestring"
+extern AttributeId ATTRIB_SIGNED;	///< Marshaling attribute "signed"
+extern AttributeId ATTRIB_STRUCTALIGN;	///< Marshaling attribute "structalign"
+extern AttributeId ATTRIB_UTF;		///< Marshaling attribute "utf"
+extern AttributeId ATTRIB_VARLENGTH;	///< Marshaling attribute "varlength"
+
+extern ElementId ELEM_CORETYPES;		///< Marshaling element \<coretypes>
+extern ElementId ELEM_DATA_ORGANIZATION;	///< Marshaling element \<data_organization>
+extern ElementId ELEM_DEF;			///< Marshaling element \<def>
+extern ElementId ELEM_ENTRY;			///< Marshaling element \<entry>
+extern ElementId ELEM_ENUM;			///< Marshaling element \<enum>
+extern ElementId ELEM_FIELD;			///< Marshaling element \<field>
+extern ElementId ELEM_INTEGER_SIZE;		///< Marshaling element \<integer_size>
+extern ElementId ELEM_LONG_SIZE;		///< Marshaling element \<long_size>
+extern ElementId ELEM_SIZE_ALIGNMENT_MAP;	///< Marshaling element \<size_alignment_map>
+extern ElementId ELEM_TYPE;			///< Marshaling element \<type>
+extern ElementId ELEM_TYPEGRP;			///< Marshaling element \<typegrp>
+extern ElementId ELEM_TYPEREF;			///< Marshaling element \<typeref>
+
 /// Print a hex dump of a data buffer to stream
 extern void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseaddr);
 //extern void print_char(ostream &s,int4 onechar);
@@ -115,9 +143,9 @@ protected:
   uint4 flags;			///< Boolean properties of the type
   uint8 id;			///< A unique id for the type (or 0 if an id is not assigned)
   Datatype *typedefImm;		///< The immediate data-type being typedefed by \e this
-  void restoreXmlBasic(const Element *el);	///< Recover basic data-type properties
-  void saveXmlBasic(type_metatype meta,ostream &s) const;	///< Save basic data-type properties
-  void saveXmlTypedef(ostream &s) const;	///< Write \b this as a \e typedef tag to stream
+  void decodeBasic(Decoder &decoder);	///< Recover basic data-type properties
+  void encodeBasic(type_metatype meta,Encoder &encoder) const;	///< Encode basic data-type properties
+  void encodeTypedef(Encoder &encoder) const;	///< Encode \b this as a \e typedef element to a stream
   void markComplete(void) { flags &= ~(uint4)type_incomplete; }		///< Mark \b this data-type as completely defined
   void setDisplayFormat(uint4 format);		///< Set a specific display format
   virtual Datatype *clone(void) const=0;	///< Clone the data-type
@@ -162,7 +190,7 @@ public:
   virtual void printNameBase(ostream &s) const { if (!name.empty()) s<<name[0]; } ///< Print name as short prefix
   virtual int4 compare(const Datatype &op,int4 level) const; ///< Order types for propagation
   virtual int4 compareDependency(const Datatype &op) const; ///< Compare for storage in tree structure
-  virtual void saveXml(ostream &s) const;	///< Serialize the data-type to XML
+  virtual void encode(Encoder &encoder) const;	///< Encode the data-type to a stream
   virtual bool isPtrsubMatching(uintb off) const;	///< Is this data-type suitable as input to a CPUI_PTRSUB op
   virtual Datatype *getStripped(void) const;		///< Get a stripped version of \b this for formal use in formal declarations
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);	///< Tailor data-type propagation based on Varnode use
@@ -170,7 +198,7 @@ public:
   virtual int4 findCompatibleResolve(Datatype *ct) const;	///< Find a resolution compatible with the given data-type
   int4 typeOrder(const Datatype &op) const { if (this==&op) return 0; return compare(op,10); }	///< Order this with -op- datatype
   int4 typeOrderBool(const Datatype &op) const;	///< Order \b this with -op-, treating \e bool data-type as special
-  void saveXmlRef(ostream &s) const;	///< Write an XML reference of \b this to stream
+  void encodeRef(Encoder &encoder) const;	///< Encode a reference of \b this to a stream
   static uint4 encodeIntegerFormat(const string &val);
   static string decodeIntegerFormat(uint4 val);
 };
@@ -182,10 +210,10 @@ public:
   int4 offset;			///< Offset (into containing structure or union) of subfield
   string name;			///< Name of subfield
   Datatype *type;		///< Data-type of subfield
-  TypeField(const Element *el,TypeFactory &typegrp);	///< Restore \b this field from an XML stream
+  TypeField(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this field from a stream
   TypeField(int4 id,int4 off,const string &nm,Datatype *ct) { ident=id; offset=off; name=nm; type=ct; }	///< Construct from components
   bool operator<(const TypeField &op2) const { return (offset < op2.offset); }	///< Compare based on offset
-  void saveXml(ostream &s) const;			///< Save \b this field as XML
+  void encode(Encoder &encoder) const;			///< Encode \b this field to a stream
 };
 
 /// Compare two Datatype pointers for equivalence of their description
@@ -234,14 +262,14 @@ public:
 class TypeChar : public TypeBase {
 protected:
   friend class TypeFactory;
-  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this char data-type from an XML element
+  void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this char data-type from a stream
 public:
   /// Construct TypeChar copying properties from another data-type
   TypeChar(const TypeChar &op) : TypeBase(op) { flags |= Datatype::chartype; }
   /// Construct a char (always 1-byte) given a name
   TypeChar(const string &n) : TypeBase(1,TYPE_INT,n) { flags |= Datatype::chartype; submeta = SUB_INT_CHAR; }
   virtual Datatype *clone(void) const { return new TypeChar(*this); }
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
 
 /// \brief The unicode data-type: i.e. wchar
@@ -251,13 +279,13 @@ class TypeUnicode : public TypeBase { // Unicode character type
   void setflags(void);	///< Set unicode property flags
 protected:
   friend class TypeFactory;
-  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this unicode data-type from an XML element
+  void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this unicode data-type from a stream
 public:
-  TypeUnicode(void) : TypeBase(0,TYPE_INT) {} ///< For use with restoreXml
+  TypeUnicode(void) : TypeBase(0,TYPE_INT) {} ///< For use with decode
   TypeUnicode(const TypeUnicode &op) : TypeBase(op) {}	///< Construct from another TypeUnicode
   TypeUnicode(const string &nm,int4 sz,type_metatype m);	///< Construct given name,size, meta-type
   virtual Datatype *clone(void) const { return new TypeUnicode(*this); }
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
 
 /// \brief Formal "void" data-type object.
@@ -273,7 +301,7 @@ public:
   /// Constructor
   TypeVoid(void) : Datatype(0,TYPE_VOID) { name = "void"; flags |= Datatype::coretype; }
   virtual Datatype *clone(void) const { return new TypeVoid(*this); }
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
 
 /// \brief Datatype object representing a pointer
@@ -283,9 +311,9 @@ protected:
   Datatype *ptrto;		///< Type being pointed to
   AddrSpace *spaceid;		///< If non-null, the address space \b this is intented to point into
   uint4 wordsize;               ///< What size unit does the pointer address
-  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this pointer data-type from an XML element
+  void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this pointer data-type from a stream
   void calcSubmeta(void);	///< Calculate specific submeta for \b this pointer
-  /// Internal constructor for use with restoreXml
+  /// Internal constructor for use with decode
   TypePointer(void) : Datatype(0,TYPE_PTR) { ptrto = (Datatype *)0; wordsize=1; spaceid=(AddrSpace *)0; }
 public:
   /// Construct from another TypePointer
@@ -306,7 +334,7 @@ public:
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePointer(*this); }
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
   virtual TypePointer *downChain(uintb &off,TypePointer *&par,uintb &parOff,bool allowArrayWrap,TypeFactory &typegrp);
   virtual bool isPtrsubMatching(uintb off) const;
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
@@ -319,8 +347,8 @@ protected:
   friend class TypeFactory;
   Datatype *arrayof;		///< type of which we have an array
   int4 arraysize;		///< Number of elements in the array
-  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this array from an XML element
-  /// Internal constructor for restoreXml
+  void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this array from a stream
+  /// Internal constructor for decode
   TypeArray(void) : Datatype(0,TYPE_ARRAY) { arraysize = 0; arrayof = (Datatype *)0; }
 public:
   /// Construct from another TypeArray
@@ -338,7 +366,7 @@ public:
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeArray(*this); }
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
@@ -354,7 +382,7 @@ protected:
   map<uintb,string> namemap;	///< Map from integer to name
   vector<uintb> masklist;	///< Masks for each bitfield within the enum
   void setNameMap(const map<uintb,string> &nmap);	///< Establish the value -> name map
-  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this enum data-type from an XML element
+  void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this enum data-type from a stream
 public:
   /// Construct from another TypeEnum
   TypeEnum(const TypeEnum &op);
@@ -370,7 +398,7 @@ public:
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypeEnum(*this); }
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
 
 /// \brief A composite Datatype object: A \b structure with component \b fields
@@ -381,7 +409,7 @@ protected:
   void setFields(const vector<TypeField> &fd);	///< Establish fields for \b this
   int4 getFieldIter(int4 off) const;		///< Get index into field list
   int4 getLowerBoundField(int4 off) const;	///< Get index of last field before or equal to given offset
-  void restoreFields(const Element *el,TypeFactory &typegrp);	///< Restore fields from XML description
+  void decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
   int4 scoreFill(PcodeOp *op,int4 slot) const;	///< Determine best type fit for given PcodeOp use
 public:
   TypeStruct(const TypeStruct &op);	///< Construct from another TypeStruct
@@ -397,7 +425,7 @@ public:
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeStruct(*this); }
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
@@ -413,7 +441,7 @@ protected:
   friend class TypeFactory;
   vector<TypeField> field;			///< The list of fields
   void setFields(const vector<TypeField> &fd);	///< Establish fields for \b this
-  void restoreFields(const Element *el,TypeFactory &typegrp);	///< Restore fields from XML description
+  void decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
 public:
   TypeUnion(const TypeUnion &op);	///< Construct from another TypeUnion
   TypeUnion(void) : Datatype(0,TYPE_UNION) { flags |= (type_incomplete | needs_resolution); }	///< Construct incomplete TypeUnion
@@ -424,7 +452,7 @@ public:
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeUnion(*this); }
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
@@ -442,8 +470,8 @@ protected:
   Datatype *parent;		///< Parent structure or array which \b this is pointing into
   int4 offset;			///< Byte offset within the parent where \b this points to
   void cacheStrippedType(TypeFactory &typegrp);
-  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this relative pointer data-type from an XML element
-  /// Internal constructor for restoreXml
+  void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this relative pointer data-type from a stream
+  /// Internal constructor for decode
   TypePointerRel(void) : TypePointer() { offset = 0; parent = (Datatype *)0; stripped = (TypePointer *)0; submeta = SUB_PTRREL; }
 public:
   /// Construct from another TypePointerRel
@@ -464,7 +492,7 @@ public:
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePointerRel(*this); }
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
   virtual TypePointer *downChain(uintb &off,TypePointer *&par,uintb &parOff,bool allowArrayWrap,TypeFactory &typegrp);
   virtual bool isPtrsubMatching(uintb off) const;
   virtual Datatype *getStripped(void) const { return stripped; }	///< Get the plain form of the pointer
@@ -486,8 +514,8 @@ protected:
 		    Datatype *outtype,const vector<Datatype *> &intypes,
 		    bool dotdotdot,Datatype *voidtype);	///< Establish a function pointer
   void setPrototype(TypeFactory *typegrp,const FuncProto *fp);	///< Set a particular function prototype on \b this
-  void restoreStub(const Element *el);		///< Restore stub of data-type without the full prototype
-  void restorePrototype(const Element *el,bool isConstructor,bool isDestructor,TypeFactory &typegrp);	///< Restore any prototype description
+  void decodeStub(Decoder &decoder);		///< Restore stub of data-type without the full prototype
+  void decodePrototype(Decoder &decoder,bool isConstructor,bool isDestructor,TypeFactory &typegrp);	///< Restore any prototype description
 public:
   TypeCode(const TypeCode &op);		///< Construct from another TypeCode
   TypeCode(void);			///< Construct an incomplete TypeCode
@@ -499,7 +527,7 @@ public:
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypeCode(*this); }
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
 
 /// \brief Special Datatype object used to describe pointers that index into the symbol table
@@ -512,7 +540,7 @@ class TypeSpacebase : public Datatype {
   AddrSpace *spaceid;		///< The address space we are treating as a structure
   Address localframe;		///< Address of function whose symbol table is indexed (or INVALID for "global")
   Architecture *glb;		///< Architecture for accessing symbol table
-  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this spacebase data-type from an XML element
+  void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this spacebase data-type from a stream
 public:
   /// Construct from another TypeSpacebase
   TypeSpacebase(const TypeSpacebase &op) : Datatype(op) {
@@ -529,7 +557,7 @@ public:
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeSpacebase(*this); }
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
 
 /// \brief Container class for all Datatype objects in an Architecture
@@ -549,11 +577,11 @@ class TypeFactory {
   void insert(Datatype *newtype);	///< Insert pointer into the cross-reference sets
   Datatype *findAdd(Datatype &ct);	///< Find data-type in this container or add it
   void orderRecurse(vector<Datatype *> &deporder,DatatypeSet &mark,Datatype *ct) const;	///< Write out dependency list
-  Datatype *restoreTypedef(const Element *el);		///< Restore a \<def> XML tag describing a typedef
-  Datatype *restoreStruct(const Element *el,bool forcecore);	///< Restore a \<type> XML tag describing a structure
-  Datatype *restoreUnion(const Element *el,bool forcecore);	///< Restore a \<type> XML tag describing a union
-  Datatype *restoreCode(const Element *el,bool isConstructor,bool isDestructor,bool forcecore);	///< Restore XML tag describing a code object
-  Datatype *restoreXmlTypeNoRef(const Element *el,bool forcecore);	///< Restore from an XML tag
+  Datatype *decodeTypedef(Decoder &decoder);		///< Restore a \<def> element describing a typedef
+  Datatype *decodeStruct(Decoder &decoder,bool forcecore);	///< Restore a \<type> element describing a structure
+  Datatype *decodeUnion(Decoder &decoder,bool forcecore);	///< Restore a \<type> element describing a union
+  Datatype *decodeCode(Decoder &decoder,bool isConstructor,bool isDestructor,bool forcecore);	///< Restore an element describing a code object
+  Datatype *decodeTypeNoRef(Decoder &decoder,bool forcecore);	///< Restore from a stream
   void clearCache(void);		///< Clear the common type cache
   TypeChar *getTypeChar(const string &n);	///< Create a default "char" type
   TypeUnicode *getTypeUnicode(const string &nm,int4 sz,type_metatype m);	///< Create a default "unicode" type
@@ -584,8 +612,8 @@ public:
 		      const vector<uintb> &vallist,
 		      const vector<bool> &assignlist,
 		      TypeEnum *te);		///< Set named values for an enumeration
-  Datatype *restoreXmlType(const Element *el);	///< Restore Datatype from XML
-  Datatype *restoreXmlTypeWithCodeFlags(const Element *el,bool isConstructor,bool isDestructor);
+  Datatype *decodeType(Decoder &decoder);	///< Restore Datatype from a stream
+  Datatype *decodeTypeWithCodeFlags(Decoder &decoder,bool isConstructor,bool isDestructor);
   TypeVoid *getTypeVoid(void);					///< Get the "void" data-type
   Datatype *getBaseNoChar(int4 s,type_metatype m);		///< Get atomic type excluding "char"
   Datatype *getBase(int4 s,type_metatype m);			///< Get atomic type
@@ -610,12 +638,12 @@ public:
   void destroyType(Datatype *ct);				///< Remove a data-type from \b this
   Datatype *concretize(Datatype *ct);				///< Convert given data-type to concrete form
   void dependentOrder(vector<Datatype *> &deporder) const;	///< Place all data-types in dependency order
-  void saveXml(ostream &s) const;			///< Save \b this container to stream
-  void saveXmlCoreTypes(ostream &s) const;		///< Save core types to stream
-  void restoreXml(const Element *el);			///< Restore \b this container from a stream
-  void restoreXmlCoreTypes(const Element *el);		///< Initialize basic type names
-  void parseDataOrganization(const Element *el);	///< Parse the \<data_organization> tag
-  void parseEnumConfig(const Element *el);		///< Parse the \<enum> tag
+  void encode(Encoder &encoder) const;			///< Encode \b this container to stream
+  void encodeCoreTypes(Encoder &encoder) const;		///< Encode core types to stream
+  void decode(Decoder &decoder);			///< Decode \b this from a \<typegrp> element
+  void decodeCoreTypes(Decoder &decoder);		///< Initialize basic data-types from a stream
+  void decodeDataOrganization(Decoder &decoder);	///< Parse a \<data_organization> element
+  void parseEnumConfig(Decoder &decoder);		///< Parse the \<enum> tag
   void setCoreType(const string &name,int4 size,type_metatype meta,bool chartp);	///< Create a core data-type
   void cacheCoreTypes(void);				///< Cache common types
 };

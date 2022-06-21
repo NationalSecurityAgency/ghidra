@@ -16,6 +16,21 @@
 #include "space.hh"
 #include "translate.hh"
 
+AttributeId ATTRIB_BASE = AttributeId("base",88);
+AttributeId ATTRIB_DEADCODEDELAY = AttributeId("deadcodedelay",89);
+AttributeId ATTRIB_DELAY = AttributeId("delay", 90);
+AttributeId ATTRIB_LOGICALSIZE = AttributeId("logicalsize",91);
+AttributeId ATTRIB_PHYSICAL = AttributeId("physical",92);
+AttributeId ATTRIB_PIECE1 = AttributeId("piece1",93);	// piece attributes must have sequential ids
+AttributeId ATTRIB_PIECE2 = AttributeId("piece2",94);
+AttributeId ATTRIB_PIECE3 = AttributeId("piece3",95);
+AttributeId ATTRIB_PIECE4 = AttributeId("piece4",96);
+AttributeId ATTRIB_PIECE5 = AttributeId("piece5",97);
+AttributeId ATTRIB_PIECE6 = AttributeId("piece6",98);
+AttributeId ATTRIB_PIECE7 = AttributeId("piece7",99);
+AttributeId ATTRIB_PIECE8 = AttributeId("piece8",100);
+AttributeId ATTRIB_PIECE9 = AttributeId("piece9",101);
+
 /// Calculate \e highest based on \e addressSize, and \e wordsize.
 /// This also calculates the default pointerLowerBound
 void AddrSpace::calcScaleMask(void)
@@ -111,58 +126,51 @@ void AddrSpace::truncateSpace(uint4 newsize)
   calcScaleMask();
 }
 
-/// Write the main XML attributes for an address within this space
+/// Write the main attributes for an address within \b this space.
 /// The caller provides only the \e offset, and this routine fills
 /// in other details pertaining to this particular space.
-/// \param s is the stream to write to
+/// \param encoder is the stream encoder
 /// \param offset is the offset of the address
-void AddrSpace::saveXmlAttributes(ostream &s,uintb offset) const
+void AddrSpace::encodeAttributes(Encoder &encoder,uintb offset) const
 
 {
-  a_v(s,"space",getName());	// Just append the proper attributes
-  s << ' ' << "offset=\"";
-  printOffset(s,offset);
-  s << "\"";
+  encoder.writeString(ATTRIB_SPACE,getName());
+  encoder.writeUnsignedInteger(ATTRIB_OFFSET, offset);
 }
 
-/// Write the main XML attributes of an address with this space
+/// Write the main attributes of an address with \b this space
 /// and a size. The caller provides the \e offset and \e size,
 /// and other details about this particular space are filled in.
-/// \param s is the stream to write to
+/// \param encoder is the stream encoder
 /// \param offset is the offset of the address
 /// \param size is the size of the memory location
-void AddrSpace::saveXmlAttributes(ostream &s,uintb offset,int4 size) const
+void AddrSpace::encodeAttributes(Encoder &encoder,uintb offset,int4 size) const
 
 {
-  a_v(s,"space",getName());	// Just append the proper attributes
-  s << ' ' << "offset=\"";
-  printOffset(s,offset);
-  s << "\"";
-  a_v_i(s,"size",size);
+  encoder.writeString(ATTRIB_SPACE, getName());
+  encoder.writeUnsignedInteger(ATTRIB_OFFSET, offset);
+  encoder.writeSignedInteger(ATTRIB_SIZE, size);
 }
 
-/// For an XML tag describing an address in this space, this routine
-/// recovers the offset and possibly the size described by the tag
-/// \param el is the XML address tag
+/// For an open element describing an address in \b this space, this routine
+/// recovers the offset and possibly the size described by the element
+/// \param decoder is the stream decoder
 /// \param size is a reference where the recovered size should be stored
 /// \return the recovered offset
-uintb AddrSpace::restoreXmlAttributes(const Element *el,uint4 &size) const
+uintb AddrSpace::decodeAttributes(Decoder &decoder,uint4 &size) const
 
 {
   uintb offset;
-  int4 num = el->getNumAttributes();
   bool foundoffset = false;
-  for(int4 i=0;i<num;++i) {
-    if (el->getAttributeName(i)=="offset") {
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_OFFSET) {
       foundoffset = true;
-      istringstream s1(el->getAttributeValue(i));
-      s1.unsetf(ios::dec | ios::hex | ios::oct);
-      s1 >> offset;
+      offset = decoder.readUnsignedInteger();
     }
-    else if (el->getAttributeName(i)=="size") {
-      istringstream s2(el->getAttributeValue(i));
-      s2.unsetf(ios::dec | ios::hex | ios::oct);
-      s2 >> size;
+    else if (attribId == ATTRIB_SIZE) {
+      size = decoder.readUnsignedInteger();
     }
   }
   if (!foundoffset)
@@ -281,7 +289,7 @@ uintb AddrSpace::read(const string &s,int4 &size) const
 }
 
 /// Write a tag fully describing the details of this space
-/// suitable for later recovery via restoreXml.
+/// suitable for later recovery via decode.
 /// \param s is the stream being written
 void AddrSpace::saveXml(ostream &s) const
 
@@ -291,56 +299,36 @@ void AddrSpace::saveXml(ostream &s) const
   s << "/>\n";
 }
 
-/// Walk a parsed XML tag and recover all the properties defining
+/// Walk attributes of the current element and recover all the properties defining
 /// this space.  The processor translator, \e trans, and the
 /// \e type must already be filled in.
-/// \param el is the parsed XML tag
-void AddrSpace::restoreXml(const Element *el)
+/// \param decoder is the stream decoder
+void AddrSpace::decodeBasicAttributes(Decoder &decoder)
 
 {
-  int4 numAttribs = el->getNumAttributes();
   deadcodedelay = -1;
-  for (int4 i=0; i < numAttribs; i++) {
-    string attrName = el->getAttributeName(i);
-    string attrValue = el->getAttributeValue(i);
-    
-    if (attrName == "name") {
-      name = attrValue;
+  for (;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_NAME) {
+      name = decoder.readString();
     }
-    if (attrName == "index")
-      {
-	istringstream s1(attrValue);
-	s1.unsetf(ios::dec | ios::hex | ios::oct);
-	s1 >> index;
-      }
-    if (attrName == "size")
-      {
-	istringstream s1(attrValue);
-	s1.unsetf(ios::dec | ios::hex | ios::oct);
-	s1 >> addressSize;
-      }
-    if (attrName == "wordsize")
-      {
-	istringstream s1(attrValue);
-	s1.unsetf(ios::dec | ios::hex | ios::oct);
-	s1 >> wordsize;
-      }
-    if (attrName == "bigendian") {
-      if (xml_readbool(attrValue))
+    if (attribId == ATTRIB_INDEX)
+      index = decoder.readSignedInteger();
+    else if (attribId == ATTRIB_SIZE)
+      addressSize = decoder.readUnsignedInteger();
+    else if (attribId == ATTRIB_WORDSIZE)
+      wordsize = decoder.readUnsignedInteger();
+    else if (attribId == ATTRIB_BIGENDIAN) {
+      if (decoder.readBool())
 	flags |= big_endian;
     }
-    if (attrName == "delay") {
-      istringstream s1(attrValue);
-      s1.unsetf(ios::dec | ios::hex | ios::oct);
-      s1 >> delay;
-    }
-    if (attrName == "deadcodedelay") {
-      istringstream s1(attrValue);
-      s1.unsetf(ios::dec | ios::hex | ios::oct);
-      s1 >> deadcodedelay;
-    }      
-    if (attrName == "physical") {
-      if (xml_readbool(attrValue))
+    else if (attribId == ATTRIB_DELAY)
+      delay = decoder.readSignedInteger();
+    else if (attribId == ATTRIB_DEADCODEDELAY)
+      deadcodedelay = decoder.readSignedInteger();
+    else if (attribId == ATTRIB_PHYSICAL) {
+      if (decoder.readBool())
 	flags |= hasphysical;
     }
     
@@ -348,6 +336,14 @@ void AddrSpace::restoreXml(const Element *el)
   if (deadcodedelay == -1)
     deadcodedelay = delay;	// If deadcodedelay attribute not present, set it to delay
   calcScaleMask();
+}
+
+void AddrSpace::decode(Decoder &decoder)
+
+{
+  uint4 elemId = decoder.openElement();		// Multiple tags: <space>, <space_other>, <space_unique>
+  decodeBasicAttributes(decoder);
+  decoder.closeElement(elemId);
 }
 
 const string ConstantSpace::NAME = "const";
@@ -384,11 +380,11 @@ void ConstantSpace::saveXml(ostream &s) const
 }
 
 /// As the ConstantSpace is never saved, it should never get
-/// restored either.
-void ConstantSpace::restoreXml(const Element *el)
+/// decoded either.
+void ConstantSpace::decode(Decoder &decoder)
 
 {
-  throw LowlevelError("Should never restore the constant space from XML");
+  throw LowlevelError("Should never decode the constant space");
 }
 
 const string OtherSpace::NAME = "OTHER";
@@ -475,87 +471,72 @@ JoinSpace::JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
   clearFlags(heritaged); // This space is never heritaged, but does dead-code analysis
 }
 
-/// Save a join address to the stream as XML.  This method in the interface only
-/// outputs XML attributes for a single tag, so we are forced to encode what should probably
-/// be recursive tags into an attribute
-/// \param s is the stream being written to
+/// Encode a \e join address to the stream.  This method in the interface only
+/// outputs attributes for a single element, so we are forced to encode what should probably
+/// be recursive elements into an attribute.
+/// \param encoder is the stream encoder
 /// \param offset is the offset within the address space to encode
-void JoinSpace::saveXmlAttributes(ostream &s,uintb offset) const
+void JoinSpace::encodeAttributes(Encoder &encoder,uintb offset) const
 
 {
+  static AttributeId *pieceArray[] = { &ATTRIB_PIECE1, &ATTRIB_PIECE2, &ATTRIB_PIECE3, &ATTRIB_PIECE4,
+	&ATTRIB_PIECE5, &ATTRIB_PIECE6, &ATTRIB_PIECE7, &ATTRIB_PIECE8, &ATTRIB_PIECE9 };
   JoinRecord *rec = getManager()->findJoin(offset); // Record must already exist
-  a_v(s,"space",getName());
+  encoder.writeString(ATTRIB_SPACE, getName());
   int4 num = rec->numPieces();
+  if (num >= 8)
+    throw LowlevelError("Cannot encode more than 8 pieces");
   for(int4 i=0;i<num;++i) {
     const VarnodeData &vdata( rec->getPiece(i) );
     ostringstream t;
-    t << " piece" << dec << (i+1) << "=\"";
+    AttributeId *attribId = pieceArray[i];
     t << vdata.space->getName() << ":0x";
-    t << hex << vdata.offset << ':' << dec << vdata.size << '\"';
-    s << t.str();
+    t << hex << vdata.offset << ':' << dec << vdata.size;
+    encoder.writeString(*attribId, t.str());
   }
   if (num == 1)
-    a_v_i(s,"logicalsize",rec->getUnified().size);
-
+    encoder.writeSignedInteger(ATTRIB_LOGICALSIZE, rec->getUnified().size);
 }
 
-/// Save a join address to the stream as XML.  This method in the interface only
-/// outputs XML attributes for a single tag, so we are forced to encode what should probably
-/// be recursive tags into an attribute
-/// \param s is the stream being written to
+/// Encode a \e join address to the stream.  This method in the interface only
+/// outputs attributes for a single element, so we are forced to encode what should probably
+/// be recursive elements into an attribute.
+/// \param encoder is the stream encoder
 /// \param offset is the offset within the address space to encode
 /// \param size is the size of the memory location being encoded
-void JoinSpace::saveXmlAttributes(ostream &s,uintb offset,int4 size) const
+void JoinSpace::encodeAttributes(Encoder &encoder,uintb offset,int4 size) const
 
 {
-  JoinRecord *rec = getManager()->findJoin(offset); // Record must already exist
-  a_v(s,"space",getName());
-  int4 num = rec->numPieces();
-  int4 count = 0;
-  for(int4 i=0;i<num;++i) {
-    const VarnodeData &vdata( rec->getPiece(i) );
-    ostringstream t;
-    t << " piece" << dec << (i+1) << "=\"";
-    t << vdata.space->getName() << ":0x";
-    t << hex << vdata.offset << ':' << dec << vdata.size << '\"';
-    count += vdata.size;
-    s << t.str();
-  }
-  if (num == 1)
-    a_v_i(s,"logicalsize",rec->getUnified().size);
-  if ((count != size)&&(num>1))
-    throw LowlevelError("size attribute in join tag does not match size of pieces");
+  encodeAttributes(encoder,offset);	// Ignore size
 }
 
-/// Restore a join address from an XML tag.  Pieces of the join are encoded as a sequence
-/// of tag attributes.  The Translate::findAddJoin method is used to construct a logical
+/// Parse a join address the current element.  Pieces of the join are encoded as a sequence
+/// of attributes.  The Translate::findAddJoin method is used to construct a logical
 /// address within the join space.
-/// \param el is the parsed XML element to extract the address from
+/// \param decoder is the stream decoder
 /// \param size is a reference to be filled in as the size encoded by the tag
 /// \return the offset of the final address encoded by the tag
-uintb JoinSpace::restoreXmlAttributes(const Element *el,uint4 &size) const
+uintb JoinSpace::decodeAttributes(Decoder &decoder,uint4 &size) const
 
 {
   vector<VarnodeData> pieces;
-  int4 numAttribs = el->getNumAttributes();
   uint4 sizesum = 0;
   uint4 logicalsize = 0;
-  for(int4 i=0;i<numAttribs;++i) {
-    string attrName = el->getAttributeName(i);
-    if (0!=attrName.compare(0,5,"piece")) {
-      if (attrName == "logicalsize") {
-	istringstream s3(el->getAttributeValue(i));
-	s3.unsetf(ios::dec | ios::hex | ios::oct);
-	s3 >> logicalsize;
-      }
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_LOGICALSIZE) {
+      logicalsize = decoder.readUnsignedInteger();
       continue;
     }
-    int4 pos = (int4)(attrName[5] - '1');
+    if (attribId < ATTRIB_PIECE1.getId() || attribId > ATTRIB_PIECE9.getId())
+      continue;
+    int4 pos = (int4)(attribId - ATTRIB_PIECE1.getId());
     while(pieces.size() <= pos)
       pieces.emplace_back();
     VarnodeData &vdat( pieces[pos] );
 
-    string attrVal = el->getAttributeValue(i);
+    string attrVal = decoder.readString();
     string::size_type offpos = attrVal.find(':');
     if (offpos == string::npos) {
       const Translate *tr = getTrans();
@@ -644,10 +625,10 @@ void JoinSpace::saveXml(ostream &s) const
   throw LowlevelError("Should never save join space to XML");
 }
 
-void JoinSpace::restoreXml(const Element *el)
+void JoinSpace::decode(Decoder &decoder)
 
 {
-  throw LowlevelError("Should never restore join space from XML");
+  throw LowlevelError("Should never decode join space");
 }
 
 /// \param m is the address space manager
@@ -669,18 +650,18 @@ void OverlaySpace::saveXml(ostream &s) const
   s << "/>\n";
 }
 
-void OverlaySpace::restoreXml(const Element *el)
+void OverlaySpace::decode(Decoder &decoder)
 
 {
-  name = el->getAttributeValue("name");
-  istringstream s1(el->getAttributeValue("index"));
-  s1.unsetf(ios::dec | ios::hex | ios::oct);
-  s1 >> index;
+  uint4 elemId = decoder.openElement(ELEM_SPACE_OVERLAY);
+  name = decoder.readString(ATTRIB_NAME);
+  index = decoder.readSignedInteger(ATTRIB_INDEX);
   
-  string basename = el->getAttributeValue("base");
+  string basename = decoder.readString(ATTRIB_BASE);
   baseSpace = getManager()->getSpaceByName(basename);
   if (baseSpace == (AddrSpace *)0)
     throw LowlevelError("Base space does not exist for overlay space: "+name);
+  decoder.closeElement(elemId);
   addressSize = baseSpace->getAddrSize();
   wordsize = baseSpace->getWordSize();
   delay = baseSpace->getDelay();
