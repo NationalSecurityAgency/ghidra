@@ -1277,7 +1277,7 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
 
   uint4 elemId = decoder.openElement(ELEM_COMPILER_SPEC);
   for(;;) {
-    uint subId = decoder.peekElement();
+    uint4 subId = decoder.peekElement();
     if (subId == 0) break;
     if (subId == ELEM_DEFAULT_PROTO)
       decodeDefaultProto(decoder);
