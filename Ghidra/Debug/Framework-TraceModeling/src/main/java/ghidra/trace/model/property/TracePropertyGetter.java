@@ -13,20 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.model.map;
+package ghidra.trace.model.property;
 
 import com.google.common.collect.Range;
 
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 
-public interface TracePropertyMap<T> {
-	Class<T> getValueClass();
+public interface TracePropertyGetter<T> {
+	/**
+	 * Get the class for values of the map
+	 * 
+	 * @return the value class
+	 */
+	Class<? extends T> getValueClass();
 
-	void set(Range<Long> lifespan, Address address, T value);
-
+	/**
+	 * Get the value at the given address-snap pair
+	 * 
+	 * @param snap the snap
+	 * @param address the address
+	 * @return the value
+	 */
 	T get(long snap, Address address);
 
+	/**
+	 * Get the union of address ranges for entries which intersect the given span
+	 * 
+	 * @param span the range of snaps
+	 * @return the address set
+	 */
 	AddressSetView getAddressSetView(Range<Long> span);
-
-	void clear(Range<Long> span, AddressRange range);
 }

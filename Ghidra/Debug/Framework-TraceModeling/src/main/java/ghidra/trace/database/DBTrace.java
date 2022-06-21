@@ -55,6 +55,7 @@ import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.property.TraceAddressPropertyManager;
 import ghidra.trace.util.TraceChangeManager;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.*;
@@ -456,8 +457,13 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		return baseAddressFactory;
 	}
 
+	@Override
+	public TraceAddressPropertyManager getAddressPropertyManager() {
+		return addressPropertyManager.getApiPropertyManager();
+	}
+
 	@Internal
-	public DBTraceAddressPropertyManager getAddressPropertyManager() {
+	public DBTraceAddressPropertyManager getInternalAddressPropertyManager() {
 		return addressPropertyManager;
 	}
 
