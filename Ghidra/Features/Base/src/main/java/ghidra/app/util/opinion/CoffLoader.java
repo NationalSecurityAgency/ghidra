@@ -23,9 +23,9 @@ import java.util.Map.Entry;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.coff.*;
-import ghidra.app.util.bin.format.coff.relocation.CoffRelocationHandler;
-import ghidra.app.util.bin.format.coff.relocation.CoffRelocationHandlerFactory;
+import ghidra.app.util.bin.format.coff.relocation.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.FileBytes;
@@ -128,7 +128,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 				// Only one of the CoffLoader/MSCoffLoader will survive this check
 				return loadSpecs;
 			}
-			String secondary = isCLI(header) ? "cli" : null;
+			String secondary = isCLI(header) ? "cli" : Integer.toString(header.getFlags() & 0xffff);
 			List<QueryResult> results =
 				QueryOpinionService.query(getName(), header.getMachineName(), secondary);
 			for (QueryResult result : results) {
@@ -645,6 +645,16 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 			MessageLog log, TaskMonitor monitor) {
 
 		CoffRelocationHandler handler = CoffRelocationHandlerFactory.getHandler(header);
+		if (handler == null) {
+			String msg = String.format("No COFF relocation handler for machine type 0x%x",
+				(Short) header.getMachine());
+			log.appendMsg(msg);
+			Msg.error(this, program.getName() + ": " + msg);
+		}
+
+		CoffRelocationContext relocationContext =
+			new CoffRelocationContext(program, header, symbolsMap);
+		int failureCount = 0;
 
 		for (CoffSectionHeader section : header.getSections()) {
 			if (monitor.isCancelled()) {
@@ -653,69 +663,123 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 
 			Address sectionStartAddr = sectionsMap.get(section);
 			if (sectionStartAddr == null) {
-				if (section.getRelocationCount() > 0) {
-					log.appendMsg("Unable to process relocations for " + section.getName() +
-						". No memory block was created.");
+				int relocCount = section.getRelocationCount();
+				if (relocCount > 0) {
+					failureCount += relocCount;
+					String msg = "Unable to process " + relocCount + " relocations for section " +
+						section.getName() + ". No memory block was created.";
+					log.appendMsg(msg);
+					Msg.error(this, program.getName() + ": " + msg);
 				}
 				continue;
 			}
 
+			relocationContext.resetContext(section);
+
+			Address failedAddr = null;
 			for (CoffRelocation relocation : section.getRelocations()) {
 				if (monitor.isCancelled()) {
 					break;
 				}
 
-				Address address = sectionStartAddr.add(relocation.getAddress()); // assuming it's always a byte-offset
+				// Sections are defined with physical address while relocations use virtual address.
+				// Must adjust relocation address to physical.
+				// NOTE: Relocation address offset assumed to always be a byte-offset
+				Address address =
+					sectionStartAddr.add(relocation.getAddress() - section.getVirtualAddress());
+				short relocationType = relocation.getType();
 
 				byte[] origBytes = new byte[0];
 
-				Symbol symbol =
-					symbolsMap.get(header.getSymbolAtIndex(relocation.getSymbolIndex()));
-
 				if (handler == null) {
-					handleRelocationError(program, log, address, String.format(
-						"No relocation handler for machine type 0x%x to process relocation at %s with type 0x%x",
-						header.getMachine(), address, relocation.getType()));
-				}
-				else if (symbol == null) {
-					handleRelocationError(program, log, address,
-						String.format("No symbol to process relocation at %s with type 0x%x",
-							address, relocation.getType()));
+					++failureCount;
+					handleRelocationError(program, address, relocationType,
+						"No COFF relocation handler", null);
 				}
 				else {
 					try {
 						origBytes = new byte[4];
-						program.getMemory().getBytes(address, origBytes);
-						handler.relocate(program, address, symbol, relocation);
+						if (address.equals(failedAddr)) {
+							// skip relocation if previous failed relocation was at the same address
+							// since it is likely dependent on the previous failed relocation result
+							++failureCount;
+
+							String logMessage =
+								String.format("Skipped dependent COFF Relocation type 0x%x at %s",
+									relocationType, address.toString());
+							Msg.error(this, program.getName() + ": " + logMessage);
+
+							// TODO: once RelocationTable can retain all relocations at the same address
+							// this continue statement should be removed (see GP-2128)
+							continue;
+						}
+						//else {
+							program.getMemory().getBytes(address, origBytes);
+							handler.relocate(address, relocation, relocationContext);
+							//}
 					}
 					catch (MemoryAccessException e) {
-						handleRelocationError(program, log, address, String.format(
-							"Error accessing memory at address %s.  Relocation failed.", address));
+						++failureCount;
+						failedAddr = address;
+						handleRelocationError(program, address, relocationType,
+							"Error accessing memory", null);
 					}
 					catch (NotFoundException e) {
-						handleRelocationError(program, log, address,
-							String.format("Relocation type 0x%x at address %s is not supported.",
-								relocation.getType(), address));
+						++failureCount;
+						failedAddr = address;
+						handleRelocationError(program, address, relocationType,
+							"Unsupported COFF relocation type", null);
 					}
-					catch (AddressOutOfBoundsException e) {
-						handleRelocationError(program, log, address,
-							String.format("Error computing relocation at address %s.", address));
+					catch (RelocationException e) {
+						++failureCount;
+						failedAddr = address;
+						handleRelocationError(program, address, relocationType, e.getMessage(),
+							null);
+					}
+					catch (Exception e) {
+						++failureCount;
+						failedAddr = address;
+						String msg = e.getMessage();
+						if (msg == null) {
+							msg = e.toString();
+						}
+						handleRelocationError(program, address, relocationType, msg, e);
 					}
 				}
 
+				// The relocation symbol may be null when either not required by a relocation or
+				// not found with symbol index
+				Symbol symbol =
+					symbolsMap.get(header.getSymbolAtIndex(relocation.getSymbolIndex()));
+
+				// TODO: There may be multiple relocations at the same address.  
+				// The RelocationTable for retaining relocations needs to be revised to handle
+				// this.  At present only the last one will remain in the DB-backed address-based 
+				// table. (see GP-2128)
 				program.getRelocationTable()
 						.add(address, relocation.getType(),
 							new long[] { relocation.getSymbolIndex() }, origBytes,
 							symbol != null ? symbol.getName() : "<null>");
 			}
 		}
+
+		if (failureCount != 0) {
+			String msg = "Failed to process a total of " + failureCount +
+				" relocations.  See log and error bookmarks for details.";
+			log.appendMsg(msg);
+			Msg.error(this, program.getName() + ": " + msg);
+		}
 	}
 
-	private void handleRelocationError(Program program, MessageLog log, Address address,
-			String message) {
+	private void handleRelocationError(Program program, Address address,
+			Short relocationType, String message, Exception causeToReport) {
+		String bookmarkMessage =
+			String.format("Failed to apply COFF Relocation type 0x%x: %s", relocationType, message);
 		program.getBookmarkManager()
-				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
-		log.appendMsg(message);
+				.setBookmark(address, BookmarkType.ERROR, "Relocations", bookmarkMessage);
+		String logMessage = String.format("Failed to apply COFF Relocation type 0x%x at %s: %s",
+			relocationType, address.toString(), message);
+		Msg.error(this, program.getName() + ": " + logMessage, causeToReport);
 	}
 
 	@Override
