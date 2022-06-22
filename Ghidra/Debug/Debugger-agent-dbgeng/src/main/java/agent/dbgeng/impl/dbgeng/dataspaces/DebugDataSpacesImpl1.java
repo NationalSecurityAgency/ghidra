@@ -268,4 +268,9 @@ public class DebugDataSpacesImpl1 implements DebugDataSpacesInternal {
 		return read;
 	}
 
+	@Override
+	public long virtualToPhysical(long offset) {
+		throw new UnsupportedOperationException("Not implemented in this interface");
+	}
+
 }

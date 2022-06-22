@@ -121,7 +121,11 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 			return "[kernel]";
 		}
 
-		String pidstr = Long.toString(process.getPid(), base);
+		Long pid = process.getPid();
+		if (pid < 0) {
+			return "[" + process.getId().id + "]";
+		}
+		String pidstr = Long.toString(pid, base);
 		if (base == 16) {
 			pidstr = "0x" + pidstr;
 		}

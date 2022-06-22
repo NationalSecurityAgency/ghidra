@@ -48,7 +48,9 @@ public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 		this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, 16), "Initialized");
 
 		getManager().addEventsListener(this);
-		requestElements(false);
+		if (!getModel().isSuppressDescent()) {
+			requestElements(false);
+		}
 	}
 
 	@Override

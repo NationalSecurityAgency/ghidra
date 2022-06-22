@@ -53,6 +53,10 @@ public interface DbgModelTargetProcess extends //
 	public void threadStateChangedSpecific(DbgThread thread, DbgState state);
 
 	public default DbgProcess getProcess() {
+		return getProcess(true);
+	}
+
+	public default DbgProcess getProcess(boolean fire) {
 		DbgManagerImpl manager = getManager();
 		DebugSystemObjects so = manager.getSystemObjects();
 		try {
@@ -62,7 +66,7 @@ public interface DbgModelTargetProcess extends //
 			if (id == null) {
 				id = so.getCurrentProcessId();
 			}
-			return manager.getProcessComputeIfAbsent(id, pid);
+			return manager.getProcessComputeIfAbsent(id, pid, fire);
 		}
 		catch (IllegalArgumentException e) {
 			return manager.getCurrentProcess();
