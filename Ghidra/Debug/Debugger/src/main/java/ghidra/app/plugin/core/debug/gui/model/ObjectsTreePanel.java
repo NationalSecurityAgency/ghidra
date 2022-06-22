@@ -27,7 +27,8 @@ import javax.swing.tree.TreePath;
 
 import com.google.common.collect.Range;
 
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeRenderer;
 import docking.widgets.tree.support.GTreeSelectionListener;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -92,17 +93,8 @@ public class ObjectsTreePanel extends JPanel {
 		return new ObjectTreeModel();
 	}
 
-	protected class KeepTreeState implements AutoCloseable {
-		private final GTreeState state;
-
-		public KeepTreeState() {
-			this.state = tree.getTreeState();
-		}
-
-		@Override
-		public void close() {
-			tree.restoreTreeState(state);
-		}
+	protected KeepTreeState keepTreeState() {
+		return new KeepTreeState(tree);
 	}
 
 	public void goToCoordinates(DebuggerCoordinates coords) {
@@ -112,7 +104,7 @@ public class ObjectsTreePanel extends JPanel {
 		}
 		DebuggerCoordinates previous = current;
 		this.current = coords;
-		try (KeepTreeState keep = new KeepTreeState()) {
+		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setDiffTrace(previous.getTrace());
 			treeModel.setTrace(current.getTrace());
 			treeModel.setDiffSnap(previous.getSnap());
@@ -129,7 +121,7 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.limitToSnap = limitToSnap;
-		try (KeepTreeState keep = new KeepTreeState()) {
+		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setSpan(limitToSnap ? Range.singleton(current.getSnap()) : Range.all());
 		}
 	}
@@ -143,7 +135,7 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showHidden = showHidden;
-		try (KeepTreeState keep = new KeepTreeState()) {
+		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowHidden(showHidden);
 		}
 	}
@@ -157,7 +149,7 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showPrimitives = showPrimitives;
-		try (KeepTreeState keep = new KeepTreeState()) {
+		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowPrimitives(showPrimitives);
 		}
 	}
@@ -171,7 +163,7 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showMethods = showMethods;
-		try (KeepTreeState keep = new KeepTreeState()) {
+		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowMethods(showMethods);
 		}
 	}
