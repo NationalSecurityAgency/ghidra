@@ -331,7 +331,6 @@ def initTestJVM(Task task, String rootDirName) {
 			'-Duser.country=US',
 			'-Duser.language=en',
 			'-Djdk.attach.allowAttachSelf',
-			'-noverify',
 			'-XX:TieredStopAtLevel=1',
 			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort,
 
