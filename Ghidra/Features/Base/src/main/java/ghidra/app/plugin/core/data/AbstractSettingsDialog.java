@@ -70,7 +70,8 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		this.settingsDefinitions = settingDefinitions;
 		settings = new SettingsImpl(originalSettings) {
 			public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
-				return originalSettings.isChangeAllowed(settingsDefinition);
+				return originalSettings == null ||
+					originalSettings.isChangeAllowed(settingsDefinition);
 			}
 		};
 		defaultSettings = settings.getDefaultSettings();
