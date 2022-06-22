@@ -291,7 +291,9 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		@Override
 		protected void childCreated(TraceObjectValue value) {
-			unloadChildren();
+			try (KeepTreeState keep = KeepTreeState.ifNotNull(getTree())) {
+				unloadChildren();
+			}
 		}
 	}
 
