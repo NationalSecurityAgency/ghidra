@@ -21,6 +21,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import javax.swing.JOptionPane;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -46,6 +48,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.CancelledException;
@@ -53,6 +56,12 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.XmlUtilities;
 
 public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProgramLaunchOffer {
+	private static final String HTML = "<html><p style='width:300px;'>";
+	private static final String NO_PAUSE_DIAGNOSTIC_MESSAGE = "" +
+		"It's possible the target launched but never paused, and so Ghidra has not been " +
+		"able to inspect it. Try interrupting the target, then inspect the process list. " +
+		"Further intervention may be required to establish the module/address mappings.";
+
 	protected final Program program;
 	protected final PluginTool tool;
 	protected final DebuggerModelFactory factory;
@@ -430,7 +439,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		return factory.build().thenApplyAsync(m -> {
 			service.addModel(m);
 			return m;
-		});
+		}, SwingExecutorService.LATER);
 	}
 
 	protected CompletableFuture<TargetLauncher> findLauncher(DebuggerObjectModel m) {
@@ -453,9 +462,37 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		return launcher.launch(args);
 	}
 
+	protected void checkCancelled(TaskMonitor monitor) {
+		if (monitor.isCancelled()) {
+			throw new CancellationException("User cancelled");
+		}
+	}
+
+	protected TargetLauncher onTimedOutFindLauncher(TaskMonitor monitor) {
+		checkCancelled(monitor);
+		monitor.setMessage("Timed out finding the launcher. Aborting.");
+		JOptionPane.showMessageDialog(null, HTML + "Timed out finding the launcher. " +
+			"This indicates an error in the implementation of the connector and/or the launcher " +
+			"opinion. Try again, and/or report the bug.",
+			getMenuParentTitle(), JOptionPane.ERROR_MESSAGE);
+		throw new CancellationException("Timed out");
+	}
+
+	protected Void onTimedOutLaunch(TaskMonitor monitor) {
+		checkCancelled(monitor);
+		monitor.setMessage("Timed out waiting for launch. Aborting.");
+		JOptionPane.showMessageDialog(null, HTML +
+			"Timed out waiting for launch. " + NO_PAUSE_DIAGNOSTIC_MESSAGE,
+			getMenuParentTitle(), JOptionPane.ERROR_MESSAGE);
+		throw new CancellationException("Timed out");
+	}
+
 	protected TargetObject onTimedOutTarget(TaskMonitor monitor) {
+		checkCancelled(monitor);
 		monitor.setMessage("Timed out waiting for target. Aborting.");
-		Msg.showError(this, null, getButtonTitle(), "Timed out waiting for target.");
+		JOptionPane.showMessageDialog(null, HTML +
+			"Timed out waiting for target. " + NO_PAUSE_DIAGNOSTIC_MESSAGE,
+			getMenuParentTitle(), JOptionPane.ERROR_MESSAGE);
 		throw new CancellationException("Timed out");
 	}
 
@@ -472,12 +509,27 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 
 	protected TraceRecorder onTimedOutRecorder(TaskMonitor monitor, DebuggerModelService service,
 			TargetObject target) {
+		checkCancelled(monitor);
 		monitor.setMessage("Timed out waiting for recording. Invoking the recorder.");
-		return service.recordTargetPromptOffers(target);
+		TraceRecorder recorder = service.recordTargetPromptOffers(target);
+		if (recorder == null) {
+			throw new CancellationException("User cancelled at record dialog");
+		}
+		DebuggerTraceManagerService traceManager =
+			tool.getService(DebuggerTraceManagerService.class);
+		if (traceManager != null) {
+			Trace trace = recorder.getTrace();
+			Swing.runLater(() -> {
+				traceManager.openTrace(trace);
+				traceManager.activateTrace(trace);
+			});
+		}
+		return recorder;
 	}
 
 	protected Void onTimedOutMapping(TaskMonitor monitor,
 			DebuggerStaticMappingService mappingService, TraceRecorder recorder) {
+		checkCancelled(monitor);
 		monitor.setMessage("Timed out waiting for module map. Invoking the mapper.");
 		Collection<ModuleMapEntry> mapped;
 		try {
@@ -503,41 +555,49 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		DebuggerModelService service = tool.getService(DebuggerModelService.class);
 		DebuggerStaticMappingService mappingService =
 			tool.getService(DebuggerStaticMappingService.class);
-		monitor.initialize(4);
+		monitor.initialize(6);
 		monitor.setMessage("Connecting");
 		var locals = new Object() {
 			CompletableFuture<TargetObject> futureTarget;
 		};
-		return connect(service, prompt).thenComposeAsync(m -> {
+		return connect(service, prompt).thenCompose(m -> {
+			checkCancelled(monitor);
 			monitor.incrementProgress(1);
 			monitor.setMessage("Finding Launcher");
-			return findLauncher(m);
-		}, SwingExecutorService.LATER).thenCompose(l -> {
+			return AsyncTimer.DEFAULT_TIMER.mark()
+					.timeOut(findLauncher(m), getTimeoutMillis(),
+						() -> onTimedOutFindLauncher(monitor));
+		}).thenCompose(l -> {
+			checkCancelled(monitor);
 			monitor.incrementProgress(1);
 			monitor.setMessage("Launching");
 			locals.futureTarget = listenForTarget(l.getModel());
-			return launch(l, prompt);
+			return AsyncTimer.DEFAULT_TIMER.mark()
+					.timeOut(launch(l, prompt), getTimeoutMillis(),
+						() -> onTimedOutLaunch(monitor));
 		}).thenCompose(__ -> {
+			checkCancelled(monitor);
 			monitor.incrementProgress(1);
 			monitor.setMessage("Waiting for target");
 			return AsyncTimer.DEFAULT_TIMER.mark()
 					.timeOut(locals.futureTarget, getTimeoutMillis(),
 						() -> onTimedOutTarget(monitor));
 		}).thenCompose(t -> {
+			checkCancelled(monitor);
 			monitor.incrementProgress(1);
 			monitor.setMessage("Waiting for recorder");
 			return AsyncTimer.DEFAULT_TIMER.mark()
 					.timeOut(waitRecorder(service, t), getTimeoutMillis(),
 						() -> onTimedOutRecorder(monitor, service, t));
 		}).thenCompose(r -> {
+			checkCancelled(monitor);
 			monitor.incrementProgress(1);
 			if (r == null) {
 				throw new CancellationException();
 			}
 			monitor.setMessage("Confirming program is mapped to target");
-			CompletableFuture<Void> futureMapped = listenForMapping(mappingService, r);
 			return AsyncTimer.DEFAULT_TIMER.mark()
-					.timeOut(futureMapped, getTimeoutMillis(),
+					.timeOut(listenForMapping(mappingService, r), getTimeoutMillis(),
 						() -> onTimedOutMapping(monitor, mappingService, r));
 		}).exceptionally(ex -> {
 			if (AsyncUtils.unwrapThrowable(ex) instanceof CancellationException) {
