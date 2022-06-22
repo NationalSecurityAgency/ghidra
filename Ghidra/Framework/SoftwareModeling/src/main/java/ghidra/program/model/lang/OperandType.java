@@ -467,9 +467,9 @@ public final class OperandType {
 			append(buf, "COP ");
 		}
 
-        if (isDynamic(operandType)) {
-            append(buf, "DYN ");
-        }
+		if (isDynamic(operandType)) {
+			append(buf, "DYN ");
+		}
 
 		return buf.toString();
 	}
