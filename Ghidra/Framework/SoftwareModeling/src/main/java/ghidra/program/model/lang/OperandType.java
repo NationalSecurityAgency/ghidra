@@ -341,7 +341,7 @@ public final class OperandType {
 		return (operandType & COP) != 0;
 	}
 	
-    /**
+	/**
 	 * check the DYNAMIC flag.
 	 * @param operandType the bit field to examine.
 	 *
