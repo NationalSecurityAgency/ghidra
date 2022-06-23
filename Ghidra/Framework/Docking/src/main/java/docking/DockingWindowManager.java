@@ -1890,7 +1890,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		/*
 		 	Note: Which window should be the parent of the dialog when the user does not specify?
-
+		
 		 	Some use cases; a dialog is shown from:
 		 		1) A toolbar action
 		 		2) A component provider's code
@@ -1898,7 +1898,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 		4) A background thread
 		 		5) The help window
 		 		6) A modal password dialog appears over the splash screen
-
+		
 		 	It seems like the parent should be the active window for 1-2.
 		 	Case 3 should probably use the window of the dialog provider.
 		 	Case 4 should probably use the main tool frame, since the user may be
@@ -1906,12 +1906,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 	active window, we can default to the tool's frame.
 		 	Case 5 should use the help window.
 		 	Case 6 should use the splash screen as the parent.
-
+		
 		 	We have not yet solidified how we should parent.  This documentation is meant to
 		 	move us towards clarity as we find Use Cases that don't make sense.  (Once we
 		 	finalize our understanding, we should update the javadoc to list exactly where
 		 	the given Dialog Component will be shown.)
-
+		
 		 	Use Case
 		 		A -The user presses an action on a toolbar from a window on screen 1, while the
 		 		   main tool frame is on screen 2.  We want the popup window to appear on screen
@@ -1930,12 +1930,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 		E -A long-running API shows a non-modal progress dialog.  This API then shows a
 		 		   results dialog which is also non-modal.  We do not want to parent the new dialog
 		 		   to the original dialog, since it is a progress dialog that will go away.
-
-
+		
+		
 		 	For now, the easiest mental model to use is to always prefer the active non-transient
 		 	window so that a dialog will appear in the user's view.  If we find a case where this is
 		 	not desired, then document it here.
-
+		
 		 */
 
 		DockingWindowManager dwm = getActiveInstance();
@@ -1996,6 +1996,9 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	private static boolean hasAnyParentableProvider(Window window) {
 		boolean hasAnyParentableProvider = false;
 		DockingWindowManager dwm = getInstanceForWindow(window);
+		if (dwm == null) {
+			return true; // the window is not affiliated with a window manager
+		}
 		WindowNode node = dwm.root.getNodeForWindow(window);
 		List<ComponentPlaceholder> placeholders = node.getActiveComponents();
 		for (ComponentPlaceholder placeholder : placeholders) {
