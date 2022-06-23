@@ -95,6 +95,19 @@ OP2: imm16      is addrMode=3; imm16
     export *:2 imm16;
 }
 
+# 2-byte EA operand for JMP/JSR
+OP2EA: imm8,X      is addrMode=2 & X; imm8
+{
+    local tmp:2 = X + imm8;
+    export tmp;
+}
+OP2EA: imm16    is addrMode=3; imm16
+{
+    local tmp:2 = imm16;
+    export tmp;
+}
+
+
 ################################################################
 # Macros
 ################################################################
@@ -511,9 +524,10 @@ macro PushEntireState()
     test(OP1);
 }
 
-:JMP OP2    is (op=0x6E | op=0x7E) ... & OP2
+:JMP OP2EA    is (op=0x6E | op=0x7E) ... & OP2EA
 {
-    goto OP2;
+    local target:2 = OP2EA;
+    goto [target];
 }
 
 :CLR^acc_4    is (op=0x4F | op=0x5F) & acc_4
@@ -884,11 +898,12 @@ macro PushEntireState()
     call REL;
 }
 
-:JSR OP2    is (op=0xAD | op=0xBD) ... & OP2
+:JSR OP2EA    is (op=0xAD | op=0xBD) ... & OP2EA
 {
     local addr:2 = inst_next;
     Push2(S, addr);
-    call OP2;
+    local target:2 = OP2EA;
+    call [target];
 }
 
 :LDS OP2    is (op=0x8E | op=0x9E | op=0xAE | op=0xBE) ... & OP2
