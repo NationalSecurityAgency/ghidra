@@ -80,7 +80,7 @@ public class TLSDataDirectory extends DataDirectory {
 					Address nextCallbackAddr = PointerDataType.getAddressValue(
 						new DumbMemBufferImpl(program.getMemory(), nextCallbackPtrAddr),
 						pointerDataType.getLength(), space);
-					if (nextCallbackAddr.getOffset() == 0) {
+					if (nextCallbackAddr == null || nextCallbackAddr.getOffset() == 0) {
 						break;
 					}
 					PeUtils.createData(program, nextCallbackPtrAddr, pointerDataType, log);
