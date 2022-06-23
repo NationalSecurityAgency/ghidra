@@ -56,9 +56,11 @@ public class DWARFProgram implements Closeable {
 	private static final String ELLIPSES_STR = "...";
 
 	/**
-	 * Returns true if the {@link Program program} probably has DWARF information.
+	 * Returns true if the {@link Program program} probably has DWARF information, without doing
+	 * all the work that querying all registered DWARFSectionProviders would take.
 	 * <p>
-	 * If the program is an Elf binary, it must have (at least) ".debug_info" and ".debug_abbr" program sections.
+	 * If the program is an Elf binary, it must have (at least) ".debug_info" and ".debug_abbr",
+	 * program sections, or their compressed "z" versions.
 	 * <p>
 	 * If the program is a MachO binary (ie. Mac), it must have a ".dSYM" directory co-located next to the
 	 * original binary file on the native filesystem.  (ie. outside of Ghidra).  See the DSymSectionProvider
@@ -73,12 +75,21 @@ public class DWARFProgram implements Closeable {
 		switch (format) {
 			case ElfLoader.ELF_NAME:
 			case PeLoader.PE_NAME:
-				return BaseSectionProvider.hasDWARFSections(program) ||
+				return hasExpectedDWARFSections(program) ||
 					ExternalDebugInfo.fromProgram(program) != null;
 			case MachoLoader.MACH_O_NAME:
 				return DSymSectionProvider.getDSYMForProgram(program) != null;
 		}
 		return false;
+	}
+
+	private static boolean hasExpectedDWARFSections(Program program) {
+		// the compressed section provider will find normally named sections as well
+		// as compressed sections
+		try (DWARFSectionProvider tmp =
+			new CompressedSectionProvider(new BaseSectionProvider(program))) {
+			return tmp.hasSection(DWARFSectionNames.MINIMAL_DWARF_SECTIONS);
+		}
 	}
 
 	/**
@@ -178,7 +189,7 @@ public class DWARFProgram implements Closeable {
 	public DWARFProgram(Program program, DWARFImportOptions importOptions, TaskMonitor monitor)
 			throws CancelledException, IOException, DWARFException {
 		this(program, importOptions, monitor,
-			DWARFSectionProviderFactory.createSectionProviderFor(program));
+			DWARFSectionProviderFactory.createSectionProviderFor(program, monitor));
 	}
 
 	/**
@@ -208,16 +219,16 @@ public class DWARFProgram implements Closeable {
 
 		monitor.setMessage("Reading DWARF debug string table");
 		this.debugStrings = StringTable.readStringTable(
-			sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_STR));
+			sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_STR, monitor));
 //		Msg.info(this, "Read DWARF debug string table, " + debugStrings.getByteCount() + " bytes.");
 
 		this.attributeFactory = new DWARFAttributeFactory(this);
 
-		this.debugLocation = getBinaryReaderFor(DWARFSectionNames.DEBUG_LOC);
-		this.debugInfoBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_INFO);
-		this.debugLineBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_LINE);
-		this.debugAbbrBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_ABBREV);
-		this.debugRanges = getBinaryReaderFor(DWARFSectionNames.DEBUG_RANGES);// sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_RANGES);
+		this.debugLocation = getBinaryReaderFor(DWARFSectionNames.DEBUG_LOC, monitor);
+		this.debugInfoBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_INFO, monitor);
+		this.debugLineBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_LINE, monitor);
+		this.debugAbbrBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_ABBREV, monitor);
+		this.debugRanges = getBinaryReaderFor(DWARFSectionNames.DEBUG_RANGES, monitor);
 
 		// if there are relocations (already handled by the ghidra loader) anywhere in the debuginfo or debugrange sections, then
 		// we don't need to manually fix up addresses extracted from DWARF data.
@@ -267,8 +278,9 @@ public class DWARFProgram implements Closeable {
 		return !program.getLanguage().isBigEndian();
 	}
 
-	private BinaryReader getBinaryReaderFor(String sectionName) throws IOException {
-		ByteProvider bp = sectionProvider.getSectionAsByteProvider(sectionName);
+	private BinaryReader getBinaryReaderFor(String sectionName, TaskMonitor monitor)
+			throws IOException {
+		ByteProvider bp = sectionProvider.getSectionAsByteProvider(sectionName, monitor);
 		return (bp != null) ? new BinaryReader(bp, !isBigEndian()) : null;
 	}
 
