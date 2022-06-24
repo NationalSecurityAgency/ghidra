@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import ghidra.app.util.*;
+import ghidra.app.util.MemoryBlockUtils;
+import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
@@ -52,24 +53,12 @@ import ghidra.util.task.TaskMonitor;
 public class DumpFileLoader extends AbstractLibrarySupportLoader {
 
 	/** The name of the dump file loader */
-	public final static String DF_NAME = "Dump File Loader";
-
-	public static final String CREATE_MEMORY_BLOCKS_OPTION_NAME = "Create Memory Blocks";
-	public static final String DEBUG_DATA_PATH_OPTION_NAME =
-		"Debug Data Path (e.g. /path/to/ntoskrnl.pdb)";
-	public static final String JOIN_BLOCKS_OPTION_NAME = "Join Blocks";
-	public static final String ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME =
-		"Analyze Embedded Executables (interactive)";
-	public static final boolean CREATE_MEMORY_BLOCKS_OPTION_DEFAULT = true;
-	public static final String DEBUG_DATA_PATH_OPTION_DEFAULT = "";
-	public static final boolean JOIN_BLOCKS_OPTION_DEFAULT = false;
-	public static final boolean ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT = false;  // must be off by default
+	public static final String DF_NAME = "Dump File Loader";
 	public static final String MEMORY = "Memory";
 
 	private AddressRangeObjectMap<String> rangeMap = new AddressRangeObjectMap<>();
 
 	private MessageLog log;
-	private boolean joinBlocks;
 
 	@Override
 	public String getName() {
@@ -131,8 +120,6 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 		int size = language.getDefaultSpace().getSize();
 		DumpFileReader reader = new DumpFileReader(provider, true, size);
 
-		joinBlocks = OptionUtils.getBooleanOptionValue(JOIN_BLOCKS_OPTION_NAME, options,
-			DumpFileLoader.JOIN_BLOCKS_OPTION_DEFAULT);
 		ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
 
 		DumpFile df = null;
@@ -209,7 +196,7 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 				}
 			}
 
-			if (joinBlocks) {
+			if (df.joinBlocksEnabled()) {
 				Set<Address> deleted = new HashSet<>();
 				count = 0;
 				monitor.setMessage("Joining blocks");
@@ -314,18 +301,30 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean isLoadIntoProgram) {
-		List<Option> list = new ArrayList<>();
-
-		list.add(new Option(CREATE_MEMORY_BLOCKS_OPTION_NAME, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-createMemoryBlocks"));
-		list.add(new Option(DEBUG_DATA_PATH_OPTION_NAME, DEBUG_DATA_PATH_OPTION_DEFAULT,
-			String.class, Loader.COMMAND_LINE_ARG_PREFIX + "-debugDataFilePath"));
-		list.add(new Option(JOIN_BLOCKS_OPTION_NAME, JOIN_BLOCKS_OPTION_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-joinBlocks"));
-		list.add(new Option(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
-			ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT));
-
-		return list;
+		List<Option> options = new ArrayList<>();
+		try {
+			int size = loadSpec.getLanguageCompilerSpec().getLanguage().getDefaultSpace().getSize();
+			DumpFileReader reader = new DumpFileReader(provider, true, size);
+			int signature = reader.readInt(0);
+			switch (signature) {
+				case Pagedump.SIGNATURE:
+					options.addAll(Pagedump.getDefaultOptions(reader));
+					break;
+				case Userdump.SIGNATURE:
+					options.addAll(Userdump.getDefaultOptions(reader));
+					break;
+				case Minidump.SIGNATURE:
+					options.addAll(Minidump.getDefaultOptions(reader));
+					break;
+				case Apport.SIGNATURE:
+					options.addAll(Apport.getDefaultOptions(reader));
+					break;
+			}
+		}
+		catch (IOException e) {
+			Msg.error(this, "Unexpected error", e);
+		}
+		return options;
 	}
 
 	@Override

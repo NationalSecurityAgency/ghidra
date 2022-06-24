@@ -16,8 +16,7 @@
 package ghidra.file.formats.dump.mdmp;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
@@ -50,8 +49,8 @@ public class Minidump extends DumpFile {
 		initManagerList(null);
 
 		createBlocks =
-			OptionUtils.getBooleanOptionValue(DumpFileLoader.CREATE_MEMORY_BLOCKS_OPTION_NAME,
-				options, DumpFileLoader.CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
+			OptionUtils.getBooleanOptionValue(CREATE_MEMORY_BLOCKS_OPTION_NAME,
+				options, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
 
 		try {
 			header = new MdmpFileHeader(reader, 0L);
@@ -438,11 +437,22 @@ public class Minidump extends DumpFile {
 	@Override
 	public void analyze(TaskMonitor monitor) {
 		boolean analyzeEmbeddedObjects =
-			OptionUtils.getBooleanOptionValue(DumpFileLoader.ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
+			OptionUtils.getBooleanOptionValue(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
 				options,
-				false);
+				ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT);
 		if (analyzeEmbeddedObjects) {
 			ModuleToPeHelper.queryModules(program, monitor);
 		}
+	}
+
+	/**
+	 * Get default <code>Minidump</code> loader options.
+	 * See {@link DumpFile#getDefaultOptions(DumpFileReader)}.
+	 * @param reader dump file reader
+	 * @return default collection of Minidump loader options
+	 */
+	public static Collection<? extends Option> getDefaultOptions(DumpFileReader reader) {
+		// Use DumpFile default options
+		return DumpFile.getDefaultOptions(reader);
 	}
 }

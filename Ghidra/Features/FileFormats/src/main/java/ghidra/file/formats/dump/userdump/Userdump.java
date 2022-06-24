@@ -16,6 +16,7 @@
 package ghidra.file.formats.dump.userdump;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 import ghidra.app.util.Option;
@@ -46,8 +47,8 @@ public class Userdump extends DumpFile {
 		initManagerList(null);
 
 		createBlocks =
-			OptionUtils.getBooleanOptionValue(DumpFileLoader.CREATE_MEMORY_BLOCKS_OPTION_NAME,
-				options, DumpFileLoader.CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
+			OptionUtils.getBooleanOptionValue(CREATE_MEMORY_BLOCKS_OPTION_NAME,
+				options, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
 
 		try {
 
@@ -164,11 +165,22 @@ public class Userdump extends DumpFile {
 
 	public void analyze(TaskMonitor monitor) {
 		boolean analyzeEmbeddedObjects =
-			OptionUtils.getBooleanOptionValue(DumpFileLoader.ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
+			OptionUtils.getBooleanOptionValue(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
 				options,
-				DumpFileLoader.ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT);
+				ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT);
 		if (analyzeEmbeddedObjects) {
 			ModuleToPeHelper.queryModules(program, monitor);
 		}
+	}
+
+	/**
+	 * Get default <code>Userdump</code> loader options.
+	 * See {@link DumpFile#getDefaultOptions(DumpFileReader)}.
+	 * @param reader dump file reader
+	 * @return default collection of Userdump loader options
+	 */
+	public static Collection<? extends Option> getDefaultOptions(DumpFileReader reader) {
+		// Use DumpFile default options
+		return DumpFile.getDefaultOptions(reader);
 	}
 }
