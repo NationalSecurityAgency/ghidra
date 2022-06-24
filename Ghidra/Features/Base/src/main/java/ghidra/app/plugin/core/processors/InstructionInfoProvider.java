@@ -236,7 +236,7 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 			if (column == 0) {
 				return "";
 			}
-			return "Operand-" + column;
+			return "Operand-" + (column - 1);
 		}
 
 		/**

@@ -18,9 +18,9 @@ package ghidra.app.plugin.core.debug.gui.watch;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -44,7 +44,6 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegisterActionContext;
 import ghidra.app.plugin.core.debug.gui.register.RegisterRow;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
@@ -60,7 +59,6 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeConflictException;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -86,9 +84,11 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	protected enum WatchTableColumns implements EnumeratedTableColumn<WatchTableColumns, WatchRow> {
 		EXPRESSION("Expression", String.class, WatchRow::getExpression, WatchRow::setExpression),
 		ADDRESS("Address", Address.class, WatchRow::getAddress),
-		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString, WatchRow::isValueEditable),
+		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString, //
+				WatchRow::isRawValueEditable),
 		TYPE("Type", DataType.class, WatchRow::getDataType, WatchRow::setDataType),
-		REPR("Repr", String.class, WatchRow::getValueString),
+		REPR("Repr", String.class, WatchRow::getValueString, WatchRow::setValueString, //
+				WatchRow::isValueEditable),
 		ERROR("Error", String.class, WatchRow::getErrorMessage);
 
 		private final String header;
@@ -252,6 +252,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	// TODO: Allow address marking
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager; // For goto time (emu mods)
+	@AutoServiceConsumed
+	protected DebuggerStateEditingService editingService;
 	@AutoServiceConsumed
 	private DebuggerStaticMappingService mappingService; // For listing action
 	@SuppressWarnings("unused")
@@ -524,7 +526,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 					listing.clearCodeUnits(row.getAddress(), row.getRange().getMaxAddress(), false);
 					listing.createData(address, dataType, size);
 				}
-				catch (CodeUnitInsertionException | DataTypeConflictException e) {
+				catch (CodeUnitInsertionException e) {
 					errs.add(address + " " + dataType + "(" + size + "): " + e.getMessage());
 				}
 			}
@@ -576,10 +578,21 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	}
 
 	private ProgramLocation getDynamicLocation(ProgramLocation someLoc) {
-		if (someLoc.getProgram() instanceof TraceProgramView) {
+		if (someLoc == null) {
+			return null;
+		}
+		TraceProgramView view = current.getView();
+		if (view == null) {
+			return null;
+		}
+		Program program = someLoc.getProgram();
+		if (program == null) {
+			return null;
+		}
+		if (program instanceof TraceProgramView) {
 			return someLoc;
 		}
-		return mappingService.getDynamicLocationFromStatic(current.getView(), someLoc);
+		return mappingService.getDynamicLocationFromStatic(view, someLoc);
 	}
 
 	private AddressSetView getDynamicAddresses(Program program, AddressSetView set) {
@@ -589,21 +602,14 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 		if (set == null) {
 			return null;
 		}
-		AddressSet result = new AddressSet();
-		for (Entry<TraceSpan, Collection<MappedAddressRange>> ent : mappingService
-				.getOpenMappedViews(program, set)
-				.entrySet()) {
-			if (ent.getKey().getTrace() != current.getTrace()) {
-				continue;
-			}
-			if (!ent.getKey().getSpan().contains(current.getSnap())) {
-				continue;
-			}
-			for (MappedAddressRange rng : ent.getValue()) {
-				result.add(rng.getDestinationAddressRange());
-			}
-		}
-		return result;
+		return mappingService.getOpenMappedViews(program, set)
+				.entrySet()
+				.stream()
+				.filter(e -> e.getKey().getTrace() == current.getTrace())
+				.filter(e -> e.getKey().getSpan().contains(current.getSnap()))
+				.flatMap(e -> e.getValue().stream())
+				.map(r -> r.getDestinationAddressRange())
+				.collect(AddressCollectors.toAddressSet());
 	}
 
 	private boolean hasDynamicLocation(ProgramLocationActionContext context) {

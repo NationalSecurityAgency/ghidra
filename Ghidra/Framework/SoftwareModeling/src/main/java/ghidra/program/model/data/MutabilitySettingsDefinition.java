@@ -63,6 +63,11 @@ public class MutabilitySettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	@Override
+	public String getValueString(Settings settings) {
+		return choices[getChoice(settings)];
+	}
+
+	@Override
 	public void setChoice(Settings settings, int value) {
 		if (value < 0 || value > CONSTANT) {
 			settings.clearSetting(MUTABILITY);
@@ -80,6 +85,11 @@ public class MutabilitySettingsDefinition implements EnumSettingsDefinition {
 	@Override
 	public String getName() {
 		return "Mutability";
+	}
+
+	@Override
+	public String getStorageKey() {
+		return MUTABILITY;
 	}
 
 	@Override

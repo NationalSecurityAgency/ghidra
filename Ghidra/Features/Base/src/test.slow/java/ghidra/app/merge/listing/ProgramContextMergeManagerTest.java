@@ -15,8 +15,7 @@
  */
 package ghidra.app.merge.listing;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.Window;
 import java.math.BigInteger;
@@ -1165,7 +1164,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 	 */
 	@Override
 	public Address addr(String address) {
-		return mtf.getResultProgram().getAddressFactory().getAddress(address);
+		return mtf.getOriginalProgram().getAddressFactory().getAddress(address);
 	}
 
 	private void setRegValue(ProgramContext pc, Address start, Address end, Register reg,

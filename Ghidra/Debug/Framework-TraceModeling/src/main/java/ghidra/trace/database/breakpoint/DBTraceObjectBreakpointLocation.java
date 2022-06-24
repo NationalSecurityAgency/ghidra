@@ -81,6 +81,7 @@ public class DBTraceObjectBreakpointLocation
 
 	// Keep copies here for when the object gets invalidated
 	private AddressRange range;
+	private Range<Long> lifespan;
 
 	public DBTraceObjectBreakpointLocation(DBTraceObject object) {
 		this.object = object;
@@ -99,28 +100,42 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
+	public void setName(Range<Long> lifespan, String name) {
+		object.setValue(lifespan, TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
+	}
+
+	@Override
 	public void setName(String name) {
-		object.setValue(getLifespan(), TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setName(getLifespan(), name);
+		}
 	}
 
 	@Override
 	public String getName() {
-		return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
-			TargetObject.DISPLAY_ATTRIBUTE_NAME, String.class, "");
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
+				TargetObject.DISPLAY_ATTRIBUTE_NAME, String.class, "");
+		}
 	}
 
 	@Override
-	public void setRange(AddressRange range) {
+	public void setRange(Range<Long> lifespan, AddressRange range) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), KEY_RANGE, range);
+			object.setValue(lifespan, KEY_RANGE, range);
 			this.range = range;
 		}
 	}
 
 	@Override
 	public AddressRange getRange() {
-		return range = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(), KEY_RANGE,
-			AddressRange.class, range);
+		try (LockHold hold = object.getTrace().lockRead()) {
+			if (object.getLife().isEmpty()) {
+				return range;
+			}
+			return range = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(), KEY_RANGE,
+				AddressRange.class, range);
+		}
 	}
 
 	@Override
@@ -146,17 +161,33 @@ public class DBTraceObjectBreakpointLocation
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			TraceObjectInterfaceUtils.setLifespan(TraceObjectBreakpointLocation.class, object,
 				lifespan);
+			this.lifespan = lifespan;
 		}
 	}
 
 	@Override
 	public Range<Long> getLifespan() {
-		return object.getLifespan();
+		try (LockHold hold = object.getTrace().lockRead()) {
+			Range<Long> computed = computeSpan();
+			if (computed != null) {
+				lifespan = computed;
+			}
+			return lifespan;
+		}
+	}
+
+	@Override
+	public Range<Long> computeSpan() {
+		Range<Long> span = TraceObjectBreakpointLocation.super.computeSpan();
+		if (span != null) {
+			return span;
+		}
+		return getSpecification().computeSpan();
 	}
 
 	@Override
 	public long getPlacedSnap() {
-		return object.getMinSnap();
+		return DBTraceUtils.lowerEndpoint(getLifespan());
 	}
 
 	@Override
@@ -168,7 +199,7 @@ public class DBTraceObjectBreakpointLocation
 
 	@Override
 	public long getClearedSnap() {
-		return object.getMaxSnap();
+		return DBTraceUtils.upperEndpoint(getLifespan());
 	}
 
 	@Override
@@ -184,9 +215,14 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
+	public void setEnabled(Range<Long> lifespan, boolean enabled) {
+		object.setValue(lifespan, TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME, enabled);
+	}
+
+	@Override
 	public void setEnabled(boolean enabled) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME, enabled);
+			setEnabled(getLifespan(), enabled);
 		}
 	}
 
@@ -203,13 +239,20 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setKinds(Collection<TraceBreakpointKind> kinds) {
+	public void setKinds(Range<Long> lifespan, Collection<TraceBreakpointKind> kinds) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			TraceObjectBreakpointSpec spec = getSpecification();
 			if (spec.getObject() != this.getObject()) {
 				throw new UnsupportedOperationException("Set via the specification instead");
 			}
-			spec.setKinds(kinds);
+			spec.setKinds(lifespan, kinds);
+		}
+	}
+
+	@Override
+	public void setKinds(Collection<TraceBreakpointKind> kinds) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setKinds(getLifespan(), kinds);
 		}
 	}
 
@@ -234,8 +277,8 @@ public class DBTraceObjectBreakpointLocation
 			}
 
 			PathMatcher procMatcher = schema.searchFor(TargetProcess.class, false);
-			return object.getAncestors(getLifespan(), procMatcher)
-					.flatMap(proc -> proc.getFirstParent(object)
+			return object.getAncestorsRoot(getLifespan(), procMatcher)
+					.flatMap(proc -> proc.getSource(object)
 							.querySuccessorsInterface(getLifespan(),
 								TraceObjectThread.class))
 					.collect(Collectors.toSet());
@@ -243,9 +286,14 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
+	public void setComment(Range<Long> lifespan, String comment) {
+		object.setValue(lifespan, KEY_COMMENT, comment);
+	}
+
+	@Override
 	public void setComment(String comment) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), KEY_COMMENT, comment);
+			setComment(getLifespan(), comment);
 		}
 	}
 
@@ -257,7 +305,9 @@ public class DBTraceObjectBreakpointLocation
 
 	@Override
 	public void delete() {
-		object.deleteTree();
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(computeSpan());
+		}
 	}
 
 	@Override
@@ -268,14 +318,14 @@ public class DBTraceObjectBreakpointLocation
 	@Override
 	public TraceObjectBreakpointSpec getSpecification() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return object.queryAncestorsInterface(getLifespan(), TraceObjectBreakpointSpec.class)
+			return object.queryCanonicalAncestorsInterface(TraceObjectBreakpointSpec.class)
 					.findAny()
 					.orElseThrow();
 		}
 	}
 
 	public TraceAddressSpace getTraceAddressSpace() {
-		return spaceForValue(object.getMinSnap(), KEY_RANGE);
+		return spaceForValue(computeMinSnap(), KEY_RANGE);
 	}
 
 	@Override

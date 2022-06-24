@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -527,7 +527,10 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	@Override
-	public void programSelectionChanged(ProgramSelection selection) {
+	public void programSelectionChanged(ProgramSelection selection, EventTrigger trigger) {
+		if (trigger != EventTrigger.GUI_ACTION) {
+			return;
+		}
 		doSetSelection(selection);
 	}
 
@@ -757,7 +760,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	public void clearPanel() {
 		if (otherPanel != null) {
 			removeHoverServices(otherPanel);
-			programSelectionChanged(new ProgramSelection());
+			programSelectionChanged(new ProgramSelection(), EventTrigger.GUI_ACTION);
 			FieldPanel fp = listingPanel.getFieldPanel();
 			FieldLocation loc = fp.getCursorLocation();
 			ViewerPosition vp = fp.getViewerPosition();

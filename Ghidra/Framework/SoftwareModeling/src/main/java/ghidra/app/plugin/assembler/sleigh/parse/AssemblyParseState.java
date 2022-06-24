@@ -17,25 +17,26 @@ package ghidra.app.plugin.assembler.sleigh.parse;
 
 import java.util.*;
 
-import org.apache.commons.collections4.set.AbstractSetDecorator;
-
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
-import ghidra.app.plugin.assembler.sleigh.util.SleighUtil;
+import ghidra.app.plugin.assembler.sleigh.util.AsmUtil;
 
 /**
  * A state in an LR(0) parsing machine
  * 
- * Each item consists of a kernel and an implied closure. Only the kernel is necessary to define
- * the item, but the whole closure must be considered when deriving new states.
+ * <p>
+ * Each item consists of a kernel and an implied closure. Only the kernel is necessary to define the
+ * item, but the whole closure must be considered when deriving new states. The kernel can be
+ * retrieved and mutated via {@link #getKernel()}, then the closure derived from it via
+ * {@link #getClosure()}.
  */
-public class AssemblyParseState extends AbstractSetDecorator<AssemblyParseStateItem>
-		implements Comparable<AssemblyParseState> {
+public class AssemblyParseState implements Comparable<AssemblyParseState> {
 	private final AssemblyGrammar grammar;
 	private final Set<AssemblyParseStateItem> kernel = new LinkedHashSet<>();
 	private Set<AssemblyParseStateItem> closure;
 
 	/**
 	 * Construct a new state associated with the given grammar
+	 * 
 	 * @param grammar the grammar
 	 */
 	public AssemblyParseState(AssemblyGrammar grammar) {
@@ -44,6 +45,7 @@ public class AssemblyParseState extends AbstractSetDecorator<AssemblyParseStateI
 
 	/**
 	 * Construct a new state associated with the given grammar, seeded with the given item
+	 * 
 	 * @param grammar the grammar
 	 * @param item an item in the state
 	 */
@@ -52,13 +54,18 @@ public class AssemblyParseState extends AbstractSetDecorator<AssemblyParseStateI
 		kernel.add(item);
 	}
 
-	@Override
-	protected Set<AssemblyParseStateItem> decorated() {
+	/**
+	 * Get the (mutable) kernel for this state
+	 * 
+	 * @return the kernel
+	 */
+	public Set<AssemblyParseStateItem> getKernel() {
 		return kernel;
 	}
 
 	/**
 	 * Get the closure of this item, caching the result
+	 * 
 	 * @return the closure
 	 */
 	public Set<AssemblyParseStateItem> getClosure() {
@@ -93,7 +100,7 @@ public class AssemblyParseState extends AbstractSetDecorator<AssemblyParseStateI
 			return result;
 		}
 		// This only works because TreeSet presents the items in order
-		result = SleighUtil.compareInOrder(this.kernel, that.kernel);
+		result = AsmUtil.compareInOrder(this.kernel, that.kernel);
 		if (result != 0) {
 			return result;
 		}

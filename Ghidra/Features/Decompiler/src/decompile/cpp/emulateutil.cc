@@ -66,7 +66,7 @@ void EmulatePcodeOp::executeLoad(void)
 {
   // op will be null, use current_op
   uintb off = getVarnodeValue(currentOp->getIn(1));
-  AddrSpace *spc = Address::getSpaceFromConst(currentOp->getIn(0)->getAddr());
+  AddrSpace *spc = currentOp->getIn(0)->getSpaceFromConst();
   off = AddrSpace::addressToByte(off,spc->getWordSize());
   int4 sz = currentOp->getOut()->getSize();
   uintb res = getLoadImageValue(spc,off,sz);
@@ -79,7 +79,7 @@ void EmulatePcodeOp::executeStore(void)
   // There is currently nowhere to store anything since the memstate is null
   //  uintb val = getVarnodeValue(current_op->getIn(2)); // Value being stored
   //  uintb off = getVarnodeValue(current_op->getIn(1));
-  //  AddrSpace *spc = Address::getSpaceFromConst(current_op->getIn(0)->getAddr());
+  //  AddrSpace *spc = current_op->getIn(0)->getSpaceFromConst();
 }
 
 bool EmulatePcodeOp::executeCbranch(void)
@@ -120,7 +120,7 @@ void EmulatePcodeOp::executeIndirect(void)
 void EmulatePcodeOp::executeSegmentOp(void)
 
 {
-  SegmentOp *segdef = glb->userops.getSegmentOp(Address::getSpaceFromConst(currentOp->getIn(0)->getAddr())->getIndex());
+  SegmentOp *segdef = glb->userops.getSegmentOp(currentOp->getIn(0)->getSpaceFromConst()->getIndex());
   if (segdef == (SegmentOp *)0)
     throw LowlevelError("Segment operand missing definition");
 
@@ -186,7 +186,7 @@ void EmulateSnippet::executeLoad(void)
 {
   // op will be null, use current_op
   uintb off = getVarnodeValue(currentOp->getInput(1));
-  AddrSpace *spc = Address::getSpaceFromConst(currentOp->getInput(0)->getAddr());
+  AddrSpace *spc = currentOp->getInput(0)->getSpaceFromConst();
   off = AddrSpace::addressToByte(off,spc->getWordSize());
   int4 sz = currentOp->getOutput()->size;
   uintb res = getLoadImageValue(spc,off,sz);

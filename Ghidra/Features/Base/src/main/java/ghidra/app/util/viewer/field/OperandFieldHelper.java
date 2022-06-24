@@ -57,7 +57,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 	private final static String SPACE_AFTER_SEPARATOR_OPTION =
 		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Add Space After Separator";
 
-	public static enum UNDERLINE_CHOICE {
+	public enum UNDERLINE_CHOICE {
 		Hidden, All, None
 	}
 
@@ -183,12 +183,6 @@ abstract class OperandFieldHelper extends FieldFactory {
 		return null;
 	}
 
-	/**
-	 * Returns the FactoryField for the given object at index index.
-	 *
-	 * @param obj           the object whose properties should be displayed.
-	 * @param varWidth      the amount of variable width spacing for any fields before this one.
-	 */
 	ListingField getField(Object obj, ProxyObj<?> proxy, int varWidth) {
 		if (!enabled) {
 			return null;
@@ -222,10 +216,10 @@ abstract class OperandFieldHelper extends FieldFactory {
 
 		ListingTextField btf = (ListingTextField) lf;
 		FieldElement fieldElement = btf.getFieldElement(row, col);
-
 		if (!(fieldElement instanceof OperandFieldElement)) {
 			return null;
 		}
+
 		OperandFieldElement element = (OperandFieldElement) fieldElement;
 		int opIndex = element.getOperandIndex();
 		int subOpIndex = element.getOperandSubIndex();
@@ -276,11 +270,10 @@ abstract class OperandFieldHelper extends FieldFactory {
 		else if (obj instanceof Data) {
 			Data data = (Data) obj;
 			Address refAddr = null;
-			Reference primaryReference =
-				data.getProgram()
-						.getReferenceManager()
-						.getPrimaryReferenceFrom(
-							data.getMinAddress(), 0);
+			Program program = data.getProgram();
+			ReferenceManager referenceManager = program.getReferenceManager();
+			Address minAddress = data.getMinAddress();
+			Reference primaryReference = referenceManager.getPrimaryReferenceFrom(minAddress, 0);
 			Object value = data.getValue();
 			if (primaryReference != null) {
 				refAddr = primaryReference.getToAddress();
@@ -291,20 +284,18 @@ abstract class OperandFieldHelper extends FieldFactory {
 				}
 			}
 
-			Program program = data.getProgram();
 			if (value instanceof Scalar) {
 				Scalar scalar = (Scalar) value;
-				Equate equate = program.getEquateTable()
-						.getEquate(data.getMinAddress(), opIndex,
-							scalar.getValue());
+				EquateTable equateTable = program.getEquateTable();
+				Equate equate = equateTable.getEquate(minAddress, opIndex, scalar.getValue());
 				if (equate != null) {
-					return new EquateOperandFieldLocation(program, data.getMinAddress(), refAddr,
+					return new EquateOperandFieldLocation(program, minAddress, refAddr,
 						equate.getDisplayName(), equate, opIndex, subOpIndex,
 						translatedLocation.col());
 				}
 			}
-			return new OperandFieldLocation(program, data.getMinAddress(), data.getComponentPath(),
-				refAddr, codeUnitFormat.getDataValueRepresentationString(data), 0, col);
+			return new OperandFieldLocation(program, minAddress, data.getComponentPath(), refAddr,
+				codeUnitFormat.getDataValueRepresentationString(data), 0, col);
 		}
 		return null;
 	}
@@ -477,9 +468,9 @@ abstract class OperandFieldHelper extends FieldFactory {
 
 	private int addElements(Instruction inst, List<OperandFieldElement> elements, List<?> objList,
 			int opIndex, int subOpIndex, boolean underline, int characterOffset) {
-		for (int i = 0; i < objList.size(); i++) {
-			characterOffset = addElement(inst, elements, objList.get(i), underline, opIndex,
-				subOpIndex, characterOffset);
+		for (Object element : objList) {
+			characterOffset = addElement(inst, elements, element, underline, opIndex, subOpIndex,
+				characterOffset);
 		}
 		return characterOffset;
 	}

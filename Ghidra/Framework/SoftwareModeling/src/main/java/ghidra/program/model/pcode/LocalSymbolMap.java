@@ -453,7 +453,14 @@ public class LocalSymbolMap {
 		if (id == 0) {
 			id = getNextId();
 		}
-		HighSymbol sym = new HighSymbol(id, nm, dt, func);
+		HighSymbol sym;
+		if (DynamicHash.getMethodFromHash(hash) > 3) {
+			int fieldNum = UnionFacetSymbol.extractFieldNumber(nm);
+			sym = new UnionFacetSymbol(id, nm, dt, fieldNum, func);
+		}
+		else {
+			sym = new HighSymbol(id, nm, dt, func);
+		}
 		DynamicEntry entry = new DynamicEntry(sym, pcaddr, hash);
 		sym.addMapEntry(entry);
 		insertSymbol(sym);

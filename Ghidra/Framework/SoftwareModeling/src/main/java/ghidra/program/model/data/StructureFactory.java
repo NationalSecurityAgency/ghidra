@@ -23,8 +23,8 @@ import ghidra.program.model.listing.*;
 
 /**
  * Creates and initializes {@link Structure} objects.
- * 
- * 
+ *
+ *
  */
 public class StructureFactory {
 	public static final String DEFAULT_STRUCTURE_NAME = "struct";
@@ -33,14 +33,14 @@ public class StructureFactory {
 	 * Creates a {@link StructureDataType} instance based upon the information
 	 * provided.  The instance will not be placed in memory.
 	 * <p>
-	 * This method is just a pass-through method for 
+	 * This method is just a pass-through method for
 	 * {@link #createStructureDataType(Program,Address,int,String,boolean)}
 	 * equivalent to calling:
 	 * <pre>
 	 *      Structure newStructure = StructureFactory.createStructureDataType(
 	 *          program, address, dataLength, DEFAULT_STRUCTURE_NAME, true );
 	 * </pre>
-	 * 
+	 *
 	 * @param  program The program to which the structure will belong.
 	 * @param  address The address of the structure.
 	 * @param  dataLength The number of components to add to the structure.
@@ -50,7 +50,7 @@ public class StructureFactory {
 	 *              <li>if <code>dataLength</code> is not greater than zero
 	 *              <li>if the number of components to add exceeds the available
 	 *                  address space
-	 *              <li>if there are any instructions in the provided 
+	 *              <li>if there are any instructions in the provided
 	 *                  address space
 	 *              <li>if there are no data components to add to the structure
 	 *         </ul>
@@ -63,7 +63,7 @@ public class StructureFactory {
 	/**
 	 * Creates a {@link StructureDataType} instance based upon the information
 	 * provided.  The instance will not be placed in memory.
-	 * 
+	 *
 	 * @param  program The program to which the structure will belong.
 	 * @param  address The address of the structure.
 	 * @param  dataLength The number of components to add to the structure.
@@ -77,7 +77,7 @@ public class StructureFactory {
 	 *              <li>if <code>dataLength</code> is not greater than zero
 	 *              <li>if the number of components to add exceeds the available
 	 *                  address space
-	 *              <li>if there are any instructions in the provided 
+	 *              <li>if there are any instructions in the provided
 	 *                  address space
 	 *              <li>if there are no data components to add to the structure
 	 *         </ul>
@@ -125,18 +125,18 @@ public class StructureFactory {
 	}
 
 	/**
-	 * Creates a {@link StructureDataType} instance, which is inside of 
-	 * another structure, based upon the information provided.  The instance 
+	 * Creates a {@link StructureDataType} instance, which is inside of
+	 * another structure, based upon the information provided.  The instance
 	 * will not be placed in memory.
 	 * <p>
-	 * This method is just a pass-through method for 
+	 * This method is just a pass-through method for
 	 * {@link #createStructureDataTypeInStrucuture(Program,Address,int[],int[],String,boolean)}
 	 * equivalent to calling:
 	 * <pre>
 	 *      Structure newStructure = StructureFactory.createStructureDataTypeInStrucuture(
 	 *          program, address, fromPath, toPath, DEFAULT_STRUCTURE_NAME, true );
 	 * </pre>
-	 * 
+	 *
 	 * @param  program The program to which the structure will belong.
 	 * @param  address The address of the structure.
 	 * @param  fromPath The path to the first element in the parent structure
@@ -160,10 +160,10 @@ public class StructureFactory {
 	}
 
 	/**
-	 * Creates a {@link StructureDataType} instance, which is inside of 
-	 * another structure, based upon the information provided.  The instance 
+	 * Creates a {@link StructureDataType} instance, which is inside of
+	 * another structure, based upon the information provided.  The instance
 	 * will not be placed in memory.
-	 * 
+	 *
 	 * @param  program The program to which the structure will belong.
 	 * @param  address The address of the structure.
 	 * @param  fromPath The path to the first element in the parent structure
@@ -227,7 +227,7 @@ public class StructureFactory {
 		return newStructure;
 	}
 
-	// uses the provided context to initiailze the provided structure with 
+	// uses the provided context to initialize the provided structure with
 	// dataLength number of components
 	private static void initializeStructureFromContext(Structure structure,
 			DataTypeProviderContext context, int dataLength) {
@@ -249,8 +249,8 @@ public class StructureFactory {
 		}
 
 		for (DataTypeComponent dataComp : dataComps) {
-			structure.add(dataComp.getDataType(), dataComp.getLength(),
-				dataComp.getFieldName(), dataComp.getComment());
+			structure.add(dataComp.getDataType(), dataComp.getLength(), dataComp.getFieldName(),
+				dataComp.getComment());
 		}
 	}
 }

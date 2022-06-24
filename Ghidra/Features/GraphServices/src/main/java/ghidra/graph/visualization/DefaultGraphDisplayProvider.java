@@ -15,8 +15,8 @@
  */
 package ghidra.graph.visualization;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import ghidra.framework.options.Options;
 import ghidra.framework.options.PreferenceState;
@@ -55,15 +55,33 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 	public GraphDisplay getGraphDisplay(boolean reuseGraph, TaskMonitor monitor) {
 
 		if (reuseGraph && !displays.isEmpty()) {
-			DefaultGraphDisplay visibleGraph = getVisibleGraph();
+			DefaultGraphDisplay visibleGraph = (DefaultGraphDisplay) getActiveGraphDisplay();
 			visibleGraph.restoreToDefaultSetOfActions();
 			return visibleGraph;
 		}
 
-		DefaultGraphDisplay display =
-			Swing.runNow(() -> new DefaultGraphDisplay(this, displayCounter++));
-		displays.add(display);
-		return display;
+		return Swing.runNow(() -> {
+			DefaultGraphDisplay display = new DefaultGraphDisplay(this, displayCounter++);
+			displays.add(display);
+			return display;
+		});
+	}
+
+	@Override
+	public GraphDisplay getActiveGraphDisplay() {
+		if (displays.isEmpty()) {
+			return null;
+		}
+		return getAllGraphDisplays().get(0);
+	}
+
+	@Override
+	public List<GraphDisplay> getAllGraphDisplays() {
+		return Swing.runNow(() -> {
+			return displays.stream()
+					.sorted((d1, d2) -> -(d1.getId() - d2.getId())) // largest/newest IDs come first
+					.collect(Collectors.toList());
+		});
 	}
 
 	@Override
@@ -76,20 +94,6 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 			pluginTool.getWindowManager().putPreferenceState(PREFERENCES_KEY, preferences);
 		}
 		defaultSatelliteState = preferences.getBoolean(DEFAULT_SATELLITE_STATE, false);
-	}
-
-	/**
-	 * Get a {@code GraphDisplay} that is 'showing', assuming that is the one the user
-	 * wishes to append to.
-	 * Called only when displays is not empty. If there are no 'showing' displays,
-	 * return one from the Set via its iterator
-	 * @return a display that is showing
-	 */
-	private DefaultGraphDisplay getVisibleGraph() {
-		return displays.stream()
-				.filter(d -> d.getComponent().isShowing())
-				.findAny()
-				.orElse(displays.iterator().next());
 	}
 
 	@Override

@@ -16,13 +16,12 @@
 package ghidra.trace.model.time.schedule;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.pcode.emu.PcodeMachine;
-import ghidra.pcode.emu.PcodeThread;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
@@ -122,7 +121,7 @@ public class Sequence implements Comparable<Sequence> {
 			return;
 		}
 		if (steps.isEmpty()) {
-			steps.add(step);
+			steps.add(step.clone());
 			return;
 		}
 		Step last = steps.get(steps.size() - 1);
@@ -155,6 +154,17 @@ public class Sequence implements Comparable<Sequence> {
 		}
 		advance(clone.get(1));
 		steps.addAll(clone.subList(2, size));
+	}
+
+	public void coalescePatches(Language language) {
+		if (steps.isEmpty()) {
+			return;
+		}
+		Step last = steps.get(steps.size() - 1);
+		long toRemove = last.coalescePatches(language, steps);
+		for (; toRemove > 0; toRemove--) {
+			steps.remove(steps.size() - 1);
+		}
 	}
 
 	/**
@@ -369,17 +379,17 @@ public class Sequence implements Comparable<Sequence> {
 	 * @param trace the trace to which the machine is bound
 	 * @param eventThread the thread for the first step, if it applies to the "last thread"
 	 * @param machine the machine to step, or null to validate the sequence
-	 * @param action the action to step each thread
+	 * @param stepper the actions to step each thread
 	 * @param monitor a monitor for cancellation and progress reports
 	 * @return the last trace thread stepped during execution
 	 * @throws CancelledException if execution is cancelled
 	 */
 	public <T> TraceThread execute(Trace trace, TraceThread eventThread, PcodeMachine<T> machine,
-			Consumer<PcodeThread<T>> action, TaskMonitor monitor) throws CancelledException {
+			Stepper<T> stepper, TaskMonitor monitor) throws CancelledException {
 		TraceThreadManager tm = trace.getThreadManager();
 		TraceThread thread = eventThread;
 		for (Step step : steps) {
-			thread = step.execute(tm, thread, machine, action, monitor);
+			thread = step.execute(tm, thread, machine, stepper, monitor);
 		}
 		return thread;
 	}

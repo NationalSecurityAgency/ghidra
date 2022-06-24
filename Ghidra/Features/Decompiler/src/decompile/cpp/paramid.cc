@@ -15,6 +15,10 @@
  */
 #include "paramid.hh"
 
+ElementId ELEM_PARAMMEASURES = ElementId("parammeasures",155);
+ElementId ELEM_PROTO = ElementId("proto",156);
+ElementId ELEM_RANK = ElementId("rank",157);
+
 // NOTES FROM 20121206 W/Decompiler-Man
 // direct reads is for all opcodes, with special for these:
 // BRANCH is direct read on input0.  No direct write.
@@ -152,19 +156,20 @@ void ParamMeasure::calculateRank(bool best,Varnode *basevn,PcodeOp *ignoreop)
     walkbackward(state, ignoreop, basevn);
 }
 
-void ParamMeasure::saveXml( ostream &s,string tag,bool moredetail ) const
+void ParamMeasure::encode( Encoder &encoder,ElementId &tag,bool moredetail ) const
 
 {
-  s << "<" + tag +">\n<addr";
-  vndata.space->saveXmlAttributes( s, vndata.offset, vndata.size );
-  s << "/>\n";
-  vntype->saveXml(s);
+  encoder.openElement(tag);
+  encoder.openElement(ELEM_ADDR);
+  vndata.space->encodeAttributes( encoder, vndata.offset, vndata.size );
+  encoder.closeElement(ELEM_ADDR);
+  vntype->encode(encoder);
   if( moredetail ) {
-    s << "<rank";
-    a_v_i(s,"val",rank);
-    s << "/>";
+    encoder.openElement(ELEM_RANK);
+    encoder.writeSignedInteger(ATTRIB_VAL, rank);
+    encoder.closeElement(ELEM_RANK);
   }
-  s << "</" + tag + ">\n";
+  encoder.closeElement(tag);
 }
 
 void ParamMeasure::savePretty( ostream &s,bool moredetail ) const
@@ -227,35 +232,31 @@ ParamIDAnalysis::ParamIDAnalysis( Funcdata *fd_in, bool justproto )
   }
 }
 
-void ParamIDAnalysis::saveXml( ostream &s,bool moredetail ) const
+void ParamIDAnalysis::encode( Encoder &encoder,bool moredetail ) const
 
 {
-  s << "<parammeasures";
-  a_v( s, "name", fd->getName() );
-  s << ">\n  ";
-  fd->getAddress().saveXml( s );
-  s << "\n  <proto";
+  encoder.openElement(ELEM_PARAMMEASURES);
+  encoder.writeString(ATTRIB_NAME, fd->getName());
+  fd->getAddress().encode( encoder );
+  encoder.openElement(ELEM_PROTO);
 
-  a_v(s,"model", fd->getFuncProto().getModelName());
+  encoder.writeString(ATTRIB_MODEL, fd->getFuncProto().getModelName());
   int4 extrapop = fd->getFuncProto().getExtraPop();
   if (extrapop == ProtoModel::extrapop_unknown)
-    a_v(s,"extrapop","unknown");
+    encoder.writeString(ATTRIB_EXTRAPOP, "unknown");
   else
-    a_v_i(s,"extrapop",extrapop);
-  s << "/>\n";
+    encoder.writeSignedInteger(ATTRIB_EXTRAPOP, extrapop);
+  encoder.closeElement(ELEM_PROTO);
   list<ParamMeasure>::const_iterator pm_iter;
   for( pm_iter = InputParamMeasures.begin(); pm_iter != InputParamMeasures.end(); ++pm_iter) {
     const ParamMeasure &pm( *pm_iter );
-    s << "  ";
-    pm.saveXml(s,"input",moredetail);
+    pm.encode(encoder,ELEM_INPUT,moredetail);
   }
   for( pm_iter = OutputParamMeasures.begin(); pm_iter != OutputParamMeasures.end() ; ++pm_iter) {
     const ParamMeasure &pm( *pm_iter );
-    s << "  ";
-    pm.saveXml( s, "output", moredetail );
+    pm.encode( encoder, ELEM_OUTPUT, moredetail );
   }
-  s << "</parammeasures>";
-  s << "\n";
+  encoder.closeElement(ELEM_PARAMMEASURES);
 }
 
 void ParamIDAnalysis::savePretty( ostream &s,bool moredetail ) const

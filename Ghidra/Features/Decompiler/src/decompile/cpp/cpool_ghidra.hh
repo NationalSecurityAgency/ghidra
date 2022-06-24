@@ -25,7 +25,7 @@
 ///
 /// The actual CPoolRecord objects are cached locally, but new queries are placed
 /// with the Ghidra client hosting the program currently being decompiled. The
-/// queries and response records are sent via XML.  The saveXml() and restoreXml()
+/// queries and response records are sent via XML.  The encode() and decode()
 /// methods are disabled.  The clear() method only releases the local cache,
 /// no records on the Ghidra client are affected.
 class ConstantPoolGhidra : public ConstantPool {
@@ -37,8 +37,8 @@ public:
   virtual const CPoolRecord *getRecord(const vector<uintb> &refs) const;
   virtual bool empty(void) const { return false; }
   virtual void clear(void) { cache.clear(); }
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,TypeFactory &typegrp);
 };
 
 #endif

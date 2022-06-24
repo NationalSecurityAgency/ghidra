@@ -785,24 +785,33 @@
           signature editor for function definitions) for creating the new desired data type.</P>
 
           <BLOCKQUOTE>
+			<H4>Creating a Typedef</H4>
             <P>Creating a new <B>typedef</B> is even easier. Right-click on the data type to be
             typedef'ed and select the <I><B>New<IMG src="../../shared/arrow.gif" alt=""> Typedef on
             XYZ</B></I> action. A new typedef will be created on the <I>XYZ</I> data type in the
             same category as the original data type.<BR>
             </P>
 
-            <BLOCKQUOTE>
-            	<P>
-              Alternatively, you can click <I><B>New<IMG src="../../shared/arrow.gif" alt="">
+            <P>Alternatively, you can click <I><B>New<IMG src="../../shared/arrow.gif" alt="">
               Typedef...</B></I>, which will show a dialog that allows you to choose a typedef name
               and the data type from which the typedef will be created.<SUP>*</SUP> This action can
               also be executed from any folder instead of directly on another data type.
               </P>
-            </BLOCKQUOTE>
-            <BR>
-            <BR>
+              
+            <P>A Typedef created with a Pointer base type will allow additional Settings to be made
+            which can influence how such a pointer should be interpreted 
+            (see <A href="#Pointer_Typedef_Settings">Pointer-Typedef Settings</A>).
+            If no name is assigned to a new Pointer-Typedef is will be treated as an "auto-typedef"
+            where a dynamic name will be assigned based upon the underlying pointer and assigned
+            typedef attribute settings. Examples:
+            <ul>
+            <li><i>char * __((space(ram)))</i></li>
+            <li><i>int * __((offset(0x8)))</i></li>
+            <li><i>pointer __((image-base-relative))</i></li>
+            </ul>
+            </P>
              
-
+			<H4>Creating a Pointer</H4>
             <P>To create a <B>pointer</B>, you can click <I><B>New<IMG src="../../shared/arrow.gif"
             alt=""> Pointer to XYZ</B></I>. A new pointer will be created to the <I>XYZ</I> data
             type in the same category as the original data type.<SUP>*</SUP></P>
@@ -1056,8 +1065,53 @@
           part of your tool's state when you close the Project or exit Ghidra. Your list of
           favorites is restored when you re-open your project or restart Ghidra.</P>
         </BLOCKQUOTE>
+        
+        <H3><A name="Pointer_Typedef_Settings"></A>Pointer-Typedef Settings</H3>
+       
+        <BLOCKQUOTE>
+        <P>On occasion there may be the need to add stipulate additional attributes on a pointer
+        type to stipulate how the associated pointer should be interpreted or processed during analysis.
+        Such pointer attributes may only be specified when such a pointer in in the form of a Typedef
+        which enables the datatype to preserve these attributes during type resolution and propagation. 
+        This includes preservation of such Typedef Settings within a data type archive, and through 
+        merge processing, which normal Data Settings do not support.</P>
+        
+        <P>The Typedef Settings may be modified via the Settings dialog in the same way data type Default Settings 
+        are changed for listing Data (see <A href="../DataPlugin/Data.htm#Default_Settings">Changing Default Settings for Data</A>).
+        In addition to this popup action on listing Data, the dialog may be displayed from the <I>Data Type Manager</I>
+        tree by right-clicking on a data type and selecting the <B>Settings...</B> action.  Typedef-specific settings
+        are only supported as default settings for a typedef and may not be overridden at the component or data level.</A>
+        
+        <P>The following Pointer-Typedef settings are currently supported:</P>
+        <UL>
+        <LI><B>Address Space</B> (case-sensitive string) - Allows a specific address space to be associated with a pointer.  
+        If an unknown name is used it will be silently ignored. Auto name attribute format: __((space(<i>name</i>))</LI>
+        <LI><B>Component Offset</B> (signed value) - Allows a base-relative offset to be specified.  When applied
+        to memory an Offset Reference will be generated.  I addition, type analysis may use the offset to identify
+        a component relative to the pointer's base-datatype (e.g., structure).  Auto name attribute format: __((offset(<i>signed_value</i>))</LI>
+        <LI><B>Offset Mask</B> (64-bit mask) - Allows a bit-mask to be applied to a stored value when computing the 
+        absolute memory offset.  This bit-mask will be applied prior to any applied bit-shift.  Auto name attribute format: __((mask(<i>hex_mask</i>))</LI>   
+        <LI><B>Offset Shift</B> (-64..0..64) - Allows a bit-shift (left=negative, right=positive) to be applied to a
+        stored value when computing the absolute memory offset.  Auto name attribute format: __((shift(<i>bitshift_amount</i>))</LI>
+        <LI><B>Pointer Type</B> (<I>default, image-base-relative, relative, file-offset</I>) - allows the overall interpretation of a
+        pointer to be specified.  The <I>relative</I> pointer type has limited applicability and is only 
+        intended to be applied to pointers stored in memory since their storage location is used in computing 
+        the absolute address that the pointer refers to.</LI>
+        </UL>
+        
+        <P><IMG src="../../shared/note.png" alt="" border="0">All Typedef Settings must be established on
+        a Typedef before such a type is applied to Data or referenced by other types.  This is highly recommended
+        since the side-affects of using such a modified typedef will not be updated to reflect subsequent changes.
+        </P>
+        
+        <P><IMG src="../../shared/note.png" alt="" border="0"> Full support for the above Pointer-Typedef
+        Settings within analysis and decompilation will evolve over time.  We also hope to improve
+        naming concerns for such typedefs and to replace the use of custom BuiltIn data types which would 
+        be better modeled as a Pointer.</P>
+        
+        </BLOCKQUOTE>
       </BLOCKQUOTE>
-            </BLOCKQUOTE>
+    </BLOCKQUOTE>
 
         <P class="providedbyplugin">Provided by: <I>DataTypeManagerPlugin</I></P>
 

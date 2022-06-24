@@ -162,7 +162,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 		return length;
 	}
 
-	DataTypeComponent doAdd(DataType dataType, int length, String componentName, String comment)
+	DataTypeComponentImpl doAdd(DataType dataType, int length, String componentName, String comment)
 			throws IllegalArgumentException {
 
 		dataType = validateDataType(dataType);
@@ -549,6 +549,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 					oldDt.removeParent(this);
 					dtc.setLength(len);
 					dtc.setDataType(replacementDt); 
+					dtc.invalidateSettings();
 					replacementDt.addParent(this);
 					changed = true;
 				}

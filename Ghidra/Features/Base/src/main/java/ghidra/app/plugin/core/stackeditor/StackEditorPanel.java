@@ -303,7 +303,7 @@ public class StackEditorPanel extends CompositeEditorPanel {
 			cancelCellEditing();
 			// TODO
 //			boolean lockState = model.isLocked(); // save the lock state
-			model.load(originalDt, model.isOffline()); // reload the structure
+			model.load(originalDt); // reload the structure
 //			model.setLocked(lockState); // restore the lock state
 			model.updateAndCheckChangeState();
 		}

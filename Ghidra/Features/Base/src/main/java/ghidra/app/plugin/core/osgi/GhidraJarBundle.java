@@ -48,7 +48,7 @@ public class GhidraJarBundle extends GhidraBundle {
 	public GhidraJarBundle(BundleHost bundleHost, ResourceFile file, boolean enabled,
 			boolean systemBundle) {
 		super(bundleHost, file, enabled, systemBundle);
-		this.bundleLocation = "file://" + file.getAbsolutePath().toString();
+		this.bundleLocation = file.toURI().toString();
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class GhidraJarBundle extends GhidraBundle {
 	}
 
 	protected ManifestParser createManifestParser() throws GhidraBundleException {
-		try (Jar jar = new Jar(file.getFile(true))) {
+		try (Jar jar = new Jar(bundleFile.getFile(true))) {
 			Manifest manifest = jar.getManifest();
 			if (manifest == null) {
 				throw new GhidraBundleException(bundleLocation, "jar bundle with no manifest");

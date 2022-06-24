@@ -17,7 +17,6 @@ package ghidra.app.util.opinion;
 
 import java.io.IOException;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
@@ -66,8 +65,7 @@ public class PeDataType extends FactoryStructureDataType {
 
 			ByteArrayProvider bap = new ByteArrayProvider(bytes);
 
-			PortableExecutable pe = PortableExecutable.createPortableExecutable(
-				RethrowContinuesFactory.INSTANCE, bap, SectionLayout.FILE);
+			PortableExecutable pe = new PortableExecutable(bap, SectionLayout.FILE);
 
 			DOSHeader dosHeader = pe.getDOSHeader();
 			addComponent(struct, dosHeader.toDataType(), DOSHeader.NAME);

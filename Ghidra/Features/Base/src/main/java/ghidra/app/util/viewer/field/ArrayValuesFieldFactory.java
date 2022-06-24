@@ -18,16 +18,23 @@ package ghidra.app.util.viewer.field;
 import java.beans.PropertyEditor;
 import java.math.BigInteger;
 
-import docking.widgets.fieldpanel.field.*;
+import docking.widgets.fieldpanel.field.AttributedString;
+import docking.widgets.fieldpanel.field.FieldElement;
+import docking.widgets.fieldpanel.field.TextFieldElement;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.proxy.ProxyObj;
-import ghidra.framework.options.*;
+import ghidra.framework.options.CustomOption;
+import ghidra.framework.options.OptionType;
+import ghidra.framework.options.Options;
+import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.AssertException;
@@ -95,11 +102,14 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 		int numComponents = parent.getNumComponents();
 		int index = data.getComponentIndex();
 		int remaining = numComponents - index;
-		int valuesThisLine = Math.min(remaining, valuesPerLine);
-		FieldElement[] aStrings = new FieldElement[valuesThisLine];
-		for (int i = 0; i < valuesThisLine; i++) {
+		int itemCount = Math.min(remaining, valuesPerLine);
+		boolean isLastLine = remaining <= itemCount;
+
+		FieldElement[] aStrings = new FieldElement[itemCount];
+		for (int i = 0; i < itemCount; i++) {
 			Data child = parent.getComponent(index++);
-			String value = getDisplayValue(child, i != valuesThisLine - 1);
+			boolean isLastItem = isLastLine && (i == itemCount - 1);
+			String value = getDisplayValue(child, !isLastItem);
 			AttributedString as = new AttributedString(value, color, getMetrics());
 			aStrings[i] = new TextFieldElement(as, i, 0);
 		}

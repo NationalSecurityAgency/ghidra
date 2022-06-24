@@ -41,7 +41,7 @@ class SymbolEditor extends DefaultCellEditor {
 			int row, int column) {
 
 		Symbol symbol = (Symbol) value;
-		if (symbol != null) {
+		if (symbol != null && !symbol.isDeleted()) {
 			symbolField.setText(symbol.getName());
 		}
 		else {

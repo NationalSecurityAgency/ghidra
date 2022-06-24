@@ -24,27 +24,19 @@ import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
 public class RangeTableCellRenderer<N extends Number & Comparable<N>>
-		extends AbstractGColumnRenderer<Range<N>> {
+		extends AbstractGColumnRenderer<Range<N>> implements RangedRenderer<N> {
 
-	protected Range<Double> doubleFullRange = Range.closed(0d, 1d);
+	protected Range<Double> fullRangeDouble = Range.closed(0d, 1d);
 	protected double span = 1;
 
 	protected Range<N> fullRange;
 	protected Range<N> dataRange;
 
-	public static Range<Double> validateViewRange(Range<? extends Number> fullRange) {
-		if (!fullRange.hasLowerBound() || !fullRange.hasUpperBound()) {
-			throw new IllegalArgumentException("Cannot have unbounded full range");
-		}
-		// I don't care to preserve open/closed, since it just specifies the view bounds
-		return Range.closed(fullRange.lowerEndpoint().doubleValue(),
-			fullRange.upperEndpoint().doubleValue());
-	}
-
+	@Override
 	public void setFullRange(Range<N> fullRange) {
 		this.fullRange = fullRange;
-		this.doubleFullRange = validateViewRange(fullRange);
-		this.span = this.doubleFullRange.upperEndpoint() - this.doubleFullRange.lowerEndpoint();
+		this.fullRangeDouble = RangedRenderer.validateViewRange(fullRange);
+		this.span = this.fullRangeDouble.upperEndpoint() - this.fullRangeDouble.lowerEndpoint();
 	}
 
 	@Override
@@ -67,38 +59,24 @@ public class RangeTableCellRenderer<N extends Number & Comparable<N>>
 		if (dataRange == null) {
 			return;
 		}
-		int width = getWidth();
-		int height = getHeight();
-
-		int x1 = dataRange.hasLowerBound()
-				? interpolate(width, dataRange.lowerEndpoint().doubleValue())
-				: 0;
-		int x2 = dataRange.hasUpperBound()
-				? interpolate(width, dataRange.upperEndpoint().doubleValue())
-				: width;
-
-		int y1 = height > 2 ? 1 : 0;
-		int y2 = height > 2 ? height - 1 : height;
 
 		Graphics g = parentG.create();
 		g.setColor(getForeground());
-
-		g.fillRect(x1, y1, x2 - x1, y2 - y1);
+		paintRange(g, dataRange);
 	}
 
-	protected int interpolate(int w, double val) {
-		double lower = doubleFullRange.lowerEndpoint();
-		if (val <= lower) {
-			return 0;
-		}
-		if (val >= doubleFullRange.upperEndpoint()) {
-			return w;
-		}
-		double dif = val - lower;
-		return (int) (dif / span * w);
-	}
-
+	@Override
 	public Range<N> getFullRange() {
 		return fullRange;
+	}
+
+	@Override
+	public Range<Double> getFullRangeDouble() {
+		return fullRangeDouble;
+	}
+
+	@Override
+	public double getSpan() {
+		return span;
 	}
 }

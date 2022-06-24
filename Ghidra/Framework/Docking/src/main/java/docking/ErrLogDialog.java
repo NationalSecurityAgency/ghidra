@@ -18,10 +18,7 @@ package docking;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -117,22 +114,33 @@ public class ErrLogDialog extends AbstractErrDialog {
 		sb.append(" ");
 		sb.append(System.getProperty("os.arch"));
 		sb.append(EOL);
-		sb.append("Workstation: ");
-		sb.append(getHostname());
-		sb.append(EOL);
+
+		String hostname = getHostnameString();
+		if (hostname != null) {
+			sb.append(hostname);
+			sb.append(EOL);
+		}
 		return sb.toString();
 	}
 
-	private Object getHostname() {
-		String hostname = "<unknown>";
-		try {
-			InetAddress addr = InetAddress.getLocalHost();
-			hostname = addr.getCanonicalHostName();
+	private String getHostnameString() {
+		//
+		// Note: we avoid use of InetAddress; using that to get the host name can timeout
+		//
+		String name = null;
+		Map<String, String> env = System.getenv();
+		if (env.containsKey("COMPUTERNAME")) {
+			name = env.get("COMPUTERNAME");
 		}
-		catch (UnknownHostException e) {
-			// ignore
+		else if (env.containsKey("HOSTNAME")) {
+			name = env.get("HOSTNAME");
 		}
-		return hostname;
+
+		if (name == null) {
+			return null;
+		}
+
+		return "Workstation: " + name;
 	}
 
 	public static void setErrorReporter(ErrorReporter errorReporter) {
@@ -174,14 +182,14 @@ public class ErrLogDialog extends AbstractErrDialog {
 
 		detailsPane = new ErrorDetailsSplitPane();
 
-		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 5, 5));
-		buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		JPanel sideButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 5, 5));
+		sideButtonPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		if (errorReporter != null) {
-			buttonPanel.add(sendButton);
+			sideButtonPanel.add(sendButton);
 		}
-		buttonPanel.add(detailsButton);
+		sideButtonPanel.add(detailsButton);
 
-		introPanel.add(buttonPanel, BorderLayout.EAST);
+		introPanel.add(sideButtonPanel, BorderLayout.EAST);
 		mainPanel.add(detailsPane, BorderLayout.CENTER);
 
 		addWorkPanel(mainPanel);

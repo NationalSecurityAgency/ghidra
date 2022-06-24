@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.macho.commands;
 import java.io.IOException;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -30,7 +30,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a LC_DYLD_CHAINED_FIXUPS command.
+ * Represents a dyld_chained_fixups_command structure
  * 
  * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
  */
@@ -38,24 +38,20 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 
 	private DyldChainedFixupHeader chainHeader;
 
-	static LinkEditDataCommand createDyldChainedFixupsCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		DyldChainedFixupsCommand command =
-			(DyldChainedFixupsCommand) reader.getFactory().create(DyldChainedFixupsCommand.class);
-		command.initLinkEditDataCommand(reader);
-
-		long ptrIndex = reader.getPointerIndex();
-		reader.setPointerIndex(command.getDataOffset());
-		command.chainHeader = DyldChainedFixupHeader.createDyldChainedFixupHeader(reader);
-		reader.setPointerIndex(ptrIndex);
-
-		return command;
-	}
-
 	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
+	 * Creates and parses a new {@link DyldChainedFixupsCommand}
+	 * 
+	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
+	 *   command
+	 * @param dataReader A {@link BinaryReader reader} that can read the data that the load command
+	 *   references.  Note that this might be in a different underlying provider.
+	 * @throws IOException if an IO-related error occurs while parsing
 	 */
-	public DyldChainedFixupsCommand() {
+	DyldChainedFixupsCommand(BinaryReader loadCommandReader, BinaryReader dataReader)
+			throws IOException {
+		super(loadCommandReader, dataReader);
+
+		chainHeader = new DyldChainedFixupHeader(dataReader);
 	}
 
 	@Override

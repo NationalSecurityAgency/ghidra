@@ -10,17 +10,16 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
         <attribute name="_state" schema="EXECUTION_STATE" required="yes" hidden="yes" />
         <attribute name="_prompt" schema="STRING" required="yes" hidden="yes" />
- 		<attribute name="Environment" schema="Environment" />
- 		<attribute name="Processes" schema="ProcessContainer" required="yes" fixed="yes" />
-  		<attribute name="Interpreter" schema="Interpreter" />
-  		<attribute name="JavaMimic" schema="Launcher" />
+        <attribute name="Environment" schema="Environment" />
+        <attribute name="Processes" schema="ProcessContainer" required="yes" fixed="yes" />
+        <attribute name="Interpreter" schema="Interpreter" />
+        <attribute name="JavaMimic" schema="Launcher" />
         <attribute schema="ANY" />
     </schema>
     <schema name="Environment" elementResync="NEVER" attributeResync="NEVER">
@@ -29,7 +28,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -46,7 +44,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -60,7 +57,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -77,7 +73,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -92,7 +87,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -102,12 +96,12 @@
         <attribute name="Modules" schema="ModuleContainer" required="yes" fixed="yes" />
         <attribute name="Registers" schema="RegisterContainer" required="yes" fixed="yes" />
         <attribute name="Threads" schema="ThreadContainer" required="yes" fixed="yes" />
-		<attribute name="Devices" schema="OBJECT" />
-		<attribute name="Environment" schema="OBJECT" />
-		<attribute name="Handle" schema="OBJECT" />
-		<attribute name="Id" schema="OBJECT" />
-		<attribute name="Io" schema="OBJECT" />
-		<attribute name="Name" schema="OBJECT" />
+        <attribute name="Devices" schema="OBJECT" />
+        <attribute name="Environment" schema="OBJECT" />
+        <attribute name="Handle" schema="OBJECT" />
+        <attribute name="Id" schema="OBJECT" />
+        <attribute name="Io" schema="OBJECT" />
+        <attribute name="Name" schema="OBJECT" />
         <attribute schema="ANY" />
     </schema>
     <schema name="Memory" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
@@ -116,7 +110,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -132,7 +125,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -146,7 +138,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -164,7 +155,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -188,7 +178,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -198,9 +187,9 @@
         <attribute name="_supported_step_kinds" schema="SET_STEP_KIND" required="yes" fixed="yes" hidden="yes" />
         <attribute name="Stack" schema="Stack" required="yes" fixed="yes" />
         <attribute name="RegisterBank" schema="RegisterBank" fixed="yes" />
- 		<attribute name="Environment" schema="OBJECT" />
-		<attribute name="Id" schema="OBJECT" />
-		<attribute name="Name" schema="OBJECT" />
+        <attribute name="Environment" schema="OBJECT" />
+        <attribute name="Id" schema="OBJECT" />
+        <attribute name="Name" schema="OBJECT" />
         <attribute name="_arch" schema="STRING" />
         <attribute schema="ANY" />
     </schema>
@@ -212,7 +201,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -223,6 +211,33 @@
         <attribute name="Len" schema="OBJECT" />
         <attribute name="Name" schema="OBJECT" />
         <attribute name="Size" schema="OBJECT" />
+        <attribute name="Sections" schema="SectionContainer" />
+        <attribute schema="ANY" />
+    </schema>
+    <schema name="SectionContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+        <interface name="SectionContainer" />
+        <element schema="Section" />
+        <attribute name="_modified" schema="BOOL" hidden="yes" />
+        <attribute name="_display" schema="STRING" hidden="yes" />
+        <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+        <attribute name="_short_display" schema="STRING" hidden="yes" />
+        <attribute name="_value" schema="ANY" hidden="yes" />
+        <attribute name="_type" schema="STRING" hidden="yes" />
+        <attribute name="_order" schema="INT" hidden="yes" />
+        <attribute schema="ANY" />
+    </schema>
+    <schema name="Section" elementResync="NEVER" attributeResync="NEVER">
+    	<interface name="Section" />
+        <element schema="VOID" />
+        <attribute name="_module" schema="Module" hidden="yes" />
+        <attribute name="_range" schema="RANGE" hidden="yes" />
+        <attribute name="_modified" schema="BOOL" hidden="yes" />
+        <attribute name="_display" schema="STRING" hidden="yes" />
+        <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+        <attribute name="_short_display" schema="STRING" hidden="yes" />
+        <attribute name="_value" schema="ANY" hidden="yes" />
+        <attribute name="_type" schema="STRING" hidden="yes" />
+        <attribute name="_order" schema="INT" hidden="yes" />
         <attribute schema="ANY" />
     </schema>
     <schema name="BreakpointContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
@@ -233,7 +248,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -246,7 +260,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -260,7 +273,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -275,7 +287,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -287,7 +298,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -310,7 +320,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -328,7 +337,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -342,18 +350,17 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
-		<attribute name="FrameNumber" schema="OBJECT" />
-		<attribute name="FrameOffset" schema="OBJECT" />
-		<attribute name="FuncTableEntry" schema="OBJECT" />
-		<attribute name="InstructionOffset" schema="OBJECT" />
-		<attribute name="ReturnOffset" schema="OBJECT" />
-		<attribute name="StackOffset" schema="OBJECT" />
-		<attribute name="Virtual" schema="OBJECT" />
+        <attribute name="FrameNumber" schema="OBJECT" />
+        <attribute name="FrameOffset" schema="OBJECT" />
+        <attribute name="FuncTableEntry" schema="OBJECT" />
+        <attribute name="InstructionOffset" schema="OBJECT" />
+        <attribute name="ReturnOffset" schema="OBJECT" />
+        <attribute name="StackOffset" schema="OBJECT" />
+        <attribute name="Virtual" schema="OBJECT" />
         <attribute schema="ANY" />
     </schema>
     <schema name="Symbol" elementResync="NEVER" attributeResync="NEVER">
@@ -365,7 +372,6 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ADDRESS" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
@@ -380,13 +386,10 @@
         <attribute name="_modified" schema="BOOL" hidden="yes" />
         <attribute name="_display" schema="STRING" hidden="yes" />
         <attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
-        <attribute name="_update_mode" schema="UPDATE_MODE" hidden="yes" />
         <attribute name="_short_display" schema="STRING" hidden="yes" />
         <attribute name="_value" schema="ANY" required="yes" hidden="yes" />
         <attribute name="_type" schema="STRING" hidden="yes" />
         <attribute name="_order" schema="INT" hidden="yes" />
         <attribute schema="VOID" />
-    </schema>
-    <schema name="UPDATE_MODE" elementResync="NEVER" attributeResync="NEVER">
     </schema>
 </context>

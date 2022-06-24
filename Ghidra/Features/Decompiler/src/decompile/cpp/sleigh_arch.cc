@@ -16,56 +16,81 @@
 #include "sleigh_arch.hh"
 #include "inject_sleigh.hh"
 
+AttributeId ATTRIB_DEPRECATED = AttributeId("deprecated",79);
+AttributeId ATTRIB_ENDIAN = AttributeId("endian",80);
+AttributeId ATTRIB_PROCESSOR = AttributeId("processor",81);
+AttributeId ATTRIB_PROCESSORSPEC = AttributeId("processorspec",82);
+AttributeId ATTRIB_SLAFILE = AttributeId("slafile",83);
+AttributeId ATTRIB_SPEC = AttributeId("spec",84);
+AttributeId ATTRIB_TARGET = AttributeId("target",85);
+AttributeId ATTRIB_VARIANT = AttributeId("variant",86);
+AttributeId ATTRIB_VERSION = AttributeId("version",87);
+
+ElementId ELEM_COMPILER = ElementId("compiler",173);
+ElementId ELEM_DESCRIPTION = ElementId("description",174);
+ElementId ELEM_LANGUAGE = ElementId("language",175);
+ElementId ELEM_LANGUAGE_DEFINITIONS = ElementId("language_definitions",176);
+
 map<int4,Sleigh *> SleighArchitecture::translators;
 vector<LanguageDescription> SleighArchitecture::description;
 
 FileManage SleighArchitecture::specpaths; // Global specfile manager
 
-/// Read file attributes from an XML \<compiler> tag
-/// \param el is the XML element
-void CompilerTag::restoreXml(const Element *el)
+/// Parse file attributes from a \<compiler> element
+/// \param decoder is the stream decoder
+void CompilerTag::decode(Decoder &decoder)
 
 {
-  name = el->getAttributeValue("name");
-  spec = el->getAttributeValue("spec");
-  id = el->getAttributeValue("id");
+  uint4 elemId = decoder.openElement(ELEM_COMPILER);
+  name = decoder.readString(ATTRIB_NAME);
+  spec = decoder.readString(ATTRIB_SPEC);
+  id = decoder.readString(ATTRIB_ID);
+  decoder.closeElement(elemId);
 }
 
-/// Parse an ldefs \<language> tag
-/// \param el is the XML element
-void LanguageDescription::restoreXml(const Element *el)
+/// Parse an ldefs \<language> element
+/// \param decoder is the stream decoder
+void LanguageDescription::decode(Decoder &decoder)
 
 {
-  processor = el->getAttributeValue("processor");
-  isbigendian = (el->getAttributeValue("endian")=="big");
-  istringstream s1(el->getAttributeValue("size"));
-  s1.unsetf(ios::dec | ios::hex | ios::oct);
-  s1 >> size;
-  variant = el->getAttributeValue("variant");
-  version = el->getAttributeValue("version");
-  slafile = el->getAttributeValue("slafile");
-  processorspec = el->getAttributeValue("processorspec");
-  id = el->getAttributeValue("id");
+  uint4 elemId = decoder.openElement(ELEM_LANGUAGE);
+  processor = decoder.readString(ATTRIB_PROCESSOR);
+  isbigendian = (decoder.readString(ATTRIB_ENDIAN)=="big");
+  size = decoder.readSignedInteger(ATTRIB_SIZE);
+  variant = decoder.readString(ATTRIB_VARIANT);
+  version = decoder.readString(ATTRIB_VERSION);
+  slafile = decoder.readString(ATTRIB_SLAFILE);
+  processorspec = decoder.readString(ATTRIB_PROCESSORSPEC);
+  id = decoder.readString(ATTRIB_ID);
   deprecated = false;
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    if (el->getAttributeName(i)=="deprecated")
-      deprecated = xml_readbool(el->getAttributeValue(i)); 
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId==ATTRIB_DEPRECATED)
+      deprecated = decoder.readBool();
   }
-  const List &sublist(el->getChildren());
-  List::const_iterator subiter;
-  for(subiter=sublist.begin();subiter!=sublist.end();++subiter) {
-    const Element *subel = *subiter;
-    if (subel->getName() == "description")
-      description = subel->getContent();
-    else if (subel->getName() == "compiler") {
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_DESCRIPTION) {
+      decoder.openElement();
+      description = decoder.readString(ATTRIB_CONTENT);
+      decoder.closeElement(subId);
+    }
+    else if (subId == ELEM_COMPILER) {
       compilers.emplace_back();
-      compilers.back().restoreXml(subel);
+      compilers.back().decode(decoder);
     }
-    else if (subel->getName() == "truncate_space") {
+    else if (subId == ELEM_TRUNCATE_SPACE) {
       truncations.emplace_back();
-      truncations.back().restoreXml(subel);
+      truncations.back().decode(decoder);
+    }
+    else {	// Ignore other child elements
+      decoder.openElement();
+      decoder.closeElementSkipping(subId);
     }
   }
+  decoder.closeElement(elemId);
 }
 
 /// Pick out the CompilerTag associated with the desired \e compiler \e id string
@@ -97,25 +122,29 @@ void SleighArchitecture::loadLanguageDescription(const string &specfile,ostream 
   ifstream s(specfile.c_str());
   if (!s) return;
 
-  Document *doc;
-  Element *el;
+  XmlDecode decoder;
   try {
-    doc = xml_tree(s);
+    decoder.ingestStream(s);
   }
   catch(XmlError &err) {
     errs << "WARNING: Unable to parse sleigh specfile: " << specfile;
     return;
   }
 
-  el = doc->getRoot();
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter) {
-    if ((*iter)->getName() != "language") continue;
-    description.emplace_back();
-    description.back().restoreXml( *iter );
+  uint4 elemId = decoder.openElement(ELEM_LANGUAGE_DEFINITIONS);
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_LANGUAGE) {
+      description.emplace_back();
+      description.back().decode( decoder );
+    }
+    else {
+      decoder.openElement();
+      decoder.closeElementSkipping(subId);
+    }
   }
-  delete doc;
+  decoder.closeElement(elemId);
 }
 
 SleighArchitecture::~SleighArchitecture(void)
@@ -307,12 +336,12 @@ void SleighArchitecture::collectSpecFiles(ostream &errs)
     loadLanguageDescription(*iter,errs);
 }
 
-/// \param s is the XML output stream
-void SleighArchitecture::saveXmlHeader(ostream &s) const
+/// \param encoder is the stream encoder
+void SleighArchitecture::encodeHeader(Encoder &encoder) const
 
 {
-  a_v(s,"name",filename);
-  a_v(s,"target",target);
+  encoder.writeString(ATTRIB_NAME, filename);
+  encoder.writeString(ATTRIB_TARGET, target);
 }
 
 /// \param el is the root XML element
@@ -455,6 +484,19 @@ void SleighArchitecture::scanForSleighDirectories(const string &rootpath)
 
   for(uint4 i=0;i<languagesubdirs.size();++i)
     specpaths.addDir2Path(languagesubdirs[i]);
+}
+
+/// Parse all .ldef files and a return the list of all LanguageDescription objects
+/// If there are any parse errors in the .ldef files, an exception is thrown
+/// \return the list of LanguageDescription objects
+const vector<LanguageDescription> &SleighArchitecture::getDescriptions(void)
+
+{
+  ostringstream s;
+  collectSpecFiles(s);
+  if (!s.str().empty())
+    throw LowlevelError(s.str());
+  return description;
 }
 
 void SleighArchitecture::shutdown(void)

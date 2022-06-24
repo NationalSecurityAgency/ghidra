@@ -62,18 +62,20 @@ public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject
 		// Function tag column is not something widely used, so make hidden by default
 		descriptor.addHiddenColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new FunctionTagTableColumn()));
-		
+
 		descriptor.addHiddenColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new IsFunctionInlineTableColumn()));
-		
+
 		descriptor.addHiddenColumn(
-			DiscoverableTableUtils.adaptColumForModel(this, new IsFunctionNonReturningTableColumn()));
-		
+			DiscoverableTableUtils.adaptColumForModel(this,
+				new IsFunctionNonReturningTableColumn()));
+
 		descriptor.addHiddenColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new IsFunctionVarargsTableColumn()));
-		
+
 		descriptor.addHiddenColumn(
-			DiscoverableTableUtils.adaptColumForModel(this, new IsFunctionCustomStorageTableColumn()));
+			DiscoverableTableUtils.adaptColumForModel(this,
+				new IsFunctionCustomStorageTableColumn()));
 
 		return descriptor;
 	}
@@ -149,15 +151,25 @@ public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject
 	}
 
 	void functionAdded(Function f) {
-		addObject(new FunctionRowObject(f));
+		if (supportsFunction(f)) {
+			addObject(new FunctionRowObject(f));
+		}
 	}
 
 	void functionRemoved(Function f) {
-		removeObject(new FunctionRowObject(f));
+		if (supportsFunction(f)) {
+			removeObject(new FunctionRowObject(f));
+		}
 	}
 
 	void update(Function f) {
-		updateObject(new FunctionRowObject(f));
+		if (supportsFunction(f)) {
+			updateObject(new FunctionRowObject(f));
+		}
+	}
+
+	private boolean supportsFunction(Function f) {
+		return !f.isExternal(); // this model does not show external functions
 	}
 
 	@Override

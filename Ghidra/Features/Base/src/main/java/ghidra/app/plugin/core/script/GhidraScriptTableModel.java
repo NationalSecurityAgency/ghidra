@@ -28,8 +28,7 @@ import ghidra.app.script.GhidraScriptInfoManager;
 import ghidra.app.script.ScriptInfo;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.util.DateUtils;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.datastruct.CaseInsensitiveDuplicateStringComparator;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
@@ -215,12 +214,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 
 	@Override
 	public void fireTableChanged(TableModelEvent e) {
-		if (SwingUtilities.isEventDispatchThread()) {
-			super.fireTableChanged(e);
-			return;
-		}
-		final TableModelEvent e1 = e;
-		SwingUtilities.invokeLater(() -> GhidraScriptTableModel.super.fireTableChanged(e1));
+		Swing.runIfSwingOrRunLater(() -> super.fireTableChanged(e));
 	}
 
 	private class StatusColumn extends AbstractDynamicTableColumn<ResourceFile, ImageIcon, Object> {

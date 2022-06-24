@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,24 +27,29 @@ public class TranslateIcon implements Icon {
 	int translateX;
 	int translateY;
 
-	/** Where the translate values are offset from the icon's upper corner */
+	/** 
+	 * Where the translate values are offset from the icon's upper corner
+	 * @param icon the icon 
+	 * @param translateX the x translation
+	 * @param translateY the y translation
+	 */
 	public TranslateIcon(Icon icon, int translateX, int translateY) {
 		this.icon = icon;
 		this.translateX = translateX;
 		this.translateY = translateY;
 	}
 
-	/**
-	 * @see javax.swing.Icon#paintIcon(java.awt.Component, java.awt.Graphics, int, int)
-	 */
+	@Override
 	public void paintIcon(Component c, Graphics g, int x, int y) {
 		icon.paintIcon(c, g, x + translateX, y + translateY);
 	}
 
+	@Override
 	public int getIconHeight() {
 		return icon.getIconHeight();
 	}
 
+	@Override
 	public int getIconWidth() {
 		return icon.getIconWidth();
 	}

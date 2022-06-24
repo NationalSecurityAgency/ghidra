@@ -1,0 +1,28 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+    <!--
+	Access fields of a packed structure.  Should see field accesses, not shifts and truncations.
+	Accesses are from beginning, middle, and end of the register holding the structure.
+    -->
+<bytechunk space="ram" offset="0x100705" readonly="true">
+          e8d0ffffff4889c248c1e2
+1048c1fa3001c248c1f83001d0c3
+</bytechunk>
+<symbol space="ram" offset="0x100705" name="access"/>
+<symbol space="ram" offset="0x1006da" name="getstruct"/>
+</binaryimage>
+<script>
+  <com>option structalign 1</com>
+  <com>parse line struct tinystruct { int4 a; int2 b; int2 c; };</com>
+  <com>parse line extern tinystruct getstruct(int4 i);</com>
+  <com>parse line extern int4 access(int4 i);</com>
+  <com>lo fu access</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Access packed fields #1" min="1" max="1">tVar1 = getstruct\(i\);</stringmatch>
+<stringmatch name="Access packed fields #2" min="1" max="1">tVar1\.a</stringmatch>
+<stringmatch name="Access packed fields #3" min="1" max="1">\(int4\)tVar1\.b</stringmatch>
+<stringmatch name="Access packed fields #4" min="1" max="1">\(int4\)tVar1\.c</stringmatch>
+</decompilertest>

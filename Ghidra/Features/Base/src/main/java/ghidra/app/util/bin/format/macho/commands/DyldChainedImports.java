@@ -18,8 +18,8 @@ package ghidra.app.util.bin.format.macho.commands;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.ArrayDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
@@ -36,23 +36,7 @@ public class DyldChainedImports implements StructConverter {
 	private long imports_offset;
 	private DyldChainedImport chainedImports[];
 
-	static DyldChainedImports createDyldChainedImports(FactoryBundledWithBinaryReader reader,
-			DyldChainedFixupHeader cfh) throws IOException {
-		DyldChainedImports dyldChainedImports =
-			(DyldChainedImports) reader.getFactory().create(DyldChainedImports.class);
-		dyldChainedImports.initDyldChainedStartsInImage(reader, cfh);
-		return dyldChainedImports;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DyldChainedImports() {
-	}
-
-	private void initDyldChainedStartsInImage(FactoryBundledWithBinaryReader reader,
-			DyldChainedFixupHeader cfh) throws IOException {
-
+	DyldChainedImports(BinaryReader reader, DyldChainedFixupHeader cfh) throws IOException {
 		long ptrIndex = reader.getPointerIndex();
 		imports_offset = ptrIndex;
 
@@ -61,7 +45,7 @@ public class DyldChainedImports implements StructConverter {
 
 		ArrayList<DyldChainedImport> starts = new ArrayList<>();
 		for (int i = 0; i < imports_count; i++) {
-			starts.add(DyldChainedImport.createDyldChainedImport(reader, cfh, imports_format));
+			starts.add(new DyldChainedImport(reader, cfh, imports_format));
 		}
 		chainedImports = starts.toArray(DyldChainedImport[]::new);
 	}
@@ -94,8 +78,8 @@ public class DyldChainedImports implements StructConverter {
 		return chainedImports[ordinal];
 	}
 
-	public void initSymbols(FactoryBundledWithBinaryReader reader,
-			DyldChainedFixupHeader dyldChainedFixupHeader) throws IOException {
+	public void initSymbols(BinaryReader reader, DyldChainedFixupHeader dyldChainedFixupHeader)
+			throws IOException {
 		long ptrIndex = reader.getPointerIndex();
 
 		for (DyldChainedImport dyldChainedImport : chainedImports) {

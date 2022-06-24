@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
-import generic.continues.GenericFactory;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.FileBytesProvider;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
@@ -28,7 +27,6 @@ import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
 import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTable;
 import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.listing.Program;
 
@@ -115,9 +113,8 @@ public class PdbCliInfoManager {
 		FileBytes fileBytes = allFileBytes.get(0); // Should be that of main imported file
 		ByteProvider provider = new FileBytesProvider(fileBytes); // close not required
 		try {
-			GenericFactory factory = MessageLogContinuesFactory.create(applicator.getMessageLog());
-			PortableExecutable pe = PortableExecutable.createPortableExecutable(factory, provider,
-				SectionLayout.FILE, true, true);
+			PortableExecutable pe =
+				new PortableExecutable(provider, SectionLayout.FILE, true, true);
 			NTHeader ntHeader = pe.getNTHeader(); // will be null if header parse fails
 			if (ntHeader == null) {
 				applicator.pdbLogAndErrorMessage(this,

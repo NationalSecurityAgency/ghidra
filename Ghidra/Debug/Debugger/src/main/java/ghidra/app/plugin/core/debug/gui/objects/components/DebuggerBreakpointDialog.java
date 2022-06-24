@@ -26,8 +26,8 @@ import javax.swing.*;
 import docking.DialogComponentProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractSetBreakpointAction;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
-import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.util.MessageType;
 import ghidra.util.Msg;
 import ghidra.util.layout.PairLayout;
@@ -89,6 +89,10 @@ public class DebuggerBreakpointDialog extends DialogComponentProvider {
 
 	public void setContainer(TargetBreakpointSpecContainer container) {
 		this.container = container;
+	}
+
+	public void setText(String text) {
+		expressionField.setText(text);
 	}
 
 }

@@ -83,6 +83,6 @@ public abstract class AbstractModelForGdbFrameActivationTest
 		assertFalse(line.contains("\n"));
 		assertTrue(line.startsWith("#"));
 		String frameLevel = line.substring(1).split("\\s+")[0];
-		assertEquals(expected.getPath(), STACK_PATTERN.applyIndices(frameLevel).getSingletonPath());
+		assertEquals(expected.getPath(), STACK_PATTERN.applyKeys(frameLevel).getSingletonPath());
 	}
 }

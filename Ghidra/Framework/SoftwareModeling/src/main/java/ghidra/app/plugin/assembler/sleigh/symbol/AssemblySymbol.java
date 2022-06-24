@@ -20,9 +20,11 @@ import ghidra.app.plugin.assembler.sleigh.grammars.AbstractAssemblyGrammar;
 /**
  * A symbol in a context-free grammar
  * 
+ * <p>
  * Symbols can be either terminals or non-terminals. Non-terminals must have a defining production,
- * i.e., it must appear as the left-hand side of some production in the grammar. 
+ * i.e., it must appear as the left-hand side of some production in the grammar.
  * 
+ * <p>
  * Traditionally, when displayed, non-terminals should be immediately distinguishable from
  * terminals. In classic CS literature, this usually means non-terminals are in CAPS, and terminals
  * are in lower-case. Because the assembler doesn't control the names provided by SLEIGH, we
@@ -35,6 +37,7 @@ public abstract class AssemblySymbol implements Comparable<AssemblySymbol> {
 
 	/**
 	 * Construct a new symbol with the given name
+	 * 
 	 * @param name the name
 	 */
 	public AssemblySymbol(String name) {
@@ -46,6 +49,7 @@ public abstract class AssemblySymbol implements Comparable<AssemblySymbol> {
 
 	/**
 	 * Get the name of this symbol
+	 * 
 	 * @return the name
 	 */
 	public String getName() {
@@ -72,6 +76,7 @@ public abstract class AssemblySymbol implements Comparable<AssemblySymbol> {
 
 	/**
 	 * Check if this symbol consumes an operand index of its constructor
+	 * 
 	 * @return true if the symbol represents an operand
 	 */
 	public boolean takesOperandIndex() {

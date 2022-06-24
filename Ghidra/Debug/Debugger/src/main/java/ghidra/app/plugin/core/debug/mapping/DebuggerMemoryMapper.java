@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.mapping;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 
 public interface DebuggerMemoryMapper {
 	/**
@@ -33,7 +32,10 @@ public interface DebuggerMemoryMapper {
 	 * @param traceRange the range in the view's address space
 	 * @return the "same range" in the target's address space
 	 */
-	AddressRange traceToTarget(AddressRange traceRange);
+	default AddressRange traceToTarget(AddressRange traceRange) {
+		return new AddressRangeImpl(traceToTarget(traceRange.getMinAddress()),
+			traceToTarget(traceRange.getMaxAddress()));
+	}
 
 	/**
 	 * Map the given address from the target process into the trace
@@ -49,5 +51,8 @@ public interface DebuggerMemoryMapper {
 	 * @param targetRange the range in the target's address space
 	 * @return the "same range" in the trace's address space
 	 */
-	AddressRange targetToTrace(AddressRange targetRange);
+	default AddressRange targetToTrace(AddressRange targetRange) {
+		return new AddressRangeImpl(targetToTrace(targetRange.getMinAddress()),
+			targetToTrace(targetRange.getMaxAddress()));
+	}
 }

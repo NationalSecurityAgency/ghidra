@@ -23,6 +23,7 @@ import javax.swing.JButton;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.help.Help;
 import docking.widgets.EventTrigger;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
@@ -298,7 +299,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		private final ActionState<T> actionState;
 
 		private ActionStateToggleAction(ActionState<T> actionState, boolean isSelected) {
-			super(actionState.getName(), "multiStateAction");
+			super(actionState.getName(), "MultiStateAction");
 
 			this.actionState = actionState;
 
@@ -308,6 +309,11 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 			HelpLocation helpLocation = actionState.getHelpLocation();
 			if (helpLocation != null) {
 				setHelpLocation(helpLocation);
+			}
+			else {
+				HelpLocation parentHelp =
+					Help.getHelpService().getHelpLocation(MultiStateDockingAction.this);
+				setHelpLocation(parentHelp);
 			}
 		}
 
@@ -329,7 +335,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		private final ActionState<T> actionState;
 
 		private ActionStateAction(ActionState<T> actionState, boolean isSelected) {
-			super(actionState.getName(), "multiStateAction");
+			super(actionState.getName(), "MultiStateAction");
 			this.actionState = actionState;
 
 			setMenuBarData(
@@ -337,6 +343,11 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 			HelpLocation helpLocation = actionState.getHelpLocation();
 			if (helpLocation != null) {
 				setHelpLocation(helpLocation);
+			}
+			else {
+				HelpLocation parentHelp =
+					Help.getHelpService().getHelpLocation(MultiStateDockingAction.this);
+				setHelpLocation(parentHelp);
 			}
 		}
 

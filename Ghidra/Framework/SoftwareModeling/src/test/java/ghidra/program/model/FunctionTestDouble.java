@@ -407,7 +407,7 @@ public class FunctionTestDouble implements Function {
 	}
 
 	@Override
-	public Address[] getFunctionThunkAddresses() {
+	public Address[] getFunctionThunkAddresses(boolean recursive) {
 		throw new UnsupportedOperationException();
 	}
 

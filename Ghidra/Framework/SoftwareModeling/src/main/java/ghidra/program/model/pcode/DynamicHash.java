@@ -43,46 +43,32 @@ public class DynamicHash {
 	public final static int transtable[] = { 0, PcodeOp.COPY, PcodeOp.LOAD, PcodeOp.STORE,
 		PcodeOp.BRANCH, PcodeOp.CBRANCH, PcodeOp.BRANCHIND,
 
-		PcodeOp.CALL,
-		PcodeOp.CALLIND,
-		PcodeOp.CALLOTHER,
-		PcodeOp.RETURN,
+		PcodeOp.CALL, PcodeOp.CALLIND, PcodeOp.CALLOTHER, PcodeOp.RETURN,
 
-		PcodeOp.INT_EQUAL,
-		PcodeOp.INT_EQUAL,	// NOT_EQUAL hashes same as EQUAL
-		PcodeOp.INT_SLESS,
-		PcodeOp.INT_SLESS,	// SLESSEQUAL hashes same as SLESS
-		PcodeOp.INT_LESS,
-		PcodeOp.INT_LESS,		// LESSEQUAL hashes same as LESS
+		PcodeOp.INT_EQUAL, PcodeOp.INT_EQUAL,	// NOT_EQUAL hashes same as EQUAL
+		PcodeOp.INT_SLESS, PcodeOp.INT_SLESS,	// SLESSEQUAL hashes same as SLESS
+		PcodeOp.INT_LESS, PcodeOp.INT_LESS,		// LESSEQUAL hashes same as LESS
 
-		PcodeOp.INT_ZEXT,
-		PcodeOp.INT_SEXT,
-		PcodeOp.INT_ADD,
-		PcodeOp.INT_ADD,		// SUB hashes same as ADD
+		PcodeOp.INT_ZEXT, PcodeOp.INT_SEXT, PcodeOp.INT_ADD, PcodeOp.INT_ADD,		// SUB hashes same as ADD
 		PcodeOp.INT_CARRY, PcodeOp.INT_SCARRY, PcodeOp.INT_SBORROW, PcodeOp.INT_2COMP,
 		PcodeOp.INT_NEGATE,
 
-		PcodeOp.INT_XOR, PcodeOp.INT_AND,
-		PcodeOp.INT_OR,
-		PcodeOp.INT_MULT,	// LEFT hashes same as MULT
+		PcodeOp.INT_XOR, PcodeOp.INT_AND, PcodeOp.INT_OR, PcodeOp.INT_MULT,	// LEFT hashes same as MULT
 		PcodeOp.INT_RIGHT, PcodeOp.INT_SRIGHT, PcodeOp.INT_MULT, PcodeOp.INT_DIV, PcodeOp.INT_SDIV,
 		PcodeOp.INT_REM, PcodeOp.INT_SREM,
 
 		PcodeOp.BOOL_NEGATE, PcodeOp.BOOL_XOR, PcodeOp.BOOL_AND, PcodeOp.BOOL_OR,
 
-		PcodeOp.FLOAT_EQUAL,
-		PcodeOp.FLOAT_EQUAL,	// NOTEQUAL hashes same as EQUAL
-		PcodeOp.FLOAT_LESS,
-		PcodeOp.FLOAT_LESS,		// LESSEQUAL hashes same as EQUAL
+		PcodeOp.FLOAT_EQUAL, PcodeOp.FLOAT_EQUAL,	// NOTEQUAL hashes same as EQUAL
+		PcodeOp.FLOAT_LESS, PcodeOp.FLOAT_LESS,		// LESSEQUAL hashes same as EQUAL
 		0,						// Unused slot -- skip
 		PcodeOp.FLOAT_NAN,
 
-		PcodeOp.FLOAT_ADD, PcodeOp.FLOAT_DIV, PcodeOp.FLOAT_MULT,
-		PcodeOp.FLOAT_ADD,	// SUB hashes same as ADD
+		PcodeOp.FLOAT_ADD, PcodeOp.FLOAT_DIV, PcodeOp.FLOAT_MULT, PcodeOp.FLOAT_ADD,	// SUB hashes same as ADD
 		PcodeOp.FLOAT_NEG, PcodeOp.FLOAT_ABS, PcodeOp.FLOAT_SQRT,
 
-		PcodeOp.FLOAT_INT2FLOAT, PcodeOp.FLOAT_FLOAT2FLOAT, PcodeOp.FLOAT_TRUNC,
-		PcodeOp.FLOAT_CEIL, PcodeOp.FLOAT_FLOOR, PcodeOp.FLOAT_ROUND,
+		PcodeOp.FLOAT_INT2FLOAT, PcodeOp.FLOAT_FLOAT2FLOAT, PcodeOp.FLOAT_TRUNC, PcodeOp.FLOAT_CEIL,
+		PcodeOp.FLOAT_FLOOR, PcodeOp.FLOAT_ROUND,
 
 		PcodeOp.MULTIEQUAL, PcodeOp.INDIRECT, PcodeOp.PIECE, PcodeOp.SUBPIECE,
 
@@ -98,7 +84,7 @@ public class DynamicHash {
 	 * in the sub-graph.  The edge can either be from an input Varnode to the PcodeOp
 	 * that reads it, or from a PcodeOp to the Varnode it defines.
 	 */
-	private class ToOpEdge implements Comparable<ToOpEdge> {
+	private static class ToOpEdge implements Comparable<ToOpEdge> {
 		private PcodeOp op;
 		private int slot;			// slot containing varnode we are coming from
 
@@ -162,10 +148,10 @@ public class DynamicHash {
 	private long hash;
 
 	private DynamicHash() {
-		markop = new ArrayList<PcodeOp>();
-		markvn = new ArrayList<Varnode>();
-		vnedge = new ArrayList<Varnode>();
-		opedge = new ArrayList<ToOpEdge>();
+		markop = new ArrayList<>();
+		markvn = new ArrayList<>();
+		vnedge = new ArrayList<>();
+		opedge = new ArrayList<>();
 	}
 
 	/**
@@ -181,13 +167,25 @@ public class DynamicHash {
 
 	/**
 	 * Construct a unique hash for the given Varnode, which must be in
-	 * a syntax tree.  The hash method is cycled into a uniquely identifying one is found.
+	 * a syntax tree.  The hash method is cycled until a uniquely identifying one is found.
 	 * @param root is the given Varnode
 	 * @param fd is the PcodeSyntaxTree containing the Varnode
 	 */
 	public DynamicHash(Varnode root, PcodeSyntaxTree fd) {
 		this();
 		uniqueHash(root, fd);
+	}
+
+	/**
+	 * Construct a unique hash that allows recovery of a specific PcodeOp and slot from the
+	 * syntax tree.  The hash method is cycled until a uniquely identifying one is found.
+	 * @param op is the specific PcodeOp to hash
+	 * @param slot is the specific slot (-1 is the output, >=0 is an input)
+	 * @param fd is the PcodeSyntaxTree containing the PcodeOp
+	 */
+	public DynamicHash(PcodeOp op, int slot, PcodeSyntaxTree fd) {
+		this();
+		uniqueHash(op, slot, fd);
 	}
 
 	/**
@@ -223,11 +221,98 @@ public class DynamicHash {
 		opedge.clear();
 	}
 
+	/**
+	 * For a DynamicHash on a PcodeOp, the op must not be a CAST or other skipped opcode.
+	 * Test if the given op is a skip op, and if so follow data-flow indicated by the
+	 * slot to another PcodeOp until we find one that isn't a skip op. Return null, if
+	 * the initial op is not skipped, otherwise return a ToOpEdge indicating the
+	 * new (op,slot) pair.
+	 * @param op is the given PcodeOp
+	 * @param slot is the slot
+	 * @return null or a new (op,slot) pair
+	 */
+	private static ToOpEdge moveOffSkip(PcodeOp op, int slot) {
+		if (transtable[op.getOpcode()] != 0) {
+			return null;
+		}
+		do {
+			if (slot >= 0) {
+				Varnode vn = op.getOutput();
+				op = vn.getLoneDescend();
+				if (op == null) {
+					return new ToOpEdge(null, 0);	// Indicate the end of the data-flow path
+				}
+				slot = op.getSlot(vn);
+			}
+			else {
+				Varnode vn = op.getInput(0);
+				op = vn.getDef();
+				if (op == null) {
+					return new ToOpEdge(null, 0);	// Indicate the end of the data-flow path
+				}
+			}
+		}
+		while (transtable[op.getOpcode()] == 0);
+		return new ToOpEdge(op, slot);
+	}
+
+	/**
+	 * Encode a particular PcodeOp and slot
+	 * @param op is the PcodeOp to preserve
+	 * @param slot is the slot to preserve (-1 for output, >=0 for input)
+	 * @param method is the method to use for encoding (4, 5, or 6)
+	 */
+	private void calcHash(PcodeOp op, int slot, int method) {
+		Varnode root;
+		if (slot < 0) {
+			root = op.getOutput();
+			if (root == null) {
+				hash = 0;
+				addrresult = Address.NO_ADDRESS;
+				return;
+			}
+		}
+		else {
+			if (slot >= op.getNumInputs()) {
+				hash = 0;
+				addrresult = Address.NO_ADDRESS;
+				return;
+			}
+			root = op.getInput(slot);
+		}
+		vnproc = 0;
+		opproc = 0;
+		opedgeproc = 0;
+		markset = new HashSet<>();
+		opedge.add(new ToOpEdge(op, slot));
+		switch (method) {
+			case 4:
+				break;
+			case 5:
+				gatherUnmarkedOp();
+				for (; opproc < markop.size(); ++opproc) {
+					buildOpUp(markop.get(opproc));
+				}
+				gatherUnmarkedVn();
+				break;
+			case 6:
+				gatherUnmarkedOp();
+				for (; opproc < markop.size(); ++opproc) {
+					buildOpDown(markop.get(opproc));
+				}
+				gatherUnmarkedVn();
+				break;
+			default:
+				break;
+		}
+		pieceTogetherHash(root, method);
+	}
+
 	private void calcHash(Varnode root, int method) {
 		vnproc = 0;
 		opproc = 0;
 		opedgeproc = 0;
-		markset = new HashSet<Object>();
+		markset = new HashSet<>();
 
 		vnedge.add(root);
 		gatherUnmarkedVn();
@@ -278,6 +363,10 @@ public class DynamicHash {
 				break;
 		}
 
+		pieceTogetherHash(root, method);
+	}
+
+	private void pieceTogetherHash(Varnode root, int method) {
 		if (opedge.size() == 0) {
 			hash = 0;
 			addrresult = null;
@@ -296,8 +385,8 @@ public class DynamicHash {
 			}
 		}
 
-		for (int i = 0; i < opedge.size(); ++i) {
-			reg = opedge.get(i).hash(reg);
+		for (ToOpEdge element : opedge) {
+			reg = element.hash(reg);
 		}
 
 		// Build the final 64-bit hash
@@ -335,10 +424,84 @@ public class DynamicHash {
 		addrresult = op.getSeqnum().getTarget();
 	}
 
+	private void uniqueHash(PcodeOp op, int slot, PcodeSyntaxTree fd) {
+		ArrayList<PcodeOp> oplist = new ArrayList<>();
+		ArrayList<PcodeOp> oplist2 = new ArrayList<>();
+		ArrayList<PcodeOp> champion = new ArrayList<>();
+		int method;
+		long tmphash = 0;
+		Address tmpaddr = null;
+		int maxduplicates = 8;
+
+		ToOpEdge move = moveOffSkip(op, slot);
+		if (move != null) {
+			op = move.getOp();
+			slot = move.getSlot();
+			if (op == null) {
+				hash = 0;
+				addrresult = Address.NO_ADDRESS;
+				return;
+			}
+		}
+		gatherOpsAtAddress(oplist, fd, op.getSeqnum().getTarget());
+		for (method = 4; method < 7; ++method) {
+			clear();
+			calcHash(op, slot, method);
+			if (hash == 0) {
+				return;		// Can't get a good hash
+			}
+			tmphash = hash;
+			tmpaddr = addrresult;
+			oplist2.clear();
+			for (PcodeOp tmpop : oplist) {
+				if (slot >= tmpop.getNumInputs()) {
+					continue;
+				}
+				clear();
+				calcHash(tmpop, slot, method);
+				if (getComparable(hash) == getComparable(tmphash)) {	// Hash collision
+					oplist2.add(tmpop);
+					if (oplist2.size() > maxduplicates) {
+						break;
+					}
+				}
+			}
+			if (oplist2.size() <= maxduplicates) {
+				if ((champion.size() == 0) || (oplist2.size() < champion.size())) {
+					champion = oplist2;
+					oplist2 = new ArrayList<>();
+					if (champion.size() == 1) {
+						break;		// Current hash is unique
+					}
+				}
+			}
+		}
+		if (champion.size() == 0) {
+			hash = 0;
+			addrresult = Address.NO_ADDRESS;	// Couldn't find a unique hash
+			return;
+		}
+		int total = champion.size() - 1;	// total is in range [0,maxduplicates-1]
+		int pos;
+		for (pos = 0; pos <= total; ++pos) {
+			if (champion.get(pos) == op) {
+				break;
+			}
+		}
+		if (pos > total) {
+			hash = 0;
+			addrresult = Address.NO_ADDRESS;
+			return;
+		}
+		hash = tmphash | ((long) pos << 49);	// Store three bits for position with list of duplicate hashes
+		hash |= ((long) total << 52);	// Store three bits for total number of duplicate hashes
+		addrresult = tmpaddr;
+	}
+
 	private void uniqueHash(Varnode root, PcodeSyntaxTree fd) {
-		ArrayList<Varnode> vnlist = new ArrayList<Varnode>();
-		ArrayList<Varnode> vnlist2 = new ArrayList<Varnode>();
-		ArrayList<Varnode> champion = new ArrayList<Varnode>();
+		ArrayList<Varnode> vnlist = new ArrayList<>();
+		ArrayList<Varnode> vnlist2 = new ArrayList<>();
+		ArrayList<Varnode> champion = new ArrayList<>();
 		int method;
 		long tmphash = 0;
 		Address tmpaddr = null;
@@ -359,7 +522,7 @@ public class DynamicHash {
 				Varnode tmpvn = vnlist.get(i);
 				clear();
 				calcHash(tmpvn, method);
-				if (hash == tmphash) {		// Hash collision
+				if (getComparable(hash) == getComparable(tmphash)) {		// Hash collision
 					vnlist2.add(tmpvn);
 					if (vnlist2.size() > maxduplicates) {
 						break;
@@ -369,7 +532,7 @@ public class DynamicHash {
 			if (vnlist2.size() <= maxduplicates) {
 				if ((champion.size() == 0) || (vnlist2.size() < champion.size())) {
 					champion = vnlist2;
-					vnlist2 = new ArrayList<Varnode>();
+					vnlist2 = new ArrayList<>();
 					if (champion.size() == 1) {
 						break;		// Current hash is unique
 					}
@@ -420,7 +583,7 @@ public class DynamicHash {
 			return; // no descendants
 		}
 
-		ArrayList<ToOpEdge> newedge = new ArrayList<ToOpEdge>();
+		ArrayList<ToOpEdge> newedge = new ArrayList<>();
 
 		while (iter.hasNext()) {
 			PcodeOp op = iter.next();
@@ -491,14 +654,14 @@ public class DynamicHash {
 		int total = getTotalFromHash(h);
 		int pos = getPositionFromHash(h);
 		h = clearTotalPosition(h);
-		ArrayList<Varnode> vnlist = new ArrayList<Varnode>();
-		ArrayList<Varnode> vnlist2 = new ArrayList<Varnode>();
+		ArrayList<Varnode> vnlist = new ArrayList<>();
+		ArrayList<Varnode> vnlist2 = new ArrayList<>();
 		gatherFirstLevelVars(vnlist, fd, addr, h);
 		for (int i = 0; i < vnlist.size(); ++i) {
 			Varnode tmpvn = vnlist.get(i);
 			dhash.clear();
 			dhash.calcHash(tmpvn, method);
-			if (dhash.getHash() == h) {
+			if (getComparable(dhash.getHash()) == getComparable(h)) {
 				vnlist2.add(tmpvn);
 			}
 		}
@@ -506,6 +669,40 @@ public class DynamicHash {
 			return null;
 		}
 		return vnlist2.get(pos);
+	}
+
+	public static PcodeOp findOp(PcodeSyntaxTree fd, Address addr, long h) {
+		DynamicHash dhash = new DynamicHash();
+		int method = getMethodFromHash(h);
+		int slot = getSlotFromHash(h);
+		int total = getTotalFromHash(h);
+		int pos = getPositionFromHash(h);
+		h = clearTotalPosition(h);
+		ArrayList<PcodeOp> oplist = new ArrayList<>();
+		ArrayList<PcodeOp> oplist2 = new ArrayList<>();
+		gatherOpsAtAddress(oplist, fd, addr);
+		for (PcodeOp tmpop : oplist) {
+			if (slot >= tmpop.getNumInputs()) {
+				continue;
+			}
+			dhash.clear();
+			dhash.calcHash(tmpop, slot, method);
+			if (getComparable(dhash.getHash()) == getComparable(h)) {
+				oplist2.add(tmpop);
+			}
+		}
+		if (total != oplist2.size()) {
+			return null;
+		}
+		return oplist2.get(pos);
+	}
+
+	public static void gatherOpsAtAddress(ArrayList<PcodeOp> oplist, PcodeSyntaxTree fd,
+			Address addr) {
+		Iterator<PcodeOpAST> iter = fd.getPcodeOps(addr);
+		while (iter.hasNext()) {
+			oplist.add(iter.next());
+		}
 	}
 
 	public static void gatherFirstLevelVars(ArrayList<Varnode> varlist, PcodeSyntaxTree fd,
@@ -586,6 +783,10 @@ public class DynamicHash {
 		return h;
 	}
 
+	public static int getComparable(long h) {
+		return (int) h;
+	}
+
 	/**
 	 * Test that extendval is equal to val1, where extendval may be an extension
 	 * @param val1  is the value that needs to be matched
@@ -615,7 +816,7 @@ public class DynamicHash {
 	 * @param value of the constant
 	 * @return array of hash values (may be zero length)
 	 */
-	public static long[] calcConstantHash(Instruction instr,long value) {
+	public static long[] calcConstantHash(Instruction instr, long value) {
 		long[] tmp = new long[2];
 		int count = 0;
 		for (PcodeOp op : instr.getPcode(true)) {
@@ -625,12 +826,12 @@ public class DynamicHash {
 					matchWithPossibleExtension(inputs[i].getOffset(), inputs[i].getSize(), value)) {
 					if (count >= tmp.length) {
 						long[] newtmp = new long[count + 10];
-						for(int j=0;j<tmp.length;++j) {
+						for (int j = 0; j < tmp.length; ++j) {
 							newtmp[j] = tmp[j];
 						}
 						tmp = newtmp;
 					}
-					DynamicHash dynamicHash = new DynamicHash(op,i);
+					DynamicHash dynamicHash = new DynamicHash(op, i);
 					tmp[count] = dynamicHash.getHash();
 					if (tmp[count] != 0) {
 						count += 1;
@@ -639,7 +840,7 @@ public class DynamicHash {
 			}
 		}
 		long[] res = new long[count];
-		for(int i=0;i<count;++i) {
+		for (int i = 0; i < count; ++i) {
 			res[i] = tmp[i];
 		}
 		return res;

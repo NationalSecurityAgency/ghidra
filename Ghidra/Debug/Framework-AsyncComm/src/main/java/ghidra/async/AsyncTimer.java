@@ -15,15 +15,14 @@
  */
 package ghidra.async;
 
-import java.util.*;
+import java.util.Timer;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
-
-import ghidra.util.Msg;
 
 /**
  * A timer for asynchronous scheduled tasks
  * 
+ * <p>
  * This object provides a futures which complete at specified times. This is useful for pausing amid
  * a chain of callback actions, i.e., between iterations of a loop. A critical tenant of
  * asynchronous reactive programming is to never block a thread, at least not for an indefinite
@@ -34,13 +33,15 @@ import ghidra.util.Msg;
  * {@link Timer}, but its {@link Future}s are not {@link CompletableFuture}s. The same is true of
  * {@link ScheduledThreadPoolExecutor}.
  * 
+ * <p>
  * A delay is achieved using {@link #mark()}, then {@link #after(long)}. For example, within a
  * {@link AsyncUtils#sequence(TypeSpec)}:
  * 
  * <pre>
- * timer.mark().afterMark(1000).handle(seq::next);
+ * timer.mark().after(1000).handle(seq::next);
  * </pre>
  * 
+ * <p>
  * {@link #mark()} marks the current system time; all subsequent calls to {@link #after(long)}
  * schedule futures relative to this mark. Using {@link #after(long)} before {@link #mark()} gives
  * undefined behavior. Scheduling a timed sequence of actions is best accomplished using times
@@ -48,31 +49,33 @@ import ghidra.util.Msg;
  * 
  * <pre>
  * sequence(TypeSpec.VOID).then((seq) -> {
- * 	timer.mark().afterMark(1000).handle(seq::next);
+ * 	timer.mark().after(1000).handle(seq::next);
  * }).then((seq) -> {
  * 	doTaskAtOneSecond().handle(seq::next);
  * }).then((seq) -> {
- * 	timer.afterMark(2000).handle(seq::next);
+ * 	timer.after(2000).handle(seq::next);
  * }).then((seq) -> {
  * 	doTaskAtTwoSeconds().handle(seq::next);
  * }).asCompletableFuture();
  * </pre>
  * 
+ * <p>
  * This provides slightly more precise scheduling than delaying for a fixed period between tasks.
  * Consider a second example:
  * 
  * <pre>
  * sequence(TypeSpec.VOID).then((seq) -> {
- * 	timer.mark().afterMark(1000).handle(seq::next);
+ * 	timer.mark().after(1000).handle(seq::next);
  * }).then((seq) -> {
  * 	doTaskAtOneSecond().handle(seq::next);
  * }).then((seq) -> {
- * 	timer.mark().afterMark(1000).handle(seq::next);
+ * 	timer.mark().after(1000).handle(seq::next);
  * }).then((seq) -> {
  * 	doTaskAtTwoSeconds().handle(seq::next);
  * }).asCompletableFuture();
  * </pre>
  * 
+ * <p>
  * In the first example, {@code doTaskAtTwoSeconds} executes at 2000ms from the mark + some
  * scheduling overhead. In the second example, {@code doTaskAtTwoSeconds} executes at 1000ms + some
  * scheduling overhead + the time to execute {@code doTaskAtOneSecond} + 1000ms + some more
@@ -82,6 +85,7 @@ import ghidra.util.Msg;
  * from the mark + some scheduling overhead. The scheduling overhead is generally bounded to a small
  * constant and depends on the accuracy of the host OS and JVM.
  * 
+ * <p>
  * Like {@link Timer}, each {@link AsyncTimer} is backed by a single thread which uses
  * {@link Object#wait()} to implement its timing. Thus, this is not suitable for real-time
  * applications. Unlike {@link Timer}, the backing thread is always a daemon. It will not prevent
@@ -92,10 +96,7 @@ import ghidra.util.Msg;
 public class AsyncTimer {
 	public static final AsyncTimer DEFAULT_TIMER = new AsyncTimer();
 
-	protected Thread thread = new Thread(this::run);
-	protected SortedMap<Long, Set<TimerPromise>> promises = new TreeMap<>();
-	protected long nextWake = Long.MAX_VALUE;
-	protected boolean alive = true;
+	protected ExecutorService thread = Executors.newSingleThreadExecutor();
 
 	public class Mark {
 		protected final long mark;
@@ -118,86 +119,42 @@ public class AsyncTimer {
 		public CompletableFuture<Void> after(long intervalMillis) {
 			return atSystemTime(mark + intervalMillis);
 		}
-	}
 
-	private class TimerPromise extends CompletableFuture<Void> {
-		private final long time;
-
-		TimerPromise(long time) {
-			this.time = time;
-		}
-
-		@Override
-		public boolean cancel(boolean mayInterruptIfRunning) {
-			synchronized (AsyncTimer.this) {
-				Set<TimerPromise> sameTime = promises.get(time);
-				if (sameTime != null) {
-					sameTime.remove(this);
-					if (sameTime.isEmpty()) {
-						promises.remove(time);
-					}
+		/**
+		 * Time a future out after the given interval
+		 * 
+		 * @param <T> the type of the future
+		 * @param future the future whose value is expected in the given interval
+		 * @param millis the time interval in milliseconds
+		 * @param valueIfLate a supplier for the value if the future doesn't complete in time
+		 * @return a future which completes with the given futures value, or the late value if it
+		 *         times out.
+		 */
+		public <T> CompletableFuture<T> timeOut(CompletableFuture<T> future, long millis,
+				Supplier<T> valueIfLate) {
+			return CompletableFuture.anyOf(future, after(millis)).thenApply(v -> {
+				if (future.isDone()) {
+					return future.getNow(null);
 				}
-			}
-			return super.cancel(mayInterruptIfRunning);
-			// Don't worry about interrupting and re-sleeping the thread
-			// It costs the same, maybe less, to let it wake itself.
+				return valueIfLate.get();
+			});
 		}
 	}
 
 	/**
 	 * Create a new timer
 	 * 
+	 * <p>
 	 * Except to reduce contention among threads, most applications need only create one timer
-	 * instance.
+	 * instance. See {@link AsyncTimer#DEFAULT_TIMER}.
 	 */
 	public AsyncTimer() {
-		thread.setDaemon(true);
-		thread.start();
-	}
-
-	private void run() {
-		/*
-		 * The general idea is to keep track of the time until the next promise is to be completed,
-		 * and to sleep until that time. Once awake, all tasks whose scheduled time has passed are
-		 * completed. The actual completion calls must take place outside of the sychronized block.
-		 */
-		while (alive) {
-			try {
-				Set<TimerPromise> toComplete = new HashSet<>();
-				synchronized (this) {
-					long delta = nextWake - System.currentTimeMillis();
-					if (delta > 0) {
-						wait(delta);
-						if (!alive) {
-							return;
-						}
-					}
-					long key = Long.MAX_VALUE;
-					while (!promises.isEmpty() &&
-						(key = promises.firstKey()) <= System.currentTimeMillis()) {
-						toComplete.addAll(promises.remove(key));
-					}
-					nextWake = key;
-				}
-				for (TimerPromise promise : toComplete) {
-					promise.complete(null);
-				}
-			}
-			catch (Throwable e) {
-				Msg.warn(this, "Exception in timer thread", e);
-			}
-		}
-	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		alive = false;
-		thread.interrupt();
 	}
 
 	/**
 	 * Schedule a task to run when {@link System#currentTimeMillis()} has passed a given time
 	 * 
+	 * <p>
 	 * This method returns immediately, giving a future result. The future completes "soon after"
 	 * the current system time passes the given time in milliseconds. There is some minimal
 	 * overhead, but the scheduler endeavors to complete the future as close to the given time as
@@ -207,20 +164,15 @@ public class AsyncTimer {
 	 * @return a future that completes soon after the given time
 	 */
 	public CompletableFuture<Void> atSystemTime(long timeMillis) {
-		if (timeMillis <= System.currentTimeMillis()) {
+		if (timeMillis - System.currentTimeMillis() <= 0) {
 			return AsyncUtils.NIL;
 		}
-		synchronized (this) {
-			Set<TimerPromise> sameTime =
-				promises.computeIfAbsent(timeMillis, (k) -> new HashSet<>());
-			TimerPromise promise = new TimerPromise(timeMillis);
-			sameTime.add(promise);
-			if (timeMillis < nextWake) {
-				nextWake = timeMillis; // In case it hasn't started waiting yet
-				notify();
-			}
-			return promise;
-		}
+
+		long delta = timeMillis - System.currentTimeMillis();
+		Executor executor =
+			delta <= 0 ? thread : CompletableFuture.delayedExecutor(delta, TimeUnit.MILLISECONDS);
+		return CompletableFuture.runAsync(() -> {
+		}, executor);
 	}
 
 	/**

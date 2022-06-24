@@ -52,7 +52,9 @@ import resources.ResourceManager;
  * the {@link #withContext(Class)} call.
  */
 public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends ActionContext, B extends AbstractActionBuilder<T, C, B>> {
+
 	private final Predicate<C> ALWAYS_TRUE = e -> true;
+
 	/**
 	 * Name for the {@code DockingAction}
 	 */
@@ -163,9 +165,10 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	private Predicate<C> enabledPredicate = null;
 
 	/**
-	 * Predicate for determining if an action should be included on the pop-up menu
+	 * Predicate for determining if an action should be included on the pop-up menu.
+	 * A null popupPredicate will cause default behavior which defers to the enabledPredicate.
 	 */
-	private Predicate<C> popupPredicate = ALWAYS_TRUE;
+	private Predicate<C> popupPredicate = null;
 
 	/**
 	 * Predicate for determining if an action is applicable for a given context
@@ -547,8 +550,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Sets a predicate for dynamically determining if this action should be included in
 	 * an impending pop-up menu.  If this predicate is not set, the action will be included
-	 * in an impending pop-up, if it is enabled. See 
-	 * {@link DockingActionIf#isAddToPopup(ActionContext)}.
+	 * in an impending pop-up if it is enabled. See {@link DockingActionIf#isAddToPopup(ActionContext)}.
 	 * 
 	 * <p>Note: use this method when you wish for an action to be added to a popup menu regardless
 	 * of whether it is enabled.  As mentioned above, standard popup actions will only be added
@@ -734,7 +736,9 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 		}
 
 		action.validContextWhen(adaptPredicate(validContextPredicate));
-		action.popupWhen(adaptPredicate(popupPredicate));
+		if (popupPredicate != null) {
+			action.popupWhen(adaptPredicate(popupPredicate));
+		}
 		
 		if (windowWhen == When.ALWAYS) {
 			action.setAddToAllWindows(true);

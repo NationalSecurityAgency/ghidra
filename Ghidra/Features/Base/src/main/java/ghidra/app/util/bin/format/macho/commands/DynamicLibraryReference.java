@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -32,22 +32,7 @@ public class DynamicLibraryReference implements StructConverter {
 	private int isym;
 	private int flags;
 
-	static DynamicLibraryReference createDynamicLibraryReference(
-			FactoryBundledWithBinaryReader reader) throws IOException {
-		DynamicLibraryReference dynamicLibraryReference =
-			(DynamicLibraryReference) reader.getFactory().create(DynamicLibraryReference.class);
-		dynamicLibraryReference.initDynamicLibraryReference(reader);
-		return dynamicLibraryReference;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DynamicLibraryReference() {
-	}
-
-	private void initDynamicLibraryReference(FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	DynamicLibraryReference(BinaryReader reader) throws IOException {
 		int value = reader.readNextInt();
 
 		if (reader.isLittleEndian()) {

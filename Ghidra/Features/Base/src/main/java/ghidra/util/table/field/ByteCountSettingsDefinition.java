@@ -37,10 +37,15 @@ public class ByteCountSettingsDefinition implements EnumSettingsDefinition {
 			return DEFAULT;
 		}
 		Long value = settings.getLong(BYTE_COUNT);
-		if (value == null) {
+		if (value == null || value < 0 || value >= choices.length) {
 			return DEFAULT;
 		}
 		return value.intValue();
+	}
+
+	@Override
+	public String getValueString(Settings settings) {
+		return choices[getChoice(settings)];
 	}
 
 	@Override
@@ -63,6 +68,11 @@ public class ByteCountSettingsDefinition implements EnumSettingsDefinition {
 
 	@Override
 	public String getName() {
+		return BYTE_COUNT;
+	}
+
+	@Override
+	public String getStorageKey() {
 		return BYTE_COUNT;
 	}
 

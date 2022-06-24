@@ -154,21 +154,19 @@
         <setEntry value="org.python.pydev.feature:default"/>
     </setAttribute>
     <setAttribute key="selected_target_bundles">
+        <setEntry value="biz.aQute.bnd.util"/>
         <setEntry value="biz.aQute.bndlib@default:default"/>
         <setEntry value="ch.qos.logback.classic@default:default"/>
         <setEntry value="ch.qos.logback.core@default:default"/>
         <setEntry value="ch.qos.logback.slf4j@default:false"/>
         <setEntry value="com.google.gson@default:default"/>
-        <setEntry value="com.google.guava*21.0.0.v20170206-1425@default:default"/>
         <setEntry value="com.google.guava*27.1.0.v20190517-1946@default:default"/>
         <setEntry value="com.google.guava*30.1.0.v20210127-2300@default:default"/>
         <setEntry value="com.ibm.icu@default:default"/>
         <setEntry value="com.python.pydev.analysis@default:default"/>
         <setEntry value="com.python.pydev.debug@default:default"/>
         <setEntry value="com.python.pydev.refactoring@default:default"/>
-        <setEntry value="com.sun.jna*4.5.1.v20190425-1842@default:default"/>
         <setEntry value="com.sun.jna*5.8.0.v20210503-0343@default:default"/>
-        <setEntry value="com.sun.jna.platform*4.5.1.v20190425-1842@default:default"/>
         <setEntry value="com.sun.jna.platform*5.8.0.v20210406-1004@default:default"/>
         <setEntry value="jakarta.servlet-api@default:default"/>
         <setEntry value="javax.annotation@default:default"/>
@@ -181,7 +179,6 @@
         <setEntry value="org.apache.commons.codec@default:default"/>
         <setEntry value="org.apache.commons.io@default:default"/>
         <setEntry value="org.apache.commons.jxpath@default:default"/>
-        <setEntry value="org.apache.commons.lang@default:default"/>
         <setEntry value="org.apache.commons.logging@default:default"/>
         <setEntry value="org.apache.felix.gogo.command@default:default"/>
         <setEntry value="org.apache.felix.gogo.runtime@default:default"/>
@@ -200,9 +197,9 @@
         <setEntry value="org.eclipse.ant.core@default:default"/>
         <setEntry value="org.eclipse.buildship.core@default:default"/>
         <setEntry value="org.eclipse.buildship.ui@default:default"/>
-        <setEntry value="org.eclipse.cdt.core.native@default:default"/>
-        <setEntry value="org.eclipse.cdt.core.win32.x86_64@default:false"/>
-        <setEntry value="org.eclipse.cdt.core.win32@default:false"/>
+        <setEntry value="org.eclipse.cdt.core.native*5.7.0.201502131403@default:default"/>
+        <setEntry value="org.eclipse.cdt.core.win32*5.4.0.201502131403@default:default"/>
+        <setEntry value="org.eclipse.cdt.core.win32.x86_64*5.3.0.201502131403@default:default"/>
         <setEntry value="org.eclipse.cdt.core@default:default"/>
         <setEntry value="org.eclipse.cdt.ui@default:default"/>
         <setEntry value="org.eclipse.compare.core@default:default"/>
@@ -268,12 +265,18 @@
         <setEntry value="org.eclipse.equinox.p2.artifact.repository@default:default"/>
         <setEntry value="org.eclipse.equinox.p2.core@default:default"/>
         <setEntry value="org.eclipse.equinox.p2.director@default:default"/>
+        <setEntry value="org.eclipse.equinox.p2.directorywatcher"/>
         <setEntry value="org.eclipse.equinox.p2.engine@default:default"/>
+        <setEntry value="org.eclipse.equinox.p2.extensionlocation@default:default"/>
+        <setEntry value="org.eclipse.equinox.p2.garbagecollector"/>
         <setEntry value="org.eclipse.equinox.p2.jarprocessor@default:default"/>
         <setEntry value="org.eclipse.equinox.p2.metadata.repository@default:default"/>
         <setEntry value="org.eclipse.equinox.p2.metadata@default:default"/>
         <setEntry value="org.eclipse.equinox.p2.operations@default:default"/>
+        <setEntry value="org.eclipse.equinox.p2.publisher"/>
+        <setEntry value="org.eclipse.equinox.p2.publisher.eclipse"/>
         <setEntry value="org.eclipse.equinox.p2.repository@default:default"/>
+        <setEntry value="org.eclipse.equinox.p2.touchpoint.eclipse"/>
         <setEntry value="org.eclipse.equinox.p2.ui@default:default"/>
         <setEntry value="org.eclipse.equinox.preferences@default:default"/>
         <setEntry value="org.eclipse.equinox.registry@default:default"/>
@@ -305,6 +308,8 @@
         <setEntry value="org.eclipse.jetty.servlet@default:default"/>
         <setEntry value="org.eclipse.jetty.util.ajax@default:default"/>
         <setEntry value="org.eclipse.jetty.util@default:default"/>
+        <setEntry value="org.eclipse.jetty.webapp"/>
+        <setEntry value="org.eclipse.jetty.xml"/>
         <setEntry value="org.eclipse.jface.databinding@default:default"/>
         <setEntry value="org.eclipse.jface.notifications@default:default"/>
         <setEntry value="org.eclipse.jface.text@default:default"/>
@@ -320,17 +325,12 @@
         <setEntry value="org.eclipse.m2e.maven.runtime@default:default"/>
         <setEntry value="org.eclipse.m2e.model.edit@default:default"/>
         <setEntry value="org.eclipse.m2e.workspace.cli@default:default"/>
-        <setEntry value="org.eclipse.mylyn.commons.core@default:default"/>
-        <setEntry value="org.eclipse.mylyn.commons.notifications.core@default:default"/>
-        <setEntry value="org.eclipse.mylyn.commons.notifications.ui@default:default"/>
-        <setEntry value="org.eclipse.mylyn.commons.screenshots@default:default"/>
-        <setEntry value="org.eclipse.mylyn.commons.ui@default:default"/>
-        <setEntry value="org.eclipse.mylyn.commons.workbench@default:default"/>
         <setEntry value="org.eclipse.osgi.compatibility.state@default:false"/>
         <setEntry value="org.eclipse.osgi.services@default:default"/>
         <setEntry value="org.eclipse.osgi.util@default:default"/>
         <setEntry value="org.eclipse.osgi@-1:true"/>
         <setEntry value="org.eclipse.platform@default:default"/>
+        <setEntry value="org.eclipse.rap.tools.launch.rwt"/>
         <setEntry value="org.eclipse.search@default:default"/>
         <setEntry value="org.eclipse.swt.win32.win32.x86_64@default:false"/>
         <setEntry value="org.eclipse.swt@default:default"/>
@@ -397,7 +397,7 @@
     <setAttribute key="selected_workspace_bundles">
         <setEntry value="ghidra.ghidradev@default:default"/>
     </setAttribute>
-    <booleanAttribute key="show_selected_only" value="true"/>
+    <booleanAttribute key="show_selected_only" value="false"/>
     <booleanAttribute key="tracing" value="false"/>
     <booleanAttribute key="useCustomFeatures" value="false"/>
     <booleanAttribute key="useDefaultConfig" value="true"/>

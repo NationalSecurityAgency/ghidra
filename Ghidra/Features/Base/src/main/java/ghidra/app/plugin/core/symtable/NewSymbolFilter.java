@@ -45,6 +45,8 @@ public class NewSymbolFilter implements SymbolFilter {
 
 	private Map<String, Filter> filterMap = new HashMap<>();
 
+	private boolean acceptsAllLabels;
+
 	private boolean acceptsAll;
 	private boolean acceptsAllTypes;
 	private boolean acceptsAllSources;
@@ -310,9 +312,13 @@ public class NewSymbolFilter implements SymbolFilter {
 		originList.toArray(activeOriginFilters);
 
 		ArrayList<Filter> typeList = new ArrayList<>(labelFilters.length);
+		acceptsAllLabels = true;
 		for (Filter labelFilter : labelFilters) {
 			if (labelFilter.isActive()) {
 				typeList.add(labelFilter);
+			}
+			else {
+				acceptsAllLabels = false;
 			}
 		}
 		for (Filter nonLabelFilter : nonLabelFilters) {
@@ -406,6 +412,9 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean matches(Program program, Symbol symbol) {
 				if (symbol.getSymbolType() == SymbolType.LABEL && !symbol.isExternal()) {
+					if (acceptsAllLabels) {
+						return true;
+					}
 					Listing l = program.getListing();
 					Address addr = symbol.getAddress();
 					CodeUnit cu = l.getCodeUnitContaining(addr);
@@ -429,7 +438,7 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean matches(Program program, Symbol symbol) {
 				if (symbol.getSymbolType() == SymbolType.LABEL) {
-					if (symbol.isExternal()) {
+					if (acceptsAllLabels || symbol.isExternal()) {
 						return true;
 					}
 					Listing l = program.getListing();
@@ -456,6 +465,9 @@ public class NewSymbolFilter implements SymbolFilter {
 			@Override
 			boolean matches(Program program, Symbol symbol) {
 				if (symbol.getSymbolType() == SymbolType.LABEL && !symbol.isExternal()) {
+					if (acceptsAllLabels) {
+						return true;
+					}
 					return program.getFunctionManager().getFunctionAt(symbol.getAddress()) != null;
 				}
 				return (symbol.getSymbolType() == SymbolType.FUNCTION);
@@ -859,7 +871,7 @@ public class NewSymbolFilter implements SymbolFilter {
 		nonPrimaryFilter.addApplicableFilter(dataFilter);
 		nonPrimaryFilter.addApplicableFilter(functionFilter);
 
-		labelFilters = new Filter[] { instructionFilter, dataFilter, functionFilter, };
+		labelFilters = new Filter[] { instructionFilter, dataFilter, functionFilter };
 		nonLabelFilters = new Filter[] { namespaceFilter, classFilter, externalLibraryFilter,
 			parameterFilter, localVarsFilter, globalRegisterFilter };
 		advancedFilters = new Filter[] { externalFilter, nonExternalFilter, primaryFilter,

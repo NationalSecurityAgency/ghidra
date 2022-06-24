@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -29,30 +29,14 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a sub_framework_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a sub_framework_command structure 
  */
 public class SubFrameworkCommand extends LoadCommand {
 	private LoadCommandString umbrella;
 
-	static SubFrameworkCommand createSubFrameworkCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		SubFrameworkCommand command =
-			(SubFrameworkCommand) reader.getFactory().create(SubFrameworkCommand.class);
-		command.initSubFrameworkCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public SubFrameworkCommand() {
-	}
-
-	private void initSubFrameworkCommand(FactoryBundledWithBinaryReader reader) throws IOException {
-		initLoadCommand(reader);
-		umbrella = LoadCommandString.createLoadCommandString(reader, this);
+	SubFrameworkCommand(BinaryReader reader) throws IOException {
+		super(reader);
+		umbrella = new LoadCommandString(reader, this);
 	}
 
 	public LoadCommandString getUmbrellaFrameworkName() {

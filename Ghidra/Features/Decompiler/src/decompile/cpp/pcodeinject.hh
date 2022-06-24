@@ -23,6 +23,26 @@
 
 class Architecture;
 
+extern AttributeId ATTRIB_DYNAMIC;	///< Marshaling attribute "dynamic"
+extern AttributeId ATTRIB_INCIDENTALCOPY;	///< Marshaling attribute "incidentalcopy"
+extern AttributeId ATTRIB_INJECT;	///< Marshaling attribute "inject"
+extern AttributeId ATTRIB_PARAMSHIFT;	///< Marshaling attribute "paramshift"
+extern AttributeId ATTRIB_TARGETOP;	///< Marshaling attribute "targetop"
+
+extern ElementId ELEM_ADDR_PCODE;	///< Marshaling element \<addr_pcode>
+extern ElementId ELEM_BODY;		///< Marshaling element \<body>
+extern ElementId ELEM_CALLFIXUP;	///< Marshaling element \<callfixup>
+extern ElementId ELEM_CALLOTHERFIXUP;	///< Marshaling element \<callotherfixup>
+extern ElementId ELEM_CASE_PCODE;	///< Marshaling element \<case_pcode>
+extern ElementId ELEM_CONTEXT;		///< Marshaling element \<context>
+extern ElementId ELEM_DEFAULT_PCODE;	///< Marshaling element \<default_pcode>
+extern ElementId ELEM_INJECT;		///< Marshaling element \<inject>
+extern ElementId ELEM_INJECTDEBUG;	///< Marshaling element \<injectdebug>
+extern ElementId ELEM_INST;		///< Marshaling element \<inst>
+extern ElementId ELEM_PAYLOAD;		///< Marshaling element \<payload>
+extern ElementId ELEM_PCODE;		///< Marshaling element \<pcode>
+extern ElementId ELEM_SIZE_PCODE;	///< Marshaling element \<size_pcode>
+
 /// \brief An input or output parameter to a p-code injection payload
 ///
 /// Within the chunk of p-code being injected, this is a placeholder for Varnodes
@@ -64,10 +84,10 @@ public:
   virtual ~InjectContext(void) {}	///< Destructor
   virtual void clear(void) { inputlist.clear(); output.clear(); }	///< Release resources (from last injection)
 
-  /// \brief Save \b this context to an XML stream as a \<context> tag
+  /// \brief Encode \b this context to a stream as a \<context> element
   ///
-  /// \param s is the output stream
-  virtual void saveXml(ostream &s) const=0;
+  /// \param encoder is the stream encoder
+  virtual void encode(Encoder &encoder) const=0;
 };
 
 /// \brief An active container for a set of p-code operations that can be injected into data-flow
@@ -91,10 +111,12 @@ protected:
   int4 paramshift;		///< Number of parameters shifted in the original call
   vector<InjectParameter> inputlist;		///< List of input parameters to this payload
   vector<InjectParameter> output;		///< List of output parameters
-  static void readParameter(const Element *el,string &name,uint4 &size);
+  static void decodeParameter(Decoder &decoder,string &name,uint4 &size);
   void orderParameters(void);			///< Assign an index to parameters
+  void decodePayloadAttributes(Decoder &decoder);	///< Parse the attributes of the current \<pcode> tag
+  void decodePayloadParams(Decoder &decoder);		///< Parse any \<input> or \<output> children of current \<pcode> tag
 public:
-  InjectPayload(const string &nm,int4 tp) { name=nm; type=tp; paramshift=0; dynamic = false; incidentalCopy = false; }	///< Construct for use with restoreXml
+  InjectPayload(const string &nm,int4 tp) { name=nm; type=tp; paramshift=0; dynamic = false; incidentalCopy = false; }	///< Construct for use with decode
   int4 getParamShift(void) const { return paramshift; }	///< Get the number of parameters shifted
   bool isDynamic(void) const { return dynamic; }	///< Return \b true if p-code in the injection is generated dynamically
   bool isIncidentalCopy(void) const { return incidentalCopy; }	///< Return \b true if any injected COPY is considered \e incidental
@@ -115,7 +137,7 @@ public:
   /// \param emit is the provovided PcodeEmit object
   virtual void inject(InjectContext &context,PcodeEmit &emit) const=0;
 
-  virtual void restoreXml(const Element *el);		///< Restore \b this payload from an XML stream
+  virtual void decode(Decoder &decoder)=0;		///< Decode \b this payload from a stream
   virtual void printTemplate(ostream &s) const=0;	///< Print the p-code ops of the injection to a stream (for debugging)
   string getName(void) const { return name; }		///< Return the name of the injection
   int4 getType(void) const { return type; }		///< Return the type of injection (CALLFIXUP_TYPE, CALLOTHERFIXUP_TYPE, etc.)
@@ -150,7 +172,7 @@ public:
 /// \brief A collection of p-code injection payloads
 ///
 /// This is a container of InjectPayload objects that can be applied for a
-/// specific Architecture.  Payloads can be read in via XML (restoreXmlInject()) and manually
+/// specific Architecture.  Payloads can be read in via stream (decodeInject()) and manually
 /// via manualCallFixup() and manualCallOtherFixup().  Each payload is assigned an integer \e id
 /// when it is read in, and getPayload() fetches the payload during analysis. The library
 /// also associates the formal names of payloads with the id. Payloads of different types,
@@ -203,15 +225,15 @@ public:
   string getCallFixupName(int4 injectid) const;			///< Get the call-fixup name associated with an id
   string getCallOtherTarget(int4 injectid) const;		///< Get the callother-fixup name associated with an id
   string getCallMechanismName(int4 injectid) const;		///< Get the call mechanism name associated with an id
-  int4 restoreXmlInject(const string &src,const string &nm,int4 tp,const Element *el);
+  int4 decodeInject(const string &src,const string &suffix,int4 tp,Decoder &decoder);
 
-  /// \brief A method for reading in p-code generated externally for use in debugging
+  /// \brief A method for parsing p-code generated externally for use in debugging
   ///
   /// Instantiate a special InjectPayloadDynamic object initialized with an
-  /// \<injectdebug> tag.  Within the library, this replaces the original InjectPayload,
+  /// \<injectdebug> element.  Within the library, this replaces the original InjectPayload,
   /// allowing its p-code to be \e replayed for debugging purposes.
-  /// \param el is the \<injectdebug> element
-  virtual void restoreDebug(const Element *el) {}
+  /// \param decoder is the stream decoder
+  virtual void decodeDebug(Decoder &decoder) {}
 
   /// \brief Manually add a call-fixup payload given a compilable snippet of p-code \e source
   ///

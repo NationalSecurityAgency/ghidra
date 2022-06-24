@@ -1,6 +1,5 @@
 ##VERSION: 2.0
 ##MODULE IP: Apache License 2.0
-##MODULE IP: BSD
 ##MODULE IP: Copyright Distribution Permitted
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: LGPL 2.1
@@ -424,6 +423,7 @@ src/main/help/help/topics/GhidraScriptMgrPlugin/images/New_Script_Editor.png||GH
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Pick.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Rename.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/SaveAs.png||GHIDRA||||END|
+src/main/help/help/topics/GhidraScriptMgrPlugin/images/ScriptQuickLaunchDialog.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Script_Dirs.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Script_Manager.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Select_Font.png||GHIDRA||||END|
@@ -940,8 +940,8 @@ src/main/resources/images/Program.gif||GHIDRA||||END|
 src/main/resources/images/ThunkFunction.gif||GHIDRA||||END|
 src/main/resources/images/U.gif||GHIDRA||||END|
 src/main/resources/images/Unpackage.gif||GHIDRA||||END|
+src/main/resources/images/V.png||GHIDRA||||END|
 src/main/resources/images/VCRFastForward.gif||GHIDRA||||END|
-src/main/resources/images/V_slash.png||GHIDRA||||END|
 src/main/resources/images/View.gif||GHIDRA||||END|
 src/main/resources/images/accessories-text-editor.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/images/akregator.png||Oxygen Icons - LGPL 3.0||||END|

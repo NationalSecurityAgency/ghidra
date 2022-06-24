@@ -27,7 +27,7 @@ import org.junit.Test;
 import ghidra.app.plugin.assembler.sleigh.grammars.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.*;
 import ghidra.app.plugin.assembler.sleigh.tree.*;
-import ghidra.app.plugin.assembler.sleigh.util.SleighUtil;
+import ghidra.app.plugin.assembler.sleigh.util.AsmUtil;
 import ghidra.util.NullOutputStream;
 
 public class ParserTest {
@@ -119,10 +119,10 @@ public class ParserTest {
 
 		// I don't care the state numbers, but I do want to make sure every state is present
 		Comparator<Set<AssemblyParseStateItem>> comp = (Set<AssemblyParseStateItem> a,
-				Set<AssemblyParseStateItem> b) -> SleighUtil.compareInOrder(a, b);
+				Set<AssemblyParseStateItem> b) -> AsmUtil.compareInOrder(a, b);
 		TreeSet<Set<AssemblyParseStateItem>> states = new TreeSet<>(comp);
 		for (AssemblyParseState pstate : parser.states) {
-			TreeSet<AssemblyParseStateItem> state = new TreeSet<>(pstate);
+			TreeSet<AssemblyParseStateItem> state = new TreeSet<>(pstate.getKernel());
 			states.add(state);
 		}
 
@@ -558,14 +558,14 @@ public class ParserTest {
 		AssemblySentential<AssemblyNonTerminal> rhs = new AssemblySentential<>();
 		for (Object o : objs) {
 			if (o instanceof AssemblySymbol) {
-				rhs.add((AssemblySymbol) o);
+				rhs.addSymbol((AssemblySymbol) o);
 			}
 			else if (o instanceof String) {
 				if (" ".equals(o)) {
 					rhs.addWS();
 				}
 				else {
-					rhs.add(new AssemblyStringTerminal((String) o));
+					rhs.addSymbol(new AssemblyStringTerminal((String) o));
 				}
 			}
 			else {

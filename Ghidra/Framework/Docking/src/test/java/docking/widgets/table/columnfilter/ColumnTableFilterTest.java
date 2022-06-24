@@ -27,14 +27,17 @@ import javax.swing.table.TableColumn;
 import org.junit.Before;
 import org.junit.Test;
 
+import docking.test.AbstractDockingTest;
 import docking.widgets.table.*;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.MappedColumnConstraint;
 import docking.widgets.table.constraint.dialog.*;
 import docking.widgets.table.constraint.provider.*;
 import ghidra.framework.options.SaveState;
-import mockit.Mock;
-import mockit.MockUp;
+import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * This test performs operations on swing components in the test thread.  I believe this is ok
@@ -42,29 +45,17 @@ import mockit.MockUp;
  * involved.  If this test has displays intermittent failures, then more work will be needed to
  * fix the threading when accessing swing components.
  */
-public class ColumnTableFilterTest {
+public class ColumnTableFilterTest extends AbstractDockingTest {
 	private SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
 	private RowObjectFilterModel<Integer> tableModel;
 	private GTable gTable;
 	private ColumnFilterDialogModel<Integer> filterModel;
-	private List<ColumnConstraint<?>> allConstraints;
 
 	@Before
-	public void setup() {
-		allConstraints = loadConstraints();
-		// using a mock up to load discoverable column filters without performing a class search.
-		new MockUp<DiscoverableTableUtils>() {
-			@Mock
-			public List<ColumnConstraint<?>> getColumnConstraints(Class<?> columnType) {
-				List<ColumnConstraint<?>> matches = new ArrayList<>();
-				for (ColumnConstraint<?> columnConstraint : allConstraints) {
-					if (columnConstraint.getColumnType().equals(columnType)) {
-						matches.add(columnConstraint);
-					}
-				}
-				return matches;
-			}
-		};
+	public void setup() throws Exception {
+
+		ClassSearcher.search(TaskMonitor.DUMMY);
+
 		tableModel = createTableModel();
 		gTable = new GTable(tableModel);
 		filterModel = new ColumnFilterDialogModel<>(tableModel, gTable.getColumnModel(), null);

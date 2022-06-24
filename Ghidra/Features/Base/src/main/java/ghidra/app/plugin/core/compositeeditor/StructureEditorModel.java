@@ -16,15 +16,16 @@
 package ghidra.app.plugin.core.compositeeditor;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.NoSuchElementException;
+import java.util.*;
+
+import javax.swing.table.TableColumn;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.dialogs.InputDialogListener;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
-import ghidra.docking.settings.SettingsImpl;
+import docking.widgets.table.GTableHeaderRenderer;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.InsufficientBytesException;
 import ghidra.util.Msg;
@@ -40,6 +41,9 @@ class StructureEditorModel extends CompEditorModel {
 	private static final int DATATYPE = 3;
 	private static final int FIELDNAME = 4;
 	private static final int COMMENT = 5;
+	private static final int ORDINAL = 6;
+
+	private List<TableColumn> hiddenColumns;
 
 	StructureEditorModel(StructureEditorProvider provider, boolean showHexNumbers) {
 		super(provider);
@@ -48,6 +52,18 @@ class StructureEditorModel extends CompEditorModel {
 		columnOffsets = new int[headers.length];
 		adjustOffsets();
 		this.showHexNumbers = showHexNumbers;
+
+		List<TableColumn> additionalColumns = new ArrayList<>();
+		TableColumn ordinalColumn = new TableColumn(ORDINAL, 75);
+		ordinalColumn.setHeaderRenderer(new GTableHeaderRenderer());
+		ordinalColumn.setHeaderValue("Ordinal");
+		additionalColumns.add(ordinalColumn);
+		hiddenColumns = Collections.unmodifiableList(additionalColumns);
+	}
+
+	@Override
+	protected List<TableColumn> getHiddenColumns() {
+		return hiddenColumns;
 	}
 
 	@Override
@@ -81,11 +97,6 @@ class StructureEditorModel extends CompEditorModel {
 	}
 
 	@Override
-	public void load(Composite dataType, boolean useOffLineCategory) {
-		super.load(dataType, useOffLineCategory);
-	}
-
-	@Override
 	public void load(Composite dataType) {
 		super.load(dataType);
 	}
@@ -116,11 +127,7 @@ class StructureEditorModel extends CompEditorModel {
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 
-		if ((viewComposite == null) || (rowIndex < 0) || (columnIndex < 0) ||
-			(columnIndex >= getColumnCount())) {
-			if (columnIndex == getDataTypeColumn()) {
-				return null;
-			}
+		if ((viewComposite == null) || (rowIndex < 0) || (columnIndex < 0)) {
 			return "";
 		}
 
@@ -143,7 +150,7 @@ class StructureEditorModel extends CompEditorModel {
 		}
 		else if (columnIndex == getMnemonicColumn()) {
 			DataType dt = dtc.getDataType();
-			value = dt.getMnemonic(new SettingsImpl());
+			value = dt.getMnemonic(dtc.getDefaultSettings());
 			int compLen = dtc.getLength();
 			int dtLen = dt.isZeroLength() ? 0 : dt.getLength();
 			if (dtLen > compLen) {
@@ -160,6 +167,10 @@ class StructureEditorModel extends CompEditorModel {
 		}
 		else if (columnIndex == getCommentColumn()) {
 			value = dtc.getComment();
+		}
+		else if (columnIndex == ORDINAL) {
+			int ordinal = dtc.getOrdinal();
+			value = showHexNumbers ? getHexString(ordinal, true) : Integer.toString(ordinal);
 		}
 
 		return (value == null) ? "" : value;
@@ -370,7 +381,10 @@ class StructureEditorModel extends CompEditorModel {
 		}
 		insertComponentMultiple(startIndex, dt, originalComp.getLength(), multiple, monitor);
 
-		// Adjust the selection since we added some
+		// Adjust the selection since we added some components. Select last component added.
+		// Ensure that last added component is selected to allow for repeated duplication
+		setSelection(new int[] { index + multiple });
+
 		componentEdited();
 		lastNumDuplicates = multiple;
 	}
@@ -581,6 +595,9 @@ class StructureEditorModel extends CompEditorModel {
 		// set actions based on number of items selected
 		int rowIndex = getRow();
 		DataTypeComponent comp = getComponent(rowIndex);
+		if (comp == null) {
+			return false;
+		}
 		DataType dt = comp.getDataType();
 		if (viewComposite.isPackingEnabled()) {
 			return true;
@@ -677,7 +694,6 @@ class StructureEditorModel extends CompEditorModel {
 				1 == currentRange.getEnd().getIndex().intValue());
 
 		if (isOneComponent) {
-			// TODO
 			if (!isShowingUndefinedBytes() || isAtEnd(currentIndex) ||
 				onlyUndefinedsUntilEnd(currentIndex + 1)) {
 				return true; // allow replace of component when aligning.
@@ -1081,7 +1097,7 @@ class StructureEditorModel extends CompEditorModel {
 	}
 
 	public void createInternalStructure(TaskMonitor monitor)
-			throws InvalidDataTypeException, DataTypeConflictException, UsrException {
+			throws InvalidDataTypeException, UsrException {
 
 		if (selection.getNumRanges() != 1) {
 			throw new UsrException("Can only create structure on a contiguous selection.");

@@ -15,53 +15,55 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import ghidra.program.model.data.*;
 import docking.ComponentProvider;
+import ghidra.program.model.data.*;
 
 /**
  * Interface implemented by data type editors.
- * 
- * 
  */
 public interface EditorProvider {
 
 	/**
 	 * Get the name of this editor.
+	 * @return the name of this editor
 	 */
 	public String getName();
 
 	/**
 	 * Get the pathname of the data type being edited.
+	 * @return the pathname of the data type being edited
 	 */
 	public DataTypePath getDtPath();
 
 	/**
 	 * Get the component provider for this editor.
+	 * @return the component provider for this editor
 	 */
 	public ComponentProvider getComponentProvider();
 
 	/**
 	 * Get the datatype manager associated with this editor.
+	 * @return the datatype manager associated with this editor
 	 */
 	public DataTypeManager getDataTypeManager();
 
 	/**
-	 * Notification that the data type manager domain object (program or data type archive) was restored.
+	 * Notification that the data type manager domain object (program or data type archive) was
+	 * restored.
 	 * @param domainObject the program or data type archive that was restored.
 	 */
 	public void domainObjectRestored(DataTypeManagerDomainObject domainObject);
 
 	/**
-	 * Return whether this editor is editing the data type with the given
-	 * path.
+	 * Return whether this editor is editing the data type with the given path.
 	 * @param dtPath path of a data type
 	 * @return true if the data type for the pathname is being edited
 	 */
 	public boolean isEditing(DataTypePath dtPath);
 
 	/**
-	 * Add an editor listener that will be notified when the edit window is
-	 * closed.
+	 * Add an editor listener that will be notified when the edit window is closed.
+	 * @param listener the listener
 	 */
 	public void addEditorListener(EditorListener listener);
 
@@ -72,6 +74,7 @@ public interface EditorProvider {
 
 	/**
 	 * Returns whether changes need to be saved.
+	 * @return whether changes need to be saved
 	 */
 	public boolean needsSave();
 

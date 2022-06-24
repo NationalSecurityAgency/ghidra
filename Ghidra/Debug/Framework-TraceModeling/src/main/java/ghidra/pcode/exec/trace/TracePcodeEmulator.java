@@ -15,11 +15,12 @@
  */
 package ghidra.pcode.exec.trace;
 
+import com.google.common.collect.Range;
+
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.pcode.emu.AbstractPcodeEmulator;
+import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.PcodeExecutorState;
-import ghidra.pcode.exec.SleighUseropLibrary;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.stack.TraceStack;
@@ -29,7 +30,7 @@ import ghidra.trace.model.thread.TraceThreadManager;
 /**
  * An emulator that can read initial state from a trace
  */
-public class TracePcodeEmulator extends AbstractPcodeEmulator {
+public class TracePcodeEmulator extends PcodeEmulator {
 	private static SleighLanguage assertSleigh(Language language) {
 		if (!(language instanceof SleighLanguage)) {
 			throw new IllegalArgumentException("Emulation requires a sleigh language");
@@ -40,14 +41,10 @@ public class TracePcodeEmulator extends AbstractPcodeEmulator {
 	protected final Trace trace;
 	protected final long snap;
 
-	public TracePcodeEmulator(Trace trace, long snap, SleighUseropLibrary<byte[]> library) {
-		super(assertSleigh(trace.getBaseLanguage()), library);
+	public TracePcodeEmulator(Trace trace, long snap) {
+		super(assertSleigh(trace.getBaseLanguage()));
 		this.trace = trace;
 		this.snap = snap;
-	}
-
-	public TracePcodeEmulator(Trace trace, long snap) {
-		this(trace, snap, SleighUseropLibrary.nil());
 	}
 
 	protected PcodeExecutorState<byte[]> newState(TraceThread thread) {
@@ -96,7 +93,8 @@ public class TracePcodeEmulator extends AbstractPcodeEmulator {
 			ls.writeCacheDown(trace, destSnap, traceThread, 0);
 			if (synthesizeStacks) {
 				TraceStack stack = trace.getStackManager().getStack(traceThread, destSnap, true);
-				stack.getFrame(0, true).setProgramCounter(emuThread.getCounter());
+				stack.getFrame(0, true)
+						.setProgramCounter(Range.atLeast(destSnap), emuThread.getCounter());
 			}
 		}
 	}

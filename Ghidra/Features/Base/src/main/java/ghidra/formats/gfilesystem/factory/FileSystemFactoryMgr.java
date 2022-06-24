@@ -242,8 +242,7 @@ public class FileSystemFactoryMgr {
 	 * if found, creates a new filesystem instance.
 	 * <p>
 	 *
-	 * @param containerFSRL {@link FSRL} of the containing file.
-	 * @param containerFile {@link File} the containing file.
+	 * @param byteProvider container {@link ByteProvider}, will be owned by the new filesystem
 	 * @param fsService reference to the {@link FileSystemService} instance.
 	 * @param conflictResolver {@link FileSystemProbeConflictResolver conflict resolver} to
 	 * use when more than one {@link GFileSystem} implementation can handle the specified

@@ -17,6 +17,7 @@ package ghidra.trace.model.target;
 
 import com.google.common.collect.Range;
 
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 
@@ -44,6 +45,17 @@ public interface TraceObjectValue {
 	String getEntryKey();
 
 	/**
+	 * Get the "canonical path" of this value
+	 * 
+	 * <p>
+	 * This is the parent's canonical path extended by this value's entry key. Note, in the case
+	 * this value has a child object, this is not necessarily its canonical path.
+	 * 
+	 * @return
+	 */
+	TraceObjectKeyPath getCanonicalPath();
+
+	/**
 	 * Get the value
 	 * 
 	 * @return the value
@@ -59,6 +71,13 @@ public interface TraceObjectValue {
 	TraceObject getChild();
 
 	/**
+	 * Check if the value is an object (i.e., {@link TraceObject})
+	 * 
+	 * @return true if an object, false otherwise
+	 */
+	boolean isObject();
+
+	/**
 	 * Check if this value represents its child's canonical location
 	 * 
 	 * <p>
@@ -68,6 +87,15 @@ public interface TraceObjectValue {
 	 * @return true if canonical
 	 */
 	boolean isCanonical();
+
+	/**
+	 * Get the (target) schema for the value
+	 * 
+	 * @return the schema
+	 */
+	default TargetObjectSchema getTargetSchema() {
+		return getParent().getTargetSchema().getChildSchema(getEntryKey());
+	}
 
 	/**
 	 * Set the lifespan of this entry, truncating duplicates
@@ -91,6 +119,7 @@ public interface TraceObjectValue {
 	 * 
 	 * @param lifespan the new lifespan
 	 * @param resolution specifies how to resolve duplicate keys with intersecting lifespans
+	 * @throws DuplicateKeyException if there are denied duplicate keys
 	 */
 	void setLifespan(Range<Long> span, ConflictResolution resolution);
 
@@ -133,16 +162,8 @@ public interface TraceObjectValue {
 
 	/**
 	 * Delete this entry
-	 * 
-	 * <p>
-	 * If this entry is part of the child object's canonical path, then the child is also deleted.
 	 */
 	void delete();
-
-	/**
-	 * Delete this entry and, if it is canonical, its successors
-	 */
-	void deleteTree();
 
 	/**
 	 * Check if this value entry has been deleted
@@ -164,4 +185,17 @@ public interface TraceObjectValue {
 	 *         if a second is created.
 	 */
 	TraceObjectValue truncateOrDelete(Range<Long> span);
+
+	/**
+	 * Check if the schema designates this value as hidden
+	 * 
+	 * @return true if hidden
+	 */
+	default boolean isHidden() {
+		TraceObject parent = getParent();
+		if (parent == null) {
+			return false;
+		}
+		return parent.getTargetSchema().isHidden(getEntryKey());
+	}
 }

@@ -44,7 +44,9 @@ public class DebuggerModuleMapProposalDialog
 		MODULE_NAME("Module", String.class, e -> e.getModule().getName()),
 		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getModule().getBase()),
 		CHOOSE("Choose", String.class, e -> "Choose Program", (e, v) -> nop()),
-		PROGRAM_NAME("Program", String.class, e -> e.getToProgram().getName()),
+		PROGRAM_NAME("Program", String.class, e -> (e.getToProgram().getDomainFile() == null
+				? e.getToProgram().getName()
+				: e.getToProgram().getDomainFile().getName())),
 		STATIC_BASE("Static Base", Address.class, e -> e.getToProgram().getImageBase()),
 		SIZE("Size", Long.class, e -> e.getModuleRange().getLength());
 

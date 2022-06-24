@@ -91,6 +91,11 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
+	private void close(GraphDisplay gd) {
+		runSwing(() -> gd.close());
+		waitForSwing();
+	}
+
 	@Test
 	public void testDeSelectVertexAction() {
 		select(a, b, c, d);
@@ -409,8 +414,35 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(graphSpy.isSelected(a, b, c, d));
 	}
 
-	private void clearSelection() {
-		select();
+	@Test
+	public void testGetActiveGraph() throws Exception {
+
+		GraphDisplayBroker broker = tool.getService(GraphDisplayBroker.class);
+		GraphDisplayProvider service = broker.getGraphDisplayProvider("Default Graph Display");
+		GraphDisplay firstDisplay = service.getActiveGraphDisplay();
+		assertNotNull(firstDisplay);
+
+		showGraph();
+		GraphDisplay secondDisplay = service.getActiveGraphDisplay();
+		assertNotNull(secondDisplay);
+		assertNotSame(firstDisplay, secondDisplay);
+
+		showGraph();
+		GraphDisplay thirdDisplay = service.getActiveGraphDisplay();
+		assertNotNull(thirdDisplay);
+		assertNotSame(firstDisplay, thirdDisplay);
+		assertNotSame(secondDisplay, thirdDisplay);
+
+		close(thirdDisplay);
+		close(firstDisplay);
+
+		GraphDisplay activeDisplay = service.getActiveGraphDisplay();
+		assertNotNull(activeDisplay);
+		assertSame(secondDisplay, activeDisplay);
+
+		close(secondDisplay);
+		activeDisplay = service.getActiveGraphDisplay();
+		assertNull(activeDisplay);
 	}
 
 	private void collapse() {
@@ -420,6 +452,10 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		performAction(action, context, false);
 		MultiLineInputDialog dialog = waitForDialogComponent(MultiLineInputDialog.class);
 		pressButtonByText(dialog, "OK", true);
+	}
+
+	private void clearSelection() {
+		select();
 	}
 
 	private void expand() {
@@ -453,12 +489,13 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 			try {
 				display.setGraph(graph, options, "test graph", false, TaskMonitor.DUMMY);
 			}
-			catch (CancelledException e) {
+			catch (CancelledException ce) {
 				// can't happen with a dummy monitor
 			}
 		});
 
-		display.setGraphDisplayListener(new TestGraphDisplayListener("test"));
+		display.setGraphDisplayListener(new TestGraphDisplayListener());
+		waitForSwing();
 	}
 
 	private void select(AttributedVertex... vertices) {
@@ -484,13 +521,7 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> display.setFocusedVertex(vertex, trigger));
 	}
 
-	class TestGraphDisplayListener implements GraphDisplayListener {
-
-		private String name;
-
-		TestGraphDisplayListener(String name) {
-			this.name = name;
-		}
+	private class TestGraphDisplayListener implements GraphDisplayListener {
 
 		@Override
 		public void graphClosed() {
@@ -509,7 +540,7 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public GraphDisplayListener cloneWith(GraphDisplay graphDisplay) {
-			return new TestGraphDisplayListener("clone");
+			return new TestGraphDisplayListener();
 		}
 
 		@Override
@@ -519,7 +550,7 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
-	class GraphSpy {
+	private class GraphSpy {
 		AttributedVertex focusedVertex;
 		Set<AttributedVertex> selectedVertices;
 
@@ -532,8 +563,8 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 			return expected.equals(selectedVertices);
 		}
 
-		public boolean isFocused(AttributedVertex a) {
-			return a == focusedVertex;
+		public boolean isFocused(AttributedVertex v) {
+			return v == focusedVertex;
 		}
 
 		public void clear() {

@@ -76,16 +76,16 @@ public class GdbModelTargetProcessMemory
 				if (end.longValue() < 0) {
 					BigInteger split = BigInteger.valueOf(Long.MAX_VALUE);
 					GdbMemoryMapping lmem = new GdbMemoryMapping(start, split,
-						split.subtract(start), start.subtract(start), "defaultLow");
+						split.subtract(start), start.subtract(start), "rwx", "defaultLow");
 					defaultMap.put(start, lmem);
 					split = split.add(BigInteger.valueOf(1));
 					GdbMemoryMapping hmem = new GdbMemoryMapping(split, end,
-						end.subtract(split), split.subtract(split), "defaultHigh");
+						end.subtract(split), split.subtract(split), "rwx", "defaultHigh");
 					defaultMap.put(split, hmem);
 				}
 				else {
 					GdbMemoryMapping mem = new GdbMemoryMapping(start, end,
-						end.subtract(start), start.subtract(start), "default");
+						end.subtract(start), start.subtract(start), "rwx", "default");
 					defaultMap.put(start, mem);
 				}
 				regions =
@@ -104,7 +104,7 @@ public class GdbModelTargetProcessMemory
 		// Can't use refresh getKnownMappings is only populated by listMappings
 		return doRefresh();
 	}
-	
+
 	protected CompletableFuture<Void> doRefresh() {
 		if (inferior.getPid() == null) {
 			setElements(List.of(), "Refreshed (while no process)");

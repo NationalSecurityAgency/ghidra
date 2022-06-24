@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
+
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
@@ -51,20 +53,23 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		assertEquals(1, structureModel.getNumSelectedRows());
 		checkSelection(new int[] { 0 });
 
-//		// Check enablement.
-//		CompositeEditorAction[] pActions = provider.getActions();
-//		for (int i = 0; i < pActions.length; i++) {
-//			if ((pActions[i] instanceof FavoritesAction)
-//			|| (pActions[i] instanceof CycleGroupAction)
-//			|| (pActions[i] instanceof EditFieldAction)
-//			|| (pActions[i] instanceof PointerAction)
-//			|| (pActions[i] instanceof HexNumbersAction)) {
-//				checkEnablement(pActions[i], true);
-//			}
-//			else {
-//				checkEnablement(pActions[i], false);
-//			}
-//		}
+		// Check enablement for empty table with modified state.
+		CompositeEditorTableAction[] pActions = provider.getActions();
+		for (int i = 0; i < pActions.length; i++) {
+			if ((pActions[i] instanceof FavoritesAction) ||
+				(pActions[i] instanceof CycleGroupAction) ||
+				(pActions[i] instanceof EditFieldAction) ||
+				(pActions[i] instanceof PointerAction) ||
+				(pActions[i] instanceof HexNumbersAction) ||
+				(pActions[i] instanceof InsertUndefinedAction) ||
+				(pActions[i] instanceof AddBitFieldAction) ||
+				(pActions[i] instanceof ApplyAction)) {
+				checkEnablement(pActions[i], true);
+			}
+			else {
+				checkEnablement(pActions[i], false);
+			}
+		}
 
 		DataType arrayDt = new ArrayDataType(new CharDataType(), 5, 1);
 		addDataType(new ByteDataType());
@@ -90,6 +95,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		addDataType(arrayDt);
 
 		waitForSwing();
+
+		assertTrue(Arrays.equals(new int[] { 0 }, model.getSelectedRows()));
 
 		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -122,6 +129,13 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		addDataType(new FloatDataType());
 		addDataType(arrayDt);
 
+		waitForSwing();
+
+		assertTrue(Arrays.equals(new int[] { 0 }, model.getSelectedRows()));
+
+		// NOTE: Settings action is missing since it is provided by the DataPlugin 
+		// which has not been added to the test tool
+
 		// Check enablement.
 		CompositeEditorTableAction[] pActions = provider.getActions();
 		for (int i = 0; i < pActions.length; i++) {
@@ -130,7 +144,15 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 				(pActions[i] instanceof EditFieldAction) ||
 				(pActions[i] instanceof InsertUndefinedAction) ||
 				(pActions[i] instanceof PointerAction) ||
-				(pActions[i] instanceof HexNumbersAction) || (actions[i] instanceof ApplyAction)) {
+				(pActions[i] instanceof HexNumbersAction) ||
+				(pActions[i] instanceof MoveDownAction) ||
+				(pActions[i] instanceof DuplicateAction) ||
+				(pActions[i] instanceof DuplicateMultipleAction) ||
+				(pActions[i] instanceof DeleteAction) ||
+				(pActions[i] instanceof ArrayAction) ||
+				(pActions[i] instanceof CreateInternalStructureAction) ||
+				(pActions[i] instanceof ShowComponentPathAction) ||
+				(pActions[i] instanceof ApplyAction)) {
 				checkEnablement(pActions[i], true);
 			}
 			else {
@@ -157,6 +179,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		addDataType(arrayDt);
 
 		waitForSwing();
+
+		assertTrue(Arrays.equals(new int[] { 0 }, model.getSelectedRows()));
 
 		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
 		assertIsPackingEnabled(true);

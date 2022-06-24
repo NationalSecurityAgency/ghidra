@@ -40,12 +40,10 @@ class UnionLocationDescriptor extends DataTypeLocationDescriptor {
 	protected void doGetReferences(Accumulator<LocationReference> accumulator, TaskMonitor monitor)
 			throws CancelledException {
 
-		// Note: we pass null for the 'fieldName', as we have no way of disambiguating which 
+		// Note: we don't use 'fieldName' of the union, as we have no way of disambiguating which
 		//       field a reference will point to. So, grab all references.
-
-		String fieldName = null;
-		ReferenceUtils.findDataTypeReferences(accumulator, union, fieldName, program,
-			useDynamicSearching, monitor);
+		ReferenceUtils.findDataTypeReferences(accumulator, union, program, useDynamicSearching,
+			monitor);
 	}
 
 	@Override

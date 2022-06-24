@@ -20,16 +20,35 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.mem.MemBuffer;
 
+/**
+ * A p-code executor state that multiplexes shared and thread-local states for use in a
+ * multi-threaded emulator
+ * 
+ * @param <T> the type of values stored in the states
+ */
 public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	protected final PcodeExecutorState<T> sharedState;
 	protected final PcodeExecutorState<T> localState;
 
+	/**
+	 * Create a multiplexed state
+	 * 
+	 * @see {@link DefaultPcodeThread#DefaultPcodeThread(String, AbstractPcodeMachine)}
+	 * @param sharedState the shared part of the state
+	 * @param localState the thread-local part of the state
+	 */
 	public ThreadPcodeExecutorState(PcodeExecutorState<T> sharedState,
 			PcodeExecutorState<T> localState) {
 		this.sharedState = sharedState;
 		this.localState = localState;
 	}
 
+	/**
+	 * Decide whether or not access to the given space is directed to thread-local state
+	 * 
+	 * @param space the space
+	 * @return true for thread-local state, false for shared state
+	 */
 	protected boolean isThreadLocalSpace(AddressSpace space) {
 		return space.isRegisterSpace() || space.isUniqueSpace();
 	}
@@ -71,10 +90,20 @@ public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 		return sharedState.getConcreteBuffer(address);
 	}
 
+	/**
+	 * Get the shared state
+	 * 
+	 * @return the shared state
+	 */
 	public PcodeExecutorState<T> getSharedState() {
 		return sharedState;
 	}
 
+	/**
+	 * Get the thread-local state
+	 * 
+	 * @return the thread-local state
+	 */
 	public PcodeExecutorState<T> getLocalState() {
 		return localState;
 	}

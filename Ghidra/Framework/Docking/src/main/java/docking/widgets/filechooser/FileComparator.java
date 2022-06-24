@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +18,11 @@
  */
 package docking.widgets.filechooser;
 
-import ghidra.util.filechooser.GhidraFileChooserModel;
+import java.util.Comparator;
 
 import java.io.File;
-import java.util.Comparator;
+
+import ghidra.util.filechooser.GhidraFileChooserModel;
 
 class FileComparator implements Comparator<File> {
 	final static int SORT_BY_NAME = 1111;
@@ -59,7 +59,7 @@ class FileComparator implements Comparator<File> {
 		else if (sortBy == SORT_BY_TIME) {
 			if (model.isDirectory(file1)) {
 				if (model.isDirectory(file2)) {
-					return compare(file1.lastModified(), file2.lastModified());
+					return Long.compare(file1.lastModified(), file2.lastModified());
 				}
 				return -1; // dirs come before files
 			}
@@ -73,24 +73,11 @@ class FileComparator implements Comparator<File> {
 			value = file1.getName().compareToIgnoreCase(file2.getName());
 		}
 		else if (sortBy == SORT_BY_SIZE) {
-			value = compare(file1.length(), file2.length());
+			value = Long.compare(file1.length(), file2.length());
 		}
 		else if (sortBy == SORT_BY_TIME) {
-			value = compare(file1.lastModified(), file2.lastModified());
+			value = Long.compare(file1.lastModified(), file2.lastModified());
 		}
 		return value;
 	}
-
-	private int compare(long l1, long l2) {
-		if (l1 == l2) {
-			return 0;
-		}
-
-		if (l1 - l2 > 0) {
-			return 1;
-		}
-
-		return -1;
-	}
-
 }

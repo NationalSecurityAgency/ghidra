@@ -23,6 +23,8 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
+import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
 public class ObjectiveC1_SymbolTable implements StructConverter {
@@ -42,12 +44,12 @@ public class ObjectiveC1_SymbolTable implements StructConverter {
 		this._state = state;
 		this._index = reader.getPointerIndex();
 
-		sel_ref_cnt  = reader.readNextInt();
-		refs         = reader.readNextInt();
-		cls_def_cnt  = reader.readNextShort();
-		cat_def_cnt  = reader.readNextShort();
+		sel_ref_cnt = reader.readNextInt();
+		refs = reader.readNextInt();
+		cls_def_cnt = reader.readNextShort();
+		cat_def_cnt = reader.readNextShort();
 
-		for (int i = 0 ; i < cls_def_cnt ; ++i) {
+		for (int i = 0; i < cls_def_cnt; ++i) {
 			long classIndex = reader.readNextInt();
 			long oldClassIndex = reader.getPointerIndex();
 			reader.setPointerIndex(classIndex);
@@ -55,7 +57,7 @@ public class ObjectiveC1_SymbolTable implements StructConverter {
 			reader.setPointerIndex(oldClassIndex);
 		}
 
-		for (int i = 0 ; i < cat_def_cnt ; ++i) {
+		for (int i = 0; i < cat_def_cnt; ++i) {
 			long categoryIndex = reader.readNextInt();
 			long oldCategoryIndex = reader.getPointerIndex();
 			reader.setPointerIndex(categoryIndex);
@@ -67,12 +69,15 @@ public class ObjectiveC1_SymbolTable implements StructConverter {
 	public int getSelectorReferenceCount() {
 		return sel_ref_cnt;
 	}
+
 	public int getRefs() {
 		return refs;
 	}
+
 	public short getClassDefinitionCount() {
 		return cls_def_cnt;
 	}
+
 	public short getCategoryDefinitionCount() {
 		return cat_def_cnt;
 	}
@@ -80,6 +85,7 @@ public class ObjectiveC1_SymbolTable implements StructConverter {
 	public List<ObjectiveC1_Class> getClasses() {
 		return classes;
 	}
+
 	public List<ObjectiveC1_Category> getCategories() {
 		return categories;
 	}
@@ -89,23 +95,28 @@ public class ObjectiveC1_SymbolTable implements StructConverter {
 		struct.setCategoryPath(ObjectiveC1_Constants.CATEGORY_PATH);
 		struct.add(DWORD, "sel_ref_cnt", null);
 		struct.add(DWORD, "refs", null);
-		struct.add( WORD, "cls_def_cnt", null);
-		struct.add( WORD, "cat_def_cnt", null);
+		struct.add(WORD, "cls_def_cnt", null);
+		struct.add(WORD, "cat_def_cnt", null);
 		return struct;
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(NAME+"_"+cls_def_cnt+"_"+cat_def_cnt+"_", 0);
+		StructureDataType struct =
+			new StructureDataType(NAME + "_" + cls_def_cnt + "_" + cat_def_cnt + "_", 0);
 		struct.setCategoryPath(ObjectiveC1_Constants.CATEGORY_PATH);
 		struct.add(DWORD, "sel_ref_cnt", null);
 		struct.add(DWORD, "refs", null);
-		struct.add( WORD, "cls_def_cnt", null);
-		struct.add( WORD, "cat_def_cnt", null);
-		for (int i = 0 ; i < cls_def_cnt ; ++i) {
-			struct.add(PointerDataType.getPointer(classes.get(i).toDataType(), _state.pointerSize), "class"+i, null);
+		struct.add(WORD, "cls_def_cnt", null);
+		struct.add(WORD, "cat_def_cnt", null);
+		for (int i = 0; i < cls_def_cnt; ++i) {
+			struct.add(PointerDataType.getPointer(classes.get(i).toDataType(), _state.pointerSize),
+				"class" + i, null);
 		}
-		for (int i = 0 ; i < cat_def_cnt ; ++i) {
-			struct.add(PointerDataType.getPointer(categories.get(i).toDataType(), _state.pointerSize), "category"+i, null);
+		for (int i = 0; i < cat_def_cnt; ++i) {
+			struct.add(
+				PointerDataType.getPointer(categories.get(i).toDataType(), _state.pointerSize),
+				"category" + i, null);
 		}
 		return struct;
 	}
@@ -116,11 +127,16 @@ public class ObjectiveC1_SymbolTable implements StructConverter {
 		}
 		_state.beenApplied.add(_index);
 
-		Address address = _state.program.getAddressFactory().getDefaultAddressSpace().getAddress(_index);
+		Address address =
+			_state.program.getAddressFactory().getDefaultAddressSpace().getAddress(_index);
+		DataType dt = toDataType();
 		try {
-			_state.program.getListing().createData(address, toDataType());
+			DataUtilities.createData(_state.program, address, dt, -1, false,
+				ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
 		}
-		catch (Exception e) {}
+		catch (Exception e) {
+			Msg.warn(this, "Could not create " + dt.getName() + " @" + address);
+		}
 
 		_state.program.getListing().getDefinedDataAt(address);
 

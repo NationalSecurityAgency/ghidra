@@ -155,11 +155,9 @@ artifacts {
 	Provide test dependencies here so each build file does not have to.
 */  
 dependencies {
-	integrationTestImplementation "org.hamcrest:hamcrest-all:1.3"
-	integrationTestImplementation "org.jmockit:jmockit:1.44"
+	integrationTestImplementation "org.hamcrest:hamcrest:2.2"
 
-	testImplementation "org.hamcrest:hamcrest-all:1.3"
-	testImplementation "org.jmockit:jmockit:1.44"
+	testImplementation "org.hamcrest:hamcrest:2.2"
 
 	testImplementation "junit:junit:4.12"
 	pcodeTestImplementation "junit:junit:4.12"

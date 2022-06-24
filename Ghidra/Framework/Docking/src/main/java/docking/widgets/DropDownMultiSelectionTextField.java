@@ -28,18 +28,18 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 
 /**
- * Extension of the {@link DropDownSelectionTextField} that allows multiple items to
- * be selected. 
+ * Extension of the {@link DropDownSelectionTextField} that allows multiple items to be selected. 
  * <p>
- * Note that multiple selection introduces some display complications that are not an 
- * issue with single selection. Namely:
+ * Note that multiple selection introduces some display complications that are not an issue with 
+ * single selection. Namely:
  * <ul>
  * <li>how do you display multiple selected items in the preview pane</li>
  * <li>how do you display those same items in the drop down text field</li>
  * </ul>
  * The solution here is to:
  * <ul>
- * <li>let the preview panel operate normally; it will simply display the preview text for whatever was last selected</li>
+ * <li>let the preview panel operate normally; it will simply display the preview text for whatever 
+ * was last selected</li>
  * <li>display all selected items in the drop down text field as a comma-delimited list</li>
  * </ul>
  *
@@ -74,7 +74,8 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 	@Override
 	public void addDropDownSelectionChoiceListener(DropDownSelectionChoiceListener<T> listener) {
 		throw new UnsupportedOperationException(
-			"Please use the flavor of this method that takes a DropDownMultiSelectionChoiceListener instance.");
+			"Please use the flavor of this method that takes a " +
+				DropDownMultiSelectionChoiceListener.class.getSimpleName() + " instance.");
 	}
 
 	/**
@@ -160,8 +161,8 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 	}
 
 	/**
-	 * Returns a string representing all items selected in the pulldown. If multiple
-	 * items are selected, they will be comma-delimited.
+	 * Returns a string representing all items selected in the drop-down. If multiple items are 
+	 * selected, they will be comma-delimited.
 	 * 
 	 * @return the comma-delimited selection
 	 */
@@ -197,9 +198,8 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 	}
 
 	/**
-	 * Listener for the preview panel which is kicked whenever a selection has been
-	 * made in the drop down. This will prompt the preview panel to change what it
-	 * displays.
+	 * Listener for the preview panel which is kicked whenever a selection has been made in the 
+	 * drop down. This will prompt the preview panel to change what it displays.
 	 */
 	private class PreviewListener implements ListSelectionListener {
 

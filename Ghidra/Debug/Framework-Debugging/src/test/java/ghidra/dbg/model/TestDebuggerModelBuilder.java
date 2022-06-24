@@ -73,7 +73,7 @@ public class TestDebuggerModelBuilder {
 		testThread1 = testProcess1.addThread(1);
 		testThread2 = testProcess1.addThread(2);
 
-		testProcess3 = testModel.addProcess(3);
+		testProcess3 = testModel.addProcess(3, testModel.ram3);
 		testThread3 = testProcess3.addThread(3);
 		testThread4 = testProcess3.addThread(4);
 	}

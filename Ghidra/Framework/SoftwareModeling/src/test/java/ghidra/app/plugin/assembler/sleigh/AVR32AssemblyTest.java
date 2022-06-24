@@ -34,4 +34,14 @@ public class AVR32AssemblyTest extends AbstractAssemblyTest {
 	public void testAssemble_STM_nnSP_R7_LR() {
 		assertOneCompatRestExact("STM --SP,R7,LR", "eb:cd:40:80");
 	}
+
+	@Test
+	public void testAssemble_LDDSP_PC_SP_m0x38() {
+		assertOneCompatRestExact("LDDSP PC,SP[0x38]", "40:ef");
+	}
+
+	@Test
+	public void testAssemble_STDSP_SP_m0xem_R10() {
+		assertOneCompatRestExact("STDSP SP[0xe],R10", "50:ea");
+	}
 }

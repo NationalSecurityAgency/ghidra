@@ -17,6 +17,7 @@ package ghidra.dbg.util;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.*;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.target.TargetObject;
@@ -91,6 +92,18 @@ public interface PathPredicates {
 	boolean ancestorMatches(List<String> path, boolean strict);
 
 	/**
+	 * Check if the given path <em>could</em> have a matching ancestor, right to left
+	 * 
+	 * <p>
+	 * This essentially checks if the given path is a viable postfix to the matcher.
+	 * 
+	 * @param path the path (postfix) to check
+	 * @param strict true to exclude the case where {@link #matches(List)} would return true
+	 * @return true if an ancestor could match, false otherwise
+	 */
+	boolean ancestorCouldMatchRight(List<String> path, boolean strict);
+
+	/**
 	 * Get the patterns for the next possible key
 	 * 
 	 * <p>
@@ -126,6 +139,17 @@ public interface PathPredicates {
 	Set<String> getNextIndices(List<String> path);
 
 	/**
+	 * Get the patterns for the previous possible key (right-to-left matching)
+	 * 
+	 * <p>
+	 * If an ancestor of the given path cannot match this pattern, the empty set is returned.
+	 * 
+	 * @param path the successor path
+	 * @return a set of patterns where indices are enclosed in brackets ({@code [])
+	 */
+	Set<String> getPrevKeys(List<String> path);
+
+	/**
 	 * If this predicate is known to match only one path, i.e., no wildcards, get that path
 	 * 
 	 * @return the singleton path, or {@code null}
@@ -138,6 +162,14 @@ public interface PathPredicates {
 	 * @return the singleton pattern, or {@code null}
 	 */
 	PathPattern getSingletonPattern();
+
+	/**
+	 * Remove count elements from the right
+	 * 
+	 * @param count the number of elements to remove
+	 * @return the resulting predicates
+	 */
+	PathPredicates removeRight(int count);
 
 	default NavigableMap<List<String>, ?> getCachedValues(TargetObject seed) {
 		return getCachedValues(List.of(), seed);
@@ -278,24 +310,36 @@ public interface PathPredicates {
 	}
 
 	/**
-	 * Substitute wildcards from left to right for the given list of indices
+	 * Substitute wildcards from left to right for the given list of keys
 	 * 
 	 * <p>
 	 * Takes each pattern and substitutes its wildcards for the given indices, starting from the
 	 * left and working right. This object is unmodified, and the result is returned.
 	 * 
 	 * <p>
-	 * If there are fewer wildcards in a pattern than given, only the left-most indices are taken.
-	 * If there are fewer indices than wildcards in a pattern, then the right-most wildcards are
-	 * left in the resulting pattern. Note while rare, attribute wildcards are substituted, too.
+	 * If there are fewer wildcards in a pattern than given, only the left-most keys are taken. If
+	 * there are fewer keys than wildcards in a pattern, then the right-most wildcards are left in
+	 * the resulting pattern.
 	 * 
-	 * @param indices the indices to substitute
+	 * @param keys the keys to substitute
 	 * @return the pattern or matcher with the applied substitutions
 	 */
-	PathPredicates applyKeys(List<String> indices);
+	PathPredicates applyKeys(List<String> keys);
 
-	default PathPredicates applyIndices(String... indices) {
-		return applyKeys(List.of(indices));
+	default PathPredicates applyKeys(Stream<String> keys) {
+		return applyKeys(keys.collect(Collectors.toList()));
+	}
+
+	default PathPredicates applyKeys(String... keys) {
+		return applyKeys(List.of(keys));
+	}
+
+	default PathPredicates applyIntKeys(int radix, List<Integer> keys) {
+		return applyKeys(keys.stream().map(k -> Integer.toString(k, radix)));
+	}
+
+	default PathPredicates applyIntKeys(int... keys) {
+		return applyKeys(IntStream.of(keys).mapToObj(k -> Integer.toString(k)));
 	}
 
 	/**

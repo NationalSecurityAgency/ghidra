@@ -35,6 +35,7 @@ public class AssemblySyntaxException extends AssemblyException {
 
 	/**
 	 * Construct a syntax exception with the associated syntax errors
+	 * 
 	 * @param errors the associated syntax errors
 	 */
 	public AssemblySyntaxException(Set<AssemblyParseResult> errors) {
@@ -44,6 +45,7 @@ public class AssemblySyntaxException extends AssemblyException {
 
 	/**
 	 * Get the collection of associated syntax errors
+	 * 
 	 * @return the collection
 	 */
 	public Collection<AssemblyParseResult> getErrors() {

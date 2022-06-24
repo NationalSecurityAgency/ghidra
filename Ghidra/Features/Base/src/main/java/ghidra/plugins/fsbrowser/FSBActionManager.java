@@ -16,12 +16,13 @@
 package ghidra.plugins.fsbrowser;
 
 import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
-import static java.util.Map.*;
+import static java.util.Map.entry;
+
+import java.util.*;
+import java.util.function.Function;
 
 import java.awt.Component;
 import java.io.*;
-import java.util.*;
-import java.util.function.Function;
 
 import javax.swing.*;
 
@@ -39,7 +40,6 @@ import docking.widgets.tree.GTreeNode;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.services.TextEditorService;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.opinion.LoaderService;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.crypto.CachedPasswordProvider;
 import ghidra.formats.gfilesystem.crypto.CryptoProviders;
@@ -68,7 +68,6 @@ class FSBActionManager {
 	private static final int MAX_TEXT_FILE_LEN = 64 * 1024;
 
 	/* package visibility menu actions */
-	DockingAction actionShowSupportedFileSystemsAndLoaders;
 	DockingAction actionImport;
 	DockingAction actionOpenPrograms;
 	DockingAction actionOpenFileSystemChooser;
@@ -109,9 +108,6 @@ class FSBActionManager {
 		this.textEditorService = textEditorService;
 		this.gTree = gTree;
 
-		chooserExport = new GhidraFileChooser(provider.getComponent());
-		chooserExportAll = new GhidraFileChooser(provider.getComponent());
-
 		createActions();
 	}
 
@@ -130,8 +126,6 @@ class FSBActionManager {
 		actions.add((actionExport = createExportAction()));
 		actions.add((actionExportAll = createExportAllAction()));
 		actions.add((actionGetInfo = createGetInfoAction()));
-		actions.add(
-			(actionShowSupportedFileSystemsAndLoaders = createSupportedFileSystemsAction()));
 		actions.add((actionListMountedFileSystems = createListMountedFilesystemsAction()));
 		actions.add((actionClearCachedPasswords = createClearCachedPasswordsAction()));
 		actions.add(createRefreshAction());
@@ -330,43 +324,9 @@ class FSBActionManager {
 
 	}
 
-	/**
-	 * Shows a list of supported file system types and loaders.
-	 */
-	private void showSupportedFileSystems() {
-		StringBuilder sb = new StringBuilder();
-
-		sb.append(
-			"<html><table><tr><td>Supported File Systems</td><td>Supported Loaders</td></tr>\n");
-		sb.append("<tr valign='top'><td><ul>");
-		for (String fileSystemName : fsService.getAllFilesystemNames()) {
-			sb.append("<li>" + fileSystemName + "\n");
-		}
-
-		sb.append("</ul></td><td><ul>");
-		for (String loaderName : LoaderService.getAllLoaderNames()) {
-			sb.append("<li>" + loaderName + "\n");
-		}
-		sb.append("</ul></td></tr></table>");
-
-		MultiLineMessageDialog.showModalMessageDialog(plugin.getTool().getActiveWindow(),
-			"Supported File Systems and Loaders", "", sb.toString(),
-			MultiLineMessageDialog.INFORMATION_MESSAGE);
-	}
-
 	//----------------------------------------------------------------------------------
 	// DockingActions
 	//----------------------------------------------------------------------------------
-	private DockingAction createSupportedFileSystemsAction() {
-		return new ActionBuilder("FSB Display Supported File Systems and Loaders", plugin.getName())
-				.description("Display Supported File Systems and Loaders")
-				.withContext(FSBActionContext.class)
-				.enabledWhen(ac -> true)
-				.toolBarIcon(ImageManager.INFO)
-				.onAction(ac -> showSupportedFileSystems())
-				.build();
-	}
-
 	private DockingAction createExportAction() {
 		return new ActionBuilder("FSB Export", plugin.getName())
 				.withContext(FSBActionContext.class)
@@ -380,11 +340,14 @@ class FSBActionManager {
 						if (fsrl == null) {
 							return;
 						}
+						if (chooserExport == null) {
+							chooserExport = new GhidraFileChooser(provider.getComponent());
+							chooserExport.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
+							chooserExport.setTitle("Select Where To Export File");
+							chooserExport.setApproveButtonText("Export");
+						}
 						File selectedFile =
 							new File(chooserExport.getCurrentDirectory(), fsrl.getName());
-						chooserExport.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
-						chooserExport.setTitle("Select Where To Export File");
-						chooserExport.setApproveButtonText("Export");
 						chooserExport.setSelectedFile(selectedFile);
 						File outputFile = chooserExport.getSelectedFile();
 						if (outputFile == null) {
@@ -421,11 +384,13 @@ class FSBActionManager {
 						if (fsrl instanceof FSRLRoot) {
 							fsrl = fsrl.appendPath("/");
 						}
-
-						chooserExportAll
-								.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
-						chooserExportAll.setTitle("Select Export Directory");
-						chooserExportAll.setApproveButtonText("Export All");
+						if (chooserExportAll == null) {
+							chooserExportAll = new GhidraFileChooser(provider.getComponent());
+							chooserExportAll
+									.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
+							chooserExportAll.setTitle("Select Export Directory");
+							chooserExportAll.setApproveButtonText("Export All");
+						}
 						chooserExportAll.setSelectedFile(null);
 						File outputFile = chooserExportAll.getSelectedFile();
 						if (outputFile == null) {

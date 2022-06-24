@@ -748,8 +748,8 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 @Test
     public void testAddOffsetReference() {
-		refMgr.addOffsetMemReference(addr(100), addr(600), 100, RefType.COMPUTED_JUMP,
-			SourceType.USER_DEFINED, 0);
+		refMgr.addOffsetMemReference(addr(100), addr(600), false, 100,
+			RefType.COMPUTED_JUMP, SourceType.USER_DEFINED, 0);
 
 		Reference ref = refMgr.getReference(addr(100), addr(600), 0);
 		assertNotNull(ref);

@@ -15,7 +15,7 @@
  */
 package ghidra.app.cmd.data.exceptionhandling;
 
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getAlignedPack4Structure;
+import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.*;
 
 import ghidra.app.cmd.data.AbstractCreateDataTypeModel;
 import ghidra.app.cmd.data.EHDataTypeUtilities;
@@ -102,7 +102,7 @@ public class EHIPToStateModel extends AbstractCreateDataTypeModel {
 
 		/* comps[0] */
 		if (isRelative) {
-			compDt = new ImageBaseOffset32DataType(dataTypeManager);
+			compDt = new IBO32DataType(dataTypeManager);
 		}
 		else {
 			DataType dwordDt = new TypedefDataType(new CategoryPath("/WinDef.h"), "DWORD",

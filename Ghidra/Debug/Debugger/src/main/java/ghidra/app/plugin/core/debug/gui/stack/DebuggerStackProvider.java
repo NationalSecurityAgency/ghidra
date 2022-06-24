@@ -381,7 +381,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 	}
 
 	protected void updateStack() {
-		Set<TraceStackFrame> toAdd = new LinkedHashSet<>(currentStack.getFrames());
+		Set<TraceStackFrame> toAdd = new LinkedHashSet<>(currentStack.getFrames(current.getSnap()));
 		for (Iterator<StackFrameRow> it = stackTableModel.getModelData().iterator(); it
 				.hasNext();) {
 			StackFrameRow row = it.next();
@@ -409,12 +409,13 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 			contextChanged();
 			return;
 		}
-		if (currentStack == stack) {
+		if (currentStack == stack && stack.hasFixedFrames()) {
+			stackTableModel.fireTableDataChanged();
 			return;
 		}
 		currentStack = stack;
 		stackTableModel.clear();
-		for (TraceStackFrame frame : currentStack.getFrames()) {
+		for (TraceStackFrame frame : currentStack.getFrames(current.getSnap())) {
 			stackTableModel.add(new StackFrameRow(this, frame));
 		}
 	}

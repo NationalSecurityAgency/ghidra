@@ -22,6 +22,16 @@ eclipse.project.name = '_LaunchSupport'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+jar {
+    manifest {
+        attributes (
+            "Specification-Title": "${project.name}",
+            "Specification-Version": "${rootProject.RELEASE_VERSION}",
+            "Specification-Vendor": "Ghidra"
+        )
+    }
+}
+
 rootProject.assembleDistribution {
 	from (jar) {
 		into "support"

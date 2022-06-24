@@ -19,49 +19,57 @@
 #include "ruleaction.hh"
 #include "funcdata.hh"
 
+/// \brief A logical value whose storage is split between two Varnodes
+///
+/// This is usually a pair of Varnodes \b lo and \b hi holding the least and
+/// most significant part of the logical value respectively.  Its possible for
+/// the logical value to be a constant, in which case \b lo and \b hi are set to
+/// null and \b val holds the actual constant.
+/// Its also possible for \b hi to be null by itself, indicating that most signficant
+/// part of the variable is zero, and the logical variable is the zero extension of \b lo.
 class SplitVarnode {
-  Varnode *lo;			// Least significant piece of the double precision object
-  Varnode *hi;			// Most significant piece of the double precision object
-  Varnode *whole;	       // A representative of the whole object
-  PcodeOp *defpoint; // Operation at which both -lo- and -hi- are defined
-  BlockBasic *defblock;	// Block in which bot -lo- and -hi- are defined
-  uintb val;			// Value of a double precision constant
-  int4 wholesize;	       // Size in bytes of the (virtual) whole
-  bool findWholeSplitToPieces(void);
-  bool findDefinitionPoint(void);
-  bool findWholeBuiltFromPieces(void);
+  Varnode *lo;			///< Least significant piece of the double precision object
+  Varnode *hi;			///< Most significant piece of the double precision object
+  Varnode *whole;		///< A representative of the whole object
+  PcodeOp *defpoint; 		///< Operation at which both \b lo and \b hi are defined
+  BlockBasic *defblock;		///< Block in which both \b lo and \b hi are defined
+  uintb val;			///< Value of a double precision constant
+  int4 wholesize;		///< Size in bytes of the (virtual) whole
+  bool findWholeSplitToPieces(void);	///< Find whole out of which \b hi and \b lo are split
+  bool findDefinitionPoint(void);	///< Find the earliest PcodeOp where both \b lo and \b hi are defined
+  bool findWholeBuiltFromPieces(void);	///< Find whole Varnode formed as a CPUI_PIECE of \b hi and \b lo
 public:
-  SplitVarnode(void) {}		// For use with inHandHi
-  SplitVarnode(int4 sz,uintb v); // Initialize a double precision constant
-  SplitVarnode(Varnode *l,Varnode *h) { initPartial(l,h); }
-  void initAll(Varnode *w,Varnode *l,Varnode *h);
-  void initPartial(int4 sz,uintb v);
-  void initPartial(Varnode *l,Varnode *h);
-  bool inHandHi(Varnode *h);
-  bool inHandLo(Varnode *l);
-  bool inHandLoNoHi(Varnode *l);
-  bool inHandHiOut(Varnode *h);
-  bool inHandLoOut(Varnode *h);
-  bool isConstant(void) const { return (lo == (Varnode *)0); }
-  bool hasBothPieces(void) const { return ((hi!=(Varnode *)0)&&(lo!=(Varnode *)0)); }
-  int4 getSize(void) const { return wholesize; }
-  Varnode *getLo(void) const { return lo; }
-  Varnode *getHi(void) const { return hi; }
-  Varnode *getWhole(void) const { return whole; }
-  PcodeOp *getDefPoint(void) const { return defpoint; }
-  BlockBasic *getDefBlock(void) const { return defblock; }
-  uintb getValue(void) const { return val; }
-  bool isWholeFeasible(PcodeOp *existop);
-  bool isWholePhiFeasible(FlowBlock *bl);
-  void findCreateWhole(Funcdata &data);
-  void findCreateOutputWhole(Funcdata &data);
-  void createJoinedWhole(Funcdata &data);
-  void buildLoFromWhole(Funcdata &data);
-  void buildHiFromWhole(Funcdata &data);
-  PcodeOp *findEarliestSplitPoint(void);
-  PcodeOp *findOutExist(void);
+  SplitVarnode(void) {}			///< Construct an uninitialized SplitVarnode
+  SplitVarnode(int4 sz,uintb v);	///< Construct a double precision constant
+  SplitVarnode(Varnode *l,Varnode *h) { initPartial(l->getSize()+h->getSize(),l,h); }	///< Construct from \b lo and \b hi piece
+  void initAll(Varnode *w,Varnode *l,Varnode *h);	///< Construct given Varnode pieces and a known \b whole Varnode
+  void initPartial(int4 sz,uintb v);	///< (Re)initialize \b this SplitVarnode as a constant
+  void initPartial(int4 sz,Varnode *l,Varnode *h);	///< (Re)initialize \b this SplitVarnode given Varnode pieces
+  bool inHandHi(Varnode *h);		///< Try to initialize given just the most significant piece split from whole
+  bool inHandLo(Varnode *l);		///< Try to initialize given just the least significant piece split from whole
+  bool inHandLoNoHi(Varnode *l);	///< Try to initialize given just the least significant piece (other piece may be zero)
+  bool inHandHiOut(Varnode *h);		///< Try to initialize given just the most significant piece concatenated into whole
+  bool inHandLoOut(Varnode *l);		///< Try to initialize given just the least significant piece concatenated into whole
+  bool isConstant(void) const { return (lo == (Varnode *)0); }	///< Return \b true if \b this is a constant
+  bool hasBothPieces(void) const { return ((hi!=(Varnode *)0)&&(lo!=(Varnode *)0)); }	///< Return \b true if both pieces are initialized
+  int4 getSize(void) const { return wholesize; }	///< Get the size of \b this SplitVarnode as a whole in bytes
+  Varnode *getLo(void) const { return lo; }		///< Get the least significant Varnode piece
+  Varnode *getHi(void) const { return hi; }		///< Get the most significant Varnode piece
+  Varnode *getWhole(void) const { return whole; }	///< Get the Varnode representing \b this as a whole
+  PcodeOp *getDefPoint(void) const { return defpoint; }	///< Get the(final) defining PcodeOp of \b this
+  BlockBasic *getDefBlock(void) const { return defblock; }	///< Get the defining basic block of \b this
+  uintb getValue(void) const { return val; }		///< Get the value of \b this, assuming it is a constant
+  bool isWholeFeasible(PcodeOp *existop);	///< Does a whole Varnode already exist or can it be created before the given PcodeOp
+  bool isWholePhiFeasible(FlowBlock *bl);	///< Does a whole Varnode already exist or can it be created before the given basic block
+  void findCreateWhole(Funcdata &data);		///< Create a \b whole Varnode for \b this, if it doesn't already exist
+  void findCreateOutputWhole(Funcdata &data);	///< Create a \b whole Varnode that will be a PcodeOp output
+  void createJoinedWhole(Funcdata &data);	///< Create a \b whole Varnode from pieces, respecting piece storage
+  void buildLoFromWhole(Funcdata &data);	///< Rebuild the least significant piece as a CPUI_SUBPIECE of the \b whole
+  void buildHiFromWhole(Funcdata &data);	///< Rebuild the most significant piece as a CPUI_SUBPIECE of the \b whole
+  PcodeOp *findEarliestSplitPoint(void);	///< Find the earliest definition point of the \b lo and \b hi pieces
+  PcodeOp *findOutExist(void);			///< Find the point at which the output \b whole must exist
   static bool adjacentOffsets(Varnode *vn1,Varnode *vn2,uintb size1);
-  static bool testContiguousLoad(PcodeOp *most,PcodeOp *least,bool allowfree,PcodeOp *&first,PcodeOp *&second,AddrSpace *&spc,int4 &sizeres);
+  static bool testContiguousPointers(PcodeOp *most,PcodeOp *least,PcodeOp *&first,PcodeOp *&second,AddrSpace *&spc);
   static bool isAddrTiedContiguous(Varnode *lo,Varnode *hi,Address &res);
   static void wholeList(Varnode *w,vector<SplitVarnode> &splitvec);
   static void findCopies(const SplitVarnode &in,vector<SplitVarnode> &splitvec);
@@ -288,9 +296,16 @@ public:
   bool applyRule(SplitVarnode &i,PcodeOp *ind,bool workishi,Funcdata &data);
 };
 
+/// \brief Simply a double precision operation, starting from a marked double precision input.
+///
+/// This rule starts by trying to find a pair of Varnodes that are SUBPIECE from a whole,
+/// are marked as double precision, and that are then used in some double precision operation.
+/// The various operation \e forms are overlayed on the data-flow until a matching one is found.  The
+/// pieces of the double precision operation are then transformed into a single logical operation on the whole.
 class RuleDoubleIn : public Rule {
+  int4 attemptMarking(Funcdata &data,Varnode *vn,PcodeOp *subpieceOp);
 public:
-  RuleDoubleIn(const string &g) : Rule(g, 0, "doublein") {}
+  RuleDoubleIn(const string &g) : Rule(g, 0, "doublein") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleDoubleIn(getGroup());
@@ -309,7 +324,19 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-  static PcodeOp *noWriteConflict(PcodeOp *op1,PcodeOp *op2,AddrSpace *spc);
+  static PcodeOp *noWriteConflict(PcodeOp *op1,PcodeOp *op2,AddrSpace *spc,vector<PcodeOp *> *indirects);
 };
 
+class RuleDoubleStore : public Rule {
+public:
+  RuleDoubleStore(const string &g) : Rule( g, 0, "doublestore") {}
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleDoubleStore(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  static bool testIndirectUse(PcodeOp *op1,PcodeOp *op2,const vector<PcodeOp *> &indirects);
+  static void reassignIndirects(Funcdata &data,PcodeOp *newStore,const vector<PcodeOp *> &indirects);
+};
 #endif

@@ -21,7 +21,6 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.address.Address;
 
@@ -32,18 +31,18 @@ import ghidra.program.model.address.Address;
  */
 public class FunctionStartsCommand extends LinkEditDataCommand {
 	
-	static FunctionStartsCommand createFunctionStartsCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		FunctionStartsCommand command =
-			(FunctionStartsCommand) reader.getFactory().create(FunctionStartsCommand.class);
-		command.initLinkEditDataCommand(reader);
-		return command;
-	}
-
 	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
+	 * Creates and parses a new {@link LinkEditDataCommand}
+	 * 
+	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
+	 *   command
+	 * @param dataReader A {@link BinaryReader reader} that can read the data that the load command
+	 *   references.  Note that this might be in a different underlying provider.
+	 * @throws IOException if an IO-related error occurs while parsing
 	 */
-	public FunctionStartsCommand() {
+	FunctionStartsCommand(BinaryReader loadCommandReader, BinaryReader dataReader)
+			throws IOException {
+		super(loadCommandReader, dataReader);
 	}
 
 	/**

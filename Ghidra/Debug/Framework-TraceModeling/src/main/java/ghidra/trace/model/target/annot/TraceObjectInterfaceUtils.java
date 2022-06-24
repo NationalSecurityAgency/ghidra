@@ -21,7 +21,7 @@ import java.util.List;
 import com.google.common.collect.Range;
 
 import ghidra.dbg.target.TargetObject;
-import ghidra.program.model.address.*;
+import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.util.LockHold;
@@ -66,8 +66,8 @@ public enum TraceObjectInterfaceUtils {
 			throw new DuplicateNameException(
 				"Duplicate " + getShortName(traceIf) + ": " + e.getMessage());
 		}
-		object.setLifespan(lifespan);
-		long lower = object.getMinSnap();
+		object.insert(lifespan, ConflictResolution.TRUNCATE);
+		long lower = DBTraceUtils.lowerEndpoint(lifespan);
 		for (String key : getFixedKeys(traceIf)) {
 			TraceObjectValue val = object.getValue(lower, key);
 			if (val != null) {

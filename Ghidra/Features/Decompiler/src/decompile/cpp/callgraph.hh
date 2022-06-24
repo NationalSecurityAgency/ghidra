@@ -24,6 +24,9 @@ class Funcdata;
 class CallGraphNode;
 class CallGraph;
 
+extern ElementId ELEM_CALLGRAPH;	///< Marshaling element \<callgraph>
+extern ElementId ELEM_NODE;		///< Marshaling element \<node>
+
 class CallGraphEdge {
 public:
   enum {
@@ -41,9 +44,9 @@ private:
 public:
   CallGraphEdge(void) { flags = 0; }
   bool isCycle(void) const { return ((flags&1)!=0); }
-  void saveXml(ostream &s) const;
+  void encode(Encoder &encoder) const;
   const Address &getCallSiteAddr(void) const { return callsiteaddr; }
-  static void restoreXml(const Element *el,CallGraph *graph);
+  static void decode(Decoder &decoder,CallGraph *graph);
 };
 
 class CallGraphNode {
@@ -77,8 +80,8 @@ public:
   const CallGraphEdge &getOutEdge(int4 i) const { return outedge[i]; }
   CallGraphNode *getOutNode(int4 i) const { return outedge[i].to; }
   void setFuncdata(Funcdata *f);
-  void saveXml(ostream &s) const;
-  static void restoreXml(const Element *el,CallGraph *graph);
+  void encode(Encoder &encoder) const;
+  static void decode(Decoder &decoder,CallGraph *graph);
 };
 
 struct LeafIterator {
@@ -116,8 +119,8 @@ public:
   map<Address,CallGraphNode>::iterator end(void) { return graph.end(); }
   void buildAllNodes(void);
   void buildEdges(Funcdata *fd);
-  void saveXml(ostream &s) const;
-  void restoreXml(const Element *el);
+  void encode(Encoder &encoder) const;
+  void decoder(Decoder &decoder);
 };
 
 #endif

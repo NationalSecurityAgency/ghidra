@@ -15,7 +15,7 @@
  */
 package ghidra.app.cmd.data.rtti;
 
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getReferencedAddress;
+import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -145,11 +145,8 @@ public class Rtti2Model extends AbstractCreateRttiDataModel {
 
 		DataTypeManager dataTypeManager = program.getDataTypeManager();
 
-		if (MSDataTypeUtils.is64Bit(program)) {
-			return new ImageBaseOffset32DataType(dataTypeManager);
-		}
-
-		return new PointerDataType(rtti1Dt, dataTypeManager);
+		return MSDataTypeUtils.is64Bit(program) ? IBO32DataType.createIBO32PointerTypedef(rtti1Dt)
+				: new PointerDataType(rtti1Dt, dataTypeManager);
 	}
 
 	/**
@@ -162,11 +159,8 @@ public class Rtti2Model extends AbstractCreateRttiDataModel {
 
 		DataTypeManager dataTypeManager = program.getDataTypeManager();
 
-		if (MSDataTypeUtils.is64Bit(program)) {
-			return new ImageBaseOffset32DataType(dataTypeManager);
-		}
-
-		return new PointerDataType(dataTypeManager);
+		return MSDataTypeUtils.is64Bit(program) ? IBO32DataType.dataType
+				: new PointerDataType(dataTypeManager);
 	}
 
 	/**

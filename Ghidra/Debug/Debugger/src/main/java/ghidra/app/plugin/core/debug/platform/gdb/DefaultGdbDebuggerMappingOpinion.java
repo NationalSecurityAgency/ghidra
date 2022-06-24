@@ -21,7 +21,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetEnvironment;
+import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 
@@ -81,7 +82,7 @@ public class DefaultGdbDebuggerMappingOpinion implements DebuggerMappingOpinion 
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetObject target,
 			boolean includeOverrides) {
 		if (!isGdb(env)) {
 			return Set.of();
@@ -90,7 +91,7 @@ public class DefaultGdbDebuggerMappingOpinion implements DebuggerMappingOpinion 
 		String arch = env.getArchitecture();
 
 		return getCompilerSpecsForGnu(arch, endian).stream()
-				.flatMap(lcsp -> offersForLanguageAndCSpec(process, arch, endian, lcsp).stream())
+				.flatMap(lcsp -> offersForLanguageAndCSpec(target, arch, endian, lcsp).stream())
 				.collect(Collectors.toSet());
 	}
 }

@@ -139,9 +139,6 @@ public interface DebuggerModelService {
 	 * as much. If the user cancels, the returned future completes with {@code null}. The invocation
 	 * is assumed to come from a {@link ActionSource#MANUAL} source.
 	 * 
-	 * <p>
-	 * TODO: Should the prompt allow the user to force an opinion which gave no offers?
-	 * 
 	 * @see DebuggerMappingOpinion#queryOpinions(TargetObject)
 	 * @param target the target to record.
 	 * @return a future which completes with the recorder, or completes exceptionally

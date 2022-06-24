@@ -230,7 +230,7 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 			public void run() {
 				List<GTreeNode> updateNodes = tree.update(container);
 				for (GTreeNode n : updateNodes) {
-					n.fireNodeChanged(ObjectNode.this, n);
+					n.fireNodeChanged();
 				}
 			}
 		});

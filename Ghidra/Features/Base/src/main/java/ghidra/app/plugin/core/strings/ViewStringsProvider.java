@@ -176,7 +176,7 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 		tool.contextChanged(this);
 	}
 
-	ProgramSelection selectData() {
+	ProgramSelection getProgramSelection() {
 		return table.getProgramSelection();
 	}
 

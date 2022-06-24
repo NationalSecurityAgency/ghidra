@@ -15,17 +15,15 @@
  */
 package ghidra.trace.database.target;
 
-import java.util.stream.Stream;
-
 import com.google.common.collect.Range;
 
 import db.DBRecord;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.target.DBTraceObjectValue.DBTraceObjectDBFieldCodec;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.LockHold;
@@ -67,6 +65,12 @@ public class DBTraceObjectAddressRangeValue
 			DBCachedObjectStore<?> store, DBRecord record) {
 		super(tree, store, record);
 		this.manager = manager;
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + ": parent=" + parent + ", key=" + entryKey +
+			", lifespan=" + getLifespan() + ", value=" + getValue();
 	}
 
 	@Override
@@ -125,6 +129,23 @@ public class DBTraceObjectAddressRangeValue
 	}
 
 	@Override
+	public boolean isObject() {
+		return false;
+	}
+
+	@Override
+	public DBTraceObject getChildOrNull() {
+		return null;
+	}
+
+	@Override
+	public TraceObjectKeyPath getCanonicalPath() {
+		try (LockHold hold = manager.trace.lockRead()) {
+			return parent.getCanonicalPath().extend(entryKey);
+		}
+	}
+
+	@Override
 	public boolean isCanonical() {
 		return false;
 	}
@@ -163,22 +184,6 @@ public class DBTraceObjectAddressRangeValue
 	}
 
 	@Override
-	public Stream<? extends DBTraceObjectValPath> doGetSuccessors(Range<Long> span,
-			DBTraceObjectValPath pre, PathPredicates predicates) {
-		DBTraceObjectValPath path = pre == null ? DBTraceObjectValPath.of() : pre.append(this);
-		if (predicates.matches(path.getKeyList())) {
-			return Stream.of(path);
-		}
-		return Stream.empty();
-	}
-
-	@Override
-	public Stream<? extends DBTraceObjectValPath> doGetOrderedSuccessors(Range<Long> span,
-			DBTraceObjectValPath pre, PathPredicates predicates, boolean forward) {
-		return doGetSuccessors(span, pre, predicates);
-	}
-
-	@Override
 	public void doDelete() {
 		manager.rangeValueMap.deleteData(this);
 	}
@@ -186,19 +191,14 @@ public class DBTraceObjectAddressRangeValue
 	@Override
 	public void delete() {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			doDelete();
+			doDeleteAndEmit();
 		}
-	}
-
-	@Override
-	public void deleteTree() {
-		delete();
 	}
 
 	@Override
 	public TraceObjectValue truncateOrDelete(Range<Long> span) {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			return doTruncateOrDelete(span);
+			return doTruncateOrDeleteAndEmitLifeChange(span);
 		}
 	}
 }

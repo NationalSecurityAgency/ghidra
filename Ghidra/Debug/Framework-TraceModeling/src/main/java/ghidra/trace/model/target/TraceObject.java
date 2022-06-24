@@ -19,7 +19,9 @@ import java.util.Collection;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
 
+import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathPredicates;
@@ -37,6 +39,8 @@ import ghidra.trace.model.TraceUniqueObject;
  * In many cases, such interfaces are just wrappers.
  */
 public interface TraceObject extends TraceUniqueObject {
+	String EXTRA_INTERFACES_ATTRIBUTE_NAME = "_extra_ifs";
+
 	/**
 	 * Get the trace containing this object
 	 * 
@@ -59,18 +63,81 @@ public interface TraceObject extends TraceUniqueObject {
 	TraceObjectKeyPath getCanonicalPath();
 
 	/**
-	 * Inserts this object at its canonical path for its lifespan
+	 * Get all ranges of this object's life
 	 * 
 	 * <p>
-	 * Any ancestor which does not exist is created with the same lifespan as this object. Values
-	 * are set with the same lifespan. Only the canonical path is considered when looking for
-	 * existing ancestry. Any whose lifespan intersects that of this object is considered
-	 * "existing." If an existing ancestor is detached, this object will still become its successor,
-	 * and the resulting subtree will remain detached.
+	 * Essentially, this is the union of the lifespans of all canonical parent values
 	 * 
-	 * @param resolution the rule for handling duplicate keys when setting values.
+	 * @return the range set for snaps at which this object is considered "inserted."
 	 */
-	void insert(ConflictResolution resolution);
+	RangeSet<Long> getLife();
+
+	/**
+	 * Inserts this object at its canonical path for the given lifespan
+	 * 
+	 * <p>
+	 * Any ancestor which does not exist is created. Values' lifespans are added or expanded to
+	 * contain the given lifespan. Only the canonical path is considered when looking for existing
+	 * ancestry.
+	 * 
+	 * @param the minimum lifespan of edges from the root to this object
+	 * @param resolution the rule for handling duplicate keys when setting values.
+	 * @return the value path from root to the newly inserted object
+	 */
+	TraceObjectValPath insert(Range<Long> lifespan, ConflictResolution resolution);
+
+	/**
+	 * Remove this object from its canonical path for the given lifespan
+	 * 
+	 * <p>
+	 * Truncate the lifespans of this object's canonical parent value by the given span. If the
+	 * parent value's lifespan is contained in the given span, the parent value will be deleted.
+	 * 
+	 * @param span the span during which this object should be removed
+	 */
+	void remove(Range<Long> span);
+
+	/**
+	 * Remove this object and its successors from their canonical paths for the given span
+	 * 
+	 * <p>
+	 * Truncate the lifespans of this object's parent values and all canonical values succeeding
+	 * this object. If a truncated value's lifespan is contained in the given span, the value will
+	 * be deleted.
+	 * 
+	 * @param span the span during which this object and its canonical successors should be removed
+	 */
+	void removeTree(Range<Long> span);
+
+	/**
+	 * Get the parent value along this object's canonical path for a given snapshot
+	 * 
+	 * <p>
+	 * To be the canonical parent value at a given snapshot, three things must be true: 1) The
+	 * parent object must have this object's path with the final key removed. 2) The parent value's
+	 * entry key must be equal to the final key of this object's path. 3) The value's lifespan must
+	 * contain the given snapshot. If no value satisfies these, null is returned, and the object and
+	 * its subtree are said to be "detached" at the given snapshot.
+	 * 
+	 * @param snap the snapshot key
+	 * @return the canonical parent value, or null
+	 */
+	TraceObjectValue getCanonicalParent(long snap);
+
+	/**
+	 * Get the parent values along this object's canonical path for a given lifespan
+	 * 
+	 * <p>
+	 * To be a canonical parent in a given lifespan, three things must be true: 1) The parent object
+	 * must have this object's path with the final key removed. 2) The parent value's entry key must
+	 * be equal to the final key of this object's path. 3) The value's lifespan must intersect the
+	 * given lifespan. If the result is empty, the object and its subtree are said to be "detatched"
+	 * during the given lifespan.
+	 * 
+	 * @param lifespan the lifespan to consider
+	 * @return the stream of canonical parents
+	 */
+	Stream<? extends TraceObjectValue> getCanonicalParents(Range<Long> lifespan);
 
 	/**
 	 * Check if this object is the root
@@ -85,7 +152,7 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @param span the span which every value entry on each path must intersect
 	 * @return the paths
 	 */
-	Stream<TraceObjectValPath> getAllPaths(Range<Long> span);
+	Stream<? extends TraceObjectValPath> getAllPaths(Range<Long> span);
 
 	/**
 	 * Specifies a strategy for resolving duplicate keys
@@ -102,60 +169,11 @@ public interface TraceObject extends TraceUniqueObject {
 		 */
 		TRUNCATE,
 		/**
-		 * Throw an exception if the specified lifespan would result in conflicting entries
+		 * Throw {@link DuplicateKeyException} if the specified lifespan would result in conflicting
+		 * entries
 		 */
 		DENY;
 	}
-
-	/**
-	 * Set the lifespan of this object
-	 * 
-	 * <p>
-	 * NOTE: Objects with intersecting lifespans are not checked for duplicate canonical paths.
-	 * However, their parent value entries are checked for conflicts. Thus, at any snap, it is
-	 * impossible for any two objects with equal canonical paths to both exist at their canonical
-	 * locations.
-	 * 
-	 * @param lifespan the new lifespan
-	 */
-	void setLifespan(Range<Long> lifespan);
-
-	/**
-	 * Get the lifespan of this object
-	 * 
-	 * @return the lifespan
-	 */
-	Range<Long> getLifespan();
-
-	/**
-	 * Set the minimum snap of this object
-	 * 
-	 * @see #setLifespan(Range)
-	 * @param minSnap the minimum snap, or {@link Long#MIN_VALUE} for "since the beginning of time"
-	 */
-	void setMinSnap(long minSnap);
-
-	/**
-	 * Get the minimum snap of this object
-	 * 
-	 * @return the minimum snap, or {@link Long#MIN_VALUE} for "since the beginning of time"
-	 */
-	long getMinSnap();
-
-	/**
-	 * Set the maximum snap of this object
-	 * 
-	 * @see #setLifespan(Range)
-	 * @param maxSnap the maximum snap, or {@link Long#MAX_VALUE} for "to the end of time"
-	 */
-	void setMaxSnap(long maxSnap);
-
-	/**
-	 * Get the maximum snap of this object
-	 * 
-	 * @return the maximum snap, or {@link Long#MAX_VALUE} for "to the end of time"
-	 */
-	long getMaxSnap();
 
 	/**
 	 * Get all the interface classes provided by this object, according to the schema
@@ -268,8 +286,19 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @param rootPredicates the predicates for matching path keys, relative to the root
 	 * @return the stream of matching paths to values
 	 */
-	Stream<? extends TraceObjectValPath> getAncestors(Range<Long> span,
+	Stream<? extends TraceObjectValPath> getAncestorsRoot(Range<Long> span,
 			PathPredicates rootPredicates);
+
+	/**
+	 * Stream all ancestor values of this object matching the given predicates, intersecting the
+	 * given span
+	 * 
+	 * @param span a span which values along the path must intersect
+	 * @param relativePredicates the predicates for matching path keys, relative to this object
+	 * @return the stream of matching paths to values
+	 */
+	Stream<? extends TraceObjectValPath> getAncestors(Range<Long> span,
+			PathPredicates relativePredicates);
 
 	/**
 	 * Stream all successor values of this object matching the given predicates, intersecting the
@@ -300,8 +329,9 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @param lifespan the lifespan of the value
 	 * @param key the key to set
 	 * @param value the new value
-	 * @param resolution determines how to resolve conflicting keys with intersecting lifespans
+	 * @param resolution determines how to resolve duplicate keys with intersecting lifespans
 	 * @return the created value entry
+	 * @throws DuplicateKeyException if there are denied duplicate keys
 	 */
 	TraceObjectValue setValue(Range<Long> lifespan, String key, Object value,
 			ConflictResolution resolution);
@@ -309,10 +339,15 @@ public interface TraceObject extends TraceUniqueObject {
 	/**
 	 * Set a value for the given lifespan, truncating existing entries
 	 * 
+	 * <p>
+	 * Setting a value of {@code null} effectively deletes the value for the given lifespan and
+	 * returns {@code null}. Values of the same key intersecting the given lifespan or either
+	 * truncated or deleted.
+	 * 
 	 * @param lifespan the lifespan of the value
 	 * @param key the key to set
 	 * @param value the new value
-	 * @return the created value entry
+	 * @return the created value entry, or null
 	 */
 	TraceObjectValue setValue(Range<Long> lifespan, String key, Object value);
 
@@ -362,6 +397,16 @@ public interface TraceObject extends TraceUniqueObject {
 	TargetObjectSchema getTargetSchema();
 
 	/**
+	 * Search for ancestors having the given target interface
+	 * 
+	 * @param span the span which the found objects must intersect
+	 * @param targetIf the interface class
+	 * @return the stream of found paths to values
+	 */
+	Stream<? extends TraceObjectValPath> queryAncestorsTargetInterface(Range<Long> span,
+			Class<? extends TargetObject> targetIf);
+
+	/**
 	 * Search for ancestors providing the given interface and retrieve those interfaces
 	 * 
 	 * @param <I> the interface type
@@ -373,18 +418,38 @@ public interface TraceObject extends TraceUniqueObject {
 			Class<I> ifClass);
 
 	/**
+	 * Search for ancestors on the canonical path having the given target interface
+	 * 
+	 * <p>
+	 * The object may not yet be inserted at its canonical path
+	 * 
+	 * @param targetIf the interface class
+	 * @return the stream of objects
+	 */
+	Stream<? extends TraceObject> queryCanonicalAncestorsTargetInterface(
+			Class<? extends TargetObject> targetIf);
+
+	/**
 	 * Search for ancestors on the canonical path providing the given interface
 	 * 
 	 * <p>
 	 * The object may not yet be inserted at its canonical path
 	 * 
 	 * @param <I> the interface type
-	 * @param span the span which the found objects must intersect
 	 * @param ifClass the interface class
 	 * @return the stream of interfaces
 	 */
-	<I extends TraceObjectInterface> Stream<I> queryCanonicalAncestorsInterface(
-			Range<Long> span, Class<I> ifClass);
+	<I extends TraceObjectInterface> Stream<I> queryCanonicalAncestorsInterface(Class<I> ifClass);
+
+	/**
+	 * Search for successors providing the given target interface
+	 * 
+	 * @param span the span which the found paths must intersect
+	 * @param targetIf the target interface class
+	 * @return the stream of found paths to values
+	 */
+	Stream<? extends TraceObjectValPath> querySuccessorsTargetInterface(Range<Long> span,
+			Class<? extends TargetObject> targetIf);
 
 	/**
 	 * Search for successors providing the given interface and retrieve those interfaces
@@ -401,21 +466,13 @@ public interface TraceObject extends TraceUniqueObject {
 	 * Delete this object along with parent and child value entries referring to it
 	 * 
 	 * <p>
-	 * Note, this does not delete the children or any successors. Use {@link #deleteTree()} to
-	 * delete an entire subtree, regardless of lifespan. It is not recommended to invoke this on the
-	 * root object, since it cannot be replaced without first clearing the manager.
+	 * <b>Warning:</b> This will remove the object from the manager <em>entirely</em>, not just over
+	 * a given span. In general, this is used for cleaning and maintenance. Consider
+	 * {@link #remove(Range)} or {@link TraceObjectValue#delete()} instead. Note, this does not
+	 * delete the child objects or any successors. It is not recommended to invoke this on the root
+	 * object, since it cannot be replaced without first clearing the manager.
 	 */
 	void delete();
-
-	/**
-	 * Delete this object and its successors along with value entries referring to any
-	 * 
-	 * <p>
-	 * It is not recommended to invoke this on the root object. Instead, use
-	 * {@link TraceObjectManager#clear()}. The root object cannot be replaced without first clearing
-	 * the manager.
-	 */
-	void deleteTree();
 
 	/**
 	 * Check if this object has been deleted
@@ -426,19 +483,28 @@ public interface TraceObject extends TraceUniqueObject {
 	boolean isDeleted();
 
 	/**
-	 * Modify the lifespan or delete this object, such that it no longer intersects the given span.
+	 * Check if the child represents a method at the given snap
 	 * 
-	 * <p>
-	 * If the given span and the current lifespan are already disjoint, this does nothing. If the
-	 * given span splits the current lifespan in two, an exception is thrown. This is because the
-	 * two resulting objects ought to be identical, but they cannot be. Instead the one object
-	 * should remain alive, and the edge(s) pointing to it should be truncated. In other words, a
-	 * single object cannot vanish and then later re-appear, but it can be unlinked and then later
-	 * become relinked.
-	 * 
-	 * @param span the span to clear
-	 * @return this if the one object remains, null if the object is deleted.
-	 * @throws IllegalArgumentException if the given span splits the current lifespan in two
+	 * @param snap the snap
+	 * @return true if a method
 	 */
-	TraceObject truncateOrDelete(Range<Long> span);
+	default boolean isMethod(long snap) {
+		if (getTargetSchema().getInterfaces().contains(TargetMethod.class)) {
+			return true;
+		}
+		TraceObjectValue extras = getAttribute(snap, TraceObject.EXTRA_INTERFACES_ATTRIBUTE_NAME);
+		if (extras == null) {
+			return false;
+		}
+		Object val = extras.getValue();
+		if (!(val instanceof String)) {
+			return false;
+		}
+		String valStr = (String) val;
+		// Not ideal, but it's not a substring of any other schema interface....
+		if (valStr.contains("Method")) {
+			return true;
+		}
+		return false;
+	}
 }

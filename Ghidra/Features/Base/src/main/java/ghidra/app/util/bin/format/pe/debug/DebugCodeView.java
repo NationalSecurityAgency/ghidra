@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.pe.debug;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.pdb.PdbInfoCodeView;
 import ghidra.app.util.bin.format.pdb.PdbInfoDotNet;
 import ghidra.app.util.bin.format.pe.OffsetValidator;
@@ -41,22 +41,8 @@ public class DebugCodeView implements StructConverter {
 	 * @param debugDir the code view debug directory
 	 * @param ntHeader 
 	 */
-	static DebugCodeView createDebugCodeView(FactoryBundledWithBinaryReader reader,
-			DebugDirectory debugDir, OffsetValidator validator) throws IOException {
-		DebugCodeView debugCodeView =
-			(DebugCodeView) reader.getFactory().create(DebugCodeView.class);
-		debugCodeView.initDebugCodeView(reader, debugDir, validator);
-		return debugCodeView;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DebugCodeView() {
-	}
-
-	private void initDebugCodeView(FactoryBundledWithBinaryReader reader, DebugDirectory debugDir,
-			OffsetValidator validator) throws IOException {
+	DebugCodeView(BinaryReader reader, DebugDirectory debugDir, OffsetValidator validator)
+			throws IOException {
 		this.debugDir = debugDir;
 
 		int ptr = debugDir.getPointerToRawData();
@@ -68,16 +54,15 @@ public class DebugCodeView implements StructConverter {
 		dotNetPdbInfo = PdbInfoDotNet.isMatch(reader, ptr) ? PdbInfoDotNet.read(reader, ptr) : null;
 		pdbInfo = PdbInfoCodeView.isMatch(reader, ptr) ? PdbInfoCodeView.read(reader, ptr) : null;
 		if (DebugCodeViewSymbolTable.isMatch(reader, ptr)) {
-			symbolTable =
-				DebugCodeViewSymbolTable.createDebugCodeViewSymbolTable(reader,
-					debugDir.getSizeOfData(), debugDir.getPointerToRawData(), ptr);
+			symbolTable = new DebugCodeViewSymbolTable(reader, debugDir.getSizeOfData(),
+				debugDir.getPointerToRawData(), ptr);
 		}
 		else {
 			//TODO??
-//            Err.warn(this, null, "Warning", "Unhandled CodeView Information Format: "+
-//			                        Integer.toHexString(reader.readShort(ptr+0)&0xffff)+
-//			                        " "+
-//			                        Integer.toHexString(reader.readShort(ptr+1)&0xffff));
+//	            Err.warn(this, null, "Warning", "Unhandled CodeView Information Format: "+
+//				                        Integer.toHexString(reader.readShort(ptr+0)&0xffff)+
+//				                        " "+
+//				                        Integer.toHexString(reader.readShort(ptr+1)&0xffff));
 		}
 	}
 

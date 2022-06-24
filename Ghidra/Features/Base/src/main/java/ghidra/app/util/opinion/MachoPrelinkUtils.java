@@ -22,9 +22,7 @@ import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.jdom.JDOMException;
 
-import generic.continues.RethrowContinuesFactory;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.ByteProviderWrapper;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.commands.*;
@@ -38,55 +36,63 @@ import ghidra.util.task.TaskMonitor;
 public class MachoPrelinkUtils {
 
 	/**
+	 * Check to see if the given {@link ByteProvider} is a Mach-O PRELINK binary
+	 * 
+	 * @param provider The {@link ByteProvider} to check
+	 * @param monitor A monitor
+	 * @return True if the given {@link ByteProvider} is a Mach-O PRELINK binary; otherwise, false
+	 */
+	public static boolean isMachoPrelink(ByteProvider provider, TaskMonitor monitor) {
+		try {
+			MachHeader header = new MachHeader(provider);
+			BinaryReader reader = new BinaryReader(provider, header.isLittleEndian());
+			reader.setPointerIndex(header.getSize());
+
+			// Doing a full header parse is too slow...we really just need to see if a segment
+			// exists that starts with __PRELINK.  Parse the minimal amount to do that check.
+			for (int i = 0; i < header.getNumberOfCommands(); i++) {
+				int type = reader.peekNextInt();
+				if (type == LoadCommandTypes.LC_SEGMENT || type == LoadCommandTypes.LC_SEGMENT_64) {
+					SegmentCommand segment = new SegmentCommand(reader, header.is32bit());
+					if (segment.getSegmentName().startsWith("__PRELINK")) {
+						return true;
+					}
+				}
+				else {
+					type = reader.readNextInt();
+					int size = reader.readNextInt();
+					reader.setPointerIndex(reader.getPointerIndex() + size - 8);
+				}
+			}
+		}
+		catch (MachException | IOException e) {
+			// Assume it's not a Mach-O PRELINK...fall through
+		}
+		return false;
+	}
+
+	/**
 	 * Parses the provider looking for PRELINK XML.
 	 * 
 	 * @param provider The provider to parse.
 	 * @param monitor A monitor.
-	 * @return A list of discovered {@link PrelinkMap}s.  An empty list indicates that the provider
+	 * @return A list of discovered {@link MachoPrelinkMap}s.  An empty list indicates that the provider
 	 *   did not represent valid Mach-O PRELINK binary.
 	 * @throws IOException if there was an IO-related issue.
 	 * @throws JDOMException if there was a issue parsing the PRELINK XML.
 	 */
-	public static List<PrelinkMap> parsePrelinkXml(ByteProvider provider, TaskMonitor monitor)
+	public static List<MachoPrelinkMap> parsePrelinkXml(ByteProvider provider, TaskMonitor monitor)
 			throws IOException, JDOMException {
 
 		try {
-			MachHeader mainHeader =
-				MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider);
+			MachHeader mainHeader = new MachHeader(provider);
 			mainHeader.parse(); // make sure first Mach-O header is valid....
 
 			monitor.setMessage("Parsing PRELINK XML...");
-			return new PrelinkParser(mainHeader, provider).parse(monitor);
+			return new MachoPrelinkParser(mainHeader, provider).parse(monitor);
 		}
 		catch (NoPreLinkSectionException | MachException e) {
 			return Collections.emptyList();
-		}
-	}
-
-	/**
-	 * Check if the Macho has a DYLD_CHAINED_FIXUPS_COMMAND
-	 * 
-	 * @param provider The provider to parse.
-	 * @param monitor A monitor.
-	 * @return A list of discovered {@link PrelinkMap}s.  An empty list indicates that the provider
-	 *   did not represent valid Mach-O PRELINK binary.
-	 * @throws IOException if there was an IO-related issue.
-	 * @throws JDOMException if there was a issue parsing the PRELINK XML.
-	 */
-	public static boolean hasChainedLoadCommand(ByteProvider provider, TaskMonitor monitor)
-			throws IOException, JDOMException {
-
-		try {
-			MachHeader mainHeader =
-				MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider);
-			mainHeader.parse(); // make sure first Mach-O header is valid....
-
-			DyldChainedFixupsCommand cmd =
-				mainHeader.getFirstLoadCommand(DyldChainedFixupsCommand.class);
-			return cmd != null;
-		}
-		catch (MachException e) {
-			return false;
 		}
 	}
 
@@ -134,7 +140,7 @@ public class MachoPrelinkUtils {
 	 * Forms a bidirectional mapping of PRELINK XML to Mach-O header offset in the given provider.
 	 * 
 	 * @param provider The PRELINK Mach-O provider.
-	 * @param prelinkList A list of {@link PrelinkMap}s.
+	 * @param prelinkList A list of {@link MachoPrelinkMap}s.
 	 * @param machoHeaderOffsets A list of provider offsets where PRELINK Mach-O headers start (not 
 	 *   including the "System" Mach-O at offset 0).
 	 * @param monitor A monitor
@@ -142,14 +148,14 @@ public class MachoPrelinkUtils {
 	 * @throws MachException If there was a problem parsing a Mach-O header.
 	 * @throws IOException If there was an IO-related issue mapping PRELINK XML to Mach-O headers.
 	 */
-	public static BidiMap<PrelinkMap, Long> matchPrelinkToMachoHeaderOffsets(ByteProvider provider,
-			List<PrelinkMap> prelinkList, List<Long> machoHeaderOffsets, TaskMonitor monitor)
+	public static BidiMap<MachoPrelinkMap, Long> matchPrelinkToMachoHeaderOffsets(ByteProvider provider,
+			List<MachoPrelinkMap> prelinkList, List<Long> machoHeaderOffsets, TaskMonitor monitor)
 			throws MachException, IOException {
 
 		monitor.setMessage("Matching PRELINK to Mach-O headers...");
 		monitor.initialize(prelinkList.size());
 
-		BidiMap<PrelinkMap, Long> map = new DualHashBidiMap<>();
+		BidiMap<MachoPrelinkMap, Long> map = new DualHashBidiMap<>();
 
 		// For pre-iOS 12, we can use the PrelinkExecutableLoadAddr field to match PrelinkMap
 		// entries to Mach-O offsets.  For iOS 12, PrelinkExecutableLoadAddr is gone so we use
@@ -167,7 +173,7 @@ public class MachoPrelinkUtils {
 						maxModuleIndex + 1, machoHeaderOffsets.size()));
 			}
 
-			for (PrelinkMap info : prelinkList) {
+			for (MachoPrelinkMap info : prelinkList) {
 				if (monitor.isCancelled()) {
 					break;
 				}
@@ -187,11 +193,10 @@ public class MachoPrelinkUtils {
 					"Using PrelinkExecutableLoadAddr to find Mach-O offsets (%d modules found)",
 					machoHeaderOffsets.size()));
 
-			MachHeader machoHeader =
-				MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider, 0, true);
+			MachHeader machoHeader = new MachHeader(provider, 0, true);
 			machoHeader.parse();
 			long prelinkStart = MachoPrelinkUtils.getPrelinkStartAddr(machoHeader);
-			for (PrelinkMap info : prelinkList) {
+			for (MachoPrelinkMap info : prelinkList) {
 				if (monitor.isCancelled()) {
 					break;
 				}

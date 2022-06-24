@@ -35,7 +35,7 @@ public interface OverviewProvider {
 	 * Sets the current program and associated address-index map
 	 * 
 	 * @param program the program to use.
-	 * @param addressIndexMap the address-index map to use.
+	 * @param map the address-index map to use.
 	 */
 	void setProgram(Program program, AddressIndexMap map);
 

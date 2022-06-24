@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
@@ -46,8 +46,8 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 	private ElfSymbol[] symbols;
 
 	/**
-	 * Create and parse an Elf symbol table
-	 * @param reader
+	 * Construct and parse an Elf symbol table
+	 * @param reader byte reader
 	 * @param header elf header
 	 * @param symbolTableSection string table section header or null if associated with a dynamic table entry
 	 * @param fileOffset symbol table file offset
@@ -56,27 +56,9 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 	 * @param entrySize size of each symbol entry in bytes
 	 * @param stringTable associated string table
 	 * @param isDynamic true if symbol table is the dynamic symbol table
-	 * @return Elf symbol table object
-	 * @throws IOException
+	 * @throws IOException if an IO or parse error occurs
 	 */
-	static ElfSymbolTable createElfSymbolTable(FactoryBundledWithBinaryReader reader,
-			ElfHeader header, ElfSectionHeader symbolTableSection, long fileOffset, long addrOffset,
-			long length, long entrySize, ElfStringTable stringTable, boolean isDynamic)
-			throws IOException {
-		ElfSymbolTable elfSymbolTable =
-			(ElfSymbolTable) reader.getFactory().create(ElfSymbolTable.class);
-		elfSymbolTable.initElfSymbolTable(reader, header, symbolTableSection, fileOffset,
-			addrOffset, length, entrySize, stringTable, isDynamic);
-		return elfSymbolTable;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ElfSymbolTable() {
-	}
-
-	private void initElfSymbolTable(FactoryBundledWithBinaryReader reader, ElfHeader header,
+	public ElfSymbolTable(BinaryReader reader, ElfHeader header,
 			ElfSectionHeader symbolTableSection, long fileOffset, long addrOffset, long length,
 			long entrySize, ElfStringTable stringTable, boolean isDynamic) throws IOException {
 
@@ -103,7 +85,7 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 			// Reposition reader to start of symbol element since ElfSymbol object 
 			// may not consume all symbol element data
 			reader.setPointerIndex(entryPos);
-			ElfSymbol sym = ElfSymbol.createElfSymbol(reader, i, this, header);
+			ElfSymbol sym = new ElfSymbol(reader, i, this, header);
 			symbolList.add(sym);
 			entryPos += entrySize;
 		}

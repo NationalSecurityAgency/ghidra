@@ -41,7 +41,9 @@ public class Ghidra {
 		// fully qualified class name (with . replaced by -). If we don't do this here, the next 
 		// time it gets done is in a new thread, which results in the application name being set to 
 		// "java-lang-thread".
-		Taskbar.isTaskbarSupported();
+		if (!Boolean.getBoolean("java.awt.headless")) {
+			Taskbar.isTaskbarSupported();
+		}
 		
 		// Forward args to GhidraLauncher, which will perform the launch
 		GhidraLauncher.launch(args);

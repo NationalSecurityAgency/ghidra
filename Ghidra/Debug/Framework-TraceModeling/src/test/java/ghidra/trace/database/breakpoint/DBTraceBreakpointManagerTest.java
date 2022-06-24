@@ -17,6 +17,7 @@ package ghidra.trace.database.breakpoint;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.*;
@@ -91,7 +92,8 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	@Test
 	public void testGetAllBreakpoints() throws Exception {
 		addBreakpoints();
-		assertEquals(Set.of(breakMain, breakVarA, breakVarB),
+		// breakVarA == breakVarB in object mode
+		assertEquals(Set.copyOf(List.of(breakMain, breakVarA, breakVarB)),
 			Set.copyOf(breakpointManager.getAllBreakpoints()));
 	}
 
@@ -100,7 +102,7 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 		addBreakpoints();
 		assertEquals(Set.of(breakMain),
 			Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[0]")));
-		assertEquals(Set.of(breakVarA, breakVarB),
+		assertEquals(Set.copyOf(List.of(breakVarA, breakVarB)), // Same breakpoint in object mode
 			Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[1]")));
 	}
 
@@ -259,14 +261,11 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	@Test
 	public void testDelete() throws Exception {
 		addBreakpoints();
-		assertEquals(Set.of(breakMain),
-			Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[0]")));
+		assertEquals(breakMain, breakpointManager.getPlacedBreakpointByPath(0, "Breakpoints[0]"));
 		try (UndoableTransaction tid = b.startTransaction()) {
 			breakMain.delete();
-			assertEquals(Set.of(),
-				Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[0]")));
+			assertNull(breakpointManager.getPlacedBreakpointByPath(0, "Breakpoints[0]"));
 		}
-		assertEquals(Set.of(),
-			Set.copyOf(breakpointManager.getBreakpointsByPath("Breakpoints[0]")));
+		assertNull(breakpointManager.getPlacedBreakpointByPath(0, "Breakpoints[0]"));
 	}
 }

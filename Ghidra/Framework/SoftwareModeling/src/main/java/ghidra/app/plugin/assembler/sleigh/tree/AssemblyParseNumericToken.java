@@ -31,6 +31,7 @@ public class AssemblyParseNumericToken extends AssemblyParseToken {
 
 	/**
 	 * Construct a numeric terminal having the given string and numeric values
+	 * 
 	 * @param grammar the grammar containing the terminal
 	 * @param term the terminal that matched this token
 	 * @param str the portion of the input comprising this token
@@ -77,6 +78,7 @@ public class AssemblyParseNumericToken extends AssemblyParseToken {
 
 	/**
 	 * Get the numeric value of the token
+	 * 
 	 * @return the value
 	 */
 	public long getNumericValue() {

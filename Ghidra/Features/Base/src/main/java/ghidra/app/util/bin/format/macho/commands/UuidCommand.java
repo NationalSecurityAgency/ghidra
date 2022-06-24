@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -29,27 +29,13 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a uuid_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a uuid_command structure 
  */
 public class UuidCommand extends LoadCommand {
 	private byte[] uuid;
 
-	static UuidCommand createUuidCommand(FactoryBundledWithBinaryReader reader) throws IOException {
-		UuidCommand command = (UuidCommand) reader.getFactory().create(UuidCommand.class);
-		command.initUuidCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public UuidCommand() {
-	}
-
-	private void initUuidCommand(FactoryBundledWithBinaryReader reader) throws IOException {
-		initLoadCommand(reader);
+	UuidCommand(BinaryReader reader) throws IOException {
+		super(reader);
 		uuid = reader.readNextByteArray(16);
 	}
 

@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -31,9 +31,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a segment_command and segment_command_64 structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a segment_command and segment_command_64 structure 
  */
 public class SegmentCommand extends LoadCommand {
 
@@ -50,23 +48,8 @@ public class SegmentCommand extends LoadCommand {
 	private boolean is32bit;
 	private List<Section> sections = new ArrayList<Section>();
 
-	public static SegmentCommand createSegmentCommand(FactoryBundledWithBinaryReader reader,
-			boolean is32bit) throws IOException {
-		SegmentCommand segmentCommand =
-			(SegmentCommand) reader.getFactory().create(SegmentCommand.class);
-		segmentCommand.initSegmentCommand(reader, is32bit);
-		return segmentCommand;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public SegmentCommand() {
-	}
-
-	private void initSegmentCommand(FactoryBundledWithBinaryReader reader, boolean is32bit)
-			throws IOException {
-		initLoadCommand(reader);
+	public SegmentCommand(BinaryReader reader, boolean is32bit) throws IOException {
+		super(reader);
 		this.is32bit = is32bit;
 
 		segname = reader.readNextAsciiString(MachConstants.NAME_LENGTH);
@@ -88,7 +71,7 @@ public class SegmentCommand extends LoadCommand {
 		flags = reader.readNextInt();
 
 		for (int i = 0; i < nsects; ++i) {
-			sections.add(Section.createSection(reader, is32bit));
+			sections.add(new Section(reader, is32bit));
 		}
 	}
 
@@ -122,6 +105,10 @@ public class SegmentCommand extends LoadCommand {
 	}
 
 	public long getVMaddress() {
+		// Mask off possible chained fixup found in kernelcache segment addresses
+		if ((vmaddr & 0xfff000000000L) == 0xfff000000000L) {
+			return vmaddr | 0xffff000000000000L;
+		}
 		return vmaddr;
 	}
 

@@ -48,16 +48,19 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	int scale;
 
 	/**
-	 * Construct a BigFloat.  If kind is FINITE, the value is <code>sign*unscaled*2^(scale-fracbits)</code>
+	 * Construct a BigFloat.  If kind is FINITE, the value is <code>sign*unscaled*2^(scale-fracbits)</code>.
+	 * <p>
+	 * NOTE: Requires that normal values are constructed in a normal form as with denormal values.
 	 * 
-	 * @param fracbits number of fractional bits
-	 * @param expbits maximum number of bits in exponent
+	 * @param fracbits number of fractional bits (positive non-zero value)
+	 * @param expbits maximum number of bits in exponent (positive non-zero value)
 	 * @param kind the Kind, FINITE, INFINITE, ...
 	 * @param sign +1 or -1
-	 * @param unscaled the value's mantissa
-	 * @param scale value's scale
+	 * @param unscaled the value's mantissa (bit size <= fracbits+1)
+	 * @param scale value's scale (signed value with the biased range of expbits)
+	 * @throws IllegalArgumentException if invalid unscaled and scale values are specified based upon the fracbits and expbits values.
 	 */
-	public BigFloat(int fracbits, int expbits, FloatKind kind, int sign, BigInteger unscaled,
+	BigFloat(int fracbits, int expbits, FloatKind kind, int sign, BigInteger unscaled,
 			int scale) {
 		this.fracbits = fracbits;
 		this.expbits = expbits;
@@ -68,6 +71,15 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 		this.maxScale = (1 << (expbits - 1)) - 1;
 		this.minScale = 1 - this.maxScale;
+
+		if (unscaled.bitLength() > (fracbits + 1)) {
+			throw new IllegalArgumentException("unscaled value exceeds " + (fracbits + 1) +
+				" bits in length (length=" + unscaled.bitLength() + ")");
+		}
+		if (scale < minScale || scale > maxScale) {
+			throw new IllegalArgumentException(
+				"scale out of bounds " + minScale + " to " + maxScale + " (scale=" + scale + ")");
+		}
 	}
 
 	@Override
@@ -219,10 +231,28 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	}
 
 	/**
-	 * @return {@code true} if this BigFloat is FINITE and normal
+	 * Determine if the state of this BigFloat reflects a normalized value.
+	 * <p>NOTE: This method relies on the manner of construction and
+	 * only checks for {@link FloatKind#FINITE} and that full size of the
+	 * fractional bits is used for the unscaled value.
+	 * 
+	 * @return {@code true} if this BigFloat is FINITE and normal.
 	 */
 	public boolean isNormal() {
-		return kind == FloatKind.FINITE && unscaled.bitLength() >= fracbits + 1;
+		return kind == FloatKind.FINITE && unscaled.bitLength() == (fracbits + 1);
+	}
+
+	/**
+	 * Determine if the state of this BigFloat reflects a subnormal/denormal value.
+	 * <p>NOTE: This method relies on the manner of construction and
+	 * only checks for {@link FloatKind#FINITE} and that the non-zero
+	 * unscaled valued does not use all fractional bits.
+	 * 
+	 * @return {@code true} if this BigFloat is FINITE and denormal
+	 */
+	public boolean isDenormal() {
+		return kind == FloatKind.FINITE && !unscaled.equals(BigInteger.ZERO) &&
+			unscaled.bitLength() <= fracbits;
 	}
 
 	/**
@@ -293,14 +323,22 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	public BigDecimal toBigDecimal() {
 		switch (kind) {
 			case FINITE:
-				// sign * unscaled * 2^(scale-fracbits)
+				if (isZero()) {
+					return BigDecimal.ZERO;
+				}
+				int unusedBits = Math.max(unscaled.getLowestSetBit(), 0);
+				BigInteger val = unscaled;
 				int iscale = scale - fracbits;
 				BigDecimal x;
-				if (iscale >= 0) {
-					x = new BigDecimal(unscaled.shiftLeft(iscale));
+				if (iscale >= -unusedBits) {
+					x = new BigDecimal(val.shiftLeft(iscale));
 				}
 				else {
-					x = new BigDecimal(unscaled.multiply(BigInteger.valueOf(5).pow(-iscale)),
+					if (unusedBits > 0) {
+						val = unscaled.shiftRight(unusedBits);
+						iscale += unusedBits;
+					}
+					x = new BigDecimal(val.multiply(BigInteger.valueOf(5).pow(-iscale)),
 						-iscale);
 				}
 				if (sign < 0) {
@@ -941,7 +979,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	}
 
 	/**
-	 * {@code this=round(this)}
+	 * Round this value to the nearest whole number
 	 */
 	public void round() {
 		BigFloat half = new BigFloat(fracbits, expbits, FloatKind.FINITE, +1,

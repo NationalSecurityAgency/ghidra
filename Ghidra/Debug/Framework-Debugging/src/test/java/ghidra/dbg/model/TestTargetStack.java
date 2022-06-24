@@ -38,6 +38,10 @@ public class TestTargetStack extends DefaultTestTargetObject<TestTargetStackFram
 		return frame;
 	}
 
+	public TestTargetStackFrameNoRegisterBank pushFrameNoBank(Address pc) {
+		return pushFrame(new TestTargetStackFrameNoRegisterBank(this, elements.size(), pc));
+	}
+
 	/**
 	 * Push a new frame onto the stack where the register bank is a child attribute
 	 * 

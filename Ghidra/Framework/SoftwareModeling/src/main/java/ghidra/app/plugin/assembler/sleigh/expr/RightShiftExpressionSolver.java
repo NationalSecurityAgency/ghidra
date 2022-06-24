@@ -19,12 +19,12 @@ import java.util.Map;
 import java.util.Set;
 
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedConstructor;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
 import ghidra.app.plugin.processors.sleigh.expression.RightShiftExpression;
 import ghidra.util.Msg;
 
 /**
- * {@literal Solves expressions of the form A >> B}
+ * Solves expressions of the form {@code A >> B}
  */
 public class RightShiftExpressionSolver
 		extends AbstractBinaryExpressionSolver<RightShiftExpression> {
@@ -62,15 +62,14 @@ public class RightShiftExpressionSolver
 
 	@Override
 	protected AssemblyResolution solveTwoSided(RightShiftExpression exp, MaskedLong goal,
-			Map<String, Long> vals, Map<Integer, Object> res, AssemblyResolvedConstructor cur,
-			Set<SolverHint> hints, String description)
-			throws NeedsBackfillException, SolverException {
+			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
+			String description) throws NeedsBackfillException, SolverException {
 		// Do the similar thing as in {@link LeftShiftExpressionSolver}
 
 		// Do not guess the same parameter recursively
 		if (hints.contains(DefaultSolverHint.GUESSING_RIGHT_SHIFT_AMOUNT)) {
 			// NOTE: Nested right shifts ought to be written as a right shift by a sum
-			return super.solveTwoSided(exp, goal, vals, res, cur, hints, description);
+			return super.solveTwoSided(exp, goal, vals, cur, hints, description);
 		}
 
 		int maxShift = Long.numberOfLeadingZeros(goal.val);
@@ -82,18 +81,18 @@ public class RightShiftExpressionSolver
 				MaskedLong reql = computeLeft(reqr, goal);
 
 				AssemblyResolution lres =
-					solver.solve(exp.getLeft(), reql, vals, res, cur, hintsWithRShift, description);
+					solver.solve(exp.getLeft(), reql, vals, cur, hintsWithRShift, description);
 				if (lres.isError()) {
 					throw new SolverException("Solving left failed");
 				}
 				AssemblyResolution rres =
-					solver.solve(exp.getRight(), reqr, vals, res, cur, hints, description);
+					solver.solve(exp.getRight(), reqr, vals, cur, hints, description);
 				if (rres.isError()) {
 					throw new SolverException("Solving right failed");
 				}
-				AssemblyResolvedConstructor lsol = (AssemblyResolvedConstructor) lres;
-				AssemblyResolvedConstructor rsol = (AssemblyResolvedConstructor) rres;
-				AssemblyResolvedConstructor sol = lsol.combine(rsol);
+				AssemblyResolvedPatterns lsol = (AssemblyResolvedPatterns) lres;
+				AssemblyResolvedPatterns rsol = (AssemblyResolvedPatterns) rres;
+				AssemblyResolvedPatterns sol = lsol.combine(rsol);
 				if (sol == null) {
 					throw new SolverException(
 						"Left and right solutions conflict for shift=" + shift);
@@ -105,6 +104,6 @@ public class RightShiftExpressionSolver
 				// try the next
 			}
 		}
-		return super.solveTwoSided(exp, goal, vals, res, cur, hints, description);
+		return super.solveTwoSided(exp, goal, vals, cur, hints, description);
 	}
 }

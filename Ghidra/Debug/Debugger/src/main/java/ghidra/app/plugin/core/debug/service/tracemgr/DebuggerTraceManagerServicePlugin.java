@@ -32,9 +32,8 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.services.*;
+import ghidra.async.*;
 import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
-import ghidra.async.AsyncReference;
-import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.NotConnectedException;
@@ -60,16 +59,25 @@ import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
 
-@PluginInfo(shortDescription = "Debugger Trace View Management Plugin", description = "Manages UI Components, Wrappers, Focus, etc.", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsProduced = {
-	TraceActivatedPluginEvent.class,
-}, eventsConsumed = {
-	TraceActivatedPluginEvent.class,
-	TraceClosedPluginEvent.class,
-	ModelObjectFocusedPluginEvent.class,
-	TraceRecorderAdvancedPluginEvent.class,
-}, servicesRequired = {}, servicesProvided = {
-	DebuggerTraceManagerService.class,
-})
+@PluginInfo(
+	shortDescription = "Debugger Trace View Management Plugin",
+	description = "Manages UI Components, Wrappers, Focus, etc.",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsProduced = {
+		TraceActivatedPluginEvent.class,
+	},
+	eventsConsumed = {
+		TraceActivatedPluginEvent.class,
+		TraceClosedPluginEvent.class,
+		ModelObjectFocusedPluginEvent.class,
+		TraceRecorderAdvancedPluginEvent.class,
+	},
+	servicesRequired = {},
+	servicesProvided = {
+		DebuggerTraceManagerService.class,
+	})
 public class DebuggerTraceManagerServicePlugin extends Plugin
 		implements DebuggerTraceManagerService {
 	private static final AutoConfigState.ClassHandler<DebuggerTraceManagerServicePlugin> CONFIG_STATE_HANDLER =
@@ -624,6 +632,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	@Override
+	public DebuggerCoordinates getCurrentFor(Trace trace) {
+		return lastCoordsByTrace.get(trace);
+	}
+
+	@Override
 	public Trace getCurrentTrace() {
 		return current.getTrace();
 	}
@@ -654,17 +667,25 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return current.getFrame();
 	}
 
-	@Override
-	public CompletableFuture<Long> materialize(DebuggerCoordinates coordinates) {
+	public Long findSnapshot(DebuggerCoordinates coordinates) {
 		if (coordinates.getTime().isSnapOnly()) {
-			return CompletableFuture.completedFuture(coordinates.getSnap());
+			return coordinates.getSnap();
 		}
 		Collection<? extends TraceSnapshot> suitable = coordinates.getTrace()
 				.getTimeManager()
 				.getSnapshotsWithSchedule(coordinates.getTime());
 		if (!suitable.isEmpty()) {
 			TraceSnapshot found = suitable.iterator().next();
-			return CompletableFuture.completedFuture(found.getKey());
+			return found.getKey();
+		}
+		return null;
+	}
+
+	@Override
+	public CompletableFuture<Long> materialize(DebuggerCoordinates coordinates) {
+		Long found = findSnapshot(coordinates);
+		if (found != null) {
+			return CompletableFuture.completedFuture(found);
 		}
 		if (emulationService == null) {
 			throw new IllegalStateException(
@@ -674,19 +695,19 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return emulationService.backgroundEmulate(coordinates.getTrace(), coordinates.getTime());
 	}
 
-	protected void prepareViewAndFireEvent(DebuggerCoordinates coordinates) {
+	protected CompletableFuture<Void> prepareViewAndFireEvent(DebuggerCoordinates coordinates) {
 		TraceVariableSnapProgramView varView = (TraceVariableSnapProgramView) coordinates.getView();
 		if (varView == null) { // Should only happen with NOWHERE
 			fireLocationEvent(coordinates);
-			return;
+			return AsyncUtils.NIL;
 		}
-		materialize(coordinates).thenAcceptAsync(snap -> {
+		return materialize(coordinates).thenAcceptAsync(snap -> {
 			if (!coordinates.equals(current)) {
 				return; // We navigated elsewhere before emulation completed
 			}
 			varView.setSnap(snap);
 			fireLocationEvent(coordinates);
-		}, AsyncUtils.SWING_EXECUTOR);
+		}, SwingExecutorService.MAYBE_NOW);
 	}
 
 	protected void fireLocationEvent(DebuggerCoordinates coordinates) {
@@ -977,14 +998,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				return thread;
 			}
 		}
-		//if (!Objects.equals(prev.getTrace(), resolved.getTrace())) {
 		return recorder.getTarget();
-		//}
-		//return null;
 	}
 
 	@Override
-	public void activate(DebuggerCoordinates coordinates) {
+	public CompletableFuture<Void> activateAndNotify(DebuggerCoordinates coordinates,
+			boolean syncTargetFocus) {
 		DebuggerCoordinates prev;
 		DebuggerCoordinates resolved;
 		synchronized (listenersByTrace) {
@@ -992,34 +1011,34 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			resolved = doSetCurrent(coordinates);
 		}
 		if (resolved == null) {
-			return;
+			return AsyncUtils.NIL;
 		}
-		prepareViewAndFireEvent(resolved);
+		CompletableFuture<Void> future = prepareViewAndFireEvent(resolved);
+		if (!syncTargetFocus) {
+			return future;
+		}
 		if (!synchronizeFocus.get()) {
-			return;
+			return future;
 		}
 		TraceRecorder recorder = resolved.getRecorder();
 		if (recorder == null) {
-			return;
+			return future;
 		}
 		TargetObject focus = translateToFocus(prev, resolved);
 		if (focus == null || !focus.isValid()) {
-			return;
+			return future;
 		}
 		recorder.requestFocus(focus);
+		return future;
+	}
+
+	@Override
+	public void activate(DebuggerCoordinates coordinates) {
+		activateAndNotify(coordinates, true); // Drop future on floor
 	}
 
 	public void activateNoFocusChange(DebuggerCoordinates coordinates) {
-		//DebuggerCoordinates prev;
-		DebuggerCoordinates resolved;
-		synchronized (listenersByTrace) {
-			//prev = current;
-			resolved = doSetCurrent(coordinates);
-		}
-		if (resolved == null) {
-			return;
-		}
-		prepareViewAndFireEvent(resolved);
+		activateAndNotify(coordinates, false); // Drop future on floor
 	}
 
 	@Override

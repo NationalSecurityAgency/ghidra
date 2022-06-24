@@ -84,6 +84,6 @@ public class DbgRegister implements Comparable<DbgRegister> {
 		if (desc == null) {
 			return true;
 		}
-		return desc.subregMaster == 0;
+		return desc.subregMask == 0;
 	}
 }

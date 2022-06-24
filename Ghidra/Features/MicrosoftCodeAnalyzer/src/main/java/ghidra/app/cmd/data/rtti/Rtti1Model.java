@@ -122,7 +122,7 @@ public class Rtti1Model extends AbstractCreateRttiDataModel {
 		// First component is either a direct reference or an image base offset.
 		Address rtti0Address = getReferencedAddress(program, startAddress);
 		if (rtti0Address == null) {
-			invalid(); // throws Exception
+			invalid("Invalid TypeDescriptor reference (pTypeDescriptor)."); // throws Exception
 		}
 		rtti0Model = new TypeDescriptorModel(program, rtti0Address, validationOptions);
 		if (validateReferredToData) {
@@ -232,7 +232,7 @@ public class Rtti1Model extends AbstractCreateRttiDataModel {
 		boolean is64Bit = MSDataTypeUtils.is64Bit(program);
 		Structure rtti1Struct = (Structure) DataTypeUtils.getBaseDataType(rtti1Dt);
 		DataType rtti3RefDt =
-			is64Bit ? new ImageBaseOffset32DataType(dataTypeManager) : new PointerDataType(rtti3Dt);
+			is64Bit ? new IBO32DataType(dataTypeManager) : new PointerDataType(rtti3Dt);
 		rtti1Struct.replace(CLASS_HIERARCHY_POINTER_ORDINAL, rtti3RefDt, rtti3RefDt.getLength(),
 			"pClassHierarchyDescriptor", "ref to ClassHierarchyDescriptor (RTTI 3) for class");
 	}
@@ -248,9 +248,9 @@ public class Rtti1Model extends AbstractCreateRttiDataModel {
 		boolean is64Bit = MSDataTypeUtils.is64Bit(program);
 		DataType rtti0Dt = TypeDescriptorModel.getDataType(program);
 		DataType rtti0RefDt =
-			is64Bit ? new ImageBaseOffset32DataType(dataTypeManager) : new PointerDataType(rtti0Dt);
+			is64Bit ? new IBO32DataType(dataTypeManager) : new PointerDataType(rtti0Dt);
 		DataType rtti3RefDt =
-			is64Bit ? new ImageBaseOffset32DataType(dataTypeManager) : new PointerDataType();
+			is64Bit ? new IBO32DataType(dataTypeManager) : new PointerDataType();
 
 		CategoryPath categoryPath = new CategoryPath(CATEGORY_PATH);
 		StructureDataType struct =

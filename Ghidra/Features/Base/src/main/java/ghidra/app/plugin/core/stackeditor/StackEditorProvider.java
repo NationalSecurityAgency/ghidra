@@ -15,6 +15,10 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
+import java.awt.event.MouseEvent;
+
+import docking.ActionContext;
+import ghidra.app.context.ProgramActionContext;
 import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.Plugin;
@@ -102,6 +106,11 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 			new HexNumbersAction(this) 
 		};
 		//@formatter:on
+	}
+
+	@Override
+	public ActionContext getActionContext(MouseEvent event) {
+		return new ProgramActionContext(this, program);
 	}
 
 	/**
@@ -240,7 +249,7 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 			stackModel.load(function);
 		}
 		else {
-			stackModel.stackChangedExcternally(true);
+			stackModel.stackChangedExternally(true);
 			editorPanel.setStatus("Stack may have been changed externally--data may be stale.");
 		}
 	}

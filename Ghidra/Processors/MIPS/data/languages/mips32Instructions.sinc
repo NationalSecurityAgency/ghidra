@@ -529,8 +529,13 @@ define pcodeop special2;
 }        
 
 # 0111 1100 000t tttt dddd d000 0011 1011
-:rdhwr RT, RDsrc                is $(AMODE) & prime=0x1F & rs=0 & fct2=0 & fct=0x3B & RT & RDsrc {
-    RT = getHWRegister(RDsrc);
+:rdhwr RT, rd_hw                is $(AMODE) & prime=0x1F & rs=0 & fct2=0 & fct=0x3B & RT & rd_hw & rd!=4 {
+    RT = getHWRegister(rd_hw);
+}
+
+# 0111 1100 000t tttt dddd d000 0011 1011
+:rdhwr RT, rd_hw, sel_0608      is $(AMODE) & REL6=1 & prime=0x1F & rs=0 & spec2=0 & fct=0x3B & RT & rd_hw & rd=4 & sel_0608 {
+    RT = getHWRegister(rd_hw, sel_0608:1);
 }
 
 # 0100 0001 010t tttt dddd d000 0000 0000 

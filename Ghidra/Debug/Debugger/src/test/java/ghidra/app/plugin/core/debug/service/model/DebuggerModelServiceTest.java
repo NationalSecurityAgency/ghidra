@@ -45,14 +45,11 @@ import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.model.TestDebuggerModelFactory;
 import ghidra.dbg.model.TestDebuggerObjectModel;
 import ghidra.dbg.target.TargetEnvironment;
-import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Swing;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.CollectionChangeListener;
-import mockit.Mocked;
-import mockit.VerificationsInOrder;
 
 /**
  * TODO: Cover the error cases, and cases where {@code null} is expected
@@ -61,57 +58,50 @@ import mockit.VerificationsInOrder;
  * TODO: Cover cases where multiple recorders are present
  */
 @Category(NightlyCategory.class)
-public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements DebuggerModelTestUtils {
+public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
-	/**
-	 * Exists just for mocking, because jmockit does Bad Things (TM) to
-	 * CollectionChangeListener.of() if I try to mock one of those or a subclass directly. I'm
-	 * guessing the version we're using (1.44 as of this writing) is utterly ignorant of static
-	 * interface methods. What was the latest version of Java at the time?
-	 *
-	 * <p>
-	 * TODO: Check if a later version fixes this issue. If so, consider upgrading. If not, submit an
-	 * issue.
-	 */
-	interface CollectionChangeDelegate<E> {
-		void elementAdded(E element);
+	protected static class NoDuplicatesTrackingChangeListener<E>
+			implements CollectionChangeListener<E> {
+		Set<E> current = new HashSet<>();
 
-		void elementRemoved(E element);
-	}
-
-	static class CollectionChangeDelegateWrapper<E> implements CollectionChangeListener<E> {
-		protected final CollectionChangeDelegate<E> delegate;
-
-		public CollectionChangeDelegateWrapper(CollectionChangeDelegate<E> delegate) {
-			assertNotNull("Did you remember the jmockit agent?", delegate);
-			this.delegate = delegate;
+		protected String formatObj(E e) {
+			return String.format("%s@%08x", e.getClass().getSimpleName(),
+				System.identityHashCode(e));
 		}
 
 		@Override
-		public void elementAdded(E element) {
-			delegate.elementAdded(element);
+		public synchronized void elementAdded(E element) {
+			assertTrue(current.add(element));
 		}
 
 		@Override
-		public void elementRemoved(E element) {
-			delegate.elementRemoved(element);
+		public synchronized void elementModified(E element) {
+			assertTrue(current.contains(element));
 		}
 
 		@Override
-		public void elementModified(E element) {
-			// Not tested here
+		public synchronized void elementRemoved(E element) {
+			assertTrue(current.remove(element));
+		}
+
+		public synchronized void sync(Collection<E> current) {
+			this.current.clear();
+			this.current.addAll(current);
+		}
+
+		public synchronized void assertAgrees(Collection<E> expected) {
+			assertEquals(Set.copyOf(expected), current);
 		}
 	}
 
-	@Mocked
-	CollectionChangeDelegate<DebuggerModelFactory> factoryChangeListener;
-	@Mocked
-	CollectionChangeDelegate<DebuggerObjectModel> modelChangeListener;
-	@Mocked
-	CollectionChangeDelegate<TraceRecorder> recorderChangeListener;
+	NoDuplicatesTrackingChangeListener<DebuggerModelFactory> factoryChangeListener =
+		new NoDuplicatesTrackingChangeListener<>();
+	NoDuplicatesTrackingChangeListener<DebuggerObjectModel> modelChangeListener =
+		new NoDuplicatesTrackingChangeListener<>();
+	NoDuplicatesTrackingChangeListener<TraceRecorder> recorderChangeListener =
+		new NoDuplicatesTrackingChangeListener<>();
 
 	@Test
 	public void testGetModelFactories() throws Exception {
@@ -122,41 +112,20 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 	@Test
 	public void testListenModelFactoryAdded() throws Exception {
 		modelServiceInternal.setModelFactories(List.of());
-		modelService.addFactoriesChangedListener(
-			new CollectionChangeDelegateWrapper<>(factoryChangeListener));
+		modelService.addFactoriesChangedListener(factoryChangeListener);
 		modelServiceInternal.setModelFactories(List.of(mb.testFactory));
 
-		new VerificationsInOrder() {
-			{
-				factoryChangeListener.elementAdded(mb.testFactory);
-			}
-		};
-	}
-
-	/**
-	 * If this test fails, then many others probably failed because of a bug in jmockit. It seems to
-	 * patch static interface methods to return null, if it needs to mock any instance with the
-	 * interface in its type hierarchy.
-	 */
-	@Test
-	public void testJMockitCanary() {
-		assertEquals(CollectionChangeListener.class, CollectionChangeListener.of(Integer.class));
+		factoryChangeListener.assertAgrees(modelService.getModelFactories());
 	}
 
 	@Test
 	public void testListenModelFactoryRemoved() throws Exception {
 		modelServiceInternal.setModelFactories(List.of(mb.testFactory));
-		// Strong ref
-		CollectionChangeDelegateWrapper<DebuggerModelFactory> wrapper =
-			new CollectionChangeDelegateWrapper<>(factoryChangeListener);
-		modelService.addFactoriesChangedListener(wrapper);
+		modelService.addFactoriesChangedListener(factoryChangeListener);
+		factoryChangeListener.sync(modelService.getModelFactories());
 		modelServiceInternal.setModelFactories(List.of());
 
-		new VerificationsInOrder() {
-			{
-				factoryChangeListener.elementRemoved(mb.testFactory);
-			}
-		};
+		factoryChangeListener.assertAgrees(modelService.getModelFactories());
 	}
 
 	@Test
@@ -179,32 +148,21 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 
 	@Test
 	public void testListenModelAdded() throws Exception {
-		// Strong ref
-		CollectionChangeDelegateWrapper<DebuggerObjectModel> wrapper =
-			new CollectionChangeDelegateWrapper<>(modelChangeListener);
-		modelService.addModelsChangedListener(wrapper);
+		modelService.addModelsChangedListener(modelChangeListener);
 		createTestModel();
 
-		new VerificationsInOrder() {
-			{
-				modelChangeListener.elementAdded(mb.testModel);
-			}
-		};
+		modelChangeListener.assertAgrees(modelService.getModels());
 	}
 
 	@Test
 	public void testListenModelRemoved() throws Exception {
 		createTestModel();
 
-		modelService.addModelsChangedListener(
-			new CollectionChangeDelegateWrapper<>(modelChangeListener));
+		modelService.addModelsChangedListener(modelChangeListener);
+		modelChangeListener.sync(modelService.getModels());
 		modelService.removeModel(mb.testModel);
 
-		new VerificationsInOrder() {
-			{
-				modelChangeListener.elementRemoved(mb.testModel);
-			}
-		};
+		modelChangeListener.assertAgrees(modelService.getModels());
 	}
 
 	@Test
@@ -224,18 +182,11 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
-		// Strong ref
-		CollectionChangeDelegateWrapper<TraceRecorder> wrapper =
-			new CollectionChangeDelegateWrapper<>(recorderChangeListener);
-		modelService.addTraceRecordersChangedListener(wrapper);
-		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		modelService.addTraceRecordersChangedListener(recorderChangeListener);
+		modelService.recordTarget(mb.testProcess1, createTargetTraceMapper(mb.testProcess1),
+			ActionSource.AUTOMATIC);
 
-		new VerificationsInOrder() {
-			{
-				recorderChangeListener.elementAdded(recorder);
-			}
-		};
+		recorderChangeListener.assertAgrees(modelService.getTraceRecorders());
 	}
 
 	@Test
@@ -245,19 +196,13 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
 			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
-		// Strong ref
-		CollectionChangeDelegateWrapper<TraceRecorder> wrapper =
-			new CollectionChangeDelegateWrapper<>(recorderChangeListener);
-		modelService.addTraceRecordersChangedListener(wrapper);
+		modelService.addTraceRecordersChangedListener(recorderChangeListener);
+		recorderChangeListener.sync(modelService.getTraceRecorders());
 		Trace trace = recorder.getTrace();
 		recorder.stopRecording();
 		waitForDomainObject(trace);
 
-		new VerificationsInOrder() {
-			{
-				recorderChangeListener.elementRemoved(recorder);
-			}
-		};
+		recorderChangeListener.assertAgrees(modelService.getTraceRecorders());
 	}
 
 	@Test
@@ -496,6 +441,20 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 
 	@Test
 	public void testCurrentModelNullAfterClose() throws Throwable {
+		createTestModel();
+
+		// Ensure the model is initialized before we close it
+		waitOn(mb.testModel.fetchModelRoot());
+
+		modelService.activateModel(mb.testModel);
+		assertEquals(mb.testModel, modelService.getCurrentModel());
+
+		waitOn(mb.testModel.close());
+		assertNull(modelService.getCurrentModel());
+	}
+
+	@Test
+	public void testCurrentModelNullAfterCloseNoWait() throws Throwable {
 		createTestModel();
 
 		modelService.activateModel(mb.testModel);

@@ -116,6 +116,7 @@ public class DbgManagerImpl implements DbgManager {
 	private DbgThread eventThread;
 	private volatile boolean waiting = false;
 	private boolean kernelMode = false;
+	private boolean altMemoryQuery = false;
 	private boolean ignoreEventThread = false;
 	private CompletableFuture<String> continuation;
 	private long processCount = 0;
@@ -139,11 +140,16 @@ public class DbgManagerImpl implements DbgManager {
 	}
 
 	public DbgThreadImpl getThreadComputeIfAbsent(DebugThreadId id, DbgProcessImpl process,
-			int tid) {
+			int tid, boolean fire) {
 		synchronized (threads) {
 			if (!threads.containsKey(id)) {
 				DbgThreadImpl thread = new DbgThreadImpl(this, process, id, tid);
 				thread.add();
+				if (fire) {
+					Causes cause = DbgCause.Causes.UNCLAIMED;
+					getEventListeners().fire.threadCreated(thread, cause);
+					getEventListeners().fire.threadSelected(thread, null, cause);
+				}
 			}
 			return threads.get(id);
 		}
@@ -208,11 +214,14 @@ public class DbgManagerImpl implements DbgManager {
 		}
 	}
 
-	public DbgProcessImpl getProcessComputeIfAbsent(DebugProcessId id, int pid) {
+	public DbgProcessImpl getProcessComputeIfAbsent(DebugProcessId id, int pid, boolean fire) {
 		synchronized (processes) {
 			if (!processes.containsKey(id)) {
 				DbgProcessImpl process = new DbgProcessImpl(this, id, pid);
 				process.add();
+				if (fire) {
+					getEventListeners().fire.processAdded(process, DbgCause.Causes.UNCLAIMED);
+				}
 			}
 			return processes.get(id);
 		}
@@ -245,11 +254,14 @@ public class DbgManagerImpl implements DbgManager {
 		}
 	}
 
-	public DbgSessionImpl getSessionComputeIfAbsent(DebugSessionId id) {
+	public DbgSessionImpl getSessionComputeIfAbsent(DebugSessionId id, boolean fire) {
 		synchronized (sessions) {
 			if (!sessions.containsKey(id) && id.id >= 0) {
 				DbgSessionImpl session = new DbgSessionImpl(this, id);
 				session.add();
+				if (fire) {
+					getEventListeners().fire.sessionAdded(session, DbgCause.Causes.UNCLAIMED);
+				}
 			}
 			return sessions.get(id);
 		}
@@ -406,10 +418,12 @@ public class DbgManagerImpl implements DbgManager {
 		//TODO: server.terminate();
 		engThread.execute(100, dbgeng -> {
 			Msg.debug(this, "Disconnecting DebugClient from session");
-			dbgeng.endSession(DebugEndSessionFlags.DEBUG_END_DISCONNECT);
+			dbgeng.endSession(DebugEndSessionFlags.DEBUG_END_PASSIVE);
 			dbgeng.setOutputCallbacks(null);
+			dbgeng.setEventCallbacks(null);
+			dbgeng.setInputCallbacks(null);
+			engThread.shutdown();
 		});
-		engThread.shutdown();
 		try {
 			engThread.awaitTermination(5000, TimeUnit.MILLISECONDS);
 		}
@@ -633,11 +647,11 @@ public class DbgManagerImpl implements DbgManager {
 		lastEventInformation = control.getLastEventInformation();
 		lastEventInformation.setSession(esid);
 		lastEventInformation.setExecutingProcessorType(execType);
-		currentSession = eventSession = getSessionComputeIfAbsent(esid);
+		currentSession = eventSession = getSessionComputeIfAbsent(esid, true);
 		currentProcess =
-			eventProcess = getProcessComputeIfAbsent(epid, so.getCurrentProcessSystemId());
+			eventProcess = getProcessComputeIfAbsent(epid, so.getCurrentProcessSystemId(), true);
 		currentThread = eventThread = getThreadComputeIfAbsent(etid, (DbgProcessImpl) eventProcess,
-			so.getCurrentThreadSystemId());
+			so.getCurrentThreadSystemId(), false);
 		if (eventThread != null) {
 			((DbgThreadImpl) eventThread).setInfo(lastEventInformation);
 		}
@@ -712,9 +726,9 @@ public class DbgManagerImpl implements DbgManager {
 		DebugThreadId eventId = updateState();
 		DbgProcessImpl process = getCurrentProcess();
 		int tid = so.getCurrentThreadSystemId();
-		DbgThreadImpl thread = getThreadComputeIfAbsent(eventId, process, tid);
+		DbgThreadImpl thread = getThreadComputeIfAbsent(eventId, process, tid, true);
 		getEventListeners().fire.eventSelected(evt, evt.getCause());
-		getEventListeners().fire.threadCreated(thread, DbgCause.Causes.UNCLAIMED);
+		//getEventListeners().fire.threadCreated(thread, DbgCause.Causes.UNCLAIMED);
 		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
 
 		String key = Integer.toHexString(eventId.id);
@@ -787,7 +801,7 @@ public class DbgManagerImpl implements DbgManager {
 		DebugProcessId id = so.getProcessIdByHandle(handle);
 		//so.setCurrentProcessId(id);
 		int pid = so.getCurrentProcessSystemId();
-		DbgProcessImpl proc = getProcessComputeIfAbsent(id, pid);
+		DbgProcessImpl proc = getProcessComputeIfAbsent(id, pid, true);
 		getEventListeners().fire.eventSelected(evt, evt.getCause());
 		getEventListeners().fire.processAdded(proc, evt.getCause());
 		getEventListeners().fire.processSelected(proc, evt.getCause());
@@ -795,9 +809,9 @@ public class DbgManagerImpl implements DbgManager {
 		handle = info.initialThreadInfo.handle;
 		DebugThreadId idt = so.getThreadIdByHandle(handle);
 		int tid = so.getCurrentThreadSystemId();
-		DbgThreadImpl thread = getThreadComputeIfAbsent(idt, proc, tid);
-		getEventListeners().fire.threadCreated(thread, evt.getCause());
-		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
+		getThreadComputeIfAbsent(idt, proc, tid, true);
+		//getEventListeners().fire.threadCreated(thread, evt.getCause());
+		//getEventListeners().fire.threadSelected(thread, null, evt.getCause());
 
 		//proc.moduleLoaded(info.moduleInfo);
 		//getEventListeners().fire.moduleLoaded(proc, info.moduleInfo, evt.getCause());
@@ -942,7 +956,8 @@ public class DbgManagerImpl implements DbgManager {
 						//System.err.println("RUNNING " + id);
 						dbgState = DbgState.RUNNING;
 						// NB: Needed by GADP variants, but not IN-VM
-						getEventListeners().fire.memoryChanged(currentProcess, 0L, 0, evt.getCause());
+						getEventListeners().fire.memoryChanged(currentProcess, 0L, 0,
+							evt.getCause());
 						processEvent(new DbgRunningEvent(eventThread.getId()));
 					}
 					if (!threads.containsValue(eventThread)) {
@@ -1483,11 +1498,13 @@ public class DbgManagerImpl implements DbgManager {
 
 	public CompletableFuture<Void> setActiveFrame(DbgThread thread, int index) {
 		currentThread = thread;
+		currentProcess = thread.getProcess();
 		return execute(new DbgSetActiveThreadCommand(this, thread, index));
 	}
 
 	public CompletableFuture<Void> setActiveThread(DbgThread thread) {
 		currentThread = thread;
+		currentProcess = thread.getProcess();
 		return execute(new DbgSetActiveThreadCommand(this, thread, null));
 	}
 
@@ -1599,6 +1616,14 @@ public class DbgManagerImpl implements DbgManager {
 
 	public void setKernelMode(boolean kernelMode) {
 		this.kernelMode = kernelMode;
+	}
+
+	public boolean useAltMemoryQuery() {
+		return altMemoryQuery;
+	}
+
+	public void setAltMemoryQuery(boolean altMemoryQuery) {
+		this.altMemoryQuery = altMemoryQuery;
 	}
 
 	public void setContinuation(CompletableFuture<String> continuation) {

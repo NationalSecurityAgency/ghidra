@@ -18,8 +18,8 @@ package ghidra.app.util.bin.format.macho.commands;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -36,22 +36,7 @@ public class DyldChainedStartsInImage implements StructConverter {
 
 	private DyldChainedStartsInSegment chainedStarts[];
 
-	static DyldChainedStartsInImage createDyldChainedStartsInImage(
-			FactoryBundledWithBinaryReader reader) throws IOException {
-		DyldChainedStartsInImage dyldChainedStartsInImage =
-			(DyldChainedStartsInImage) reader.getFactory().create(DyldChainedStartsInImage.class);
-		dyldChainedStartsInImage.initDyldChainedStartsInImage(reader);
-		return dyldChainedStartsInImage;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DyldChainedStartsInImage() {
-	}
-
-	private void initDyldChainedStartsInImage(FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	DyldChainedStartsInImage(BinaryReader reader) throws IOException {
 
 		long ptrIndex = reader.getPointerIndex();
 
@@ -62,7 +47,7 @@ public class DyldChainedStartsInImage implements StructConverter {
 		for (int off : seg_info_offset) {
 
 			reader.setPointerIndex(ptrIndex + off);
-			starts.add(DyldChainedStartsInSegment.createDyldChainedFixupHeader(reader));
+			starts.add(new DyldChainedStartsInSegment(reader));
 		}
 		chainedStarts = starts.toArray(DyldChainedStartsInSegment[]::new);
 	}

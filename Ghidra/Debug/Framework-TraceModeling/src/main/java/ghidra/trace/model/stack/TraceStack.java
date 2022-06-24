@@ -17,7 +17,10 @@ package ghidra.trace.model.stack;
 
 import java.util.List;
 
+import ghidra.lifecycle.Experimental;
+import ghidra.lifecycle.Transitional;
 import ghidra.trace.model.TraceUniqueObject;
+import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.thread.TraceThread;
 
 /**
@@ -56,9 +59,13 @@ public interface TraceStack extends TraceUniqueObject {
 	/**
 	 * Set the depth of the stack by adding or deleting frames to or from the specified end
 	 * 
-	 * Note that pushing new frames onto a stack does not adjust the frame level of any associated
-	 * annotations. Some utility to adjust those annotations. Cannot just rename tables, since those
-	 * contain annotations for the given level, regardless of the particular stack.
+	 * <p>
+	 * Note that pushing new frames onto a stack does not adjust the frame level of any
+	 * frame-associated managers or spaces, e.g., that returned by
+	 * {@link TraceMemoryManager#getMemoryRegisterSpace(TraceThread, int, boolean)}.
+	 * 
+	 * <p>
+	 * If the experimental object mode is successful, this method should be deleted.
 	 * 
 	 * @param depth the desired depth
 	 * @param atInner true if frames should be "pushed"
@@ -78,12 +85,27 @@ public interface TraceStack extends TraceUniqueObject {
 	/**
 	 * Get all (known) frames in this stack
 	 * 
+	 * @param snap the snap (only relevant in the experimental objects mode. Ordinarily, the frames
+	 *            are fixed over the stack's lifetime)
 	 * @return the list of frames
 	 */
-	List<TraceStackFrame> getFrames();
+	List<TraceStackFrame> getFrames(@Experimental long snap);
 
 	/**
 	 * Delete this stack and its frames
 	 */
 	void delete();
+
+	/**
+	 * Check if this stack'sframes are fixed for its lifetime
+	 * 
+	 * <p>
+	 * This is a transitional method, since the experimental objects mode breaks with the normal
+	 * stack/frame model. Essentially, this returns true if the normal model is being used, and
+	 * false if the object-based model is being used.
+	 * 
+	 * @return true if fixed, false if object-based (dynamic)
+	 */
+	@Transitional
+	boolean hasFixedFrames();
 }

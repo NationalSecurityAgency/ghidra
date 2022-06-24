@@ -15,6 +15,8 @@
  */
 package help.screenshot;
 
+import java.awt.Component;
+import java.awt.Window;
 import java.io.*;
 import java.util.*;
 
@@ -23,6 +25,7 @@ import javax.swing.*;
 import org.junit.Test;
 
 import docking.ComponentProvider;
+import docking.action.DockingActionIf;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
@@ -235,6 +238,30 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 
 		PickProviderDialog dialog = waitForDialogComponent(PickProviderDialog.class);
 		captureDialog(dialog);
+	}
+
+	@Test
+	public void testScriptQuickLaunchDialog() {
+
+		DockingActionIf action = getAction(tool, "Script Quick Launch");
+		performAction(action, false);
+		ScriptSelectionDialog dialog = waitForDialogComponent(ScriptSelectionDialog.class);
+
+		JTextField textField = findComponent(dialog.getComponent(), JTextField.class);
+		triggerText(textField, "Hello*Pop");
+
+		// note: textField is an instance of DropDownSelectionTextField
+		waitFor(() -> (Window) getInstanceField("matchingWindow", textField));
+
+		JComponent component = dialog.getComponent();
+		Window dataTypeDialog = windowForComponent(component);
+		Window[] popUpWindows = dataTypeDialog.getOwnedWindows();
+
+		List<Component> dataTypeWindows = new ArrayList<>(Arrays.asList(popUpWindows));
+		dataTypeWindows.add(dataTypeDialog);
+
+		captureComponents(dataTypeWindows);
+		closeAllWindows();
 	}
 
 //==================================================================================================

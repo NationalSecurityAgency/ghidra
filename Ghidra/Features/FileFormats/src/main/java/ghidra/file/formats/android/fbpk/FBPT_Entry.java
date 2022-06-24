@@ -15,91 +15,10 @@
  */
 package ghidra.file.formats.android.fbpk;
 
-import java.io.IOException;
-
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.*;
-import ghidra.util.InvalidNameException;
-import ghidra.util.exception.DuplicateNameException;
 
-public class FBPT_Entry implements StructConverter {
-	private String name;
-	private String guid1;
-	private String guid2;
-	private String padding;
-	private int unknown1;
-	private int unknown2;
-	private int unknown3;
-	private boolean isLast;
+public abstract class FBPT_Entry implements StructConverter {
 
-	public FBPT_Entry(BinaryReader reader, boolean isLast) throws IOException {
-		this.isLast = isLast;
-		name = reader.readNextAsciiString(FBPK_Constants.NAME_MAX_LENGTH);//not +1
-		guid1 = reader.readNextAsciiString(FBPK_Constants.NAME_MAX_LENGTH + 1);
-		guid2 = reader.readNextAsciiString(FBPK_Constants.NAME_MAX_LENGTH + 1);
-		padding = reader.readNextAsciiString(2);
-		if (FBPK_Constants.LAST_PARTITION_ENTRY.equals(name)) {
-			return;
-		}
-		unknown1 = reader.readNextInt();
-		if (!isLast) {
-			unknown2 = reader.readNextInt();
-			unknown3 = reader.readNextInt();
-		}
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public String getGuid1() {
-		return guid1;
-	}
-
-	public String getGuid2() {
-		return guid2;
-	}
-
-	public String getPadding() {
-		return padding;
-	}
-
-	public int getUnknown1() {
-		return unknown1;
-	}
-
-	public int getUnknown2() {
-		return unknown2;
-	}
-
-	public int getUnknown3() {
-		return unknown3;
-	}
-
-	@Override
-	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure struct = new StructureDataType(FBPT_Entry.class.getSimpleName(), 0);
-		struct.add(STRING, FBPK_Constants.NAME_MAX_LENGTH, "name", null);
-		struct.add(STRING, FBPK_Constants.NAME_MAX_LENGTH + 1, "guid1", null);
-		struct.add(STRING, FBPK_Constants.NAME_MAX_LENGTH + 1, "guid2", null);
-		struct.add(STRING, 2, "padding", null);
-		if (FBPK_Constants.LAST_PARTITION_ENTRY.equals(name) || isLast) {
-			try {
-				struct.setName(FBPT_Entry.class.getSimpleName() + "_last");
-			}
-			catch (InvalidNameException e) {
-				//ignore
-			}
-		}
-		else {
-			struct.add(DWORD, "unknown1", null);
-			if (!isLast) {
-				struct.add(DWORD, "unknown2", null);
-				struct.add(DWORD, "unknown3", null);
-			}
-		}
-		return struct;
-	}
+	public abstract String getName();
 
 }

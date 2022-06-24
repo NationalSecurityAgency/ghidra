@@ -35,7 +35,7 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.database.language.DBTraceGuestLanguage;
+import ghidra.trace.database.guest.DBTraceGuestPlatform;
 import ghidra.trace.database.listing.*;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
@@ -108,13 +108,15 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 				b.trace.getMemoryManager().getMemorySpace(b.language.getDefaultSpace(), true);
 			space.putBytes(0, b.addr(0x4000), b.buf(0x90));
 
-			DBTraceGuestLanguage guest = b.trace.getLanguageManager().addGuestLanguage(x86);
+			DBTraceGuestPlatform guest =
+				b.trace.getPlatformManager().addGuestPlatform(x86.getDefaultCompilerSpec());
 			guest.addMappedRange(b.addr(0x4000), b.addr(guest, 0x00400000), 0x1000);
 
-			// TODO: The more I look, the more I think I need a fully-mapped program view :(
-			// As annoying as it is, I plan to do it as a wrapper, not as an extension....
-			// The disassembler uses bookmarks, context, etc. for feedback. It'd be nice to
-			// have that
+			/*
+			 * TODO: The more I look, the more I think I need a fully-mapped program view :( As
+			 * annoying as it is, I plan to do it as a wrapper, not as an extension.... The
+			 * disassembler uses bookmarks, context, etc. for feedback. It'd be nice to have that.
+			 */
 			RegisterValue defaultContextValue =
 				b.trace.getRegisterContextManager()
 						.getDefaultContext(x86)
@@ -125,7 +127,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 				guest.getMappedMemBuffer(0, b.addr(guest, 0x00400000)), defaultContextValue, 1));
 
 			DBTraceCodeManager code = b.trace.getCodeManager();
-			code.instructions().addInstructionSet(Range.closed(0L, 0L), set, false);
+			code.instructions().addInstructionSet(Range.closed(0L, 0L), guest, set, false);
 
 			DBTraceInstruction ins = code.instructions().getAt(0, b.addr(0x4000));
 			// TODO: This is great, but probably incomplete.
@@ -143,7 +145,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 			UndoableTransaction.start(b.getProgram(), "Disassemble (THUMB)", true)) {
 			MemoryBlock text = b.createMemory(".text", "b6fa2cd0", 32, "Sample", (byte) 0);
 			text.putBytes(b.addr(0xb6fa2cdc), new byte[] {
-				// GDB: stmdb sp!,  {r4, r5, r6, r7, r8, lr}
+				// GDB: stmdb sp!,  {r4,r5,r6,r7,r8,lr}
 				(byte) 0x2d, (byte) 0xe9, (byte) 0xf0, (byte) 0x41,
 				// GDB: sub sp, #472  ; 0x1d8
 				(byte) 0xf6, (byte) 0xb0 });
@@ -154,7 +156,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 			thumbDis.applyTo(b.getProgram(), TaskMonitor.DUMMY);
 
 			CodeUnit cu1 = b.getProgram().getListing().getCodeUnitAt(b.addr(0xb6fa2cdc));
-			assertEquals("push { r4, r5, r6, r7, r8, lr  }", cu1.toString());
+			assertEquals("push {r4,r5,r6,r7,r8,lr}", cu1.toString());
 			CodeUnit cu2 = b.getProgram().getListing().getCodeUnitAt(b.addr(0xb6fa2ce0));
 			assertEquals("sub sp,#0x1d8", cu2.toString());
 		}
@@ -171,7 +173,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 			memory.createRegion(".text", 0, b.range(0xb6fa2cd0, 0xb6fa2cef),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 			memory.putBytes(0, b.addr(0xb6fa2cdc), b.buf(
-				// GDB: stmdb sp!,  {r4, r5, r6, r7, r8, lr}
+				// GDB: stmdb sp!,  {r4,r5,r6,r7,r8,lr}
 				0x2d, 0xe9, 0xf0, 0x41,
 				// GDB: sub sp, #472  ; 0x1d8
 				0xf6, 0xb0));
@@ -183,7 +185,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 
 			DBTraceCodeUnitsMemoryView cuManager = b.trace.getCodeManager().codeUnits();
 			CodeUnit cu1 = cuManager.getAt(0, b.addr(0xb6fa2cdc));
-			assertEquals("push { r4, r5, r6, r7, r8, lr  }", cu1.toString());
+			assertEquals("push {r4,r5,r6,r7,r8,lr}", cu1.toString());
 			CodeUnit cu2 = cuManager.getAt(0, b.addr(0xb6fa2ce0));
 			assertEquals("sub sp,#0x1d8", cu2.toString());
 		}

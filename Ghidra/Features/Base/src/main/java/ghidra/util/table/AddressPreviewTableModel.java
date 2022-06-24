@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +19,7 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
+import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -99,7 +99,8 @@ public abstract class AddressPreviewTableModel extends AddressBasedTableModel<Ad
 				addressSet.addRange(minAddr, maxAddr);
 			}
 			catch (AddressOverflowException e) {
-				// I guess we don't care--not sure why this is undocumented :(
+				Msg.debug(this,
+					"Unable to add address range for addresses: " + minAddr + ", " + maxAddr);
 			}
 		}
 		return new ProgramSelection(addressSet);

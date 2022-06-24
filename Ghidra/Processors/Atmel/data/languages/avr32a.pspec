@@ -2,7 +2,7 @@
 
 <processor_spec>
   <properties>
-    <property key="assemblyRating:avr32:BE:32:default" value="BRONZE"/>
+    <property key="assemblyRating:avr32:BE:32:default" value="PLATINUM"/>
   </properties>
   <programcounter register="PC"/>
 </processor_spec>

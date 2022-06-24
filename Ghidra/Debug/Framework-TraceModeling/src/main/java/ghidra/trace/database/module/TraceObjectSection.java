@@ -15,6 +15,8 @@
  */
 package ghidra.trace.database.module;
 
+import com.google.common.collect.Range;
+
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetSection;
 import ghidra.program.model.address.AddressRange;
@@ -30,5 +32,7 @@ import ghidra.trace.model.target.annot.TraceObjectInfo;
 		TargetSection.RANGE_ATTRIBUTE_NAME
 	})
 public interface TraceObjectSection extends TraceSection, TraceObjectInterface {
-	void setRange(AddressRange range);
+	void setName(Range<Long> lifespan, String name);
+
+	void setRange(Range<Long> lifespan, AddressRange range);
 }

@@ -21,8 +21,7 @@ import java.net.URL;
 import ghidra.util.HelpLocation;
 
 /**
- * <code>HelpService</code> defines a service for displaying Help content by
- * an ID or URL.
+ * <code>HelpService</code> defines a service for displaying Help content by an ID or URL.
  */
 public interface HelpService {
 
@@ -41,8 +40,8 @@ public interface HelpService {
 
 	/**
 	 * Display the help page for the given URL.  This is a specialty method for displaying
-	 * help when a specific file is desired, like an introduction page.  Showing help for 
-	 * objects within the system is accomplished by calling 
+	 * help when a specific file is desired, like an introduction page.  Showing help for
+	 * objects within the system is accomplished by calling
 	 * {@link #showHelp(Object, boolean, Component)}.
 	 * 
 	 * @param url the URL to display
@@ -51,7 +50,15 @@ public interface HelpService {
 	public void showHelp(URL url);
 
 	/**
-	 * Signals to the help system to ignore the given object when searching for and validating 
+	 * Display the help page for the given help location.
+	 * 
+	 * @param location the location to display.
+	 * @see #showHelp(Object, boolean, Component)
+	 */
+	public void showHelp(HelpLocation location);
+
+	/**
+	 * Signals to the help system to ignore the given object when searching for and validating
 	 * help.  Once this method has been called, no help can be registered for the given object.
 	 * 
 	 * @param helpObject the object to exclude from the help system.
@@ -68,7 +75,7 @@ public interface HelpService {
 	public boolean isExcludedFromHelp(Object helpObject);
 
 	/**
-	 * Register help for a specific object.  
+	 * Register help for a specific object.
 	 * 
 	 * <P>Do not call this method will a <code>null</code> help location.  Instead, to signal that
 	 * an item has no help, call {@link #excludeFromHelp(Object)}.
@@ -79,8 +86,8 @@ public interface HelpService {
 	public void registerHelp(Object helpObject, HelpLocation helpLocation);
 
 	/**
-	 * Removes this object from the help system.  This method is useful, for example, 
-	 * when a single Java {@link Component} will have different help locations 
+	 * Removes this object from the help system.  This method is useful, for example,
+	 * when a single Java {@link Component} will have different help locations
 	 * assigned over its lifecycle.
 	 * 
 	 * @param helpObject the object for which to clear help
@@ -88,7 +95,7 @@ public interface HelpService {
 	public void clearHelp(Object helpObject);
 
 	/**
-	 * Returns the registered (via {@link #registerHelp(Object, HelpLocation)} help 
+	 * Returns the registered (via {@link #registerHelp(Object, HelpLocation)} help
 	 * location for the given object; null if there is no registered
 	 * help.
 	 * 

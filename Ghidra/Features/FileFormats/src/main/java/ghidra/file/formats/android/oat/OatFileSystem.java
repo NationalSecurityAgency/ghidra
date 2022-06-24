@@ -18,7 +18,6 @@ package ghidra.file.formats.android.oat;
 import java.io.IOException;
 import java.util.*;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.importer.MessageLog;
@@ -55,8 +54,7 @@ public class OatFileSystem extends GFileSystemBase {
 				ElfConstants.MAGIC_STR.equalsIgnoreCase(e_ident_magic_str);
 
 			if (magicMatch) {
-				ElfHeader elf =
-					ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider, null);
+				ElfHeader elf = new ElfHeader(provider, null);
 				elf.parse();
 
 				ElfSymbolTable dynamicSymbolTable = elf.getDynamicSymbolTable();
@@ -98,8 +96,7 @@ public class OatFileSystem extends GFileSystemBase {
 			monitor.setMaximum(10);
 			monitor.setMessage("Parsing ELF header...");
 			monitor.incrementProgress(1);
-			ElfHeader elf =
-				ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider, null);
+			ElfHeader elf = new ElfHeader(provider, null);
 			elf.parse();
 			monitor.incrementProgress(1);
 

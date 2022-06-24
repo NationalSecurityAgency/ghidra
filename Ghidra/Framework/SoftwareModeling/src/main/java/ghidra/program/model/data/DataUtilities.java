@@ -70,19 +70,62 @@ public final class DataUtilities {
 		 */
 		CLEAR_SINGLE_DATA,
 		/**
-		 * Clear all conflicting Undefined data provided data will
+		 * Clear all conflicting Undefined Data provided new data will
 		 * fit within memory and not conflict with an
 		 * instruction or other defined data.  Undefined refers to defined
-		 * data with the Undefined data-type.
-		 * @see Undefined#isUndefined(DataType)
+		 * data with the Undefined data-type (see {@link Undefined#isUndefined(DataType)}).
 		 */
 		CLEAR_ALL_UNDEFINED_CONFLICT_DATA,
 		/**
-		 * Clear all conflicting data provided data will
-		 * fit within memory and not conflict with an
-		 * instruction.
+		 * Clear all Default Data provided new data will fit within memory and 
+		 * not conflict with an instruction or other defined data.  In this
+		 * context Default Data refers to all defined data with either an
+		 * Undefined data-type (see {@link Undefined#isUndefined(DataType)}) or
+		 * is considered a default pointer which is either:
+		 * <ol>
+		 * <li>A pointer without a referenced datatype (i.e., <i>addr</i>), or</li>
+		 * <li>An auto-named pointer-typedef without a referenced datatype 
+		 * (e.g., <i>pointer __((offset(0x8)))</i>.</li>
+		 * </ol>
+		 */
+		CLEAR_ALL_DEFAULT_CONFLICT_DATA,
+		/**
+		 * Clear all conflicting data provided new data will fit within memory and 
+		 * not conflict with an instruction.
 		 */
 		CLEAR_ALL_CONFLICT_DATA
+	}
+
+	private static boolean isDefaultData(DataType dt) {
+		// see ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA
+		if (Undefined.isUndefined(dt)) {
+			return true;
+		}
+		if (dt instanceof TypeDef) {
+			TypeDef td = (TypeDef) dt;
+			if (!td.isAutoNamed()) {
+				return false;
+			}
+			dt = td.getDataType();
+		}
+		if (dt instanceof Pointer) {
+			Pointer p = (Pointer) dt;
+			dt = p.getDataType();
+			return dt == null || dt == DataType.DEFAULT;
+		}
+		return false;
+	}
+
+	private static boolean isDataClearingDenied(DataType dt, ClearDataMode clearMode) {
+		if ((clearMode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA &&
+			!Undefined.isUndefined(dt))) {
+			return true;
+		}
+		if (clearMode == ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA &&
+			!isDefaultData(dt)) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -113,8 +156,7 @@ public final class DataUtilities {
 				return data;
 			}
 
-			if (!stackPointers && clearMode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA &&
-				!Undefined.isUndefined(existingType)) {
+			if (!stackPointers && isDataClearingDenied(existingType, clearMode)) {
 				throw new CodeUnitInsertionException("Could not create Data at address " + addr);
 			}
 
@@ -176,12 +218,12 @@ public final class DataUtilities {
 
 		// null data; see if we are in a composite
 		if (clearMode == ClearDataMode.CLEAR_ALL_CONFLICT_DATA ||
-			clearMode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA) {
+			clearMode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA ||
+			clearMode == ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA) {
 
 			// allow offcut addr if CLEAR_ALL_CONFLICT_DATA
 			data = listing.getDataContaining(addr);
-			if (data != null && clearMode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA &&
-				!Undefined.isUndefined(data.getDataType())) {
+			if (data != null && isDataClearingDenied(data.getDataType(), clearMode)) {
 				data = null; // force error
 			}
 		}
@@ -267,32 +309,8 @@ public final class DataUtilities {
 		return extRef;
 	}
 
-	private static void validateCanCreateData(Address addr, ClearDataMode clearMode,
-			Listing listing, Data data) throws CodeUnitInsertionException {
-
-		if (data != null) {
-			return; // existing data; it us possible to create data
-		}
-
-		if (clearMode == ClearDataMode.CLEAR_ALL_CONFLICT_DATA ||
-			clearMode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA) {
-
-			// allow offcut addr if CLEAR_ALL_CONFLICT_DATA
-			data = listing.getDataContaining(addr);
-			if (data != null && clearMode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA &&
-				!Undefined.isUndefined(data.getDataType())) {
-				data = null; // force error
-			}
-		}
-
-		// null data implies that we cannot create data at this address
-		if (data == null) {
-			throw new CodeUnitInsertionException("Could not create Data at address " + addr);
-		}
-	}
-
 	private static void checkEnoughSpace(Program program, Address addr, int existingDataLen,
-			DataTypeInstance dti, ClearDataMode mode) throws CodeUnitInsertionException {
+			DataTypeInstance dti, ClearDataMode clearMode) throws CodeUnitInsertionException {
 		// NOTE: method not invoked when clearMode == ClearDataMode.CLEAR_SINGLE_DATA
 		Listing listing = program.getListing();
 		Address end = null;
@@ -318,11 +336,12 @@ public final class DataUtilities {
 			return;
 		}
 
-		if (mode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA &&
-			Undefined.isUndefined(definedData.getDataType())) {
-			checkForDefinedData(dti, listing, newEnd, definedData.getMaxAddress());
+		if ((clearMode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA ||
+			clearMode == ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA) &&
+			!isDataClearingDenied(definedData.getDataType(), clearMode)) {
+			checkForDefinedData(dti, listing, newEnd, definedData.getMaxAddress(), clearMode);
 		}
-		else if (mode != ClearDataMode.CLEAR_ALL_CONFLICT_DATA) {
+		else if (clearMode != ClearDataMode.CLEAR_ALL_CONFLICT_DATA) {
 			throw new CodeUnitInsertionException("Not enough space to create DataType " +
 				dti.getDataType().getDisplayName());
 		}
@@ -330,9 +349,9 @@ public final class DataUtilities {
 	}
 
 	private static void checkForDefinedData(DataTypeInstance dti, Listing listing, Address address,
-			Address end) throws CodeUnitInsertionException {
+			Address end, ClearDataMode clearMode) throws CodeUnitInsertionException {
 
-		// ignore all defined data which is considered Undefined and may be cleared
+		// ignore all defined data which may be cleared
 		while (end.compareTo(address) <= 0) {
 			Data definedData = listing.getDefinedDataAfter(end);
 			if (definedData == null ||
@@ -340,7 +359,7 @@ public final class DataUtilities {
 				return;
 			}
 
-			if (!Undefined.isUndefined(definedData.getDataType())) {
+			if (isDataClearingDenied(definedData.getDataType(), clearMode)) {
 				throw new CodeUnitInsertionException("Not enough space to create DataType " +
 					dti.getDataType().getDisplayName());
 			}

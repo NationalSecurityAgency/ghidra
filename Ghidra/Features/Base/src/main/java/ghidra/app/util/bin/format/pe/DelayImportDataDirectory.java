@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.pe;
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -41,24 +41,12 @@ public class DelayImportDataDirectory extends DataDirectory {
 
     private DelayImportDescriptor [] descriptors; 
 
-    static DelayImportDataDirectory createDelayImportDataDirectory(
-            NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-            throws IOException {
-        DelayImportDataDirectory delayImportDataDirectory = (DelayImportDataDirectory) reader.getFactory().create(DelayImportDataDirectory.class);
-        delayImportDataDirectory.initDelayImportDataDirectory(ntHeader, reader);
-        return delayImportDataDirectory;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DelayImportDataDirectory() {}
-
-	private void initDelayImportDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader) throws IOException {
+	DelayImportDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
 
-        if (descriptors == null) descriptors = new DelayImportDescriptor[0];
-	}
+		if (descriptors == null)
+			descriptors = new DelayImportDescriptor[0];
+    }
 
 	/**
 	 * Returns the array of delay import descriptors defined in this delay import data directory.
@@ -82,7 +70,7 @@ public class DelayImportDataDirectory extends DataDirectory {
 
         List<DelayImportDescriptor> list = new ArrayList<DelayImportDescriptor>();
         while (true) {
-            DelayImportDescriptor did = DelayImportDescriptor.createDelayImportDescriptor(ntHeader, reader, ptr);
+			DelayImportDescriptor did = new DelayImportDescriptor(ntHeader, reader, ptr);
 
             if (!did.isValid() || did.getPointerToDLLName() == 0) break;
 
@@ -98,8 +86,8 @@ public class DelayImportDataDirectory extends DataDirectory {
 
     @Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
-			DataTypeConflictException, IOException {
+			NTHeader ntHeader)
+			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 
     	monitor.setMessage(program.getName()+": delay import(s)...");
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
@@ -199,7 +187,7 @@ public class DelayImportDataDirectory extends DataDirectory {
 									DelayImportDescriptor descriptor, 
 									TaskMonitor monitor,
 									MessageLog log)
-			throws DataTypeConflictException, DuplicateNameException {
+			throws DuplicateNameException {
 
 		Map<ThunkData, ImportByName> map = descriptor.getImportByNameMap();
 		Iterator<ThunkData> thunks = map.keySet().iterator();
