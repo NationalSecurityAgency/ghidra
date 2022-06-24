@@ -106,12 +106,19 @@ public interface DataType {
 	public Settings getDefaultSettings();
 
 	/**
-	 * Returns an instance of this DataType with its universalID and SourceArchive identity
-	 * retained.
+	 * Returns an instance of this DataType using the specified {@link DataTypeManager} to allow
+	 * its use of the corresponding {@link DataOrganization} while retaining its unique identity
+	 * (see {@link #getUniversalID()} and archive association (see {@link #getSourceArchive()}) if
+	 * applicable.
 	 * <p>
-	 * The current instanceof will be returned if this datatype's DataTypeManager matches the
-	 * specified dtm. The recursion depth of a clone will stop on any datatype whose DataTypeManager
-	 * matches the specified dtm and simply use the existing datatype instance.
+	 * This instance will be returned if this datatype's DataTypeManager matches the
+	 * specified dtm. The recursion depth of a clone will stop on any datatype whose 
+	 * {@link DataTypeManager} matches the specified dtm and simply use the existing datatype 
+	 * instance.
+	 * <p>
+	 * NOTE: In general, this method should not be used to obtain an instance to be modified.
+	 * In most cases changes shuold be made directly to this instance if supported or to a 
+	 * {@link #copy(DataTypeManager)}.
 	 * 
 	 * @param dtm the data-type manager instance whose data-organization should apply.
 	 * @return cloned instance which may be the same as this instance
@@ -119,7 +126,8 @@ public interface DataType {
 	public DataType clone(DataTypeManager dtm);
 
 	/**
-	 * Returns a new instance (shallow copy) of this DataType with a new identity.
+	 * Returns a new instance (shallow copy) of this DataType with a new identity and no
+	 * source archive association.
 	 * <p>
 	 * Any reference to other datatypes will use {@link #clone(DataTypeManager)}.
 	 * 
