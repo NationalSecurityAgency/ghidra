@@ -25,27 +25,41 @@ import ghidra.trace.model.target.TraceObject;
 public class TestDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion {
 
 	enum Offers implements DebuggerPlatformOffer {
-		X86_64 {
-			@Override
-			public String getDescription() {
-				return "Test x86-64";
-			}
+		ARM_V8_LE("Test armv8le", "ARM:LE:32:v8", "default"),
+		X86_64("Test x86-64", "x86:LE:64:default", "gcc");
 
-			@Override
-			public int getConfidence() {
-				return 1;
-			}
+		private final String description;
+		private final LanguageCompilerSpecPair lcsp;
 
-			@Override
-			public CompilerSpec getCompilerSpec() {
-				return getCompilerSpec(new LanguageID("x86:LE:64:default"), null);
-			}
+		private Offers(String description, String langID, String cSpecID) {
+			this.description = description;
+			this.lcsp = new LanguageCompilerSpecPair(langID, cSpecID);
+		}
 
-			@Override
-			public DebuggerPlatformMapper take(PluginTool tool, Trace trace) {
-				return new DefaultDebuggerPlatformMapper(tool, trace, getCompilerSpec());
+		@Override
+		public String getDescription() {
+			return description;
+		}
+
+		@Override
+		public int getConfidence() {
+			return 1;
+		}
+
+		@Override
+		public CompilerSpec getCompilerSpec() {
+			try {
+				return lcsp.getCompilerSpec();
 			}
-		};
+			catch (LanguageNotFoundException | CompilerSpecNotFoundException e) {
+				throw new AssertionError(e);
+			}
+		}
+
+		@Override
+		public DebuggerPlatformMapper take(PluginTool tool, Trace trace) {
+			return new DefaultDebuggerPlatformMapper(tool, trace, getCompilerSpec());
+		}
 	}
 
 	@Override
@@ -54,9 +68,12 @@ public class TestDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion
 		if (!"test".equals(debugger)) {
 			return Set.of();
 		}
-		if (!"x86-64".equals(arch)) {
-			return Set.of();
+		if ("armv8le".equals(arch)) {
+			return Set.of(Offers.ARM_V8_LE);
 		}
-		return Set.of(Offers.X86_64);
+		if ("x86-64".equals(arch)) {
+			return Set.of(Offers.X86_64);
+		}
+		return Set.of();
 	}
 }

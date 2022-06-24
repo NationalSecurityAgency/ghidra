@@ -73,6 +73,9 @@ public class DebuggerStateEditingPlugin extends AbstractDebuggerPlugin {
 		if (current.getTrace() == null) {
 			return;
 		}
+		if (editingService == null) {
+			return;
+		}
 		editingService.setCurrentMode(current.getTrace(), state.getUserData());
 		// TODO: Limit selectable modes?
 		// No sense showing Write Target, if the trace can never be live, again....

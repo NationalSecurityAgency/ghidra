@@ -589,6 +589,8 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 			program.release(this);
 		}
 
+		waitForSwing();
+
 		env.dispose();
 	}
 

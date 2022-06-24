@@ -26,9 +26,9 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceDataSettingsSpace;
-import ghidra.trace.database.guest.DBTraceGuestPlatform;
+import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
-import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
@@ -56,7 +56,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 	@DBAnnotatedField(column = DATATYPE_COLUMN_NAME)
 	private long dataTypeID;
 
-	protected DBTraceGuestPlatform guest;
+	protected InternalTracePlatform platform;
 	protected DataType dataType;
 	protected DataType baseDataType;
 	protected Settings defaultSettings;
@@ -75,8 +75,8 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		if (created) {
 			return;
 		}
-		guest = space.manager.platformManager.getPlatformByKey(platformKey);
-		if (guest == null && platformKey != -1) {
+		platform = space.manager.platformManager.getPlatformByKey(platformKey);
+		if (platform == null) {
 			throw new IOException("Data table is corrupt. Missing platform: " + platformKey);
 		}
 		dataType = space.dataTypeManager.getDataType(dataTypeID);
@@ -102,12 +102,12 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		return this;
 	}
 
-	protected void set(DBTraceGuestPlatform platform, DataType dataType) {
-		this.platformKey = (int) (platform == null ? -1 : platform.getKey());
+	protected void set(InternalTracePlatform platform, DataType dataType) {
+		this.platformKey = platform.getIntKey();
 		this.dataTypeID = space.dataTypeManager.getResolvedID(dataType);
 		update(PLATFORM_COLUMN, DATATYPE_COLUMN);
 
-		this.guest = platform;
+		this.platform = platform;
 		// Use the stored dataType, not the given one, in case it's different
 		this.dataType = space.dataTypeManager.getDataType(dataTypeID);
 		assert this.dataType != null;
@@ -133,8 +133,8 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 	}
 
 	@Override
-	public TraceGuestPlatform getGuestPlatform() {
-		return guest;
+	public TracePlatform getPlatform() {
+		return platform;
 	}
 
 	@Override
@@ -157,7 +157,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 
 	@Override
 	public Language getLanguage() {
-		return guest == null ? space.baseLanguage : guest.getLanguage();
+		return platform.getLanguage();
 	}
 
 	@Override

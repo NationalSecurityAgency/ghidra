@@ -86,6 +86,9 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec {
 			return false;
 		}
 		Register register = computeRegister(coordinates);
+		if (register == null) {
+			return false;
+		}
 		AddressRange regRng = TraceRegisterUtils.rangeForRegister(register);
 		return range.getRange().intersects(regRng);
 	}

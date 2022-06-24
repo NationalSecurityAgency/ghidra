@@ -84,7 +84,7 @@ public class GdbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion 
 	@Override
 	protected Set<DebuggerPlatformOffer> getOffers(TraceObject object, long snap, TraceObject env,
 			String debugger, String arch, String os, Endian endian) {
-		if (!"gdb".equals(debugger.toLowerCase())) {
+		if (debugger == null || !"gdb".equals(debugger.toLowerCase())) {
 			return Set.of();
 		}
 		return getCompilerSpecsForGnu(arch, endian).stream().flatMap(lcsp -> {

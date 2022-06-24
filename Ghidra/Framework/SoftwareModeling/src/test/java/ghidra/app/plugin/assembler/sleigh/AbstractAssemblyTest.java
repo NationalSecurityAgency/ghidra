@@ -200,9 +200,8 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	 */
 	protected void checkAllExact(AssemblyResolutionResults rr, Collection<String> disassembly,
 			long addr, String ctxstr) {
-		final AssemblyPatternBlock ctx =
-			(ctxstr == null ? context.getDefault() : AssemblyPatternBlock.fromString(ctxstr))
-					.fillMask();
+		final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefault()
+				: AssemblyPatternBlock.fromString(ctxstr)).fillMask();
 		dbg.println("Checking each: " + disassembly + " ctx:" + ctx);
 		boolean gotOne = false;
 		boolean failedOne = false;

@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.codebrowser;
+package ghidra.trace.database.guest;
 
-import ghidra.app.context.ListingActionContext;
-import ghidra.app.context.NavigatableRangeActionContext;
-import ghidra.program.util.ProgramLocation;
+import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
+import ghidra.trace.model.guest.TracePlatform;
 
-public class CodeViewerActionContext extends ListingActionContext implements
-		NavigatableRangeActionContext {
+public interface InternalTracePlatform extends TracePlatform {
+	/**
+	 * Get the entry's key in the table as an integer
+	 * 
+	 * @return the key
+	 */
+	int getIntKey();
 
-	public CodeViewerActionContext(CodeViewerProvider provider) {
-		super(provider, provider);
-	}
-
-	public CodeViewerActionContext(CodeViewerProvider provider, ProgramLocation location) {
-		super(provider, provider, location);
-	}
-
+	DBTraceGuestLanguage getLanguageEntry();
 }

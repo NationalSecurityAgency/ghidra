@@ -25,8 +25,8 @@ import org.junit.*;
 
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.database.guest.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.ConsoleTaskMonitor;
 
@@ -46,14 +46,10 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 	}
 
 	@Test
-	public void testGetBaseLanguage() {
-		assertEquals("Toy:BE:64:default",
-			manager.getBaseLanguage().getLanguageID().getIdAsString());
-	}
-
-	@Test
-	public void testGetBaseCompilerSpec() {
-		assertEquals("default", manager.getBaseCompilerSpec().getCompilerSpecID().getIdAsString());
+	public void testGetHostPlatform() throws Throwable {
+		TracePlatform host = b.trace.getPlatformManager().getHostPlatform();
+		assertEquals("Toy:BE:64:default", host.getLanguage().getLanguageID().getIdAsString());
+		assertEquals("default", host.getCompilerSpec().getCompilerSpecID().getIdAsString());
 	}
 
 	@Test
@@ -324,7 +320,8 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 		b.trace.undo();
 
-		guest = manager.getGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
+		guest =
+			(DBTraceGuestPlatform) manager.getPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 		assertNotNull(guest.mapHostToGuest(b.addr(0x01000800)));
 		assertNotNull(guest.mapGuestToHost(b.addr(guest, 0x02000800)));
 	}
@@ -359,7 +356,8 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 		b.trace.undo();
 
-		guest = manager.getGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
+		guest =
+			(DBTraceGuestPlatform) manager.getPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 		assertEquals(b.addr(guest, 0x02000800), guest.mapHostToGuest(b.addr(0x01000800)));
 	}
 }

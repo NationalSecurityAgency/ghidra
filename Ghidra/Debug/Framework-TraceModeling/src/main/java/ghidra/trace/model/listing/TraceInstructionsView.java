@@ -21,7 +21,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 
 public interface TraceInstructionsView extends TraceBaseDefinedUnitsView<TraceInstruction> {
 	/**
@@ -29,15 +29,27 @@ public interface TraceInstructionsView extends TraceBaseDefinedUnitsView<TraceIn
 	 * 
 	 * @param lifespan the lifespan for the instruction unit
 	 * @param address the starting address of the instruction
-	 * @param platform the optional guest platform, null for the host
+	 * @param platform the platform
 	 * @param prototype the instruction prototype
 	 * @param context the input disassembly context for the instruction
 	 * @return the new instruction
 	 * @throws CodeUnitInsertionException if the instruction cannot be created
 	 */
-	TraceInstruction create(Range<Long> lifespan, Address address, TraceGuestPlatform platform,
+	TraceInstruction create(Range<Long> lifespan, Address address, TracePlatform platform,
 			InstructionPrototype prototype, ProcessorContextView context)
 			throws CodeUnitInsertionException;
+
+	/**
+	 * Create an instruction for the host platform
+	 * 
+	 * @see #create(Range, Address, TracePlatform, InstructionPrototype, ProcessorContextView)
+	 */
+	default TraceInstruction create(Range<Long> lifespan, Address address,
+			InstructionPrototype prototype, ProcessorContextView context)
+			throws CodeUnitInsertionException {
+		return create(lifespan, address, getTrace().getPlatformManager().getHostPlatform(),
+			prototype, context);
+	}
 
 	/**
 	 * Create several instructions
@@ -52,6 +64,17 @@ public interface TraceInstructionsView extends TraceBaseDefinedUnitsView<TraceIn
 	 * @param overwrite true to replace conflicting instructions
 	 * @return the (host) address set of instructions actually added
 	 */
-	AddressSetView addInstructionSet(Range<Long> lifespan, TraceGuestPlatform platform,
+	AddressSetView addInstructionSet(Range<Long> lifespan, TracePlatform platform,
 			InstructionSet instructionSet, boolean overwrite);
+
+	/**
+	 * Create several instructions for the host platform
+	 * 
+	 * @see #addInstructionSet(Range, TracePlatform, InstructionSet, boolean)
+	 */
+	default AddressSetView addInstructionSet(Range<Long> lifespan, InstructionSet instructionSet,
+			boolean overwrite) {
+		return addInstructionSet(lifespan, getTrace().getPlatformManager().getHostPlatform(),
+			instructionSet, overwrite);
+	}
 }

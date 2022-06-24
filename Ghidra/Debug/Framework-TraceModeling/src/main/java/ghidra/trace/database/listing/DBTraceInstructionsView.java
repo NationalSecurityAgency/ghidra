@@ -29,12 +29,12 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
-import ghidra.trace.database.guest.DBTraceGuestPlatform;
+import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Trace.TraceCodeChangeType;
-import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceInstruction;
 import ghidra.trace.model.listing.TraceInstructionsView;
 import ghidra.trace.util.OverlappingObjectIterator;
@@ -53,7 +53,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	protected class InstructionBlockAdder {
 		private final Set<Address> skipDelaySlots;
 		private final Range<Long> lifespan;
-		private final DBTraceGuestPlatform platform;
+		private final InternalTracePlatform platform;
 		private final InstructionBlock block;
 		private final Address errorAddress;
 		private final InstructionError conflict;
@@ -62,7 +62,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		protected int count = 0;
 
 		private InstructionBlockAdder(Set<Address> skipDelaySlots, Range<Long> lifespan,
-				DBTraceGuestPlatform platform, InstructionBlock block, Address errorAddress,
+				InternalTracePlatform platform, InstructionBlock block, Address errorAddress,
 				InstructionError conflict, CodeUnit conflictCodeUnit) {
 			this.skipDelaySlots = skipDelaySlots;
 			this.lifespan = lifespan;
@@ -185,19 +185,11 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		ctxSpace.setValue(language, newValue, tasr.getLifespan(), tasr.getRange());
 	}
 
-	protected boolean languagesAgree(DBTraceGuestPlatform platform,
-			InstructionPrototype prototype) {
-		if (platform == null) {
-			return prototype.getLanguage() == space.baseLanguage;
-		}
-		return prototype.getLanguage() == platform.getLanguage();
-	}
-
 	protected DBTraceInstruction doCreate(Range<Long> lifespan, Address address,
-			DBTraceGuestPlatform platform, InstructionPrototype prototype,
+			InternalTracePlatform platform, InstructionPrototype prototype,
 			ProcessorContextView context)
 			throws CodeUnitInsertionException, AddressOverflowException {
-		if (!languagesAgree(platform, prototype)) {
+		if (platform.getLanguage() != prototype.getLanguage()) {
 			throw new IllegalArgumentException("Platform and prototype disagree in language");
 		}
 
@@ -245,11 +237,10 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	}
 
 	@Override
-	public DBTraceInstruction create(Range<Long> lifespan, Address address,
-			TraceGuestPlatform platform, InstructionPrototype prototype,
-			ProcessorContextView context)
+	public DBTraceInstruction create(Range<Long> lifespan, Address address, TracePlatform platform,
+			InstructionPrototype prototype, ProcessorContextView context)
 			throws CodeUnitInsertionException {
-		DBTraceGuestPlatform dbPlatform = space.manager.platformManager.assertMine(platform);
+		InternalTracePlatform dbPlatform = space.manager.platformManager.assertMine(platform);
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			DBTraceInstruction created =
 				doCreate(lifespan, address, dbPlatform, prototype, context);
@@ -277,7 +268,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	}
 
 	protected InstructionBlockAdder startAddingBlock(Range<Long> lifespan,
-			Set<Address> skipDelaySlots, DBTraceGuestPlatform platform, InstructionBlock block) {
+			Set<Address> skipDelaySlots, InternalTracePlatform platform, InstructionBlock block) {
 		InstructionError conflict = block.getInstructionConflict();
 		if (conflict == null) {
 			return new InstructionBlockAdder(skipDelaySlots, lifespan, platform, block, null, null,
@@ -384,9 +375,9 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	}
 
 	@Override
-	public AddressSetView addInstructionSet(Range<Long> lifespan, TraceGuestPlatform platform,
+	public AddressSetView addInstructionSet(Range<Long> lifespan, TracePlatform platform,
 			InstructionSet instructionSet, boolean overwrite) {
-		DBTraceGuestPlatform dbPlatform = space.manager.platformManager.assertMine(platform);
+		InternalTracePlatform dbPlatform = space.manager.platformManager.assertMine(platform);
 		// NOTE: Partly derived from CodeManager#addInstructions()
 		// Attempted to factor more fluently
 		AddressSet result = new AddressSet();

@@ -30,12 +30,12 @@ import ghidra.app.plugin.core.assembler.AssemblyDualTextField.AssemblyInstructio
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 
 public class AssemblerPluginTestHelper {
-	public final AssemblerPlugin assemblerPlugin;
 	private final CodeViewerProvider provider;
 	private final Program program;
 
@@ -46,20 +46,30 @@ public class AssemblerPluginTestHelper {
 
 	private final Listing listing;
 
-	public AssemblerPluginTestHelper(AssemblerPlugin assemblerPlugin, CodeViewerProvider provider,
-			Program program) {
-		this.assemblerPlugin = assemblerPlugin;
+	public AssemblerPluginTestHelper(PatchInstructionAction patchInstructionAction,
+			PatchDataAction patchDataAction, CodeViewerProvider provider, Program program) {
 		this.provider = provider;
 		this.program = program;
 
-		this.patchInstructionAction = assemblerPlugin.patchInstructionAction;
-		this.patchDataAction = assemblerPlugin.patchDataAction;
-		this.instructionInput = assemblerPlugin.patchInstructionAction.input;
-		this.dataInput = assemblerPlugin.patchDataAction.input;
+		this.patchInstructionAction = patchInstructionAction;
+		this.patchDataAction = patchDataAction;
+		this.instructionInput =
+			patchInstructionAction == null ? null : patchInstructionAction.input;
+		this.dataInput = patchDataAction == null ? null : patchDataAction.input;
 		this.listing = program.getListing();
 
 		// Snuff the assembler's warning prompt
-		patchInstructionAction.shownWarning.put(program.getLanguage(), true);
+		snuffWarning(program.getLanguage());
+	}
+
+	public AssemblerPluginTestHelper(AssemblerPlugin assemblerPlugin, CodeViewerProvider provider,
+			Program program) {
+		this(assemblerPlugin.patchInstructionAction, assemblerPlugin.patchDataAction, provider,
+			program);
+	}
+
+	public void snuffWarning(Language language) {
+		PatchInstructionAction.SHOWN_WARNING.put(language, true);
 	}
 
 	public void assertDualFields() {
@@ -69,12 +79,18 @@ public class AssemblerPluginTestHelper {
 	}
 
 	public List<AssemblyCompletion> inputAndGetCompletions(String text) {
-		return AbstractGenericTest.runSwing(() -> {
+		AbstractGenericTest.runSwing(() -> {
 			instructionInput.setText(text);
 			instructionInput.auto.startCompletion(instructionInput.getOperandsField());
 			instructionInput.auto.flushUpdates();
-			return instructionInput.auto.getSuggestions();
 		});
+		return AbstractGenericTest.waitForValue(() -> AbstractGenericTest.runSwing(() -> {
+			List<AssemblyCompletion> suggestions = instructionInput.auto.getSuggestions();
+			if (suggestions.isEmpty()) {
+				return null;
+			}
+			return suggestions;
+		}));
 	}
 
 	public void goTo(Address address) {
@@ -95,18 +111,21 @@ public class AssemblerPluginTestHelper {
 
 	public Instruction patchInstructionAt(Address address, String expText, String newText) {
 		goTo(address);
+		Language language = patchInstructionAction.getLanguage(listing.getCodeUnitAt(address));
+		snuffWarning(language);
 
-		AbstractDockingTest.performAction(assemblerPlugin.patchInstructionAction, provider, true);
+		AbstractDockingTest.performAction(patchInstructionAction, provider, true);
 		assertDualFields();
 		assertEquals(expText, instructionInput.getText());
-		assertEquals(address, assemblerPlugin.patchInstructionAction.getAddress());
+		assertEquals(address, patchInstructionAction.getAddress());
 
 		List<AssemblyCompletion> completions = inputAndGetCompletions(newText);
+		assertFalse("There are no assembly completion options", completions.isEmpty());
 		AssemblyCompletion first = completions.get(0);
 		assertTrue(first instanceof AssemblyInstruction);
 		AssemblyInstruction ai = (AssemblyInstruction) first;
 
-		AbstractGenericTest.runSwing(() -> assemblerPlugin.patchInstructionAction.accept(ai));
+		AbstractGenericTest.runSwing(() -> patchInstructionAction.accept(ai));
 		AbstractGhidraHeadedIntegrationTest.waitForProgram(program);
 
 		return Objects.requireNonNull(listing.getInstructionAt(address));
@@ -115,14 +134,14 @@ public class AssemblerPluginTestHelper {
 	public Data patchDataAt(Address address, String expText, String newText) {
 		goTo(address);
 
-		AbstractDockingTest.performAction(assemblerPlugin.patchDataAction, provider, true);
+		AbstractDockingTest.performAction(patchDataAction, provider, true);
 		assertTrue(dataInput.isVisible());
 		assertEquals(expText, dataInput.getText());
-		assertEquals(address, assemblerPlugin.patchDataAction.getAddress());
+		assertEquals(address, patchDataAction.getAddress());
 
 		AbstractGenericTest.runSwing(() -> {
 			dataInput.setText(newText);
-			assemblerPlugin.patchDataAction.accept();
+			patchDataAction.accept();
 		});
 		AbstractGhidraHeadedIntegrationTest.waitForProgram(program);
 
