@@ -119,15 +119,14 @@ void StringManager::encode(Encoder &encoder) const
 
 /// Parse a \<stringmanage> element, with \<string> children.
 /// \param decoder is the stream decoder
-/// \param m is the manager for looking up AddressSpaces
-void StringManager::decode(Decoder &decoder, const AddrSpaceManager *m)
+void StringManager::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_STRINGMANAGE);
   for (;;) {
     uint4 subId = decoder.openElement();
     if (subId != ELEM_STRING) break;
-    Address addr = Address::decode(decoder, m);
+    Address addr = Address::decode(decoder);
     StringData &stringData(stringMap[addr]);
     uint4 subId2 = decoder.openElement(ELEM_BYTES);
     stringData.isTruncated = decoder.readBool(ATTRIB_TRUNC);

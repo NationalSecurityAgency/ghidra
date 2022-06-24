@@ -134,7 +134,7 @@ void SegmentOp::decode(Decoder &decoder)
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
     if (attribId == ATTRIB_SPACE)
-      spc = glb->getSpaceByName(decoder.readString());
+      spc = decoder.readSpace();
     else if (attribId == ATTRIB_FARPOINTER)
       supportsfarpointer = true;
     else if (attribId == ATTRIB_USEROP) {	// Based on existing sleigh op
@@ -157,7 +157,7 @@ void SegmentOp::decode(Decoder &decoder)
       int4 sz;
       decoder.openElement();
       if (decoder.peekElement() != 0) {
-	Address addr = Address::decode(decoder,glb,sz);
+	Address addr = Address::decode(decoder,sz);
 	constresolve.space = addr.getSpace();
 	constresolve.offset = addr.getOffset();
 	constresolve.size = sz;

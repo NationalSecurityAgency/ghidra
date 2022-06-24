@@ -211,9 +211,8 @@ void SymbolEntry::encode(Encoder &encoder) const
 /// if the symbol is dynamic. Then parse the \b uselimit describing the valid
 /// range of code addresses.
 /// \param decoder is the stream decoder
-/// \param manage is an address space manager for constructing Address objects
 /// \return the advanced iterator
-void SymbolEntry::decode(Decoder &decoder,const AddrSpaceManager *manage)
+void SymbolEntry::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.peekElement();
@@ -224,10 +223,10 @@ void SymbolEntry::decode(Decoder &decoder,const AddrSpaceManager *manage)
     decoder.closeElement(elemId);
   }
   else {
-    addr = Address::decode(decoder,manage);
+    addr = Address::decode(decoder);
     hash = 0;
   }
-  uselimit.decode(decoder,manage);
+  uselimit.decode(decoder);
 }
 
 /// Examine the data-type to decide if the Symbol has the special property
@@ -809,7 +808,7 @@ void ExternRefSymbol::decode(Decoder &decoder)
     if (attribId == ATTRIB_NAME) // Unless we see it explicitly
       name = decoder.readString();
   }
-  refaddr = Address::decode(decoder,scope->getArch());
+  refaddr = Address::decode(decoder);
   decoder.closeElement(elemId);
   buildNameType();
 }
@@ -1583,7 +1582,7 @@ Symbol *Scope::addMapSym(Decoder &decoder)
   addSymbolInternal(sym);	// This routine may throw, but it will delete sym in this case
   while(decoder.peekElement() != 0) {
     SymbolEntry entry(sym);
-    entry.decode(decoder,glb);
+    entry.decode(decoder);
     if (entry.isInvalid()) {
       glb->printMessage("WARNING: Throwing out symbol with invalid mapping: "+sym->getName());
       removeSymbol(sym);
@@ -2632,7 +2631,7 @@ void ScopeInternal::decodeHole(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_HOLE);
   uint4 flags = 0;
   Range range;
-  range.decodeFromAttributes(decoder, glb);
+  range.decodeFromAttributes(decoder);
   decoder.rewindAttributes();
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
@@ -2717,7 +2716,7 @@ void ScopeInternal::decode(Decoder &decoder)
   }
   if (subId== ELEM_RANGELIST) {
     RangeList newrangetree;
-    newrangetree.decode(decoder,glb);
+    newrangetree.decode(decoder);
     glb->symboltab->setRange(this,newrangetree);
   }
   else if (subId == ELEM_RANGEEQUALSSYMBOLS) {
@@ -3262,7 +3261,7 @@ void Database::decode(Decoder &decoder)
     decoder.openElement();
     uint4 val = decoder.readUnsignedInteger(ATTRIB_VAL);
     VarnodeData vData;
-    vData.decodeFromAttributes(decoder, glb);
+    vData.decodeFromAttributes(decoder);
     Address addr = vData.getAddr();
     decoder.closeElement(subId);
     flagbase.split(addr) = val;

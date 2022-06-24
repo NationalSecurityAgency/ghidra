@@ -52,16 +52,15 @@ void Comment::encode(Encoder &encoder) const
 
 /// Parse a \<comment> element from the given stream decoder
 /// \param decoder is the given stream decoder
-/// \param manage is a manager for resolving address space references
-void Comment::decode(Decoder &decoder,const AddrSpaceManager *manage)
+void Comment::decode(Decoder &decoder)
 
 {
   emitted = false;
   type = 0;
   uint4 elemId = decoder.openElement(ELEM_COMMENT);
   type = Comment::encodeCommentType(decoder.readString(ATTRIB_TYPE));
-  funcaddr = Address::decode(decoder,manage);
-  addr = Address::decode(decoder,manage);
+  funcaddr = Address::decode(decoder);
+  addr = Address::decode(decoder);
   uint4 subId = decoder.peekElement();
   if (subId != 0) {
     decoder.openElement();
@@ -249,13 +248,13 @@ void CommentDatabaseInternal::encode(Encoder &encoder) const
   encoder.closeElement(ELEM_COMMENTDB);
 }
 
-void CommentDatabaseInternal::decode(Decoder &decoder,const AddrSpaceManager *manage)
+void CommentDatabaseInternal::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_COMMENTDB);
   while(decoder.peekElement() != 0) {
     Comment com;
-    com.decode(decoder,manage);
+    com.decode(decoder);
     addComment(com.getType(),com.getFuncAddr(),com.getAddr(),com.getText());
   }
   decoder.closeElement(elemId);

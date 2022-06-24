@@ -111,7 +111,7 @@ private:
 public:
   LanedRegister(void) { wholeSize = 0; sizeBitMask = 0; }	///< Constructor for use with decode
   LanedRegister(int4 sz,uint4 mask) { wholeSize = sz; sizeBitMask = mask; }	///< Constructor
-  bool decode(Decoder &decoder,const AddrSpaceManager *manage);	///< Parse \<register> elements for lane sizes
+  bool decode(Decoder &decoder);			///< Parse \<register> elements for lane sizes
   int4 getWholeSize(void) const { return wholeSize; }	///< Get the size in bytes of the whole laned register
   uint4 getSizeBitMask(void) const { return sizeBitMask; }	///< Get the bit mask of possible lane sizes
   void addLaneSize(int4 size) { sizeBitMask |= ((uint4)1 << size); }	///< Add a new \e size to the allowed list

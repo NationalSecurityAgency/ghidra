@@ -20,7 +20,7 @@ Datatype *TypeFactoryGhidra::findById(const string &n,uint8 id,int4 sz)
 {
   Datatype *ct = TypeFactory::findById(n,id,sz); // Try internal find
   if (ct != (Datatype *)0) return ct;
-  XmlDecode decoder;
+  XmlDecode decoder(glb);
   try {
     if (!((ArchitectureGhidra *)glb)->getType(n,id,decoder)) // See if ghidra knows about type
       return (Datatype *)0;

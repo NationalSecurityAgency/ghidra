@@ -16,7 +16,7 @@
 #include "printjava.hh"
 #include "funcdata.hh"
 
-OpToken PrintJava::instanceof = { "instanceof", 2, 60, true, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintJava::instanceof = { "instanceof", "", 2, 60, true, OpToken::binary, 1, 0, (OpToken *)0 };
 
 // Constructing this registers the capability
 PrintJavaCapability PrintJavaCapability::printJavaCapability;
@@ -102,13 +102,13 @@ void PrintJava::pushTypeStart(const Datatype *ct,bool noident)
   if (ct->getName().size()==0) {	// Check for anonymous type
     // We could support a struct or enum declaration here
     string nm = genericTypeName(ct);
-    pushAtom(Atom(nm,typetoken,EmitXml::type_color,ct));
+    pushAtom(Atom(nm,typetoken,EmitMarkup::type_color,ct));
   }
   else {
-    pushAtom(Atom(ct->getName(),typetoken,EmitXml::type_color,ct));
+    pushAtom(Atom(ct->getName(),typetoken,EmitMarkup::type_color,ct));
   }
   for(int4 i=0;i<arrayCount;++i)
-    pushAtom(Atom("",blanktoken,EmitXml::no_color));		// Fill in the blank array index
+    pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));		// Fill in the blank array index
 }
 
 void PrintJava::pushTypeEnd(const Datatype *ct)
@@ -119,8 +119,8 @@ void PrintJava::pushTypeEnd(const Datatype *ct)
 void PrintJava::adjustTypeOperators(void)
 
 {
-  scope.print = ".";
-  shift_right.print = ">>>";
+  scope.print1 = ".";
+  shift_right.print1 = ">>>";
   TypeOp::selectJavaOperators(glb->inst,true);
 }
 
@@ -285,7 +285,7 @@ void PrintJava::opCallind(const PcodeOp *op)
   }
   else {			// A void function
     pushVn(op->getIn(0),op,mods);
-    pushAtom(Atom("",blanktoken,EmitXml::no_color));
+    pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));
   }
 }
 
@@ -299,7 +299,7 @@ void PrintJava::opCpoolRefOp(const PcodeOp *op)
     refs.push_back(op->getIn(i)->getOffset());
   const CPoolRecord *rec = glb->cpool->getRecord(refs);
   if (rec == (const CPoolRecord *)0) {
-    pushAtom(Atom("UNKNOWNREF",syntax,EmitXml::const_color,op,outvn));
+    pushAtom(Atom("UNKNOWNREF",syntax,EmitMarkup::const_color,op,outvn));
   }
   else {
     switch(rec->getTag()) {
@@ -316,11 +316,11 @@ void PrintJava::opCpoolRefOp(const PcodeOp *op)
 	else {
 	  str << "...\"";
 	}
-	pushAtom(Atom(str.str(),vartoken,EmitXml::const_color,op,outvn));
+	pushAtom(Atom(str.str(),vartoken,EmitMarkup::const_color,op,outvn));
 	break;
       }
     case CPoolRecord::class_reference:
-      pushAtom(Atom(rec->getToken(),vartoken,EmitXml::type_color,op,outvn));
+      pushAtom(Atom(rec->getToken(),vartoken,EmitMarkup::type_color,op,outvn));
       break;
     case CPoolRecord::instance_of:
       {
@@ -330,7 +330,7 @@ void PrintJava::opCpoolRefOp(const PcodeOp *op)
 	}
 	pushOp(&instanceof,op);
 	pushVn(vn0,op,mods);
-	pushAtom(Atom(dt->getName(),syntax,EmitXml::type_color,op,outvn));
+	pushAtom(Atom(dt->getName(),syntax,EmitMarkup::type_color,op,outvn));
 	break;
       }
     case CPoolRecord::primitive:		// Should be eliminated
@@ -341,11 +341,11 @@ void PrintJava::opCpoolRefOp(const PcodeOp *op)
     default:
       {
 	Datatype *ct = rec->getType();
-	EmitXml::syntax_highlight color = EmitXml::var_color;
+	EmitMarkup::syntax_highlight color = EmitMarkup::var_color;
 	if (ct->getMetatype() == TYPE_PTR) {
 	  ct = ((TypePointer *)ct)->getPtrTo();
 	  if (ct->getMetatype() == TYPE_CODE)
-	  color = EmitXml::funcname_color;
+	  color = EmitMarkup::funcname_color;
 	}
 	if (vn0->isConstant()) {	// If this is NOT relative to an object reference
 	  pushAtom(Atom(rec->getToken(),vartoken,color,op,outvn));

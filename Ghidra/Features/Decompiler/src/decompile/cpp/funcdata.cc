@@ -735,7 +735,7 @@ uint8 Funcdata::decode(Decoder &decoder)
     throw LowlevelError("Missing function name");
   if (size == -1)
     throw LowlevelError("Missing function size");
-  baseaddr = Address::decode( decoder, glb );
+  baseaddr = Address::decode( decoder );
   for(;;) {
     uint4 subId = decoder.peekElement();
     if (subId == 0) break;

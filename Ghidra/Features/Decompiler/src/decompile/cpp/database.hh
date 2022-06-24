@@ -157,7 +157,7 @@ public:
   Datatype *getSizedType(const Address &addr,int4 sz) const;		///< Get the data-type associated with (a piece of) \b this
   void printEntry(ostream &s) const;					///< Dump a description of \b this to a stream
   void encode(Encoder &encoder) const;					///< Encode \b this to a stream
-  void decode(Decoder &decoder,const AddrSpaceManager *manage);		///< Decode \b this from a stream
+  void decode(Decoder &decoder);					///< Decode \b this from a stream
 };
 typedef rangemap<SymbolEntry> EntryMap;			///< A rangemap of SymbolEntry
 

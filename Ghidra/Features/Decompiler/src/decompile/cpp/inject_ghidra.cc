@@ -48,7 +48,7 @@ void InjectPayloadGhidra::inject(InjectContext &con,PcodeEmit &emit) const
 
 {
   ArchitectureGhidra *ghidra = (ArchitectureGhidra *)con.glb;
-  XmlDecode decoder;
+  XmlDecode decoder(ghidra);
   try {
     if (!ghidra->getPcodeInject(name,type,con,decoder))
       throw LowlevelError("Could not retrieve pcode snippet: "+name);
@@ -61,7 +61,7 @@ void InjectPayloadGhidra::inject(InjectContext &con,PcodeEmit &emit) const
   }
   uint4 elemId = decoder.openElement();
   while(decoder.peekElement() != 0)
-    emit.decodeOp(decoder,ghidra->translate);
+    emit.decodeOp(decoder);
   decoder.closeElement(elemId);
 }
 
@@ -121,7 +121,7 @@ void ExecutablePcodeGhidra::inject(InjectContext &con,PcodeEmit &emit) const
 
 {
   ArchitectureGhidra *ghidra = (ArchitectureGhidra *)con.glb;
-  XmlDecode decoder;
+  XmlDecode decoder(ghidra);
   try {
     if (!ghidra->getPcodeInject(name,type,con,decoder))
       throw LowlevelError("Could not retrieve pcode snippet: "+name);
@@ -134,7 +134,7 @@ void ExecutablePcodeGhidra::inject(InjectContext &con,PcodeEmit &emit) const
   }
   uint4 elemId = decoder.openElement();
   while(decoder.peekElement() != 0)
-    emit.decodeOp(decoder,ghidra->translate);
+    emit.decodeOp(decoder);
   decoder.closeElement(elemId);
 }
 

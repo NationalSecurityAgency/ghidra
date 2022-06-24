@@ -122,7 +122,7 @@ void SleighArchitecture::loadLanguageDescription(const string &specfile,ostream 
   ifstream s(specfile.c_str());
   if (!s) return;
 
-  XmlDecode decoder;
+  XmlDecode decoder((const AddrSpaceManager *)0);
   try {
     decoder.ingestStream(s);
   }

@@ -108,7 +108,7 @@ public:
   virtual void dump(const Address &addr,OpCode opc,VarnodeData *outvar,VarnodeData *vars,int4 isize)=0;
 
   /// Emit pcode directly from an \<op> element
-  void decodeOp(Decoder &decoder,const AddrSpaceManager *trans);
+  void decodeOp(Decoder &decoder);
 
   enum {			// Tags for packed pcode format
     unimpl_tag = 0x20,

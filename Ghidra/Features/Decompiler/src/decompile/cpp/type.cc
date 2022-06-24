@@ -763,7 +763,7 @@ void TypePointer::encode(Encoder &encoder) const
   if (wordsize != 1)
     encoder.writeSignedInteger(ATTRIB_WORDSIZE, wordsize);
   if (spaceid != (AddrSpace *)0)
-    encoder.writeString(ATTRIB_SPACE, spaceid->getName());
+    encoder.writeSpace(ATTRIB_SPACE, spaceid);
   ptrto->encodeRef(encoder);
   encoder.closeElement(ELEM_TYPE);
 }
@@ -784,7 +784,7 @@ void TypePointer::decode(Decoder &decoder,TypeFactory &typegrp)
       wordsize = decoder.readUnsignedInteger();
     }
     else if (attrib == ATTRIB_SPACE) {
-      spaceid = typegrp.getArch()->getSpaceByName(decoder.readString());
+      spaceid = decoder.readSpace();
     }
   }
   ptrto = typegrp.decodeType( decoder );
@@ -1871,7 +1871,7 @@ void TypePointerRel::decode(Decoder &decoder,TypeFactory &typegrp)
       wordsize = decoder.readUnsignedInteger();
     }
     else if (attrib == ATTRIB_SPACE) {
-      spaceid = typegrp.getArch()->getSpaceByName(decoder.readString());
+      spaceid = decoder.readSpace();
     }
   }
   ptrto = typegrp.decodeType( decoder );
@@ -2397,7 +2397,7 @@ void TypeSpacebase::encode(Encoder &encoder) const
   }
   encoder.openElement(ELEM_TYPE);
   encodeBasic(metatype,encoder);
-  encoder.writeString(ATTRIB_SPACE, spaceid->getName());
+  encoder.writeSpace(ATTRIB_SPACE, spaceid);
   localframe.encode(encoder);
   encoder.closeElement(ELEM_TYPE);
 }
@@ -2410,8 +2410,8 @@ void TypeSpacebase::decode(Decoder &decoder,TypeFactory &typegrp)
 {
 //  uint4 elemId = decoder.openElement();
   decodeBasic(decoder);
-  spaceid = glb->getSpaceByName(decoder.readString(ATTRIB_SPACE));
-  localframe = Address::decode(decoder,typegrp.getArch());
+  spaceid = decoder.readSpace(ATTRIB_SPACE);
+  localframe = Address::decode(decoder);
 //  decoder.closeElement(elemId);
 }
 

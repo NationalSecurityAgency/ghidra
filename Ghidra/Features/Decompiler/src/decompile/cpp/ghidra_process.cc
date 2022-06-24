@@ -47,15 +47,15 @@ void connect_to_console(Funcdata *fd)
   decomp_data->fd = fd;
   decomp_data->conf = fd->getArch();
   ostream *oldPrintStream = decomp_data->conf->print->getOutputStream();
-  bool emitXml = decomp_data->conf->print->emitsXml();
+  bool emitMarkup = decomp_data->conf->print->emitsMarkup();
   decomp_data->conf->setDebugStream(remote->getOutputStream());
   decomp_data->conf->print->setOutputStream(remote->getOutputStream());
-  decomp_data->conf->print->setXML(false);
+  decomp_data->conf->print->setMarkup(false);
   ghidra_dcp->reset();
   mainloop(ghidra_dcp);
   decomp_data->conf->clearAnalysis(fd);
   decomp_data->conf->print->setOutputStream(oldPrintStream);
-  decomp_data->conf->print->setXML(emitXml);
+  decomp_data->conf->print->setMarkup(emitMarkup);
   fd->debugDisable();
   decomp_data->conf->allacts.getCurrent()->clearBreakPoints();
 }
@@ -274,9 +274,9 @@ void DecompileAt::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  XmlDecode decoder;
+  XmlDecode decoder(ghidra);
   ArchitectureGhidra::readStream(sin,decoder);	// Read encoded address directly from in stream
-  addr = Address::decode(decoder,ghidra); 	// Decode for functions address
+  addr = Address::decode(decoder); 		// Decode for functions address
 }
 
 void DecompileAt::rawAction(void) 
@@ -328,9 +328,9 @@ void StructureGraph::loadParameters(void)
 {
   GhidraCommand::loadParameters();
 
-  XmlDecode decoder;
+  XmlDecode decoder(ghidra);
   ArchitectureGhidra::readStream(sin,decoder);
-  ingraph.decode(decoder,ghidra);
+  ingraph.decode(decoder);
 }
 
 void StructureGraph::rawAction(void)
@@ -408,8 +408,8 @@ void SetOptions::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  decoder.clear();
-  ArchitectureGhidra::readStream(sin,decoder);
+  optionsListTag.clear();
+  ArchitectureGhidra::readStringStream(sin, optionsListTag);
 }
 
 void SetOptions::rawAction(void)
@@ -418,8 +418,12 @@ void SetOptions::rawAction(void)
   res = false;
 
   ghidra->resetDefaults();
+  DocumentStorage storage;
+  istringstream s(optionsListTag);
+  Document *doc = storage.parseDocument(s);
+  XmlDecode decoder(ghidra,doc->getRoot());
   ghidra->options->decode(decoder);
-  decoder.clear();
+  optionsListTag.clear();
   res = true;
 }
 

@@ -96,10 +96,10 @@ public:
   void encode(Encoder &encoder,int4 size) const; ///< Encode \b this and a size to a stream
 
   /// Restore an address from parsed XML
-  static Address decode(Decoder &decoder,const AddrSpaceManager *manage);
+  static Address decode(Decoder &decoder);
 
   /// Restore an address and size from parsed XML
-  static Address decode(Decoder &decoder,const AddrSpaceManager *manage,int4 &size);
+  static Address decode(Decoder &decoder,int4 &size);
 };
 
 /// \brief A class for uniquely labelling and comparing PcodeOps
@@ -158,7 +158,7 @@ public:
   void encode(Encoder &encoder) const;
 
   /// Decode a SeqNum from a stream
-  static SeqNum decode(Decoder &decoder,const AddrSpaceManager *manage);
+  static SeqNum decode(Decoder &decoder);
 
   /// Write out a SeqNum in human readable form to a stream
   friend ostream &operator<<(ostream &s,const SeqNum &sq);
@@ -202,8 +202,8 @@ public:
     return (first < op2.first); }
   void printBounds(ostream &s) const;			///< Print \b this Range to a stream
   void encode(Encoder &encoder) const;			///< Encode \b this Range to a stream
-  void decode(Decoder &decoder,const AddrSpaceManager *manage);	///< Restore \b this from a stream
-  void decodeFromAttributes(Decoder &decoder,const AddrSpaceManager *manage);	///< Read \b from attributes on another tag
+  void decode(Decoder &decoder);			///< Restore \b this from a stream
+  void decodeFromAttributes(Decoder &decoder);		///< Read \b from attributes on another tag
 };
 
 /// \brief A partially parsed description of a Range
@@ -247,7 +247,7 @@ public:
   uintb longestFit(const Address &addr,uintb maxsize) const;	///< Find size of biggest Range containing given address
   void printBounds(ostream &s) const;				///< Print a description of \b this RangeList to stream
   void encode(Encoder &encoder) const;				///< Encode \b this RangeList to a stream
-  void decode(Decoder &decoder,const AddrSpaceManager *manage);	///< Decode \b this RangeList from a \<rangelist> element
+  void decode(Decoder &decoder);				///< Decode \b this RangeList from a \<rangelist> element
 };
 
 /// Precalculated masks indexed by size

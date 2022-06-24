@@ -51,8 +51,8 @@ public:
   virtual const TrackedSet &getTrackedSet(const Address &addr) const;
 
   // Ignored routines (taken care of by GHIDRA)
-  virtual void decode(Decoder &decoder,const AddrSpaceManager *manage);
-  virtual void decodeFromSpec(Decoder &decoder,const AddrSpaceManager *manage);
+  virtual void decode(Decoder &decoder);
+  virtual void decodeFromSpec(Decoder &decoder);
 
   // Unimplemented routines (should never be called)
   virtual int getContextSize(void) const {

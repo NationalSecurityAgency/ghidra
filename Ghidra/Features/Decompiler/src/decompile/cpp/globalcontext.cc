@@ -51,12 +51,11 @@ void TrackedContext::encode(Encoder &encoder) const
 
 /// Parse a \<set> element to fill in the storage and value details.
 /// \param decoder is the stream decoder
-/// \param manage is the manager used to decode address references
-void TrackedContext::decode(Decoder &decoder,const AddrSpaceManager *manage)
+void TrackedContext::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_SET);
-  loc.decodeFromAttributes(decoder, manage);
+  loc.decodeFromAttributes(decoder);
 
   val = decoder.readUnsignedInteger(ATTRIB_VAL);
   decoder.closeElement(elemId);
@@ -86,16 +85,14 @@ void ContextDatabase::encodeTracked(Encoder &encoder,const Address &addr,const T
 /// Parse a \<tracked_pointset> element, decoding each child in turn to populate a list of
 /// TrackedContext objects.
 /// \param decoder is the given stream decoder
-/// \param manage is used to resolve address space references
 /// \param vec is the container that will hold the new TrackedContext objects
-void ContextDatabase::decodeTracked(Decoder &decoder,const AddrSpaceManager *manage,
-				     TrackedSet &vec)
+void ContextDatabase::decodeTracked(Decoder &decoder,TrackedSet &vec)
 
 {
   vec.clear();			// Clear out any old stuff
   while(decoder.peekElement() != 0) {
     vec.emplace_back();
-    vec.back().decode(decoder,manage);
+    vec.back().decode(decoder);
   }
 }
 
@@ -498,7 +495,7 @@ void ContextInternal::encode(Encoder &encoder) const
   encoder.closeElement(ELEM_CONTEXT_POINTS);
 }
 
-void ContextInternal::decode(Decoder &decoder,const AddrSpaceManager *manage)
+void ContextInternal::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_CONTEXT_POINTS);
@@ -513,14 +510,14 @@ void ContextInternal::decode(Decoder &decoder,const AddrSpaceManager *manage)
       }
       else {
 	VarnodeData vData;
-	vData.decodeFromAttributes(decoder, manage);
+	vData.decodeFromAttributes(decoder);
 	decodeContext(decoder,vData.getAddr(),Address());
       }
     }
     else if (subId == ELEM_TRACKED_POINTSET) {
       VarnodeData vData;
-      vData.decodeFromAttributes(decoder, manage);
-      decodeTracked(decoder,manage,trackbase.split(vData.getAddr()) );
+      vData.decodeFromAttributes(decoder);
+      decodeTracked(decoder,trackbase.split(vData.getAddr()) );
     }
     else
       throw LowlevelError("Bad <context_points> tag");
@@ -529,7 +526,7 @@ void ContextInternal::decode(Decoder &decoder,const AddrSpaceManager *manage)
   decoder.closeElement(elemId);
 }
 
-void ContextInternal::decodeFromSpec(Decoder &decoder,const AddrSpaceManager *manage)
+void ContextInternal::decodeFromSpec(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_CONTEXT_DATA);
@@ -537,14 +534,14 @@ void ContextInternal::decodeFromSpec(Decoder &decoder,const AddrSpaceManager *ma
     uint4 subId = decoder.openElement();
     if (subId == 0) break;
     Range range;
-    range.decodeFromAttributes(decoder, manage);	// There MUST be a range
+    range.decodeFromAttributes(decoder);	// There MUST be a range
     Address addr1 = range.getFirstAddr();
-    Address addr2 = range.getLastAddrOpen(manage);
+    Address addr2 = range.getLastAddrOpen(decoder.getAddrSpaceManager());
     if (subId == ELEM_CONTEXT_SET) {
       decodeContext(decoder,addr1,addr2);
     }
     else if (subId == ELEM_TRACKED_SET) {
-      decodeTracked(decoder,manage,createSet(addr1,addr2));
+      decodeTracked(decoder,createSet(addr1,addr2));
     }
     else
       throw LowlevelError("Bad <context_data> tag");

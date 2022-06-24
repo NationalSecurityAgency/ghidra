@@ -36,7 +36,7 @@ void GhidraTranslate::initialize(DocumentStorage &store)
   const Element *el = store.getTag("sleigh");
   if (el == (const Element *)0)
     throw LowlevelError("Could not find ghidra sleigh tag");
-  XmlDecode decoder(el);
+  XmlDecode decoder(this,el);
   decode(decoder);
 }
 
@@ -46,7 +46,7 @@ const VarnodeData &GhidraTranslate::getRegister(const string &nm) const
   map<string,VarnodeData>::const_iterator iter = nm2addr.find(nm);
   if (iter != nm2addr.end())
     return (*iter).second;
-  XmlDecode decoder;
+  XmlDecode decoder(glb);
   try {
     if (!glb->getRegister(nm,decoder))		// Ask Ghidra client about the register
       throw LowlevelError("No register named "+nm);
@@ -59,7 +59,7 @@ const VarnodeData &GhidraTranslate::getRegister(const string &nm) const
   }
   Address regaddr;
   int4 regsize;
-  regaddr = Address::decode( decoder, this, regsize);
+  regaddr = Address::decode( decoder, regsize);
   VarnodeData vndata;
   vndata.space = regaddr.getSpace();
   vndata.offset = regaddr.getOffset();
