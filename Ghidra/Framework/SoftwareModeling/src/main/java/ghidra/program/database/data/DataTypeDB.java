@@ -300,16 +300,19 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	}
 
 	@Override
-	public void setName(String name) throws InvalidNameException, DuplicateNameException {
+	public void setName(String newName) throws InvalidNameException, DuplicateNameException {
 		lock.acquire();
 		try {
 			checkDeleted();
+			if (getName().equals(newName)) {
+				return;
+			}
 			CategoryPath categoryPath = getCategoryPath();
-			if (dataMgr.getDataType(categoryPath, name) != null) {
-				throw new DuplicateNameException("DataType named " + name +
+			if (dataMgr.getDataType(categoryPath, newName) != null) {
+				throw new DuplicateNameException("DataType named " + newName +
 					" already exists in category " + categoryPath.getPath());
 			}
-			doSetName(name);
+			doSetName(newName);
 		}
 		finally {
 			lock.release();
@@ -338,9 +341,12 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		lock.acquire();
 		try {
 			checkDeleted();
-			DataType type = dataMgr.getDataType(path, getName());
-			if (type != null) {
-				throw new DuplicateNameException("DataType named " + getDisplayName() +
+			if (getCategoryPath().equals(path)) {
+				return;
+			}
+			String currentName = getName();
+			if (dataMgr.getDataType(path, currentName) != null) {
+				throw new DuplicateNameException("DataType named " + currentName +
 					" already exists in category " + path.getPath());
 			}
 			doSetCategoryPath(path);
@@ -374,7 +380,11 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		lock.acquire();
 		try {
 			checkDeleted();
-			if (dataMgr.getDataType(path, name) != null) {
+			DataType dt = dataMgr.getDataType(path, name);
+			if (dt != null) {
+				if (dt == this) {
+					return; // unchanged
+				}
 				throw new DuplicateNameException(
 					"DataType named " + name + " already exists in category " + path.getPath());
 			}

@@ -1384,7 +1384,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	public static TableCellEditor editCell(final JTable table, final int row, final int col) {
 
 		waitForSwing();
+
 		runSwing(() -> table.setRowSelectionInterval(row, row));
+		waitForSwing();
+
 		runSwing(() -> table.editCellAt(row, col));
 		waitForSwing();
 

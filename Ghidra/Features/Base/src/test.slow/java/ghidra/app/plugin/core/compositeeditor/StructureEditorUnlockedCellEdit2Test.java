@@ -28,7 +28,7 @@ import generic.test.ConcurrentTestExceptionHandler;
 import ghidra.program.model.data.*;
 
 public class StructureEditorUnlockedCellEdit2Test
-		extends AbstractStructureEditorUnlockedCellEditTest {
+		extends AbstractStructureEditorTest {
 
 	@Test
 	public void testF2EditKey() throws Exception {
