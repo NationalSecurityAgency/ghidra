@@ -220,12 +220,12 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 					++totalSuccesses;
 				}
 			}
-			System.out.println(totalSuccesses + " languages successfully compiled");
+			System.out.println(String.format("%d language%s successfully compiled", totalSuccesses, totalSuccesses == 1 ? "" : "s"));
 			if (totalFailures != 0) {
 				for (String path : failures) {
 					System.out.println(path + " failed to compile");
 				}
-				System.out.println(totalFailures + " languages total failed to compile");
+				System.out.println(String.format("%d language%s failed to compile", totalFailures, totalFailures == 1 ? "" : "s"));
 			}
 			return -totalFailures;
 		}
@@ -288,7 +288,7 @@ public class SleighCompileLauncher implements GhidraLaunchable {
 			String option = r.readLine();
 			while (option != null) {
 				option = option.trim();
-				if (option.length() != 0 && !option.startsWith("#")) {
+				if (option.length() != 0 && option.charAt(0) != '#') {
 					list.add(option);
 				}
 				option = r.readLine();

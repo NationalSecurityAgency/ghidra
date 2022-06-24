@@ -454,21 +454,21 @@ public class SleighCompile extends SleighBase {
 		DecisionProperties props = new DecisionProperties();
 		root.buildDecisionTree(props);
 
-		for (int i = 0; i < tables.size(); ++i) {
-			tables.get(i).buildDecisionTree(props);
+		for (SubtableSymbol symbol : tables) {
+			symbol.buildDecisionTree(props);
 		}
 		VectorSTL<String> ierrors = props.getIdentErrors();
 //    		const vector<string> &ierrors( props.getIdentErrors() );
-		for (int i = 0; i < ierrors.size(); ++i) {
+		for (String error : ierrors) {
 			errors += 1;
-			Msg.error(this, ierrors.get(i));
+			Msg.error(this, error);
 		}
 
 		if (!lenientconflicterrors) {
 			VectorSTL<String> cerrors = props.getConflictErrors();
-			for (int i = 0; i < cerrors.size(); ++i) {
+			for (String error : cerrors) {
 				errors += 1;
-				Msg.error(this, cerrors.get(i));
+				Msg.error(this, error);
 			}
 		}
 	}
@@ -509,8 +509,13 @@ public class SleighCompile extends SleighBase {
 			return;
 		}
 		if ((!warnunnecessarypcode) && (checker.getNumUnnecessaryPcode() > 0)) {
-			reportWarning(null, checker.getNumUnnecessaryPcode() +
-				" unnecessary extensions/truncations were converted to copies");
+			if (checker.getNumUnnecessaryPcode() == 1) {
+				reportWarning(null, "1 unnecessary extension/truncation was converted to a copy");
+			}
+			else {
+				reportWarning(null, checker.getNumUnnecessaryPcode() +
+					" unnecessary extensions/truncations were converted to copies");
+			}
 			reportWarning(null, "Use -u switch to list each individually");
 		}
 		checker.optimizeAll();
@@ -519,16 +524,20 @@ public class SleighCompile extends SleighBase {
 			return;
 		}
 		if ((!warndeadtemps) && (checker.getNumWriteNoRead() > 0)) {
-			reportWarning(null, checker.getNumWriteNoRead() +
-				" operations wrote to temporaries that were not read");
+			reportWarning(null, String.format("%d operation%s wrote to temporaries that were not read", checker.getNumWriteNoRead() , checker.getNumWriteNoRead() == 1 ? "" : "s"));
 			reportWarning(null, "Use -t switch to list each individually");
 		}
 		checker.testLargeTemporary();
 		if ((!largetemporarywarning) && checker.getNumLargeTemporaries() > 0) {
-			reportWarning(null,
-				checker.getNumLargeTemporaries() +
-					" constructors contain temporaries larger than " + SleighBase.MAX_UNIQUE_SIZE +
-					" bytes.");
+			if (checker.getNumLargeTemporaries() == 1) {
+				reportWarning(null, "1 constructor contains temporaries larger than " + SleighBase.MAX_UNIQUE_SIZE +
+						" bytes.");
+			} else {
+				reportWarning(null,
+						checker.getNumLargeTemporaries() +
+								" constructors contain temporaries larger than " + SleighBase.MAX_UNIQUE_SIZE +
+								" bytes.");
+			}
 			reportWarning(null, "Use -o switch to list each individually.");
 		}
 	}
@@ -598,8 +607,7 @@ public class SleighCompile extends SleighBase {
 			sym = tables.get(i);
 		}
 		if (collisionCount > 0) {
-			reportWarning(null,
-				collisionCount + " constructors with local collisions between operands");
+			reportWarning(null, String.format("%d constructor%s with local collisions between operands", collisionCount, collisionCount == 1 ? "" : "s"));
 			if (!warnalllocalcollisions) {
 				reportWarning(null, "Use -c switch to list each individually");
 			}
