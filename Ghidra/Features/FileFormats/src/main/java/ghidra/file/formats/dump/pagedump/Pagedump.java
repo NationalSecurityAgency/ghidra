@@ -24,6 +24,7 @@ import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.Loader;
 import ghidra.app.util.opinion.PeLoader;
 import ghidra.app.util.pdb.pdbapplicator.*;
 import ghidra.file.formats.dump.*;
@@ -37,6 +38,10 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 public class Pagedump extends DumpFile {
+
+	public static final String DEBUG_DATA_PATH_OPTION_NAME =
+		"Debug Data Path (e.g. /path/to/ntoskrnl.pdb)";
+	public static final String DEBUG_DATA_PATH_OPTION_DEFAULT = "";
 
 	public static long ETHREAD_PID_OFFSET; //TODO: Where do we want to get these from?
 	public static long ETHREAD_TID_OFFSET;
@@ -109,11 +114,11 @@ public class Pagedump extends DumpFile {
 		initManagerList(addins);
 
 		createBlocks =
-			OptionUtils.getBooleanOptionValue(DumpFileLoader.CREATE_MEMORY_BLOCKS_OPTION_NAME,
-				options, DumpFileLoader.CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
+			OptionUtils.getBooleanOptionValue(CREATE_MEMORY_BLOCKS_OPTION_NAME,
+				options, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
 		String pdbLocation =
-			OptionUtils.getOption(DumpFileLoader.DEBUG_DATA_PATH_OPTION_NAME, options,
-				DumpFileLoader.DEBUG_DATA_PATH_OPTION_DEFAULT);
+			OptionUtils.getOption(DEBUG_DATA_PATH_OPTION_NAME, options,
+				DEBUG_DATA_PATH_OPTION_DEFAULT);
 		if (!pdbLocation.equals("")) {
 			loadKernelPDB(pdbLocation, monitor);
 		}
@@ -460,9 +465,9 @@ public class Pagedump extends DumpFile {
 
 	public void analyze(TaskMonitor monitor) {
 		boolean analyzeEmbeddedObjects =
-			OptionUtils.getBooleanOptionValue(DumpFileLoader.ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
+			OptionUtils.getBooleanOptionValue(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
 				options,
-				false);
+				ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT);
 		if (analyzeEmbeddedObjects) {
 			ModuleToPeHelper.queryModules(program, monitor);
 		}
@@ -605,5 +610,24 @@ public class Pagedump extends DumpFile {
 		}
 	}
 	*/
+
+	/**
+	 * Get default <code>Pagedump</code> loader options.
+	 * Includes {@link #DEBUG_DATA_PATH_OPTION_NAME} plus default {@link DumpFile} options 
+	 * (see {@link DumpFile#getDefaultOptions(DumpFileReader)}).
+	 * @param reader dump file reader
+	 * @return default collection of Pagedump loader options
+	 */
+	public static Collection<? extends Option> getDefaultOptions(DumpFileReader reader) {
+
+		List<Option> list = new ArrayList<>();
+
+		list.add(new Option(DEBUG_DATA_PATH_OPTION_NAME, DEBUG_DATA_PATH_OPTION_DEFAULT,
+			String.class, Loader.COMMAND_LINE_ARG_PREFIX + "-debugDataFilePath"));
+
+		list.addAll(DumpFile.getDefaultOptions(reader));
+
+		return list;
+	}
 
 }
