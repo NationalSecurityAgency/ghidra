@@ -393,6 +393,9 @@ class EnumDB extends DataTypeDB implements Enum {
 
 	@Override
 	public DataType clone(DataTypeManager dtm) {
+		if (dtm == getDataTypeManager()) {
+			return this;
+		}
 		EnumDataType enumDataType =
 			new EnumDataType(getCategoryPath(), getName(), getLength(), getUniversalID(),
 				getSourceArchive(), getLastChangeTime(), getLastChangeTimeInSourceArchive(), dtm);

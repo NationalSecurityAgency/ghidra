@@ -22,7 +22,7 @@ import org.junit.Test;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.UsrException;
 
-public class StructureEditorLockedActions1Test extends AbstractStructureEditorLockedActionsTest {
+public class StructureEditorLockedActions1Test extends AbstractStructureEditorTest {
 
 	@Test
 	public void testArrayOnSelection() throws Exception {

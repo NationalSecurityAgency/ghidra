@@ -471,25 +471,11 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected void startTransaction(final String txDescription) {
-		runSwing(() -> {
-			try {
-				txId = program.startTransaction(txDescription);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
+		txId = program.startTransaction(txDescription);
 	}
 
 	protected void endTransaction(final boolean saveChanges) {
-		runSwing(() -> {
-			try {
-				program.endTransaction(txId, saveChanges);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
+		program.endTransaction(txId, saveChanges);
 	}
 
 	protected class RestoreListener implements DomainObjectListener {

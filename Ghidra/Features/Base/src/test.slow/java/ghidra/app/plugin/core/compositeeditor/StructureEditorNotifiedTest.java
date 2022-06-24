@@ -19,8 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.Window;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 import ghidra.program.model.data.*;
 import ghidra.util.Swing;
@@ -29,42 +28,24 @@ import ghidra.util.task.TaskMonitor;
 
 public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
-	protected void init(Structure dt, final Category cat) {
-		boolean commit = true;
-		startTransaction("Structure Editor Test Initialization");
-		try {
-			DataTypeManager dataTypeManager = cat.getDataTypeManager();
-			if (dt.getDataTypeManager() != dataTypeManager) {
-				dt = dt.clone(dataTypeManager);
-			}
-			CategoryPath categoryPath = cat.getCategoryPath();
-			if (!dt.getCategoryPath().equals(categoryPath)) {
-				try {
-					dt.setCategoryPath(categoryPath);
-				}
-				catch (DuplicateNameException e) {
-					commit = false;
-					Assert.fail(e.getMessage());
-				}
-			}
-		}
-		finally {
-			endTransaction(commit);
-		}
+	private int persistentTxId = 0;
 
-		Structure structDt = dt;
-		runSwing(() -> {
-			installProvider(new StructureEditorProvider(plugin, structDt, false));
-		});
+	@Override
+	@Before
+	public void setUp() throws Exception {
+		super.setUp();
 
-		model = provider.getModel();
-		startTransaction("Modify Program");
+		// Create overlapping trasnaction to handle all changes
+		persistentTxId = program.startTransaction("Modify Program");
 	}
 
 	@Override
-	protected void cleanup() {
-		endTransaction(false);
-		provider.dispose();
+	@After
+	public void tearDown() throws Exception {
+		if (persistentTxId != 0) {
+			program.endTransaction(persistentTxId, true);
+		}
+		super.tearDown();
 	}
 
 	@Test

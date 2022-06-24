@@ -440,6 +440,9 @@ class UnionDB extends CompositeDB implements UnionInternal {
 
 	@Override
 	public Union clone(DataTypeManager dtm) {
+		if (dtm == getDataTypeManager()) {
+			return this;
+		}
 		UnionDataType union = new UnionDataType(getCategoryPath(), getName(), getUniversalID(),
 			getSourceArchive(), getLastChangeTime(), getLastChangeTimeInSourceArchive(), dtm);
 		union.setDescription(getDescription());
