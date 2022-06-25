@@ -35,6 +35,10 @@ public class LoadCommandFactory {
 
 	/**
 	 * Create and parses a {@link LoadCommand}
+	 * <p>
+	 * NOTE: Parsing {@link LoadCommand}s whose data lives in the __LINKEDIT segment require that
+	 * the __LINKEDIT {@link SegmentCommand} have already been parsed.  Thus, it is required that
+	 * this method be called on {@link SegmentCommand}s before other types of {@link LoadCommand}s.
 	 * 
 	 * @param reader A {@link BinaryReader reader} that points to the start of the load command
 	 * @param header The {@link MachHeader header} associated with this load command	 
@@ -156,6 +160,9 @@ public class LoadCommandFactory {
 	 * Gets a {@link BinaryReader} that points to the given {@link MachHeader Mach-O header's} 
 	 * __LINKEDIT segment.  Note that this segment may live in a different provider than
 	 * the Mach-O header if a {@link SplitDyldCache} is being used.
+	 * <p>
+	 * NOTE: This method assumes that the __LINKEDIT segment {@link LoadCommand} has already been
+	 * parsed.
 	 * 
 	 * @param reader The {@link BinaryReader} used to read the given Mach-O header
 	 * @param header The {@link MachHeader Mach-O header}
