@@ -96,12 +96,12 @@ OP2: imm16      is addrMode=3; imm16
 }
 
 # 2-byte EA operand for JMP/JSR
-OP2EA: imm8,X      is addrMode=2 & X; imm8
+EA2: imm8,X      is addrMode=2 & X; imm8
 {
     local tmp:2 = X + imm8;
     export tmp;
 }
-OP2EA: imm16    is addrMode=3; imm16
+EA2: imm16    is addrMode=3; imm16
 {
     local tmp:2 = imm16;
     export tmp;
@@ -524,9 +524,9 @@ macro PushEntireState()
     test(OP1);
 }
 
-:JMP OP2EA    is (op=0x6E | op=0x7E) ... & OP2EA
+:JMP EA2    is (op=0x6E | op=0x7E) ... & EA2
 {
-    local target:2 = OP2EA;
+    local target:2 = EA2;
     goto [target];
 }
 
@@ -898,11 +898,11 @@ macro PushEntireState()
     call REL;
 }
 
-:JSR OP2EA    is (op=0xAD | op=0xBD) ... & OP2EA
+:JSR EA2    is (op=0xAD | op=0xBD) ... & EA2
 {
     local addr:2 = inst_next;
     Push2(S, addr);
-    local target:2 = OP2EA;
+    local target:2 = EA2;
     call [target];
 }
 
