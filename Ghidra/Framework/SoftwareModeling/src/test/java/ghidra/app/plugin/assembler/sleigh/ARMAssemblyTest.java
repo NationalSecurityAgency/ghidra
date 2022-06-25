@@ -71,6 +71,11 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	}
 
 	@Test
+	public void testAssemble_T_movs_r0_r0() {
+		assertOneCompatRestExact("movs r0,r0", "00:00", THUMB, 0x00400000, "movs r0,r0");
+	}
+
+	@Test
 	public void testAssemble_T_bl_0x00008000() {
 		// What makes this different from the above test is that it jumps backward
 		assertOneCompatRestExact("bl 0x00008000", "ff:f7:be:ff", THUMB, 0x00008080,

@@ -19,6 +19,7 @@ import com.google.common.collect.Range;
 
 import generic.NestedIterator;
 import ghidra.program.model.address.*;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
 
 public abstract class AbstractBaseDBTraceCodeUnitsView<T extends DBTraceCodeUnitAdapter> {
@@ -27,6 +28,10 @@ public abstract class AbstractBaseDBTraceCodeUnitsView<T extends DBTraceCodeUnit
 
 	public AbstractBaseDBTraceCodeUnitsView(DBTraceCodeSpace space) {
 		this.space = space;
+	}
+
+	public Trace getTrace() {
+		return space.manager.getTrace();
 	}
 
 	public abstract int size();

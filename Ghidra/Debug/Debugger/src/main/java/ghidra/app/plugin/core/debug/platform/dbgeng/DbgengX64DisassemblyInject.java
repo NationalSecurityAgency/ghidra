@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.workflow.*;
 import ghidra.app.services.DebuggerModelService;
 import ghidra.app.services.TraceRecorder;
@@ -49,7 +50,7 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 	}
 
 	@Override
-	public void pre(PluginTool tool, DisassembleTraceCommand command, Trace trace,
+	public void pre(PluginTool tool, TraceDisassembleCommand command, Trace trace,
 			Language language, long snap, TraceThread thread, AddressSetView startSet,
 			AddressSetView restricted) {
 		AddressRange first = startSet.getFirstRange();

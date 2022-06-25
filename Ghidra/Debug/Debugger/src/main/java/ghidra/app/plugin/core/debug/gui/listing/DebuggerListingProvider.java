@@ -348,6 +348,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		return false;
 	}
 
+	@Override
+	public boolean isDynamic() {
+		return true;
+	}
+
 	/**
 	 * Check if this is the main dynamic listing.
 	 * 

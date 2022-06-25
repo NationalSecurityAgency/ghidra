@@ -13,35 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.workflow;
+package ghidra.app.plugin.core.debug.disassemble;
+
+import com.google.common.collect.Range;
 
 import ghidra.framework.cmd.TypedBackgroundCommand;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.MemoryBufferImpl;
-import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.MathUtilities;
 import ghidra.util.task.TaskMonitor;
 
-public class DisassembleTraceCommand extends TypedBackgroundCommand<TraceProgramView> {
-	public static DisassembleTraceCommand create(TraceGuestPlatform guest, Address start,
-			AddressSetView restrictedSet) {
-		return guest == null ? new DisassembleTraceCommand(start, restrictedSet)
-				: new DisassembleGuestTraceCommand(guest, start, restrictedSet);
-	}
+public class TraceDisassembleCommand extends TypedBackgroundCommand<TraceProgramView> {
 
+	protected final TracePlatform platform;
 	protected final Address start;
 	protected final AddressSetView restrictedSet;
 
 	protected RegisterValue initialContext;
 	private AddressSetView disassembled;
 
-	public DisassembleTraceCommand(Address start, AddressSetView restrictedSet) {
+	public TraceDisassembleCommand(TracePlatform platform, Address start,
+			AddressSetView restrictedSet) {
 		super("Disassemble", true, true, false);
+		this.platform = platform;
 		this.start = start;
 		this.restrictedSet = restrictedSet;
 	}
@@ -51,11 +50,12 @@ public class DisassembleTraceCommand extends TypedBackgroundCommand<TraceProgram
 	}
 
 	protected Disassembler getDisassembler(TraceProgramView view, TaskMonitor monitor) {
-		return Disassembler.getDisassembler(view, monitor, monitor::setMessage);
+		return Disassembler.getDisassembler(platform.getLanguage(), platform.getAddressFactory(),
+			monitor, monitor::setMessage);
 	}
 
 	protected MemBuffer getBuffer(TraceProgramView view) {
-		return new MemoryBufferImpl(view.getMemory(), start);
+		return platform.getMappedMemBuffer(view.getSnap(), platform.mapHostToGuest(start));
 	}
 
 	protected int computeLimit() {
@@ -68,14 +68,12 @@ public class DisassembleTraceCommand extends TypedBackgroundCommand<TraceProgram
 	}
 
 	protected AddressSetView writeBlock(TraceProgramView view, InstructionBlock block) {
-		InstructionSet set = new InstructionSet(view.getAddressFactory());
+		InstructionSet set = new InstructionSet(platform.getAddressFactory());
 		set.addBlock(block);
-		try {
-			return view.getListing().addInstructions(set, true);
-		}
-		catch (CodeUnitInsertionException e) {
-			return new AddressSet();
-		}
+		return view.getTrace()
+				.getCodeManager()
+				.instructions()
+				.addInstructionSet(Range.atLeast(view.getSnap()), platform, set, true);
 	}
 
 	@Override
@@ -83,8 +81,21 @@ public class DisassembleTraceCommand extends TypedBackgroundCommand<TraceProgram
 		Disassembler disassembler = getDisassembler(view, monitor);
 		MemBuffer buffer = getBuffer(view);
 		int limit = computeLimit();
+		// TODO: limit is actually instruction count, not byte count :'(
 		InstructionBlock block = disassembler.pseudoDisassembleBlock(buffer, initialContext, limit);
-		disassembled = writeBlock(view, block);
+		if (block == null) {
+			return true; // Alignment issue. Just go silently.
+		}
+		InstructionBlock filtered = new InstructionBlock(block.getStartAddress());
+		for (Instruction ins : block) {
+			if (restrictedSet.contains(ins.getMaxAddress())) {
+				filtered.addInstruction(ins);
+			}
+			else {
+				break;
+			}
+		}
+		disassembled = writeBlock(view, filtered);
 		return true;
 	}
 

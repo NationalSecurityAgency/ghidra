@@ -26,6 +26,7 @@ import generic.NestedIterator;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.util.LockHold;
 
@@ -38,6 +39,10 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 		this.manager = manager;
 		this.activeSpacesView =
 			Collections2.transform(manager.getActiveMemorySpaces(), this::getView);
+	}
+
+	public Trace getTrace() {
+		return manager.getTrace();
 	}
 
 	protected abstract M getView(DBTraceCodeSpace space);

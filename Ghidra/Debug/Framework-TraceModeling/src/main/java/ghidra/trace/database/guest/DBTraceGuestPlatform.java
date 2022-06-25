@@ -42,7 +42,8 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 @DBAnnotatedObjectInfo(version = 0)
-public class DBTraceGuestPlatform extends DBAnnotatedObject implements TraceGuestPlatform {
+public class DBTraceGuestPlatform extends DBAnnotatedObject
+		implements TraceGuestPlatform, InternalTracePlatform {
 	public static final String TABLE_NAME = "Platforms";
 
 	@DBAnnotatedObjectInfo(version = 0)
@@ -160,6 +161,16 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject implements TraceGues
 		return manager.trace;
 	}
 
+	@Override
+	public int getIntKey() {
+		return (int) key;
+	}
+
+	@Override
+	public boolean isGuest() {
+		return true;
+	}
+
 	protected void deleteMappedRange(DBTraceGuestPlatformMappedRange range, TaskMonitor monitor)
 			throws CancelledException {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
@@ -175,6 +186,7 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject implements TraceGues
 		}
 	}
 
+	@Override
 	@Internal
 	public DBTraceGuestLanguage getLanguageEntry() {
 		return languageEntry;

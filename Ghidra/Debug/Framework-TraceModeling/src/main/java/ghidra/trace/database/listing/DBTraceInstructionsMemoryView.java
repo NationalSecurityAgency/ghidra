@@ -24,7 +24,7 @@ import com.google.common.collect.Range;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceInstructionsView;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
@@ -50,17 +50,16 @@ public class DBTraceInstructionsMemoryView
 
 	@Override
 	public DBTraceInstruction create(Range<Long> lifespan, Address address,
-			TraceGuestPlatform platform, InstructionPrototype prototype,
+			TracePlatform platform, InstructionPrototype prototype,
 			ProcessorContextView context) throws CodeUnitInsertionException {
 		return delegateWrite(address.getAddressSpace(),
 			m -> m.create(lifespan, address, platform, prototype, context));
 	}
 
 	@Override
-	public AddressSetView addInstructionSet(Range<Long> lifespan, TraceGuestPlatform platform,
+	public AddressSetView addInstructionSet(Range<Long> lifespan, TracePlatform platform,
 			InstructionSet instructionSet, boolean overwrite) {
-		InstructionSet mappedSet = manager.platformManager
-				.mapGuestInstructionAddressesToHost(platform, instructionSet);
+		InstructionSet mappedSet = platform.mapGuestInstructionAddressesToHost(instructionSet);
 
 		Map<AddressSpace, InstructionSet> breakDown = new HashMap<>();
 		// TODO: I'm not sure the consequences of breaking an instruction set down.

@@ -129,7 +129,7 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 			tb.trace.getThreadManager().createThread("Thread 2", 4);
 
 			tb.addData(0, tb.addr(0x4004), Undefined4DataType.dataType, tb.buf(6, 7, 8, 9));
-			tb.addInstruction(0, tb.addr(0x4008), null, tb.buf(0xf4, 0));
+			tb.addInstruction(0, tb.addr(0x4008), tb.host, tb.buf(0xf4, 0));
 
 			Language x86 = getSLEIGH_X86_LANGUAGE();
 			DBTraceGuestPlatform guest =

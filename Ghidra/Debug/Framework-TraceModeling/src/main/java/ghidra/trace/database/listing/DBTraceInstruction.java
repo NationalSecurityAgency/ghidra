@@ -32,13 +32,13 @@ import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
-import ghidra.trace.database.guest.DBTraceGuestPlatform;
 import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
+import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.database.symbol.DBTraceReferenceSpace;
 import ghidra.trace.model.Trace.TraceInstructionChangeType;
-import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceInstruction;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.util.*;
@@ -79,7 +79,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	protected class GuestInstructionContext implements InstructionContext {
 		@Override
 		public Address getAddress() {
-			return guest.mapHostToGuest(getX1());
+			return platform.mapHostToGuest(getX1());
 		}
 
 		@Override
@@ -118,7 +118,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	protected FlowOverride flowOverride;
 
 	protected ParserContext parserContext;
-	protected DBTraceGuestPlatform guest;
+	protected InternalTracePlatform platform;
 	protected InstructionContext instructionContext;
 
 	public DBTraceInstruction(DBTraceCodeSpace space,
@@ -127,9 +127,9 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		super(space, tree, store, record);
 	}
 
-	protected void doSetGuestMapping(final DBTraceGuestPlatform guest) {
-		this.guest = guest;
-		if (guest == null) {
+	protected void doSetPlatformMapping(final InternalTracePlatform platform) {
+		this.platform = platform;
+		if (platform.isHost()) {
 			instructionContext = this;
 		}
 		else {
@@ -137,11 +137,11 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		}
 	}
 
-	protected void set(DBTraceGuestPlatform guest, InstructionPrototype prototype,
+	protected void set(InternalTracePlatform platform, InstructionPrototype prototype,
 			ProcessorContextView context) {
-		this.platformKey = (int) (guest == null ? -1 : guest.getKey());
+		this.platformKey = platform.getIntKey();
 		// NOTE: Using "this" for the MemBuffer seems a bit precarious.
-		DBTraceGuestLanguage languageEntry = guest == null ? null : guest.getLanguageEntry();
+		DBTraceGuestLanguage languageEntry = platform == null ? null : platform.getLanguageEntry();
 		this.prototypeKey = (int) space.manager
 				.findOrRecordPrototype(prototype, languageEntry, this, context)
 				.getKey();
@@ -149,7 +149,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		update(PLATFORM_COLUMN, PROTOTYPE_COLUMN, FLAGS_COLUMN);
 
 		// TODO: Can there be more in this context than the context register???
-		doSetGuestMapping(guest);
+		doSetPlatformMapping(platform);
 		this.prototype = prototype;
 	}
 
@@ -160,8 +160,8 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			// Wait for something to set prototype
 			return;
 		}
-		guest = space.manager.platformManager.getPlatformByKey(platformKey);
-		if (guest == null && platformKey != -1) {
+		platform = space.manager.platformManager.getPlatformByKey(platformKey);
+		if (platform == null) {
 			throw new IOException("Instruction table is corrupt. Missing platform: " + platformKey);
 		}
 		prototype = space.manager.getPrototypeByKey(prototypeKey);
@@ -173,7 +173,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		}
 		flowOverride = FlowOverride.values()[(flags & FLOWOVERRIDE_SET_MASK) >> FLOWOVERRIDE_SHIFT];
 
-		doSetGuestMapping(guest);
+		doSetPlatformMapping(platform);
 	}
 
 	@Override
@@ -206,8 +206,8 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	}
 
 	@Override
-	public TraceGuestPlatform getGuestPlatform() {
-		return guest;
+	public TracePlatform getPlatform() {
+		return platform;
 	}
 
 	@Override
@@ -273,8 +273,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	public Address getDefaultFallThrough() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			Address fallThrough = getGuestDefaultFallThrough();
-			return guest == null || fallThrough == null ? fallThrough
-					: guest.mapGuestToHost(fallThrough);
+			return platform.mapGuestToHost(fallThrough);
 		}
 	}
 
@@ -392,12 +391,12 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	public Address[] getDefaultFlows() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			Address[] guestFlows = getGuestDefaultFlows();
-			if (guest == null || guestFlows == null) {
+			if (platform.isHost() || guestFlows == null) {
 				return guestFlows;
 			}
 			List<Address> hostFlows = new ArrayList<>();
 			for (Address g : guestFlows) {
-				Address h = guest.mapGuestToHost(g);
+				Address h = platform.mapGuestToHost(g);
 				if (h != null) {
 					hostFlows.add(h);
 				}

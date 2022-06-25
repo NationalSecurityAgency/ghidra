@@ -15,7 +15,7 @@
  */
 package generic;
 
-import java.util.Iterator;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,7 +39,12 @@ public interface Unique {
 		}
 		T result = it.next();
 		if (it.hasNext()) {
-			throw new AssertionError("Expected exactly one. Got many.");
+			List<T> all = new ArrayList<>();
+			all.add(result);
+			while (it.hasNext()) {
+				all.add(it.next());
+			}
+			throw new AssertionError("Expected exactly one. Got many: " + all);
 		}
 		return result;
 	}
