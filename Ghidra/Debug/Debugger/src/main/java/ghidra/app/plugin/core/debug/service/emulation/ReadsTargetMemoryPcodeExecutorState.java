@@ -40,8 +40,8 @@ public class ReadsTargetMemoryPcodeExecutorState
 	protected class ReadsTargetMemoryCachedSpace extends AbstractReadsTargetCachedSpace {
 
 		public ReadsTargetMemoryCachedSpace(Language language, AddressSpace space,
-				TraceMemorySpace source, long snap) {
-			super(language, space, source, snap);
+				TraceMemorySpace backing, long snap) {
+			super(language, space, backing, snap);
 		}
 
 		@Override
@@ -69,7 +69,7 @@ public class ReadsTargetMemoryPcodeExecutorState
 			if (!isLive()) {
 				return false;
 			}
-			waitTimeout(recorder.captureProcessMemory(unknown, TaskMonitor.DUMMY, false));
+			waitTimeout(recorder.readMemoryBlocks(unknown, TaskMonitor.DUMMY, false));
 			return true;
 		}
 
@@ -108,7 +108,7 @@ public class ReadsTargetMemoryPcodeExecutorState
 											" bytes");
 								}
 								// write(lower - shift, data, 0 ,read);
-								cache.putData(lower - shift, data, 0, read);
+								bytes.putData(lower - shift, data, 0, read);
 							}
 							catch (MemoryAccessException | AddressOutOfBoundsException e) {
 								throw new AssertionError(e);

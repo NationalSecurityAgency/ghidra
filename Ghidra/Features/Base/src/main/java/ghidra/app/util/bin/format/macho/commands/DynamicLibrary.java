@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -34,23 +34,8 @@ public class DynamicLibrary implements StructConverter {
 	private int current_version;
 	private int compatibility_version;
 
-	public static DynamicLibrary createDynamicLibrary(FactoryBundledWithBinaryReader reader,
-			LoadCommand command) throws IOException {
-		DynamicLibrary dynamicLibrary =
-			(DynamicLibrary) reader.getFactory().create(DynamicLibrary.class);
-		dynamicLibrary.initDynamicLibrary(reader, command);
-		return dynamicLibrary;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DynamicLibrary() {
-	}
-
-	private void initDynamicLibrary(FactoryBundledWithBinaryReader reader, LoadCommand command)
-			throws IOException {
-		name = LoadCommandString.createLoadCommandString(reader, command);
+	public DynamicLibrary(BinaryReader reader, LoadCommand command) throws IOException {
+		name = new LoadCommandString(reader, command);
 		timestamp = reader.readNextInt();
 		current_version = reader.readNextInt();
 		compatibility_version = reader.readNextInt();

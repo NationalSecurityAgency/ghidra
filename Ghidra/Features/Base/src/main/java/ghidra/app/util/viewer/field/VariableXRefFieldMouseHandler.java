@@ -34,31 +34,12 @@ import ghidra.program.util.*;
  */
 public class VariableXRefFieldMouseHandler extends XRefFieldMouseHandler {
 
-	private final static Class<?>[] SUPPORTED_CLASSES = new Class<?>[] {
-		VariableXRefFieldLocation.class, VariableXRefHeaderFieldLocation.class };
-
-	@Override
-	protected Address getToReferenceAddress(ProgramLocation programLocation, Program program) {
-		Variable variable = ((VariableLocation) programLocation).getVariable();
-		return variable.getMinAddress();
-	}
+	private final static Class<?>[] SUPPORTED_CLASSES =
+		new Class<?>[] { VariableXRefFieldLocation.class, VariableXRefHeaderFieldLocation.class };
 
 	@Override
 	protected Address getFromReferenceAddress(ProgramLocation programLocation) {
 		return ((VariableXRefFieldLocation) programLocation).getRefAddress();
-	}
-
-	@Override
-	protected ProgramLocation getReferredToLocation(Navigatable navigatable,
-			ProgramLocation location) {
-		VariableLocation variableLocation = (VariableLocation) location;
-		Variable variable = variableLocation.getVariable();
-		return new VariableNameFieldLocation(variable.getProgram(), variable, 0);
-	}
-
-	@Override
-	protected int getIndex(ProgramLocation programLocation) {
-		return ((VariableXRefFieldLocation) programLocation).getIndex();
 	}
 
 	@Override
@@ -71,6 +52,7 @@ public class VariableXRefFieldMouseHandler extends XRefFieldMouseHandler {
 		return location instanceof VariableXRefHeaderFieldLocation;
 	}
 
+	@Override
 	protected void showXRefDialog(Navigatable navigatable, ProgramLocation location,
 			ServiceProvider serviceProvider) {
 		TableService service = serviceProvider.getService(TableService.class);

@@ -718,14 +718,8 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 					while (addresses.hasNext() && !addedMonitor.isCancelled()) {
 						Address address = addresses.next();
 						// if there are any conditional references, then this can't be a function start
-						ReferenceIterator referencesTo =
-							addedProgram.getReferenceManager().getReferencesTo(address);
-						while (referencesTo.hasNext()) {
-							Reference reference = referencesTo.next();
-							if (reference.getReferenceType().isConditional()) {
-								continue;
-							}
-
+						if (hasConditionalReferences(addedProgram, address)) {
+							continue;
 						}
 						Function funcAt =
 							addedProgram.getFunctionManager().getFunctionContaining(address);
@@ -742,6 +736,18 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 						new CreateFunctionCmd(address, false).applyTo(addedProgram, addedMonitor);
 					}
 					return true;
+				}
+				
+				private boolean hasConditionalReferences(Program addedProgram, Address address) {
+					ReferenceIterator refsTo =
+						addedProgram.getReferenceManager().getReferencesTo(address);
+					while (refsTo.hasNext()) {
+						Reference reference = refsTo.next();
+						if (reference.getReferenceType().isConditional()) {
+							return true;
+						}
+					}
+					return false;
 				}
 			}, potentialFuncResult);
 		}

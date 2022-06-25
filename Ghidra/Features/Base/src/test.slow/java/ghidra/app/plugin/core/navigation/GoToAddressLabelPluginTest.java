@@ -19,7 +19,8 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
 
 import org.junit.*;
 
@@ -43,13 +44,16 @@ import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.plugin.core.table.TableServicePlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.services.QueryData;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.PluginConstants;
+import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.navigation.GoToAddressLabelDialog;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProviderStub;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.*;
@@ -61,6 +65,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.VariableNameFieldLocation;
 import ghidra.test.*;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.table.field.LabelTableColumn;
 import ghidra.util.task.TaskMonitor;
@@ -107,7 +112,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(1, actions.size());
 		assertEquals("Go To Address/Label", CollectionUtils.any(actions).getName());
 		ActionContext actionContext = getActionContext();
-		assertTrue(!CollectionUtils.any(actions).isEnabledForContext(actionContext));
+		assertFalse(CollectionUtils.any(actions).isEnabledForContext(actionContext));
 
 		loadProgram("x86");
 
@@ -116,7 +121,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		final ProgramManager pm = tool.getService(ProgramManager.class);
 		runSwing(() -> pm.closeProgram(program, true));
 		actionContext = getActionContext();
-		assertTrue(!CollectionUtils.any(actions).isEnabledForContext(actionContext));
+		assertFalse(CollectionUtils.any(actions).isEnabledForContext(actionContext));
 	}
 
 	@Test
@@ -135,7 +140,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		showDialog();
 		performOkCallback();
 		assertEquals(addr("0x1006420"), cbPlugin.getCurrentAddress());
-		assertTrue(!dialog.isVisible());
+		assertFalse(dialog.isVisible());
 
 		setText("bad input");
 		showDialog();
@@ -199,7 +204,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		TableServicePlugin tablePlugin = getPlugin(tool, TableServicePlugin.class);
 		TableComponentProvider<?>[] providers = tablePlugin.getManagedComponents();
 		assertEquals(1, providers.length);
-		providers[0].closeComponent();
+		close(providers[0]);
 		providers = tablePlugin.getManagedComponents();
 		assertEquals(0, providers.length);
 	}
@@ -215,6 +220,65 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		showDialog();
 		performOkCallback();
 		assertEquals(addr("0x100494d"), cbPlugin.getCurrentAddress());
+	}
+
+	@Test
+	public void testGoToFileOffset() throws Exception {
+		loadProgram("x86");
+		Memory mem = program.getMemory();
+
+		//@formatter:off
+		// Create a 4-byte and a 1-byte memory block using a 4-byte source FileBytes (just an array
+		// in this case). The 2nd block's byte should share a file byte with the first block so we
+		// can get multiple results when doing a Go To on that file offset.
+		byte[] bytes =
+		/* Block1      |---|---|---|---|   */
+		/* FileBytes*/ { 1,  2,  3,  4 }   ;
+		/* Block2                  |---|   */
+		//@formatter:on
+
+		// Create FileBytes-based memory blocks
+		Address addr1 = addr("0x2000");
+		Address addr2 = addr("0x3000");
+		tx(program, () -> {
+			FileBytes fileBytes1 = MemoryBlockUtils.createFileBytes(program,
+				new ByteArrayProvider(program.getName() + "1", bytes), TaskMonitor.DUMMY);
+			FileBytes fileBytes2 = MemoryBlockUtils.createFileBytes(program,
+				new ByteArrayProvider(program.getName() + "2", bytes), TaskMonitor.DUMMY);
+			mem.createInitializedBlock("FileBytes1", addr1, fileBytes1, 0, 4, false);
+			mem.createInitializedBlock("FileBytes2", addr2, fileBytes2, 3, 1, false);
+		});
+
+		// Test decimal
+		setText("file:0");
+		showDialog();
+		performOkCallback();
+		assertEquals(addr1, cbPlugin.getCurrentAddress());
+
+		// Test hex
+		setText("file:0x1");
+		showDialog();
+		performOkCallback();
+		assertEquals(addr1.add(1), cbPlugin.getCurrentAddress());
+
+		// Test "case"
+		setText("FILE:2");
+		showDialog();
+		performOkCallback();
+		assertEquals(addr1.add(2), cbPlugin.getCurrentAddress());
+
+		// Test not found
+		setText("file:0x100");
+		showDialog();
+		performOkCallback();
+		assertNotEquals(addr1.add(0x100), cbPlugin.getCurrentAddress());
+
+		// Test multiple results
+		setText("file:3");
+		showDialog();
+		performOkCallback();
+		GhidraProgramTableModel<?> model = waitForModel();
+		assertEquals(2, model.getRowCount());
 	}
 
 	@Test
@@ -442,9 +506,9 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		TableServicePlugin tablePlugin = getPlugin(tool, TableServicePlugin.class);
 		TableComponentProvider<?>[] providers = tablePlugin.getManagedComponents();
 		assertEquals(1, providers.length);
-		providers[0].closeComponent();
-		providers = tablePlugin.getManagedComponents();
-		assertEquals(0, providers.length);
+		close(providers[0]);
+		TableComponentProvider<?>[] newProviders = tablePlugin.getManagedComponents();
+		assertEquals(0, newProviders.length);
 	}
 
 	@Test
@@ -466,7 +530,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		TableComponentProvider<?>[] providers = getProviders();
 		assertEquals(1, providers.length);
-		providers[0].closeComponent();
+		close(providers[0]);
 		providers = getProviders();
 		assertEquals(0, providers.length);
 
@@ -538,9 +602,10 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	public void testQueryResultsDialogCaseSensitive2() throws Exception {
 		loadProgram("x86");
 		Symbol symbol = getUniqueSymbol(program, "comdlg32.dll_PageSetupDlgW");
-		int transactionID = program.startTransaction("test");
-		symbol.setName("COmlg32.dll_PageSetupDlgW", SourceType.USER_DEFINED);
-		program.endTransaction(transactionID, true);
+
+		tx(program, () -> {
+			symbol.setName("COmlg32.dll_PageSetupDlgW", SourceType.USER_DEFINED);
+		});
 
 		setText("COm*");
 		performOkCallback();
@@ -553,11 +618,11 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	public void testQueryResultsDialogNotCaseSensitive() throws Exception {
 		loadProgram("x86");
 		Symbol symbol = getUniqueSymbol(program, "comdlg32.dll_PageSetupDlgW");
-		int transactionID = program.startTransaction("test");
-		symbol.setName("COmlg32.dll_PageSetupDlgW", SourceType.USER_DEFINED);
-		program.endTransaction(transactionID, true);
-		final JCheckBox cb = findComponent(dialog, JCheckBox.class);
+		tx(program, () -> {
+			symbol.setName("COmlg32.dll_PageSetupDlgW", SourceType.USER_DEFINED);
+		});
 
+		JCheckBox cb = findComponent(dialog, JCheckBox.class);
 		runSwing(() -> {
 			cb.setSelected(false);
 			dialog.setText("COm*");
@@ -569,7 +634,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(3, model.getRowCount());
 
 		TableComponentProvider<?>[] providers = getProviders();
-		providers[0].closeComponent();
+		close(providers[0]);
 	}
 
 	@Test
@@ -579,12 +644,12 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		setText("rsrc_S*");
 		performOkCallback();
 
-		final GhidraProgramTableModel<?> model = waitForModel();
+		GhidraProgramTableModel<?> model = waitForModel();
 		assertEquals(4, model.getRowCount());
 		TableComponentProvider<?>[] providers = getProviders();
 		GThreadedTablePanel<?> panel =
 			(GThreadedTablePanel<?>) TestUtils.getInstanceField("threadedPanel", providers[0]);
-		final GTable table = panel.getTable();
+		GTable table = panel.getTable();
 
 		assertEquals("0100def8", model.getValueAt(0, 0).toString());
 		assertEquals("0100e2f8", model.getValueAt(1, 0).toString());
@@ -594,7 +659,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		clickTableCell(table, 2, 0, 2);
 		assertEquals(addr("0100eb90"), cbPlugin.getCurrentAddress());
 
-		providers[0].closeComponent();
+		close(providers[0]);
 	}
 
 	@Test
@@ -604,38 +669,38 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		DockingActionIf next = getAction(np, "Next Location in History");
 		DockingActionIf prev = getAction(np, "Previous Location in History");
 		DockingActionIf clear = getAction(np, "Clear History Buffer");
-		assertTrue(!clear.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!next.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!prev.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(clear.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
 
 		loadProgram("x86");
 
-		assertTrue(!clear.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!next.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!prev.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(clear.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
 
 		setText("100493b");
 		performOkCallback();
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 
 		clear.actionPerformed(new ActionContext());
-		assertTrue(!clear.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!next.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!prev.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(clear.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
 
 		setText("1001000");
 		performOkCallback();
 		assertEquals(addr("1001000"), cbPlugin.getCurrentAddress());
 		waitForPostedSwingRunnables();
 		assertTrue(clear.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!next.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
 		prev.actionPerformed(new ActionContext());
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 
 		assertTrue(next.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!prev.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
 
 		next.actionPerformed(new ActionContext());
 		assertEquals(addr("1001000"), cbPlugin.getCurrentAddress());
@@ -644,7 +709,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		performOkCallback();
 		assertEquals(addr("1001010"), cbPlugin.getCurrentAddress());
 		waitForPostedSwingRunnables();
-		assertTrue(!next.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
 		prev.actionPerformed(new ActionContext());
@@ -652,13 +717,13 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 		assertTrue(next.isEnabledForContext(provider.getActionContext(null)));
-		assertTrue(!prev.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
 
 		setText("1001020");
 		performOkCallback();
 		assertEquals(addr("1001020"), cbPlugin.getCurrentAddress());
 		waitForPostedSwingRunnables();
-		assertTrue(!next.isEnabledForContext(provider.getActionContext(null)));
+		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
 	}
@@ -677,7 +742,6 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		VariableNameFieldLocation vloc = (VariableNameFieldLocation) loc;
 		assertEquals(locals[locals.length - 1].getName(), vloc.getName());
-
 	}
 
 	@Test
@@ -686,7 +750,6 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		setText("rand");
 		performOkCallback();
 		assertEquals(addr("0x1002000"), cbPlugin.getCurrentAddress());
-
 	}
 
 	@Test
@@ -880,18 +943,13 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		//
 
 		ProgramDB p = builder.getProgram();
-		int txID = p.startTransaction("All Local Variable");
-		try {
+		tx(p, () -> {
 			FunctionManager fm = p.getFunctionManager();
 			Function f = fm.getFunctionAt(builder.addr("0x01006420"));
 			ByteDataType dt = new ByteDataType();
 			Variable var = new LocalVariableImpl("bob.local", 0, dt, builder.addr("0x01006421"), p);
 			f.addLocalVariable(var, SourceType.USER_DEFINED);
-
-		}
-		finally {
-			p.endTransaction(txID, true);
-		}
+		});
 
 		return p;
 	}
@@ -949,7 +1007,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	private ActionContext getActionContext() {
-		ActionContext context = cbPlugin.getProvider().getActionContext(null);
+		ActionContext context = runSwing(() -> cbPlugin.getProvider().getActionContext(null));
 		if (context == null) {
 			context = new ActionContext();
 		}
@@ -958,7 +1016,6 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	private MemoryBlock createOverlay(String name, String address, long size) throws Exception {
 		int transactionID = program.startTransaction("Test");
-
 		try {
 			Memory memory = program.getMemory();
 			return memory.createInitializedBlock(name, addr(address), size, (byte) 0,
@@ -1015,7 +1072,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	private void showDialog() {
-		SwingUtilities.invokeLater(() -> dialog.show(provider, cbPlugin.getCurrentAddress(), tool));
+		Swing.runLater(() -> dialog.show(provider, cbPlugin.getCurrentAddress(), tool));
 		waitForPostedSwingRunnables();
 	}
 
@@ -1041,4 +1098,9 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 			options.setBoolean(NavigationOptions.ASSUME_CURRENT_ADDRESS_SPACE, b);
 		});
 	}
+
+	private void close(TableComponentProvider<?> c) {
+		runSwing(c::closeComponent);
+	}
+
 }

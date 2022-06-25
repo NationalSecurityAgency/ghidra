@@ -758,7 +758,7 @@ public class ProgramBuilder {
 		return tx(() -> {
 			ReferenceManager refManager = program.getReferenceManager();
 			Reference ref = refManager.addOffsetMemReference(addr(fromAddress), addr(toAddress),
-				offset, refType, sourceType, opIndex);
+				false, offset, refType, sourceType, opIndex);
 			return ref;
 		});
 	}

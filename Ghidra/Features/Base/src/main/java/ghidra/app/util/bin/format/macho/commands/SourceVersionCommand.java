@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -29,30 +29,13 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a source_version_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a source_version_command structure 
  */
 public class SourceVersionCommand extends LoadCommand {
 	private long version;
 
-	static SourceVersionCommand createSourceVersionCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-
-		SourceVersionCommand command =
-			(SourceVersionCommand) reader.getFactory().create(SourceVersionCommand.class);
-		command.initEntryPointCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public SourceVersionCommand() {
-	}
-
-	private void initEntryPointCommand(FactoryBundledWithBinaryReader reader) throws IOException {
-		initLoadCommand(reader);
+	SourceVersionCommand(BinaryReader reader) throws IOException {
+		super(reader);
 		version = reader.readNextLong();
 	}
 

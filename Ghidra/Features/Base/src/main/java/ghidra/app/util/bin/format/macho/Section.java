@@ -20,8 +20,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.commands.SegmentNames;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -46,25 +46,11 @@ public class Section implements StructConverter {
 	private int reserved2;
 	private int reserved3;//only used for 64 bit
 
-	private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
 	private boolean is32bit;
 	private List<RelocationInfo> relocations = new ArrayList<>();
 
-	public static Section createSection(FactoryBundledWithBinaryReader reader, boolean is32bit)
-			throws IOException {
-		Section section = (Section) reader.getFactory().create(Section.class);
-		section.initSection(reader, is32bit);
-		return section;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public Section() {
-	}
-
-	private void initSection(FactoryBundledWithBinaryReader reader, boolean is32bit)
-			throws IOException {
+	public Section(BinaryReader reader, boolean is32bit) throws IOException {
 		this.reader = reader;
 		this.is32bit = is32bit;
 
@@ -93,7 +79,7 @@ public class Section implements StructConverter {
 		long index = reader.getPointerIndex();
 		reader.setPointerIndex(reloff);
 		for (int i = 0; i < nrelocs; ++i) {
-			relocations.add(RelocationInfo.createRelocationInfo(reader));
+			relocations.add(new RelocationInfo(reader));
 		}
 		reader.setPointerIndex(index);
 	}
@@ -183,6 +169,10 @@ public class Section implements StructConverter {
 	}
 
 	public long getAddress() {
+		// Mask off possible chained fixup found in kernelcache section addresses
+		if ((addr & 0xfff000000000L) == 0xfff000000000L) {
+			return addr | 0xffff000000000000L;
+		}
 		return addr;
 	}
 

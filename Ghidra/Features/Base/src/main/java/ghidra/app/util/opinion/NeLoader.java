@@ -20,19 +20,16 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
-import generic.continues.ContinuesFactory;
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.ne.*;
-import ghidra.app.util.bin.format.ne.Resource;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -67,7 +64,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		if (provider.length() < MIN_BYTE_LENGTH) {
 			return loadSpecs;
 		}
-		NewExecutable ne = new NewExecutable(RethrowContinuesFactory.INSTANCE, provider, null);
+		NewExecutable ne = new NewExecutable(provider, null);
 		WindowsHeader wh = ne.getWindowsHeader();
 		if (wh != null) {
 			List<QueryResult> results = QueryOpinionService.query(getName(),
@@ -94,8 +91,6 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 		initVars();
 
-		ContinuesFactory factory = MessageLogContinuesFactory.create(log);
-
 		// We don't use the file bytes to create block because the bytes are manipulated before
 		// forming the block.  Creating the FileBytes anyway in case later we want access to all
 		// the original bytes.
@@ -103,7 +98,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 		SegmentedAddressSpace space =
 			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
-		NewExecutable ne = new NewExecutable(factory, provider, space.getAddress(SEGMENT_START, 0));
+		NewExecutable ne = new NewExecutable(provider, space.getAddress(SEGMENT_START, 0));
 		WindowsHeader wh = ne.getWindowsHeader();
 		InformationBlock ib = wh.getInformationBlock();
 		SegmentTable st = wh.getSegmentTable();
@@ -380,8 +375,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 							listing.createData(straddr, new StringDataType(),
 								Conv.byteToInt(string.getLength()));
 						}
-						catch (AddressOverflowException | CodeUnitInsertionException
-								| DataTypeConflictException e) {
+						catch (AddressOverflowException | CodeUnitInsertionException e) {
 							log.appendMsg("Error creating data");
 							log.appendException(e);
 						}

@@ -15,8 +15,7 @@
  */
 package ghidra.program.model.data;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.Address;
@@ -30,7 +29,6 @@ public class MenuResourceDataType extends DynamicDataType {
 
 	private static short MF_POPUP = 0x0010;
 	private static short MF_END = 0x0080;
-	private static short LAST = 0x0090;
 
 	static {
 		ClassTranslator.put("ghidra.app.plugin.prototype.data.MenuResourceDataType",
@@ -68,7 +66,6 @@ public class MenuResourceDataType extends DynamicDataType {
 	protected DataTypeComponent[] getAllComponents(MemBuffer mbIn) {
 		List<DataTypeComponent> comps = new ArrayList<>();
 		int tempOffset = 0;
-		boolean lastMenuItem = false;
 		MemBuffer memBuffer = mbIn;
 		short option;
 
@@ -81,18 +78,30 @@ public class MenuResourceDataType extends DynamicDataType {
 
 			//loop through menu items and add them
 			boolean lastItem = false;
+
+			// keep options from parent popup menu items
+			Stack<Short> parentItemOptions = new Stack<>();
+			parentItemOptions.push((short) 0);
+
 			while (!lastItem) {
 				option = memBuffer.getShort(tempOffset);
 				tempOffset = addMenuItemTemplate(memBuffer, comps, tempOffset, option);
-				//last item in a menu
-				if (option == MF_END) {
-					if (lastMenuItem == true) {
-						lastItem = true;
+
+				if ((option & MF_POPUP) == MF_POPUP) {
+					// Increase the depth
+					parentItemOptions.push(option);
+				}
+				else if ((option & MF_END) == MF_END) {
+					// Decrease the depth until we have found a parent menu item that isn't also the last item
+					short parentOptions = parentItemOptions.pop();
+					while ((parentOptions & MF_END) == MF_END) {
+						parentOptions = parentItemOptions.pop();
 					}
 				}
-				//last menu
-				if (option == LAST) {
-					lastMenuItem = true;
+
+				// We have finished when there are no more parent menu items
+				if (parentItemOptions.size() == 0) {
+					lastItem = true;
 				}
 			}
 		}
@@ -155,7 +164,7 @@ public class MenuResourceDataType extends DynamicDataType {
 			int tempOffset, short mtOption) {
 
 		//If it is a popup there is only an option field, no ID field
-		if (mtOption == MF_POPUP) {
+		if ((mtOption & MF_POPUP) == MF_POPUP) {
 			tempOffset =
 				addComp(WordDataType.dataType, 2, "mtOption", memBuffer.getAddress(), comps,
 					tempOffset);

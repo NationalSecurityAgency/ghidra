@@ -18,8 +18,8 @@ package ghidra.app.util.bin.format.pe;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
@@ -54,12 +54,12 @@ public abstract class DataDirectory implements StructConverter, PeMarkupable {
 	public final static byte IMAGE_SIZEOF_IMAGE_DIRECTORY_ENTRY = 8;
 
 	protected NTHeader ntHeader;
-	protected FactoryBundledWithBinaryReader reader;
+	protected BinaryReader reader;
 	protected int virtualAddress;
 	protected int size;
 	protected boolean hasParsed = false;
 
-	protected void processDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
+	protected void processDataDirectory(NTHeader ntHeader, BinaryReader reader)
 			throws IOException {
 		this.ntHeader = ntHeader;
 		this.reader = reader;

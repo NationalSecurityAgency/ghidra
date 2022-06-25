@@ -96,7 +96,7 @@ class Merge {
   void collectCovering(vector<Varnode *> &vlist,HighVariable *high,PcodeOp *op);
   bool collectCorrectable(const vector<Varnode *> &vlist,list<PcodeOp *> &oplist,vector<int4> &slotlist,
 			   PcodeOp *op);
-  PcodeOp *allocateCopyTrim(Varnode *inVn,Datatype *ct,const Address &addr);
+  PcodeOp *allocateCopyTrim(Varnode *inVn,const Address &addr);
   void snipReads(Varnode *vn,list<PcodeOp *> &markedop);
   void snipIndirect(PcodeOp *indop);
   void eliminateIntersect(Varnode *vn,const vector<BlockVarnode> &blocksort);

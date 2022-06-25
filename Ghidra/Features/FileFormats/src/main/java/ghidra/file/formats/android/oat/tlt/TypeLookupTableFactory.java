@@ -41,6 +41,7 @@ public final class TypeLookupTableFactory {
 			case OatConstants.VERSION_11_RELEASE:
 				return new TypeLookupTable_Android11(reader);
 			case OatConstants.VERSION_12_RELEASE:
+			case OatConstants.VERSION_S_V2_PREVIEW:
 				return new TypeLookupTable_Android12(reader);
 			default:
 				throw new IOException(new UnsupportedOatVersionException(

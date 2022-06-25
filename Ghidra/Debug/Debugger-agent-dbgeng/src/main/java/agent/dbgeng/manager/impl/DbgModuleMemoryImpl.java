@@ -16,6 +16,7 @@
 package agent.dbgeng.manager.impl;
 
 import java.util.List;
+import java.util.Objects;
 
 import agent.dbgeng.dbgeng.DebugDataSpaces.PageState;
 import agent.dbgeng.manager.DbgModuleMemory;
@@ -33,6 +34,7 @@ public class DbgModuleMemoryImpl implements DbgModuleMemory {
 	private boolean isRead;
 	private boolean isWrite;
 	private boolean isExec;
+	private int hashcode;
 
 	public DbgModuleMemoryImpl(String index, long vmaStart, long vmaEnd, long allocationBase,
 			List<String> allocationProtect, List<String> protect, PageState state, String type,
@@ -48,6 +50,7 @@ public class DbgModuleMemoryImpl implements DbgModuleMemory {
 		this.isRead = isRead;
 		this.isWrite = isWrite;
 		this.isExec = isExec;
+		this.hashcode = Objects.hash(vmaStart, vmaEnd, getState(), type, isRead, isWrite, isExec);
 	}
 
 	@Override
@@ -106,4 +109,43 @@ public class DbgModuleMemoryImpl implements DbgModuleMemory {
 	public boolean isExec() {
 		return isExec;
 	}
+
+	@Override
+	public int hashCode() {
+		return hashcode;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof DbgModuleMemory)) {
+			return false;
+		}
+		DbgModuleMemory that = (DbgModuleMemory) obj;
+		if (this.getVmaStart() != that.getVmaStart()) {
+			return false;
+		}
+		if (this.getVmaEnd() != that.getVmaEnd()) {
+			return false;
+		}
+		if (!this.getState().equals(that.getState())) {
+			return false;
+		}
+		if (!this.getType().equals(that.getType())) {
+			return false;
+		}
+		if (this.isRead() != that.isRead()) {
+			return false;
+		}
+		if (this.isWrite() != that.isWrite()) {
+			return false;
+		}
+		if (this.isExec() != that.isExec()) {
+			return false;
+		}
+		return true;
+	}
+
 }

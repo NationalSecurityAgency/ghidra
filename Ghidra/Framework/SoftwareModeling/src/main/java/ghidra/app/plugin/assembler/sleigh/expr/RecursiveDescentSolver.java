@@ -18,24 +18,30 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import java.util.*;
 
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedConstructor;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
 /**
  * This singleton class seeks solutions to {@link PatternExpression}s
  * 
- * It is called naive, because it does not perform algebraic transformations. Rather, it attempts to
- * fold constants, assuming there is a single variable in the expression, modifying the goal as it
+ * <p>
+ * It is rather naive. It does not perform algebraic transformations. Instead, it attempts to fold
+ * constants, assuming there is a single variable in the expression, modifying the goal as it
  * descends toward that variable. If it finds a variable, i.e., token or context field, it encodes
  * the solution, positioned in the field. If the expression is constant, it checks that the goal
- * agrees. If not, an error is returned.
+ * agrees. If not, an error is returned. There are some common cases where it is forced to solve
+ * expressions involving multiple variables. Those cases are addressed in the derivatives of
+ * {@link AbstractBinaryExpressionSolver} where the situation can be detected. One common example is
+ * field concatenation using the {@code (A << 4) | B} pattern.
  * 
- * TODO This whole mechanism ought to just be factored directly into {@link PatternExpression}.
+ * <p>
+ * TODO: Perhaps this whole mechanism ought to just be factored directly into
+ * {@link PatternExpression}.
  */
 public class RecursiveDescentSolver {
-	protected static final DbgTimer dbg = DbgTimer.INACTIVE;
-	private static final RecursiveDescentSolver solver = new RecursiveDescentSolver();
+	protected static final DbgTimer DBG = DbgTimer.INACTIVE;
+	private static final RecursiveDescentSolver INSTANCE = new RecursiveDescentSolver();
 
 	// A mapping from each subclass of PatternExpression to the appropriate solver
 	protected Map<Class<?>, AbstractExpressionSolver<?>> registry = new HashMap<>();
@@ -67,7 +73,7 @@ public class RecursiveDescentSolver {
 	 * @return the singleton instance
 	 */
 	public static RecursiveDescentSolver getSolver() {
-		return solver;
+		return INSTANCE;
 	}
 
 	/**
@@ -103,59 +109,52 @@ public class RecursiveDescentSolver {
 	 * @param exp the expression to solve
 	 * @param goal the desired output (modulo a mask) of the expression
 	 * @param vals any defined symbols (usually {@code inst_start}, and {@code inst_next})
-	 * @param res resolved subconstructors, by operand index (see method details)
 	 * @param hints describes techniques applied by calling solvers
 	 * @param description a description to attached to the encoded solution
 	 * @return the encoded solution
 	 * @throws NeedsBackfillException a solution may exist, but a required symbol is missing
 	 */
 	protected AssemblyResolution solve(PatternExpression exp, MaskedLong goal,
-			Map<String, Long> vals, Map<Integer, Object> res, AssemblyResolvedConstructor cur,
-			Set<SolverHint> hints, String description) throws NeedsBackfillException {
+			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
+			String description) throws NeedsBackfillException {
 		try {
-			return getRegistered(exp.getClass()).solve(exp, goal, vals, res, cur, hints,
-				description);
+			return getRegistered(exp.getClass()).solve(exp, goal, vals, cur, hints, description);
 		}
 		catch (UnsupportedOperationException e) {
-			dbg.println("Error solving " + exp + " = " + goal);
+			DBG.println("Error solving " + exp + " = " + goal);
 			throw e;
 		}
 	}
 
 	/**
-	 * Solve a given expression, assuming it outputs a given masked value
+	 * Solve a given expression, given a masked-value goal
 	 * 
+	 * <p>
 	 * From a simplified perspective, we need only the expression and the desired value to solve it.
-	 * Generally speaking, the expression may have only contain a single variable, and the encoded
-	 * result represents that single variable. It must be absorbed into the overall instruction
-	 * and/or context encoding.
+	 * Generally speaking, the expression may only contain a single field, and the encoded result
+	 * specifies the bits of the solved field. It must be absorbed into the overall assembly
+	 * pattern.
 	 * 
-	 * More realistically, however, these expressions may depend on quite a bit of extra
-	 * information. For example, PC-relative encodings (i.e., those involving {@code inst_start} or
+	 * <p>
+	 * More realistically, these expressions may depend on quite a bit of extra information. For
+	 * example, PC-relative encodings (i.e., those involving {@code inst_start} or
 	 * {@code inst_next}, need to know the starting address of the resulting instruction. {@code
 	 * inst_start} must be provided to the solver by the assembler. {@code inst_next} cannot be
 	 * known until the instruction length is known. Thus, expressions using it always result in a
 	 * {@link NeedsBackfillException}. The symbols, when known, are provided to the solver via the
 	 * {@code vals} parameter.
 	 * 
-	 * Expressions involving {@link OperandValueSolver}s are a little more complicated, because they
-	 * specify an offset that affects its encoding in the instruction. To compute this offset, the
-	 * lengths of other surrounding operands must be known. Thus, when solving a context change for
-	 * a given constructor, its resolved subconstructors must be provided to the solver via the
-	 * {@code res} parameter.
-	 * 
 	 * @param exp the expression to solve
 	 * @param goal the desired output (modulo a mask) of the expression
 	 * @param vals any defined symbols (usually {@code inst_start}, and {@code inst_next})
-	 * @param res resolved subconstructors, by operand index (see method details)
 	 * @param description a description to attached to the encoded solution
 	 * @return the encoded solution
 	 * @throws NeedsBackfillException a solution may exist, but a required symbol is missing
 	 */
 	public AssemblyResolution solve(PatternExpression exp, MaskedLong goal, Map<String, Long> vals,
-			Map<Integer, Object> res, AssemblyResolvedConstructor cur, String description)
+			AssemblyResolvedPatterns cur, String description)
 			throws NeedsBackfillException {
-		return solve(exp, goal, vals, res, cur, Set.of(), description);
+		return solve(exp, goal, vals, cur, Set.of(), description);
 	}
 
 	/**
@@ -163,45 +162,44 @@ public class RecursiveDescentSolver {
 	 * 
 	 * @param exp the (sub-)expression to fold
 	 * @param vals any defined symbols (usually {@code inst_start}, and {@code inst_next})
-	 * @param res resolved subconstructors, by operand index (see
-	 *        {@link #solve(PatternExpression, MaskedLong, Map, Map, AssemblyResolvedConstructor, String)})
 	 * @return the masked solution
 	 * @throws NeedsBackfillException it may be folded, but a required symbol is missing
 	 */
 	protected <T extends PatternExpression> MaskedLong getValue(T exp, Map<String, Long> vals,
-			Map<Integer, Object> res, AssemblyResolvedConstructor cur)
-			throws NeedsBackfillException {
-		MaskedLong value = getRegistered(exp.getClass()).getValue(exp, vals, res, cur);
-		dbg.println("Expression: " + value + " =: " + exp);
+			AssemblyResolvedPatterns cur) throws NeedsBackfillException {
+		MaskedLong value = getRegistered(exp.getClass()).getValue(exp, vals, cur);
+		DBG.println("Expression: " + value + " =: " + exp);
 		return value;
 	}
 
 	/**
 	 * Determine the length of the instruction part of the encoded solution to the given expression
 	 * 
+	 * <p>
 	 * This is used to keep operands in their appropriate position when backfilling becomes
 	 * applicable. Normally, the instruction length is taken from the encoding of a solution, but if
 	 * the solution cannot be determined yet, the instruction length must still be obtained.
 	 * 
+	 * <p>
 	 * The length can be determined by finding token fields in the expression.
 	 * 
 	 * @param exp the expression, presumably containing a token field
-	 * @param res resolved subconstructors, by operand index (see
-	 *            {@link #solve(PatternExpression, MaskedLong, Map, Map, AssemblyResolvedConstructor, String)})
 	 * @return the anticipated length, in bytes, of the instruction encoding
 	 */
-	public int getInstructionLength(PatternExpression exp, Map<Integer, Object> res) {
-		return getRegistered(exp.getClass()).getInstructionLength(exp, res);
+	public int getInstructionLength(PatternExpression exp) {
+		return getRegistered(exp.getClass()).getInstructionLength(exp);
 	}
 
 	/**
 	 * Compute the value of an expression given a (possibly-intermediate) resolution
 	 * 
 	 * @param exp the expression to evaluate
-	 * @param rc the resolution on which to evalute it
+	 * @param vals values of defined symbols
+	 * @param rc the resolution on which to evaluate it
 	 * @return the result
 	 */
-	public MaskedLong valueForResolution(PatternExpression exp, AssemblyResolvedConstructor rc) {
-		return getRegistered(exp.getClass()).valueForResolution(exp, rc);
+	public MaskedLong valueForResolution(PatternExpression exp, Map<String, Long> vals,
+			AssemblyResolvedPatterns rc) {
+		return getRegistered(exp.getClass()).valueForResolution(exp, vals, rc);
 	}
 }

@@ -176,6 +176,13 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 			return null;
 		}
 
+		if (programLocation instanceof MnemonicFieldLocation) {
+			CodeUnit cu = program.getListing().getCodeUnitAt(programLocation.getAddress());
+			if (!(cu instanceof Instruction)) {
+				return null; // defer to mnemonic hover for Data
+			}
+		}
+
 		Address refAddr = programLocation.getRefAddress();
 		if (refAddr != null && refAddr.isExternalAddress()) {
 			return createExternalToolTipComponent(program, refAddr);

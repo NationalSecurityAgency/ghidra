@@ -284,6 +284,21 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		if (PathUtils.isLink(parent.getPath(), proxy.getName(), proxy.getPath())) {
 			return;
 		}
+		if (proxy instanceof DbgModelTargetSession) {
+			DbgModelTargetSession targetSession = (DbgModelTargetSession) proxy;
+			targetSession.getSession(false);
+		}
+		if (proxy instanceof DbgModelTargetProcess) {
+			DbgModelTargetProcess targetProcess = (DbgModelTargetProcess) proxy;
+			targetProcess.getProcess(false);
+		}
+		if (proxy instanceof DbgModelTargetThread) {
+			DbgModelTargetThread targetThread = (DbgModelTargetThread) proxy;
+			targetThread.getThread(false);
+		}
+		if (getModel().isSuppressDescent()) {
+			return;
+		}
 		if (proxy instanceof DbgModelTargetSession || //
 			proxy instanceof DbgModelTargetProcess || //
 			proxy instanceof DbgModelTargetThread) {
@@ -402,7 +417,9 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			}
 		}
 		if (proxy instanceof TargetRegisterContainer) {
-			requestElements(false);
+			if (!getModel().isSuppressDescent()) {
+				requestElements(false);
+			}
 			requestAttributes(false);
 		}
 		if (proxy instanceof TargetRegisterBank) {

@@ -17,13 +17,16 @@ package ghidra.app.plugin.assembler.sleigh;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
 
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.parse.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
+import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNumericSymbols;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.disassemble.DisassemblerMessageListener;
 import ghidra.program.model.address.*;
@@ -32,18 +35,34 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.symbol.*;
+import ghidra.program.util.ChangeManager;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * An {@link Assembler} for a {@link SleighLanguage}.
  * 
- * To obtain one of these, please use {@link SleighAssemblerBuilder}, or better yet, the static
- * methods of {@link Assemblers}.
+ * <p>
+ * For documentation on how the SLEIGH assembler works, see {@link SleighAssemblerBuilder}. To use
+ * the assembler, please use {@link Assemblers#getAssembler(Program)} or similar.
  */
 public class SleighAssembler implements Assembler {
-	public static final int DEFAULT_MAX_RECURSION_DEPTH = 2; // TODO: Toss this
 	protected static final DbgTimer dbg = DbgTimer.INACTIVE;
+
+	protected class ListenerForSymbolsRefresh implements DomainObjectListener {
+		@Override
+		public void domainObjectChanged(DomainObjectChangedEvent ev) {
+			if (ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDED) ||
+				ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDRESS_CHANGED) ||
+				ev.containsEvent(ChangeManager.DOCR_SYMBOL_REMOVED) ||
+				ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED)) {
+				synchronized (lock) {
+					symbols = null;
+				}
+			}
+		}
+	}
+
+	protected final Object lock = new Object();
 
 	protected AssemblySelector selector;
 	protected Program program;
@@ -53,6 +72,8 @@ public class SleighAssembler implements Assembler {
 	protected AssemblyDefaultContext defaultContext;
 	protected AssemblyContextGraph ctxGraph;
 	protected SleighLanguage lang;
+
+	protected AssemblyNumericSymbols symbols;
 
 	/**
 	 * Construct a SleighAssembler.
@@ -75,7 +96,8 @@ public class SleighAssembler implements Assembler {
 	/**
 	 * Construct a SleighAssembler.
 	 * 
-	 * NOTE: This variant does not permit {@link #assemble(Address, String...)}.
+	 * <p>
+	 * <b>NOTE:</b> This variant does not permit {@link #assemble(Address, String...)}.
 	 * 
 	 * @param selector a method of selecting one result from many
 	 * @param lang the SLEIGH language (must be same as to create the parser)
@@ -93,7 +115,7 @@ public class SleighAssembler implements Assembler {
 	}
 
 	@Override
-	public Instruction patchProgram(AssemblyResolvedConstructor res, Address at)
+	public Instruction patchProgram(AssemblyResolvedPatterns res, Address at)
 			throws MemoryAccessException {
 		if (!res.getInstruction().isFullMask()) {
 			throw new AssemblySelectionError("Selected instruction must have a full mask.");
@@ -157,7 +179,7 @@ public class SleighAssembler implements Assembler {
 
 	@Override
 	public Collection<AssemblyParseResult> parseLine(String line) {
-		return parser.parse(line, getProgramLabels());
+		return parser.parse(line, getNumericSymbols());
 	}
 
 	@Override
@@ -173,13 +195,13 @@ public class SleighAssembler implements Assembler {
 		if (parse.isError()) {
 			AssemblyResolutionResults results = new AssemblyResolutionResults();
 			AssemblyParseErrorResult err = (AssemblyParseErrorResult) parse;
-			results.add(AssemblyResolution.error(err.describeError(), "Parsing", null));
+			results.add(AssemblyResolution.error(err.describeError(), "Parsing"));
 			return results;
 		}
 
 		AssemblyParseAcceptResult acc = (AssemblyParseAcceptResult) parse;
 		AssemblyTreeResolver tr =
-			new AssemblyTreeResolver(lang, at.getOffset(), acc.getTree(), ctx, ctxGraph);
+			new AssemblyTreeResolver(lang, at, acc.getTree(), ctx, ctxGraph);
 		return tr.resolve();
 	}
 
@@ -219,7 +241,7 @@ public class SleighAssembler implements Assembler {
 	public byte[] assembleLine(Address at, String line, AssemblyPatternBlock ctx)
 			throws AssemblySemanticException, AssemblySyntaxException {
 		AssemblyResolutionResults results = resolveLine(at, line, ctx);
-		AssemblyResolvedConstructor res = selector.select(results, ctx);
+		AssemblyResolvedPatterns res = selector.select(results, ctx);
 		if (res == null) {
 			throw new AssemblySelectionError(
 				"Must select exactly one instruction. Report errors via AssemblySemanticError");
@@ -234,37 +256,23 @@ public class SleighAssembler implements Assembler {
 	}
 
 	/**
-	 * A convenience to obtain a map of program labels strings to long values
+	 * A convenience to obtain assembly symbols
 	 * 
 	 * @return the map
-	 * 
-	 *         {@literal TODO Use a Map<String, Address> instead so that, if possible, symbol values can be checked}
-	 *         lest they be an invalid substitution for a given operand.
 	 */
-	protected Map<String, Long> getProgramLabels() {
-		Map<String, Long> labels = new HashMap<>();
-		for (Register reg : lang.getRegisters()) {
-			// TODO/HACK: There ought to be a better mechanism describing suitable symbolic
-			// substitutions for a given operand.
-			if (!"register".equals(reg.getAddressSpace().getName())) {
-				labels.put(reg.getName(), (long) reg.getOffset());
+	protected AssemblyNumericSymbols getNumericSymbols() {
+		synchronized (lock) {
+			if (symbols != null) {
+				return symbols;
 			}
-		}
-		if (program != null) {
-			final SymbolIterator it = program.getSymbolTable().getAllSymbols(false);
-			while (it.hasNext()) {
-				Symbol sym = it.next();
-				if (sym.isExternal()) {
-					continue; // skip externals - will generally be referenced indirectly not directly
-				}
-				SymbolType symbolType = sym.getSymbolType();
-				if (symbolType != SymbolType.LABEL && symbolType != SymbolType.FUNCTION) {
-					continue;
-				}
-				labels.put(sym.getName(), sym.getAddress().getOffset());
+			if (program == null) {
+				symbols = AssemblyNumericSymbols.fromLanguage(lang);
 			}
+			else {
+				symbols = AssemblyNumericSymbols.fromProgram(program);
+			}
+			return symbols;
 		}
-		return labels;
 	}
 
 	@Override

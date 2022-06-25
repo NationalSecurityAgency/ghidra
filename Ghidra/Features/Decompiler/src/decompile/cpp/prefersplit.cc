@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,8 @@
  */
 #include "prefersplit.hh"
 #include "funcdata.hh"
+
+ElementId ELEM_PREFERSPLIT = ElementId("prefersplit",171);
 
 bool PreferSplitRecord::operator<(const PreferSplitRecord &op2) const
 
@@ -292,7 +293,7 @@ void PreferSplitManager::splitLoad(SplitInstance *inst,PcodeOp *op)
   data->opSetOutput(hiop,inst->hi); // Outputs are the pieces of the original
   data->opSetOutput(loop,inst->lo);
   Varnode *spaceid = op->getIn(0);
-  AddrSpace *spc = Address::getSpaceFromConst(spaceid->getAddr());
+  AddrSpace *spc = spaceid->getSpaceFromConst();
   spaceid = data->newConstant(spaceid->getSize(),spaceid->getOffset()); // Duplicate original spaceid into new LOADs
   data->opSetInput(hiop,spaceid,0);
   spaceid = data->newConstant(spaceid->getSize(),spaceid->getOffset());
@@ -343,7 +344,7 @@ void PreferSplitManager::splitStore(SplitInstance *inst,PcodeOp *op)
   data->opSetInput(hiop,inst->hi,2); // Varnodes "being stored" are the pieces of the original
   data->opSetInput(loop,inst->lo,2);
   Varnode *spaceid = op->getIn(0);
-  AddrSpace *spc = Address::getSpaceFromConst(spaceid->getAddr());
+  AddrSpace *spc = spaceid->getSpaceFromConst();
   spaceid = data->newConstant(spaceid->getSize(),spaceid->getOffset()); // Duplicate original spaceid into new STOREs
   data->opSetInput(hiop,spaceid,0);
   spaceid = data->newConstant(spaceid->getSize(),spaceid->getOffset());

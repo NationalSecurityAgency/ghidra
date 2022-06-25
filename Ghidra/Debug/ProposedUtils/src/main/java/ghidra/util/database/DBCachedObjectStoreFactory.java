@@ -597,15 +597,21 @@ public class DBCachedObjectStoreFactory {
 				.stream()
 				.collect(Collectors.toMap(c -> c.getValueClass(), c -> c));
 
-		@SuppressWarnings("unchecked")
 		static <T> PrimitiveCodec<T> getCodec(Class<T> cls) {
-			return (PrimitiveCodec<T>) Objects.requireNonNull(CODECS_BY_CLASS.get(cls),
-				"No variant codec for class " + cls);
+			@SuppressWarnings("unchecked")
+			PrimitiveCodec<T> obj = (PrimitiveCodec<T>) CODECS_BY_CLASS.get(cls);
+			if (obj == null) {
+				throw new IllegalArgumentException("No variant codec for class " + cls);
+			}
+			return obj;
 		}
 
 		static PrimitiveCodec<?> getCodec(byte sel) {
-			return Objects.requireNonNull(CODECS_BY_SELECTOR.get(sel),
-				"No variant codec with selector " + sel);
+			PrimitiveCodec<?> obj = CODECS_BY_SELECTOR.get(sel);
+			if (obj == null) {
+				throw new IllegalArgumentException("No variant codec with selector " + sel);
+			}
+			return obj;
 		}
 	}
 

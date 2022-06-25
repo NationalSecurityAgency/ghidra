@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.Random;
+import java.util.Set;
 
 import org.junit.*;
 
@@ -142,52 +143,42 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 
 		DomainFile df2;
 
-		Program program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+		Program program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		space = program.getAddressFactory().getDefaultAddressSpace();
-		try {
-			assertFalse(program.isChanged());
-			assertTrue(program.canSave());
+		assertFalse(program.isChanged());
+		assertTrue(program.canSave());
 
-			// Modify program content - no user data should be saved
-			change(program);
-			assertTrue(program.isChanged());
-			program.save("save", TaskMonitor.DUMMY);
-			assertFalse(program.isChanged());
-			assertFalse("User data directory should be empty", userDataSubDir.isDirectory());
+		// Modify program content - no user data should be saved
+		change(program);
+		assertTrue(program.isChanged());
+		program.save("save", TaskMonitor.DUMMY);
+		assertFalse(program.isChanged());
+		assertFalse("User data directory should be empty", userDataSubDir.isDirectory());
 
-			// Modify user data content
-			ProgramUserData userData = program.getProgramUserData();
-			change(userData, "STRING", space.getAddress(0), "Str0");
-			change(userData, "STRING", space.getAddress(10), "Str10");
-			assertFalse(program.isChanged());
+		// Modify user data content
+		ProgramUserData userData = program.getProgramUserData();
+		change(userData, "STRING", space.getAddress(0), "Str0");
+		change(userData, "STRING", space.getAddress(10), "Str10");
+		assertFalse(program.isChanged());
 
-			String newName = df.getName() + ".1";
-			df2 = df.getParent().createFile(newName, program, TaskMonitor.DUMMY);
+		String newName = df.getName() + ".1";
+		df2 = df.getParent().createFile(newName, program, TaskMonitor.DUMMY);
 
-		}
-		finally {
-			program.release(this);
-		}
+		program.release(this);
 
-		program =
-			(Program) df2.getDomainObject(this, false, false, TaskMonitor.DUMMY);
-		try {
-			assertFalse(program.isChanged());
+		program = (Program) df2.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+		assertFalse(program.isChanged());
 
-			// Verify user data content
-			ProgramUserData userData = program.getProgramUserData();
-			StringPropertyMap map =
-				userData.getStringProperty(testName.getMethodName(), "STRING", false);
-			assertEquals("Str0", map.getString(space.getAddress(0)));
-			assertEquals("Str10", map.getString(space.getAddress(10)));
-			assertNull(map.getString(space.getAddress(20)));
-			assertFalse(program.isChanged());
-		}
-		finally {
-			program.release(this);
-		}
+		// Verify user data content
+		userData = program.getProgramUserData();
+		StringPropertyMap map =
+			userData.getStringProperty(testName.getMethodName(), "STRING", false);
+		assertEquals("Str0", map.getString(space.getAddress(0)));
+		assertEquals("Str10", map.getString(space.getAddress(10)));
+		assertNull(map.getString(space.getAddress(20)));
+		assertFalse(program.isChanged());
 
+		program.release(this);
 	}
 
 	@Test
@@ -204,77 +195,63 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 		File dbDir = new File(dataDir, "00/~00000000.db");
 		int ver;
 
-		Program program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+		Program program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		space = program.getAddressFactory().getDefaultAddressSpace();
-		try {
-			assertFalse(program.isChanged());
-			assertTrue(program.canSave());
+		assertFalse(program.isChanged());
+		assertTrue(program.canSave());
 
-			// Modify program content - no user data should be saved
-			change(program);
-			assertTrue(program.isChanged());
-			program.save("save", TaskMonitor.DUMMY);
-			assertFalse(program.isChanged());
-			assertFalse("User data directory should be empty", userDataSubDir.isDirectory());
+		// Modify program content - no user data should be saved
+		change(program);
+		assertTrue(program.isChanged());
+		program.save("save", TaskMonitor.DUMMY);
+		assertFalse(program.isChanged());
+		assertFalse("User data directory should be empty", userDataSubDir.isDirectory());
 
-			ver = getLatestDbVersion(dbDir);
+		ver = getLatestDbVersion(dbDir);
 
-			// Modify user data content
-			ProgramUserData userData = program.getProgramUserData();
-			change(userData, "STRING", space.getAddress(0), "Str0");
-			change(userData, "STRING", space.getAddress(10), "Str10");
-			assertFalse(program.isChanged());
+		// Modify user data content
+		ProgramUserData userData = program.getProgramUserData();
+		change(userData, "STRING", space.getAddress(0), "Str0");
+		change(userData, "STRING", space.getAddress(10), "Str10");
+		assertFalse(program.isChanged());
 
-		}
-		finally {
-			program.release(this);
-		}
+		program.release(this);
 
 		assertEquals("User data files missing", 2, userDataSubDir.list().length);
 		assertEquals("Program database should not have been updated", ver,
 			getLatestDbVersion(dbDir));
 
-		program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
-		try {
-			assertFalse(program.isChanged());
+		program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+		assertFalse(program.isChanged());
 
-			// Verify user data content
-			ProgramUserData userData = program.getProgramUserData();
-			StringPropertyMap map =
-				userData.getStringProperty(testName.getMethodName(), "STRING", false);
-			assertEquals("Str0", map.getString(space.getAddress(0)));
-			assertEquals("Str10", map.getString(space.getAddress(10)));
-			assertNull(map.getString(space.getAddress(20)));
-			assertFalse(program.isChanged());
+		// Verify user data content
+		userData = program.getProgramUserData();
+		StringPropertyMap map =
+			userData.getStringProperty(testName.getMethodName(), "STRING", false);
+		assertEquals("Str0", map.getString(space.getAddress(0)));
+		assertEquals("Str10", map.getString(space.getAddress(10)));
+		assertNull(map.getString(space.getAddress(20)));
+		assertFalse(program.isChanged());
 
-			// Modify user data content
-			change(userData, "STRING", space.getAddress(10), "Str10a");
-			change(userData, "STRING", space.getAddress(20), "Str20a");
-			assertFalse(program.isChanged());
-		}
-		finally {
-			program.release(this);
-		}
+		// Modify user data content
+		change(userData, "STRING", space.getAddress(10), "Str10a");
+		change(userData, "STRING", space.getAddress(20), "Str20a");
+		assertFalse(program.isChanged());
 
-		program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
-		try {
-			assertFalse(program.isChanged());
+		program.release(this);
 
-			// Verify user data content
-			ProgramUserData userData = program.getProgramUserData();
-			StringPropertyMap map =
-				userData.getStringProperty(testName.getMethodName(), "STRING", false);
-			assertEquals("Str0", map.getString(space.getAddress(0)));
-			assertEquals("Str10a", map.getString(space.getAddress(10)));
-			assertEquals("Str20a", map.getString(space.getAddress(20)));
-			assertFalse(program.isChanged());
-		}
-		finally {
-			program.release(this);
-		}
+		program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+		assertFalse(program.isChanged());
+
+		// Verify user data content
+		userData = program.getProgramUserData();
+		map = userData.getStringProperty(testName.getMethodName(), "STRING", false);
+		assertEquals("Str0", map.getString(space.getAddress(0)));
+		assertEquals("Str10a", map.getString(space.getAddress(10)));
+		assertEquals("Str20a", map.getString(space.getAddress(20)));
+		assertFalse(program.isChanged());
+
+		program.release(this);
 
 		assertEquals("User data files missing", 2, userDataSubDir.list().length);
 		df.delete();
@@ -288,18 +265,14 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// TODO: Multi-user repository connect case not tested
 
-		Program program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+		Program program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		space = program.getAddressFactory().getDefaultAddressSpace();
-		try {
-			// Create user data content
-			ProgramUserData userData = program.getProgramUserData();
-			change(userData, "STRING", space.getAddress(0), "Str0");
-			change(userData, "STRING", space.getAddress(10), "Str10");
-		}
-		finally {
-			program.release(this);
-		}
+		// Create user data content
+		ProgramUserData userData = program.getProgramUserData();
+		change(userData, "STRING", space.getAddress(0), "Str0");
+		change(userData, "STRING", space.getAddress(10), "Str10");
+
+		program.release(this);
 
 		// Close and re-open (domain file remains intact)
 		project.close();
@@ -308,23 +281,19 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 
 		df = project.getProjectData().getFile("/test");
 
-		program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
-		try {
-			assertFalse(program.isChanged());
+		program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+		assertFalse(program.isChanged());
 
-			// Verify user data content
-			ProgramUserData userData = program.getProgramUserData();
-			StringPropertyMap map =
-				userData.getStringProperty(testName.getMethodName(), "STRING", false);
-			assertEquals("Str0", map.getString(space.getAddress(0)));
-			assertEquals("Str10", map.getString(space.getAddress(10)));
-			assertNull(map.getString(space.getAddress(20)));
-			assertFalse(program.isChanged());
-		}
-		finally {
-			program.release(this);
-		}
+		// Verify user data content
+		userData = program.getProgramUserData();
+		StringPropertyMap map =
+			userData.getStringProperty(testName.getMethodName(), "STRING", false);
+		assertEquals("Str0", map.getString(space.getAddress(0)));
+		assertEquals("Str10", map.getString(space.getAddress(10)));
+		assertNull(map.getString(space.getAddress(20)));
+		assertFalse(program.isChanged());
+
+		program.release(this);
 
 		// Close and re-open (domain file removed)
 		project.close();
@@ -351,4 +320,70 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
+	@Test
+	public void testSetGetStringProperty() throws Exception {
+		Program program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+
+		ProgramUserData userData = program.getProgramUserData();
+		userData.setStringProperty("Foo", "Bar");
+		assertEquals("Bar", userData.getStringProperty("Foo", null));
+		program.release(this);
+
+		program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+		userData = program.getProgramUserData();
+		assertEquals("Bar", userData.getStringProperty("Foo", null));
+		program.release(this);
+	}
+
+	@Test
+	public void testGetStringPropertyNames() throws Exception {
+		Program program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+
+		ProgramUserData userData = program.getProgramUserData();
+		userData.setStringProperty("Alpha", "alpha");
+		userData.setStringProperty("Beta", "beta");
+		Set<String> stringPropertyNames = userData.getStringPropertyNames();
+		assertEquals(2, stringPropertyNames.size());
+		assertTrue(stringPropertyNames.contains("Alpha"));
+		assertTrue(stringPropertyNames.contains("Beta"));
+
+		program.release(this);
+	}
+
+	@Test
+	public void testGetStringPropertyForNondefinedProperty() throws Exception {
+		Program program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+
+		ProgramUserData userData = program.getProgramUserData();
+		assertEquals("xxx", userData.getStringProperty("ABC", "xxx"));
+		assertEquals("zzz", userData.getStringProperty("ABC", "zzz"));
+
+		program.release(this);
+	}
+
+	@Test
+	public void testRemoveStringProperty() throws Exception {
+		Program program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+
+		ProgramUserData userData = program.getProgramUserData();
+		userData.setStringProperty("foo", "bar");
+		program.release(this);
+
+		// reload and make sure the property is there
+
+		program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+		userData = program.getProgramUserData();
+		assertEquals("bar", userData.getStringProperty("foo", null));
+		assertEquals("bar", userData.removeStringProperty("foo"));
+		program.release(this);
+
+		// reload and make sure the property is gone
+
+		program = (Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+		userData = program.getProgramUserData();
+		assertNull(userData.getStringProperty("foo", null));
+
+		program.release(this);
+
+	}
 }

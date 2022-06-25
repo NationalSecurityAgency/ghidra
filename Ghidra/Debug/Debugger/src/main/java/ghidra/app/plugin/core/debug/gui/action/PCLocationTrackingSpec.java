@@ -73,7 +73,7 @@ public class PCLocationTrackingSpec implements RegisterLocationTrackingSpec {
 		if (frame == null) {
 			return null;
 		}
-		return frame.getProgramCounter();
+		return frame.getProgramCounter(snap);
 	}
 
 	@Override

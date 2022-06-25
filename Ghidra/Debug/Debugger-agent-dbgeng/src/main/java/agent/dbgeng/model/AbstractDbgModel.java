@@ -44,4 +44,6 @@ public abstract class AbstractDbgModel extends AbstractDebuggerObjectModel {
 
 	public abstract void deleteModelObject(Object object);
 
+	public abstract boolean isSuppressDescent();
+
 }

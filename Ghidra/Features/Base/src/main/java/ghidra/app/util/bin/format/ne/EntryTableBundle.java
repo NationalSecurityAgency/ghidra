@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,7 @@ package ghidra.app.util.bin.format.ne;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.*;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.util.Conv;
 
 /**
@@ -49,7 +48,7 @@ public class EntryTableBundle {
      * Constructs a new entry table bundle.
      * @param reader the binary reader
      */
-    EntryTableBundle(FactoryBundledWithBinaryReader reader) throws IOException {
+	EntryTableBundle(BinaryReader reader) throws IOException {
         count = reader.readNextByte();
         if (count == 0) return; //do not read anymore data...
 

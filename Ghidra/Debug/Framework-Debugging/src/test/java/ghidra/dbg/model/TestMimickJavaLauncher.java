@@ -32,16 +32,24 @@ public class TestMimickJavaLauncher
 	public TestMimickJavaLauncher(TestTargetObject parent) {
 		super(parent, "Java Launcher", "Launcher");
 
-		setAttributes(List.of(), Map.of(TargetMethod.PARAMETERS_ATTRIBUTE_NAME, Map.of("Suspend",
-			ParameterDescription.create(Boolean.class, "Suspend", false, true, "Suspend", ""),
-			"Quote", ParameterDescription.create(String.class, "Quote", false, "\"", "Quote", ""),
-			"Launcher",
-			ParameterDescription.create(String.class, "Launcher", false, "java", "Launcher", ""),
-			"Options",
-			ParameterDescription.create(String.class, "Options", false, "", "Options", ""), "Main",
-			ParameterDescription.create(String.class, "Main", false, "hw.HelloWorld", "Main", ""),
-			"Home", ParameterDescription.create(String.class, "Home", false,
-				"/opt/java-11-amazon-corretto", "Home", ""))),
+		setAttributes(
+			List.of(), Map.of(TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetParameterMap.ofEntries(
+				Map.entry("Suspend",
+					ParameterDescription.create(Boolean.class, "Suspend", false, true, "Suspend",
+						"")),
+				Map.entry("Quote",
+					ParameterDescription.create(String.class, "Quote", false, "\"", "Quote", "")),
+				Map.entry("Launcher",
+					ParameterDescription.create(String.class, "Launcher", false, "java", "Launcher",
+						"")),
+				Map.entry("Options",
+					ParameterDescription.create(String.class, "Options", false, "", "Options", "")),
+				Map.entry("Main",
+					ParameterDescription.create(String.class, "Main", false, "hw.HelloWorld",
+						"Main", "")),
+				Map.entry("Home",
+					ParameterDescription.create(String.class, "Home", false,
+						"/opt/java-11-amazon-corretto", "Home", "")))),
 			"Initialized");
 	}
 
@@ -52,6 +60,6 @@ public class TestMimickJavaLauncher
 
 	@Override
 	public CompletableFuture<Void> launch(Map<String, ?> args) {
-		return AsyncUtils.NIL; // TODO: Queue and allow to test complete it?
+		return AsyncUtils.NIL; // TODO: Queue and allow test to complete it?
 	}
 }

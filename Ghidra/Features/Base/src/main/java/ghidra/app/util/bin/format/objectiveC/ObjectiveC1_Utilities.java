@@ -31,6 +31,7 @@ import ghidra.framework.cmd.Command;
 import ghidra.program.database.symbol.ClassSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -48,8 +49,8 @@ public final class ObjectiveC1_Utilities {
 	 * Clears the code units defined in the given memory block.
 	 */
 	public static void clear(ObjectiveC2_State state, MemoryBlock block) throws Exception {
-		state.program.getListing().clearCodeUnits(block.getStart(), block.getEnd(), false,
-			state.monitor);
+		state.program.getListing()
+				.clearCodeUnits(block.getStart(), block.getEnd(), false, state.monitor);
 	}
 
 	/**
@@ -138,14 +139,16 @@ public final class ObjectiveC1_Utilities {
 	 * Applies the data type at the specified address.
 	 */
 	public static void applyData(Program program, DataType dt, Address address)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 		Data data = program.getListing().getDefinedDataAt(address);
 		if (data != null && data.getDataType().isEquivalent(dt)) {
 			return;
 		}
-		//program.getListing().clearCodeUnits(address, address.add(dt.getLength()-1));
 
-		program.getListing().createData(address, dt);
+		// need to clear, as pointers could have been created on import
+		// from following pointer chains
+		DataUtilities.createData(program, address, dt, -1, false,
+			ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
 	}
 
 	/**
@@ -173,24 +176,10 @@ public final class ObjectiveC1_Utilities {
 	 * Applies a pointer data type at the specified address and returns the address being referenced.
 	 */
 	public static Address createPointerAndReturnAddressBeingReferenced(Program program,
-			Address address) throws CodeUnitInsertionException, DataTypeConflictException {
+			Address address) throws CodeUnitInsertionException {
 		program.getListing().createData(address, new PointerDataType());
 		Data data = program.getListing().getDefinedDataAt(address);
 		return (Address) data.getValue();
-	}
-
-	/**
-	 * Applies a pointer data type at the specified address and returns the newly created data object.
-	 */
-	public static Data createPointer(Program program, Address address) {
-		try {
-			program.getListing().createData(address, new PointerDataType());
-			Data data = program.getListing().getDefinedDataAt(address);
-			return data;
-		}
-		catch (Exception e) {
-		}
-		return null;
 	}
 
 	/**
@@ -230,8 +219,8 @@ public final class ObjectiveC1_Utilities {
 	 */
 	public static Symbol createSymbol(Program program, Namespace parentNamespace, String symbolName,
 			Address symbolAddress) throws InvalidInputException {
-		Symbol symbol = program.getSymbolTable().createLabel(symbolAddress, symbolName,
-			parentNamespace, SourceType.IMPORTED);
+		Symbol symbol = program.getSymbolTable()
+				.createLabel(symbolAddress, symbolName, parentNamespace, SourceType.IMPORTED);
 		symbol.setPrimary();
 		return symbol;
 	}

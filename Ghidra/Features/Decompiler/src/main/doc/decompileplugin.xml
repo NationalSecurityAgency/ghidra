@@ -3981,7 +3981,8 @@
       <listitem><para>
 	Double-clicking a '{' or '}' token, causes the window to navigate to the <emphasis>matching</emphasis> brace
 	within the window. The cursor is set and the window view is adjusted if
-	necessary to ensure that the matching brace is visible.
+	necessary to ensure that the matching brace is visible.  Braces may also be navigated via
+	the keyboard.
       </para></listitem>
     </varlistentry>
     </variablelist>
@@ -4321,6 +4322,19 @@
   </para>
 </sect2>
 
+<sect2 id="GoToBrace">
+  <title>Go To Next/Previous Brace</title>
+  <para>
+    These actions are available from the keyboard.  
+    <emphasis role="bold">Shift-Open Bracket</emphasis> will go to the previous enclosing
+    open brace.   <emphasis role="bold">Shift-Close Bracket</emphasis> will go to the
+    next enclosing closing brace.   These key bindings can be changed via the tool options.
+  </para>
+  <para>
+	Paired braces can also be navigated by double-clicking.
+  </para>
+</sect2>
+
 <sect2 id="ActionHighlight">
   <title>Highlight</title>
   <para>
@@ -4510,20 +4524,21 @@
     </para>
   </sect3>
   <sect3 id="ActionFindReferences">
-    <title>Find References to &lt;function&gt;</title>
+    <title>Find References to &lt;function/global variable&gt;</title>
     <para>
-      Display locations in the Program that reference the <emphasis role="bold">function</emphasis>
-      associated with the token under the cursor. Results are collected in a
+      Display locations in the Program that reference the <emphasis role="bold">function</emphasis> or
+      <emphasis role="bold">global variable</emphasis> associated with the token under the cursor. 
+      Results are collected in a 
       <link xlink:href="help/topics/LocationReferencesPlugin/Location_References.html">Location References Dialog</link>,
       which displays a row for each reference with its address and other context.
     </para>
     <para>
-      References include both instructions and data referring to the <emphasis>entry point</emphasis>
+      In the case of a function, references include both instructions and data referring to the <emphasis>entry point</emphasis>
       address of the function.
     </para>
   </sect3>
   <sect3 id="ActionShowReferences">
-    <title>Show References to Address</title>
+    <title>Show References to &lt;address&gt;</title>
     <para>
       Display locations in the Program that reference the <emphasis role="bold">address</emphasis>
       associated with the token under the cursor.  Results are collected in a

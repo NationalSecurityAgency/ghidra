@@ -17,8 +17,6 @@ package ghidra.app.util.html;
 
 import java.awt.Color;
 
-import ghidra.util.exception.AssertException;
-
 public class EmptyDataTypeLine extends DataTypeLine implements PlaceHolderLine {
 	public EmptyDataTypeLine() {
 		super("", "", "", null);
@@ -39,14 +37,8 @@ public class EmptyDataTypeLine extends DataTypeLine implements PlaceHolderLine {
 			return;
 		}
 
-		if (!(otherValidatableLine instanceof DataTypeLine)) {
-			throw new AssertException("DataTypeLine can only be matched against other " +
-				"DataTypeLine implementations.");
-		}
-		DataTypeLine otherLine = (DataTypeLine) otherValidatableLine;
-
 		// since we are the empty line, the other line is all a mismatch
-		otherLine.setAllColors(invalidColor);
+		otherValidatableLine.setTextColor(invalidColor);
 	}
 
 	boolean matches(DataTypeLine otherLine) {

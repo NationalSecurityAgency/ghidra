@@ -18,9 +18,10 @@ package ghidra.pcode.emu;
 import java.util.List;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.pcode.emu.DefaultPcodeThread.SleighEmulationLibrary;
+import ghidra.pcode.emu.DefaultPcodeThread.PcodeEmulationLibrary;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Instruction;
 
@@ -48,6 +49,7 @@ public interface PcodeThread<T> {
 	/**
 	 * Set the emulator's counter without writing to its machine state
 	 * 
+	 * @see #overrideCounter(Address)
 	 * @param counter the new target address
 	 */
 	void setCounter(Address counter);
@@ -62,23 +64,25 @@ public interface PcodeThread<T> {
 	/**
 	 * Set the emulator's counter and write the PC of its machine state
 	 * 
+	 * @see #setCounter(Address)
 	 * @param counter the new target address
 	 */
 	void overrideCounter(Address counter);
 
 	/**
-	 * Adjust the emulator's parsing context without writing to its machine state
+	 * Adjust the emulator's decoding context without writing to its machine state
 	 * 
+	 * <p>
+	 * As in {@link RegisterValue#assign(Register, RegisterValue)}, only those bits having a value
+	 * in the given context are applied to the current context.
+	 * 
+	 * @see #overrideContext(RegisterValue)
 	 * @param context the new context
 	 */
 	void assignContext(RegisterValue context);
 
 	/**
-	 * Adjust the emulator's parsing context without writing to its machine state
-	 * 
-	 * @param context the new context void assignContext(RegisterValue context);
-	 * 
-	 *            /** Get the emulator's parsing context
+	 * Get the emulator's decoding context
 	 * 
 	 * @return the context
 	 */
@@ -87,6 +91,7 @@ public interface PcodeThread<T> {
 	/**
 	 * Adjust the emulator's parsing context and write the contextreg of its machine state
 	 * 
+	 * @see #assignContext(RegisterValue)
 	 * @param context the new context
 	 */
 	void overrideContext(RegisterValue context);
@@ -114,11 +119,22 @@ public interface PcodeThread<T> {
 	 * 
 	 * <p>
 	 * Note because of the way Ghidra and Sleigh handle delay slots, the execution of an instruction
-	 * with delay slots cannot be separated from the following instructions filling them. It and its
-	 * slots are executed in a single "step." Stepping individual p-code ops which comprise the
-	 * delay-slotted instruction is possible using {@link #stepPcodeOp(PcodeFrame)}.
+	 * with delay slots cannot be separated from the following instructions filling those slots. It
+	 * and its slotted instructions are executed in a single "step." However, stepping the
+	 * individual p-code ops is still possible using {@link #stepPcodeOp(PcodeFrame)}.
 	 */
 	void stepInstruction();
+
+	/**
+	 * Repeat {@link #stepInstruction()} count times
+	 * 
+	 * @param count the number of instructions to step
+	 */
+	default void stepInstruction(long count) {
+		for (long i = 0; i < count; i++) {
+			stepInstruction();
+		}
+	}
 
 	/**
 	 * Step emulation a single p-code operation
@@ -130,18 +146,55 @@ public interface PcodeThread<T> {
 	 * completed, the machine's program counter is advanced and the current frame is removed.
 	 * 
 	 * <p>
-	 * In order to provide the most flexibility, there is no enforcement of various emulation state
-	 * on this method. Expect strange behavior for strange call sequences. For example, the caller
-	 * should ensure that the given frame was in fact generated from the emulators current
-	 * instruction. Doing otherwise may cause the emulator to advance in strange ways.
+	 * Consider the case of a fall-through instruction: The first p-code step decodes the
+	 * instruction and sets up the p-code frame. The second p-code step executes the first p-code op
+	 * of the frame. Each subsequent p-code step executes the next p-code op until no ops remain.
+	 * The final p-code step detects the fall-through result, advances the counter, and disposes the
+	 * frame. The next p-code step is actually the first p-code step of the next instruction.
+	 * 
+	 * <p>
+	 * Consider the case of a branching instruction: The first p-code step decodes the instruction
+	 * and sets up the p-code frame. The second p-code step executes the first p-code op of the
+	 * frame. Each subsequent p-code step executes the next p-code op until an (external) branch is
+	 * executed. That branch itself sets the program counter appropriately. The final p-code step
+	 * detects the branch result and simply disposes the frame. The next p-code step is actually the
+	 * first p-code step of the next instruction.
+	 * 
+	 * <p>
+	 * The decode step in both examples is subject to p-code injections. In order to provide the
+	 * most flexibility, there is no enforcement of various emulation state on this method. Expect
+	 * strange behavior for strange call sequences.
 	 * 
 	 * <p>
 	 * While this method heeds injects, such injects will obscure the p-code of the instruction
 	 * itself. If the inject executes the instruction, the entire instruction will be executed when
-	 * stepping the {@link SleighEmulationLibrary#emu_exec_decoded()} userop, since there is not
+	 * stepping the {@link PcodeEmulationLibrary#emu_exec_decoded()} userop, since there is not
 	 * (currently) any way to "step into" a userop.
 	 */
 	void stepPcodeOp();
+
+	/**
+	 * Repeat {@link #stepPcodeOp()} count times
+	 * 
+	 * @param count the number of p-code operations to step
+	 */
+	default void stepPcodeOp(long count) {
+		for (long i = 0; i < count; i++) {
+			stepPcodeOp();
+		}
+	}
+
+	/**
+	 * Skip emulation of a single p-code operation
+	 * 
+	 * <p>
+	 * If there is no current frame, this behaves as in {@link #stepPcodeOp()}. Otherwise, this
+	 * skips the current pcode op, advancing as if a fall-through op. If no ops remain in the frame,
+	 * this behaves as in {@link #stepPcodeOp()}. Please note to skip an extranal branch, the op
+	 * itself must be skipped. "Skipping" the following op, which disposes the frame, cannot prevent
+	 * the branch.
+	 */
+	void skipPcodeOp();
 
 	/**
 	 * Get the current frame, if present
@@ -169,9 +222,9 @@ public interface PcodeThread<T> {
 	 * Execute the next instruction, ignoring injects
 	 * 
 	 * <p>
-	 * This method should likely only be used internally. It steps the current instruction, but
-	 * without any consideration for user injects, e.g., breakpoints. Most clients should call
-	 * {@link #stepInstruction()} instead.
+	 * <b>WARNING:</b> This method should likely only be used internally. It steps the current
+	 * instruction, but without any consideration for user injects, e.g., breakpoints. Most clients
+	 * should call {@link #stepInstruction()} instead.
 	 * 
 	 * @throws IllegalStateException if the emulator is still in the middle of an instruction. That
 	 *             can happen if the machine is interrupted, or if the client has called
@@ -201,10 +254,11 @@ public interface PcodeThread<T> {
 	 * If there is a current instruction, drop its frame of execution
 	 * 
 	 * <p>
-	 * This does not revert any state changes caused by a partially-executed instruction. It is up
-	 * to the client to revert the underlying machine state if desired. Note the thread's program
-	 * counter will not be advanced. Likely, the next call to {@link #stepInstruction()} will
-	 * re-start the same instruction. If there is no current instruction, this method has no effect.
+	 * <b>WARNING:</b> This does not revert any state changes caused by a partially-executed
+	 * instruction. It is up to the client to revert the underlying machine state if desired. Note
+	 * the thread's program counter will not be advanced. Likely, the next call to
+	 * {@link #stepInstruction()} will re-start the same instruction. If there is no current
+	 * instruction, this method has no effect.
 	 */
 	void dropInstruction();
 
@@ -216,7 +270,7 @@ public interface PcodeThread<T> {
 	 * instruction is finished. By calling this method, you are "donating" the current Java thread
 	 * to the emulator. This method will not likely return, but instead only terminates via
 	 * exception, e.g., hitting a user breakpoint or becoming suspended. Depending on the use case,
-	 * this method might be invoked from a dedicated Java thread.
+	 * this method might be invoked from a Java thread dedicated to this emulated thread.
 	 */
 	void run();
 
@@ -226,8 +280,8 @@ public interface PcodeThread<T> {
 	 * <p>
 	 * When {@link #run()} is invoked by a dedicated thread, suspending the pcode thread is the most
 	 * reliable way to halt execution. Note the emulator will halt mid instruction. If this is not
-	 * desired, then upon catching the exception, the dedicated thread should un-suspend the machine
-	 * and call {@link #finishInstruction()}.
+	 * desired, then upon catching the exception, un-suspend the p-code thread and call
+	 * {@link #finishInstruction()} or {@link #dropInstruction()}.
 	 */
 	void setSuspended(boolean suspended);
 
@@ -264,11 +318,12 @@ public interface PcodeThread<T> {
 	PcodeExecutor<T> getExecutor();
 
 	/**
-	 * Get the userop library for controlling this thread's execution
+	 * Get the complete userop library for this thread, including userops for controlling this
+	 * thread
 	 * 
 	 * @return the library
 	 */
-	SleighUseropLibrary<T> getUseropLibrary();
+	PcodeUseropLibrary<T> getUseropLibrary();
 
 	/**
 	 * Get the thread's memory and register state
@@ -283,6 +338,7 @@ public interface PcodeThread<T> {
 	/**
 	 * Override the p-code at the given address with the given SLEIGH source for only this thread
 	 * 
+	 * <p>
 	 * This works the same {@link PcodeMachine#inject(Address, List)} but on a per-thread basis.
 	 * Where there is both a machine-level and thread-level inject the thread inject takes
 	 * precedence. Furthermore, the machine-level inject cannot be accessed by the thread-level

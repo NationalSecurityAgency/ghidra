@@ -18,6 +18,44 @@
 #include "flow.hh"
 #include "printc.hh"
 
+ElementId ELEM_ALIASBLOCK = ElementId("aliasblock",111);
+ElementId ELEM_ALLOWCONTEXTSET = ElementId("allowcontextset",112);
+ElementId ELEM_ANALYZEFORLOOPS = ElementId("analyzeforloops",113);
+ElementId ELEM_COMMENTHEADER = ElementId("commentheader",114);
+ElementId ELEM_COMMENTINDENT = ElementId("commentindent",115);
+ElementId ELEM_COMMENTINSTRUCTION = ElementId("commentinstruction",116);
+ElementId ELEM_COMMENTSTYLE = ElementId("commentstyle",117);
+ElementId ELEM_CONVENTIONPRINTING = ElementId("conventionprinting",118);
+ElementId ELEM_CURRENTACTION = ElementId("currentaction",119);
+ElementId ELEM_DEFAULTPROTOTYPE = ElementId("defaultprototype",120);
+ElementId ELEM_ERRORREINTERPRETED = ElementId("errorreinterpreted",121);
+ElementId ELEM_ERRORTOOMANYINSTRUCTIONS = ElementId("errortoomanyinstructions",122);
+ElementId ELEM_ERRORUNIMPLEMENTED = ElementId("errorunimplemented",123);
+ElementId ELEM_EXTRAPOP = ElementId("extrapop",124);
+ElementId ELEM_IGNOREUNIMPLEMENTED = ElementId("ignoreunimplemented",125);
+ElementId ELEM_INDENTINCREMENT = ElementId("indentincrement",126);
+ElementId ELEM_INFERCONSTPTR = ElementId("inferconstptr",127);
+ElementId ELEM_INLINE = ElementId("inline",128);
+ElementId ELEM_INPLACEOPS = ElementId("inplaceops",129);
+ElementId ELEM_INTEGERFORMAT = ElementId("integerformat",130);
+ElementId ELEM_JUMPLOAD = ElementId("jumpload",131);
+ElementId ELEM_MAXINSTRUCTION = ElementId("maxinstruction",132);
+ElementId ELEM_MAXLINEWIDTH = ElementId("maxlinewidth",133);
+ElementId ELEM_NAMESPACESTRATEGY = ElementId("namespacestrategy",134);
+ElementId ELEM_NOCASTPRINTING = ElementId("nocastprinting",135);
+ElementId ELEM_NORETURN = ElementId("noreturn",136);
+ElementId ELEM_NULLPRINTING = ElementId("nullprinting",137);
+ElementId ELEM_OPTIONSLIST = ElementId("optionslist",138);
+ElementId ELEM_PARAM1 = ElementId("param1",139);
+ElementId ELEM_PARAM2 = ElementId("param2",140);
+ElementId ELEM_PARAM3 = ElementId("param3",141);
+ElementId ELEM_PROTOEVAL = ElementId("protoeval",142);
+ElementId ELEM_SETACTION = ElementId("setaction",143);
+ElementId ELEM_SETLANGUAGE = ElementId("setlanguage",144);
+ElementId ELEM_STRUCTALIGN = ElementId("structalign",145);
+ElementId ELEM_TOGGLERULE = ElementId("togglerule",146);
+ElementId ELEM_WARNING = ElementId("warning",147);
+
 /// If the parameter is "on" return \b true, if "off" return \b false.
 /// Any other value causes an exception.
 /// \param p is the parameter
@@ -40,7 +78,8 @@ bool ArchOption::onOrOff(const string &p)
 void OptionDatabase::registerOption(ArchOption *option)
 
 {
-  optionmap[option->getName()] = option;
+  uint4 id = ElementId::find(option->getName());	// Option name must match a known element name
+  optionmap[id] = option;
 }
 
 /// Register all possible ArchOption objects with this database and set-up the parsing map.
@@ -88,69 +127,67 @@ OptionDatabase::OptionDatabase(Architecture *g)
 OptionDatabase::~OptionDatabase(void)
 
 {
-  map<string,ArchOption *>::iterator iter;
+  map<uint4,ArchOption *>::iterator iter;
   for(iter=optionmap.begin();iter!=optionmap.end();++iter)
     delete (*iter).second;
 }
 
-/// Perform an \e option \e command directly, given its name and optional parameters
-/// \param nm is the registered name of the option
+/// Perform an \e option \e command directly, given its id and optional parameters
+/// \param nameId is the id of the option
 /// \param p1 is the first optional parameter
 /// \param p2 is the second optional parameter
 /// \param p3 is the third optional parameter
 /// \return the confirmation/failure method after trying to apply the option
-string OptionDatabase::set(const string &nm,const string &p1,const string &p2,const string &p3)
+string OptionDatabase::set(uint4 nameId,const string &p1,const string &p2,const string &p3)
 
 {
-  map<string,ArchOption *>::const_iterator iter;
-  iter = optionmap.find(nm);
+  map<uint4,ArchOption *>::const_iterator iter;
+  iter = optionmap.find(nameId);
   if (iter == optionmap.end())
-    throw ParseError("Unknown option: "+nm);
+    throw ParseError("Unknown option");
   ArchOption *opt = (*iter).second;
   return opt->apply(glb,p1,p2,p3);
 }
 
-/// Unwrap the name and optional parameters and call method set()
-/// \param el is the command XML tag
-void OptionDatabase::parseOne(const Element *el)
+/// Scan the name and optional parameters and call method set()
+/// \param decoder is the stream decoder
+void OptionDatabase::decodeOne(Decoder &decoder)
 
 {
-  const string &optname( el->getName() );
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  
   string p1,p2,p3;
 
-  iter = list.begin();
-  if (iter != list.end()) {
-    p1 = (*iter)->getContent();
-    ++iter;
-    if (iter != list.end()) {
-      p2 = (*iter)->getContent();
-      ++iter;
-      if (iter != list.end()) {
-	p3 = (*iter)->getContent();
-	++iter;
-	if (iter != list.end())
-	  throw LowlevelError("Too many parameters to option: "+optname);
+  uint4 elemId = decoder.openElement();
+  uint4 subId = decoder.openElement();
+  if (subId == ELEM_PARAM1) {
+    p1 = decoder.readString(ATTRIB_CONTENT);
+    decoder.closeElement(subId);
+    subId = decoder.openElement();
+    if (subId == ELEM_PARAM2) {
+      p2 = decoder.readString(ATTRIB_CONTENT);
+      decoder.closeElement(subId);
+      subId = decoder.openElement();
+      if (subId == ELEM_PARAM3) {
+	p3 = decoder.readString(ATTRIB_CONTENT);
+	decoder.closeElement(subId);
       }
     }
   }
-  else
-    p1 = el->getContent();	// If no children, content is param 1
-  set(optname,p1,p2,p3);
+  else if (subId == 0)
+    p1 = decoder.readString(ATTRIB_CONTENT);	// If no children, content is param 1
+  decoder.closeElement(elemId);
+  set(elemId,p1,p2,p3);
 }
 
-/// Parse the \<optionslist> tag, treating each sub-tag as an \e option \e command.
-/// \param el is the \<optionslist> tag
-void OptionDatabase::restoreXml(const Element *el)
+/// Parse an \<optionslist> element, treating each child as an \e option \e command.
+/// \param decoder is the stream decoder
+void OptionDatabase::decode(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
+  uint4 elemId = decoder.openElement(ELEM_OPTIONSLIST);
 
-  for(iter=list.begin();iter!=list.end();++iter)
-    parseOne(*iter);
+  while(decoder.peekElement() != 0)
+    decodeOne(decoder);
+  decoder.closeElement(elemId);
 }
 
 /// \class OptionExtraPop

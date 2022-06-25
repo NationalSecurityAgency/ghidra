@@ -46,9 +46,10 @@
       <LI>Value - the value of the register as recorded in the trace. When the value refers to a
       valid memory offset, right-clicking the row allows the user to navigate to that offset in a
       selected memory space. This field is user modifiable when the <B>Enable Edits</B> toggle is
-      on, and the register is not part of <CODE>contextreg</CODE>. Changes are sent to the target
-      if the trace is live and "at the present." Otherwise, the change is materialized via
-      emulation. Values changed by the last event are displayed in <FONT color=
+      on, and the <A href=
+      "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">editing service</A>
+      reports the register as modifiable. Edits may be directed toward a live target, the trace, or
+      the emulator. Values changed by the last event are displayed in <FONT color=
       "red">red</FONT>.</LI>
 
       <LI>Type - the type of the register as marked up in the trace. There is generally no default
@@ -57,7 +58,8 @@
       time on."</LI>
 
       <LI>Representation - the value of the register as interpreted by its data type. If the value
-      is an address, double-clicking this field will navigate to it.</LI>
+      is an address, double-clicking this field will navigate to it. This field is user modifiable
+      whenever the Value column is modifiable and the selected data type provides an encoder.</LI>
     </UL>
 
     <H2>Actions</H2>
@@ -92,21 +94,17 @@
 
     <H3><A name="enable_edits"></A>Enable Edits</H3>
 
-    <P>This toggle is a write protector for target machine state. To modify register values, this
-    toggle must be enabled. Editing a value when the trace is live and "at the present" will cause
-    the value to be modified on the target. Editing emulated values is permitted, but ity has no
-    effect on the target. Editing historical values is not permitted. All edits to non-live trace
-    values are performed in emulation. Specifically, it appends a patch command to the current
-    emulation schedule. This keeps trace history in tact, and it allows patched emulated states to
-    be annotated and recalled later, since they are stored in the trace's scratch space. Note that
-    only the raw "Value" column can be edited directory. The "Repr" column cannot be edited,
-    yet.</P>
+    <P>This toggle is a write protector for machine state. To modify register values, this toggle
+    must be enabled. Edits are directed according the to <A href=
+    "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">State Editing Plugin
+    and Service</A>. <B>Note:</B> Only the raw "Value" column can be edited directly. The "Repr"
+    column cannot be edited, yet.</P>
 
-    <H3><A name="snapshot_window"></A>Snapshot Window</H3>
+    <H3><A name="clone_window"></A>Clone Window</H3>
 
     <P>This button is analogous to the "snapshot" action of other Ghidra windows. It generates a
-    copy of this window. The copy will no longer follow the current thread, but it will follow the
-    current time.</P>
+    clone of this window. The clone will no longer follow the current thread, but it will follow
+    the current time.</P>
 
     <H2><A name="colors"></A>Tool Options: Colors</H2>
 

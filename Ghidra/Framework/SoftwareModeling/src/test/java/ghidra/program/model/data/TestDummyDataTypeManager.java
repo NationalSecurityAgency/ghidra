@@ -156,12 +156,6 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 	}
 
 	@Override
-	public void dataTypeChanged(DataType dataType, boolean isAutoChange) {
-		// stub
-
-	}
-
-	@Override
 	public void addDataTypeManagerListener(DataTypeManagerChangeListener l) {
 		// stub
 
@@ -399,6 +393,18 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 	public Set<DataType> getDataTypesContaining(DataType dataType) {
 		// stub
 		return null;
+	}
+
+	@Override
+	public boolean allowsDefaultBuiltInSettings() {
+		// stub
+		return false;
+	}
+
+	@Override
+	public boolean allowsDefaultComponentSettings() {
+		// stub
+		return false;
 	}
 
 }

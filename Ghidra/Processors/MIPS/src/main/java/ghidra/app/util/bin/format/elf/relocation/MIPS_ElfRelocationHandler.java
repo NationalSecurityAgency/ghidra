@@ -61,6 +61,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 
 		MIPS_ElfRelocationContext mipsRelocationContext =
 			(MIPS_ElfRelocationContext) elfRelocationContext;
+		mipsRelocationContext.lastSymbolAddr = null;
 
 		int type = relocation.getType();
 		int symbolIndex = relocation.getSymbolIndex();
@@ -117,6 +118,8 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 		Memory memory = program.getMemory();
 		MessageLog log = mipsRelocationContext.getLog();
 
+		ElfHeader elf = mipsRelocationContext.getElfHeader();
+
 		long offset = (int) relocationAddress.getOffset();
 
 		ElfSymbol elfSymbol = mipsRelocationContext.getSymbol(symbolIndex);
@@ -124,6 +127,10 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 		Address symbolAddr = mipsRelocationContext.getSymbolAddress(elfSymbol);
 		long symbolValue = mipsRelocationContext.getSymbolValue(elfSymbol);
 		String symbolName = elfSymbol.getNameAsString();
+
+		if (symbolIndex != 0) {
+			mipsRelocationContext.lastSymbolAddr = symbolAddr;
+		}
 
 		long addend = 0;
 		if (mipsRelocationContext.useSavedAddend) {
@@ -361,6 +368,10 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 			case MIPS_ElfRelocationConstants.R_MICROMIPS_LO16:
 			case MIPS_ElfRelocationConstants.R_MICROMIPS_HI0_LO16:
 
+				if (mipsRelocationContext.extractAddend()) {
+					addend = (short) (oldValue & 0xffff);  // 16-bit sign extended
+				}
+
 				processHI16Relocations(mipsRelocationContext, relocType, elfSymbol, (int) addend);
 
 				processGOT16Relocations(mipsRelocationContext, relocType, elfSymbol, (int) addend);
@@ -386,17 +397,9 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				else {
 					value = (int) symbolValue;
 				}
-				value += mipsRelocationContext.extractAddend() ? (oldValue & 0xffff) : addend;
+				value += addend;
 
 				newValue = (oldValue & ~0xffff) | (value & 0xffff);
-				writeNewValue = true;
-				break;
-
-			case MIPS_ElfRelocationConstants.R_MIPS_32:
-				value = (int) symbolValue;
-				value += mipsRelocationContext.extractAddend() ? oldValue : addend;
-
-				newValue = value;
 				writeNewValue = true;
 				break;
 
@@ -405,17 +408,26 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				if (symbolIndex == 0) {
 					symbolValue = mipsRelocationContext.getImageBaseWordAdjustmentOffset();
 				}
+			case MIPS_ElfRelocationConstants.R_MIPS_32:
 				value = (int) symbolValue;
-				int a = (int) (mipsRelocationContext.extractAddend() ? oldValue : addend);
-				// NOTE: this may not detect correctly for all combound relocations
-				if (a != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
-					symbolAddr, symbolName, a, log)) {
-					a = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
-				}
-				value += a;
+				int intAddend = (int) (mipsRelocationContext.extractAddend() ? oldValue : addend);
+				value += intAddend;
 
 				newValue = value;
 				writeNewValue = true;
+
+				if (symbolIndex != 0 && intAddend != 0 && !saveValue) {
+					// If not continuing with compound relocation perform fixup so
+					// we can create offset-pointer now.
+					// NOTE: this may not handle all combound relocation cases
+					memory.setInt(relocationAddress, newValue);
+					writeNewValue = false;
+					warnExternalOffsetRelocation(program, relocationAddress,
+						symbolAddr, symbolName, intAddend, mipsRelocationContext.getLog());
+					if (elf.is32Bit()) {
+						applyComponentOffsetPointer(program, relocationAddress, intAddend);
+					}
+				}
 				break;
 
 			case MIPS_ElfRelocationConstants.R_MIPS_26:
@@ -457,6 +469,24 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				}
 				else {
 					memory.setLong(relocationAddress, newValueBig);
+					Address addr =
+						symbolIndex == 0 ? mipsRelocationContext.lastSymbolAddr : symbolAddr;
+					if (addr != null && addend != 0) {
+						if (symbolIndex == 0) {
+							// compute addend used with compound relocation and lastSymbolAddr 
+							addend -= addr.getOffset();
+						}
+						if (addend != 0) {
+							// If not continuing with compound relocation perform fixup so
+							// we can create offset-pointer now.
+							// NOTE: this may not handle all combound relocation cases
+							warnExternalOffsetRelocation(program, relocationAddress,
+								addr, symbolName, addend, mipsRelocationContext.getLog());
+							if (elf.is64Bit()) {
+								applyComponentOffsetPointer(program, relocationAddress, addend);
+							}
+						}
+					}
 				}
 				break;
 
@@ -665,9 +695,9 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 					if (block != null) {
 						if (MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName())) {
 
-							success =
-								mipsRelocationContext.getLoadHelper().createExternalFunctionLinkage(
-									symbolName, symAddr, null) != null;
+							success = mipsRelocationContext.getLoadHelper()
+									.createExternalFunctionLinkage(symbolName, symAddr,
+										null) != null;
 
 							if (success) {
 								// Inject appropriate JAL instruction
@@ -1015,6 +1045,8 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 		private boolean useSavedAddend = false;
 		private boolean savedAddendHasError = false;
 		private long savedAddend;
+
+		private Address lastSymbolAddr;
 
 		MIPS_ElfRelocationContext(MIPS_ElfRelocationHandler handler, ElfLoadHelper loadHelper,
 				ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {

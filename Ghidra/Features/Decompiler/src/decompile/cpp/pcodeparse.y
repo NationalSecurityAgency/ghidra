@@ -303,6 +303,9 @@ int4 PcodeLexer::moveState(void)
   switch(curstate) {
   case start:
     switch(curchar) {
+    case '#':
+      curstate = comment;
+      return start;
     case '|':
       if (lookahead1 == '|') {
 	starttoken();
@@ -517,17 +520,14 @@ int4 PcodeLexer::moveState(void)
     advancetoken();
     curstate = start;
     return identifier;
-    break;
   case special3:
     advancetoken();
     curstate = special32;
     return start;
-    break;
   case special32:
     advancetoken();
     curstate = start;
     return identifier;
-    break;
   case comment:
     if (curchar == '\n')
       curstate = start;
@@ -535,28 +535,25 @@ int4 PcodeLexer::moveState(void)
       curstate = endstream;
       return endstream;
     }
-    break;
+    return start;
   case identifier:
     advancetoken();
     if (isIdent(lookahead1))
       return start;
     curstate = start;
     return identifier;
-    break;
   case hexstring:
     advancetoken();
     if (isHex(lookahead1))
       return start;
     curstate = start;
     return hexstring;
-    break;
   case decstring:
     advancetoken();
     if (isDec(lookahead1))
       return start;
     curstate = start;
     return decstring;
-    break;
   default:
     curstate = endstream;
   }
@@ -635,10 +632,10 @@ void PcodeLexer::initialize(istream *t)
   }
 }
 
-uintb PcodeSnippet::allocateTemp(void)
+uint4 PcodeSnippet::allocateTemp(void)
 
 { // Allocate a variable in the unique space and return the offset
-  uintb res = tempbase;
+  uint4 res = tempbase;
   tempbase += 16;
   return res;
 }

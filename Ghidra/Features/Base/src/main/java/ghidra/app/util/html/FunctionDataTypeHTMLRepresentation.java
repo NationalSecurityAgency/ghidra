@@ -15,11 +15,13 @@
  */
 package ghidra.app.util.html;
 
+import static ghidra.util.HTMLUtilities.*;
+
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.ToolTipUtils;
-import ghidra.app.util.datatype.DataTypeUrl;
 import ghidra.app.util.html.diff.DataTypeDiff;
 import ghidra.app.util.html.diff.DataTypeDiffBuilder;
 import ghidra.program.model.data.*;
@@ -130,9 +132,8 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 			String displayName = dataType.getDisplayName();
 			String name = var.getName();
 
-			DataType locatableType = getLocatableDataType(dataType);
 			lines.add(new VariableTextLine(HTMLUtilities.friendlyEncodeHTML(displayName),
-				HTMLUtilities.friendlyEncodeHTML(name), locatableType));
+				HTMLUtilities.friendlyEncodeHTML(name), dataType));
 		}
 
 		return lines;
@@ -242,23 +243,15 @@ public class FunctionDataTypeHTMLRepresentation extends HTMLDataTypeRepresentati
 
 	private static String generateTypeText(VariableTextLine line, boolean trim) {
 
-		String type = line.getVariableType();
-		if (trim) {
-			type = StringUtilities.trimMiddle(type, ToolTipUtils.LINE_LENGTH);
-		}
-		type = wrapStringInColor(type, line.getVariableTypeColor());
-
-		if (!line.hasUniversalId()) {
-			return type;
+		Color color = line.getVariableTypeColor();
+		DataType dt = line.getDataType();
+		if (dt != null) {
+			return generateTypeName(dt, color, trim);
 		}
 
-		//
-		// Markup the name with info for later hyperlink capability, as needed by the client
-		//
-		DataType dataType = line.getDataType();
-		DataTypeUrl url = new DataTypeUrl(dataType);
-		String wrapped = HTMLUtilities.wrapWithLinkPlaceholder(type, url.toString());
-		return wrapped;
+		String type = truncateAsNecessary(line.getVariableType());
+		type = friendlyEncodeHTML(type);
+		return wrapStringInColor(type, color);
 	}
 
 	@Override

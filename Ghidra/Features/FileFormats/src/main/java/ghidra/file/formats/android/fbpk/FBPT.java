@@ -15,159 +15,53 @@
  */
 package ghidra.file.formats.android.fbpk;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.program.flatapi.FlatProgramAPI;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.listing.*;
+import ghidra.util.task.TaskMonitor;
 
-public class FBPT implements StructConverter {
-	private String magic;
-	private int unknown1;
-	private int unknown2;
-	private int unknown3;
-	private int nEntries;
-	private int unknownA;
-	private int unknownB;
-	private int unknownC;
-	private int unknownD;
-	private int unknownE;
-	private int unknownF;
-	private int unknownG;
-	private int unknownH;
-	private int unknownI;
-	private int unknownJ;
-	private int unknownK;
-	private int unknownL;
-	private int unknownM;
-	private List<FBPT_Entry> entries = new ArrayList<>();
+public abstract class FBPT implements StructConverter {
 
-	public FBPT(BinaryReader reader) throws IOException {
-		magic = reader.readNextAsciiString(FBPK_Constants.FBPT.length());
-		unknown1 = reader.readNextInt();
-		unknown2 = reader.readNextInt();
-		unknown3 = reader.readNextInt();
-		nEntries = reader.readNextInt();
-		unknownA = reader.readNextInt();
-		unknownB = reader.readNextInt();
-		unknownC = reader.readNextInt();
-		unknownD = reader.readNextInt();
-		unknownE = reader.readNextInt();
-		unknownF = reader.readNextInt();
-		unknownG = reader.readNextInt();
-		unknownH = reader.readNextInt();
-		unknownI = reader.readNextInt();
-		unknownJ = reader.readNextInt();
-		unknownK = reader.readNextInt();
-		unknownL = reader.readNextInt();
-		unknownM = reader.readNextInt();
+	public abstract String getMagic();
 
-		for (int i = 0; i < nEntries; ++i) {
-			entries.add(new FBPT_Entry(reader, i == nEntries - 1));
+	public abstract List<FBPT_Entry> getEntries();
+
+	public void processFBPT(Program program, Address address, TaskMonitor monitor, MessageLog log) throws Exception {
+		FlatProgramAPI api = new FlatProgramAPI(program);
+
+		DataType fbptDataType = toDataType();
+		Data fbptData = program.getListing().createData(address, fbptDataType);
+		if (fbptData == null) {
+			log.appendMsg("Unable to apply FBPT data, stopping - " + address);
+			return;
+		}
+		String comment = "FBPT" + "\n" + "Num of entries: " + getEntries().size();
+		program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+		api.createFragment(FBPK_Constants.FBPT, address, fbptDataType.getLength());
+		address = address.add(fbptDataType.getLength());
+
+		processFbPtEntries(program, address, monitor, log);
+	}
+
+	private void processFbPtEntries(Program program, Address address, TaskMonitor monitor, MessageLog log) throws Exception {
+		int i = 0;
+		FlatProgramAPI api = new FlatProgramAPI(program);
+		for (FBPT_Entry entry : getEntries()) {
+			monitor.checkCanceled();
+			DataType entryDataType = entry.toDataType();
+			Data entryData = program.getListing().createData(address, entryDataType);
+			if (entryData == null) {
+				log.appendMsg("Unable to apply FBPT Entry data, stopping - " + address);
+				return;
+			}
+			program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, entry.getName() + " - " + i++);
+			api.createFragment(FBPK_Constants.FBPT, address, entryDataType.getLength());
+			address = address.add(entryDataType.getLength());
 		}
 	}
-
-	public String getMagic() {
-		return magic;
-	}
-
-	public int getNEntries() {
-		return nEntries;
-	}
-
-	public List<FBPT_Entry> getEntries() {
-		return entries;
-	}
-
-	public int getUnknown1() {
-		return unknown1;
-	}
-
-	public int getUnknown2() {
-		return unknown2;
-	}
-
-	public int getUnknown3() {
-		return unknown3;
-	}
-
-	public int getUnknownA() {
-		return unknownA;
-	}
-
-	public int getUnknownB() {
-		return unknownB;
-	}
-
-	public int getUnknownC() {
-		return unknownC;
-	}
-
-	public int getUnknownD() {
-		return unknownD;
-	}
-
-	public int getUnknownE() {
-		return unknownE;
-	}
-
-	public int getUnknownF() {
-		return unknownF;
-	}
-
-	public int getUnknownG() {
-		return unknownG;
-	}
-
-	public int getUnknownH() {
-		return unknownH;
-	}
-
-	public int getUnknownI() {
-		return unknownI;
-	}
-
-	public int getUnknownJ() {
-		return unknownJ;
-	}
-
-	public int getUnknownK() {
-		return unknownK;
-	}
-
-	public int getUnknownL() {
-		return unknownL;
-	}
-
-	public int getUnknownM() {
-		return unknownM;
-	}
-
-	@Override
-	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure struct = new StructureDataType(FBPT.class.getSimpleName(), 0);
-		struct.add(STRING, FBPK_Constants.FBPT.length(), "magic", null);
-		struct.add(DWORD, "unknown1", null);
-		struct.add(DWORD, "unknown2", null);
-		struct.add(DWORD, "unknown3", null);
-		struct.add(DWORD, "nEntries", null);
-		struct.add(DWORD, "unknownA", null);
-		struct.add(DWORD, "unknownB", null);
-		struct.add(DWORD, "unknownC", null);
-		struct.add(DWORD, "unknownD", null);
-		struct.add(DWORD, "unknownE", null);
-		struct.add(DWORD, "unknownF", null);
-		struct.add(DWORD, "unknownG", null);
-		struct.add(DWORD, "unknownH", null);
-		struct.add(DWORD, "unknownI", null);
-		struct.add(DWORD, "unknownJ", null);
-		struct.add(DWORD, "unknownK", null);
-		struct.add(DWORD, "unknownL", null);
-		struct.add(DWORD, "unknownM", null);
-		return struct;
-	}
-
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +15,22 @@
  */
 package ghidra.app.util.bin.format.objc2;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+
+import ghidra.app.util.opinion.DyldCacheLoader;
 import ghidra.app.util.opinion.MachoLoader;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
 
 public final class ObjectiveC2_Constants {
 
 	/**
 	 * The name prefix of all Objective-C 2 sections.
 	 */
-	private final static String OBJC2_PREFIX                    = "__objc_";
+	public final static String OBJC2_PREFIX = "__objc_";
 
 	/** Objective-C 2 category list. */
 	public final static String OBJC2_CATEGORY_LIST             = "__objc_catlist";
@@ -84,7 +84,8 @@ public final class ObjectiveC2_Constants {
 	 */
 	public final static boolean isObjectiveC2(Program program) {
 		String format = program.getExecutableFormat();
-		if (MachoLoader.MACH_O_NAME.equals(format)) {
+		if (MachoLoader.MACH_O_NAME.equals(format) ||
+			DyldCacheLoader.DYLD_CACHE_NAME.equals(format)) {
 			MemoryBlock [] blocks = program.getMemory().getBlocks();
 			for (MemoryBlock memoryBlock : blocks) {
 				if (memoryBlock.getName().startsWith(OBJC2_PREFIX)) {

@@ -25,10 +25,11 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.*;
+import com.google.common.collect.Range;
 
 import db.DBHandle;
 import db.DBRecord;
+import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ContextChangeException;
@@ -41,7 +42,9 @@ import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.data.DBTraceDataTypeManager;
-import ghidra.trace.database.language.DBTraceLanguageManager;
+import ghidra.trace.database.guest.DBTraceGuestPlatform;
+import ghidra.trace.database.guest.DBTracePlatformManager;
+import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
@@ -90,7 +93,7 @@ public class DBTraceCodeManager
 		static DBObjectColumn DELAY_COLUMN;
 
 		@DBAnnotatedField(column = LANGUAGE_COLUMN_NAME)
-		private int langKey;
+		private int languageKey;
 		@DBAnnotatedField(column = BYTES_COLUMN_NAME)
 		private byte[] bytes;
 		@DBAnnotatedField(column = CONTEXT_COLUMN_NAME)
@@ -99,6 +102,8 @@ public class DBTraceCodeManager
 		private Address address;
 		@DBAnnotatedField(column = DELAY_COLUMN_NAME)
 		private boolean delaySlot;
+
+		private InstructionPrototype prototype;
 
 		private DBTraceCodeManager manager;
 
@@ -113,21 +118,33 @@ public class DBTraceCodeManager
 			return manager.overlayAdapter;
 		}
 
-		void set(int langKey, byte[] bytes, byte[] context, Address address, boolean delaySlot) {
-			this.langKey = langKey;
+		void set(DBTraceGuestLanguage languageEntry, byte[] bytes, byte[] context, Address address,
+				boolean delaySlot) {
+			this.languageKey = (int) (languageEntry == null ? -1 : languageEntry.getKey());
 			this.bytes = bytes;
 			this.context = context;
 			this.address = address;
 			this.delaySlot = delaySlot;
 			update(LANGUAGE_COLUMN, BYTES_COLUMN, CONTEXT_COLUMN, ADDRESS_COLUMN, DELAY_COLUMN);
+			this.prototype = parsePrototype();
 		}
 
-		int getLanguageKey() {
-			return langKey;
+		@Override
+		protected void fresh(boolean created) throws IOException {
+			super.fresh(created);
+			if (created) {
+				return;
+			}
+			this.prototype = parsePrototype();
 		}
 
-		InstructionPrototype parsePrototype() {
-			Language language = manager.languageManager.getLanguageByKey(langKey);
+		public InstructionPrototype getPrototype() {
+			return prototype;
+		}
+
+		private InstructionPrototype parsePrototype() {
+			DBTraceGuestLanguage guest = manager.platformManager.getLanguageByKey(languageKey);
+			Language language = guest == null ? manager.baseLanguage : guest.getLanguage();
 			MemBuffer memBuffer = new ByteMemBufferImpl(address, bytes, language.isBigEndian());
 			ProcessorContext ctx =
 				new ProtoProcessorContext(getBaseContextValue(language, context, address));
@@ -168,13 +185,14 @@ public class DBTraceCodeManager
 		return max;
 	}
 
-	protected final DBTraceLanguageManager languageManager;
+	protected final DBTracePlatformManager platformManager;
 	protected final DBTraceDataTypeManager dataTypeManager;
 	protected final DBTraceOverlaySpaceAdapter overlayAdapter;
 	protected final DBTraceReferenceManager referenceManager;
 
 	protected final DBCachedObjectStore<DBTraceCodePrototypeEntry> protoStore;
-	protected final BiMap<InstructionPrototype, Integer> protoMap = HashBiMap.create();
+	protected final Map<InstructionPrototype, DBTraceCodePrototypeEntry> entriesByProto =
+		new HashMap<>();
 
 	protected final DBTraceCodeUnitsMemoryView codeUnits = new DBTraceCodeUnitsMemoryView(this);
 	protected final DBTraceInstructionsMemoryView instructions =
@@ -196,11 +214,11 @@ public class DBTraceCodeManager
 
 	public DBTraceCodeManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
-			DBTraceThreadManager threadManager, DBTraceLanguageManager languageManager,
+			DBTraceThreadManager threadManager, DBTracePlatformManager platformManager,
 			DBTraceDataTypeManager dataTypeManager, DBTraceOverlaySpaceAdapter overlayAdapter,
 			DBTraceReferenceManager referenceManager) throws IOException, VersionException {
 		super(NAME, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager);
-		this.languageManager = languageManager;
+		this.platformManager = platformManager;
 		this.dataTypeManager = dataTypeManager;
 		this.overlayAdapter = overlayAdapter;
 		this.referenceManager = referenceManager;
@@ -230,7 +248,7 @@ public class DBTraceCodeManager
 		// NOTE: Should already own write lock
 		for (DBTraceCodePrototypeEntry protoEnt : protoStore.asMap().values()) {
 			// NOTE: No need to check if it exists. This is only called on new or after clear
-			protoMap.put(protoEnt.parsePrototype(), (int) protoEnt.getKey());
+			entriesByProto.put(protoEnt.prototype, protoEnt);
 		}
 	}
 
@@ -239,8 +257,8 @@ public class DBTraceCodeManager
 		return Arrays.copyOfRange(bytes, bytes.length / 2, bytes.length);
 	}
 
-	protected int doRecordPrototype(InstructionPrototype prototype, MemBuffer memBuffer,
-			ProcessorContextView context) {
+	protected DBTraceCodePrototypeEntry doRecordPrototype(InstructionPrototype prototype,
+			DBTraceGuestLanguage guest, MemBuffer memBuffer, ProcessorContextView context) {
 		DBTraceCodePrototypeEntry protoEnt = protoStore.create();
 		byte[] bytes = new byte[prototype.getLength()];
 		if (memBuffer.getBytes(bytes, 0) != bytes.length) {
@@ -255,20 +273,20 @@ public class DBTraceCodeManager
 			RegisterValue value = context.getRegisterValue(baseCtxReg);
 			ctx = value == null ? null : valueBytes(value);
 		}
-		protoEnt.set(languageManager.getKeyForLanguage(prototype.getLanguage()), bytes, ctx,
-			memBuffer.getAddress(), prototype.isInDelaySlot());
-		return (int) protoEnt.getKey();
+		protoEnt.set(guest, bytes, ctx, memBuffer.getAddress(), prototype.isInDelaySlot());
+		return protoEnt;
 	}
 
-	protected int findOrRecordPrototype(InstructionPrototype prototype, MemBuffer memBuffer,
-			ProcessorContextView context) {
+	protected DBTraceCodePrototypeEntry findOrRecordPrototype(InstructionPrototype prototype,
+			DBTraceGuestLanguage guest, MemBuffer memBuffer, ProcessorContextView context) {
 		// NOTE: Must already have write lock
-		return protoMap.computeIfAbsent(prototype,
-			p -> doRecordPrototype(prototype, memBuffer, context));
+		return entriesByProto.computeIfAbsent(prototype,
+			p -> doRecordPrototype(prototype, guest, memBuffer, context));
 	}
 
 	protected InstructionPrototype getPrototypeByKey(int key) {
-		return protoMap.inverse().get(key);
+		DBTraceCodePrototypeEntry protoEnt = protoStore.getObjectAt(key);
+		return protoEnt == null ? null : protoEnt.prototype;
 	}
 
 	@Override
@@ -326,35 +344,43 @@ public class DBTraceCodeManager
 		return getForRegisterSpace(frame, createIfAbsent);
 	}
 
-	// Internal
+	@Internal
 	public void replaceDataTypes(long oldID, long newID) {
 		TODO();
 	}
 
-	// Internal
+	@Internal
 	public void clearData(LinkedList<Long> deletedDataTypeIds, TaskMonitor monitor) {
 		TODO();
 	}
 
-	// Internal
-	public void clearLanguage(Range<Long> span, AddressRange range, int langKey,
+	@Internal
+	public void clearPlatform(Range<Long> span, AddressRange range, DBTraceGuestPlatform guest,
 			TaskMonitor monitor) throws CancelledException {
 		delegateDeleteV(range.getAddressSpace(),
-			m -> m.clearLanguage(span, range, langKey, monitor));
+			m -> m.clearPlatform(span, range, guest, monitor));
 	}
 
-	// Internal
-	public void deleteLanguage(int langKey, TaskMonitor monitor) throws CancelledException {
+	@Internal
+	public void deletePlatform(DBTraceGuestPlatform guest, TaskMonitor monitor)
+			throws CancelledException {
 		// TODO: Use sub-monitors when available
 		for (DBTraceCodeSpace codeSpace : memSpaces.values()) {
-			codeSpace.clearLanguage(Range.all(), codeSpace.all, langKey, monitor);
+			codeSpace.clearPlatform(Range.all(), codeSpace.all, guest, monitor);
 		}
 		for (DBTraceCodeRegisterSpace codeSpace : regSpaces.values()) {
 			// TODO: I don't know any way to get guest instructions into register space
 			// The mapping manager does (should) not allow guest register addresses
 			// TODO: Test this if I ever get guest data units
-			codeSpace.clearLanguage(Range.all(), codeSpace.all, langKey, monitor);
+			// TODO: I think explicit per-thread/frame register spaces will be going away, anyway
+			// They'll just be path-named overlays on register space?
+			codeSpace.clearPlatform(Range.all(), codeSpace.all, guest, monitor);
 		}
+	}
+
+	@Internal
+	public void deleteLangauge(DBTraceGuestLanguage guest, TaskMonitor monitor)
+			throws CancelledException {
 		monitor.setMessage("Clearing instruction prototypes");
 		monitor.setMaximum(protoStore.getRecordCount());
 		for (Iterator<DBTraceCodePrototypeEntry> it = protoStore.asMap().values().iterator(); it
@@ -362,11 +388,11 @@ public class DBTraceCodeManager
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
 			DBTraceCodePrototypeEntry protoEnt = it.next();
-			if (langKey != protoEnt.langKey) {
+			if (protoEnt.prototype.getLanguage() != guest.getLanguage()) {
 				continue;
 			}
 			it.remove();
-			protoMap.inverse().remove((int) protoEnt.getKey());
+			entriesByProto.remove(protoEnt.prototype);
 		}
 	}
 
@@ -374,7 +400,7 @@ public class DBTraceCodeManager
 	public void invalidateCache(boolean all) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			protoStore.invalidateCache();
-			protoMap.clear();
+			entriesByProto.clear();
 			loadPrototypes();
 
 			super.invalidateCache(all);

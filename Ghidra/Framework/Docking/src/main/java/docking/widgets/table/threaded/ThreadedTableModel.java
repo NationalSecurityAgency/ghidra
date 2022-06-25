@@ -93,7 +93,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	private int minUpdateDelayMillis;
 	private int maxUpdateDelayMillis;
 	private TableAddRemoveStrategy<ROW_OBJECT> binarySearchAddRemoveStrategy =
-		new DefaultAddRemoveStrategy<>();
+		new CoalescingAddRemoveStrategy<>();
 
 	protected ThreadedTableModel(String modelName, ServiceProvider serviceProvider) {
 		this(modelName, serviceProvider, null);

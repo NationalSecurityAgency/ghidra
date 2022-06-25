@@ -26,21 +26,24 @@ import javax.swing.table.*;
 import com.google.common.collect.Range;
 
 public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
-		extends GTableHeaderRenderer {
+		extends GTableHeaderRenderer implements RangedRenderer<N> {
 	protected final static int ARROW_SIZE = 10;
 	protected final static Polygon ARROW = new Polygon(
 		new int[] { 0, -ARROW_SIZE, -ARROW_SIZE },
 		new int[] { 0, ARROW_SIZE, -ARROW_SIZE }, 3);
 
-	protected Range<Double> fullRange = Range.closed(0d, 1d);
+	protected Range<Double> fullRangeDouble = Range.closed(0d, 1d);
 	protected double span = 1;
+
+	protected Range<N> fullRange;
 
 	protected N pos;
 	protected double doublePos;
 
+	@Override
 	public void setFullRange(Range<N> fullRange) {
-		this.fullRange = RangeTableCellRenderer.validateViewRange(fullRange);
-		this.span = this.fullRange.upperEndpoint() - this.fullRange.lowerEndpoint();
+		this.fullRangeDouble = RangedRenderer.validateViewRange(fullRange);
+		this.span = this.fullRangeDouble.upperEndpoint() - this.fullRangeDouble.lowerEndpoint();
 	}
 
 	public void setCursorPosition(N pos) {
@@ -51,6 +54,7 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 	@Override
 	protected void paintChildren(Graphics g) {
 		super.paintChildren(g);
+		// The cursor should occlude the children
 		paintCursor(g);
 	}
 
@@ -58,7 +62,7 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 		Graphics2D g = (Graphics2D) parentG.create();
 
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		double x = (doublePos - fullRange.lowerEndpoint()) / span * getWidth();
+		double x = (doublePos - fullRangeDouble.lowerEndpoint()) / span * getWidth();
 		g.translate(x, getHeight());
 		g.rotate(Math.PI / 2);
 		g.setColor(getForeground());
@@ -117,7 +121,8 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 				}
 				TableColumn col = colModel.getColumn(viewColIdx);
 
-				double pos = span * (e.getX() - colX) / col.getWidth() + fullRange.lowerEndpoint();
+				double pos =
+					span * (e.getX() - colX) / col.getWidth() + fullRangeDouble.lowerEndpoint();
 				listener.accept(pos);
 			}
 		};
@@ -127,5 +132,20 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 
 	public N getCursorPosition() {
 		return pos;
+	}
+
+	@Override
+	public Range<N> getFullRange() {
+		return fullRange;
+	}
+
+	@Override
+	public Range<Double> getFullRangeDouble() {
+		return fullRangeDouble;
+	}
+
+	@Override
+	public double getSpan() {
+		return span;
 	}
 }

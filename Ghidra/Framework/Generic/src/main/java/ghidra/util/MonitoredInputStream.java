@@ -23,7 +23,8 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * An InputStream which utilizes a TaskMonitor to indicate input progress and
- * allows the operation to be cancelled via the TaskMonitor.
+ * allows the operation to be cancelled via the TaskMonitor.  If monitor is
+ * cancelled any susequent read will generate a {@link IOCancelledException}.
  */
 public class MonitoredInputStream extends InputStream {
 
@@ -32,7 +33,8 @@ public class MonitoredInputStream extends InputStream {
 	protected InputStream in;
 	private TaskMonitor monitor;
 	private int smallCount = 0;
-	private int count = 0;
+	private long count = 0;
+	private boolean cleanupOnCancel;
 
 	public MonitoredInputStream(InputStream in, TaskMonitor monitor) {
 		this.in = in;
@@ -40,10 +42,19 @@ public class MonitoredInputStream extends InputStream {
 	}
 
 	/**
-	 * Reset the current progress count to the specified value.
+	 * Get task monitor associated within this input stream.
+	 * @return task monitor
 	 */
-	public void setProgress(int count) {
-		this.count = count;
+	public TaskMonitor getTaskMonitor() {
+		return monitor;
+	}
+
+	/**
+	 * Reset the current progress count to the specified value.
+	 * @param progress current progress 
+	 */
+	public void setProgress(long progress) {
+		this.count = progress;
 	}
 
 	/**
@@ -245,4 +256,25 @@ public class MonitoredInputStream extends InputStream {
 	public boolean markSupported() {
 		return in.markSupported();
 	}
+
+	/**
+	 * Convey to byte stream consumer if cleanup of any artifacts produced is recommended, when 
+	 * applicable, if {@link IOCancelledException} is thrown by this input stream.
+	 * @param enable true if cleanup recommended, false if no cleanup neccessary (default).
+	 * @return this instance
+	 */
+	public MonitoredInputStream setCleanupOnCancel(boolean enable) {
+		cleanupOnCancel = enable;
+		return this;
+	}
+
+	/**
+	 * Determine if artifact cleanup is recommended when possible following cancellation
+	 * of this input stream (i.e., {@link IOCancelledException} has been caught).
+	 * @return true if cleanup recommended, false if no cleanup required.
+	 */
+	public boolean cleanupOnCancel() {
+		return cleanupOnCancel;
+	}
+
 }

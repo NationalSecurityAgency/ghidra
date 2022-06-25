@@ -230,7 +230,7 @@ void PrintJava::opLoad(const PcodeOp *op)
   bool printArrayRef = needZeroArray(op->getIn(1));
   if (printArrayRef)
     pushOp(&subscript,op);
-  pushVnImplied(op->getIn(1),op,m);
+  pushVn(op->getIn(1),op,m);
   if (printArrayRef)
     push_integer(0,4,false,(Varnode *)0,op);
 }
@@ -242,15 +242,15 @@ void PrintJava::opStore(const PcodeOp *op)
   pushOp(&assignment,op);	// This is an assignment
   if (needZeroArray(op->getIn(1))) {
     pushOp(&subscript,op);
-    pushVnImplied(op->getIn(1),op,m);
+    pushVn(op->getIn(1),op,m);
     push_integer(0,4,false,(Varnode *)0,op);
-    pushVnImplied(op->getIn(2),op,mods);
+    pushVn(op->getIn(2),op,mods);
   }
   else {
     // implied vn's pushed on in reverse order for efficiency
     // see PrintLanguage::pushVnImplied
-    pushVnImplied(op->getIn(2),op,mods);
-    pushVnImplied(op->getIn(1),op,m);
+    pushVn(op->getIn(2),op,mods);
+    pushVn(op->getIn(1),op,m);
   }
 }
 
@@ -266,25 +266,25 @@ void PrintJava::opCallind(const PcodeOp *op)
   int4 count = op->numInput() - 1;
   count -= (skip < 0) ? 0 : 1;
   if (count > 1) {	// Multiple parameters
-    pushVnImplied(op->getIn(0),op,mods);
+    pushVn(op->getIn(0),op,mods);
     for(int4 i=0;i<count-1;++i)
       pushOp(&comma,op);
     // implied vn's pushed on in reverse order for efficiency
     // see PrintLanguage::pushVnImplied
     for(int4 i=op->numInput()-1;i>=1;--i) {
       if (i == skip) continue;
-      pushVnImplied(op->getIn(i),op,mods);
+      pushVn(op->getIn(i),op,mods);
     }
   }
   else if (count == 1) {	// One parameter
     if (skip == 1)
-      pushVnImplied(op->getIn(2),op,mods);
+      pushVn(op->getIn(2),op,mods);
     else
-      pushVnImplied(op->getIn(1),op,mods);
-    pushVnImplied(op->getIn(0),op,mods);
+      pushVn(op->getIn(1),op,mods);
+    pushVn(op->getIn(0),op,mods);
   }
   else {			// A void function
-    pushVnImplied(op->getIn(0),op,mods);
+    pushVn(op->getIn(0),op,mods);
     pushAtom(Atom("",blanktoken,EmitXml::no_color));
   }
 }
@@ -329,7 +329,7 @@ void PrintJava::opCpoolRefOp(const PcodeOp *op)
 	  dt = ((TypePointer *)dt)->getPtrTo();
 	}
 	pushOp(&instanceof,op);
-	pushVnImplied(vn0,op,mods);
+	pushVn(vn0,op,mods);
 	pushAtom(Atom(dt->getName(),syntax,EmitXml::type_color,op,outvn));
 	break;
       }
@@ -352,7 +352,7 @@ void PrintJava::opCpoolRefOp(const PcodeOp *op)
 	}
 	else {
 	  pushOp(&object_member,op);
-	  pushVnImplied(vn0,op,mods);
+	  pushVn(vn0,op,mods);
 	  pushAtom(Atom(rec->getToken(),syntax,color,op,outvn));
 	}
       }

@@ -18,7 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import ghidra.app.plugin.processors.sleigh.expression.DivExpression;
 
 /**
- * Solves expressions of the form A / B
+ * Solves expressions of the form {@code A / B}
  */
 public class DivExpressionSolver extends AbstractBinaryExpressionSolver<DivExpression> {
 
@@ -37,7 +37,8 @@ public class DivExpressionSolver extends AbstractBinaryExpressionSolver<DivExpre
 			return MaskedLong.fromLong(1);
 		}
 		throw new SolverException(
-			"Encountered a division of the form A / x = B, where A != B. x has many solutions not easily expressed with masking.");
+			"Encountered a division of the form A / x = B, where A != B. x has many solutions " +
+				"not easily expressed with masking.");
 	}
 
 	@Override

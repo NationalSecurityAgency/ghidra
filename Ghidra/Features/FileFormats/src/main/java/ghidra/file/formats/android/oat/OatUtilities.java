@@ -19,7 +19,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.app.util.bin.format.elf.ElfSectionHeaderConstants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.ElfLoader;
@@ -42,7 +44,7 @@ public final class OatUtilities {
 	 * Returns null when the "oatdata" symbol does not exist.
 	 */
 	public static BinaryReader getBinaryReader(Program program) {
-		if (OatConstants.isOAT(program)) {
+		if (isOAT(program)) {
 			Symbol symbol = getOatDataSymbol(program);
 			if (symbol != null && symbol.getName().equals(OatConstants.SYMBOL_OAT_DATA)) {
 				ByteProvider provider =
@@ -51,6 +53,28 @@ public final class OatUtilities {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Returns true if the given program contain OAT information.
+	 * Checks for the program being an ELF, and containing the three magic OAT symbols.
+	 * @param program the program to inspect
+	 * @return true if the program is OAT
+	 */
+	public static boolean isOAT(Program program) {
+		if (program != null) {
+			String executableFormat = program.getExecutableFormat();
+			if (ElfLoader.ELF_NAME.equals(executableFormat)) {
+				MemoryBlock roDataBlock =
+					program.getMemory().getBlock(ElfSectionHeaderConstants.dot_rodata);
+				if (roDataBlock != null) {
+					SymbolTable symbolTable = program.getSymbolTable();
+					Symbol oatDataSymbol = symbolTable.getPrimarySymbol(roDataBlock.getStart());
+					return oatDataSymbol != null && oatDataSymbol.getName().equals(OatConstants.SYMBOL_OAT_DATA);
+				}
+			}
+		}
+		return false;
 	}
 
 	public static boolean isELF(Program program) {

@@ -45,7 +45,7 @@ import resources.Icons;
 import resources.ResourceManager;
 
 /**
- * component for managing OSGi bundle status
+ * Component for managing OSGi bundle status
  */
 public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
@@ -289,7 +289,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				files.stream().map(ResourceFile::new).collect(Collectors.toUnmodifiableList());
 			Collection<GhidraBundle> bundles = bundleHost.add(resourceFiles, true, false);
 
-			TaskLauncher.launchNonModal("activating new bundles", (monitor) -> {
+			TaskLauncher.launchNonModal("Activating new bundles", (monitor) -> {
 				bundleHost.activateAll(bundles, monitor,
 					getTool().getService(ConsoleService.class).getStdErr());
 			});
@@ -339,9 +339,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		return panel;
 	}
 
-	/**
-	 * cleanup this component
-	 */
 	public void dispose() {
 		filterPanel.dispose();
 	}
@@ -351,9 +348,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	/**
-	 * This is for testing only!  during normal execution, statuses are only added through BundleHostListener bundle(s) added events.
+	 * This is for testing only!  during normal execution, statuses are only added through 
+	 * BundleHostListener bundle(s) added events.
 	 * 
-	 * <p>each new bundle will be enabled and writable
+	 * <p>Each new bundle will be enabled and writable
 	 * 
 	 * @param bundleFiles the files to use
 	 */
@@ -362,6 +360,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				.map(f -> new BundleStatus(f, true, false, null))
 				.collect(Collectors.toList()));
 	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
 
 	private final class RemoveBundlesTask extends Task {
 		private final DeactivateAndDisableBundlesTask deactivateBundlesTask;
@@ -378,7 +380,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		public void run(TaskMonitor monitor) throws CancelledException {
 			deactivateBundlesTask.run(monitor);
 			monitor.checkCanceled();
-			// partition bundles into system (bundles.get(true)) and non-system (bundles.get(false)).
+			// partition bundles into system (bundles.get(true)) / non-system (bundles.get(false))
 			Map<Boolean, List<GhidraBundle>> bundles = statuses.stream()
 					.map(bs -> bundleHost.getExistingGhidraBundle(bs.getFile()))
 					.collect(Collectors.partitioningBy(GhidraBundle::isSystemBundle));
@@ -483,8 +485,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	/*
-	 * Activating/deactivating a single bundle doesn't require resolving dependents,
-	 * so this task is slightly different from the others.
+	 * Activating/deactivating a single bundle doesn't require resolving dependents, so this task 
+	 * is slightly different from the others.
 	 */
 	private class ActivateDeactivateBundleTask extends Task {
 		private final BundleStatus status;

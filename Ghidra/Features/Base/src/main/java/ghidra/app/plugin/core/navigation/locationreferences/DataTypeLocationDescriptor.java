@@ -35,8 +35,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A location descriptor that should be extended by location descriptor implementations that 
- * are based upon data types.
+ * A location descriptor that should be extended by location descriptor implementations that are
+ * based upon data types.
  */
 abstract class DataTypeLocationDescriptor extends LocationDescriptor {
 
@@ -70,18 +70,28 @@ abstract class DataTypeLocationDescriptor extends LocationDescriptor {
 		findDataTypeReferences(accumulator, monitor);
 	}
 
-	/** The original data type that this location descriptor describes */
+	/**
+	 * The original data type that this location descriptor describes
+	 * @return the type
+	 */
 	protected abstract DataType getSourceDataType();
 
-	/** Generates the label for the results window */
+	/**
+	 * Generates the label for the results window
+	 * @return the label
+	 */
 	protected abstract String generateLabel();
 
-	/** Returns the name of the data type, for example, 'Foo' or 'Foo.bar.baz' */
+	/**
+	 * Returns the name of the data type, for example, 'Foo' or 'Foo.bar.baz'
+	 * @return the name
+	 */
 	protected abstract String getDataTypeName();
 
-	/** 
+	/**
 	 * The base data type that this location descriptor describes (this may be the same as the
 	 * original data type.
+	 * @return the type.
 	 */
 	protected DataType getBaseDataType() {
 		return getSourceDataType(); // by default these two values are the same
@@ -91,7 +101,7 @@ abstract class DataTypeLocationDescriptor extends LocationDescriptor {
 			TaskMonitor monitor) throws CancelledException {
 
 		DataType currentDataType = getDataType();
-		ReferenceUtils.findDataTypeReferences(accumulator, currentDataType, null, program,
+		ReferenceUtils.findDataTypeReferences(accumulator, currentDataType, program,
 			useDynamicSearching, monitor);
 	}
 
@@ -177,8 +187,8 @@ abstract class DataTypeLocationDescriptor extends LocationDescriptor {
 			List<Variable> allVariables = ReferenceUtils.getVariables(function, true);
 			for (Variable variable : allVariables) {
 				DataType variableDataType = variable.getDataType();
-				if (ReferenceUtils.getBaseDataType(variableDataType).isEquivalent(
-					currentDataType)) {
+				if (ReferenceUtils.getBaseDataType(variableDataType)
+						.isEquivalent(currentDataType)) {
 					return true;
 				}
 			}
@@ -266,8 +276,8 @@ abstract class DataTypeLocationDescriptor extends LocationDescriptor {
 		}
 		// check for pointer names
 		else if (label.endsWith("*") && label.startsWith(paramName)) {
-			// see if we need to chop off some '*'s, as we may have searched for a pointer to a 
-			// pointer and have found a match against a simple pointer and thus the display may 
+			// see if we need to chop off some '*'s, as we may have searched for a pointer to a
+			// pointer and have found a match against a simple pointer and thus the display may
 			// not match our label
 			if (paramParts.length == 1) {
 				return paramName; // not a full declaration, just the name

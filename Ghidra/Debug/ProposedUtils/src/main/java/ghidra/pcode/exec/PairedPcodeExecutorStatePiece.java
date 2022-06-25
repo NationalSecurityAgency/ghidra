@@ -25,6 +25,14 @@ import ghidra.program.model.mem.MemBuffer;
 /**
  * A paired executor state piece
  * 
+ * <p>
+ * This compose two delegate pieces "left" and "right" creating a single piece which instead stores
+ * pairs of values, where the left component has the value type of the left state, and the right
+ * component has the value type of the right state. Both pieces must have the same address type.
+ * Every operation on this piece is decomposed into operations upon the delegate pieces, and the
+ * final result composed from the results of those operations.
+ * 
+ * @see PairedPcodeExecutorState
  * @param <A> the type of offset, usually the type of a controlling state
  * @param <L> the type of the "left" state
  * @param <R> the type of the "right" state
@@ -66,10 +74,20 @@ public class PairedPcodeExecutorStatePiece<A, L, R>
 		return left.getConcreteBuffer(address);
 	}
 
+	/**
+	 * Get the delegate backing the left side of paired values
+	 * 
+	 * @return the left piece
+	 */
 	public PcodeExecutorStatePiece<A, L> getLeft() {
 		return left;
 	}
 
+	/**
+	 * Get the delegate backing the right side of paired values
+	 * 
+	 * @return the right piece
+	 */
 	public PcodeExecutorStatePiece<A, R> getRight() {
 		return right;
 	}

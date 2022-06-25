@@ -26,8 +26,7 @@ import ghidra.app.plugin.processors.sleigh.symbol.ContextSymbol;
 import ghidra.app.plugin.processors.sleigh.symbol.Symbol;
 import ghidra.app.util.DataTypeDependencyOrderer;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.BuiltIn;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -327,10 +326,13 @@ public class DecompileDebug {
 	}
 
 	private void dumpDataTypes(OutputStream debugStream) throws IOException {
-		int intSize = program.getCompilerSpec().getDataOrganization().getIntegerSize();
+		DataOrganization dataOrganization = program.getCompilerSpec().getDataOrganization();
+		int intSize = dataOrganization.getIntegerSize();
+		int longSize = dataOrganization.getLongSize();
 		StringBuilder buf = new StringBuilder();
 		buf.append("<typegrp");
 		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "intsize", intSize);
+		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "longsize", longSize);
 		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "structalign", 4);
 		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "enumsize", 4);
 		SpecXmlUtils.encodeBooleanAttribute(buf, "enumsigned", false);
@@ -340,9 +342,10 @@ public class DecompileDebug {
 		DataTypeDependencyOrderer TypeOrderer =
 			new DataTypeDependencyOrderer(program.getDataTypeManager(), dtypes);
 		//First output all structures as zero size so to avoid any cyclic dependencies.
-		for (DataType dataType : TypeOrderer.getStructList()) {
-			debugStream.write(
-				(dtmanage.buildStructTypeZeroSizeOveride(dataType) + "\n").toString().getBytes());
+		for (DataType dataType : TypeOrderer.getCompositeList()) {
+			debugStream
+					.write((dtmanage.buildCompositeZeroSizePlaceholder(dataType) + "\n").toString()
+							.getBytes());
 		}
 		//Next, use the dependency stack to output types.
 		for (DataType dataType : TypeOrderer.getDependencyList()) {
@@ -551,7 +554,7 @@ public class DecompileDebug {
 	private void dumpDatabases(OutputStream debugStream) throws IOException {
 		Namespace scopename = null;
 		ArrayList<Namespace> spaceList = orderNamespaces();
-		debugStream.write("<db scodeidbyname=\"false\">\n".getBytes());
+		debugStream.write("<db scopeidbyname=\"false\">\n".getBytes());
 		for (Namespace element : spaceList) {
 			scopename = element;
 			StringBuilder datahead = new StringBuilder();

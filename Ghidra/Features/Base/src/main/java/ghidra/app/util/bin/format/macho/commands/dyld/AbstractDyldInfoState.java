@@ -147,7 +147,7 @@ abstract public class AbstractDyldInfoState {
 			header.getLoadCommands(FileSetEntryCommand.class);
 		for (FileSetEntryCommand fileSetEntryCommand : fileSetEntries) {
 			if (fileSetEntryCommand.getFileOffset() == segment.getFileOffset()) {
-				return fileSetEntryCommand.getFileSetEntryName();
+				return fileSetEntryCommand.getFileSetEntryId().getString();
 			}
 		}
 		return segment.getSegmentName();

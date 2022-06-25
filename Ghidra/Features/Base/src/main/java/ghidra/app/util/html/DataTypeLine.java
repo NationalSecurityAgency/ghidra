@@ -21,7 +21,6 @@ import java.util.Objects;
 import ghidra.program.model.data.DataType;
 import ghidra.util.StringUtilities;
 import ghidra.util.UniversalID;
-import ghidra.util.exception.AssertException;
 
 public class DataTypeLine implements ValidatableLine {
 
@@ -105,6 +104,11 @@ public class DataTypeLine implements ValidatableLine {
 		this.commentColor = commentColor;
 	}
 
+	@Override
+	public void setTextColor(Color color) {
+		setAllColors(color);
+	}
+
 	void setAllColors(Color diffColor) {
 		setNameColor(diffColor);
 		setTypeColor(diffColor);
@@ -125,9 +129,10 @@ public class DataTypeLine implements ValidatableLine {
 		}
 
 		if (!(otherValidatableLine instanceof DataTypeLine)) {
-			throw new AssertException("DataTypeLine can only be matched against other " +
-				"DataTypeLine implementations.");
+			otherValidatableLine.setTextColor(invalidColor);
+			return;
 		}
+
 		DataTypeLine otherLine = (DataTypeLine) otherValidatableLine;
 
 		// note: use the other line here, so if it is a special, overridden case, then we will
@@ -205,8 +210,7 @@ public class DataTypeLine implements ValidatableLine {
 		}
 
 		if (!(otherValidatableLine instanceof DataTypeLine)) {
-			throw new AssertException("DataTypeLine can only be matched against other " +
-				"DataTypeLine implementations.");
+			return false;
 		}
 		DataTypeLine otherLine = (DataTypeLine) otherValidatableLine;
 

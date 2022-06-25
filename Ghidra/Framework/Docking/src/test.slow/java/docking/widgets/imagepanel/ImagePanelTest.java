@@ -15,7 +15,7 @@
  */
 package docking.widgets.imagepanel;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.awt.Image;
 
@@ -39,84 +39,92 @@ public class ImagePanelTest extends AbstractDockingTest {
 		Image emptyImage = ResourceManager.getImageIcon(emptyIcon).getImage();
 		imagePanel = new ImagePanel(emptyImage);
 
-		frame = new JFrame("ImagePanel Test");
-		frame.getContentPane().add(imagePanel);
-		frame.setSize(400, 400);
+		runSwing(() -> {
+			frame = new JFrame("ImagePanel Test");
+			frame.getContentPane().add(imagePanel);
+			frame.setSize(400, 400);
 
-		frame.setVisible(true);
+			frame.setVisible(true);
+		});
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		frame.dispose();
+		runSwing(() -> frame.dispose());
 	}
 
 	private void reset() {
-		imagePanel.setZoomFactor(1.0f);
+		setZoom(1.0f);
 
 		assertTrue("Unable to reset zoom factor",
-			Float.compare(imagePanel.getZoomFactor(), 1.0f) == 0);
-
+			Float.compare(getZoom(), 1.0f) == 0);
 	}
 
 	@Test
 	public void testZoom_Neutral() {
 		reset();
 
-		imagePanel.setZoomFactor(1.0f);
+		setZoom(1.0f);
 
 		assertTrue("Zoom factor not set to 1.0x",
-			Float.compare(imagePanel.getZoomFactor(), 1.0f) == 0);
+			Float.compare(getZoom(), 1.0f) == 0);
 	}
 
 	@Test
 	public void testZoom_10Point0f() {
 		reset();
 
-		imagePanel.setZoomFactor(10.0f);
+		setZoom(10.0f);
 
 		assertTrue("Zoom factor not set to 10.0x",
-			Float.compare(imagePanel.getZoomFactor(), 10.0f) == 0);
+			Float.compare(getZoom(), 10.0f) == 0);
 	}
 
 	@Test
 	public void testZoom_0Point05() {
 		reset();
 
-		imagePanel.setZoomFactor(0.05f);
+		setZoom(0.05f);
 
 		assertTrue("Zoom factor not set to 0.05x",
-			Float.compare(imagePanel.getZoomFactor(), 0.05f) == 0);
+			Float.compare(getZoom(), 0.05f) == 0);
 	}
 
 	@Test
 	public void testZoom_20Point0() {
 		reset();
 
-		imagePanel.setZoomFactor(20.0f);
+		setZoom(20.0f);
 
 		assertTrue("Zoom factor not set to 20.0x; should be 10.0x",
-			Float.compare(imagePanel.getZoomFactor(), 10.0f) == 0);
+			Float.compare(getZoom(), 10.0f) == 0);
 	}
 
 	@Test
 	public void testZoom_0Point001() {
 		reset();
 
-		imagePanel.setZoomFactor(0.001f);
+		setZoom(0.001f);
 
 		assertTrue("Zoom factor not set to 0.001x; should be 0.05x",
-			Float.compare(imagePanel.getZoomFactor(), 0.05f) == 0);
+			Float.compare(getZoom(), 0.05f) == 0);
 	}
 
 	@Test
 	public void testZoom_3Point75() {
 		reset();
 
-		imagePanel.setZoomFactor(3.75f);
+		setZoom(3.75f);
 
 		assertTrue("Zoom factor not set to 3.75x; should be 4.0x",
-			Float.compare(imagePanel.getZoomFactor(), 4.0f) == 0);
+			Float.compare(getZoom(), 4.0f) == 0);
 	}
 
+	private void setZoom(float zoom) {
+		runSwing(() -> imagePanel.setZoomFactor(zoom));
+	}
+
+	private float getZoom() {
+		return runSwing(() -> imagePanel.getZoomFactor());
+	}
 }

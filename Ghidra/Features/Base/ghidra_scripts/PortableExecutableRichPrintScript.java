@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemoryByteProvider;
@@ -48,8 +47,7 @@ public class PortableExecutableRichPrintScript extends GhidraScript {
 		PortableExecutable pe = null;
 
 		try {
-			pe = PortableExecutable.createPortableExecutable(RethrowContinuesFactory.INSTANCE,
-				provider, SectionLayout.MEMORY, false, false);
+			pe = new PortableExecutable(provider, SectionLayout.MEMORY, false, false);
 		}
 		catch (Exception e) {
 			printerr("Unable to create PE from current program");

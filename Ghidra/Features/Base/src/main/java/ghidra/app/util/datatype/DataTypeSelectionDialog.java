@@ -17,7 +17,8 @@ package ghidra.app.util.datatype;
 
 import java.awt.BorderLayout;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
@@ -25,6 +26,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import ghidra.util.data.DataTypeParser;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 
@@ -63,7 +65,7 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 	private void buildEditor() {
 		removeWorkPanel();
 
-		editor = new DataTypeSelectionEditor(pluginTool, allowedTypes);
+		editor = createEditor(pluginTool, allowedTypes);
 		editor.setPreferredDataTypeManager(dtm);
 		editor.setConsumeEnterKeyPress(false); // we want to handle Enter key presses
 		editor.addCellEditorListener(new CellEditorListener() {
@@ -106,6 +108,11 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 		rootPanel.validate();
 	}
 
+	protected DataTypeSelectionEditor createEditor(PluginTool tool,
+			AllowedDataTypes allowedDataTypes) {
+		return new DataTypeSelectionEditor(tool, allowedDataTypes);
+	}
+
 	protected JComponent createEditorPanel(DataTypeSelectionEditor dtEditor) {
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		mainPanel.add(editor.getEditorComponent(), BorderLayout.NORTH);
@@ -114,7 +121,7 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 
 	@Override
 	protected void dialogShown() {
-		SwingUtilities.invokeLater(() -> editor.requestFocus());
+		Swing.runLater(() -> editor.requestFocus());
 	}
 
 	// overridden to set the user choice to null
@@ -166,7 +173,7 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 
 	/**
 	 * If true then a Tab key press will work the same as pressing the Enter key.  If false, then
-	 * a Tab key press will trigger navigation, as is normally done in Java.  
+	 * a Tab key press will trigger navigation, as is normally done in Java.
 	 * <p>
 	 * This method is useful for widgets that have embedded editors that launch this dialog.  For
 	 * these editors, like tables, it is nice to be able to tab through various editors.  This

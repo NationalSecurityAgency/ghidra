@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import generic.continues.GenericFactory;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.services.*;
 import ghidra.app.util.PseudoDisassembler;
@@ -29,7 +28,6 @@ import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.app.util.opinion.DyldCacheLoader;
 import ghidra.app.util.opinion.MachoLoader;
 import ghidra.framework.options.Options;
@@ -170,8 +168,7 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 	private void analyzeMachoFunctionStarts(Program program, ByteProvider provider,
 			AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws MachException, IOException, CancelledException {
-		GenericFactory factory = MessageLogContinuesFactory.create(log);
-		MachHeader header = MachHeader.createMachHeader(factory, provider);
+		MachHeader header = new MachHeader(provider);
 		header.parse();
 		monitor.setIndeterminate(true);
 		monitor.setMessage("Analyzing function starts...");
@@ -215,8 +212,7 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 				monitor.incrementProgress(1);
 
 				// Parse Mach-O header
-				MachHeader machoHeader = MachHeader.createMachHeader(
-					MessageLogContinuesFactory.create(log), providerMap.get(dyldCacheHeader),
+				MachHeader machoHeader = new MachHeader(providerMap.get(dyldCacheHeader),
 					mappedImage.getAddress() - dyldCacheHeader.getBaseAddress(), false);
 				machoHeader.parse();
 

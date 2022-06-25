@@ -20,7 +20,6 @@ import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.program.model.data.*;
 import ghidra.util.*;
@@ -52,7 +51,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	private int signature;
 	private FileHeader fileHeader;
 	private OptionalHeader optionalHeader;
-	private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
 	private int index;
 	private boolean advancedProcess = true;
 	private boolean parseCliHeaders = false;
@@ -68,23 +67,8 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	 * @throws InvalidNTHeaderException if the bytes the specified index
 	 * do not constitute an accurate NT header.
 	 */
-	public static NTHeader createNTHeader(FactoryBundledWithBinaryReader reader, int index,
-			SectionLayout layout, boolean advancedProcess, boolean parseCliHeaders)
-			throws InvalidNTHeaderException, IOException {
-		NTHeader ntHeader = (NTHeader) reader.getFactory().create(NTHeader.class);
-		ntHeader.initNTHeader(reader, index, layout, advancedProcess, parseCliHeaders);
-		return ntHeader;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public NTHeader() {
-	}
-
-	private void initNTHeader(FactoryBundledWithBinaryReader reader, int index,
-			SectionLayout layout, boolean advancedProcess, boolean parseCliHeaders)
-			throws InvalidNTHeaderException, IOException {
+	public NTHeader(BinaryReader reader, int index, SectionLayout layout, boolean advancedProcess,
+			boolean parseCliHeaders) throws InvalidNTHeaderException, IOException {
 		this.reader = reader;
 		this.index = index;
 		this.layout = layout;
@@ -254,14 +238,14 @@ public class NTHeader implements StructConverter, OffsetValidator {
 
 		tmpIndex += 4;
 
-		fileHeader = FileHeader.createFileHeader(reader, tmpIndex, this);
+		fileHeader = new FileHeader(reader, tmpIndex, this);
 		if (fileHeader.getSizeOfOptionalHeader() == 0) {
 			Msg.warn(this, "Section headers overlap optional header");
 		}
 		tmpIndex += FileHeader.IMAGE_SIZEOF_FILE_HEADER;
 
 		try {
-			optionalHeader = OptionalHeaderImpl.createOptionalHeader(this, reader, tmpIndex);
+			optionalHeader = new OptionalHeaderImpl(this, reader, tmpIndex);
 		}
 		catch (NotYetImplementedException e) {//TODO
 			Msg.error(this, "Unexpected Exception: " + e.getMessage());

@@ -43,11 +43,9 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 
 	RTTIClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVfunctions, boolean hasDebugSymbols, boolean replaceClassStructures,
-			TaskMonitor monitor) throws Exception {
+			boolean nameVfunctions, boolean hasDebugSymbols, TaskMonitor monitor) throws Exception {
 
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
-			replaceClassStructures,
 			monitor);
 
 		this.program = program;
@@ -258,7 +256,6 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 			memberFunctionsToProcess.addAll(recoveredClass.getConstructorList());
 			memberFunctionsToProcess.addAll(recoveredClass.getDestructorList());
 			memberFunctionsToProcess.addAll(recoveredClass.getIndeterminateList());
-
 			memberFunctionsToProcess.addAll(recoveredClass.getInlinedConstructorList());
 
 			Iterator<Function> memberFunctionIterator = memberFunctionsToProcess.iterator();

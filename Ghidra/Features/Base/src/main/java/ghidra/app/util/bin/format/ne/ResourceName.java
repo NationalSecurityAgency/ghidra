@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,9 @@
  */
 package ghidra.app.util.bin.format.ne;
 
-import ghidra.app.util.bin.format.*;
-
 import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * A class for storing new-executable resource names.
@@ -33,7 +32,7 @@ public class ResourceName {
 	 * Constructs a resource name.
 	 * @param reader the binary reader
 	 */
-    ResourceName(FactoryBundledWithBinaryReader reader) throws IOException {
+	ResourceName(BinaryReader reader) throws IOException {
         index = reader.getPointerIndex();
 
         lns = new LengthStringSet(reader);

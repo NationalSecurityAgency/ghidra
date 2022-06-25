@@ -21,8 +21,7 @@ import java.util.*;
 
 import db.*;
 import ghidra.framework.options.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.exception.ClosedException;
 
 /**
@@ -279,6 +278,10 @@ class OptionsDB extends AbstractOptions {
 					// in the code. In that case, ignore the old value.
 					if (optionType == getOptionType()) {
 						value = optionType.convertStringToObject(rec.getString(VALUE_COL));
+					}
+					else {
+						Msg.info(this, "The type for '" + this.getName() + "' has changed!  Using default value.");
+						value = getDefaultValue();
 					}
 				}
 			}

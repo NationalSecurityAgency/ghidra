@@ -577,7 +577,7 @@ public class ReferencesPlugin extends Plugin {
 		int opIndex = editRef.getOperandIndex();
 		cmd.add(new RemoveReferenceCmd(editRef));
 		if (isOffsetRef) {
-			cmd.add(new AddOffsetMemRefCmd(fromCodeUnit.getMinAddress(), toAddr, refType,
+			cmd.add(new AddOffsetMemRefCmd(fromCodeUnit.getMinAddress(), toAddr, false, refType,
 				SourceType.USER_DEFINED, opIndex, offset));
 		}
 		else {
@@ -612,7 +612,7 @@ public class ReferencesPlugin extends Plugin {
 
 		Command cmd;
 		if (isOffsetRef) {
-			cmd = new AddOffsetMemRefCmd(fromAddr, toAddr, refType, SourceType.USER_DEFINED,
+			cmd = new AddOffsetMemRefCmd(fromAddr, toAddr, false, refType, SourceType.USER_DEFINED,
 				opIndex, offset);
 		}
 		else {

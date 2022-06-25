@@ -221,7 +221,7 @@ class MarkupXmlMgr {
 			Command cmd = null;
 			if (baseAddr != null) {
 				long offset = toAddr.subtract(baseAddr);
-				cmd = new AddOffsetMemRefCmd(fromAddr, toAddr, refType,
+				cmd = new AddOffsetMemRefCmd(fromAddr, toAddr, false, refType,
 					userDefined ? SourceType.USER_DEFINED : SourceType.DEFAULT, opIndex, offset);
 			}
 			else {

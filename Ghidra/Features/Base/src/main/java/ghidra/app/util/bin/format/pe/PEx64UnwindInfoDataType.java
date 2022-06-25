@@ -34,7 +34,7 @@ public class PEx64UnwindInfoDataType extends DynamicDataType {
 	private final static int UNWIND_OP_INFO_FIELD_LENGTH = 0x04;
 
 	private final static DataType BYTE = ByteDataType.dataType;
-	private final static DataType IBO32 = new ImageBaseOffset32DataType();
+	private final static DataType IBO32 = new IBO32DataType();
 
 	public PEx64UnwindInfoDataType() {
 		this(null);

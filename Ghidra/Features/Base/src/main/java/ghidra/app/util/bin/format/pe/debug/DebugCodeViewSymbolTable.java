@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,14 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-import java.io.*;
-import java.util.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A class to represent the Object Module Format (OMF)
@@ -42,7 +42,7 @@ public class DebugCodeViewSymbolTable implements StructConverter {
 		DebugCodeViewConstants.SIGNATURE_N1 << 16 |
 		DebugCodeViewConstants.VERSION_13;
 
-	public static boolean isMatch(FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
+	public static boolean isMatch(BinaryReader reader, int ptr) throws IOException {
 		//read value out as big endian
 		int value = reader.readByte(ptr  ) << 24 |
 					reader.readByte(ptr+1) << 16 |
@@ -68,52 +68,42 @@ public class DebugCodeViewSymbolTable implements StructConverter {
 
 	private OMFLibrary library;
 
-    static DebugCodeViewSymbolTable createDebugCodeViewSymbolTable(
-            FactoryBundledWithBinaryReader reader, int size, int base, int ptr)
-            throws IOException {
-        DebugCodeViewSymbolTable debugCodeViewSymbolTable = (DebugCodeViewSymbolTable) reader.getFactory().create(DebugCodeViewSymbolTable.class);
-        debugCodeViewSymbolTable.initDebugCodeViewSymbolTable(reader, size, base, ptr);
-        return debugCodeViewSymbolTable;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DebugCodeViewSymbolTable() {}
-
-    private void initDebugCodeViewSymbolTable(FactoryBundledWithBinaryReader reader, int size, int base, int ptr) throws IOException {
-    	magic = reader.readByteArray(ptr, 4); ptr += 4;
+	DebugCodeViewSymbolTable(BinaryReader reader, int size, int base, int ptr) throws IOException {
+		magic = reader.readByteArray(ptr, 4);
+		ptr += 4;
         lfoDirectoryPos = reader.readInt(ptr);
         omfDirHeaderPos = base + lfoDirectoryPos;
-        header = OMFDirHeader.createOMFDirHeader(reader, omfDirHeaderPos);
+		header = new OMFDirHeader(reader, omfDirHeaderPos);
         omfDirEntryPos = omfDirHeaderPos + OMFDirHeader.IMAGE_SIZEOF_OMF_DIR_HEADER;
 
         for (int i = 0 ; i < header.getNumberOfEntries() ; ++i) {
-            OMFDirEntry entry = OMFDirEntry.createOMFDirEntry(reader, omfDirEntryPos);
+			OMFDirEntry entry = new OMFDirEntry(reader, omfDirEntryPos);
             entriesList.add(entry);
             switch (entry.getSubSectionType()) {
                 case DebugCodeViewConstants.sstModule:
-                    modulesList.add(OMFModule.createOMFModule(reader, entry.getLargeFileOffset()+base, entry.getNumberOfBytes()));
+					modulesList.add(new OMFModule(reader, entry.getLargeFileOffset() + base,
+						entry.getNumberOfBytes()));
                     break;
                 case DebugCodeViewConstants.sstSegMap:
-                    segMapsList.add(OMFSegMap.createOMFSegMap(reader, entry.getLargeFileOffset()+base));
+					segMapsList.add(new OMFSegMap(reader, entry.getLargeFileOffset() + base));
                     break;
                 case DebugCodeViewConstants.sstGlobalPub:
 				case DebugCodeViewConstants.sstGlobalSym:
 				case DebugCodeViewConstants.sstStaticSym:
-					globalsList.add(OMFGlobal.createOMFGlobal(reader, entry.getLargeFileOffset()+base));
+					globalsList.add(new OMFGlobal(reader, entry.getLargeFileOffset() + base));
                     break;
 				case DebugCodeViewConstants.sstSrcModule:
-					srcModuleList.add(OMFSrcModule.createOMFSrcModule(reader, entry.getLargeFileOffset()+base));
+					srcModuleList.add(new OMFSrcModule(reader, entry.getLargeFileOffset() + base));
 					break;
 				case DebugCodeViewConstants.sstFileIndex:
-					fileIndexList.add(OMFFileIndex.createOMFFileIndex(reader, entry.getLargeFileOffset()+base));
+					fileIndexList.add(new OMFFileIndex(reader, entry.getLargeFileOffset() + base));
 					break;
 				case DebugCodeViewConstants.sstAlignSym:
-					alignSymsList.add(OMFAlignSym.createOMFAlignSym(reader, entry.getLargeFileOffset()+base));
+					alignSymsList.add(new OMFAlignSym(reader, entry.getLargeFileOffset() + base));
 					break;
 				case DebugCodeViewConstants.sstLibraries:
-					library = OMFLibrary.createOMFLibrary(reader, entry.getLargeFileOffset()+base, entry.getNumberOfBytes());
+					library = new OMFLibrary(reader, entry.getLargeFileOffset() + base,
+						entry.getNumberOfBytes());
 					break;
 				case DebugCodeViewConstants.sstGlobalTypes:
 					//int type = entry.getLargeFileOffset()+base;

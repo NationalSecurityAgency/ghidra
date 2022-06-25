@@ -151,10 +151,7 @@ public class GTableColumnModel
 
 	@Override
 	public void addColumn(TableColumn aColumn) {
-		if (aColumn == null) {
-			throw new IllegalArgumentException("Object is null");
-		}
-
+		Objects.requireNonNull(aColumn);
 		removeColumnWithModelIndex(aColumn.getModelIndex()); // dedup
 
 		completeList.add(aColumn);
@@ -167,6 +164,18 @@ public class GTableColumnModel
 		// Post columnAdded event notification
 		fireColumnAdded(new TableColumnModelEvent(this, 0, getColumnCount() - 1));
 		columnModelState.restoreState();
+	}
+
+	/**
+	 * Adds a table column to this model that is not visible default.  This column may be made
+	 * visible later by the user or by the system restoring a previously used visible column state.
+	 * @param aColumn the column
+	 */
+	public void addHiddenColumn(TableColumn aColumn) {
+		Objects.requireNonNull(aColumn);
+		removeColumnWithModelIndex(aColumn.getModelIndex()); // dedup
+		completeList.add(aColumn);
+		aColumn.addPropertyChangeListener(this);
 	}
 
 	/** Finds the table's column with the given model index */

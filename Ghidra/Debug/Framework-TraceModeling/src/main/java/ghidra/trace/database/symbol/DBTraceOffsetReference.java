@@ -20,8 +20,12 @@ import ghidra.trace.database.symbol.DBTraceReferenceSpace.DBTraceReferenceEntry;
 import ghidra.trace.model.symbol.TraceOffsetReference;
 
 public class DBTraceOffsetReference extends DBTraceReference implements TraceOffsetReference {
-	public DBTraceOffsetReference(DBTraceReferenceEntry ent) {
+
+	private boolean isExternalBlockReference;
+
+	public DBTraceOffsetReference(DBTraceReferenceEntry ent, boolean isExternalBlockReference) {
 		super(ent);
+		this.isExternalBlockReference = isExternalBlockReference;
 	}
 
 	@Override
@@ -31,6 +35,9 @@ public class DBTraceOffsetReference extends DBTraceReference implements TraceOff
 
 	@Override
 	public Address getBaseAddress() {
+		if (isExternalBlockReference) {
+			return ent.toAddress;
+		}
 		return ent.toAddress.subtractWrap(ent.ext);
 	}
 }

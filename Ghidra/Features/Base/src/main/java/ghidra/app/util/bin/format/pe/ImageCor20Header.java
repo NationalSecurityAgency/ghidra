@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.pe.cli.CliMetadataDirectory;
 import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
 import ghidra.app.util.bin.format.pe.cli.tables.CliTableMethodDef.CliMethodDefRow;
@@ -80,22 +80,7 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 	private DefaultDataDirectory exportAddressTableJumps;
 	private DefaultDataDirectory managedNativeHeader;
 
-	static ImageCor20Header createImageCor20Header(FactoryBundledWithBinaryReader reader,
-			long index, NTHeader ntHeader) throws IOException {
-		ImageCor20Header imageCor20Header =
-			(ImageCor20Header) reader.getFactory().create(ImageCor20Header.class);
-		imageCor20Header.initIMAGE_COR20_HEADER(reader, index, ntHeader);
-		return imageCor20Header;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ImageCor20Header() {
-	}
-
-	private void initIMAGE_COR20_HEADER(FactoryBundledWithBinaryReader reader, long index,
-			NTHeader ntHeader) throws IOException {
+	ImageCor20Header(BinaryReader reader, long index, NTHeader ntHeader) throws IOException {
 		long origIndex = reader.getPointerIndex();
 
 		reader.setPointerIndex(index);
@@ -103,15 +88,15 @@ public class ImageCor20Header implements StructConverter, PeMarkupable {
 		cb = reader.readNextInt();
 		majorRuntimeVersion = reader.readNextShort();
 		minorRuntimeVersion = reader.readNextShort();
-		metadata = CliMetadataDirectory.createCliMetadataDirectory(ntHeader, reader);
+		metadata = new CliMetadataDirectory(ntHeader, reader);
 		flags = reader.readNextInt();
 		entryPointToken = reader.readNextInt();
-		resources = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
-		strongNameSignature = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
-		codeManagerTable = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
-		vTableFixups = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
-		exportAddressTableJumps = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
-		managedNativeHeader = DefaultDataDirectory.createDefaultDataDirectory(ntHeader, reader);
+		resources = new DefaultDataDirectory(ntHeader, reader);
+		strongNameSignature = new DefaultDataDirectory(ntHeader, reader);
+		codeManagerTable = new DefaultDataDirectory(ntHeader, reader);
+		vTableFixups = new DefaultDataDirectory(ntHeader, reader);
+		exportAddressTableJumps = new DefaultDataDirectory(ntHeader, reader);
+		managedNativeHeader = new DefaultDataDirectory(ntHeader, reader);
 
 		reader.setPointerIndex(origIndex);
 	}

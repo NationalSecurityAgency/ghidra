@@ -71,14 +71,15 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	/**
 	 * Create a new Repository at the given path; the directory has already
 	 * been created.
+	 * @param mgr repository manager
 	 * @param currentUser user creating the repository, or null if the
 	 * repository exists
 	 * @param rootFile root file for this repository
-	 * @param initialize true means
-	 * @throws IOException
+	 * @param name repository name
+	 * @throws IOException if filesystem error occurs
 	 */
 	public Repository(RepositoryManager mgr, String currentUser, File rootFile, String name)
-			throws IOException, UserAccessException {
+			throws IOException {
 		this.mgr = mgr;
 		this.name = name;
 
@@ -275,14 +276,17 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	/**
 	 * Get the name of this repository.
 	 * @return name of the repository.
-	 * @throws IOException
 	 */
 	public String getName() {
 		return name;
 	}
 
 	/**
-	 * @see FileSystem#getItemCount()
+	 * Get the total number of items contained within this repository.
+	 * See {@link FileSystem#getItemCount()}.
+	 * @return total number of repository items
+	 * @throws IOException if filesystem IO error occurs
+	 * @throws UnsupportedOperationException if file-system does not support this operation
 	 */
 	public int getItemCount() throws IOException, UnsupportedOperationException {
 		return fileSystem.getItemCount();
@@ -321,7 +325,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	/**
 	 * Convenience method for getting list of all "Known" users
 	 * defined to the repository user manager.
-	 * @param currentUser
+	 * @param currentUser user performing request
 	 * @return list of user names.
 	 * @throws IOException
 	 */
@@ -336,9 +340,9 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * Set the user access list.
 	 * @param currentUser user that is setting the access list on this
 	 * repository; the current user must 
-	 * @param users
-	 * @param allowAnonymousAccess
-	 * @throws UserAccessException
+	 * @param users user access list
+	 * @param allowAnonymousAccess true if anonymous access should be permitted (assume allowed by server config).
+	 * @throws UserAccessException if currentUser is not a current repository admin
 	 * @throws IOException
 	 */
 	public void setUserList(String currentUser, User[] users, boolean allowAnonymousAccess)
@@ -382,22 +386,55 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	}
 
 	/**
-	 * Privileged method for adding a new repository admin
-	 * @param sid user username
-	 * @throws IOException
+	 * Privileged method for setting user access for this repository
+	 * @param username user username
+	 * @param permission access permission ({@link User#READ_ONLY}, 
+	 * {@link User#WRITE}, or {@link User#ADMIN}).
+	 * @return true if successful, false if user has not been added to server
+	 * @throws IOException failed to update repository access list
 	 */
-	void addAdmin(String username) throws IOException {
+	boolean setUserPermission(String username, int permission) throws IOException {
 		synchronized (fileSystem) {
-			userMap.remove(username);
-			userMap.put(username, new User(username, User.ADMIN));
-			writeUserList(userMap, anonymousAccessAllowed);
+			if (permission < User.READ_ONLY || permission > User.ADMIN) {
+				throw new IllegalArgumentException("Invalid permission: " + permission);
+			}
+			if (mgr.getUserManager().isValidUser(username)) {
+				User newUser = new User(username, permission);
+				User oldUser = userMap.put(username, newUser);
+				writeUserList(userMap, anonymousAccessAllowed);
+				if (oldUser != null) {
+					log.info("User access to repository '" + name + "' changed: " + newUser);
+				}
+				else {
+					log.info("User access granted to repository '" + name + "': " + newUser);
+				}
+				return true;
+			}
+			return false;
+		}
+	}
+
+	/**
+	 * Privileged method for removing user access from this repository
+	 * @param username user username
+	 * @return true if user had access and has been successfully removed, else false
+	 * @throws IOException failed to update repository access list
+	 */
+	boolean removeUser(String username) throws IOException {
+		synchronized (fileSystem) {
+			if (userMap.remove(username) != null) {
+				writeUserList(userMap, anonymousAccessAllowed);
+				log.info("User access d from repository '" + name + "': " + username);
+				return true;
+			}
+			return false;
 		}
 	}
 
 	/**
 	 * Get the list of known users for this repository.
 	 * @param currentUser user that is requesting the user list. 
-	 * @throws UserAccessException
+	 * @throws UserAccessException if currentUser is not a current repository admin
 	 * @throws IOException
 	 */
 	public User[] getUserList(String currentUser) throws UserAccessException, IOException {
@@ -428,29 +465,18 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * Get the specified user data.
 	 * If the repository's user list if missing or currupt, this user
 	 * will become its administrator.
-	 * @param currentUser
+	 * @param username user name attempting repository access
 	 * @return user data
 	 */
-	public User getUser(String currentUser) {
+	public User getUser(String username) {
 		synchronized (fileSystem) {
-			if (anonymousAccessAllowed && UserManager.ANONYMOUS_USERNAME.equals(currentUser)) {
+			if (anonymousAccessAllowed && UserManager.ANONYMOUS_USERNAME.equals(username)) {
 				return ANONYMOUS_USER;
 			}
-			if (userMap.isEmpty()) {
-				log.error("Empty repository access list, will attempt repair (" + name + ")");
-				log.warn("Adding user " + currentUser + " as Admin to repository (" + name + ")");
-				userMap.put(currentUser, new User(currentUser, User.ADMIN));
-				try {
-					writeUserList(currentUser, userMap, anonymousAccessAllowed);
-				}
-				catch (Exception e) {
-					log.error("Failed to repair repository access list: " + e.getMessage());
-				}
-			}
-			User user = userMap.get(currentUser);
+			User user = userMap.get(username);
 			if (user == null && anonymousAccessAllowed) {
 				// allow authenticated user to access repository in read-only mode
-				return new User(currentUser, User.READ_ONLY);
+				return new User(username, User.READ_ONLY);
 			}
 			return user;
 		}
@@ -460,8 +486,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * Write user access list to local file.
 	 * @param currentUser current user
 	 * @param newUserMap user map
-	 * @param allowAnonymous
-	 * @throws UserAccessException
+	 * @param allowAnonymous true if anonymous access is allowed
+	 * @throws UserAccessException if currentUser does not have admin priviledge
 	 * @throws IOException
 	 */
 	private void writeUserList(String currentUser, LinkedHashMap<String, User> newUserMap,
@@ -472,13 +498,14 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 			throw new UserAccessException(currentUser + " must have ADMIN privilege!");
 		}
 		writeUserList(newUserMap, allowAnonymous);
+		log.info("User access list for repository '" + name + "' updated by: " + currentUser);
 	}
 
 	/**
 	 * Privileged method for updating user access list.
-	 * @param newUserMap
-	 * @param allowAnonymous
-	 * @throws UserAccessException
+	 * @param newUserMap user map
+	 * @param allowAnonymous true if anonymous access is allowed
+	 * @throws UserAccessException if currentUser does not have admin priviledge
 	 * @throws IOException
 	 */
 	private void writeUserList(LinkedHashMap<String, User> newUserMap, boolean allowAnonymous)
@@ -533,27 +560,63 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	}
 
 	/**
-	 * Print to stdout the user access permissions to the specified repository.
+	 * Generate formatted list of user access permissions to the specified repository.
 	 * This is intended to be used with the svrAdmin console command
 	 * @param repositoryDir repository directory
 	 * @param pad padding string to be prefixed to each output line
+	 * @return formatted list of user access permissions
 	 */
-	static void listUserPermissions(File repositoryDir, String pad) {
+	static String getFormattedUserPermissions(File repositoryDir, String pad) {
+		StringBuilder buf = new StringBuilder();
 		File userAccessFile = new File(repositoryDir, ACCESS_CONTROL_FILENAME);
 		try {
-			ArrayList<User> list = new ArrayList<>();
+			List<User> list = new ArrayList<>();
 			boolean anonymousAccessAllowed = readAccessFile(userAccessFile, list);
 			Collections.sort(list);
 			if (anonymousAccessAllowed) {
-				System.out.println(pad + "* Anonymous read-only access permitted *");
+				buf.append(pad + "* Anonymous read-only access permitted *\n");
 			}
 			for (User user : list) {
-				System.out.println(pad + user);
+				buf.append(pad + user + "\n");
 			}
 		}
 		catch (IOException e) {
 			System.out.println(pad + "Failed to read repository access file: " + e.getMessage());
 		}
+		return buf.toString();
+	}
+
+	/**
+	 * Generate formatted list of user access permissions to the specified repository
+	 * restricted to user names contained within listUserAccess.
+	 * This is intended to be used with the svrAdmin console command
+	 * @param repositoryDir repository directory
+	 * @param pad padding string to be prefixed to each output line
+	 * @param listUserAccess set of user names of interest
+	 * @return formatted list of user access permissions or null if no users of interest found
+	 */
+	static String getFormattedUserPermissions(File repositoryDir, String pad,
+			Set<String> listUserAccess) {
+		StringBuilder buf = null;
+		File userAccessFile = new File(repositoryDir, ACCESS_CONTROL_FILENAME);
+		try {
+			ArrayList<User> list = new ArrayList<>();
+			readAccessFile(userAccessFile, list);
+			Collections.sort(list);
+			for (User user : list) {
+				if (!listUserAccess.contains(user.getName())) {
+					continue;
+				}
+				if (buf == null) {
+					buf = new StringBuilder();
+				}
+				buf.append(pad + user + "\n");
+			}
+		}
+		catch (IOException e) {
+			System.out.println(pad + "Failed to read repository access file: " + e.getMessage());
+		}
+		return buf != null ? buf.toString() : null;
 	}
 
 	/**

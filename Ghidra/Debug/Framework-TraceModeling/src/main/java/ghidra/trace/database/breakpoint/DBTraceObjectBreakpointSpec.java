@@ -15,7 +15,8 @@
  */
 package ghidra.trace.database.breakpoint;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Range;
@@ -31,6 +32,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
@@ -46,7 +48,7 @@ public class DBTraceObjectBreakpointSpec
 		implements TraceObjectBreakpointSpec, DBTraceObjectInterface {
 	private final DBTraceObject object;
 
-	private Set<TraceBreakpointKind> kinds;
+	private TraceBreakpointKindSet kinds;
 
 	public DBTraceObjectBreakpointSpec(DBTraceObject object) {
 		this.object = object;
@@ -97,12 +99,12 @@ public class DBTraceObjectBreakpointSpec
 
 	@Override
 	public Range<Long> getLifespan() {
-		return object.getLifespan();
+		return computeSpan();
 	}
 
 	@Override
 	public long getPlacedSnap() {
-		return object.getMinSnap();
+		return computeMinSnap();
 	}
 
 	@Override
@@ -114,7 +116,7 @@ public class DBTraceObjectBreakpointSpec
 
 	@Override
 	public long getClearedSnap() {
-		return object.getMaxSnap();
+		return computeMaxSnap();
 	}
 
 	@Override
@@ -142,33 +144,37 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public void setKinds(Collection<TraceBreakpointKind> kinds) {
+	public void setKinds(Range<Long> lifespan, Collection<TraceBreakpointKind> kinds) {
 		// TODO: More efficient encoding
 		// TODO: Target-Trace mapping is implied by encoded name. Seems bad.
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME,
-				kinds.stream().map(k -> k.name()).collect(Collectors.joining(",")));
-			this.kinds = Set.copyOf(kinds);
+			object.setValue(lifespan, TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME,
+				TraceBreakpointKindSet.encode(kinds));
+			this.kinds = TraceBreakpointKindSet.copyOf(kinds);
+		}
+	}
+
+	@Override
+	public void setKinds(Collection<TraceBreakpointKind> kinds) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setKinds(getLifespan(), kinds);
 		}
 	}
 
 	@Override
 	public Set<TraceBreakpointKind> getKinds() {
-		Set<TraceBreakpointKind> result = new HashSet<>();
 		String kindsStr = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
 			TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME, String.class, null);
 		if (kindsStr == null) {
 			return kinds;
 		}
-		for (String name : kindsStr.split(",")) {
-			try {
-				result.add(TraceBreakpointKind.valueOf(name));
-			}
-			catch (IllegalArgumentException e) {
-				Msg.warn(this, "Could not decode breakpoint kind from trace database: " + name);
-			}
+		try {
+			return kinds = TraceBreakpointKindSet.decode(kindsStr, true);
 		}
-		return kinds = result;
+		catch (IllegalArgumentException e) {
+			Msg.warn(this, "Unrecognized breakpoint kind(s) in trace database: " + e);
+			return kinds = TraceBreakpointKindSet.decode(kindsStr, false);
+		}
 	}
 
 	@Override
@@ -188,7 +194,9 @@ public class DBTraceObjectBreakpointSpec
 
 	@Override
 	public void delete() {
-		object.deleteTree();
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(computeSpan());
+		}
 	}
 
 	@Override
@@ -207,16 +215,20 @@ public class DBTraceObjectBreakpointSpec
 
 	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceObjectChangeType.VALUE_CHANGED.getType()) {
-			TraceChangeRecord<TraceObjectValue, Object> cast =
-				TraceObjectChangeType.VALUE_CHANGED.cast(rec);
-			String key = cast.getAffectedObject().getEntryKey();
+		if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getType()) {
+			TraceChangeRecord<TraceObjectValue, Void> cast =
+				TraceObjectChangeType.VALUE_CREATED.cast(rec);
+			TraceObjectValue affected = cast.getAffectedObject();
+			String key = affected.getEntryKey();
 			boolean applies = TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME.equals(key) ||
 				TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME.equals(key);
 			if (!applies) {
 				return null;
 			}
-			assert cast.getAffectedObject().getParent() == object;
+			assert affected.getParent() == object;
+			if (object.getCanonicalParent(affected.getMaxSnap()) == null) {
+				return null; // Incomplete object
+			}
 			for (TraceObjectBreakpointLocation loc : getLocations()) {
 				DBTraceObjectBreakpointLocation dbLoc = (DBTraceObjectBreakpointLocation) loc;
 				TraceAddressSpace space = dbLoc.getTraceAddressSpace();

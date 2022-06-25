@@ -20,7 +20,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.List;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.RandomAccessByteProvider;
@@ -29,7 +28,8 @@ import ghidra.app.util.bin.format.macho.Section;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
-import ghidra.util.*;
+import ghidra.util.DataConverter;
+import ghidra.util.StringUtilities;
 
 public class MachoProcessBindScript extends GhidraScript {
 
@@ -49,11 +49,7 @@ public class MachoProcessBindScript extends GhidraScript {
 		}
 		ByteProvider provider = new RandomAccessByteProvider( file ) ;
 		try {
-			MachHeader header = MachHeader.createMachHeader( RethrowContinuesFactory.INSTANCE, provider );
-			if ( header == null ) {
-				popup( "unable to create mach header from original file" );
-				return;
-			}
+			MachHeader header = new MachHeader(provider);
 			header.parse();
 			List<DyldInfoCommand> commands = header.getLoadCommands( DyldInfoCommand.class );
 			for ( DyldInfoCommand command : commands ) {

@@ -50,8 +50,8 @@ import ghidra.util.exception.CancelledException;
  * via the {@link #addDocumentListener(DocumentListener)} method.  The added listener will be
  * notified as the user enters text into the editor's text field.  Then, to determine when there
  * is as valid DataType in the field you may call {@link #validateUserSelection()}.
- * 
- * 
+ *
+ *
  */
 public class DataTypeSelectionEditor extends AbstractCellEditor {
 
@@ -89,10 +89,10 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	/**
 	 * Sets the {@link DataTypeManager} to use when the chooser is forced to parse the given
 	 * data type text to resolve the data type.  If the users chooses a type, then this value
-	 * is not used.  Note that setting this value does not restrict the parser to just the 
+	 * is not used.  Note that setting this value does not restrict the parser to just the
 	 * given value, but rather the given value is the preferred manager and is thus searched
-	 * first. 
-	 * 
+	 * first.
+	 *
 	 * @param dataTypeManager the preferred data type manager
 	 */
 	public void setPreferredDataTypeManager(DataTypeManager dataTypeManager) {
@@ -102,15 +102,20 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	/**
 	 * Sets whether this editor should consumer Enter key presses
 	 * @see DropDownSelectionTextField#setConsumeEnterKeyPress(boolean)
-	 * 
+	 *
 	 * @param consume true to consume
 	 */
 	public void setConsumeEnterKeyPress(boolean consume) {
 		selectionField.setConsumeEnterKeyPress(consume);
 	}
 
+	protected DropDownSelectionTextField<DataType> createDropDownSelectionTextField(
+			DataTypeDropDownSelectionDataModel model) {
+		return new DropDownSelectionTextField<>(model);
+	}
+
 	private void init() {
-		selectionField = new DropDownSelectionTextField<>(
+		selectionField = createDropDownSelectionTextField(
 			new DataTypeDropDownSelectionDataModel(dataTypeManagerService));
 		selectionField.addCellEditorListener(new CellEditorListener() {
 			@Override
@@ -158,9 +163,6 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		};
 	}
 
-	/**
-	 * @see javax.swing.CellEditor#getCellEditorValue()
-	 */
 	@Override
 	public Object getCellEditorValue() {
 		return selectionField.getSelectedValue();
@@ -203,9 +205,9 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	}
 
 	/**
-	 * Sets the initially selected node in the data type tree that the user can choose to 
+	 * Sets the initially selected node in the data type tree that the user can choose to
 	 * show.
-	 * 
+	 *
 	 * @param path The path to set
 	 */
 	public void setDefaultSelectedTreePath(TreePath path) {
@@ -225,7 +227,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 	/**
 	 * Sets the value to be edited on this cell editor.
-	 * 
+	 *
 	 * @param dataType The data type which is to be edited.
 	 */
 	public void setCellEditorValue(DataType dataType) {
@@ -240,7 +242,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 	/**
 	 * Adds a document listener to the text field editing component of this editor so that users
-	 * can be notified when the text contents of the editor change.  You may verify whether the 
+	 * can be notified when the text contents of the editor change.  You may verify whether the
 	 * text changes represent a valid DataType by calling {@link #validateUserSelection()}.
 	 * @param listener the listener to add.
 	 * @see #validateUserSelection()
@@ -251,7 +253,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 	/**
 	 * Removes a previously added document listener.
-	 * @param listener the listener to remove.s
+	 * @param listener the listener to remove.
 	 */
 	public void removeDocumentListener(DocumentListener listener) {
 		selectionField.getDocument().removeDocumentListener(listener);
@@ -317,7 +319,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 	}
 
 	private boolean isValidDataType() throws InvalidDataTypeException {
-		// look for the case where the user made a selection from the matching window, but 
+		// look for the case where the user made a selection from the matching window, but
 		// then changed the text field text.
 		DataType selectedDataType = selectionField.getSelectedValue();
 		if (selectedDataType != null &&
@@ -328,7 +330,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 		return false;
 	}
 
-	// looks at the current text and the current data type and will return a non-null value if 
+	// looks at the current text and the current data type and will return a non-null value if
 	// the current text starts with the name of the data type
 	private DataType getDataTypeRootForCurrentText() {
 		DataType dataType = selectionField.getSelectedValue();

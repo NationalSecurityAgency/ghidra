@@ -15,14 +15,15 @@
  */
 package ghidra.app.util.bin.format.coff.relocation;
 
+import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.coff.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.NotFoundException;
 
-public class X86_32_CoffRelocationHandler extends CoffRelocationHandler {
+public class X86_32_CoffRelocationHandler implements CoffRelocationHandler {
 
 	@Override
 	public boolean canRelocate(CoffFileHeader fileHeader) {
@@ -30,27 +31,38 @@ public class X86_32_CoffRelocationHandler extends CoffRelocationHandler {
 	}
 
 	@Override
-	public void relocate(Program program, Address address, Symbol symbol,
-			CoffRelocation relocation) throws MemoryAccessException, NotFoundException {
+	public void relocate(Address address, CoffRelocation relocation,
+			CoffRelocationContext relocationContext)
+			throws MemoryAccessException, NotFoundException, RelocationException {
 
-		int addend = program.getMemory().getInt(address);
+		Program program = relocationContext.getProgram();
+		Memory mem = program.getMemory();
+		
+		int addend = mem.getInt(address);
 
 		switch (relocation.getType()) {
 
 			// We are implementing these types:
 			case IMAGE_REL_I386_DIR32: {
-				program.getMemory().setInt(address,
-					(int) symbol.getAddress().add(addend).getOffset());				
+				int value = (int) relocationContext.getSymbolAddress(relocation)
+						.add(addend)
+						.getOffset();
+				program.getMemory().setInt(address, value);
 				break;
 			}
 			case IMAGE_REL_I386_DIR32NB: {
-				program.getMemory().setInt(address,
-					(int) symbol.getAddress().add(addend).subtract(program.getImageBase()));
+				int value = (int) relocationContext.getSymbolAddress(relocation)
+						.add(addend)
+						.subtract(program.getImageBase());
+				mem.setInt(address, value);
 				break;
 			}
 			case IMAGE_REL_I386_REL32: {
-				program.getMemory().setInt(address,
-					(int) symbol.getAddress().add(addend).subtract(address) - 4);
+				int value = (int) relocationContext.getSymbolAddress(relocation)
+						.add(addend)
+						.subtract(address);
+				value -= 4;
+				mem.setInt(address, value);
 				break;
 			}
 

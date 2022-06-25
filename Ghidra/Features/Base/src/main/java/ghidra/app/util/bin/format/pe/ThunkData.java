@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,13 @@
  */
 package ghidra.app.util.bin.format.pe;
 
-import ghidra.app.util.bin.ByteArrayConverter;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import java.io.IOException;
+
+import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.Conv;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * A class to represent the 
@@ -63,21 +60,7 @@ public class ThunkData implements StructConverter, ByteArrayConverter {
 	private long value;
 	private ImportByName ibn;
 
-	static ThunkData createThunkData(FactoryBundledWithBinaryReader reader, int index,
-			boolean is64bit) throws IOException {
-		ThunkData thunkData = (ThunkData) reader.getFactory().create(ThunkData.class);
-		thunkData.initThunkData(reader, index, is64bit);
-		return thunkData;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ThunkData() {
-	}
-
-	private void initThunkData(FactoryBundledWithBinaryReader reader, int index, boolean is64bit)
-			throws IOException {
+	ThunkData(BinaryReader reader, int index, boolean is64bit) throws IOException {
 		this.is64bit = is64bit;
 		if (is64bit) {
 			value = reader.readLong(index);

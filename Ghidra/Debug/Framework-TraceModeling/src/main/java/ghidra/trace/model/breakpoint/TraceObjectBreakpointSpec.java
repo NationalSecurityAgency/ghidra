@@ -43,4 +43,6 @@ public interface TraceObjectBreakpointSpec extends TraceBreakpoint, TraceObjectI
 	void setLifespan(Range<Long> lifespan) throws DuplicateNameException;
 
 	Collection<? extends TraceObjectBreakpointLocation> getLocations();
+
+	void setKinds(Range<Long> lifespan, Collection<TraceBreakpointKind> kinds);
 }

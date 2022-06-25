@@ -30,7 +30,6 @@ import ghidra.app.services.ActionSource;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetStack;
 import ghidra.dbg.model.TestTargetStackFrameHasRegisterBank;
-import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.framework.model.DomainFile;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.stack.TraceStack;
@@ -38,8 +37,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements DebuggerModelTestUtils {
+public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	@Test
 	public void testGetOpenTraces() throws Exception {
@@ -331,7 +329,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testSynchronizeFocusTraceToModel() throws Exception {
+	public void testSynchronizeFocusTraceToModel() throws Throwable {
 		assertTrue(traceManager.isSynchronizeFocus());
 
 		createTestModel();
@@ -342,8 +340,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		Trace trace = recorder.getTrace();
 
 		waitForValue(() -> modelService.getTarget(trace));
-		// TODO: Fragile. This depends on the recorder advancing the snap for each thread
-		waitForPass(() -> assertEquals(2, trace.getTimeManager().getSnapshotCount()));
+		waitRecorder(recorder);
 
 		traceManager.openTrace(trace);
 		waitForSwing();

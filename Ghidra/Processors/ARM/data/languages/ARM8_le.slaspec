@@ -11,6 +11,7 @@
 @define VERSION_8 ""
 @define SIMD ""
 @define VFPv3 ""
+@define VFPv4 ""
 
 @include "ARM.sinc"
 

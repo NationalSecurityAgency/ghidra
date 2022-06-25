@@ -15,8 +15,7 @@
  */
 package ghidra.app.extension.datatype.finder;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.decompiler.*;
 import ghidra.program.model.address.Address;
@@ -25,7 +24,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.*;
 
 /**
- * A base class that represents a variable from the decompiler.  This is either a variable 
+ * A base class that represents a variable from the decompiler.  This is either a variable
  * type or a variable with an optional field access.
  */
 public abstract class DecompilerVariable {
@@ -51,7 +50,7 @@ public abstract class DecompilerVariable {
 			return ((ClangTypeToken) variable).getDataType();
 		}
 
-// not sure if we need this; the type returned here is the structure and not the 
+// not sure if we need this; the type returned here is the structure and not the
 // field's type
 //		if (variable instanceof ClangFieldToken) {
 //			return ((ClangFieldToken) variable).getDataType();
@@ -79,8 +78,8 @@ public abstract class DecompilerVariable {
 			}
 		}
 
-		// Prefer the type of the first input varnode, unless that type is a 'void *'.  
-		// Usually, in that special case, the output varnode has the correct type information. 		
+		// Prefer the type of the first input varnode, unless that type is a 'void *'.
+		// Usually, in that special case, the output varnode has the correct type information.
 		PcodeOp op = variable.getPcodeOp();
 		dataType = getInputDataType(op);
 
@@ -173,6 +172,13 @@ public abstract class DecompilerVariable {
 				return entry;
 			}
 
+			if (parent instanceof ClangTokenGroup) {
+				Address parentAddress = getAddressFromParent((ClangTokenGroup) parent, variable);
+				if (parentAddress != null) {
+					return parentAddress;
+				}
+			}
+
 			Address parentAddress = parent.getMinAddress();
 			if (parentAddress != null) {
 				return parentAddress;
@@ -183,9 +189,31 @@ public abstract class DecompilerVariable {
 		return null;
 	}
 
+	private Address getAddressFromParent(ClangTokenGroup parent, ClangToken child) {
+
+		// get as close as possible to the given token without going over
+		Address bestAddress = parent.getMinAddress();
+		Iterator<ClangNode> iterator = parent.iterator();
+		while (iterator.hasNext()) {
+			ClangNode node = iterator.next();
+			if (child.equals(node)) {
+				break;
+			}
+			Address nextAddress = node.getMinAddress();
+			if (nextAddress != null) {
+				bestAddress = nextAddress;
+			}
+		}
+		return bestAddress;
+	}
+
 	public String getName() {
 		String text = variable.getText();
 		return text;
+	}
+
+	public int getOffset() {
+		return Integer.MIN_VALUE; // subclasses can override
 	}
 
 	@Override
@@ -193,7 +221,7 @@ public abstract class DecompilerVariable {
 		String castString = casts.isEmpty() ? "" : "\tcasts: " + casts + ",\n";
 		//@formatter:off
 		return "{\n" +
-			castString + 
+			castString +
 			"\tvariable: " + variable + ",\n" +
 		"}";
 		//@formatter:on

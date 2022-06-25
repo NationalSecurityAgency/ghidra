@@ -34,7 +34,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.ProgramManager;
 import ghidra.file.crypto.CryptoKeyFileTemplateWriter;
 import ghidra.file.eclipse.AndroidProjectCreator;
-import ghidra.file.formats.ios.prelink.PrelinkFileSystem;
+import ghidra.file.formats.ios.prelink.MachoPrelinkFileSystem;
 import ghidra.file.jad.JadProcessWrapper;
 import ghidra.file.jad.JarDecompiler;
 import ghidra.formats.gfilesystem.*;
@@ -273,7 +273,7 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 					}
 					FSBRootNode rootNode = ac.getRootOfSelectedNode();
 					return rootNode != null && rootNode.getFSRef() != null &&
-						rootNode.getFSRef().getFilesystem() instanceof PrelinkFileSystem;
+						rootNode.getFSRef().getFilesystem() instanceof MachoPrelinkFileSystem;
 				})
 				.popupMenuPath("Load iOS Kernel")
 				.popupMenuIcon(ImageManager.iOS)

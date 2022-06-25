@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -39,23 +39,7 @@ public class DyldChainedStartsInSegment implements StructConverter {
 	private short page_starts[];    // each entry is offset in each page of first element in chain
 	private short chain_starts[];   // TODO: used for some 32-bit formats with multiple starts per page 
 
-	static DyldChainedStartsInSegment createDyldChainedFixupHeader(
-			FactoryBundledWithBinaryReader reader) throws IOException {
-		DyldChainedStartsInSegment dyldChainedFixupHeader =
-			(DyldChainedStartsInSegment) reader.getFactory().create(
-				DyldChainedStartsInSegment.class);
-		dyldChainedFixupHeader.initDyldChainedStartsInSegment(reader);
-		return dyldChainedFixupHeader;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DyldChainedStartsInSegment() {
-	}
-
-	private void initDyldChainedStartsInSegment(FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	DyldChainedStartsInSegment(BinaryReader reader) throws IOException {
 		size = reader.readNextInt();
 		page_size = reader.readNextShort();
 		pointer_format = reader.readNextShort();

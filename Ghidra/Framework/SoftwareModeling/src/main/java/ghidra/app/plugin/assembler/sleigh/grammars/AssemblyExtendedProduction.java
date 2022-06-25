@@ -29,6 +29,7 @@ public class AssemblyExtendedProduction
 
 	/**
 	 * Construct an extended production based on the given ancestor
+	 * 
 	 * @param lhs the extended left-hand side
 	 * @param rhs the extended right-hand side
 	 * @param finalState the end state of the final symbol of the RHS
@@ -49,6 +50,7 @@ public class AssemblyExtendedProduction
 
 	/**
 	 * Get the final state of this production
+	 * 
 	 * @return the end state of the last symbol of the RHS
 	 */
 	public int getFinalState() {
@@ -57,6 +59,7 @@ public class AssemblyExtendedProduction
 
 	/**
 	 * Get the original production from which this production was derived
+	 * 
 	 * @return the original production
 	 */
 	public AssemblyProduction getAncestor() {

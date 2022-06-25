@@ -48,7 +48,11 @@ public class DataTypeUrl {
 	 */
 	public DataTypeUrl(DataType dt) {
 		DataTypeManager dtm = dt.getDataTypeManager();
-		dataTypeManagerId = Objects.requireNonNull(dtm.getUniversalID());
+		if (dtm == null) {
+			// Tolerate tests which may produce datatypes without datatype manager
+			dtm = BuiltInDataTypeManager.getDataTypeManager();
+		}
+		dataTypeManagerId = dtm.getUniversalID();
 		dataTypeId = dt.getUniversalID();
 		dataTypeName = Objects.requireNonNull(dt.getName());
 	}

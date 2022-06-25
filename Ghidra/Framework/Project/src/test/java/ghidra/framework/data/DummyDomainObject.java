@@ -29,7 +29,7 @@ public class DummyDomainObject extends DomainObjectAdapterDB {
 	}
 
 	public DummyDomainObject(String name, Object consumer) throws IOException {
-		super(new DBHandle(), name, 10, 1, consumer);
+		super(new DBHandle(), name, 10, consumer);
 	}
 
 	@Override

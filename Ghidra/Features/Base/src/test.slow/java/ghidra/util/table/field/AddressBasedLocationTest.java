@@ -69,11 +69,11 @@ public class AddressBasedLocationTest extends AbstractGhidraHeadlessIntegrationT
 		ReferenceManager rm = program.getReferenceManager();
 
 		Reference offsetRef1 =
-			rm.addOffsetMemReference(addr("CODE:0"), addr("CODE:110"), 0x10, DATA, ANALYSIS, 0);
+			rm.addOffsetMemReference(addr("CODE:0"), addr("CODE:110"), false, 0x10, DATA, ANALYSIS, 0);
 		Reference offsetRef2 =
-			rm.addOffsetMemReference(addr("CODE:1"), addr("CODE:f0"), -0x10, DATA, ANALYSIS, 0);
+			rm.addOffsetMemReference(addr("CODE:1"), addr("CODE:f0"), false, -0x10, DATA, ANALYSIS, 0);
 		Reference offsetRef3 =
-			rm.addOffsetMemReference(addr("CODE:2"), addr("CODE:120"), 0x20, DATA, ANALYSIS, 0);
+			rm.addOffsetMemReference(addr("CODE:2"), addr("CODE:120"), false, 0x20, DATA, ANALYSIS, 0);
 
 		Reference stackRef1 = rm.addStackReference(addr("CODE:3"), 0, 0x10, DATA, ANALYSIS);
 		Reference stackRef2 = rm.addStackReference(addr("CODE:4"), 0, -0x10, DATA, ANALYSIS);

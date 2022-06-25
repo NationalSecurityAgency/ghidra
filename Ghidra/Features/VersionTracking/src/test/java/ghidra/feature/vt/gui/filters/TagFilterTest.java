@@ -28,28 +28,23 @@ import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.db.DummyTestProgramCorrelator;
 import ghidra.feature.vt.db.VTBaseTestCase;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.plugin.VTControllerListener;
+import ghidra.feature.vt.gui.plugin.*;
+import ghidra.feature.vt.gui.util.MatchInfo;
 import ghidra.framework.data.DummyDomainObject;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
-import mockit.*;
 
 public class TagFilterTest extends VTBaseTestCase {
-	@Mocked
-	VTController controller;
-	@Mocked
-	DomainFile domainFile;
+
+	private VTController controller;
 
 	private TagFilter tagFilter;
 	private TestTagFilterChooser excludedTagChooser;
 
-	private VTControllerListener listener;
-
-	public TagFilterTest() {
-		super();
-	}
+	private VTControllerListener listener = new StubControllerListener();
 
 	@Override
 	@Before
@@ -69,7 +64,7 @@ public class TagFilterTest extends VTBaseTestCase {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testFilterWithNoTags() {
-		// 
+		//
 		// test that a match set with no tags applied has no items filtered
 		//
 		VTSession session = controller.getSession();
@@ -117,7 +112,7 @@ public class TagFilterTest extends VTBaseTestCase {
 	public void testMatchesPassFilterWithIncludedTags() {
 		//
 		// Test that an applied filter will include only those tags chosen to pass the filter
-		// 
+		//
 		VTMatchTag fooTag = new TestMatchTag("Foo");
 		VTMatchTag barTag = new TestMatchTag("Bar");
 		VTMatchTag bazTag = new TestMatchTag("Baz");
@@ -239,7 +234,7 @@ public class TagFilterTest extends VTBaseTestCase {
 
 		assertPassesFilter(fooTagMatch1, untaggedMatch1, barTagMatch1);
 
-		// 
+		//
 		// now filter out an item and then remove that item
 		//
 		excludedTagChooser.setExcludedTags(fooTag);
@@ -338,22 +333,53 @@ public class TagFilterTest extends VTBaseTestCase {
 
 	// controller creation
 	private VTController createController() {
-		final VTSession session = createSession();
+		VTSession session = createSession();
+		return new StubVTController() {
+			@Override
+			public VTSession getSession() {
+				return session;
+			}
 
-		new Expectations() {
-			{
-				controller.addListener(with(new ListenerDelegate()));
-				controller.getSession();
-				result = session;
+			@Override
+			public void addListener(VTControllerListener l) {
+				// stub
 			}
 		};
-
-		return controller;
 	}
 
-	class ListenerDelegate implements Delegate<VTControllerListener> {
+	class StubControllerListener implements VTControllerListener {
 		void validate(VTControllerListener l) {
 			listener = l;
+		}
+
+		@Override
+		public void sessionChanged(VTSession session) {
+			// stub
+		}
+
+		@Override
+		public void matchSelected(MatchInfo matchInfo) {
+			// stub
+		}
+
+		@Override
+		public void sessionUpdated(DomainObjectChangedEvent ev) {
+			// stub
+		}
+
+		@Override
+		public void markupItemSelected(VTMarkupItem markupItem) {
+			// stub
+		}
+
+		@Override
+		public void optionsChanged(Options options) {
+			// stub
+		}
+
+		@Override
+		public void disposed() {
+			// stub
 		}
 	}
 

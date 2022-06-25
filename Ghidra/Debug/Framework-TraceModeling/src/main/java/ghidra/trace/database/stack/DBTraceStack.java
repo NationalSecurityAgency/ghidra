@@ -212,8 +212,8 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 			}
 			doUpdateFrameKeys();
 		}
-		manager.trace
-				.setChanged(new TraceChangeRecord<>(TraceStackChangeType.CHANGED, null, this));
+		manager.trace.setChanged(
+			new TraceChangeRecord<>(TraceStackChangeType.CHANGED, null, this, 0L, getSnap()));
 	}
 
 	@Override
@@ -237,7 +237,7 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 	}
 
 	@Override
-	public List<TraceStackFrame> getFrames() {
+	public List<TraceStackFrame> getFrames(long snap) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			return List.copyOf(frames);
 		}
@@ -253,5 +253,10 @@ public class DBTraceStack extends DBAnnotatedObject implements TraceStack {
 		}
 		manager.trace
 				.setChanged(new TraceChangeRecord<>(TraceStackChangeType.DELETED, null, this));
+	}
+
+	@Override
+	public boolean hasFixedFrames() {
+		return true;
 	}
 }

@@ -37,7 +37,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	private PcodeDataTypeManager datatypeManager;
 	private HashMap<Integer, Varnode> refmap;					// Obtain varnode by id
 	private HashMap<Integer, PcodeOp> oprefmap;				// Obtain op by SequenceNumber unique id
-	private HashMap<Integer,VariableStorage> joinmap;			// logical map of joined objects
+	private HashMap<Integer, VariableStorage> joinmap;			// logical map of joined objects
 	private int joinAllocate;								// next offset to be allocated in join map
 	private PcodeOpBank opbank;
 	private VarnodeBank vbank;
@@ -53,7 +53,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		joinAllocate = 0;
 		opbank = new PcodeOpBank();
 		vbank = new VarnodeBank();
-		bblocks = new ArrayList<PcodeBlockBasic>();
+		bblocks = new ArrayList<>();
 		uniqId = 0;
 	}
 
@@ -64,7 +64,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		joinAllocate = 0;
 		vbank.clear();
 		opbank.clear();
-		bblocks = new ArrayList<PcodeBlockBasic>();
+		bblocks = new ArrayList<>();
 		uniqId = 0;
 	}
 
@@ -106,12 +106,13 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	 * @param addr join address associated with pieces
 	 * 
 	 * @return the VariableStorage associated with xml
-	 * @throws PcodeXMLException
-	 * @throws InvalidInputException
+	 * @throws PcodeXMLException for improperly formatted XML
+	 * @throws InvalidInputException if the pieces are not valid storage locations
 	 */
 	@Override
-	public VariableStorage readXMLVarnodePieces(XmlElement el, Address addr) throws PcodeXMLException, InvalidInputException {
-		ArrayList<Varnode> list = new ArrayList<Varnode>();
+	public VariableStorage readXMLVarnodePieces(XmlElement el, Address addr)
+			throws PcodeXMLException, InvalidInputException {
+		ArrayList<Varnode> list = new ArrayList<>();
 		int index = 1;
 		String nextPiece = "piece" + index;
 		while (el.hasAttribute(nextPiece)) {
@@ -125,11 +126,13 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		return allocateJoinStorage(addr.getOffset(), pieces);
 	}
 
-	private VariableStorage allocateJoinStorage(long offset,Varnode[] pieces) throws InvalidInputException {
+	private VariableStorage allocateJoinStorage(long offset, Varnode[] pieces)
+			throws InvalidInputException {
 		VariableStorage storage;
 		try {
-			storage = new VariableStorage(datatypeManager.getProgram(),pieces);
-		} catch (InvalidInputException e) {
+			storage = new VariableStorage(datatypeManager.getProgram(), pieces);
+		}
+		catch (InvalidInputException e) {
 			storage = null;
 		}
 		if (storage == null) {
@@ -146,23 +149,23 @@ public class PcodeSyntaxTree implements PcodeFactory {
 				sz += piece.getSize();
 			}
 			Address uniqaddr = addrFactory.getUniqueSpace().getAddress(0x20000000);
-			storage = new VariableStorage(datatypeManager.getProgram(),uniqaddr,sz);
+			storage = new VariableStorage(datatypeManager.getProgram(), uniqaddr, sz);
 		}
 		Integer offObject;
 		int roundsize = (storage.size() + 15) & 0xfffffff0;
 		if (offset < 0) {
-			offObject = new Integer(joinAllocate);
+			offObject = Integer.valueOf(joinAllocate);
 			joinAllocate += roundsize;
 		}
 		else {
-			offObject = new Integer((int)offset);
+			offObject = Integer.valueOf((int) offset);
 			offset += roundsize;
 			if (offset > joinAllocate) {
-				joinAllocate = (int)offset;
+				joinAllocate = (int) offset;
 			}
 		}
 		if (joinmap == null) {
-			joinmap = new HashMap<Integer,VariableStorage>();
+			joinmap = new HashMap<>();
 		}
 		joinmap.put(offObject, storage);
 		return storage;
@@ -172,20 +175,25 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		if (joinmap == null) {
 			return null;
 		}
-		return joinmap.get(new Integer((int)offset));
+		return joinmap.get(Integer.valueOf((int) offset));
 	}
 
 	@Override
 	public VariableStorage buildStorage(Varnode vn) throws InvalidInputException {
 		Address addr = vn.getAddress();
 		if (addr.getAddressSpace().getType() == AddressSpace.TYPE_VARIABLE) {
-			return findJoinStorage(addr.getOffset());
+			VariableStorage store = findJoinStorage(addr.getOffset());
+			if (store == null) {
+				throw new InvalidInputException(
+					"Missing description of pieces for a varnode in the join address space");
+			}
+			return store;
 		}
-		return new VariableStorage(datatypeManager.getProgram(),vn);
+		return new VariableStorage(datatypeManager.getProgram(), vn);
 	}
 
 	/**
-	 * Returns an iterator for all Varnodes in the tree ordered by Address
+	 * @return an iterator for all Varnodes in the tree ordered by Address
 	 */
 	public Iterator<VarnodeAST> locRange() {
 		return vbank.locRange();
@@ -278,15 +286,6 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		return opbank.findOp(sq);
 	}
 
-	/**
-	 * @deprecated
-	 * @return the varnode bank for this syntax tree
-	 */
-	@Deprecated
-	public VarnodeBank getVbank() {
-		return vbank;
-	}
-
 	public ArrayList<PcodeBlockBasic> getBasicBlocks() {
 		return bblocks;
 	}
@@ -321,7 +320,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	@Override
-	public Varnode createFromStorage(Address addr,VariableStorage storage, int logicalSize) {
+	public Varnode createFromStorage(Address addr, VariableStorage storage, int logicalSize) {
 		Varnode[] pieces = storage.getVarnodes();
 
 		// This is the most common case, 1 piece, and address is pulled from the piece
@@ -337,10 +336,12 @@ public class PcodeSyntaxTree implements PcodeFactory {
 				long joinoffset = joinAllocate;				// Next available offset
 				storage = allocateJoinStorage(-1, pieces);	// is allocated from JOIN space
 				addr = AddressSpace.VARIABLE_SPACE.getAddress(joinoffset);
-			} else {
+			}
+			else {
 				storage = allocateJoinStorage(addr.getOffset(), pieces);
 			}
-		} catch (InvalidInputException e) {
+		}
+		catch (InvalidInputException e) {
 			return null;
 		}
 		Varnode vn = newVarnode(logicalSize, addr);
@@ -359,7 +360,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	private void buildVarnodeRefs() {
-		refmap = new HashMap<Integer, Varnode>((int) (1.5 * vbank.size()));
+		refmap = new HashMap<>((int) (1.5 * vbank.size()));
 		Iterator<?> iter = vbank.locRange();			// Iterate over all varnodes
 		while (iter.hasNext()) {
 			VarnodeAST vn = (VarnodeAST) iter.next();
@@ -410,7 +411,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	private void buildOpRefs() {
-		oprefmap = new HashMap<Integer, PcodeOp>((int) (1.5 * opbank.size()));
+		oprefmap = new HashMap<>((int) (1.5 * opbank.size()));
 		Iterator<?> iter = opbank.allOrdered();
 		while (iter.hasNext()) {
 			PcodeOp op = (PcodeOp) iter.next();
@@ -447,8 +448,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	public void setOutput(PcodeOp op, Varnode vn) {
-		if (vn == op.getOutput())
-		 {
+		if (vn == op.getOutput()) {
 			return;			// Output already set to this
 		}
 		if (op.getOutput() != null) {
@@ -464,8 +464,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 
 	public void unSetOutput(PcodeOp op) {
 		Varnode vn = op.getOutput();
-		if (vn == null)
-		 {
+		if (vn == null) {
 			return;		// Nothing to do
 		}
 		op.setOutput(null);
@@ -473,8 +472,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	public void setInput(PcodeOp op, Varnode vn, int slot) {
-		if (slot >= op.getNumInputs())
-		 {
+		if (slot >= op.getNumInputs()) {
 			op.setInput(null, slot);					// Expand number of inputs as necessary
 		}
 		if (op.getInput(slot) != null) {

@@ -73,10 +73,6 @@ public class TestAnalyzer extends AbstractAnalyzer {
 				log.appendException(e);
 				return false;
 			}
-			catch (DataTypeConflictException e) {
-				log.appendException(e);
-				return false;
-			}
 		}
 
 		return true;

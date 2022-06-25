@@ -37,7 +37,7 @@ import ghidra.util.HelpLocation;
 import ghidra.util.exception.AssertException;
 
 public class SettingsDialog extends DialogComponentProvider {
-
+	
 	private final static int WIDTH = 300;
 	private final static int HEIGHT = 150;
 

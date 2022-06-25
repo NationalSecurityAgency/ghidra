@@ -15,11 +15,11 @@
  */
 package ghidra.program.database.register;
 
+import java.util.*;
+
 import ghidra.program.model.address.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.*;
 
 /**
  * Associates objects with address ranges.
@@ -170,7 +170,8 @@ public class AddressRangeObjectMap<T> {
 			T object, AddressValueRange<T> newRange, int pos) {
 
 		AddressValueRange<T> previousRange = ranges.get(pos);
-		if ((start.previous() == null) || (previousRange.getEnd().compareTo(start.previous()) < 0)) {
+		if ((start.previous() == null) ||
+			(previousRange.getEnd().compareTo(start.previous()) < 0)) {
 			return newRange;  // no overlap
 		}
 
@@ -468,6 +469,10 @@ public class AddressRangeObjectMap<T> {
 			}
 		}
 		return new AddressRangeImpl(min, max);
+	}
+
+	public void clearCache() {
+		lastRange = null;
 	}
 }
 

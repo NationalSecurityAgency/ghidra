@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachException;
 
 /**
@@ -27,24 +27,8 @@ import ghidra.app.util.bin.format.macho.MachException;
  */
 public class FixedVirtualMemorySharedLibraryCommand extends ObsoleteCommand {
 
-	static FixedVirtualMemorySharedLibraryCommand createFixedVirtualMemorySharedLibraryCommand(
-			FactoryBundledWithBinaryReader reader) throws IOException, MachException {
-		FixedVirtualMemorySharedLibraryCommand command =
-			(FixedVirtualMemorySharedLibraryCommand) reader.getFactory().create(
-				FixedVirtualMemorySharedLibraryCommand.class);
-		command.initFixedVirtualMemorySharedLibraryCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public FixedVirtualMemorySharedLibraryCommand() {
-	}
-
-	private void initFixedVirtualMemorySharedLibraryCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException, MachException {
-		initObsoleteCommand(reader);
+	FixedVirtualMemorySharedLibraryCommand(BinaryReader reader) throws IOException, MachException {
+		super(reader);
 	}
 
 	@Override

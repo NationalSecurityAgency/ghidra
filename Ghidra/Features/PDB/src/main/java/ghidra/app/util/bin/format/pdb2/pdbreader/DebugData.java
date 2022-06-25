@@ -137,7 +137,7 @@ public class DebugData {
 	 *  each particular debug type (e.g., the first stream number read is for the stream containing
 	 *  Frame Pointer Omission debug data).  A stream number of 0XFFFF says that there is no data
 	 *  for that debug type; else the stream number represents the stream that should
-	 *  be deserialized to retrieve the debug data of that type.  The 
+	 *  be deserialized to retrieve the debug data of that type.  The
 	 *  {@link #deserialize(TaskMonitor)} method deserializes each of these streams
 	 *  that are valid to the corresponding debug data type.
 	 * @param reader {@link PdbByteReader} from which to parse the header.
@@ -323,9 +323,10 @@ public class DebugData {
 //		}
 		// TODO: More work possible.  See XData processing and notes there.  This is very
 		//  incomplete.
-		if (pdb.getDebugInfo() instanceof PdbNewDebugInfo) {
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo instanceof PdbNewDebugInfo) {
 			//Processor target = pdb.getTargetProcessor();
-			PdbNewDebugInfo dbi = (PdbNewDebugInfo) pdb.getDebugInfo();
+			PdbNewDebugInfo dbi = (PdbNewDebugInfo) debugInfo;
 			ImageFileMachine machine = dbi.getMachineType();
 			switch (machine) {
 				case IA64:

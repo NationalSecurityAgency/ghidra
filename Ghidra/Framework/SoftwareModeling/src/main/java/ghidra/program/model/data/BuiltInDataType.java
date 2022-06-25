@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.docking.settings.Settings;
 import ghidra.util.classfinder.ExtensionPoint;
 
 /**
@@ -37,5 +37,14 @@ public interface BuiltInDataType extends DataType, ExtensionPoint {
 	 * or Dynamic.
 	 */
 	public String getCTypeDeclaration(DataOrganization dataOrganization);
+
+	/**
+	 * Set the default settings for this data type.
+	 * <br>
+	 * NOTE: This method is reserved for internal DB use.
+	 * <br>
+	 * @param settings the settings to be used as this dataTypes default settings. 
+	 */
+	public void setDefaultSettings(Settings settings);
 
 }

@@ -239,7 +239,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		populateRefTypes(rt);
 		refTypes.setSelectedItem(rt);
 
-		if (fromSubIndex < 0) {
+		if (fromOpIndex < 0) {
 			Program program = plugin.getCurrentProgram();
 			ProgramLocation location = plugin.getCurrentLocation();
 			Address toAddr = null;

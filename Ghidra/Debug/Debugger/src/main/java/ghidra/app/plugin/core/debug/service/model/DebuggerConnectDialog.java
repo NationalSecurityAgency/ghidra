@@ -256,7 +256,7 @@ public class DebuggerConnectDialog extends DialogComponentProvider
 				result.completeAsync(() -> m);
 				result = null;
 			}
-		}, SwingExecutorService.INSTANCE).exceptionally(e -> {
+		}, SwingExecutorService.LATER).exceptionally(e -> {
 			e = AsyncUtils.unwrapThrowable(e);
 			if (!(e instanceof CancellationException)) {
 				Msg.showError(this, getComponent(), "Could not connect", e);

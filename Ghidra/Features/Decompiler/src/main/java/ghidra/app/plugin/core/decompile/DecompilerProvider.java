@@ -809,8 +809,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		RenameFieldAction renameFieldAction = new RenameFieldAction();
 		setGroupInfo(renameFieldAction, variableGroup, subGroupPosition++);
 
+		ForceUnionAction forceUnionAction = new ForceUnionAction();
+		setGroupInfo(forceUnionAction, variableGroup, subGroupPosition++);
+
 		RetypeLocalAction retypeLocalAction = new RetypeLocalAction();
 		setGroupInfo(retypeLocalAction, variableGroup, subGroupPosition++);
+
+		CreatePointerRelative createRelativeAction = new CreatePointerRelative();
+		setGroupInfo(createRelativeAction, variableGroup, subGroupPosition++);
 
 		RetypeGlobalAction retypeGlobalAction = new RetypeGlobalAction();
 		setGroupInfo(retypeGlobalAction, variableGroup, subGroupPosition++);
@@ -939,17 +945,17 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		setGroupInfo(findReferencesAction, searchGroup, subGroupPosition++);
 		findReferencesAction.getPopupMenuData().setParentMenuGroup(referencesParentGroup);
 
-		FindReferencesToSymbolAction findReferencesToSymbolAction =
-			new FindReferencesToSymbolAction();
+		FindReferencesToHighSymbolAction findReferencesToSymbolAction =
+			new FindReferencesToHighSymbolAction();
 		setGroupInfo(findReferencesToSymbolAction, searchGroup, subGroupPosition++);
 		findReferencesToSymbolAction.getPopupMenuData().setParentMenuGroup(referencesParentGroup);
 		addLocalAction(findReferencesToSymbolAction);
 
-		FindReferencesToAddressAction findReferencesToAdressAction =
+		FindReferencesToAddressAction findReferencesToAddressAction =
 			new FindReferencesToAddressAction(tool, owner);
-		setGroupInfo(findReferencesToAdressAction, searchGroup, subGroupPosition++);
-		findReferencesToAdressAction.getPopupMenuData().setParentMenuGroup(referencesParentGroup);
-		addLocalAction(findReferencesToAdressAction);
+		setGroupInfo(findReferencesToAddressAction, searchGroup, subGroupPosition++);
+		findReferencesToAddressAction.getPopupMenuData().setParentMenuGroup(referencesParentGroup);
+		addLocalAction(findReferencesToAddressAction);
 
 		//
 		// Options
@@ -966,6 +972,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		DebugDecompilerAction debugFunctionAction = new DebugDecompilerAction(controller);
 		ExportToCAction convertAction = new ExportToCAction();
 		CloneDecompilerAction cloneDecompilerAction = new CloneDecompilerAction();
+		GoToNextBraceAction goToNextBraceAction = new GoToNextBraceAction();
+		GoToPreviousBraceAction goToPreviousBraceAction = new GoToPreviousBraceAction();
 
 		addLocalAction(refreshAction);
 		addLocalAction(selectAllAction);
@@ -979,6 +987,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(renameLocalAction);
 		addLocalAction(renameGlobalAction);
 		addLocalAction(renameFieldAction);
+		addLocalAction(forceUnionAction);
 		addLocalAction(setSecondaryHighlightAction);
 		addLocalAction(setSecondaryHighlightColorChooserAction);
 		addLocalAction(removeSecondaryHighlightAction);
@@ -991,6 +1000,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(setEquateAction);
 		addLocalAction(removeEquateAction);
 		addLocalAction(retypeLocalAction);
+		addLocalAction(createRelativeAction);
 		addLocalAction(retypeGlobalAction);
 		addLocalAction(retypeReturnAction);
 		addLocalAction(retypeFieldAction);
@@ -1010,6 +1020,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(findReferencesAction);
 		addLocalAction(propertiesAction);
 		addLocalAction(cloneDecompilerAction);
+		addLocalAction(goToNextBraceAction);
+		addLocalAction(goToPreviousBraceAction);
 
 		graphServiceAdded();
 	}

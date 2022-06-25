@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.SourceType;
@@ -55,6 +56,7 @@ import ghidra.util.task.TaskMonitor;
 public class CliTableMethodDef extends CliAbstractTable {
 
 	private static final int CLITABLEMETHODDEF_PINVOKE_JUMP_LENGTH = 0x06;
+	private static final String CLITABLEMETHODDEF_CLRCALL_CONVENTION = "__clrcall";
 
 	public class CliMethodDefRow extends CliAbstractTableRow {
 		public int RVA;
@@ -437,6 +439,22 @@ public class CliTableMethodDef extends CliAbstractTable {
 				newFunc.setReturnType(returnType, SourceType.ANALYSIS);
 				newFunc.updateFunction(null, null, FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
 					true, SourceType.ANALYSIS, parameters);
+				
+				// If Code here is not of the correct type, create a data element to stop disassembly, and comment
+				PrototypeModel cliCallingConvention = program.getLanguage()
+						.getDefaultCompilerSpec()
+						.getCallingConvention(CLITABLEMETHODDEF_CLRCALL_CONVENTION);
+
+				if ((cliCallingConvention == null && !methodRow.isNative()) ||
+					(cliCallingConvention != null && methodRow.isNative())) {
+					Data data = program.getListing()
+							.createData(startAddr, new ArrayDataType(BYTE, (int) endAddr.subtract(startAddr) + 1, 1));
+					data.setComment(CodeUnit.PRE_COMMENT,
+						(methodRow.isManaged() ? ".NET CLR Managed Code" : "Native Code"));
+				}
+			}
+			catch (CodeUnitInsertionException e) {
+				// Ignore, something there already
 			}
 			catch (NullPointerException e) {
 				Msg.warn(this, "Error processing function \"" + funcName + "\" (" + methodRowIndex +

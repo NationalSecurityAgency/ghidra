@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
@@ -71,25 +71,8 @@ public class ImageRuntimeFunctionEntries {
 
 	List<_IMAGE_RUNTIME_FUNCTION_ENTRY> functionEntries = new ArrayList<>();
 
-	static ImageRuntimeFunctionEntries createImageRuntimeFunctionEntries(
-			FactoryBundledWithBinaryReader reader, long index, NTHeader ntHeader)
+	ImageRuntimeFunctionEntries(BinaryReader reader, long index, NTHeader ntHeader)
 			throws IOException {
-		ImageRuntimeFunctionEntries imageRuntimeFunctionEntriesSection =
-			(ImageRuntimeFunctionEntries) reader.getFactory()
-					.create(ImageRuntimeFunctionEntries.class);
-		imageRuntimeFunctionEntriesSection.initImageRuntimeFunctionEntries(reader, index, ntHeader);
-		return imageRuntimeFunctionEntriesSection;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ImageRuntimeFunctionEntries() {
-	}
-
-	private void initImageRuntimeFunctionEntries(FactoryBundledWithBinaryReader reader, long index,
-			NTHeader ntHeader) throws IOException {
-
 		int entryCount = 0;
 
 		// Find the exception handler data section. This is an unbounded array of

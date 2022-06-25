@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.pe;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.pdb.PdbInfoCodeView;
 import ghidra.app.util.bin.format.pdb.PdbInfoDotNet;
 import ghidra.app.util.bin.format.pe.debug.*;
@@ -41,22 +41,9 @@ public class DebugDataDirectory extends DataDirectory {
 
     private DebugDirectoryParser parser;
 
-    static DebugDataDirectory createDebugDataDirectory(
-            NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-            throws IOException {
-        DebugDataDirectory debugDataDirectory = (DebugDataDirectory) reader.getFactory().create(DebugDataDirectory.class);
-        debugDataDirectory.initDebugDataDirectory(ntHeader, reader);
-        return debugDataDirectory;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DebugDataDirectory() {}
-
-	private void initDebugDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader) throws IOException {
+	DebugDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
-	}
+    }
 
 	@Override
 	public String getDirectoryName() {
@@ -70,14 +57,15 @@ public class DebugDataDirectory extends DataDirectory {
 			return false;
 		}
 		
-    	parser = DebugDirectoryParser.createDebugDirectoryParser(reader, ptr, size, ntHeader);
+		parser = new DebugDirectoryParser(reader, ptr, size,
+			ntHeader.getOptionalHeader().getSizeOfImage());
     	return true;
     }
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
-			DataTypeConflictException, IOException {
+			NTHeader ntHeader)
+			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 
 		monitor.setMessage(program.getName()+": debug...");
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);

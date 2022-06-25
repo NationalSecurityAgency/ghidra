@@ -15,11 +15,13 @@
  */
 package ghidra.file.formats.android.art;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.BinaryLoader;
 import ghidra.file.analyzers.FileFormatAnalyzer;
-import ghidra.file.formats.android.oat.OatConstants;
+import ghidra.file.formats.android.oat.OatUtilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataType;
@@ -49,7 +51,7 @@ public class ArtAnalyzer extends FileFormatAnalyzer {
 		//HACK:
 		//Make analyzer appear after ART is merged with OAT program
 		//Currently, analyzers will not recognize the new ART block being added
-			|| OatConstants.isOAT(program);
+			|| OatUtilities.isOAT(program);
 	}
 
 	@Override

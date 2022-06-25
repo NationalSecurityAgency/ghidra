@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +15,17 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
-import ghidra.util.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.util.Conv;
 
 class S_PROCREF extends DebugSymbol {
     private int module;
 	private int checksum;
 	private int paddingLen;
 
-    static S_PROCREF createS_PROCREF(short length, short type,
-            FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        S_PROCREF s_procref = (S_PROCREF) reader.getFactory().create(S_PROCREF.class);
-        s_procref.initS_PROCREF(length, type, reader, ptr);
-        return s_procref;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public S_PROCREF() {}
-
-	private void initS_PROCREF(short length, short type, FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
+	S_PROCREF(short length, short type, BinaryReader reader, int ptr) throws IOException {
 		processDebugSymbol(length, type);
 
 //		if (type != DebugCodeViewConstants.S_PROCREF) {

@@ -15,13 +15,12 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.pe.NTHeader;
 import ghidra.app.util.bin.format.pe.OffsetValidator;
 import ghidra.util.Msg;
-
-import java.io.IOException;
 
 /**
  * A class to represent the COFF Symbols Header.
@@ -58,23 +57,8 @@ public class DebugCOFFSymbolsHeader {
 	 * @param debugDir the debug directory associated to this COFF symbol header
 	 * @param ntHeader 
 	 */
-	static DebugCOFFSymbolsHeader createDebugCOFFSymbolsHeader(
-			FactoryBundledWithBinaryReader reader, DebugDirectory debugDir,
-			OffsetValidator validator) throws IOException {
-		DebugCOFFSymbolsHeader debugCOFFSymbolsHeader =
-			(DebugCOFFSymbolsHeader) reader.getFactory().create(DebugCOFFSymbolsHeader.class);
-		debugCOFFSymbolsHeader.initDebugCOFFSymbolsHeader(reader, debugDir, validator);
-		return debugCOFFSymbolsHeader;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DebugCOFFSymbolsHeader() {
-	}
-
-	private void initDebugCOFFSymbolsHeader(FactoryBundledWithBinaryReader reader,
-			DebugDirectory debugDir, OffsetValidator validator) throws IOException {
+	DebugCOFFSymbolsHeader(BinaryReader reader, DebugDirectory debugDir, OffsetValidator validator)
+			throws IOException {
 		int ptr = debugDir.getPointerToRawData();
 		if (!validator.checkPointer(ptr)) {
 			Msg.error(this, "Invalid pointer " + Long.toHexString(ptr));
@@ -101,14 +85,12 @@ public class DebugCOFFSymbolsHeader {
 		if (numberOfLinenumbers > 0 && numberOfLinenumbers < NTHeader.MAX_SANE_COUNT) {
 			lineNumbers = new DebugCOFFLineNumber[numberOfLinenumbers];
 			for (int i = 0; i < numberOfLinenumbers; ++i) {
-				lineNumbers[i] = DebugCOFFLineNumber.createDebugCOFFLineNumber(reader, ptr);
+				lineNumbers[i] = new DebugCOFFLineNumber(reader, ptr);
 				ptr += DebugCOFFLineNumber.IMAGE_SIZEOF_LINENUMBER;
 			}
-		}
+			}
 
-		symbolTable =
-			DebugCOFFSymbolTable.createDebugCOFFSymbolTable(reader, this,
-				debugDir.getPointerToRawData());
+			symbolTable = new DebugCOFFSymbolTable(reader, this, debugDir.getPointerToRawData());
 	}
 
 	/**

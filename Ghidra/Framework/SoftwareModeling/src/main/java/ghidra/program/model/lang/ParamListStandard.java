@@ -240,7 +240,7 @@ public class ParamListStandard implements ParamList {
 		pe.add(pentry);
 		pentry.restoreXml(parser, cspec, pe, grouped);
 		if (splitFloat) {
-			if (pentry.getType() == ParamEntry.TYPE_FLOAT) {
+			if (!grouped && pentry.getType() == ParamEntry.TYPE_FLOAT) {
 				if (resourceTwoStart >= 0) {
 					throw new XmlParseException(
 						"parameter list floating-point entries must come first");
@@ -276,8 +276,8 @@ public class ParamListStandard implements ParamList {
 		// Check that all entries in the group are distinguishable
 		for (int i = 1; i < count; ++i) {
 			ParamEntry curEntry = pe.get(pe.size() - 1 - i);
-			for (int j = 0; j < i; ++i) {
-				ParamEntry.orderWithinGroup(pe.get(pe.size() - 1 - j), curEntry);
+			for (int j = 0; j < i; ++j) {
+				ParamEntry.orderWithinGroup(curEntry, pe.get(pe.size() - 1 - j));
 			}
 		}
 		parser.end(el);
@@ -315,14 +315,6 @@ public class ParamListStandard implements ParamList {
 			}
 			else if (el.getName().equals("group")) {
 				parseGroup(parser, cspec, pe, numgroup, splitFloat);
-			}
-		}
-		// Check that any pentry tags with join storage don't overlap following tags
-		for (ParamEntry curEntry : pe) {
-			if (curEntry.isNonOverlappingJoin()) {
-				if (curEntry.countJoinOverlap(pe) != 1) {
-					throw new XmlParseException("pentry tag must be listed after all its overlaps");
-				}
 			}
 		}
 		parser.end(mainel);

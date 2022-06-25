@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.awt.Color;
 
@@ -31,14 +30,12 @@ import docking.menu.MultiStateDockingAction;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.plugin.core.bookmark.BookmarkEditCmd;
-import ghidra.app.plugin.core.bookmark.BookmarkPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.services.ProgramManager;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DWordDataType;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.*;
@@ -50,47 +47,45 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 	private TestEnv env;
 	private PluginTool tool;
 	private AddressFactory addrFactory;
+	private ProgramBuilder builder;
 	private Program program;
 	private CodeBrowserPlugin cb;
-	private DockingActionIf direction;
-	private DockingActionIf nextInst;
-	private DockingActionIf nextData;
-	private DockingActionIf nextUndef;
-	private DockingActionIf nextLabel;
-	private DockingActionIf nextFunc;
-	private DockingActionIf nextNonFunc;
-	private MultiStateDockingAction<String> nextBookmark;
 	private BookmarkManager bookmarkManager;
+
+	private DockingActionIf direction;
+	private DockingActionIf invert;
+	private DockingActionIf nextInstruction;
+	private DockingActionIf nextData;
+	private DockingActionIf nextUndefined;
+	private DockingActionIf nextLabel;
+	private DockingActionIf nextFunction;
+	private DockingActionIf nextByteValue;
+	private MultiStateDockingAction<String> nextBookmark;
 
 	private Address addr(String address) {
 		return addrFactory.getAddress(address);
 	}
 
+	@SuppressWarnings("unchecked") // we know that bookmarks is of type String
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();
-		tool = env.getTool();
-		setupTool(tool);
-		cb = env.getPlugin(CodeBrowserPlugin.class);
-	}
-
-	@SuppressWarnings("unchecked")
-	// we know that bookmarks is of type String
-	private void setupTool(PluginTool tool) throws Exception {
-		tool.addPlugin(CodeBrowserPlugin.class.getName());
-		tool.addPlugin(NextPrevAddressPlugin.class.getName());
-		tool.addPlugin(NextPrevCodeUnitPlugin.class.getName());
-		tool.addPlugin(BookmarkPlugin.class.getName());
+		loadProgram();
+		tool = env.launchDefaultTool(program);
 
 		NextPrevCodeUnitPlugin p = getPlugin(tool, NextPrevCodeUnitPlugin.class);
 		direction = getAction(p, "Toggle Search Direction");
-		nextInst = getAction(p, "Next Instruction");
+		invert = getAction(p, "Invert Search Logic");
+		nextInstruction = getAction(p, "Next Instruction");
 		nextData = getAction(p, "Next Data");
-		nextUndef = getAction(p, "Next Undefined");
+		nextUndefined = getAction(p, "Next Undefined");
 		nextLabel = getAction(p, "Next Label");
-		nextFunc = getAction(p, "Next Function");
-		nextNonFunc = getAction(p, "Next Non-Function");
+		nextFunction = getAction(p, "Next Function");
+		nextByteValue = getAction(p, "Next Matching Byte Values");
+
 		nextBookmark = (MultiStateDockingAction<String>) getAction(p, "Next Bookmark");
+
+		cb = env.getPlugin(CodeBrowserPlugin.class);
 	}
 
 	@After
@@ -98,311 +93,547 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		env.dispose();
 	}
 
-	private void loadProgram(String programName) throws Exception {
+	private void loadProgram() throws Exception {
 
-		ClassicSampleX86ProgramBuilder builder = new ClassicSampleX86ProgramBuilder();
-		builder.setName(programName);
+		// create a grouping of data types to test the Byte Value searching
+
+		builder = new ClassicSampleX86ProgramBuilder();
+
 		program = builder.getProgram();
-
-		ProgramManager pm = tool.getService(ProgramManager.class);
-		pm.openProgram(program.getDomainFile());
-		builder.dispose();
 		addrFactory = program.getAddressFactory();
 		bookmarkManager = program.getBookmarkManager();
 	}
 
+	private void addData() throws Exception {
+		addType("01001010", "52 65 67 69", new DWordDataType());
+		addType("01001016", "64 00 6f 00 77", new DWordDataType());
+		addType("0100101c", "43 68 6f 6f", new DWordDataType());
+		addType("01001020", "43 68 6f 6f", new DWordDataType());
+		addType("01001024", "43 68 6f 6f", new DWordDataType());
+		addType("0100102a", "15 00", new DWordDataType());
+	}
+
+	private void addType(String addrString, String bytes, DataType dt)
+			throws Exception {
+		builder.setBytes(addrString, bytes);
+		builder.applyDataType(addrString, dt);
+	}
+
 	@Test
 	public void testToggle() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
+
 		Icon upIcon = ResourceManager.loadImage("images/up.png");
 		Icon downIcon = ResourceManager.loadImage("images/down.png");
 
 		assertEquals(downIcon, direction.getToolBarData().getIcon());
-		assertStartsWith("Go To Next Instruction", nextInst.getDescription());
+		assertStartsWith("Go To Next Instruction", nextInstruction.getDescription());
 		assertStartsWith("Go To Next Data", nextData.getDescription());
-		assertStartsWith("Go To Next Undefined", nextUndef.getDescription());
+		assertStartsWith("Go To Next Undefined", nextUndefined.getDescription());
 		assertStartsWith("Go To Next Label", nextLabel.getDescription());
-		assertStartsWith("Go To Next Function", nextFunc.getDescription());
-		assertStartsWith("Go To Next Instruction Not In a Function", nextNonFunc.getDescription());
+		assertStartsWith("Go To Next Function", nextFunction.getDescription());
 		assertStartsWith("Go To Next Bookmark: All Types", nextBookmark.getDescription());
 
-		performAction(direction, cb.getProvider(), true);
+		toggleDirection();
 
 		assertEquals(upIcon, direction.getToolBarData().getIcon());
-		assertStartsWith("Go To Previous Instruction", nextInst.getDescription());
+		assertStartsWith("Go To Previous Instruction", nextInstruction.getDescription());
 		assertStartsWith("Go To Previous Data", nextData.getDescription());
-		assertStartsWith("Go To Previous Undefined", nextUndef.getDescription());
+		assertStartsWith("Go To Previous Undefined", nextUndefined.getDescription());
 		assertStartsWith("Go To Previous Label", nextLabel.getDescription());
-		assertStartsWith("Go To Previous Function", nextFunc.getDescription());
-		assertStartsWith("Go To Previous Instruction Not In a Function",
-			nextNonFunc.getDescription());
+		assertStartsWith("Go To Previous Function", nextFunction.getDescription());
 		assertStartsWith("Go To Previous Bookmark: All Types", nextBookmark.getDescription());
 
-		performAction(direction, cb.getProvider(), true);
+		toggleDirection();
 
 		assertEquals(downIcon, direction.getToolBarData().getIcon());
-		assertStartsWith("Go To Next Instruction", nextInst.getDescription());
+		assertStartsWith("Go To Next Instruction", nextInstruction.getDescription());
 		assertStartsWith("Go To Next Data", nextData.getDescription());
-		assertStartsWith("Go To Next Undefined", nextUndef.getDescription());
+		assertStartsWith("Go To Next Undefined", nextUndefined.getDescription());
 		assertStartsWith("Go To Next Label", nextLabel.getDescription());
-		assertStartsWith("Go To Next Function", nextFunc.getDescription());
-		assertStartsWith("Go To Next Instruction Not In a Function", nextNonFunc.getDescription());
+		assertStartsWith("Go To Next Function", nextFunction.getDescription());
 		assertStartsWith("Go To Next Bookmark: All Types", nextBookmark.getDescription());
-	}
-
-	private static void assertStartsWith(String expected, String actual) {
-		assertTrue("startsWith expected: \"" + expected + "\", got: \"" + actual + "\"",
-			actual.startsWith(expected));
 	}
 
 	@Test
 	public void testSearchInstruction() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
-		assertEquals(addr("0x1001000"), cb.getCurrentAddress());
-		performAction(nextInst, cb.getProvider(), true);
-		assertEquals(addr("0x1002239"), cb.getCurrentAddress());
-		performAction(nextInst, cb.getProvider(), true);
-		assertEquals(addr("0x1002cf5"), cb.getCurrentAddress());
 
-		performAction(direction, cb.getProvider(), true);
-		performAction(nextInst, cb.getProvider(), true);
-		assertEquals(addr("0x100294d"), cb.getCurrentAddress());
-		performAction(nextInst, cb.getProvider(), true);
+		assertAddress("0x1001000");
+		nextInstruction();
+		assertAddress("0x1002239");
+		nextInstruction();
+		assertAddress("0x1002cf5");
+
+		toggleDirection();
+
+		nextInstruction();
+		assertAddress("0x100294d");
+		nextInstruction();
 
 		// no more instructions, this is the last range
-		assertEquals(addr("0x100294d"), cb.getCurrentAddress());
+		assertAddress("0x100294d");
+	}
+
+	@Test
+	public void testSearchNotInstruction() throws Exception {
+
+		negateSearch();
+
+		assertAddress("0x1001000");
+		nextInstruction();
+		assertAddress("0x01002950");
+		nextInstruction();
+		assertAddress("0x01002d6e");
+
+		toggleDirection();
+
+		nextInstruction();
+		assertAddress("0x01002cf4");
+		nextInstruction();
+		assertAddress("0x01002238");
 	}
 
 	@Test
 	public void testSearchData() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
-		assertEquals(addr("0x1001000"), cb.getCurrentAddress());
-		performAction(nextData, cb.getProvider(), true);
-		assertEquals(addr("0x1001058"), cb.getCurrentAddress());
-		performAction(nextData, cb.getProvider(), true);
-		assertEquals(addr("0x1001080"), cb.getCurrentAddress());
 
-		performAction(direction, cb.getProvider(), true);
-		performAction(nextData, cb.getProvider(), true);
-		assertEquals(addr("0x1001058"), cb.getCurrentAddress());
-		performAction(nextData, cb.getProvider(), true);
+		assertAddress("0x1001000");
+		nextData();
+		assertAddress("0x1001058");
+		nextData();
+		assertAddress("0x1001080");
 
+		toggleDirection();
+
+		nextData();
+		assertAddress("0x1001058");
+		nextData();
+		assertAddress("0x01001008");
+	}
+
+	@Test
+	public void testSearchNotData() throws Exception {
+
+		negateSearch();
+
+		assertAddress("0x1001000");
+		nextData();
+		assertAddress("0x0100100c");
+		nextData();
+		assertAddress("0x0100105c");
+
+		toggleDirection();
+
+		nextData();
+		assertAddress("0x01001057");
+		nextData();
+		// no more undefined data or instructions, this is the last range
+		assertAddress("0x1001057");
 	}
 
 	@Test
 	public void testSearchUndefined() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
-		assertEquals(addr("0x1001000"), cb.getCurrentAddress());
-		performAction(nextUndef, cb.getProvider(), true);
-		assertEquals(addr("0x100100c"), cb.getCurrentAddress());
-		performAction(nextUndef, cb.getProvider(), true);
-		assertEquals(addr("0x100105c"), cb.getCurrentAddress());
 
-		performAction(direction, cb.getProvider(), true);
-		performAction(nextUndef, cb.getProvider(), true);
-		assertEquals(addr("0x1001057"), cb.getCurrentAddress());
-		performAction(nextUndef, cb.getProvider(), true);
+		assertAddress("0x1001000");
+		nextUndefined();
+		assertAddress("0x100100c");
+		nextUndefined();
+		assertAddress("0x100105c");
 
+		toggleDirection();
+
+		nextUndefined();
+		assertAddress("0x1001057");
+		nextUndefined();
 		// no more undefined data, this is the last range
-		assertEquals(addr("0x1001057"), cb.getCurrentAddress());
+		assertAddress("0x1001057");
+	}
+
+	@Test
+	public void testSearchNotUndefined() throws Exception {
+
+		negateSearch();
+
+		assertAddress("0x1001000");
+		nextUndefined();
+		assertAddress("0x1001058");
+		nextUndefined();
+		assertAddress("0x1001080");
+
+		toggleDirection();
+
+		nextUndefined();
+		assertAddress("0x1001058");
+		nextUndefined();
+		assertAddress("0x1001008");
 	}
 
 	@Test
 	public void testSearchLabel() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
-		assertEquals(addr("0x1001000"), cb.getCurrentAddress());
-		performAction(nextLabel, cb.getProvider(), true);
-		assertEquals(addr("0x1001004"), cb.getCurrentAddress());
-		performAction(nextLabel, cb.getProvider(), true);
-		assertEquals(addr("0x1001008"), cb.getCurrentAddress());
 
-		performAction(direction, cb.getProvider(), true);
-		performAction(nextLabel, cb.getProvider(), true);
-		assertEquals(addr("0x1001004"), cb.getCurrentAddress());
-		performAction(nextLabel, cb.getProvider(), true);
-		assertEquals(addr("0x1001000"), cb.getCurrentAddress());
-		performAction(nextLabel, cb.getProvider(), true);
+		assertAddress("0x1001000");
+		nextLabel();
+		assertAddress("0x1001004");
+		nextLabel();
+		assertAddress("0x1001008");
+
+		toggleDirection();
+
+		nextLabel();
+		assertAddress("0x1001004");
+		nextLabel();
+		assertAddress("0x1001000");
+		nextLabel();
 
 		// no more labels, this is the last range
-		assertEquals(addr("0x1001000"), cb.getCurrentAddress());
+		assertAddress("0x1001000");
+	}
+
+	@Test
+	public void testSearchNotLabel() throws Exception {
+
+		negateSearch();
+
+		assertAddress("0x1001000");
+		nextLabel();
+		assertAddress("0x100100c");
+		nextLabel();
+		assertAddress("0x100105c");
+
+		toggleDirection();
+
+		nextLabel();
+		assertAddress("0x1001057");
+		nextLabel();
+		assertAddress("0x1001057"); // no more non-labels
 	}
 
 	@Test
 	public void testSearchFunction() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
-		assertEquals(addr("0x1001000"), cb.getCurrentAddress());
-		performAction(nextFunc, cb.getProvider(), true);
-		assertEquals(addr("0x100194b"), cb.getCurrentAddress());
-		performAction(nextFunc, cb.getProvider(), true);
-		assertEquals(addr("0x1001ae3"), cb.getCurrentAddress());
 
-		performAction(direction, cb.getProvider(), true);
-		performAction(nextFunc, cb.getProvider(), true);
-		assertEquals(addr("0x100194b"), cb.getCurrentAddress());
-		performAction(nextFunc, cb.getProvider(), true);
+		assertAddress("0x1001000");
+		performAction(nextFunction, cb.getProvider(), true);
+		assertAddress("0x100194b");
+		performAction(nextFunction, cb.getProvider(), true);
+		assertAddress("0x1001ae3");
+
+		toggleDirection();
+		performAction(nextFunction, cb.getProvider(), true);
+		assertAddress("0x100194b");
+		performAction(nextFunction, cb.getProvider(), true);
 
 		// no more functions, this is the last range
-		assertEquals(addr("0x100194b"), cb.getCurrentAddress());
+		assertAddress("0x100194b");
 	}
 
 	@Test
-	public void testSearchNonFunction() throws Exception {
-		loadProgram("notepad");
+	public void testSearchNotFunction() throws Exception {
 
 		Address a1 = addInstructions("0x01006600");
 		Address a2 = addInstructions("0x0100662a");
 
-		showTool(tool);
-		assertEquals(addr("0x1001000"), cb.getCurrentAddress());
-		performAction(nextNonFunc, cb.getProvider(), true);
-		assertEquals(a1, cb.getCurrentAddress());
-		performAction(nextNonFunc, cb.getProvider(), true);
-		assertEquals(a2, cb.getCurrentAddress());
+		assertAddress("0x1001000");
 
-		performAction(direction, cb.getProvider(), true);
-		performAction(nextNonFunc, cb.getProvider(), true);
-		assertEquals(addr("0x1006603"), cb.getCurrentAddress());
-		performAction(nextNonFunc, cb.getProvider(), true);
+		// search wit the function action in the inverted mode
+		negateSearch();
+
+		performAction(nextFunction, cb.getProvider(), true);
+		assertAddress(a1);
+		performAction(nextFunction, cb.getProvider(), true);
+		assertAddress(a2);
+
+		toggleDirection();
+
+		performAction(nextFunction, cb.getProvider(), true);
+		assertAddress("0x1006603");
+		performAction(nextFunction, cb.getProvider(), true);
 
 		// no more functions, this is the last range
-		assertEquals(addr("0x1006603"), cb.getCurrentAddress());
+		assertAddress("0x1006603");
+	}
+
+	@Test
+	public void testSearchNotBytesValue_SingleByte() throws Exception {
+
+		/*
+		 	01005ad5 50              ??         50h    P
+		    01005ad6 56              ??         56h    V
+		    01005ad7 56              ??         56h    V
+		    01005ad8 56              ??         56h    V
+		    01005ad9 53              ??         53h    S
+		 */
+
+		negateSearch();
+
+		goTo(tool, program, addr("01005ad5"));
+
+		nextByteValue();
+		assertAddress("01005ad6");
+		nextByteValue();
+		assertAddress("01005ad9");
+
+		toggleDirection();
+
+		nextByteValue();
+		assertAddress("01005ad8");
+		nextByteValue();
+		assertAddress("01005ad5");
+	}
+
+	@Test
+	public void testSearchNotBytesValue_Instruction() throws Exception {
+
+		/*
+		 	01005a49 8b 3d 14        MOV        EDI,dword ptr [DAT_01001214]
+		         12 00 01
+		    01005a4f 56              PUSH       ESI
+		    01005a50 56              PUSH       ESI
+		    01005a51 6a 0e           PUSH       0xe
+		    01005a53 ff 35 d4        PUSH       dword ptr [DAT_010087d4]
+		             87 00 01
+		    01005a59 ff d7           CALL       EDI
+		 */
+
+		negateSearch();
+
+		goTo(tool, program, addr("01005a49"));
+
+		nextByteValue();
+		assertAddress("01005a4f");
+		nextByteValue();
+		assertAddress("01005a51");
+
+		toggleDirection();
+
+		nextByteValue();
+		assertAddress("01005a50");
+		nextByteValue();
+		assertAddress("01005a49");
+	}
+
+	@Test
+	public void testSearchBytesValue_Data() throws Exception {
+
+		/*
+		 
+		 	01001010 52 65 67 69     ddw        69676552h
+		    01001014 00              ??         00h
+		    01001015 00              ??         00h
+		    01001016 64 00 6f 00     ddw        6F0064h
+		    0100101a 77              ??         77h    w
+		    0100101b 00              ??         00h
+		    0100101c 43 68 6f 6f     ddw        6F6F6843h
+		    01001020 43 68 6f 6f     ddw        6F6F6843h
+		    01001024 43 68 6f 6f     ddw        6F6F6843h
+		    01001028 00              ??         00h
+		    01001029 00              ??         00h
+		    0100102a 15 00 00 00     ddw        15h
+		
+		 */
+
+		addData();
+
+		goTo(tool, program, addr("01001010"));
+
+		nextByteValue();
+		assertAddress("0100750e"); // a far away match
+
+		goTo(tool, program, addr("0100101c"));
+		nextByteValue();
+		assertAddress("01001020");
+		nextByteValue();
+		assertAddress("01001024");
+		nextByteValue();
+		assertAddress("01006a02");
+
+		toggleDirection();
+
+		goTo(tool, program, addr("01001024"));
+		nextByteValue();
+		assertAddress("01001020");
+		nextByteValue();
+		assertAddress("0100101c");
+		nextByteValue();
+		assertAddress("0100101c"); // no more matching bytes
+	}
+
+	@Test
+	public void testSearchNotBytesValue_Data() throws Exception {
+
+		/*
+		 
+		 	01001010 52 65 67 69     ddw        69676552h
+		    01001014 00              ??         00h
+		    01001015 00              ??         00h
+		    01001016 64 00 6f 00     ddw        6F0064h
+		    0100101a 77              ??         77h    w
+		    0100101b 00              ??         00h
+		    0100101c 43 68 6f 6f     ddw        6F6F6843h
+		    01001020 43 68 6f 6f     ddw        6F6F6843h
+		    01001024 43 68 6f 6f     ddw        6F6F6843h
+		    01001028 00              ??         00h
+		    01001029 00              ??         00h
+		    0100102a 15 00 00 00     ddw        15h
+		
+		 */
+
+		addData();
+
+		negateSearch();
+
+		goTo(tool, program, addr("01001010"));
+
+		nextByteValue();
+		assertAddress("01001014");
+		nextByteValue();
+		assertAddress("01001016");
+		nextByteValue();
+		assertAddress("0100101a");
+
+		goTo(tool, program, addr("0100101c"));
+		nextByteValue();
+		assertAddress("01001020");
+
+		goTo(tool, program, addr("01001024"));
+		nextByteValue();
+		assertAddress("01001028");
+		nextByteValue();
+		assertAddress("0100102a");
+
+		toggleDirection();
+
+		nextByteValue();
+		assertAddress("01001029");
+		nextByteValue();
+		assertAddress("01001024");
+		nextByteValue();
+		assertAddress("01001020");
+
+		goTo(tool, program, addr("01001015"));
+		nextByteValue();
+		assertAddress("01001010");
 	}
 
 	@Test
 	public void testSearchAllTypesBookmark() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
-		assertEquals(addr("01001000"), cb.getCurrentAddress());
 
-		//
-		// Setup:
-		// 100c - error bookmark
-		// 101c - info bookmark
-		// 101e - warning bookmark
-		//
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
-		addCmd.add(new BookmarkEditCmd(addr("0100100c"), BookmarkType.ERROR, "Cat1a", "Cmt1A"));
-		addCmd.add(new BookmarkEditCmd(addr("0100101c"), BookmarkType.INFO, "Cat1a", "Cmt1B"));
-		addCmd.add(new BookmarkEditCmd(addr("0100101e"), BookmarkType.WARNING, "Cat1a", "Cmt1B"));
-		applyCmd(program, addCmd);
+		addBookmark("0100100c", BookmarkType.ERROR);
+		addBookmark("0100101c", BookmarkType.INFO);
+		addBookmark("0100101e", BookmarkType.WARNING);
 
-		selectBookmarkType(BookmarkType.ALL_TYPES);
+		selectBookmarkType(NextPreviousBookmarkAction.ALL_BOOKMARK_TYPES);
 
-		pressBookmark();
-		assertEquals(addr("0100100c"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("0100101c"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("0100101e"), cb.getCurrentAddress());
+		assertAddress("01001000");
+		nextBookmark();
+		assertAddress("0100100c");
+		nextBookmark();
+		assertAddress("0100101c");
+		nextBookmark();
+		assertAddress("0100101e");
 
 		toggleDirection();
 
-		pressBookmark();
-		assertEquals(addr("0100101c"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("0100100c"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("0100101c");
+		nextBookmark();
+		assertAddress("0100100c");
+	}
+
+	@Test
+	public void testSearchNotBookmark() throws Exception {
+
+		addBookmark("0100100c", BookmarkType.ERROR);
+		addBookmark("0100101c", BookmarkType.INFO);
+		addBookmark("0100101e", BookmarkType.WARNING);
+
+		selectBookmarkType(NextPreviousBookmarkAction.ALL_BOOKMARK_TYPES);
+
+		negateSearch();
+
+		assertAddress("01001000");
+		nextBookmark();
+		assertAddress("0100100d");
+		nextBookmark();
+		assertAddress("0100101d");
+		nextBookmark();
+		assertAddress("0100101f");
+
+		toggleDirection();
+
+		nextBookmark();
+		assertAddress("0100101d");
+		nextBookmark();
+		assertAddress("0100101b");
 	}
 
 	@Test
 	public void testOffcutBookmarkForwardAndBackward() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
-		assertEquals(addr("01001000"), cb.getCurrentAddress());
 
-		//
-		// Setup:
-		// 1000 - info bookmark
-		// 1006 - offcut info bookmark
-		// 101e - info bookmark
-		//
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
-		addCmd.add(new BookmarkEditCmd(addr("01001000"), BookmarkType.INFO, "Cat1a", "Cmt1A"));
-		addCmd.add(new BookmarkEditCmd(addr("01001004"), BookmarkType.INFO, "Cat1a", "Cmt1BC"));
-		addCmd.add(new BookmarkEditCmd(addr("01001006"), BookmarkType.INFO, "Cat1a", "Cmt1B"));
-		addCmd.add(new BookmarkEditCmd(addr("0100101e"), BookmarkType.INFO, "Cat1a", "Cmt1B"));
-		applyCmd(program, addCmd);
+		addBookmark("01001000", BookmarkType.INFO);
+		addBookmark("01001004", BookmarkType.INFO);
+		addBookmark("01001006", BookmarkType.INFO); // offcut
+		addBookmark("0100101e", BookmarkType.INFO);
 
-		selectBookmarkType(BookmarkType.ALL_TYPES);
+		selectBookmarkType(NextPreviousBookmarkAction.ALL_BOOKMARK_TYPES);
 
-		pressBookmark();
-		assertEquals(addr("01001004"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("0100101e"), cb.getCurrentAddress());
+		assertAddress("01001000");
+		nextBookmark();
+		assertAddress("01001004");
+		nextBookmark();
+		assertAddress("0100101e");
 
 		toggleDirection();
 
-		pressBookmark();
-		assertEquals(addr("01001004"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("01001000"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001004");
+		nextBookmark();
+		assertAddress("01001000");
 	}
 
 	@Test
 	public void testBookmarksOffcutInStructures() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
-		assertEquals(addr("01001000"), cb.getCurrentAddress());
 
-		//
-		// Setup:
-		// 1000 - info bookmark
-		// 1006 - offcut info bookmark
-		// 101e - info bookmark
-		//
-		CompoundCmd addCmd = new CompoundCmd("Add Bookmarks");
-		addCmd.add(new BookmarkEditCmd(addr("01001000"), BookmarkType.INFO, "Cat1a", "A"));
-		addCmd.add(new BookmarkEditCmd(addr("01001004"), BookmarkType.INFO, "Cat1a", "B"));
-		addCmd.add(new BookmarkEditCmd(addr("0100100d"), BookmarkType.INFO, "Cat1a", "C"));
-		addCmd.add(new BookmarkEditCmd(addr("01001010"), BookmarkType.INFO, "Cat1a", "C"));
-		addCmd.add(new BookmarkEditCmd(addr("01001015"), BookmarkType.INFO, "Cat1a", "D"));
-		addCmd.add(new BookmarkEditCmd(addr("01001020"), BookmarkType.INFO, "Cat1a", "E"));
+		addBookmark("01001000", BookmarkType.INFO);
+		addBookmark("01001004", BookmarkType.INFO);
+		addBookmark("0100100d", BookmarkType.INFO);
+		addBookmark("01001010", BookmarkType.INFO);
+		addBookmark("01001015", BookmarkType.INFO);
+		addBookmark("01001020", BookmarkType.INFO);
 
 		StructureDataType struct = new StructureDataType("Test", 0);
 		struct.add(new DWordDataType());
 		struct.add(new DWordDataType());
 		struct.add(new DWordDataType());
 		assertEquals(12, struct.getLength());
+		applyCmd(program, new CreateDataCmd(addr("0100100c"), struct));
 
-		addCmd.add(new CreateDataCmd(addr("0100100c"), struct));
+		selectBookmarkType(NextPreviousBookmarkAction.ALL_BOOKMARK_TYPES);
 
-		applyCmd(program, addCmd);
-
-		selectBookmarkType(BookmarkType.ALL_TYPES);
-
-		pressBookmark();
-		assertEquals(addr("01001004"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("0100100c"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("01001010"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("01001014"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("01001020"), cb.getCurrentAddress());
+		assertAddress("01001000");
+		nextBookmark();
+		assertAddress("01001004");
+		nextBookmark();
+		assertAddress("0100100c");
+		nextBookmark();
+		assertAddress("01001010");
+		nextBookmark();
+		assertAddress("01001014");
+		nextBookmark();
+		assertAddress("01001020");
 
 		toggleDirection();
 
-		pressBookmark();
-		assertEquals(addr("01001014"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("01001010"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("0100100c"), cb.getCurrentAddress());
-		pressBookmark();
-		assertEquals(addr("01001004"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001014");
+		nextBookmark();
+		assertAddress("01001010");
+		nextBookmark();
+		assertAddress("0100100c");
+		nextBookmark();
+		assertAddress("01001004");
 	}
 
 	@Test
-	public void testErrorBookmark() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
-		assertEquals(addr("01001000"), cb.getCurrentAddress());
+	public void testSearchErrorBookmark() throws Exception {
+
 		clearExisingBookmarks();
 
 		// add more to our current set
@@ -420,53 +651,88 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		selectBookmarkType(BookmarkType.ERROR);
 
-		pressBookmark();
-		assertEquals(addr("01001110"), cb.getCurrentAddress());
+		assertAddress("01001000");
+		nextBookmark();
+		assertAddress("01001110");
 
-		pressBookmark();
-		assertEquals(addr("01001120"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001120");
 
-		pressBookmark();
-		assertEquals(addr("01001130"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001130");
 
-		pressBookmark();
-		assertEquals(addr("01001140"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001140");
 
-		pressBookmark();
-		assertEquals(addr("01001150"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001150");
 
-		pressBookmark();
-		assertEquals(addr("01001160"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001160");
 
-		pressBookmark();
-		assertEquals(addr("01001160"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001160");
 
 		toggleDirection();
 
-		pressBookmark();
-		assertEquals(addr("01001150"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001150");
 
-		pressBookmark();
-		assertEquals(addr("01001140"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001140");
 
-		pressBookmark();
-		assertEquals(addr("01001130"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001130");
 
-		pressBookmark();
-		assertEquals(addr("01001120"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001120");
 
-		pressBookmark();
-		assertEquals(addr("01001110"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001110");
 
-		pressBookmark();
-		assertEquals(addr("01001110"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01001110");
 	}
 
 	@Test
-	public void testWarningBookmark() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
-		assertEquals(addr("01001000"), cb.getCurrentAddress());
+	public void testSearchNotErrorBookmark() throws Exception {
+
+		clearExisingBookmarks();
+
+		addBookmark("01001110", BookmarkType.ERROR);
+		addBookmark("01001118", BookmarkType.NOTE);
+		addBookmark("01001120", BookmarkType.ERROR);
+		addBookmark("01001130", BookmarkType.ERROR);
+		addBookmark("01001140", BookmarkType.WARNING);
+		addBookmark("01001143", BookmarkType.INFO);
+
+		selectBookmarkType(BookmarkType.ERROR);
+
+		negateSearch();
+
+		assertAddress("01001000");
+		nextBookmark();
+		assertAddress("01001118");
+
+		nextBookmark();
+		assertAddress("01001140");
+
+		nextBookmark();
+		assertAddress("01001143");
+
+		toggleDirection();
+
+		nextBookmark();
+		assertAddress("01001140");
+
+		nextBookmark();
+		assertAddress("01001118");
+	}
+
+	@Test
+	public void testSearchWarningBookmark() throws Exception {
+
+		assertAddress("01001000");
 		clearExisingBookmarks();
 
 		// add more to our current set
@@ -484,54 +750,52 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		selectBookmarkType(BookmarkType.WARNING);
 
-		pressBookmark();
-		assertEquals(addr("01003e2c"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e2c");
 
-		pressBookmark();
-		assertEquals(addr("01003e30"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e30");
 
-		pressBookmark();
-		assertEquals(addr("01003e32"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e32");
 
-		pressBookmark();
-		assertEquals(addr("01003e38"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e38");
 
-		pressBookmark();
-		assertEquals(addr("01003e3a"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e3a");
 
-		pressBookmark();
-		assertEquals(addr("01003e43"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e43");
 
-		pressBookmark();
-		assertEquals(addr("01003e43"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e43");
 
 		toggleDirection();
 
-		pressBookmark();
-		assertEquals(addr("01003e3a"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e3a");
 
-		pressBookmark();
-		assertEquals(addr("01003e38"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e38");
 
-		pressBookmark();
-		assertEquals(addr("01003e32"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e32");
 
-		pressBookmark();
-		assertEquals(addr("01003e30"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e30");
 
-		pressBookmark();
-		assertEquals(addr("01003e2c"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e2c");
 
-		pressBookmark();
-		assertEquals(addr("01003e2c"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("01003e2c");
 	}
 
 	@Test
-	public void testCustomBobBookmark() throws Exception {
-		loadProgram("notepad");
-		showTool(tool);
+	public void testSearchCustomBobBookmark() throws Exception {
 
-		assertEquals(addr("01001000"), cb.getCurrentAddress());
+		assertAddress("01001000");
 		ImageIcon bookmarkBobIcon =
 			ResourceManager.loadImage("images/applications-engineering.png");
 
@@ -553,50 +817,95 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		selectBookmarkType("Custom");
 
-		pressBookmark();
-		assertEquals(addr("0100529b"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("0100529b");
 
-		pressBookmark();
-		assertEquals(addr("0100529e"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("0100529e");
 
-		pressBookmark();
-		assertEquals(addr("010052a1"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("010052a1");
 
-		pressBookmark();
-		assertEquals(addr("010052a4"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("010052a4");
 
-		pressBookmark();
-		assertEquals(addr("010052a7"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("010052a7");
 
-		pressBookmark();
-		assertEquals(addr("010052a7"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("010052a7");
 
 		toggleDirection();
 
-		pressBookmark();
-		assertEquals(addr("010052a4"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("010052a4");
 
-		pressBookmark();
-		assertEquals(addr("010052a1"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("010052a1");
 
-		pressBookmark();
-		assertEquals(addr("0100529e"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("0100529e");
 
-		pressBookmark();
-		assertEquals(addr("0100529b"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("0100529b");
 
-		pressBookmark();
-		assertEquals(addr("0100529b"), cb.getCurrentAddress());
+		nextBookmark();
+		assertAddress("0100529b");
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================	
+
+	private void addBookmark(String addrString, String type) {
+		applyCmd(program, new BookmarkEditCmd(addr(addrString), type, "Cat1a", "Cmt1A"));
+	}
+
+	private void assertStartsWith(String expected, String actual) {
+		assertTrue("startsWith expected: \"" + expected + "\", got: \"" + actual + "\"",
+			actual.startsWith(expected));
+	}
+
+	private void assertAddress(String addrString) {
+		assertEquals(addr(addrString), cb.getCurrentAddress());
+	}
+
+	private void assertAddress(Address addr) {
+		assertEquals(addr, cb.getCurrentAddress());
 	}
 
 	private void toggleDirection() {
 		performAction(direction, cb.getProvider(), true);
 	}
 
-	private void pressBookmark() throws Exception {
+	private void nextInstruction() {
+		performAction(nextInstruction, cb.getProvider(), true);
+	}
+
+	private void nextData() {
+		performAction(nextData, cb.getProvider(), true);
+	}
+
+	private void nextUndefined() {
+		performAction(nextUndefined, cb.getProvider(), true);
+	}
+
+	private void nextLabel() {
+		performAction(nextLabel, cb.getProvider(), true);
+	}
+
+	private void negateSearch() {
+		performAction(invert, cb.getProvider(), true);
+	}
+
+	private void nextBookmark() throws Exception {
 		performAction(nextBookmark, cb.getProvider(), true);
 		waitForSwing();
 		waitForTasks();
+	}
+
+	private void nextByteValue() {
+		performAction(nextByteValue, cb.getProvider(), true);
 	}
 
 	private void selectBookmarkType(final String bookmarkType) {
@@ -610,9 +919,7 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 	private Address addInstructions(String addr) throws Exception {
 
 		Address address = program.getAddressFactory().getAddress(addr);
-
-		int txID = program.startTransaction("Add Test Instruction");
-		try {
+		tx(program, () -> {
 			// these bytes create a couple instructions in x86
 			Memory memory = program.getMemory();
 			memory.setBytes(address, new byte[] { 0x55, (byte) 0x8b, (byte) 0xec });
@@ -620,24 +927,17 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 			AddressSet set = new AddressSet(address, address.add(4));
 			DisassembleCommand cmd = new DisassembleCommand(set, set);
 			cmd.applyTo(program);
-		}
-		finally {
-			program.endTransaction(txID, true);
-		}
+		});
 
 		return address;
 	}
 
 	private void clearExisingBookmarks() throws Exception {
-		int txID = program.startTransaction("Add Test Instruction");
-		try {
+		tx(program, () -> {
 			BookmarkManager bm = program.getBookmarkManager();
 			AddressSet set = new AddressSet(program.getMemory());
 			bm.removeBookmarks(set, TaskMonitor.DUMMY);
-		}
-		finally {
-			program.endTransaction(txID, true);
-		}
+		});
 	}
 
 }

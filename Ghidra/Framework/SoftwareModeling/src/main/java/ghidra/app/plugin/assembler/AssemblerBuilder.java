@@ -25,18 +25,21 @@ import ghidra.program.model.listing.Program;
 public interface AssemblerBuilder {
 	/**
 	 * Get the ID of the language for which this instance builds an assembler
+	 * 
 	 * @return the language ID
 	 */
 	public LanguageID getLanguageID();
 
 	/**
 	 * Get the language for which this instance builds an assembler
+	 * 
 	 * @return the language
 	 */
 	public Language getLanguage();
 
 	/**
 	 * Build an assembler with the given selector callback
+	 * 
 	 * @param selector the selector callback
 	 * @return the built assembler
 	 */
@@ -44,6 +47,7 @@ public interface AssemblerBuilder {
 
 	/**
 	 * Build an assembler with the given selector callback and program binding
+	 * 
 	 * @param selector the selector callback
 	 * @param program the bound program
 	 * @return the built assembler

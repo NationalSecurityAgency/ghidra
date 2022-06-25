@@ -1148,7 +1148,19 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 	public void setProgram(Program program) {
 		currentProgram = program;
-		String name = (program == null ? "..." : program.getName());
+		String name;
+		if (program != null) {
+			DomainFile df = program.getDomainFile();
+			if (df != null) {
+				name = df.getName();
+			}
+			else {
+				name = program.getName();
+			}
+		}
+		else {
+			name = "...";
+		}
 		actionMapModuleTo.getPopupMenuData().setMenuItemName(MapModuleToAction.NAME_PREFIX + name);
 		actionMapSectionsTo.getPopupMenuData()
 				.setMenuItemName(MapSectionsToAction.NAME_PREFIX + name);
@@ -1174,7 +1186,13 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		if (block == null) {
 			return "...";
 		}
-		return location.getProgram().getName() + ":" + block.getName();
+		Program program = location.getProgram();
+		String name = program.getName();
+		DomainFile df = program.getDomainFile();
+		if (df != null) {
+			name = df.getName();
+		}
+		return name + ":" + block.getName();
 	}
 
 	public void setLocation(ProgramLocation location) {
@@ -1230,7 +1248,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		}
 		DomainFileFilter filter = df -> Program.class.isAssignableFrom(df.getDomainObjectClass());
 
-		// TODO regarding the hack note below, I believe this issue ahs been fixed, but not sure how to test
+		// TODO regarding the hack note below, I believe it's fixed, but not sure how to test
 		return programChooserDialog =
 			new DataTreeDialog(null, "Map Module to Program", DataTreeDialog.OPEN, filter) {
 				{ // TODO/HACK: I get an NPE setting the default selection if I don't fake this.

@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -87,7 +86,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testActionCopyIntoCurrentProgramWithoutRelocationCreateBlocks() throws Exception {
+	public void testActionCopyIntoCurrentProgramWithoutRelocationCreateBlocks() throws Throwable {
 		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		createProgram();
@@ -120,7 +119,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		assertEquals(".text", entry.getBlockName());
 		assertTrue(entry.isCreate());
 		dialog.okCallback();
-		dialog.lastTask.get(1000, TimeUnit.MILLISECONDS);
+		waitOn(dialog.lastTask);
 		waitForSwing();
 
 		MemoryBlock text = Unique.assertOne(Arrays.asList(program.getMemory().getBlocks()));
@@ -128,7 +127,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testActionCopyIntoCurrentProgramWithoutRelocationCrossLanguage() throws Exception {
+	public void testActionCopyIntoCurrentProgramWithoutRelocationCrossLanguage() throws Throwable {
 		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		createProgram(getSLEIGH_X86_LANGUAGE());
@@ -201,7 +200,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		assertTrue(entry.isCreate());
 
 		dialog.okCallback();
-		dialog.lastTask.get(1000, TimeUnit.MILLISECONDS);
+		waitOn(dialog.lastTask);
 		waitForSwing();
 
 		byte[] dest = new byte[4];
@@ -210,7 +209,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testActionCopyIntoCurrentProgramWithRelocationExistingBlocks() throws Exception {
+	public void testActionCopyIntoCurrentProgramWithRelocationExistingBlocks() throws Throwable {
 		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		createAndOpenTrace();
@@ -264,7 +263,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		assertEquals(".text *", entry.getBlockName());
 		assertFalse(entry.isCreate());
 		dialog.okCallback();
-		dialog.lastTask.get(1000, TimeUnit.MILLISECONDS);
+		waitOn(dialog.lastTask);
 		waitForSwing();
 
 		MemoryBlock text = Unique.assertOne(Arrays.asList(program.getMemory().getBlocks()));
@@ -272,7 +271,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testActionCopyIntoCurrentProgramWithRelocationOverlayBlocks() throws Exception {
+	public void testActionCopyIntoCurrentProgramWithRelocationOverlayBlocks() throws Throwable {
 		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		createAndOpenTrace();
@@ -327,7 +326,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		assertEquals(".text_2", entry.getBlockName());
 		assertTrue(entry.isCreate());
 		dialog.okCallback();
-		dialog.lastTask.get(1000, TimeUnit.MILLISECONDS);
+		waitOn(dialog.lastTask);
 		waitForSwing();
 
 		MemoryBlock text2 =
@@ -337,7 +336,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testActionCopyIntoNewProgram() throws Exception {
+	public void testActionCopyIntoNewProgram() throws Throwable {
 		assertDisabled(copyActionsPlugin.actionCopyIntoNewProgram);
 
 		createAndOpenTrace();
@@ -366,7 +365,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		assertTrue(entry.isCreate());
 		entry.setBlockName(".my_text");
 		dialog.okCallback();
-		dialog.lastTask.get(1000, TimeUnit.MILLISECONDS);
+		waitOn(dialog.lastTask);
 		waitForSwing();
 
 		// Declare my own, or the @After will try to release it erroneously
@@ -379,7 +378,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testActionCopyIntoNewProgramAdjacentRegions() throws Exception {
+	public void testActionCopyIntoNewProgramAdjacentRegions() throws Throwable {
 		assertDisabled(copyActionsPlugin.actionCopyIntoNewProgram);
 
 		createAndOpenTrace();
@@ -422,7 +421,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		assertTrue(entry.isCreate());
 
 		dialog.okCallback();
-		dialog.lastTask.get(1000, TimeUnit.MILLISECONDS);
+		waitOn(dialog.lastTask);
 		waitForSwing();
 
 		// Declare my own, or the @After will try to release it erroneously
@@ -431,7 +430,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testActionCopyIntoNewProgramCaptureLive() throws Exception {
+	public void testActionCopyIntoNewProgramCaptureLive() throws Throwable {
 		assertDisabled(copyActionsPlugin.actionCopyIntoNewProgram);
 
 		createTestModel();
@@ -482,7 +481,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		assertEquals(0, listener.count);
 		dialog.okCallback();
-		dialog.lastTask.get(10000, TimeUnit.MILLISECONDS);
+		waitOn(dialog.lastTask);
 		waitForSwing();
 		assertEquals(16, listener.count);
 
@@ -494,7 +493,13 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		assertEquals(tb.addr(stSpace, 0x55550000), text.getStart());
 		assertEquals(".my_text", text.getName());
 		byte[] arr = new byte[8];
-		text.getBytes(tb.addr(stSpace, 0x55550000), arr);
-		assertArrayEquals(tb.arr(1, 2, 3, 4, 5, 6, 7, 8), arr);
+		/**
+		 * While waitOn will ensure the read request completes, it doesn't ensure the recorder has
+		 * actually written the result to the database, yet.
+		 */
+		waitForPass(noExc(() -> {
+			text.getBytes(tb.addr(stSpace, 0x55550000), arr);
+			assertArrayEquals(tb.arr(1, 2, 3, 4, 5, 6, 7, 8), arr);
+		}));
 	}
 }

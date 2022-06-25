@@ -15,7 +15,7 @@ The Program Tree is an organizational view of the program that is initialized wi
 The Program Tree allows a program to be organized into a hierarchy of folders and fragments. You can have multiple Program Trees.
 You can add memory overlays to your program using the Memory Map dialog.
 Did you know that you can create and edit structures from the Decompiler?
-Did you know that you can apply the local variables, parameters, and return values that the Decompiler figures out? Just right click on them and choose Apply Locals or Apply Params/Return to get them all for a particular function. You can also run the Decompiler Parameter ID analysis option to apply the Decompiler parameters when the program is initially being analyzed or choose Analyis-One Shot->Decompiler Parameter ID to do it after analysis.
+Did you know that you can apply the local variables, parameters, and return values that the Decompiler figures out? Just right click on them and choose Apply Locals or Apply Params/Return to get them all for a particular function. You can also run the Decompiler Parameter ID analysis option to apply the Decompiler parameters when the program is initially being analyzed or choose Analysis-One Shot->Decompiler Parameter ID to do it after analysis.
 Did you know that you can run various analyzers separately and after the initial analysis run? See Analysis->One Shot for a list of them. 
 
 Did you know that you can right-click on the marker margin to learn the meaning of each color.
@@ -24,7 +24,7 @@ The largest diamond that was ever found was 3106.75 carats.
 
 You can edit program bytes using the byte viewer provided those bytes are not disassembled.
 
-You can add URL's to your comments to link to other documents. Hit F1 while making a comment to learn how.
+You can add URLs to your comments to link to other documents. Hit F1 while making a comment to learn how.
 You can embed links to other program locations in your comments.
 
 A cubic yard of air weighs about 2 pounds.
@@ -33,7 +33,7 @@ You can create structures, unions, and enums using the Ghidra data type manager.
 Use enums (not equates) to get constant names to appear in the decompiler. Enums are also listed in the Equates menu if you want to make one an equate in the Listing.   
 To edit a row in the datatype (eg structure) editor, double-click on the "DataType" column.
 Ghidra can extract datatype and function signatures from C header files using the CParser.
-You can drag datatypes from the datatype manager and drop it into the browser to apply at address.
+You can drag datatypes from the datatype manager and drop them into the browser to apply at address.
 You can apply multiple copies of a data type by making a selection and then dragging that data type from the Data Type Manager onto the selection.
 
 You can find view information about your current program by selecting "Help -> About {program name}...".

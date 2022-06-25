@@ -179,7 +179,7 @@ public class PackedDatabase extends Database {
 
 			LocalManagedBufferFile bfile = new LocalManagedBufferFile(dbHandle.getBufferSize(),
 				bfMgr, FolderItem.DEFAULT_CHECKOUT_ID);
-			dbHandle.saveAs(bfile, newDatabaseId, monitor);
+			dbHandle.saveAs(bfile, newDatabaseId, true, monitor);
 			packDatabase(monitor);
 			addInstance(this);
 			success = true;

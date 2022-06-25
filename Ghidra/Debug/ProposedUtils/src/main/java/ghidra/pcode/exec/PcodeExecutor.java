@@ -19,8 +19,9 @@ import java.util.List;
 import java.util.Map;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.error.LowlevelError;
-import ghidra.pcode.exec.SleighUseropLibrary.SleighUseropDefinition;
+import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.pcode.opbehavior.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -28,6 +29,15 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
+/**
+ * An executor of p-code programs
+ * 
+ * <p>
+ * This is the kernel of SLEIGH expression evaluation and p-code emulation. For a complete example
+ * of a p-code emulator, see {@link PcodeEmulator}.
+ *
+ * @param <T> the type of values processed by the executor
+ */
 public class PcodeExecutor<T> {
 	protected final SleighLanguage language;
 	protected final PcodeArithmetic<T> arithmetic;
@@ -35,6 +45,13 @@ public class PcodeExecutor<T> {
 	protected final Register pc;
 	protected final int pointerSize;
 
+	/**
+	 * Construct an executor with the given bindings
+	 * 
+	 * @param language the processor language
+	 * @param arithmetic an implementation of arithmetic p-code ops
+	 * @param state an implementation of load/store p-code ops
+	 */
 	public PcodeExecutor(SleighLanguage language, PcodeArithmetic<T> arithmetic,
 			PcodeExecutorStatePiece<T, T> state) {
 		this.language = language;
@@ -72,17 +89,17 @@ public class PcodeExecutor<T> {
 		return state;
 	}
 
-	public void executeLine(String line) {
+	public void executeSleighLine(String line) {
 		PcodeProgram program = SleighProgramCompiler.compileProgram(language,
-			"line", List.of(line + ";"), SleighUseropLibrary.NIL);
-		execute(program, SleighUseropLibrary.nil());
+			"line", List.of(line + ";"), PcodeUseropLibrary.NIL);
+		execute(program, PcodeUseropLibrary.nil());
 	}
 
 	public PcodeFrame begin(PcodeProgram program) {
 		return begin(program.code, program.useropNames);
 	}
 
-	public PcodeFrame execute(PcodeProgram program, SleighUseropLibrary<T> library) {
+	public PcodeFrame execute(PcodeProgram program, PcodeUseropLibrary<T> library) {
 		return execute(program.code, program.useropNames, library);
 	}
 
@@ -91,7 +108,7 @@ public class PcodeExecutor<T> {
 	}
 
 	public PcodeFrame execute(List<PcodeOp> code, Map<Integer, String> useropNames,
-			SleighUseropLibrary<T> library) {
+			PcodeUseropLibrary<T> library) {
 		PcodeFrame frame = begin(code, useropNames);
 		finish(frame, library);
 		return frame;
@@ -108,7 +125,7 @@ public class PcodeExecutor<T> {
 	 * @param frame the incomplete frame
 	 * @param library the library of userops to use
 	 */
-	public void finish(PcodeFrame frame, SleighUseropLibrary<T> library) {
+	public void finish(PcodeFrame frame, PcodeUseropLibrary<T> library) {
 		try {
 			while (!frame.isFinished()) {
 				step(frame, library);
@@ -133,7 +150,7 @@ public class PcodeExecutor<T> {
 		}
 	}
 
-	public void stepOp(PcodeOp op, PcodeFrame frame, SleighUseropLibrary<T> library) {
+	public void stepOp(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<T> library) {
 		OpBehavior b = OpBehaviorFactory.getOpBehavior(op.getOpcode());
 		if (b == null) {
 			badOp(op);
@@ -181,7 +198,7 @@ public class PcodeExecutor<T> {
 		}
 	}
 
-	public void step(PcodeFrame frame, SleighUseropLibrary<T> library) {
+	public void step(PcodeFrame frame, PcodeUseropLibrary<T> library) {
 		try {
 			stepOp(frame.nextOp(), frame, library);
 		}
@@ -192,6 +209,10 @@ public class PcodeExecutor<T> {
 		catch (Exception e) {
 			throw new PcodeExecutionException("Exception during pcode execution", frame, e);
 		}
+	}
+
+	public void skip(PcodeFrame frame) {
+		frame.nextOp();
 	}
 
 	protected int getIntConst(Varnode vn) {
@@ -300,19 +321,20 @@ public class PcodeExecutor<T> {
 		return frame.getUseropName(opNo);
 	}
 
-	public void executeCallother(PcodeOp op, PcodeFrame frame, SleighUseropLibrary<T> library) {
+	public void executeCallother(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<T> library) {
 		int opNo = getIntConst(op.getInput(0));
 		String opName = getUseropName(opNo, frame);
 		if (opName == null) {
 			throw new AssertionError(
 				"Pcode userop " + opNo + " is not defined");
 		}
-		SleighUseropDefinition<T> opDef = library.getUserops().get(opName);
+		PcodeUseropDefinition<T> opDef = library.getUserops().get(opName);
 		if (opDef == null) {
 			throw new SleighLinkException(
 				"Sleigh userop '" + opName + "' is not in the library " + library);
 		}
-		opDef.execute(state, op.getOutput(), List.of(op.getInputs()).subList(1, op.getNumInputs()));
+		opDef.execute(this, library, op.getOutput(),
+			List.of(op.getInputs()).subList(1, op.getNumInputs()));
 	}
 
 	public void executeReturn(PcodeOp op, PcodeFrame frame) {

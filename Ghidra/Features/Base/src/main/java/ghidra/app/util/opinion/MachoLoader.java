@@ -17,16 +17,16 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessMode;
 import java.util.*;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
-import ghidra.app.util.bin.format.macho.prelink.PrelinkMap;
 import ghidra.app.util.bin.format.ubi.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.listing.Program;
 import ghidra.util.LittleEndianDataConverter;
@@ -41,12 +41,12 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	public final static String MACH_O_NAME = "Mac OS X Mach-O";
 	private static final long MIN_BYTE_LENGTH = 4;
 
-	/** Loader option to add relocation entries for each fixed chain pointer */
-	static final String ADD_RELOCATION_ENTRIES_OPTION_NAME =
-		"Add relocation entries for fixed chain pointers";
+	/** Loader option to add relocation entries for chained fixups */
+	static final String ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME =
+		"Add relocation entries for chained fixups";
 
-	/** Default value for loader option add relocation entries */
-	static final boolean ADD_RELOCATION_ENTRIES_OPTION_DEFAULT = true;
+	/** Default value for loader option add chained fixups relocation entries */
+	static final boolean ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT = true;
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
@@ -64,8 +64,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 		}
 
 		try {
-			MachHeader machHeader =
-				MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider);
+			MachHeader machHeader = new MachHeader(provider);
 			String magic =
 				CpuTypes.getMagicString(machHeader.getCpuType(), machHeader.getCpuSubType());
 			List<QueryResult> results = QueryOpinionService.query(getName(), magic, null);
@@ -89,23 +88,20 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 		try {
 			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
-			if (MachoPrelinkUtils.hasChainedLoadCommand(provider, monitor)) {
-				MachoPrelinkProgramBuilder.buildProgram(program, provider, fileBytes,
-					Collections.emptyList(), shouldAddRelocationEntries(options), log, monitor);
-				return;
-			}
-
 			// A Mach-O file may contain PRELINK information.  If so, we use a special
 			// program builder that knows how to deal with it.
-			List<PrelinkMap> prelinkList = MachoPrelinkUtils.parsePrelinkXml(provider, monitor);
-			if (!prelinkList.isEmpty()) {
-				MachoPrelinkProgramBuilder.buildProgram(program, provider, fileBytes, prelinkList,
-					shouldAddRelocationEntries(options), log, monitor);
-				return;
+			if (MachoPrelinkUtils.isMachoPrelink(provider, monitor)) {
+				MachoPrelinkProgramBuilder.buildProgram(program, provider, fileBytes,
+					shouldAddChainedFixupsRelocations(options), log, monitor);
 			}
-
-			MachoProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
+			else {
+				MachoProgramBuilder.buildProgram(program, provider, fileBytes,
+					shouldAddChainedFixupsRelocations(options), log, monitor);
+			}
 		}
+		catch (CancelledException e) {
+ 			return;
+ 		}
 		catch (IOException e) {
 			throw e;
 		}
@@ -119,9 +115,22 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 		return MACH_O_NAME;
 	}
 
-	private boolean shouldAddRelocationEntries(List<Option> options) {
-		return OptionUtils.getOption(ADD_RELOCATION_ENTRIES_OPTION_NAME, options,
-			ADD_RELOCATION_ENTRIES_OPTION_DEFAULT);
+	@Override
+	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
+			DomainObject domainObject, boolean loadIntoProgram) {
+		List<Option> list =
+			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+		if (!loadIntoProgram) {
+			list.add(new Option(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME,
+				ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT, Boolean.class,
+				Loader.COMMAND_LINE_ARG_PREFIX + "-addChainedFixupsRelocations"));
+		}
+		return list;
+	}
+
+	private boolean shouldAddChainedFixupsRelocations(List<Option> options) {
+		return OptionUtils.getOption(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME, options,
+			ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT);
 	}
 
 	/**
@@ -144,10 +153,9 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			return false;
 		}
 
-		try (ByteProvider provider = new RandomAccessByteProvider(libFile)) {
+		try (ByteProvider provider = new FileByteProvider(libFile, null, AccessMode.READ)) {
 
-			FatHeader header =
-				FatHeader.createFatHeader(RethrowContinuesFactory.INSTANCE, provider);
+			FatHeader header = new FatHeader(provider);
 			List<FatArch> architectures = header.getArchitectures();
 
 			if (architectures.isEmpty()) {

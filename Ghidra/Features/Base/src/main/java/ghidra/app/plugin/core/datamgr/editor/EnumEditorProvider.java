@@ -34,6 +34,7 @@ import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.compositeeditor.EditorListener;
 import ghidra.app.plugin.core.compositeeditor.EditorProvider;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -81,7 +82,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	private long originalEnumID = -1;
 
 	/**
-	 * Construct a new enum editor provider. 
+	 * Construct a new enum editor provider.
 	 * @param plugin owner of this provider
 	 * @param enumDT enum data type
 	 */
@@ -251,7 +252,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void updateTitle(DataType dataType) {
 		setTitle(getName() + " - " + getProviderSubTitle(dataType));
@@ -285,19 +286,28 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		deleteAction =
 			new EnumPluginAction("Delete Enum Value", e -> editorPanel.deleteSelectedEntries());
 		deleteAction.setEnabled(false);
-		deleteAction.setPopupMenuData(
-			new MenuData(new String[] { "Delete" }, DELETE_ICON, editGroup));
+		deleteAction
+				.setPopupMenuData(new MenuData(new String[] { "Delete" }, DELETE_ICON, editGroup));
 		deleteAction.setToolBarData(new ToolBarData(DELETE_ICON, editGroup));
 		deleteAction.setDescription("Delete the selected enum entries");
 
 		applyAction = new EnumPluginAction("Apply Enum Changes", e -> applyChanges());
 		applyAction.setEnabled(false);
-		applyAction.setToolBarData(new ToolBarData(APPLY_ICON, "ApplyChanges"));
+		String firstGroup = "ApplyChanges";
+		applyAction.setToolBarData(new ToolBarData(APPLY_ICON, firstGroup));
 		applyAction.setDescription("Apply changes to Enum");
+
+		EnumPluginAction showEnumAction =
+			new EnumPluginAction("Show In Data Type Manager", e -> showDataEnumInTree());
+		showEnumAction.setEnabled(true);
+		String thirdGroup = "FThirdGroup";
+		showEnumAction.setToolBarData(
+			new ToolBarData(ResourceManager.loadImage("images/go-home.png"), thirdGroup));
 
 		tool.addLocalAction(this, applyAction);
 		tool.addLocalAction(this, addAction);
 		tool.addLocalAction(this, deleteAction);
+		tool.addLocalAction(this, showEnumAction);
 	}
 
 	private boolean applyChanges() {
@@ -336,6 +346,11 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 			endTransaction(txID);
 		}
 		return true;
+	}
+
+	private void showDataEnumInTree() {
+		DataTypeManagerService dtmService = tool.getService(DataTypeManagerService.class);
+		dtmService.setDataTypeSelected(originalEnum);
 	}
 
 	/**
@@ -467,9 +482,9 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	/**
 	 * Prompts the user if the editor has unsaved changes. Saves the changes if
 	 * the user indicates to do so.
-	 * @return CANCEL (0) if the user canceled; 
-	 *   SAVE (1) if the user saved changes; 
-	 *   NO_SAVE (2) if the user did not save changes or no save was required; 
+	 * @return CANCEL (0) if the user canceled;
+	 *   SAVE (1) if the user saved changes;
+	 *   NO_SAVE (2) if the user did not save changes or no save was required;
 	 *   ERROR (3) if there was an error when the changes were applied.
 	 */
 	private int saveChangesForCloseEvent(boolean allowCancel) {
@@ -502,7 +517,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class MyDataTypeManagerChangeListener extends DataTypeManagerChangeListenerAdapter {
 
@@ -547,7 +562,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 		@Override
 		public void categoryRemoved(DataTypeManager dtm, CategoryPath path) {
-			// should never get this callback, as we should first have gotten a 
+			// should never get this callback, as we should first have gotten a
 			// dataTypeRemoved(), which will dispose this editor
 		}
 
@@ -665,11 +680,11 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 			DataType dataType = dtm.getDataType(otherPath);
 			if (dataType == null) {
-				// 
-				// Unusual Code Alert!: 
+				//
+				// Unusual Code Alert!:
 				// Must have been deleted and we have not yet processed the event...return true
 				// here to signal that the types are the same so that clients will continue the
-				// updating process.  The types may not really be the same, but the fallout is 
+				// updating process.  The types may not really be the same, but the fallout is
 				// only that there will be more updating than is necessary.
 				//
 				return true;

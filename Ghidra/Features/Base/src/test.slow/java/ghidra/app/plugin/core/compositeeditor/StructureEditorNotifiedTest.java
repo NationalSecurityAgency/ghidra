@@ -106,11 +106,10 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertEquals("complexStructure *", dataType10.getDisplayName());
 		assertEquals(4, dataType10.getLength());
 
-		runSwing(() -> {
-			programDTM.remove(complexStructure, TaskMonitor.DUMMY);
-			programDTM.getCategory(pgmRootCat.getCategoryPath())
+		programDTM.remove(complexStructure, TaskMonitor.DUMMY);
+		programDTM.getCategory(pgmRootCat.getCategoryPath())
 					.removeCategory("Temp", TaskMonitor.DUMMY);
-		});
+
 		waitForSwing();
 
 		// complexStructure* gets removed and becomes 4 undefined bytes in this editor.

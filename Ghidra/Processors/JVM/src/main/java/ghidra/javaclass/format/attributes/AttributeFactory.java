@@ -20,6 +20,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
 import ghidra.javaclass.format.constantpool.ConstantPoolUtf8Info;
+import ghidra.util.Msg;
 
 public class AttributeFactory {
 
@@ -61,6 +62,10 @@ public class AttributeFactory {
 				return new LocalVariableTableAttribute(reader, constantPool);
 			case AttributesConstants.LocalVariableTypeTable:
 				return new LocalVariableTypeTableAttribute(reader);
+			case AttributesConstants.MethodParameters:
+				return new MethodParametersAttribute(reader);
+			case AttributesConstants.Module:
+				return new ModuleAttribute(reader);
 			case AttributesConstants.ModuleMainClass:
 				return new ModuleMainClassAttribute(reader);
 			case AttributesConstants.ModulePackages:
@@ -87,10 +92,11 @@ public class AttributeFactory {
 				return new StackMapTableAttribute(reader);
 			case AttributesConstants.Synthetic:
 				return new SyntheticAttribute(reader);
-			case AttributesConstants.Module:
-				return new ModuleAttribute(reader);
+
 			default:
-				throw new RuntimeException("Unknown attribute type: " + utf8.getString());
+				Msg.warn(AttributeFactory.class, "Unknown attribute type: " + utf8.getString() +
+					" at index " + (reader.getPointerIndex() - 2));
+				return new UnsupportedAttributeInfo(reader);
 		}
 	}
 }

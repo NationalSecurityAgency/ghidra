@@ -83,7 +83,7 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * initialize state of GhidraScriptUtil with user, system paths, and optional extra system paths.
+	 * Initialize state of GhidraScriptUtil with user, system, and optional extra system paths.
 	 * 
 	 * @param aBundleHost the host to use 
 	 * @param extraSystemPaths additional system paths for this run, can be null 
@@ -106,7 +106,7 @@ public class GhidraScriptUtil {
 	 */
 	public static void dispose() {
 		if (bundleHost != null) {
-			bundleHost.dispose();
+			bundleHost.stopFramework();
 			bundleHost = null;
 		}
 		providers = null;

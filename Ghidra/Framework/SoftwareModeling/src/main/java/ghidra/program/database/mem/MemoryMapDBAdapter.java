@@ -228,10 +228,10 @@ abstract class MemoryMapDBAdapter {
 
 	/**
 	 * Deletes the given memory block.
-	 * @param key the key for the memory block record
+	 * @param block the memory block to be deleted
 	 * @throws IOException if a database IO error occurs.
 	 */
-	abstract void deleteMemoryBlock(long key) throws IOException;
+	abstract void deleteMemoryBlock(MemoryBlockDB block) throws IOException;
 
 	/**
 	 * Updates the memory block record.

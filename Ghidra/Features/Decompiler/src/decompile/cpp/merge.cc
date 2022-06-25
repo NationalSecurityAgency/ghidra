@@ -344,18 +344,24 @@ void Merge::mergeByDatatype(VarnodeLocSet::const_iterator startiter,VarnodeLocSe
 /// A COPY is allocated with the given input and data-type.  A \e unique space
 /// output is created.
 /// \param inVn is the given input Varnode for the new COPY
-/// \param ct is the data-type to assign to the new unique output
 /// \param addr is the address associated with the new COPY
 /// \return the newly allocated COPY
-PcodeOp *Merge::allocateCopyTrim(Varnode *inVn,Datatype *ct,const Address &addr)
+PcodeOp *Merge::allocateCopyTrim(Varnode *inVn,const Address &addr)
 
 {
   PcodeOp *copyOp = data.newOp(1,addr);
   data.opSetOpcode(copyOp,CPUI_COPY);
+  Datatype *ct = inVn->getType();
   Varnode *outVn = data.newUnique(inVn->getSize(),ct);
   data.opSetOutput(copyOp,outVn);
   data.opSetInput(copyOp,inVn,0);
   copyTrims.push_back(copyOp);
+  if (ct->needsResolution()) {		// If the data-type needs resolution
+    if (inVn->isWritten()) {
+      int4 fieldNum = data.inheritWriteResolution(ct, copyOp, inVn->getDef());
+      data.forceFacingType(ct, fieldNum, copyOp, 0);
+    }
+  }
   return copyOp;
 }
 
@@ -374,7 +380,6 @@ void Merge::snipReads(Varnode *vn,list<PcodeOp *> &markedop)
   PcodeOp *copyop,*op;
   BlockBasic *bl;
   Address pc;
-  int4 slot;
   PcodeOp *afterop;
 
 				// Figure out where copy is inserted
@@ -392,7 +397,7 @@ void Merge::snipReads(Varnode *vn,list<PcodeOp *> &markedop)
     else
       afterop = vn->getDef();
   }
-  copyop = allocateCopyTrim(vn, vn->getType(), pc);
+  copyop = allocateCopyTrim(vn, pc);
   if (afterop == (PcodeOp *)0)
     data.opInsertBegin(copyop,bl);
   else
@@ -401,8 +406,7 @@ void Merge::snipReads(Varnode *vn,list<PcodeOp *> &markedop)
   list<PcodeOp *>::iterator iter;
   for(iter=markedop.begin();iter!=markedop.end();++iter) {
     op = *iter;
-    for(slot=0;slot<op->numInput();++slot)
-      if (op->getIn(slot)==vn) break; // Find the correct slot
+    int4 slot = op->getSlot(vn);
     data.opSetInput(op,copyop->getOut(),slot);
   }
 }
@@ -561,7 +565,7 @@ void Merge::trimOpOutput(PcodeOp *op)
   else
     afterop = op;
   vn = op->getOut();
-  uniq = data.newUnique(vn->getSize(),vn->getType());
+  uniq = data.newUnique(vn->getSize(),vn->getTypeDefFacing());
   copyop = data.newOp(1,op->getAddr());
   data.opSetOutput(op,uniq);	// Output of op is now stubby uniq
   data.opSetOpcode(copyop,CPUI_COPY);
@@ -592,7 +596,7 @@ void Merge::trimOpInput(PcodeOp *op,int4 slot)
   else
     pc = op->getAddr();
   vn = op->getIn(slot);
-  copyop = allocateCopyTrim(vn, vn->getType(), pc);
+  copyop = allocateCopyTrim(vn, pc);
   data.opSetInput(op,copyop->getOut(),slot);
   if (op->code() == CPUI_MULTIEQUAL)
     data.opInsertEnd(copyop,(BlockBasic *)op->getParent()->getIn(slot));
@@ -748,7 +752,7 @@ void Merge::snipIndirect(PcodeOp *indop)
 				// an instance of the output high must
 				// all intersect so the varnodes must all be
 				// traceable via COPY to the same root
-  snipop = allocateCopyTrim(refvn, refvn->getType(), op->getAddr());
+  snipop = allocateCopyTrim(refvn, op->getAddr());
   data.opInsertBefore(snipop,op);
   list<PcodeOp *>::iterator oiter;
   int4 i,slot;
@@ -774,8 +778,10 @@ void Merge::mergeIndirect(PcodeOp *indop)
     return;
   }
 
-  if (mergeTestRequired(outvn->getHigh(),invn0->getHigh()))
-    if (merge(invn0->getHigh(),outvn->getHigh(),false)) return;
+  if (mergeTestRequired(outvn->getHigh(),invn0->getHigh())) {
+    if (merge(invn0->getHigh(),outvn->getHigh(),false))
+      return;
+  }
   snipIndirect(indop);		// If we cannot merge, the only thing that can go
 				// wrong with an input trim, is if the output of
 				// indop is involved in the input to the op causing
@@ -783,7 +789,11 @@ void Merge::mergeIndirect(PcodeOp *indop)
 
   PcodeOp *newop;
 
-  newop = allocateCopyTrim(invn0, outvn->getType(), indop->getAddr());
+  newop = allocateCopyTrim(invn0, indop->getAddr());
+  SymbolEntry *entry = outvn->getSymbolEntry();
+  if (entry != (SymbolEntry *)0 && entry->getSymbol()->getType()->needsResolution()) {
+    data.inheritWriteResolution(entry->getSymbol()->getType(), newop, indop);
+  }
   data.opSetInput(indop,newop->getOut(),0);
   data.opInsertBefore(newop,indop);
   if (!mergeTestRequired(outvn->getHigh(),indop->getIn(0)->getHigh()) ||

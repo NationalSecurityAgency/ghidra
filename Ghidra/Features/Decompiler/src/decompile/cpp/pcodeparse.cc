@@ -2904,6 +2904,9 @@ int4 PcodeLexer::moveState(void)
   switch(curstate) {
   case start:
     switch(curchar) {
+    case '#':
+      curstate = comment;
+      return start;
     case '|':
       if (lookahead1 == '|') {
 	starttoken();
@@ -3118,17 +3121,14 @@ int4 PcodeLexer::moveState(void)
     advancetoken();
     curstate = start;
     return identifier;
-    break;
   case special3:
     advancetoken();
     curstate = special32;
     return start;
-    break;
   case special32:
     advancetoken();
     curstate = start;
     return identifier;
-    break;
   case comment:
     if (curchar == '\n')
       curstate = start;
@@ -3136,28 +3136,25 @@ int4 PcodeLexer::moveState(void)
       curstate = endstream;
       return endstream;
     }
-    break;
+    return start;
   case identifier:
     advancetoken();
     if (isIdent(lookahead1))
       return start;
     curstate = start;
     return identifier;
-    break;
   case hexstring:
     advancetoken();
     if (isHex(lookahead1))
       return start;
     curstate = start;
     return hexstring;
-    break;
   case decstring:
     advancetoken();
     if (isDec(lookahead1))
       return start;
     curstate = start;
     return decstring;
-    break;
   default:
     curstate = endstream;
   }

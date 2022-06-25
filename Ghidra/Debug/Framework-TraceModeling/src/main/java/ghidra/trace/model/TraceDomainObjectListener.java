@@ -125,6 +125,14 @@ public class TraceDomainObjectListener implements DomainObjectListener {
 		typedMap.put(type, handler);
 	}
 
+	/**
+	 * Listen for the given event, taking the affected object, the old value, and the new value
+	 * 
+	 * @param <T> the type of the affected object
+	 * @param <U> the type of the values
+	 * @param type the event type
+	 * @param handler the handler
+	 */
 	protected <T, U> void listenFor(TraceChangeType<T, U> type,
 			AffectedAndValuesOnlyHandler<? super T, ? super U> handler) {
 		typedMap.put(type, handler);

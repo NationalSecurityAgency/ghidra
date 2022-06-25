@@ -28,7 +28,7 @@ import ghidra.program.model.pcode.Varnode;
  * An executor which can perform (some of) its work asynchronously
  * 
  * <p>
- * Note that a future returned from, e.g., {@link #executeAsync(SleighProgram, SleighUseropLibrary)}
+ * Note that a future returned from, e.g., {@link #executeAsync(SleighProgram, PcodeUseropLibrary)}
  * may complete before the computation has actually been performed. They complete when all of the
  * operations have been scheduled, and the last future has been written into the state. (This
  * typically happens when any branch conditions have completed). Instead, a caller should read from
@@ -46,7 +46,7 @@ public class AsyncPcodeExecutor<T> extends PcodeExecutor<CompletableFuture<T>> {
 	}
 
 	public CompletableFuture<Void> stepOpAsync(PcodeOp op, PcodeFrame frame,
-			SleighUseropLibrary<CompletableFuture<T>> library) {
+			PcodeUseropLibrary<CompletableFuture<T>> library) {
 		if (op.getOpcode() == PcodeOp.CBRANCH) {
 			return executeConditionalBranchAsync(op, frame);
 		}
@@ -55,7 +55,7 @@ public class AsyncPcodeExecutor<T> extends PcodeExecutor<CompletableFuture<T>> {
 	}
 
 	public CompletableFuture<Void> stepAsync(PcodeFrame frame,
-			SleighUseropLibrary<CompletableFuture<T>> library) {
+			PcodeUseropLibrary<CompletableFuture<T>> library) {
 		try {
 			return stepOpAsync(frame.nextOp(), frame, library);
 		}
@@ -80,12 +80,12 @@ public class AsyncPcodeExecutor<T> extends PcodeExecutor<CompletableFuture<T>> {
 	}
 
 	public CompletableFuture<Void> executeAsync(PcodeProgram program,
-			SleighUseropLibrary<CompletableFuture<T>> library) {
+			PcodeUseropLibrary<CompletableFuture<T>> library) {
 		return executeAsync(program.code, program.useropNames, library);
 	}
 
 	protected CompletableFuture<Void> executeAsyncLoop(PcodeFrame frame,
-			SleighUseropLibrary<CompletableFuture<T>> library) {
+			PcodeUseropLibrary<CompletableFuture<T>> library) {
 		if (frame.isFinished()) {
 			return AsyncUtils.NIL;
 		}
@@ -94,7 +94,7 @@ public class AsyncPcodeExecutor<T> extends PcodeExecutor<CompletableFuture<T>> {
 	}
 
 	public CompletableFuture<Void> executeAsync(List<PcodeOp> code,
-			Map<Integer, String> useropNames, SleighUseropLibrary<CompletableFuture<T>> library) {
+			Map<Integer, String> useropNames, PcodeUseropLibrary<CompletableFuture<T>> library) {
 		PcodeFrame frame = new PcodeFrame(language, code, useropNames);
 		return executeAsyncLoop(frame, library);
 	}

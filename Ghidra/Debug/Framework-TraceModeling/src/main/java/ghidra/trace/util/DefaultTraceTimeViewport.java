@@ -28,7 +28,8 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.time.*;
+import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
 import ghidra.util.datastruct.ListenerSet;
@@ -105,7 +106,7 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	 * may need the DB's lock, esp., considering user callbacks, then it must <em>first</em> acquire
 	 * the DB lock.
 	 */
-	protected final List<Range<Long>> ordered = new ArrayList<>(List.of(Range.singleton(0L)));
+	protected final List<Range<Long>> ordered = new ArrayList<>();
 	protected final RangeSet<Long> spanSet = TreeRangeSet.create();
 	protected final ForSnapshotsListener listener = new ForSnapshotsListener();
 	protected final ListenerSet<Runnable> changeListeners = new ListenerSet<>(Runnable.class);
@@ -113,6 +114,10 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	protected long snap = 0;
 
 	public DefaultTraceTimeViewport(Trace trace) {
+		Range<Long> zero = Range.singleton(0L);
+		spanSet.add(zero);
+		ordered.add(zero);
+
 		this.trace = trace;
 		trace.addCloseListener(listener);
 		trace.addListener(listener);
@@ -189,12 +194,14 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	protected boolean isLower(long lower) {
-		synchronized (ordered) {
-			Range<Long> range = spanSet.rangeContaining(lower);
-			if (range == null) {
-				return false;
+		try (LockHold hold = trace.lockRead()) { // May not be necessary
+			synchronized (ordered) {
+				Range<Long> range = spanSet.rangeContaining(lower);
+				if (range == null) {
+					return false;
+				}
+				return range.lowerEndpoint().longValue() == lower;
 			}
-			return range.lowerEndpoint().longValue() == lower;
 		}
 	}
 
@@ -265,12 +272,12 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 		List<Range<Long>> ordered = new ArrayList<>();
 		try (LockHold hold = trace.lockRead()) {
 			collectForkRanges(trace.getTimeManager(), snap, spanSet, ordered);
-		}
-		synchronized (this.ordered) {
-			this.spanSet.clear();
-			this.ordered.clear();
-			this.spanSet.addAll(spanSet);
-			this.ordered.addAll(ordered);
+			synchronized (this.ordered) {
+				this.spanSet.clear();
+				this.ordered.clear();
+				this.spanSet.addAll(spanSet);
+				this.ordered.addAll(ordered);
+			}
 		}
 		assert !ordered.isEmpty();
 		changeListeners.fire.run();
@@ -325,41 +332,51 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 
 	@Override
 	public boolean isForked() {
-		synchronized (ordered) {
-			return ordered.size() > 1;
+		try (LockHold hold = trace.lockRead()) { // May not be necessary
+			synchronized (ordered) {
+				return ordered.size() > 1;
+			}
 		}
 	}
 
 	public List<Range<Long>> getOrderedSpans() {
-		synchronized (ordered) {
-			return List.copyOf(ordered);
+		try (LockHold hold = trace.lockRead()) { // May not be necessary
+			synchronized (ordered) {
+				return List.copyOf(ordered);
+			}
 		}
 	}
 
 	public List<Range<Long>> getOrderedSpans(long snap) {
-		synchronized (ordered) {
-			setSnap(snap);
-			return getOrderedSpans();
+		try (LockHold hold = trace.lockRead()) { // setSnap requires this
+			synchronized (ordered) {
+				setSnap(snap);
+				return getOrderedSpans();
+			}
 		}
 	}
 
 	@Override
 	public List<Long> getOrderedSnaps() {
-		synchronized (ordered) {
-			return ordered
-					.stream()
-					.map(Range::upperEndpoint)
-					.collect(Collectors.toList());
+		try (LockHold hold = trace.lockRead()) { // May not be necessary
+			synchronized (ordered) {
+				return ordered
+						.stream()
+						.map(Range::upperEndpoint)
+						.collect(Collectors.toList());
+			}
 		}
 	}
 
 	@Override
 	public List<Long> getReversedSnaps() {
-		synchronized (ordered) {
-			return Lists.reverse(ordered)
-					.stream()
-					.map(Range::upperEndpoint)
-					.collect(Collectors.toList());
+		try (LockHold hold = trace.lockRead()) { // May not be necessary
+			synchronized (ordered) {
+				return Lists.reverse(ordered)
+						.stream()
+						.map(Range::upperEndpoint)
+						.collect(Collectors.toList());
+			}
 		}
 	}
 

@@ -38,7 +38,7 @@ public class ProjectDataReadOnlyAction extends ProjectDataContextToggleAction {
 		Object contextObject = context.getContextObject();
 		if (contextObject instanceof DomainFileNode) {
 			DomainFileNode node = (DomainFileNode) contextObject;
-			node.fireNodeChanged(node.getParent(), node);
+			node.fireNodeChanged();
 		}
 	}
 

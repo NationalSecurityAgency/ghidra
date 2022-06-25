@@ -18,7 +18,6 @@ package ghidra.framework.main.logviewer.ui;
 import java.awt.BorderLayout;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -29,28 +28,30 @@ import ghidra.framework.main.logviewer.event.*;
 import ghidra.framework.main.logviewer.event.FVEvent.EventType;
 import ghidra.framework.main.logviewer.model.*;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import utilities.util.FileUtilities;
 
 /**
  * UI for viewing the contents of very large files efficiently. Pieces of a file are read in using
- * the {@link ChunkReader}, which are then displayed line-by-line in {@link FVTable}.  As
- * users scroll up/down, new sections of the file are swapped in as appropriate.
- *
+ * the {@link ChunkReader}, which are then displayed line-by-line in {@link FVTable}.  As users
+ * scroll up/down, new sections of the file are swapped in as appropriate.
+ * <p>
  * Notes:
- * 1. The viewer consists of a simple JTable and a custom JSlider. The table displays lines of
+ * <ol>
+ * <li>The viewer consists of a simple JTable and a custom JSlider. The table displays lines of
  *    text described by {@link Chunk} objects. The number of chunks visible at any given time
  *    is restricted by the {@link ChunkModel#MAX_VISIBLE_CHUNKS} property.
  *
- * 2. Because only part of the file is loaded into the viewable table at any given time, the
- *    built-in scrollbar associated with the scrollpane cannot be used. We want the scroll bar
+ * <li>Because only part of the file is loaded into the viewable table at any given time, the
+ *    built-in scrollbar associated with the scroll pane cannot be used. We want the scroll bar
  *    maximum size to reflect the total size of the file, not just what's in view at the time. So
- *    we use our own slider implementation ({@link FVSlider}) and manage the
- *    size/position ourselves. If you're asking why a JSlider is used instead of a JScrollPane,
- *    it's because the former is more easily configuration for what we need.
+ *    we use our own slider implementation ({@link FVSlider}) and manage the size/position
+ *    ourselves. If you're asking why a JSlider is used instead of a JScrollPane, it's because the
+ *    former is more easily configuration for what we need.
  *
- * 3. Communication between modules (the table, the slider, the viewport utility, etc...) is done
+ * <li>Communication between modules (the table, the slider, the viewport utility, etc...) is done
  *    almost exclusively via events, using the custom {@link FVEvent} framework.
- *
+ * </ol>
  */
 public class FileViewer extends JPanel implements Observer {
 
@@ -68,16 +69,15 @@ public class FileViewer extends JPanel implements Observer {
 	private FVEventListener eventListener;
 
 	/**
-	 * Constructor. Sets up the UI elements and subscribes to events.
+	 * Constructor.
 	 *
-	 * @param reader
-	 * @param model
-	 * @param eventListener
-	 * @throws IOException
-	 * @throws FileNotFoundException
+	 * @param reader the log file reader
+	 * @param model the reader's data model
+	 * @param eventListener the event listener; the hub through which this API communicates
+	 * @throws IOException if there is an issue reading the log file
 	 */
 	public FileViewer(ChunkReader reader, ChunkModel model, FVEventListener eventListener)
-			throws FileNotFoundException, IOException {
+			throws IOException {
 
 		this.reader = reader;
 		this.model = model;
@@ -116,33 +116,17 @@ public class FileViewer extends JPanel implements Observer {
 		eventListener.addObserver(this);
 	}
 
-	/**
-	 * Part of the Java {@link Observer} pattern. This class is a subscriber to all
-	 * {@link FVEventListener} events, so when those are fired, they will be received here.
-	 *
-	 * Note: this method invokes the {@link #handleFVEvent(FVEvent)} method on the Swing
-	 * thread to ensure that we will make all UI updates on the EDT.
-	 *
-	 * @param o
-	 * @param arg
-	 */
 	@Override
 	public void update(Observable o, Object arg) {
 
 		if (o instanceof FVEventListener && arg instanceof FVEvent) {
-
-			if (SwingUtilities.isEventDispatchThread()) {
-				handleFVEvent((FVEvent) arg);
-			}
-			else {
-				SwingUtilities.invokeLater(() -> handleFVEvent((FVEvent) arg));
-			}
+			Swing.runIfSwingOrRunLater(() -> handleFVEvent((FVEvent) arg));
 		}
 	}
 
-	/***************************************************************************************
-	 * PRIVATE METHODS
-	 ***************************************************************************************/
+//=================================================================================================
+// Private Methods
+//=================================================================================================
 
 	/**
 	 * Processes events received via the {@link FVEvent} mechanism.
@@ -173,7 +157,7 @@ public class FileViewer extends JPanel implements Observer {
 					clipboard.setContents(stringSelection, null);
 				}
 				catch (IOException e) {
-					Msg.error(this, "error reading bytes from file", e);
+					Msg.error(this, "Error reading bytes from file", e);
 				}
 
 				break;
@@ -218,7 +202,7 @@ public class FileViewer extends JPanel implements Observer {
 					FileUtilities.openNative(reader.getFile().getParentFile());
 				}
 				catch (IOException e) {
-					Msg.error(this, e);
+					Msg.error(this, "Error opening log file: " + reader.getFile(), e);
 				}
 				break;
 
@@ -247,7 +231,7 @@ public class FileViewer extends JPanel implements Observer {
 					table.restoreSelection();
 				}
 				catch (IOException e) {
-					Msg.error(this, "error retrieving file size from reader", e);
+					Msg.error(this, "Error retrieving file size from reader", e);
 				}
 
 				break;
@@ -275,7 +259,7 @@ public class FileViewer extends JPanel implements Observer {
 	 * @param lock if true, scrolling will be locked
 	 */
 	private void setScrollLock(boolean lock) {
-		toolbar.getScrollLockBtn().setSelected(lock);
+		toolbar.setScrollLockOn(lock);
 	}
 
 	/**
@@ -314,12 +298,8 @@ public class FileViewer extends JPanel implements Observer {
 		}
 	}
 
-	/**
-	 * Updates the view to show the correct portion of the file specified by the given
-	 * file position.
-	 *
-	 * @param filePos
-	 * @param model
+	/*
+	 * Updates the view to show the correct part of the file specified by the given file position.
 	 */
 	private void updateViewToFilePos(long filePos) {
 		model.clear();
@@ -358,12 +338,11 @@ public class FileViewer extends JPanel implements Observer {
 			slider.setMaximum(reader.getFileSize());
 		}
 		catch (IOException e) {
-			Msg.error(this, "error reading file size", e);
+			Msg.error(this, "Error reading file size", e);
 		}
 
-		// If scroll locking is not on, then we want to tail the file, so just move to the
-		// bottom.
-		if (!toolbar.getScrollLockBtn().isSelected()) {
+		// If scroll locking is not on, then we want to tail the file, so just move to the bottom.
+		if (!toolbar.isScrollLockOn()) {
 			FVEvent endEvt = new FVEvent(EventType.SCROLL_END, true);
 			eventListener.send(endEvt);
 			return;

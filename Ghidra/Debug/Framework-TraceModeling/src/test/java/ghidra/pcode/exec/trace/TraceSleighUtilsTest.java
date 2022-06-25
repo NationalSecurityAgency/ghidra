@@ -214,7 +214,7 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 					"<else>",
 					"    r1 = 7;",
 					"<done>"),
-				SleighUseropLibrary.NIL);
+				PcodeUseropLibrary.NIL);
 			TraceThread thread;
 			try (UndoableTransaction tid = b.startTransaction()) {
 				thread = b.getOrAddThread("Thread1", 0);
@@ -222,7 +222,7 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 					new PcodeExecutor<>(sp.getLanguage(),
 						BytesPcodeArithmetic.forLanguage(b.language),
 						new TraceBytesPcodeExecutorState(b.trace, 0, thread, 0));
-				sp.execute(executor, SleighUseropLibrary.nil());
+				sp.execute(executor, PcodeUseropLibrary.nil());
 			}
 
 			Register r1 = b.language.getRegister("r1");

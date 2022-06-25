@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -28,26 +28,30 @@ import ghidra.program.model.listing.ProgramModule;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a load_command structure.
+ * Represents a load_command structure
  * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
  */
 public abstract class LoadCommand implements StructConverter {
 	private long startIndex;
 	private int cmd;
 	private int cmdsize;
 
-	public LoadCommand() {
-	}
-
-	protected void initLoadCommand(FactoryBundledWithBinaryReader reader) throws IOException {
+	/**
+	 * Creates a new {@link LoadCommand}
+	 * 
+	 * @param reader A {@link BinaryReader} that points to the start of the load command
+	 * @throws IOException if there was an IO-related error
+	 */
+	public LoadCommand(BinaryReader reader) throws IOException {
 		startIndex = reader.getPointerIndex();
 		cmd = reader.readNextInt();
 		cmdsize = reader.readNextInt();
 	}
 
 	/**
-	 * Returns the binary start index of this load command.
+	 * Returns the binary start index of this load command
+	 * 
 	 * @return the binary start index of this load command
 	 */
 	public long getStartIndex() {
@@ -55,29 +59,33 @@ public abstract class LoadCommand implements StructConverter {
 	}
 
 	/**
-	 * Type of load command
-	 * @return type of load command
+	 * Gets the type of this load command
+	 * 
+	 * @return The type of this load command
 	 */
 	public int getCommandType() {
 		return cmd;
 	}
 
 	/**
-	 * Total size of command in bytes
-	 * @return total size of command in bytes
+	 * Gets the size of this load command in bytes
+	 * 
+	 * @return The size of this load command in bytes
 	 */
 	public int getCommandSize() {
 		return cmdsize;
 	}
 
 	/**
-	 * Returns the name of this command.
-	 * @return the name of this command
+	 * Gets the name of this load command
+	 * 
+	 * @return The name of this load command
 	 */
 	public abstract String getCommandName();
 
 	/**
-	 * Mark-up the program with the data structures for this load command.
+	 * Marks-up the program with the data structures for this load command
+	 * 
 	 * @param header the mach header
 	 * @param api the flat program api
 	 * @param baseAddress the base address to apply the mark-up

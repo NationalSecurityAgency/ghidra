@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -29,22 +29,10 @@ import ghidra.util.task.TaskMonitor;
 public class GlobalPointerDataDirectory extends DataDirectory {
     private final static String NAME = "IMAGE_DIRECTORY_ENTRY_GLOBALPTR";
 
-	static GlobalPointerDataDirectory createGlobalPointerDataDirectory(
-            NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-            throws IOException {
-	    GlobalPointerDataDirectory globalPointerDataDirectory = (GlobalPointerDataDirectory) reader.getFactory().create(GlobalPointerDataDirectory.class);
-	    globalPointerDataDirectory.initGlobalPointerDataDirectory(ntHeader, reader);
-	    return globalPointerDataDirectory;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public GlobalPointerDataDirectory() {}
-
-    private void initGlobalPointerDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader) throws IOException {
+	GlobalPointerDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
-	}
+
+    }
 
 	@Override
 	public String getDirectoryName() {
@@ -53,8 +41,8 @@ public class GlobalPointerDataDirectory extends DataDirectory {
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
-			DataTypeConflictException, IOException {
+			NTHeader ntHeader)
+			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 		monitor.setMessage(program.getName()+": global pointers...");
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
 		if (!program.getMemory().contains(addr)) {

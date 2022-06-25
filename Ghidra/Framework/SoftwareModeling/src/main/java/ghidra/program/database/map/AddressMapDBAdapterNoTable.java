@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,11 @@
  */
 package ghidra.program.database.map;
 
-import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Language;
-import ghidra.program.util.LanguageTranslator;
-
 import java.io.IOException;
 import java.util.*;
 
 import db.DBHandle;
+import ghidra.program.model.address.*;
 
 /**
  * Adapter for when no addr map database existed.
@@ -114,21 +110,6 @@ class AddressMapDBAdapterNoTable extends AddressMapDBAdapter {
 		};
 
 		@Override
-		public boolean hasSameKeyBase(long addrKey1, long addrKey2) {
-			return (addrKey1 >> 32) == (addrKey2 >> 32);
-		}
-
-		@Override
-		public boolean isKeyRangeMax(long addrKey) {
-			return (addrKey & 0xffffffff) == 0xffffffff;
-		}
-
-		@Override
-		public boolean isKeyRangeMin(long addrKey) {
-			return (addrKey & 0xffffffff) == 0;
-		}
-
-		@Override
 		public long getKey(Address addr, boolean create) {
 			if (create) {
 				throw new IllegalArgumentException("Old address map does not support key creation");
@@ -205,43 +186,14 @@ class AddressMapDBAdapterNoTable extends AddressMapDBAdapter {
 		}
 
 		@Override
-		public int getModCount() {
-			return 0;
-		}
-
-		@Override
 		public AddressMap getOldAddressMap() {
 			return this;
-		}
-
-		@Override
-		public void invalidateCache() {
 		}
 
 		@Override
 		public boolean isUpgraded() {
 			return false;
 		}
-
-		@Override
-		public void deleteOverlaySpace(String name) {
-		}
-
-		@Override
-		public void renameOverlaySpace(String oldName, String newName) {
-		}
-
-		@Override
-		public void setImageBase(Address base) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void setLanguage(Language newLanguage, AddressFactory addrFactory,
-				LanguageTranslator translator) {
-			throw new UnsupportedOperationException();
-		}
-
 	}
 
 	@Override

@@ -27,18 +27,16 @@ import ghidra.program.model.block.CodeBlock;
 import ghidra.program.model.block.IsolatedEntrySubModel;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.listing.Function.FunctionUpdateType;
-import ghidra.program.model.mem.DumbMemBufferImpl;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 	final int defaultPointerSize;
 
-	ExtendedFlatProgramAPI(Program program, TaskMonitor taskMonitor) {
+	public ExtendedFlatProgramAPI(Program program, TaskMonitor taskMonitor) {
 
 		super(program, taskMonitor);
 		defaultPointerSize = program.getDefaultPointerSize();
@@ -279,34 +277,9 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to determine if the given instruction is a terminating instruction (it return, ...)
-	 * @param instruction the given instruction
-	 * @return true if the given instruction is a terminating instruction, false otherwise
-	 */
-	public boolean isTerminatingInstruction(Instruction instruction) {
-
-		FlowType flowType = instruction.getFlowType();
-		FlowType overrideType =
-			FlowOverride.getModifiedFlowType(flowType, instruction.getFlowOverride());
-
-		if (flowType.isTerminal() || overrideType.isTerminal()) {
-			return true;
-		}
-		Function functionContaining = getFunctionContaining(instruction.getAddress());
-		if (functionContaining != null) {
-			if (functionContaining.isThunk() && flowType.isJump()) {
-				return true;
-			}
-			if (flowType.isJump()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Method to create the first function after the last terminating function before the given address
-	 * @param address the given addres
+	 * Method to create the first function after the last terminating function before the given 
+	 * address which is in the middle of undefined bytes
+	 * @param address the given address
 	 * @param expectedFiller the expected filler byte value
 	 * @return the created function or null if not created
 	 */
@@ -314,12 +287,33 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		PseudoDisassembler pseudoDisassembler = new PseudoDisassembler(currentProgram);
 
+		// skip any undefineds and get the defined instruction before the given address
 		Instruction instructionBefore = getInstructionBefore(address);
 
-		if (instructionBefore == null || !isTerminatingInstruction(instructionBefore)) {
+		if (instructionBefore == null) {
 			return null;
 		}
 
+		Address instBeforeAddr = instructionBefore.getAddress();
+
+		Memory memory = currentProgram.getMemory();
+		if (!memory.getBlock(address).equals(memory.getBlock(instBeforeAddr))) {
+			return null;
+		}
+
+		// set some arbritrary limit on how far back to go
+		if (address.subtract(instBeforeAddr) > 2000) {
+			return null;
+		}
+
+		// if the instruction before all the undefines bytes doesn't indicate that it is the end 
+		// of a function or an end of a range of a function then return
+		FlowType flowType = instructionBefore.getFlowType();
+		if (!flowType.isTerminal() && !flowType.isJump()) {
+			return null;
+		}
+
+		//get the last address in the instruction
 		Address maxAddress = instructionBefore.getMaxAddress();
 		int maxLen = (int) (address.getOffset() - maxAddress.getOffset());
 		if (maxLen <= 0) {
@@ -328,6 +322,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		int offset = 1;
 
+		// skip the filler
 		Byte filler;
 		try {
 			filler = getByte(maxAddress.add(offset));
@@ -345,6 +340,8 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		Address functionStart = maxAddress.add(offset);
 
+		// check to see if the address after the instruction and filler is the start of a valid 
+		// subroutine
 		if (!pseudoDisassembler.isValidSubroutine(functionStart, true)) {
 			return null;
 		}
@@ -352,6 +349,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 			disassemble(functionStart);
 		}
 
+		// if so, create a function there
 		Function function = createFunction(functionStart, null);
 
 		return function;
@@ -451,7 +449,6 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		Byte filler = determineFillerByte();
 		if (filler == null) {
-			//	println("Can't determine filler byte so cannot create undefined functions");
 			return;
 		}
 
@@ -469,7 +466,6 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 			Function newFunction = createFunctionBefore(address, filler);
 			if (newFunction == null) {
-				//println("Can't find function containing " + address.toString());
 				continue;
 			}
 
@@ -542,27 +538,6 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		return subroutineAddresses;
 	}
 
-	/**
-	 * Method to make the given function a thiscall
-	 * @param function the given function
-	 * @throws InvalidInputException if issues setting return type
-	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 */
-	public void makeFunctionThiscall(Function function)
-			throws InvalidInputException, DuplicateNameException {
-
-		if (function.getCallingConventionName().equals("__thiscall")) {
-			return;
-		}
-
-		// FIXME: if you pass a Function arg you should use its program not currentProgram
-		ReturnParameterImpl returnType =
-			new ReturnParameterImpl(function.getSignature().getReturnType(), currentProgram);
-
-		function.updateFunction("__thiscall", returnType,
-			FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, function.getSignatureSource(),
-			function.getParameters());
-	}
 
 	/**
 	 * Method to get a list of symbols either matching exactly (if exact flag is true) or containing (if exact flag is false) the given symbol name
@@ -606,8 +581,8 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		int addressSize = address.getSize();
 		if (addressSize == 64 && getIboIf64bit) {
-			ImageBaseOffset32DataType ibo32 =
-				new ImageBaseOffset32DataType(currentProgram.getDataTypeManager());
+			IBO32DataType ibo32 =
+				new IBO32DataType(currentProgram.getDataTypeManager());
 			int length = ibo32.getLength();
 			DumbMemBufferImpl compMemBuffer =
 				new DumbMemBufferImpl(currentProgram.getMemory(), address);
@@ -693,30 +668,31 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	 * Get the nth called function from calling function
 	 * @param callingFunction The calling function
 	 * @param callIndex the called function index (ie 1 = first called function)
+	 * @param getThunkedFunction if true get the thunked function, if false get the thunk itself, if
+	 * there is a thunk
 	 * @return the nth called function in calling function
 	 * @throws CancelledException if cancelled
 	 */
-	public Function getCalledFunctionByCallOrder(Function callingFunction, int callIndex)
-			throws CancelledException {
+	public Function getCalledFunctionByCallOrder(Function callingFunction, int callIndex,
+			boolean getThunkedFunction) throws CancelledException {
 
-		List<ReferenceAddressPair> orderedReferenceAddressPairsFromCallingFunction =
-			getOrderedReferenceAddressPairsFromCallingFunction(callingFunction);
-		if (callIndex > orderedReferenceAddressPairsFromCallingFunction.size()) {
-			return null;
+		int callNumber = 0;
+		InstructionIterator instructions = callingFunction.getProgram()
+				.getListing()
+				.getInstructions(callingFunction.getBody(), true);
+		while (instructions.hasNext() && callNumber < callIndex) {
+			monitor.checkCanceled();
+			Instruction instruction = instructions.next();
+			if (instruction.getFlowType().isCall()) {
+				callNumber++;
+				if (callNumber == callIndex) {
+					Function referencedFunction =
+						getReferencedFunction(instruction.getMinAddress(), getThunkedFunction);
+					return referencedFunction;
+				}
+			}
 		}
-
-		ReferenceAddressPair referenceAddressPair =
-			orderedReferenceAddressPairsFromCallingFunction.get(callIndex - 1);
-		Address calledFunctionAddress = referenceAddressPair.getDestination();
-		Function calledFunction = getFunctionAt(calledFunctionAddress);
-		if (calledFunction == null) {
-			return null;
-		}
-		if (calledFunction.isThunk()) {
-			calledFunction = calledFunction.getThunkedFunction(true);
-		}
-		return calledFunction;
-
+		return null;
 	}
 
 	/**
@@ -872,28 +848,6 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to retrieve the minimum address on the given list
-	 * @param list the list of addresses
-	 * @return the minimum address on the given list
-	 */
-	public Address getMinimumAddressOnList(List<Address> list) {
-
-		Collections.sort(list);
-		return list.get(0);
-	}
-
-	/**
-	 * Method to retrieve the maximum address on the given list
-	 * @param list the list of addresses
-	 * @return the maximum address on the given list
-	 */
-	public Address getMaximumAddressOnList(List<Address> list) {
-
-		Collections.sort(list, Collections.reverseOrder());
-		return list.get(0);
-	}
-
-	/**
 	 * Method to retrieve the referenced Functions from the given referenceToClassMap
 	 * @param referenceToClassMap map of addresses that contain a reference to either a vftable or 
 	 * called function for a particular function
@@ -910,11 +864,8 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		while (referenceIterator.hasNext()) {
 			monitor.checkCanceled();
 			Address referenceAddress = referenceIterator.next();
-			Address referencedAddress = getSingleReferencedAddress(referenceAddress);
-			if (referencedAddress == null) {
-				continue;
-			}
-			Function function = getFunctionAt(referencedAddress);
+
+			Function function = getReferencedFunction(referenceAddress, true);
 
 			// skip the ones that reference a vftable
 			if (function != null) {
@@ -930,30 +881,43 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	 * @param address the given address
 	 * @param getThunkedFunction if true and referenced function is a thunk, get the thunked function
 	 * @return the referenced function or null if no function is referenced
+	 * @throws CancelledException if cancelled
 	 */
-	public Function getReferencedFunction(Address address, boolean getThunkedFunction) {
+	public Function getReferencedFunction(Address address, boolean getThunkedFunction)
+			throws CancelledException {
 
-		Address referencedAddress = getSingleReferencedAddress(address);
+		Reference[] referencesFrom = getReferencesFrom(address);
 
-		if (referencedAddress == null) {
+		if (referencesFrom.length == 0) {
 			return null;
 		}
 
-		Function function = getFunctionAt(referencedAddress);
+		for (Reference referenceFrom : referencesFrom) {
 
-		if (function == null) {
-			return null;
-		}
+			monitor.checkCanceled();
 
-		if (!getThunkedFunction) {
+			Address referencedAddress = referenceFrom.getToAddress();
+			if (referencedAddress == null) {
+				continue;
+			}
+
+			Function function = getFunctionAt(referencedAddress);
+
+			if (function == null) {
+				continue;
+			}
+
+			if (!getThunkedFunction) {
+				return function;
+			}
+
+			if (function.isThunk()) {
+				function = function.getThunkedFunction(true);
+			}
 			return function;
 		}
 
-		if (function.isThunk()) {
-			function = function.getThunkedFunction(true);
-		}
-
-		return function;
+		return null;
 
 	}
 
@@ -1009,7 +973,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to add the given comment to an existing plate comment unless it already exists in the comment
+	 * Method to add the given string to a plate comment unless the string already exists in it. 
 	 * @param address the given address
 	 * @param comment the comment to add to the plate comment at the given address
 	 */
@@ -1018,6 +982,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		String plateComment = getPlateComment(address);
 
 		if (plateComment == null) {
+			setPlateComment(address, comment);
 			return;
 		}
 
@@ -1044,72 +1009,22 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 	}
 
 	/**
-	 * Create data type manager path that will be used when data types are created to place them in the correct folder
-	 * @param parent parent CategoryPath
-	 * @param categoryName name of the new category in the parent path
+	 * Create data type manager path combining the given parent category path and namespace
+	 * @param parent the given parent CategoryPath
+	 * @param namespace the given namespace
 	 * @return CategoryPath for new categoryName 
 	 * @throws CancelledException if cancelled
 	 */
-	public CategoryPath createDataTypeCategoryPath(CategoryPath parent, String categoryName) throws CancelledException {
+	public CategoryPath createDataTypeCategoryPath(CategoryPath parent, Namespace namespace)
+			throws CancelledException {
 
-		CategoryPath dataTypePath;
+		CategoryPath dataTypePath = parent;
 
-		// if single namespace no parsing necessary, just create using given categoryName
-		if (!categoryName.contains("::")) {
-			dataTypePath = new CategoryPath(parent, categoryName);
-			return dataTypePath;
+		for (String name : namespace.getPathList(true)) {
+			monitor.checkCanceled();
+
+			dataTypePath = new CategoryPath(dataTypePath, name);
 		}
-
-		// if category name contains :: but not valid template info then just 
-		// replace ::'s with /'s to form multi level path
-		if (!containsTemplate(categoryName)) {
-			categoryName = categoryName.replace("::", "/");
-		}
-
-		// if category name contains both :: and matched template brackets then only replace the 
-		// :: that are not contained inside template brackets
-		else {
-			boolean insideBrackets = false;
-			int numOpenedBrackets = 0;
-			int index = 0;
-			String newCategoryName = new String();
-			while (index < categoryName.length()) {
-				monitor.checkCanceled();
-
-				if (categoryName.substring(index).startsWith("::") && !insideBrackets) {
-					newCategoryName = newCategoryName.concat("/");
-					index += 2;
-					continue;
-				}
-
-				String character = categoryName.substring(index, index + 1);
-
-				newCategoryName = newCategoryName.concat(character);
-				index++;
-
-				if (character.equals("<")) {
-					insideBrackets = true;
-					numOpenedBrackets++;
-				}
-				if (character.equals(">")) {
-					numOpenedBrackets--;
-				}
-				if (numOpenedBrackets == 0) {
-					insideBrackets = false;
-				}
-			}
-			categoryName = newCategoryName;
-		}
-
-		String path;
-		if (parent.getName().equals("")) {
-			path = "/" + categoryName;
-		}
-		else {
-			path = "/" + parent.getName() + "/" + categoryName;
-		}
-		dataTypePath = new CategoryPath(path);
-
 		return dataTypePath;
 
 	}

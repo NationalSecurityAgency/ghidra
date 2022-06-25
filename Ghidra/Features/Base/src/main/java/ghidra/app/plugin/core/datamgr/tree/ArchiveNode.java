@@ -127,7 +127,7 @@ public class ArchiveNode extends CategoryNode {
 	}
 
 	public void nodeChanged() {
-		fireNodeChanged(getParent(), this);
+		fireNodeChanged();
 
 		GTree tree = getTree();
 		if (tree != null) {
@@ -150,9 +150,8 @@ public class ArchiveNode extends CategoryNode {
 
 	@Override
 	/**
-	 * The equals must not be based on the name since it can change
-	 * based upon the underlying archive.  This must be consistent with
-	 * the hashCode method implementation.
+	 * The equals must not be based on the name since it can change based upon the underlying
+	 * archive. This must be consistent with the hashCode method implementation.
 	 */
 	public boolean equals(Object o) {
 		if (this == o) {
@@ -175,9 +174,8 @@ public class ArchiveNode extends CategoryNode {
 
 	@Override
 	/**
-	 * The hashcode must not be based on the name since it can change
-	 * based upon the underlying archive.  This must be consistent with
-	 * the equals method implementation.
+	 * The hashcode must not be based on the name since it can change based upon the underlying
+	 * archive. This must be consistent with the equals method implementation.
 	 */
 	public int hashCode() {
 		return getArchive().hashCode();
@@ -194,10 +192,11 @@ public class ArchiveNode extends CategoryNode {
 	}
 
 	/**
-	 * Finds the node that represents the given category.  
+	 * Finds the node that represents the given category.
 	 * 
-	 * <P>Children <b>will not</b> be loaded when searching for the node.  This allows clients
-	 * to search for data types of interest, only updating the tree when the nodes are loaded.
+	 * <P>
+	 * Children <b>will not</b> be loaded when searching for the node. This allows clients to search
+	 * for data types of interest, only updating the tree when the nodes are loaded.
 	 * 
 	 * @param localCategory the category of interest
 	 * @return the node if loaded; null if not loaded
@@ -304,7 +303,7 @@ public class ArchiveNode extends CategoryNode {
 		public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath,
 				CategoryPath newPath) {
 			if (oldPath.getParent() == null) { // root has no parent
-				fireNodeChanged(null, ArchiveNode.this); // fire that the root changed
+				ArchiveNode.this.fireNodeChanged(); // fire that the root changed
 				return;
 			}
 			Category parentCategory = dtm.getCategory(oldPath.getParent());

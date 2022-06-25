@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.pe.cli;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
@@ -37,22 +37,7 @@ public class CliMetadataDirectory extends DataDirectory {
 
 	private CliMetadataRoot metadataRoot;
 
-	public static CliMetadataDirectory createCliMetadataDirectory(NTHeader ntHeader,
-			FactoryBundledWithBinaryReader reader) throws IOException {
-		CliMetadataDirectory cliMetadataDirectory =
-			(CliMetadataDirectory) reader.getFactory().create(CliMetadataDirectory.class);
-		cliMetadataDirectory.initCliMetadataDirectory(ntHeader, reader);
-		return cliMetadataDirectory;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public CliMetadataDirectory() {
-	}
-
-	private void initCliMetadataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	public CliMetadataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		this.ntHeader = ntHeader;
 		this.reader = reader;
 

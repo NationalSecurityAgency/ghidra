@@ -82,9 +82,10 @@ public class PackedDBHandle extends DBHandle {
 	}
 
 	@Override
-	protected synchronized void saveAs(BufferFile outFile, Long newDatabaseId, TaskMonitor monitor)
+	protected synchronized void saveAs(BufferFile outFile, Long newDatabaseId,
+			boolean associateWithNewFile, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		super.saveAs(outFile, newDatabaseId, monitor);
+		super.saveAs(outFile, newDatabaseId, associateWithNewFile, monitor);
 		if (pdb != null) {
 			pdb.dispose();
 			pdb = null;

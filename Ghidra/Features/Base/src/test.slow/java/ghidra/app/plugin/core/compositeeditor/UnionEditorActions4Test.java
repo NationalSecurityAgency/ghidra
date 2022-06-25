@@ -68,7 +68,7 @@ public class UnionEditorActions4Test extends AbstractUnionEditorTest {
 
 		num += 5;
 		assertEquals(num, model.getNumComponents());
-		checkSelection(new int[] { 2 });
+		checkSelection(new int[] { 7 });
 		assertEquals(getDataType(2), dt2);
 		assertEquals(getDataType(3), dt2);
 		assertEquals(getDataType(4), dt2);

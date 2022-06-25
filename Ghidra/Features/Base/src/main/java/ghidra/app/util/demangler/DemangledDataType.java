@@ -342,6 +342,9 @@ public class DemangledDataType extends DemangledType {
 	static DataType findDataType(DataTypeManager dataTypeManager, Demangled namespace,
 			String dtName) {
 
+		// TODO: add support for use of Program.getPreferredRootNamespaceCategoryPath when
+		// searching for datatypes
+
 		List<DataType> list = new ArrayList<>();
 		dataTypeManager.findDataTypes(dtName, list);
 		if (list.isEmpty()) {

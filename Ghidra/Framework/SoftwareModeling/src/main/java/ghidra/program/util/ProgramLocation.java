@@ -95,7 +95,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
 	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
 	 * original address can be retrieved using the {@link #getByteAddress()}" method.
-	 * 
+	 *
 	 * @param program the program associated with this program location (also used to obtain a
 	 *            code-unit-aligned address)
 	 * @param addr address of the location; cannot be null
@@ -118,7 +118,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
 	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
 	 * original address can be retrieved using the {@link #getByteAddress()} method.
-	 * 
+	 *
 	 * @param program the program associated with this program location (also used to obtain a
 	 *            code-unit-aligned address)
 	 * @param addr address for the location
@@ -132,7 +132,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
 	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
 	 * original address can be retrieved using the {@link #getByteAddress()} method.
-	 * 
+	 *
 	 * @param program the program associated with this program location (also used to obtain a
 	 *            code-unit-aligned address)
 	 * @param addr address for the location
@@ -150,7 +150,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
 	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
 	 * original address can be retrieved using the {@link #getByteAddress()} method.
-	 * 
+	 *
 	 * @param program the program associated with this program location (also used to obtain a
 	 *            code-unit-aligned address)
 	 * @param addr address for the location
@@ -170,6 +170,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	/**
 	 * Returns the componentPath for the {@link CodeUnit code unit}. Null will be returned if the
 	 * object is an {@link Instruction} or a top-level {@link Data} object.
+	 * @return the path.
 	 */
 	public int[] getComponentPath() {
 		return componentPath;
@@ -177,6 +178,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns the program associated with this location.
+	 * @return the program.
 	 */
 	public Program getProgram() {
 		return program;
@@ -184,11 +186,12 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns the address associated with this location.
-	 * 
+	 *
 	 * <p>
 	 * Note: this may not be the same as the byte address. For example, in a {@link CodeUnit code
 	 * unit} location this may be the minimum address of the code unit that contains the byte
 	 * address.
+	 * @return the address.
 	 */
 	public Address getAddress() {
 		return addr;
@@ -196,6 +199,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns the byte level address associated with this location.
+	 * @return the byte address.
 	 */
 	public Address getByteAddress() {
 		return byteAddr;
@@ -203,6 +207,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns the "referred to" address if the location is over an address in some field.
+	 * @return the address.
 	 */
 	public Address getRefAddress() {
 		return refAddr;
@@ -210,7 +215,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Save this program location to the given save state object.
-	 * 
+	 *
 	 * @param obj the save state object for saving the location
 	 */
 	public void saveState(SaveState obj) {
@@ -231,7 +236,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Restore this program location using the given program and save state object.
-	 * 
+	 *
 	 * @param program1 program to restore from
 	 * @param obj the save state to restore from
 	 */
@@ -254,7 +259,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Get the program location for the given program and save state object.
-	 * 
+	 *
 	 * @param program the program for the location
 	 * @param saveState the state to restore
 	 * @return the restored program location
@@ -274,7 +279,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 			}
 			// no address, it must be in a removed block; we can't use it
 		}
-		catch (RuntimeException e) { // restoreState may not parse the address if it is no longer valid.
+		catch (RuntimeException e) { // state may not parse the address if it is no longer valid
 		}
 		catch (ClassNotFoundException e) {
 			// not sure why we are ignoring this--if you know, then please let everyone else know
@@ -419,7 +424,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 		}
 		CodeUnit cu = p.getListing().getCodeUnitContaining(addr);
 
-		// if the codeunit is a data, try and dig down to the lowest subdata containing the address
+		// if the code unit is data, get the lowest sub-data containing the address
 		if (cu instanceof Data) {
 			Data data = (Data) cu;
 			cu = data.getPrimitiveAt((int) addr.subtract(data.getAddress()));
@@ -437,10 +442,10 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	}
 
 	/**
-	 * Returns true if this location represents a valid location in the given program
-	 * 
+	 * Returns true if this location represents a valid location in the given program.
+	 *
 	 * @param testProgram the program to test if this location is valid.
-	 * @return true if this location represents a valid location in the given program
+	 * @return true if this location represents a valid location in the given program.
 	 */
 	public boolean isValid(Program testProgram) {
 		return addr == null || testProgram.getAddressFactory().isValidAddress(addr);
@@ -448,7 +453,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns the row within the program location.
-	 * 
+	 *
 	 * @return the row within the program location.
 	 */
 	public int getRow() {
@@ -456,9 +461,9 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	}
 
 	/**
-	 * Returns the character offset in the display item at the (row,col)
-	 * 
-	 * @return the character offset in the display item at the (row,col)
+	 * Returns the character offset in the display item at the (row,col).
+	 *
+	 * @return the character offset in the display item at the (row,col).
 	 */
 	public int getCharOffset() {
 		return charOffset;
@@ -467,6 +472,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	/**
 	 * Returns the column index of the display piece represented by this location. For most
 	 * locations, there is only one display item per row, in which case this value will be 0.
+	 * @return the column.
 	 */
 	public int getColumn() {
 		return col;

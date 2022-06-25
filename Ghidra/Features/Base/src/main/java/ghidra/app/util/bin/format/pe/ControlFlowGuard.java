@@ -173,7 +173,7 @@ public class ControlFlowGuard {
 			IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_MASK) >> IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT;
 
 		// Pre-define base data types used to define table entry data type
-		DataType ibo32 = new ImageBaseOffset32DataType();
+		DataType ibo32 = new IBO32DataType();
 		DataType byteType = ByteDataType.dataType;
 
 		CategoryPath categoryPath = new CategoryPath(CategoryPath.ROOT, "CFG");
@@ -255,7 +255,7 @@ public class ControlFlowGuard {
 			program.getSymbolTable()
 					.createLabel(tableAddr, GuardCFAddressTakenIatTableName, SourceType.IMPORTED);
 			// Each table entry is an RVA (32-bit image base offset)
-			DataType ibo32 = new ImageBaseOffset32DataType();
+			DataType ibo32 = new IBO32DataType();
 			for (long i = 0; i < functionCount; i++) {
 				Data d =
 					PeUtils.createData(program, tableAddr.add(i * ibo32.getLength()), ibo32, log);

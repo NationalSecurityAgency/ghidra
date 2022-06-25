@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
@@ -58,21 +57,18 @@ public class ImportDescriptor implements StructConverter, ByteArrayConverter {
 	private List<ThunkData> intList = new ArrayList<ThunkData>();
 	private List<ThunkData> iatList = new ArrayList<ThunkData>();
 
-    static ImportDescriptor createImportDescriptor(
-            FactoryBundledWithBinaryReader reader, int index)
-            throws IOException {
-        ImportDescriptor importDescriptor = (ImportDescriptor) reader.getFactory().create(ImportDescriptor.class);
-        importDescriptor.initImportDescriptor(reader, index);
-        return importDescriptor;
-    }
-
-    private void initImportDescriptor(FactoryBundledWithBinaryReader reader, int index) throws IOException {
-        characteristics    = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
-        originalFirstThunk = characteristics;
-        timeDateStamp      = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
-        forwarderChain     = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
-        name               = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
-        firstThunk         = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
+	ImportDescriptor(BinaryReader reader, int index) throws IOException {
+		characteristics = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
+		originalFirstThunk = characteristics;
+		timeDateStamp = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
+		forwarderChain = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
+		name = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
+		firstThunk = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
     }
 
     /**

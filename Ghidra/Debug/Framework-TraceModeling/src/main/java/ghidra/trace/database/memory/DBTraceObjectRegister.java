@@ -23,13 +23,15 @@ import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.util.PathUtils;
 import ghidra.pcode.utils.Utils;
 import ghidra.trace.database.target.DBTraceObject;
+import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.memory.TraceObjectRegister;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
 import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.trace.util.TraceChangeRecord;
 
-public class DBTraceObjectRegister implements TraceObjectRegister {
+public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObjectInterface {
 	private final DBTraceObject object;
 
 	public DBTraceObjectRegister(DBTraceObject object) {
@@ -43,7 +45,7 @@ public class DBTraceObjectRegister implements TraceObjectRegister {
 
 	@Override
 	public TraceObjectThread getThread() {
-		return object.queryAncestorsInterface(object.getLifespan(), TraceObjectThread.class)
+		return object.queryCanonicalAncestorsInterface(TraceObjectThread.class)
 				.findAny()
 				.orElseThrow();
 	}
@@ -59,7 +61,7 @@ public class DBTraceObjectRegister implements TraceObjectRegister {
 
 	@Override
 	public int getLength() {
-		return TraceObjectInterfaceUtils.getValue(object, object.getMinSnap(),
+		return TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
 			TargetRegister.LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
 	}
 
@@ -101,5 +103,11 @@ public class DBTraceObjectRegister implements TraceObjectRegister {
 	public TraceMemoryState getState(long snap) {
 		return TraceMemoryState.values()[TraceObjectInterfaceUtils.getValue(object, snap, KEY_STATE,
 			Integer.class, TraceMemoryState.UNKNOWN.ordinal())];
+	}
+
+	@Override
+	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
+		// TODO: Once we decide how to map registers....
+		return null;
 	}
 }

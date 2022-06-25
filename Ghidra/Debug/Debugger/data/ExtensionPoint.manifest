@@ -2,6 +2,7 @@ AutoReadMemorySpec
 DebuggerBot
 DebuggerMappingOpinion
 DebuggerModelFactory
+DebuggerPlatformOpinion
 DebuggerProgramLaunchOpinion
 DisassemblyInject
 LocationTrackingSpec

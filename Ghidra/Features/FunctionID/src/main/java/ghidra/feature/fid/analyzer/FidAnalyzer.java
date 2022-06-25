@@ -129,6 +129,11 @@ public class FidAnalyzer extends AbstractAnalyzer {
 			Msg.warn(this, "No FID Libraries apply for language " + program.getLanguageID());
 			return false;
 		}
+
+		if (!isFullExecutable(program, set)) {
+			return true;
+		}
+
 		ApplyFidEntriesCommand cmd;
 		cmd = new ApplyFidEntriesCommand(set, scoreThreshold, multiScoreThreshold,
 			alwaysApplyFidLabels, createBookmarksEnabled);
@@ -137,9 +142,27 @@ public class FidAnalyzer extends AbstractAnalyzer {
 		// Name Change can change the nature of a function from a system
 		// library. Probably a better way to do this.
 		AutoAnalysisManager.getAnalysisManager(program)
-				.functionModifierChanged(
-					cmd.getFIDLocations());
+				.functionModifierChanged(cmd.getFIDLocations());
 		return true;
+	}
+
+	/**
+	 * Check if set contains the full executable or loaded/initialized memory areas.
+	 * 
+	 * @param program program to check
+	 * @param set set to check
+	 * @return true if all program executable or load/initialized memory is in set
+	 */
+	private boolean isFullExecutable(Program program, AddressSetView set) {
+		// if has an execute set, then set to FID, must contain the execute set
+		AddressSetView executeSet = program.getMemory().getExecuteSet();
+		if (!executeSet.isEmpty()) {
+			return set.contains(executeSet);
+		}
+
+		// if there are no execute blocks, then use loaded/initialized for program blocks
+		AddressSetView loadSet = program.getMemory().getLoadedAndInitializedAddressSet();
+		return set.contains(loadSet);
 	}
 
 	@Override
