@@ -35,9 +35,9 @@ dependencies {
 	api "org.apache.commons:commons-text:1.6"
 	api "commons-io:commons-io:2.11.0"	
 	api "com.google.code.gson:gson:2.9.0"
-	api 'org.bouncycastle:bcpkix-jdk15on:1.69' // requires bcutil and bcprov
-	api 'org.bouncycastle:bcprov-jdk15on:1.69'
-	api 'org.bouncycastle:bcutil-jdk15on:1.69'
+	api 'org.bouncycastle:bcpkix-jdk15on:1.70' // requires bcutil and bcprov
+	api 'org.bouncycastle:bcprov-jdk15on:1.70'
+	api 'org.bouncycastle:bcutil-jdk15on:1.70'
 
 	compileOnly "junit:junit:4.12"
 }
