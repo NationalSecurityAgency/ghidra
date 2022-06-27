@@ -31,7 +31,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ProgramContext;
 import ghidra.program.util.ProgramContextImpl;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.language.DBTraceLanguageManager;
+import ghidra.trace.database.guest.DBTracePlatformManager;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
@@ -83,13 +83,13 @@ public class DBTraceRegisterContextManager extends
 		}
 	}
 
-	protected final DBTraceLanguageManager languageManager;
+	protected final DBTracePlatformManager languageManager;
 
 	protected final Map<Language, ProgramContext> defaultContexts = new HashMap<>();
 
 	public DBTraceRegisterContextManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
-			DBTraceThreadManager threadManager, DBTraceLanguageManager languageManager)
+			DBTraceThreadManager threadManager, DBTracePlatformManager languageManager)
 			throws VersionException, IOException {
 		super(NAME, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager);
 		this.languageManager = languageManager;

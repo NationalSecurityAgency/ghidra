@@ -109,7 +109,11 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 		if (getManager().isKernelMode()) {
 			return "[PR" + thread.getId().id + "]";
 		}
-		String tidstr = Long.toString(thread.getTid(), base);
+		Long tid = thread.getTid();
+		if (tid < 0) {
+			return "[" + thread.getId().id + "]";
+		}
+		String tidstr = Long.toString(tid, base);
 		if (base == 16) {
 			tidstr = "0x" + tidstr;
 		}

@@ -18,7 +18,6 @@ package ghidra.trace.model.time.schedule;
 import java.util.*;
 
 import ghidra.pcode.emu.PcodeMachine;
-import ghidra.pcode.emu.PcodeThread;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -339,9 +338,9 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 			throws CancelledException {
 		TraceThread lastThread = getEventThread(trace);
 		lastThread =
-			steps.execute(trace, lastThread, machine, PcodeThread::stepInstruction, monitor);
+			steps.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
 		lastThread =
-			pSteps.execute(trace, lastThread, machine, PcodeThread::stepPcodeOp, monitor);
+			pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
 	}
 
 	/**
@@ -383,13 +382,13 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		if (remains.isNop()) {
 			Sequence pRemains = this.pSteps.relativize(position.pSteps);
 			lastThread =
-				pRemains.execute(trace, lastThread, machine, PcodeThread::stepPcodeOp, monitor);
+				pRemains.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
 		}
 		else {
 			lastThread =
-				remains.execute(trace, lastThread, machine, PcodeThread::stepInstruction, monitor);
+				remains.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
 			lastThread =
-				pSteps.execute(trace, lastThread, machine, PcodeThread::stepPcodeOp, monitor);
+				pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
 		}
 	}
 
@@ -408,6 +407,19 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	public TraceSchedule steppedForward(TraceThread thread, long tickCount) {
 		Sequence steps = this.steps.clone();
 		steps.advance(new TickStep(thread == null ? -1 : thread.getKey(), tickCount));
+		return new TraceSchedule(snap, steps, new Sequence());
+	}
+
+	/**
+	 * Behaves as in {@link #steppedForward(TraceThread, long)}, but by appending skips
+	 * 
+	 * @param thread the thread to step, or null for the "last thread"
+	 * @param tickCount the number of skips to take the thread forward
+	 * @return the resulting schedule
+	 */
+	public TraceSchedule skippedForward(TraceThread thread, long tickCount) {
+		Sequence steps = this.steps.clone();
+		steps.advance(new SkipStep(thread == null ? -1 : thread.getKey(), tickCount));
 		return new TraceSchedule(snap, steps, new Sequence());
 	}
 

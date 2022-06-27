@@ -15,41 +15,55 @@
  */
 package ghidra.app.util.bin.format.coff.relocation;
 
+import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.coff.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.NotFoundException;
 
-public class X86_64_CoffRelocationHandler extends CoffRelocationHandler {
+public class X86_64_CoffRelocationHandler implements CoffRelocationHandler {
 
 	@Override
 	public boolean canRelocate(CoffFileHeader fileHeader) {
 		return fileHeader.getMachine() == CoffMachineType.IMAGE_FILE_MACHINE_AMD64;
 	}
-
+	
 	@Override
-	public void relocate(Program program, Address address, Symbol symbol,
-			CoffRelocation relocation) throws MemoryAccessException, NotFoundException {
+	public void relocate(Address address, CoffRelocation relocation,
+			CoffRelocationContext relocationContext)
+			throws MemoryAccessException, NotFoundException, RelocationException {
+
+		Program program = relocationContext.getProgram();
+		Memory mem = program.getMemory();
 
 		int distance = 0;
-		long addend = program.getMemory().getInt(address);
+		long addend = mem.getInt(address);
 
 		switch (relocation.getType()) {
 
 			// We are implementing these types:
-			case IMAGE_REL_AMD64_ADDR64:
-				addend = program.getMemory().getLong(address); // overwrite default 4-byte addend
-				program.getMemory().setLong(address, symbol.getAddress().add(addend).getOffset());
+			case IMAGE_REL_AMD64_ADDR64: {
+				addend = mem.getLong(address); // overwrite default 4-byte addend
+				long value = relocationContext.getSymbolAddress(relocation)
+						.add(addend)
+						.getOffset();
+				mem.setLong(address, value);
 				break;
-			case IMAGE_REL_AMD64_ADDR32:
-				program.getMemory().setInt(address,
-					(int) symbol.getAddress().add(addend).getOffset());
+			}
+			case IMAGE_REL_AMD64_ADDR32: {
+				int value = (int) relocationContext.getSymbolAddress(relocation)
+						.add(addend)
+						.getOffset();
+				mem.setInt(address, value);
 				break;
+			}
 			case IMAGE_REL_AMD64_ADDR32NB: {
-				program.getMemory().setInt(address,
-					(int) symbol.getAddress().add(addend).subtract(program.getImageBase()));
+				int value = (int) relocationContext.getSymbolAddress(relocation)
+						.add(addend)
+						.subtract(program.getImageBase());
+				mem.setInt(address, value);
 				break;
 			}
 			case IMAGE_REL_AMD64_REL32_5: { // fallthrough to IMAGE_REL_AMD64_REL32 to get correct 'distance'
@@ -68,8 +82,11 @@ public class X86_64_CoffRelocationHandler extends CoffRelocationHandler {
 				distance++;
 			}
 			case IMAGE_REL_AMD64_REL32: {
-				program.getMemory().setInt(address,
-					(int) symbol.getAddress().add(addend).subtract(address) - 4 - distance);
+				int value = (int) relocationContext.getSymbolAddress(relocation)
+						.add(addend)
+						.subtract(address);
+				value -= (distance + 4);
+				mem.setInt(address, value);
 				break;
 			}
 

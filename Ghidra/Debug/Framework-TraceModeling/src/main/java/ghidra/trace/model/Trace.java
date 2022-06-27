@@ -32,12 +32,13 @@ import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointManager;
 import ghidra.trace.model.context.TraceRegisterContextManager;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
-import ghidra.trace.model.language.TraceLanguageManager;
+import ghidra.trace.model.guest.TracePlatformManager;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
+import ghidra.trace.model.property.TraceAddressPropertyManager;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackManager;
 import ghidra.trace.model.symbol.*;
@@ -388,6 +389,8 @@ public interface Trace extends DataTypeManagerDomainObject {
 
 	AddressFactory getBaseAddressFactory();
 
+	TraceAddressPropertyManager getAddressPropertyManager();
+
 	TraceBookmarkManager getBookmarkManager();
 
 	TraceBreakpointManager getBreakpointManager();
@@ -399,7 +402,7 @@ public interface Trace extends DataTypeManagerDomainObject {
 
 	TraceEquateManager getEquateManager();
 
-	TraceLanguageManager getLanguageManager();
+	TracePlatformManager getPlatformManager();
 
 	TraceMemoryManager getMemoryManager();
 

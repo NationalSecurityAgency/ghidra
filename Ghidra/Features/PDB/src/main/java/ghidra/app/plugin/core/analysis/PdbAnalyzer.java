@@ -72,7 +72,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 
 		if (PdbParser.isAlreadyLoaded(program)) {
 			if (!PdbUniversalAnalyzer.isEnabled(program)) { // yield to other analyzer complaining
-				Msg.info(this, "Skipping PDB analysis since it has previouslu run.");
+				Msg.info(this, "Skipping PDB analysis since it has previously run.");
 				Msg.info(this, ">> Clear 'PDB Loaded' program property or use Load PDB action if " +
 					"additional PDB processing required.");
 			}

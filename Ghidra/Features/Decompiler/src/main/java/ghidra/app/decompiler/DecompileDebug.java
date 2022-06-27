@@ -343,8 +343,9 @@ public class DecompileDebug {
 			new DataTypeDependencyOrderer(program.getDataTypeManager(), dtypes);
 		//First output all structures as zero size so to avoid any cyclic dependencies.
 		for (DataType dataType : TypeOrderer.getCompositeList()) {
-			debugStream.write(
-				(dtmanage.buildCompositeZeroSizePlaceholder(dataType) + "\n").toString().getBytes());
+			debugStream
+					.write((dtmanage.buildCompositeZeroSizePlaceholder(dataType) + "\n").toString()
+							.getBytes());
 		}
 		//Next, use the dependency stack to output types.
 		for (DataType dataType : TypeOrderer.getDependencyList()) {
@@ -553,7 +554,7 @@ public class DecompileDebug {
 	private void dumpDatabases(OutputStream debugStream) throws IOException {
 		Namespace scopename = null;
 		ArrayList<Namespace> spaceList = orderNamespaces();
-		debugStream.write("<db scodeidbyname=\"false\">\n".getBytes());
+		debugStream.write("<db scopeidbyname=\"false\">\n".getBytes());
 		for (Namespace element : spaceList) {
 			scopename = element;
 			StringBuilder datahead = new StringBuilder();

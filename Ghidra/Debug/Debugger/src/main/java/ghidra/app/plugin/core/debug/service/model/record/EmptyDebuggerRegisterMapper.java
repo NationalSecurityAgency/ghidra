@@ -50,7 +50,7 @@ public class EmptyDebuggerRegisterMapper implements DebuggerRegisterMapper {
 
 	@Override
 	public Set<Register> getRegistersOnTarget() {
-		return null;
+		return Set.of();
 	}
 
 	@Override

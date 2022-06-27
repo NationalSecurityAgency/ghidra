@@ -26,6 +26,7 @@ import com.google.common.collect.RangeSet;
 import agent.dbgeng.manager.DbgModuleMemory;
 import agent.dbgeng.manager.cmd.*;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
+import agent.dbgeng.manager.impl.DbgProcessImpl;
 import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
@@ -53,13 +54,17 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 	public DbgModelTargetMemoryContainerImpl(DbgModelTargetProcess process) {
 		super(process.getModel(), process, "Memory", "MemoryContainer");
 		this.process = process;
-		requestElements(true);
+		if (!getModel().isSuppressDescent()) {
+			requestElements(true);
+		}
 	}
 
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
 		DbgModelTargetProcess targetProcess = getParentProcess();
-		if (!refresh || !targetProcess.getProcess().equals(getManager().getCurrentProcess())) {
+		DbgProcessImpl currentProcess = getManager().getCurrentProcess();
+		if (!refresh ||
+			(currentProcess != null && !currentProcess.equals(targetProcess.getProcess()))) {
 			return AsyncUtils.NIL;
 		}
 		return listMemory().thenAccept(byName -> {
@@ -89,6 +94,9 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		DbgManagerImpl manager = getManager();
 		if (manager.isKernelMode()) {
 			return manager.execute(new DbgListKernelMemoryRegionsCommand(manager));
+		}
+		if (manager.useAltMemoryQuery()) {
+			return manager.execute(new DbgListMemoryRegionsCommandAlt(manager));
 		}
 		return manager.execute(new DbgListMemoryRegionsCommand(manager));
 	}

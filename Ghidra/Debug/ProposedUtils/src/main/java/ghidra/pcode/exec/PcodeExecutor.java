@@ -211,6 +211,10 @@ public class PcodeExecutor<T> {
 		}
 	}
 
+	public void skip(PcodeFrame frame) {
+		frame.nextOp();
+	}
+
 	protected int getIntConst(Varnode vn) {
 		assert vn.getAddress().getAddressSpace().isConstantSpace();
 		return (int) vn.getAddress().getOffset();

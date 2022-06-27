@@ -136,6 +136,7 @@ public enum BackgroundUtils {
 			boolean hasProgress, boolean canCancel,
 			Function<TaskMonitor, CompletableFuture<T>> futureProducer) {
 		var dialog = new TaskDialog(name, canCancel, true, hasProgress) {
+			CancelledListener cancelledListener = this::cancelled;
 			CompletableFuture<T> orig = futureProducer.apply(this);
 			CompletableFuture<T> future = orig.exceptionally(ex -> {
 				if (AsyncUtils.unwrapThrowable(ex) instanceof CancellationException) {
@@ -148,11 +149,15 @@ public enum BackgroundUtils {
 				return v;
 			});
 
-			@Override
-			protected void cancelCallback() {
+			{
+				addCancelledListener(cancelledListener);
+			}
+
+			private void cancelled() {
 				future.cancel(true);
 				close();
 			}
+
 		};
 		if (!dialog.orig.isDone()) {
 			tool.showDialog(dialog);

@@ -250,9 +250,14 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			}
 			if (proxy instanceof TargetExecutionStateful) {
 				if (isValid()) {
-					TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
-					TargetExecutionState state = stateful.getExecutionState();
-					attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, state);
+					if (attributes.containsKey(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)) {
+						TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
+						TargetExecutionState state = stateful.getExecutionState();
+						attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, state);
+					} else {
+						attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME,
+							TargetExecutionState.INACTIVE);
+					}
 				}
 			}
 			if (proxy instanceof TargetAttacher) {

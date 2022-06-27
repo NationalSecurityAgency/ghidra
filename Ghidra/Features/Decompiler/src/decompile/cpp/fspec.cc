@@ -16,6 +16,38 @@
 #include "fspec.hh"
 #include "funcdata.hh"
 
+AttributeId ATTRIB_CUSTOM = AttributeId("custom",54);
+AttributeId ATTRIB_DOTDOTDOT = AttributeId("dotdotdot",55);
+AttributeId ATTRIB_EXTENSION = AttributeId("extension",56);
+AttributeId ATTRIB_HASTHIS = AttributeId("hasthis",57);
+AttributeId ATTRIB_INLINE = AttributeId("inline",58);
+AttributeId ATTRIB_KILLEDBYCALL = AttributeId("killedbycall",59);
+AttributeId ATTRIB_MAXSIZE = AttributeId("maxsize",60);
+AttributeId ATTRIB_MINSIZE = AttributeId("minsize",61);
+AttributeId ATTRIB_MODELLOCK = AttributeId("modellock",62);
+AttributeId ATTRIB_NORETURN = AttributeId("noreturn",63);
+AttributeId ATTRIB_POINTERMAX = AttributeId("pointermax",64);
+AttributeId ATTRIB_SEPARATEFLOAT = AttributeId("separatefloat",65);
+AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",66);
+AttributeId ATTRIB_STRATEGY = AttributeId("strategy",67);
+AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",68);
+AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",69);
+
+ElementId ELEM_GROUP = ElementId("group",75);
+ElementId ELEM_INTERNALLIST = ElementId("internallist",76);
+ElementId ELEM_KILLEDBYCALL = ElementId("killedbycall",77);
+ElementId ELEM_LIKELYTRASH = ElementId("likelytrash",78);
+ElementId ELEM_LOCALRANGE = ElementId("localrange",79);
+ElementId ELEM_MODEL = ElementId("model",80);
+ElementId ELEM_PARAM = ElementId("param",81);
+ElementId ELEM_PARAMRANGE = ElementId("paramrange",82);
+ElementId ELEM_PENTRY = ElementId("pentry",83);
+ElementId ELEM_PROTOTYPE = ElementId("prototype",84);
+ElementId ELEM_RESOLVEPROTOTYPE = ElementId("resolveprototype",85);
+ElementId ELEM_RETPARAM = ElementId("retparam",86);
+ElementId ELEM_RETURNSYM = ElementId("returnsym",87);
+ElementId ELEM_UNAFFECTED = ElementId("unaffected",88);
+
 /// \brief Find a ParamEntry matching the given storage Varnode
 ///
 /// Search through the list backward.
@@ -399,25 +431,25 @@ Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz) const
       index = numslots;
       index -= slotnum;
       index -= slotsused;
-    } 
+    }
     else
       index = slotnum;
     res = Address(spaceid, addressbase + index * alignment);
     slotnum += slotsused;	// Inform caller of number of slots used
   }
   if (!isLeftJustified())   // Adjust for right justified (big endian)
-    res = res + (spaceused - sz); 
+    res = res + (spaceused - sz);
   return res;
 }
 
-/// \brief Restore the entry from an XML stream
+/// \brief Decode a \<pentry> element into \b this object
 ///
-/// \param el is the root \<pentry> element
+/// \param decoder is the stream decoder
 /// \param manage is a manager to resolve address space references
 /// \param normalstack is \b true if the parameters should be allocated from the front of the range
 /// \param grouped is \b true if \b this will be grouped with other entries
 /// \param curList is the list of ParamEntry defined up to this point
-void ParamEntry::restoreXml(const Element *el,const AddrSpaceManager *manage,bool normalstack,bool grouped,list<ParamEntry> &curList)
+void ParamEntry::decode(Decoder &decoder,const AddrSpaceManager *manage,bool normalstack,bool grouped,list<ParamEntry> &curList)
 
 {
   flags = 0;
@@ -426,54 +458,49 @@ void ParamEntry::restoreXml(const Element *el,const AddrSpaceManager *manage,boo
   alignment = 0;		// default
   numslots = 1;
   groupsize = 1;		// default
-  int4 num = el->getNumAttributes();
-  
-  for(int4 i=0;i<num;++i) {
-    const string &attrname( el->getAttributeName(i) );
-    if (attrname=="minsize") {
-      istringstream i1(el->getAttributeValue(i));
-      i1.unsetf(ios::dec | ios::hex | ios::oct);
-      i1 >> minsize;
+
+  uint4 elemId = decoder.openElement(ELEM_PENTRY);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_MINSIZE) {
+      minsize = decoder.readSignedInteger();
     }
-    else if (attrname == "size") { // old style
-      istringstream i2(el->getAttributeValue(i));
-      i2.unsetf(ios::dec | ios::hex | ios::oct);
-      i2 >> alignment;
+    else if (attribId == ATTRIB_SIZE) { // old style
+      alignment = decoder.readSignedInteger();
     }
-    else if (attrname == "align") { // new style
-      istringstream i4(el->getAttributeValue(i));
-      i4.unsetf(ios::dec | ios::hex | ios::oct);
-      i4 >> alignment;
+    else if (attribId == ATTRIB_ALIGN) { // new style
+      alignment = decoder.readSignedInteger();
     }
-    else if (attrname == "maxsize") {
-      istringstream i3(el->getAttributeValue(i));
-      i3.unsetf(ios::dec | ios::hex | ios::oct);
-      i3 >> size;
+    else if (attribId == ATTRIB_MAXSIZE) {
+      size = decoder.readSignedInteger();
     }
-    else if (attrname == "metatype")
-      type = string2metatype(el->getAttributeValue(i));
-    else if (attrname == "extension") {
+    else if (attribId == ATTRIB_METATYPE)
+      type = string2metatype(decoder.readString());
+    else if (attribId == ATTRIB_EXTENSION) {
       flags &= ~((uint4)(smallsize_zext | smallsize_sext | smallsize_inttype));
-      if (el->getAttributeValue(i) == "sign")
+      string ext = decoder.readString();
+      if (ext == "sign")
 	flags |= smallsize_sext;
-      else if (el->getAttributeValue(i) == "zero")
+      else if (ext == "zero")
 	flags |= smallsize_zext;
-      else if (el->getAttributeValue(i) == "inttype")
+      else if (ext == "inttype")
 	flags |= smallsize_inttype;
-      else if (el->getAttributeValue(i) == "float")
+      else if (ext == "float")
 	flags |= smallsize_floatext;
-      else if (el->getAttributeValue(i) != "none")
+      else if (ext != "none")
 	throw LowlevelError("Bad extension attribute");
     }
     else
-      throw LowlevelError("Unknown ParamEntry attribute: "+attrname);
+      throw LowlevelError("Unknown <pentry> attribute");
   }
   if ((size==-1)||(minsize==-1))
     throw LowlevelError("ParamEntry not fully specified");
   if (alignment == size)
     alignment = 0;
   Address addr;
-  addr = Address::restoreXml( *el->getChildren().begin(),manage);
+  addr = Address::decode(decoder,manage);
+  decoder.closeElement(elemId);
   spaceid = addr.getSpace();
   addressbase = addr.getOffset();
   if (alignment != 0) {
@@ -741,7 +768,7 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
 
   for(int4 i=0;i<hitlist.size();++i) {
     const ParamEntry *curentry = hitlist[i];
-    
+
     if (curentry == (const ParamEntry *)0) {
       curentry = selectUnreferenceEntry(i, (floatCount > intCount) ? TYPE_FLOAT : TYPE_UNKNOWN);
       if (curentry == (const ParamEntry *)0)
@@ -768,7 +795,7 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
 	  slot = endslot;
 	  endslot = tmp;
 	}
-	
+
 	while(slotlist.size() <= endslot)
 	  slotlist.push_back(0);
 	while(slot<=endslot) {
@@ -831,7 +858,7 @@ void ParamListStandard::separateSections(ParamActive *active,int4 &oneStart,int4
 ///
 /// Only one trial within an exclusion group can have active use, mark all others as unused.
 /// \param active is the set of trials, which must be sorted on group
-/// \param groupUper is the biggest group number to be marked
+/// \param groupUpper is the biggest group number to be marked
 /// \param groupStart is the index of the first trial in the smallest group to be marked
 /// \param index is the specified trial index that is \e not to be marked
 void ParamListStandard::markGroupNoUse(ParamActive *active,int4 groupUpper,int4 groupStart,int4 index)
@@ -1077,9 +1104,9 @@ void ParamListStandard::populateResolver(void)
   }
 }
 
-/// \brief Read a \<pentry> tag and add it to \b this list
+/// \brief Parse a \<pentry> element and add it to \b this list
 ///
-/// \param el is the \<pentry element
+/// \param decoder is the stream decoder
 /// \param manage is manager for parsing address spaces
 /// \param effectlist holds any passed back effect records
 /// \param groupid is the group to which the new ParamEntry is assigned
@@ -1087,11 +1114,11 @@ void ParamListStandard::populateResolver(void)
 /// \param autokill is \b true if parameters are automatically added to the killedbycall list
 /// \param splitFloat is \b true if floating-point parameters are in their own resource section
 /// \param grouped is \b true if the new ParamEntry is grouped with other entries
-void ParamListStandard::parsePentry(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
+void ParamListStandard::parsePentry(Decoder &decoder,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
 				    int4 groupid,bool normalstack,bool autokill,bool splitFloat,bool grouped)
 {
   entry.emplace_back(groupid);
-  entry.back().restoreXml(el,manage,normalstack,grouped,entry);
+  entry.back().decode(decoder,manage,normalstack,grouped,entry);
   if (splitFloat) {
     if (!grouped && entry.back().getType() == TYPE_FLOAT) {
       if (resourceTwoStart >= 0)
@@ -1111,29 +1138,25 @@ void ParamListStandard::parsePentry(const Element *el,const AddrSpaceManager *ma
     numgroup = maxgroup;
 }
 
-/// \brief Read a group of \<pentry> tags that are allocated as a group
+/// \brief Parse a sequence of \<pentry> elements that are allocated as a group
 ///
 /// All ParamEntry objects will share the same \b group id.
-/// \param el is the \<pentry element
+/// \param decoder is the stream decoder
 /// \param manage is manager for parsing address spaces
 /// \param effectlist holds any passed back effect records
 /// \param groupid is the group to which all ParamEntry elements are assigned
 /// \param normalstack is \b true if the parameters should be allocated from the front of the range
 /// \param autokill is \b true if parameters are automatically added to the killedbycall list
 /// \param splitFloat is \b true if floating-point parameters are in their own resource section
-void ParamListStandard::parseGroup(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
+void ParamListStandard::parseGroup(Decoder &decoder,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
 				   int4 groupid,bool normalstack,bool autokill,bool splitFloat)
 {
-  const List &flist(el->getChildren());
-  List::const_iterator iter = flist.begin();
   int4 basegroup = numgroup;
   ParamEntry *previous1 = (ParamEntry *)0;
   ParamEntry *previous2 = (ParamEntry *)0;
-  for(;iter!=flist.end();++iter) {
-    const Element *subel = *iter;
-    if (subel->getName() != "pentry")
-      throw LowlevelError("Expected <pentry> child of <group>: " + subel->getName());
-    parsePentry(subel, manage, effectlist, basegroup, normalstack, autokill, splitFloat, true);
+  uint4 elemId = decoder.openElement(ELEM_GROUP);
+  while(decoder.peekElement() != 0) {
+    parsePentry(decoder, manage, effectlist, basegroup, normalstack, autokill, splitFloat, true);
     ParamEntry &pentry( entry.back() );
     if (pentry.getSpace()->getType() == IPTR_JOIN)
       throw LowlevelError("<pentry> in the join space not allowed in <group> tag");
@@ -1145,6 +1168,7 @@ void ParamListStandard::parseGroup(const Element *el,const AddrSpaceManager *man
     previous2 = previous1;
     previous1 = &pentry;
   }
+  decoder.closeElement(elemId);
 }
 
 void ParamListStandard::fillinMap(ParamActive *active) const
@@ -1306,8 +1330,8 @@ void ParamListStandard::getRangeList(AddrSpace *spc,RangeList &res) const
   }
 }
 
-void ParamListStandard::restoreXml(const Element *el,const AddrSpaceManager *manage,
-				   vector<EffectRecord> &effectlist,bool normalstack)
+void ParamListStandard::decode(Decoder &decoder,const AddrSpaceManager *manage,
+			       vector<EffectRecord> &effectlist,bool normalstack)
 
 {
   numgroup = 0;
@@ -1316,35 +1340,35 @@ void ParamListStandard::restoreXml(const Element *el,const AddrSpaceManager *man
   thisbeforeret = false;
   bool splitFloat = true;		// True if we should split FLOAT entries into their own resource section
   bool autokilledbycall = false;
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    const string &attrname( el->getAttributeName(i) );
-    if (attrname == "pointermax") {
-      istringstream i1(el->getAttributeValue(i));
-      i1.unsetf(ios::dec | ios::hex | ios::oct);
-      i1 >> pointermax;
+  uint4 elemId = decoder.openElement();
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_POINTERMAX) {
+      pointermax = decoder.readSignedInteger();
     }
-    else if (attrname == "thisbeforeretpointer") {
-      thisbeforeret = xml_readbool( el->getAttributeValue(i) );
+    else if (attribId == ATTRIB_THISBEFORERETPOINTER) {
+      thisbeforeret = decoder.readBool();
     }
-    else if (attrname == "killedbycall") {
-      autokilledbycall = xml_readbool( el->getAttributeValue(i) );
+    else if (attribId == ATTRIB_KILLEDBYCALL) {
+      autokilledbycall = decoder.readBool();
     }
-    else if (attrname == "separatefloat") {
-      splitFloat = xml_readbool( el->getAttributeValue(i) );
+    else if (attribId == ATTRIB_SEPARATEFLOAT) {
+      splitFloat = decoder.readBool();
     }
   }
   resourceTwoStart = splitFloat ? -1 : 0;
-  const List &flist(el->getChildren());
-  List::const_iterator fiter;
-  for(fiter=flist.begin();fiter!=flist.end();++fiter) {
-    const Element *subel = *fiter;
-    if (subel->getName() == "pentry") {
-      parsePentry(subel, manage, effectlist, numgroup, normalstack, autokilledbycall, splitFloat, false);
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_PENTRY) {
+      parsePentry(decoder, manage, effectlist, numgroup, normalstack, autokilledbycall, splitFloat, false);
     }
-    else if (subel->getName() == "group") {
-      parseGroup(subel, manage, effectlist, numgroup, normalstack, autokilledbycall, splitFloat);
+    else if (subId == ELEM_GROUP) {
+      parseGroup(decoder, manage, effectlist, numgroup, normalstack, autokilledbycall, splitFloat);
     }
   }
+  decoder.closeElement(elemId);
   calcDelay();
   populateResolver();
 }
@@ -1528,10 +1552,10 @@ void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,TypeFactory
   }
 }
 
-void ParamListStandardOut::restoreXml(const Element *el,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,bool normalstack)
+void ParamListStandardOut::decode(Decoder &decoder,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,bool normalstack)
 
 {
-  ParamListRegisterOut::restoreXml(el,manage,effectlist,normalstack);
+  ParamListRegisterOut::decode(decoder,manage,effectlist,normalstack);
   // Check for double precision entries
   list<ParamEntry>::iterator iter;
   ParamEntry *previous1 = (ParamEntry *)0;
@@ -1762,7 +1786,7 @@ void ParamActive::deleteUnusedTrials(void)
 {
   vector<ParamTrial> newtrials;
   int4 slot = 1;
-  
+
   for(int4 i=0;i<trial.size();++i) {
     ParamTrial &curtrial(trial[i]);
     if (curtrial.isUsed()) {
@@ -1784,7 +1808,7 @@ void ParamActive::splitTrial(int4 i,int4 sz)
     throw LowlevelError("Cannot split parameter when the placeholder has not been recovered");
   vector<ParamTrial> newtrials;
   int4 slot = trial[i].getSlot();
-  
+
   for(int4 j=0;j<i;++j) {
     newtrials.push_back(trial[j]);
     int4 oldslot = newtrials.back().getSlot();
@@ -1868,36 +1892,32 @@ FspecSpace::FspecSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
     setFlags(big_endian);
 }
 
-void FspecSpace::saveXmlAttributes(ostream &s,uintb offset) const
+void FspecSpace::encodeAttributes(Encoder &encoder,uintb offset) const
 
 {
   FuncCallSpecs *fc = (FuncCallSpecs *)(uintp)offset;
 
   if (fc->getEntryAddress().isInvalid())
-    s << " space=\"fspec\"";
+    encoder.writeString(ATTRIB_SPACE, "fspec");
   else {
     AddrSpace *id = fc->getEntryAddress().getSpace();
-    a_v(s,"space",id->getName()); // Just append the proper attributes
-    s << ' ' << "offset=\"";
-    printOffset(s,fc->getEntryAddress().getOffset());
-    s << "\"";
+    encoder.writeString(ATTRIB_SPACE, id->getName());
+    encoder.writeUnsignedInteger(ATTRIB_OFFSET, fc->getEntryAddress().getOffset());
   }
 }
 
-void FspecSpace::saveXmlAttributes(ostream &s,uintb offset,int4 size) const
+void FspecSpace::encodeAttributes(Encoder &encoder,uintb offset,int4 size) const
 
 {
   FuncCallSpecs *fc = (FuncCallSpecs *)(uintp)offset;
 
   if (fc->getEntryAddress().isInvalid())
-    s << " space=\"fspec\"";
+    encoder.writeString(ATTRIB_SPACE, "fspec");
   else {
     AddrSpace *id = fc->getEntryAddress().getSpace();
-    a_v(s,"space",id->getName()); // Just append the proper attributes
-    s << ' ' << "offset=\"";
-    printOffset(s,fc->getEntryAddress().getOffset());
-    s << "\"";
-    a_v_i(s,"size",size);
+    encoder.writeString(ATTRIB_SPACE, id->getName());
+    encoder.writeUnsignedInteger(ATTRIB_OFFSET, fc->getEntryAddress().getOffset());
+    encoder.writeSignedInteger(ATTRIB_SIZE, size);
   }
 }
 
@@ -1917,13 +1937,13 @@ void FspecSpace::printRaw(ostream &s,uintb offset) const
 void FspecSpace::saveXml(ostream &s) const
 
 {
-  throw LowlevelError("Should never save fspec space to XML");
+  throw LowlevelError("Should never encode fspec space to stream");
 }
 
-void FspecSpace::restoreXml(const Element *el)
+void FspecSpace::decode(Decoder &decoder)
 
 {
-  throw LowlevelError("Should never restore fspec space from XML");
+  throw LowlevelError("Should never decode fspec space from stream");
 }
 
 /// The type is set to \e unknown_effect
@@ -1958,27 +1978,27 @@ EffectRecord::EffectRecord(const VarnodeData &data,uint4 t)
   type = t;
 }
 
-/// Writes just an \<addr> tag.  The effect type is indicated by the parent tag.
-/// \param s is the output stream
-void EffectRecord::saveXml(ostream &s) const
+/// Encode just an \<addr> element.  The effect type is indicated by the parent element.
+/// \param encoder is the stream encoder
+void EffectRecord::encode(Encoder &encoder) const
 
 {
   Address addr(range.space,range.offset);
   if ((type == unaffected)||(type == killedbycall)||(type == return_address))
-    addr.saveXml(s,range.size);
+    addr.encode(encoder,range.size);
   else
     throw LowlevelError("Bad EffectRecord type");
 }
 
-/// Reads an \<addr> tag to get the memory range. The effect type is inherited from the parent.
+/// Parse an \<addr> element to get the memory range. The effect type is inherited from the parent.
 /// \param grouptype is the effect inherited from the parent
-/// \param el is address element
+/// \param decoder is the stream decoder
 /// \param manage is a manager to resolve address space references
-void EffectRecord::restoreXml(uint4 grouptype,const Element *el,const AddrSpaceManager *manage)
+void EffectRecord::decode(uint4 grouptype,Decoder &decoder,const AddrSpaceManager *manage)
 
 {
   type = grouptype;
-  range.restoreXml(el,manage);
+  range.decode(decoder,manage);
 }
 
 void ProtoModel::defaultLocalRange(void)
@@ -2094,7 +2114,7 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
 
   effectlist = op2.effectlist;
   likelytrash = op2.likelytrash;
-  
+
   injectUponEntry = op2.injectUponEntry;
   injectUponReturn = op2.injectUponReturn;
   localrange = op2.localrange;
@@ -2250,13 +2270,11 @@ uint4 ProtoModel::hasEffect(const Address &addr,int4 size) const
   return lookupEffect(effectlist,addr,size);
 }
 
-/// Read in details about \b this model from a \<prototype> tag
-/// \param el is the \<prototype> element
-void ProtoModel::restoreXml(const Element *el)
+/// Parse details about \b this model from a \<prototype> element
+/// \param decoder is the stream decoder
+void ProtoModel::decode(Decoder &decoder)
 
 {
-  int4 numattr = el->getNumAttributes();
-
   bool sawlocalrange = false;
   bool sawparamrange = false;
   bool sawretaddr = false;
@@ -2274,32 +2292,36 @@ void ProtoModel::restoreXml(const Element *el)
   injectUponEntry = -1;
   injectUponReturn = -1;
   likelytrash.clear();
-  for(int4 i=0;i<numattr;++i) {
-    if (el->getAttributeName(i) == "name")
-      name = el->getAttributeValue(i);
-    else if (el->getAttributeName(i) == "extrapop") {
-      if (el->getAttributeValue(i) == "unknown")
+  uint4 elemId = decoder.openElement(ELEM_PROTOTYPE);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_NAME)
+      name = decoder.readString();
+    else if (attribId == ATTRIB_EXTRAPOP) {
+      string extrapopString = decoder.readString();
+      if (extrapopString == "unknown")
 	extrapop = extrapop_unknown;
       else {
-	istringstream s(el->getAttributeValue(i));
+	istringstream s(extrapopString);
 	s.unsetf(ios::dec | ios::hex | ios::oct);
 	s >> extrapop;
       }
     }
-    else if (el->getAttributeName(i) == "stackshift") {
+    else if (attribId == ATTRIB_STACKSHIFT) {
       // Allow this attribute for backward compatibility
     }
-    else if (el->getAttributeName(i) == "strategy") {
-      strategystring = el->getAttributeValue(i);
+    else if (attribId == ATTRIB_STRATEGY) {
+      strategystring = decoder.readString();
     }
-    else if (el->getAttributeName(i) == "hasthis") {
-      hasThis = xml_readbool(el->getAttributeValue(i));
+    else if (attribId == ATTRIB_HASTHIS) {
+      hasThis = decoder.readBool();
     }
-    else if (el->getAttributeName(i) == "constructor") {
-      isConstruct = xml_readbool(el->getAttributeValue(i));
+    else if (attribId == ATTRIB_CONSTRUCTOR) {
+      isConstruct = decoder.readBool();
     }
     else
-      throw LowlevelError("Unknown prototype attribute: "+el->getAttributeName(i));
+      throw LowlevelError("Unknown prototype attribute");
   }
   if (name == "__thiscall")
     hasThis = true;
@@ -2307,91 +2329,86 @@ void ProtoModel::restoreXml(const Element *el)
     throw LowlevelError("Missing prototype attributes");
 
   buildParamList(strategystring); // Allocate input and output ParamLists
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const Element *subnode = *iter;
-    if (subnode->getName() == "input") {
-      input->restoreXml(subnode,glb,effectlist,stackgrowsnegative);
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_INPUT) {
+      input->decode(decoder,glb,effectlist,stackgrowsnegative);
       if (stackspc != (AddrSpace *)0) {
 	input->getRangeList(stackspc,paramrange);
 	if (!paramrange.empty())
 	  sawparamrange = true;
       }
     }
-    else if (subnode->getName() == "output") {
-      output->restoreXml(subnode,glb,effectlist,stackgrowsnegative);
+    else if (subId == ELEM_OUTPUT) {
+      output->decode(decoder,glb,effectlist,stackgrowsnegative);
     }
-    else if (subnode->getName() == "unaffected") {
-      const List &flist(subnode->getChildren());
-      List::const_iterator fiter;
-      for(fiter=flist.begin();fiter!=flist.end();++fiter) {
+    else if (subId == ELEM_UNAFFECTED) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
 	effectlist.emplace_back();
-	effectlist.back().restoreXml(EffectRecord::unaffected,*fiter,glb);
+	effectlist.back().decode(EffectRecord::unaffected,decoder,glb);
       }
+      decoder.closeElement(subId);
     }
-    else if (subnode->getName() == "killedbycall") {
-      const List &flist(subnode->getChildren());
-      List::const_iterator fiter;
-      for(fiter=flist.begin();fiter!=flist.end();++fiter) {
+    else if (subId == ELEM_KILLEDBYCALL) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
 	effectlist.emplace_back();
-	effectlist.back().restoreXml(EffectRecord::killedbycall,*fiter,glb);
-      }	
-    }
-    else if (subnode->getName() == "returnaddress") {
-      const List &flist(subnode->getChildren());
-      List::const_iterator fiter;
-      for(fiter=flist.begin();fiter!=flist.end();++fiter) {
-	effectlist.emplace_back();
-	effectlist.back().restoreXml(EffectRecord::return_address,*fiter,glb);
+	effectlist.back().decode(EffectRecord::killedbycall,decoder,glb);
       }
+      decoder.closeElement(subId);
+    }
+    else if (subId == ELEM_RETURNADDRESS) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
+	effectlist.emplace_back();
+	effectlist.back().decode(EffectRecord::return_address,decoder,glb);
+      }
+      decoder.closeElement(subId);
       sawretaddr = true;
     }
-    else if (subnode->getName() == "localrange") {
+    else if (subId == ELEM_LOCALRANGE) {
       sawlocalrange = true;
-      const List &sublist(subnode->getChildren());
-      List::const_iterator subiter;
-      for(subiter=sublist.begin();subiter!=sublist.end();++subiter) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
         Range range;
-        range.restoreXml(*subiter,glb);
+        range.decode(decoder,glb);
         localrange.insertRange(range.getSpace(),range.getFirst(),range.getLast());
       }
+      decoder.closeElement(subId);
     }
-    else if (subnode->getName() == "paramrange") {
+    else if (subId == ELEM_PARAMRANGE) {
       sawparamrange = true;
-      const List &sublist(subnode->getChildren());
-      List::const_iterator subiter;
-      for(subiter=sublist.begin();subiter!=sublist.end();++subiter) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
         Range range;
-        range.restoreXml(*subiter,glb);
+        range.decode(decoder,glb);
         paramrange.insertRange(range.getSpace(),range.getFirst(),range.getLast());
       }
+      decoder.closeElement(subId);
     }
-    else if (subnode->getName() == "likelytrash") {
-      const List &flist(subnode->getChildren());
-      List::const_iterator fiter;
-      for(fiter=flist.begin();fiter!=flist.end();++fiter) {
+    else if (subId == ELEM_LIKELYTRASH) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
 	likelytrash.emplace_back();
-	likelytrash.back().restoreXml(*fiter,glb);
-      }	
-    }
-    else if (subnode->getName() == "pcode") {
-      if (subnode->getAttributeValue("inject") == "uponentry") {
-	injectUponEntry = glb->pcodeinjectlib->restoreXmlInject("Protomodel : "+name,
-								name+"@@inject_uponentry",
-								InjectPayload::CALLMECHANISM_TYPE,subnode);
-     }
-      else {
-	injectUponReturn = glb->pcodeinjectlib->restoreXmlInject("Protomodel : "+name,
-								 name+"@@inject_uponreturn",
-								 InjectPayload::CALLMECHANISM_TYPE,subnode);
+	likelytrash.back().decode(decoder,glb);
       }
+      decoder.closeElement(subId);
     }
-    else if (subnode->getName() == "description") {
+    else if (subId == ELEM_PCODE) {
+      int4 injectId = glb->pcodeinjectlib->decodeInject("Protomodel : "+name, name,
+								InjectPayload::CALLMECHANISM_TYPE,decoder);
+      InjectPayload *payload = glb->pcodeinjectlib->getPayload(injectId);
+      if (payload->getName().find("uponentry") != string::npos)
+	injectUponEntry = injectId;
+      else
+	injectUponReturn = injectId;
     }
     else
-      throw LowlevelError("Unknown element in prototype: "+subnode->getName());
+      throw LowlevelError("Unknown element in prototype");
   }
+  decoder.closeElement(elemId);
   if ((!sawretaddr)&&(glb->defaultReturnAddr.space != (AddrSpace *)0)) {
     // Provide the default return address, if there isn't a specific one for the model
     effectlist.push_back(EffectRecord(glb->defaultReturnAddr,EffectRecord::return_address));
@@ -2520,7 +2537,7 @@ void ProtoModelMerged::intersectLikelyTrash(const vector<VarnodeData> &trashlist
   while((i<likelytrash.size())&&(j<trashlist.size())) {
     const VarnodeData &trs1( likelytrash[i] );
     const VarnodeData &trs2( trashlist[j] );
-    
+
     if (trs1 < trs2)
       i += 1;
     else if (trs2 < trs1)
@@ -2604,20 +2621,23 @@ ProtoModel *ProtoModelMerged::selectModel(ParamActive *active) const
   throw LowlevelError("No model matches : missing default");
 }
 
-void ProtoModelMerged::restoreXml(const Element *el)
+void ProtoModelMerged::decode(Decoder &decoder)
 
 {
-  name = el->getAttributeValue("name");
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter) { // A tag for each merged prototype
-    const Element *subel = *iter;
-    ProtoModel *mymodel = glb->getModel( subel->getAttributeValue("name"));
+  uint4 elemId = decoder.openElement(ELEM_RESOLVEPROTOTYPE);
+  name = decoder.readString(ATTRIB_NAME);
+  for(;;) { // A tag for each merged prototype
+    uint4 subId = decoder.openElement();
+    if (subId != ELEM_MODEL) break;
+    string modelName = decoder.readString(ATTRIB_NAME);
+    ProtoModel *mymodel = glb->getModel( modelName );
     if (mymodel == (ProtoModel *)0)
-      throw LowlevelError("Missing prototype model: "+subel->getAttributeValue("name"));
+      throw LowlevelError("Missing prototype model: "+modelName);
+    decoder.closeElement(subId);
     foldIn(mymodel);
     modellist.push_back(mymodel);
   }
+  decoder.closeElement(elemId);
   ((ParamListMerged *)input)->finalize();
   ((ParamListMerged *)output)->finalize();
 }
@@ -2679,10 +2699,10 @@ ProtoParameter *ParameterBasic::clone(void) const
   return res;
 }
 
-const string &ParameterSymbol::getName(void) const 
+const string &ParameterSymbol::getName(void) const
 
-{ 
-  return sym->getName(); 
+{
+  return sym->getName();
 }
 
 Datatype *ParameterSymbol::getType(void) const
@@ -2864,7 +2884,7 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
   }
   if (res->sym == (Symbol *)0) {
     if (scope->discoverScope(pieces.addr,pieces.type->getSize(),usepoint) == (Scope *)0)
-      usepoint = restricted_usepoint; 
+      usepoint = restricted_usepoint;
     res->sym = scope->addSymbol(nm,pieces.type,pieces.addr,usepoint)->getSymbol();
     scope->setCategory(res->sym,Symbol::function_parameter,i);
     if (isindirect || ishidden) {
@@ -2973,16 +2993,16 @@ ProtoStore *ProtoStoreSymbol::clone(void) const
   return res;
 }
 
-void ProtoStoreSymbol::saveXml(ostream &s) const
+void ProtoStoreSymbol::encode(Encoder &encoder) const
 
 { // Do not store anything explicitly for a symboltable backed store
   // as the symboltable will be stored separately
 }
 
-void ProtoStoreSymbol::restoreXml(const Element *el,ProtoModel *model)
+void ProtoStoreSymbol::decode(Decoder &decoder,ProtoModel *model)
 
 {
-  throw LowlevelError("Do not restore symbol-backed prototype through this interface");
+  throw LowlevelError("Do not decode symbol-backed prototype through this interface");
 }
 
 /// \param vt is the \b void data-type used for an unspecified return value
@@ -3101,54 +3121,53 @@ ProtoStore *ProtoStoreInternal::clone(void) const
   return res;
 }
 
-void ProtoStoreInternal::saveXml(ostream &s) const
+void ProtoStoreInternal::encode(Encoder &encoder) const
 
 {
-  s << "<internallist>\n";
+  encoder.openElement(ELEM_INTERNALLIST);
   if (outparam != (ProtoParameter *)0) {
-    s << "<retparam";
+    encoder.openElement(ELEM_RETPARAM);
     if (outparam->isTypeLocked())
-      a_v_b(s,"typelock",true);
-    s << ">\n";
-    outparam->getAddress().saveXml(s);
-    outparam->getType()->saveXml(s);
-    s << "</retparam>\n";
+      encoder.writeBool(ATTRIB_TYPELOCK,true);
+    outparam->getAddress().encode(encoder);
+    outparam->getType()->encode(encoder);
+    encoder.closeElement(ELEM_RETPARAM);
   }
   else {
-    s << "<retparam>\n <addr/>\n <void/>\n</retparam>\n";
+    encoder.openElement(ELEM_RETPARAM);
+    encoder.openElement(ELEM_ADDR);
+    encoder.closeElement(ELEM_ADDR);
+    encoder.openElement(ELEM_VOID);
+    encoder.closeElement(ELEM_VOID);
+    encoder.closeElement(ELEM_RETPARAM);
   }
 
   for(int4 i=0;i<inparam.size();++i) {
     ProtoParameter *param = inparam[i];
-    s << "<param";
+    encoder.openElement(ELEM_PARAM);
     if (param->getName().size()!=0)
-      a_v(s,"name",param->getName());
+      encoder.writeString(ATTRIB_NAME,param->getName());
     if (param->isTypeLocked())
-      a_v_b(s,"typelock",true);
+      encoder.writeBool(ATTRIB_TYPELOCK, true);
     if (param->isNameLocked())
-      a_v_b(s,"namelock",true);
+      encoder.writeBool(ATTRIB_NAMELOCK, true);
     if (param->isThisPointer())
-      a_v_b(s,"thisptr",true);
+      encoder.writeBool(ATTRIB_THISPTR, true);
     if (param->isIndirectStorage())
-      a_v_b(s,"indirectstorage",true);
+      encoder.writeBool(ATTRIB_INDIRECTSTORAGE, true);
     if (param->isHiddenReturn())
-      a_v_b(s,"hiddenretparm",true);
-    s << ">\n";
-    param->getAddress().saveXml(s);
-    param->getType()->saveXml(s);
-    s << "</param>\n";
+      encoder.writeBool(ATTRIB_HIDDENRETPARM, true);
+    param->getAddress().encode(encoder);
+    param->getType()->encode(encoder);
+    encoder.closeElement(ELEM_PARAM);
   }
-  s << "</internallist>\n";
+  encoder.closeElement(ELEM_INTERNALLIST);
 }
 
-void ProtoStoreInternal::restoreXml(const Element *el,ProtoModel *model)
+void ProtoStoreInternal::decode(Decoder &decoder,ProtoModel *model)
 
 {
-  if (el->getName() != "internallist")
-    throw LowlevelError("Mismatched ProtoStore tag: ProtoStoreInternal did not get <internallist>");
   Architecture *glb = model->getArch();
-  const List &list(el->getChildren());
-  List::const_iterator iter;
   vector<ParameterPieces> pieces;
   vector<string> namelist;
   bool addressesdetermined = true;
@@ -3164,32 +3183,35 @@ void ProtoStoreInternal::restoreXml(const Element *el,ProtoModel *model)
   if (outparam->getAddress().isInvalid())
     addressesdetermined = false;
 
-  for(iter=list.begin();iter!=list.end();++iter) { // This is only the input params
-    const Element *subel = *iter;
+  uint4 elemId = decoder.openElement(ELEM_INTERNALLIST);
+  for(;;) { // This is only the input params
+    uint4 subId = decoder.openElement();		// <retparam> or <param>
+    if (subId == 0) break;
     string name;
     uint4 flags = 0;
-    for(int4 i=0;i<subel->getNumAttributes();++i) {
-      const string &attr( subel->getAttributeName(i) );
-      if (attr == "name")
-	name = subel->getAttributeValue(i);
-      else if (attr == "typelock") {
-	if (xml_readbool(subel->getAttributeValue(i)))
+    for(;;) {
+      uint4 attribId = decoder.getNextAttributeId();
+      if (attribId == 0) break;
+      if (attribId == ATTRIB_NAME)
+	name = decoder.readString();
+      else if (attribId == ATTRIB_TYPELOCK) {
+	if (decoder.readBool())
 	  flags |= ParameterPieces::typelock;
       }
-      else if (attr == "namelock") {
-	if (xml_readbool(subel->getAttributeValue(i)))
+      else if (attribId == ATTRIB_NAMELOCK) {
+	if (decoder.readBool())
 	  flags |= ParameterPieces::namelock;
       }
-      else if (attr == "thisptr") {
-	if (xml_readbool(subel->getAttributeValue(i)))
+      else if (attribId == ATTRIB_THISPTR) {
+	if (decoder.readBool())
 	  flags |= ParameterPieces::isthis;
       }
-      else if (attr == "indirectstorage") {
-	if (xml_readbool(subel->getAttributeValue(i)))
+      else if (attribId == ATTRIB_INDIRECTSTORAGE) {
+	if (decoder.readBool())
 	  flags |= ParameterPieces::indirectstorage;
       }
-      else if (attr == "hiddenretparm") {
-	if (xml_readbool(subel->getAttributeValue(i)))
+      else if (attribId == ATTRIB_HIDDENRETPARM) {
+	if (decoder.readBool())
 	  flags |= ParameterPieces::hiddenretparm;
       }
     }
@@ -3197,22 +3219,20 @@ void ProtoStoreInternal::restoreXml(const Element *el,ProtoModel *model)
       namelist.push_back(name);
     pieces.emplace_back();
     ParameterPieces &curparam( pieces.back() );
-    const List &sublist(subel->getChildren());
-    List::const_iterator subiter;
-    subiter = sublist.begin();
-    curparam.addr = Address::restoreXml(*subiter,glb);
-    ++subiter;
-    curparam.type = glb->types->restoreXmlType(*subiter);
+    curparam.addr = Address::decode(decoder,glb);
+    curparam.type = glb->types->decodeType(decoder);
     curparam.flags = flags;
     if (curparam.addr.isInvalid())
       addressesdetermined = false;
+    decoder.closeElement(subId);
   }
+  decoder.closeElement(elemId);
   ProtoParameter *curparam;
   if (!addressesdetermined) {
     // If addresses for parameters are not provided, use
     // the model to derive them from type info
     vector<Datatype *> typelist;
-    for(int4 i=0;i<pieces.size();++i) // Save off the restored types
+    for(int4 i=0;i<pieces.size();++i) // Save off the decoded types
       typelist.push_back( pieces[i].type );
     vector<ParameterPieces> addrPieces;
     model->assignParameterStorage(typelist,addrPieces,true);
@@ -3244,7 +3264,7 @@ void ProtoStoreInternal::restoreXml(const Element *el,ProtoModel *model)
   }
 }
 
-/// This is called after a new prototype is established (via restoreXml or updateAllTypes)
+/// This is called after a new prototype is established (via decode or updateAllTypes)
 /// It makes sure that if the ProtoModel calls for a "this" parameter, then the appropriate parameter
 /// is explicitly marked as the "this".
 void FuncProto::updateThisPointer(void)
@@ -3263,8 +3283,8 @@ void FuncProto::updateThisPointer(void)
 
 /// If the \e effectlist for \b this is non-empty, it contains the complete set of
 /// EffectRecords.  Save just those that override the underlying list from ProtoModel
-/// \param s is the stream to write to
-void FuncProto::saveEffectXml(ostream &s) const
+/// \param encoder is the stream encoder
+void FuncProto::encodeEffect(Encoder &encoder) const
 
 {
   if (effectlist.empty()) return;
@@ -3283,55 +3303,51 @@ void FuncProto::saveEffectXml(ostream &s) const
       retAddr = &curRecord;
   }
   if (!unaffectedList.empty()) {
-    s << "  <unaffected>\n";
+    encoder.openElement(ELEM_UNAFFECTED);
     for(int4 i=0;i<unaffectedList.size();++i) {
-      s << "    ";
-      unaffectedList[i]->saveXml(s);
-      s << '\n';
+      unaffectedList[i]->encode(encoder);
     }
-    s << "  </unaffected>\n";
+    encoder.closeElement(ELEM_UNAFFECTED);
   }
   if (!killedByCallList.empty()) {
-    s << "  <killedbycall>\n";
+    encoder.openElement(ELEM_KILLEDBYCALL);
     for(int4 i=0;i<killedByCallList.size();++i) {
-      s << "    ";
-      killedByCallList[i]->saveXml(s);
-      s << '\n';
+      killedByCallList[i]->encode(encoder);
     }
-    s << "  </killedbycall>\n";
+    encoder.closeElement(ELEM_KILLEDBYCALL);
   }
   if (retAddr != (const EffectRecord *)0) {
-    s << "  <returnaddress>\n    ";
-    retAddr->saveXml(s);
-    s << "\n  </returnaddress>\n";
+    encoder.openElement(ELEM_RETURNADDRESS);
+    retAddr->encode(encoder);
+    encoder.closeElement(ELEM_RETURNADDRESS);
   }
 }
 
-/// If the -likelytrash- list is not empty it overrides the underlying ProtoModel's list.
-/// Write any VarnodeData that does not appear in the ProtoModel to the XML stream.
-/// \param s is the stream to write to
-void FuncProto::saveLikelyTrashXml(ostream &s) const
+/// If the \b likelytrash list is not empty it overrides the underlying ProtoModel's list.
+/// Encode any VarnodeData that does not appear in the ProtoModel to the stream.
+/// \param encoder is the stream encoder
+void FuncProto::encodeLikelyTrash(Encoder &encoder) const
 
 {
   if (likelytrash.empty()) return;
   vector<VarnodeData>::const_iterator iter1,iter2;
   iter1 = model->trashBegin();
   iter2 = model->trashEnd();
-  s << "  <likelytrash>\n";
+  encoder.openElement(ELEM_LIKELYTRASH);
   for(vector<VarnodeData>::const_iterator iter=likelytrash.begin();iter!=likelytrash.end();++iter) {
     const VarnodeData &cur(*iter);
     if (binary_search(iter1,iter2,cur)) continue;	// Already exists in ProtoModel
-    s << "    <addr";
-    cur.space->saveXmlAttributes(s,cur.offset,cur.size);
-    s << "/>\n";
+    encoder.openElement(ELEM_ADDR);
+    cur.space->encodeAttributes(encoder,cur.offset,cur.size);
+    encoder.closeElement(ELEM_ADDR);
   }
-  s << "  </likelytrash>\n";
+  encoder.closeElement(ELEM_LIKELYTRASH);
 }
 
-/// EffectRecords read into \e effectlist by restoreXml() override the list from ProtoModel.
+/// EffectRecords read into \e effectlist by decode() override the list from ProtoModel.
 /// If this list is not empty, set up \e effectlist as a complete override containing
 /// all EffectRecords from ProtoModel plus all the overrides.
-void FuncProto::restoreEffectXml(void)
+void FuncProto::decodeEffect(void)
 
 {
   if (effectlist.empty()) return;
@@ -3360,10 +3376,10 @@ void FuncProto::restoreEffectXml(void)
     sort(effectlist.begin(),effectlist.end(),EffectRecord::compareByAddress);
 }
 
-/// VarnodeData read into \e likelytrash by restoreXml() are additional registers over
+/// VarnodeData read into \e likelytrash by decode() are additional registers over
 /// what is already in ProtoModel.  Make \e likelytrash in \b this a complete list by
 /// merging in everything from ProtoModel.
-void FuncProto::restoreLikelyTrashXml(void)
+void FuncProto::decodeLikelyTrash(void)
 
 {
   if (likelytrash.empty()) return;
@@ -3407,7 +3423,7 @@ void FuncProto::paramShift(int4 paramshift)
     nmlist.push_back("");
     typelist.push_back(extra);
   }
-  
+
   if (isInputLocked()) {	// Copy in the original parameter types
     int4 num = numParams();
     for(int4 i=0;i<num;++i) {
@@ -3879,7 +3895,7 @@ void FuncProto::updateAllTypes(const vector<string> &namelist,const vector<Datat
   store->clearOutput();
   flags &= ~((uint4)voidinputlock);
   setDotdotdot(dtdtdt);
-  
+
   vector<ParameterPieces> pieces;
 
   // Calculate what memory locations hold each type
@@ -4214,7 +4230,7 @@ bool FuncProto::isCompatible(const FuncProto &op2) const
       // the prototype hasn't been marked as varargs
       if (isInputLocked()) return false;
     }
-    else 
+    else
       return false;
   }
 
@@ -4258,63 +4274,63 @@ void FuncProto::printRaw(const string &funcname,ostream &s) const
   s << ") extrapop=" << dec << extrapop;
 }
 
-/// \brief Save \b this to an XML stream as a \<prototype> tag.
+/// \brief Encode \b this to a stream as a \<prototype> element.
 ///
 /// Save everything under the control of this prototype, which
 /// may \e not include input parameters, as these are typically
 /// controlled by the function's symbol table scope.
-/// \param s is the output stream
-void FuncProto::saveXml(ostream &s) const
+/// \param encoder is the stream encoder
+void FuncProto::encode(Encoder &encoder) const
 
 {
-  s << " <prototype";
-  a_v(s,"model",model->getName());
+  encoder.openElement(ELEM_PROTOTYPE);
+  encoder.writeString(ATTRIB_MODEL, model->getName());
   if (extrapop == ProtoModel::extrapop_unknown)
-    a_v(s,"extrapop","unknown");
+    encoder.writeString(ATTRIB_EXTRAPOP, "unknown");
   else
-    a_v_i(s,"extrapop",extrapop);
+    encoder.writeSignedInteger(ATTRIB_EXTRAPOP, extrapop);
   if (isDotdotdot())
-    a_v_b(s,"dotdotdot",true);
+    encoder.writeBool(ATTRIB_DOTDOTDOT, true);
   if (isModelLocked())
-    a_v_b(s,"modellock",true);
+    encoder.writeBool(ATTRIB_MODELLOCK, true);
   if ((flags&voidinputlock)!=0)
-    a_v_b(s,"voidlock",true);
+    encoder.writeBool(ATTRIB_VOIDLOCK, true);
   if (isInline())
-    a_v_b(s,"inline",true);
+    encoder.writeBool(ATTRIB_INLINE, true);
   if (isNoReturn())
-    a_v_b(s,"noreturn",true);
+    encoder.writeBool(ATTRIB_NORETURN, true);
   if (hasCustomStorage())
-    a_v_b(s,"custom",true);
+    encoder.writeBool(ATTRIB_CUSTOM, true);
   if (isConstructor())
-    a_v_b(s,"constructor",true);
+    encoder.writeBool(ATTRIB_CONSTRUCTOR, true);
   if (isDestructor())
-    a_v_b(s,"destructor",true);
-  s << ">\n";
+    encoder.writeBool(ATTRIB_DESTRUCTOR, true);
   ProtoParameter *outparam = store->getOutput();
-  s << "  <returnsym";
+  encoder.openElement(ELEM_RETURNSYM);
   if (outparam->isTypeLocked())
-    a_v_b(s,"typelock",true);
-  s << ">\n   ";
-  outparam->getAddress().saveXml(s,outparam->getSize());
-  outparam->getType()->saveXml(s);
-  s << "  </returnsym>\n";
-  saveEffectXml(s);
-  saveLikelyTrashXml(s);
+    encoder.writeBool(ATTRIB_TYPELOCK, true);
+  outparam->getAddress().encode(encoder,outparam->getSize());
+  outparam->getType()->encode(encoder);
+  encoder.closeElement(ELEM_RETURNSYM);
+  encodeEffect(encoder);
+  encodeLikelyTrash(encoder);
   if (injectid >= 0) {
     Architecture *glb = model->getArch();
-    s << "  <inject>" << glb->pcodeinjectlib->getCallFixupName(injectid) << "</inject>\n";
+    encoder.openElement(ELEM_INJECT);
+    encoder.writeString(ATTRIB_CONTENT, glb->pcodeinjectlib->getCallFixupName(injectid));
+    encoder.closeElement(ELEM_INJECT);
   }
-  store->saveXml(s);		// Store any internally backed prototyped symbols
-  s << " </prototype>\n";
+  store->encode(encoder);		// Store any internally backed prototyped symbols
+  encoder.closeElement(ELEM_PROTOTYPE);
 }
 
-/// \brief Restore \b this from an XML stream
+/// \brief Restore \b this from a \<prototype> element in the given stream
 ///
 /// The backing store for the parameters must already be established using either
 /// setStore() or setInternal().
-/// \param el is the \<prototype> XML element
+/// \param decoder is the given stream decoder
 /// \param glb is the Architecture owning the prototype
-void FuncProto::restoreXml(const Element *el,Architecture *glb)
+void FuncProto::decode(Decoder &decoder,Architecture *glb)
 
 {
   // Model must be set first
@@ -4324,13 +4340,14 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
   bool seenextrapop = false;
   bool seenunknownmod = false;
   int4 readextrapop;
-  int4 num = el->getNumAttributes();
   flags = 0;
   injectid = -1;
-  for(int4 i=0;i<num;++i) {
-    const string &attrname( el->getAttributeName(i) );
-    if (attrname == "model") {
-      const string &modelname( el->getAttributeValue(i) );
+  uint4 elemId = decoder.openElement(ELEM_PROTOTYPE);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_MODEL) {
+      string modelname = decoder.readString();
       if ((modelname == "default")||(modelname.size()==0))
 	mod = glb->defaultfp;	// Get default model
       else if (modelname == "unknown") {
@@ -4340,9 +4357,9 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
       else
 	mod = glb->getModel(modelname);
     }
-    else if (attrname == "extrapop") {
+    else if (attribId == ATTRIB_EXTRAPOP) {
       seenextrapop = true;
-      const string &expopval( el->getAttributeValue(i) );
+      string expopval = decoder.readString();
       if (expopval == "unknown")
 	readextrapop = ProtoModel::extrapop_unknown;
       else {
@@ -4351,36 +4368,36 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
 	i1 >> readextrapop;
       }
     }
-    else if (attrname == "modellock") {
-      if (xml_readbool(el->getAttributeValue(i)))
+    else if (attribId == ATTRIB_MODELLOCK) {
+      if (decoder.readBool())
 	flags |= modellock;
     }
-    else if (attrname == "dotdotdot") {
-      if (xml_readbool(el->getAttributeValue(i)))
+    else if (attribId == ATTRIB_DOTDOTDOT) {
+      if (decoder.readBool())
 	flags |= dotdotdot;
     }
-    else if (attrname == "voidlock") {
-      if (xml_readbool(el->getAttributeValue(i)))
+    else if (attribId == ATTRIB_VOIDLOCK) {
+      if (decoder.readBool())
 	flags |= voidinputlock;
     }
-    else if (attrname == "inline") {
-      if (xml_readbool(el->getAttributeValue(i)))
+    else if (attribId == ATTRIB_INLINE) {
+      if (decoder.readBool())
 	flags |= is_inline;
     }
-    else if (attrname == "noreturn") {
-      if (xml_readbool(el->getAttributeValue(i)))
+    else if (attribId == ATTRIB_NORETURN) {
+      if (decoder.readBool())
 	flags |= no_return;
     }
-    else if (attrname == "custom") {
-      if (xml_readbool(el->getAttributeValue(i)))
+    else if (attribId == ATTRIB_CUSTOM) {
+      if (decoder.readBool())
 	flags |= custom_storage;
     }
-    else if (attrname == "constructor") {
-      if (xml_readbool(el->getAttributeValue(i)))
+    else if (attribId == ATTRIB_CONSTRUCTOR) {
+      if (decoder.readBool())
 	flags |= is_constructor;
     }
-    else if (attrname == "destructor") {
-      if (xml_readbool(el->getAttributeValue(i)))
+    else if (attribId == ATTRIB_DESTRUCTOR) {
+      if (decoder.readBool())
 	flags |= is_destructor;
     }
   }
@@ -4391,40 +4408,30 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
   if (seenunknownmod)
     flags |= unknown_model;
 
-  const List &list(el->getChildren());
-  List::const_iterator iter = list.begin();
-
-  const Element *subel = (const Element *)0;
-  if (iter != list.end()) {
-    subel = *iter;
-    ++iter;
-  }
-  if (subel != (const Element *)0) {
+  uint4 subId = decoder.peekElement();
+  if (subId != 0) {
     ParameterPieces outpieces;
     bool outputlock = false;
 
-    if (subel->getName() == "returnsym") {
-      num = subel->getNumAttributes();
-      for(int4 i=0;i<num;++i) {
-	const string &attrname( subel->getAttributeName(i) );
-	if (attrname == "typelock")
-	  outputlock = xml_readbool(subel->getAttributeValue(i));
+    if (subId == ELEM_RETURNSYM) {
+      decoder.openElement();
+      for(;;) {
+	uint4 attribId = decoder.getNextAttributeId();
+	if (attribId == 0) break;
+	if (attribId == ATTRIB_TYPELOCK)
+	  outputlock = decoder.readBool();
       }
-      const List &list2(subel->getChildren());
-      List::const_iterator riter = list2.begin();
-      
       int4 tmpsize;
-      outpieces.addr = Address::restoreXml(*riter,glb,tmpsize);
-      ++riter;
-      outpieces.type = glb->types->restoreXmlType(*riter);
+      outpieces.addr = Address::decode(decoder,glb,tmpsize);
+      outpieces.type = glb->types->decodeType(decoder);
       outpieces.flags = 0;
+      decoder.closeElement(subId);
     }
-    else if (subel->getName() == "addr") { // Old-style specification of return (supported partially for backward compat)
+    else if (subId == ELEM_ADDR) { // Old-style specification of return (supported partially for backward compat)
       int4 tmpsize;
-      outpieces.addr = Address::restoreXml(subel,glb,tmpsize);
-      outpieces.type = glb->types->restoreXmlType(*iter);
+      outpieces.addr = Address::decode(decoder,glb,tmpsize);
+      outpieces.type = glb->types->decodeType(decoder);
       outpieces.flags = 0;
-      ++iter;
     }
     else
       throw LowlevelError("Missing <returnsym> tag");
@@ -4438,53 +4445,55 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
   if (((flags&voidinputlock)!=0)||(isOutputLocked()))
     flags |= modellock;
 
-  for(;iter!=list.end();++iter) {
-    if ((*iter)->getName() == "unaffected") {
-      const List &list2((*iter)->getChildren());
-      List::const_iterator iter2 = list2.begin();
-      while(iter2 != list2.end()) {
+  for(;;) {
+    subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_UNAFFECTED) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
 	effectlist.emplace_back();
-	effectlist.back().restoreXml(EffectRecord::unaffected,*iter2,glb);
-	++iter2;
+	effectlist.back().decode(EffectRecord::unaffected,decoder,glb);
       }
+      decoder.closeElement(subId);
     }
-    else if ((*iter)->getName() == "killedbycall") {
-      const List &list2((*iter)->getChildren());
-      List::const_iterator iter2 = list2.begin();
-      while(iter2 != list2.end()) {
+    else if (subId == ELEM_KILLEDBYCALL) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
 	effectlist.emplace_back();
-	effectlist.back().restoreXml(EffectRecord::killedbycall,*iter2,glb);
-	++iter2;
+	effectlist.back().decode(EffectRecord::killedbycall,decoder,glb);
       }
+      decoder.closeElement(subId);
     }
-    else if ((*iter)->getName() == "returnaddress") {
-      const List &list2((*iter)->getChildren());
-      List::const_iterator iter2 = list2.begin();
-      while(iter2 != list2.end()) {
+    else if (subId == ELEM_RETURNADDRESS) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
 	effectlist.emplace_back();
-	effectlist.back().restoreXml(EffectRecord::return_address,*iter2,glb);
-	++iter2;
+	effectlist.back().decode(EffectRecord::return_address,decoder,glb);
       }
+      decoder.closeElement(subId);
     }
-    else if ((*iter)->getName() == "likelytrash") {
-      const List &list2((*iter)->getChildren());
-      List::const_iterator iter2 = list2.begin();
-      while(iter2 != list2.end()) {
+    else if (subId == ELEM_LIKELYTRASH) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
 	likelytrash.emplace_back();
-	likelytrash.back().restoreXml(*iter2,glb);
-	++iter2;
+	likelytrash.back().decode(decoder,glb);
       }
+      decoder.closeElement(subId);
     }
-    else if ((*iter)->getName() == "inject") {
-      injectid = glb->pcodeinjectlib->getPayloadId(InjectPayload::CALLFIXUP_TYPE,(*iter)->getContent());
+    else if (subId == ELEM_INJECT) {
+      decoder.openElement();
+      string injectString = decoder.readString(ATTRIB_CONTENT);
+      injectid = glb->pcodeinjectlib->getPayloadId(InjectPayload::CALLFIXUP_TYPE,injectString);
       flags |= is_inline;
+      decoder.closeElement(subId);
     }
-    else if ((*iter)->getName() == "internallist") {
-      store->restoreXml(*iter,model);
+    else if (subId == ELEM_INTERNALLIST) {
+      store->decode(decoder,model);
     }
   }
-  restoreEffectXml();
-  restoreLikelyTrashXml();
+  decoder.closeElement(elemId);
+  decodeEffect();
+  decodeLikelyTrash();
   if (!isModelLocked()) {
     if (isInputLocked())
       flags |= modellock;
@@ -4527,7 +4536,7 @@ void FuncCallSpecs::resolveSpacebaseRelative(Funcdata &data,Varnode *phvn)
       return;
     }
   }
-  
+
   if (isInputLocked()) {
     // The prototype is locked and had stack parameters, we grab the relative offset from this
     // rather than from a placeholder
@@ -4744,7 +4753,7 @@ bool FuncCallSpecs::transferLockedInput(vector<Varnode *> &newinput)
   for(int4 i=0;i<numparams;++i) {
     int4 reuse = transferLockedInputParam(getParam(i));
     if (reuse == 0) return false;
-    if (reuse > 0) 
+    if (reuse > 0)
       newinput.push_back(op->getIn(reuse));
     else {
       if (stackref == (Varnode *)0)
@@ -5197,7 +5206,7 @@ void FuncCallSpecs::checkInputTrialUse(Funcdata &data,AliasChecker &aliascheck)
   int4 expop = 0;
   if (hasModel()) {
     callee_pop = (getModelExtraPop() == ProtoModel::extrapop_unknown);
-    if (callee_pop) {		
+    if (callee_pop) {
       expop = getExtraPop();
       // Tried to use getEffectiveExtraPop at one point, but it is too unreliable
       if ((expop==ProtoModel::extrapop_unknown)||(expop <=4))
@@ -5295,7 +5304,7 @@ void FuncCallSpecs::buildInputFromTrials(Funcdata &data)
   bool isspacebase;
   Varnode *vn;
   vector<Varnode *> newparam;
-  
+
   newparam.push_back(op->getIn(0)); // Preserve the fspec parameter
 
   for(int4 i=0;i<activeinput.getNumTrials();++i) {

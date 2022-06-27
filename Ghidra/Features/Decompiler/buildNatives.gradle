@@ -51,6 +51,7 @@ model {
 		            source {
 		                srcDir "src/decompile/cpp"
 		                
+		         	 	include "marshal.cc"
 		                include "space.cc"
 		                include "float.cc"
 		                include "address.cc"
@@ -152,6 +153,7 @@ model {
 					source {
 						srcDir "src/decompile/cpp"
 						
+		         	 	include "marshal.cc"
 						include "space.cc"
 						include "float.cc"
 						include "address.cc"

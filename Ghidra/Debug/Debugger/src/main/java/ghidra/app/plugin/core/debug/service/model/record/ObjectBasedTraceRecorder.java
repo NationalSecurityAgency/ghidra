@@ -392,6 +392,9 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 
 	@Override
 	public TargetThread getTargetThread(TraceThread thread) {
+		if (thread == null) {
+			return null;
+		}
 		return objectRecorder.getTargetInterface(thread, TraceObjectThread.class,
 			TargetThread.class);
 	}

@@ -86,7 +86,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 
 		public synchronized void assertAgreesWithService() {
 			waitForPass(() -> {
-				assertEquals(breakpointService.getAllBreakpoints(), changeListener.current);
+				assertEquals(breakpointService.getAllBreakpoints(), current);
 			});
 		}
 	}

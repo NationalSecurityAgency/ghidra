@@ -30,7 +30,6 @@ import org.junit.*;
 
 import db.DBHandle;
 import db.DBRecord;
-import ghidra.lifecycle.Unfinished;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
@@ -55,7 +54,7 @@ import ghidra.util.task.ConsoleTaskMonitor;
  *
  */
 public class DBTraceAddressSnapRangePropertyMapSpaceTest
-		extends AbstractGhidraHeadlessIntegrationTest implements Unfinished {
+		extends AbstractGhidraHeadlessIntegrationTest {
 	protected static class MyObject extends DBCachedDomainObjectAdapter implements AutoCloseable {
 		private final DBCachedObjectStoreFactory factory;
 		private final Language toy;

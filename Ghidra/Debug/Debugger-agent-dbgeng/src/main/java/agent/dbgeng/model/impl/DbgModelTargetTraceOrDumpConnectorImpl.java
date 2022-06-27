@@ -18,6 +18,7 @@ package agent.dbgeng.model.impl;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.DbgModelTargetConnector;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
@@ -79,7 +80,12 @@ public class DbgModelTargetTraceOrDumpConnectorImpl extends DbgModelTargetObject
 	@Override
 	public CompletableFuture<Void> launch(Map<String, ?> args) {
 		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			getManager().openFile(args).handle(seq::nextIgnore);
+			DbgManagerImpl manager = getManager();
+			Boolean qv = (Boolean) args.get("UseQueryVirtual");
+			if (qv != null) {
+				manager.setAltMemoryQuery(!qv);
+			}
+			manager.openFile(args).handle(seq::nextIgnore);
 		}).finish().exceptionally((exc) -> {
 			throw new DebuggerUserException("Launch failed for " + args);
 		});

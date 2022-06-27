@@ -329,7 +329,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testSynchronizeFocusTraceToModel() throws Exception {
+	public void testSynchronizeFocusTraceToModel() throws Throwable {
 		assertTrue(traceManager.isSynchronizeFocus());
 
 		createTestModel();
@@ -340,8 +340,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		Trace trace = recorder.getTrace();
 
 		waitForValue(() -> modelService.getTarget(trace));
-		// TODO: Fragile. This depends on the recorder advancing the snap for each thread
-		waitForPass(() -> assertEquals(2, trace.getTimeManager().getSnapshotCount()));
+		waitRecorder(recorder);
 
 		traceManager.openTrace(trace);
 		waitForSwing();

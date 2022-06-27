@@ -123,8 +123,15 @@ public class DebuggerModelServicePlugin extends Plugin
 				synchronized (this) {
 					this.root = r;
 				}
-				r.addListener(this.forRemoval);
-				if (!r.isValid()) {
+				boolean isInvalid = false;
+				try {
+					r.addListener(this.forRemoval);
+				}
+				catch (IllegalStateException e) {
+					isInvalid = true;
+				}
+				isInvalid |= !r.isValid();
+				if (isInvalid) {
 					forRemoval.invalidated(root, root, "Who knows?");
 				}
 				CompletableFuture<? extends TargetFocusScope> findSuitable =

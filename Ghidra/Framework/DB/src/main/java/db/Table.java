@@ -112,14 +112,10 @@ public class Table {
 	 * Subsequent table use may generate an exception.
 	 */
 	void invalidate() {
-		boolean isIndexTable = tableRecord.getIndexedColumn() >= 0;
 		tableRecord = null;
 		rootBufferId = -1;
 		nodeMgr = null;
 		++modCount;
-		if (!isIndexTable) {
-			db.tableDeleted(this);
-		}
 	}
 
 	/**

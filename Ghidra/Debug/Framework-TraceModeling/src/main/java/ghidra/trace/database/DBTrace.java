@@ -38,7 +38,7 @@ import ghidra.trace.database.breakpoint.DBTraceBreakpointManager;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter;
 import ghidra.trace.database.data.DBTraceDataTypeManager;
-import ghidra.trace.database.language.DBTraceLanguageManager;
+import ghidra.trace.database.guest.DBTracePlatformManager;
 import ghidra.trace.database.listing.DBTraceCodeManager;
 import ghidra.trace.database.listing.DBTraceCommentAdapter;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
@@ -55,6 +55,7 @@ import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.property.TraceAddressPropertyManager;
 import ghidra.trace.util.TraceChangeManager;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.*;
@@ -101,7 +102,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	@DependentService
 	protected DBTraceEquateManager equateManager;
 	@DependentService
-	protected DBTraceLanguageManager languageManager;
+	protected DBTracePlatformManager platformManager;
 	@DependentService
 	protected DBTraceMemoryManager memoryManager;
 	@DependentService
@@ -283,12 +284,12 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	@DependentService
 	protected DBTraceCodeManager createCodeManager(DBTraceThreadManager threadManager,
-			DBTraceLanguageManager languageManager, DBTraceDataTypeManager dataTypeManager,
+			DBTracePlatformManager platformManager, DBTraceDataTypeManager dataTypeManager,
 			DBTraceOverlaySpaceAdapter overlayAdapter, DBTraceReferenceManager referenceManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Code Manager",
 			(openMode, monitor) -> new DBTraceCodeManager(dbh, openMode, rwLock, monitor,
-				baseLanguage, this, threadManager, languageManager, dataTypeManager, overlayAdapter,
+				baseLanguage, this, threadManager, platformManager, dataTypeManager, overlayAdapter,
 				referenceManager));
 	}
 
@@ -325,11 +326,11 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@DependentService
-	protected DBTraceLanguageManager createLanguageManager()
+	protected DBTracePlatformManager createPlatformManager()
 			throws CancelledException, IOException {
 		return createTraceManager("Language Manager",
-			(openMode, monitor) -> new DBTraceLanguageManager(dbh, openMode, rwLock, monitor,
-				baseLanguage, this));
+			(openMode, monitor) -> new DBTracePlatformManager(dbh, openMode, rwLock, monitor,
+				baseCompilerSpec, this));
 	}
 
 	@DependentService
@@ -373,11 +374,11 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	@DependentService
 	protected DBTraceRegisterContextManager createRegisterContextManager(
-			DBTraceThreadManager threadManager, DBTraceLanguageManager languageManager)
+			DBTraceThreadManager threadManager, DBTracePlatformManager platformManager)
 			throws CancelledException, IOException {
 		return createTraceManager("Context Manager",
 			(openMode, monitor) -> new DBTraceRegisterContextManager(dbh, openMode, rwLock, monitor,
-				baseLanguage, this, threadManager, languageManager));
+				baseLanguage, this, threadManager, platformManager));
 	}
 
 	@DependentService
@@ -456,8 +457,13 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		return baseAddressFactory;
 	}
 
+	@Override
+	public TraceAddressPropertyManager getAddressPropertyManager() {
+		return addressPropertyManager.getApiPropertyManager();
+	}
+
 	@Internal
-	public DBTraceAddressPropertyManager getAddressPropertyManager() {
+	public DBTraceAddressPropertyManager getInternalAddressPropertyManager() {
 		return addressPropertyManager;
 	}
 
@@ -497,8 +503,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@Override
-	public DBTraceLanguageManager getLanguageManager() {
-		return languageManager;
+	public DBTracePlatformManager getPlatformManager() {
+		return platformManager;
 	}
 
 	@Override

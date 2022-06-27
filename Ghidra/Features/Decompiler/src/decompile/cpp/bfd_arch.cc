@@ -19,6 +19,8 @@
 // Constructing this object registers capability
 BfdArchitectureCapability BfdArchitectureCapability::bfdArchitectureCapability;
 
+ElementId ELEM_BFD_SAVEFILE = ElementId("bfd_savefile",46);
+
 BfdArchitectureCapability::BfdArchitectureCapability(void)
 
 {
@@ -125,16 +127,15 @@ BfdArchitecture::BfdArchitecture(const string &fname,const string &targ,ostream 
   adjustvma = 0;
 }
 
-void BfdArchitecture::saveXml(ostream &s) const
+void BfdArchitecture::encode(Encoder &encoder) const
 
 {				// prepend extra stuff to specify binary file and spec
-  s << "<bfd_savefile";
-  saveXmlHeader(s);
-  a_v_u(s,"adjustvma",adjustvma);
-  s << ">\n";
-  types->saveXmlCoreTypes(s);
-  SleighArchitecture::saveXml(s); // Save the rest of the state
-  s << "</bfd_savefile>\n";
+  encoder.openElement(ELEM_BFD_SAVEFILE);
+  encodeHeader(encoder);
+  encoder.writeUnsignedInteger(ATTRIB_ADJUSTVMA, adjustvma);
+  types->encodeCoreTypes(encoder);
+  SleighArchitecture::encode(encoder); // Save the rest of the state
+  encoder.closeElement(ELEM_BFD_SAVEFILE);
 }
 
 void BfdArchitecture::restoreXml(DocumentStorage &store)

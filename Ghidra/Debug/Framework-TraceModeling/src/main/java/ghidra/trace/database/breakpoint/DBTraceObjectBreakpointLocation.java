@@ -277,7 +277,7 @@ public class DBTraceObjectBreakpointLocation
 			}
 
 			PathMatcher procMatcher = schema.searchFor(TargetProcess.class, false);
-			return object.getAncestors(getLifespan(), procMatcher)
+			return object.getAncestorsRoot(getLifespan(), procMatcher)
 					.flatMap(proc -> proc.getSource(object)
 							.querySuccessorsInterface(getLifespan(),
 								TraceObjectThread.class))

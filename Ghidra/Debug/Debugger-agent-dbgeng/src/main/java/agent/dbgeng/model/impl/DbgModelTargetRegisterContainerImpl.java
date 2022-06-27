@@ -55,10 +55,12 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 		super(thread.getModel(), thread, "Registers", "RegisterContainer");
 		this.thread = thread.getThread();
 
-		requestElements(false);
-		changeAttributes(List.of(), List.of(), Map.of( //
-			TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, this //
-		), "Initialized");
+		if (!getModel().isSuppressDescent()) {
+			requestElements(false);
+			changeAttributes(List.of(), List.of(), Map.of( //
+				TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, this //
+			), "Initialized");
+		}
 	}
 
 	@Override

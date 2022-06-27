@@ -15,7 +15,7 @@
  */
 package ghidra.test;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -115,7 +115,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * Get the language and compiler spec associated with an old language name string. If the
 	 * language no longer exists, and suitable replacement language will be returned if found. If no
 	 * language is found, an exception will be thrown.
-	 * 
+	 *
 	 * @param oldLanguageName old language name string
 	 * @return the language compiler and spec
 	 * @throws LanguageNotFoundException if the language is not found
@@ -138,7 +138,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Creates an in-memory program with the given language
-	 * 
+	 *
 	 * @param name the program name
 	 * @param languageString a language string of the format <code>x86:LE:32:default</code>
 	 * @param consumer a consumer for the program
@@ -157,7 +157,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Creates an in-memory program with the given language
-	 * 
+	 *
 	 * @param name the program name
 	 * @param languageString a language string of the format <code>x86:LE:32:default</code>
 	 * @param compilerSpecID the ID
@@ -236,7 +236,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
 	 * logic and returning a result.
-	 * 
+	 *
 	 * @param <T> the return type
 	 * @param <E> the exception type
 	 * @param p the program
@@ -308,7 +308,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Undo the last transaction on the domain object and wait for all events to be flushed.
-	 * 
+	 *
 	 * @param dobj The domain object upon which to perform the undo.
 	 * @param wait if true, wait for undo to fully complete in Swing thread. If a modal dialog may
 	 *            result from this undo, wait should be set false.
@@ -332,7 +332,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Redo the last undone transaction on the domain object and wait for all events to be flushed.
-	 * 
+	 *
 	 * @param dobj The domain object upon which to perform the redo.
 	 * @param wait if true, wait for redo to fully complete in Swing thread. If a modal dialog may
 	 *            result from this redo, wait should be set false.
@@ -356,7 +356,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Undo the last transaction on the domain object and wait for all events to be flushed.
-	 * 
+	 *
 	 * @param dobj The domain object upon which to perform the undo.
 	 */
 	public static void undo(final UndoableDomainObject dobj) {
@@ -365,7 +365,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Redo the last undone transaction on domain object and wait for all events to be flushed.
-	 * 
+	 *
 	 * @param dobj The domain object upon which to perform the redo.
 	 */
 	public static void redo(final UndoableDomainObject dobj) {
@@ -375,7 +375,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Undo the last 'count' transactions on the domain object and wait for all events to be
 	 * flushed.
-	 * 
+	 *
 	 * @param dobj The domain object upon which to perform the undo.
 	 * @param count number of transactions to undo
 	 */
@@ -388,7 +388,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Redo the last 'count' undone transactions on the domain object and wait for all events to be
 	 * flushed.
-	 * 
+	 *
 	 * @param dobj The domain object upon which to perform the redo.
 	 * @param count number of transactions to redo
 	 */
@@ -514,7 +514,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 *
 	 * <P>
 	 * <B>Do not leave this call in your test when committing changes.</B>
-	 * 
+	 *
 	 * @param p the program
 	 * @param address the address
 	 *
@@ -601,6 +601,11 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 			}
 		}
 
+		T instance = tool.getService(service);
+		if (instance != null) {
+			serviceManager.removeService(service, instance);
+		}
+
 		set.add(replacement.getClass());
 		serviceManager.addService(service, replacement);
 
@@ -614,7 +619,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Get language service used for testing.
-	 * 
+	 *
 	 * @return language service.
 	 */
 	public synchronized static LanguageService getLanguageService() {

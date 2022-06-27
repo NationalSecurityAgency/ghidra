@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 #include "funcdata.hh"
-//#include <fstream>
+
+AttributeId ATTRIB_NOCODE = AttributeId("nocode",70);
+
+ElementId ELEM_AST = ElementId("ast",89);
+ElementId ELEM_FUNCTION = ElementId("function",90);
+ElementId ELEM_HIGHLIST = ElementId("highlist",91);
+ElementId ELEM_JUMPTABLELIST = ElementId("jumptablelist",92);
+ElementId ELEM_VARNODES = ElementId("varnodes",93);
 
 /// \param nm is the (base) name of the function
 /// \param scope is Symbol scope associated with the function
@@ -42,7 +49,7 @@ Funcdata::Funcdata(const string &nm,Scope *scope,const Address &addr,FunctionSym
   size = sz;
   AddrSpace *stackid = glb->getStackSpace();
   if (nm.size()==0)
-    localmap = (ScopeLocal *)0; // Filled in by restoreXml
+    localmap = (ScopeLocal *)0; // Filled in by decode
   else {
     uint8 id;
     if (sym != (FunctionSymbol *)0)
@@ -542,66 +549,65 @@ void Funcdata::printLocalRange(ostream &s) const
   }
 }
 
-/// This parses a \<jumptablelist> tag and builds a JumpTable object for
-/// each \<jumptable> sub-tag.
-/// \param el is the root \<jumptablelist> tag
-void Funcdata::restoreXmlJumpTable(const Element *el)
+/// Parse a \<jumptablelist> element and build a JumpTable object for
+/// each \<jumptable> child element.
+/// \param decoder is the stream decoder
+void Funcdata::decodeJumpTable(Decoder &decoder)
 
 {
-  const List &list( el->getChildren() );
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter) {
+  uint4 elemId = decoder.openElement(ELEM_JUMPTABLELIST);
+  while(decoder.peekElement() != 0) {
     JumpTable *jt = new JumpTable(glb);
-    jt->restoreXml(*iter);
+    jt->decode(decoder);
     jumpvec.push_back(jt);
   }
+  decoder.closeElement(elemId);
 }
 
-/// A \<jumptablelist> tag is written with \<jumptable> sub-tags describing
+/// A \<jumptablelist> element is written with \<jumptable> children describing
 /// each jump-table associated with the control-flow of \b this function.
-/// \param s is the output stream
-void Funcdata::saveXmlJumpTable(ostream &s) const
+/// \param encoder is the stream encoder
+void Funcdata::encodeJumpTable(Encoder &encoder) const
 
 {
   if (jumpvec.empty()) return;
   vector<JumpTable *>::const_iterator iter;
 
-  s << "<jumptablelist>\n";
+  encoder.openElement(ELEM_JUMPTABLELIST);
   for(iter=jumpvec.begin();iter!=jumpvec.end();++iter)
-    (*iter)->saveXml(s);
-  s << "</jumptablelist>\n";
+    (*iter)->encode(encoder);
+  encoder.closeElement(ELEM_JUMPTABLELIST);
 }
 
-/// \brief Save XML descriptions for a set of Varnodes to stream
+/// \brief Encode descriptions for a set of Varnodes to a stream
 ///
-/// This is an internal function for the function's save to XML system.
-/// Individual XML tags are written in sequence for Varnodes in a given set.
+/// This is an internal function for the function's marshaling system.
+/// Individual elements are written in sequence for Varnodes in a given set.
 /// The set is bounded by iterators using the 'loc' ordering.
-/// \param s is the output stream
+/// \param encoder is the stream encoder
 /// \param iter is the beginning of the set
 /// \param enditer is the end of the set
-void Funcdata::saveVarnodeXml(ostream &s,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer)
+void Funcdata::encodeVarnode(Encoder &encoder,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer)
 
 {
   Varnode *vn;
   while(iter!=enditer) {
     vn = *iter++;
-    vn->saveXml(s);
-    s << '\n';
+    vn->encode(encoder);
   }
 }
 
-/// This produces a single \<highlist> tag, with a \<high> sub-tag for each
+/// This produces a single \<highlist> element, with a \<high> child for each
 /// high-level variable (HighVariable) currently associated with \b this function.
-/// \param s is the output stream
-void Funcdata::saveXmlHigh(ostream &s) const
+/// \param encoder is the stream encoder
+void Funcdata::encodeHigh(Encoder &encoder) const
 
 {
   Varnode *vn;
   HighVariable *high;
 
   if (!isHighOn()) return;
-  s << "<highlist>";
+  encoder.openElement(ELEM_HIGHLIST);
   VarnodeLocSet::const_iterator iter;
   for(iter=beginLoc();iter!=endLoc();++iter) {
     vn = *iter;
@@ -609,104 +615,98 @@ void Funcdata::saveXmlHigh(ostream &s) const
     high = vn->getHigh();
     if (high->isMark()) continue;
     high->setMark();
-    high->saveXml(s);
+    high->encode(encoder);
   }
   for(iter=beginLoc();iter!=endLoc();++iter) {
     vn = *iter;
     if (!vn->isAnnotation())
       vn->getHigh()->clearMark();
   }
-
- s << "</highlist>\n";
+  encoder.closeElement(ELEM_HIGHLIST);
 }
 
-/// A single \<ast> tag is produced with children describing Varnodes, PcodeOps, and
+/// A single \<ast> element is produced with children describing Varnodes, PcodeOps, and
 /// basic blocks making up \b this function's current syntax tree.
-/// \param s is the output stream
-void Funcdata::saveXmlTree(ostream &s) const
+/// \param encoder is the stream encoder
+void Funcdata::encodeTree(Encoder &encoder) const
 
 {
-  s << "<ast>\n";
-  s << "<varnodes>\n";
+  encoder.openElement(ELEM_AST);
+  encoder.openElement(ELEM_VARNODES);
   for(int4 i=0;i<glb->numSpaces();++i) {
     AddrSpace *base = glb->getSpace(i);
     if (base == (AddrSpace *)0 || base->getType()==IPTR_IOP) continue;
     VarnodeLocSet::const_iterator iter = vbank.beginLoc(base);
     VarnodeLocSet::const_iterator enditer = vbank.endLoc(base);
-    saveVarnodeXml(s,iter,enditer);
+    encodeVarnode(encoder,iter,enditer);
   }
-  s << "</varnodes>\n";
+  encoder.closeElement(ELEM_VARNODES);
   
   list<PcodeOp *>::iterator oiter,endoiter;
   PcodeOp *op;
   BlockBasic *bs;
   for(int4 i=0;i<bblocks.getSize();++i) {
     bs = (BlockBasic *)bblocks.getBlock(i);
-    s << "<block";
-    a_v_i(s,"index",bs->getIndex());
-    s << ">\n";
-    bs->saveXmlBody(s);
+    encoder.openElement(ELEM_BLOCK);
+    encoder.writeSignedInteger(ATTRIB_INDEX, bs->getIndex());
+    bs->encodeBody(encoder);
     oiter = bs->beginOp();
     endoiter = bs->endOp();
     while(oiter != endoiter) {
       op = *oiter++;
-      op->saveXml(s);
-      s << '\n';
+      op->encode(encoder);
     }
-    s << "</block>\n";
+    encoder.closeElement(ELEM_BLOCK);
   }
   for(int4 i=0;i<bblocks.getSize();++i) {
     bs = (BlockBasic *)bblocks.getBlock(i);
     if (bs->sizeIn() == 0) continue;
-    s << "<blockedge";
-    a_v_i(s,"index",bs->getIndex());
-    s << ">\n";
-    bs->saveXmlEdges(s);
-    s << "</blockedge>\n";
+    encoder.openElement(ELEM_BLOCKEDGE);
+    encoder.writeSignedInteger(ATTRIB_INDEX, bs->getIndex());
+    bs->encodeEdges(encoder);
+    encoder.closeElement(ELEM_BLOCKEDGE);
   }
-  s << "</ast>\n";
+  encoder.closeElement(ELEM_AST);
 }
 
-/// An XML description of \b this function is written to the stream,
+/// A description of \b this function is written to the stream,
 /// including name, address, prototype, symbol, jump-table, and override information.
 /// If indicated by the caller, a description of the entire PcodeOp and Varnode
 /// tree is also emitted.
-/// \param s is the output stream
+/// \param encoder is the stream encoder
 /// \param id is the unique id associated with the function symbol
 /// \param savetree is \b true if the p-code tree should be emitted
-void Funcdata::saveXml(ostream &s,uint8 id,bool savetree) const
+void Funcdata::encode(Encoder &encoder,uint8 id,bool savetree) const
 
 {
-  s << "<function";
+  encoder.openElement(ELEM_FUNCTION);
   if (id != 0)
-    a_v_u(s, "id", id);
-  a_v(s,"name",name);
-  a_v_i(s,"size",size);
+    encoder.writeUnsignedInteger(ATTRIB_ID, id);
+  encoder.writeString(ATTRIB_NAME, name);
+  encoder.writeSignedInteger(ATTRIB_SIZE, size);
   if (hasNoCode())
-    a_v_b(s,"nocode",true);
-  s << ">\n";
-  baseaddr.saveXml(s);
-  s << '\n';
+    encoder.writeBool(ATTRIB_NOCODE, true);
+  baseaddr.encode(encoder);
 
   if (!hasNoCode()) {
-    localmap->saveXmlRecursive(s,false);	// Save scope and all subscopes
+    localmap->encodeRecursive(encoder,false);	// Save scope and all subscopes
   }
 
   if (savetree) {
-    saveXmlTree(s);
-    saveXmlHigh(s);
+    encodeTree(encoder);
+    encodeHigh(encoder);
   }
-  saveXmlJumpTable(s);
-  funcp.saveXml(s);		// Must be saved after database
-  localoverride.saveXml(s,glb);
-  s << "</function>\n";
+  encodeJumpTable(encoder);
+  funcp.encode(encoder);		// Must be saved after database
+  localoverride.encode(encoder,glb);
+  encoder.closeElement(ELEM_FUNCTION);
 }
 
-/// From an XML \<function> tag, recover the name, address, prototype, symbol,
+/// Parse a \<function> element, recovering the name, address, prototype, symbol,
 /// jump-table, and override information for \b this function.
-/// \param el is the root \<function> tag
+/// \param decoder is the stream decoder
 /// \return the symbol id associated with the function
-uint8 Funcdata::restoreXml(const Element *el)
+uint8 Funcdata::decode(Decoder &decoder)
 
 {
   //  clear();  // Shouldn't be needed
@@ -714,22 +714,20 @@ uint8 Funcdata::restoreXml(const Element *el)
   size = -1;
   uint8 id = 0;
   AddrSpace *stackid = glb->getStackSpace();
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    const string &attrName(el->getAttributeName(i));
-    if (attrName == "name")
-      name = el->getAttributeValue(i);
-    else if (attrName == "size") {
-      istringstream s( el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> size;
+  uint4 elemId = decoder.openElement(ELEM_FUNCTION);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_NAME)
+      name = decoder.readString();
+    else if (attribId == ATTRIB_SIZE) {
+      size = decoder.readSignedInteger();
     }
-    else if (attrName == "id") {
-      istringstream s( el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> id;
+    else if (attribId == ATTRIB_ID) {
+      id = decoder.readUnsignedInteger();
     }
-    else if (attrName == "nocode") {
-      if (xml_readbool(el->getAttributeValue(i)))
+    else if (attribId == ATTRIB_NOCODE) {
+      if (decoder.readBool())
 	flags |= no_code;
     }
   }
@@ -737,27 +735,20 @@ uint8 Funcdata::restoreXml(const Element *el)
     throw LowlevelError("Missing function name");
   if (size == -1)
     throw LowlevelError("Missing function size");
-  const List &list( el->getChildren() );
-  List::const_iterator iter = list.begin();
-  baseaddr = Address::restoreXml( *iter, glb );
-  ++iter;
-  for(;iter!=list.end();++iter) {
-    if ((*iter)->getName() == "localdb") {
+  baseaddr = Address::decode( decoder, glb );
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_LOCALDB) {
       if (localmap != (ScopeLocal *)0)
 	throw LowlevelError("Pre-existing local scope when restoring: "+name);
       ScopeLocal *newMap = new ScopeLocal(id,stackid,this,glb);
-      glb->symboltab->restoreXmlScope(*iter,newMap);	// May delete newMap and throw
+      glb->symboltab->decodeScope(decoder,newMap);	// May delete newMap and throw
       localmap = newMap;
     }
-    //    else if ((*iter)->getName() == "scope") {
-    //      const Element *scopeel = *iter;
-    //      ScopeInternal *subscope = new ScopeInternal("",glb);
-    //      subscope->restrictScope(this);
-    //      glb->symboltab->restore_nonglobal_xml(scopeel,subscope);
-    //    }
-    else if ((*iter)->getName() == "override")
-      localoverride.restoreXml(*iter,glb);
-    else if ((*iter)->getName() == "prototype") {
+    else if (subId == ELEM_OVERRIDE)
+      localoverride.decode(decoder,glb);
+    else if (subId == ELEM_PROTOTYPE) {
       if (localmap == (ScopeLocal *)0) {
 	// If we haven't seen a <localdb> tag yet, assume we have a default local scope
 	ScopeLocal *newMap = new ScopeLocal(id,stackid,this,glb);
@@ -766,11 +757,12 @@ uint8 Funcdata::restoreXml(const Element *el)
 	localmap = newMap;
       }
       funcp.setScope(localmap,baseaddr+ -1); // localmap built earlier
-      funcp.restoreXml(*iter,glb);
+      funcp.decode(decoder,glb);
     }
-    else if ((*iter)->getName() == "jumptablelist")
-      restoreXmlJumpTable(*iter);
+    else if (subId == ELEM_JUMPTABLELIST)
+      decodeJumpTable(decoder);
   }
+  decoder.closeElement(elemId);
   if (localmap == (ScopeLocal *)0) { // Seen neither <localdb> or <prototype>
     // This is a function shell, so we provide default locals
     ScopeLocal *newMap = new ScopeLocal(id,stackid,this,glb);

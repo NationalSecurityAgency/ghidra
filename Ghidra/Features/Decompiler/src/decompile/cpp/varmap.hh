@@ -21,6 +21,11 @@
 
 #include "database.hh"
 
+extern AttributeId ATTRIB_LOCK;		///< Marshaling attribute "lock"
+extern AttributeId ATTRIB_MAIN;		///< Marshaling attribute "main"
+
+extern ElementId ELEM_LOCALDB;		///< Marshaling element \<localdb>
+
 /// \brief A symbol name recommendation with its associated storage location
 ///
 /// The name is associated with a static Address and use point in the code. Symbols
@@ -224,8 +229,9 @@ public:
   void markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool param);	///< Mark a specific address range is not mapped
 
 				// Routines that are specific to one address space
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder);
+  virtual void decodeWrappingAttributes(Decoder &decoder);
   virtual string buildVariableName(const Address &addr,
 				   const Address &pc,
 				   Datatype *ct,

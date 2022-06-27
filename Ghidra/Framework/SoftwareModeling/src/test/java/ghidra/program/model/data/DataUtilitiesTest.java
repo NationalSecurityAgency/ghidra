@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.*;
 
 import generic.test.AbstractGTest;
-import ghidra.program.model.ProgramTestDouble;
+import ghidra.program.model.StubProgram;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -249,7 +249,7 @@ public class DataUtilitiesTest extends AbstractGTest {
 	//================================================================
 
 	private Program createProgram() {
-		return new ProgramTestDouble() {
+		return new StubProgram() {
 
 			@Override
 			public AddressFactory getAddressFactory() {
@@ -268,7 +268,7 @@ public class DataUtilitiesTest extends AbstractGTest {
 		};
 	}
 
-	private class MyMemory extends MemoryStub {
+	private class MyMemory extends StubMemory {
 
 		@Override
 		public MemoryBlock getBlock(Address addr) {
@@ -335,7 +335,7 @@ public class DataUtilitiesTest extends AbstractGTest {
 		}
 	}
 
-	private class MyListing extends ListingStub {
+	private class MyListing extends StubListing {
 
 		@Override
 		public Data getDataContaining(Address address) {

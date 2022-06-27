@@ -54,10 +54,6 @@ public interface PathPredicates {
 		return new PathPattern(PathUtils.parse(pattern));
 	}
 
-	static PathPredicates all() {
-		return AllPathsMatcher.INSTANCE;
-	}
-
 	PathPredicates or(PathPredicates that);
 
 	/**
@@ -96,6 +92,18 @@ public interface PathPredicates {
 	boolean ancestorMatches(List<String> path, boolean strict);
 
 	/**
+	 * Check if the given path <em>could</em> have a matching ancestor, right to left
+	 * 
+	 * <p>
+	 * This essentially checks if the given path is a viable postfix to the matcher.
+	 * 
+	 * @param path the path (postfix) to check
+	 * @param strict true to exclude the case where {@link #matches(List)} would return true
+	 * @return true if an ancestor could match, false otherwise
+	 */
+	boolean ancestorCouldMatchRight(List<String> path, boolean strict);
+
+	/**
 	 * Get the patterns for the next possible key
 	 * 
 	 * <p>
@@ -131,6 +139,17 @@ public interface PathPredicates {
 	Set<String> getNextIndices(List<String> path);
 
 	/**
+	 * Get the patterns for the previous possible key (right-to-left matching)
+	 * 
+	 * <p>
+	 * If an ancestor of the given path cannot match this pattern, the empty set is returned.
+	 * 
+	 * @param path the successor path
+	 * @return a set of patterns where indices are enclosed in brackets ({@code [])
+	 */
+	Set<String> getPrevKeys(List<String> path);
+
+	/**
 	 * If this predicate is known to match only one path, i.e., no wildcards, get that path
 	 * 
 	 * @return the singleton path, or {@code null}
@@ -143,6 +162,14 @@ public interface PathPredicates {
 	 * @return the singleton pattern, or {@code null}
 	 */
 	PathPattern getSingletonPattern();
+
+	/**
+	 * Remove count elements from the right
+	 * 
+	 * @param count the number of elements to remove
+	 * @return the resulting predicates
+	 */
+	PathPredicates removeRight(int count);
 
 	default NavigableMap<List<String>, ?> getCachedValues(TargetObject seed) {
 		return getCachedValues(List.of(), seed);

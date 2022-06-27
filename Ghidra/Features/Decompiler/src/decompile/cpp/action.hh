@@ -128,8 +128,6 @@ public:
   virtual int4 apply(Funcdata &data)=0;
   virtual int4 print(ostream &s,int4 num,int4 depth) const;	///< Print a description of this Action to stream
   virtual void printState(ostream &s) const;			///< Print status to stream
-  virtual void saveXml(ostream &s) const {} 			///< Save specifics of this action to stream
-  virtual void restoreXml(const Element *el,Funcdata *fd) {}	///< Load specifics of action from XML
   virtual Action *getSubAction(const string &specify);		///< Retrieve a specific sub-action by name
   virtual Rule *getSubRule(const string &specify);		///< Retrieve a specific sub-rule by name
 };

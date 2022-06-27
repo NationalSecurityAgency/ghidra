@@ -190,7 +190,7 @@ public class GoToHelper {
 	 * @return true if navigation was successful or a list of possible linkage locations
 	 * was displayed.
 	 */
-	private boolean goToExternalLinkage(Navigatable nav, ExternalLocation externalLoc,
+	protected boolean goToExternalLinkage(Navigatable nav, ExternalLocation externalLoc,
 			boolean popupAllowed) {
 		if (externalLoc == null) {
 			return false;
@@ -457,10 +457,6 @@ public class GoToHelper {
 	private Program findGoToProgram(Program currentProgram, Address address) {
 		// we need to try and find a suitable program
 		Program goToProgram = findProgramContaining(currentProgram, address);
-		if (goToProgram == null) {
-			return null;
-		}
-
 		return goToProgram;
 	}
 

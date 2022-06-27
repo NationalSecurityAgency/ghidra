@@ -368,7 +368,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 			if (rootVal == null) {
 				return Stream.of();
 			}
-			return rootVal.doStreamVisitor(span, new InternalSuccessorsVisitor(predicates));
+			return rootVal.doStreamVisitor(span, new InternalSuccessorsRelativeVisitor(predicates));
 		}
 	}
 

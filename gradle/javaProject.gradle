@@ -156,10 +156,8 @@ artifacts {
 */  
 dependencies {
 	integrationTestImplementation "org.hamcrest:hamcrest:2.2"
-	integrationTestImplementation "org.jmockit:jmockit:1.44"
 
 	testImplementation "org.hamcrest:hamcrest:2.2"
-	testImplementation "org.jmockit:jmockit:1.44"
 
 	testImplementation "junit:junit:4.12"
 	pcodeTestImplementation "junit:junit:4.12"

@@ -1,0 +1,23 @@
+<opinions>
+    <constraint loader="Dump File Loader">
+        <constraint compilerSpecID="windows">
+         	<constraint primary="0"     processor="x86"     endian="little" size="32" />
+        	<constraint primary="1"     processor="MIPS"    endian="little" size="32" />
+        	<!-- constraint primary="2"     processor="ALPHA"     endian="little" size="32" -->
+        	<constraint primary="4"     processor="SuperH4" endian="little" size="32" />
+        	<constraint primary="5"     processor="ARM"     endian="little" size="32" />
+        	<!-- constraint primary="6"     processor="IA64"      endian="little" size="32" -->
+        	<!-- constraint primary="7"     processor="ALPHA64"   endian="little" size="32" -->
+        	<!-- constraint primary="8"     processor="MSIL"      endian="little" size="32" -->
+        	<constraint primary="9"     processor="x86"     endian="little" size="64" />
+        	<!-- constraint primary="10"    processor="IA32/64"   endian="little" size="32" -->
+        	<!-- constraint primary="11"    processor="NEUTRAL"     endian="little" size="32" -->
+        	<constraint primary="12"    processor="ARM"     endian="little" size="64" />
+        	<constraint primary="13"    processor="ARM"     endian="little" size="32" />
+        	<!-- constraint primary="14"    processor="IA32"     endian="little" size="32" -->
+        </constraint>
+        <constraint compilerSpecID="default">
+        	<constraint primary="3"     processor="PowerPC" endian="little" size="32" />
+        </constraint>
+    </constraint>
+</opinions>

@@ -16,6 +16,8 @@
 #include "prefersplit.hh"
 #include "funcdata.hh"
 
+ElementId ELEM_PREFERSPLIT = ElementId("prefersplit",171);
+
 bool PreferSplitRecord::operator<(const PreferSplitRecord &op2) const
 
 {

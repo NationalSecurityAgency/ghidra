@@ -35,6 +35,10 @@ public interface DbgModelTargetThread extends //
 		DbgModelSelectableObject {
 
 	public default DbgThread getThread() {
+		return getThread(false);
+	}
+
+	public default DbgThread getThread(boolean fire) {
 		DbgManagerImpl manager = getManager();
 		DebugSystemObjects so = manager.getSystemObjects();
 		try {
@@ -46,7 +50,7 @@ public interface DbgModelTargetThread extends //
 			}
 			DbgModelTargetProcess parentProcess = getParentProcess();
 			DbgProcessImpl process = (DbgProcessImpl) parentProcess.getProcess();
-			DbgThreadImpl thread = manager.getThreadComputeIfAbsent(id, process, tid);
+			DbgThreadImpl thread = manager.getThreadComputeIfAbsent(id, process, tid, fire);
 			return thread;
 		}
 		catch (IllegalArgumentException e) {

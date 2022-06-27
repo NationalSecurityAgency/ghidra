@@ -314,7 +314,7 @@ void IfcOption::execute(istream &s)
   }
   
   try {
-    string res = dcp->conf->options->set(optname,p1,p2,p3);
+    string res = dcp->conf->options->set(ElementId::find(optname),p1,p2,p3);
     *status->optr << res << endl;
   }
   catch(ParseError &err) {
@@ -2690,7 +2690,8 @@ void IfcCallGraphDump::execute(istream &s)
   if (!os)
     throw IfaceExecutionError("Unable to open file "+name);
 
-  dcp->cgraph->saveXml(os);
+  XmlEncode encoder(os);
+  dcp->cgraph->encode(encoder);
   os.close();
   *status->optr << "Successfully saved callgraph to " << name << endl;
 }
@@ -2723,7 +2724,8 @@ void IfcCallGraphLoad::execute(istream &s)
   Document *doc = store.parseDocument(is);
 
   dcp->allocateCallGraph();
-  dcp->cgraph->restoreXml(doc->getRoot());
+  XmlDecode decoder(doc->getRoot());
+  dcp->cgraph->decoder(decoder);
   *status->optr << "Successfully read in callgraph" << endl;
 
   Scope *gscope = dcp->conf->symboltab->getGlobalScope();
@@ -3014,7 +3016,8 @@ void IfcStructureBlocks::execute(istream &s)
 
   try {
     BlockGraph ingraph;
-    ingraph.restoreXml(doc->getRoot(),dcp->conf);
+    XmlDecode decoder(doc->getRoot());
+    ingraph.decode(decoder,dcp->conf);
     
     BlockGraph resultgraph;
     vector<FlowBlock *> rootlist;
@@ -3030,7 +3033,8 @@ void IfcStructureBlocks::execute(istream &s)
     sout.open(outfile.c_str());
     if (!sout)
       throw IfaceExecutionError("Unable to open output file: "+outfile);
-    resultgraph.saveXml(sout);
+    XmlEncode encoder(sout);
+    resultgraph.encode(encoder);
     sout.close();
   }
   catch(LowlevelError &err) {
