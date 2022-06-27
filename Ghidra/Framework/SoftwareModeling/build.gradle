@@ -39,16 +39,16 @@ dependencies {
 	
 	api "msv:msv:20050913"
 	api "msv:xsdlib:20050913"
-	api "org.antlr:antlr-runtime:3.5.2"
+	api "org.antlr:antlr-runtime:3.5.3"
 	
 	runtimeOnly "msv:relaxngDatatype:20050913"
 	api "msv:isorelax:20050913"	
 		
 	// Must specify the specific antlr implementation to use or it will default to trying to find
 	// version 2.7.7 (which we don't have)
-	antlr "org.antlr:antlr:3.5.2"
+	antlr "org.antlr:antlr:3.5.3"
 	// need to add in the antlr dependencies for when we build from flat jar dirs
-	antlr "org.antlr:antlr-runtime:3.5.2"
+	antlr "org.antlr:antlr-runtime:3.5.3"
 	antlr "org.antlr:ST4:4.0.8"
 }	
 
