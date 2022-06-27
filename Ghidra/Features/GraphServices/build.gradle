@@ -35,7 +35,7 @@ dependencies {
 	// not using jgrapht-io code that depends on antlr, so exclude antlr
 	api ("org.jgrapht:jgrapht-io:1.5.1") { exclude group: "org.antlr", module: "antlr4-runtime" }
 	
-	runtimeOnly "org.jheaps:jheaps:0.13"
+	runtimeOnly "org.jheaps:jheaps:0.14"
       
 	helpPath project(path: ":Base", configuration: 'helpPath')
 	
