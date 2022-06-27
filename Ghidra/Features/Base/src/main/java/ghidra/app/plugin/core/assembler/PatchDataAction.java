@@ -45,8 +45,6 @@ public class PatchDataAction extends AbstractPatchAction {
 
 	/*test*/ final JTextField input = new JTextField();
 
-	private Data data;
-
 	public PatchDataAction(Plugin owner) {
 		this(owner, "Patch Data");
 	}
@@ -119,6 +117,7 @@ public class PatchDataAction extends AbstractPatchAction {
 	public void accept() {
 		Program program = getProgram();
 		Address address = getAddress();
+		Data data = getData();
 		DataType dt = data.getBaseDataType();
 		/**
 		 * Do as much outside the transaction as possible. The tool tends to steal focus away upon
