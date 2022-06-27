@@ -756,6 +756,13 @@ public class TextFieldAutocompleter<T> {
 	}
 
 	/**
+	 * Update the completion list immediately
+	 */
+	public void updateNow() {
+		updateManager.updateNow();
+	}
+
+	/**
 	 * Cause the suggestion at the given index to be selected
 	 * 
 	 * @param index the index of the selection

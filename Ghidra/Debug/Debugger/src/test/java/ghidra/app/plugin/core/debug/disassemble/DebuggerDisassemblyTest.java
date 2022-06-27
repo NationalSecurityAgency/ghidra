@@ -428,9 +428,8 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 			new ProgramSelection(start, start.addWrap(1)), null);
 
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
-		AssemblerPluginTestHelper helper =
-			new AssemblerPluginTestHelper(disassemblerPlugin.actionPatchInstruction, null,
-				listingProvider, tb.trace.getProgramView());
+		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
+			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
 		Instruction result = helper.patchInstructionAt(start, "andeq r0,r0,r0", "bx lr");
 
 		assertArrayEquals(tb.arr(0x1e, 0xff, 0x2f, 0xe1), result.getBytes());
@@ -466,9 +465,8 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 			new ProgramSelection(start, start.addWrap(1)), null);
 
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
-		AssemblerPluginTestHelper helper =
-			new AssemblerPluginTestHelper(disassemblerPlugin.actionPatchInstruction, null,
-				listingProvider, tb.trace.getProgramView());
+		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
+			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
 		Instruction result = helper.patchInstructionAt(start, "movs r0,r0", "bx lr");
 
 		assertArrayEquals(tb.arr(0x70, 0x47), result.getBytes());
@@ -502,9 +500,8 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 			new ProgramSelection(start, start.addWrap(1)), null);
 
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
-		AssemblerPluginTestHelper helper =
-			new AssemblerPluginTestHelper(disassemblerPlugin.actionPatchInstruction, null,
-				listingProvider, tb.trace.getProgramView());
+		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
+			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
 		Instruction result = helper.patchInstructionAt(start, "andeq r0,r0,r0", "bx lr");
 
 		assertArrayEquals(tb.arr(0x1e, 0xff, 0x2f, 0xe1), result.getBytes());
@@ -543,9 +540,8 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 			new ProgramSelection(start, start.addWrap(1)), null);
 
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
-		AssemblerPluginTestHelper helper =
-			new AssemblerPluginTestHelper(disassemblerPlugin.actionPatchInstruction, null,
-				listingProvider, tb.trace.getProgramView());
+		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
+			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
 		Instruction result = helper.patchInstructionAt(start, "movs r0,r0", "bx lr");
 
 		assertArrayEquals(tb.arr(0x70, 0x47), result.getBytes());

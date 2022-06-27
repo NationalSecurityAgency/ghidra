@@ -33,6 +33,8 @@ import ghidra.app.plugin.core.assembler.AssemblerPlugin;
 import ghidra.app.plugin.core.assembler.AssemblerPluginTestHelper;
 import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
+import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
+import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPluginTestHelper;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.services.DebuggerStateEditingService;
@@ -43,6 +45,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
+import ghidra.util.Swing;
 import ghidra.util.database.UndoableTransaction;
 
 /**
@@ -58,7 +61,8 @@ public class DebuggerStateEditingPluginIntegrationTest extends AbstractGhidraHea
 	@Test
 	public void testPatchInstructionActionInDynamicListingEmu() throws Throwable {
 		DebuggerListingPlugin listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
-		AssemblerPlugin assemblerPlugin = addPlugin(tool, AssemblerPlugin.class);
+		DebuggerDisassemblerPlugin disassemblerPlugin =
+			addPlugin(tool, DebuggerDisassemblerPlugin.class);
 		DebuggerStateEditingPlugin editingPlugin =
 			addPlugin(tool, DebuggerStateEditingPlugin.class);
 		DebuggerStateEditingService editingService =
@@ -73,13 +77,17 @@ public class DebuggerStateEditingPluginIntegrationTest extends AbstractGhidraHea
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin:.text]", 0, tb.range(0x00400000, 0x00401000),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
+			// Dynamic Patch Instruction requires existing code unit for context
+			tb.addInstruction(0, tb.addr(0x00400123), tb.host);
 		}
 
 		CodeViewerProvider listingProvider = listingPlugin.getProvider();
-		AssemblerPluginTestHelper helper =
-			new AssemblerPluginTestHelper(assemblerPlugin, listingProvider, view);
+		DebuggerDisassemblerPluginTestHelper helper =
+			new DebuggerDisassemblerPluginTestHelper(disassemblerPlugin, listingProvider, view);
 
 		traceManager.activateTrace(tb.trace);
+		Swing.runNow(
+			() -> listingProvider.goTo(view, new ProgramLocation(view, tb.addr(0x00400123))));
 		waitForSwing();
 
 		assertTrue(editingPlugin.actionEditMode.isEnabled());
@@ -96,7 +104,8 @@ public class DebuggerStateEditingPluginIntegrationTest extends AbstractGhidraHea
 
 		assertTrue(
 			helper.patchInstructionAction.isAddToPopup(listingProvider.getActionContext(null)));
-		Instruction ins = helper.patchInstructionAt(tb.addr(0x00400123), "", "imm r0,#1234");
+		Instruction ins =
+			helper.patchInstructionAt(tb.addr(0x00400123), "imm r0,#0x0", "imm r0,#1234");
 		assertEquals(2, ins.getLength());
 
 		long snap = traceManager.getCurrent().getViewSnap();

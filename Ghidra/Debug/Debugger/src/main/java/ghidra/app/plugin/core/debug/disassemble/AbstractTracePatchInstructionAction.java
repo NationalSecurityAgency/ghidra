@@ -63,7 +63,8 @@ public abstract class AbstractTracePatchInstructionAction extends PatchInstructi
 			public void setAddress(Address address) {
 				super.setAddress(address);
 				RegisterValue rv = getContextValue(getCodeUnit());
-				ctx = AssemblyPatternBlock.fromRegisterValue(rv).fillMask();
+				ctx = rv == null ? AssemblyPatternBlock.nop()
+						: AssemblyPatternBlock.fromRegisterValue(rv).fillMask();
 			}
 		};
 	}
@@ -126,7 +127,9 @@ public abstract class AbstractTracePatchInstructionAction extends PatchInstructi
 		view.getMemory().setBytes(address, data); // This invalidates cu
 		AddressSetView set = new AddressSet(address, address.add(data.length - 1));
 		TraceDisassembleCommand dis = new TraceDisassembleCommand(platform, address, set);
-		dis.setInitialContext(contextValue);
+		if (contextValue != null) {
+			dis.setInitialContext(contextValue);
+		}
 		dis.run(tool, view);
 	}
 

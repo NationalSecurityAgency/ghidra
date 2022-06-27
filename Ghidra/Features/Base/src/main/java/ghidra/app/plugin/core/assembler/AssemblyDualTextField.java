@@ -719,14 +719,14 @@ public class AssemblyDualTextField {
 	 * If text parses and assembles, then the completion set will include assembled instruction-byte
 	 * entries. Note that there may still be valid textual completions to continue the instruction.
 	 * The suggestions yielded by all syntax errors are used to create textual completions. If the
-	 * suggestion is prefixed by the buffer where the syntax error ocurred, then, the tail of that
+	 * suggestion is prefixed by the buffer where the syntax error occurred, then, the tail of that
 	 * suggestion is made into a completion entry.
 	 * 
 	 * @param text the prefix
 	 * @return the collection of completion items
 	 */
 	protected Collection<AssemblyCompletion> computeCompletions(String text) {
-		final AssemblyPatternBlock ctx = getContext();
+		final AssemblyPatternBlock ctx = Objects.requireNonNull(getContext());
 
 		Set<AssemblyCompletion> result = new TreeSet<>();
 		Collection<AssemblyParseResult> parses = assembler.parseLine(text);
@@ -748,7 +748,7 @@ public class AssemblyDualTextField {
 		for (AssemblyParseResult parse : parses) {
 			if (!parse.isError()) {
 				AssemblyResolutionResults sems =
-					assembler.resolveTree(parse, address, getContext());
+					assembler.resolveTree(parse, address, ctx);
 				for (AssemblyResolution ar : sems) {
 					if (ar.isError()) {
 						//result.add(new AssemblyError("", ar.toString()));

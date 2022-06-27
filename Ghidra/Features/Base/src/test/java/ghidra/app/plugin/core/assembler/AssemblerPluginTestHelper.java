@@ -82,7 +82,7 @@ public class AssemblerPluginTestHelper {
 		AbstractGenericTest.runSwing(() -> {
 			instructionInput.setText(text);
 			instructionInput.auto.startCompletion(instructionInput.getOperandsField());
-			instructionInput.auto.flushUpdates();
+			instructionInput.auto.updateNow();
 		});
 		return AbstractGenericTest.waitForValue(() -> AbstractGenericTest.runSwing(() -> {
 			List<AssemblyCompletion> suggestions = instructionInput.auto.getSuggestions();
