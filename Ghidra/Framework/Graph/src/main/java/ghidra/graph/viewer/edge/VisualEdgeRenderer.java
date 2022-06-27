@@ -18,11 +18,11 @@ package ghidra.graph.viewer.edge;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.util.function.Predicate;
 
 import javax.swing.JComponent;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
@@ -324,8 +324,8 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		//
 		// Arrow Head
 		//
-		Predicate<Context<Graph<V, E>, E>> predicate = rc.getEdgeArrowPredicate();
-		boolean drawArrow = predicate.apply(context);
+		Predicate<Context<Graph<V, E>, E>> predicate = rc.getEdgeArrowPredicate()::apply;
+		boolean drawArrow = predicate.test(context);
 		if (!drawArrow) {
 			g.setPaint(oldPaint);
 			return;
@@ -480,7 +480,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 	 */
 	public Shape getFullShape(RenderContext<V, E> rc, Layout<V, E> layout, V vertex) {
 		Function<? super V, Shape> vertexShaper = rc.getVertexShapeTransformer();
-		Shape shape = null;
+		Shape shape;
 		if (vertexShaper instanceof VisualGraphVertexShapeTransformer) {
 			@SuppressWarnings("unchecked")
 			VisualGraphVertexShapeTransformer<V> vgShaper =

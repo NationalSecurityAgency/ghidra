@@ -18,9 +18,8 @@ package ghidra.graph.graphs;
 import static util.CollectionUtils.asList;
 
 import java.util.*;
-
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.graph.util.Pair;
@@ -52,7 +51,7 @@ import utility.function.Callback;
  * allows this class to know when to update this graph, based upon whether or not data has
  * been filtered.   Implementation of this is achieved by using a flag.  Currently, this flag
  * is thread-safe.  If this graph is to be multi-threaded (such as if changes are to be 
- * made by multiple threads, then this update flag will have to be revisited to ensure thread
+ * made by multiple threads), then this update flag will have to be revisited to ensure thread
  * visibility. 
  *
  * @param <V> the vertex type
@@ -71,7 +70,6 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 	private int internalCallCount;
 
 	public void filterVertices(Collection<V> toFilter) {
-
 		for (V v : toFilter) {
 			removeVertexFromView(v);
 		}
@@ -113,21 +111,19 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 	}
 
 	public Iterator<V> getFilteredVertices() {
-
 		// a vertex is 'filtered' if it is in the complete graph, but not in the current graph
-		Predicate<? super V> isFiltered = v -> {
-			return !containsVertex(v) && completeGraph.containsVertex(v);
-		};
-		return Iterators.filter(getAllVertices(), isFiltered);
+		Iterable<V> iterable = () -> getAllVertices();
+		Stream<V> filterStream = StreamSupport.stream(iterable.spliterator(), false);
+
+		return filterStream.filter(v ->!containsVertex(v) && completeGraph.containsVertex(v)).iterator();
 	}
 
 	public Iterator<E> getFilteredEdges() {
-
 		// an edge is 'filtered' if it is in the complete graph, but not in the current graph
-		Predicate<? super E> isFiltered = e -> {
-			return !containsEdge(e) && completeGraph.containsEdge(e);
-		};
-		return Iterators.filter(getAllEdges(), isFiltered);
+		Iterable<E> iterable = () -> getAllEdges();
+		Stream<E> filterStream = StreamSupport.stream(iterable.spliterator(), false);
+
+		return filterStream.filter(e ->!containsEdge(e) && completeGraph.containsEdge(e)).iterator();
 	}
 
 	public Iterator<V> getUnfilteredVertices() {
@@ -199,16 +195,12 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 
 	private void restoreAllVertices() {
 		Collection<V> allVertices = completeGraph.getVertices();
-		performInternalUpdate(() -> {
-			allVertices.forEach(v -> addVertex(v));
-		});
+		performInternalUpdate(() -> allVertices.forEach(v -> addVertex(v)));
 	}
 
 	private void restoreAllEdges() {
 		Collection<E> allEdges = completeGraph.getEdges();
-		performInternalUpdate(() -> {
-			allEdges.forEach(e -> addEdge(e));
-		});
+		performInternalUpdate(() -> allEdges.forEach(e -> addEdge(e)));
 	}
 
 	private void maybeRestoreVertices(Collection<V> toRestore) {
@@ -241,7 +233,6 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 	}
 
 	private void maybeRestoreRelatedEdges(Collection<V> toUnfilter) {
-
 		for (V v : toUnfilter) {
 
 			Collection<E> vertexEdges = completeGraph.getIncidentEdges(v);
@@ -371,7 +362,7 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 	public boolean removeEdge(E e) {
 		boolean removed = super.removeEdge(e);
 
-		List<E> asList = Arrays.asList(e);
+		List<E> asList = Collections.singletonList(e);
 		if (removed) {
 			fireEdgesRemoved(asList);
 		}
@@ -387,9 +378,7 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 
 		super.removeEdges(toRemove);
 
-		maybePerformRemove(() -> {
-			completeGraph.removeEdges(toRemove);
-		});
+		maybePerformRemove(() -> completeGraph.removeEdges(toRemove));
 
 		fireEdgesRemoved(toRemove);
 	}

@@ -17,12 +17,11 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.function.Predicate;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
-
-import com.google.common.base.Predicate;
 
 import docking.ActionContext;
 import docking.widgets.DropDownSelectionTextField;
@@ -70,8 +69,6 @@ public class BitFieldEditorPanel extends JPanel {
 	private JSpinnerWithMouseWheel bitSizeInput;
 
 	private GDLabel statusTextField;
-
-	private BitSelectionHandler bitSelectionHandler;
 
 
 	private boolean updating = false;
@@ -447,7 +444,7 @@ public class BitFieldEditorPanel extends JPanel {
 		placementComponent.setFont(UIManager.getFont("TextField.font"));
 		placementComponent.addMouseWheelListener(e -> bitSizeInput.mouseWheelMoved(e));
 
-		bitSelectionHandler = new BitSelectionHandler();
+		BitSelectionHandler bitSelectionHandler = new BitSelectionHandler();
 		placementComponent.addMouseListener(bitSelectionHandler);
 		placementComponent.addMouseMotionListener(bitSelectionHandler);
 
@@ -486,7 +483,7 @@ public class BitFieldEditorPanel extends JPanel {
 		}
 		if (isValid) {
 			DataType dt = dtChoiceEditor.getCellEditorValueAsDataType();
-			if (!dataTypeValidator.apply(baseDataType)) {
+			if (!dataTypeValidator.test(baseDataType)) {
 				setStatus("Valid bitfield base datatype entry required");
 				isValid = false;
 			}
@@ -496,7 +493,7 @@ public class BitFieldEditorPanel extends JPanel {
 			}
 		}
 		else {
-			dataTypeValidator.apply(null); // affects button enablement
+			dataTypeValidator.test(null); // affects button enablement
 		}
 		return isValid;
 	}
@@ -569,7 +566,7 @@ public class BitFieldEditorPanel extends JPanel {
 		updating = true;
 		try {
 			baseDataType = initialBaseDataType;
-			dataTypeValidator.apply(baseDataType);
+			dataTypeValidator.test(baseDataType);
 			dtChoiceEditor.setCellEditorValue(initialBaseDataType);
 			fieldNameTextField.setText(initialFieldName);
 			fieldCommentTextField.setText(initialComment);

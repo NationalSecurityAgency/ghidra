@@ -16,9 +16,9 @@
 package ghidra.trace.util;
 
 import java.util.Iterator;
-
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionIterator;
@@ -32,7 +32,9 @@ public class WrappingFunctionIterator implements FunctionIterator {
 
 	public <T extends Function> WrappingFunctionIterator(Iterator<T> it,
 			Predicate<? super T> filter) {
-		this.it = Iterators.filter(it, filter);
+		Iterable<T> iterable = () -> it;
+		Stream<T> filterStream = StreamSupport.stream(iterable.spliterator(), false);
+		this.it = filterStream.filter(filter).iterator();
 	}
 
 	@Override

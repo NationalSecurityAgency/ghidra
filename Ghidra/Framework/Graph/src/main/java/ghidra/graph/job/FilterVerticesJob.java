@@ -21,9 +21,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import ghidra.graph.graphs.FilteringVisualGraph;
 import ghidra.graph.viewer.*;
@@ -119,9 +118,9 @@ public class FilterVerticesJob<V extends VisualVertex, E extends VisualEdge<V>>
 	}
 
 	private Set<V> findCurrentVerticesFailingTheFilter(Set<V> validVertices) {
-
-		UnmodifiableIterator<V> nonMatchingIterator =
-			Iterators.filter(filterGraph.getUnfilteredVertices(), v -> !validVertices.contains(v));
+		Iterable<V> isFilter = () -> filterGraph.getUnfilteredVertices();
+		Stream<V> filterStream = StreamSupport.stream(isFilter.spliterator(), false);
+		Iterator<V> nonMatchingIterator = filterStream.filter(v -> !validVertices.contains(v)).iterator();
 		Set<V> nonMatching = asSet(nonMatchingIterator);
 		return nonMatching;
 	}

@@ -29,6 +29,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -36,8 +38,6 @@ import javax.swing.JPanel;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.*;
-
-import com.google.common.collect.Iterators;
 
 import db.DBHandle;
 import db.DBRecord;
@@ -723,56 +723,66 @@ public class RStarTreeMapTest {
 
 	@Test
 	public void testQueryIntersecting() {
+		Iterable<IntRect> it = ()-> allRects(range);
+		Stream<IntRect> filterStream = StreamSupport.stream(it.spliterator(), false);
+
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range), queryRect::intersects).forEachRemaining(expected::add);
+		filterStream.filter(queryRect::intersects).iterator().forEachRemaining(expected::add);
 
 		IntRectQuery query = IntRectQuery.intersecting(queryRect);
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		filterStream.filter(query::testData).iterator().forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}
 
 	@Test
 	public void testQueryEnclosing() {
+		Iterable<IntRect> it = ()-> allRects(range);
+		Stream<IntRect> filterStream = StreamSupport.stream(it.spliterator(), false);
+
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range), queryRect::enclosedBy).forEachRemaining(expected::add);
+		filterStream.filter(queryRect::enclosedBy).iterator().forEachRemaining(expected::add);
 
 		IntRectQuery query = IntRectQuery.enclosing(queryRect);
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		filterStream.filter(query::testData).iterator().forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}
 
 	@Test
 	public void testQueryEnclosed() {
+		Iterable<IntRect> it = ()-> allRects(range);
+		Stream<IntRect> filterStream = StreamSupport.stream(it.spliterator(), false);
+
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range), queryRect::encloses).forEachRemaining(expected::add);
+		filterStream.filter(queryRect::encloses).iterator().forEachRemaining(expected::add);
 
 		IntRectQuery query = IntRectQuery.enclosed(queryRect);
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		filterStream.filter(query::testData).iterator().forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}
 
 	@Test
 	public void testQueryIntersectionAndIntersection() {
+		Iterable<IntRect> it = ()-> allRects(range);
+		Stream<IntRect> filterStream = StreamSupport.stream(it.spliterator(), false);
+
 		IntRect queryRect1 = rect(1, 1, 12, 13);
 		IntRect queryRect2 = rect(4, 4, 12, 13);
+
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range),
-			r -> queryRect1.intersects(r) && queryRect2.intersects(r))
-				.forEachRemaining(
-					expected::add);
+		filterStream.filter(r -> queryRect1.intersects(r) && queryRect2.intersects(r)).iterator().forEachRemaining(expected::add);
 
 		System.out.println(expected);
 
 		IntRectQuery query =
 			IntRectQuery.intersecting(queryRect1).and(IntRectQuery.intersecting(queryRect2));
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		filterStream.filter(query::testData).iterator().forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}

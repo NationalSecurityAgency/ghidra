@@ -19,8 +19,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.List;
-
-import com.google.common.base.Predicate;
+import java.util.function.Predicate;
 
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
@@ -67,9 +66,9 @@ class DNLEdgeLabelRenderer<V extends FGVertex, E extends FGEdge>
 		V startv = endpoints.getFirst();
 		V endv = endpoints.getSecond();
 
-		Predicate<Context<Graph<V, E>, V>> includeVertex = rc.getVertexIncludePredicate();
-		if (!includeVertex.apply(Context.getInstance(jungGraph, startv)) ||
-			!includeVertex.apply(Context.getInstance(jungGraph, endv))) {
+		Predicate<Context<Graph<V, E>, V>> includeVertex = rc.getVertexIncludePredicate()::apply;
+		if (!includeVertex.test(Context.getInstance(jungGraph, startv)) ||
+			!includeVertex.test(Context.getInstance(jungGraph, endv))) {
 			return;
 		}
 
