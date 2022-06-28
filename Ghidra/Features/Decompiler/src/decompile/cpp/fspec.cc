@@ -4861,6 +4861,8 @@ void FuncCallSpecs::commitNewOutputs(Funcdata &data,Varnode *newout)
     // We could conceivably truncate the output to the correct size to match the parameter
     activeoutput.registerTrial(param->getAddress(),param->getSize());
     PcodeOp *indop = newout->getDef();
+    if (newout->getSize() == 1 && param->getType()->getMetatype() == TYPE_BOOL)
+      data.opMarkCalculatedBool(op);
     if (newout->getSize() == param->getSize()) {
       if (indop != op) {
 	data.opUnsetOutput(indop);
