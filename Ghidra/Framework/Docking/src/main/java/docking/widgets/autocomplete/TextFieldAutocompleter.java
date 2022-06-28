@@ -759,6 +759,7 @@ public class TextFieldAutocompleter<T> {
 	 * Update the completion list immediately
 	 */
 	public void updateNow() {
+		pendingTextUpdate = true;
 		updateManager.updateNow();
 	}
 
