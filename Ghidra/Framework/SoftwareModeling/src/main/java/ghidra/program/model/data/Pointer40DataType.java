@@ -19,7 +19,7 @@ package ghidra.program.model.data;
 import ghidra.util.classfinder.ClassTranslator;
 
 /**
- * Pointer16 is really a factory for generating 5-byte pointers.
+ * Pointer40 is really a factory for generating 5-byte pointers.
  */
 public class Pointer40DataType extends PointerDataType {
 	static {

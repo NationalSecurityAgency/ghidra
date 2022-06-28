@@ -19,7 +19,7 @@ package ghidra.program.model.data;
 import ghidra.util.classfinder.ClassTranslator;
 
 /**
- * Pointer16 is really a factory for generating 2-byte pointers.
+ * Pointer24 is really a factory for generating 3-byte pointers.
  */
 public class Pointer24DataType extends PointerDataType {
 	static {
