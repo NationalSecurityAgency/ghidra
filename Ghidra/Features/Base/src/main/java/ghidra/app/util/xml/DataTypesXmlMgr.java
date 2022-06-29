@@ -295,7 +295,8 @@ public class DataTypesXmlMgr {
 		return true;
 	}
 
-	private boolean processStructure(XmlTreeNode root, boolean firstPass) {
+	private boolean processStructure(XmlTreeNode root, boolean firstPass)
+			throws XmlAttributeException {
 		XmlElement element = root.getStartElement();
 		String name = element.getAttribute("NAME");
 		CategoryPath path = getCategoryPath(element);
