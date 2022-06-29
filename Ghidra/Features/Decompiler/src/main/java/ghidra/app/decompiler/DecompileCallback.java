@@ -80,6 +80,7 @@ public class DecompileCallback {
 	private Charset utf8Charset;
 	private String nativeMessage;
 
+	private XmlDecodeLight lightDecoder;
 	private InstructionBlock lastPseudoInstructionBlock;
 	private Disassembler pseudoDisassembler;
 
@@ -96,6 +97,7 @@ public class DecompileCallback {
 		nativeMessage = null;
 		debug = null;
 		utf8Charset = Charset.availableCharsets().get(CharsetInfo.UTF8);
+		lightDecoder = new XmlDecodeLight(addrfactory);
 	}
 
 	private static SAXParser getSAXParser() throws PcodeXMLException {
@@ -170,8 +172,10 @@ public class DecompileCallback {
 
 	public byte[] getBytes(String addrxml) {
 		try {
-			Address addr = AddressXML.readXML(addrxml, addrfactory);
-			int size = AddressXML.readXMLSize(addrxml);
+			lightDecoder.ingestString(addrxml);
+			lightDecoder.openElement();
+			Address addr = AddressXML.decodeFromAttributes(lightDecoder);
+			int size = (int) lightDecoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
 			if (overlaySpace != null) {
 				addr = overlaySpace.getOverlayAddress(addr);
 			}
@@ -220,7 +224,8 @@ public class DecompileCallback {
 		Address addr;
 		int flags;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
+			lightDecoder.ingestString(addrstring);
+			addr = AddressXML.decode(lightDecoder);
 			if (overlaySpace != null) {
 				addr = overlaySpace.getOverlayAddress(addr);
 			}
@@ -263,7 +268,8 @@ public class DecompileCallback {
 	public PackedBytes getPcodePacked(String addrstring) {
 		Address addr = null;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
+			lightDecoder.ingestString(addrstring);
+			addr = AddressXML.decode(lightDecoder);
 			if (overlaySpace != null) {
 				addr = overlaySpace.getOverlayAddress(addr);
 			}
@@ -351,7 +357,8 @@ public class DecompileCallback {
 		InjectContext con = snippetLibrary.buildInjectContext();
 		PcodeOp[] pcode;
 		try {
-			con.restoreXml(getSAXParser(), context, addrfactory);
+			lightDecoder.ingestString(context);
+			con.decode(lightDecoder);
 		}
 		catch (PcodeXMLException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
@@ -484,7 +491,8 @@ public class DecompileCallback {
 	public String getSymbol(String addrstring) { // Return first symbol name at this address
 		Address addr;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
+			lightDecoder.ingestString(addrstring);
+			addr = AddressXML.decode(lightDecoder);
 			if (overlaySpace != null) {
 				addr = overlaySpace.getOverlayAddress(addr);
 			}
@@ -701,7 +709,8 @@ public class DecompileCallback {
 	public String getMappedSymbolsXML(String addrstring) { // Return XML describing data or functions at addr
 		Address addr;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
+			lightDecoder.ingestString(addrstring);
+			addr = AddressXML.decode(lightDecoder);
 			if (overlaySpace != null) {
 				addr = overlaySpace.getOverlayAddress(addr);
 			}
@@ -746,7 +755,8 @@ public class DecompileCallback {
 	public String getExternalRefXML(String addrstring) { // Return any external reference at addr
 		Address addr;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
+			lightDecoder.ingestString(addrstring);
+			addr = AddressXML.decode(lightDecoder);
 			if (overlaySpace != null) {
 				addr = overlaySpace.getOverlayAddress(addr);
 			}
@@ -809,8 +819,8 @@ public class DecompileCallback {
 		return null;
 	}
 
-	public String getType(String name, String idstr) {
-		DataType type = dtmanage.findBaseType(name, idstr);
+	public String getType(String name, long id) {
+		DataType type = dtmanage.findBaseType(name, id);
 		if (type == null) {
 			return null;
 		}
@@ -836,9 +846,10 @@ public class DecompileCallback {
 
 	public String getRegisterName(String addrstring) {
 		try {
-
-			Address addr = AddressXML.readXML(addrstring, addrfactory);
-			int size = AddressXML.readXMLSize(addrstring);
+			lightDecoder.ingestString(addrstring);
+			lightDecoder.openElement();
+			Address addr = AddressXML.decodeFromAttributes(lightDecoder);
+			int size = (int) lightDecoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
 			Register reg = pcodelanguage.getRegister(addr, size);
 			if (reg == null) {
 				return null;
@@ -855,7 +866,8 @@ public class DecompileCallback {
 	public String getTrackedRegisters(String addrstring) {
 		Address addr;
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
+			lightDecoder.ingestString(addrstring);
+			addr = AddressXML.decode(lightDecoder);
 			if (overlaySpace != null) {
 				addr = overlaySpace.getOverlayAddress(addr);
 			}
@@ -1312,12 +1324,14 @@ public class DecompileCallback {
 	 * @param dtId is the id associated with the character data-type
 	 * @return the UTF8 encoded byte array or null
 	 */
-	public StringData getStringData(String addrString, String dtName, String dtId) {
+	public StringData getStringData(String addrString, String dtName, long dtId) {
 		Address addr;
 		int maxChars;
 		try {
-			addr = AddressXML.readXML(addrString, addrfactory);
-			maxChars = AddressXML.readXMLSize(addrString);
+			lightDecoder.ingestString(addrString);
+			lightDecoder.openElement();
+			addr = AddressXML.decodeFromAttributes(lightDecoder);
+			maxChars = (int) lightDecoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
 			if (overlaySpace != null) {
 				addr = overlaySpace.getOverlayAddress(addr);
 			}

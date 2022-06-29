@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.io.Writer;
 
 import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * Block representing an if () goto control flow
@@ -35,22 +33,22 @@ import ghidra.xml.XmlPullParser;
 public class BlockIfGoto extends BlockGraph {
 	private PcodeBlock gototarget;
 	private int gototype;               // type of goto 1=plaingoto 2=break 3=continue
-	
+
 	public BlockIfGoto() {
 		super();
 		blocktype = PcodeBlock.IFGOTO;
 		gototarget = null;
 		gototype = 1;
 	}
-	
+
 	public void setGotoTarget(PcodeBlock bl) {
 		gototarget = bl;
 	}
-	
+
 	public PcodeBlock getGotoTarget() {
 		return gototarget;
 	}
-	
+
 	public int getGotoType() {
 		return gototype;
 	}
@@ -70,13 +68,13 @@ public class BlockIfGoto extends BlockGraph {
 	}
 
 	@Override
-	public void restoreXmlBody(XmlPullParser parser, BlockMap resolver) throws PcodeXMLException {
-		super.restoreXmlBody(parser,resolver);
-		XmlElement el = parser.start("target");
-		int target = SpecXmlUtils.decodeInt(el.getAttribute("index"));
-		int depth = SpecXmlUtils.decodeInt(el.getAttribute("depth"));
-		gototype = SpecXmlUtils.decodeInt(el.getAttribute("type"));
-		parser.end(el);
+	public void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+		super.decodeBody(decoder, resolver);
+		int el = decoder.openElement(ElementId.ELEM_TARGET);
+		int target = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDEX);
+		int depth = (int) decoder.readSignedInteger(AttributeId.ATTRIB_DEPTH);
+		gototype = (int) decoder.readUnsignedInteger(AttributeId.ATTRIB_TYPE);
+		decoder.closeElement(el);
 		gototarget = null;
 		resolver.addGotoRef(this, target, depth);
 	}

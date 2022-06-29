@@ -21,6 +21,7 @@
 
 #include "ifacedecomp.hh"
 
+
 static IfaceStatus *ghidra_dcp = (IfaceStatus *)0;
 static RemoteSocket *remote = (RemoteSocket *)0;
 
@@ -61,6 +62,8 @@ void connect_to_console(Funcdata *fd)
 }
 
 #endif
+
+ElementId ELEM_DOC = ElementId("doc",218);
 
 vector<ArchitectureGhidra *> archlist; // List of architectures currently running
 
@@ -300,10 +303,10 @@ void DecompileAt::rawAction(void)
   }
 
   sout.write("\000\000\001\016",4);
-				// Write output XML directly to outstream
+
   if (fd->isProcComplete()) {
-    sout << "<doc>\n";
     XmlEncode encoder(sout);
+    encoder.openElement(ELEM_DOC);
     if (ghidra->getSendParamMeasures() && (ghidra->allacts.getCurrentName() == "paramid")) {
       ParamIDAnalysis pidanalysis( fd, true ); // Only send back final prototype
       pidanalysis.encode( encoder, true );
@@ -318,7 +321,7 @@ void DecompileAt::rawAction(void)
 	  (ghidra->allacts.getCurrentName() == "decompile"))
         ghidra->print->docFunction(fd);
     }
-    sout << "</doc>\n";
+    encoder.closeElement(ELEM_DOC);
   }
   sout.write("\000\000\001\017",4);
 }

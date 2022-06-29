@@ -20,8 +20,6 @@ import java.util.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -418,7 +416,7 @@ public class PcodeOp {
 		output = vn;
 	}
 
-	public void buildXML(StringBuilder resBuf,AddressFactory addrFactory) {
+	public void buildXML(StringBuilder resBuf, AddressFactory addrFactory) {
 		resBuf.append("<op");
 		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "code", opcode);
 		resBuf.append('>');
@@ -446,29 +444,26 @@ public class PcodeOp {
 	}
 
 	/**
-	 * Read p-code from XML stream
+	 * Decode p-code from a stream
 	 * 
-	 * @param parser is the XML stream
+	 * @param decoder is the stream decoder
 	 * @param pfact factory used to create p-code correctly
 	 * 
 	 * @return new PcodeOp
-	 * @throws PcodeXMLException if XML layout is incorrect
+	 * @throws PcodeXMLException if encodings are invalid
 	 */
-	public static PcodeOp readXML(XmlPullParser parser, PcodeFactory pfact)
-			throws PcodeXMLException {
-		XmlElement el = parser.start("op");
-		int opc = SpecXmlUtils.decodeInt(el.getAttribute("code"));
-		if (!parser.peek().isStart()) {
-			throw new PcodeXMLException("Missing <seqnum> in PcodeOp");
-		}
-		SequenceNumber seqnum = SequenceNumber.readXML(parser, pfact.getAddressFactory());
-		if (!parser.peek().isStart()) {
-			throw new PcodeXMLException("Missing output in PcodeOp");
-		}
-		Varnode output = Varnode.readXML(parser, pfact);
-		ArrayList<Varnode> inputlist = new ArrayList<Varnode>();
-		while (parser.peek().isStart()) {
-			Varnode vn = Varnode.readXML(parser, pfact);
+	public static PcodeOp decode(Decoder decoder, PcodeFactory pfact) throws PcodeXMLException {
+		int el = decoder.openElement(ElementId.ELEM_OP);
+		int opc = (int) decoder.readSignedInteger(AttributeId.ATTRIB_CODE);
+		SequenceNumber seqnum = SequenceNumber.decode(decoder);
+		Varnode output = Varnode.decode(decoder, pfact);
+		ArrayList<Varnode> inputlist = new ArrayList<>();
+		for (;;) {
+			int subel = decoder.peekElement();
+			if (subel == 0) {
+				break;
+			}
+			Varnode vn = Varnode.decode(decoder, pfact);
 			inputlist.add(vn);
 		}
 		PcodeOp res;
@@ -478,7 +473,7 @@ public class PcodeOp {
 		catch (UnknownInstructionException e) {
 			throw new PcodeXMLException("Bad opcode: " + e.getMessage(), e);
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 		return res;
 	}
 
@@ -522,7 +517,7 @@ public class PcodeOp {
 	 * Generate a lookup table that maps pcode mnemonic strings to pcode operation codes.
 	 */
 	private static void generateOpcodeTable() {
-		opcodeTable = new Hashtable<String, Integer>();
+		opcodeTable = new Hashtable<>();
 		for (int i = 0; i < PCODE_MAX; i++) {
 			opcodeTable.put(getMnemonic(i), i);
 		}

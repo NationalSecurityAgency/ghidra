@@ -21,8 +21,6 @@ import java.util.ArrayList;
 
 import ghidra.program.model.address.Address;
 import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -160,32 +158,34 @@ public class PcodeBlock {
 		}
 
 		/**
-		 * Restore meta-data for a single edge
-		 * @param parser
+		 * Decode a single edge
+		 * @param decoder is the stream decoder
 		 * @param resolver used to recover PcodeBlock reference
-		 * @throws PcodeXMLException
+		 * @throws PcodeXMLException for invalid encodings
 		 */
-		public void restoreXml(XmlPullParser parser, BlockMap resolver) throws PcodeXMLException {
-			XmlElement el = parser.start("edge");
+		public void decode(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+			int el = decoder.openElement(ElementId.ELEM_EDGE);
 			label = 0;		// Tag does not currently contain info about label
-			int endIndex = SpecXmlUtils.decodeInt(el.getAttribute("end"));
+			int endIndex = (int) decoder.readSignedInteger(AttributeId.ATTRIB_END);
 			point = resolver.findLevelBlock(endIndex);
-			if (point == null)
+			if (point == null) {
 				throw new PcodeXMLException("Bad serialized edge in block graph");
-			reverse_index = SpecXmlUtils.decodeInt(el.getAttribute("rev"));
-			parser.end(el);
+			}
+			reverse_index = (int) decoder.readSignedInteger(AttributeId.ATTRIB_REV);
+			decoder.closeElement(el);
 		}
 
-		public void restoreXml(XmlPullParser parser, ArrayList<? extends PcodeBlock> blockList)
+		public void decode(Decoder decoder, ArrayList<? extends PcodeBlock> blockList)
 				throws PcodeXMLException {
-			XmlElement el = parser.start("edge");
+			int el = decoder.openElement(ElementId.ELEM_EDGE);
 			label = 0;		// Tag does not currently contain info about label
-			int endIndex = SpecXmlUtils.decodeInt(el.getAttribute("end"));
+			int endIndex = (int) decoder.readSignedInteger(AttributeId.ATTRIB_END);
 			point = blockList.get(endIndex);
-			if (point == null)
+			if (point == null) {
 				throw new PcodeXMLException("Bad serialized edge in block list");
-			reverse_index = SpecXmlUtils.decodeInt(el.getAttribute("rev"));
-			parser.end(el);
+			}
+			reverse_index = (int) decoder.readSignedInteger(AttributeId.ATTRIB_REV);
+			decoder.closeElement(el);
 		}
 
 		@Override
@@ -198,8 +198,8 @@ public class PcodeBlock {
 		index = -1;
 		blocktype = PLAIN;
 		parent = null;
-		intothis = new ArrayList<BlockEdge>();
-		outofthis = new ArrayList<BlockEdge>();
+		intothis = new ArrayList<>();
+		outofthis = new ArrayList<>();
 	}
 
 	public int getType() {
@@ -240,38 +240,37 @@ public class PcodeBlock {
 	}
 
 	/**
-	 * Restore the next input edge via XML
-	 * @param parser
-	 * @param resolver
-	 * @throws PcodeXMLException
+	 * Decode the next input edge from the stream
+	 * @param decoder is the stream decoder
+	 * @param resolver is used to find PcodeBlocks
+	 * @throws PcodeXMLException for any invalid encoding
 	 */
-	protected void restoreNextInEdge(XmlPullParser parser, BlockMap resolver)
-			throws PcodeXMLException {
+	protected void decodeNextInEdge(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
 		BlockEdge inEdge = new BlockEdge();
 		intothis.add(inEdge);
-		inEdge.restoreXml(parser, resolver);
-		while(inEdge.point.outofthis.size() <= inEdge.reverse_index) {
+		inEdge.decode(decoder, resolver);
+		while (inEdge.point.outofthis.size() <= inEdge.reverse_index) {
 			inEdge.point.outofthis.add(null);
 		}
-		BlockEdge outEdge = new BlockEdge(this,0,intothis.size()-1);
+		BlockEdge outEdge = new BlockEdge(this, 0, intothis.size() - 1);
 		inEdge.point.outofthis.set(inEdge.reverse_index, outEdge);
 	}
 
 	/**
-	 * Restore the next input edge via XML. Resolve block indices via a blockList
-	 * @param parser
+	 * Decode the next input edge from the stream. Resolve block indices via a blockList
+	 * @param decoder is the stream decoder
 	 * @param blockList allows lookup of PcodeBlock via index
-	 * @throws PcodeXMLException
+	 * @throws PcodeXMLException for any invalid encoding
 	 */
-	protected void restoreNextInEdge(XmlPullParser parser,
-			ArrayList<? extends PcodeBlock> blockList) throws PcodeXMLException {
+	protected void decodeNextInEdge(Decoder decoder, ArrayList<? extends PcodeBlock> blockList)
+			throws PcodeXMLException {
 		BlockEdge inEdge = new BlockEdge();
 		intothis.add(inEdge);
-		inEdge.restoreXml(parser, blockList);
-		while(inEdge.point.outofthis.size() <= inEdge.reverse_index) {
+		inEdge.decode(decoder, blockList);
+		while (inEdge.point.outofthis.size() <= inEdge.reverse_index) {
 			inEdge.point.outofthis.add(null);
 		}
-		BlockEdge outEdge = new BlockEdge(this,0,intothis.size()-1);
+		BlockEdge outEdge = new BlockEdge(this, 0, intothis.size() - 1);
 		inEdge.point.outofthis.set(inEdge.reverse_index, outEdge);
 	}
 
@@ -349,8 +348,8 @@ public class PcodeBlock {
 		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "index", index);
 	}
 
-	public void restoreXmlHeader(XmlElement el) throws PcodeXMLException {
-		index = SpecXmlUtils.decodeInt(el.getAttribute("index"));
+	public void decodeHeader(Decoder decoder) throws PcodeXMLException {
+		index = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDEX);
 	}
 
 	/**
@@ -365,28 +364,29 @@ public class PcodeBlock {
 
 	public void saveXmlEdges(Writer writer) throws IOException {
 		StringBuilder buf = new StringBuilder();
-		for (int i = 0; i < intothis.size(); ++i) {
-			intothis.get(i).saveXml(buf);
+		for (BlockEdge element : intothis) {
+			element.saveXml(buf);
 		}
 		writer.write(buf.toString());
 	}
 
 	/**
-	 * Restore the any additional information beyond header and edges from XML
-	 * @param parser is the XML parser
+	 * Restore the any additional information beyond header and edges from stream
+	 * @param decoder is the stream decoder
 	 * @param resolver is for looking up edge references
-	 * @throws PcodeXMLException for invalid XML descriptions
+	 * @throws PcodeXMLException for invalid encoding
 	 */
-	public void restoreXmlBody(XmlPullParser parser, BlockMap resolver) throws PcodeXMLException {
+	public void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
 		// No body to restore by default
 	}
 
-	public void restoreXmlEdges(XmlPullParser parser, BlockMap resolver) throws PcodeXMLException {
-		while (parser.peek().isStart()) {
-			if (!parser.peek().getName().equals("edge")) {
-				return;
+	public void decodeEdges(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+		for (;;) {
+			int el = decoder.peekElement();
+			if (el != ElementId.ELEM_EDGE.getId()) {
+				break;
 			}
-			restoreNextInEdge(parser, resolver);
+			decodeNextInEdge(decoder, resolver);
 		}
 	}
 
@@ -401,11 +401,11 @@ public class PcodeBlock {
 		writer.write("</block>\n");
 	}
 
-	public void restoreXml(XmlPullParser parser, BlockMap resolver) throws PcodeXMLException {
-		XmlElement el = parser.start("block");
-		restoreXmlHeader(el);
-		restoreXmlBody(parser, resolver);
-		restoreXmlEdges(parser, resolver);
-		parser.end(el);
+	public void decode(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+		int el = decoder.openElement(ElementId.ELEM_BLOCK);
+		decodeHeader(decoder);
+		decodeBody(decoder, resolver);
+		decodeEdges(decoder, resolver);
+		decoder.closeElement(el);
 	}
 }

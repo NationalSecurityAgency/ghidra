@@ -15,11 +15,8 @@
  */
 package ghidra.program.model.pcode;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.xml.sax.*;
 
 import ghidra.program.database.function.FunctionDB;
 import ghidra.program.database.symbol.CodeSymbol;
@@ -28,11 +25,9 @@ import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
-import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.*;
 
 /**
  *
@@ -219,9 +214,9 @@ public class HighFunction extends PcodeSyntaxTree {
 		return super.newVarnode(sz, addr, id);
 	}
 
-	private void readHighXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.peek();
-		String classstring = el.getAttribute("class");
+	private void decodeHigh(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ElementId.ELEM_HIGH);
+		String classstring = decoder.readString(AttributeId.ATTRIB_CLASS);
 		HighVariable var;
 		switch (classstring.charAt(0)) {
 			case 'o':
@@ -242,81 +237,80 @@ public class HighFunction extends PcodeSyntaxTree {
 			default:
 				throw new PcodeXMLException("Unknown HighVariable class string: " + classstring);
 		}
-		var.restoreXml(parser);
+		var.decode(decoder);
+		decoder.closeElement(el);
 	}
 
-	private void readHighlistXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("highlist");
-		while (parser.peek().isStart()) {
-			readHighXML(parser);
+	private void decodeHighlist(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ElementId.ELEM_HIGHLIST);
+		while (decoder.peekElement() != 0) {
+			decodeHigh(decoder);
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.pcode.PcodeSyntaxTree#readXML(org.jdom.Element)
-	 */
 	@Override
-	public void readXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement start = parser.start("function");
-		String name = start.getAttribute("name");
+	public void decode(Decoder decoder) throws PcodeXMLException {
+		int start = decoder.openElement(ElementId.ELEM_FUNCTION);
+		String name = decoder.readString(AttributeId.ATTRIB_NAME);
 		if (!func.getName().equals(name)) {
 			throw new PcodeXMLException("Function name mismatch: " + func.getName() + " + " + name);
 		}
-		while (!parser.peek().isEnd()) {
-			XmlElement subel = parser.peek();
-			if (subel.getName().equals("addr")) {
-				subel = parser.start("addr");
-				Address addr = AddressXML.readXML(subel, getAddressFactory());
-				parser.end(subel);
+		for (;;) {
+			int subel = decoder.peekElement();
+			if (subel == 0) {
+				break;
+			}
+			if (subel == ElementId.ELEM_ADDR.getId()) {
+				Address addr = AddressXML.decode(decoder);
 				addr = func.getEntryPoint().getAddressSpace().getOverlayAddress(addr);
 				if (!func.getEntryPoint().equals(addr)) {
 					throw new PcodeXMLException("Mismatched address in function tag");
 				}
 			}
-			else if (subel.getName().equals("prototype")) {
-				proto.readPrototypeXML(parser, getDataTypeManager());
+			else if (subel == ElementId.ELEM_PROTOTYPE.getId()) {
+				proto.decodePrototype(decoder, getDataTypeManager());
 			}
-			else if (subel.getName().equals("localdb")) {
-				localSymbols.parseScopeXML(parser);
+			else if (subel == ElementId.ELEM_LOCALDB.getId()) {
+				localSymbols.decodeScope(decoder);
 			}
-			else if (subel.getName().equals("ast")) {
-				super.readXML(parser);
+			else if (subel == ElementId.ELEM_AST.getId()) {
+				super.decode(decoder);
 			}
-			else if (subel.getName().equals("highlist")) {
-				readHighlistXML(parser);
+			else if (subel == ElementId.ELEM_HIGHLIST.getId()) {
+				decodeHighlist(decoder);
 			}
-			else if (subel.getName().equals("jumptablelist")) {
-				readJumpTableListXML(parser);
+			else if (subel == ElementId.ELEM_JUMPTABLELIST.getId()) {
+				decodeJumpTableList(decoder);
 			}
-			else if (subel.getName().equals("override")) {
+			else if (subel == ElementId.ELEM_OVERRIDE.getId()) {
 				// Do nothing with override at the moment
-				parser.discardSubTree();
+				decoder.skipElement();
 			}
-			else if (subel.getName().equals("scope")) {
+			else if (subel == ElementId.ELEM_SCOPE.getId()) {
 				// This must be a subscope of the local scope
 				// Currently this can only hold static variables of the function
 				// which ghidra already knows about
-				parser.discardSubTree();
+				decoder.skipElement();
 			}
 			else {
-				throw new PcodeXMLException("Unknown tag in function: " + subel.getName());
+				throw new PcodeXMLException("Unknown element in function");
 			}
 		}
-		parser.end(start);
+		decoder.closeElement(start);
 	}
 
 	/**
-	 * Read in the Jump Table list for this function from XML
+	 * Decode the Jump Table list for this function from the stream
 	 *
-	 * @param parser is the XML stream
-	 * @throws PcodeXMLException for any format errors
+	 * @param decoder is the stream decoder
+	 * @throws PcodeXMLException for invalid encodings
 	 */
-	private void readJumpTableListXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("jumptablelist");
-		while (parser.peek().isStart()) {
+	private void decodeJumpTableList(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ElementId.ELEM_JUMPTABLELIST);
+		while (decoder.peekElement() != 0) {
 			JumpTable table = new JumpTable(func.getEntryPoint().getAddressSpace());
-			table.restoreXml(parser, getAddressFactory());
+			table.decode(decoder);
 			if (!table.isEmpty()) {
 				if (jumpTables == null) {
 					jumpTables = new ArrayList<>();
@@ -324,7 +318,7 @@ public class HighFunction extends PcodeSyntaxTree {
 				jumpTables.add(table);
 			}
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
 	protected Address getPCAddress(Varnode rep) {
@@ -495,26 +489,6 @@ public class HighFunction extends PcodeSyntaxTree {
 		return resBuf.toString();
 	}
 
-	public static ErrorHandler getErrorHandler(final Object errOriginator,
-			final String targetName) {
-		return new ErrorHandler() {
-			@Override
-			public void error(SAXParseException exception) throws SAXException {
-				Msg.error(errOriginator, "Error parsing " + targetName, exception);
-			}
-
-			@Override
-			public void fatalError(SAXParseException exception) throws SAXException {
-				Msg.error(errOriginator, "Fatal error parsing " + targetName, exception);
-			}
-
-			@Override
-			public void warning(SAXParseException exception) throws SAXException {
-				Msg.warn(errOriginator, "Warning parsing " + targetName, exception);
-			}
-		};
-	}
-
 	public static Namespace findOverrideSpace(Function func) {
 		SymbolTable symtab = func.getProgram().getSymbolTable();
 		return findNamespace(symtab, func, "override");
@@ -590,29 +564,6 @@ public class HighFunction extends PcodeSyntaxTree {
 			}
 		}
 		return res;
-	}
-
-	/**
-	 * Create XML parse tree from an input XML string
-	 *
-	 * TODO: this probably doesn't belong here.
-	 *
-	 * @param xml is the XML string to parse
-	 * @param handler is the handler to use for parsing errors
-	 * @return the XML tree
-	 *
-	 * @throws PcodeXMLException for format errors in the XML
-	 */
-	static public XmlPullParser stringTree(InputStream xml, ErrorHandler handler)
-			throws PcodeXMLException {
-		try {
-			XmlPullParser parser =
-				XmlPullParserFactory.create(xml, "Decompiler Result Parser", handler, false);
-			return parser;
-		}
-		catch (Exception e) {
-			throw new PcodeXMLException("XML parsing error: " + e.getMessage(), e);
-		}
 	}
 
 	/**

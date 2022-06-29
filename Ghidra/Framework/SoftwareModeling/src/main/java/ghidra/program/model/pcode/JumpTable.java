@@ -23,9 +23,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * JumpTable found as part of the decompilation of a function
@@ -78,14 +75,12 @@ public class JumpTable {
 			return num;
 		}
 
-		public void restoreXml(XmlPullParser parser, AddressFactory addrFactory) {
-			XmlElement el = parser.start("loadtable");
-			size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-			num = SpecXmlUtils.decodeInt(el.getAttribute("num"));
-			XmlElement subel = parser.start("addr");
-			addr = translateOverlayAddress(AddressXML.readXML(subel, addrFactory));
-			parser.end(subel);
-			parser.end(el);
+		public void decode(Decoder decoder) throws PcodeXMLException {
+			int el = decoder.openElement(ElementId.ELEM_LOADTABLE);
+			size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			num = (int) decoder.readSignedInteger(AttributeId.ATTRIB_NUM);
+			addr = translateOverlayAddress(AddressXML.decode(decoder));
+			decoder.closeElement(el);
 		}
 	}
 
@@ -159,61 +154,62 @@ public class JumpTable {
 	}
 
 	/**
-	 * Create a JumpTable object by parsing the XML elements
-	 * @param parser is the XML parser
-	 * @param addrFactory is used to look-up address spaces
-	 * @throws PcodeXMLException for improperly formed XML
+	 * Decode a JumpTable object from the stream.
+	 * @param decoder is the stream decoder
+	 * @throws PcodeXMLException for invalid encodings
 	 */
-	public void restoreXml(XmlPullParser parser, AddressFactory addrFactory)
-			throws PcodeXMLException {
-		XmlElement el = parser.start("jumptable");
-		try {
-			ArrayList<Address> aTable = new ArrayList<>();
-			ArrayList<Integer> lTable = new ArrayList<>();
-			ArrayList<LoadTable> ldTable = new ArrayList<>();
+	public void decode(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ElementId.ELEM_JUMPTABLE);
+		if (decoder.peekElement() == 0) {		// Empty jumptable
+			decoder.closeElement(el);
+			return;
+		}
+		ArrayList<Address> aTable = new ArrayList<>();
+		ArrayList<Integer> lTable = new ArrayList<>();
+		ArrayList<LoadTable> ldTable = new ArrayList<>();
 
-			if (!parser.peek().isStart()) {		// Empty jumptable
-				return;
+		Address switchAddr = translateOverlayAddress(AddressXML.decode(decoder));
+
+		for (;;) {
+			int subel = decoder.peekElement();
+			if (subel == 0) {
+				break;
 			}
-
-			XmlElement addrel = parser.start("addr");
-			Address switchAddr = translateOverlayAddress(AddressXML.readXML(addrel, addrFactory));
-			parser.end(addrel);
-
-			while (parser.peek().isStart()) {
-				if (parser.peek().getName().equals("dest")) {
-					XmlElement subel = parser.start("dest");
-					Address caseAddr =
-						translateOverlayAddress(AddressXML.readXML(subel, addrFactory));
-					aTable.add(caseAddr);
-					String slabel = subel.getAttribute("label");
-					if (slabel != null) {
-						int label = SpecXmlUtils.decodeInt(slabel);
+			if (subel == ElementId.ELEM_DEST.getId()) {
+				decoder.openElement();
+				Address caseAddr = translateOverlayAddress(AddressXML.decodeFromAttributes(decoder));
+				aTable.add(caseAddr);
+				decoder.rewindAttributes();
+				for (;;) {
+					int attribId = decoder.getNextAttributeId();
+					if (attribId == 0) {
+						break;
+					}
+					if (attribId == AttributeId.ATTRIB_LABEL.getId()) {
+						int label = (int) decoder.readUnsignedInteger();
 						lTable.add(label);
 					}
-					parser.end(subel);
 				}
-				else if (parser.peek().getName().equals("loadtable")) {
-					LoadTable loadtable = new LoadTable();
-					loadtable.restoreXml(parser, addrFactory);
-					ldTable.add(loadtable);
-				}
-				else {
-					parser.discardSubTree();
-				}
+				decoder.closeElement(subel);
 			}
+			else if (subel == ElementId.ELEM_LOADTABLE.getId()) {
+				LoadTable loadtable = new LoadTable();
+				loadtable.decode(decoder);
+				ldTable.add(loadtable);
+			}
+			else {
+				decoder.skipElement();
+			}
+		}
 
-			opAddress = switchAddr;
-			addressTable = new Address[aTable.size()];
-			aTable.toArray(addressTable);
-			labelTable = new Integer[lTable.size()];
-			lTable.toArray(labelTable);
-			loadTable = new LoadTable[ldTable.size()];
-			ldTable.toArray(loadTable);
-		}
-		finally {
-			parser.end(el);
-		}
+		opAddress = switchAddr;
+		addressTable = new Address[aTable.size()];
+		aTable.toArray(addressTable);
+		labelTable = new Integer[lTable.size()];
+		lTable.toArray(labelTable);
+		loadTable = new LoadTable[ldTable.size()];
+		ldTable.toArray(loadTable);
+		decoder.closeElement(el);
 	}
 
 	public void buildXml(StringBuilder buf) {

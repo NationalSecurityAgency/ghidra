@@ -17,9 +17,8 @@ package ghidra.program.model.pcode;
 
 import java.util.ArrayList;
 
-import org.xml.sax.Attributes;
-
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
@@ -358,155 +357,74 @@ public class AddressXML {
 	}
 
 	/**
-	 * Parse String containing an XML tag representing an Address.
-	 * The format options are simple enough that we don't try to invoke
-	 * an actual XML parser but just walk the string. This recognizes
-	 *   - \<addr>
-	 *   - \<spaceid> or
-	 *   - any tag with a "space" and "offset" attribute
-	 * 
-	 * @param addrstring  is the string containing the XML tag
-	 * @param addrfactory is the factory that can produce addresses
-	 * @return the created Address or Address.NO_ADDRESS in some special cases
-	 * @throws PcodeXMLException for a badly formed Address
+	 * Create an address from "space" and "offset" attributes of the current element
+	 * @param decoder is the stream decoder
+	 * @return the decoded Address
+	 * @throws PcodeXMLException for any problems decoding the stream
 	 */
-	public static Address readXML(String addrstring, AddressFactory addrfactory)
-			throws PcodeXMLException {
-
-		int tagstart = addrstring.indexOf('<');
-		if (tagstart >= 0) {
-			tagstart += 1;
-			if (addrstring.startsWith("spaceid", tagstart)) {
-				tagstart += 8;
-				int attrstart = addrstring.indexOf("name=\"", tagstart);
-				if (attrstart >= 0) {
-					attrstart += 6;
-					int nameend = addrstring.indexOf('\"', attrstart);
-					if (nameend >= 0) {
-						AddressSpace spc =
-							addrfactory.getAddressSpace(addrstring.substring(attrstart, nameend));
-						int spaceid = spc.getSpaceID();
-						spc = addrfactory.getConstantSpace();
-						return spc.getAddress(spaceid);
-					}
-				}
-
+	public static Address decodeFromAttributes(Decoder decoder) throws PcodeXMLException {
+		AddressSpace spc = null;
+		long offset = -1;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
 			}
-			// There are several tag forms where we essentially want to just look for 'space' and 'offset' attributes
-			// don't explicitly check the tag name
-			int spacestart = addrstring.indexOf("space=\"");
-			if (spacestart >= 4) {
-				spacestart += 7;
-				int spaceend = addrstring.indexOf('"', spacestart);
-				if (spaceend >= spacestart) {
-					String spcname = addrstring.substring(spacestart, spaceend);
-					int offstart = addrstring.indexOf("offset=\"");
-					if (offstart >= 4) {
-						offstart += 8;
-						int offend = addrstring.indexOf('"', offstart);
-						if (offend >= offstart) {
-							String offstr = addrstring.substring(offstart, offend);
-							AddressSpace spc = addrfactory.getAddressSpace(spcname);
-							// Unknown spaces may result from "spacebase" registers defined in cspec
-							if (spc == null) {
-								return Address.NO_ADDRESS;
-							}
-							long offset = SpecXmlUtils.decodeLong(offstr);
-							return spc.getAddress(offset);
-						}
-					}
-				}
+			if (attribId == AttributeId.ATTRIB_SPACE.getId()) {
+				spc = decoder.readSpace();
+			}
+			else if (attribId == AttributeId.ATTRIB_OFFSET.getId()) {
+				offset = decoder.readUnsignedInteger();
 			}
 		}
-		throw new PcodeXMLException("Badly formed address: " + addrstring);
-	}
-
-	/**
-	 * Read the (first) size attribute from an XML tag string as an integer
-	 * @param addrxml is the XML string
-	 * @return the decoded integer or zero if the attribute doesn't exist
-	 */
-	public static int readXMLSize(String addrxml) {
-		int attrstart = addrxml.indexOf("size=\"");
-		if (attrstart >= 4) {
-			attrstart += 6;
-			int attrend = addrxml.indexOf('\"', attrstart);
-			if (attrend > attrstart) {
-				int size = SpecXmlUtils.decodeInt(addrxml.substring(attrstart, attrend));
-				return size;
-			}
-		}
-		return 0;
-	}
-
-	/**
-	 * Create an address from an XML parse tree node. This recognizes XML tags
-	 *   - \<addr>
-	 *   - \<spaceid>
-	 *   - \<iop> or
-	 *   - any tag with "space" and "offset" attributes
-	 * 
-	 * An empty \<addr> tag, with no attributes, results in Address.NO_ADDRESS being returned.
-	 * @param el is the parse tree element
-	 * @param addrFactory address factory used to create valid addresses
-	 * @return Address created from XML info
-	 */
-	public static Address readXML(XmlElement el, AddressFactory addrFactory) {
-		String localName = el.getName();
-		if (localName.equals("spaceid")) {
-			AddressSpace spc = addrFactory.getAddressSpace(el.getAttribute("name"));
-			int spaceid = spc.getSpaceID();
-			spc = addrFactory.getConstantSpace();
-			return spc.getAddress(spaceid);
-		}
-		else if (localName.equals("iop")) {
-			int ref = SpecXmlUtils.decodeInt(el.getAttribute("value"));
-			AddressSpace spc = addrFactory.getConstantSpace();
-			return spc.getAddress(ref);
-		}
-		String space = el.getAttribute("space");
-		if (space == null) {
-			return Address.NO_ADDRESS;
-		}
-		long offset = SpecXmlUtils.decodeLong(el.getAttribute("offset"));
-		AddressSpace spc = addrFactory.getAddressSpace(space);
 		if (spc == null) {
-			return null;
+			return Address.NO_ADDRESS;
 		}
 		return spc.getAddress(offset);
 	}
 
 	/**
-	 * Read an Address given an XML tag name and its attributes. This recognizes XML tags
+	 * Create an address from a stream encoding. This recognizes elements
 	 *   - \<addr>
 	 *   - \<spaceid>
-	 *   - \<iop>
-	 *   - any tag with "space" or "offset" attributes
+	 *   - \<iop> or
+	 *   - any element with "space" and "offset" attributes
 	 * 
-	 * An empty \<addr> tag, with no attributes, results in Address.NO_ADDRESS being returned.
-	 * @param localName is the name of the tag
-	 * @param attr is the collection of attributes for the tag
-	 * @param addrFactory is an Address factory
-	 * @return the scanned address
+	 * An empty \<addr> element, with no attributes, results in Address.NO_ADDRESS being returned.
+	 * @param decoder is the stream decoder
+	 * @return Address created from XML info
+	 * @throws PcodeXMLException for any problems decoding the stream
 	 */
-	public static Address readXML(String localName, Attributes attr, AddressFactory addrFactory) {
-		if (localName.equals("spaceid")) {
-			AddressSpace spc = addrFactory.getAddressSpace(attr.getValue("name"));
+	public static Address decode(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement();
+		if (el == ElementId.ELEM_SPACEID.getId()) {
+			AddressSpace spc = decoder.readSpace(AttributeId.ATTRIB_NAME);
+			decoder.closeElement(el);
 			int spaceid = spc.getSpaceID();
-			spc = addrFactory.getConstantSpace();
+			spc = decoder.getAddressFactory().getConstantSpace();
 			return spc.getAddress(spaceid);
 		}
-		else if (localName.equals("iop")) {
-			int ref = SpecXmlUtils.decodeInt(attr.getValue("value"));
-			AddressSpace spc = addrFactory.getConstantSpace();
+		else if (el == ElementId.ELEM_IOP.getId()) {
+			int ref = (int) decoder.readUnsignedInteger(AttributeId.ATTRIB_VALUE);
+			decoder.closeElement(el);
+			AddressSpace spc = decoder.getAddressFactory().getConstantSpace();
 			return spc.getAddress(ref);
 		}
-		String space = attr.getValue("space");
-		if (space == null) {
-			return Address.NO_ADDRESS;
+		AddressSpace spc = null;
+		long offset = -1;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == AttributeId.ATTRIB_SPACE.getId()) {
+				spc = decoder.readSpace();
+			}
+			else if (attribId == AttributeId.ATTRIB_OFFSET.getId()) {
+				offset = decoder.readUnsignedInteger();
+			}
 		}
-		long offset = SpecXmlUtils.decodeLong(attr.getValue("offset"));
-		AddressSpace spc = addrFactory.getAddressSpace(space);
+		decoder.closeElement(el);
 		if (spc == null) {
 			return Address.NO_ADDRESS;
 		}

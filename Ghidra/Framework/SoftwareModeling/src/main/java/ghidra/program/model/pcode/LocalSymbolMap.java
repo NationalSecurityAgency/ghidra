@@ -24,8 +24,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.SystemUtilities;
 import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * A container for local symbols within the decompiler's model of a function. It contains HighSymbol
@@ -261,40 +259,40 @@ public class LocalSymbolMap {
 	}
 
 	/**
-	 * Parse a &lt;mapsym&gt; tag in XML
-	 * @param parser is the XML parser
+	 * Decode a &lt;mapsym&gt; element from the stream.
+	 * @param decoder is the stream decoder
 	 * @return the reconstructed HighSymbol
 	 * @throws PcodeXMLException for problems sub tags
 	 */
-	private HighSymbol parseSymbolXML(XmlPullParser parser) throws PcodeXMLException {
-		HighSymbol res = HighSymbol.restoreMapSymXML(parser, false, func);
+	private HighSymbol decodeSymbol(Decoder decoder) throws PcodeXMLException {
+		HighSymbol res = HighSymbol.decodeMapSym(decoder, false, func);
 		insertSymbol(res);
 		return res;
 	}
 
 	/**
-	 * Parse a local symbol scope in XML from the &lt;localdb&gt; tag.
+	 * Decode a local symbol scope from the stream
 	 * 
-	 * @param parser is the XML parser
-	 * @throws PcodeXMLException for problems parsing individual tags
+	 * @param decoder is the stream decoder
+	 * @throws PcodeXMLException for invalid encodings
 	 */
-	public void parseScopeXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("localdb");
-		spacename = el.getAttribute("main");
-		XmlElement scopeel = parser.start("scope");
+	public void decodeScope(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ElementId.ELEM_LOCALDB);
+		spacename = decoder.readString(AttributeId.ATTRIB_MAIN);
+		int scopeel = decoder.openElement(ElementId.ELEM_SCOPE);
 
-		parser.discardSubTree();	// This is the parent scope path
-		parser.discardSubTree();	// This is the address range
+		decoder.skipElement();			// This is the parent scope path
+		decoder.skipElement();			// This is the address range
 
-		addrMappedSymbols.clear();			// Clear out any old map
-		symbolMap.clear();			// Clear out any old map
+		addrMappedSymbols.clear();		// Clear out any old map
+		symbolMap.clear();				// Clear out any old map
 
-		XmlElement nextEl = parser.peek();
-		if (nextEl != null && nextEl.isStart() && "symbollist".equals(nextEl.getName())) {
-			parseSymbolList(parser);
+		int nextEl = decoder.peekElement();
+		if (nextEl == ElementId.ELEM_SYMBOLLIST.getId()) {
+			decodeSymbolList(decoder);
 		}
-		parser.end(scopeel);
-		parser.end(el);
+		decoder.closeElement(scopeel);
+		decoder.closeElement(el);
 	}
 
 	private static final Comparator<HighSymbol> PARAM_SYMBOL_SLOT_COMPARATOR = new Comparator<>() {
@@ -305,15 +303,15 @@ public class LocalSymbolMap {
 	};
 
 	/**
-	 * Add mapped symbols to this LocalVariableMap, by parsing the &lt;symbollist&gt; and &lt;mapsym&gt; tags.
-	 * @param parser is the XML parser
-	 * @throws PcodeXMLException for problems parsing a tag
+	 * Add mapped symbols to this LocalVariableMap, by decoding the &lt;symbollist&gt; and &lt;mapsym&gt; elements
+	 * @param decoder is the stream decoder
+	 * @throws PcodeXMLException for invalid encodings
 	 */
-	public void parseSymbolList(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("symbollist");
+	public void decodeSymbolList(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ElementId.ELEM_SYMBOLLIST);
 		ArrayList<HighSymbol> parms = new ArrayList<>();
-		while (parser.peek().isStart()) {
-			HighSymbol sym = parseSymbolXML(parser);
+		while (decoder.peekElement() != 0) {
+			HighSymbol sym = decodeSymbol(decoder);
 			if (sym.isParameter()) {
 				parms.add(sym);
 			}
@@ -321,7 +319,7 @@ public class LocalSymbolMap {
 		paramSymbols = new HighSymbol[parms.size()];
 		parms.toArray(paramSymbols);
 		Arrays.sort(paramSymbols, PARAM_SYMBOL_SLOT_COMPARATOR);
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
 	/**

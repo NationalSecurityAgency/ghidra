@@ -22,6 +22,7 @@ import ghidra.program.model.lang.PackedBytes;
 import ghidra.util.Msg;
 import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
+import ghidra.util.xml.SpecXmlUtils;
 
 /**
  *
@@ -787,7 +788,7 @@ public class DecompileProcess {
 
 	private void getType() throws IOException {
 		String name = readQueryString();
-		String id = readQueryString();
+		long id = SpecXmlUtils.decodeLong(readQueryString());
 		String res = callback.getType(name, id);
 		write(query_response_start);
 		if ((res != null) && (res.length() != 0)) {
@@ -816,7 +817,7 @@ public class DecompileProcess {
 	private void getStringData() throws IOException {
 		String addr = readQueryString();
 		String dtName = readQueryString();
-		String dtId = readQueryString();
+		long dtId = SpecXmlUtils.decodeLong(readQueryString());
 		DecompileCallback.StringData stringData = callback.getStringData(addr, dtName, dtId);
 		write(query_response_start);
 		if (stringData != null) {

@@ -34,7 +34,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
-import ghidra.xml.XmlPullParser;
 
 /**
  * This is a self-contained interface to a single decompile
@@ -669,10 +668,10 @@ public class DecompInterface {
 				timeoutSecs);
 			decompileMessage = decompCallback.getNativeMessage();
 			if (res != null) {
-				XmlPullParser parser = HighFunction.stringTree(res.getInputStream(),
-					HighFunction.getErrorHandler(this, "Results for structureGraph command"));
+				XmlDecode decoder = new XmlDecode(factory);
+				decoder.ingestStream(res.getInputStream(), "structureGraph results");
 				resgraph = new BlockGraph();
-				resgraph.restoreXml(parser, factory);
+				resgraph.restoreXml(decoder);
 				resgraph.transferObjectRef(ingraph);
 			}
 		}

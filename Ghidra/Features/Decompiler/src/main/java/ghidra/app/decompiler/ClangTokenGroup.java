@@ -20,9 +20,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.pcode.PcodeFactory;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.*;
 
 /**
  * A node in a tree of C code tokens. 
@@ -106,44 +104,43 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 		}
 	}
 
-	public void restoreFromXML(XmlPullParser parser, PcodeFactory pfactory) {
-		XmlElement node = parser.start(ClangXML.FUNCTION, ClangXML.RETURN_TYPE, ClangXML.VARDECL,
-			ClangXML.STATEMENT, ClangXML.FUNCPROTO, ClangXML.BLOCK, ClangXML.VARIABLE, ClangXML.OP,
-			ClangXML.SYNTAX, ClangXML.BREAK, ClangXML.FUNCNAME, ClangXML.TYPE, ClangXML.COMMENT,
-			ClangXML.LABEL);
-		while (parser.peek().isStart()) {
-			XmlElement elem = parser.peek();
-			if (elem.getName().equals(ClangXML.RETURN_TYPE)) {
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+		for (;;) {
+			int elem = decoder.openElement();
+			if (elem == 0) {
+				break;
+			}
+			if (elem == ElementId.ELEM_RETURN_TYPE.getId()) {
 				ClangReturnType child = new ClangReturnType(this);
-				child.restoreFromXML(parser, pfactory);
+				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem.getName().equals(ClangXML.VARDECL)) {
+			else if (elem == ElementId.ELEM_VARDECL.getId()) {
 				ClangVariableDecl child = new ClangVariableDecl(this);
-				child.restoreFromXML(parser, pfactory);
+				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem.getName().equals(ClangXML.STATEMENT)) {
+			else if (elem == ElementId.ELEM_STATEMENT.getId()) {
 				ClangStatement child = new ClangStatement(this);
-				child.restoreFromXML(parser, pfactory);
+				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem.getName().equals(ClangXML.FUNCPROTO)) {
+			else if (elem == ElementId.ELEM_FUNCPROTO.getId()) {
 				ClangFuncProto child = new ClangFuncProto(this);
-				child.restoreFromXML(parser, pfactory);
+				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem.getName().equals(ClangXML.BLOCK)) {
+			else if (elem == ElementId.ELEM_BLOCK.getId()) {
 				ClangTokenGroup child = new ClangTokenGroup(this);
-				child.restoreFromXML(parser, pfactory);
+				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
 			else {
-				ClangToken tok = ClangToken.buildToken(this, parser, pfactory);
+				ClangToken tok = ClangToken.buildToken(elem, this, decoder, pfactory);
 				AddTokenGroup(tok);
 			}
+			decoder.closeElement(elem);
 		}
-		parser.end(node);
 	}
 
 	private boolean isLetterDigitOrUnderscore(char c) {

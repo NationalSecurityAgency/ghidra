@@ -20,8 +20,6 @@ import java.io.Writer;
 import java.util.ArrayList;
 
 import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * A block representing a 2-or-more control flow branchpoint
@@ -35,23 +33,22 @@ import ghidra.xml.XmlPullParser;
  */
 public class BlockMultiGoto extends BlockGraph {
 	protected ArrayList<PcodeBlock> targets;
-	
+
 	public BlockMultiGoto() {
 		super();
-		targets = new ArrayList<PcodeBlock>();
+		targets = new ArrayList<>();
 		blocktype = PcodeBlock.MULTIGOTO;
 	}
-	
+
 	public void addGotoTarget(PcodeBlock target) {
 		targets.add(target);
 	}
-	
+
 	@Override
 	public void saveXmlBody(Writer writer) throws IOException {
 		super.saveXmlBody(writer);
-		for(int i=0;i<targets.size();++i) {
-			
-			PcodeBlock gototarget = targets.get(i);
+		for (PcodeBlock gototarget : targets) {
+
 			StringBuilder buf = new StringBuilder();
 			buf.append("<target");
 			PcodeBlock leaf = gototarget.getFrontLeaf();
@@ -65,14 +62,17 @@ public class BlockMultiGoto extends BlockGraph {
 	}
 
 	@Override
-	public void restoreXmlBody(XmlPullParser parser, BlockMap resolver) throws PcodeXMLException {
-		super.restoreXmlBody(parser, resolver);
-		while(parser.peek().isStart()) {
-			XmlElement el = parser.start("target");
-			int target = SpecXmlUtils.decodeInt(el.getAttribute("index"));
-			int depth = SpecXmlUtils.decodeInt(el.getAttribute("depth"));
-//			int gototype = SpecXmlUtils.decodeInt(el.getAttribute("type"));
-			parser.end(el);
+	public void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+		super.decodeBody(decoder, resolver);
+		for (;;) {
+			int el = decoder.peekElement();
+			if (el != ElementId.ELEM_TARGET.getId()) {
+				break;
+			}
+			decoder.openElement();
+			int target = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDEX);
+			int depth = (int) decoder.readSignedInteger(AttributeId.ATTRIB_DEPTH);
+			decoder.closeElement(el);
 			resolver.addGotoRef(this, target, depth);
 		}
 	}

@@ -18,8 +18,6 @@ package ghidra.program.model.pcode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 public class EquateSymbol extends HighSymbol {
 
@@ -66,12 +64,22 @@ public class EquateSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement symel = parser.start("equatesymbol");
-		restoreXMLHeader(symel);
+	public void decode(Decoder decoder) throws PcodeXMLException {
+		int symel = decoder.openElement(ElementId.ELEM_EQUATESYMBOL);
+		decodeHeader(decoder);
 		type = DataType.DEFAULT;
 		convert = FORMAT_DEFAULT;
-		String formString = symel.getAttribute("format");
+		decoder.rewindAttributes();
+		String formString = null;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == AttributeId.ATTRIB_FORMAT.getId()) {
+				formString = decoder.readString();
+			}
+		}
 		if (formString != null) {
 			if (formString.equals("hex")) {
 				convert = FORMAT_HEX;
@@ -89,9 +97,10 @@ public class EquateSymbol extends HighSymbol {
 				convert = FORMAT_BIN;
 			}
 		}
-		parser.start("value");
-		value = SpecXmlUtils.decodeLong(parser.end().getText());			// End <value> tag
-		parser.end(symel);
+		int valel = decoder.openElement(ElementId.ELEM_VALUE);
+		value = decoder.readUnsignedInteger(AttributeId.ATTRIB_CONTENT);
+		decoder.closeElement(valel);
+		decoder.closeElement(symel);
 	}
 
 	@Override

@@ -340,7 +340,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 			ClangTokenGroup line = new ClangTokenGroup(docroot);
 			ClangBreak lineBreak = new ClangBreak(line, 1);
 			ClangSyntaxToken message =
-				new ClangSyntaxToken(line, errline, ClangXML.COMMENT_COLOR);
+				new ClangSyntaxToken(line, errline, ClangMarkup.COMMENT_COLOR);
 			line.AddTokenGroup(lineBreak);
 			line.AddTokenGroup(message);
 			docroot.AddTokenGroup(line);

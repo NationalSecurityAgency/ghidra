@@ -28,8 +28,6 @@ import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.DecompilerLanguage;
 import ghidra.program.model.listing.Program;
 import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  *
@@ -123,13 +121,11 @@ public class PcodeDataTypeManager {
 	 * a corresponding data-type exists, this data-type is returned. Otherwise the first
 	 * built-in data-type with a matching name is returned
 	 * @param nm name of data-type
-	 * @param idstr is an optional string containing a data-type id number
+	 * @param id is an optional data-type id number
 	 * @return the data-type object or null if no matching data-type exists
 	 */
-	public DataType findBaseType(String nm, String idstr) {
-		long id = 0;
-		if (idstr != null) {
-			id = SpecXmlUtils.decodeLong(idstr);
+	public DataType findBaseType(String nm, long id) {
+		if (id != 0) {
 			if (id > 0) {
 				DataType dt = progDataTypes.getDataType(id);
 				if (dt != null) {
@@ -156,97 +152,106 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Get the data type that corresponds to the given XML element.
-	 * @param parser the xml parser
-	 * @return the read data type
-	 * @throws PcodeXMLException if the data type could be resolved from the 
-	 * element 
+	 * Decode a data-type from the stream
+	 * @param decoder is the stream decoder
+	 * @return the decoded data-type object
+	 * @throws PcodeXMLException for invalid encodings 
 	 */
-	public DataType readXMLDataType(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("type", "void", "typeref", "def");
-		try {
-			if (el == null) {
-				throw new PcodeXMLException("Bad <type> tag");
+	public DataType decodeDataType(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement();
+		if (el == ElementId.ELEM_VOID.getId()) {
+			decoder.closeElement(el);
+			return voidDt;
+		}
+		String name = "";
+		long id = 0;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
 			}
+			if (attribId == AttributeId.ATTRIB_NAME.getId()) {
+				name = decoder.readString();
+			}
+			else if (attribId == AttributeId.ATTRIB_ID.getId()) {
+				id = decoder.readUnsignedInteger();
+			}
+		}
+		if (el == ElementId.ELEM_TYPEREF.getId()) {
+			decoder.closeElement(el);
+			return findBaseType(name, id);
+		}
+		if (el == ElementId.ELEM_DEF.getId()) {
+			decoder.closeElementSkipping(el);
+			return findBaseType(name, id);
+		}
+		if (el != ElementId.ELEM_TYPE.getId()) {
+			throw new PcodeXMLException("Expecting <type> element");
+		}
 
-			if (el.getName().equals("void")) {
-				return voidDt;
-			}
-			if (el.getName().equals("typeref")) {
-				return findBaseType(el.getAttribute("name"), el.getAttribute("id"));
-			}
-			if (el.getName().equals("def")) {
-				String nameStr = el.getAttribute("name");
-				String idStr = el.getAttribute("id");
-				parser.discardSubTree();	// Get rid of unused <typeref>
-				return findBaseType(nameStr, idStr);
-			}
-			String name = el.getAttribute("name");
-			if (name.length() != 0) {
-				return findBaseType(name, el.getAttribute("id"));
-			}
-			String meta = el.getAttribute("metatype");
-			DataType restype = null;
-			if (meta.equals("ptr")) {
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				if (parser.peek().isStart()) {
-					DataType dt = readXMLDataType(parser);
-					boolean useDefaultSize = (size == dataOrganization.getPointerSize() ||
-						size > PointerDataType.MAX_POINTER_SIZE_BYTES);
-					restype = new PointerDataType(dt, useDefaultSize ? -1 : size, progDataTypes);
-				}
-			}
-			else if (meta.equals("array")) {
-				int arrsize = SpecXmlUtils.decodeInt(el.getAttribute("arraysize"));
-				if (parser.peek().isStart()) {
-					DataType dt = readXMLDataType(parser);
-					if (dt == null || dt.getLength() == 0) {
-						dt = DataType.DEFAULT;
-					}
-					restype = new ArrayDataType(dt, arrsize, dt.getLength(), progDataTypes);
-				}
-			}
-			else if (meta.equals("spacebase")) {				// Typically the type of "the whole stack"
-				parser.discardSubTree();  // get rid of unused "addr" element
-				return voidDt;
-			}
-			else if (meta.equals("struct")) {
-				// we now can reach here with the decompiler inventing structures, apparently
-				// this is a band-aid so that we don't blow up
-				// just make an undefined data type of the appropriate size
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				return Undefined.getUndefinedDataType(size);
-				// OLD COMMENT:
-				// Structures should always be named so we should never reach here
-				// if all the structures are contained in ghidra. I should probably add the
-				// parsing here so the decompiler can pass new structures into ghidra
-			}
-			else if (meta.equals("int")) {
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				return AbstractIntegerDataType.getSignedDataType(size, progDataTypes);
-			}
-			else if (meta.equals("uint")) {
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				return AbstractIntegerDataType.getUnsignedDataType(size, progDataTypes);
-			}
-			else if (meta.equals("float")) {
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				return AbstractFloatDataType.getFloatDataType(size, progDataTypes);
-			}
-			else {	// We typically reach here if the decompiler invents a new type
-					// probably an unknown with a non-standard size
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				return Undefined.getUndefinedDataType(size).clone(progDataTypes);
-			}
-			if (restype == null) {
-				throw new PcodeXMLException("Unable to resolve DataType");
-			}
-			return restype;
+		if (name.length() != 0) {
+			decoder.closeElementSkipping(el);
+			return findBaseType(name, id);
 		}
-		finally {
-			parser.discardSubTree(el);
-//	        parser.end(el);
+		String meta = decoder.readString(AttributeId.ATTRIB_METATYPE);
+		DataType restype = null;
+		if (meta.equals("ptr")) {
+			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			if (decoder.peekElement() != 0) {
+				DataType dt = decodeDataType(decoder);
+				boolean useDefaultSize = (size == dataOrganization.getPointerSize() ||
+					size > PointerDataType.MAX_POINTER_SIZE_BYTES);
+				restype = new PointerDataType(dt, useDefaultSize ? -1 : size, progDataTypes);
+			}
 		}
+		else if (meta.equals("array")) {
+			int arrsize = (int) decoder.readSignedInteger(AttributeId.ATTRIB_ARRAYSIZE);
+			if (decoder.peekElement() != 0) {
+				DataType dt = decodeDataType(decoder);
+				if (dt == null || dt.getLength() == 0) {
+					dt = DataType.DEFAULT;
+				}
+				restype = new ArrayDataType(dt, arrsize, dt.getLength(), progDataTypes);
+			}
+		}
+		else if (meta.equals("spacebase")) {		// Typically the type of "the whole stack"
+			decoder.closeElementSkipping(el);  		// get rid of unused "addr" element
+			return voidDt;
+		}
+		else if (meta.equals("struct")) {
+			// We reach here if the decompiler invents a structure, apparently
+			// this is a band-aid so that we don't blow up
+			// just make an undefined data type of the appropriate size
+			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			decoder.closeElementSkipping(el);
+			return Undefined.getUndefinedDataType(size);
+		}
+		else if (meta.equals("int")) {
+			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			decoder.closeElement(el);
+			return AbstractIntegerDataType.getSignedDataType(size, progDataTypes);
+		}
+		else if (meta.equals("uint")) {
+			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			decoder.closeElement(el);
+			return AbstractIntegerDataType.getUnsignedDataType(size, progDataTypes);
+		}
+		else if (meta.equals("float")) {
+			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			decoder.closeElement(el);
+			return AbstractFloatDataType.getFloatDataType(size, progDataTypes);
+		}
+		else {	// We typically reach here if the decompiler invents a new type
+				// probably an unknown with a non-standard size
+			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			decoder.closeElement(el);
+			return Undefined.getUndefinedDataType(size).clone(progDataTypes);
+		}
+		if (restype == null) {
+			throw new PcodeXMLException("Unable to resolve DataType");
+		}
+		decoder.closeElementSkipping(el);
+		return restype;
 	}
 
 	/**

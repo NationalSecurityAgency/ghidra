@@ -19,8 +19,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * A mapping from a HighSymbol object to the storage that holds the symbol's value.
@@ -39,12 +37,11 @@ public abstract class SymbolEntry {
 	}
 
 	/**
-	 * Restore this entry from the given XML stream. Typically more than one tag is consumed
-	 * @param parser is the given XML stream
-	 * @throws PcodeXMLException if the XML is invalid
+	 * Decode this entry from the stream. Typically more than one element is consumed.
+	 * @param decoder is the stream decoder
+	 * @throws PcodeXMLException for invalid encodings
 	 */
-	public abstract void restoreXML(XmlPullParser parser)
-			throws PcodeXMLException;
+	public abstract void decode(Decoder decoder) throws PcodeXMLException;
 
 	/**
 	 * Save this entry as (a set of) XML tags to the given stream
@@ -83,21 +80,22 @@ public abstract class SymbolEntry {
 		return pcaddr;
 	}
 
-	protected void parseRangeList(XmlPullParser parser) {
-		XmlElement rangelistel = parser.start("rangelist");
-		if (parser.peek().isStart()) {
+	protected void decodeRangeList(Decoder decoder) throws PcodeXMLException {
+		int rangelistel = decoder.openElement(ElementId.ELEM_RANGELIST);
+		if (decoder.peekElement() != 0) {
 			// we only use this to establish first-use
-			XmlElement rangeel = parser.start("range");
-			String spc = rangeel.getAttribute("space");
-			long offset = SpecXmlUtils.decodeLong(rangeel.getAttribute("first"));
-			pcaddr = symbol.function.getAddressFactory().getAddressSpace(spc).getAddress(offset);
-			pcaddr =
-				symbol.function.getFunction().getEntryPoint().getAddressSpace().getOverlayAddress(
-					pcaddr);
-			parser.end(rangeel);
+			int rangeel = decoder.openElement(ElementId.ELEM_RANGE);
+			AddressSpace spc = decoder.readSpace(AttributeId.ATTRIB_SPACE);
+			long offset = decoder.readUnsignedInteger(AttributeId.ATTRIB_FIRST);
+			pcaddr = spc.getAddress(offset);
+			pcaddr = symbol.function.getFunction()
+					.getEntryPoint()
+					.getAddressSpace()
+					.getOverlayAddress(pcaddr);
+			decoder.closeElement(rangeel);
 		}
 
-		parser.end(rangelistel);
+		decoder.closeElement(rangelistel);
 	}
 
 	protected void buildRangelistXML(StringBuilder res) {
