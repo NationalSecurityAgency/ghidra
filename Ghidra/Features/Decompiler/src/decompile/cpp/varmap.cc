@@ -373,7 +373,7 @@ void ScopeLocal::encode(Encoder &encoder) const
 
 {
   encoder.openElement(ELEM_LOCALDB);
-  encoder.writeString(ATTRIB_MAIN, space->getName());
+  encoder.writeSpace(ATTRIB_MAIN, space);
   encoder.writeBool(ATTRIB_LOCK, rangeLocked);
   ScopeInternal::encode(encoder);
   encoder.closeElement(ELEM_LOCALDB);
@@ -392,7 +392,7 @@ void ScopeLocal::decodeWrappingAttributes(Decoder &decoder)
   rangeLocked = false;
   if (decoder.readBool(ATTRIB_LOCK))
     rangeLocked = true;
-  space = glb->getSpaceByName(decoder.readString(ATTRIB_MAIN));
+  space = decoder.readSpace(ATTRIB_MAIN);
 }
 
 /// The given range can no longer hold a \e mapped local variable. This indicates the range

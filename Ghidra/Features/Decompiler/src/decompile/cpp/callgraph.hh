@@ -107,7 +107,6 @@ class CallGraph {
   void iterateFunctionsAddrOrder(Scope *scope);
 public:
   CallGraph(Architecture *g) { glb = g; }
-  Architecture *getArch(void) const { return glb; }
   CallGraphNode *addNode(Funcdata *f);
   CallGraphNode *addNode(const Address &addr,const string &nm);
   CallGraphNode *findNode(const Address &addr);

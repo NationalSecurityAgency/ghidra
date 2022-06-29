@@ -220,7 +220,7 @@ public:
 /// The command returns a single character message, 't' or 'f', indicating whether the
 /// configuration succeeded.
 class SetOptions : public GhidraCommand {
-  XmlDecode decoder;			///< The XML option document
+  string optionsListTag;		///< The <optionslist> XML tag
   virtual void loadParameters(void);
   virtual void sendResult(void);
 public:

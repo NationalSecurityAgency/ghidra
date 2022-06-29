@@ -40,14 +40,13 @@ void LoadTable::encode(Encoder &encoder) const
 }
 
 /// \param decoder is the stream decoder
-/// \param glb is the architecture for resolving address space tags
-void LoadTable::decode(Decoder &decoder,Architecture *glb)
+void LoadTable::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_LOADTABLE);
   size = decoder.readSignedInteger(ATTRIB_SIZE);
   num = decoder.readSignedInteger(ATTRIB_NUM);
-  addr = Address::decode( decoder, glb);
+  addr = Address::decode( decoder );
   decoder.closeElement(elemId);
 }
 
@@ -1934,7 +1933,7 @@ void JumpBasicOverride::encode(Encoder &encoder) const
   encoder.closeElement(ELEM_BASICOVERRIDE);
 }
 
-void JumpBasicOverride::decode(Decoder &decoder,Architecture *glb)
+void JumpBasicOverride::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_BASICOVERRIDE);
@@ -1943,12 +1942,12 @@ void JumpBasicOverride::decode(Decoder &decoder,Architecture *glb)
     if (subId == 0) break;
     if (subId == ELEM_DEST) {
       VarnodeData vData;
-      vData.decodeFromAttributes(decoder, glb);
+      vData.decodeFromAttributes(decoder);
       adset.insert( vData.getAddr() );
     }
     else if (subId == ELEM_NORMADDR) {
       VarnodeData vData;
-      vData.decodeFromAttributes(decoder, glb);
+      vData.decodeFromAttributes(decoder);
       normaddress = vData.getAddr();
     }
     else if (subId == ELEM_NORMHASH) {
@@ -2645,7 +2644,7 @@ void JumpTable::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_JUMPTABLE);
-  opaddress = Address::decode( decoder, glb);
+  opaddress = Address::decode( decoder );
   bool missedlabel = false;
   for(;;) {
     uint4 subId = decoder.peekElement();
@@ -2667,17 +2666,17 @@ void JumpTable::decode(Decoder &decoder)
       }
       if (!foundlabel)		// No label attribute
 	missedlabel = true;	// No following entries are allowed to have a label attribute
-      addresstable.push_back( Address::decode( decoder, glb) );
+      addresstable.push_back( Address::decode( decoder ) );
     }
     else if (subId == ELEM_LOADTABLE) {
       loadpoints.emplace_back();
-      loadpoints.back().decode(decoder,glb);
+      loadpoints.back().decode(decoder);
     }
     else if (subId == ELEM_BASICOVERRIDE) {
       if (jmodel != (JumpModel *)0)
 	throw LowlevelError("Duplicate jumptable override specs");
       jmodel = new JumpBasicOverride(this);
-      jmodel->decode(decoder,glb);
+      jmodel->decode(decoder);
     }
   }
   decoder.closeElement(elemId);

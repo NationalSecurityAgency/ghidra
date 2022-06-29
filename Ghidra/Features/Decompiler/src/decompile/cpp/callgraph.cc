@@ -33,12 +33,11 @@ void CallGraphEdge::decode(Decoder &decoder,CallGraph *graph)
 
 {
   uint4 elemId = decoder.openElement(ELEM_EDGE);
-  const AddrSpaceManager *manage = graph->getArch();
   Address fromaddr,toaddr,siteaddr;
   
-  fromaddr = Address::decode(decoder,manage);
-  toaddr = Address::decode(decoder,manage);
-  siteaddr = Address::decode(decoder,manage);
+  fromaddr = Address::decode(decoder);
+  toaddr = Address::decode(decoder);
+  siteaddr = Address::decode(decoder);
   decoder.closeElement(elemId);
 
   CallGraphNode *fromnode = graph->findNode(fromaddr);
@@ -83,7 +82,7 @@ void CallGraphNode::decode(Decoder &decoder,CallGraph *graph)
     if (attribId == ATTRIB_NAME)
       name = decoder.readString();
   }
-  Address addr = Address::decode(decoder,graph->getArch());
+  Address addr = Address::decode(decoder);
   decoder.closeElement(elemId);
   graph->addNode(addr,name);
 }

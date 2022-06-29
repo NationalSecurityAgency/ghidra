@@ -76,8 +76,8 @@ public:
 struct TrackedContext {
   VarnodeData loc;	///< Storage details of the register being tracked
   uintb val;		///< The value of the register
-  void decode(Decoder &decoder,const AddrSpaceManager *manage);		///< Decode \b this from a stream
-  void encode(Encoder &encoder) const;					///< Encode \b this to a stream
+  void decode(Decoder &decoder);			///< Decode \b this from a stream
+  void encode(Encoder &encoder) const;			///< Encode \b this to a stream
 };
 typedef vector<TrackedContext> TrackedSet;		///< A set of tracked registers and their values (at one code point)
 
@@ -116,7 +116,7 @@ typedef vector<TrackedContext> TrackedSet;		///< A set of tracked registers and 
 class ContextDatabase {
 protected:
   static void encodeTracked(Encoder &encoder,const Address &addr,const TrackedSet &vec);
-  static void decodeTracked(Decoder &decoder,const AddrSpaceManager *manage,TrackedSet &vec);
+  static void decodeTracked(Decoder &decoder,TrackedSet &vec);
 
   /// \brief Retrieve the context variable description object by name
   ///
@@ -234,16 +234,14 @@ public:
   /// \brief Restore the state of \b this database object from the given stream decoder
   ///
   /// \param decoder is the given stream decoder
-  /// \param manage is used to resolve address space references
-  virtual void decode(Decoder &decoder,const AddrSpaceManager *manage)=0;
+  virtual void decode(Decoder &decoder)=0;
 
   /// \brief Add initial context state from elements in the compiler/processor specifications
   ///
   /// Parse a \<context_data> element from the given stream decoder from either the compiler
   /// or processor specification file for the architecture, initializing this database.
   /// \param decoder is the given stream decoder
-  /// \param manage is used to resolve address space references
-  virtual void decodeFromSpec(Decoder &decoder,const AddrSpaceManager *manage)=0;
+  virtual void decodeFromSpec(Decoder &decoder)=0;
 
   void setVariableDefault(const string &nm,uintm val);	///< Provide a default value for a context variable
   uintm getDefaultValue(const string &nm) const;	///< Retrieve the default value for a context variable
@@ -305,8 +303,8 @@ public:
   virtual TrackedSet &createSet(const Address &addr1,const Address &addr2);
 
   virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,const AddrSpaceManager *manage);
-  virtual void decodeFromSpec(Decoder &decoder,const AddrSpaceManager *manage);
+  virtual void decode(Decoder &decoder);
+  virtual void decodeFromSpec(Decoder &decoder);
 };
 
 /// \brief A helper class for caching the active context blob to minimize database lookups

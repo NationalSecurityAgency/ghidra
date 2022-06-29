@@ -427,7 +427,7 @@ void PcodeOp::encode(Encoder &encoder) const
       if ((i==0)&&((code()==CPUI_STORE)||(code()==CPUI_LOAD))) {
 	AddrSpace *spc = vn->getSpaceFromConst();
 	encoder.openElement(ELEM_SPACEID);
-	encoder.writeString(ATTRIB_NAME, spc->getName());
+	encoder.writeSpace(ATTRIB_NAME, spc);
 	encoder.closeElement(ELEM_SPACEID);
       }
       else {

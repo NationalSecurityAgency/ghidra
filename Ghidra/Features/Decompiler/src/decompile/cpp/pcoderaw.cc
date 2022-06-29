@@ -18,19 +18,17 @@
 
 /// Build this VarnodeData from an \<addr>, \<register>, or \<varnode> element.
 /// \param decoder is the stream decoder
-/// \param manage is the address space manager
-void VarnodeData::decode(Decoder &decoder,const AddrSpaceManager *manage)
+void VarnodeData::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement();
-  decodeFromAttributes(decoder,manage);
+  decodeFromAttributes(decoder);
   decoder.closeElement(elemId);
 }
 
 /// Collect attributes for the VarnodeData possibly from amidst other attributes
 /// \param decoder is the stream decoder
-/// \param manage is the address space manager
-void VarnodeData::decodeFromAttributes(Decoder &decoder,const AddrSpaceManager *manage)
+void VarnodeData::decodeFromAttributes(Decoder &decoder)
 
 {
   space = (AddrSpace *)0;
@@ -40,16 +38,13 @@ void VarnodeData::decodeFromAttributes(Decoder &decoder,const AddrSpaceManager *
     if (attribId == 0)
       break;		// Its possible to have no attributes in an <addr/> tag
     if (attribId == ATTRIB_SPACE) {
-      string nm = decoder.readString();
-      space = manage->getSpaceByName(nm);
-      if (space == (AddrSpace *)0)
-	throw LowlevelError("Unknown space name: "+nm);
+      space = decoder.readSpace();
       decoder.rewindAttributes();
       offset = space->decodeAttributes(decoder,size);
       break;
     }
     else if (attribId == ATTRIB_NAME) {
-      const Translate *trans = manage->getDefaultCodeSpace()->getTrans();
+      const Translate *trans = decoder.getAddrSpaceManager()->getDefaultCodeSpace()->getTrans();
       const VarnodeData &point(trans->getRegister(decoder.readString()));
       *this = point;
       break;

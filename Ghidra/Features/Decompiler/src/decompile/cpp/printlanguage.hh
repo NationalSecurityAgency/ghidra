@@ -90,7 +90,8 @@ public:
     space,			///< No explicitly printed token
     hiddenfunction		///< Operation that isn't explicitly printed
   };
-  const char *print;		///< Printing characters for the token
+  string print1;		///< Printing characters for the token
+  string print2;		///< (terminating) characters for the token
   int4 stage;			///< Additional elements consumed from the RPN stack when emitting this token
   int4 precedence;		///< Precedence level of this token (higher binds more tightly)
   bool associative;		///< True if the operator is associative
@@ -134,6 +135,9 @@ public:
 /// stack to provide a printing context mechanism for derived classes.
 class PrintLanguage {
 public:
+  static const string OPEN_PAREN;	///< "(" token
+  static const string CLOSE_PAREN;	///< ")" token
+
   /// \brief Possible context sensitive modifiers to how tokens get emitted
   enum modifiers {
     force_hex = 1,		///< Force printing of hex
@@ -203,7 +207,7 @@ public:
   struct Atom {
     const string &name;		///< The actual printed characters of the token
     tagtype type;		///< The type of Atom
-    EmitXml::syntax_highlight highlight;	///< The type of highlighting to use when emitting the token
+    EmitMarkup::syntax_highlight highlight;	///< The type of highlighting to use when emitting the token
     const PcodeOp *op;		///< A p-code operation associated with the token
     union {
       const Varnode *vn;	///< A Varnode associated with the token
@@ -213,27 +217,27 @@ public:
     int4 offset;        	///< The offset (within the parent structure) for a \e field token
 
     /// \brief Construct a token with no associated data-flow annotations
-    Atom(const string &nm,tagtype t,EmitXml::syntax_highlight hl)
+    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl)
       : name(nm) { type = t; highlight = hl; }
 
     /// \brief Construct a token for a data-type name
-    Atom(const string &nm,tagtype t,EmitXml::syntax_highlight hl,const Datatype *c)
+    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const Datatype *c)
       : name(nm) { type = t; highlight = hl; ptr_second.ct = c; }
 
     /// \brief Construct a token for a field name
-    Atom(const string &nm,tagtype t,EmitXml::syntax_highlight hl,const Datatype *c,int4 off,const PcodeOp *o)
+    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const Datatype *c,int4 off,const PcodeOp *o)
       : name(nm) { type = t; highlight = hl; ptr_second.ct = c; offset = off; op = o; }
 
     /// \brief Construct a token with an associated PcodeOp
-    Atom(const string &nm,tagtype t,EmitXml::syntax_highlight hl,const PcodeOp *o)
+    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const PcodeOp *o)
       : name(nm) { type = t; highlight = hl; op = o; }
 
     /// \brief Construct a token with an associated PcodeOp and Varnode
-    Atom(const string &nm,tagtype t,EmitXml::syntax_highlight hl,const PcodeOp *o,const Varnode *v)
+    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const PcodeOp *o,const Varnode *v)
       : name(nm) { type=t; highlight = hl; ptr_second.vn = v; op = o; }
 
     /// \brief Construct a token for a function name
-    Atom(const string &nm,tagtype t,EmitXml::syntax_highlight hl,const PcodeOp *o,const Funcdata *f)
+    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const PcodeOp *o,const Funcdata *f)
       : name(nm) { type=t; highlight = hl; op = o; ptr_second.fd = f; }
   };
 private:
@@ -250,7 +254,7 @@ protected:
   Architecture *glb;			///< The Architecture owning the language emitter
   const Scope *curscope;		///< The current symbol scope
   CastStrategy *castStrategy;		///< The strategy for emitting explicit \e case operations
-  EmitXml *emit;			///< The low-level token emitter
+  Emit *emit;				///< The low-level token emitter
   uint4 mods;				///< Currently active printing modifications
   uint4 instr_comment_type;		///< Type of instruction comments to display
   uint4 head_comment_type;		///< Type of header comments to display
@@ -431,8 +435,8 @@ public:
   void setNamespaceStrategy(namespace_strategy strat) { namespc_strategy = strat; }	///< Set how namespace tokens are displayed
   uint4 getHeaderComment(void) const { return head_comment_type; }	///< Get the type of comments suitable for a function header
   void setHeaderComment(uint4 val) { head_comment_type = val; }		///< Set the type of comments suitable for a function header
-  bool emitsXml(void) const { return emit->emitsXml(); }		///< Does the low-level emitter, emit XML markup
-  void setXML(bool val);						///< Set whether the low-level emitter, emits XML markup
+  bool emitsMarkup(void) const { return emit->emitsMarkup(); }		///< Does the low-level emitter, emit markup
+  void setMarkup(bool val);						///< Set whether the low-level emitter, emits markup
   void setFlat(bool val);						///< Set whether nesting code structure should be emitted
 
   virtual void initializeFromArchitecture(void)=0;		///< Initialize architecture specific aspects of printer

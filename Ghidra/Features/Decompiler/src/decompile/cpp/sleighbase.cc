@@ -268,7 +268,7 @@ void SleighBase::restoreXml(const Element *el)
   }
   indexer.restoreXml(*iter);
   iter++;
-  XmlDecode decoder(*iter);
+  XmlDecode decoder(this,*iter);
   decodeSpaces(decoder,this);
   iter++;
   symtab.restoreXml(*iter,this);

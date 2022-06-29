@@ -45,10 +45,10 @@ struct VarnodeData {
   AddrSpace *getSpaceFromConst(void) const;
 
   /// Recover this object from a stream
-  void decode(Decoder &decoder,const AddrSpaceManager *manage);
+  void decode(Decoder &decoder);
 
   /// Recover \b this object from attributes of the current open element
-  void decodeFromAttributes(Decoder &decoder,const AddrSpaceManager *manage);
+  void decodeFromAttributes(Decoder &decoder);
 
   /// Does \b this container another given VarnodeData
   bool contains(const VarnodeData &op2) const;

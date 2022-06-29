@@ -134,7 +134,7 @@ void AddrSpace::truncateSpace(uint4 newsize)
 void AddrSpace::encodeAttributes(Encoder &encoder,uintb offset) const
 
 {
-  encoder.writeString(ATTRIB_SPACE,getName());
+  encoder.writeSpace(ATTRIB_SPACE,this);
   encoder.writeUnsignedInteger(ATTRIB_OFFSET, offset);
 }
 
@@ -147,7 +147,7 @@ void AddrSpace::encodeAttributes(Encoder &encoder,uintb offset) const
 void AddrSpace::encodeAttributes(Encoder &encoder,uintb offset,int4 size) const
 
 {
-  encoder.writeString(ATTRIB_SPACE, getName());
+  encoder.writeSpace(ATTRIB_SPACE, this);
   encoder.writeUnsignedInteger(ATTRIB_OFFSET, offset);
   encoder.writeSignedInteger(ATTRIB_SIZE, size);
 }
@@ -482,7 +482,7 @@ void JoinSpace::encodeAttributes(Encoder &encoder,uintb offset) const
   static AttributeId *pieceArray[] = { &ATTRIB_PIECE1, &ATTRIB_PIECE2, &ATTRIB_PIECE3, &ATTRIB_PIECE4,
 	&ATTRIB_PIECE5, &ATTRIB_PIECE6, &ATTRIB_PIECE7, &ATTRIB_PIECE8, &ATTRIB_PIECE9 };
   JoinRecord *rec = getManager()->findJoin(offset); // Record must already exist
-  encoder.writeString(ATTRIB_SPACE, getName());
+  encoder.writeSpace(ATTRIB_SPACE, this);
   int4 num = rec->numPieces();
   if (num >= 8)
     throw LowlevelError("Cannot encode more than 8 pieces");
@@ -657,10 +657,7 @@ void OverlaySpace::decode(Decoder &decoder)
   name = decoder.readString(ATTRIB_NAME);
   index = decoder.readSignedInteger(ATTRIB_INDEX);
   
-  string basename = decoder.readString(ATTRIB_BASE);
-  baseSpace = getManager()->getSpaceByName(basename);
-  if (baseSpace == (AddrSpace *)0)
-    throw LowlevelError("Base space does not exist for overlay space: "+name);
+  baseSpace = decoder.readSpace(ATTRIB_BASE);
   decoder.closeElement(elemId);
   addressSize = baseSpace->getAddrSize();
   wordsize = baseSpace->getWordSize();

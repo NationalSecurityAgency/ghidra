@@ -52,7 +52,7 @@ Scope *ScopeGhidra::reresolveScope(uint8 id) const
   if (cacheScope != (Scope *)0)
     return cacheScope;		// Scope was previously cached
 
-  XmlDecode decoder;
+  XmlDecode decoder(ghidra);
   if (!ghidra->getNamespacePath(id,decoder))
     throw LowlevelError("Could not get namespace info");
 
@@ -85,7 +85,7 @@ void ScopeGhidra::decodeHole(Decoder &decoder) const
   uint4 elemId = decoder.openElement(ELEM_HOLE);
   uint4 flags = 0;
   Range range;
-  range.decodeFromAttributes(decoder,ghidra);
+  range.decodeFromAttributes(decoder);
   decoder.rewindAttributes();
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
@@ -212,7 +212,7 @@ Symbol *ScopeGhidra::removeQuery(const Address &addr) const
 
   // Have we queried this address before
   if (holes.inRange(addr,1)) return (Symbol *)0;
-  XmlDecode decoder;
+  XmlDecode decoder(ghidra);
   if (ghidra->getMappedSymbolsXML(addr,decoder)) {	// Query GHIDRA about this address
     sym = dump2Cache(decoder);	// Add it to the cache
   }
@@ -350,7 +350,7 @@ Funcdata *ScopeGhidra::resolveExternalRefFunction(ExternRefSymbol *sym) const
     // If the function isn't in cache, we use the special
     // getExternalRefXML interface to recover the external function
     SymbolEntry *entry = sym->getFirstWholeMap();
-    XmlDecode decoder;
+    XmlDecode decoder(ghidra);
     if (ghidra->getExternalRefXML(entry->getAddr(),decoder)) {
       FunctionSymbol *funcSym;
       // Make sure referenced function is cached

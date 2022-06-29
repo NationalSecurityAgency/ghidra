@@ -32,7 +32,7 @@ const CPoolRecord *ConstantPoolGhidra::getRecord(const vector<uintb> &refs) cons
 {
   const CPoolRecord *rec = cache.getRecord(refs);
   if (rec == (const CPoolRecord *)0) {
-    XmlDecode decoder;
+    XmlDecode decoder(ghidra);
     bool success;
     try {
       success = ghidra->getCPoolRef(refs,decoder);

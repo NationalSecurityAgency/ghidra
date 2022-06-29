@@ -64,12 +64,12 @@ void SeqNum::encode(Encoder &encoder) const
   encoder.closeElement(ELEM_SEQNUM);
 }
 
-SeqNum SeqNum::decode(Decoder &decoder,const AddrSpaceManager *manage)
+SeqNum SeqNum::decode(Decoder &decoder)
 
 {
   uintm uniq = ~((uintm)0);
   uint4 elemId = decoder.openElement(ELEM_SEQNUM);
-  Address pc = Address::decode(decoder,manage); // Recover address
+  Address pc = Address::decode(decoder); // Recover address
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
@@ -199,14 +199,13 @@ void Address::renormalize(int4 size) {
 /// or a \e name attribute can be used to recover an address
 /// based on a register name.
 /// \param decoder is the stream decoder
-/// \param manage is the address space manager for the program
 /// \return the resulting Address
-Address Address::decode(Decoder &decoder,const AddrSpaceManager *manage)
+Address Address::decode(Decoder &decoder)
 
 {
   VarnodeData var;
 
-  var.decode(decoder,manage);
+  var.decode(decoder);
   return Address(var.space,var.offset);
 }
 
@@ -220,15 +219,14 @@ Address Address::decode(Decoder &decoder,const AddrSpaceManager *manage)
 /// and size based on a register name. If a size is recovered
 /// it is stored in \e size reference.
 /// \param decoder is the stream decoder
-/// \param manage is the address space manager for the program
 /// \param size is the reference to any recovered size
 /// \return the resulting Address
-Address Address::decode(Decoder &decoder,const AddrSpaceManager *manage,int4 &size)
+Address Address::decode(Decoder &decoder,int4 &size)
 
 {
   VarnodeData var;
 
-  var.decode(decoder,manage);
+  var.decode(decoder);
   size = var.size;
   return Address(var.space,var.offset);
 }
@@ -293,7 +291,7 @@ void Range::encode(Encoder &encoder) const
 
 {
   encoder.openElement(ELEM_RANGE);
-  encoder.writeString(ATTRIB_SPACE, spc->getName());
+  encoder.writeSpace(ATTRIB_SPACE, spc);
   encoder.writeUnsignedInteger(ATTRIB_FIRST, first);
   encoder.writeUnsignedInteger(ATTRIB_LAST, last);
   encoder.closeElement(ELEM_RANGE);
@@ -301,21 +299,19 @@ void Range::encode(Encoder &encoder) const
 
 /// Reconstruct this object from a \<range> or \<register> element
 /// \param decoder is the stream decoder
-/// \param manage is the space manager for recovering AddrSpace objects
-void Range::decode(Decoder &decoder,const AddrSpaceManager *manage)
+void Range::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement();
   if (elemId != ELEM_RANGE && elemId != ELEM_REGISTER)
     throw XmlError("Expecting <range> or <register> element");
-  decodeFromAttributes(decoder,manage);
+  decodeFromAttributes(decoder);
   decoder.closeElement(elemId);
 }
 
 /// Reconstruct from attributes that may not be part of a \<range> element.
 /// \param decoder is the stream decoder
-/// \param manage is the space manager for recovering AddrSpace objects
-void Range::decodeFromAttributes(Decoder &decoder,const AddrSpaceManager *manage)
+void Range::decodeFromAttributes(Decoder &decoder)
 
 {
   spc = (AddrSpace *)0;
@@ -326,10 +322,7 @@ void Range::decodeFromAttributes(Decoder &decoder,const AddrSpaceManager *manage
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
     if (attribId == ATTRIB_SPACE) {
-      string spcname = decoder.readString();
-      spc = manage->getSpaceByName(spcname);
-      if (spc == (AddrSpace *)0)
-        throw LowlevelError("Undefined space: "+spcname);
+      spc = decoder.readSpace();
     }
     else if (attribId == ATTRIB_FIRST) {
       first = decoder.readUnsignedInteger();
@@ -339,7 +332,7 @@ void Range::decodeFromAttributes(Decoder &decoder,const AddrSpaceManager *manage
       seenLast = true;
     }
     else if (attribId == ATTRIB_NAME) {
-      const Translate *trans = manage->getDefaultCodeSpace()->getTrans();
+      const Translate *trans = decoder.getAddrSpaceManager()->getDefaultCodeSpace()->getTrans();
       const VarnodeData &point(trans->getRegister(decoder.readString()));
       spc = point.space;
       first = point.offset;
@@ -620,14 +613,13 @@ void RangeList::encode(Encoder &encoder) const
 
 /// Recover each individual disjoint Range for \b this RangeList.
 /// \param decoder is the stream decoder
-/// \param manage is manager for retrieving address spaces
-void RangeList::decode(Decoder &decoder,const AddrSpaceManager *manage)
+void RangeList::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_RANGELIST);
   while(decoder.peekElement() != 0) {
     Range range;
-    range.decode(decoder,manage);
+    range.decode(decoder);
     tree.insert(range);
   }
   decoder.closeElement(elemId);

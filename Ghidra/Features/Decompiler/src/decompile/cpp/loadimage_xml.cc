@@ -81,27 +81,19 @@ void LoadImageXml::open(const AddrSpaceManager *m)
   uint4 sz;			// unused size
 
   // Read parsed xml file
-  XmlDecode decoder(rootel);
+  XmlDecode decoder(m,rootel);
   uint4 elemId = decoder.openElement(ELEM_BINARYIMAGE);
   for(;;) {
     uint4 subId = decoder.openElement();
     if (subId == 0) break;
     if (subId==ELEM_SYMBOL) {
-      AddrSpace *base = (AddrSpace *)0;
-      string spaceName = decoder.readString(ATTRIB_SPACE);
-      base = manage->getSpaceByName(spaceName);
-      if (base == (AddrSpace *)0)
-	throw LowlevelError("Unknown space name: "+spaceName);
+      AddrSpace *base = decoder.readSpace(ATTRIB_SPACE);
       Address addr(base,base->decodeAttributes(decoder,sz));
       string nm = decoder.readString(ATTRIB_NAME);
       addrtosymbol[addr] = nm;
     }
     else if (subId == ELEM_BYTECHUNK) {
-      AddrSpace *base = (AddrSpace *)0;
-      string spaceName = decoder.readString(ATTRIB_SPACE);
-      base = manage->getSpaceByName(spaceName);
-      if (base == (AddrSpace *)0)
-	throw LowlevelError("Unknown space name: "+spaceName);
+      AddrSpace *base = decoder.readSpace(ATTRIB_SPACE);
       Address addr(base,base->decodeAttributes(decoder,sz));
       map<Address,vector<uint1> >::iterator chnkiter;
       vector<uint1> &vec( chunk[addr] );
