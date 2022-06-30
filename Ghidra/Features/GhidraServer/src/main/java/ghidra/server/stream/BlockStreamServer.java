@@ -315,7 +315,7 @@ public class BlockStreamServer extends Thread {
 				}
 				else if (!(e instanceof EOFException)) { // silent on closed connection
 					log.error("file block stream failed from " + socket.getInetAddress() + ": " +
-						e.getMessage(), e);
+						e.getMessage());
 				}
 			}
 			finally {
