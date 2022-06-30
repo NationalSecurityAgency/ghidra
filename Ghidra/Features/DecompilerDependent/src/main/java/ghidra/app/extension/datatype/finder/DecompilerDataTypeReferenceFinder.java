@@ -90,7 +90,9 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		}
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt(); // reset the flag
-			Msg.debug(this, "Interrupted while decompiling functions");
+			if (!monitor.isCancelled()) {
+				Msg.debug(this, "Interrupted while decompiling functions");
+			}
 		}
 		catch (Exception e) {
 			Msg.error(this, "Encountered an exception decompiling functions", e);
