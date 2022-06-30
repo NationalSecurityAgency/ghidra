@@ -211,8 +211,8 @@ public abstract class AbstractPatchAction extends DockingAction {
 		fieldPanel = listingPanel.getFieldPanel();
 
 		fieldLayoutManager = new FieldPanelOverLayoutManager(fieldPanel);
-		fieldPanel.setLayout(fieldLayoutManager);
 		addLayoutListeners(fieldLayoutManager);
+		fieldPanel.setLayout(fieldLayoutManager);
 	}
 
 	/**
@@ -349,8 +349,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 		}
 
 		ListingActionContext lac = (ListingActionContext) context;
-		prepareLayout(lac);
-		if (codeViewerProvider.isReadOnly()) {
+		if (((CodeViewerProvider) lac.getComponentProvider()).isReadOnly()) {
 			return null;
 		}
 		return lac.getCodeUnit();
@@ -365,9 +364,6 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 		ListingActionContext lac = (ListingActionContext) context;
 		prepareLayout(lac);
-		if (codeViewerProvider.isReadOnly()) {
-			return;
-		}
 
 		ProgramLocation cur = lac.getLocation();
 		program = cur.getProgram();

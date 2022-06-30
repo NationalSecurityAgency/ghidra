@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.assembler;
 import static org.junit.Assert.*;
 
 import java.util.List;
-import java.util.Objects;
 
 import javax.swing.JTextField;
 
@@ -81,7 +80,9 @@ public class AssemblerPluginTestHelper {
 	public List<AssemblyCompletion> inputAndGetCompletions(String text) {
 		AbstractGenericTest.runSwing(() -> {
 			instructionInput.setText(text);
-			instructionInput.auto.startCompletion(instructionInput.getOperandsField());
+			JTextField field = instructionInput.getOperandsField();
+			instructionInput.auto.fakeFocusGained(field);
+			instructionInput.auto.startCompletion(field);
 			instructionInput.auto.updateNow();
 		});
 		return AbstractGenericTest.waitForValue(() -> AbstractGenericTest.runSwing(() -> {
@@ -128,7 +129,7 @@ public class AssemblerPluginTestHelper {
 		AbstractGenericTest.runSwing(() -> patchInstructionAction.accept(ai));
 		AbstractGhidraHeadedIntegrationTest.waitForProgram(program);
 
-		return Objects.requireNonNull(listing.getInstructionAt(address));
+		return AbstractGTest.waitForValue(() -> listing.getInstructionAt(address));
 	}
 
 	public Data patchDataAt(Address address, String expText, String newText) {
@@ -145,6 +146,6 @@ public class AssemblerPluginTestHelper {
 		});
 		AbstractGhidraHeadedIntegrationTest.waitForProgram(program);
 
-		return Objects.requireNonNull(listing.getDataAt(address));
+		return AbstractGTest.waitForValue(() -> listing.getDataAt(address));
 	}
 }

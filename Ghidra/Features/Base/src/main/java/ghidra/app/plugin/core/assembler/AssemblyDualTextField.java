@@ -253,6 +253,10 @@ public class AssemblyDualTextField {
 			super(model);
 		}
 
+		void fakeFocusGained(JTextField field) {
+			listener.fakeFocusGained(field);
+		}
+
 		@Override
 		protected String getPrefix(JTextField field) {
 			if (field == assembly) {
