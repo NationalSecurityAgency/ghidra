@@ -346,10 +346,10 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 			listingProvider, view, new ProgramLocation(view, start),
 			new ProgramSelection(start, start.addWrap(3)), null);
 		DockingActionIf action =
-			Unique.assertOne(disassemblerPlugin.getPopupActions(tool, actionContext)
+			runSwing(() -> Unique.assertOne(disassemblerPlugin.getPopupActions(tool, actionContext)
 					.stream()
 					.filter(a -> a.isAddToPopup(actionContext))
-					.filter(actionPred));
+					.filter(actionPred)));
 		performAction(action, actionContext, true);
 		waitForTasks();
 	}
@@ -555,11 +555,11 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 			listingProvider, view, new ProgramLocation(view, start),
 			new ProgramSelection(start, start.addWrap(1)), null);
 		FixedPlatformTracePatchInstructionAction action =
-			Unique.assertOne(disassemblerPlugin.getPopupActions(tool, actionContext)
+			runSwing(() -> Unique.assertOne(disassemblerPlugin.getPopupActions(tool, actionContext)
 					.stream()
 					.filter(a -> a instanceof FixedPlatformTracePatchInstructionAction)
 					.map(a -> (FixedPlatformTracePatchInstructionAction) a)
-					.filter(actionPred));
+					.filter(actionPred)));
 
 		AssemblerPluginTestHelper helper =
 			new AssemblerPluginTestHelper(action, null, listingProvider, tb.trace.getProgramView());
