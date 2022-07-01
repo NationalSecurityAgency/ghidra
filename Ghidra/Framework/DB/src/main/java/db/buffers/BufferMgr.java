@@ -136,7 +136,7 @@ public class BufferMgr {
 	private static final int INITIAL_BUFFER_TABLE_SIZE = 1024;
 
 	/**
-	 * An optional pre-cache of all buffers can be performed within a separate 
+	 * An optional pre-cache of all buffers can be performed within a separate
 	 * thread if enabled.
 	 */
 	private enum PreCacheStatus {
@@ -257,7 +257,7 @@ public class BufferMgr {
 
 	/**
 	 * Enable and start source buffer file pre-cache if appropriate.
-	 * This may be forced for all use cases by setting the System property 
+	 * This may be forced for all use cases by setting the System property
 	 * db.always.precache=true
 	 * WARNING! EXPERIMENTAL !!!
 	 */
@@ -384,13 +384,13 @@ public class BufferMgr {
 	public void dispose() {
 		dispose(false);
 	}
-	
+
 	/**
 	 * Dispose of all buffer manager resources including any source
 	 * buffer file.
 	 * This method should be called when this buffer manager instance
 	 * is no longer needed.
-	 * @param keepRecoveryData true if existing snapshot recovery files 
+	 * @param keepRecoveryData true if existing snapshot recovery files
 	 * should not be deleted.
 	 */
 	public void dispose(boolean keepRecoveryData) {
@@ -689,7 +689,7 @@ public class BufferMgr {
 
 	/**
 	 * Start pre-cache of source file if appropriate.
-	 * This targets remote buffer file adapters only. 
+	 * This targets remote buffer file adapters only.
 	 */
 	private void startPreCacheIfNeeded() {
 		if (preCacheThread != null) {
@@ -729,7 +729,7 @@ public class BufferMgr {
 	}
 
 	/**
-	 * Pre-cache source file into cache file.  This is intended to be run in a 
+	 * Pre-cache source file into cache file.  This is intended to be run in a
 	 * dedicated thread when the source file is remote.
 	 */
 	private void preCacheSourceFile() throws IOException {
@@ -1038,6 +1038,12 @@ public class BufferMgr {
 	 */
 	private void handleCorruptionException(Exception exception, String errorText)
 			throws IOException {
+
+		if (exception instanceof ClosedException) {
+			// not a corruption exception, but rather it can happen when closing the database
+			throw (IOException) exception;
+		}
+
 		Msg.error(this, errorText, exception);
 		corruptedState = true;
 		if (exception instanceof IOException) {
@@ -1651,8 +1657,7 @@ public class BufferMgr {
 				monitor.checkCanceled();
 				if (index >= origIndexCount) {
 					// Newly allocated free buffer
-					BufferNode node =
-						createNewBufferNode(index, currentCheckpointHead, null);
+					BufferNode node = createNewBufferNode(index, currentCheckpointHead, null);
 					node.isDirty = true;
 					node.modified = true;
 					node.empty = true;
