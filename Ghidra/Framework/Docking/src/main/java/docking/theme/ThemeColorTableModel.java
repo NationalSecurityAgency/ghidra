@@ -38,6 +38,11 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		colors = Gui.getAllValues().getColors();
 	}
 
+	public void refresh() {
+		colors = Gui.getAllValues().getColors();
+		fireTableDataChanged();
+	}
+
 	@Override
 	public String getName() {
 		return "Users";
@@ -46,6 +51,10 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 	@Override
 	public List<ColorValue> getModelData() {
 		return colors;
+	}
+
+	public boolean isCellEditable(int row, int column) {
+		return getColumnName(column).equals("Current Color");
 	}
 
 	@Override
@@ -78,7 +87,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 	}
 
-	class ValueColumn extends AbstractDynamicTableColumn<ColorValue, String, Object> {
+	class ValueColumn extends AbstractDynamicTableColumn<ColorValue, ColorValue, Object> {
 		private ThemeColorRenderer renderer = new ThemeColorRenderer(Gui.getAllValues());
 		private GThemeValueMap valueMap;
 		private String name;
@@ -95,18 +104,19 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 
 		@Override
-		public String getValue(ColorValue themeColor, Settings settings, Object data,
+		public ColorValue getValue(ColorValue themeColor, Settings settings, Object data,
 				ServiceProvider provider) throws IllegalArgumentException {
-			return themeColor.getId();
+			return themeColor;
 		}
 
 		@Override
-		public GColumnRenderer<String> getColumnRenderer() {
+		public GColumnRenderer<ColorValue> getColumnRenderer() {
 			return renderer;
 		}
 
-		public Comparator<String> getComparator() {
-			return (s1, s2) -> valueMap.getColor(s1).compareValue(valueMap.getColor(s2));
+		public Comparator<ColorValue> getComparator() {
+			return (v1, v2) -> valueMap.getColor(v1.getId())
+					.compareValue(valueMap.getColor(v2.getId()));
 		}
 
 	}
@@ -125,7 +135,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 	}
 
-	private class ThemeColorRenderer extends AbstractGColumnRenderer<String> {
+	private class ThemeColorRenderer extends AbstractGColumnRenderer<ColorValue> {
 
 		private GThemeValueMap valueMap;
 
@@ -138,7 +148,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
 			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
-			String id = (String) data.getValue();
+			String id = ((ColorValue) data.getValue()).getId();
 
 			ColorValue colorValue = valueMap.getColor(id);
 			Color color;
@@ -169,8 +179,9 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 
 		@Override
-		public String getFilterString(String id, Settings settings) {
-			return id;
+		public String getFilterString(ColorValue t, Settings settings) {
+			return t.getId();
 		}
+
 	}
 }

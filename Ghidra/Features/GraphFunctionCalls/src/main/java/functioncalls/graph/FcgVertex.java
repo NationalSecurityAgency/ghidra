@@ -26,6 +26,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
+import docking.theme.GColor;
+import docking.theme.GThemeDefaults.Colors.Palette;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
 import ghidra.graph.viewer.vertex.AbstractVisualVertex;
@@ -41,9 +43,10 @@ import resources.ResourceManager;
  */
 public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvider {
 
-	// TODO to be made an option in an upcoming ticket
-	public static final Color DEFAULT_VERTEX_SHAPE_COLOR = new Color(110, 197, 174);
-	private static final Color TOO_BIG_VERTEX_SHAPE_COLOR = Color.LIGHT_GRAY;
+	//@formatter:off
+	public static final Color DEFAULT_VERTEX_SHAPE_COLOR = new GColor("color.bg.fcg.vertex.default");
+	private static final Color TOO_BIG_VERTEX_SHAPE_COLOR = new GColor("color.bg.fcg.vertex.toobig ");
+	//@formatter:on
 
 	public static final Icon NOT_ALLOWED_ICON = Icons.ERROR_ICON;
 	private static final Icon EXPAND_ICON =
@@ -312,8 +315,8 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	private void addToggleButtons() {
 
 		// hide the button background
-		toggleInsButton.setBackground(new Color(255, 255, 255, 0));
-		toggleOutsButton.setBackground(new Color(255, 255, 255, 0));
+		toggleInsButton.setBackground(Palette.NO_COLOR);
+		toggleOutsButton.setBackground(Palette.NO_COLOR);
 
 		Rectangle parentBounds = vertexImageLabel.getBounds();
 		Dimension size = toggleInsButton.getPreferredSize();

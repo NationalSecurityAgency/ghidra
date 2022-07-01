@@ -55,6 +55,8 @@ public class GThemeDefaults {
 		 * Generic palette colors, using color names, that may be changed along with the theme
 		 */
 		public static class Palette {
+			public static final Color NO_COLOR = new GColor("color.palette.nocolor");
+
 			public static final Color BLACK = new GColor("color.palette.black");
 			public static final Color CYAN = new GColor("color.palette.cyan");
 			public static final Color RED = new GColor("color.palette.red");

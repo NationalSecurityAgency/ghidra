@@ -32,7 +32,7 @@ import ghidra.util.filechooser.GhidraFileFilter;
 public class GThemeDialog extends DialogComponentProvider {
 
 	public GThemeDialog() {
-		super("Theme Dialog");
+		super("Theme Dialog", false);
 		addWorkPanel(createMainPanel());
 		addOKButton();
 		addCancelButton();
@@ -80,6 +80,9 @@ public class GThemeDialog extends DialogComponentProvider {
 		colorTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		GFilterTable<ColorValue> filterTable = new GFilterTable<>(colorTableModel);
 		filterTable.getTable().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		filterTable.getTable()
+				.setDefaultEditor(ColorValue.class,
+					new ThemeColorEditor(Gui.getAllValues(), colorTableModel));
 		return filterTable;
 	}
 

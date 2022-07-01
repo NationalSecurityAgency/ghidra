@@ -15,8 +15,6 @@
  */
 package functioncalls.graph.view;
 
-import java.awt.Color;
-
 import docking.theme.GColor;
 import edu.uci.ics.jung.visualization.RenderContext;
 import functioncalls.graph.*;
@@ -38,19 +36,14 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 	private FcgVertexPaintTransformer vertexPaintTransformer =
 		new FcgVertexPaintTransformer(FcgVertex.DEFAULT_VERTEX_SHAPE_COLOR);
 
-	private Color lightGreen = new Color(143, 197, 143);
-	private Color lightGray = new Color(233, 233, 233);
-
-	// the satellite gets too cluttered, so wash out the edges
-	private Color washedOutBlack = new GColor("color.fcg.satellite.edge");
-
 	private FcgEdgePaintTransformer edgePaintTransformer =
-		new FcgEdgePaintTransformer(lightGreen, lightGray);
+		new FcgEdgePaintTransformer(new GColor("color.bg.fcg.edge.primary.direct"),
+			new GColor("color.bg.fcg.edge.primary.indirect"));
 	private FcgEdgePaintTransformer satelliteEdgePaintTransformer =
-		new FcgEdgePaintTransformer(washedOutBlack, new Color(125, 125, 125, 25));
+		new FcgEdgePaintTransformer(new GColor("color.bg.fcg.edge.satellite.direct"),
+			new GColor("color.bg.fcg.edge.satellite.indirect"));
 
 	FcgComponent(FunctionCallGraph g) {
-
 		setGraph(g);
 		build();
 	}
@@ -75,7 +68,6 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 		renderContext.setEdgeDrawPaintTransformer(edgePaintTransformer);
 		renderContext.setArrowFillPaintTransformer(edgePaintTransformer);
 		renderContext.setArrowDrawPaintTransformer(edgePaintTransformer);
-
 	}
 
 	@Override

@@ -59,8 +59,7 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.HelpLocation;
+import ghidra.util.*;
 import resources.ResourceManager;
 
 public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
@@ -561,11 +560,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 	private Color getToolTipColorForEdge(FGEdge edge) {
 		FunctionGraphOptions options = controller.getFunctionGraphOptions();
 		Color c = options.getColor(edge.getFlowType());
-		return withAlpha(c, 125);
-	}
-
-	private Color withAlpha(Color c, int alpha) {
-		return new Color(c.getRed(), c.getGreen(), c.getBlue(), 125);
+		return ColorUtils.withAlpha(c, 125);
 	}
 
 	private Address getPreviewAddress(boolean forward) {

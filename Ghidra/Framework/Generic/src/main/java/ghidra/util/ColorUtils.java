@@ -192,6 +192,17 @@ public class ColorUtils {
 	}
 
 	/**
+	 * Returns a new color that is comprised of the given color's rgb value and the given alpha
+	 * value.
+	 * @param c the color
+	 * @param alpha the alpha
+	 * @return the new color
+	 */
+	public static Color withAlpha(Color c, int alpha) {
+		return new Color(c.getRed(), c.getGreen(), c.getBlue(), alpha);
+	}
+
+	/**
 	 * Blender of colors
 	 */
 	public static class ColorBlender {

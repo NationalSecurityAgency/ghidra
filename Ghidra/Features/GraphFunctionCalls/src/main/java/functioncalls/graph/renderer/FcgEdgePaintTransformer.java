@@ -21,13 +21,13 @@ import java.awt.Paint;
 import com.google.common.base.Function;
 
 import functioncalls.graph.FcgEdge;
+import ghidra.util.ColorUtils;
 
 /**
  * Generates colors for a given {@link FcgEdge}
  */
 public class FcgEdgePaintTransformer implements Function<FcgEdge, Paint> {
 
-	// private static final Paint LESS_IMPORTANT_COLOR = new Color(125, 125, 125, 75);
 	private Color directColor;
 	private Color indirectColor;
 
@@ -46,7 +46,7 @@ public class FcgEdgePaintTransformer implements Function<FcgEdge, Paint> {
 		alphad[0] = c;
 		for (int i = 1; i < 10; i++) {
 			double newAlpha = 255 - (i * 25.5);
-			alphad[i] = new Color(c.getRed(), c.getGreen(), c.getBlue(), (int) newAlpha);
+			alphad[i] = ColorUtils.withAlpha(c, (int) newAlpha);
 		}
 		return alphad;
 	}

@@ -21,10 +21,19 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.ColorModel;
 
-public class GColor extends Color implements Refreshable {
+import ghidra.util.datastruct.WeakDataStructureFactory;
+import ghidra.util.datastruct.WeakSet;
 
+public class GColor extends Color implements Refreshable {
+	private static WeakSet<GColor> inUseColors = WeakDataStructureFactory.createCopyOnReadWeakSet();
 	private String id;
 	private Color delegate;
+
+	public static void refreshAll() {
+		for (GColor gcolor : inUseColors) {
+			gcolor.refresh();
+		}
+	}
 
 	public GColor(String id) {
 		super(0x808080);
@@ -33,6 +42,7 @@ public class GColor extends Color implements Refreshable {
 		if (delegate == null) {
 			delegate = Color.gray;
 		}
+		inUseColors.add(this);
 	}
 
 	public String getId() {

@@ -307,4 +307,10 @@ public class Gui {
 		return map;
 	}
 
+	public static void setColor(String id, Color color) {
+		currentValues.addColor(new ColorValue(id, color));
+		GColor.refreshAll();
+
+	}
+
 }
