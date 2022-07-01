@@ -53,11 +53,9 @@ class PCodeTest(BuildUtil):
 
     @classmethod
     def print_all(cls):
-        pct = sorted(cls.list.iteritems(), key=lambda x: x[0].lower())
-        
-        for t,pcodetest in sorted(cls.list.iteritems(), key=lambda x: x[0].lower()):
-            print str(pcodetest)
-            if pcodetest.config.verbose: print pcodetest.config.dump()
+        for t,pcodetest in sorted(cls.list.items(), key=lambda x: x[0].lower()):
+            print(str(pcodetest))
+            if pcodetest.config.verbose: print(pcodetest.config.dump())
 
     def __str__(self):
         cb = 'build-all:%-5s' % ('yes' if self.config.build_all else 'no')
@@ -81,7 +79,7 @@ class PCodeTestBuild(BuildUtil):
         elif pcode_test.config.toolchain_type == 'sdcc':
             return PCodeBuildSDCC(pcode_test)
         else:
-            raise Exception(self.config.format('Toolchain type %(toolchain_type)s not known'))
+            raise Exception(pcode_test.config.format('Toolchain type %(toolchain_type)s not known'))
 
     def which(self, what):
         return self.config.format('%(toolchain_dir)s/%(' + what + ')s')
@@ -122,7 +120,7 @@ class PCodeTestBuild(BuildUtil):
         if not self.config.has_longlong: available_files = [x for x in available_files if not fnmatch.fnmatch(x, '*LONGLONG*')]
             
         # compile for each optimization
-        for opt_name,opt_cflag in sorted(self.config.variants.iteritems()):
+        for opt_name,opt_cflag in sorted(self.config.variants.items()):
 
             kind = 'PCodeTest'
 
