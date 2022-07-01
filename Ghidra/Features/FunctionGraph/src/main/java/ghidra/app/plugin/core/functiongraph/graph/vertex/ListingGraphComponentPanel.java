@@ -26,11 +26,13 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
 
 import docking.ActionContext;
 import docking.GenericHeader;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import docking.theme.GColor;
 import docking.theme.GThemeDefaults.Colors;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.Layout;
@@ -134,10 +136,10 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 		add(listingPanel, BorderLayout.CENTER);
 
-		BevelBorder beveledBorder =
-			(BevelBorder) BorderFactory.createBevelBorder(BevelBorder.RAISED,
-				new Color(225, 225, 225), new Color(155, 155, 155), new Color(96, 96, 96),
-				new Color(0, 0, 0));
+		Border beveledBorder =
+			BorderFactory.createBevelBorder(BevelBorder.RAISED,
+				new GColor("color.border.bevel.highlight"),
+				new GColor("color.border.bevel.shadow"));
 		setBorder(beveledBorder);
 
 		addKeyListener(new FieldPanelKeyListener());
@@ -542,7 +544,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 		previewListingPanel.getFieldPanel()
 				.setBackgroundColorModel(
-					new HighlightingColorModel(address, getColorForEdge(edge)));
+					new HighlightingColorModel(address, getToolTipColorForEdge(edge)));
 	}
 
 	private void initializeToolTipComponent(Address goToAddress) {
@@ -556,9 +558,13 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		previewListingPanel.getFieldPanel().setCursorOn(false);
 	}
 
-	private Color getColorForEdge(FGEdge edge) {
+	private Color getToolTipColorForEdge(FGEdge edge) {
 		FunctionGraphOptions options = controller.getFunctionGraphOptions();
 		Color c = options.getColor(edge.getFlowType());
+		return withAlpha(c, 125);
+	}
+
+	private Color withAlpha(Color c, int alpha) {
 		return new Color(c.getRed(), c.getGreen(), c.getBlue(), 125);
 	}
 

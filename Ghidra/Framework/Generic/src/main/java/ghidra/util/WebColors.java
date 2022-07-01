@@ -263,7 +263,7 @@ public abstract class WebColors {
 	 * blue values are all integers between 0-255, while the alpha value is a float value from 0.0 to
 	 * 1.0.
 	 * <BR><BR>
-	 * @param colorString
+	 * @param colorString the color name
 	 * @return a color for the given string or null
 	 */
 	public static Color getColor(String colorString) {

@@ -25,6 +25,7 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.menu.MultiActionDockingAction;
 import docking.menu.MultipleActionDockingToolbarButton;
+import docking.theme.GColor;
 import ghidra.app.plugin.core.functiongraph.FGColorProvider;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
@@ -47,7 +48,7 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 		this.controller = controller;
 		this.vertex = vertex;
 		setDescription("Set this block's background color");
-		colorIcon = new ColorIcon3D(new Color(189, 221, 252), 12, 12) {
+		colorIcon = new ColorIcon3D(new GColor("color.bg.functiongraph.paint.icon"), 12, 12) {
 			@Override
 			public Color getColor() {
 				return controller.getMostRecentColor();

@@ -37,7 +37,6 @@ import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.layout.LayoutListener.ChangeType;
 import ghidra.graph.viewer.layout.LayoutProvider;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
-import ghidra.graph.viewer.options.VisualGraphOptions;
 import ghidra.graph.viewer.renderer.VisualGraphEdgeLabelRenderer;
 import ghidra.program.model.listing.Function;
 import ghidra.program.util.ProgramLocation;
@@ -219,14 +218,14 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 		// note: this label renderer is the stamp for the label; we use another edge label 
 		//       renderer inside of the VisualGraphRenderer
 		VisualGraphEdgeLabelRenderer edgeLabelRenderer =
-			new VisualGraphEdgeLabelRenderer(Color.BLACK);
-		edgeLabelRenderer.setNonPickedForegroundColor(Color.LIGHT_GRAY);
+			new VisualGraphEdgeLabelRenderer(new GColor("color.fg.label.picked"));
+		edgeLabelRenderer.setNonPickedForegroundColor(new GColor("color.fg.label.non-picked"));
 		edgeLabelRenderer.setRotateEdgeLabels(false);
 		renderContext.setEdgeLabelRenderer(edgeLabelRenderer);
 
 		viewer.setGraphOptions(vgOptions);
 		Color bgColor = vgOptions.getGraphBackgroundColor();
-		if (bgColor.equals(VisualGraphOptions.DEFAULT_GRAPH_BACKGROUND_COLOR)) {
+		if (vgOptions.isDefaultBackgroundColor(bgColor)) {
 
 			// Give user notice when seeing the graph for a non-function (such as an undefined 
 			// function), as this is typical for Ghidra UI widgets.   

@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import docking.theme.GColor;
+import docking.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutOptions;
 import ghidra.framework.options.Options;
@@ -264,7 +265,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 			return getConditionalJumpEdgeColor();
 		}
 
-		return Color.BLACK;
+		return Palette.BLACK;
 	}
 
 	public Color getHighlightColor(FlowType flowType) {
@@ -278,7 +279,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 			return getConditionalJumpEdgeHighlightColor();
 		}
 
-		return Color.BLACK;
+		return Palette.BLACK;
 	}
 
 	public boolean optionChangeRequiresRelayout(String optionName) {

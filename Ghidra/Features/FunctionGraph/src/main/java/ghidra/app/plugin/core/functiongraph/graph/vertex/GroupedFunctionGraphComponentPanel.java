@@ -21,11 +21,13 @@ import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
 
 import docking.ActionContext;
 import docking.GenericHeader;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import docking.theme.GColor;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
@@ -137,10 +139,11 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 		add(genericHeader, BorderLayout.NORTH);
 		add(contentPanel, BorderLayout.CENTER);
 
-		BevelBorder beveledBorder =
-			(BevelBorder) BorderFactory.createBevelBorder(BevelBorder.RAISED,
-				new Color(225, 225, 225), new Color(155, 155, 155), new Color(96, 96, 96),
-				new Color(0, 0, 0));
+		Border beveledBorder =
+			BorderFactory.createBevelBorder(BevelBorder.RAISED,
+				new GColor("color.border.bevel.highlight"),
+				new GColor("color.border.bevel.shadow"));
+
 		setBorder(beveledBorder);
 
 		createActions();

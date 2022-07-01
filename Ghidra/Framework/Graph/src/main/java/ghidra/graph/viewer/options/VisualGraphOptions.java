@@ -75,6 +75,10 @@ public class VisualGraphOptions {
 		return graphBackgroundColor;
 	}
 
+	public boolean isDefaultBackgroundColor(Color c) {
+		return DEFAULT_GRAPH_BACKGROUND_COLOR.equals(c);
+	}
+
 	public boolean getScrollWheelPans() {
 		return scrollWheelPans;
 	}

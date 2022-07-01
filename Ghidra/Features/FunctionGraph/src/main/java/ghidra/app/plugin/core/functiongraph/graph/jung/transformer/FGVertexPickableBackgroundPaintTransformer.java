@@ -26,6 +26,7 @@ import edu.uci.ics.jung.visualization.picking.PickedInfo;
 import ghidra.app.plugin.core.functiongraph.graph.FGVertexType;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.program.util.ProgramSelection;
+import ghidra.util.ColorUtils;
 
 public class FGVertexPickableBackgroundPaintTransformer implements Function<FGVertex, Paint> {
 
@@ -37,8 +38,7 @@ public class FGVertexPickableBackgroundPaintTransformer implements Function<FGVe
 	private final Color pickedExitColor;
 
 	private static Color mix(Color c1, Color c2) {
-		return new Color((c1.getRed() + c2.getRed()) / 2, (c1.getGreen() + c2.getGreen()) / 2,
-			(c1.getBlue() + c2.getBlue()) / 2);
+		return ColorUtils.blend(c1, c2, .5f);
 	}
 
 	public FGVertexPickableBackgroundPaintTransformer(PickedInfo<FGVertex> info, Color pickedColor,
