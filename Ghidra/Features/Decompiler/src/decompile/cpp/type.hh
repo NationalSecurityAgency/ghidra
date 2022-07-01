@@ -469,7 +469,7 @@ protected:
   TypePointer *stripped;	///< Same data-type with container info stripped
   Datatype *parent;		///< Parent structure or array which \b this is pointing into
   int4 offset;			///< Byte offset within the parent where \b this points to
-  void cacheStrippedType(TypeFactory &typegrp);
+  void markEphemeral(TypeFactory &typegrp);
   void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this relative pointer data-type from a stream
   /// Internal constructor for decode
   TypePointerRel(void) : TypePointer() { offset = 0; parent = (Datatype *)0; stripped = (TypePointer *)0; submeta = SUB_PTRREL; }
@@ -479,8 +479,7 @@ public:
     offset = op.offset; parent = op.parent; stripped = op.stripped; }
   /// Construct given a size, pointed-to type, parent, and offset
   TypePointerRel(int4 sz,Datatype *pt,uint4 ws,Datatype *par,int4 off) : TypePointer(sz,pt,ws) {
-    parent = par; offset = off; stripped = (TypePointer *)0; flags |= is_ptrrel;
-    submeta = pt->getMetatype()==TYPE_UNKNOWN ? SUB_PTRREL_UNK : SUB_PTRREL; }
+    parent = par; offset = off; stripped = (TypePointer *)0; flags |= is_ptrrel; submeta = SUB_PTRREL; }
   Datatype *getParent(void) const { return parent; }	///< Get the parent data-type to which \b this pointer is offset
   bool evaluateThruParent(uintb addrOff) const;	///< Do we display given address offset as coming from the parent data-type
 
@@ -700,18 +699,23 @@ inline TypeArray::TypeArray(int4 n,Datatype *ao) : Datatype(n*ao->getSize(),TYPE
     flags |= needs_resolution;
 }
 
-/// \brief Set up the base pointer data-type \b this is modeling
+/// \brief Mark \b this as an ephemeral data-type, to be replaced in the final output
 ///
-/// This base data-type is used for formal variable declarations in source code output.
-/// Calling this method marks the TypePointerRel as an ephemeral data-type.  The TypePointerRel
-/// is not considered a formal data-type and is replaced with the base pointer data-type, after propagation,
-/// in the final decompiler output.
+/// A \e base data-type is cached, which is a stripped version of the relative pointer, leaving
+/// just a plain TypePointer object with the same underlying \b ptrto.  The base data-type
+/// replaces \b this relative pointer for formal variable declarations in source code output.
+/// This TypePointerRel is not considered a formal data-type but is only used to provide extra
+/// context for the pointer during propagation.
 /// \param typegrp is the factory from which to fetch the base pointer
-inline void TypePointerRel::cacheStrippedType(TypeFactory &typegrp)
+inline void TypePointerRel::markEphemeral(TypeFactory &typegrp)
 
 {
   stripped = typegrp.getTypePointer(size,ptrto,wordsize);
   flags |= has_stripped;
+  // An ephemeral relative pointer that points to something unknown, propagates slightly
+  // differently than a formal relative pointer
+  if (ptrto->getMetatype() == TYPE_UNKNOWN)
+    submeta = SUB_PTRREL_UNK;
 }
 
 #endif

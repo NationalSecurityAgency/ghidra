@@ -1881,9 +1881,9 @@ void TypePointerRel::decode(Decoder &decoder,TypeFactory &typegrp)
   decoder.closeElement(subId);
   if (offset == 0)
     throw new LowlevelError("For metatype=\"ptrstruct\", <off> tag must not be zero");
-  submeta = (ptrto->getMetatype()==TYPE_UNKNOWN) ? SUB_PTRREL_UNK: SUB_PTRREL;
+  submeta = SUB_PTRREL;
   if (name.size() == 0)		// If the data-type is not named
-    cacheStrippedType(typegrp);	// it is considered ephemeral
+    markEphemeral(typegrp);	// it is considered ephemeral
 //  decoder.closeElement(elemId);
 }
 
@@ -3251,7 +3251,7 @@ TypePointerRel *TypeFactory::getTypePointerRel(TypePointer *parentPtr,Datatype *
 
 {
   TypePointerRel tp(parentPtr->size,ptrTo,parentPtr->wordsize,parentPtr->ptrto,off);
-  tp.cacheStrippedType(*this);		// Mark as ephemeral
+  tp.markEphemeral(*this);		// Mark as ephemeral
   TypePointerRel *res = (TypePointerRel *) findAdd(tp);
   return res;
 }
