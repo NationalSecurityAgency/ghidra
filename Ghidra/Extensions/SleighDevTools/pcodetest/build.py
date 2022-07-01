@@ -112,8 +112,7 @@ class BuildUtil(object):
         try:
             if not os.path.isdir(dname):
                 self.makedirs(dname)
-            else:
-                self.copy(fname, dname, verbose=True)
+            self.copy(fname, dname, verbose=True)
         except IOError as e:
             self.log_err('Error occurred exporting %s to %s' % (fname, dname))
             self.log_err("Unexpected error: %s" % str(e))
