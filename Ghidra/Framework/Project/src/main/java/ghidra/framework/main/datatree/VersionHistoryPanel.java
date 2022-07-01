@@ -20,6 +20,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -93,15 +94,20 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 	}
 
 	/**
-	 * Set the domain file to show its history
+	 * Set the domain file to show its history.
+	 * If file not found a null file will be set.
 	 * @param domainFile the file
 	 */
 	public void setDomainFile(DomainFile domainFile) {
 		this.domainFile = domainFile;
-		if (domainFile != null) {
-			this.domainFilePath = domainFile.getPathname();
+		this.domainFilePath = domainFile != null ? domainFile.getPathname() : null;
+		try {
+			refresh();
 		}
-		refresh();
+		catch (FileNotFoundException e) {
+			this.domainFile = null;
+			this.domainFilePath = null;
+		}
 	}
 
 	/**
@@ -306,7 +312,7 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 			messageType) == OptionDialog.OPTION_ONE;
 	}
 
-	void refresh() {
+	void refresh() throws FileNotFoundException {
 		try {
 			Version[] history = null;
 			if (domainFile != null) {
@@ -316,6 +322,9 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 				history = new Version[0];
 			}
 			tableModel.refresh(history);
+		}
+		catch (FileNotFoundException e) {
+			throw e;
 		}
 		catch (IOException e) {
 			ClientUtil.handleException(tool.getProject().getRepository(), e, "Get Version History",
