@@ -86,6 +86,7 @@ public class SleighParserContext implements ParserContext {
 		nextInstrAddr = nAddr;
 		refAddr = rAddr;
 		destAddr = dAddr;
+		handleMap = new HashMap<>();
 	}
 
 	/**
