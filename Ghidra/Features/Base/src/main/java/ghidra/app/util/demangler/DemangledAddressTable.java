@@ -88,8 +88,17 @@ public class DemangledAddressTable extends DemangledObject {
 			return false;
 		}
 
+		if (address.isExternalAddress()) {
+			Msg.warn(this,
+				"Unable to fully apply external demangled Address Table: " + s.getName(true));
+			return true;
+		}
+
 		Listing listing = program.getListing();
-		if (MemoryBlock.isExternalBlockAddress(address, program)) {
+		if (program.getMemory().isExternalBlockAddress(address)) {
+			Msg.warn(this,
+				"Unable to fully apply external demangled Address Table at " + address + ": " +
+					s.getName(true));
 			listing.setComment(address, CodeUnit.EOL_COMMENT,
 				"WARNING: Unable to apply demangled Address Table");
 			return true; // don't complain

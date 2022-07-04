@@ -23,7 +23,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
 /**
- * A class that represents access to a Decompiler {@link ClangFieldToken} object.  This is the field 
+ * A class that represents access to a Decompiler {@link ClangFieldToken} object.  This is the field
  * of a variable, denoted by {@link ClangVariableToken}.
  */
 public class DecompilerFieldAccess extends DecompilerVariable {
@@ -71,6 +71,12 @@ public class DecompilerFieldAccess extends DecompilerVariable {
 		}
 		dt = component.getDataType();
 		return dt;
+	}
+
+	@Override
+	public int getOffset() {
+		ClangFieldToken field = (ClangFieldToken) variable;
+		return field.getOffset();
 	}
 
 	protected DataType getBaseType(DataType dt) {

@@ -27,6 +27,8 @@ import ghidra.util.Msg;
  * 
  */
 public class DefineTable {
+	private static final int ARBITRARY_MAX_REPLACEMENTS = 900000;
+
 	// Hastable for storing #defs
 	Hashtable<String, PPToken> defs = new Hashtable<String, PPToken>();
 
@@ -267,40 +269,32 @@ public class DefineTable {
 	 * return a string with all the macros substitute starting at pos in the input string.
 	 * @param image string to expand
 	 * @param pos position within string to start expanding
-	 * @return
+	 * @return string with all substitutions applied
 	 */
 	private String macroSub(String image, int pos, ArrayList<String> sublist) {
 		int replaceCount = 0;
 
 		StringBuffer buf = new StringBuffer(image);
+		int lastReplPos = pos;
 
-		// don't replace an infinite number of times.
-		//HashMap<String,Integer> lastReplStrings = new HashMap<String,Integer>();
-		while (pos < buf.length() && replaceCount < 900000) {
+		// don't replace an infinite number of times.  Fail safe for possible ininite loop
+		while (pos < buf.length() && replaceCount < ARBITRARY_MAX_REPLACEMENTS) {
+			// clear list of used macros when move past replacement area
+			if (pos == lastReplPos) {
+				sublist = new ArrayList<String> (); // ok to clear list of used macro names
+			}
 			String defName = getDefineAt(buf, pos);
 			if (shouldReplace(buf, defName, pos)) {
 				// stop recursion on the same replacement string
-//				if (lastReplStrings.containsKey(defName)) {
-//					int lastpos = lastReplStrings.get(defName);
-//					Vector<PPToken> argv = getArgs(defName);
-//					// if it has no args, don't replace already replaced.
-//					if (argv == null && pos < lastpos) {
-//						System.out.println("Already did : " + defName);
-//						System.out.println("    No repl at " + pos + " lastpos " + lastpos + " : " + buf);
-//						pos++;
-//						continue;
-//					}
-//					lastReplStrings.remove(defName);
-//				}
-				int newpos = replace(buf, defName, pos, sublist);
-				// is there a replacement string
-				if (newpos == -1) {
+				int replPos = replace(buf, defName, pos, sublist);
+				
+				if (replPos == -1) {
+					// if no replacement string, move on
 					pos++;
 				}
 				else {
-					//System.err.println(" replace " + defName + " with " + buf.substring(pos,newpos));
-					//lastReplStrings.put(defName,pos + defName.length());
-					pos = newpos;
+					// replaced text, update the last place a replacement was made
+					lastReplPos = replPos;
 					replaceCount++;
 				}
 			}
@@ -308,7 +302,7 @@ public class DefineTable {
 				pos++;
 			}
 		}
-		if (replaceCount >= 100000) {
+		if (replaceCount >= ARBITRARY_MAX_REPLACEMENTS) {
 			System.err.println(" replace " + image + " hit limit");
 		}
 		return buf.toString();
@@ -319,7 +313,6 @@ public class DefineTable {
 			return false;
 		}
 
-		//String nextRepl = "";
 		int currIndex = buf.indexOf(defName, pos);
 		if (currIndex < 0) {
 			return false; // nothing to replace
@@ -341,25 +334,6 @@ public class DefineTable {
 		if (replacementString.equals(defName)) {
 			return false; // no need to replace
 		}
-
-//		// check that macro argv arguments match
-//		Vector<PPToken> argv = getArgs(defName);
-//		if (argv != null && argv.size() > 0) {
-//			// need to scan carefully, and recursively
-//			// there shouldn't be so many globals...
-//			// could be screwed up by so many things
-//			String parms = getParams(buf, currIndex + defName.length(),
-//					(char) 0);
-//
-//			int parmslen = parms.length();
-//			if (parmslen < 2) {
-//				return false;
-//			}
-//			parms = parms.trim();
-//			if (!parms.startsWith("(") || !parms.endsWith(")")) {
-//				return false;
-//			}
-//		}
 
 		return true;
 	}
@@ -423,19 +397,9 @@ public class DefineTable {
 
 			replacedSubpieceLen += parmslen;
 		}
-		// you may add an else if{} block to warn of malformed macros
-		// but the actual culprit may be the Define() non-terminal
-		//if (replString != null)
-		//	nextRepl += replString;
 
-		sublist = new ArrayList<String>(sublist);
 		sublist.add(currKey);
-		String newReplString = macroSub(replacementString, 0, sublist);
-		if (newReplString != null) {
-			replacementString = newReplString;
-		}
 		buf.replace(currIndex, currIndex + replacedSubpieceLen, replacementString);
-		//nextRepl += image.substring(currIndex + currKey.length());
 		return currIndex + replacementString.length();
 	}
 
@@ -543,19 +507,25 @@ public class DefineTable {
 		if (pos >= len) {
 			return "";
 		}
+		
 		char ch = buf.charAt(pos);
+		char lastChar = 0;
 		boolean hitQuote = false;
+		boolean hitTick = false;
 
 		while (pos < len) {
 			ch = buf.charAt(pos++);
-			if (ch == '"') {
+			if (ch == '"' && lastChar != '\\') {
 				hitQuote = !hitQuote;
 			}
-			if (!hitQuote && ch == endChar && depth == 0) {
+			if (ch == '\'' && lastChar != '\\') {
+				hitTick = !hitTick;
+			}
+			if (!(hitQuote||hitTick) && ch == endChar && depth == 0) {
 				pos--;
 				break;
 			}
-			if (!hitQuote && ch == ')') {
+			if (!(hitQuote||hitTick) && ch == ')') {
 				depth--;
 				if (depth == 0 && endChar == 0) {
 					break;
@@ -566,9 +536,10 @@ public class DefineTable {
 					break;
 				}
 			}
-			if (!hitQuote && ch == '(') {
+			if (!(hitQuote||hitTick) && ch == '(') {
 				depth++;
 			}
+			lastChar = ch;
 		}
 		return buf.substring(start, pos);
 	}

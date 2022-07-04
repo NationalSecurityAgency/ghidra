@@ -31,6 +31,7 @@ public class TableEntry<T> extends TableEntryKey {
 
 	/**
 	 * Create a new table entry with the given value at the given state and symbol
+	 * 
 	 * @param state the row
 	 * @param sym the column
 	 * @param value the value
@@ -42,6 +43,7 @@ public class TableEntry<T> extends TableEntryKey {
 
 	/**
 	 * Get the value of the entry
+	 * 
 	 * @return the value
 	 */
 	public T getValue() {

@@ -24,8 +24,8 @@ import ghidra.pcode.utils.Utils;
 import ghidra.program.model.data.StringRenderParser.StringParseException;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
+import ghidra.util.DataConverter;
 import ghidra.util.StringFormat;
-import utilities.util.ArrayUtilities;
 
 /**
  * Base type for integer data types such as {@link CharDataType chars}, {@link IntegerDataType
@@ -166,25 +166,14 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			return null;
 		}
 
-		if (!ENDIAN.isBigEndian(settings, buf)) {
-			bytes = ArrayUtilities.reverse(bytes);
-		}
+		DataConverter dc = DataConverter.getInstance(ENDIAN.isBigEndian(settings, buf));
 
 		if (size > 8) {
-			if (!isSigned()) {
-				// ensure that bytes are treated as unsigned
-				byte[] unsignedBytes = new byte[bytes.length + 1];
-				System.arraycopy(bytes, 0, unsignedBytes, 1, bytes.length);
-				bytes = unsignedBytes;
-			}
-			return new BigInteger(bytes);
+			return dc.getBigInteger(bytes, size, isSigned());
 		}
 
 		// Use long when possible
-		long val = 0;
-		for (byte b : bytes) {
-			val = (val << 8) + (b & 0x0ffL);
-		}
+		long val = dc.getValue(bytes, size);
 		return new Scalar(size * 8, val, isSigned());
 	}
 
@@ -294,11 +283,8 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			return "??";
 		}
 
-		if (!ENDIAN.isBigEndian(settings, buf)) {
-			bytes = ArrayUtilities.reverse(bytes);
-		}
-
-		BigInteger value = new BigInteger(bytes);
+		BigInteger value = DataConverter.getInstance(ENDIAN.isBigEndian(settings, buf))
+				.getBigInteger(bytes, size, true);
 
 		if (getFormatSettingsDefinition().getFormat(settings) == FormatSettingsDefinition.CHAR) {
 			return StringDataInstance.getCharRepresentation(this, bytes, settings);

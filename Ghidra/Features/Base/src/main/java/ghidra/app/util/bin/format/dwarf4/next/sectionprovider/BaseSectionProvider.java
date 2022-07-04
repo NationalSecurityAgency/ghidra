@@ -21,6 +21,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Fetches DWARF sections from a normal program using simple Ghidra memory blocks. 
@@ -28,13 +29,8 @@ import ghidra.program.model.mem.MemoryBlock;
 public class BaseSectionProvider implements DWARFSectionProvider {
 	protected Program program;
 
-	public static boolean hasDWARFSections(Program program) {
-		try (BaseSectionProvider tmp = new BaseSectionProvider(program)) {
-			return tmp.hasSection(DWARFSectionNames.MINIMAL_DWARF_SECTIONS);
-		}
-	}
-
-	public static BaseSectionProvider createSectionProviderFor(Program program) {
+	public static BaseSectionProvider createSectionProviderFor(Program program,
+			TaskMonitor monitor) {
 		return new BaseSectionProvider(program);
 	}
 
@@ -43,15 +39,17 @@ public class BaseSectionProvider implements DWARFSectionProvider {
 	}
 
 	@Override
-	public ByteProvider getSectionAsByteProvider(String sectionName) throws IOException {
+	public ByteProvider getSectionAsByteProvider(String sectionName, TaskMonitor monitor)
+			throws IOException {
 
 		MemoryBlock block = program.getMemory().getBlock(sectionName);
 		if (block == null) {
 			block = program.getMemory().getBlock("." + sectionName);
 		}
 		if (block != null && block.isInitialized()) {
-			// TODO: limit the returned ByteProvider to block.getSize() bytes
-			return new MemoryByteProvider(program.getMemory(), block.getStart());
+			// NOTE: MemoryByteProvider instances don't need to be closed(), so we don't
+			// track them here
+			return MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(), block);
 		}
 
 		return null;

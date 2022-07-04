@@ -26,6 +26,7 @@ import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedError;
 /**
  * Thrown when all resolutions of an assembly instruction result in semantic errors.
  * 
+ * <p>
  * For SLEIGH, semantic errors amount to incompatible contexts
  */
 public class AssemblySemanticException extends AssemblyException {
@@ -37,6 +38,7 @@ public class AssemblySemanticException extends AssemblyException {
 
 	/**
 	 * Construct a semantic exception with the associated semantic errors
+	 * 
 	 * @param errors the associated semantic errors
 	 */
 	public AssemblySemanticException(Set<AssemblyResolvedError> errors) {
@@ -46,6 +48,7 @@ public class AssemblySemanticException extends AssemblyException {
 
 	/**
 	 * Get the collection of associated semantic errors
+	 * 
 	 * @return the collection
 	 */
 	public Collection<AssemblyResolvedError> getErrors() {

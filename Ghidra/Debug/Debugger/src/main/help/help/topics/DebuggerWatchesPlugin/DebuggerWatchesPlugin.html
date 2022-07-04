@@ -25,27 +25,33 @@
     <P>Watches refer to expressions which are evaluated each pause in order to monitor the value of
     variables in the target machine state. The watch variables are expressed in Sleigh and
     evaluated in the current thread's context at the current point in time. If the current trace is
-    live and at the present, then the necessary target state is queried and recorded. The watch can
-    be assigned a data type so that the raw data is rendered in a meaningful way. When applicable,
-    that data type can optionally be applied to the trace database. Some metadata about the watch
-    is also given, e.g., the address of the value.</P>
+    live and at the present, then the necessary target state is retrieved and recorded. The watch
+    can be assigned a data type so that the raw data is rendered in a meaningful way. When
+    applicable, that data type can optionally be applied to the trace database. Some metadata about
+    the watch is also given, e.g., the address of the value.</P>
 
     <H2>Examples</H2>
 
     <P>For those less familiar with Sleigh, here are some example expressions:</P>
 
     <UL>
-      <LI><CODE>*:4 (RSP+8)</CODE>: Display 4 bytes of [ram] starting 8 bytes after the offset
-      given by register RSP.</LI>
+      <LI><CODE>RSP</CODE>: Display the value of register RSP.</LI>
 
-      <LI><CODE>*:4 0x7fff0004:8</CODE>: Display 4 bytes starting at ram:7fff0004. The extraneous,
-      but required, size specifier on constant derefs is a known issue. Just use the target's
-      pointer size in bytes.</LI>
+      <LI><CODE>*:4 0x7fff0004:8</CODE>: Display 4 bytes starting at ram:7fff0004, e.g., to read
+      the <CODE>int</CODE> at address 7fff0004. The extraneous but required size specifier on the
+      constant 0x7fff0004 is a known issue. Just use the target's pointer size in bytes &mdash; 8
+      in the example.</LI>
 
       <LI><CODE>*:8 RSP</CODE>: Display 8 bytes of [ram] starting at the offset given by register
-      RSP.</LI>
+      RSP, e.g., to read a <CODE>long</CODE> on the stack.</LI>
 
-      <LI><CODE>RSP</CODE>: Display the value of register RSP.</LI>
+      <LI><CODE>*:4 (RSP+8)</CODE>: Display 4 bytes of [ram] starting 8 bytes after the offset
+      given by register RSP, e.g., to read a <CODE>int</CODE> on the stack.</LI>
+
+      <LI><CODE>*:4 ((*:8 RSP)+4)</CODE>: Display 4 bytes of [ram] starting 4 bytes after the
+      offset given by reading 8 bytes of [ram] starting at the offset given by register RSP. This
+      might be used to read the second <CODE>int</CODE> of an array whose base pointer is on the
+      stack.</LI>
     </UL>
 
     <H2>Table Columns</H2>
@@ -62,18 +68,20 @@
 
       <LI>Value - the raw bytes of the watched buffer. If the expression is a register, then this
       is its hexadecimal value. This field is user modifiable when the <B>Enable Edits</B> toggle
-      is on. Changes are sent to the target if the trace is live and "at the present." Otherwise,
-      the change is materialized via emulation. If the value has changed since the last navigation
-      event, this cell is rendered in <FONT color="red">red</FONT>.</LI>
+      is on, and the <A href=
+      "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">editing service</A>
+      reports the register as modifiable. Edits may be directed toward a live target, the trace, or
+      the emulator. If the value has changed since the last navigation event, this cell is rendered
+      in <FONT color="red">red</FONT>.</LI>
 
       <LI>Type - the user-modifiable type of the watch. Note the type is not marked up in the
       trace. Clicking the Apply Data Type action will apply it to the current trace, if
       possible.</LI>
 
-      <LI>Representation - the value of the watch as interpreted by the selected data type. This
-      field is not yet user modifiable, even if the <B>Enable Edits</B> toggle is on. If the value
-      is an address, i.e., Type is a pointer, then double-clicking this cell will navigate the
-      primary dynamic listing, if possible.</LI>
+      <LI>Representation - the value of the watch as interpreted by the selected data type. If the
+      value is an address, i.e., Type is a pointer, then double-clicking this cell will navigate
+      the primary dynamic listing, if possible. This field is user-modifiable whenever the Value
+      column is modifiable and the selected data type provides an encoder.</LI>
 
       <LI>Error - if an error occurs during compilation or evaluation of the expression, that error
       is rendered here. Double-clicking the row will display the stack trace. Note that errors
@@ -129,23 +137,17 @@
     address. For registers, it adds a watch on that register. Note that <CODE>contextreg</CODE> and
     its children cannot be watched, due to a limitation in Sleigh.</P>
 
-    <P>If the context</P>
-
     <H3><A name="remove"></A>Remove</H3>
 
     <P>This action is available when at least one watch is selected. It removes those watches.</P>
 
     <H3><A name="enable_edits"></A>Enable Edits</H3>
 
-    <P>This toggle is a write protector for target machine state. To modify a watch's value, this
-    toggle must be enabled. Editing a value when the trace is live and "at the present" will cause
-    the value to be modified on the target. Editing emulated values is permitted, but it has no
-    effect on the target. Editing historical values is not permitted. All edits to non-live trace
-    values are performed in emulation. Specifically, it appends a patch command to the current
-    emulation schedule. This keeps trace history in tact, and it allows patched emulated states to
-    be annotated and recalled later, since they are stored in the trace's scratch space. Note that
-    only the raw "Value" column can be edited directly. The "Repr" column cannot be edited,
-    yet.</P>
+    <P>This toggle is a write protector for machine state. To modify a watch's value, this toggle
+    must be enabled. Edits are directed according the to <A href=
+    "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">State Editing Plugin
+    and Service</A>. <B>Note:</B> Only the raw "Value" column can be edited directly. The "Repr"
+    column cannot be edited, yet.</P>
 
     <H2><A name="colors"></A>Tool Options: Colors</H2>
 

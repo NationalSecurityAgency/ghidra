@@ -51,21 +51,22 @@ public class UnionEditorProvider extends CompositeEditorProvider {
 	@Override
 	protected CompositeEditorTableAction[] createActions() {
 		//@formatter:off
-		return new CompositeEditorTableAction[] { 
-			new ApplyAction(this), 
+		return new CompositeEditorTableAction[] {
+			new ApplyAction(this),
 			new MoveUpAction(this),
-			new MoveDownAction(this), 
-			new DuplicateAction(this), 
+			new MoveDownAction(this),
+			new DuplicateAction(this),
 			new DuplicateMultipleAction(this),
-			new DeleteAction(this), 
-			new PointerAction(this), 
+			new DeleteAction(this),
+			new PointerAction(this),
 			new ArrayAction(this),
-			new ShowComponentPathAction(this), 
+			new ShowComponentPathAction(this),
 			new EditComponentAction(this),
-			new EditFieldAction(this), 
+			new EditFieldAction(this),
 			new HexNumbersAction(this),
 			new AddBitFieldAction(this),
-			new EditBitFieldAction(this)
+			new EditBitFieldAction(this),
+			new ShowDataTypeInTreeAction(this)
 		};
 		//@formatter:on
 	}

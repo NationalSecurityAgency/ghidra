@@ -18,9 +18,10 @@ package ghidra.file.formats.sevenzip;
 
 import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
+import java.util.*;
+
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -123,6 +124,9 @@ public class SevenZipFileSystem implements GFileSystem {
 			// special case when there is a single unnamed file.
 			// use the name of the 7zip file itself, minus the extension
 			itemPath = FilenameUtils.getBaseName(fsrl.getContainer().getName());
+		}
+		if (itemPath.isEmpty()) {
+			itemPath = "<blank>";
 		}
 		return itemPath;
 	}

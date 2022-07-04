@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -31,32 +31,15 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a linker_option_command structure
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a linker_option_command structure 
  */
 public class LinkerOptionCommand extends LoadCommand {
 
 	private int count;
 	private List<String> linkerOptions;
 
-	static LinkerOptionCommand createLinkerOptionCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-
-		LinkerOptionCommand command =
-			(LinkerOptionCommand) reader.getFactory().create(LinkerOptionCommand.class);
-		command.initLinkerOptionCommand(reader);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public LinkerOptionCommand() {
-	}
-
-	private void initLinkerOptionCommand(FactoryBundledWithBinaryReader reader) throws IOException {
-		initLoadCommand(reader);
+	LinkerOptionCommand(BinaryReader reader) throws IOException {
+		super(reader);
 		count = reader.readNextInt();
 		linkerOptions = new ArrayList<>(count);
 		long readerIndex = reader.getPointerIndex();

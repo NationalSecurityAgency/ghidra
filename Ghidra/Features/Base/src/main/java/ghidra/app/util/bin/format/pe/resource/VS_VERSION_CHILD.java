@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -44,7 +44,7 @@ public class VS_VERSION_CHILD implements StructConverter {
 
 	private ArrayList<VS_VERSION_CHILD> children;
 
-	VS_VERSION_CHILD(FactoryBundledWithBinaryReader reader, long relativeOffset, String parentName,
+	VS_VERSION_CHILD(BinaryReader reader, long relativeOffset, String parentName,
 			HashMap<String, String> valueMap) throws IOException {
 		this.relativeOffset = relativeOffset;
 		this.parentName = parentName;

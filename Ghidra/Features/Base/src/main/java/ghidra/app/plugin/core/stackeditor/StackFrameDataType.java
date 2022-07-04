@@ -68,7 +68,6 @@ public class StackFrameDataType extends BiDirectionDataType {
 		this.growsNegative = stackDt.growsNegative;
 		this.returnAddressOffset = stackDt.returnAddressOffset;
 		this.stack = stackDt.stack;
-		this.defaultSettings = stackDt.defaultSettings;
 		for (DataTypeComponentImpl dtc : stackDt.components) {
 			replaceAtOffset(dtc.getOffset(), dtc.getDataType(), dtc.getLength(), dtc.getFieldName(),
 				dtc.getComment());
@@ -150,6 +149,14 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	@Override
 	public StackFrameDataType clone(DataTypeManager dtm) {
+		if (dtm == dataMgr) {
+			return this;
+		}
+		return new StackFrameDataType(this, dtm);
+	}
+
+	@Override
+	public DataType copy(DataTypeManager dtm) {
 		return new StackFrameDataType(this, dtm);
 	}
 

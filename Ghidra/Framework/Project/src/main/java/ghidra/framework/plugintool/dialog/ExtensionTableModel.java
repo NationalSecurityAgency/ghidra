@@ -18,8 +18,7 @@ package ghidra.framework.plugintool.dialog;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
@@ -52,7 +51,7 @@ import utilities.util.FileUtilities;
  * is a checkbox allowing users to install/uninstall a particular extension. 
  * 
  */
-class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<ExtensionDetails>> {
+class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 
 	/** We don't care about the ordering of other columns, but the install/uninstall checkbox should be 
 	 the first one and the name col is our initial sort column. */
@@ -60,7 +59,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	final static int NAME_COL = 1;
 
 	/** This is the data source for the model. Whatever is here will be displayed in the table. */
-	private List<ExtensionDetails> extensions = new ArrayList<>();
+	private Set<ExtensionDetails> extensions;
 
 	/** Indicates if the model has changed due to an install or uninstall. */
 	private boolean modelChanged = false;
@@ -78,7 +77,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	protected TableColumnDescriptor<ExtensionDetails> createTableColumnDescriptor() {
 
 		TableColumnDescriptor<ExtensionDetails> descriptor =
-			new TableColumnDescriptor<ExtensionDetails>();
+			new TableColumnDescriptor<>();
 
 		descriptor.addVisibleColumn(new ExtensionInstalledColumn(), INSTALLED_COL, true);
 		descriptor.addVisibleColumn(new ExtensionNameColumn(), NAME_COL, true);
@@ -178,20 +177,33 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	}
 
 	@Override
-	public List<ExtensionDetails> getDataSource() {
-		return extensions;
+	public Object getDataSource() {
+		return null;
 	}
 
 	@Override
 	protected void doLoad(Accumulator<ExtensionDetails> accumulator, TaskMonitor monitor)
 			throws CancelledException {
+		if (extensions != null) {
+			accumulator.addAll(extensions);
+			return;
+		}
+
+		try {
+			extensions = ExtensionUtils.getExtensions();
+		}
+		catch (ExtensionException e) {
+			Msg.error(this, "Error loading extensions", e);
+			return;
+		}
+
 		accumulator.addAll(extensions);
 	}
 
 	/**
-	 * Returns true if the model has changed as a result of installing or uninstalling an extension.
+	 * Returns true if the model has changed as a result of installing or uninstalling an extension
 	 * 
-	 * @return true if the model has changed as a result of installing or uninstalling an extension.
+	 * @return true if the model has changed as a result of installing or uninstalling an extension
 	 */
 	public boolean hasModelChanged() {
 		return modelChanged;
@@ -203,7 +215,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	 * @param model the list to use as the model
 	 */
 	public void setModelData(List<ExtensionDetails> model) {
-		extensions = model;
+		extensions = new HashSet<>(model);
 		reload();
 	}
 
@@ -211,12 +223,8 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	 * Gets a new set of extensions and reloads the table.
 	 */
 	public void refreshTable() {
-		try {
-			setModelData(new ArrayList<ExtensionDetails>(ExtensionUtils.getExtensions()));
-		}
-		catch (ExtensionException e) {
-			Msg.error(this, "Error loading extensions", e);
-		}
+		extensions = null;
+		reload();
 	}
 
 	/**
@@ -236,7 +244,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	 * Table column for displaying the extension name.
 	 */
 	private class ExtensionNameColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, String, List<ExtensionDetails>> {
+			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
 
 		private ExtVersionRenderer renderer = new ExtVersionRenderer();
 
@@ -252,7 +260,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 
 		@Override
 		public String getValue(ExtensionDetails rowObject, Settings settings,
-				List<ExtensionDetails> data, ServiceProvider sp) throws IllegalArgumentException {
+				Object data, ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getName();
 		}
 
@@ -266,7 +274,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	 * Table column for displaying the extension description.
 	 */
 	private class ExtensionDescriptionColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, String, List<ExtensionDetails>> {
+			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
 
 		private ExtVersionRenderer renderer = new ExtVersionRenderer();
 
@@ -282,7 +290,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 
 		@Override
 		public String getValue(ExtensionDetails rowObject, Settings settings,
-				List<ExtensionDetails> data, ServiceProvider sp) throws IllegalArgumentException {
+				Object data, ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getDescription();
 		}
 
@@ -296,7 +304,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	 * Table column for displaying the extension description.
 	 */
 	private class ExtensionVersionColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, String, List<ExtensionDetails>> {
+			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
 
 		private ExtVersionRenderer renderer = new ExtVersionRenderer();
 
@@ -312,7 +320,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 
 		@Override
 		public String getValue(ExtensionDetails rowObject, Settings settings,
-				List<ExtensionDetails> data, ServiceProvider sp) throws IllegalArgumentException {
+				Object data, ServiceProvider sp) throws IllegalArgumentException {
 
 			String version = rowObject.getVersion();
 
@@ -335,7 +343,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	 * Table column for displaying the extension installation status.
 	 */
 	private class ExtensionInstalledColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, Boolean, List<ExtensionDetails>> {
+			extends AbstractDynamicTableColumn<ExtensionDetails, Boolean, Object> {
 
 		@Override
 		public String getColumnName() {
@@ -349,7 +357,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 
 		@Override
 		public Boolean getValue(ExtensionDetails rowObject, Settings settings,
-				List<ExtensionDetails> data, ServiceProvider sp) throws IllegalArgumentException {
+				Object data, ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.isInstalled();
 		}
 	}
@@ -358,7 +366,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	 * Table column for displaying the extension installation directory.
 	 */
 	private class ExtensionInstallationDirColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, String, List<ExtensionDetails>> {
+			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
 
 		@Override
 		public String getColumnName() {
@@ -372,7 +380,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 
 		@Override
 		public String getValue(ExtensionDetails rowObject, Settings settings,
-				List<ExtensionDetails> data, ServiceProvider sp) throws IllegalArgumentException {
+				Object data, ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getInstallPath();
 		}
 	}
@@ -381,7 +389,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	 * Table column for displaying the extension archive file.
 	 */
 	private class ExtensionArchiveFileColumn
-			extends AbstractDynamicTableColumn<ExtensionDetails, String, List<ExtensionDetails>> {
+			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
 
 		@Override
 		public String getColumnName() {
@@ -395,7 +403,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 
 		@Override
 		public String getValue(ExtensionDetails rowObject, Settings settings,
-				List<ExtensionDetails> data, ServiceProvider sp) throws IllegalArgumentException {
+				Object data, ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getArchivePath();
 		}
 	}

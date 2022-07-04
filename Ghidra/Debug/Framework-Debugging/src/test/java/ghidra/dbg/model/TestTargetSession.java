@@ -25,6 +25,7 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.program.model.address.AddressSpace;
 
 public class TestTargetSession extends DefaultTargetModelRoot
 		implements TestTargetObject, TargetFocusScope, TargetEventScope, TargetLauncher {
@@ -51,8 +52,12 @@ public class TestTargetSession extends DefaultTargetModelRoot
 			"Initialized");
 	}
 
-	public TestTargetProcess addProcess(int pid) {
-		return processes.addProcess(pid);
+	public TestTargetProcess addProcess(int pid, AddressSpace space) {
+		return processes.addProcess(pid, space);
+	}
+
+	public void removeProcess(TestTargetProcess process) {
+		processes.removeProcess(process);
 	}
 
 	@Override

@@ -36,7 +36,8 @@ void GhidraTranslate::initialize(DocumentStorage &store)
   const Element *el = store.getTag("sleigh");
   if (el == (const Element *)0)
     throw LowlevelError("Could not find ghidra sleigh tag");
-  restoreXml(el);
+  XmlDecode decoder(this,el);
+  decode(decoder);
 }
 
 const VarnodeData &GhidraTranslate::getRegister(const string &nm) const
@@ -45,9 +46,10 @@ const VarnodeData &GhidraTranslate::getRegister(const string &nm) const
   map<string,VarnodeData>::const_iterator iter = nm2addr.find(nm);
   if (iter != nm2addr.end())
     return (*iter).second;
-  Document *doc;
+  XmlDecode decoder(glb);
   try {
-    doc = glb->getRegister(nm);		// Ask Ghidra client about the register
+    if (!glb->getRegister(nm,decoder))		// Ask Ghidra client about the register
+      throw LowlevelError("No register named "+nm);
   }
   catch(XmlError &err) {
     ostringstream errmsg;
@@ -55,16 +57,13 @@ const VarnodeData &GhidraTranslate::getRegister(const string &nm) const
     errmsg << " -- " << err.explain;
     throw LowlevelError(errmsg.str());
   }
-  if (doc == (Document *)0)
-    throw LowlevelError("No register named "+nm);
   Address regaddr;
   int4 regsize;
-  regaddr = Address::restoreXml( doc->getRoot(), this, regsize);
+  regaddr = Address::decode( decoder, regsize);
   VarnodeData vndata;
   vndata.space = regaddr.getSpace();
   vndata.offset = regaddr.getOffset();
   vndata.size = regsize;
-  delete doc;
   return cacheRegister(nm,vndata);
 }
 
@@ -142,33 +141,23 @@ int4 GhidraTranslate::oneInstruction(PcodeEmit &emit,const Address &baseaddr) co
   return offset;
 }
 
-/// The Ghidra client passes descriptions of address spaces and other
-/// information that needs to be cached by the decompiler
-/// \param el is the element of the initialization tag
-void GhidraTranslate::restoreXml(const Element *el)
+/// Parse the \<sleigh> element passed back by the Ghidra client, describing address spaces
+/// and other information that needs to be cached by the decompiler.
+/// \param decoder is the stream decoder
+void GhidraTranslate::decode(Decoder &decoder)
 
 {
-  setBigEndian(xml_readbool(el->getAttributeValue("bigendian")));
-  {
-    istringstream s(el->getAttributeValue("uniqbase"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    uintm ubase;
-    s >> ubase;
-    setUniqueBase(ubase);
+  uint4 elemId = decoder.openElement(ELEM_SLEIGH);
+  setBigEndian(decoder.readBool(ATTRIB_BIGENDIAN));
+  setUniqueBase(decoder.readUnsignedInteger(ATTRIB_UNIQBASE));
+  decodeSpaces(decoder,this);
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId != ELEM_TRUNCATE_SPACE) break;
+    TruncationTag tag;
+    tag.decode(decoder);
+    truncateSpace(tag);
   }
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  restoreXmlSpaces(*iter,this);
-  ++iter;
-  while(iter != list.end()) {
-    const Element *subel = *iter;
-    if (subel->getName() == "truncate_space") {
-      TruncationTag tag;
-      tag.restoreXml(subel);
-      truncateSpace(tag);
-    }
-    ++iter;
-  }
+  decoder.closeElement(elemId);
 }
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +15,20 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.format.*;
-import ghidra.util.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.util.Msg;
 
 /**
  * 
  */
 class S_END extends DebugSymbol {
 
-	static S_END createS_END(short length, short type,
-            FactoryBundledWithBinaryReader reader, int ptr) {
-	    S_END s_end = (S_END) reader.getFactory().create(S_END.class);
-	    s_end.initS_END(length, type, reader, ptr);
-	    return s_end;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public S_END() {}
-
-    private void initS_END(short length, short type, FactoryBundledWithBinaryReader reader, int ptr) {
+	S_END(short length, short type, BinaryReader reader, int ptr) {
 		processDebugSymbol(length, type);
-		Msg.debug(this, reader.getPointerIndex()+" -- "+ptr);
+		Msg.debug(this, reader.getPointerIndex() + " -- " + ptr);
 		this.name = "END";
 		this.offset = 0;
-		this.section = 0;		
-	}
+		this.section = 0;
+    }
+
 }

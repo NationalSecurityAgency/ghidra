@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +22,9 @@ public interface DBListener {
 
 	/**
 	 * Provides notification that an undo or redo was performed.
-	 * Separate notification will be provided if tables were added/removed.
-	 * The state of the database may still be in transition and should not be accessed
-	 * by this callback method.
+	 * During the restore process {@link #tableAdded(DBHandle, Table)} and
+	 * {@link #tableDeleted(DBHandle, Table)} notifications will be supressed.
+	 * Any listener concerned with tables added or removed should reacquire their table(s).
 	 * @param dbh associated database handle
 	 */
 	void dbRestored(DBHandle dbh);

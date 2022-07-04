@@ -26,6 +26,6 @@ import java.lang.annotation.Target;
  * The items are intended to become part of the public API, but the interfaces are unstable, and
  * there's no guarantee they will ever become public.
  */
-@Target({ TYPE, FIELD, METHOD, CONSTRUCTOR, ANNOTATION_TYPE, PACKAGE })
+@Target({ TYPE, FIELD, METHOD, CONSTRUCTOR, ANNOTATION_TYPE, PACKAGE, PARAMETER })
 public @interface Experimental {
 }

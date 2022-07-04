@@ -24,11 +24,18 @@ import ghidra.util.*;
 
 /**
  * Base implementation for dataTypes.
+ * 
+ * NOTE: Settings are immutable when a DataTypeManager has not been specified (i.e., null).
  */
 public abstract class DataTypeImpl extends AbstractDataType {
 
 	private final static SettingsDefinition[] EMPTY_DEFINITIONS = new SettingsDefinition[0];
+
+	// NOTE: Modification of default settings on Impl datatypes is generally blocked
+	// with the exception of TypeDef's and BuiltInDataType which have had a suitable
+	// defaultSettings implementation established by its DataTypeManager.
 	protected Settings defaultSettings;
+
 	private List<WeakReference<DataType>> parentList;
 	private UniversalID universalID;
 	private SourceArchive sourceArchive;
@@ -43,7 +50,7 @@ public abstract class DataTypeImpl extends AbstractDataType {
 			SourceArchive sourceArchive, long lastChangeTime, long lastChangeTimeInSourceArchive,
 			DataTypeManager dataMgr) {
 		super(path, name, dataMgr);
-		defaultSettings = new SettingsImpl();
+		defaultSettings = SettingsImpl.NO_SETTINGS;
 		parentList = new ArrayList<>();
 		this.universalID = universalID == null ? UniversalIdGenerator.nextID() : universalID;
 		this.sourceArchive = sourceArchive;
@@ -77,11 +84,6 @@ public abstract class DataTypeImpl extends AbstractDataType {
 		if (!DataUtilities.isValidDataTypeName(checkedName)) {
 			throw new InvalidNameException("Invalid Name: " + checkedName);
 		}
-	}
-
-	@Override
-	public void setDefaultSettings(Settings settings) {
-		defaultSettings = settings;
 	}
 
 	@Override

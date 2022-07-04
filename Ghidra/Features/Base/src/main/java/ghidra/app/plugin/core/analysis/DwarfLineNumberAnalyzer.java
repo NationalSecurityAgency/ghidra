@@ -15,7 +15,10 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import generic.continues.RethrowContinuesFactory;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
 import ghidra.app.services.*;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.dwarf.DwarfSectionNames;
@@ -31,10 +34,6 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
 
 public class DwarfLineNumberAnalyzer extends AbstractAnalyzer {
 	private static final String NAME = "DWARF Line Number";
@@ -114,8 +113,7 @@ public class DwarfLineNumberAnalyzer extends AbstractAnalyzer {
 			}
 			RandomAccessByteProvider provider = new RandomAccessByteProvider(dSymFile);
 			try {
-				MachHeader header =
-					MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider);
+				MachHeader header = new MachHeader(provider);
 				header.parse();
 				List<Section> allSections = header.getAllSections();
 				for (Section section : allSections) {

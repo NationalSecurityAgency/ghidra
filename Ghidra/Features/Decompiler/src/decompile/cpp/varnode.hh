@@ -30,6 +30,12 @@ class Funcdata;
 class SymbolEntry;
 class ValueSet;
 
+extern AttributeId ATTRIB_ADDRTIED;	///< Marshaling attribute "addrtied"
+extern AttributeId ATTRIB_GRP;		///< Marshaling attribute "grp"
+extern AttributeId ATTRIB_INPUT;	///< Marshaling attribute "input"
+extern AttributeId ATTRIB_PERSISTS;	///< Marshaling attribute "persists"
+extern AttributeId ATTRIB_UNAFF;	///< Marshaling attribute "unaff"
+
 /// \brief Compare two Varnode pointers by location then definition
 struct VarnodeCompareLocDef {
   bool operator()(const Varnode *a,const Varnode *b) const;	///< Functional comparison operator
@@ -113,12 +119,14 @@ public:
     lisconsume = 0x08,		///< In consume worklist
     ptrcheck = 0x10,	        ///< The Varnode value is \e NOT a pointer
     ptrflow = 0x20,             ///< If this varnode flows to or from a pointer
-    unsignedprint = 0x40,	///< Constant that must be explicitly printed as unsigned
-    stack_store = 0x80,		///< Created by an explicit STORE
-    locked_input = 0x100,	///< Input that exists even if its unused
-    spacebase_placeholder = 0x200, ///< This varnode is inserted artificially to track a register
+    unsignedprint = 0x40,	///< Constant that must be explicitly printed as an unsigned token
+    longprint = 0x80,		///< Constant that must be explicitly printed as a \e long integer token
+    stack_store = 0x100,	///< Created by an explicit STORE
+    locked_input = 0x200,	///< Input that exists even if its unused
+    spacebase_placeholder = 0x400, ///< This varnode is inserted artificially to track a register
 				///< value at a specific point in the code
-    stop_uppropagation = 0x400	///< Data-types do not propagate from an output into \b this
+    stop_uppropagation = 0x800,	///< Data-types do not propagate from an output into \b this
+    has_implied_field = 0x1000	///< The varnode is implied but also has a data-type that needs resolution
   };
 private:
   mutable uint4 flags;		///< The collection of boolean attributes for this Varnode
@@ -167,6 +175,7 @@ public:
 
   const Address &getAddr(void) const { return (const Address &) loc; } ///< Get the storage Address
   AddrSpace *getSpace(void) const { return loc.getSpace(); } ///< Get the AddrSpace storing this Varnode
+  AddrSpace *getSpaceFromConst(void) const;	///< Get AddrSpace from \b this encoded constant Varnode
   uintb getOffset(void) const { return loc.getOffset(); } ///< Get the offset (within its AddrSpace) where this is stored
   int4 getSize(void) const { return size; } ///< Get the number of bytes this Varnode stores
   int2 getMergeGroup(void) const { return mergegroup; }	///< Get the \e forced \e merge group of this Varnode
@@ -176,6 +185,10 @@ public:
   SymbolEntry *getSymbolEntry(void) const { return mapentry; } ///< Get symbol and scope information associated with this Varnode
   uint4 getFlags(void) const { return flags; } ///< Get all the boolean attributes
   Datatype *getType(void) const { return type; } ///< Get the Datatype associated with this Varnode
+  Datatype *getTypeDefFacing(void) const;	///< Return the data-type of \b this when it is written to
+  Datatype *getTypeReadFacing(const PcodeOp *op) const;	///< Get the data-type of \b this when it is read by the given PcodeOp
+  Datatype *getHighTypeDefFacing(void) const;	///< Return the data-type of the HighVariable when \b this is written to
+  Datatype *getHighTypeReadFacing(const PcodeOp *op) const;	///< Return data-type of the HighVariable when read by the given PcodeOp
   void setTempType(Datatype *t) const { temp.dataType = t; }	///< Set the temporary Datatype
   Datatype *getTempType(void) const { return temp.dataType; } ///< Get the temporary Datatype (used during type propagation)
   void setValueSet(ValueSet *v) const { temp.valueSet = v; }	///< Set the temporary ValueSet record
@@ -245,6 +258,7 @@ public:
   bool isStackStore(void) const { return ((addlflags&Varnode::stack_store)!=0); } ///< Was this originally produced by an explicit STORE
   bool isLockedInput(void) const { return ((addlflags&Varnode::locked_input)!=0); }	///< Is always an input, even if unused
   bool stopsUpPropagation(void) const { return ((addlflags&Varnode::stop_uppropagation)!=0); }	///< Is data-type propagation stopped
+  bool hasImpliedField(void) const { return ((addlflags&Varnode::has_implied_field)!=0); }	///< Does \b this have an implied field
 
   /// Is \b this just a special placeholder representing INDIRECT creation?
   bool isIndirectZero(void) const { return ((flags&(Varnode::indirect_creation|Varnode::constant))==(Varnode::indirect_creation|Varnode::constant)); }
@@ -256,6 +270,7 @@ public:
   bool isIncidentalCopy(void) const { return ((flags&Varnode::incidental_copy)!=0); } ///< Does this varnode get copied as a side-effect
   bool isWriteMask(void) const { return ((addlflags&Varnode::writemask)!=0); } ///< Is \b this (not) considered a true write location when calculating SSA form?
   bool isUnsignedPrint(void) const { return ((addlflags&Varnode::unsignedprint)!=0); } ///< Must \b this be printed as unsigned
+  bool isLongPrint(void) const { return ((addlflags&Varnode::longprint)!=0); } ///< Must \b this be printed as a \e long token
   bool isWritten(void) const { return ((flags&Varnode::written)!=0); }   ///< Does \b this have a defining write operation?
 
   /// Does \b this have Cover information?
@@ -303,8 +318,10 @@ public:
   void setAutoLiveHold(void) { flags |= Varnode::autolive_hold; }	///< Place temporary hold on dead code removal
   void clearAutoLiveHold(void) { flags &= ~Varnode::autolive_hold; }	///< Clear temporary hold on dead code removal
   void setUnsignedPrint(void) { addlflags |= Varnode::unsignedprint; } ///< Force \b this to be printed as unsigned
+  void setLongPrint(void) { addlflags |= Varnode::longprint; }	///< Force \b this to be printed as a \e long token
   void setStopUpPropagation(void) { addlflags |= Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
   void clearStopUpPropagation(void) { addlflags &= ~Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
+  void setImpliedField(void) { addlflags |= Varnode::has_implied_field; }	///< Mark \b this as having an implied field
   bool updateType(Datatype *ct,bool lock,bool override); ///< (Possibly) set the Datatype given various restrictions
   void setStackStore(void) { addlflags |= Varnode::stack_store; } ///< Mark as produced by explicit CPUI_STORE
   void setLockedInput(void) { addlflags |= Varnode::locked_input; }	///< Mark as existing input, even if unused
@@ -312,10 +329,9 @@ public:
   void copySymbolIfValid(const Varnode *vn);	///< Copy symbol info from \b vn if constant value matches
   Datatype *getLocalType(bool &blockup) const; ///< Calculate type of Varnode based on local information
   bool copyShadow(const Varnode *op2) const; ///< Are \b this and \b op2 copied from the same source?
-  void saveXml(ostream &s) const; ///< Save a description of \b this as an XML tag
+  void encode(Encoder &encoder) const; ///< Encode a description of \b this to a stream
   static bool comparePointers(const Varnode *a,const Varnode *b) { return (*a < *b); }	///< Compare Varnodes as pointers
   static void printRaw(ostream &s,const Varnode *vn);	///< Print raw info about a Varnode to stream
-  //  static Varnode *restoreXml(const Element *el,Funcdata &fd,bool coderef);
 };
 
 /// \brief A container for Varnode objects from a specific function
@@ -382,12 +398,28 @@ public:
 
 /// \brief Node for a forward traversal of a Varnode expression
 struct TraverseNode {
+  enum {
+    actionalt = 1,	///< Alternate path traverses a solid action or \e non-incidental COPY
+    indirect = 2,	///< Main path traverses an INDIRECT
+    indirectalt = 4,	///< Alternate path traverses an INDIRECT
+    lsb_truncated = 8,	///< Least significant byte(s) of original value have been truncated
+    concat_high = 0x10	///< Original value has been concatented as \e most significant portion
+  };
   const Varnode *vn;		///< Varnode at the point of traversal
   uint4 flags;			///< Flags associated with the node
   TraverseNode(const Varnode *v,uint4 f) { vn = v; flags = f; }		///< Constructor
+  static bool isAlternatePathValid(const Varnode *vn,uint4 flags);
 };
 
 bool contiguous_test(Varnode *vn1,Varnode *vn2);	///< Test if Varnodes are pieces of a whole
 Varnode *findContiguousWhole(Funcdata &data,Varnode *vn1,
 				  Varnode *vn2);	///< Retrieve the whole Varnode given pieces
+
+/// In \b LOAD and \b STORE instructions, the particular address space being read/written is encoded
+/// as a constant Varnode.  Internally, this constant is the actual pointer to the AddrSpace.
+/// \return the AddrSpace pointer
+inline AddrSpace *Varnode::getSpaceFromConst(void) const {
+  return (AddrSpace *)(uintp)loc.getOffset();
+}
+
 #endif

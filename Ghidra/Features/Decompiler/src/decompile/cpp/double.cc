@@ -15,9 +15,13 @@
  */
 #include "double.hh"
 
+/// Internally, the \b lo and \b hi Varnodes are set to null, and the \b val field
+/// holds the constant value.
+/// \param sz is the size in bytes of the constant
+/// \param v is the constant value
 SplitVarnode::SplitVarnode(int4 sz,uintb v)
 
-{				// Construct a double precision constant
+{
   val = v;
   wholesize = sz;
   lo = (Varnode *)0;
@@ -27,6 +31,8 @@ SplitVarnode::SplitVarnode(int4 sz,uintb v)
   defblock = (BlockBasic *)0;
 }
 
+/// \param sz is the size of the constant in bytes
+/// \param v is the constant value
 void SplitVarnode::initPartial(int4 sz,uintb v)
 
 {
@@ -39,17 +45,25 @@ void SplitVarnode::initPartial(int4 sz,uintb v)
   defblock = (BlockBasic *)0;
 }
 
-void SplitVarnode::initPartial(Varnode *l,Varnode *h)
+/// The Varnode pieces can be constant, in which case a constant SplitVarnode is initialized and
+/// a constant value is built from the pieces.  The given most significant piece can be null, indicating
+/// that the most significant piece of the whole is an implied zero.
+/// \param sz is the size of the logical whole in bytes
+/// \param l is the given (least significant) Varnode piece
+/// \param h is the given (most significant) Varnode piece
+void SplitVarnode::initPartial(int4 sz,Varnode *l,Varnode *h)
 
-{				// Construct a virtual double precision varnode
+{
   if (h == (Varnode *)0) {	// hi is an implied zero
-    wholesize = l->getSize();
-    val = l->getOffset();	// Assume l is a constant
-    lo = (Varnode *)0;
     hi = (Varnode *)0;
+    if (l->isConstant()) {
+      val = l->getOffset();	// Assume l is a constant
+      lo = (Varnode *)0;
+    }
+    else
+      lo = l;
   }
   else {
-    wholesize = l->getSize() + h->getSize();
     if (l->isConstant() && h->isConstant()) {
       val = h->getOffset();
       val <<= (l->getSize()*8);
@@ -62,14 +76,19 @@ void SplitVarnode::initPartial(Varnode *l,Varnode *h)
       hi = h;
     }
   }
+  wholesize = sz;
   whole = (Varnode *)0;
   defpoint = (PcodeOp *)0;
   defblock = (BlockBasic *)0;
 }
 
+/// The \b lo, \b hi, and \b whole fields are filled in.  The definition point remains uninitialized.
+/// \param w is the given whole Varnode
+/// \param l is the given (least significant) Varnode piece
+/// \param h is the given (most significant) Varnode piece
 void SplitVarnode::initAll(Varnode *w,Varnode *l,Varnode *h)
 
-{				// A double precision varnode, with an existing whole and pieces
+{
   wholesize = w->getSize();
   lo = l;
   hi = h;
@@ -78,10 +97,13 @@ void SplitVarnode::initAll(Varnode *w,Varnode *l,Varnode *h)
   defblock = (BlockBasic *)0;
 }
 
+/// Verify that the given most significant piece is formed via CPUI_SUBPIECE and search
+/// for the least significant piece being formed as a CPUI_SUBPIECE of the same whole.
+/// \param h is the given (most significant) Varnode piece
+/// \return \b true if the matching \b whole and least significant piece is found
 bool SplitVarnode::inHandHi(Varnode *h)
 
-{ // Initialize the SplitVarnode with the lo and hi, if we know that -h- is a high precision piece
-  // and we know its companion low precision piece, otherwise return false
+{
   if (!h->isPrecisHi()) return false; // Check for mark, in order to have quick -false- in most cases
   // Search for the companion
   if (h->isWritten()) {
@@ -110,10 +132,13 @@ bool SplitVarnode::inHandHi(Varnode *h)
   return false;
 }
 
+/// Verify that the given least significant piece is formed via CPUI_SUBPIECE and search
+/// for the most significant piece being formed as a CPUI_SUBPIECE of the same whole.
+/// \param l is the given (least significant) Varnode piece
+/// \return \b true if the matching \b whole and most significant piece is found
 bool SplitVarnode::inHandLo(Varnode *l)
 
-{ // Initialize the SplitVarnode with the lo and hi, if we know that -l- is a low precision piece
-  // and we know its companion high precision piece, otherwise return false
+{
   if (!l->isPrecisLo()) return false; // Check for mark, in order to have quick -false- in most cases
   // Search for the companion
   if (l->isWritten()) {
@@ -142,10 +167,15 @@ bool SplitVarnode::inHandLo(Varnode *l)
   return false;
 }
 
+/// The given least significant Varnode must already be marked as a piece.
+/// Initialize the SplitVarnode with the given piece and the \b whole that it came from.
+/// If a matching most significant piece can be found, as another CPUI_SUBPIECE off of the same
+/// \b whole, initialize that as well.  Otherwise leave the most significant piece as null.
+/// \param l is the given (least significant) Varnode piece
+/// \return \b true if the SplitVarnode is successfully initialized
 bool SplitVarnode::inHandLoNoHi(Varnode *l)
 
-{ // Initialize the SplitVarnode with lo and the whole it came from, if possible return true;
-  // Fill in the hi if it exists, otherwise leave as null
+{
   if (!l->isPrecisLo()) return false;
   if (!l->isWritten()) return false;
   PcodeOp *op = l->getDef();
@@ -172,9 +202,14 @@ bool SplitVarnode::inHandLoNoHi(Varnode *l)
   return true;
 }
 
+/// Initialize the SplitVarnode given the most significant piece, if it is concatenated together
+/// immediately with is least significant piece.  The CPUI_PIECE and the matching least significant
+/// piece must be unique.  If these are found, \b hi, \b lo, and \b whole are all filled in.
+/// \param h is the given (most significant) piece
+/// \return \b true if initialization was successful and the least significant piece was found
 bool SplitVarnode::inHandHiOut(Varnode *h)
 
-{ // Return true (and initialize -this-) if -h- is combined with a -lo- into an existing whole
+{
   list<PcodeOp *>::const_iterator iter,enditer;
   iter = h->beginDescend();
   enditer = h->endDescend();
@@ -198,9 +233,14 @@ bool SplitVarnode::inHandHiOut(Varnode *h)
   return false;
 }
 
+/// Initialize the SplitVarnode given the least significant piece, if it is concatenated together
+/// immediately with is nost significant piece.  The CPUI_PIECE and the matching most significant
+/// piece must be unique.  If these are found, \b hi, \b lo, and \b whole are all filled in.
+/// \param l is the given (least significant) piece
+/// \return \b true if initialization was successful and the most significant piece was found
 bool SplitVarnode::inHandLoOut(Varnode *l)
 
-{ // Return true (and initialize -this-) if -l- is combined with a -hi- into an existing whole
+{
   list<PcodeOp *>::const_iterator iter,enditer;
   iter = l->beginDescend();
   enditer = l->endDescend();
@@ -224,40 +264,42 @@ bool SplitVarnode::inHandLoOut(Varnode *l)
   return false;
 }
 
+/// Look for CPUI_SUBPIECE operations off of a common Varnode.
+/// The \b whole field is set to this Varnode if found; the definition point and block are
+/// filled in and \b true is returned.  Otherwise \b false is returned.
+/// \return \b true if the \b whole Varnode is found
 bool SplitVarnode::findWholeSplitToPieces(void)
 
-{ // Find whole out of which -hi- and -lo- are split, return -true- if it is found
-  if (whole == (Varnode *)0) {
-    if (hi != (Varnode *)0) {
-      if (!hi->isWritten()) return false;
-      PcodeOp *subhi = hi->getDef();
-      if (subhi->code() == CPUI_COPY) { // Go thru one level of copy, if the piece is addrtied
-	Varnode *otherhi = subhi->getIn(0);
-	if (!otherhi->isWritten()) return false;
-	subhi = otherhi->getDef();
-      }
-      if (subhi->code() != CPUI_SUBPIECE) return false;
-      Varnode *res = subhi->getIn(0);
-      if (subhi->getIn(1)->getOffset() != wholesize - hi->getSize()) return false;
+{
+  if (whole == (Varnode*)0) {
+    if (hi == (Varnode*)0) return false;
+    if (lo == (Varnode*)0) return false;
+    if (!hi->isWritten()) return false;
+    PcodeOp *subhi = hi->getDef();
+    if (subhi->code() == CPUI_COPY) { // Go thru one level of copy, if the piece is addrtied
+      Varnode *otherhi = subhi->getIn(0);
+      if (!otherhi->isWritten()) return false;
+      subhi = otherhi->getDef();
+    }
+    if (subhi->code() != CPUI_SUBPIECE) return false;
+    if (subhi->getIn(1)->getOffset() != wholesize - hi->getSize()) return false;
+    whole = subhi->getIn(0);
+    if (!lo->isWritten()) return false;
+    PcodeOp *sublo = lo->getDef();
+    if (sublo->code() == CPUI_COPY) { // Go thru one level of copy, if the piece is addrtied
+      Varnode *otherlo = sublo->getIn(0);
+      if (!otherlo->isWritten()) return false;
+      sublo = otherlo->getDef();
+    }
+    if (sublo->code() != CPUI_SUBPIECE) return false;
+    Varnode *res = sublo->getIn(0);
+    if (whole == (Varnode*)0)
       whole = res;
-    }
-    if (lo != (Varnode *)0) {
-      if (!lo->isWritten()) return false;
-      PcodeOp *sublo = lo->getDef();
-      if (sublo->code() == CPUI_COPY) { // Go thru one level of copy, if the piece is addrtied
-	Varnode *otherlo = sublo->getIn(0);
-	if (!otherlo->isWritten()) return false;
-	sublo = otherlo->getDef();
-      }
-      if (sublo->code() != CPUI_SUBPIECE) return false;
-      Varnode *res = sublo->getIn(0);
-      if (whole == (Varnode *)0)
-	whole = res;
-      else if (whole != res)
-	return false;		// Doesn't match between pieces
-      if (sublo->getIn(1)->getOffset() != 0) return false;
-    }
-    if (whole==(Varnode *)0) return false;
+    else if (whole != res)
+      return false;		// Doesn't match between pieces
+    if (sublo->getIn(1)->getOffset() != 0)
+      return false;
+    if (whole == (Varnode*)0) return false;
   }
 
   if (whole->isWritten()) {
@@ -271,22 +313,32 @@ bool SplitVarnode::findWholeSplitToPieces(void)
   return true;
 }
 
+/// Set the basic block, \b defblock, and PcodeOp, \b defpoint, where they are defined.
+/// Its possible that \b lo and \b hi are \e input Varnodes with no natural defining PcodeOp,
+/// in which case \b defpoint is set to null and \b defblock is set to the function entry block.
+/// The method returns \b true, if the definition point is found, which amounts to returning
+/// \b false if the SplitVarnode is only half constant or half input.
+/// \return \b true if the definition point is located
 bool SplitVarnode::findDefinitionPoint(void)
 
-{ // Set basic block, where both -lo- and -hi- are defined, set the PcodeOp within block if possible
-  if (lo == (Varnode *)0) return false;
-  if (hi == (Varnode *)0) return false;
-  defblock = (BlockBasic *)0;
+{
   PcodeOp *lastop;
-  if (lo->isConstant()&&hi->isConstant()) {
-    defblock = (BlockBasic *)0;
-    defpoint = (PcodeOp *)0;
-    return true;
-  }
-  if (hi->isConstant()) return false; // If one but not both is constant
+  if (hi != (Varnode *)0 && hi->isConstant()) return false; // If one but not both is constant
   if (lo->isConstant()) return false;
-  if (hi->isWritten()) {
-    if (!lo->isWritten()) return false;
+  if (hi == (Varnode *)0) {	// Implied zero extension
+    if (lo->isInput()) {
+      defblock = (BlockBasic *)0;
+      defpoint = (PcodeOp *)0;
+    }
+    else if (lo->isWritten()) {
+      defpoint = lo->getDef();
+      defblock = defpoint->getParent();
+    }
+    else
+      return false;
+  }
+  else if (hi->isWritten()) {
+    if (!lo->isWritten()) return false;		// Do not allow mixed input/non-input pairs
     lastop = hi->getDef();
     defblock = lastop->getParent();
     PcodeOp *lastop2 = lo->getDef();
@@ -314,19 +366,20 @@ bool SplitVarnode::findDefinitionPoint(void)
     defpoint = lastop;
   }
   else if (hi->isInput()) {
-    if (!lo->isInput()) {
-      defblock = (BlockBasic *)0;
-      return false;
-    }
+    if (!lo->isInput())
+      return false;		// Do not allow mixed input/non-input pairs
     defblock = (BlockBasic *)0;
     defpoint = (PcodeOp *)0;
   }
   return true;
 }
 
+/// If both \b lo and \b hi pieces are written, the earlier of the two defining PcodeOps
+/// is returned.  Otherwise null is returned.
+/// \return the earlier of the two defining PcodeOps or null
 PcodeOp *SplitVarnode::findEarliestSplitPoint(void)
 
-{ // Find the earliest definition point of the lo and hi pieces
+{
   if (!hi->isWritten()) return (PcodeOp *)0;
   if (!lo->isWritten()) return (PcodeOp *)0;
   PcodeOp *hiop = hi->getDef();
@@ -336,12 +389,14 @@ PcodeOp *SplitVarnode::findEarliestSplitPoint(void)
   return (loop->getSeqNum().getOrder() < hiop->getSeqNum().getOrder()) ? loop : hiop;
 }
  
+/// We scan for concatenations formed out of \b hi and \b lo, in the correct significance order.
+/// We assume \b hi and \b lo are defined in the same basic block (or  are both inputs) and that
+/// the concatenation is also in this block. If such a concatenation is found, \b whole is set to the
+/// concatenated Varnode, the defining block and PcodeOp is filled in, and \b true is returned.
+/// \return \b true if a \b whole concatenated from \b hi and \b lo is found
 bool SplitVarnode::findWholeBuiltFromPieces(void)
 
 {
-  // We want to scan here for concatenations formed out of hi <-> lo, in order to avoid
-  // duplicate subexpressions.  But we need to be careful that the concatenation isn't created
-  // AFTER we need it.  We assume hi and lo are defined in the same basic block (or both inputs)
   if (hi==(Varnode *)0) return false;
   if (lo==(Varnode *)0) return false;
   list<PcodeOp *>::const_iterator iter,enditer;
@@ -383,10 +438,14 @@ bool SplitVarnode::findWholeBuiltFromPieces(void)
   return (whole!=(Varnode *)0);
 }
 
+/// The whole Varnode must be defined or definable \e before the given PcodeOp.
+/// This is checked by comparing the given PcodeOp to the defining PcodeOp and block for \b this,
+/// which are filled in if they weren't before.
+/// \param existop is the given PcodeOp
+/// \return \b true if a whole Varnode exists or can be defined before the given PcodeOp
 bool SplitVarnode::isWholeFeasible(PcodeOp *existop)
 
-{ // Does there exist, or can we construct a whole out of this split varnode that will be defined
-  // before existop
+{
   if (isConstant()) return true;
   if ((lo!=(Varnode *)0)&&(hi!=(Varnode *)0))
     if (lo->isConstant() != hi->isConstant()) return false; // Mixed constant/non-constant
@@ -407,10 +466,13 @@ bool SplitVarnode::isWholeFeasible(PcodeOp *existop)
   return false;
 }
 
+/// This is similar to isWholeFeasible(), but the \b whole must be defined before the end of the given
+/// basic block.
+/// \param bl is the given basic block
+/// \return \b true if a whole Varnode exists or can be defined before the end of the given basic block
 bool SplitVarnode::isWholePhiFeasible(FlowBlock *bl)
 
-{ // This is the same as isWholeFeasible, but for MULTIEQUAL constructions where we have construct
-  // a whole thats available for a particular branch
+{
   if (isConstant()) return false;
   if (!findWholeSplitToPieces()) {
     if (!findWholeBuiltFromPieces()) {
@@ -428,9 +490,14 @@ bool SplitVarnode::isWholePhiFeasible(FlowBlock *bl)
   return false;
 }
 
+/// This method assumes isWholeFeasible has been called and returned \b true.
+/// If the \b whole didn't already exist, it is created as the concatenation of its two pieces.
+/// If the pieces were constant, a constant whole Varnode is created.
+/// If the \b hi piece was null, the whole is created as a CPUI_ZEXT of the \b lo.
+/// \param data is the function owning the Varnode pieces
 void SplitVarnode::findCreateWhole(Funcdata &data)
 
-{ // Find or create a whole varnode, we assume isWholeFeasible has returned true
+{
   if (isConstant()) {
     whole = data.newConstant(wholesize,val);
     return;
@@ -453,14 +520,23 @@ void SplitVarnode::findCreateWhole(Funcdata &data)
     topblock = (BlockBasic *)data.getBasicBlocks().getStartBlock();
     addr = topblock->getStart();
   }
-  
-  concatop = data.newOp(2,addr);
-  // Do we need to pick something other than a unique????
-  whole = data.newUniqueOut(wholesize,concatop);
-  data.opSetOpcode(concatop,CPUI_PIECE);
-  data.opSetOutput(concatop,whole);
-  data.opSetInput(concatop,hi,0);
-  data.opSetInput(concatop,lo,1);
+
+  if (hi != (Varnode*)0) {
+    concatop = data.newOp(2,addr);
+    // Do we need to pick something other than a unique????
+    whole = data.newUniqueOut(wholesize,concatop);
+    data.opSetOpcode(concatop,CPUI_PIECE);
+    data.opSetOutput(concatop,whole);
+    data.opSetInput(concatop,hi,0);
+    data.opSetInput(concatop,lo,1);
+  }
+  else {
+    concatop = data.newOp(1,addr);
+    whole = data.newUniqueOut(wholesize,concatop);
+    data.opSetOpcode(concatop,CPUI_INT_ZEXT);
+    data.opSetOutput(concatop,whole);
+    data.opSetInput(concatop,lo,0);
+  }
 
   if (defblock != (BlockBasic *)0)
     data.opInsertAfter(concatop,defpoint);
@@ -471,6 +547,9 @@ void SplitVarnode::findCreateWhole(Funcdata &data)
   defblock = concatop->getParent();
 }
 
+/// If the \b whole does not already exist, it is created as a \e unique register.
+/// The new Varnode must later be set explicitly as the output of some PcodeOp.
+/// \param data is the function owning the Varnode pieces
 void SplitVarnode::findCreateOutputWhole(Funcdata &data)
 
 { // Create the actual -whole- varnode
@@ -480,11 +559,12 @@ void SplitVarnode::findCreateOutputWhole(Funcdata &data)
   whole = data.newUnique(wholesize);
 }
 
+/// If the pieces can be treated as a contiguous whole, use the same storage location to construct the \b whole,
+/// otherwise use a \b join address for storage.
+/// \param data is the function owning the pieces
 void SplitVarnode::createJoinedWhole(Funcdata &data)
 
-{ // Create a whole from pieces, respecting the piece addresses
-  // if the pieces can be treated as a contiguous whole, use that address
-  // otherwise construct a join address
+{
   lo->setPrecisLo();
   hi->setPrecisHi();
   if (whole != (Varnode *)0) return;
@@ -497,10 +577,12 @@ void SplitVarnode::createJoinedWhole(Funcdata &data)
   whole->setWriteMask();
 }
 
+/// Assume \b lo was initially defined in some other way but now needs to be defined as a split from
+/// a new \b whole Varnode.  The original PcodeOp defining \b lo is transformed into a CPUI_SUBPIECE.
+/// The method findCreateOutputWhole() must already have been called on \b this.
 void SplitVarnode::buildLoFromWhole(Funcdata &data)
 
-{ // Assume -lo- was defined in some other way and now needs to be defined as a split from 
-  // a new -whole- varnode
+{
   PcodeOp *loop = lo->getDef();
   if (loop == (PcodeOp *)0)
     throw LowlevelError("Building low piece that was originally undefined");
@@ -533,11 +615,13 @@ void SplitVarnode::buildLoFromWhole(Funcdata &data)
   }
 }
 
+/// Assume \b hi was initially defined in some other way but now needs to be defined as a split from
+/// a new \b whole Varnode.  The original PcodeOp defining \b hi is transformed into a CPUI_SUBPIECE.
+/// The method findCreateOutputWhole() must already have been called on \b this.
 void SplitVarnode::buildHiFromWhole(Funcdata &data)
 
-{ // Assume -hi- was defined in some other way and now needs to be defined as a split from 
-  // a new -whole- varnode
-   PcodeOp *hiop = hi->getDef();
+{
+  PcodeOp *hiop = hi->getDef();
   if (hiop == (PcodeOp *)0)
     throw LowlevelError("Building low piece that was originally undefined");
 
@@ -596,20 +680,31 @@ void SplitVarnode::buildHiFromWhole(Funcdata &data)
 //   }
 // }
 
+/// Its assumed that \b this is the output of the double precision operation being performed.
+/// The \b whole Varnode may not yet exist.  This method returns the first PcodeOp where the \b whole
+/// needs to exist.  If no such PcodeOp exists, null is returned.
+/// \return the first PcodeOp where the \b whole needs to exist or null
 PcodeOp *SplitVarnode::findOutExist(void)
 
-{ // Find the point at which the whole must exist
+{
   if (findWholeBuiltFromPieces()) {
     return defpoint;
   }
   return findEarliestSplitPoint();
 }
 
+/// \brief Check if the values in the given Varnodes differ by the given size
+///
+/// Return \b true, if the (possibly dynamic) value represented by the given \b vn1 plus \b size1
+/// produces the value in the given \b vn2. For constants, the values can be computed directly, but
+/// otherwise \b vn1 and \b vn2 must be defined by INT_ADD operations from a common ancestor.
+/// \param vn1 is the first given Varnode
+/// \param vn2 is the second given Varnode
+/// \param size1 is the given size to add to \b vn1
+/// \return \b true if the values in \b vn1 and \b vn2 are related by the given size
 bool SplitVarnode::adjacentOffsets(Varnode *vn1,Varnode *vn2,uintb size1)
 
-{ // Return true, if the (possibly dynamic) offset represented
-  // by vn1 plus size1 produces the offset in vn2
-
+{
   if (vn1->isConstant()) {
     if (!vn2->isConstant()) return false;
     return ((vn1->getOffset() + size1) == vn2->getOffset());
@@ -634,15 +729,26 @@ bool SplitVarnode::adjacentOffsets(Varnode *vn1,Varnode *vn2,uintb size1)
   return ((c1 + size1) == c2);
 }
 
-bool SplitVarnode::testContiguousLoad(PcodeOp *most,PcodeOp *least,bool allowfree,PcodeOp *&first,PcodeOp *&second,AddrSpace *&spc,int4 &sizeres)
+/// \brief Verify that the pointers into the given LOAD/STORE PcodeOps address contiguous memory
+///
+/// The two given PcodeOps must either both be LOADs or both be STOREs. The pointer for the
+/// first PcodeOp is labeled as the most significant piece of the contiguous whole, the
+/// second PcodeOp is labeled as the least significant piece. The p-code defining the pointers is examined
+/// to determine if the two memory regions being pointed at really form one contiguous region.
+/// If the regions are contiguous and the pointer labeling is valid, \b true is returned, the PcodeOps are sorted
+/// into \b first and \b second based on Address, and the address space of the memory region is passed back.
+/// \param most is the given LOAD/STORE PcodeOp referring to the most significant region
+/// \param least is the given LOAD/STORE PcodeOp referring to the least significant region
+/// \param first is used to pass back the earliest of the address sorted PcodeOps
+/// \param second is used to pass back the latest of the address sorted PcodeOps
+/// \param spc is used to pass back the LOAD address space
+/// \param sizeres is used to pass back the combined LOAD size
+/// \return true if the given PcodeOps are contiguous LOADs
+bool SplitVarnode::testContiguousPointers(PcodeOp *most,PcodeOp *least,PcodeOp *&first,PcodeOp *&second,AddrSpace *&spc)
 
-{ // Determine if -most- and -least- are contiguous loads, given that the outputs form the most and least significant
-  // parts of a double precision result, sort the ops into -first- address and -second- address
-  // return 'true' and the -spc- loaded from and the combined load size
-  if (least->code() != CPUI_LOAD) return false;
-  if (most->code() != CPUI_LOAD) return false;
-  spc = Address::getSpaceFromConst(least->getIn(0)->getAddr());
-  if (Address::getSpaceFromConst(most->getIn(0)->getAddr()) != spc) return false;
+{
+  spc = least->getIn(0)->getSpaceFromConst();
+  if (most->getIn(0)->getSpaceFromConst() != spc) return false;
 
   if (spc->isBigEndian()) {	// Convert significance order to address order
     first = most;
@@ -653,20 +759,28 @@ bool SplitVarnode::testContiguousLoad(PcodeOp *most,PcodeOp *least,bool allowfre
     second = most;
   }
   Varnode *firstptr = first->getIn(1);
-  if (!allowfree)
-    if (firstptr->isFree()) return false;
-  sizeres = first->getOut()->getSize(); // # of bytes read by lowest address load
+  if (firstptr->isFree()) return false;
+  int4 sizeres;
+  if (first->code() == CPUI_LOAD)
+    sizeres = first->getOut()->getSize(); // # of bytes read by lowest address load
+  else		// CPUI_STORE
+    sizeres = first->getIn(2)->getSize();
 
   // Check if the loads are adjacent to each other
-  if (!adjacentOffsets(first->getIn(1),second->getIn(1),(uintb)sizeres))
-    return false;
-  sizeres += second->getOut()->getSize();
-  return true;
+  return adjacentOffsets(first->getIn(1),second->getIn(1),(uintb)sizeres);
 }
 
+/// \brief Return \b true if the given pieces can be melded into a contiguous storage location
+///
+/// The given Varnodes must be \e address \e tied, and their storage must line up, respecting their
+/// significance as pieces.
+/// \param lo is the given least significant piece
+/// \param hi is the given most significant piece
+/// \param res is used to pass back the starting address of the contigous range
+/// \return \b true if the pieces are address tied and form a contiguous range
 bool SplitVarnode::isAddrTiedContiguous(Varnode *lo,Varnode *hi,Address &res)
 
-{ // Return true if the pieces -lo- and -hi- can be melded into a contiguous storage location
+{
   if (!lo->isAddrTied()) return false;
   if (!hi->isAddrTied()) return false;
 
@@ -692,9 +806,16 @@ bool SplitVarnode::isAddrTiedContiguous(Varnode *lo,Varnode *hi,Address &res)
   return true;
 }
 
+/// \brief Create a list of all the possible pairs that contain the same logical value as the given Varnode
+///
+/// The given Varnode is assumed to be the logical whole that is being used in a double precision calculation.
+/// At least one of the most or least significant pieces must be extracted from the whole and must be
+/// marked as a double precision piece.
+/// \param w is the given Varnode whole
+/// \param splitvec is the container for holding any discovered SplitVarnodes
 void SplitVarnode::wholeList(Varnode *w,vector<SplitVarnode> &splitvec)
 
-{ // Create a list of all the possible pairs that contain the same logical value as -w-
+{
   SplitVarnode basic;
 
   basic.whole = w;
@@ -730,9 +851,16 @@ void SplitVarnode::wholeList(Varnode *w,vector<SplitVarnode> &splitvec)
   findCopies(basic,splitvec);
 }
 
+/// \brief Find copies from (the pieces of) the given SplitVarnode
+///
+/// Scan for each piece being used as input to COPY operations.  If the each piece is
+/// copied within the same basic block to contiguous storage locations, create a new
+/// SplitVarnode from COPY outputs and add it to the list.
+/// \param in is the given SplitVarnode
+/// \param splitvec is the container for holding SplitVarnode copies
 void SplitVarnode::findCopies(const SplitVarnode &in,vector<SplitVarnode> &splitvec)
 
-{ // Find copies from -in- pieces into another logical pair
+{
   if (!in.hasBothPieces()) return;
   list<PcodeOp *>::const_iterator iter,enditer;
 
@@ -765,6 +893,14 @@ void SplitVarnode::findCopies(const SplitVarnode &in,vector<SplitVarnode> &split
   }
 }
 
+/// \brief For the given CBRANCH PcodeOp, pass back the \b true and \b false basic blocks
+///
+/// The result depends on the \e boolean \e flip property of the CBRANCH, and the user can
+/// also flip the meaning of the branches.
+/// \param boolop is the given CBRANCH PcodeOp
+/// \param flip is \b true if the caller wants to flip the meaning of the blocks
+/// \param trueout is used to pass back the true fall-through block
+/// \param falseout is used to pass back the false fall-through block
 void SplitVarnode::getTrueFalse(PcodeOp *boolop,bool flip,BlockBasic *&trueout,BlockBasic *&falseout)
 
 {
@@ -781,9 +917,15 @@ void SplitVarnode::getTrueFalse(PcodeOp *boolop,bool flip,BlockBasic *&trueout,B
   }
 }
 
+/// \brief Return \b true if the basic block containing the given CBRANCH PcodeOp performs no other operation.
+///
+/// The basic block can contain the CBRANCH and the one PcodeOp producing the boolean value.
+/// Otherwise \b false is returned.
+/// \param branchop is the given CBRANCH
+/// \return \b true if the parent basic block performs only the branch operation
 bool SplitVarnode::otherwiseEmpty(PcodeOp *branchop)
 
-{ // Return true if this block is only used to perform the branch specified by -branchop-
+{
   BlockBasic *bl = branchop->getParent();
   if (bl->sizeIn() != 1) return false;
   PcodeOp *otherop = (PcodeOp *)0;
@@ -803,6 +945,11 @@ bool SplitVarnode::otherwiseEmpty(PcodeOp *branchop)
   return true;
 }
 
+/// \brief Verify that the given PcodeOp is a CPUI_INT_MULT by -1
+///
+/// The PcodeOp must be a CPUI_INT_MULT and the second operand must be a constant -1.
+/// \param op is the given PcodeOp
+/// \return \b true if the PcodeOp is a multiple by -1
 bool SplitVarnode::verifyMultNegOne(PcodeOp *op)
 
 {
@@ -813,6 +960,15 @@ bool SplitVarnode::verifyMultNegOne(PcodeOp *op)
   return true;
 }
 
+/// \brief Check that the logical version of a (generic) binary double-precision operation can be created
+///
+/// This checks only the most generic aspects of the calculation.  The input and output whole Varnodes
+/// must already exist or be creatable.  The point where the output Varnode must exist is identified
+/// and returned.  If the binary operation cannot be created, null is returned.
+/// \param out is the output of the binary operation
+/// \param in1 is the first input of the binary operation
+/// \param in2 is the second input of the binary operation
+/// \return the first PcodeOp where the output whole must exist
 PcodeOp *SplitVarnode::prepareBinaryOp(SplitVarnode &out,SplitVarnode &in1,SplitVarnode &in2)
 
 {
@@ -823,11 +979,21 @@ PcodeOp *SplitVarnode::prepareBinaryOp(SplitVarnode &out,SplitVarnode &in1,Split
   return existop;
 }
 
+/// \brief Rewrite a double precision binary operation by replacing the pieces with unified Varnodes
+///
+/// This assumes that we have checked that the transformation is possible via the various
+/// verify and prepare methods.  After this method is called, the logical inputs and output of
+/// the calculation will exist as real Varnodes.
+/// \param data is the function owning the operation
+/// \param out is the output of the binary operation
+/// \param in1 is the first input to the binary operation
+/// \param in2 is the second input to the binary operation
+/// \param existop is the precalculated PcodeOp where the output whole Varnode must exist
+/// \param opc is the opcode of the operation
 void SplitVarnode::createBinaryOp(Funcdata &data,SplitVarnode &out,SplitVarnode &in1,SplitVarnode &in2,
 				  PcodeOp *existop,OpCode opc)
 
-{ // Rewrite the double precision operation (if possible) by replacing the pieces with unified varnodes
-  // Make sure all the actual whole varnodes exist
+{
   out.findCreateOutputWhole(data);
   in1.findCreateWhole(data);
   in2.findCreateWhole(data);
@@ -848,6 +1014,14 @@ void SplitVarnode::createBinaryOp(Funcdata &data,SplitVarnode &out,SplitVarnode 
   }
 }
 
+/// \brief Make sure input and output operands of a double precision shift operation are compatible
+///
+/// Do generic testing that the input and output whole Varnodes can be created.  Calculate the
+/// PcodeOp where the output whole must exist and return it.  If logical operation cannot be created,
+/// return null.
+/// \param out is the output of the double precision shift operation
+/// \param in is the (first) input operand of the double precision shift operation
+/// \return the PcodeOp where output whole must exist or null
 PcodeOp *SplitVarnode::prepareShiftOp(SplitVarnode &out,SplitVarnode &in)
 
 {
@@ -857,10 +1031,22 @@ PcodeOp *SplitVarnode::prepareShiftOp(SplitVarnode &out,SplitVarnode &in)
   return existop;
 }
 
+/// \brief Rewrite a double precision shift by replacing hi/lo pieces with unified Varnodes
+///
+/// This assumes that we have checked that the transformation is possible by calling the appropriate
+/// verify and prepare methods. After this method is called, the logical inputs and output of
+/// the calculation will exist as real Varnodes.  The \e shift \e amount is not treated as a double
+/// precision variable.
+/// \param data is the function owning the operation
+/// \param out is the output of the double precision operation
+/// \param in is the first input of the operation
+/// \param sa is the Varnode indicating the \e shift \e amount for the operation
+/// \param existop is the first PcodeOp where the output whole needs to exist
+/// \param opc is the opcode of the particular shift operation
 void SplitVarnode::createShiftOp(Funcdata &data,SplitVarnode &out,SplitVarnode &in,Varnode *sa,
 				 PcodeOp *existop,OpCode opc)
 
-{ // Rewrite the double precision shift by replacing hi/lo pieces with unified varnodes
+{
   out.findCreateOutputWhole(data);
   in.findCreateWhole(data);
   if (sa->isConstant())
@@ -882,9 +1068,16 @@ void SplitVarnode::createShiftOp(Funcdata &data,SplitVarnode &out,SplitVarnode &
   }
 }
 
+/// \brief Try to perform one transform on a logical double precision operation given a specific input
+///
+/// All the various double precision forms are lined up against the input.  The first one that matches
+/// has its associated transform performed and then 1 is returned.  If no form matches, 0 is returned.
+/// \param in is the given double precision input
+/// \param data is the function owning the Varnodes
+/// \return a count of the number of transforms applied, 0 or 1
 int4 SplitVarnode::applyRuleIn(SplitVarnode &in,Funcdata &data)
 
-{ // Try to perform one transform on a logical double precision operation that uses -in- as input
+{
   for(int4 i=0;i<2;++i) {
     Varnode *vn;
     vn = (i==0) ? in.getHi() : in.getLo();
@@ -1023,6 +1216,12 @@ int4 SplitVarnode::applyRuleIn(SplitVarnode &in,Funcdata &data)
   return 0;
 }
 
+/// \brief Make sure input operands of a double precision compare operation are compatible
+///
+/// Do generic testing that the input whole Varnodes can be created.  If they can be created, return \b true.
+/// \param in1 is the first input operand of the double precision compare operation
+/// \param in2 is the second input operand of the double precision compare operation
+/// \return \b true if the logical transformation can be performed
 bool SplitVarnode::prepareBoolOp(SplitVarnode &in1,SplitVarnode &in2,PcodeOp *testop)
 
 {
@@ -1031,11 +1230,20 @@ bool SplitVarnode::prepareBoolOp(SplitVarnode &in1,SplitVarnode &in2,PcodeOp *te
   return true;
 }
 
+/// \brief Rewrite a double precision boolean operation by replacing the input pieces with unified Varnodes
+///
+/// This assumes we checked that the transformation is possible by calling the various verify and prepare
+/// methods. The inputs to the given PcodeOp producing the final boolean value are replaced with new
+/// logical Varnodes, and the opcode is updated.  The output Varnode is not affected.
+/// \param data is the function owning the operation
+/// \param boolop is the given PcodeOp producing the final boolean value
+/// \param in1 is the first input to the operation
+/// \param in2 is the second input to the operation
+/// \param opc is the opcode of the operation
 void SplitVarnode::replaceBoolOp(Funcdata &data,PcodeOp *boolop,SplitVarnode &in1,SplitVarnode &in2,
 				 OpCode opc)
 
-{ // Rewrite the a double precision operation that results in a boolean, by replacing the input pieces
-  // with unified varnodes.
+{
   in1.findCreateWhole(data);
   in2.findCreateWhole(data);
   data.opSetOpcode(boolop,opc);
@@ -1043,11 +1251,19 @@ void SplitVarnode::replaceBoolOp(Funcdata &data,PcodeOp *boolop,SplitVarnode &in
   data.opSetInput(boolop,in2.getWhole(),1);
 }
 
+/// \brief Create a new compare PcodeOp, replacing the boolean Varnode taken as input by the given CBRANCH
+///
+/// The inputs to the new compare operation are Varnodes representing the logical whole of the double precision
+/// pieces.
+/// \param data is the function owning the operation
+/// \param cbranch is the given CBRANCH PcodeOp
+/// \param in1 is the first input to the compare operation
+/// \param in2 is the second input to the compare operation
+/// \param opc is the opcode of the compare operation
 void SplitVarnode::createBoolOp(Funcdata &data,PcodeOp *cbranch,SplitVarnode &in1,SplitVarnode &in2,
 				OpCode opc)
 
-{ // Create a new boolean op which replaces the boolean taken as input by -cbranch- with a double
-  // precision version.
+{
   PcodeOp *addrop = cbranch;
   Varnode *boolvn = cbranch->getIn(1);
   if (boolvn->isWritten())
@@ -1063,6 +1279,14 @@ void SplitVarnode::createBoolOp(Funcdata &data,PcodeOp *cbranch,SplitVarnode &in
   data.opSetInput(cbranch,newbool,1); // CBRANCH now determined by new compare
 }
 
+/// \brief Check that the logical version of a CPUI_MULTIEQUAL operation can be created
+///
+/// This checks only the most generic aspects of the calculation.  The input and output whole Varnodes
+/// must already exist or be creatable.  The point where the output Varnode must exist is identified
+/// and returned.  If the MULTIEQUAL operation cannot be created, null is returned.
+/// \param out is the output of the MULTIEQUAL operation
+/// \param inlist is a vector of the input operands to the MULTIEQUAL
+/// \return the first PcodeOp where the output whole must exist
 PcodeOp *SplitVarnode::preparePhiOp(SplitVarnode &out,vector<SplitVarnode> &inlist)
 
 {
@@ -1079,6 +1303,15 @@ PcodeOp *SplitVarnode::preparePhiOp(SplitVarnode &out,vector<SplitVarnode> &inli
   return existop;
 }
 
+/// \brief Rewrite a double precision MULTIEQUAL operation by replacing the pieces with unified Varnodes
+///
+/// This assumes that we have checked that the transformation is possible via the various
+/// verify and prepare methods.  After this method is called, the logical inputs and output of
+/// the calculation will exist as real Varnodes.
+/// \param data is the function owning the operation
+/// \param out is the output of the MULTIEQUAL operation
+/// \param inlist is the list of input operands to the MULTIEQUAL
+/// \param existop is the precalculated PcodeOp where the output whole Varnode must exist
 void SplitVarnode::createPhiOp(Funcdata &data,SplitVarnode &out,vector<SplitVarnode> &inlist,
 			       PcodeOp  *existop)
 
@@ -1100,6 +1333,12 @@ void SplitVarnode::createPhiOp(Funcdata &data,SplitVarnode &out,vector<SplitVarn
   out.buildHiFromWhole(data);
 }
 
+/// \brief Check that the logical version of a CPUI_INDIRECT operation can be created
+///
+/// This checks only the most generic aspects of the calculation.  The input whole Varnode
+/// must already exist or be creatable.  If the INDIRECT operation cannot be created, \b false is returned.
+/// \param in is the (first) input operand of the INDIRECT
+/// \return \b true if the logical version of the CPUI_INDIRECT can be created
 bool SplitVarnode::prepareIndirectOp(SplitVarnode &in,PcodeOp *affector)
 
 {
@@ -1109,9 +1348,18 @@ bool SplitVarnode::prepareIndirectOp(SplitVarnode &in,PcodeOp *affector)
   return true;
 }
 
+/// \brief Rewrite a double precision INDIRECT operation by replacing the pieces with unified Varnodes
+///
+/// This assumes that we have checked that the transformation is possible via the various
+/// verify and prepare methods.  After this method is called, the logical input and output of
+/// the calculation will exist as real Varnodes.
+/// \param data is the function owning the operation
+/// \param out is the output of the INDIRECT operation
+/// \param in is the (first) operand of the INDIRECT
+/// \param affector is the second operand to the indirect, the PcodeOp producing the indirect affect
 void SplitVarnode::replaceIndirectOp(Funcdata &data,SplitVarnode &out,SplitVarnode &in,PcodeOp *affector)
 
-{ // This REPLACES the existing INDIRECTs of the pieces
+{
   out.createJoinedWhole(data);
 
   in.findCreateWhole(data);
@@ -1290,8 +1538,8 @@ bool AddForm::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data
   if (!verify(in.getHi(),in.getLo(),op))
     return false;
 
-  indoub.initPartial(lo2,hi2);
-  outdoub.initPartial(reslo,reshi);
+  indoub.initPartial(in.getSize(),lo2,hi2);
+  outdoub.initPartial(in.getSize(),reslo,reshi);
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,indoub);
   if (existop == (PcodeOp *)0)
     return false;
@@ -1383,8 +1631,8 @@ bool SubForm::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data
   if (!verify(in.getHi(),in.getLo(),op))
     return false;
 
-  indoub.initPartial(lo2,hi2);
-  outdoub.initPartial(reslo,reshi);
+  indoub.initPartial(in.getSize(),lo2,hi2);
+  outdoub.initPartial(in.getSize(),reslo,reshi);
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,indoub);
   if (existop == (PcodeOp *)0)
     return false;
@@ -1503,8 +1751,8 @@ bool LogicalForm::applyRule(SplitVarnode &i,PcodeOp *lop,bool workishi,Funcdata 
   if (!verify(in.getHi(),in.getLo(),lop))
     return false;
 
-  outdoub.initPartial(loop->getOut(),hiop->getOut());
-  indoub.initPartial(lo2,hi2);
+  outdoub.initPartial(in.getSize(),loop->getOut(),hiop->getOut());
+  indoub.initPartial(in.getSize(),lo2,hi2);
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,indoub);
   if (existop == (PcodeOp *)0)
     return false;
@@ -1564,7 +1812,7 @@ bool Equal1Form::applyRule(SplitVarnode &i,PcodeOp *hop,bool workishi,Funcdata &
 	lobool = *iter3;
 	++iter3;
 
-	in2.initPartial(lo2,hi2);
+	in2.initPartial(in1.getSize(),lo2,hi2);
 	
 	if ((hibool->code() == CPUI_CBRANCH)&&(lobool->code()==CPUI_CBRANCH)) {
 	  // Branching form of the equal operation
@@ -1681,7 +1929,7 @@ bool Equal2Form::replace(Funcdata &data)
     // Some kind of mixed form
     return false;
   }
-  param2.initPartial(lo2,hi2);
+  param2.initPartial(in.getSize(),lo2,hi2);
   return SplitVarnode::prepareBoolOp(in,param2,equalop);
 }
 
@@ -2202,7 +2450,7 @@ bool LessThreeWay::testReplace(void)
     if (!setBoolOp()) return false;
   }
   else {
-    in2.initPartial(lo2,hi2);
+    in2.initPartial(in.getSize(), lo2,hi2);
     if (!setBoolOp()) return false;
   }
   return true;
@@ -2451,7 +2699,7 @@ bool ShiftForm::applyRuleLeft(SplitVarnode &i,PcodeOp *loop,bool workishi,Funcda
   if (!verifyLeft(in.getHi(),in.getLo(),loop))
     return false;
 
-  out.initPartial(reslo,reshi);
+  out.initPartial(in.getSize(),reslo,reshi);
   existop = SplitVarnode::prepareShiftOp(out,in);
   if (existop == (PcodeOp *)0)
     return false;
@@ -2469,7 +2717,7 @@ bool ShiftForm::applyRuleRight(SplitVarnode &i,PcodeOp *hiop,bool workishi,Funcd
   if (!verifyRight(in.getHi(),in.getLo(),hiop))
     return false;
 
-  out.initPartial(reslo,reshi);
+  out.initPartial(in.getSize(),reslo,reshi);
   existop = SplitVarnode::prepareShiftOp(out,in);
   if (existop == (PcodeOp *)0)
     return false;
@@ -2713,8 +2961,8 @@ bool MultForm::mapFromIn(Varnode *rhi)
 bool MultForm::replace(Funcdata &data)
 
 { // We have matched a double precision multiply, now transform to logical variables
-  outdoub.initPartial(reslo,reshi);
-  in2.initPartial(lo2,hi2);
+  outdoub.initPartial(in.getSize(),reslo,reshi);
+  in2.initPartial(in.getSize(),lo2,hi2);
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,in2);
   if (existop == (PcodeOp *)0)
     return false;
@@ -2811,7 +3059,7 @@ bool PhiForm::applyRule(SplitVarnode &i,PcodeOp *hphi,bool workishi,Funcdata &da
     Varnode *vlo = lophi->getIn(j);
     inlist.push_back(SplitVarnode(vlo,vhi));
   }
-  outvn.initPartial(lophi->getOut(),hiphi->getOut());
+  outvn.initPartial(in.getSize(),lophi->getOut(),hiphi->getOut());
   existop = SplitVarnode::preparePhiOp(outvn,inlist);
   if (existop != (PcodeOp *)0) {
     SplitVarnode::createPhiOp(data,outvn,inlist,existop);
@@ -2857,7 +3105,7 @@ bool IndirectForm::applyRule(SplitVarnode &i,PcodeOp *ind,bool workishi,Funcdata
   if (!verify(in.getHi(),in.getLo(),ind))
     return false;
 
-  outvn.initPartial(reslo,reshi);
+  outvn.initPartial(in.getSize(),reslo,reshi);
 
   if (!SplitVarnode::prepareIndirectOp(in,affector))
     return false;
@@ -2877,11 +3125,85 @@ void RuleDoubleIn::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_SUBPIECE);
 }
 
+/// \brief Determine if the given Varnode from a SUBPIECE should be marked as a double precision piece
+///
+/// If the given Varnode looks like the most significant piece, there is another SUBPIECE that looks
+/// like the least significant piece, and the whole is from an operation that produces a logical whole,
+/// then mark the Varnode (and its companion) as double precision pieces and return 1.
+/// \param data is the function owning the Varnode
+/// \param vn is the given Varnode
+/// \param subpieceOp is the SUBPIECE PcodeOp producing the Varnode
+int4 RuleDoubleIn::attemptMarking(Funcdata &data,Varnode *vn,PcodeOp *subpieceOp)
+
+{
+  Varnode *whole = subpieceOp->getIn(0);
+  int4 offset = (int4)subpieceOp->getIn(1)->getOffset();
+  if (offset != vn->getSize()) return 0;
+  if (offset * 2 != whole->getSize()) return 0;		// Truncate exactly half
+  if (whole->isInput()) {
+    if (!whole->isTypeLock()) return 0;
+  }
+  else if (!whole->isWritten()) {
+    return 0;
+  }
+  else {
+    // Categorize opcodes as "producing a logical whole"
+    switch(whole->getDef()->code()) {
+      case CPUI_INT_ADD:
+	// Its hard to tell if the bit operators are really being used to act on the "logical whole"
+//      case CPUI_INT_AND:
+//      case CPUI_INT_OR:
+//      case CPUI_INT_XOR:
+//      case CPUI_INT_NEGATE:
+      case CPUI_INT_MULT:
+      case CPUI_INT_DIV:
+      case CPUI_INT_SDIV:
+      case CPUI_INT_REM:
+      case CPUI_INT_SREM:
+      case CPUI_INT_2COMP:
+      case CPUI_FLOAT_ADD:
+      case CPUI_FLOAT_DIV:
+      case CPUI_FLOAT_MULT:
+      case CPUI_FLOAT_SUB:
+      case CPUI_FLOAT_NEG:
+      case CPUI_FLOAT_ABS:
+      case CPUI_FLOAT_SQRT:
+      case CPUI_FLOAT_INT2FLOAT:
+      case CPUI_FLOAT_FLOAT2FLOAT:
+      case CPUI_FLOAT_TRUNC:
+      case CPUI_FLOAT_CEIL:
+      case CPUI_FLOAT_FLOOR:
+      case CPUI_FLOAT_ROUND:
+	break;
+      default:
+	return 0;
+    }
+  }
+  Varnode *vnLo = (Varnode *)0;
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=whole->beginDescend();iter!=whole->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->code() != CPUI_SUBPIECE) continue;
+    if (op->getIn(1)->getOffset() != 0) continue;
+    if (op->getOut()->getSize() == vn->getSize()) {
+      vnLo = op->getOut();
+      break;
+    }
+  }
+  if (vnLo == (Varnode *)0) return 0;
+  vnLo->setPrecisLo();
+  vn->setPrecisHi();
+  return 1;
+}
+
 int4 RuleDoubleIn::applyOp(PcodeOp *op,Funcdata &data)
 
 { // Try to push double precision object "down" one level from input
   Varnode *outvn = op->getOut();
-  if (!outvn->isPrecisLo()) return 0;
+  if (!outvn->isPrecisLo()) {
+    if (outvn->isPrecisHi()) return 0;
+    return attemptMarking(data, outvn, op);
+  }
   if (data.hasUnreachableBlocks()) return 0;
 
   vector<SplitVarnode> splitvec;
@@ -2896,10 +3218,22 @@ int4 RuleDoubleIn::applyOp(PcodeOp *op,Funcdata &data)
   return 0;
 }
 
-PcodeOp *RuleDoubleLoad::noWriteConflict(PcodeOp *op1,PcodeOp *op2,AddrSpace *spc)
+/// \brief Scan for conflicts between two LOADs or STOREs that would prevent them from being combined
+///
+/// The PcodeOps must be in the same basic block.  Each PcodeOp that falls in between is examined
+/// to determine if it writes to the same address space as the LOADs or STOREs, which indicates that
+/// combining isn't possible.  If the LOADs and STOREs can be combined, the later of the two PcodeOps
+/// is returned, otherwise null is returned.
+///
+/// In the case of STORE ops, an extra container for INDIRECT PcodeOps is passed in.  INDIRECTs that
+/// are caused by the STORE ops themselves are collected in the container.
+/// \param op1 is a given LOAD or STORE
+/// \param op2 is the other given LOAD or STORE
+/// \param spc is the address space referred to by the LOAD/STOREs
+/// \param indirects if non-null is used to collect INDIRECTs caused by STOREs
+PcodeOp *RuleDoubleLoad::noWriteConflict(PcodeOp *op1,PcodeOp *op2,AddrSpace *spc,vector<PcodeOp *> *indirects)
 
-{ // Return NULL if some op between op1 and op2 could write to
-  // -range-. Otherwise return pointer to latest op.
+{
   const BlockBasic *bb = op1->getParent();
 
   // Force the two ops to be in the same basic block
@@ -2909,18 +3243,39 @@ PcodeOp *RuleDoubleLoad::noWriteConflict(PcodeOp *op1,PcodeOp *op2,AddrSpace *sp
     op2 = op1;
     op1 = tmp;
   }
-  list<PcodeOp *>::iterator iter = op1->getBasicIter();
+  PcodeOp *startop = op1;
+  if (op1->code() == CPUI_STORE) {
+    // Extend the range of PcodeOps to include any CPUI_INDIRECTs associated with the initial STORE
+    PcodeOp *tmpOp = startop->previousOp();
+    while(tmpOp != (PcodeOp *)0 && tmpOp->code() == CPUI_INDIRECT) {
+      startop = tmpOp;
+      tmpOp = tmpOp->previousOp();
+    }
+  }
+  list<PcodeOp *>::iterator iter = startop->getBasicIter();
   list<PcodeOp *>::iterator enditer = op2->getBasicIter();
 
-  ++iter;
   while(iter != enditer) {
     PcodeOp *curop = *iter;
     Varnode *outvn;
+    PcodeOp *affector;
     ++iter;
+    if (curop == op1) continue;
     switch(curop->code()) {
     case CPUI_STORE:
-      if (Address::getSpaceFromConst(curop->getIn(0)->getAddr()) == spc)
+      if (curop->getIn(0)->getSpaceFromConst() == spc)
 	return (PcodeOp *)0;	// Don't go any further trying to resolve alias
+      break;
+    case CPUI_INDIRECT:
+      affector = PcodeOp::getOpFromConst(curop->getIn(1)->getAddr());
+      if (affector == op1 || affector == op2) {
+	if (indirects != (vector<PcodeOp *> *)0)
+	  indirects->push_back(curop);
+      }
+      else {
+	if (curop->getOut()->getSpace() == spc)
+	  return (PcodeOp *)0;
+      }
       break;
     case CPUI_CALL:
     case CPUI_CALLIND:
@@ -2955,12 +3310,17 @@ int4 RuleDoubleLoad::applyOp(PcodeOp *op,Funcdata &data)
   AddrSpace *spc;
   int4 size;
 
-  if (!op->getIn(0)->isWritten()) return 0;
-  if (!op->getIn(1)->isWritten()) return 0;
-  if (!SplitVarnode::testContiguousLoad(op->getIn(0)->getDef(),op->getIn(1)->getDef(),false,loadlo,loadhi,spc,size))
+  Varnode *piece0 = op->getIn(0);
+  Varnode *piece1 = op->getIn(1);
+  if (!piece0->isWritten()) return 0;
+  if (!piece1->isWritten()) return 0;
+  if (piece0->getDef()->code() != CPUI_LOAD) return false;
+  if (piece1->getDef()->code() != CPUI_LOAD) return false;
+  if (!SplitVarnode::testContiguousPointers(piece0->getDef(),piece1->getDef(),loadlo,loadhi,spc))
     return 0;
 
-  PcodeOp *latest = noWriteConflict(loadlo,loadhi,spc);
+  size = piece0->getSize() + piece1->getSize();
+  PcodeOp *latest = noWriteConflict(loadlo,loadhi,spc,(vector<PcodeOp *> *)0);
   if (latest == (PcodeOp *)0) return 0; // There was a conflict
 
   // Create new load op that combines the two smaller loads
@@ -2983,4 +3343,144 @@ int4 RuleDoubleLoad::applyOp(PcodeOp *op,Funcdata &data)
   data.opSetInput(op,vnout,0);
 
   return 1;
+}
+
+void RuleDoubleStore::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_STORE);
+}
+
+int4 RuleDoubleStore::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  PcodeOp *storelo,*storehi;
+  AddrSpace *spc;
+
+  Varnode *vnlo = op->getIn(2);
+  if (!vnlo->isPrecisLo()) return 0;
+  if (!vnlo->isWritten()) return 0;
+  PcodeOp *subpieceOpLo = vnlo->getDef();
+  if (subpieceOpLo->code() != CPUI_SUBPIECE) return 0;
+  if (subpieceOpLo->getIn(1)->getOffset() != 0) return 0;
+  Varnode *whole = subpieceOpLo->getIn(0);
+  if (whole->isFree()) return 0;
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=whole->beginDescend();iter!=whole->endDescend();++iter) {
+    PcodeOp *subpieceOpHi = *iter;
+    if (subpieceOpHi->code() != CPUI_SUBPIECE) continue;
+    if (subpieceOpHi == subpieceOpLo) continue;
+    int4 offset = (int4)subpieceOpHi->getIn(1)->getOffset();
+    if (offset != vnlo->getSize()) continue;
+    Varnode *vnhi = subpieceOpHi->getOut();
+    if (!vnhi->isPrecisHi()) continue;
+    if (vnhi->getSize() != whole->getSize() - offset) continue;
+    list<PcodeOp *>::const_iterator iter2;
+    for(iter2=vnhi->beginDescend();iter2!=vnhi->endDescend();++iter2) {
+      PcodeOp *storeOp2 = *iter2;
+      if (storeOp2->code() != CPUI_STORE) continue;
+      if (storeOp2->getIn(2) != vnhi) continue;
+      if (SplitVarnode::testContiguousPointers(storeOp2, op, storelo, storehi, spc)) {
+	vector<PcodeOp *> indirects;
+	PcodeOp *latest = RuleDoubleLoad::noWriteConflict(storelo,storehi,spc,&indirects);
+	if (latest == (PcodeOp *)0) continue;	// There was a conflict
+	if (!testIndirectUse(storelo, storehi, indirects)) continue;
+	// Create new STORE op that combines the two smaller STOREs
+	PcodeOp *newstore = data.newOp(3,latest->getAddr());
+	Varnode *spcvn = data.newVarnodeSpace(spc);
+	data.opSetOpcode(newstore,CPUI_STORE);
+	data.opSetInput(newstore,spcvn,0);
+	Varnode *addrvn = storelo->getIn(1);
+	if (addrvn->isConstant())
+	  addrvn = data.newConstant(addrvn->getSize(),addrvn->getOffset());
+	data.opSetInput(newstore,addrvn,1);
+	data.opSetInput(newstore,whole,2);
+	// We need to guarantee that -newstore- reads -addrvn- after
+	// it has been defined. So insert it after the latest.
+	data.opInsertAfter(newstore,latest);
+	data.opDestroy(op);		// Get rid of the original STOREs
+	data.opDestroy(storeOp2);
+	reassignIndirects(data, newstore, indirects);
+	return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+/// \brief Test if output Varnodes from a list of PcodeOps are used anywhere within a range of PcodeOps
+///
+/// The range of PcodeOps bounded by given starting and ending PcodeOps.  An output Varnode is
+/// used within the range if there is a PcodeOp in the range that takes the Varnode as input.
+/// \param op1 is the given starting PcodeOp of the range
+/// \param op2 is the given ending PcodeOp of the range
+/// \param indirects is the list of PcodesOps whose output are tested
+/// \return \b true if no output in the list is used in the range
+bool RuleDoubleStore::testIndirectUse(PcodeOp *op1,PcodeOp *op2,const vector<PcodeOp *> &indirects)
+
+{
+  if (op2->getSeqNum().getOrder() < op1->getSeqNum().getOrder()) {
+    PcodeOp *tmp = op2;
+    op2 = op1;
+    op1 = tmp;
+  }
+  for(int4 i=0;i<indirects.size();++i) {
+    Varnode *outvn = indirects[i]->getOut();
+    list<PcodeOp *>::const_iterator iter;
+    int4 usecount = 0;
+    int4 usebyop2 = 0;
+    for(iter=outvn->beginDescend();iter!=outvn->endDescend();++iter) {
+      PcodeOp *op = *iter;
+      usecount += 1;
+      if (op->getParent() != op1->getParent()) continue;
+      if (op->getSeqNum().getOrder() < op1->getSeqNum().getOrder()) continue;
+      if (op->getSeqNum().getOrder() > op2->getSeqNum().getOrder()) continue;
+      // Its likely that INDIRECTs from the first STORE feed INDIRECTs for the second STORE
+      if (op->code() == CPUI_INDIRECT && op2 == PcodeOp::getOpFromConst(op->getIn(1)->getAddr())) {
+	usebyop2 += 1;	// Note this pairing
+	continue;
+      }
+      return false;
+    }
+    // As an INDIRECT whose output Varnode feeds into later INDIRECTs must be removed, we need the following test.
+    // If some uses of the output feed into later INDIRECTs, but not ALL do, then return false
+    if (usebyop2 > 0 && usecount != usebyop2)
+      return false;
+    if (usebyop2 > 1)
+      return false;
+  }
+  return true;
+}
+
+/// \brief Reassign INDIRECTs to a new given STORE
+///
+/// The INDIRECTs are associated with old STOREs that are being removed.
+/// Each INDIRECT is moved from its position near the old STORE to be near the new STORE and
+/// the affect iop operand is set to point at the new STORE.
+/// \param data is the function owning the INDIRECTs
+/// \param newStore is the given new STORE PcodeOp
+/// \param indirects is the list of INDIRECT PcodeOps to reassign
+void RuleDoubleStore::reassignIndirects(Funcdata &data,PcodeOp *newStore,const vector<PcodeOp *> &indirects)
+
+{
+  // Search for INDIRECT pairs.  The earlier is deleted.  The later gains the earlier's input.
+  for(int4 i=0;i<indirects.size();++i) {
+    PcodeOp *op = indirects[i];
+    op->setMark();
+    Varnode *vn = op->getIn(0);
+    if (!vn->isWritten()) continue;
+    PcodeOp *earlyop = vn->getDef();
+    if (earlyop->isMark()) {
+      data.opSetInput(op,earlyop->getIn(0),0);	// Grab the earlier op's input, replacing the use of its output
+      data.opDestroy(earlyop);
+    }
+  }
+  for(int4 i=0;i<indirects.size();++i) {
+    PcodeOp *op = indirects[i];
+    op->clearMark();
+    if (op->isDead()) continue;
+    data.opUninsert(op);
+    data.opInsertBefore(op,newStore);		// Move the INDIRECT to the new STORE
+    data.opSetInput(op,data.newVarnodeIop(newStore),1);	// Assign the INDIRECT to the new STORE
+  }
 }

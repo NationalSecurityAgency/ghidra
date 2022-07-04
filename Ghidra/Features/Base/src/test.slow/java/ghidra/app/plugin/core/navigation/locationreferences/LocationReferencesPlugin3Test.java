@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.navigation.locationreferences;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -44,7 +43,7 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 		int parameterColumn = 1;
 		goTo(address, "Function Signature", parameterColumn);
 
-		// change the return type 
+		// change the return type
 		DataType dataType = setReturnTypeToByte(address);
 
 		search();
@@ -176,7 +175,7 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 	@Test
 	public void testLabelLocationDescriptor() throws Exception {
 
-		// 010039fe - LAB_010039fe 
+		// 010039fe - LAB_010039fe
 		Address address = addr(0x010039fe);
 		int column = 3;
 		goTo(address, "Label", column);
@@ -232,19 +231,6 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 	}
 
 	@Test
-	public void testFieldNameLocationDescriptor_StructureFieldName_ArrayInStructure()
-			throws Exception {
-
-		openData(0x01005540);
-
-		goTo(addr(0x01005541), FieldNameFieldFactory.FIELD_NAME, 1);
-
-		ProgramLocation location = codeBrowser.getCurrentLocation();
-		LocationDescriptor descriptor = ReferenceUtils.getLocationDescriptor(location);
-		assertThat(descriptor, is(instanceOf(StructureMemberLocationDescriptor.class)));
-	}
-
-	@Test
 	public void testFieldNameLocationDescriptor_StructureInArray() throws Exception {
 
 		openData(0x01005520);
@@ -261,7 +247,7 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 
 	@Test
 	public void testFindReferencesToFunctionDefinitionDataTypeFromService() throws Exception {
-		// 
+		//
 		// For this test we will have to create a FunctionDefinitionData type that matches
 		// that of an existing function
 		//
@@ -312,7 +298,7 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 
 		//
 		// Dynamic data types should show all references to the the outermost data, including
-		// offcut.  
+		// offcut.
 		//
 
 		// go to an unused address
@@ -379,11 +365,9 @@ public class LocationReferencesPlugin3Test extends AbstractLocationReferencesTes
 		assertContains(results, from1, from2, from3, stringAddr);
 	}
 
-	
-
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void createString_CallStructure(String addressString) throws Exception {
 		// String

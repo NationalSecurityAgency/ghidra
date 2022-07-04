@@ -240,9 +240,9 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		//
 		// This test is verifying a hack that was put in to fix the difference in 'Alt' key handling
-		// on Windows (https://bugs.openjdk.java.net/browse/JDK-8194873).  
-		// Create an action and set the keybinding to use the 'Alt' modifier.  
-		// Verify that the action will also get mapped to the 'Alt Graph' modifier.  
+		// on Windows (https://bugs.openjdk.java.net/browse/JDK-8194873).
+		// Create an action and set the keybinding to use the 'Alt' modifier.
+		// Verify that the action will also get mapped to the 'Alt Graph' modifier.
 		//
 
 		// verify that no action is mapped to the new binding
@@ -335,14 +335,11 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		setUpDialog();
 		selectRowForAction(action1);
 
-		capture(panel, "pre.keystroke.change");
 		KeyStroke validKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK);
 		triggerActionKey(keyField, InputEvent.CTRL_DOWN_MASK, validKeyStroke.getKeyCode());
 		assertEquals(KeyEntryTextField.parseKeyStroke(validKeyStroke), keyField.getText());
-		capture(panel, "post.keystroke.change");
 
 		apply();
-		capture(panel, "post.keystroke.apply");
 		assertEquals(validKeyStroke, getKeyStroke(action1));
 
 		// try again to set a reserved binding

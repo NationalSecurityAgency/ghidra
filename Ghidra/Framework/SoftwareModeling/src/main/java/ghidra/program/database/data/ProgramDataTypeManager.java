@@ -26,9 +26,8 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.Options;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.database.map.AddressMap;
-import ghidra.program.database.symbol.SymbolManager;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ChangeManager;
@@ -40,8 +39,8 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Class for managing data types in a program
  */
-public class ProgramDataTypeManager extends DataTypeManagerDB
-		implements ManagerDB, ProgramBasedDataTypeManager {
+public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB
+		implements ManagerDB {
 
 	private static final String OLD_DT_ARCHIVE_FILENAMES = "DataTypeArchiveFilenames"; // eliminated with Ghidra 4.3
 
@@ -52,19 +51,30 @@ public class ProgramDataTypeManager extends DataTypeManagerDB
 	 * Constructor
 	 * @param handle open database  handle
 	 * @param addrMap the address map
-	 * @param openMode the program open mode
+	 * @param openMode the program open mode (see {@link DBConstants})
 	 * @param errHandler the database io error handler
 	 * @param lock the program synchronization lock
 	 * @param monitor the progress monitor
 	 * @throws CancelledException if the user cancels an upgrade
 	 * @throws VersionException if the database does not match the expected version.
-	 * @throws IOException if a database io error occurs.
+	 * @throws IOException if a database IO error occurs.
 	 */
 	public ProgramDataTypeManager(DBHandle handle, AddressMap addrMap, int openMode,
 			ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
 			throws CancelledException, VersionException, IOException {
 		super(handle, addrMap, openMode, errHandler, lock, monitor);
 		upgrade = (openMode == DBConstants.UPGRADE);
+	}
+
+	@Override
+	protected void dataSettingChanged(Address dataAddr) {
+		program.setChanged(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED, dataAddr,
+			dataAddr, null, null);
+	}
+
+	@Override
+	public boolean allowsDefaultBuiltInSettings() {
+		return true;
 	}
 
 	@Override
@@ -101,11 +111,6 @@ public class ProgramDataTypeManager extends DataTypeManagerDB
 	@Override
 	public String getName() {
 		return program.getName();
-	}
-
-	@Override
-	public Pointer getPointer(DataType dt) {
-		return PointerDataType.getPointer(dt, this);
 	}
 
 	@Override
@@ -213,14 +218,16 @@ public class ProgramDataTypeManager extends DataTypeManagerDB
 			return;
 		}
 		program.getCodeManager().replaceDataTypes(oldDataTypeID, newDataTypeID);
-		((SymbolManager) program.getSymbolTable()).replaceDataTypes(oldDataTypeID, newDataTypeID);
-		((FunctionManagerDB) program.getFunctionManager()).replaceDataTypes(oldDataTypeID,
-			newDataTypeID);
+		program.getSymbolTable().replaceDataTypes(oldDataTypeID, newDataTypeID);
+		program.getFunctionManager().replaceDataTypes(oldDataTypeID, newDataTypeID);
 	}
 
 	@Override
 	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor)
 			throws CancelledException {
+		// TODO: SymbolManager/FunctionManager do not appear to handle datatype removal update.
+		// Suspect it handles indirectly through detection of deleted datatype.  Old deleted ID
+		// use could be an issue.
 		long[] ids = new long[deletedIds.size()];
 		Iterator<Long> it = deletedIds.iterator();
 		int i = 0;
@@ -292,4 +299,5 @@ public class ProgramDataTypeManager extends DataTypeManagerDB
 		}
 		return dataOrganization;
 	}
+
 }

@@ -80,7 +80,7 @@ public class JavaEnumSettingsDefinition<T extends Enum<T>> implements EnumSettin
 	 * @return Enum&lt;T&gt; value, or the specified defaultValueOveride if not present.
 	 */
 	public T getEnumValue(Settings settings, T defaultValueOverride) {
-		Long lvalue = settings.getLong(getSettingName());
+		Long lvalue = settings.getLong(settingName);
 		if (lvalue == null) {
 			return defaultValueOverride;
 		}
@@ -126,38 +126,34 @@ public class JavaEnumSettingsDefinition<T extends Enum<T>> implements EnumSettin
 		return -1;
 	}
 
-	/**
-	 * The name of this setting as it is stored in a {@link Settings} object.
-	 *
-	 * @return String name.
-	 */
-	public String getSettingName() {
-		return settingName;
-	}
-
 	@Override
 	public boolean hasValue(Settings setting) {
-		return setting.getValue(getSettingName()) != null;
+		return setting.getValue(settingName) != null;
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
 	@Override
-	public String getDescription() {
+	public final String getStorageKey() {
+		return settingName;
+	}
+
+	@Override
+	public final String getDescription() {
 		return description;
 	}
 
 	@Override
 	public void clear(Settings settings) {
-		settings.clearSetting(getSettingName());
+		settings.clearSetting(settingName);
 	}
 
 	@Override
 	public void copySetting(Settings srcSettings, Settings destSettings) {
-		Long l = srcSettings.getLong(getSettingName());
+		Long l = srcSettings.getLong(settingName);
 		if (l == null) {
 			clear(destSettings);
 		}
@@ -168,15 +164,20 @@ public class JavaEnumSettingsDefinition<T extends Enum<T>> implements EnumSettin
 
 	@Override
 	public int getChoice(Settings settings) {
-		Long lvalue = settings.getLong(getSettingName());
+		Long lvalue = settings.getLong(settingName);
 
 		int value = (lvalue != null) ? (int) (long) lvalue : defaultValue.ordinal();
 		return Math.min(Math.max(value, 0), values.length - 1);
 	}
 
 	@Override
+	public String getValueString(Settings settings) {
+		return values[getChoice(settings)].toString();
+	}
+
+	@Override
 	public void setChoice(Settings settings, int value) {
-		settings.setLong(getSettingName(), value);
+		settings.setLong(settingName, value);
 	}
 
 	@Override

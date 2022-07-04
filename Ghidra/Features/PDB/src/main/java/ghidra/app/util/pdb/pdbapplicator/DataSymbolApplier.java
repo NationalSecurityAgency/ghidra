@@ -59,12 +59,11 @@ public class DataSymbolApplier extends MsSymbolApplier {
 			if (dataType == null) { // TODO: check that we can have null here.
 				return; // silently return.
 			}
-			String name = symbol.getName();
 			Address address = applicator.getAddress(symbol);
-			if (applicator.isInvalidAddress(address, symbol.getName())) {
+			if (!createData(address, applier)) {
 				return;
 			}
-			functionSymbolApplier.setLocalVariable(address, name, dataType);
+			functionSymbolApplier.setLocalVariable(address, symbol.getName(), dataType);
 		}
 	}
 
@@ -75,20 +74,29 @@ public class DataSymbolApplier extends MsSymbolApplier {
 			return;
 		}
 		RecordNumber typeRecordNumber = symbol.getTypeRecordNumber();
+		if (!createData(symbolAddress, typeRecordNumber)) {
+			return;
+		}
 		applicator.createSymbol(symbolAddress, symbol.getName(), true);
-		createData(symbolAddress, typeRecordNumber);
 	}
 
 	MsTypeApplier getTypeApplier() {
 		return applicator.getTypeApplier(symbol.getTypeRecordNumber());
 	}
 
-	void createData(Address address, RecordNumber typeRecordNumber) {
+	boolean createData(Address address, RecordNumber typeRecordNumber) {
 		MsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
 		if (applier == null) {
 			applicator.appendLogMsg("Error: Failed to resolve datatype RecordNumber " +
 				typeRecordNumber + " at " + address);
-			return;
+			return false;
+		}
+		return createData(address, applier);
+	}
+
+	boolean createData(Address address, MsTypeApplier applier) {
+		if (applicator.isInvalidAddress(address, symbol.getName())) {
+			return false;
 		}
 		DataType dataType = applier.getDataType();
 		if (dataType == null) {
@@ -97,11 +105,11 @@ public class DataSymbolApplier extends MsSymbolApplier {
 				applicator.appendLogMsg("Error: Failed to resolve datatype " +
 					applier.getMsType().getName() + " at " + address);
 			}
-			return;
+			return false;
 		}
 		if (applicator.getImageBase().equals(address) &&
 			!"_IMAGE_DOS_HEADER".equals(dataType.getName())) {
-			return; // Squash some noise
+			return false; // Squash some noise
 		}
 		if (!(dataType instanceof FunctionDefinition)) {
 			//TODO: might want to do an ApplyDatatypeCmd here!!!
@@ -111,10 +119,11 @@ public class DataSymbolApplier extends MsSymbolApplier {
 			if (dti == null) {
 				applicator.appendLogMsg(
 					"Error: Failed to apply datatype " + dataType.getName() + " at " + address);
-				return;
+				return false;
 			}
 			createData(address, dti.getDataType(), dti.getLength());
 		}
+		return true;
 	}
 
 	private void createData(Address address, DataType dataType, int dataTypeLength) {
@@ -171,7 +180,7 @@ public class DataSymbolApplier extends MsSymbolApplier {
 					applicator.getProgram().getListing().createData(address, dataType);
 				}
 			}
-			catch (CodeUnitInsertionException | DataTypeConflictException e) {
+			catch (CodeUnitInsertionException e) {
 				applicator.appendLogMsg("Unable to create " + dataType.getDisplayName() + " at 0x" +
 					address + ": " + e.getMessage());
 			}
@@ -182,7 +191,7 @@ public class DataSymbolApplier extends MsSymbolApplier {
 					address.add(dataTypeLength - 1), false);
 				applicator.getProgram().getListing().createData(address, dataType, dataTypeLength);
 			}
-			catch (CodeUnitInsertionException | DataTypeConflictException e) {
+			catch (CodeUnitInsertionException e) {
 				applicator.appendLogMsg("Unable to replace " + dataType.getDisplayName() +
 					" at 0x" + address + ": " + e.getMessage());
 			}

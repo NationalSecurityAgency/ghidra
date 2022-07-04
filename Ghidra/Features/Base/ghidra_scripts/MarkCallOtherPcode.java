@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Generate WARNING Bookmarks CallOther PcodeOp's within an instructions Pcode.
-// This is useful to find PsuedoOps that need to be implemented to yield better
+// Generate WARNING Bookmarks at instructions whose pcode contains a CALLOTHER op.
+// This is useful to find PseudoOps that need to be implemented to yield better
 // emulation or decompilation.
 // @category sleigh
 
@@ -63,8 +63,9 @@ public class MarkCallOtherPcode extends GhidraScript {
 	}
 
 	private void markCallOtherPcode(Instruction instr, PcodeOp op) {
-		currentProgram.getBookmarkManager().setBookmark(instr.getAddress(), BookmarkType.WARNING,
-			"CallOther PcodeOp",
-			currentProgram.getLanguage().getUserDefinedOpName((int) op.getInput(0).getOffset()));
+		currentProgram.getBookmarkManager()
+				.setBookmark(instr.getAddress(), BookmarkType.WARNING, "CallOther PcodeOp",
+					currentProgram.getLanguage()
+							.getUserDefinedOpName((int) op.getInput(0).getOffset()));
 	}
 }

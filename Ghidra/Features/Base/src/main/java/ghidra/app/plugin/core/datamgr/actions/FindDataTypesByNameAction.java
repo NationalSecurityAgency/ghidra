@@ -56,7 +56,6 @@ public class FindDataTypesByNameAction extends DockingAction {
 
 		String searchString = inputDialog.getValue();
 		DataTypesProvider newProvider = plugin.createProvider();
-		newProvider.setIncludeDataTypeMembersInFilter(plugin.includeDataMembersInSearch());
 		newProvider.setTitle(NAME);
 		newProvider.setFilterText(searchString);
 		newProvider.setVisible(true);

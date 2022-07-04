@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +28,6 @@ public class CodeViewerActionContext extends ListingActionContext implements
 
 	public CodeViewerActionContext(CodeViewerProvider provider, ProgramLocation location) {
 		super(provider, provider, location);
-	}
-
-	/**
-	 * @return true if underlying code viewer corresponds to a dynamic listing
-	 */
-	public boolean isDyanmicListing() {
-		return ((CodeViewerProvider) getComponentProvider()).isDynamicListing();
 	}
 
 }

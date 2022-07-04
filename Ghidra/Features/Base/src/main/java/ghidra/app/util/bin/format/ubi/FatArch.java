@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.ubi;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.CpuSubTypes;
 import ghidra.app.util.bin.format.macho.CpuTypes;
 
@@ -33,19 +33,7 @@ public class FatArch {
 	private int size;
 	private int align;
 
-    public static FatArch createFatArch(FactoryBundledWithBinaryReader reader)
-            throws IOException {
-        FatArch fatArch = (FatArch) reader.getFactory().create(FatArch.class);
-        fatArch.initFatArch(reader);
-        return fatArch;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public FatArch() {}
-
-    private void initFatArch(FactoryBundledWithBinaryReader reader) throws IOException {
+	public FatArch(BinaryReader reader) throws IOException {
 		cputype    = reader.readNextInt();
 		cpusubtype = reader.readNextInt();
 		offset     = reader.readNextInt();

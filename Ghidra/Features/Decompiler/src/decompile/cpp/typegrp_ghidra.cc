@@ -20,16 +20,14 @@ Datatype *TypeFactoryGhidra::findById(const string &n,uint8 id,int4 sz)
 {
   Datatype *ct = TypeFactory::findById(n,id,sz); // Try internal find
   if (ct != (Datatype *)0) return ct;
-
-  Document *doc;
+  XmlDecode decoder(glb);
   try {
-    doc = ((ArchitectureGhidra *)glb)->getType(n,id); // See if ghidra knows about type
+    if (!((ArchitectureGhidra *)glb)->getType(n,id,decoder)) // See if ghidra knows about type
+      return (Datatype *)0;
   }
   catch(XmlError &err) {
     throw LowlevelError("XML error: "+err.explain);
   }
-  if (doc == (Document *)0) return (Datatype *)0;
-  ct = restoreXmlType(doc->getRoot()); // Parse ghidra's type
-  delete doc;
+  ct = decodeType(decoder); // Parse ghidra's type
   return ct;
 }

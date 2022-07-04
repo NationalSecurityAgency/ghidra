@@ -57,7 +57,6 @@ import ghidra.test.TestEnv;
 import ghidra.util.SystemUtilities;
 import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -99,8 +98,6 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void tearDown() throws Exception {
 		env.dispose();
 	}
-
-	/*******************************************************/
 
 	@Test
 	public void testStructures() throws Exception {
@@ -187,15 +184,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		for (int element : TYPES) {
 
-			int txId = program.startTransaction("TEST");
-			try {
-				program.getListing().setComment(addr, element, "Test" + element);
-			}
-			finally {
-				program.endTransaction(txId, true);
-			}
-
-			program.flushEvents();
+			tx(program, () -> program.getListing().setComment(addr, element, "Test" + element));
 
 			sendProgramLocation(addr, element);
 
@@ -368,8 +357,6 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(browser.goToField(addr, EolCommentFieldFactory.FIELD_NAME, 0, 0));
 	}
 
-	/*******************************************************/
-
 	@Test
 	public void testSetAll() throws Exception {
 		openX86ProgramInTool();
@@ -405,8 +392,6 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(REPEAT, cu.getComment(CodeUnit.REPEATABLE_COMMENT));
 	}
 
-	/*******************************************************/
-
 	@Test
 	public void testApplyButton() throws Exception {
 		openX86ProgramInTool();
@@ -421,8 +406,6 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(!commentsDialog.isVisible());
 	}
 
-	/*******************************************************/
-
 	@Test
 	public void testModify() throws Exception {
 		openX86ProgramInTool();
@@ -435,8 +418,6 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		redo(program);
 		assertEquals(PRE_U, cu.getComment(CodeUnit.PRE_COMMENT));
 	}
-
-	/*******************************************************/
 
 	@Test
 	public void testPromptForSaveChangesYes() throws Exception {
@@ -544,8 +525,6 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	/*******************************************************/
-
 	@Test
 	public void testReallyBigComment() throws Exception {
 		openX86ProgramInTool();
@@ -562,8 +541,6 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setAt(addr, CodeUnit.PRE_COMMENT, comment, "OK");
 		assertEquals(comment, cu.getComment(CodeUnit.PRE_COMMENT));
 	}
-
-	/*******************************************************/
 
 	@Test
 	public void testNavigationFromSymbol() throws Exception {
@@ -685,7 +662,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address destAddr = addr(0x01008394);
 		assertEquals(destAddr, browser.getCurrentLocation().getAddress());
 
-		getProviders()[0].closeComponent();
+		runSwing(() -> getProviders()[0].closeComponent());
 
 		assertEquals(destAddr, browser.getCurrentLocation().getAddress());
 	}
@@ -697,7 +674,6 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		open8051Program();
 
 		AddressFactory af = program.getAddressFactory();
-		AddressSpace codeSpace = af.getAddressSpace("CODE");
 		AddressSpace extmemSpace = af.getAddressSpace("EXTMEM");
 
 		Address addr = extmemSpace.getAddress(0);
@@ -722,9 +698,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(spaceComment, cu.getComment(CodeUnit.PLATE_COMMENT));
 	}
 
-	/*******************************************************/
-
-	/**
+	/*
 	 * Test that when using the GoTo service the edit comments action
 	 * is enabled.
 	 *
@@ -837,13 +811,13 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		int transactionID = program.startTransaction("Test");
 		try {
 			memory.createInitializedBlock("test1", addr(0x1006000), 0x1000, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+				TaskMonitor.DUMMY, false);
 			memory.createInitializedBlock("test2", addr(0x1008000), 0x1000, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+				TaskMonitor.DUMMY, false);
 			memory.createInitializedBlock("test3", addr(0x100b000), 0x1000, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+				TaskMonitor.DUMMY, false);
 			memory.createInitializedBlock("test4", addr(0xf0000000), 0x2000, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+				TaskMonitor.DUMMY, false);
 
 			SymbolTable st = program.getSymbolTable();
 			Namespace ns = st.createNameSpace(null, "Deadpool", SourceType.USER_DEFINED);
@@ -854,8 +828,11 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			program.endTransaction(transactionID, true);
 		}
 		// write the file to the project to test external navigation for comment annotation
-		env.getProject().getProjectData().getRootFolder().createFile("Test", program,
-			TaskMonitor.DUMMY);
+		env.getProject()
+				.getProjectData()
+				.getRootFolder()
+				.createFile("Test", program,
+					TaskMonitor.DUMMY);
 		env.showTool(program);
 	}
 
@@ -871,9 +848,9 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		int transactionID = program.startTransaction("Test");
 		try {
 			memory.createInitializedBlock("EEPROM", extmemSpace.getAddress(0), 0x100, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+				TaskMonitor.DUMMY, false);
 			memory.createInitializedBlock("CODE", codeSpace.getAddress(0), 0x100, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+				TaskMonitor.DUMMY, false);
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -884,23 +861,23 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private Reference addReference(long fromOffset, long toOffset, RefType refType) {
-		int transactionID = program.startTransaction("Add Reference");
-		try {
-			return program.getReferenceManager().addMemoryReference(addr(fromOffset),
-				addr(toOffset), refType, SourceType.USER_DEFINED, 0);
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
+
+		return modifyProgram(program, p -> {
+			return p.getReferenceManager()
+					.addMemoryReference(addr(fromOffset),
+						addr(toOffset), refType, SourceType.USER_DEFINED, 0);
+		});
 	}
 
 	private Function addFunction(String name, long functionEntry, int size) throws Exception {
-		int transactionID = program.startTransaction("Add Function");
-		try {
+
+		return modifyProgram(program, p -> {
+
 			Function function =
-				program.getFunctionManager().createFunction(name, addr(functionEntry),
-					new AddressSet(addr(functionEntry), addr(functionEntry + size - 1)),
-					SourceType.USER_DEFINED);
+				p.getFunctionManager()
+						.createFunction(name, addr(functionEntry),
+							new AddressSet(addr(functionEntry), addr(functionEntry + size - 1)),
+							SourceType.USER_DEFINED);
 			ReturnParameterImpl returnParam =
 				new ReturnParameterImpl(IntegerDataType.dataType, program);
 			ParameterImpl param1 = new ParameterImpl("p1", ByteDataType.dataType, program);
@@ -912,10 +889,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.USER_DEFINED,
 				param1, param2);
 			return function;
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
+		});
 	}
 
 	private void configureTool(PluginTool pluginTool) throws Exception {
@@ -961,8 +935,7 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private void resetFormatOptions(CodeBrowserPlugin codeBrowserPlugin) {
 		Options fieldOptions = codeBrowserPlugin.getFormatManager().getFieldOptions();
 		List<String> names = fieldOptions.getOptionNames();
-		for (int i = 0; i < names.size(); i++) {
-			String name = names.get(i);
+		for (String name : names) {
 			if (!name.startsWith("Format Code")) {
 				continue;
 			}

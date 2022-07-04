@@ -29,7 +29,6 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
@@ -347,7 +346,7 @@ public class DemangledFunction extends DemangledObject {
 	 * This method assumes preconditions test has been run.
 	 */
 	private boolean shouldDisassemble(Program program, Address address, DemanglerOptions options) {
-		if (!address.isMemoryAddress() || MemoryBlock.isExternalBlockAddress(address, program)) {
+		if (!address.isMemoryAddress() || program.getMemory().isExternalBlockAddress(address)) {
 			return false;
 		}
 		CodeUnit codeUnit = program.getListing().getCodeUnitAt(address);
@@ -568,9 +567,6 @@ public class DemangledFunction extends DemangledObject {
 		}
 		catch (CodeUnitInsertionException e) {
 			// ignore
-		}
-		catch (DataTypeConflictException e) {
-			// ignore - should not happen
 		}
 	}
 

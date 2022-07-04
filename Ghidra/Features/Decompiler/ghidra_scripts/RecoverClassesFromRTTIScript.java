@@ -69,6 +69,7 @@ import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProvid
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProviderFactory;
 import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.ElfLoader;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -129,42 +130,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	// show shortened class template names in class structure field names
 	private static final boolean USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS = true;
 
-	// replace defined existing class structures (ie pdb, fid, demangler, or other)with ones created by 
-	// this script and rename the existing ones with a _REPLACED suffix
-	// NOTE: currently does not replace DWARF
-	// NEW OPTION:
-	private static final boolean REPLACE_EXISTING_CLASS_STRUCTURES = true;
-
 	private static final String CLASS_DATA_STRUCT_NAME = "_data";
 
 	private static final String CONSTRUCTOR_BOOKMARK = "CONSTRUCTOR";
 	private static final String DESTRUCTOR_BOOKMARK = "DESTRUCTOR";
 
 	private static final String INDETERMINATE_BOOKMARK = "INDETERMINATE";
-
-	// DO_NOT_REMOVE_REPLACED_CLASS_STRUCTURES
-	// If replacedClassStructuresOption is set to the following, no replaced structures will be removed
-	// from the data type manager
-
-	// REMOVE_EMPTY_REPLACED_CLASS_STRUCTURES
-	// If replacedClassStructuresOption is set to the following, only empty existing class structures 
-	// that were replaced by this script will be removed from the data type manager 
-
-	// REMOVE_ALL_REPLACED_CLASS_STRUCTURES
-	// If replacedClassStructuresOption is set to the following, all existing class structures that 
-	// were replaced by this script, including non-emtpy ones, will be removed from the data type 
-	// manager 
-	private static enum removeOption {
-		DO_NOT_REMOVE_REPLACED_CLASS_STRUCTURES,
-		REMOVE_EMPTY_REPLACED_CLASS_STRUCTURES,
-		REMOVE_ALL_REPLACED_CLASS_STRUCTURES
-	}
-
-	// NEW OPTION - 
-	// This option allows the user to decide whether and how to remove replaced existing class structures
-	// using one of the above three flags
-	removeOption replacedClassStructuresOption =
-		removeOption.DO_NOT_REMOVE_REPLACED_CLASS_STRUCTURES;
 
 	boolean programHasRTTIApplied = false;
 	boolean hasDebugSymbols;
@@ -197,7 +168,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			recoverClassesFromRTTI =
 				new RTTIWindowsClassRecoverer(currentProgram, currentLocation, state.getTool(),
 					this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-					nameVfunctions, hasDebugSymbols, REPLACE_EXISTING_CLASS_STRUCTURES, monitor);
+					nameVfunctions, hasDebugSymbols, monitor);
 		}
 		else if (isGcc()) {
 
@@ -206,6 +177,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			if (!runGcc) {
 				return;
 			}
+
+			//run fixup old elf relocations script
+			runScript("FixElfExternalOffsetDataRelocationScript.java");
 
 			hasDebugSymbols = isDwarfLoadedInProgram();
 			if (hasDwarf() && !hasDebugSymbols) {
@@ -217,7 +191,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			recoverClassesFromRTTI =
 				new RTTIGccClassRecoverer(currentProgram, currentLocation, state.getTool(), this,
 					BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-					nameVfunctions, hasDebugSymbols, REPLACE_EXISTING_CLASS_STRUCTURES, monitor);
+					nameVfunctions, hasDebugSymbols, monitor);
 		}
 		else {
 			println("This script will not work on this program type");
@@ -260,6 +234,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			File outputFile = askFile("Choose Output File", "Please choose an output file");
 			out = new PrintWriter(outputFile);
 		}
+
+		currentProgram.setPreferredRootNamespaceCategoryPath(
+			"/" + RecoveredClassHelper.DTM_CLASS_DATA_FOLDER_NAME);
 
 		if (FIXUP_PROGRAM) {
 			println(
@@ -309,17 +286,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			showGraph(graph);
 		}
 
-		if (replacedClassStructuresOption == removeOption.REMOVE_EMPTY_REPLACED_CLASS_STRUCTURES) {
-			println("Removing all empty replaced class structures from the data type manager");
-			recoverClassesFromRTTI.removeReplacedClassStructures(recoveredClasses, false);
-		}
-
-		if (replacedClassStructuresOption == removeOption.REMOVE_ALL_REPLACED_CLASS_STRUCTURES) {
-			println(
-				"Removing all replaced class structures from the data type manager, including non-empty ones");
-			recoverClassesFromRTTI.removeReplacedClassStructures(recoveredClasses, true);
-		}
-
 		decompilerUtils.disposeDecompilerInterface();
 
 	}
@@ -358,6 +324,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		if (currentProgram == null) {
 			return ("There is no open program");
+		}
+
+		CategoryPath path =
+			new CategoryPath(CategoryPath.ROOT, RecoveredClassHelper.DTM_CLASS_DATA_FOLDER_NAME);
+		if (currentProgram.getDataTypeManager().containsCategory(path)) {
+			return ("This script has already been run on this program");
 		}
 
 		if (!checkGhidraVersion()) {
@@ -574,8 +546,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	 */
 	private boolean isGcc() {
 
-		boolean isELF = currentProgram.getExecutableFormat().contains("ELF");
-		if (!isELF) {
+		if (!ElfLoader.ELF_NAME.equals(currentProgram.getExecutableFormat())) {
 			return false;
 		}
 
@@ -591,10 +562,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			return false;
 		}
 
-		if (!commentBlock.isLoaded()) {
+		if (!commentBlock.isInitialized()) {
 			return false;
 		}
-
 
 		// check memory bytes in block for GCC: bytes
 		byte[] gccBytes = { (byte) 0x47, (byte) 0x43, (byte) 0x43, (byte) 0x3a };

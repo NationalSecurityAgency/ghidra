@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
-import java.io.Closeable;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.BiFunction;
+
+import java.io.Closeable;
 
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -29,19 +30,21 @@ import ghidra.util.task.TaskMonitor;
 public class DWARFSectionProviderFactory {
 
 	/**
-	 * A list of references to static methods that will create a {@link DWARFSectionProvider}.
+	 * A list of functions that will create a {@link DWARFSectionProvider}.
 	 * <p>
 	 * The method should return null if it can't parse the data it found in the {@link Program}.
 	 * <p>
 	 * The method does NOT need to worry about validating the presence of DWARF debug info
-	 * sections, as that will be done in {@link #createSectionProviderFor(Program)}.
+	 * sections, as that will be done later via calls to DWARFSectionProvider.hasSection() and
+	 * DWARFSectionProvider.getSectionAsByteProvider().
 	 * <p>
 	 * The method should not throw anything, instead just return a NULL.
 	 */
-	private static final List<Function<Program, DWARFSectionProvider>> sectionProviderFactoryFuncs =
+	private static final List<BiFunction<Program, TaskMonitor, DWARFSectionProvider>> sectionProviderFactoryFuncs =
 		List.of(
 			BaseSectionProvider::createSectionProviderFor,
-			DSymSectionProvider::createSectionProviderFor);
+			DSymSectionProvider::createSectionProviderFor,
+			ExternalDebugFileSectionProvider::createExternalSectionProviderFor);
 
 	/**
 	 * Iterates through the statically registered {@link #sectionProviderFactoryFuncs factory funcs},
@@ -53,14 +56,23 @@ public class DWARFSectionProviderFactory {
 	 * responsibility to ensure that the object is closed when done. 
 	 * 
 	 * @param program
+	 * @param monitor {@link TaskMonitor}
 	 * @return {@link DWARFSectionProvider} that should be closed by the caller or NULL if no
 	 * section provider types match the specified program.
 	 */
-	public static DWARFSectionProvider createSectionProviderFor(Program program) {
-		for (Function<Program, DWARFSectionProvider> factoryFunc : sectionProviderFactoryFuncs) {
-			DWARFSectionProvider sp = factoryFunc.apply(program);
+	public static DWARFSectionProvider createSectionProviderFor(Program program,
+			TaskMonitor monitor) {
+		for (BiFunction<Program, TaskMonitor, DWARFSectionProvider> factoryFunc : sectionProviderFactoryFuncs) {
+			DWARFSectionProvider sp = factoryFunc.apply(program, monitor);
 			if (sp != null) {
 				try {
+					if (sp.hasSection(DWARFSectionNames.MINIMAL_DWARF_SECTIONS)) {
+						return sp;
+					}
+
+					// if normal sections were not found, look for compressed sections in the
+					// same provider
+					sp = new CompressedSectionProvider(sp);
 					if (sp.hasSection(DWARFSectionNames.MINIMAL_DWARF_SECTIONS)) {
 						return sp;
 					}
@@ -73,30 +85,6 @@ public class DWARFSectionProviderFactory {
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Iterates through the statically registered {@link #sectionProviderFactoryFuncs factory funcs},
-	 * trying each factory method until one returns a {@link DWARFSectionProvider} 
-	 * that can successfully retrieve the {@link DWARFSectionNames#MINIMAL_DWARF_SECTIONS minimal} 
-	 * sections we need to do a DWARF import.
-	 * <p>
-	 * The resulting {@link DWARFSectionProvider} is {@link Closeable} and it is the caller's
-	 * responsibility to ensure that the object is closed when done. 
-	 * 
-	 * @param program Ghidra {@link Program}
-	 * @param monitor {@link TaskMonitor}
-	 * @return {@link DWARFSectionProvider} that should be closed by the caller or NULL if no
-	 * section provider types match the specified program.
-	 */
-	public static DWARFSectionProvider createSectionProviderFor(Program program,
-			TaskMonitor monitor) {
-		DWARFSectionProvider result = createSectionProviderFor(program);
-		if (result != null) {
-			return result;
-		}
-		result = ExternalDebugFileSectionProvider.createSectionProviderFor(program, monitor);
-		return result;
 	}
 
 }

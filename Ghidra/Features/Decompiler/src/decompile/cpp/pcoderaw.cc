@@ -16,28 +16,38 @@
 #include "pcoderaw.hh"
 #include "translate.hh"
 
-/// Build this VarnodeData from an \b \<addr\> tag
-/// \param el is the parsed tag
-/// \param manage is the address space manager
-void VarnodeData::restoreXml(const Element *el,const AddrSpaceManager *manage)
+/// Build this VarnodeData from an \<addr>, \<register>, or \<varnode> element.
+/// \param decoder is the stream decoder
+void VarnodeData::decode(Decoder &decoder)
+
+{
+  uint4 elemId = decoder.openElement();
+  decodeFromAttributes(decoder);
+  decoder.closeElement(elemId);
+}
+
+/// Collect attributes for the VarnodeData possibly from amidst other attributes
+/// \param decoder is the stream decoder
+void VarnodeData::decodeFromAttributes(Decoder &decoder)
 
 {
   space = (AddrSpace *)0;
   size = 0;
-  int4 num = el->getNumAttributes();
-  for(int4 i=0;i<num;++i) {
-    if (el->getAttributeName(i)=="space") {
-      space = manage->getSpaceByName(el->getAttributeValue(i));
-      if (space == (AddrSpace *)0)
-	throw LowlevelError("Unknown space name: "+el->getAttributeValue(i));
-      offset = space->restoreXmlAttributes(el,size);
-      return;
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0)
+      break;		// Its possible to have no attributes in an <addr/> tag
+    if (attribId == ATTRIB_SPACE) {
+      space = decoder.readSpace();
+      decoder.rewindAttributes();
+      offset = space->decodeAttributes(decoder,size);
+      break;
     }
-    else if (el->getAttributeName(i)=="name") {
-      const Translate *trans = manage->getDefaultCodeSpace()->getTrans();
-      const VarnodeData &point(trans->getRegister(el->getAttributeValue(i)));
+    else if (attribId == ATTRIB_NAME) {
+      const Translate *trans = decoder.getAddrSpaceManager()->getDefaultCodeSpace()->getTrans();
+      const VarnodeData &point(trans->getRegister(decoder.readString()));
       *this = point;
-      return;
+      break;
     }
   }
 }

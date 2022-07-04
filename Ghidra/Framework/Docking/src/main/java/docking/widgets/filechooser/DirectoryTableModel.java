@@ -15,8 +15,9 @@
  */
 package docking.widgets.filechooser;
 
-import java.io.File;
 import java.util.*;
+
+import java.io.File;
 
 import docking.widgets.table.AbstractSortedTableModel;
 
@@ -28,7 +29,7 @@ class DirectoryTableModel extends AbstractSortedTableModel<File> {
 	final static int TIME_COL = 2;
 
 	private GhidraFileChooser chooser;
-	private File[] files = new File[0];
+	private List<File> files = new ArrayList<>();
 
 	DirectoryTableModel(GhidraFileChooser chooser) {
 		super(FILE_COL);
@@ -36,31 +37,27 @@ class DirectoryTableModel extends AbstractSortedTableModel<File> {
 	}
 
 	void insert(File file) {
-		int len = files.length;
-		File[] arr = new File[len + 1];
-		System.arraycopy(files, 0, arr, 0, len);
-		arr[len] = file;
-		files = arr;
+		int len = files.size();
+		files.add(file);
 		fireTableRowsInserted(len, len);
 	}
 
 	void setFiles(List<File> fileList) {
-		this.files = new File[fileList.size()];
-		files = fileList.toArray(files);
-		System.arraycopy(files, 0, this.files, 0, files.length);
+		files.clear();
+		files.addAll(fileList);
 		fireTableDataChanged();
 	}
 
 	File getFile(int row) {
-		if (row >= 0 && row < files.length) {
-			return files[row];
+		if (row >= 0 && row < files.size()) {
+			return files.get(row);
 		}
 		return null;
 	}
 
 	void setFile(int row, File file) {
-		if (row >= 0 && row < files.length) {
-			files[row] = file;
+		if (row >= 0 && row < files.size()) {
+			files.set(row, file);
 			fireTableRowsUpdated(row, row);
 		}
 	}
@@ -72,7 +69,7 @@ class DirectoryTableModel extends AbstractSortedTableModel<File> {
 
 	@Override
 	public int getRowCount() {
-		return files == null ? 0 : files.length;
+		return files.size();
 	}
 
 	@Override
@@ -129,7 +126,7 @@ class DirectoryTableModel extends AbstractSortedTableModel<File> {
 
 	@Override
 	public List<File> getModelData() {
-		return Arrays.asList(files);
+		return files;
 	}
 
 	@Override
@@ -140,7 +137,7 @@ class DirectoryTableModel extends AbstractSortedTableModel<File> {
 
 	@Override
 	public void setValueAt(Object aValue, int row, int column) {
-		if (row < 0 || row >= files.length) {
+		if (row < 0 || row >= files.size()) {
 			return;
 		}
 
@@ -150,7 +147,7 @@ class DirectoryTableModel extends AbstractSortedTableModel<File> {
 
 		switch (column) {
 			case FILE_COL:
-				files[row] = (File) aValue;
+				files.set(row, (File) aValue);
 				update();
 				break;
 		}

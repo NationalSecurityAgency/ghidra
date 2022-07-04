@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.ne;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.util.Conv;
 
 /**
@@ -195,7 +195,7 @@ public class InformationBlock {
 	private short ne_swaparea;     // Minimum code swap area size
 	private short ne_expver;       // Expected windows version number
 
-	InformationBlock(FactoryBundledWithBinaryReader reader, short index)
+	InformationBlock(BinaryReader reader, short index)
 			throws InvalidWindowsHeaderException, IOException {
 		long oldIndex = reader.getPointerIndex();
 		reader.setPointerIndex(Conv.shortToInt(index));

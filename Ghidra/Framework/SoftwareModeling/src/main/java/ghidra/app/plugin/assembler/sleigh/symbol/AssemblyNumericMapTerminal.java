@@ -24,7 +24,9 @@ import ghidra.app.plugin.processors.sleigh.symbol.ValueMapSymbol;
 /**
  * A terminal that accepts only a particular set of numeric values, mapping each to another value
  * 
+ * <p>
  * This often used for non-conventional numeric encodings.
+ * 
  * @see ValueMapSymbol
  */
 public class AssemblyNumericMapTerminal extends AssemblyNumericTerminal {
@@ -32,20 +34,21 @@ public class AssemblyNumericMapTerminal extends AssemblyNumericTerminal {
 
 	/**
 	 * Construct a terminal with the given name, accepting only the keys of a given map
+	 * 
 	 * @param name the name
 	 * @param map the map from display value to token value
 	 */
 	public AssemblyNumericMapTerminal(String name, Map<Long, Integer> map) {
-		super(name, 0);
+		super(name, 0, null);
 		this.map = map;
 	}
 
 	@Override
 	public Collection<AssemblyParseNumericToken> match(String buffer, int pos,
-			AssemblyGrammar grammar, Map<String, Long> labels) {
+			AssemblyGrammar grammar, AssemblyNumericSymbols symbols) {
 		// NOTE: No label substitution
 		Collection<AssemblyParseNumericToken> toks =
-			new HashSet<>(super.match(buffer, pos, grammar, new HashMap<String, Long>()));
+			new HashSet<>(super.match(buffer, pos, grammar, AssemblyNumericSymbols.EMPTY));
 		Collection<AssemblyParseNumericToken> results = new LinkedHashSet<>();
 		for (AssemblyParseNumericToken tok : toks) {
 			Integer mapped = map.get(tok.getNumericValue());
@@ -58,7 +61,7 @@ public class AssemblyNumericMapTerminal extends AssemblyNumericTerminal {
 	}
 
 	@Override
-	public Collection<String> getSuggestions(String got, Map<String, Long> labels) {
+	public Collection<String> getSuggestions(String got, AssemblyNumericSymbols symbols) {
 		Set<String> result = new HashSet<>();
 		for (long k : map.keySet()) {
 			result.add(Long.toString(k));

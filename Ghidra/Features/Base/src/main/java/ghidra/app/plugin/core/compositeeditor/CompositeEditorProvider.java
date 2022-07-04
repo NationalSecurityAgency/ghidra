@@ -174,10 +174,23 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
+
+		DataTypeComponent componentAt = null;
+		int[] selectedComponentRows = editorModel.getSelectedComponentRows();
+		if (selectedComponentRows.length == 1) {
+			componentAt = editorModel.getComponent(selectedComponentRows[0]);
+		}
+
 		DataTypeManager originalDTM = editorModel.getOriginalDataTypeManager();
 		if (originalDTM instanceof ProgramBasedDataTypeManager) {
 			Program program = ((ProgramBasedDataTypeManager) originalDTM).getProgram();
+			if (componentAt != null) {
+				return new ComponentProgramActionContext(this, program, componentAt);
+			}
 			return new ProgramActionContext(this, program);
+		}
+		else if (componentAt != null && (originalDTM instanceof StandAloneDataTypeManager)) {
+			return new ComponentStandAloneActionContext(this, componentAt);
 		}
 		return new ActionContext(this, null);
 	}

@@ -21,6 +21,11 @@
 
 #include "loadimage.hh"
 
+extern AttributeId ATTRIB_ARCH;		///< Marshaling attribute "arch"
+
+extern ElementId ELEM_BINARYIMAGE;	///< Marshaling element \<binaryimage>
+extern ElementId ELEM_BYTECHUNK;	///< Marshaling element \<bytechunk>
+
 /// \brief Implementation of the LoadImage interface using underlying data stored in an XML format
 ///
 /// The image data is stored in an XML file in a \<binaryimage> file.
@@ -38,7 +43,7 @@ public:
   LoadImageXml(const string &f,const Element *el);	///< Constructor
   void open(const AddrSpaceManager *m);		///< Read XML tags into the containers
   void clear(void);				///< Clear out all the caches
-  void saveXml(ostream &s) const;		///< Save the image back out to an XML stream
+  void encode(Encoder &encoder) const;		///< Encode the image to a stream
   virtual ~LoadImageXml(void) { clear(); }
   virtual void loadFill(uint1 *ptr,int4 size,const Address &addr);
   virtual void openSymbols(void) const;

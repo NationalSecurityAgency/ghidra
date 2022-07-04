@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -34,8 +34,6 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Represents a dysymtab_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
  */
 public class DynamicSymbolTableCommand extends LoadCommand {
 
@@ -65,84 +63,76 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 	private List<RelocationInfo> externalRelocations = new ArrayList<RelocationInfo>();
 	private List<RelocationInfo> localRelocations = new ArrayList<RelocationInfo>();
 
-	static DynamicSymbolTableCommand createDynamicSymbolTableCommand(
-			FactoryBundledWithBinaryReader reader, MachHeader header) throws IOException {
-		DynamicSymbolTableCommand command =
-			(DynamicSymbolTableCommand) reader.getFactory().create(DynamicSymbolTableCommand.class);
-		command.initDynamicSymbolTableCommand(reader, header);
-		return command;
-	}
-
 	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
+	 * Creates and parses a new {@link DynamicSymbolTableCommand}
+	 * 
+	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
+	 *   command
+	 * @param dataReader A {@link BinaryReader reader} that can read the data that the load command
+	 *   references.  Note that this might be in a different underlying provider.
+	 * @param header The {@link MachHeader header} associated with this load command
+	 * @throws IOException if an IO-related error occurs while parsing
 	 */
-	public DynamicSymbolTableCommand() {
-	}
-
-	private void initDynamicSymbolTableCommand(FactoryBundledWithBinaryReader reader,
+	DynamicSymbolTableCommand(BinaryReader loadCommandReader, BinaryReader dataReader,
 			MachHeader header) throws IOException {
-		initLoadCommand(reader);
+		super(loadCommandReader);
 
-		ilocalsym = reader.readNextInt();
-		nlocalsym = reader.readNextInt();
-		iextdefsym = reader.readNextInt();
-		nextdefsym = reader.readNextInt();
-		iundefsym = reader.readNextInt();
-		nundefsym = reader.readNextInt();
-		tocoff = reader.readNextInt();
-		ntoc = reader.readNextInt();
-		modtaboff = reader.readNextInt();
-		nmodtab = reader.readNextInt();
-		extrefsymoff = reader.readNextInt();
-		nextrefsyms = reader.readNextInt();
-		indirectsymoff = reader.readNextInt();
-		nindirectsyms = reader.readNextInt();
-		extreloff = reader.readNextInt();
-		nextrel = reader.readNextInt();
-		locreloff = reader.readNextInt();
-		nlocrel = reader.readNextInt();
-
-		long index = reader.getPointerIndex();
+		ilocalsym = loadCommandReader.readNextInt();
+		nlocalsym = loadCommandReader.readNextInt();
+		iextdefsym = loadCommandReader.readNextInt();
+		nextdefsym = loadCommandReader.readNextInt();
+		iundefsym = loadCommandReader.readNextInt();
+		nundefsym = loadCommandReader.readNextInt();
+		tocoff = loadCommandReader.readNextInt();
+		ntoc = loadCommandReader.readNextInt();
+		modtaboff = loadCommandReader.readNextInt();
+		nmodtab = loadCommandReader.readNextInt();
+		extrefsymoff = loadCommandReader.readNextInt();
+		nextrefsyms = loadCommandReader.readNextInt();
+		indirectsymoff = loadCommandReader.readNextInt();
+		nindirectsyms = loadCommandReader.readNextInt();
+		extreloff = loadCommandReader.readNextInt();
+		nextrel = loadCommandReader.readNextInt();
+		locreloff = loadCommandReader.readNextInt();
+		nlocrel = loadCommandReader.readNextInt();
 
 		if (tocoff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + tocoff);
+			dataReader.setPointerIndex(header.getStartIndex() + tocoff);
 			for (int i = 0; i < ntoc; ++i) {
-				tocList.add(TableOfContents.createTableOfContents(reader));
+				tocList.add(new TableOfContents(dataReader));
 			}
 		}
 		if (modtaboff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + modtaboff);
+			dataReader.setPointerIndex(header.getStartIndex() + modtaboff);
 			for (int i = 0; i < nmodtab; ++i) {
-				moduleList.add(DynamicLibraryModule.createDynamicLibraryModule(reader, header));
+				moduleList.add(new DynamicLibraryModule(dataReader, header));
 			}
 		}
 		if (extrefsymoff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + extrefsymoff);
+			dataReader.setPointerIndex(header.getStartIndex() + extrefsymoff);
 			for (int i = 0; i < nextrefsyms; ++i) {
-				referencedList.add(DynamicLibraryReference.createDynamicLibraryReference(reader));
+				referencedList.add(new DynamicLibraryReference(dataReader));
 			}
 		}
 		if (indirectsymoff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + indirectsymoff);
+			dataReader.setPointerIndex(header.getStartIndex() + indirectsymoff);
 			indirectSymbols = new int[nindirectsyms];
 			for (int i = 0; i < nindirectsyms; ++i) {
-				indirectSymbols[i] = reader.readNextInt();
+				indirectSymbols[i] = dataReader.readNextInt();
 			}
 		}
 		if (extreloff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + extreloff);
+			dataReader.setPointerIndex(header.getStartIndex() + extreloff);
 			for (int i = 0; i < nextrel; ++i) {
-				externalRelocations.add(RelocationInfo.createRelocationInfo(reader));
+				externalRelocations.add(new RelocationInfo(dataReader));
 			}
 		}
 		if (locreloff > 0) {
-			reader.setPointerIndex(header.getStartIndex() + locreloff);
+			dataReader.setPointerIndex(header.getStartIndex() + locreloff);
 			for (int i = 0; i < nlocrel; ++i) {
-				localRelocations.add(RelocationInfo.createRelocationInfo(reader));
+				localRelocations.add(new RelocationInfo(dataReader));
 			}
 		}
-
-		reader.setPointerIndex(index);
 	}
 
 	/**

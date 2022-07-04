@@ -642,7 +642,7 @@ public class SleighDebugLogger {
 				String partialMatch = childMatchValue.hasValue() ? "" : "*";
 				String matchStr = match.equals(actual) ? " Match"
 						: (" Failed (=0x" + Long.toHexString(actual.longValue()) + ")");
-				int msb = baseRegSize - reg.getLeastSignificatBitInBaseRegister() - 1;
+				int msb = baseRegSize - reg.getLeastSignificantBitInBaseRegister() - 1;
 				int lsb = msb - reg.getBitLength() + 1;
 				append(partialMatch + reg.getName() + "(" + lsb + "," + msb + ") == 0x" +
 					Long.toHexString(match.longValue()) + matchStr);
@@ -685,7 +685,7 @@ public class SleighDebugLogger {
 			RegisterValue childActualValue = actualValue.getRegisterValue(reg);
 			if (childActualValue.hasAnyValue()) {
 				BigInteger actual = childActualValue.getUnsignedValueIgnoreMask();
-				int msb = baseRegSize - reg.getLeastSignificatBitInBaseRegister() - 1;
+				int msb = baseRegSize - reg.getLeastSignificantBitInBaseRegister() - 1;
 				int lsb = msb - reg.getBitLength() + 1;
 				append("Set " + reg.getName() + "(" + lsb + "," + msb + ") = 0x" +
 					Long.toHexString(actual.longValue()) + "\n");
@@ -737,7 +737,7 @@ public class SleighDebugLogger {
 			RegisterValue childActualValue = actualValue.getRegisterValue(reg);
 			if (childActualValue.hasAnyValue()) {
 				BigInteger actual = childActualValue.getUnsignedValueIgnoreMask();
-				int msb = baseRegSize - reg.getLeastSignificatBitInBaseRegister() - 1;
+				int msb = baseRegSize - reg.getLeastSignificantBitInBaseRegister() - 1;
 				int lsb = msb - reg.getBitLength() + 1;
 
 				append(msg + reg.getName() + "(" + lsb + "," + msb + ") = 0x" +

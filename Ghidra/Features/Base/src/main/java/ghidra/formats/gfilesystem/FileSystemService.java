@@ -88,7 +88,7 @@ public class FileSystemService {
 	 *     null,
 	 *     "the_derived_file",
 	 *     -1,
-	 *     () -> new MySpecialtyInputstream(),
+	 *     () -&gt; new MySpecialtyInputstream(),
 	 *     monitor);</pre>
 	 * <p>
 	 * See {@link #produceDerivedStream()}.   
@@ -122,7 +122,7 @@ public class FileSystemService {
 	 *     null,
 	 *     "the_derived_file",
 	 *     -1,
-	 *     os -> FileUtilities.copyStream(my_input_stream, os),
+	 *     os -&gt; FileUtilities.copyStream(my_input_stream, os),
 	 *     monitor);</pre>
 	 * <p>
 	 * See {@link #push(OutputStream)}.   

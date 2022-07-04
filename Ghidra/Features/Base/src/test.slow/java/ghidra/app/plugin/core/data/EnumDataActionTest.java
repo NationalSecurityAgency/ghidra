@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.data;
 import org.junit.Before;
 import org.junit.Test;
 
+import docking.action.DockingActionIf;
 import ghidra.program.model.data.EnumDataType;
 
 public class EnumDataActionTest extends AbstractDataActionTest {
@@ -48,11 +49,11 @@ public class EnumDataActionTest extends AbstractDataActionTest {
 
 	@Test
 	public void testAllEnumDataSettings() throws Exception {
-		String actionName = enumDataAction.getName();
-		manipulateAllSettings(false, true, false, actionName);
-		manipulateAllSettings(true, true, true, actionName);
-		manipulateAllSettings(false, false, false, actionName);
-		manipulateAllSettings(true, false, false, actionName);
+		DockingActionIf action = getAction(enumDataAction.getName());
+		manipulateAllSettings(false, true, false, action);
+		manipulateAllSettings(true, true, true, action);
+		manipulateAllSettings(false, false, false, action);
+		manipulateAllSettings(true, false, false, action);
 	}
 
 	class TestEnumDataAction extends DataAction {

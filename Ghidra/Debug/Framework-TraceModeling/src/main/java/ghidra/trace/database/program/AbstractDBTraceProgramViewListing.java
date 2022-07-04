@@ -37,16 +37,17 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.model.util.PropertyMap;
 import ghidra.trace.database.DBTrace;
+import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.listing.UndefinedDBTraceData;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.symbol.DBTraceFunctionSymbol;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
-import ghidra.trace.model.map.TracePropertyMap;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewListing;
+import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.trace.model.symbol.TraceFunctionSymbol;
 import ghidra.trace.util.*;
 import ghidra.util.*;
@@ -77,6 +78,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	protected final DBTraceProgramView program;
 	protected final TraceCodeOperations codeOperations;
+	protected final InternalTracePlatform platform;
 
 	protected final DBTraceProgramViewRootModule rootModule;
 	protected final Map<TraceMemoryRegion, DBTraceProgramViewFragment> fragmentsByRegion =
@@ -94,6 +96,8 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			TraceCodeOperations codeOperations) {
 		this.program = program;
 		this.codeOperations = codeOperations;
+		// TODO: Guest platform views?
+		this.platform = program.trace.getPlatformManager().getHostPlatform();
 
 		this.rootModule = new DBTraceProgramViewRootModule(this);
 	}
@@ -358,7 +362,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 		// TODO: Cover this in testing
 		TracePropertyMap<?> map =
-			program.trace.getAddressPropertyManager().getPropertyMap(property);
+			program.trace.getInternalAddressPropertyManager().getPropertyMap(property);
 		if (map == null) {
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
 		}
@@ -380,7 +384,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 		// TODO: Cover this in testing
 		TracePropertyMap<?> map =
-			program.trace.getAddressPropertyManager().getPropertyMap(property);
+			program.trace.getInternalAddressPropertyManager().getPropertyMap(property);
 		if (map == null) {
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
 		}
@@ -403,7 +407,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 		// TODO: Cover this in testing
 		TracePropertyMap<?> map =
-			program.trace.getAddressPropertyManager().getPropertyMap(property);
+			program.trace.getInternalAddressPropertyManager().getPropertyMap(property);
 		if (map == null) {
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
 		}
@@ -725,27 +729,23 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	public Instruction createInstruction(Address addr, InstructionPrototype prototype,
 			MemBuffer memBuf, ProcessorContextView context) throws CodeUnitInsertionException {
 		// TODO: Why memBuf? Can it vary from program memory?
-		try (LockHold hold = program.trace.lockWrite()) {
-			return codeOperations.instructions()
-					.create(Range.atLeast(program.snap), addr,
-						prototype, context);
-		}
+		return codeOperations.instructions()
+				.create(Range.atLeast(program.snap), addr, platform, prototype, context);
 	}
 
 	@Override
 	public AddressSetView addInstructions(InstructionSet instructionSet, boolean overwrite)
 			throws CodeUnitInsertionException {
 		return codeOperations.instructions()
-				.addInstructionSet(Range.atLeast(program.snap),
-					instructionSet, overwrite);
+				.addInstructionSet(Range.atLeast(program.snap), platform, instructionSet,
+					overwrite);
 	}
 
 	@Override
 	public Data createData(Address addr, DataType dataType, int length)
 			throws CodeUnitInsertionException {
 		return codeOperations.definedData()
-				.create(Range.atLeast(program.snap), addr, dataType,
-					length);
+				.create(Range.atLeast(program.snap), addr, dataType, length);
 	}
 
 	@Override

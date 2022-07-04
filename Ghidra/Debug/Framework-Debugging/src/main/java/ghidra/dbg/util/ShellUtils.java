@@ -80,6 +80,7 @@ public class ShellUtils {
 						default:
 							curArg.append(c);
 					}
+					break;
 				case SQUOTE_ESCAPE:
 					curArg.append(c);
 					state = State.SQUOTE;

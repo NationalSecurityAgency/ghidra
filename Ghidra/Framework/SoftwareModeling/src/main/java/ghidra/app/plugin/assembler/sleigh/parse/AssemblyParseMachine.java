@@ -24,16 +24,18 @@ import ghidra.app.plugin.assembler.sleigh.grammars.AssemblySentential.TruncatedW
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseActionGotoTable.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.*;
 import ghidra.app.plugin.assembler.sleigh.tree.*;
+import ghidra.app.plugin.assembler.sleigh.util.AsmUtil;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
-import ghidra.app.plugin.assembler.sleigh.util.SleighUtil;
 
 /**
  * A class that implements the LALR(1) parsing algorithm
  * 
- * Instances of this class store a parse state. In order to work correctly, the class must be
- * given a properly-constructed Action/Goto table.
+ * <p>
+ * Instances of this class store a parse state. In order to work correctly, the class must be given
+ * a properly-constructed Action/Goto table.
  * 
+ * <p>
  * This implementation is somewhat unconventional. First, instead of strictly tokenizing and then
  * parsing, each terminal is given the opportunity to match a token in the input. If none match, it
  * results in a syntax error (equivalent to the token type having an empty cell in the classical
@@ -62,8 +64,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 	// The last token we consumed (i.e., last terminal pushed to the stack)
 	protected AssemblyParseToken lastTok;
 
-	// A set of labels that identify valid tokens for some terminals
-	protected final Map<String, Long> labels; // used for label -> number substitution
+	protected final AssemblyNumericSymbols symbols; // used for symbol -> number substitution
 
 	protected boolean accepted = false; // the machine is in the accepted state
 	protected int error = ERROR_NONE; // non-zero if the machine is in an error state
@@ -74,24 +75,25 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 
 	static int nextMachineId = 0;
 
-	static final DbgTimer dbg = DbgTimer.INACTIVE;
+	static final DbgTimer DBG = DbgTimer.INACTIVE;
 
 	/**
 	 * Construct a new parse state
+	 * 
 	 * @param parser the parser driving this machine
 	 * @param input the full input line
 	 * @param pos the position in the line identifying the next characters to parse
 	 * @param labels a map of valid tokens to number for numeric terminals
 	 */
 	public AssemblyParseMachine(AssemblyParser parser, String input, int pos,
-			AssemblyParseToken lastTok, Map<String, Long> labels) {
+			AssemblyParseToken lastTok, AssemblyNumericSymbols symbols) {
 		this.parser = parser;
 		this.stack.push(0);
 		this.buffer = input;
 		this.pos = pos;
 		this.lastTok = lastTok;
 		this.id = nextMachineId++;
-		this.labels = labels;
+		this.symbols = symbols;
 	}
 
 	/* ********************************************************************************************
@@ -155,12 +157,12 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 			return result;
 		}
 
-		result = SleighUtil.compareInOrder(this.stack, that.stack);
+		result = AsmUtil.compareInOrder(this.stack, that.stack);
 		if (result != 0) {
 			return result;
 		}
 
-		result = SleighUtil.compareInOrder(this.output, that.output);
+		result = AsmUtil.compareInOrder(this.output, that.output);
 		if (result != 0) {
 			return result;
 		}
@@ -182,11 +184,13 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 	/**
 	 * Duplicate this machine state
 	 * 
+	 * <p>
 	 * This is used extensively when branching
+	 * 
 	 * @return the duplicate
 	 */
 	public AssemblyParseMachine copy() {
-		AssemblyParseMachine c = new AssemblyParseMachine(parser, buffer, pos, lastTok, labels);
+		AssemblyParseMachine c = new AssemblyParseMachine(parser, buffer, pos, lastTok, symbols);
 		// leave labels copied by reference
 
 		c.output.clear();
@@ -201,25 +205,25 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 		c.accepted = accepted;
 		c.error = error;
 
-		dbg.println("Copied " + id + " to " + c.id);
+		DBG.println("Copied " + id + " to " + c.id);
 		return c;
 	}
 
 	/**
 	 * Perform a given action and continue parsing, exhausting all results after the action
+	 * 
+	 * <p>
+	 * The visited list prevents infinite loops or stack overflows resulting from consuming epsilon
+	 * and going to the same state. Such loops may involve many states.
+	 * 
 	 * @param a the action
 	 * @param tok the token given by the terminal (column) of the entry containing this action
 	 * @param results a place to store all the parsing results (each must be accept or error state)
 	 * @param visited a collection of machine states already visited
-	 * 
-	 * The visited "collection" prevents infinite loops or stack overflows resulting from
-	 * "consuming" epsilon and going to the same state. Such loops may involve many states. It is
-	 * also defined as a map here for debugging purposes, so that when a loop is detected, we can
-	 * print the ID of the first visit.
 	 */
 	protected void doAction(Action a, AssemblyParseToken tok, Set<AssemblyParseMachine> results,
 			Deque<AssemblyParseMachine> visited) {
-		try (DbgCtx dc = dbg.start("Action: " + a)) {
+		try (DbgCtx dc = DBG.start("Action: " + a)) {
 			if (a instanceof ShiftAction) {
 				AssemblyParseMachine m = copy();
 				m.stack.push(((ShiftAction) a).newStateNum);
@@ -233,15 +237,15 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 				AssemblyParseBranch branch = new AssemblyParseBranch(parser.grammar, prod);
 				AssemblyParseMachine m = copy();
 				m.output.add(prod.getIndex());
-				dbg.println("Prod: " + prod);
+				DBG.println("Prod: " + prod);
 				for (@SuppressWarnings("unused")
-				AssemblySymbol sym : prod) {
+				AssemblySymbol sym : prod.getRHS()) {
 					m.stack.pop();
 					branch.addChild(m.treeStack.pop());
 				}
 				for (Action aa : m.parser.actions.get(m.stack.peek(), prod.getLHS())) {
 					GotoAction ga = (GotoAction) aa;
-					dbg.println("Goto: " + ga);
+					DBG.println("Goto: " + ga);
 					AssemblyParseMachine n = m.copy();
 					n.stack.push(ga.newStateNum);
 					n.treeStack.push(branch);
@@ -258,6 +262,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 
 	/**
 	 * Consume a given terminal (and corresponding token) and continue parsing
+	 * 
 	 * @param t the terminal
 	 * @param tok the corresponding token
 	 * @param results a place to store all the parsing results
@@ -265,10 +270,10 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 	 */
 	protected void consume(AssemblyTerminal t, AssemblyParseToken tok,
 			Set<AssemblyParseMachine> results, Deque<AssemblyParseMachine> visited) {
-		try (DbgCtx dc = dbg.start("Matched " + t + " " + tok)) {
+		try (DbgCtx dc = DBG.start("Matched " + t + " " + tok)) {
 			Collection<Action> as = parser.actions.get(stack.peek(), t);
 			assert !as.isEmpty();
-			dbg.println("Actions: " + as);
+			DBG.println("Actions: " + as);
 			for (Action a : as) {
 				doAction(a, tok, results, visited);
 			}
@@ -278,7 +283,9 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 	/**
 	 * Look for previous machine states having the same stack and position
 	 * 
+	 * <p>
 	 * This would imply we have gone in a loop without consuming anything. We need to prune.
+	 * 
 	 * @param machine the machine state to check
 	 * @param visited the stack of previous machine states
 	 * @return if there is a loop, the machine state proving it, null otherwise
@@ -307,15 +314,16 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 
 	/**
 	 * Parse (or continue parsing) all possible trees from this machine state
+	 * 
 	 * @param results a place to store all the parsing results
 	 * @param visited a collection of machine states already visited
 	 */
 	protected void exhaust(Set<AssemblyParseMachine> results, Deque<AssemblyParseMachine> visited) {
-		try (DbgCtx dc = dbg.start("Exhausting machine " + id)) {
-			dbg.println("Machine: " + this);
+		try (DbgCtx dc = DBG.start("Exhausting machine " + id)) {
+			DBG.println("Machine: " + this);
 			AssemblyParseMachine loop = findLoop(this, visited);
 			if (loop != null) {
-				dbg.println("Pruned. Loop of " + loop.id);
+				DBG.println("Pruned. Loop of " + loop.id);
 				return;
 			}
 			try (DequePush<?> push = DequePush.push(visited, this)) {
@@ -332,7 +340,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 				}
 				Set<AssemblyTerminal> unmatched = new TreeSet<>(terms);
 				for (AssemblyTerminal t : terms) {
-					for (AssemblyParseToken tok : t.match(buffer, pos, parser.grammar, labels)) {
+					for (AssemblyParseToken tok : t.match(buffer, pos, parser.grammar, symbols)) {
 						unmatched.remove(t);
 						assert buffer.regionMatches(pos, tok.getString(), 0,
 							tok.getString().length());
@@ -350,9 +358,9 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 						newExpected = new TreeSet<>();
 						newExpected.add(AssemblySentential.WHITE_SPACE);
 					}
-					dbg.println("Syntax Error: ");
-					dbg.println("  Expected: " + newExpected);
-					dbg.println("  Got: " + buffer.substring(pos));
+					DBG.println("Syntax Error: ");
+					DBG.println("  Expected: " + newExpected);
+					DBG.println("  Got: " + buffer.substring(pos));
 					m.error = ERROR_SYNTAX;
 					m.got = buffer.substring(pos);
 					m.expected = newExpected;
@@ -365,6 +373,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 
 	/**
 	 * Parse (or continue parsing) all possible trees from this machine state
+	 * 
 	 * @return the set of all possible trees and errors
 	 */
 	public Set<AssemblyParseMachine> exhaust() {
@@ -376,6 +385,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 
 	/**
 	 * If in the accepted state, get the resulting parse tree for this machine
+	 * 
 	 * @return the parse tree
 	 */
 	public AssemblyParseBranch getTree() {

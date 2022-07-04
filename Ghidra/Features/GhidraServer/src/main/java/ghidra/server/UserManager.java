@@ -67,11 +67,10 @@ public class UserManager {
 	private LinkedHashMap<String, UserEntry> userList = new LinkedHashMap<>();
 	private HashMap<X500Principal, UserEntry> dnLookupMap = new HashMap<>();
 	private long lastUserListChange;
-	private boolean userListUpdateInProgress = false;
 
 	/**
 	 * Construct server user manager
-	 * @param repositoryMgr repository manager (used for queued command processing)
+	 * @param repositoryMgr repository manager
 	 * @param enableLocalPasswords if true user passwords will be maintained 
 	 * 			within local 'users' file
 	 * @param defaultPasswordExpirationDays password expiration in days when 
@@ -90,8 +89,8 @@ public class UserManager {
 
 		userFile = new File(repositoryMgr.getRootDir(), USER_PASSWORD_FILE);
 		try {
-			// everything must be constructed before processing commands
-			updateUserList(false);
+			readUserListIfNeeded();
+			clearExpiredPasswords();
 			log.info("User file contains " + userList.size() + " entries");
 		}
 		catch (FileNotFoundException e) {
@@ -145,14 +144,14 @@ public class UserManager {
 	/**
 	 * Get the SSH public key file for the specified user
 	 * if it exists.
-	 * @param user
+	 * @param username user name/SID
 	 * @return SSH public key file or null if key unavailable
 	 */
-	public File getSSHPubKeyFile(String user) {
-		if (!userList.containsKey(user)) {
+	public File getSSHPubKeyFile(String username) {
+		if (!userList.containsKey(username)) {
 			return null;
 		}
-		File f = new File(sshDir, user + SSH_PUBKEY_EXT);
+		File f = new File(sshDir, username + SSH_PUBKEY_EXT);
 		if (f.isFile()) {
 			return f;
 		}
@@ -163,29 +162,31 @@ public class UserManager {
 	 * Add a user.
 	 * @param username user name/SID
 	 * @param passwordHash MD5 hash of initial password or null if explicit password reset required
-	 * @param dn X500 distinguished name for user (may be null)
+	 * @param x500User X500 user name (may be null)
 	 * @throws DuplicateNameException if username already exists
 	 * @throws IOException if IO error occurs
 	 */
-	private synchronized void addUser(String username, char[] passwordHash, X500Principal x500User)
+	private void addUser(String username, char[] passwordHash, X500Principal x500User)
 			throws DuplicateNameException, IOException {
 		if (username == null) {
 			throw new IllegalArgumentException();
 		}
-		updateUserList(true);
-		if (userList.containsKey(username)) {
-			throw new DuplicateNameException("User " + username + " already exists");
+		synchronized (repositoryMgr) {
+			if (userList.containsKey(username)) {
+				throw new DuplicateNameException("User " + username + " already exists");
+			}
+			UserEntry entry = new UserEntry();
+			entry.username = username;
+			entry.passwordHash = passwordHash;
+			entry.passwordTime = (new Date()).getTime();
+			entry.x500User = x500User;
+			userList.put(username, entry);
+			if (x500User != null) {
+				dnLookupMap.put(x500User, entry);
+			}
+			writeUserList();
+			log.info("User '" + username + "' added");
 		}
-		UserEntry entry = new UserEntry();
-		entry.username = username;
-		entry.passwordHash = passwordHash;
-		entry.passwordTime = (new Date()).getTime();
-		entry.x500User = x500User;
-		userList.put(username, entry);
-		if (x500User != null) {
-			dnLookupMap.put(x500User, entry);
-		}
-		writeUserList();
 	}
 
 	/**
@@ -230,15 +231,15 @@ public class UserManager {
 	 * Returns the X500 distinguished name for the specified user.
 	 * @param username user name/SID
 	 * @return X500 distinguished name
-	 * @throws IOException
 	 */
-	public synchronized X500Principal getDistinguishedName(String username) throws IOException {
-		updateUserList(true);
-		UserEntry entry = userList.get(username);
-		if (entry != null) {
-			return entry.x500User;
+	public X500Principal getDistinguishedName(String username) {
+		synchronized (repositoryMgr) {
+			UserEntry entry = userList.get(username);
+			if (entry != null) {
+				return entry.x500User;
+			}
+			return null;
 		}
-		return null;
 	}
 
 	/**
@@ -246,11 +247,11 @@ public class UserManager {
 	 * @param x500User a user's X500 distinguished name
 	 * @return username or null if not found
 	 */
-	public synchronized String getUserByDistinguishedName(X500Principal x500User)
-			throws IOException {
-		updateUserList(true);
-		UserEntry entry = dnLookupMap.get(x500User);
-		return entry != null ? entry.username : null;
+	public String getUserByDistinguishedName(X500Principal x500User) {
+		synchronized (repositoryMgr) {
+			UserEntry entry = dnLookupMap.get(x500User);
+			return entry != null ? entry.username : null;
+		}
 	}
 
 	/**
@@ -258,28 +259,29 @@ public class UserManager {
 	 * @param username user name/SID
 	 * @param x500User X500 distinguished name
 	 * @return true if successful, false if user not found
-	 * @throws IOException
+	 * @throws IOException if error occurs while updating user file
 	 */
-	public synchronized boolean setDistinguishedName(String username, X500Principal x500User)
+	public boolean setDistinguishedName(String username, X500Principal x500User)
 			throws IOException {
-		updateUserList(true);
-		UserEntry oldEntry = userList.remove(username);
-		if (oldEntry != null) {
-			if (oldEntry.x500User != null) {
-				dnLookupMap.remove(oldEntry.x500User);
+		synchronized (repositoryMgr) {
+			UserEntry oldEntry = userList.remove(username);
+			if (oldEntry != null) {
+				if (oldEntry.x500User != null) {
+					dnLookupMap.remove(oldEntry.x500User);
+				}
+				UserEntry entry = new UserEntry();
+				entry.username = username;
+				entry.passwordHash = oldEntry.passwordHash;
+				entry.x500User = x500User;
+				userList.put(username, entry);
+				if (x500User != null) {
+					dnLookupMap.put(x500User, entry);
+				}
+				writeUserList();
+				return true;
 			}
-			UserEntry entry = new UserEntry();
-			entry.username = username;
-			entry.passwordHash = oldEntry.passwordHash;
-			entry.x500User = x500User;
-			userList.put(username, entry);
-			if (x500User != null) {
-				dnLookupMap.put(x500User, entry);
-			}
-			writeUserList();
-			return true;
+			return false;
 		}
-		return false;
 	}
 
 	private void checkValidPasswordHash(char[] saltedPasswordHash) throws IOException {
@@ -332,9 +334,9 @@ public class UserManager {
 	 * @param saltedSHA256PasswordHash 4-character salt followed by 64-hex digit SHA256 password hash for new password
 	 * @param isTemporary if true password will be set to expire
 	 * @return true if successful, false if user not found
-	 * @throws IOException
+	 * @throws IOException if error occurs while updating user file
 	 */
-	public synchronized boolean setPassword(String username, char[] saltedSHA256PasswordHash,
+	public boolean setPassword(String username, char[] saltedSHA256PasswordHash,
 			boolean isTemporary) throws IOException {
 		if (!enableLocalPasswords) {
 			throw new IOException("Local passwords are not used");
@@ -342,31 +344,36 @@ public class UserManager {
 
 		checkValidPasswordHash(saltedSHA256PasswordHash);
 
-		updateUserList(true);
-		UserEntry oldEntry = userList.remove(username);
-		if (oldEntry != null) {
-			UserEntry entry = new UserEntry();
-			entry.username = username;
-			entry.passwordHash = saltedSHA256PasswordHash;
-			entry.passwordTime = isTemporary ? (new Date()).getTime() : NO_EXPIRATION;
-			entry.x500User = oldEntry.x500User;
-			userList.put(username, entry);
-			if (entry.x500User != null) {
-				dnLookupMap.put(entry.x500User, entry);
+		synchronized (repositoryMgr) {
+			UserEntry oldEntry = userList.remove(username);
+			if (oldEntry != null) {
+				UserEntry entry = new UserEntry();
+				entry.username = username;
+				entry.passwordHash = saltedSHA256PasswordHash;
+				entry.passwordTime = isTemporary ? (new Date()).getTime() : NO_EXPIRATION;
+				entry.x500User = oldEntry.x500User;
+				userList.put(username, entry);
+				if (entry.x500User != null) {
+					dnLookupMap.put(entry.x500User, entry);
+				}
+				writeUserList();
+				return true;
 			}
-			writeUserList();
-			return true;
+			return false;
 		}
-		return false;
 	}
 
 	/**
 	 * Returns true if local passwords are in use and can be changed by the user.
-	 * @see #setPassword(String, char[])
+	 * See {@link #setPassword(String, char[], boolean)}.
+	 * @param username user name/SID
+	 * @return true if password change permitted, else false
 	 */
 	public boolean canSetPassword(String username) {
-		UserEntry userEntry = userList.get(username);
-		return (enableLocalPasswords && userEntry != null && userEntry.passwordHash != null);
+		synchronized (repositoryMgr) {
+			UserEntry userEntry = userList.get(username);
+			return (enableLocalPasswords && userEntry != null && userEntry.passwordHash != null);
+		}
 	}
 
 	/**
@@ -375,18 +382,17 @@ public class UserManager {
 	 * @param username user name
 	 * @return time until expiration or -1 if it will not expire
 	 */
-	public long getPasswordExpiration(String username) throws IOException {
-		updateUserList(true);
+	public long getPasswordExpiration(String username) {
+		synchronized (repositoryMgr) {
+			UserEntry userEntry = userList.get(username);
 
-		UserEntry userEntry = userList.get(username);
-
-		// indicate immediate expiration for users with short hash (non salted SHA-256)
-		if (userEntry != null && userEntry.passwordHash != null &&
-			userEntry.passwordHash.length != HashUtilities.SHA256_SALTED_HASH_LENGTH) {
-			return 0;
+			// indicate immediate expiration for users with short hash (non salted SHA-256)
+			if (userEntry != null && userEntry.passwordHash != null &&
+				userEntry.passwordHash.length != HashUtilities.SHA256_SALTED_HASH_LENGTH) {
+				return 0;
+			}
+			return getPasswordExpiration(userEntry);
 		}
-
-		return getPasswordExpiration(userEntry);
 	}
 
 	/**
@@ -415,10 +421,10 @@ public class UserManager {
 
 	/**
 	 * Reset the local password to the 'changeme' for the specified user.
-	 * @param username
+	 * @param username user name/SID
 	 * @param saltedPasswordHash optional user password hash (may be null)
-	 * @return true if password updated successfully.
-	 * @throws IOException
+	 * @return true if password updated successfully, else false if local passwords are not used.
+	 * @throws IOException if error occurs while updating user file
 	 */
 	public boolean resetPassword(String username, char[] saltedPasswordHash) throws IOException {
 		if (!enableLocalPasswords) {
@@ -435,62 +441,46 @@ public class UserManager {
 	/**
 	 * Remove the specified user from the server access list
 	 * @param username user name/SID
-	 * @throws IOException
+	 * @return true if existing user removed, else false if not found
+	 * @throws IOException if error occurs while updating user file
 	 */
-	public synchronized void removeUser(String username) throws IOException {
-		updateUserList(true);
-		UserEntry oldEntry = userList.remove(username);
-		if (oldEntry != null) {
-			if (oldEntry.x500User != null) {
-				dnLookupMap.remove(oldEntry.x500User);
+	public boolean removeUser(String username) throws IOException {
+		synchronized (repositoryMgr) {
+			UserEntry oldEntry = userList.remove(username);
+			if (oldEntry != null) {
+				if (oldEntry.x500User != null) {
+					dnLookupMap.remove(oldEntry.x500User);
+				}
+				writeUserList();
+				repositoryMgr.userRemoved(username);
+				log.info("User removed from server: " + username);
+				return true;
 			}
-			writeUserList();
+			return false;
 		}
 	}
 
 	/**
 	 * Get list of all users known to server.
 	 * @return list of known users
-	 * @throws IOException
 	 */
-	public synchronized String[] getUsers() throws IOException {
-		updateUserList(true);
-		String[] names = new String[userList.size()];
-		Iterator<String> iter = userList.keySet().iterator();
-		int i = 0;
-		while (iter.hasNext()) {
-			names[i++] = iter.next();
-		}
-		return names;
-	}
-
-	/**
-	 * Refresh the server's user list and process any pending UserAdmin commands.
-	 * @param processCmds TODO
-	 * @throws IOException
-	 */
-	synchronized void updateUserList(boolean processCmds) throws IOException {
-		if (userListUpdateInProgress) {
-			return;
-		}
-		userListUpdateInProgress = true;
-		try {
-			readUserListIfNeeded();
-			clearExpiredPasswords();
-			if (processCmds) {
-				UserAdmin.processCommands(repositoryMgr);
+	public String[] getUsers() {
+		synchronized (repositoryMgr) {
+			String[] names = new String[userList.size()];
+			Iterator<String> iter = userList.keySet().iterator();
+			int i = 0;
+			while (iter.hasNext()) {
+				names[i++] = iter.next();
 			}
-		}
-		finally {
-			userListUpdateInProgress = false;
+			return names;
 		}
 	}
 
 	/**
 	 * Clear all local user passwords which have expired.
-	 * @throws IOException
+	 * @throws IOException if error occurs while updating user file
 	 */
-	private void clearExpiredPasswords() throws IOException {
+	void clearExpiredPasswords() throws IOException {
 		if (defaultPasswordExpirationMS == 0) {
 			return;
 		}
@@ -498,7 +488,8 @@ public class UserManager {
 		Iterator<UserEntry> it = userList.values().iterator();
 		while (it.hasNext()) {
 			UserEntry entry = it.next();
-			if (enableLocalPasswords && getPasswordExpiration(entry) == 0) {
+			if (entry.passwordHash != null && enableLocalPasswords &&
+				getPasswordExpiration(entry) == 0) {
 				entry.passwordHash = null;
 				entry.passwordTime = 0;
 				dataChanged = true;
@@ -513,9 +504,9 @@ public class UserManager {
 	/**
 	 * Read user data from file if the timestamp on the file has changed.
 	 * 
-	 * @throws IOException
+	 * @throws IOException if error occurs while updating user file
 	 */
-	private void readUserListIfNeeded() throws IOException {
+	void readUserListIfNeeded() throws IOException {
 
 		long lastMod = userFile.lastModified();
 		if (lastUserListChange == lastMod) {
@@ -627,7 +618,7 @@ public class UserManager {
 
 	/**
 	 * Write user data to file.
-	 * @throws IOException
+	 * @throws IOException if error occurs while updating user file
 	 */
 	private void writeUserList() throws IOException {
 		try (BufferedWriter bw = new BufferedWriter(new FileWriter(userFile))) {
@@ -660,16 +651,12 @@ public class UserManager {
 	/**
 	 * Returns true if the specified user is known to server.
 	 * @param username user name/SID
-	 * @return
+	 * @return true if user is known to server
 	 */
-	public synchronized boolean isValidUser(String username) {
-		try {
-			updateUserList(true);
+	public boolean isValidUser(String username) {
+		synchronized (repositoryMgr) {
+			return userList.containsKey(username);
 		}
-		catch (IOException e) {
-			// ignore
-		}
-		return userList.containsKey(username);
 	}
 
 	/**
@@ -677,50 +664,54 @@ public class UserManager {
 	 * password set for the specified user.
 	 * @param username user name/SID
 	 * @param password password data
-	 * @throws IOException
+	 * @throws IOException if error occurs while updating user file
 	 * @throws FailedLoginException if authentication fails
 	 */
-	public synchronized void authenticateUser(String username, char[] password)
+	public void authenticateUser(String username, char[] password)
 			throws IOException, FailedLoginException {
 		if (username == null || password == null) {
 			throw new FailedLoginException("Invalid authentication data");
 		}
-		updateUserList(true);
-		UserEntry entry = userList.get(username);
-		if (entry == null) {
-			throw new FailedLoginException("Unknown user: " + username);
-		}
-
-		if (entry.passwordHash == null ||
-			entry.passwordHash.length < HashUtilities.MD5_UNSALTED_HASH_LENGTH) {
-			throw new FailedLoginException("User password not set, must be reset");
-		}
-
-		// Support deprecated unsalted hash
-		if (entry.passwordHash.length == HashUtilities.MD5_UNSALTED_HASH_LENGTH && Arrays.equals(
-			HashUtilities.getHash(HashUtilities.MD5_ALGORITHM, password), entry.passwordHash)) {
-			return;
-		}
-
-		char[] salt = new char[HashUtilities.SALT_LENGTH];
-		System.arraycopy(entry.passwordHash, 0, salt, 0, HashUtilities.SALT_LENGTH);
-
-		if (entry.passwordHash.length == HashUtilities.MD5_SALTED_HASH_LENGTH) {
-			if (!Arrays.equals(
-				HashUtilities.getSaltedHash(HashUtilities.MD5_ALGORITHM, salt, password),
-				entry.passwordHash)) {
-				throw new FailedLoginException("Incorrect password");
+		synchronized (repositoryMgr) {
+			clearExpiredPasswords();
+			UserEntry entry = userList.get(username);
+			if (entry == null) {
+				throw new FailedLoginException("Unknown user: " + username);
 			}
-		}
-		else if (entry.passwordHash.length == HashUtilities.SHA256_SALTED_HASH_LENGTH) {
-			if (!Arrays.equals(
-				HashUtilities.getSaltedHash(HashUtilities.SHA256_ALGORITHM, salt, password),
-				entry.passwordHash)) {
-				throw new FailedLoginException("Incorrect password");
+
+			if (entry.passwordHash == null ||
+				entry.passwordHash.length < HashUtilities.MD5_UNSALTED_HASH_LENGTH) {
+				throw new FailedLoginException("User password not set, must be reset");
 			}
-		}
-		else {
-			throw new FailedLoginException("User password not set, must be reset");
+
+			// Support deprecated unsalted hash
+			if (entry.passwordHash.length == HashUtilities.MD5_UNSALTED_HASH_LENGTH &&
+				Arrays.equals(
+					HashUtilities.getHash(HashUtilities.MD5_ALGORITHM, password),
+					entry.passwordHash)) {
+				return;
+			}
+
+			char[] salt = new char[HashUtilities.SALT_LENGTH];
+			System.arraycopy(entry.passwordHash, 0, salt, 0, HashUtilities.SALT_LENGTH);
+
+			if (entry.passwordHash.length == HashUtilities.MD5_SALTED_HASH_LENGTH) {
+				if (!Arrays.equals(
+					HashUtilities.getSaltedHash(HashUtilities.MD5_ALGORITHM, salt, password),
+					entry.passwordHash)) {
+					throw new FailedLoginException("Incorrect password");
+				}
+			}
+			else if (entry.passwordHash.length == HashUtilities.SHA256_SALTED_HASH_LENGTH) {
+				if (!Arrays.equals(
+					HashUtilities.getSaltedHash(HashUtilities.SHA256_ALGORITHM, salt, password),
+					entry.passwordHash)) {
+					throw new FailedLoginException("Incorrect password");
+				}
+			}
+			else {
+				throw new FailedLoginException("User password not set, must be reset");
+			}
 		}
 	}
 
@@ -760,7 +751,8 @@ public class UserManager {
 	/*
 	 * Regex: matches if the entire string is alpha, digit, ".", "-", "_", fwd or back slash.
 	 */
-	private static final Pattern VALID_USERNAME_REGEX = Pattern.compile("[a-zA-Z0-9.\\-_/\\\\]+");
+	private static final Pattern VALID_USERNAME_REGEX =
+		Pattern.compile("[a-zA-Z][a-zA-Z0-9.\\-_/\\\\]*");
 
 	/**
 	 * Ensures a name only contains valid characters and meets length limitations.

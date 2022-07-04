@@ -22,6 +22,7 @@ import com.google.common.collect.Range;
 
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetObject;
+import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.target.TraceObjectInterface;
 import ghidra.trace.model.target.annot.TraceObjectInfo;
 
@@ -34,6 +35,10 @@ import ghidra.trace.model.target.annot.TraceObjectInfo;
 	})
 public interface TraceObjectMemoryRegion extends TraceMemoryRegion, TraceObjectInterface {
 	String KEY_VOLATILE = "_volatile";
+
+	void setName(Range<Long> lifespan, String name);
+
+	void setRange(Range<Long> lifespan, AddressRange range);
 
 	void setFlags(Range<Long> lifespan, Collection<TraceMemoryFlag> flags);
 

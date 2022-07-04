@@ -72,7 +72,6 @@ public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		env.release(program);
 		env.dispose();
 		cleanUpStoredPreferences();
 	}
@@ -258,6 +257,7 @@ public class AnalysisOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
 	private void createConfig(String name, boolean stackOn, boolean refOn, boolean stringOn) {
 		setAnalyzerEnabled("Stack", stackOn);
 		setAnalyzerEnabled("Reference", refOn);

@@ -22,6 +22,7 @@ import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseBranch;
 /**
  * A result of parsing a sentence
  * 
+ * <p>
  * If the sentence was accepted, this yields a parse tree. If not, this describes the error and
  * provides suggestions to correct the error.
  */
@@ -29,6 +30,7 @@ public abstract class AssemblyParseResult implements Comparable<AssemblyParseRes
 
 	/**
 	 * Construct a successful parse result
+	 * 
 	 * @param tree the tree output by the parser
 	 */
 	public static AssemblyParseAcceptResult accept(AssemblyParseBranch tree) {
@@ -37,6 +39,7 @@ public abstract class AssemblyParseResult implements Comparable<AssemblyParseRes
 
 	/**
 	 * Construct an error parse result
+	 * 
 	 * @param got the input buffer when the error occurred
 	 * @param suggestions a subset of strings that would have allowed parsing to proceed
 	 */
@@ -46,6 +49,7 @@ public abstract class AssemblyParseResult implements Comparable<AssemblyParseRes
 
 	/**
 	 * Check if the parse result is successful or an error
+	 * 
 	 * @return true if the result describes an error
 	 */
 	public abstract boolean isError();

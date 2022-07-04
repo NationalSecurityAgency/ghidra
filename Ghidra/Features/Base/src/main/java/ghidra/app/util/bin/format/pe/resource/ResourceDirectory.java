@@ -15,20 +15,17 @@
  */
 package ghidra.app.util.bin.format.pe.resource;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
-import ghidra.app.util.bin.format.pe.NTHeader;
-import ghidra.app.util.bin.format.pe.ResourceDataDirectory;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.pe.NTHeader;
+import ghidra.app.util.bin.format.pe.ResourceDataDirectory;
+import ghidra.program.model.data.*;
+import ghidra.util.Msg;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * <pre>
@@ -54,7 +51,7 @@ public class ResourceDirectory implements StructConverter {
     private short  numberOfIdEntries;
     private ArrayList<ResourceDirectoryEntry> entries = new ArrayList<ResourceDirectoryEntry>();
 
-    public ResourceDirectory(FactoryBundledWithBinaryReader reader, 
+	public ResourceDirectory(BinaryReader reader,
     						int index, 
     						int resourceBase, 
     						boolean isFirstLevel,

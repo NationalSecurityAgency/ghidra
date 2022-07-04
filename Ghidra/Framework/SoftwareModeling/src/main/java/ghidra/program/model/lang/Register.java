@@ -366,7 +366,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 		return this;
 	}
 
-	public int getLeastSignificatBitInBaseRegister() {
+	public int getLeastSignificantBitInBaseRegister() {
 		return leastSigBitInBaseRegister;
 	}
 

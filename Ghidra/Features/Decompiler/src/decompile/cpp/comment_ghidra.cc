@@ -28,7 +28,6 @@ CommentDatabaseGhidra::CommentDatabaseGhidra(ArchitectureGhidra *g)
 void CommentDatabaseGhidra::fillCache(const Address &fad) const
 
 {
-  Document *doc;
   uint4 commentfilter;
 
   if (cachefilled) return;	// Already queried ghidra
@@ -41,10 +40,9 @@ void CommentDatabaseGhidra::fillCache(const Address &fad) const
   iter = cache.beginComment(fad);
   iterend = cache.endComment(fad);
 
-  doc = ghidra->getComments(fad,commentfilter);
-  if (doc != (Document *)0) {
-    cache.restoreXml(doc->getRoot(),ghidra);
-    delete doc;
+  XmlDecode decoder(ghidra);
+  if (ghidra->getComments(fad,commentfilter,decoder)) {
+    cache.decode(decoder);
   }
 }
 

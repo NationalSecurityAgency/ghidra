@@ -20,8 +20,10 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.Icon;
 
+import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import generic.util.image.ImageUtils;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.NavigatableContextAction;
@@ -58,14 +60,14 @@ import resources.ResourceManager;
 //@formatter:on
 public class NextPrevCodeUnitPlugin extends Plugin {
 	private DockingAction toggleDirectionAction;
+	private InvertStateAction invertStateAction;
 	private AbstractNextPreviousAction instructionAction;
 	private AbstractNextPreviousAction dataAction;
 	private AbstractNextPreviousAction undefinedAction;
 	private AbstractNextPreviousAction functionAction;
-	private AbstractNextPreviousAction nonFunctionAction;
 	private AbstractNextPreviousAction labelAction;
 	private NextPreviousBookmarkAction bookmarkAction;
-	private NextPreviousDifferentByteAction differentValueAction;
+	private NextPreviousSameBytesAction sameValueAction;
 
 	public NextPrevCodeUnitPlugin(PluginTool tool) {
 		super(tool);
@@ -73,60 +75,107 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 	}
 
 	private void createActions() {
-		// use this index to make sure that the following actions are ordered in the way that 
-		// they are inserted
-		int subGroupIndex = 0;
+		// use this index to ensure the actions are ordered in the way that they are inserted
+		char subGroupChar = 'a';
 
-		toggleDirectionAction = new ToggleDirectionAction("" + subGroupIndex++);
+		toggleDirectionAction = new ToggleDirectionAction(String.valueOf(subGroupChar++));
 		tool.addAction(toggleDirectionAction);
 
+		invertStateAction = new InvertStateAction(String.valueOf(subGroupChar++));
+		tool.addAction(invertStateAction);
+
 		instructionAction =
-			new NextPreviousInstructionAction(tool, getName(), "" + subGroupIndex++);
+			new NextPreviousInstructionAction(tool, getName(), String.valueOf(subGroupChar++));
 		tool.addAction(instructionAction);
 
-		dataAction = new NextPreviousDefinedDataAction(tool, getName(), "" + subGroupIndex++);
+		dataAction =
+			new NextPreviousDefinedDataAction(tool, getName(), String.valueOf(subGroupChar++));
 		tool.addAction(dataAction);
 
-		undefinedAction = new NextPreviousUndefinedAction(tool, getName(), "" + subGroupIndex++);
+		undefinedAction =
+			new NextPreviousUndefinedAction(tool, getName(), String.valueOf(subGroupChar++));
 		tool.addAction(undefinedAction);
 
-		labelAction = new NextPreviousLabelAction(tool, getName(), "" + subGroupIndex++);
+		labelAction = new NextPreviousLabelAction(tool, getName(), String.valueOf(subGroupChar++));
 		tool.addAction(labelAction);
 
-		functionAction = new NextPreviousFunctionAction(tool, getName(), "" + subGroupIndex++);
+		functionAction =
+			new NextPreviousFunctionAction(tool, getName(), String.valueOf(subGroupChar++));
 		tool.addAction(functionAction);
 
-		nonFunctionAction =
-			new NextPreviousNonFunctionAction(tool, getName(), "" + subGroupIndex++);
-		tool.addAction(nonFunctionAction);
+		sameValueAction =
+			new NextPreviousSameBytesAction(tool, getName(), String.valueOf(subGroupChar++));
+		tool.addAction(sameValueAction);
 
-		differentValueAction =
-			new NextPreviousDifferentByteAction(tool, getName(), "" + subGroupIndex++);
-		tool.addAction(differentValueAction);
-
-		bookmarkAction = new NextPreviousBookmarkAction(tool, getName(), "" + subGroupIndex++);
+		bookmarkAction =
+			new NextPreviousBookmarkAction(tool, getName(), String.valueOf(subGroupChar++));
 		tool.addAction(bookmarkAction);
 	}
 
-	private void updateActions(boolean searchForward) {
+	private void updateActionsDirection(boolean searchForward) {
 		instructionAction.setDirection(searchForward);
 		dataAction.setDirection(searchForward);
 		undefinedAction.setDirection(searchForward);
 		functionAction.setDirection(searchForward);
-		nonFunctionAction.setDirection(searchForward);
 		labelAction.setDirection(searchForward);
-		differentValueAction.setDirection(searchForward);
+		sameValueAction.setDirection(searchForward);
 		bookmarkAction.setDirection(searchForward);
 	}
 
+	private void updatedActionsLogic(boolean isInverted) {
+		instructionAction.setInverted(isInverted);
+		dataAction.setInverted(isInverted);
+		undefinedAction.setInverted(isInverted);
+		functionAction.setInverted(isInverted);
+		labelAction.setInverted(isInverted);
+		sameValueAction.setInverted(isInverted);
+		bookmarkAction.setInverted(isInverted);
+	}
+
+	private class InvertStateAction extends ToggleDockingAction {
+
+		private final Icon INVERTED_ICON_OFF = ImageUtils.makeTransparent(
+			ResourceManager.loadImage("images/dialog-cancel.png"));
+		private final Icon INVERTED_ICON_ON = ImageUtils.makeTransparent(
+			ResourceManager.loadImage("images/dialog-cancel.png"), .8f);
+		private boolean isInverted = false;
+
+		public InvertStateAction(String subGroup) {
+			super("Invert Search Logic", NextPrevCodeUnitPlugin.this.getName());
+
+			setToolBarData(new ToolBarData(INVERTED_ICON_OFF,
+				ToolConstants.TOOLBAR_GROUP_FOUR, subGroup));
+
+			// TODO add help entry
+			setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, getName()));
+
+			// TODO setDescriptoin("...");
+			setSelected(false);
+
+			addToWindowWhen(NavigatableActionContext.class);
+		}
+
+		@Override
+		public void setSelected(boolean isSelected) {
+			super.setSelected(isSelected);
+			getToolBarData().setIcon(isSelected ? INVERTED_ICON_ON : INVERTED_ICON_OFF);
+		}
+
+		@Override
+		public void actionPerformed(ActionContext context) {
+			isInverted = isSelected();
+			updatedActionsLogic(isInverted);
+		}
+	}
+
 	private class ToggleDirectionAction extends NavigatableContextAction {
-		Icon forwardIcon = ResourceManager.loadImage("images/down.png");
-		Icon backwardIcon = ResourceManager.loadImage("images/up.png");
+		private final Icon FORWARD_ICON = ResourceManager.loadImage("images/down.png");
+		private final Icon BACKWARD_ICON = ResourceManager.loadImage("images/up.png");
 		private boolean isForward = true;
 
 		ToggleDirectionAction(String subGroup) {
 			super("Toggle Search Direction", NextPrevCodeUnitPlugin.this.getName());
-			setToolBarData(new ToolBarData(forwardIcon,
+			setToolBarData(new ToolBarData(FORWARD_ICON,
 				ToolConstants.TOOLBAR_GROUP_FOUR, subGroup));
 			setKeyBindingData(new KeyBindingData(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK |
 				InputEvent.ALT_DOWN_MASK));
@@ -136,14 +185,13 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 				new HelpLocation(HelpTopics.NAVIGATION, longName));
 			setDescription(longName);
 			addToWindowWhen(NavigatableActionContext.class);
-
 		}
 
 		@Override
 		public void actionPerformed(NavigatableActionContext context) {
 			isForward = !isForward;
-			getToolBarData().setIcon(isForward ? forwardIcon : backwardIcon);
-			updateActions(isForward);
+			getToolBarData().setIcon(isForward ? FORWARD_ICON : BACKWARD_ICON);
+			updateActionsDirection(isForward);
 		}
 	}
 }

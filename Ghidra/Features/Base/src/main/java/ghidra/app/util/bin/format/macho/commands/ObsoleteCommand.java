@@ -15,27 +15,22 @@
  */
 package ghidra.app.util.bin.format.macho.commands;
 
-import ghidra.app.util.bin.format.*;
-import ghidra.app.util.bin.format.macho.*;
-import ghidra.app.util.importer.*;
-import ghidra.program.flatapi.*;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
-import ghidra.util.exception.*;
-import ghidra.util.task.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.macho.*;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.program.flatapi.FlatProgramAPI;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.ProgramModule;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class ObsoleteCommand extends LoadCommand {
 
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public ObsoleteCommand() {}
-
-    protected void initObsoleteCommand(FactoryBundledWithBinaryReader reader) throws IOException, MachException {
-		initLoadCommand(reader);
+	public ObsoleteCommand(BinaryReader reader) throws IOException, MachException {
+		super(reader);
 		throw new ObsoleteException();
 	}
 

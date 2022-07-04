@@ -284,8 +284,10 @@ public interface DomainObject {
 	public boolean lock(String reason);
 
 	/**
-	 * Cancels any previous lock and acquires it.
-	 * @param rollback if true, any changes in made with the previous lock should be discarded.
+	 * Force transaction lock and terminate current transaction.
+	 * @param rollback true if rollback of non-commited changes should occurs, false if commit
+	 * should be done.  NOTE: it can be potentially detrimental to commit an incomplete transaction
+	 * which should be avoided.
 	 * @param reason very short reason for requesting lock
 	 */
 	public void forceLock(boolean rollback, String reason);

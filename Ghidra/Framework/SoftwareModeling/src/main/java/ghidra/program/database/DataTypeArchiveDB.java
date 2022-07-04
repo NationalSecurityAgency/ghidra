@@ -100,7 +100,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	 */
 	public DataTypeArchiveDB(DomainFolder folder, String name, Object consumer)
 			throws IOException, DuplicateNameException, InvalidNameException {
-		super(new DBHandle(), name, 500, 1000, consumer);
+		super(new DBHandle(), name, 500, consumer);
 		this.name = name;
 
 		recordChanges = false;
@@ -153,7 +153,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	public DataTypeArchiveDB(DBHandle dbh, int openMode, TaskMonitor monitor, Object consumer)
 			throws IOException, VersionException, CancelledException {
 
-		super(dbh, "Untitled", 500, 1000, consumer);
+		super(dbh, "Untitled", 500, consumer);
 		if (monitor == null) {
 			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
 		}

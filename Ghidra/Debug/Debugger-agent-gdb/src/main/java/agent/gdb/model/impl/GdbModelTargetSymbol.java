@@ -20,8 +20,7 @@ import java.util.Map;
 
 import agent.gdb.manager.impl.GdbMinimalSymbol;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetSymbol;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
@@ -31,6 +30,7 @@ import ghidra.program.model.address.Address;
 	elements = {
 		@TargetElementType(type = Void.class) },
 	attributes = {
+		@TargetAttributeType(name = TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME, type = String.class),
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetSymbol extends
 		DefaultTargetObject<TargetObject, GdbModelTargetSymbolContainer> implements TargetSymbol {
@@ -58,7 +58,8 @@ public class GdbModelTargetSymbol extends
 			// TODO: DATA_TYPE
 			VALUE_ATTRIBUTE_NAME, value,
 			SIZE_ATTRIBUTE_NAME, size,
-			DISPLAY_ATTRIBUTE_NAME, symbol.getName()),
+			DISPLAY_ATTRIBUTE_NAME, symbol.getName(),
+			TargetBreakpointSpec.AS_BPT_ATTRIBUTE_NAME, symbol.getName()),
 			"Initialized");
 	}
 

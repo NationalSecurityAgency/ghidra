@@ -16,14 +16,13 @@
 package ghidra.app.plugin.processors.generic;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
 import ghidra.app.util.HighlightProvider;
-import ghidra.app.util.pcode.PcodeFormatter;
+import ghidra.app.util.pcode.AttributedStringPcodeFormatter;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -48,7 +47,7 @@ public class PcodeFieldFactory extends FieldFactory {
 		GROUP_TITLE + Options.DELIMITER + "Display Raw Pcode";
 	public final static int MAX_DISPLAY_LINES = 30;
 
-	private PcodeFormatter formatter;
+	private AttributedStringPcodeFormatter formatter;
 
 	public PcodeFieldFactory() {
 		super(FIELD_NAME);
@@ -63,7 +62,7 @@ public class PcodeFieldFactory extends FieldFactory {
 		color = displayOptions.getColor(OptionsGui.BYTES.getColorOptionName(),
 			OptionsGui.BYTES.getDefaultColor());
 		style = displayOptions.getInt(OptionsGui.BYTES.getStyleOptionName(), -1);
-		formatter = new PcodeFormatter();
+		formatter = new AttributedStringPcodeFormatter();
 
 		setColors(displayOptions);
 		setOptions(fieldOptions);
@@ -88,7 +87,8 @@ public class PcodeFieldFactory extends FieldFactory {
 		ArrayList<TextFieldElement> elements = new ArrayList<>();
 
 		List<AttributedString> pcodeListing =
-			formatter.toAttributedStrings(instr.getProgram(), instr.getPcode(true));
+			formatter.formatOps(instr.getProgram().getLanguage(),
+				Arrays.asList(instr.getPcode(true)));
 		int lineCnt = pcodeListing.size();
 		for (int i = 0; i < lineCnt; i++) {
 			elements.add(new TextFieldElement(pcodeListing.get(i), i, 0));
@@ -130,7 +130,7 @@ public class PcodeFieldFactory extends FieldFactory {
 		Program program = instr.getProgram();
 
 		List<AttributedString> attributedStrings =
-			formatter.toAttributedStrings(program, instr.getPcode(true));
+			formatter.formatOps(program.getLanguage(), Arrays.asList(instr.getPcode(true)));
 		List<String> strings = new ArrayList<>(attributedStrings.size());
 		for (AttributedString attributedString : attributedStrings) {
 			strings.add(attributedString.getText());
@@ -151,6 +151,7 @@ public class PcodeFieldFactory extends FieldFactory {
 			Object newValue) {
 		super.displayOptionsChanged(options, optionName, oldValue, newValue);
 		formatter.setFontMetrics(getMetrics());
+		setColors(options);
 	}
 
 	@Override
@@ -167,19 +168,33 @@ public class PcodeFieldFactory extends FieldFactory {
 	}
 
 	/**
-	 * Called when the fonts are first initialized or when one of the options
-	 * changes.  It looks up all the color settings and resets the its values.
+	 * Called when the fonts are first initialized or when one of the options changes. It looks up
+	 * all the color settings and resets the its values.
 	 */
 	private void setColors(Options options) {
-		formatter.setColor(
-			options.getColor(OptionsGui.ADDRESS.getColorOptionName(),
-				OptionsGui.ADDRESS.getDefaultColor()),
-			options.getColor(OptionsGui.REGISTERS.getColorOptionName(),
-				OptionsGui.REGISTERS.getDefaultColor()),
-			options.getColor(OptionsGui.CONSTANT.getColorOptionName(),
-				OptionsGui.CONSTANT.getDefaultColor()),
-			options.getColor(OptionsGui.LABELS_LOCAL.getColorOptionName(),
-				OptionsGui.LABELS_LOCAL.getDefaultColor()));
+		formatter.setAddressColor(options.getColor(OptionsGui.ADDRESS.getColorOptionName(),
+			OptionsGui.ADDRESS.getDefaultColor()));
+		formatter.setRegisterColor(options.getColor(OptionsGui.REGISTERS.getColorOptionName(),
+			OptionsGui.REGISTERS.getDefaultColor()));
+		formatter.setScalarColor(options.getColor(OptionsGui.CONSTANT.getColorOptionName(),
+			OptionsGui.CONSTANT.getDefaultColor()));
+		formatter.setLocalColor(options.getColor(OptionsGui.LABELS_LOCAL.getColorOptionName(),
+			OptionsGui.LABELS_LOCAL.getDefaultColor()));
+		formatter.setMnemonicColor(options.getColor(OptionsGui.MNEMONIC.getColorOptionName(),
+			OptionsGui.MNEMONIC.getDefaultColor()));
+		formatter.setUnimplColor(options.getColor(OptionsGui.UNIMPL.getColorOptionName(),
+			OptionsGui.UNIMPL.getDefaultColor()));
+		formatter.setSeparatorColor(options.getColor(OptionsGui.SEPARATOR.getColorOptionName(),
+			OptionsGui.SEPARATOR.getDefaultColor()));
+		formatter.setLineLabelColor(
+			options.getColor(OptionsGui.PCODE_LINE_LABEL.getColorOptionName(),
+				OptionsGui.PCODE_LINE_LABEL.getDefaultColor()));
+		formatter.setSpaceColor(options.getColor(OptionsGui.PCODE_ADDR_SPACE.getColorOptionName(),
+			OptionsGui.PCODE_ADDR_SPACE.getDefaultColor()));
+		formatter.setRawColor(options.getColor(OptionsGui.PCODE_RAW_VARNODE.getColorOptionName(),
+			OptionsGui.PCODE_RAW_VARNODE.getDefaultColor()));
+		formatter.setUseropColor(options.getColor(OptionsGui.PCODE_USEROP.getColorOptionName(),
+			OptionsGui.PCODE_USEROP.getDefaultColor()));
 		formatter.setFontMetrics(getMetrics());
 	}
 

@@ -52,120 +52,103 @@ Scope *ScopeGhidra::reresolveScope(uint8 id) const
   if (cacheScope != (Scope *)0)
     return cacheScope;		// Scope was previously cached
 
-  Document *doc = ghidra->getNamespacePath(id);
-  if (doc == (Document *)0)
+  XmlDecode decoder(ghidra);
+  if (!ghidra->getNamespacePath(id,decoder))
     throw LowlevelError("Could not get namespace info");
 
   Scope *curscope = symboltab->getGlobalScope();	// Get pointer to ourselves (which is not const)
-  try {
-    const List &list(doc->getRoot()->getChildren());
-    List::const_iterator iter = list.begin();
-    ++iter;		// Skip element describing the root scope
-    while(iter != list.end()) {
-      const Element *el = *iter;
-      ++iter;
-      uint8 scopeId;
-      istringstream s(el->getAttributeValue("id"));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> scopeId;
-      curscope = symboltab->findCreateScope(scopeId, el->getContent(), curscope);
-    }
-    delete doc;
+  uint4 elemId = decoder.openElement();
+  uint4 subId = decoder.openElement();
+  decoder.closeElementSkipping(subId);		// Skip element describing the root scope
+  for(;;) {
+    subId = decoder.openElement();
+    if (subId == 0) break;
+    uint8 scopeId = decoder.readUnsignedInteger(ATTRIB_ID);
+    curscope = symboltab->findCreateScope(scopeId, decoder.readString(ATTRIB_CONTENT), curscope);
+    decoder.closeElement(subId);
   }
-  catch(LowlevelError &err) {
-    delete doc;
-    throw err;
-  }
+  decoder.closeElement(elemId);
   return curscope;
 }
 
 /// The Ghidra client can respond to a query negatively by sending a
-/// \<hole> tag, which describes the (largest) range of addresses containing
+/// \<hole> element, which describes the (largest) range of addresses containing
 /// the query address that do not have any Symbol mapped to them. This object
 /// stores this information in the \b holes map, which it consults to avoid
 /// sending queries for the same unmapped address repeatedly. The tag may
 /// also contain boolean property information about the memory range, which
 /// also gets stored.
-/// \param el is the \<hole> element
-void ScopeGhidra::processHole(const Element *el) const
+/// \param decoder is the stream decoder
+void ScopeGhidra::decodeHole(Decoder &decoder) const
 
 {
-  Range range;
-  range.restoreXml(el,ghidra);
-  holes.insertRange(range.getSpace(),range.getFirst(),range.getLast());
+  uint4 elemId = decoder.openElement(ELEM_HOLE);
   uint4 flags = 0;
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    if ((el->getAttributeName(i)=="readonly")&&
-	xml_readbool(el->getAttributeValue(i)))
+  Range range;
+  range.decodeFromAttributes(decoder);
+  decoder.rewindAttributes();
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId==ATTRIB_READONLY &&  decoder.readBool())
       flags |= Varnode::readonly;
-    else if ((el->getAttributeName(i)=="volatile")&&
-	     xml_readbool(el->getAttributeValue(i)))
+    else if (attribId==ATTRIB_VOLATILE && decoder.readBool())
       flags |= Varnode::volatil;
   }
+  holes.insertRange(range.getSpace(),range.getFirst(),range.getLast());
+  decoder.closeElement(elemId);
   if (flags != 0) {
     ghidra->symboltab->setPropertyRange(flags,range);
     cacheDirty = true;
   }
 }
 
-/// Build the global object described by the XML document
-/// and put it in the cache. The XML can either be a
-/// \<hole> tag, describing the absence of symbols at the queried
-/// address, or one of the symbol tags
-/// \param doc is the XML document
+/// Build the global object described by the stream element
+/// and put it in the cache. The element can either be a \<hole>, describing the absence
+/// of symbols at the queried address, or one of the symbol elements.
+/// \param decoder is the stream decoder
 /// \return the newly constructed Symbol or NULL if there was a hole
-Symbol *ScopeGhidra::dump2Cache(Document *doc) const
+Symbol *ScopeGhidra::dump2Cache(Decoder &decoder) const
 
 {
-  const Element *el = doc->getRoot();
   Symbol *sym = (Symbol *)0;
 
-  if (el->getName() == "hole") {
-    processHole(el);
+  uint4 elemId = decoder.peekElement();
+  if (elemId == ELEM_HOLE) {
+    decodeHole(decoder);
     return sym;
   }
 
-  List::const_iterator iter = el->getChildren().begin();
-  uint8 scopeId;
-  {
-    istringstream s(el->getAttributeValue("id"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> scopeId;
-  }
-
+  decoder.openElement();
+  uint8 scopeId = decoder.readUnsignedInteger(ATTRIB_ID);
   Scope *scope = reresolveScope(scopeId);
-  el = *iter;
+
   try {
-    sym = scope->addMapSym(el);
+    sym = scope->addMapSym(decoder);
+    decoder.closeElement(elemId);
   }
-  catch(RecovError &err) {
+  catch(DuplicateFunctionError &err) {
     // Duplicate name error (when trying to create the new function's scope)
     // Check for function object where the full size is not stored in the cache
     // Entries for functions always start at the entry address
     // of the function in order to deal with non-contiguous functions
     // But ghidra will still return the function for queries at addresses in the
     // interior of the function
-    const Element *symel = *el->getChildren().begin();
-    if (symel->getName() == "function") {	// Make sure new record is for a function
-      const Element *baseAddrEl = *symel->getChildren().begin();
-      Address baseaddr = Address::restoreXml( baseAddrEl, glb );	// Decode address from record
+    if (!err.address.isInvalid()) {	// Make sure the address was parsed
       vector<Symbol *> symList;
-      scope->queryByName(symel->getAttributeValue("name"),symList);	// Lookup symbols with duplicate name
+      scope->queryByName(err.functionName,symList);	// Lookup symbols with duplicate name
       for(int4 i=0;i<symList.size();++i) {
 	FunctionSymbol *funcSym = dynamic_cast<FunctionSymbol *>(symList[i]);
 	if (funcSym != (FunctionSymbol *)0) {				// If duplicate symbol is for function
-	  if (funcSym->getFunction()->getAddress() == baseaddr) {	//   and the address matches
+	  if (funcSym->getFunction()->getAddress() == err.address) {	//   and the address matches
 	    sym = funcSym;						// use the old symbol
 	    break;
 	  }
 	}
       }
     }
-    if (sym == (Symbol *)0) {
-      ostringstream s;
-      s << err.explain << ": entry didn't cache";
-      throw LowlevelError(s.str());
-    }
+    if (sym == (Symbol *)0)
+      throw LowlevelError("DuplicateFunctionError, but could not recover original symbol");
   }
   if (sym != (Symbol *)0) {
     SymbolEntry *entry = sym->getFirstWholeMap();
@@ -208,7 +191,6 @@ Symbol *ScopeGhidra::dump2Cache(Document *doc) const
 Symbol *ScopeGhidra::removeQuery(const Address &addr) const
 
 {
-  Document *doc;
   Symbol *sym = (Symbol *)0;
 
   // Don't send up queries on constants or uniques
@@ -230,10 +212,9 @@ Symbol *ScopeGhidra::removeQuery(const Address &addr) const
 
   // Have we queried this address before
   if (holes.inRange(addr,1)) return (Symbol *)0;
-  doc = ghidra->getMappedSymbolsXML(addr); // Query GHIDRA about this address
-  if (doc != (Document *)0) {
-    sym = dump2Cache(doc);	// Add it to the cache
-    delete doc;
+  XmlDecode decoder(ghidra);
+  if (ghidra->getMappedSymbolsXML(addr,decoder)) {	// Query GHIDRA about this address
+    sym = dump2Cache(decoder);	// Add it to the cache
   }
   return sym;
 }
@@ -368,14 +349,12 @@ Funcdata *ScopeGhidra::resolveExternalRefFunction(ExternRefSymbol *sym) const
   if (resFd == (Funcdata *)0) {
     // If the function isn't in cache, we use the special
     // getExternalRefXML interface to recover the external function
-    Document *doc;
     SymbolEntry *entry = sym->getFirstWholeMap();
-    doc = ghidra->getExternalRefXML(entry->getAddr());
-    if (doc != (Document *)0) {
+    XmlDecode decoder(ghidra);
+    if (ghidra->getExternalRefXML(entry->getAddr(),decoder)) {
       FunctionSymbol *funcSym;
       // Make sure referenced function is cached
-      funcSym = dynamic_cast<FunctionSymbol *>(dump2Cache(doc));
-      delete doc;
+      funcSym = dynamic_cast<FunctionSymbol *>(dump2Cache(decoder));
       if (funcSym != (FunctionSymbol *)0)
 	resFd = funcSym->getFunction();
     }

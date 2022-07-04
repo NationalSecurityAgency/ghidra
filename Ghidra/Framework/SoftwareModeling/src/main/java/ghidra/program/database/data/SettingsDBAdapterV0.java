@@ -16,84 +16,200 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.util.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import db.*;
+import ghidra.util.ReadOnlyException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Version 0 implementation for the accessing the data type settings database table.
+ * This version stored settings name as a string within each record.
  */
 class SettingsDBAdapterV0 extends SettingsDBAdapter {
 
 	// Default Settings Columns
-	static final int V0_SETTINGS_DT_ID_COL = 0;
-	static final int V0_SETTINGS_NAME_COL = 1;
+	static final int V0_SETTINGS_ASSOCIATION_ID_COL = 0; // e.g., Address-key, Datatype-ID
+	static final int V0_SETTINGS_NAME_COL = 1; // string - must translate to short index with name map
 	static final int V0_SETTINGS_LONG_VALUE_COL = 2;
 	static final int V0_SETTINGS_STRING_VALUE_COL = 3;
-	static final int V0_SETTINGS_BYTE_VALUE_COL = 4;
+	// static final int V0_SETTINGS_BYTE_VALUE_COL = 4; // discarded during V1 upgrade
 
-	static final Schema V0_SETTINGS_SCHEMA = new Schema(0, "DT Settings ID",
-		new Field[] { LongField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
-			StringField.INSTANCE, BinaryField.INSTANCE },
-		new String[] { "Data Type ID", "Settings Name", "Long Value", "String Value",
-			"Byte Value" });
+	private static final int V0_SCHEMA_VERSION = 0;
+
+//  Keep for reference
+//	static final Schema V0_SETTINGS_SCHEMA = new Schema(0, "SettingsID",
+//		new Field[] { LongField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+//			StringField.INSTANCE, BinaryField.INSTANCE },
+//		new String[] { "AssociationID", "Settings Name", "Long Value", "String Value",
+//			"Byte Value" });
+
 	private Table settingsTable;
 
-	SettingsDBAdapterV0(DBHandle handle, boolean create) throws VersionException, IOException {
+	private HashMap<Short, String> nameIndexMap = new HashMap<>();
+	private HashMap<String, Short> nameStringMap = new HashMap<>();
 
-		if (create) {
-			settingsTable = handle.createTable(SETTINGS_TABLE_NAME, V0_SETTINGS_SCHEMA,
-				new int[] { V0_SETTINGS_DT_ID_COL });
+	SettingsDBAdapterV0(String tableName, DBHandle handle)
+			throws VersionException {
+
+		settingsTable = handle.getTable(tableName);
+		if (settingsTable == null) {
+			throw new VersionException("Missing Table: " + tableName);
 		}
-		else {
-			settingsTable = handle.getTable(SETTINGS_TABLE_NAME);
-			if (settingsTable == null) {
-				throw new VersionException("Missing Table: " + SETTINGS_TABLE_NAME);
-			}
-			if (settingsTable.getSchema().getVersion() != 0) {
-				throw new VersionException("Expected version 0 for table " + SETTINGS_TABLE_NAME +
-					" but got " + settingsTable.getSchema().getVersion());
-			}
+		int ver = settingsTable.getSchema().getVersion();
+		if (ver != V0_SCHEMA_VERSION) {
+			throw new VersionException(false);
 		}
 	}
 
 	@Override
-	public DBRecord createSettingsRecord(long dataTypeID, String name, String strValue,
-			long longValue, byte[] byteValue) throws IOException {
-
-		DBRecord record = V0_SETTINGS_SCHEMA.createRecord(settingsTable.getKey());
-		record.setLongValue(V0_SETTINGS_DT_ID_COL, dataTypeID);
-		record.setString(V0_SETTINGS_NAME_COL, name);
-		record.setString(V0_SETTINGS_STRING_VALUE_COL, strValue);
-		record.setLongValue(V0_SETTINGS_LONG_VALUE_COL, longValue);
-		record.setBinaryData(V0_SETTINGS_BYTE_VALUE_COL, byteValue);
-		settingsTable.putRecord(record);
-		return record;
+	String getTableName() {
+		return settingsTable.getName();
 	}
 
 	@Override
-	public Field[] getSettingsKeys(long dataTypeID) throws IOException {
-		return settingsTable.findRecords(new LongField(dataTypeID), V0_SETTINGS_DT_ID_COL);
+	public DBRecord createSettingsRecord(long associationId, String name, String strValue,
+			long longValue) throws IOException {
+		throw new ReadOnlyException();
+	}
+
+	@Override
+	public Field[] getSettingsKeys(long associationId) throws IOException {
+		return settingsTable.findRecords(new LongField(associationId),
+			V0_SETTINGS_ASSOCIATION_ID_COL);
+	}
+
+	@Override
+	void removeAllSettingsRecords(long associationId) throws IOException {
+		for (Field key : getSettingsKeys(associationId)) {
+			removeSettingsRecord(key.getLongValue());
+		}
 	}
 
 	@Override
 	public boolean removeSettingsRecord(long settingsID) throws IOException {
-		return settingsTable.deleteRecord(settingsID);
+		throw new ReadOnlyException();
+	}
+
+	@Override
+	boolean removeSettingsRecord(long associationId, String name) throws IOException {
+		throw new ReadOnlyException();
+	}
+
+	@Override
+	String[] getSettingsNames(long associationId) throws IOException {
+		ArrayList<String> list = new ArrayList<>();
+		for (Field key : getSettingsKeys(associationId)) {
+			DBRecord rec = settingsTable.getRecord(key);
+			list.add(rec.getString(V0_SETTINGS_NAME_COL));
+		}
+		String[] names = new String[list.size()];
+		return list.toArray(names);
+	}
+
+	@Override
+	void addAllValues(String name, Set<String> set) throws IOException {
+		RecordIterator recIter = settingsTable.iterator();
+		while (recIter.hasNext()) {
+			DBRecord rec = recIter.next();
+			if (name.equals(rec.getString(V0_SETTINGS_NAME_COL))) {
+				String s = rec.getString(V0_SETTINGS_STRING_VALUE_COL);
+				if (!StringUtils.isBlank(s)) {
+					set.add(s);
+				}
+			}
+		}
+	}
+
+	@Override
+	protected String getSettingName(DBRecord normalizedRecord) {
+		short nameIndex = normalizedRecord.getShortValue(SettingsDBAdapter.SETTINGS_NAME_INDEX_COL);
+		return nameIndexMap.get(nameIndex);
+	}
+
+	@Override
+	void invalidateNameCache() {
+		// ignore - name map values can be retained
+	}
+
+	private short assignNameIndexValue(String name) {
+		Short index = nameStringMap.get(name);
+		if (index == null) {
+			index = (short) nameStringMap.size();
+			nameStringMap.put(name, index);
+			nameIndexMap.put(index, name);
+		}
+		return index;
 	}
 
 	@Override
 	public DBRecord getSettingsRecord(long settingsID) throws IOException {
-		return settingsTable.getRecord(settingsID);
+		return translateV0Record(settingsTable.getRecord(settingsID));
+	}
+
+	@Override
+	DBRecord getSettingsRecord(long associationId, String name) throws IOException {
+		for (Field key : getSettingsKeys(associationId)) {
+			DBRecord rec = settingsTable.getRecord(key);
+			if (rec.getString(V0_SETTINGS_NAME_COL).equals(name)) {
+				return translateV0Record(rec);
+			}
+		}
+		return null;
 	}
 
 	@Override
 	public void updateSettingsRecord(DBRecord record) throws IOException {
-		settingsTable.putRecord(record);
+		throw new ReadOnlyException();
+	}
+
+	@Override
+	DBRecord updateSettingsRecord(long associationId, String name, String strValue, long longValue)
+			throws IOException {
+		throw new ReadOnlyException();
 	}
 
 	@Override
 	int getRecordCount() {
 		return settingsTable.getRecordCount();
+	}
+
+	@Override
+	RecordIterator getRecords() throws IOException {
+		return new TranslatedRecordIterator(settingsTable.iterator(), r -> translateV0Record(r));
+	}
+
+	@Override
+	RecordIterator getRecords(long minAssociationId, long maxAssociationId) throws IOException {
+		return settingsTable.indexIterator(V0_SETTINGS_ASSOCIATION_ID_COL, new LongField(minAssociationId),
+			new LongField(maxAssociationId), true);
+	}
+
+	@Override
+	void delete(long minAssociationId, long maxAssociationId, TaskMonitor monitor) throws CancelledException, IOException {
+		throw new ReadOnlyException();
+	}
+
+	private DBRecord translateV0Record(DBRecord rec) {
+		if (rec == null) {
+			return null;
+		}
+		DBRecord normalizedRecord =
+			SettingsDBAdapterV1.V1_SETTINGS_SCHEMA.createRecord(rec.getKey());
+		normalizedRecord.setLongValue(SETTINGS_ASSOCIATION_ID_COL,
+			rec.getLongValue(V0_SETTINGS_ASSOCIATION_ID_COL));
+		String name = rec.getString(V0_SETTINGS_NAME_COL);
+		normalizedRecord.setShortValue(SettingsDBAdapter.SETTINGS_NAME_INDEX_COL,
+			assignNameIndexValue(name));
+		normalizedRecord.setLongValue(SettingsDBAdapter.SETTINGS_LONG_VALUE_COL,
+			rec.getLongValue(V0_SETTINGS_LONG_VALUE_COL));
+		normalizedRecord.setString(SettingsDBAdapter.SETTINGS_STRING_VALUE_COL,
+			rec.getString(V0_SETTINGS_STRING_VALUE_COL));
+		return normalizedRecord;
 	}
 
 }

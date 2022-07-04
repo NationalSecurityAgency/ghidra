@@ -24,6 +24,7 @@ import com.google.common.collect.Range;
 
 import db.DBHandle;
 import ghidra.trace.database.*;
+import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.thread.*;
@@ -158,9 +159,8 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 	@Override
 	public TraceThread getThread(long key) {
 		if (objectManager.hasSchema()) {
-			return objectManager
-					.getObjectById(key)
-					.queryInterface(TraceObjectThread.class);
+			DBTraceObject object = objectManager.getObjectById(key);
+			return object == null ? null : object.queryInterface(TraceObjectThread.class);
 		}
 		return threadStore.getObjectAt(key);
 	}

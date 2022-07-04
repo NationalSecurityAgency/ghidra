@@ -15,90 +15,114 @@
  */
 package ghidra.file.formats.android.fbpk;
 
-import java.io.IOException;
+import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.program.flatapi.FlatProgramAPI;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.RefType;
+import ghidra.util.task.TaskMonitor;
 
-import ghidra.app.util.bin.*;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
+public abstract class FBPK_Partition implements StructConverter {
 
-public class FBPK_Partition implements StructConverter {
-	private int type;
-	private String name;
-	private int dataSize;
-	private int unknown1;
-	private int offsetToNextPartitionTable;
-	private int unknown2;
-	private FBPT fbpt;
-	private long dataStartOffset;
+	protected int headerSize;
+	protected int type;
+	protected String name;
+	protected int partitionIndex;
 
-	public FBPK_Partition(BinaryReader reader) throws IOException {
-		type = reader.readNextInt();
-		name = reader.readNextAsciiString(FBPK_Constants.NAME_MAX_LENGTH);
-		dataSize = reader.readNextInt();
-		unknown1 = reader.readNextInt();
-		offsetToNextPartitionTable = reader.readNextInt();
-		unknown2 = reader.readNextInt();
-		if (type == FBPK_Constants.PARTITION_TYPE_DIRECTORY) {
-			fbpt = new FBPT(reader);
-		}
-		else if (type == FBPK_Constants.PARTITION_TYPE_FILE) {
-			dataStartOffset = reader.getPointerIndex();
-		}
+	/**
+	 * Returns the size of the partition's header, in bytes.
+	 * @return the size of the partition's header, in bytes
+	 */
+	public final int getHeaderSize() {
+		return headerSize;
 	}
 
-	public int getType() {
+	/**
+	 * Returns the partition's type.
+	 * @return the partition's type
+	 */
+	public final int getType() {
 		return type;
 	}
 
-	public String getName() {
+	/**
+	 * Returns the partition's name.
+	 * @return the partition's name
+	 */
+	public final String getName() {
 		return name;
 	}
 
 	/**
-	 * Returns the Fast Boot Partition Table
-	 * @return the Fast Boot Partition Table, could be null if file
+	 * Returns the offsets to the start of this
+	 * partition's data payload.
+	 * @return offsets to the partition's data
 	 */
-	public FBPT getFBPT() {
-		return fbpt;
+	public abstract long getDataStartOffset();
+
+	/**
+	 * Returns the partition's data payload size.
+	 * @return the partition's data payload size
+	 */
+	public abstract int getDataSize();
+
+	/**
+	 * Returns true if this partition represents a file.
+	 * @return true if this partition represents a file
+	 */
+	public abstract boolean isFile();
+
+	/**
+	 * Returns the offset to the next partition (for non-adjoining partitions).
+	 * Returns 0 is the next partition is adjoingin (immediately following the previous).
+	 * @return offset to the next partition, or 0
+	 */
+	public abstract int getOffsetToNextPartitionTable();
+
+	/**
+	 * Returns the partition's index.
+	 * @return the partition's index
+	 */
+	public final int getPartitionIndex() {
+		return partitionIndex;
 	}
 
-	public long getDataStartOffset() {
-		return dataStartOffset;
-	}
+	/**
+	 * Annotates the program with this partition's data structures.
+	 * @param program the program to markup
+	 * @param address the address of the partition
+	 * @param monitor the task monitor
+	 * @param log the message log
+	 * @throws Exception if any exception occurs during markup
+	 */
+	public void markup(Program program, Address address, TaskMonitor monitor, MessageLog log) throws Exception {
+		FlatProgramAPI api = new FlatProgramAPI(program);
 
-	public int getDataSize() {
-		return dataSize;
-	}
+		DataType partitionDataType = toDataType();
 
-	public int getOffsetToNextPartitionTable() {
-		return offsetToNextPartitionTable;
-	}
+		Data partitionData = program.getListing().createData(address, partitionDataType);
 
-	public boolean isDirectory() {
-		return getType() == FBPK_Constants.PARTITION_TYPE_DIRECTORY;
-	}
+		if (partitionData == null) {
+			log.appendMsg("Unable to apply partition data, stopping - " + address);
+			return;
+		}
 
-	public boolean isFile() {
-		return getType() == FBPK_Constants.PARTITION_TYPE_FILE;
-	}
+		program.getListing()
+				.setComment(address, CodeUnit.PLATE_COMMENT,
+					getName() + " - " + getPartitionIndex());
 
-	public int getUnknown1() {
-		return unknown1;
-	}
+		api.createFragment(getName(), address, partitionDataType.getLength());
 
-	public int getUnknown2() {
-		return unknown2;
-	}
+		Address dataStart = api.toAddr(getDataStartOffset());
+		api.createFragment(getName(), dataStart, getDataSize());
 
-	@Override
-	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure struct = new StructureDataType(FBPK_Partition.class.getSimpleName(), 0);
-		struct.add(DWORD, "type", null);
-		struct.add(STRING, FBPK_Constants.NAME_MAX_LENGTH, "name", null);
-		struct.add(DWORD, "dataSize", null);
-		struct.add(DWORD, "unknown1", null);
-		struct.add(DWORD, "offsetToNextPartitionTable", null);
-		struct.add(DWORD, "unknown2", null);
-		return struct;
+		Data offsetData = partitionData.getComponent(2);
+		api.createMemoryReference(offsetData, dataStart, RefType.DATA);
+
+		address = address.add(partitionDataType.getLength());
 	}
 }

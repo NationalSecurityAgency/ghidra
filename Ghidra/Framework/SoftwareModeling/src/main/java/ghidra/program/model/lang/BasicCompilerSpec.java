@@ -157,7 +157,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 	 * spec from Language.
 	 * @param op2 is the spec to clone
 	 */
-	protected BasicCompilerSpec(BasicCompilerSpec op2) {
+	public BasicCompilerSpec(BasicCompilerSpec op2) {
 		language = op2.language;
 		description = op2.description;
 		// PrototypeModel is immutable but the map may change, so callingConventionMap
@@ -336,7 +336,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 			case EVAL_CALLED:
 				return evalCalledModel;
 		}
-		return null;
+		return defaultModel;
 	}
 
 	@Override
@@ -414,17 +414,35 @@ public class BasicCompilerSpec implements CompilerSpec {
 	 * Build the model arrays given a complete list of models.
 	 * The array -models- contains all normal PrototypeModel objects
 	 * The array -allmodels- contains all models, including merge models.
+	 * We also check that a suitable model exists that matches a desired default name.
+	 * In principle, the XML schema should guarantee that the model exists, but if for some reason
+	 * it doesn't, an exception is thrown.
 	 * 
 	 * @param modelList is the complete list of models
+	 * @param putativeDefaultName is the desired name of the default model
+	 * @throws XmlParseException if a suitable default model cannot be found
 	 */
-	private void buildModelArrays(List<PrototypeModel> modelList) {
+	private void buildModelArrays(List<PrototypeModel> modelList, String putativeDefaultName)
+			throws XmlParseException {
+		if (putativeDefaultName == null) {
+			throw new XmlParseException("Compiler Spec " + description.getCompilerSpecName() +
+				" does not provide a default prototype");
+		}
 		int fullcount = 0;
 		int resolvecount = 0;
+		boolean foundDefault = false;
 		for (PrototypeModel model : modelList) {
 			fullcount += 1;
 			if (model.isMerged()) {
 				resolvecount += 1;
 			}
+			else if (putativeDefaultName.equals(model.getName())) {
+				foundDefault = true;	// Matching name AND not a merged model
+			}
+		}
+		if (!foundDefault) {
+			throw new XmlParseException("Could not find default model " + putativeDefaultName +
+				"for Compiler Spec " + description.getCompilerSpecName());
 		}
 		models = new PrototypeModel[fullcount - resolvecount];
 		allmodels = new PrototypeModel[fullcount];
@@ -449,17 +467,20 @@ public class BasicCompilerSpec implements CompilerSpec {
 	 * All xrefs are regenerated from a single complete list of PrototypeModels.
 	 * If there are PrototypeModels with duplicate names, return an example name.
 	 * Return null otherwise
+	 * The modelList must provide a model with name matching defaultName or
+	 * an exception is thrown.  (In theory the schema guarantees this model always exists)
 	 * 
 	 * @param modelList is the complete list of models
-	 * @param defaultName is the name to use for the default model (or null)
+	 * @param defaultName is the name to use for the default model
 	 * @param evalCurrent is the name to use for evaluating the current function (or null)
 	 * @param evalCalled is the name to use for evaluating called functions (or null)
 	 * @return a PrototypeModel name that was duplicated or null
+	 * @throws XmlParseException if there is no model matching defaultName
 	 */
 	protected String modelXrefs(List<PrototypeModel> modelList, String defaultName,
-			String evalCurrent, String evalCalled) {
+			String evalCurrent, String evalCalled) throws XmlParseException {
 		String foundDuplicate = null;
-		buildModelArrays(modelList);
+		buildModelArrays(modelList, defaultName);
 		callingConventionMap = new HashMap<>();
 		for (PrototypeModel model : models) {
 			String name = model.getName();
@@ -471,10 +492,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 			}
 		}
 
-		defaultModel = null;
-		if (defaultName != null) {
-			defaultModel = callingConventionMap.get(defaultName);
-		}
+		defaultModel = callingConventionMap.get(defaultName);
 		evalCurrentModel = defaultModel; // The default evaluation is to assume default model
 		evalCalledModel = defaultModel;
 

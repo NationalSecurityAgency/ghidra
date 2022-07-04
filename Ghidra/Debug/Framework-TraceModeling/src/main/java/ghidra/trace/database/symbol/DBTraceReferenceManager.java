@@ -179,9 +179,10 @@ public class DBTraceReferenceManager extends
 
 	@Override
 	public DBTraceOffsetReference addOffsetReference(Range<Long> lifespan, Address fromAddress,
-			Address toAddress, long offset, RefType refType, SourceType source, int operandIndex) {
+			Address toAddress, boolean toAddrIsBase, long offset, RefType refType,
+			SourceType source, int operandIndex) {
 		return delegateWrite(fromAddress.getAddressSpace(), s -> s.addOffsetReference(lifespan,
-			fromAddress, toAddress, offset, refType, source, operandIndex));
+			fromAddress, toAddress, toAddrIsBase, offset, refType, source, operandIndex));
 	}
 
 	@Override

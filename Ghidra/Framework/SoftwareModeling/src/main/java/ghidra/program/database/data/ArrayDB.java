@@ -153,8 +153,18 @@ class ArrayDB extends DataTypeDB implements Array {
 	}
 
 	@Override
+	protected Settings doGetDefaultSettings() {
+		return getDataType().getDefaultSettings();
+	}
+
+	@Override
 	public SettingsDefinition[] getSettingsDefinitions() {
 		return getDataType().getSettingsDefinitions();
+	}
+
+	@Override
+	public TypeDefSettingsDefinition[] getTypeDefSettingsDefinitions() {
+		return getDataType().getTypeDefSettingsDefinitions();
 	}
 
 	@Override

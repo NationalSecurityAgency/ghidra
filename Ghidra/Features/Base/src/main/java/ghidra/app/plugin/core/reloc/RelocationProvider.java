@@ -35,7 +35,7 @@ class RelocationProvider extends ComponentProviderAdapter {
 	private JPanel mainPanel;
 	private Program currentProgram;
 	private GhidraTableFilterPanel<Relocation> tableFilterPanel;
-	private GhidraThreadedTablePanel threadedPanel;
+	private GhidraThreadedTablePanel<Relocation> threadedPanel;
 
 	RelocationProvider(RelocationTablePlugin plugin) {
 		super(plugin.getTool(), "Relocation Table", plugin.getName());
@@ -45,9 +45,6 @@ class RelocationProvider extends ComponentProviderAdapter {
 		addToTool();
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.ComponentProviderAdapter#getComponent()
-	 */
 	@Override
 	public JComponent getComponent() {
 		return mainPanel;

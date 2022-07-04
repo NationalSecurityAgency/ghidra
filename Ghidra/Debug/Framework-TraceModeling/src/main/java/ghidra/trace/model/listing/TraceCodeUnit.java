@@ -25,6 +25,7 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.util.TypeMismatchException;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.thread.TraceThread;
@@ -41,6 +42,13 @@ public interface TraceCodeUnit extends CodeUnit {
 	 * @return the trace
 	 */
 	Trace getTrace();
+
+	/**
+	 * Get the platform for this unit
+	 * 
+	 * @return the platform
+	 */
+	TracePlatform getPlatform();
 
 	@Override
 	TraceProgramView getProgram();

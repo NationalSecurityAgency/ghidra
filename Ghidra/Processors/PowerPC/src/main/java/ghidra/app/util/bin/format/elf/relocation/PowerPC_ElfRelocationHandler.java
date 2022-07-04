@@ -91,12 +91,13 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR32:
 			case PowerPC_ElfRelocationConstants.R_PPC_UADDR32:
 			case PowerPC_ElfRelocationConstants.R_PPC_GLOB_DAT:
-				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
-					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
-					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
-				}
 				newValue = symbolValue + addend;
 				memory.setInt(relocationAddress, newValue);
+				if (addend != 0) {
+					warnExternalOffsetRelocation(program, relocationAddress,
+						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+					applyComponentOffsetPointer(program, relocationAddress, addend);
+				}
 				break;
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR24:
 				newValue = (symbolValue + addend) >> 2;

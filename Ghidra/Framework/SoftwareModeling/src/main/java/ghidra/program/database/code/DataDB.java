@@ -21,7 +21,7 @@ import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
-import ghidra.program.database.data.DataTypeManagerDB;
+import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -30,7 +30,6 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.Msg;
 
 /**
@@ -48,8 +47,7 @@ class DataDB extends CodeUnitDB implements Data {
 	protected DataType baseDataType;
 
 	protected int level = 0;
-	protected DataTypeManagerDB dataMgr;
-	protected Settings defaultSettings;
+	protected ProgramDataTypeManager dataMgr;
 
 	private Boolean hasMutabilitySetting;
 
@@ -70,7 +68,6 @@ class DataDB extends CodeUnitDB implements Data {
 
 		baseDataType = getBaseDataType(dataType);
 
-		defaultSettings = dataType.getDefaultSettings();
 		length = -1; // lazy compute
 	}
 
@@ -117,7 +114,6 @@ class DataDB extends CodeUnitDB implements Data {
 		}
 		dataType = dt;
 		baseDataType = getBaseDataType(dataType);
-		defaultSettings = dataType.getDefaultSettings();
 		length = -1; // set to compute lazily later
 		bytes = null;
 		return false;
@@ -142,13 +138,8 @@ class DataDB extends CodeUnitDB implements Data {
 		if (length < 1) {
 			length = codeMgr.getLength(address);
 		}
-		if (length < 1) {
-			if (baseDataType instanceof Pointer) {
-				length = address.getPointerSize();
-			}
-			else {
-				length = 1;
-			}
+		if (length <= 0) {
+			length = 1;
 		}
 
 		// no need to do all that follow on checking when length == 1
@@ -242,7 +233,7 @@ class DataDB extends CodeUnitDB implements Data {
 				int elementLength = array.getElementLength();
 				Address componentAddr = address.add(index * elementLength);
 				return new DataComponent(codeMgr, componentCache, componentAddr,
-					addressMap.getKey(componentAddr, false), this, array.getDataType(), index,
+					addressMap.getKey(componentAddr, false), this, array, index,
 					index * elementLength, elementLength);
 			}
 			if (baseDataType instanceof Composite) {
@@ -280,10 +271,6 @@ class DataDB extends CodeUnitDB implements Data {
 		return null;
 	}
 
-	/**
-	 * Provide default formatted string representation of this instruction.
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		String valueRepresentation = getDefaultValueRepresentation();
@@ -346,8 +333,7 @@ class DataDB extends CodeUnitDB implements Data {
 
 	private <T extends SettingsDefinition> T getSettingsDefinition(
 			Class<T> settingsDefinitionClass) {
-		DataType dt = baseDataType;
-		for (SettingsDefinition def : dt.getSettingsDefinitions()) {
+		for (SettingsDefinition def : dataType.getSettingsDefinitions()) {
 			if (settingsDefinitionClass.isAssignableFrom(def.getClass())) {
 				return settingsDefinitionClass.cast(def);
 			}
@@ -388,31 +374,23 @@ class DataDB extends CodeUnitDB implements Data {
 	}
 
 	@Override
-	public void clearSetting(String name) {
+	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
 		refreshIfNeeded();
-		Address cuAddr = getDataSettingsAddress();
-		if (dataMgr.clearSetting(cuAddr, name)) {
-			changeMgr.setChanged(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED, cuAddr, cuAddr, null,
-				null);
-		}
+		return dataMgr.isChangeAllowed(this, settingsDefinition);
 	}
 
 	@Override
-	public byte[] getByteArray(String name) {
+	public void clearSetting(String name) {
 		refreshIfNeeded();
-		byte[] tempBytes = dataMgr.getByteSettingsValue(getDataSettingsAddress(), name);
-		if (tempBytes == null && defaultSettings != null) {
-			tempBytes = defaultSettings.getByteArray(name);
-		}
-		return tempBytes;
+		dataMgr.clearSetting(this, name);
 	}
 
 	@Override
 	public Long getLong(String name) {
 		refreshIfNeeded();
-		Long value = dataMgr.getLongSettingsValue(getDataSettingsAddress(), name);
-		if (value == null && defaultSettings != null) {
-			value = defaultSettings.getLong(name);
+		Long value = dataMgr.getLongSettingsValue(this, name);
+		if (value == null) {
+			value = getDefaultSettings().getLong(name);
 		}
 		return value;
 	}
@@ -420,15 +398,15 @@ class DataDB extends CodeUnitDB implements Data {
 	@Override
 	public String[] getNames() {
 		refreshIfNeeded();
-		return dataMgr.getNames(getDataSettingsAddress());
+		return dataMgr.getInstanceSettingsNames(this);
 	}
 
 	@Override
 	public String getString(String name) {
 		refreshIfNeeded();
-		String value = dataMgr.getStringSettingsValue(getDataSettingsAddress(), name);
-		if (value == null && defaultSettings != null) {
-			value = defaultSettings.getString(name);
+		String value = dataMgr.getStringSettingsValue(this, name);
+		if (value == null) {
+			value = getDefaultSettings().getString(name);
 		}
 		return value;
 	}
@@ -436,51 +414,29 @@ class DataDB extends CodeUnitDB implements Data {
 	@Override
 	public Object getValue(String name) {
 		refreshIfNeeded();
-		Object value = dataMgr.getSettings(getDataSettingsAddress(), name);
-		if (value == null && defaultSettings != null) {
-			value = defaultSettings.getValue(name);
+		Object value = dataMgr.getSettings(this, name);
+		if (value == null) {
+			value = getDefaultSettings().getValue(name);
 		}
 		return value;
 	}
 
 	@Override
-	public void setByteArray(String name, byte[] value) {
-		refreshIfNeeded();
-		Address cuAddr = getDataSettingsAddress();
-		if (dataMgr.setByteSettingsValue(cuAddr, name, value)) {
-			changeMgr.setChanged(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED, cuAddr, cuAddr, null,
-				null);
-		}
-	}
-
-	@Override
 	public void setLong(String name, long value) {
 		refreshIfNeeded();
-		Address cuAddr = getDataSettingsAddress();
-		if (dataMgr.setLongSettingsValue(cuAddr, name, value)) {
-			changeMgr.setChanged(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED, cuAddr, cuAddr, null,
-				null);
-		}
+		dataMgr.setLongSettingsValue(this, name, value);
 	}
 
 	@Override
 	public void setString(String name, String value) {
 		refreshIfNeeded();
-		Address cuAddr = getDataSettingsAddress();
-		if (dataMgr.setStringSettingsValue(cuAddr, name, value)) {
-			changeMgr.setChanged(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED, cuAddr, cuAddr, null,
-				null);
-		}
+		dataMgr.setStringSettingsValue(this, name, value);
 	}
 
 	@Override
 	public void setValue(String name, Object value) {
 		refreshIfNeeded();
-		Address cuAddr = getDataSettingsAddress();
-		if (dataMgr.setSettings(cuAddr, name, value)) {
-			changeMgr.setChanged(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED, cuAddr, cuAddr, null,
-				null);
-		}
+		dataMgr.setSettings(this, name, value);
 	}
 
 	@Override
@@ -520,7 +476,6 @@ class DataDB extends CodeUnitDB implements Data {
 		}
 	}
 
-	@Deprecated
 	@Override
 	public Data getComponentAt(int offset) {
 		return getComponentContaining(offset);
@@ -638,45 +593,6 @@ class DataDB extends CodeUnitDB implements Data {
 		return null;
 	}
 
-//	public Data[] getComponents() {
-//		lock.acquire();
-//		try {
-//	      	checkIsValid();
-//	        if (length < dataType.getLength()) {
-//	            return null;
-//	        }
-//	        Data[] retData = EMPTY_COMPONENTS;
-//	        if (baseDataType instanceof Composite) {
-//				Composite composite = (Composite)baseDataType;
-//				int n = composite.getNumComponents();
-//				retData = new Data[n];
-//				for(int i=0;i<n;i++) {
-//					retData[i] = getComponent(i);
-//				}
-//	        }
-//			else if (baseDataType instanceof Array) {
-//				Array array = (Array)baseDataType;
-//				int n = array.getNumElements();
-//				retData = new Data[n];
-//				for(int i=0;i<n;i++) {
-//					retData[i] = getComponent(i);
-//				}
-//			}
-//			else if (baseDataType instanceof DynamicDataType) {
-//				DynamicDataType ddt = (DynamicDataType)baseDataType;
-//				int n = ddt.getNumComponents(this);
-//				retData = new Data[n];
-//				for(int i=0;i<n;i++) {
-//					retData[i] = getComponent(i);
-//				}
-//			}
-//			return retData;
-//		}
-//		finally {
-//			lock.release();
-//		}
-//	}
-
 	@Override
 	public DataType getDataType() {
 		return dataType;
@@ -774,7 +690,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			return baseDataType.getValue(this, this, getLength());
+			return dataType.getValue(this, this, getLength());
 		}
 		finally {
 			lock.release();
@@ -844,16 +760,13 @@ class DataDB extends CodeUnitDB implements Data {
 	@Override
 	public void clearAllSettings() {
 		refreshIfNeeded();
-		Address cuAddr = getDataSettingsAddress();
-		dataMgr.clearAllSettings(cuAddr);
-		changeMgr.setChanged(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED, cuAddr, cuAddr, null,
-			null);
+		dataMgr.clearAllSettings(this);
 	}
 
 	@Override
 	public boolean isEmpty() {
 		refreshIfNeeded();
-		return dataMgr.isEmptySetting(getDataSettingsAddress());
+		return dataMgr.isEmptySetting(this);
 	}
 
 	@Override
@@ -874,10 +787,7 @@ class DataDB extends CodeUnitDB implements Data {
 
 	@Override
 	public Settings getDefaultSettings() {
-		return defaultSettings;
+		return dataType.getDefaultSettings();
 	}
 
-	protected Address getDataSettingsAddress() {
-		return address;
-	}
 }

@@ -52,8 +52,22 @@
 
   */
 
+
+
 options {
+    // Methods and class variables should not be static to allow multiple parsers to be in use.
+    // This is at the expense of some speed.
 	STATIC= false;
+	
+	// Don't interpret unicode escape sequences, they can appear in embedded text in macros and strings,
+    // which if interpreted can mess up parsing if they are pre-interpreted by the input stream.
+	JAVA_UNICODE_ESCAPE = false;
+	
+	// However, if the file has real embedded unicode characters, such as some microsoft header files,
+    // they need to be read correctly by the parser.  An example is the embedded code at the beginning
+    // of a file that states that it is in unicode.  The characters might be all ascii, which for parsing
+    // purposes is most likely the case.
+    UNICODE_INPUT = true;
 }
 
 
@@ -89,9 +103,12 @@ public class CParser {
     private Map<String, DataType> enums = new HashMap<String, DataType>();
 
     private Map<String, DataType> declarations = new HashMap<String, DataType>();
+    
+    private Map<String, DataType> internalTypes = new HashMap<String, DataType>();
 
     private DataType lastDataType = null;
     private boolean storeNewDT = true;
+    private String possiblyUndefinedType = null;
 
     DataTypeManager dtMgr = null;
     private DataTypeManager[] subDTMgrs = new DataTypeManager[0];
@@ -181,7 +198,7 @@ public class CParser {
         	}
         }
 
-        dt = new TypedefDataType(type, dt);
+        dt = new TypedefDataType(CategoryPath.ROOT, type, dt, dtMgr);
         dt = addDef(types, type, dt);
         return dt;
     }
@@ -223,6 +240,7 @@ public class CParser {
             return dt;
         }
         
+        possiblyUndefinedType = type;
         return null;
     }
     
@@ -320,6 +338,20 @@ public class CParser {
         table.put(name, dt);
         return dt;
     }
+    
+    // resolve data types using data type manager so that data organization is considered
+    //
+    private DataType resolveInternal(DataType datatype) {
+		DataType existingDT = internalTypes.get(datatype.getName());
+		if (existingDT != null) {
+			return existingDT;
+		}
+		existingDT = datatype.copy(dtMgr);
+
+		internalTypes.put(datatype.getName(), existingDT);
+
+		return existingDT;
+	}
 
 
     // rename a data type in the given table
@@ -440,7 +472,7 @@ public class CParser {
       if (currentFuncDT != null) {
          return currentFuncDT;
       }
-      return new FunctionDefinitionDataType(ANONYMOUS_FUNC_PREFIX+func_cnt++);
+      return new FunctionDefinitionDataType(CategoryPath.ROOT, ANONYMOUS_FUNC_PREFIX+func_cnt++, dtMgr);
     }
     
     private void checkReturnDataType(DataType retDT) throws ParseException {
@@ -688,7 +720,9 @@ public class CParser {
             if (headerFileName != null) {
                 parseMessage += "         in " + headerFileName + " near line " + subLinenum + "\n";
             }
+            parseMessage += "Error: " + e.getMessage() + "\n";
             parseMessage += "         near token: " + e.currentToken + "\n";
+            parseMessage += "Possibly Undefined : " + possiblyUndefinedType + "\n";  
             parseMessage += "         Last Valid Datatype: "
                     + (lastDataType == null ? "- none -" : lastDataType.getDisplayName()) + "\n";
             parseMessage += "         Check around CParserPlugin.out around line: "
@@ -800,7 +834,9 @@ TOKEN_MGR_DECLS :
 
 SKIP :
 {
-	" " 
+    "\ufeff"   // BOM character at beginning of file
+    |  
+	" "
 	|
 	"\f" 
 	|
@@ -956,7 +992,9 @@ TOKEN :
 	|
 	<ASM : ( [ "_" ] )* "asm" ( [ "_" ] )*  >
 	|
-	<INLINE : ( [ "_" ] )* ("inline" | "forceinline") ( [ "_" ] )*> 
+	<INLINE : ( [ "_" ] )* ("inline" | "forceinline") ( [ "_" ] )*>
+	|
+	<STATICASSERT : ("_S" | "s") "tatic_assert">
 	|
 	<FLOAT : "float"> 
 	|
@@ -1005,6 +1043,8 @@ TOKEN :
 	<IF : "if"> 
 	|
 	<DO : "do">
+	|
+	<NORETURN : "_Noreturn">
 	|
 	<PROTOCOL : "@protocol"> : OBJC
 	|
@@ -1262,7 +1302,7 @@ DataType ObjcDef() : {
 {
 	( nameTok=<OBJC_IDENTIFIER> ) ( <OBJC_IDENTIFIER> | <OBJC_IGNORE> | <OBJC2_IGNORE> )*  ( <OBJC_SEMI> | <OBJC2_END> )
 	{
-		return addTypedef(nameTok.image, VoidDataType.dataType);
+		return addTypedef(nameTok.image, resolveInternal(VoidDataType.dataType));
 	}
 }
 
@@ -1381,33 +1421,33 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
 }
 {
 	(
-		<VOID> 				{ dec.setDataType(VoidDataType.dataType); }
+		<VOID> 				{ dec.setDataType(resolveInternal(VoidDataType.dataType)); }
 		|
 		<CHAR> 				{   dt = dec.getDataType();
 								if (dt != null) {
-									if (dt == UnsignedIntegerDataType.dataType) {
-				                         dt = UnsignedCharDataType.dataType;
-				                    } else if (dt == IntegerDataType.dataType) {
-		                                 dt = CharDataType.dataType;
+									if (dt == resolveInternal(UnsignedIntegerDataType.dataType)) {
+				                         dt = resolveInternal(UnsignedCharDataType.dataType);
+				                    } else if (dt == resolveInternal(IntegerDataType.dataType)) {
+		                                 dt = resolveInternal(CharDataType.dataType);
 		                            } else {
 		                                 throw new ParseException("Bad datatype " + dt + " char");
 		                            }
 								}
 								else {
-									dt = CharDataType.dataType;
+									dt = resolveInternal(CharDataType.dataType);
 								}
 								dec.setDataType(dt);
 							}
 		|
-		<WCHAR> 			{ dec.setDataType(WideCharDataType.dataType); }
+		<WCHAR> 			{ dec.setDataType(resolveInternal(WideCharDataType.dataType)); }
 		|
 		<SHORT> 			{ dt = dec.getDataType();
 		                   if (dt == null) {
-		                       dt = ShortDataType.dataType;
-		                   } else if (dt == UnsignedIntegerDataType.dataType) {
-		                       dt = UnsignedShortDataType.dataType;
-		                   } else if (dt == IntegerDataType.dataType) {
-		                       dt = ShortDataType.dataType;
+		                       dt = resolveInternal(ShortDataType.dataType);
+		                   } else if (dt == resolveInternal(UnsignedIntegerDataType.dataType)) {
+		                       dt = resolveInternal(UnsignedShortDataType.dataType);
+		                   } else if (dt == resolveInternal(IntegerDataType.dataType)) {
+		                       dt = resolveInternal(ShortDataType.dataType);
 		                   } else {
 		                      throw new ParseException("Bad datatype " + dt + " short");
 		                   }
@@ -1420,21 +1460,21 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
 		|
 		<INT> 				{ dt = dec.getDataType();
 		                       if (dt == null ) { 
-		                         dec.setDataType(IntegerDataType.dataType);
+		                         dec.setDataType(resolveInternal(IntegerDataType.dataType));
 		                       }
 		                     }
 		|
 		<LONG> 		        { dt = dec.getDataType();
 			                  if ( dt == null) {
-			                      dt = LongDataType.dataType;
-			                  } else if ( dt == UnsignedIntegerDataType.dataType) {
-			                      dt = UnsignedLongDataType.dataType;
-			                  } else if (dt == IntegerDataType.dataType) {
-		                         dt = LongDataType.dataType;
-		                      } else if (dt == LongDataType.dataType) {
-		                         dt = LongLongDataType.dataType;
-		                      } else if (dt == UnsignedLongDataType.dataType) {
-		                         dt = UnsignedLongLongDataType.dataType;
+			                      dt = resolveInternal(LongDataType.dataType);
+			                  } else if ( dt == resolveInternal(UnsignedIntegerDataType.dataType)) {
+			                      dt = resolveInternal(UnsignedLongDataType.dataType);
+			                  } else if (dt == resolveInternal(IntegerDataType.dataType)) {
+		                         dt = resolveInternal(LongDataType.dataType);
+		                      } else if (dt == resolveInternal(LongDataType.dataType)) {
+		                         dt = resolveInternal(LongLongDataType.dataType);
+		                      } else if (dt == resolveInternal(UnsignedLongDataType.dataType)) {
+		                         dt = resolveInternal(UnsignedLongLongDataType.dataType);
 		                      } else {
 		                         throw new ParseException("Bad datatype " + dt + " long");
 		                      }
@@ -1447,20 +1487,20 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
 		|
 		<FLOAT> 			{ dt = dec.getDataType();
 		                  if ( dt == null) {
-		                      dt = FloatDataType.dataType;
-		                  } else if ( dt == LongDataType.dataType) {
-		                      dt = DoubleDataType.dataType;
+		                      dt = resolveInternal(FloatDataType.dataType);
+		                  } else if ( dt == resolveInternal(LongDataType.dataType)) {
+		                      dt = resolveInternal(DoubleDataType.dataType);
 		     			  } else {
 		                      throw new ParseException("Bad datatype " + dt + " long");
 		                  }
 		                  dec.setDataType(dt);
 			             }
 		|
-		<DOUBLE> 			{ dec.setDataType(new DoubleDataType()); }
+		<DOUBLE> 			{ dec.setDataType(resolveInternal(DoubleDataType.dataType)); }
 		|
 		<SIGNED>			{ dt = dec.getDataType();
 		                  if ( dt == null) {
-		                      dt = IntegerDataType.dataType;
+		                      dt = resolveInternal(IntegerDataType.dataType);
 		                  } else {
 		                      // data type already set, don't do anything?
 							 dt = dt;
@@ -1475,13 +1515,13 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
 		|
 		<UNSIGNED>		{     dt = dec.getDataType();
 			                  if ( dt == null) {
-			                      dt = UnsignedIntegerDataType.dataType;
-			                  } else if (dt == ShortDataType.dataType) {
-		                         dt = UnsignedShortDataType.dataType;
-		                      } else if (dt == LongDataType.dataType) {
-		                         dt = UnsignedLongDataType.dataType;
-		                      } else if (dt == LongLongDataType.dataType) {
-		                         dt = UnsignedLongLongDataType.dataType;
+			                      dt = resolveInternal(UnsignedIntegerDataType.dataType);
+			                  } else if (dt == resolveInternal(ShortDataType.dataType)) {
+		                         dt = resolveInternal(UnsignedShortDataType.dataType);
+		                      } else if (dt == resolveInternal(LongDataType.dataType)) {
+		                         dt = resolveInternal(UnsignedLongDataType.dataType);
+		                      } else if (dt == resolveInternal(LongLongDataType.dataType)) {
+		                         dt = resolveInternal(UnsignedLongLongDataType.dataType);
 		                      } else {
 		                         throw new ParseException("Bad datatype " + dt + " unsigned");
 		                      }
@@ -1492,13 +1532,13 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
 				dec = BuiltInDeclarationSpecifier(dec) 
 			]
 		|
-		<INT8>              { dec.setDataType(SignedByteDataType.dataType); }
+		<INT8>              { dec.setDataType(resolveInternal(SignedByteDataType.dataType)); }
 		|
-		<INT16>             { dec.setDataType(ShortDataType.dataType); }
+		<INT16>             { dec.setDataType(resolveInternal(ShortDataType.dataType)); }
 		|
-		<INT32>             { dec.setDataType(IntegerDataType.dataType); }
+		<INT32>             { dec.setDataType(resolveInternal(IntegerDataType.dataType)); }
 		|
-		<INT64>             { dec.setDataType(LongLongDataType.dataType); }
+		<INT64>             { dec.setDataType(resolveInternal(LongLongDataType.dataType)); }
 	)
 	{
 		return dec;
@@ -1546,6 +1586,7 @@ Declaration TypeQualifier(Declaration dec) : {}
 	  <PTR64> |
 	  <PTR32> |
 	  <INLINE> |
+	  <NORETURN> |
 	  <RESTRICT> |
 	  <EXTENSION> |
 	  <STATIC> |
@@ -1631,8 +1672,7 @@ void PragmaSpecifier() : {
 			packSize = popPack(ID);
 			newPackVal = null;
 		}
-		else if (ds1.image.equals("push")) {
-			// push current and set value
+		else if (ds1.image.equals("push") && ds2 != null) {
 			try {
 				// check if second arg is an integer
 				int ival = Integer.parseInt(ds2.image);
@@ -1683,6 +1723,12 @@ Token PragmaConstant() : {
   {
       return val;
   }
+}
+
+void StaticAssert() : {
+}
+{
+  ( ( <STATICASSERT> ) "(" ConstantExpression() [ "," <STRING_LITERAL> ] ")" )
 }
 
 
@@ -1750,7 +1796,7 @@ DataType StructOrUnionSpecifier() : {
 Composite StructOrUnion() : {Composite comp;}
 {
 	(
-		<STRUCT> ( DeclSpec() )* { comp =  new StructureDataType(ANONYMOUS_STRUCT_PREFIX + cnt++, 0);
+		<STRUCT> ( DeclSpec() | PragmaSpec() )* { comp =  new StructureDataType(CategoryPath.ROOT, ANONYMOUS_STRUCT_PREFIX + cnt++, 0, dtMgr);
 
 		                          	  // Always set the packing, because by default structures should be aligned
 	                                  if (packSize > 0) {
@@ -1762,7 +1808,7 @@ Composite StructOrUnion() : {Composite comp;}
 		                           
 								}
 		|
-		<UNION>  ( DeclSpec() )* { comp = new UnionDataType(ANONYMOUS_UNION_PREFIX  + cnt++); 
+		<UNION>  ( DeclSpec() )* { comp = new UnionDataType(CategoryPath.ROOT, ANONYMOUS_UNION_PREFIX  + cnt++, dtMgr); 
 		
 								  // Always set the packing, because by default structures should be aligned
                                   if (packSize > 0) {
@@ -1821,6 +1867,7 @@ void StructDeclaration(Composite comp, CompositeHandler compositeHandler) : {
 }
 {
     LineDef() |
+    PragmaSpec() |
 	(   
 		[ dt = SpecifierQualifierList() ]
 		[
@@ -1928,7 +1975,7 @@ DataType EnumSpecifier() : {
 		[ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}" 
 		{
 			String enumName= (t != null ? t.image : ("enum_" + cnt++));
-			EnumDataType enuum= new EnumDataType(enumName, 4);
+			EnumDataType enuum= new EnumDataType(CategoryPath.ROOT, enumName, 4, dtMgr);
 			for (EnumMember member : list) {
 				try {
                 	enuum.add(member.name, member.value);
@@ -2147,7 +2194,7 @@ Declaration ParameterTypeList(FunctionDefinitionDataType funcDT, DataType retDT)
 	{
 		checkReturnDataType(retDT);
 		if (funcDT == null) {
-			funcDT= new FunctionDefinitionDataType(ANONYMOUS_FUNC_PREFIX);
+			funcDT= new FunctionDefinitionDataType(CategoryPath.ROOT, ANONYMOUS_FUNC_PREFIX, dtMgr);
 		}
 		funcDT.setVarArgs(varargs!=null);
 		ParameterDefinition[] variables= new ParameterDefinition[list.size()];
@@ -2260,13 +2307,13 @@ void Designator() : { }
   "." <IDENTIFIER>
 }
 
-DataType TypeName() : {
-    Declaration dt = null;
+Declaration TypeName() : {
+    Declaration dec = null;
 }
 {
-	dt = SpecifierQualifierList() [ AbstractDeclarator(new Declaration()) ]
+	dec = SpecifierQualifierList() [ dec = AbstractDeclarator(new Declaration(dec)) ]
 	{
-	   return dt.getDataType();
+	   return dec;
 	}
 }
 
@@ -2342,6 +2389,8 @@ void Statement() : {}
 		AsmStatement()
 		|
 		PragmaSpec()
+		|
+		StaticAssert()
 	)
 }
 
@@ -2608,9 +2657,9 @@ Object CastExpression() : {
 }
 
 Object UnaryExpression() : {
-     DataType dt = null;
      Object obj = null;
      Token op = null;
+	 Declaration dec = null;
 }
 {
 	(
@@ -2633,12 +2682,18 @@ Object UnaryExpression() : {
 		| 
 		<SIZEOF> 
 		(
-			"(" (dt = TypeName() | <IDENTIFIER> | obj = ConstantExpression() ) ")"
+			"(" ( dec = TypeName() | obj = UnaryExpression() ) ")"
 			{
-			    if (dt != null) {
-			        obj = Long.valueOf(dt.getLength());
-			    } else if (obj != null && obj instanceof String) {
+			    if (obj != null && obj instanceof String) {
 			        obj = Long.valueOf(((String) obj).length() - 1); // will include "" plus \0
+			    }
+			    else if (dec != null) {
+			        obj = Long.valueOf(dec.getDataType().getLength());
+			    }
+			    else if (obj != null) {
+			       // TODO: try to look up the type of the identifier
+			       // TODO: Throw error if identifier is not defined
+			       //       may need to actually track declarations!
 			    }
 			}
 		)

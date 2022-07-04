@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -29,33 +29,30 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a linkedit_data_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a linkedit_data_command structure 
  */
 public class LinkEditDataCommand extends LoadCommand {
-	private int dataoff;
-	private int datasize;
-
-	static LinkEditDataCommand createLinkEditDataCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		LinkEditDataCommand command =
-			(LinkEditDataCommand) reader.getFactory().create(LinkEditDataCommand.class);
-		command.initLinkEditDataCommand(reader);
-		return command;
-	}
+	protected int dataoff;
+	protected int datasize;
+	protected BinaryReader dataReader;
 
 	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
+	 * Creates and parses a new {@link LinkEditDataCommand}.  Sets <code>dataReader</code> to the
+	 * data offset.
+	 * 
+	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
+	 *   command
+	 * @param dataReader A {@link BinaryReader reader} that can read the data that the load command
+	 *   references.  Note that this might be in a different underlying provider.
+	 * @throws IOException if an IO-related error occurs while parsing
 	 */
-	public LinkEditDataCommand() {
-	}
-
-	protected void initLinkEditDataCommand(FactoryBundledWithBinaryReader reader)
+	LinkEditDataCommand(BinaryReader loadCommandReader, BinaryReader dataReader)
 			throws IOException {
-		initLoadCommand(reader);
-		dataoff = reader.readNextInt();
-		datasize = reader.readNextInt();
+		super(loadCommandReader);
+		this.dataoff = loadCommandReader.readNextInt();
+		this.datasize = loadCommandReader.readNextInt();
+		this.dataReader = dataReader;
+		this.dataReader.setPointerIndex(dataoff);
 	}
 
 	public int getDataOffset() {
@@ -81,7 +78,7 @@ public class LinkEditDataCommand extends LoadCommand {
 				Address address = baseAddress.getNewAddress(getStartIndex());
 				api.createData(address, toDataType());
 				api.setPlateComment(address,
-					LoadCommandTypes.getLoadCommentTypeName(getCommandType()));
+					LoadCommandTypes.getLoadCommandName(getCommandType()));
 
 //TODO markup actual data
 

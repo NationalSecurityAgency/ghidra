@@ -259,7 +259,7 @@ class CategoryDB extends DatabaseObject implements Category {
 		try {
 			checkDeleted();
 			if (!getCategoryPath().equals(dt.getCategoryPath())) {
-				dt = dt.clone(dt.getDataTypeManager());
+				dt = dt.clone(mgr);
 				try {
 					dt.setCategoryPath(getCategoryPath());
 				}

@@ -18,15 +18,12 @@ package ghidra.app.util.opinion;
 import java.io.IOException;
 import java.util.*;
 
-import generic.continues.GenericFactory;
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.ElfException;
 import ghidra.app.util.bin.format.elf.ElfHeader;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
@@ -106,8 +103,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 
 		try {
-			ElfHeader elf =
-				ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider, null);
+			ElfHeader elf = new ElfHeader(provider, null);
 			// TODO: Why do we convey image base to loader ?  This will be managed by each loader !
 			List<QueryResult> results =
 				QueryOpinionService.query(getName(), elf.getMachineName(), elf.getFlags());
@@ -149,8 +145,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 			throws IOException, CancelledException {
 
 		try {
-			GenericFactory factory = MessageLogContinuesFactory.create(log);
-			ElfHeader elf = ElfHeader.createElfHeader(factory, provider, msg -> log.appendMsg(msg));
+			ElfHeader elf = new ElfHeader(provider, msg -> log.appendMsg(msg));
 			ElfProgramBuilder.loadElf(elf, program, options, log, monitor);
 		}
 		catch (ElfException e) {

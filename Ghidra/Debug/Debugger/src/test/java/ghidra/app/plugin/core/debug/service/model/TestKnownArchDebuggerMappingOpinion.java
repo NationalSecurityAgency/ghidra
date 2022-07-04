@@ -19,7 +19,7 @@ import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.dbg.target.TargetEnvironment;
-import ghidra.dbg.target.TargetProcess;
+import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 
@@ -27,12 +27,12 @@ public class TestKnownArchDebuggerMappingOpinion implements DebuggerMappingOpini
 	public static final String ARCH = "test-known-arch";
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetObject target,
 			boolean includeOverrides) {
 		if (!ARCH.equals(env.getArchitecture())) {
 			return Set.of();
 		}
-		return Set.of(new DefaultDebuggerMappingOffer(process, 100, "Offer for test-known-arch",
+		return Set.of(new DefaultDebuggerMappingOffer(target, 100, "Offer for test-known-arch",
 			new LanguageID(DebuggerModelServiceTest.LANGID_TOYBE64), new CompilerSpecID("default"),
 			Set.of()));
 	}

@@ -15,7 +15,7 @@
  */
 package ghidra.server.security;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
 import javax.security.auth.Subject;
@@ -24,13 +24,25 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 
-import ch.ethz.ssh2.signature.*;
+import org.bouncycastle.crypto.CipherParameters;
+import org.bouncycastle.crypto.digests.SHA1Digest;
+import org.bouncycastle.crypto.params.DSAKeyParameters;
+import org.bouncycastle.crypto.params.RSAKeyParameters;
+import org.bouncycastle.crypto.signers.*;
+import org.bouncycastle.util.Strings;
+
 import ghidra.framework.remote.GhidraPrincipal;
 import ghidra.framework.remote.SSHSignatureCallback;
 import ghidra.framework.remote.security.SSHKeyManager;
 import ghidra.net.*;
 import ghidra.server.UserManager;
 
+/**
+ * <code>SSHAuthenticationModule</code> provides SHA1-RSA and SHA1-DSA signature-based authentication
+ * support using SSH public/private keys where user public keys are made available to the server.
+ * Module makes use of a {@link SSHSignatureCallback} object to convey the signature request to a
+ * client.
+ */
 public class SSHAuthenticationModule {
 
 	private static final long MAX_TOKEN_TIME = 10000;
@@ -87,12 +99,48 @@ public class SSHAuthenticationModule {
 	}
 
 	/**
+	 * Read UInt32 from SSH-encoded buffer.
+	 * (modeled after org.bouncycastle.crypto.util.SSHBuffer.readU32())
+	 * @param in data input stream
+	 * @return integer value
+	 * @throws IOException if IO error occurs reading input stream or inadequate 
+	 * bytes are available.
+	 */
+	private static int sshBufferReadUInt32(ByteArrayInputStream in) throws IOException {
+		byte[] tmp = in.readNBytes(4);
+		if (tmp.length != 4) {
+			throw new IOException("insufficient data");
+		}
+		int value = (tmp[0] & 0xff) << 24;
+		value |= (tmp[1] & 0xff) << 16;
+		value |= (tmp[2] & 0xff) << 8;
+		value |= (tmp[3] & 0xff);
+		return value;
+	}
+
+	/**
+	 * Read block of data from SSH-encoded buffer.
+	 * (modeled after org.bouncycastle.crypto.util.SSHBuffer.readBlock())
+	 * @param in data input stream
+	 * @return byte array
+	 * @throws IOException if IO error occurs reading input stream or inadequate 
+	 * bytes are available.
+	 */
+	private static byte[] sshBufferReadBlock(ByteArrayInputStream in) throws IOException {
+		int len = sshBufferReadUInt32(in);
+		if (len <= 0 || len > in.available()) {
+			throw new IOException("insufficient data");
+		}
+		return in.readNBytes(len);
+	}
+
+	/**
 	 * Complete the authentication process
 	 * @param userMgr Ghidra server user manager
 	 * @param subject unauthenticated user ID (must be used if name callback not provided/allowed)
 	 * @param callbacks authentication callbacks
 	 * @return authenticated user ID (may come from callbacks)
-	 * @throws LoginException
+	 * @throws LoginException if authentication failure occurs
 	 */
 	public String authenticate(UserManager userMgr, Subject subject, Callback[] callbacks)
 			throws LoginException {
@@ -162,23 +210,41 @@ public class SSHAuthenticationModule {
 		}
 
 		try {
+			ByteArrayInputStream in = new ByteArrayInputStream(sigBytes);
+			String keyAlgorithm = Strings.fromByteArray(sshBufferReadBlock(in));
+			byte[] sig = sshBufferReadBlock(in);
+			if (in.available() != 0) {
+				throw new FailedLoginException("SSH Signature contained extra bytes");
+			}
 
-			Object sshPublicKey = SSHKeyManager.getSSHPublicKey(sshPublicKeyFile);
+			CipherParameters cipherParams = SSHKeyManager.getSSHPublicKey(sshPublicKeyFile);
 
-			if (sshPublicKey instanceof RSAPublicKey) {
-				RSAPublicKey key = (RSAPublicKey) sshPublicKey;
-				RSASignature rsaSignature = RSASHA1Verify.decodeSSHRSASignature(sigBytes);
-				if (!RSASHA1Verify.verifySignature(token, rsaSignature, key)) {
+			if (cipherParams instanceof RSAKeyParameters) {
+				if (!"ssh-rsa".equals(keyAlgorithm)) {
+					throw new FailedLoginException("Invalid SSH RSA Signature");
+				}
+				RSADigestSigner signer = new RSADigestSigner(new SHA1Digest());
+				signer.init(false, cipherParams);
+				signer.update(token, 0, token.length);
+				if (!signer.verifySignature(sig)) {
 					throw new FailedLoginException("Incorrect signature");
 				}
 			}
-			else if (sshPublicKey instanceof DSAPublicKey) {
-				DSAPublicKey key = (DSAPublicKey) sshPublicKey;
-				DSASignature dsaSignature = DSASHA1Verify.decodeSSHDSASignature(sigBytes);
-				if (!DSASHA1Verify.verifySignature(token, dsaSignature, key)) {
+			else if (cipherParams instanceof DSAKeyParameters) {
+				if (!"ssh-dss".equals(keyAlgorithm)) {
+					throw new FailedLoginException("Invalid SSH DSA Signature");
+				}
+				DSADigestSigner signer = new DSADigestSigner(new DSASigner(), new SHA1Digest());
+				signer.init(false, cipherParams);
+				signer.update(token, 0, token.length);
+				if (!signer.verifySignature(sig)) {
 					throw new FailedLoginException("Incorrect signature");
 				}
 			}
+			else {
+				throw new FailedLoginException("Unsupported public key");
+			}
+
 		}
 		catch (LoginException e) {
 			throw e;

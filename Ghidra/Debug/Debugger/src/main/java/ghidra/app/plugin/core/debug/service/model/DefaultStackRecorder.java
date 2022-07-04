@@ -86,7 +86,7 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 
 	public void doRecordFrame(TraceStack traceStack, int frameLevel, Address pc) {
 		TraceStackFrame traceFrame = traceStack.getFrame(frameLevel, true);
-		traceFrame.setProgramCounter(pc);
+		traceFrame.setProgramCounter(null, pc); // Not object-based, so span=null
 	}
 
 	public void recordFrame(TargetStackFrame frame) {

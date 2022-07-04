@@ -15,13 +15,13 @@
  */
 package ghidra.program.util;
 
+import java.util.*;
+
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.*;
 
 /**
  * This is a generalized class for storing register values over ranges.  The values include mask bits
@@ -123,9 +123,11 @@ public class RegisterValueStore {
 				// Ensure that transaction is open to avoid delayed error condition
 				rangeMap.checkWritableState();
 			}
-			rangeWriteCacheValue = newValue;
-			rangeWriteCacheMin = start;
-			rangeWriteCacheMax = end;
+			synchronized (this) {
+				rangeWriteCacheValue = newValue;
+				rangeWriteCacheMin = start;
+				rangeWriteCacheMax = end;
+			}
 			return;
 		}
 
@@ -230,21 +232,27 @@ public class RegisterValueStore {
 
 	/**
 	 * Returns the RegisterValue (value and mask) associated with the given address. 
+	 * @param register register (base or child) for which context value should be returned
 	 * @param address the address at which to get the RegisterValue.
 	 * @return the RegisterValue 
 	 */
 	public RegisterValue getValue(Register register, Address address) {
 
-		if (rangeWriteCacheValue != null && address.compareTo(rangeWriteCacheMin) >= 0 &&
-			address.compareTo(rangeWriteCacheMax) <= 0) {
-			return rangeWriteCacheValue.getRegisterValue(register);
-		}
-
+		RegisterValue value = null;
 		byte[] bytes = rangeMap.getValue(address);
-		if (bytes == null) {
-			return null;
+		if (bytes != null) {
+			value = new RegisterValue(register, bytes);
 		}
-		return new RegisterValue(register, bytes);
+		
+		synchronized (this) {
+			if (rangeWriteCacheValue != null && address.compareTo(rangeWriteCacheMin) >= 0 &&
+				address.compareTo(rangeWriteCacheMax) <= 0) {
+				value = value != null ? value.combineValues(rangeWriteCacheValue)
+						: rangeWriteCacheValue;
+				return value.getRegisterValue(register);
+			}
+		}
+		return value;
 	}
 
 	/**
@@ -322,6 +330,13 @@ public class RegisterValueStore {
 		flushWriteCache();
 
 		return rangeMap.getValueRangeContaining(addr);
+	}
+
+	/**
+	 * Notifies that something changed, may need to invalidate any caches
+	 */
+	public void invalidate() {
+		rangeMap.invalidate();
 	}
 
 }

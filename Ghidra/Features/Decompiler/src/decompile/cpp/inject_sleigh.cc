@@ -61,20 +61,29 @@ void InjectPayloadSleigh::inject(InjectContext &context,PcodeEmit &emit) const
   con.cacher.emit(con.baseaddr,&emit);
 }
 
-void InjectPayloadSleigh::restoreXml(const Element *el)
+/// The content is read as raw p-code source
+/// \param decoder is the XML stream decoder
+void InjectPayloadSleigh::decodeBody(Decoder &decoder)
 
 {
-  InjectPayload::restoreXml(el);
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const Element *subel = *iter;
-    if (subel->getName() == "body") {
-      parsestring = subel->getContent();
-    }
+  uint4 elemId = decoder.openElement();		// Tag may not be present
+  if (elemId == ELEM_BODY) {
+    parsestring = decoder.readString(ATTRIB_CONTENT);
+    decoder.closeElement(elemId);
   }
   if (parsestring.size() == 0 && (!dynamic))
     throw LowlevelError("Missing <body> subtag in <pcode>: "+getSource());
+}
+
+void InjectPayloadSleigh::decode(Decoder &decoder)
+
+{
+  // Restore a raw <pcode> tag.  Used for uponentry, uponreturn
+  uint4 elemId = decoder.openElement(ELEM_PCODE);
+  decodePayloadAttributes(decoder);
+  decodePayloadParams(decoder);
+  decodeBody(decoder);
+  decoder.closeElement(elemId);
 }
 
 void InjectPayloadSleigh::printTemplate(ostream &s) const
@@ -138,23 +147,27 @@ InjectPayloadCallfixup::InjectPayloadCallfixup(const string &sourceName)
 {
 }
 
-void InjectPayloadCallfixup::restoreXml(const Element *el)
+void InjectPayloadCallfixup::decode(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  name = el->getAttributeValue("name");
+  uint4 elemId = decoder.openElement(ELEM_CALLFIXUP);
+  name = decoder.readString(ATTRIB_NAME);
   bool pcodeSubtag = false;
 
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const Element *subel = *iter;
-    if (subel->getName() == "pcode") {
-      InjectPayloadSleigh::restoreXml(subel);
+  for(;;) {
+    uint4 subId = decoder.openElement();
+    if (subId == 0) break;
+    if (subId == ELEM_PCODE) {
+      decodePayloadAttributes(decoder);
+      decodePayloadParams(decoder);
+      decodeBody(decoder);
       pcodeSubtag = true;
     }
-    else if (subel->getName() == "target")
-      targetSymbolNames.push_back(subel->getAttributeValue("name"));
+    else if (subId == ELEM_TARGET)
+      targetSymbolNames.push_back(decoder.readString(ATTRIB_NAME));
+    decoder.closeElement(subId);
   }
+  decoder.closeElement(elemId);
   if (!pcodeSubtag)
     throw LowlevelError("<callfixup> is missing <pcode> subtag: "+name);
 }
@@ -164,16 +177,19 @@ InjectPayloadCallother::InjectPayloadCallother(const string &sourceName)
 {
 }
 
-void InjectPayloadCallother::restoreXml(const Element *el)
+void InjectPayloadCallother::decode(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  name = el->getAttributeValue("targetop");
-  iter = list.begin();
-  if ((iter == list.end()) || ((*iter)->getName() != "pcode"))
+  uint4 elemId = decoder.openElement(ELEM_CALLOTHERFIXUP);
+  name = decoder.readString(ATTRIB_TARGETOP);
+  uint4 subId = decoder.openElement();
+  if (subId != ELEM_PCODE)
     throw LowlevelError("<callotherfixup> does not contain a <pcode> tag");
-  InjectPayloadSleigh::restoreXml(*iter);
+  decodePayloadAttributes(decoder);
+  decodePayloadParams(decoder);
+  decodeBody(decoder);
+  decoder.closeElement(subId);
+  decoder.closeElement(elemId);
 }
 
 ExecutablePcodeSleigh::ExecutablePcodeSleigh(Architecture *g,const string &src,const string &nm)
@@ -211,22 +227,19 @@ void ExecutablePcodeSleigh::inject(InjectContext &context,PcodeEmit &emit) const
   con.cacher.emit(con.baseaddr,&emit);
 }
 
-void ExecutablePcodeSleigh::restoreXml(const Element *el)
+void ExecutablePcodeSleigh::decode(Decoder &decoder)
 
 {
-  InjectPayload::restoreXml(el);
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  bool hasbody = false;
-  for (iter = list.begin(); iter != list.end(); ++iter) {
-    const Element *subel = *iter;
-    if (subel->getName() == "body") {
-      hasbody = true;
-      parsestring = subel->getContent();
-    }
-  }
-  if (!hasbody)
-    throw LowlevelError("Missing <body> subtag in <pcode>: " + getSource());
+  uint4 elemId = decoder.openElement();
+  if (elemId != ELEM_PCODE && elemId != ELEM_CASE_PCODE &&
+      elemId != ELEM_ADDR_PCODE && elemId != ELEM_DEFAULT_PCODE && elemId != ELEM_SIZE_PCODE)
+    throw XmlError("Expecting <pcode>, <case_pcode>, <addr_pcode>, <default_pcode>, or <size_pcode>");
+  decodePayloadAttributes(decoder);
+  decodePayloadParams(decoder);
+  uint4 subId = decoder.openElement(ELEM_BODY);
+  parsestring = decoder.readString(ATTRIB_CONTENT);
+  decoder.closeElement(subId);
+  decoder.closeElement(elemId);
 }
 
 void ExecutablePcodeSleigh::printTemplate(ostream &s) const
@@ -243,16 +256,12 @@ InjectPayloadDynamic::~InjectPayloadDynamic(void)
     delete (*iter).second;
 }
 
-void InjectPayloadDynamic::restoreEntry(const Element *el)
+void InjectPayloadDynamic::decodeEntry(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  iter = list.begin();
-  Address addr = Address::restoreXml(*iter,glb);
-  ++iter;
-  istringstream s((*iter)->getContent());
+  Address addr = Address::decode(decoder);
+  uint4 subId = decoder.openElement(ELEM_PAYLOAD);
+  istringstream s(decoder.readString(ATTRIB_CONTENT));
   try {
     Document *doc = xml_tree(s);
     map<Address,Document *>::iterator iter = addrMap.find(addr);
@@ -263,6 +272,7 @@ void InjectPayloadDynamic::restoreEntry(const Element *el)
   catch(XmlError &err) {
     throw LowlevelError("Error in dynamic payload XML");
   }
+  decoder.closeElement(subId);
 }
 
 void InjectPayloadDynamic::inject(InjectContext &context,PcodeEmit &emit) const
@@ -272,10 +282,11 @@ void InjectPayloadDynamic::inject(InjectContext &context,PcodeEmit &emit) const
   if (eiter == addrMap.end())
     throw LowlevelError("Missing dynamic inject");
   const Element *el = (*eiter).second->getRoot();
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter)
-    emit.restoreXmlOp(*iter,glb->translate);
+  XmlDecode decoder(glb->translate,el);
+  uint4 rootId = decoder.openElement(ELEM_INST);
+  while(decoder.peekElement() != 0)
+    emit.decodeOp(decoder);
+  decoder.closeElement(rootId);
 }
 
 PcodeInjectLibrarySleigh::PcodeInjectLibrarySleigh(Architecture *g)
@@ -402,26 +413,24 @@ void PcodeInjectLibrarySleigh::registerInject(int4 injectid)
   }
 }
 
-void PcodeInjectLibrarySleigh::restoreDebug(const Element *el)
+void PcodeInjectLibrarySleigh::decodeDebug(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const Element *subel = *iter;
-    const string &name( subel->getAttributeValue("name") );
-    istringstream s( subel->getAttributeValue("type") );
-    int4 type = -1;
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> type;
+  uint4 elemId = decoder.openElement(ELEM_INJECTDEBUG);
+  for(;;) {
+    uint4 subId = decoder.openElement();
+    if (subId != ELEM_INJECT) break;
+    string name = decoder.readString(ATTRIB_NAME);
+    int4 type = decoder.readSignedInteger(ATTRIB_TYPE);
     int4 id = getPayloadId(type,name);
     InjectPayloadDynamic *payload = dynamic_cast<InjectPayloadDynamic *>(getPayload(id));
     if (payload == (InjectPayloadDynamic *)0) {
       payload = forceDebugDynamic(id);
     }
-    payload->restoreEntry(subel);
+    payload->decodeEntry(decoder);
+    decoder.closeElement(subId);
   }
+  decoder.closeElement(elemId);
 }
 
 const vector<OpBehavior *> &PcodeInjectLibrarySleigh::getBehaviors(void)

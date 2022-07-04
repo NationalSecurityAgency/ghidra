@@ -31,31 +31,29 @@ import util.CollectionUtils;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**
- * An abstract table model for showing DynamicTableColumns where each row is based on an
- * object of type ROW_TYPE.   The client is responsible for implementing
- * {@link #createTableColumnDescriptor()}.  This method specifies which default columns the
- * table should have and whether they should be visible or hidden.  Hidden columns can be
- * made visible through the UI.
+ * An abstract table model for showing DynamicTableColumns where each row is based on an object of
+ * type ROW_TYPE. The client is responsible for implementing {@link #createTableColumnDescriptor()}.
+ * This method specifies which default columns the table should have and whether they should be
+ * visible or hidden. Hidden columns can be made visible through the UI.
  * <p>
  * This model will also discover other system columns that understand how to render
- * <code>ROW_TYPE</code> data directly.  Also, if you create a {@link TableRowMapper mapper}(s) for
+ * <code>ROW_TYPE</code> data directly. Also, if you create a {@link TableRowMapper mapper}(s) for
  * your row type, then this model will load columns for each type for which a mapper was created,
  * all as optional, hidden columns.
  * <p>
- * The various attributes of the columns of this model (visibility, position, size, etc) are
- * saved to disk as tool preferences when the user exits the tool.
+ * The various attributes of the columns of this model (visibility, position, size, etc) are saved
+ * to disk as tool preferences when the user exits the tool.
  * <p>
  * Implementation Note: this model loads all columns, specific and discovered, as being visible.
- *                      Then, during initialization, the {@link TableColumnModelState} class will
- *                      either hide all non-default columns, or reload the column state if any
- *                      previous saved state is found.
+ * Then, during initialization, the {@link TableColumnModelState} class will either hide all
+ * non-default columns, or reload the column state if any previous saved state is found.
  *
  * @param <ROW_TYPE> the row object class for this table model.
- * @param <DATA_SOURCE> the type of data that will be returned from {@link #getDataSource()}.  This
- *                    object will be given to the {@link DynamicTableColumn} objects used by this
- *                    table model when
- *                    {@link DynamicTableColumn#getValue(Object, ghidra.docking.settings.Settings, Object, ServiceProvider)}
- *                    is called.
+ * @param <DATA_SOURCE> the type of data that will be returned from {@link #getDataSource()}. This
+ *            object will be given to the {@link DynamicTableColumn} objects used by this table
+ *            model when
+ *            {@link DynamicTableColumn#getValue(Object, ghidra.docking.settings.Settings, Object, ServiceProvider)}
+ *            is called.
  */
 public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 		extends AbstractSortedTableModel<ROW_TYPE>
@@ -122,10 +120,10 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Allows clients to defer column creation until after this parent class's constructor has
-	 * been called.   This method will not restore any column settings that have been changed
-	 * after construction.  Thus, this method is intended only to be called during the 
-	 * construction process.
+	 * Allows clients to defer column creation until after this parent class's constructor has been
+	 * called. This method will not restore any column settings that have been changed after
+	 * construction. Thus, this method is intended only to be called during the construction
+	 * process.
 	 */
 	protected void reloadColumns() {
 
@@ -201,9 +199,8 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * This differs from {@link #createSortComparator(int)} in that the other method
-	 * creates a comparator that operates on a full row value, whereas this method operates on
-	 * column values.
+	 * This differs from {@link #createSortComparator(int)} in that the other method creates a
+	 * comparator that operates on a full row value, whereas this method operates on column values.
 	 *
 	 * @param columnIndex the column index
 	 * @return a comparator for the specific column values
@@ -211,7 +208,8 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	@SuppressWarnings("unchecked") // the column provides the values itself; safe cast
 	protected Comparator<Object> createSortComparatorForColumn(int columnIndex) {
 		DynamicTableColumn<ROW_TYPE, ?, ?> column = getColumn(columnIndex);
-		Comparator<Object> comparator = (Comparator<Object>) column.getComparator();
+		Comparator<Object> comparator =
+			(Comparator<Object>) column.getComparator(this, columnIndex);
 		return comparator;
 	}
 
@@ -252,11 +250,13 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Adds the given column at the end of the list of columns.  This method is intended for
+	 * Adds the given column at the end of the list of columns. This method is intended for
 	 * implementations to add custom column objects, rather than relying on generic, discovered
 	 * DynamicTableColumn implementations.
 	 * 
-	 * <p><b>Note: this method assumes that the columns have already been sorted</b>
+	 * <p>
+	 * <b>Note: this method assumes that the columns have already been sorted</b>
+	 * 
 	 * @param column The field to add
 	 */
 	protected void addTableColumn(DynamicTableColumn<ROW_TYPE, ?, ?> column) {
@@ -264,11 +264,12 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Adds the given columns to the end of the list of columns.  This method is intended for
+	 * Adds the given columns to the end of the list of columns. This method is intended for
 	 * implementations to add custom column objects, rather than relying on generic, discovered
 	 * DynamicTableColumn implementations.
 	 * 
-	 * <p><b>Note: this method assumes that the columns have already been sorted.</b>
+	 * <p>
+	 * <b>Note: this method assumes that the columns have already been sorted.</b>
 	 * 
 	 * @param columns The columns to add
 	 */
@@ -280,15 +281,16 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Adds the given field at the given index to the list of fields in this class.
-	 * This method is intended for implementations to add custom column objects, rather than
-	 * relying on generic, discovered DynamicTableColumn implementations.
+	 * Adds the given field at the given index to the list of fields in this class. This method is
+	 * intended for implementations to add custom column objects, rather than relying on generic,
+	 * discovered DynamicTableColumn implementations.
 	 * <p>
 	 * <b>Note: this method assumes that the columns have already been sorted.</b>
+	 * 
 	 * @param column The field to add.
-	 * @param index The index at which to add the field.  If the index value is invalid (negative
-	 *        or greater than the number of columns), then the column will be added to the
-	 *        end of the columns list.
+	 * @param index The index at which to add the field. If the index value is invalid (negative or
+	 *            greater than the number of columns), then the column will be added to the end of
+	 *            the columns list.
 	 * @param isDefault true if this is a default column
 	 */
 	protected void addTableColumn(DynamicTableColumn<ROW_TYPE, ?, ?> column, int index,
@@ -324,8 +326,8 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Removes the given columns from this model.  This method allows the client to remove
-	 * multiple columns at once, firing only one event when the work is finished.
+	 * Removes the given columns from this model. This method allows the client to remove multiple
+	 * columns at once, firing only one event when the work is finished.
 	 *
 	 * @param columns the columns to remove
 	 */
@@ -363,6 +365,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	/**
 	 * Returns true if the column indicated by the index in the model is a default column (meaning
 	 * that it was specified by the model and not discovered).
+	 * 
 	 * @param modelIndex the index of the column in the model.
 	 * @return true if the column is a default.
 	 */
@@ -460,7 +463,8 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 
 	/**
 	 * Returns the table's context for the data.
-	 * @return  the table's context for the data.
+	 * 
+	 * @return the table's context for the data.
 	 */
 	public abstract DATA_SOURCE getDataSource();
 
@@ -524,12 +528,12 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Gets the special table cell renderer for the specified table field column.
-	 * A null value indicates that this field uses a default cell renderer.
+	 * Gets the special table cell renderer for the specified table field column. A null value
+	 * indicates that this field uses a default cell renderer.
 	 *
 	 * @param index the model column index
-	 * @return a table cell renderer for this field. Otherwise, null if a default
-	 *         renderer should be used.
+	 * @return a table cell renderer for this field. Otherwise, null if a default renderer should be
+	 *         used.
 	 */
 	@Override
 	public TableCellRenderer getRenderer(int index) {
@@ -537,8 +541,9 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
-	 * Gets the maximum number of text display lines needed for any given cell within the
-	 * specified column.
+	 * Gets the maximum number of text display lines needed for any given cell within the specified
+	 * column.
+	 * 
 	 * @param index column field index
 	 * @return maximum number of lines needed for specified column
 	 */

@@ -73,7 +73,6 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 	private DebuggerConsoleService consoleService;
 
 	private List<DebuggerObjectsProvider> providers = new ArrayList<>();
-	private boolean firstPass = true;
 	private Program activeProgram;
 	// Because there's no "primary" provider, save a copy of read config state to apply to new providers 
 	private SaveState copiedSaveState = new SaveState();
@@ -87,6 +86,7 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		try {
 			ObjectContainer init = new ObjectContainer(null, null);
 			DebuggerObjectsProvider p = new DebuggerObjectsProvider(this, null, init, true);
+			p.readConfigState(copiedSaveState);
 			init.propagateProvider(p);
 			p.update(init);
 			p.setVisible(true);
@@ -228,6 +228,7 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 				toRemove.add(p);
 			}
 		}
+		writeConfigState(copiedSaveState);
 		for (DebuggerObjectsProvider p : toRemove) {
 			providers.remove(p);
 		}

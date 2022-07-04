@@ -20,9 +20,47 @@
 #define __ARCH_OPTIONS__
 
 #include "error.hh"
-#include "xml.hh"
+#include "marshal.hh"
 
 class Architecture;
+
+extern ElementId ELEM_ALIASBLOCK;		///< Marshaling element \<aliasblock>
+extern ElementId ELEM_ALLOWCONTEXTSET;		///< Marshaling element \<allowcontextset>
+extern ElementId ELEM_ANALYZEFORLOOPS;		///< Marshaling element \<analyzeforloops>
+extern ElementId ELEM_COMMENTHEADER;		///< Marshaling element \<commentheader>
+extern ElementId ELEM_COMMENTINDENT;		///< Marshaling element \<commentindent>
+extern ElementId ELEM_COMMENTINSTRUCTION;	///< Marshaling element \<commentinstruction>
+extern ElementId ELEM_COMMENTSTYLE;		///< Marshaling element \<commentstyle>
+extern ElementId ELEM_CONVENTIONPRINTING;	///< Marshaling element \<conventionprinting>
+extern ElementId ELEM_CURRENTACTION;		///< Marshaling element \<currentaction>
+extern ElementId ELEM_DEFAULTPROTOTYPE;		///< Marshaling element \<defaultprototype>
+extern ElementId ELEM_ERRORREINTERPRETED;	///< Marshaling element \<errorreinterpreted>
+extern ElementId ELEM_ERRORTOOMANYINSTRUCTIONS;	///< Marshaling element \<errortoomanyinstructions>
+extern ElementId ELEM_ERRORUNIMPLEMENTED;	///< Marshaling element \<errorunimplemented>
+extern ElementId ELEM_EXTRAPOP;			///< Marshaling element \<extrapop>
+extern ElementId ELEM_IGNOREUNIMPLEMENTED;	///< Marshaling element \<ignoreunimplemented>
+extern ElementId ELEM_INDENTINCREMENT;		///< Marshaling element \<indentincrement>
+extern ElementId ELEM_INFERCONSTPTR;		///< Marshaling element \<inferconstptr>
+extern ElementId ELEM_INLINE;			///< Marshaling element \<inline>
+extern ElementId ELEM_INPLACEOPS;		///< Marshaling element \<inplaceops>
+extern ElementId ELEM_INTEGERFORMAT;		///< Marshaling element \<integerformat>
+extern ElementId ELEM_JUMPLOAD;			///< Marshaling element \<jumpload>
+extern ElementId ELEM_MAXINSTRUCTION;		///< Marshaling element \<maxinstruction>
+extern ElementId ELEM_MAXLINEWIDTH;		///< Marshaling element \<maxlinewidth>
+extern ElementId ELEM_NAMESPACESTRATEGY;	///< Marshaling element \<namespacestrategy>
+extern ElementId ELEM_NOCASTPRINTING;		///< Marshaling element \<nocastprinting>
+extern ElementId ELEM_NORETURN;			///< Marshaling element \<noreturn>
+extern ElementId ELEM_NULLPRINTING;		///< Marshaling element \<nullprinting>
+extern ElementId ELEM_OPTIONSLIST;		///< Marshaling element \<optionslist>
+extern ElementId ELEM_PARAM1;			///< Marshaling element \<param1>
+extern ElementId ELEM_PARAM2;			///< Marshaling element \<param2>
+extern ElementId ELEM_PARAM3;			///< Marshaling element \<param3>
+extern ElementId ELEM_PROTOEVAL;		///< Marshaling element \<protoeval>
+extern ElementId ELEM_SETACTION;		///< Marshaling element \<setaction>
+extern ElementId ELEM_SETLANGUAGE;		///< Marshaling element \<setlanguage>
+extern ElementId ELEM_STRUCTALIGN;		///< Marshaling element \<structalign>
+extern ElementId ELEM_TOGGLERULE;		///< Marshaling element \<togglerule>
+extern ElementId ELEM_WARNING;			///< Marshaling element \<warning>
 
 /// \brief Base class for options classes that affect the configuration of the Architecture object
 ///
@@ -56,20 +94,20 @@ public:
 /// An \b option \b command is a specific request by a user to change the configuration options
 /// for an Architecture.  This class takes care of dispatching the command to the proper ArchOption
 /// derived class, which does the work of actually modifying the configuration. The command is issued
-/// either through the set() method directly, or via an XML tag handed to the restoreXml() method.
-/// The restoreXml() method expects an \<optionslist> tag with one or more sub-tags. The sub-tag names
-/// match the registered name of the option and have up to three child tags, \<param1>, \<param2> and \<param3>,
+/// either through the set() method directly, or via an element handed to the decode() method.
+/// The decode() method expects an \<optionslist> element with one or more children. The child names
+/// match the registered name of the option and have up to three child elements, \<param1>, \<param2> and \<param3>,
 /// whose content is provided as the optional parameters to command.
 class OptionDatabase {
   Architecture *glb;				///< The Architecture affected by the contained ArchOption
-  map<string,ArchOption *> optionmap;		///< A map from option name to registered ArchOption instance
+  map<uint4,ArchOption *> optionmap;		///< A map from option id to registered ArchOption instance
   void registerOption(ArchOption *option);	///< Map from ArchOption name to its class instance
 public:
   OptionDatabase(Architecture *g);		///< Construct given the owning Architecture
   ~OptionDatabase(void);			///< Destructor
-  string set(const string &nm,const string &p1="",const string &p2="",const string &p3="");	///< Issue an option command
-  void parseOne(const Element *el);		///< Unwrap and execute a single option XML tag
-  void restoreXml(const Element *el);		///< Execute a series of \e option \e commands passed by XML
+  string set(uint4 nameId,const string &p1="",const string &p2="",const string &p3="");	///< Issue an option command
+  void decodeOne(Decoder &decoder);		///< Parse and execute a single option element
+  void decode(Decoder &decoder);		///< Execute a series of \e option \e commands parsed from a stream
 };  
 
 class OptionExtraPop : public ArchOption {

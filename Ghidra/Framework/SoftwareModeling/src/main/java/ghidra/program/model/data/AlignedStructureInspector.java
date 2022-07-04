@@ -117,11 +117,6 @@ public class AlignedStructureInspector extends AlignedStructurePacker {
 		}
 
 		@Override
-		public void setDefaultSettings(Settings settings) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
 		public void setComment(String comment) {
 			throw new UnsupportedOperationException();
 		}

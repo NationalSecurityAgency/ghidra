@@ -23,7 +23,8 @@ import java.io.File;
 
 import javax.swing.JTable;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
@@ -31,7 +32,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.exception.DuplicateNameException;
 
 public class StructureEditorLockedCellEditTest extends AbstractStructureEditorTest {
 
@@ -41,42 +41,6 @@ public class StructureEditorLockedCellEditTest extends AbstractStructureEditorTe
 		super.setUp();
 		File dir = getDebugFileDirectory();
 		dir.mkdirs();
-	}
-
-	protected void init(Structure dt, final Category cat) {
-
-		boolean commit = true;
-		startTransaction("Structure Editor Test Initialization");
-
-		try {
-			DataTypeManager dataTypeManager = cat.getDataTypeManager();
-			if (dt.getDataTypeManager() != dataTypeManager) {
-				dt = dt.clone(dataTypeManager);
-			}
-
-			CategoryPath categoryPath = cat.getCategoryPath();
-			if (!dt.getCategoryPath().equals(categoryPath)) {
-				try {
-					dt.setCategoryPath(categoryPath);
-				}
-				catch (DuplicateNameException e) {
-					commit = false;
-					Assert.fail(e.getMessage());
-				}
-			}
-		}
-		finally {
-			endTransaction(commit);
-		}
-
-		final Structure structDt = dt;
-		runSwing(() -> {
-			installProvider(new StructureEditorProvider(plugin, structDt, false));
-			model = provider.getModel();
-		});
-		waitForSwing();
-
-		getActions();
 	}
 
 	@Test

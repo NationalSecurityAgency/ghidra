@@ -16,34 +16,29 @@
 #include "callgraph.hh"
 #include "funcdata.hh"
 
-void CallGraphEdge::saveXml(ostream &s) const
+ElementId ELEM_CALLGRAPH = ElementId("callgraph",51);
+ElementId ELEM_NODE = ElementId("node",52);
+
+void CallGraphEdge::encode(Encoder &encoder) const
 
 {
-  s << "  <edge>\n";
-  s << "    ";
-  from->getAddr().saveXml(s);
-  s << "\n    ";
-  to->getAddr().saveXml(s);
-  s << "\n    ";
-  callsiteaddr.saveXml(s);
-  s << "\n  </edge>\n";
+  encoder.openElement(ELEM_EDGE);
+  from->getAddr().encode(encoder);
+  to->getAddr().encode(encoder);
+  callsiteaddr.encode(encoder);
+  encoder.closeElement(ELEM_EDGE);
 }
 
-void CallGraphEdge::restoreXml(const Element *el,CallGraph *graph)
+void CallGraphEdge::decode(Decoder &decoder,CallGraph *graph)
 
 {
-  const AddrSpaceManager *manage = graph->getArch();
+  uint4 elemId = decoder.openElement(ELEM_EDGE);
   Address fromaddr,toaddr,siteaddr;
   
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  iter = list.begin();
-  fromaddr = Address::restoreXml(*iter,manage);
-  ++iter;
-  toaddr = Address::restoreXml(*iter,manage);
-  ++iter;
-  siteaddr = Address::restoreXml(*iter,manage);
+  fromaddr = Address::decode(decoder);
+  toaddr = Address::decode(decoder);
+  siteaddr = Address::decode(decoder);
+  decoder.closeElement(elemId);
 
   CallGraphNode *fromnode = graph->findNode(fromaddr);
   if (fromnode == (CallGraphNode *)0)
@@ -66,28 +61,29 @@ void CallGraphNode::setFuncdata(Funcdata *f)
   fd = f;
 }
 
-void CallGraphNode::saveXml(ostream &s) const
+void CallGraphNode::encode(Encoder &encoder) const
 
 {
-  s << "  <node";
+  encoder.openElement(ELEM_NODE);
   if (name.size() != 0)
-    a_v(s,"name",name);
-  s << ">\n    ";
-  entryaddr.saveXml(s);
-  s << "\n  </node>\n";
+    encoder.writeString(ATTRIB_NAME, name);
+  entryaddr.encode(encoder);
+  encoder.closeElement(ELEM_NODE);
 }
 
-void CallGraphNode::restoreXml(const Element *el,CallGraph *graph)
+void CallGraphNode::decode(Decoder &decoder,CallGraph *graph)
 
 {
-  int4 num = el->getNumAttributes();
+  uint4 elemId = decoder.openElement(ELEM_NODE);
   string name;
-  for(int4 i=0;i<num;++i) {
-    if (el->getAttributeName(i) == "name")
-      name = el->getAttributeValue(i);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_NAME)
+      name = decoder.readString();
   }
-  Address addr = Address::restoreXml(*el->getChildren().begin(),graph->getArch());
-
+  Address addr = Address::decode(decoder);
+  decoder.closeElement(elemId);
   graph->addNode(addr,name);
 }
 
@@ -431,41 +427,39 @@ void CallGraph::buildEdges(Funcdata *fd)
   }
 }
 
-void CallGraph::saveXml(ostream &s) const
+void CallGraph::encode(Encoder &encoder) const
 
 {
   map<Address,CallGraphNode>::const_iterator iter;
 
-  s << "<callgraph>\n";
+  encoder.openElement(ELEM_CALLGRAPH);
 
   for(iter=graph.begin();iter!=graph.end();++iter)
-    (*iter).second.saveXml(s);
+    (*iter).second.encode(encoder);
 
   // Dump all the "in" edges
   for(iter=graph.begin();iter!=graph.end();++iter) {
     const CallGraphNode &node( (*iter).second );
 
     for(uint4 i=0;i<node.inedge.size();++i)
-      node.inedge[i].saveXml(s);
+      node.inedge[i].encode(encoder);
   }
 
-  s << "</callgraph>\n";
+  encoder.closeElement(ELEM_CALLGRAPH);
 }
 
-void CallGraph::restoreXml(const Element *el)
+void CallGraph::decoder(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  iter = list.begin();
-  while(iter != list.end()) {
-    const Element *subel = *iter;
-    ++iter;
-    if (subel->getName() == "edge")
-      CallGraphEdge::restoreXml(subel,this);
+  uint4 elemId = decoder.openElement(ELEM_CALLGRAPH);
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_EDGE)
+      CallGraphEdge::decode(decoder,this);
     else
-      CallGraphNode::restoreXml(subel,this);
+      CallGraphNode::decode(decoder,this);
   }
+  decoder.closeElement(elemId);
 }
 

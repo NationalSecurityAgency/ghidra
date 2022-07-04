@@ -329,6 +329,7 @@ public class MemoryBlockUtils {
 	 * @return the newly created FileBytes object.
 	 * @param monitor the monitor for canceling this potentially long running operation.
 	 * @throws IOException if an IOException occurred.
+	 * @throws CancelledException if the user cancelled the operation
 	 */
 	public static FileBytes createFileBytes(Program program, ByteProvider provider,
 			TaskMonitor monitor) throws IOException, CancelledException {

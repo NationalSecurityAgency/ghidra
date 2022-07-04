@@ -378,11 +378,11 @@ public class UserSearchUtils {
 	}
 
 	/**
-	 * Escapes all regex characters with the '\' character, except for those in the given
-	 * exclusion array.
+	 * Escapes all regex characters with the '\' character, except for those in the given exclusion 
+	 * array.
 	 *
-	 * @param input
-	 *            The input string to be escaped
+	 * @param input The input string to be escaped
+	 * @param doNotEscape characters that should not be escaped
 	 * @return A new regex string with special characters escaped.
 	 */
 	// note: 'package' for testing

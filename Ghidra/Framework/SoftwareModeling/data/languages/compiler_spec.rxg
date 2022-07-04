@@ -291,11 +291,6 @@
     <optional> <attribute name="minsize"/> </optional>
     <optional> <attribute name="align"/> </optional>
     <optional> <attribute name="metatype"/> </optional>
-    <optional>
-      <attribute name="trial">
-        <ref name="boolean_type"/>
-      </attribute>
-    </optional>
     <optional> <attribute name="extension"/> </optional>
     <!--
         THIS IS THE WEAK ADDR TYPE.  Attribute size is not required.

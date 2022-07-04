@@ -15,8 +15,7 @@
  */
 package ghidra.app.decompiler.component;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -43,14 +42,11 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.*;
-import mockit.Mock;
-import mockit.MockUp;
 
 public class DecompilerCachingTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private TestEnv env;
 	private PluginTool tool;
-	private DecompilePlugin decompilePlugin;
 	private CodeBrowserPlugin codeBrowser;
 	private ProgramDB program;
 	private List<Address> functionAddrs = new ArrayList<>();
@@ -58,34 +54,26 @@ public class DecompilerCachingTest extends AbstractGhidraHeadedIntegrationTest {
 	public Cache<Function, DecompileResults> cache;
 	private ToyProgramBuilder builder;
 
-	// partial fake of DecompilerController to take control of the buildCache() method.
-	public class FakeDecompilerController extends MockUp<DecompilerController> {
-		@Mock
-		public Cache<Function, DecompileResults> buildCache() {
-			//@formatter:off
-			cache = CacheBuilder
-				.newBuilder()
-				.maximumSize(3)
-				.recordStats()
-				.build()
-				;
-			//@formatter:on
-			return cache;
-		}
-	}
-
 	@Before
 	public void setUp() throws Exception {
-		// the magic of JMockit will cause our FakeDecompilerController to get used instead
-		// of the real one, regardless of where it gets constructed.
-		new FakeDecompilerController();
-
 		setErrorGUIEnabled(false);
 
 		env = new TestEnv();
 		tool = env.getTool();
 
 		initializeTool();
+
+		//@formatter:off
+		cache = CacheBuilder
+			.newBuilder()
+			.maximumSize(3)
+			.recordStats()
+			.build()
+			;
+		//@formatter:on
+
+		DecompilerController controller = decompilerProvider.getController();
+		controller.setCache(cache);
 	}
 
 	@After
@@ -258,8 +246,6 @@ public class DecompilerCachingTest extends AbstractGhidraHeadedIntegrationTest {
 	private void installPlugins() throws PluginException {
 		tool.addPlugin(CodeBrowserPlugin.class.getName());
 		tool.addPlugin(DecompilePlugin.class.getName());
-
-		decompilePlugin = env.getPlugin(DecompilePlugin.class);
 		codeBrowser = env.getPlugin(CodeBrowserPlugin.class);
 	}
 

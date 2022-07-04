@@ -15,6 +15,9 @@
  */
 package ghidra.graph;
 
+import java.util.Collections;
+import java.util.List;
+
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.GraphDisplay;
@@ -38,25 +41,32 @@ public class TestGraphService implements GraphDisplayProvider {
 	}
 
 	@Override
-	public void initialize(PluginTool tool, Options options) {
-		// nothing
+	public GraphDisplay getActiveGraphDisplay() {
+		return null;
+	}
 
+	@Override
+	public List<GraphDisplay> getAllGraphDisplays() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public void initialize(PluginTool tool, Options options) {
+		// stub
 	}
 
 	@Override
 	public void optionsChanged(Options options) {
-		// nothing
-
+		// stub
 	}
 
 	@Override
 	public void dispose() {
-		// nothing
+		// stub
 	}
 
 	@Override
 	public HelpLocation getHelpLocation() {
 		return null;
 	}
-
 }

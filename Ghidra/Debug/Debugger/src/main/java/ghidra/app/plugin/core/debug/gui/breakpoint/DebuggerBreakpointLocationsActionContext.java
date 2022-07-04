@@ -16,18 +16,23 @@
 package ghidra.app.plugin.core.debug.gui.breakpoint;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import docking.ActionContext;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 
 public class DebuggerBreakpointLocationsActionContext extends ActionContext {
-	private final Collection<TraceBreakpoint> selection;
+	private final Collection<BreakpointLocationRow> selection;
 
-	public DebuggerBreakpointLocationsActionContext(Collection<TraceBreakpoint> selection) {
+	public DebuggerBreakpointLocationsActionContext(Collection<BreakpointLocationRow> selection) {
 		this.selection = selection;
 	}
 
-	public Collection<TraceBreakpoint> getSelection() {
+	public Collection<BreakpointLocationRow> getSelection() {
 		return selection;
+	}
+
+	public Collection<TraceBreakpoint> getLocations() {
+		return selection.stream().map(row -> row.getTraceBreakpoint()).collect(Collectors.toList());
 	}
 }

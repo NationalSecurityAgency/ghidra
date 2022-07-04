@@ -33,6 +33,7 @@ import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
@@ -78,6 +79,11 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 	@Override
 	public Language getLanguage() {
 		return trace.getBaseLanguage();
+	}
+
+	@Override
+	public TracePlatform getPlatform() {
+		return trace.getPlatformManager().getHostPlatform();
 	}
 
 	@Override

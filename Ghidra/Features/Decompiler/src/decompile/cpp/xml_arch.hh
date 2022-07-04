@@ -18,6 +18,8 @@
 #include "sleigh_arch.hh"
 #include "loadimage_xml.hh"
 
+extern ElementId ELEM_XML_SAVEFILE;	///< Marshaling element \<xml_savefile>
+
 /// \brief Extension for building an XML format capable Architecture
 class XmlArchitectureCapability : public ArchitectureCapability {
   static XmlArchitectureCapability xmlArchitectureCapability;		///< The singleton instance
@@ -38,7 +40,7 @@ class XmlArchitecture : public SleighArchitecture {
   // virtual void resolveArchitecture(void);   		///< Inherit SleighArchitecture's version
   virtual void postSpecFile(void);
 public:
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
   virtual void restoreXml(DocumentStorage &store);
   XmlArchitecture(const string &fname,const string &targ,ostream *estream);	///< Constructor
   virtual ~XmlArchitecture(void) {}

@@ -93,7 +93,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	private int minUpdateDelayMillis;
 	private int maxUpdateDelayMillis;
 	private TableAddRemoveStrategy<ROW_OBJECT> binarySearchAddRemoveStrategy =
-		new DefaultAddRemoveStrategy<>();
+		new CoalescingAddRemoveStrategy<>();
 
 	protected ThreadedTableModel(String modelName, ServiceProvider serviceProvider) {
 		this(modelName, serviceProvider, null);
@@ -207,14 +207,12 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * The basic method that all children must implement.  This is where children load their
-	 * data.
-	 * @param accumulator the datastructure into which you should incrementally place you table
-	 *        row data
+	 * The basic method that all children must implement.  This is where children load their data.
+	 * @param accumulator the datastructure into which you should incrementally place you table row
+	 *        data
 	 * @param monitor the task monitor to check for cancellations and to update progress
-	 *
-	 * @throws CancelledException if the task monitor has been cancelled and a call is made
-	 *         to <code>monitor.checkCancelled();</code>.
+	 * @throws CancelledException if the task monitor has been cancelled and a call is made to
+	 *         <code>monitor.checkCancelled();</code>.
 	 */
 	protected abstract void doLoad(Accumulator<ROW_OBJECT> accumulator, TaskMonitor monitor)
 			throws CancelledException;
@@ -227,21 +225,21 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * <p><u>Performance Notes</u>
 	 * <ul>
 	 * 	<li>This method uses a {@link HashMap} to cache column values for a row object.   Further,
-	 *      upon a key collision, the map will perform O(logn) lookups <b>if the 
-	 *      key (the row object) is {@link Comparable}</b>.   If the key is not comparable, then
-	 *      the collision lookups will be linear.    So, make your row objects comparable
-	 *      for maximum speed <b>when your table size becomes large</b>  (for small tables there
-	 *      is no observable impact).
-	 *  <li>Even if your row objects are comparable, relying on this table model to convert your 
-	 *      row object into column values can be slow <b>for large tables</b>.  This is because
-	 *      the default column comparison framework for the tables will call this method 
-	 *      multiple times, resulting in many more method calls per column value lookup.  For 
-	 *      large data, the repeated method calls start to become noticeable.  For maximum 
-	 *      column sorting speed, use a comparator that works not on the column value, but on 
-	 *      the row value.  To do this, return a comparator from your model's 
-	 *      {@link #createSortComparator(int)} method, instead of from the column itself or 
-	 *      by relying on column item implementing {@link Comparable}.  This is possible any
-	 *      time that a row object already has a field that is used for a given column.
+	 *      upon a key collision, the map will perform O(logn) lookups <b>if the key (the row
+	 *      object) is {@link Comparable}</b>.   If the key is not comparable, then the collision
+	 *      lookups will be linear.    So, make your row objects comparable for maximum speed
+	 *      <b>when your table size becomes large</b>  (for small tables there is no observable
+	 *      impact).
+	 *  <li>Even if your row objects are comparable, relying on this table model to convert your
+	 *      row object into column values can be slow <b>for large tables</b>.  This is because the
+	 *      default column comparison framework for the tables will call this method multiple
+	 *      times, resulting in many more method calls per column value lookup.  For large data,
+	 *      the repeated method calls start to become noticeable.  For maximum column sorting
+	 *      speed, use a comparator that works not on the column value, but on the row value.  To
+	 *      do this, return a comparator from your model's {@link #createSortComparator(int)}
+	 *      method, instead of from the column itself or by relying on column item implementing
+	 *      {@link Comparable}.  This is possible any time that a row object already has a field
+	 *      that is used for a given column.
 	 * </ul>
 	 * 
 	 * @param rowObject the row object
@@ -253,8 +251,8 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		Map<ROW_OBJECT, Map<Integer, Object>> cachedColumnValues = threadLocalColumnCache.get();
 
 		if (cachedColumnValues == null) {
-			// the caching has not been enabled--this must be a simple lookup from a client
-			// that cares not about speed
+			// the caching has not been enabled--this must be a simple lookup from a client that
+			// cares not about speed
 			return getColumnValueForRow(rowObject, columnIndex);
 		}
 
@@ -413,11 +411,10 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	/**
 	 * Override this to change how filtering is performed.  This implementation will do nothing
-	 * if a <code>TableFilter</code> has not been set via a call to {@link #setTableFilter(TableFilter)}.
+	 * if a <code>TableFilter</code> has not been set via a call to
+	 * {@link #setTableFilter(TableFilter)}.
 	 * 
-	 *
 	 * @param data The list of data to be filtered.
-	 *
 	 * @param monitor the progress monitor to check for cancellation.
 	 * @param lastSortingContext the comparator used to sort data.  This can be used by overridden
 	 *                   filter methods that need to query data about how the table is sorted.
@@ -479,9 +476,9 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	public void setTableFilter(TableFilter<ROW_OBJECT> tableFilter) {
 		this.pendingTableFilter = tableFilter;
 		if (pendingTableFilter == null) {
-			// Don't allow the pending filter to be null in this case.  The client has changed
-			// the filter.  If we use null, then we don't know the difference between a client
-			// change request or a simple refilter operation.
+			// Don't allow the pending filter to be null in this case.  The client has changed the
+			// filter.  If we use null, then we don't know the difference between a client change
+			// request or a simple refilter operation.
 			pendingTableFilter = new NullTableFilter<>();
 		}
 		reFilter();
@@ -517,13 +514,13 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	/**
 	 * Removes the specified object from this model and schedules an update.
 	 * 
-	 * <P>Note: for this method to function correctly, the given object must compare as 
-	 * {@link #equals(Object)} and have the same {@link #hashCode()} as the object to be removed 
+	 * <P>Note: for this method to function correctly, the given object must compare as
+	 * {@link #equals(Object)} and have the same {@link #hashCode()} as the object to be removed
 	 * from the table data.   This allows clients to create proxy objects to pass into this method,
-	 * as long as they honor those requirements.    
+	 * as long as they honor those requirements.
 	 * 
 	 * <P>If this model's data is sorted, then a binary search will be used to locate the item
-	 * to be removed.  However, for this to work, all field used to sort the data must still be 
+	 * to be removed.  However, for this to work, all field used to sort the data must still be
 	 * available from the original object and must be the same values.   If this is not true, then
 	 * the binary search will not work and a brute force search will be used.
 	 * 
@@ -544,7 +541,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 		//@formatter:off
 		// The data is changed when it is filtered OR when an item has been added or removed
-		boolean dataChanged = this.filteredData.getId() != filteredData.getId() || 
+		boolean dataChanged = this.filteredData.getId() != filteredData.getId() ||
 							  this.filteredData.size() != filteredData.size();
 		//@formatter:on
 		this.allData = allData;
@@ -622,17 +619,13 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * Schedules the model to completely reload
-	 * its underlying data.
+	 * Schedules the model to completely reload its underlying data.
 	 */
 	public void reload() {
 		cancelCurrentWorkerJob();
 		updateManager.reload();
 	}
 
-	/**
-	 * @see javax.swing.table.AbstractTableModel#fireTableChanged(javax.swing.event.TableModelEvent)
-	 */
 	@Override
 	public void fireTableChanged(TableModelEvent e) {
 		if (Swing.isSwingThread()) {
@@ -643,25 +636,33 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * Disposes this model.
-	 * Once a model has been disposed, it cannot be reused.
+	 * Disposes this model. Once a model has been disposed, it cannot be reused.
 	 */
 	@Override
 	public void dispose() {
+
+		// Signal to listeners now that the load is being cancelled.  Otherwise, any delayed cancel
+		// callbacks will not works because the listeners have been removed.   Any future requests
+		// to notifyFinished() due to cancelling below will have no effect because we clear the
+		// listeners.
+		Swing.runNow(() -> {
+			notifyFinished(true);
+			listeners.clear();
+		});
+
 		updateManager.dispose();
 		if (worker != null) {
 			worker.dispose();
 		}
 		doClearData();
 		disposeDynamicColumnData();
-		listeners.clear();
 		clearCache();
 	}
 
 	/**
 	 * This method will clear all data and trigger fire a table data changed.  Use this method to
-	 * immediately clear all data.  This is useful when you want to reload your table data and
-	 * not have any old data hanging around being painted, which can produce odd results.
+	 * immediately clear all data.  This is useful when you want to reload your table data and not
+	 * have any old data hanging around being painted, which can produce odd results.
 	 */
 	protected void clearData() {
 		doClearData();
@@ -677,8 +678,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * Cancels all current and pending updates to the model. Waits until all updates have
-	 * been cancelled.
+	 * Cancels all current and pending updates to the model.
 	 */
 	public void cancelAllUpdates() {
 		if (worker != null) {
@@ -687,17 +687,14 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		updateManager.cancelAllJobs();
 	}
 
-	/**
-	 * @see javax.swing.table.TableModel#getRowCount()
-	 */
 	@Override
 	public int getRowCount() {
 		return filteredData.size();
 	}
 
 	/**
-	 * Given a row index for the raw (unfiltered) model, return the corresponding index in the
-	 * view (filtered) model.
+	 * Given a row index for the raw (unfiltered) model, return the corresponding index in the view
+	 * (filtered) model.
 	 *
 	 * @param modelRow The row index that corresponds to unfiltered data
 	 * @return the index of that row in the filtered data
@@ -719,8 +716,8 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * Given a row index for the view (filtered) model, return the corresponding index in the
-	 * raw (unfiltered) model.
+	 * Given a row index for the view (filtered) model, return the corresponding index in the raw
+	 * (unfiltered) model.
 	 *
 	 * @param viewRow The row index that corresponds to filtered data
 	 * @return the index of that row in the unfiltered data
@@ -756,7 +753,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	/**
 	 * Returns the name of this model.
-	 * @return the name of this model
+	 * @return the name of this model.
 	 */
 	@Override
 	public String getName() {
@@ -766,7 +763,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	/**
 	 * Returns the corresponding row objects for the specified rows.
 	 * @param rows the table rows
-	 * @return the corresponding database keys
+	 * @return the corresponding database keys.
 	 */
 	public List<ROW_OBJECT> getRowObjects(int[] rows) {
 		List<ROW_OBJECT> list = new ArrayList<>(rows.length);
@@ -777,11 +774,11 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * Sets the update delay, which is how long the model should wait before updating, after
-	 * a change has been made the data
+	 * Sets the update delay, which is how long the model should wait before updating, after a
+	 * change has been made the data.
 	 * 
-	 * @param updateDelayMillis the new update delay
-	 * @param maxUpdateDelayMillis the new max update delay; updates will not wait past this time
+	 * @param updateDelayMillis the new update delay.
+	 * @param maxUpdateDelayMillis the new max update delay; updates will not wait past this time.
 	 */
 	void setUpdateDelay(int updateDelayMillis, int maxUpdateDelayMillis) {
 		this.minUpdateDelayMillis = updateDelayMillis;
@@ -808,14 +805,14 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	/**
 	 * Returns the strategy to use for performing adds and removes to this table.   Subclasses can
-	 * override this method to customize this process for their particular type of data.   See
-	 * the implementations of {@link TableAddRemoveStrategy} for details.
+	 * override this method to customize this process for their particular type of data.  See the
+	 * implementations of {@link TableAddRemoveStrategy} for details.
 	 * 
-	 * <P>Note: The default add/remove strategy assumes that objects to be removed will be the 
-	 * same instance that is in the list of this model.   This allows the {@link #equals(Object)} 
-	 * and {@link #hashCode()} to be used when removing the object from the list.   If you model 
-	 * does not pass the same instance into {@link #removeObject(Object)}, then you will need to 
-	 * update your add/remove strategy accordingly.
+	 * <P>Note: The default add/remove strategy assumes that objects to be removed will be the same
+	 * instance that is in the list of this model.   This allows the {@link #equals(Object)} and
+	 * {@link #hashCode()} to be used when removing the object from the list.   If you model does
+	 * not pass the same instance into {@link #removeObject(Object)}, then you will need to update
+	 * your add/remove strategy accordingly.
 	 * 
 	 * @return the strategy
 	 */
@@ -861,13 +858,13 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		//
 		//				 Unusual Code Alert!
 		// It is odd that a 'notify' method is changing the state of a variable.  This is a wart
-		// that we've chosen to live with.  We have a variable that we want to stay around as
-		// long as the threaded update manager has work to do.  We know that this method is
-		// called when no pending work remains.  We use this signal to know that this crufty
-		// state variable can now be cleansed.
+		// that we've chosen to live with.  We have a variable that we want to stay around as long
+		// as the threaded update manager has work to do.  We know that this method is called when
+		// no pending work remains.  We use this signal to know that this crufty state variable can
+		// now be cleansed.
 		//
-		// This variable may have already been cleared, but just in case of a cancel situation,
-		// we don't want this hanging around and affecting future sorts.
+		// This variable may have already been cleared, but just in case of a cancel situation, we
+		// don't want this hanging around and affecting future sorts.
 		//
 		pendingSortContext = null;
 
@@ -893,8 +890,8 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 //==================================================================================================
 
 	/**
-	 * Standard (non-incremental) listener mechanism to receive notifications from the
-	 * update manager.
+	 * Standard (non-incremental) listener mechanism to receive notifications from the update
+	 * manager.
 	 */
 	private class NonIncrementalUpdateManagerListener implements ThreadedTableModelListener {
 		@Override
@@ -914,25 +911,24 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * Listener to get updates from the {@link ThreadedTableModelUpdateMgr}.  This listener
-	 * is only here to make sure that non-loading actions, like sorting, will trigger
-	 * notifications to clients.  "Loading" events are handled by the listener passed to the
+	 * Listener to get updates from the {@link ThreadedTableModelUpdateMgr}.  This listener is only
+	 * here to make sure that non-loading actions, like sorting, will trigger notifications to
+	 * clients.  "Loading" events are handled by the listener passed to the
 	 * {@link IncrementalLoadJob} (this {@link IncrementalLoadJobListener}).
 	 * <p>
-	 * We need the two different listeners due to how they are wired to the update manager.
-	 * The {@link IncrementalLoadJobListener} listener is added and removed for each load
-	 * request.  We need that listener so that during an incremental load, when multiple starts
-	 * and stops come from the update manager, we don't keep adding and removing the progress
-	 * bar.  This works great for a normal loading processes.  However, we still need a listener
-	 * for when the users manipulates the data, like for filtering or sorting.  Without having
-	 * this listener, there is no way to get those notifications.  Thus, this listener has
-	 * to be careful not to "get in the way" of the loading listener--the loading listener will
-	 * thus always take precedence.
+	 * We need the two different listeners due to how they are wired to the update manager.  The
+	 * {@link IncrementalLoadJobListener} listener is added and removed for each load request.  We
+	 * need that listener so that during an incremental load, when multiple starts and stops come
+	 * from the update manager, we don't keep adding and removing the progress bar.  This works
+	 * great for a normal loading processes.  However, we still need a listener for when the users
+	 * manipulates the data, like for filtering or sorting.  Without having this listener, there is
+	 * no way to get those notifications.  Thus, this listener has to be careful not to "get in the
+	 * way" of the loading listener--the loading listener will thus always take precedence.
 	 */
 	private class IncrementalUpdateManagerListener implements ThreadedTableModelListener {
 		@Override
 		public void loadPending() {
-			// don't care about a pending notification--another listener handles that.
+			// don't care about a pending notification--another listener handles that
 		}
 
 		@Override
@@ -955,9 +951,9 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * A special internal listener for the model to know when incremental jobs begin and end.
-	 * This allows the model to ignore repeated start/finished events from the update manager
-	 * when it is in 'load incrementally' mode.
+	 * A special internal listener for the model to know when incremental jobs begin and end.  This
+	 * allows the model to ignore repeated start/finished events from the update manager when it is
+	 * in 'load incrementally' mode.
 	 */
 	protected class IncrementalLoadJobListener extends IncrementalJobListener {
 		@Override
@@ -972,8 +968,8 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * A listener wrapper that will pass on notifications and then remove itself after
-	 * the loadFinished() call so that not more events are broadcast.
+	 * A listener wrapper that will pass on notifications and then remove itself after the
+	 * loadFinished() call so that not more events are broadcast.
 	 */
 	private class OneTimeListenerWrapper implements ThreadedTableModelListener {
 		private final ThreadedTableModelListener delegate;

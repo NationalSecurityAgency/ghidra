@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import static org.junit.Assert.assertEquals;
-
+import org.junit.After;
 import org.junit.Assert;
 
 import ghidra.program.model.data.*;
@@ -40,34 +39,39 @@ public abstract class AbstractUnionEditorTest extends AbstractEditorTest {
 	ShowComponentPathAction showComponentPathAction;
 	HexNumbersAction hexNumbersAction;
 
+	@Override
+	@After
+	public void tearDown() throws Exception {
+		clearActions();
+		unionModel = null;
+		super.tearDown();
+	}
+
 	UnionEditorModel getModel() {
-		return (UnionEditorModel) model;
+		return unionModel;
 	}
 
 	protected void init(Union dt, final Category cat, final boolean showInHex) {
-
-		assertEquals("Category path mismatch", dt.getCategoryPath(), cat.getCategoryPath());
-
-		boolean commit = true;
-		startTransaction("Union Editor Test Initialization");
-		try {
-			DataTypeManager dataTypeManager = cat.getDataTypeManager();
-			if (dt.getDataTypeManager() != dataTypeManager) {
-				dt = (Union) dt.clone(dataTypeManager);
-			}
-			CategoryPath categoryPath = cat.getCategoryPath();
-			if (!dt.getCategoryPath().equals(categoryPath)) {
-				try {
-					dt.setCategoryPath(categoryPath);
-				}
-				catch (DuplicateNameException e) {
-					commit = false;
-					Assert.fail(e.getMessage());
-				}
-			}
+		
+		DataTypeManager dataTypeManager = cat.getDataTypeManager();
+		if (dt.getDataTypeManager() != dataTypeManager) {
+			dt = dt.clone(dataTypeManager);
 		}
-		finally {
-			endTransaction(commit);
+		
+		CategoryPath categoryPath = cat.getCategoryPath();
+		if (!dt.getCategoryPath().equals(categoryPath)) {
+			// dt may or may not be a DataTypeDB but create transaction to be safe
+			int dtmTxId =
+				dataTypeManager.startTransaction("Modify Datatype Category: " + dt.getName());
+			try {
+				dt.setCategoryPath(categoryPath);
+			}
+			catch (DuplicateNameException e) {
+				Assert.fail(e.getMessage());
+			}
+			finally {
+				dataTypeManager.endTransaction(dtmTxId, true);
+			}
 		}
 
 		Union unionDt = dt;
@@ -79,12 +83,6 @@ public abstract class AbstractUnionEditorTest extends AbstractEditorTest {
 
 		getActions();
 		unionModel = (UnionEditorModel) model;
-	}
-
-	protected void cleanup() {
-		clearActions();
-		runSwing(() -> provider.dispose());
-		unionModel = null;
 	}
 
 	void clearActions() {

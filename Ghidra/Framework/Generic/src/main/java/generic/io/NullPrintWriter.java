@@ -19,6 +19,10 @@ import java.io.PrintWriter;
 
 public class NullPrintWriter extends PrintWriter {
 
+	public static PrintWriter dummyIfNull(PrintWriter pw) {
+		return pw == null ? new NullPrintWriter() : pw;
+	}
+
 	public NullPrintWriter() {
 		super(new NullWriter());
 	}

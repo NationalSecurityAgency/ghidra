@@ -350,10 +350,7 @@ void PcodeCompile::newLocalDefinition(string *varname,uint4 size)
 
 { // Create a new temporary symbol (without generating any pcode)
   VarnodeSymbol *sym;
-  VarnodeTpl *tmpvn = buildTemporary();
-  if (size != 0)
-    tmpvn->setSize(ConstTpl(ConstTpl::real,size)); // Size was explicitly specified
-  sym = new VarnodeSymbol(*varname,tmpvn->getSpace().getSpace(),tmpvn->getOffset().getReal(),tmpvn->getSize().getReal());
+  sym = new VarnodeSymbol(*varname,uniqspace,allocateTemp(),size);
   addSymbol(sym);
   delete varname;
 }

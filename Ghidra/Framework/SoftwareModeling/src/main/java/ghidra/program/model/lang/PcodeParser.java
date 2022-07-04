@@ -46,9 +46,9 @@ import ghidra.sleigh.grammar.SleighParser_SemanticParser.semantic_return;
 import ghidra.util.exception.AssertException;
 
 /**
- * This class is intended to parse p-code snippets, typically from compiler specification files
- * or extensions.  This is outside the normal SLEIGH compilation process, and the parser is built
- * on top of an existing SleighLanguage.
+ * This class is intended to parse p-code snippets, typically from compiler specification files or
+ * extensions. This is outside the normal SLEIGH compilation process, and the parser is built on top
+ * of an existing SleighLanguage.
  */
 public class PcodeParser extends PcodeCompile {
 
@@ -68,6 +68,7 @@ public class PcodeParser extends PcodeCompile {
 
 	/**
 	 * Build parser from an existing SleighLanguage.
+	 * 
 	 * @param language is the existing language
 	 * @param ubase is the starting offset for allocating temporary registers
 	 */
@@ -90,9 +91,12 @@ public class PcodeParser extends PcodeCompile {
 	}
 
 	/**
-	 * Inject a symbol representing an "operand" to the pcode snippet.  This puts a placeholder in the
-	 * resulting template, which gets filled in with the context specific storage locations when final
-	 * p-code is generated
+	 * Inject a symbol representing an "operand" to the pcode snippet.
+	 * 
+	 * <p>
+	 * This puts a placeholder in the resulting template, which gets filled in with the context
+	 * specific storage locations when final p-code is generated
+	 * 
 	 * @param loc is location information for the operand
 	 * @param name of operand symbol
 	 * @param index to use for the placeholder
@@ -151,6 +155,10 @@ public class PcodeParser extends PcodeCompile {
 			return sym;
 		}
 		return PcodeParser.this.sleigh.findSymbol(nm);
+	}
+
+	public SleighBase getSleigh() {
+		return sleigh;
 	}
 
 	@Override
@@ -217,10 +225,10 @@ public class PcodeParser extends PcodeCompile {
 
 	/**
 	 * This class wraps on existing SleighLanguage with the SleighBase interface expected by
-	 * PcodeCompile.  It populates the symbol table with user-defined operations and the global
+	 * PcodeCompile. It populates the symbol table with user-defined operations and the global
 	 * VarnodeSymbol objects, which typically includes all the general purpose registers.
 	 */
-	private static class PcodeTranslate extends SleighBase {
+	public static class PcodeTranslate extends SleighBase {
 
 		private void copySpaces(SleighLanguage language) {
 			insertSpace(new ConstantSpace(this));
@@ -270,8 +278,9 @@ public class PcodeParser extends PcodeCompile {
 		}
 
 		/**
-		 * Populate the predefined symbol table for the parser from the given SLEIGH language.
-		 * We only use user-defined op symbols and varnode symbols.
+		 * Populate the predefined symbol table for the parser from the given SLEIGH language. We
+		 * only use user-defined op symbols and varnode symbols.
+		 * 
 		 * @param language is the SLEIGH language
 		 */
 		private void copySymbols(SleighLanguage language) {
@@ -383,11 +392,12 @@ public class PcodeParser extends PcodeCompile {
 
 	/**
 	 * Compile pcode semantic statements.
+	 * 
 	 * @param pcodeStatements is the raw source to parse
 	 * @param srcFile source filename from which pcodeStatements came (
 	 * @param srcLine line number in srcFile corresponding to pcodeStatements
-	 * @return ConstructTpl. A null may be returned or 
-	 * an exception thrown if parsing/compiling fails (see application log for errors).
+	 * @return ConstructTpl. A null may be returned or an exception thrown if parsing/compiling
+	 *         fails (see application log for errors).
 	 * @throws SleighException pcode compile error
 	 */
 	public ConstructTpl compilePcode(String pcodeStatements, String srcFile, int srcLine)

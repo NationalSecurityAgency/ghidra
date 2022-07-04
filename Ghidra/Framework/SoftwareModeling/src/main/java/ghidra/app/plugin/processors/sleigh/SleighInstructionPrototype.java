@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Feb 9, 2005
- *
- */
 package ghidra.app.plugin.processors.sleigh;
 
 import java.util.*;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedConstructor;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger.SleighDebugMode;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.app.plugin.processors.sleigh.symbol.*;
@@ -40,10 +36,9 @@ import ghidra.util.exception.NotYetImplementedException;
 /**
  * 
  *
- * The InstructionPrototype for sleigh languages.
- * The prototype is unique up to the tree of Constructors.
- * Variations in the bit pattern that none of the Constructor
- * mask/values care about get lumped under the same prototype
+ * The InstructionPrototype for sleigh languages. The prototype is unique up to the tree of
+ * Constructors. Variations in the bit pattern that none of the Constructor mask/values care about
+ * get lumped under the same prototype
  */
 public class SleighInstructionPrototype implements InstructionPrototype {
 	// Flowflags for resolving flowType
@@ -126,9 +121,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Cache the Constructor state which represents the base
-	 * mnemonic, and the operands to that mnemonic
-	 * Cache the operand states for each operand in printing order
+	 * Cache the Constructor state which represents the base mnemonic, and the operands to that
+	 * mnemonic Cache the operand states for each operand in printing order
 	 */
 	private void cacheMnemonicState() {
 		mnemonicState = rootState;
@@ -191,9 +185,10 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Walk the pcode templates in the order they would be emitted.
-	 * Collect flowFlags FlowRecords
+	 * Walk the pcode templates in the order they would be emitted. Collect flowFlags FlowRecords
+	 * 
 	 * @param walker the pcode template walker
+	 * @return a summary of the flow information
 	 */
 	public static FlowSummary walkTemplates(OpTplWalker walker) {
 		FlowSummary res = new FlowSummary();
@@ -286,8 +281,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Walk the Constructor tree gathering ConstructStates which are flow destinations (flowStateList)
-	 * flowFlags and delayslot directives
+	 * Walk the Constructor tree gathering ConstructStates which are flow destinations
+	 * (flowStateList) flowFlags and delayslot directives
 	 */
 	private void cacheTreeInfo() {
 		OpTplWalker walker = new OpTplWalker(rootState, -1);
@@ -472,6 +467,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 		}
 		catch (Exception e) {
+			// Treat bad instructions as not part of delay slot
 		}
 		return delayInstrCnt;
 	}
@@ -551,6 +547,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 				return context.getAddress().addNoWrap(getFallThroughOffset(context));
 			}
 			catch (AddressOverflowException e) {
+				// Return null if fallthru goes beyond boundary of address space
 			}
 		}
 		return null;
@@ -631,12 +628,14 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Gather all the flow records (perhaps across multiple InstructionPrototypes via crossbuilds) and convert to Addresses
+	 * Gather all the flow records (perhaps across multiple InstructionPrototypes via crossbuilds)
+	 * and convert to Addresses
+	 * 
 	 * @param res is the resulting flow Addresses
 	 * @param parsecontext is the parsing context for the current instruction
 	 * @param context is the context for the particular address so crossbuilds can be resolved
-	 * @throws MemoryAccessException
-	 * @throws UnknownContextException
+	 * @throws MemoryAccessException if a memory error occurred while resolving instruction details
+	 * @throws UnknownContextException if the gather encounters an instruction not previously parsed
 	 */
 	private void gatherFlows(ArrayList<Address> res, SleighParserContext parsecontext,
 			InstructionContext context, int secnum)
@@ -735,6 +734,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			sym.printList(walker, list);
 		}
 		catch (Exception e) {
+			// If the instruction produces memory errors, treat as if it has no representation list
 		}
 
 		AddressSpace curSpace = context.getAddress().getAddressSpace();
@@ -759,6 +759,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			return ct.getOperand(opresolve[opIndex]);
 		}
 		catch (Exception e) {
+			// Return null for an out-of bounds opIndex
 		}
 		return null;
 	}
@@ -815,6 +816,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 		}
 		catch (Exception e) {
+			// If opIndex is out of bounds (or if there are memory errors) return a null Scalar
 		}
 		return null;
 	}
@@ -837,6 +839,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 		}
 		catch (Exception e) {
+			// If opIndex is out of bounds (or if there are memory errors) return null
 		}
 		return null;
 	}
@@ -991,7 +994,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 					bytecount += len;
 				}
 				while (bytecount < delaySlotByteCnt);
-				protoContext.setDelaySlotLength(bytecount);
+				protoContext = new SleighParserContext(protoContext, bytecount);
 			}
 			ParserWalker walker = new ParserWalker(protoContext);
 			walker.baseState();
@@ -1001,7 +1004,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			if (!isindelayslot) {
 				emit.resolveFinalFallthrough();
 			}
-			protoContext.setDelaySlotLength(0);
 			return emit.getPcodeOp();
 		}
 		catch (NotYetImplementedException e) {
@@ -1031,7 +1033,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 					bytecount += len;
 				}
 				while (bytecount < delaySlotByteCnt);
-				protoContext.setDelaySlotLength(bytecount);
+				protoContext = new SleighParserContext(protoContext, bytecount);
 			}
 			ParserWalker walker = new ParserWalker(protoContext);
 			walker.baseState();
@@ -1050,7 +1052,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			if (!isindelayslot) {
 				emit.resolveFinalFallthrough();
 			}
-			protoContext.setDelaySlotLength(0);
 			emit.write(PcodeEmitPacked.end_tag); // Terminate the inst_tag
 			return emit.getPackedBytes();
 		}
@@ -1089,6 +1090,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 		}
 		catch (Exception e) {
+			// If opIndex is out of bounds (or if there are memory errors) return an empty p-code list
 		}
 		return emptyPCode;
 	}
@@ -1458,11 +1460,13 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Reconstruct the ParserContext's internal packed context array and its list of global ContextSet directives
-	 * by walking a previously resolved ConstructState tree
-	 * @param protoContext is the SleighParserContext containing the tree and holding the context results
-	 * @param debug
-	 * @throws MemoryAccessException
+	 * Reconstruct the ParserContext's internal packed context array and its list of global 
+	 * ContextSet directives by walking a previously resolved ConstructState tree
+	 * 
+	 * @param protoContext is the SleighParserContext containing the tree and holding the context
+	 *   results
+	 * @param debug (optional) logger for collecting information about the recovered context
+	 * @throws MemoryAccessException if memory errors occur trying to recover context
 	 */
 	private void reconstructContext(SleighParserContext protoContext, SleighDebugLogger debug)
 			throws MemoryAccessException {
@@ -1589,7 +1593,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 		return newContext;
 	}
 
-	ConstructState getRootState() {
+	public ConstructState getRootState() {
 		return rootState;
 	}
 
@@ -1607,7 +1611,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	 * encoding
 	 * 
 	 * This includes braces to describe the tree structure
-	 * @see AssemblyResolvedConstructor#dumpConstructorTree()
+	 * 
+	 * @see AssemblyResolvedPatterns#dumpConstructorTree()
 	 * @return the constructor tree
 	 */
 	public String dumpConstructorTree() {

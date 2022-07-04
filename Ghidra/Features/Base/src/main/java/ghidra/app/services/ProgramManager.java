@@ -29,9 +29,7 @@ import ghidra.program.model.listing.Program;
  * Service for managing programs. Multiple programs may be open in a tool, but only one is active at
  * any given time.
  */
-@ServiceInfo(
-	defaultProvider = ProgramManagerPlugin.class,
-	description = "Get the currently open program")
+@ServiceInfo(defaultProvider = ProgramManagerPlugin.class, description = "Get the currently open program")
 public interface ProgramManager {
 
 	/**
@@ -53,14 +51,14 @@ public interface ProgramManager {
 
 	/**
 	 * Return the program that is currently active.
-	 * 
+	 *
 	 * @return may return null if no program is open
 	 */
 	public Program getCurrentProgram();
 
 	/**
 	 * Returns true if the specified program is open and considered visible to the user.
-	 * 
+	 *
 	 * @param program the program
 	 * @return true if the specified program is open and considered visible to the user
 	 */
@@ -68,7 +66,7 @@ public interface ProgramManager {
 
 	/**
 	 * Closes the currently active program
-	 * 
+	 *
 	 * @return true if the close is successful. false if the close fails or if there is no program
 	 *         currently active.
 	 */
@@ -76,7 +74,7 @@ public interface ProgramManager {
 
 	/**
 	 * Open the program corresponding to the given url.
-	 * 
+	 *
 	 * @param ghidraURL valid server-based program URL
 	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE). The visibility
 	 *            states will be ignored if the program is already open.
@@ -88,7 +86,7 @@ public interface ProgramManager {
 
 	/**
 	 * Open the program for the given domainFile. Once open it will become the active program.
-	 * 
+	 *
 	 * @param domainFile domain file that has the program
 	 * @return null if the user canceled the "open" for the new program
 	 */
@@ -96,10 +94,10 @@ public interface ProgramManager {
 
 	/**
 	 * Open the program for the given domainFile. Once open it will become the active program.
-	 * 
+	 *
 	 * <P>
 	 * Note: this method functions exactly as {@link #openProgram(DomainFile)}
-	 * 
+	 *
 	 * @param domainFile domain file that has the program
 	 * @param dialogParent unused
 	 * @return the program
@@ -112,7 +110,7 @@ public interface ProgramManager {
 	/**
 	 * Opens the specified version of the program represented by the given DomainFile. This method
 	 * should be used for shared DomainFiles. The newly opened file will be made the active program.
-	 * 
+	 *
 	 * @param df the DomainFile to open
 	 * @param version the version of the Program to open
 	 * @return the opened program or null if the given version does not exist.
@@ -121,7 +119,7 @@ public interface ProgramManager {
 
 	/**
 	 * Open the program for the given domainFile
-	 * 
+	 *
 	 * @param domainFile domain file that has the program
 	 * @param version the version of the Program to open. Specify DomainFile.DEFAULT_VERSION for
 	 *            file update mode.
@@ -135,7 +133,7 @@ public interface ProgramManager {
 	/**
 	 * Opens the program to the tool. In this case the program is already open, but this tool may
 	 * not have it registered as open. The program is made the active program.
-	 * 
+	 *
 	 * @param program the program to register as open with the tool.
 	 */
 	public void openProgram(Program program);
@@ -143,7 +141,7 @@ public interface ProgramManager {
 	/**
 	 * Opens the program to the tool. In this case the program is already open, but this tool may
 	 * not have it registered as open. The program is made the active program.
-	 * 
+	 *
 	 * @param program the program to register as open with the tool.
 	 * @param current if true, the program is made the current active program. If false, then the
 	 *            program is made active only if it the first open program in the tool.
@@ -154,7 +152,7 @@ public interface ProgramManager {
 
 	/**
 	 * Open the specified program in the tool.
-	 * 
+	 *
 	 * @param program the program
 	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE). The visibility
 	 *            states will be ignored if the program is already open.
@@ -168,7 +166,7 @@ public interface ProgramManager {
 
 	/**
 	 * Saves the specified program, possibly prompting the user for a new name.
-	 * 
+	 *
 	 * @param program the program
 	 */
 	public void saveProgram(Program program);
@@ -180,7 +178,7 @@ public interface ProgramManager {
 
 	/**
 	 * Prompts the user to save the specified program to a selected file.
-	 * 
+	 *
 	 * @param program the program
 	 */
 	public void saveProgramAs(Program program);
@@ -188,13 +186,15 @@ public interface ProgramManager {
 	/**
 	 * Establish a persistent owner on an open program. This will cause the program manager to imply
 	 * make a program hidden if it is closed.
-	 * 
+	 *
 	 * @param program the program
 	 * @param owner the owner
 	 * @return true if program is open and another object is not already the owner, or the specified
 	 *         owner is already the owner.
 	 * @see #releaseProgram(Program, Object)
+	 * @deprecated this method is no longer used by the system
 	 */
+	@Deprecated(forRemoval = true, since = "10.2")
 	public boolean setPersistentOwner(Program program, Object owner);
 
 	/**
@@ -205,10 +205,12 @@ public interface ProgramManager {
 	 * to save or keep the program open.
 	 * <p>
 	 * If persistentOwner is not the correct owner, the method will have no affect.
-	 * 
+	 *
 	 * @param program the program
 	 * @param persistentOwner the owner defined by {@link #setPersistentOwner(Program, Object)}
+	 * @deprecated this method is no longer used by the system
 	 */
+	@Deprecated(forRemoval = true, since = "10.2")
 	public void releaseProgram(Program program, Object persistentOwner);
 
 	/**
@@ -217,7 +219,7 @@ public interface ProgramManager {
 	 * then the program is closed for this tool only and the user is not prompted to save the
 	 * program regardless of the ignoreChanges flag. Otherwise, if ignoreChanges is false and
 	 * changes have been made, the user is prompted to save the program.
-	 * 
+	 *
 	 * @param program the program to close.
 	 * @param ignoreChanges if true, the program is closed without saving any changes.
 	 * @return true if the program was closed. Returns false if the user canceled the close while
@@ -230,7 +232,7 @@ public interface ProgramManager {
 	 * Closes all open programs in this tool except the current program. If this tool is the only
 	 * tool with a program open and that program has changes, then the user will be prompted to
 	 * close each such file. (Providing the ignoreChanges flag is false)
-	 * 
+	 *
 	 * @param ignoreChanges if true, the programs will be closed without saving changes.
 	 * @return true if all other programs were closed. Returns false if the user canceled the close
 	 *         while being prompted to save.
@@ -241,7 +243,7 @@ public interface ProgramManager {
 	 * Closes all open programs in this tool. If this tool is the only tool with a program open and
 	 * that program has changes, then the user will be prompted to close each such file. (Providing
 	 * the ignoreChanges flag is false)
-	 * 
+	 *
 	 * @param ignoreChanges if true, the programs will be closed without saving changes.
 	 * @return true if all programs were closed. Returns false if the user canceled the close while
 	 *         being prompted to save.
@@ -250,7 +252,7 @@ public interface ProgramManager {
 
 	/**
 	 * Sets the given program to be the current active program in the tool.
-	 * 
+	 *
 	 * @param p the program to make active.
 	 */
 	public void setCurrentProgram(Program p);
@@ -260,7 +262,7 @@ public interface ProgramManager {
 	 * Programs are searched in the order they were opened within a given priority. Program are
 	 * initially opened with the PRIORITY_NORMAL priority, but can be set to have PRIORITY_HIGH or
 	 * PRIORITY_LOW.
-	 * 
+	 *
 	 * @param addr the address for which to search.
 	 * @return the first program that can be found to contain the given address.
 	 */
@@ -268,7 +270,7 @@ public interface ProgramManager {
 
 	/**
 	 * Returns a list of all open program.
-	 * 
+	 *
 	 * @return the programs
 	 */
 	public Program[] getAllOpenPrograms();
@@ -276,7 +278,7 @@ public interface ProgramManager {
 	/**
 	 * Allows program manager state to be locked/unlocked. While locked, the program manager will
 	 * not support opening additional programs.
-	 * 
+	 *
 	 * @param state locked if true, unlocked if false
 	 * @deprecated deprecated for 10.1; removal for 10.3 or later
 	 */
@@ -285,7 +287,7 @@ public interface ProgramManager {
 
 	/**
 	 * Returns true if program manager is in the locked state
-	 * 
+	 *
 	 * @return true if program manager is in the locked state
 	 * @deprecated deprecated for 10.1; removal for 10.3 or later
 	 */

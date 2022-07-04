@@ -26,7 +26,8 @@ public class DefaultDropDownSelectionDataModel<T> implements DropDownTextFieldDa
 	private static final char END_CHAR = '\uffff';
 
 	protected List<T> data;
-	private ObjectStringComparator comparator;
+
+	private Comparator<Object> comparator;
 	private DataToStringConverter<T> searchConverter;
 	private DataToStringConverter<T> descriptionConverter;
 	private ListCellRenderer<T> renderer =
@@ -75,7 +76,7 @@ public class DefaultDropDownSelectionDataModel<T> implements DropDownTextFieldDa
 	public int getIndexOfFirstMatchingEntry(List<T> list, String text) {
 		// The data are sorted such that lower-case is before upper-case and smaller length 
 		// matches come before longer matches.  If we ever find a case-sensitive exact match, 
-		// use that. Otherwise, keep looking for a case-insensitve exact match.  The 
+		// use that. Otherwise, keep looking for a case-insensitive exact match.  The 
 		// case-insensitive match is preferred over a non-matching item.  Once we get to a 
 		// non-matching item, we can quit.
 		int lastPreferredMatchIndex = -1;

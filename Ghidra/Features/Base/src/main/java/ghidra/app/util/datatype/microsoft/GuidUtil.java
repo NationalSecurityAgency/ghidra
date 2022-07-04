@@ -319,7 +319,7 @@ public class GuidUtil {
 		}
 		GuidDataType dt = new GuidDataType();
 		String guidRep = dt.getRepresentation(new DumbMemBufferImpl(program.getMemory(), address),
-			new SettingsImpl(), -1);
+			SettingsImpl.NO_SETTINGS, -1);
 		return guidRep.endsWith(guidString);
 	}
 

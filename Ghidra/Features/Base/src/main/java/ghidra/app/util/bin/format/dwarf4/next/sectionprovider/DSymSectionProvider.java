@@ -15,16 +15,18 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import generic.continues.RethrowContinuesFactory;
+import java.io.File;
+import java.io.IOException;
+
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.opinion.MachoLoader;
+import ghidra.formats.gfilesystem.FSUtilities;
 import ghidra.program.model.listing.Program;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Fetches DWARF section data for a MachO program with co-located .dSYM folder. (ie. Mac OSX
@@ -36,7 +38,7 @@ public class DSymSectionProvider implements DWARFSectionProvider {
 	private RandomAccessByteProvider provider;
 
 	public static File getDSYMForProgram(Program program) {
-		
+
 		File exePath = new File(program.getExecutablePath());
 		File dSymFile = new File(exePath.getParentFile(),
 			exePath.getName() + ".dSYM/Contents/Resources/DWARF/" + exePath.getName());
@@ -44,7 +46,8 @@ public class DSymSectionProvider implements DWARFSectionProvider {
 		return dSymFile.isFile() ? dSymFile : null;
 	}
 
-	public static DSymSectionProvider createSectionProviderFor(Program program) {
+	public static DSymSectionProvider createSectionProviderFor(Program program,
+			TaskMonitor monitor) {
 		if (MachoLoader.MACH_O_NAME.equals(program.getExecutableFormat())) {
 			File dsymFile = getDSYMForProgram(program);
 			if (dsymFile != null) {
@@ -61,8 +64,8 @@ public class DSymSectionProvider implements DWARFSectionProvider {
 
 	public DSymSectionProvider(File dsymFile) throws IOException, MachException {
 		this.provider = new RandomAccessByteProvider(dsymFile);
-		
-		machHeader = MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE, provider);
+
+		machHeader = new MachHeader(provider);
 		machHeader.parse();
 		for (Section s : machHeader.getAllSections()) {
 			// strip leading "_"'s from section name to normalize
@@ -72,22 +75,17 @@ public class DSymSectionProvider implements DWARFSectionProvider {
 	}
 
 	@Override
-	public ByteProvider getSectionAsByteProvider(String sectionName) throws IOException {
-		
+	public ByteProvider getSectionAsByteProvider(String sectionName, TaskMonitor monitor)
+			throws IOException {
+
 		Section s = machSectionsByName.get(sectionName);
 		return (s != null) ? new ByteProviderWrapper(provider,
 			machHeader.getStartIndex() + s.getOffset(), s.getSize()) : null;
 	}
 
 	@Override
-	public void close()
-	{
-		try {
-			provider.close();
-		}
-		catch (IOException e) {
-			// ignore
-		}
+	public void close() {
+		FSUtilities.uncheckedClose(provider, null);
 	}
 
 	@Override

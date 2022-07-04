@@ -20,8 +20,10 @@ import java.io.InputStream;
 import java.util.*;
 
 import db.*;
+import ghidra.util.MonitoredInputStream;
 import ghidra.util.exception.IOCancelledException;
 import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Initial version of the FileBytesAdapter
@@ -71,9 +73,9 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 	}
 
 	@Override
-	FileBytes createFileBytes(String filename, long offset, long size, InputStream is)
-			throws IOException {
-		DBBuffer[] buffers = createBuffers(size, is);
+	FileBytes createFileBytes(String filename, long offset, long size, InputStream is,
+			TaskMonitor monitor) throws IOException {
+		DBBuffer[] buffers = createBuffers(size, is, monitor);
 		DBBuffer[] layeredBuffers = createLayeredBuffers(buffers);
 		int[] bufIds = getIds(buffers);
 		int[] layeredBufIds = getIds(layeredBuffers);
@@ -152,7 +154,24 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 		return layeredBuffers;
 	}
 
-	private DBBuffer[] createBuffers(long size, InputStream is) throws IOException {
+	@SuppressWarnings("resource")
+	private DBBuffer[] createBuffers(long size, InputStream is, TaskMonitor monitor)
+			throws IOException {
+
+		if (monitor == null) {
+			monitor = TaskMonitor.DUMMY;
+		}
+		MonitoredInputStream mis;
+		if (is instanceof MonitoredInputStream) {
+			mis = (MonitoredInputStream) is;
+			mis.getTaskMonitor().initialize(size);
+		}
+		else {
+			// caller responsible for closing input stream provided
+			mis = new MonitoredInputStream(is, monitor).setCleanupOnCancel(true);
+			monitor.initialize(size);
+		}
+
 		int maxBufSize = getMaxBufferSize();
 		int bufCount = (int) (size / maxBufSize);
 		int sizeLastBuf = (int) (size % maxBufSize);
@@ -174,12 +193,21 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 
 		try {
 			for (DBBuffer buffer : buffers) {
-				buffer.fill(is);
+				buffer.fill(mis);
 			}
 		}
 		catch (IOCancelledException e) {
-			for (DBBuffer buffer : buffers) {
-				buffer.delete();
+			if (mis.cleanupOnCancel()) {
+				// Optional cleanup which can be avoided during import where entire program
+				// will get removed on cancel.
+				monitor.initialize(buffers.length);
+				monitor.setMessage("Cancelling...");
+				monitor.setCancelEnabled(false);
+				for (DBBuffer buffer : buffers) {
+					buffer.delete();
+					monitor.incrementProgress(1);
+				}
+				monitor.setIndeterminate(true);
 			}
 			throw e;
 		}

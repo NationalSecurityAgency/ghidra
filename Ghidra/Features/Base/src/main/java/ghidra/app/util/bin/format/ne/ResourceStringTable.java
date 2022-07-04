@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.app.util.bin.format.ne;
 
-import ghidra.app.util.bin.format.*;
-import ghidra.util.Conv;
-
 import java.io.IOException;
 import java.util.ArrayList;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.util.Conv;
 
 /**
  * A class for storing new-executable resource string tables.
@@ -38,7 +37,7 @@ public class ResourceStringTable extends Resource {
 	 * @param reader the binary reade
 	 * @param rt the resource table where this resource string table is defined
 	 */
-    ResourceStringTable(FactoryBundledWithBinaryReader reader, ResourceTable rt) throws IOException {
+	ResourceStringTable(BinaryReader reader, ResourceTable rt) throws IOException {
         super(reader, rt);
 
         byte [] bytes = getBytes();

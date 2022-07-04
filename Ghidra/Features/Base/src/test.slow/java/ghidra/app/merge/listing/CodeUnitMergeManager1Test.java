@@ -15,7 +15,7 @@
  */
 package ghidra.app.merge.listing;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -892,9 +892,6 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 				catch (CodeUnitInsertionException e) {
 					e.printStackTrace();
 				}
-				catch (DataTypeConflictException e) {
-					e.printStackTrace();
-				}
 				finally {
 					program.endTransaction(txId, commit);
 				}
@@ -1016,9 +1013,6 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 				catch (CodeUnitInsertionException e) {
 					e.printStackTrace();
 				}
-				catch (DataTypeConflictException e) {
-					e.printStackTrace();
-				}
 				finally {
 					program.endTransaction(txId, commit);
 				}
@@ -1132,9 +1126,6 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					commit = true;
 				}
 				catch (CodeUnitInsertionException e) {
-					e.printStackTrace();
-				}
-				catch (DataTypeConflictException e) {
 					e.printStackTrace();
 				}
 				finally {
@@ -1274,9 +1265,6 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					commit = true;
 				}
 				catch (CodeUnitInsertionException e) {
-					e.printStackTrace();
-				}
-				catch (DataTypeConflictException e) {
 					e.printStackTrace();
 				}
 				finally {

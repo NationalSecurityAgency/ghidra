@@ -17,35 +17,27 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 
 import java.util.*;
 
+import ghidra.app.plugin.assembler.sleigh.expr.match.ExpressionMatcher;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
-import ghidra.app.plugin.processors.sleigh.ParserWalker;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.expression.*;
-import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
-import ghidra.xml.XmlPullParser;
 
 /**
- * Solves expressions of the form A | B
+ * Solves expressions of the form {@code A | B}
  */
 public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpression> {
-	static final PatternExpression DUMMY = new PatternExpression() {
-		@Override
-		public long getValue(ParserWalker walker) throws MemoryAccessException {
-			return 0;
-		}
+	protected static class Matchers implements ExpressionMatcher.Context {
+		protected ExpressionMatcher<ConstantValue> val = var(ConstantValue.class);
+		protected ExpressionMatcher<ConstantValue> size = var(ConstantValue.class);
+		protected ExpressionMatcher<PatternValue> fld = fldSz(size);
 
-		@Override
-		public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-			// Dummy intentionally left empty
-		}
+		protected ExpressionMatcher<?> neqConst = or(
+			and(shr(sub(opnd(fld), val), size), cv(1)),
+			and(shr(sub(val, opnd(fld)), size), cv(1)));
+	}
 
-		@Override
-		public String toString() {
-			return null;
-		}
-	};
+	protected static final Matchers MATCHERS = new Matchers();
 
 	public OrExpressionSolver() {
 		super(OrExpression.class);
@@ -62,8 +54,8 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 	}
 
 	protected AssemblyResolution tryCatenationExpression(OrExpression exp, MaskedLong goal,
-			Map<String, Long> vals, Map<Integer, Object> res, AssemblyResolvedConstructor cur,
-			Set<SolverHint> hints, String description) throws SolverException {
+			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
+			String description) throws SolverException {
 		/*
 		 * If OR is being used to concatenate fields, then we can solve with some symbolic
 		 * manipulation. We'll descend to see if this is a tree of ORs with SHIFTs or fields at the
@@ -71,12 +63,12 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		 * component independently.
 		 */
 		Map<Long, PatternExpression> fields = new TreeMap<>();
-		fields.put(0L, new ConstantValue(0));
-		collectComponentsOr(exp, 0, fields, vals, res, cur);
+		collectComponentsOr(exp, 0, fields, vals, cur);
+		fields.computeIfAbsent(0L, __ -> new ConstantValue(0));
 		fields.put(64L, new ConstantValue(0));
 		long lo = 0;
 		PatternExpression fieldExp = null;
-		AssemblyResolvedConstructor result = AssemblyResolution.nop(description, null);
+		AssemblyResolvedPatterns result = AssemblyResolution.nop(description);
 		try (DbgCtx dc = dbg.start("Trying solution of field catenation")) {
 			dbg.println("Original: " + goal + ":= " + exp);
 			for (Map.Entry<Long, PatternExpression> ent : fields.entrySet()) {
@@ -89,12 +81,12 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 				dbg.println("Part(" + hi + ":" + lo + "]:= " + fieldExp);
 				MaskedLong part = goal.shiftLeft(64 - hi).shiftRightPositional(64 - hi + lo);
 				dbg.println("Solving: " + part + ":= " + fieldExp);
-				AssemblyResolution sol = solver.solve(fieldExp, part, vals, res, cur, hints,
+				AssemblyResolution sol = solver.solve(fieldExp, part, vals, cur, hints,
 					description + " with shift " + lo);
 				if (sol.isError()) {
 					return sol;
 				}
-				result = result.combine((AssemblyResolvedConstructor) sol);
+				result = result.combine((AssemblyResolvedPatterns) sol);
 				if (result == null) {
 					throw new SolverException("Solutions to individual fields produced conflict");
 				}
@@ -107,8 +99,8 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 	}
 
 	protected AssemblyResolution tryCircularShiftExpression(OrExpression exp, MaskedLong goal,
-			Map<String, Long> vals, Map<Integer, Object> res, AssemblyResolvedConstructor cur,
-			Set<SolverHint> hints, String description) throws SolverException {
+			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
+			String description) throws SolverException {
 		// If OR is being used to accomplish a circular shift, then we can apply a clever solver.
 		// We'll match against the patterns: (f << (C - g)) | (f >> g)
 		//                                   (f >> (C - g)) | (f << g)
@@ -144,7 +136,7 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 			expShift = sub.getRight();
 			if (expShift.equals(s2)) {
 				PatternExpression c = sub.getLeft();
-				MaskedLong cc = solver.getValue(c, vals, res, cur);
+				MaskedLong cc = solver.getValue(c, vals, cur);
 				if (cc.isFullyDefined()) {
 					// the left side has the subtraction, so the overall shift is the opposite
 					// of the direction of the shift on the left
@@ -158,7 +150,7 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 			expShift = sub.getRight();
 			if (expShift.equals(s1)) {
 				PatternExpression c = sub.getLeft();
-				MaskedLong cc = solver.getValue(c, vals, res, cur);
+				MaskedLong cc = solver.getValue(c, vals, cur);
 				if (cc.isFullyDefined()) {
 					// the right side has the subtraction, so the overall shift is the same
 					// as the direction of the shift on the left
@@ -174,16 +166,16 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		// At this point, I know it's a circular shift
 		dbg.println("Identified circular shift: value:= " + expValu1 + ", shift:= " + expShift +
 			", size:= " + size + ", dir:= " + (dir == 1 ? "right" : "left"));
-		return solveLeftCircularShift(expValu1, expShift, size, dir, goal, vals, res, cur, hints,
+		return solveLeftCircularShift(expValu1, expShift, size, dir, goal, vals, cur, hints,
 			description);
 	}
 
 	protected AssemblyResolution solveLeftCircularShift(PatternExpression expValue,
 			PatternExpression expShift, int size, int dir, MaskedLong goal, Map<String, Long> vals,
-			Map<Integer, Object> res, AssemblyResolvedConstructor cur, Set<SolverHint> hints,
-			String description) throws NeedsBackfillException, SolverException {
-		MaskedLong valValue = solver.getValue(expValue, vals, res, cur);
-		MaskedLong valShift = solver.getValue(expShift, vals, res, cur);
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
+			throws NeedsBackfillException, SolverException {
+		MaskedLong valValue = solver.getValue(expValue, vals, cur);
+		MaskedLong valShift = solver.getValue(expShift, vals, cur);
 
 		if (valValue != null && !valValue.isFullyDefined()) {
 			if (!valValue.isFullyUndefined()) {
@@ -202,12 +194,12 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 			throw new AssertionError("Should not have constants when solving special forms");
 		}
 		else if (valValue != null) {
-			return solver.solve(expShift, computeCircShiftG(valValue, size, dir, goal), vals, res,
-				cur, hints, description);
+			return solver.solve(expShift, computeCircShiftG(valValue, size, dir, goal), vals, cur,
+				hints, description);
 		}
 		else if (valShift != null) {
-			return solver.solve(expValue, computeCircShiftF(valShift, size, dir, goal), vals, res,
-				cur, hints, description);
+			return solver.solve(expValue, computeCircShiftF(valShift, size, dir, goal), vals, cur,
+				hints, description);
 		}
 
 		// Oiy. Try guessing the shift amount, starting at 0
@@ -221,21 +213,21 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 			try {
 				MaskedLong reqShift = MaskedLong.fromLong(shift);
 				MaskedLong reqValue = computeCircShiftF(reqShift, size, dir, goal);
-				AssemblyResolution resValue = solver.solve(expValue, reqValue, vals, res, cur,
+				AssemblyResolution resValue = solver.solve(expValue, reqValue, vals, cur,
 					hintsWithCircularShift, description);
 				if (resValue.isError()) {
 					AssemblyResolvedError err = (AssemblyResolvedError) resValue;
 					throw new SolverException("Solving f failed: " + err.getError());
 				}
 				AssemblyResolution resShift =
-					solver.solve(expShift, reqShift, vals, res, cur, hints, description);
+					solver.solve(expShift, reqShift, vals, cur, hints, description);
 				if (resShift.isError()) {
 					AssemblyResolvedError err = (AssemblyResolvedError) resShift;
 					throw new SolverException("Solving g failed: " + err.getError());
 				}
-				AssemblyResolvedConstructor solValue = (AssemblyResolvedConstructor) resValue;
-				AssemblyResolvedConstructor solShift = (AssemblyResolvedConstructor) resShift;
-				AssemblyResolvedConstructor sol = solValue.combine(solShift);
+				AssemblyResolvedPatterns solValue = (AssemblyResolvedPatterns) resValue;
+				AssemblyResolvedPatterns solShift = (AssemblyResolvedPatterns) resShift;
+				AssemblyResolvedPatterns sol = solValue.combine(solShift);
 				if (sol == null) {
 					throw new SolverException(
 						"value and shift solutions conflict for shift=" + shift);
@@ -276,11 +268,10 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 
 	@Override
 	protected AssemblyResolution solveTwoSided(OrExpression exp, MaskedLong goal,
-			Map<String, Long> vals, Map<Integer, Object> res, AssemblyResolvedConstructor cur,
-			Set<SolverHint> hints, String description)
-			throws NeedsBackfillException, SolverException {
+			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
+			String description) throws NeedsBackfillException, SolverException {
 		try {
-			return tryCatenationExpression(exp, goal, vals, res, cur, hints, description);
+			return tryCatenationExpression(exp, goal, vals, cur, hints, description);
 		}
 		catch (Exception e) {
 			dbg.println("while solving: " + goal + "=:" + exp);
@@ -288,46 +279,73 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		}
 
 		try {
-			return tryCircularShiftExpression(exp, goal, vals, res, cur, hints, description);
+			return tryCircularShiftExpression(exp, goal, vals, cur, hints, description);
 		}
 		catch (Exception e) {
 			dbg.println("while solving: " + goal + "=:" + exp);
 			dbg.println(e.getMessage());
 		}
+
+		Map<ExpressionMatcher<?>, PatternExpression> match = MATCHERS.neqConst.match(exp);
+		if (match != null) {
+			long value = MATCHERS.val.get(match).getValue();
+			PatternValue field = MATCHERS.fld.get(match);
+			// Solve for equals, then either return that, or forbid it, depending on goal
+			AssemblyResolution solution =
+				solver.solve(field, MaskedLong.fromLong(value), vals, cur, hints, description);
+			if (goal.equals(MaskedLong.fromMaskAndValue(0, 1))) {
+				return solution;
+			}
+			if (goal.equals(MaskedLong.fromMaskAndValue(1, 1))) {
+				if (solution.isError()) {
+					return AssemblyResolution.nop(description);
+				}
+				if (solution.isBackfill()) {
+					throw new AssertionError();
+				}
+				AssemblyResolvedPatterns forbidden = (AssemblyResolvedPatterns) solution;
+				forbidden = forbidden.withDescription("Solved 'not equals'");
+				return AssemblyResolution.nop(description).withForbids(Set.of(forbidden));
+			}
+		}
+
 		throw new SolverException("Could not solve two-sided OR");
 	}
 
 	void collectComponents(PatternExpression exp, long shift,
 			Map<Long, PatternExpression> components, Map<String, Long> vals,
-			Map<Integer, Object> res, AssemblyResolvedConstructor cur) throws SolverException {
+			AssemblyResolvedPatterns cur) throws SolverException {
 		if (exp instanceof OrExpression) {
-			collectComponentsOr((OrExpression) exp, shift, components, vals, res, cur);
+			collectComponentsOr((OrExpression) exp, shift, components, vals, cur);
 		}
 		else if (exp instanceof LeftShiftExpression) {
-			collectComponentsLeft((LeftShiftExpression) exp, shift, components, vals, res, cur);
+			collectComponentsLeft((LeftShiftExpression) exp, shift, components, vals, cur);
 		}
 		else if (exp instanceof RightShiftExpression) {
-			collectComponentsRight((RightShiftExpression) exp, shift, components, vals, res, cur);
+			collectComponentsRight((RightShiftExpression) exp, shift, components, vals, cur);
 		}
 		else {
 			assert shift < 64;
-			components.put(shift, exp);
+			PatternExpression conflict = components.put(shift, exp);
+			if (conflict != null) {
+				throw new SolverException("Two 'fields' at the same shift indicates conflict");
+			}
 		}
 	}
 
 	void collectComponentsOr(OrExpression exp, long shift, Map<Long, PatternExpression> components,
-			Map<String, Long> vals, Map<Integer, Object> res, AssemblyResolvedConstructor cur)
+			Map<String, Long> vals, AssemblyResolvedPatterns cur)
 			throws SolverException {
-		collectComponents(exp.getLeft(), shift, components, vals, res, cur);
-		collectComponents(exp.getRight(), shift, components, vals, res, cur);
+		collectComponents(exp.getLeft(), shift, components, vals, cur);
+		collectComponents(exp.getRight(), shift, components, vals, cur);
 	}
 
 	void collectComponentsLeft(LeftShiftExpression exp, long shift,
 			Map<Long, PatternExpression> components, Map<String, Long> vals,
-			Map<Integer, Object> res, AssemblyResolvedConstructor cur) throws SolverException {
+			AssemblyResolvedPatterns cur) throws SolverException {
 		MaskedLong adj;
 		try {
-			adj = solver.getValue(exp.getRight(), vals, res, cur);
+			adj = solver.getValue(exp.getRight(), vals, cur);
 		}
 		catch (NeedsBackfillException e) {
 			throw new SolverException("Variable shifts break field catenation solver", e);
@@ -335,15 +353,15 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		if (adj == null || !adj.isFullyDefined()) {
 			throw new SolverException("Variable shifts break field catenation solver");
 		}
-		collectComponents(exp.getLeft(), shift + adj.val, components, vals, res, cur);
+		collectComponents(exp.getLeft(), shift + adj.val, components, vals, cur);
 	}
 
 	void collectComponentsRight(RightShiftExpression exp, long shift,
 			Map<Long, PatternExpression> components, Map<String, Long> vals,
-			Map<Integer, Object> res, AssemblyResolvedConstructor cur) throws SolverException {
+			AssemblyResolvedPatterns cur) throws SolverException {
 		MaskedLong adj;
 		try {
-			adj = solver.getValue(exp.getRight(), vals, res, cur);
+			adj = solver.getValue(exp.getRight(), vals, cur);
 		}
 		catch (NeedsBackfillException e) {
 			throw new SolverException("Variable shifts break field catenation solver", e);
@@ -351,6 +369,6 @@ public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpress
 		if (adj == null || !adj.isFullyDefined()) {
 			throw new SolverException("Variable shifts break field catenation solver");
 		}
-		collectComponents(exp.getLeft(), shift - adj.val, components, vals, res, cur);
+		collectComponents(exp.getLeft(), shift - adj.val, components, vals, cur);
 	}
 }

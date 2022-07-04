@@ -46,7 +46,8 @@ import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.listing.*;
-import ghidra.trace.database.memory.*;
+import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.symbol.DBTraceFunctionSymbolView;
 import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.TraceAddressSnapRange;
@@ -913,7 +914,7 @@ public class DBTraceProgramView implements TraceProgramView {
 		this.viewport.setSnap(snap);
 
 		this.eventQueues =
-			new DomainObjectEventQueues(this, TIME_INTERVAL, BUF_SIZE, trace.getLock());
+			new DomainObjectEventQueues(this, TIME_INTERVAL, trace.getLock());
 
 		this.regViewsByThread = new WeakValueHashMap<>();
 
@@ -1068,6 +1069,18 @@ public class DBTraceProgramView implements TraceProgramView {
 
 	@Override
 	public void setCompiler(String compiler) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public CategoryPath getPreferredRootNamespaceCategoryPath() {
+		// TODO: not yet implemented
+		return null;
+	}
+
+	@Override
+	public void setPreferredRootNamespaceCategoryPath(String categoryPath) {
+		// TODO: not yet implemented
 		throw new UnsupportedOperationException();
 	}
 

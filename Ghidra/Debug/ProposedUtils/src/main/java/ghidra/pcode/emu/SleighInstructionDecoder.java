@@ -25,9 +25,15 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * The default instruction decoder, based on SLEIGH
+ * 
+ * <p>
+ * This simply uses a {@link Disassembler} on the machine's memory state.
+ */
 public class SleighInstructionDecoder implements InstructionDecoder {
 	// TODO: Some sort of instruction decode caching?
-	// Not as imported for stepping small distances
+	// Not as important for stepping small distances
 	// Could become important when dealing with "full system emulation," if we get there.
 
 	private static final String DEFAULT_ERROR = "Unknown disassembly error";
@@ -43,6 +49,14 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 
 	private Instruction instruction;
 
+	/**
+	 * Construct a SLEIGH instruction decoder
+	 * 
+	 * @see {@link DefaultPcodeThread#createInstructionDecoder(PcodeExecutorState)}
+	 * @param language the language to decoder
+	 * @param state the state containing the target program, probably the shared state of the p-code
+	 *            machine. It must be possible to obtain concrete buffers on this state.
+	 */
 	public SleighInstructionDecoder(Language language, PcodeExecutorState<?> state) {
 		this.state = state;
 		addrFactory = language.getAddressFactory();
@@ -67,6 +81,11 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 		return instruction;
 	}
 
+	/**
+	 * Compute the "length" of an instruction, including any delay-slotted instructions that follow
+	 * 
+	 * @return the length
+	 */
 	protected int computeLength() {
 		int length = instruction.getLength();
 		int slots = instruction.getDelaySlotDepth();

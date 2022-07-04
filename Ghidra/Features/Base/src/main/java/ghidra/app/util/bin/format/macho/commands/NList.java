@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
@@ -39,21 +39,7 @@ public class NList implements StructConverter {
 	private String string;
 	private boolean is32bit;
 
-	public static NList createNList(FactoryBundledWithBinaryReader reader, boolean is32bit)
-			throws IOException {
-		NList nList = (NList) reader.getFactory().create(NList.class);
-		nList.initNList(reader, is32bit);
-		return nList;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public NList() {
-	}
-
-	private void initNList(FactoryBundledWithBinaryReader reader, boolean is32bit)
-			throws IOException {
+	public NList(BinaryReader reader, boolean is32bit) throws IOException {
 		this.is32bit = is32bit;
 
 		n_strx = reader.readNextInt();
@@ -78,10 +64,10 @@ public class NList implements StructConverter {
 	 * scattered.  Initializing the strings linearly from the string table is much
 	 * faster.
 	 * 
-	 * @param reader 
+	 * @param reader The BinaryReader
 	 * @param stringTableOffset offset of the string table
 	 */
-	public void initString(FactoryBundledWithBinaryReader reader, long stringTableOffset) {
+	public void initString(BinaryReader reader, long stringTableOffset) {
 		try {
 			string = reader.readAsciiString(stringTableOffset + n_strx);
 		}

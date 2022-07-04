@@ -1847,7 +1847,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private Data setData(DataType dataType, int dtLength, Address address, Program program)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 
 		Listing listing = program.getListing();
 		Data data = null;

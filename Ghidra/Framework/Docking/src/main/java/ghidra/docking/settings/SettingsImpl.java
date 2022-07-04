@@ -18,8 +18,13 @@ package ghidra.docking.settings;
 import java.io.Serializable;
 import java.util.*;
 
+import javax.help.UnsupportedOperationException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import com.google.common.base.Predicate;
+
+import ghidra.util.Msg;
 
 /**
  * Basic implementation of the Settings object
@@ -31,21 +36,57 @@ public class SettingsImpl implements Settings, Serializable {
 	private Settings defaultSettings;
 	private ChangeListener listener;
 	private Object changeSourceObj;
+	private boolean immutable;
+	private Predicate<String> allowedSettingPredicate;
 
 	//@formatter:off
-	public static final Settings NO_SETTINGS = new SettingsImpl() {
-		@Override public void setByteArray(String name, byte[] value) { /* nada */ }
-		@Override public void setDefaultSettings(Settings settings) { /* nada*/ }
-		@Override public void setLong(String name, long value) { /* nada */ }
-		@Override public void setString(String name, String value) { /* nada */ }
-		@Override public void setValue(String name, Object value) { /* nada */ }
+	public static final Settings NO_SETTINGS = new SettingsImpl(true) {
+		@Override
+		public void setDefaultSettings(Settings settings) {
+			throw new UnsupportedOperationException();
+		}
 	};
 	//@formatter:on
 
 	/**
-	 *  Construct a new SettingsImpl
+	 *  Construct a new SettingsImpl.
 	 */
 	public SettingsImpl() {
+		map = new HashMap<>();
+	}
+
+	/**
+	 *  Construct a new SettingsImpl with a modification predicate.
+	 *  @param allowedSettingPredicate callback for checking an allowed setting modification
+	 */
+	public SettingsImpl(Predicate<String> allowedSettingPredicate) {
+		map = new HashMap<>();
+		this.allowedSettingPredicate = allowedSettingPredicate;
+	}
+
+	/**
+	 * Construct a new SettingsImpl object.  If settings object is specified this
+	 * settings will copy all name/value pairs and underlying defaults.
+	 * @param settings the settings object to copy
+	 */
+	public SettingsImpl(Settings settings) {
+		this();
+		if (settings != null) {
+			String[] names = settings.getNames();
+			for (int i = 0; i < names.length; i++) {
+				map.put(names[i], settings.getValue(names[i]));
+			}
+			defaultSettings = settings.getDefaultSettings();
+		}
+	}
+
+	/**
+	 *  Construct a new SettingsImpl.
+	 *  @param immutable if true settings are immutable with the exception of
+	 *  setting its default settings.  If false settings may be modified.
+	 */
+	public SettingsImpl(boolean immutable) {
+		this.immutable = immutable;
 		map = new HashMap<>();
 	}
 
@@ -60,17 +101,59 @@ public class SettingsImpl implements Settings, Serializable {
 		this.changeSourceObj = changeSourceObj;
 	}
 
-	/**
-	 * Construct a new SettingsImpl object with the same set of name-value pairs
-	 * as the given settings object
-	 * @param settings the settings object to copy
-	 */
-	public SettingsImpl(Settings settings) {
-		this();
-		String[] names = settings.getNames();
-		for (int i = 0; i < names.length; i++) {
-			map.put(names[i], settings.getValue(names[i]));
+	@Override
+	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
+		if (immutable) {
+			return false;
 		}
+		if (allowedSettingPredicate != null &&
+			!allowedSettingPredicate.apply(settingsDefinition.getStorageKey())) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Check for immutable or restricted settings and log error of modification not permitted
+	 * @param type setting type or null
+	 * @param name setting name or null
+	 * @return true if change permitted
+	 */
+	private boolean checkSetting(String type, String name) {
+		if (!checkImmutableSetting(type, name)) {
+			return false;
+		}
+		if (name != null && allowedSettingPredicate != null &&
+			!allowedSettingPredicate.apply(name)) {
+			Msg.warn(this, "Ignored disallowed setting '" + name + "'");
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Check for immutable settings and log error of modification not permitted.
+	 * Does not check for other setting restrictions.
+	 * @param type setting type or null
+	 * @param name setting name or null
+	 * @return true if change permitted
+	 */
+	private boolean checkImmutableSetting(String type, String name) {
+		if (immutable) {
+			String typeStr = "";
+			if (type != null) {
+				typeStr = type + " ";
+			}
+			String nameStr = ": " + name;
+			if (name == null) {
+				nameStr = "s";
+			}
+			Msg.warn(SettingsImpl.class,
+				"Ignored invalid attempt to modify immutable " + typeStr + "component setting" +
+					nameStr);
+			return false;
+		}
+		return true;
 	}
 
 	@Override
@@ -78,18 +161,11 @@ public class SettingsImpl implements Settings, Serializable {
 		return map.toString();
 	}
 
-	/**
-	 *
-	 * @see ghidra.docking.settings.Settings#isEmpty()
-	 */
 	@Override
 	public boolean isEmpty() {
 		return map.isEmpty();
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getLong(java.lang.String)
-	 */
 	@Override
 	public Long getLong(String name) {
 		Long value = (Long) map.get(name);
@@ -99,70 +175,41 @@ public class SettingsImpl implements Settings, Serializable {
 		return value;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getString(java.lang.String)
-	 */
 	@Override
 	public String getString(String name) {
-		String value = (String) map.get(name);
-		if (value == null && defaultSettings != null) {
-			value = defaultSettings.getString(name);
+		if (map.containsKey(name)) {
+			return (String) map.get(name); // null may be allowed/set
 		}
-		return value;
+		if (defaultSettings != null) {
+			return defaultSettings.getString(name);
+		}
+		return null;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getByteArray(java.lang.String)
-	 */
-	@Override
-	public byte[] getByteArray(String name) {
-		byte[] bytes = (byte[]) map.get(name);
-		if (bytes == null && defaultSettings != null) {
-			bytes = defaultSettings.getByteArray(name);
-		}
-		return bytes;
-	}
-
-	/**
-	 * @see ghidra.docking.settings.Settings#setLong(java.lang.String, long)
-	 */
 	@Override
 	public void setLong(String name, long value) {
-		map.put(name, new Long(value));
-		changed();
+		if (checkSetting("long", name)) {
+			map.put(name, Long.valueOf(value));
+			changed();
+		}
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#setString(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public void setString(String name, String value) {
-		map.put(name, value);
-		changed();
+		if (checkSetting("string", name)) {
+			map.put(name, value);
+			changed();
+		}
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#setByteArray(java.lang.String, byte[])
-	 */
-	@Override
-	public void setByteArray(String name, byte[] value) {
-		map.put(name, value);
-		changed();
-	}
-
-	/**
-	 *
-	 * @see ghidra.docking.settings.Settings#clearSetting(java.lang.String)
-	 */
 	@Override
 	public void clearSetting(String name) {
-		map.remove(name);
-		changed();
+		if (checkImmutableSetting(null, name)) {
+			map.remove(name);
+			changed();
+		}
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getNames()
-	 */
 	@Override
 	public String[] getNames() {
 		String[] names = new String[map.size()];
@@ -174,9 +221,6 @@ public class SettingsImpl implements Settings, Serializable {
 		return names;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getValue(java.lang.String)
-	 */
 	@Override
 	public Object getValue(String name) {
 		Object value = map.get(name);
@@ -186,11 +230,11 @@ public class SettingsImpl implements Settings, Serializable {
 		return value;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#setValue(java.lang.String, java.lang.Object)
-	 */
 	@Override
 	public void setValue(String name, Object value) {
+		if (!checkSetting(null, name)) {
+			return;
+		}
 		if (value instanceof Long || value instanceof String || value instanceof byte[]) {
 			map.put(name, value);
 			changed();
@@ -209,22 +253,21 @@ public class SettingsImpl implements Settings, Serializable {
 		}
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#clearAllSettings()
-	 */
 	@Override
 	public void clearAllSettings() {
-		map.clear();
-		changed();
+		if (map.isEmpty()) {
+			return;
+		}
+		if (checkImmutableSetting(null, null)) {
+			map.clear();
+			changed();
+		}
 	}
 
 	public void setDefaultSettings(Settings settings) {
 		defaultSettings = settings;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getDefaultSettings()
-	 */
 	@Override
 	public Settings getDefaultSettings() {
 		return defaultSettings;

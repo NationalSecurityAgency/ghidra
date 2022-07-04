@@ -15,6 +15,14 @@
  */
 #include "globalcontext.hh"
 
+ElementId ELEM_CONTEXT_DATA = ElementId("context_data",94);
+ElementId ELEM_CONTEXT_POINTS = ElementId("context_points",95);
+ElementId ELEM_CONTEXT_POINTSET = ElementId("context_pointset",96);
+ElementId ELEM_CONTEXT_SET = ElementId("context_set",97);
+ElementId ELEM_SET = ElementId("set",98);
+ElementId ELEM_TRACKED_POINTSET = ElementId("tracked_pointset",99);
+ElementId ELEM_TRACKED_SET = ElementId("tracked_set",100);
+
 /// Bits within the whole context blob are labeled starting with 0 as the most significant bit
 /// in the first word in the sequence. The new context value must be contained within a single
 /// word.
@@ -30,76 +38,61 @@ ContextBitRange::ContextBitRange(int4 sbit,int4 ebit)
   mask = (~((uintm)0))>>(startbit+shift);
 }
 
-/// The register storage and value are serialized as a \<set> tag.
-/// \param s is the output stream
-void TrackedContext::saveXml(ostream &s) const
+/// The register storage and value are encoded as a \<set> element.
+/// \param encoder is the stream encoder
+void TrackedContext::encode(Encoder &encoder) const
 
 {
-  s << "<set";
-  loc.space->saveXmlAttributes(s,loc.offset,loc.size);
-  a_v_u(s,"val",val);
-  s << "/>\n";
+  encoder.openElement(ELEM_SET);
+  loc.space->encodeAttributes(encoder,loc.offset,loc.size);
+  encoder.writeUnsignedInteger(ATTRIB_VAL, val);
+  encoder.closeElement(ELEM_SET);
 }
 
-/// Read a \<set> tag to fill in the storage and value details
-/// \param el is the root \<set> tag
-/// \param manage is the manager used to decode address references
-void TrackedContext::restoreXml(const Element *el,const AddrSpaceManager *manage)
+/// Parse a \<set> element to fill in the storage and value details.
+/// \param decoder is the stream decoder
+void TrackedContext::decode(Decoder &decoder)
 
 {
-  int4 size;
-  Address addr = Address::restoreXml(el,manage,size);
-  
-  istringstream s(el->getAttributeValue("val"));
-  s.unsetf(ios::dec | ios::hex | ios::oct);
-  s >> val;
+  uint4 elemId = decoder.openElement(ELEM_SET);
+  loc.decodeFromAttributes(decoder);
 
-  loc.space = addr.getSpace();
-  loc.offset = addr.getOffset();
-  loc.size = size;
+  val = decoder.readUnsignedInteger(ATTRIB_VAL);
+  decoder.closeElement(elemId);
 }
 
-/// \brief Save all tracked register values for a specific address to an XML stream
+/// \brief Encode all tracked register values for a specific address to a stream
 ///
 /// Encode all the tracked register values associated with a specific target address
 /// as a \<tracked_pointset> tag.
-/// \param s is the output stream
+/// \param encoder is the stream encoder
 /// \param addr is the specific address we have tracked values for
 /// \param vec is the list of tracked values
-void ContextDatabase::saveTracked(ostream &s,const Address &addr,
-				  const TrackedSet &vec)
+void ContextDatabase::encodeTracked(Encoder &encoder,const Address &addr,const TrackedSet &vec)
+
 {
   if (vec.empty()) return;
-  s << "<tracked_pointset";
-  addr.getSpace()->saveXmlAttributes(s,addr.getOffset() );
-  s << ">\n";
+  encoder.openElement(ELEM_TRACKED_POINTSET);
+  addr.getSpace()->encodeAttributes(encoder,addr.getOffset() );
   for(int4 i=0;i<vec.size();++i) {
-    s << "  ";
-    vec[i].saveXml(s);
+    vec[i].encode(encoder);
   }
-  s << "</tracked_pointset>\n";
+  encoder.closeElement(ELEM_TRACKED_POINTSET);
 }
 
-/// \brief Restore a sequence of tracked register values from an XML stream
+/// \brief Restore a sequence of tracked register values from the given stream decoder
 ///
-/// Given a root \<tracked_pointset> tag, decode each child in turn populating a list of
+/// Parse a \<tracked_pointset> element, decoding each child in turn to populate a list of
 /// TrackedContext objects.
-/// \param el is the root tag
-/// \param manage is used to resolve address space references
+/// \param decoder is the given stream decoder
 /// \param vec is the container that will hold the new TrackedContext objects
-void ContextDatabase::restoreTracked(const Element *el,const AddrSpaceManager *manage,
-				     TrackedSet &vec)
+void ContextDatabase::decodeTracked(Decoder &decoder,TrackedSet &vec)
 
 {
   vec.clear();			// Clear out any old stuff
-  const List &list(el->getChildren());
-  List::const_iterator iter = list.begin();
-
-  while(iter != list.end()) {
-    const Element *subel = *iter;
+  while(decoder.peekElement() != 0) {
     vec.emplace_back();
-    vec.back().restoreXml(subel,manage);
-    ++iter;
+    vec.back().decode(decoder);
   }
 }
 
@@ -314,54 +307,47 @@ ContextInternal::FreeArray &ContextInternal::FreeArray::operator=(const FreeArra
   return *this;
 }
 
-/// \brief Write out a single context block as an XML tag
+/// \brief Encode a single context block to a stream
 ///
 /// The blob is broken up into individual values and written out as a series
-/// of \<set> tags within a parent \<context_pointset> tag.
-/// \param s is the output stream
+/// of \<set> elements within a parent \<context_pointset> element.
+/// \param encoder is the stream encoder
 /// \param addr is the address of the split point where the blob is valid
 /// \param vec is the array of words holding the blob values
-void ContextInternal::saveContext(ostream &s,const Address &addr,
-				  const uintm *vec) const
+void ContextInternal::encodeContext(Encoder &encoder,const Address &addr,const uintm *vec) const
 {
-  s << "<context_pointset";
-  addr.getSpace()->saveXmlAttributes(s,addr.getOffset() );
-  s << ">\n";
+  encoder.openElement(ELEM_CONTEXT_POINTSET);
+  addr.getSpace()->encodeAttributes(encoder,addr.getOffset() );
   map<string,ContextBitRange>::const_iterator iter;
   for(iter=variables.begin();iter!=variables.end();++iter) {
     uintm val = (*iter).second.getValue(vec);
-    s << "  <set";
-    a_v(s,"name",(*iter).first);
-    a_v_u(s,"val",val);
-    s << "/>\n";
+    encoder.openElement(ELEM_SET);
+    encoder.writeString(ATTRIB_NAME, (*iter).first);
+    encoder.writeUnsignedInteger(ATTRIB_VAL, val);
+    encoder.closeElement(ELEM_SET);
   }
-  s << "</context_pointset>\n";
+  encoder.closeElement(ELEM_CONTEXT_POINTSET);
 }
 
-/// \brief Restore a context blob for given address range from an XML tag
+/// \brief Restore a context blob for given address range from a stream decoder
 ///
-/// The tag can be either \<context_pointset> or \<context_set>. In either case,
+/// Parse either a \<context_pointset> or \<context_set> element. In either case,
 /// children are parsed to get context variable values.  Then a context blob is
 /// reconstructed from the values.  The new blob is added to the interval map based
 /// on the address range.  If the start address is invalid, the default value of
 /// the context variables are painted.  The second address can be invalid, if
 /// only a split point is known.
-/// \param el is the root XML tag
+/// \param decoder is the stream decoder
 /// \param addr1 is the starting address of the given range
 /// \param addr2 is the ending address of the given range
-void ContextInternal::restoreContext(const Element *el,const Address &addr1,const Address &addr2)
+void ContextInternal::decodeContext(Decoder &decoder,const Address &addr1,const Address &addr2)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter = list.begin();
-
-  while(iter != list.end()) {
-    const Element *subel = *iter;
-    istringstream s(subel->getAttributeValue("val"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    uintm val;
-    s >> val;
-    ContextBitRange &var(getVariable(subel->getAttributeValue("name")));
+  for(;;) {
+    uint4 subId = decoder.openElement();
+    if (subId != ELEM_SET) break;
+    uintm val = decoder.readUnsignedInteger(ATTRIB_VAL);
+    ContextBitRange &var(getVariable(decoder.readString(ATTRIB_NAME)));
     vector<uintm *> vec;
     if (addr1.isInvalid()) {		// Invalid addr1, indicates we should set default value
       uintm *defaultBuffer = getDefaultValue();
@@ -373,7 +359,7 @@ void ContextInternal::restoreContext(const Element *el,const Address &addr1,cons
       getRegionForSet(vec,addr1,addr2,var.getWord(),var.getMask()<<var.getShift());
     for(int4 i=0;i<vec.size();++i)
       var.setValue(vec[i],val);
-    ++iter;
+    decoder.closeElement(subId);
   }
 }
 
@@ -487,83 +473,81 @@ TrackedSet &ContextInternal::createSet(const Address &addr1,const Address &addr2
   return res;
 }
 
-void ContextInternal::saveXml(ostream &s) const
+void ContextInternal::encode(Encoder &encoder) const
 
 {
   if (database.empty() && trackbase.empty()) return;
-  
-  s << "<context_points>\n";
+
+  encoder.openElement(ELEM_CONTEXT_POINTS);
 
   partmap<Address,FreeArray>::const_iterator fiter,fenditer;
   fiter = database.begin();
   fenditer = database.end();
   for(;fiter!=fenditer;++fiter)	// Save context at each changepoint
-    saveContext(s,(*fiter).first,(*fiter).second.array);
+    encodeContext(encoder,(*fiter).first,(*fiter).second.array);
   
   partmap<Address,TrackedSet>::const_iterator titer,tenditer;
   titer = trackbase.begin();
   tenditer = trackbase.end();
   for(;titer!=tenditer;++titer) 
-    saveTracked(s,(*titer).first,(*titer).second);
+    encodeTracked(encoder,(*titer).first,(*titer).second);
 
-  s << "</context_points>\n";
+  encoder.closeElement(ELEM_CONTEXT_POINTS);
 }
 
-void ContextInternal::restoreXml(const Element *el,const AddrSpaceManager *manage)
+void ContextInternal::decode(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter = list.begin();
-
-  while(iter != list.end()) {
-    const Element *subel = *iter;
-    if (subel->getName() == "context_pointset") {
-      if (subel->getNumAttributes()==0) {
-	restoreContext(subel,Address(),Address());	// Restore the default value
+  uint4 elemId = decoder.openElement(ELEM_CONTEXT_POINTS);
+  for(;;) {
+    uint4 subId = decoder.openElement();
+    if (subId == 0) break;
+    if (subId == ELEM_CONTEXT_POINTSET) {
+      uint4 attribId = decoder.getNextAttributeId();
+      decoder.rewindAttributes();
+      if (attribId==0) {
+	decodeContext(decoder,Address(),Address());	// Restore the default value
       }
       else {
-	Address addr = Address::restoreXml(subel,manage);
-	restoreContext(subel,addr,Address());
+	VarnodeData vData;
+	vData.decodeFromAttributes(decoder);
+	decodeContext(decoder,vData.getAddr(),Address());
       }
     }
-    else if (subel->getName() == "tracked_pointset") {
-      Address addr = Address::restoreXml(subel,manage);
-      restoreTracked(subel,manage,trackbase.split(addr) );
+    else if (subId == ELEM_TRACKED_POINTSET) {
+      VarnodeData vData;
+      vData.decodeFromAttributes(decoder);
+      decodeTracked(decoder,trackbase.split(vData.getAddr()) );
     }
     else
-      throw LowlevelError("Bad <context_points> tag: "+subel->getName());
-    ++iter;
+      throw LowlevelError("Bad <context_points> tag");
+    decoder.closeElement(subId);
   }
+  decoder.closeElement(elemId);
 }
 
-void ContextInternal::restoreFromSpec(const Element *el,const AddrSpaceManager *manage)
+void ContextInternal::decodeFromSpec(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter = list.begin();
-
-  while(iter != list.end()) {
-    const Element *subel = *iter;
-    if (subel->getName() == "context_set") {
-      Range range;
-      range.restoreXml(subel,manage); // There MUST be a range
-      Address addr1,addr2;
-      addr1 = range.getFirstAddr();
-      addr2 = range.getLastAddrOpen(manage);
-      restoreContext(subel,addr1,addr2);
+  uint4 elemId = decoder.openElement(ELEM_CONTEXT_DATA);
+  for(;;) {
+    uint4 subId = decoder.openElement();
+    if (subId == 0) break;
+    Range range;
+    range.decodeFromAttributes(decoder);	// There MUST be a range
+    Address addr1 = range.getFirstAddr();
+    Address addr2 = range.getLastAddrOpen(decoder.getAddrSpaceManager());
+    if (subId == ELEM_CONTEXT_SET) {
+      decodeContext(decoder,addr1,addr2);
     }
-    else if (subel->getName() == "tracked_set") {
-      Range range;
-      range.restoreXml(subel,manage); // There MUST be a range
-      Address addr1,addr2;
-      addr1 = range.getFirstAddr();
-      addr2 = range.getLastAddrOpen(manage);
-      restoreTracked(subel,manage,createSet(addr1,addr2));
+    else if (subId == ELEM_TRACKED_SET) {
+      decodeTracked(decoder,createSet(addr1,addr2));
     }
     else
-      throw LowlevelError("Bad <context_data> tag: "+subel->getName());
-    ++iter;
+      throw LowlevelError("Bad <context_data> tag");
+    decoder.closeElement(subId);
   }
+  decoder.closeElement(elemId);
 }
 
 /// \param db is the context database that will be encapsulated

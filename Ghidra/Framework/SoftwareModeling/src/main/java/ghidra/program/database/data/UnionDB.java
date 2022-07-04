@@ -161,6 +161,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 	private void removeComponent(long compKey) {
 		try {
 			componentAdapter.removeRecord(compKey);
+			dataMgr.getSettingsAdapter().removeAllSettingsRecords(compKey);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -439,6 +440,9 @@ class UnionDB extends CompositeDB implements UnionInternal {
 
 	@Override
 	public Union clone(DataTypeManager dtm) {
+		if (dtm == getDataTypeManager()) {
+			return this;
+		}
 		UnionDataType union = new UnionDataType(getCategoryPath(), getName(), getUniversalID(),
 			getSourceArchive(), getLastChangeTime(), getLastChangeTimeInSourceArchive(), dtm);
 		union.setDescription(getDescription());
@@ -726,7 +730,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			return false;
 		}
 
-		checkIsValid();
+		validate(lock);
 		if (resolving) { // actively resolving children
 			if (dataType.getUniversalID().equals(getUniversalID())) {
 				return true;
@@ -830,6 +834,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 						oldDt.removeParent(this);
 						dtc.setLength(len, false);
 						dtc.setDataType(replacementDt); // updates record
+						dataMgr.getSettingsAdapter().removeAllSettingsRecords(dtc.getKey());
 						replacementDt.addParent(this);
 						changed = true;
 					}

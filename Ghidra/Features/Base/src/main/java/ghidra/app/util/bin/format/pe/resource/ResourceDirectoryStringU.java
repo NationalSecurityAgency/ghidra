@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -42,7 +41,7 @@ public class ResourceDirectoryStringU implements StructConverter {
 	 * @param reader the binary reader
 	 * @param index the index where this resource string begins
 	 */
-    public ResourceDirectoryStringU(FactoryBundledWithBinaryReader reader, int index) throws IOException {
+	public ResourceDirectoryStringU(BinaryReader reader, int index) throws IOException {
         length = reader.readShort(index);
         nameString = reader.readUnicodeString(index+BinaryReader.SIZEOF_SHORT, length);
     }

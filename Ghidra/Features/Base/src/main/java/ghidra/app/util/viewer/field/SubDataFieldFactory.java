@@ -30,7 +30,7 @@ import ghidra.util.classfinder.ClassSearcher;
 
 /**
   *  Generates data value Fields for data subcomponents.
-  *  <P> 
+  *  <P>
   *  This field is not meant to be loaded by the {@link ClassSearcher}, hence the X in the name.
   */
 public class SubDataFieldFactory extends OperandFieldFactory {
@@ -43,16 +43,10 @@ public class SubDataFieldFactory extends OperandFieldFactory {
 	 * @param path the component path for the data
 	 */
 	public SubDataFieldFactory(String name, int[] path) {
-		super();
 		this.componentPath = path;
 		this.name = name;
 	}
 
-	/**
-	  * Constructor
-	  * @param provider The FieldProvider object that serves as the SubDataFieldFactory factory.
-	  * @param model The Field model that will use this Address factory.
-	  */
 	private SubDataFieldFactory(String name, int[] componentPath, FieldFormatModel model,
 			HighlightProvider hlProvider, ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(model, hlProvider, displayOptions, fieldOptions);
@@ -60,12 +54,6 @@ public class SubDataFieldFactory extends OperandFieldFactory {
 		this.componentPath = componentPath;
 	}
 
-	/**
-	 * Returns the FactoryField for the given object at index index.
-	 * @param varWidth the amount of variable width spacing for any fields
-	 * before this one.
-	 * @param proxy the object whose properties should be displayed.
-	 */
 	@Override
 	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
 		Object obj = proxy.getObject();
@@ -138,8 +126,8 @@ public class SubDataFieldFactory extends OperandFieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new SubDataFieldFactory(name, componentPath, formatModel, provider, displayOptions,
+			ToolOptions options, ToolOptions fieldOptions) {
+		return new SubDataFieldFactory(name, componentPath, formatModel, provider, options,
 			fieldOptions);
 	}
 

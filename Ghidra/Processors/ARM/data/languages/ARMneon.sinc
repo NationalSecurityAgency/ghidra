@@ -1784,7 +1784,7 @@ extImm: "#"^thv_c0811	is TMode=1 & thv_c0811	{ tmp:1 = thv_c0811; export tmp; }
 }
 
 
-:vraddhn.i^esize2021x2 Dd,Qn,Qm    is (($(AMODE) & cond=15 & c2527=1 & c2323=0 & c2021<3  & c0811=4 & Q6=0 & c0404=0) |
+:vraddhn.i^esize2021x2 Dd,Qn,Qm    is (($(AMODE) & cond=15 & c2527=1 & c2323=1 & c2021<3  & c0811=4 & Q6=0 & c0404=0) |
 	                                   ($(TMODE_F) & thv_c2327=0x1f & thv_c2021<3  & thv_c0811=4 & thv_Q6=0 & thv_c0404=0) ) & Qm & esize2021x2 & Qn & Dd
 {
 	Dd = VectorRoundAddAndNarrow(Qn,Qm,esize2021x2);
@@ -1813,6 +1813,86 @@ extImm: "#"^thv_c0811	is TMode=1 & thv_c0811	{ tmp:1 = thv_c0811; export tmp; }
 {
 	Qd = VectorHalvingSubtract(Qn,Qm,esize2021,udt);
 }
+
+#######
+# VFMA VFMS VFNMA and VFNMS
+#
+
+@if defined(VFPv4)
+
+:vfma^COND^".f16" Sd,Sn,Sm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=2 & c1011=2 & c0809=1 & c0606=0 & c0404=0 ) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=2 & thv_c1011=2 & thv_c0809=1 & thv_c0606=0 & thv_c0404=0)) & Sm & Sn & Sd
+{
+	Sd = zext(Sd:2 f+ (Sn:2 f* Sm:2));
+}
+
+:vfma^COND^".f32" Sd,Sn,Sm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=2 & c1011=2 & c0809=2 & c0606=0 & c0404=0 ) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=2 & thv_c1011=2 & thv_c0809=2 & thv_c0606=0 & thv_c0404=0)) & Sm & Sn & Sd
+{
+	Sd = Sd f+ (Sn f* Sm);
+}
+
+:vfma^COND^".f64" Dd,Dn,Dm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=2 & c1011=2 & c0809=3 & c0606=0 & c0404=0) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=2 & thv_c1011=2 & thv_c0809=3 & thv_c0606=0 & thv_c0404=0)) & Dm & Dn & Dd
+{
+	Dd = Dd f+ (Dn f* Dm);
+}
+
+:vfms^COND^".f16" Sd,Sn,Sm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=2 & c1011=2 & c0809=1 & c0606=1 & c0404=0) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=2 & thv_c1011=2 & thv_c0809=1 & thv_c0606=1 & thv_c0404=0)) & Sm & Sn & Sd
+{
+	Sd = zext(Sd:2 f+ ((f- Sn:2) f* Sm:2));
+}
+
+:vfms^COND^".f32" Sd,Sn,Sm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=2 & c1011=2 & c0809=2 & c0606=1 & c0404=0) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=2 & thv_c1011=2 & thv_c0809=2 & thv_c0606=1 & thv_c0404=0)) & Sm & Sn & Sd
+{
+	Sd = Sd f+ ((f- Sn) f* Sm);
+}
+
+:vfms^COND^".f64" Dd,Dn,Dm  is ( ( $(AMODE) & COND & c2327=0x1d & c2021=2 & c1011=2 & c0809=3 & c0606=1 & c0404=0 ) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=2 & thv_c1011=2 & thv_c0809=3 & thv_c0606=1 & thv_c0404=0)) & Dm & Dn & Dd
+{
+	Dd = Dd f+ ((f- Dn) f* Dm);
+}
+
+:vfnma^COND^".f16" Sd,Sn,Sm is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c1011=2 & c0809=1 & c0606=1 & c0404=0 ) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c1011=2 & thv_c0809=1 & thv_c0606=1 & thv_c0404=0)) & Sm & Sn & Sd
+{
+	Sd = zext((f- Sd:2) f+ ((f- Sn:2) f* Sm:2));
+}
+
+:vfnma^COND^".f32" Sd,Sn,Sm is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c1011=2 & c0809=2 & c0606=1 & c0404=0 ) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c1011=2 & thv_c0809=2 & thv_c0606=1 & thv_c0404=0)) & Sm & Sn & Sd
+{
+	Sd = (f- Sd) f+ ((f- Sn) f* Sm);
+}
+
+:vfnma^COND^".f64" Dd,Dn,Dm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c1011=2 & c0809=3 & c0606=1 & c0404=0) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c1011=2 & thv_c0809=3 & thv_c0606=1 & thv_c0404=0)) & Dm & Dn & Dd
+{
+	Dd = (f- Dd) f+ ((f- Dn) f* Dm);
+}
+
+:vfnms^COND^".f16" Sd,Sn,Sm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c1011=2 & c0809=1 & c0606=0 & c0404=0 ) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c1011=2 & thv_c0809=1 & thv_c0606=0 & thv_c0404=0)) & Sm & Sn & Sd
+{
+	Sd = zext((f- Sd:2) f+ (Sn:2 f* Sm:2));
+}
+
+:vfnms^COND^".f32" Sd,Sn,Sm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c1011=2 & c0809=2 & c0606=0 & c0404=0 ) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c1011=2 & thv_c0809=2 & thv_c0606=0 & thv_c0404=0)) & Sm & Sn & Sd
+{
+	Sd = (f- Sd) f+ (Sn f* Sm);
+}
+
+:vfnms^COND^".f64" Dd,Dn,Dm	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=1 & c1011=2 & c0809=3 & c0606=0 & c0404=0 ) |
+						           ($(TMODE_E) & thv_c2327=0x1d & thv_c2021=1 & thv_c1011=2 & thv_c0809=3 & thv_c0606=0 & thv_c0404=0)) & Dm & Dn & Dd
+{
+	Dd = (f- Dd) f+ (Dn f* Dm);
+}
+
+@endif # VFPv4
 
 #######
 # VLD1 (multiple single elements)

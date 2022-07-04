@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -29,67 +29,63 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a kext_command
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.60.75/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a fileset_entry_command
  */
 public class FileSetEntryCommand extends LoadCommand {
 
 	private long vmaddr;
 	private long fileoff;
-	private String entryName;
-	private long unknown;
+	private LoadCommandString entryId;
+	private int reserved;
 
-	boolean is32bit;
-
-	public static FileSetEntryCommand createFileSetEntryCommand(
-			FactoryBundledWithBinaryReader reader, boolean is32bit) throws IOException {
-		FileSetEntryCommand filesetEntryCommand =
-			(FileSetEntryCommand) reader.getFactory().create(FileSetEntryCommand.class);
-		filesetEntryCommand.initFileSetEntryCommand(reader, is32bit);
-		return filesetEntryCommand;
+	/**
+	 * Creates and parses a new {@link FileSetEntryCommand}
+	 * 
+	 * @param reader A {@link BinaryReader reader} that points to the start of the load command
+	 * @throws IOException if an IO-related error occurs while parsing
+	 */
+	FileSetEntryCommand(BinaryReader reader) throws IOException {
+		super(reader);
+		vmaddr = reader.readNextLong();
+		fileoff = reader.readNextLong();
+		entryId = new LoadCommandString(reader, this);
+		reserved = reader.readNextInt();
 	}
 
 	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
+	 * Gets the virtual address of the DYLIB
+	 * 
+	 * @return The virtual address of the DYLIB
 	 */
-	public FileSetEntryCommand() {
-	}
-
-	private void initFileSetEntryCommand(FactoryBundledWithBinaryReader reader, boolean is32bit)
-			throws IOException {
-		initLoadCommand(reader);
-		this.is32bit = is32bit;
-
-		if (is32bit) {
-			vmaddr = reader.readNextUnsignedInt();
-			fileoff = reader.readNextUnsignedInt();
-			unknown = reader.readNextUnsignedInt();
-		}
-		else {
-			vmaddr = reader.readNextLong();
-			fileoff = reader.readNextLong();
-			unknown = reader.readNextLong();
-		}
-
-		int stringSize = this.getCommandSize() - (8 + 3 * (is32bit ? 4 : 8));
-		entryName = reader.readNextAsciiString(stringSize);
-	}
-
-	public String getFileSetEntryName() {
-		return entryName;
-	}
-
 	public long getVMaddress() {
 		return vmaddr;
 	}
 
+	/**
+	 * Gets the file offset of the DYLIB
+	 * 
+	 * @return the file offset of the DYLIB
+	 */
 	public long getFileOffset() {
 		return fileoff;
 	}
 
-	public long getUnknown() {
-		return unknown;
+	/**
+	 * Gets the identifier of the DYLIB
+	 * 
+	 * @return the identifier of the DYLIB
+	 */
+	public LoadCommandString getFileSetEntryId() {
+		return entryId;
+	}
+
+	/**
+	 * Gets the reserved field (should just be padding)
+	 * 
+	 * @return The reserved field
+	 */
+	public int getReserved() {
+		return reserved;
 	}
 
 	@Override
@@ -97,20 +93,10 @@ public class FileSetEntryCommand extends LoadCommand {
 		StructureDataType struct = new StructureDataType(getCommandName(), 0);
 		struct.add(DWORD, "cmd", null);
 		struct.add(DWORD, "cmdsize", null);
-
-		if (is32bit) {
-			struct.add(DWORD, "vmaddr", null);
-			struct.add(DWORD, "fileoff", null);
-			struct.add(DWORD, "unknown", null);
-		}
-		else {
-			struct.add(QWORD, "vmaddr", null);
-			struct.add(QWORD, "fileoff", null);
-			struct.add(QWORD, "unknown", null);
-		}
-		int stringSize = getCommandSize() - (8 + 3 * (is32bit ? 4 : 8));
-		struct.add(new StringDataType(), stringSize, "fileSetEntryname", null);
-
+		struct.add(QWORD, "vmaddr", null);
+		struct.add(QWORD, "fileoff", null);
+		struct.add(entryId.toDataType(), "entry_id", null);
+		struct.add(DWORD, "reserved", null);
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
 		return struct;
 	}
@@ -130,7 +116,7 @@ public class FileSetEntryCommand extends LoadCommand {
 				Address addr = baseAddress.getNewAddress(getStartIndex());
 				DataType fileSetEntryDT = toDataType();
 				api.createData(addr, fileSetEntryDT);
-				api.setPlateComment(addr, getFileSetEntryName());
+				api.setPlateComment(addr, entryId.getString());
 			}
 		}
 		catch (Exception e) {
@@ -140,6 +126,6 @@ public class FileSetEntryCommand extends LoadCommand {
 
 	@Override
 	public String toString() {
-		return getFileSetEntryName();
+		return entryId.getString();
 	}
 }

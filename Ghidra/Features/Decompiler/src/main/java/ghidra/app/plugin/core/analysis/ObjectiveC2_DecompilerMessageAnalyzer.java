@@ -191,6 +191,9 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 		}
 		setReference(objcCallAddress, program, currentClassName, currentMethodName);
 
+		if (instruction == null) {
+			return;
+		}
 		if (instruction.getComment(CodeUnit.EOL_COMMENT) != null) {
 			return;
 		}

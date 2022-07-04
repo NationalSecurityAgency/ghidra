@@ -38,12 +38,30 @@ public class RecorderSimpleMemory implements AbstractRecorderMemory {
 	}
 
 	@Override
+	public void addMemory(TargetMemory memory) {
+		synchronized (this) {
+			if (this.memory == null) {
+				this.memory = memory;
+			}
+		}
+	}
+
+	@Override
 	public void addRegion(TargetMemoryRegion region, TargetMemory memory) {
 		synchronized (this) {
 			if (this.memory == null) {
 				this.memory = memory;
 			}
 			byMin.put(region.getRange().getMinAddress(), region);
+		}
+	}
+
+	@Override
+	public void removeMemory(TargetMemory invalid) {
+		synchronized (this) {
+			if (this.memory == invalid) {
+				this.memory = null;
+			}
 		}
 	}
 
@@ -79,13 +97,6 @@ public class RecorderSimpleMemory implements AbstractRecorderMemory {
 		}
 	}
 
-	/**
-	 * Get accessible memory, as viewed in the trace
-	 * 
-	 * @param pred an additional predicate applied via "AND" with accessibility
-	 * @param memMapper target-to-trace mapping utility
-	 * @return the computed set
-	 */
 	@Override
 	public AddressSet getAccessibleMemory(Predicate<TargetMemory> pred,
 			DebuggerMemoryMapper memMapper) {

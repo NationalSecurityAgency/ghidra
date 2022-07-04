@@ -19,6 +19,7 @@ import java.awt.Component;
 import java.io.*;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
+import java.security.InvalidKeyException;
 
 import javax.security.auth.callback.*;
 
@@ -86,29 +87,23 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 		ClientUtil.setClientAuthenticator(authenticator);
 
 		if (keystorePath != null) {
-			File f = new File(keystorePath);
-			if (!f.exists()) {
+			File keyfile = new File(keystorePath);
+			if (!keyfile.exists()) {
 				// If keystorePath file not found - try accessing as SSH key resource stream
 				// InputStream keyIn = ResourceManager.getResourceAsStream(keystorePath);
-				InputStream keyIn = keystorePath.getClass().getResourceAsStream(keystorePath);
-				if (keyIn != null) {
-					try {
-						sshPrivateKey = SSHKeyManager.getSSHPrivateKey(keyIn);
-						Msg.info(HeadlessClientAuthenticator.class,
-							"Loaded SSH key: " + keystorePath);
-						return;
-					}
-					catch (Exception e) {
-						Msg.error(HeadlessClientAuthenticator.class,
-							"Failed to open keystore for SSH use: " + keystorePath, e);
-						throw new IOException("Failed to parse keystore: " + keystorePath);
-					}
-					finally {
+				try (InputStream keyIn =
+					HeadlessClientAuthenticator.class.getResourceAsStream(keystorePath)) {
+					if (keyIn != null) {
 						try {
-							keyIn.close();
+							sshPrivateKey = SSHKeyManager.getSSHPrivateKey(keyIn);
+							Msg.info(HeadlessClientAuthenticator.class,
+								"Loaded SSH key: " + keystorePath);
+							return;
 						}
-						catch (IOException e) {
-							// ignore
+						catch (Exception e) {
+							Msg.error(HeadlessClientAuthenticator.class,
+								"Failed to open keystore for SSH use: " + keystorePath, e);
+							throw new IOException("Failed to parse keystore: " + keystorePath);
 						}
 					}
 				}
@@ -116,23 +111,26 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 				throw new FileNotFoundException("Keystore not found: " + keystorePath);
 			}
 
+			boolean success = false;
 			try {
-				sshPrivateKey = SSHKeyManager.getSSHPrivateKey(new File(keystorePath));
+				sshPrivateKey = SSHKeyManager.getSSHPrivateKey(keyfile);
+				success = true;
 				Msg.info(HeadlessClientAuthenticator.class, "Loaded SSH key: " + keystorePath);
 			}
-			catch (IOException e) {
-				try {
-					// try keystore as PKI keystore if failed as SSH keystore
-					ApplicationKeyManagerFactory.setKeyStore(keystorePath, false);
-					Msg.info(HeadlessClientAuthenticator.class, "Loaded PKI key: " + keystorePath);
+			catch (InvalidKeyException e) { // keyfile is not a valid SSH provate key format
+				// does not appear to be an SSH private key - try PKI keystore parse
+				if (ApplicationKeyManagerFactory.setKeyStore(keystorePath, false)) {
+					success = true;
+					Msg.info(HeadlessClientAuthenticator.class,
+						"Loaded PKI keystore: " + keystorePath);
 				}
-				catch (IOException e1) {
-					Msg.error(HeadlessClientAuthenticator.class,
-						"Failed to open keystore for PKI use: " + keystorePath, e1);
-					Msg.error(HeadlessClientAuthenticator.class,
-						"Failed to open keystore for SSH use: " + keystorePath, e);
-					throw new IOException("Failed to parse keystore: " + keystorePath);
-				}
+			}
+			catch (IOException e) { // SSH key parse failure only
+				Msg.error(HeadlessClientAuthenticator.class,
+					"Failed to open keystore for SSH use: " + keystorePath, e);
+			}
+			if (!success) {
+				throw new IOException("Failed to parse keystore: " + keystorePath);
 			}
 		}
 		else {

@@ -243,4 +243,5 @@ public interface ProgramContext {
 	 * @return disassembly context register value
 	 */
 	public RegisterValue getDisassemblyContext(Address address);
+
 }

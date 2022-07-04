@@ -16,6 +16,7 @@
 package ghidra.program.model.data;
 
 import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
+import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.lang.DecompilerLanguage;
 import ghidra.util.InvalidNameException;
@@ -29,6 +30,8 @@ import ghidra.util.exception.DuplicateNameException;
  * Base class for built-in Datatypes.  A built-in data type is
  * searched for in the classpath and added automatically to the available
  * data types in the data type manager.
+ * 
+ * NOTE: Settings are immutable when a DataTypeManager has not been specified (i.e., null).
  */
 public abstract class BuiltIn extends DataTypeImpl implements BuiltInDataType {
 
@@ -71,6 +74,11 @@ public abstract class BuiltIn extends DataTypeImpl implements BuiltInDataType {
 	 */
 	protected SettingsDefinition[] getBuiltInSettingsDefinitions() {
 		return null;
+	}
+
+	@Override
+	public void setDefaultSettings(Settings settings) {
+		defaultSettings = settings;
 	}
 
 	@Override

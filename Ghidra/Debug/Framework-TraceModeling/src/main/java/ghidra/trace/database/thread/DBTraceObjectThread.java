@@ -101,9 +101,14 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 	}
 
 	@Override
+	public void setName(Range<Long> lifespan, String name) {
+		object.setValue(lifespan, TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
+	}
+
+	@Override
 	public void setName(String name) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(getLifespan(), TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
+			setName(computeSpan(), name);
 		}
 	}
 
@@ -116,7 +121,7 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 
 	@Override
 	public long getCreationSnap() {
-		return object.getMinSnap();
+		return computeMinSnap();
 	}
 
 	@Override
@@ -128,7 +133,7 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 
 	@Override
 	public long getDestructionSnap() {
-		return object.getMaxSnap();
+		return computeMaxSnap();
 	}
 
 	@Override
@@ -138,7 +143,7 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 
 	@Override
 	public Range<Long> getLifespan() {
-		return object.getLifespan();
+		return computeSpan();
 	}
 
 	@Override
@@ -156,7 +161,9 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 
 	@Override
 	public void delete() {
-		object.deleteTree();
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			object.removeTree(computeSpan());
+		}
 	}
 
 	@Override

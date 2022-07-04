@@ -635,11 +635,9 @@ public interface Listing {
 	 * @return newly created data unit
 	 * @exception CodeUnitInsertionException thrown if the new Instruction would
 	 *                overlap and existing Instruction or defined data.
-	 * @throws DataTypeConflictException if the given datatype conflicts (same
-	 *             name, but not equal) with an existing datatype.
 	 */
 	public Data createData(Address addr, DataType dataType, int length)
-			throws CodeUnitInsertionException, DataTypeConflictException;
+			throws CodeUnitInsertionException;
 
 	/**
 	 * Creates a new defined Data object at the given address. This ignores the
@@ -651,11 +649,9 @@ public interface Listing {
 	 * @return newly created data unit
 	 * @exception CodeUnitInsertionException thrown if the new Instruction would
 	 *                overlap and existing Instruction or defined data.
-	 * @throws DataTypeConflictException if the given datatype conflicts (same
-	 *             name, but not equal) with an existing datatype.
 	 */
 	public Data createData(Address addr, DataType dataType)
-			throws CodeUnitInsertionException, DataTypeConflictException;
+			throws CodeUnitInsertionException;
 
 	/**
 	 * Clears any code units in the given range returning everything to "db"s,

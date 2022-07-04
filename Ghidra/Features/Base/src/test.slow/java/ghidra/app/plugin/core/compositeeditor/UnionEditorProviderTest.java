@@ -135,7 +135,6 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		finally {
 			dialog = null;
 			program.removeListener(restoreListener);
-			cleanup();
 		}
 	}
 
@@ -175,7 +174,6 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		}
 		finally {
 			program.removeListener(restoreListener);
-			cleanup();
 		}
 	}
 

@@ -48,7 +48,7 @@ public class DWARFLine {
 	 * DebugLine stream (if present).
 	 * 
 	 * @param diea {@link DIEAggregate} compile unit DIE(a) 
-	 * @return a new DWARFLine instance if DW_AT_stmt_list & stream are present, otherwise null
+	 * @return a new DWARFLine instance if DW_AT_stmt_list and stream are present, otherwise null
 	 * @throws IOException if error reading data
 	 * @throws DWARFException if bad DWARF values
 	 */

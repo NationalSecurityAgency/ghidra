@@ -1,0 +1,1381 @@
+# sleigh specification file for Motorola 6809/Hitachi 6309
+
+define endian=big;
+define alignment=1;
+
+@define SWI3_VECTOR "0xFFF2"
+@define SWI2_VECTOR "0xFFF4"
+@define FIRQ_VECTOR "0xFFF6"
+@define IRQ_VECTOR  "0xFFF8"
+@define SWI_VECTOR  "0xFFFA"
+@define NMI_VECTOR  "0xFFFC"
+@define RST_VECTOR  "0xFFFE"
+
+define space RAM     type=ram_space      size=2  default;
+define space register type=register_space size=1;
+
+@ifdef H6309
+# 8-bit registers A, B, E, F, MD
+define register offset=0 size=1 [ A B E F MD ];
+# 16-bit registers D, W
+define register offset=0 size=2 [ D W ];
+# 16-bit register V
+define register offset=12 size=2 [ V ];
+# 32-bit register Q
+define register offset=0 size=4 [ Q ];
+@else
+# 8-bit registers A, B
+define register offset=0 size=1 [ A B ];
+# 16-bit register D
+define register offset=0 size=2 [ D ];
+@endif
+
+# 8-bit condition code register, direct page register
+define register offset=8 size=1 [ CC DP ];
+# 16-bit registers:
+#    PC: Program counter
+#    S:  Stack pointer
+#    U:  alternate stack pointer/index register
+#    X,Y: index register
+define register offset=16 size=2 [ PC X Y U S ];
+
+# Pseudo registers used for EXG instruction.
+define register offset=32 size=2 [ exg16_r0           exg16_r1          ];
+define register offset=32 size=1 [ exg8h_r0 exg8l_r0  exg8h_r1 exg8l_r1 ];
+
+# define status bits: (See also 8051/z80).
+@define C "CC[0,1]" # C: Carry (or borrow) flag
+@define V "CC[1,1]" # V: Overflow flag
+@define Z "CC[2,1]" # Z: Zero result
+@define N "CC[3,1]" # N: Negative result (twos complement)
+@define I "CC[4,1]" # I: IRQ interrupt masked
+@define H "CC[5,1]" # H: Half carry flag
+@define F "CC[6,1]" # F: FIRQ interrupt masked
+@define E "CC[7,1]" # E: Entire register state stacked
+
+define token opbyte (8)
+    op        = (0,7)
+    op45      = (4,5)
+    op47      = (4,7)
+;
+
+define token data8 (8)
+    imm8      = (0,7)
+    simm8     = (0,7) signed
+    simm5     = (0,4) signed
+    idxMode   = (0,4)
+    noOffset5 = (7,7)
+    idxReg    = (5,6)
+    imm80     = (0,0)
+    imm81     = (1,1)
+    imm82     = (2,2)
+    imm83     = (3,3)
+    imm84     = (4,4)
+    imm85     = (5,5)
+    imm86     = (6,6)
+    imm87     = (7,7)
+    reg0_exg  = (4,7)
+    reg1_exg  = (0,3)
+;
+
+define token data (16)
+    imm16   = (0,15)
+    simm16  = (0,15) signed
+;
+
+attach variables [ idxReg ] [ X Y U S ];
+
+EA: simm5,idxReg    is simm5 & idxReg & noOffset5=0
+{
+     local offs:1 = simm5;
+     local addr:2 = idxReg + sext(offs);
+     export addr; 
+}
+EA: ","^idxReg    is idxReg & noOffset5=1 & idxMode=0b00100 # no offset
+{
+     local addr:2 = idxReg;
+     export addr; 
+}
+EA: simm8,idxReg    is idxReg & noOffset5=1 & idxMode=0b01000; simm8 # 8-bit offset
+{
+     local addr:2 = idxReg + simm8;
+     export addr; 
+}
+EA: simm16,idxReg    is idxReg & noOffset5=1 & idxMode=0b01001; simm16 # 16-bit offset
+{
+     local addr:2 = idxReg + simm16;
+     export addr; 
+}
+
+@ifdef H6309
+EA: ","^W    is idxReg=0b00 & noOffset5=1 & idxMode=0b01111 & W # no offset
+{
+     local addr:2 = W;
+     export addr; 
+}
+EA: simm16,W    is idxReg=0b01 & noOffset5=1 & idxMode=0b01111; simm16 & W # 16-bit offset
+{
+     local addr:2 = W + simm16;
+     export addr; 
+}
+@endif # H6309
+
+EA: A,idxReg    is idxReg & noOffset5=1 & idxMode=0b00110 & A # A,R
+{
+     local addr:2 = idxReg + sext(A);
+     export addr; 
+}
+EA: B,idxReg    is idxReg & noOffset5=1 & idxMode=0b00101 & B # B,R
+{
+     local addr:2 = idxReg + sext(B);
+     export addr; 
+}
+EA: D,idxReg    is idxReg & noOffset5=1 & idxMode=0b01011 & D # D,R
+{
+     local addr:2 = idxReg + D;
+     export addr; 
+}
+
+@ifdef H6309
+EA: E,idxReg    is idxReg & noOffset5=1 & idxMode=0b00111 & E # E,R
+{
+     local addr:2 = idxReg + sext(E);
+     export addr; 
+}
+EA: F,idxReg    is idxReg & noOffset5=1 & idxMode=0b01010 & F # F,R
+{
+     local addr:2 = idxReg + sext(F);
+     export addr; 
+}
+EA: W,idxReg    is idxReg & noOffset5=1 & idxMode=0b01110 & W # W,R
+{
+     local addr:2 = idxReg + W;
+     export addr; 
+}
+@endif # H6309
+
+
+EA: ","^idxReg^"+"    is idxReg & noOffset5=1 & idxMode=0b00000 # ,R+
+{
+     addr:2 = idxReg;
+     idxReg = idxReg + 1;
+     export addr;
+}
+EA: ","^idxReg^"++"    is idxReg & noOffset5=1 & idxMode=0b00001 # ,R++
+{
+     local addr:2 = idxReg;
+     idxReg = idxReg + 2;
+     export addr;
+}
+EA: ",-"^idxReg    is idxReg & noOffset5=1 & idxMode=0b00010 # ,-R
+{
+     idxReg = idxReg - 1;
+     local addr:2 = idxReg;
+     export addr;
+}
+EA: ",--"^idxReg    is idxReg & noOffset5=1 & idxMode=0b00011 # ,--R
+{
+     idxReg = idxReg - 2;
+     local addr:2 = idxReg;
+     export addr;
+}
+
+@ifdef H6309
+EA: ","^W^"++"    is idxReg=0b10 & noOffset5=1 & idxMode=0b01111 & W # ,W++
+{
+     local addr:2 = W;
+     W = W + 2;
+     export addr;
+}
+EA: ",--"^W    is idxReg=0b11 & noOffset5=1 & idxMode=0b01111 & W # ,--W
+{
+     W = W - 2;
+     local addr:2 = W;
+     export addr;
+}
+@endif # H6309
+
+EA: addr,"PCR" is noOffset5=1 & idxMode=0b01100; simm8 [ addr = inst_next + simm8; ] 
+{
+     export addr; 
+}
+EA: addr,"PCR" is noOffset5=1 & idxMode=0b01101; simm16 [ addr = inst_next + simm16; ] 
+{
+     export addr; 
+}
+EA: "[,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=0b10100
+{
+     local addr:2 = *:2 idxReg;
+     export addr; 
+}
+EA: "["simm8,idxReg"]"    is idxReg & noOffset5=1 & idxMode=0b11000; simm8
+{
+     local offs:1 = simm8;
+     local addr:2 = idxReg + sext(offs);
+     addr = *:2 addr;
+     export addr; 
+}
+EA: "["simm16,idxReg"]"    is idxReg & noOffset5=1 & idxMode=0b11001; simm16
+{
+     local addr:2 = idxReg + simm16;
+     addr = *:2 addr;
+     export addr; 
+}
+
+@ifdef H6309
+EA: "[,"W"]"    is idxReg=0b00 & noOffset5=1 & idxMode=0b10000 & W
+{
+     local addr:2 = *:2 W;
+     export addr; 
+}
+EA: "["simm16,W"]"    is idxReg=0b01 & noOffset5=1 & idxMode=0b10000; simm16 & W
+{
+     local addr:2 = W + simm16;
+     addr = *:2 addr;
+     export addr; 
+}
+@endif # H6309
+
+EA: "["^A,idxReg"]"    is A & idxReg & noOffset5=1 & idxMode=0b10110
+{
+     local addr:2 = idxReg + sext(A);
+     addr = *:2 addr;
+     export addr; 
+}
+EA: "["^B,idxReg"]"    is B & idxReg & noOffset5=1 & idxMode=0b10101
+{
+     local addr:2 = idxReg + sext(B);
+     addr = *:2 addr;
+     export addr; 
+}
+EA: "["^D,idxReg"]"    is D & idxReg & noOffset5=1 & idxMode=0b11011
+{
+     local addr:2 = idxReg + D;
+     addr = *:2 addr;
+     export addr; 
+}
+
+@ifdef H6309
+EA: "["^E,idxReg"]"    is E & idxReg & noOffset5=1 & idxMode=0b10111
+{
+     local addr:2 = idxReg + sext(E);
+     addr = *:2 addr;
+     export addr; 
+}
+EA: "["^F,idxReg"]"    is F & idxReg & noOffset5=1 & idxMode=0b11010
+{
+     local addr:2 = idxReg + sext(F);
+     addr = *:2 addr;
+     export addr; 
+}
+EA: "["^W,idxReg"]"    is W & idxReg & noOffset5=1 & idxMode=0b11110
+{
+     local addr:2 = idxReg + W;
+     addr = *:2 addr;
+     export addr; 
+}
+@endif # H6309
+
+
+EA: "[,"idxReg"++]"    is idxReg & noOffset5=1 & idxMode=0b10001
+{
+     local addr:2 = idxReg;
+     addr = *:2 addr;
+     idxReg = idxReg + 2;
+     export addr;
+}
+EA: "[,--"idxReg"]"    is idxReg & noOffset5=1 & idxMode=0b10011
+{
+     idxReg = idxReg - 2;
+     local addr:2 = idxReg;
+     addr = *:2 addr;
+     export addr;
+}
+
+@ifdef H6309
+EA: "[,"^W^"++]"    is W & idxReg=0b10 & noOffset5=1 & idxMode=0b10000
+{
+     local addr:2 = W;
+     addr = *:2 addr;
+     W = W + 2;
+     export addr;
+}
+EA: "[,--"^W^"]"    is W & idxReg=0b11 & noOffset5=1 & idxMode=0b10000
+{
+     W = W - 2;
+     local addr:2 = W;
+     addr = *:2 addr;
+     export addr;
+}
+@endif # H6309
+
+EA: "["addr",PCR]" is noOffset5=1 & idxMode=0b11100; simm8 [ addr = inst_next + simm8; ] 
+{
+     local eaddr:2 = inst_next + simm8;
+     eaddr = *:2 eaddr;
+     export eaddr; 
+}
+EA: "["addr",PCR]" is noOffset5=1 & idxMode=0b11101; simm16 [ addr = inst_next + simm16; ] 
+{
+     local eaddr:2 = inst_next + simm16;
+     eaddr = *:2 eaddr;
+     export eaddr; 
+}
+
+EA: "["addr"]" is noOffset5=1 & idxReg=0b00 & idxMode=0b11101; simm16 [ addr = inst_next; ] 
+{
+     local eaddr:2 = inst_next;
+     eaddr = *:2 eaddr;
+     export eaddr; 
+}
+
+################################################################
+# Constructors
+################################################################
+
+PAGE2: is op=0x10 { } # PAGE2 opcode prefix (0x10)
+PAGE3: is op=0x11 { } # PAGE3 opcode prefix (0x11)
+
+IMMED1: "#"imm8  is imm8  { export *[const]:1 imm8; }
+
+REL:  addr    is simm8  [ addr = inst_next + simm8;  ]   { export *:2 addr; } 
+REL2: addr    is simm16 [ addr = inst_next + simm16; ]   { export *:2 addr; } 
+
+# 1-byte operand, immediate/direct/indexed/extended addressing mode
+OP1: "#"imm8    is op45=0; imm8
+{
+    export *[const]:1 imm8;
+}
+OP1: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
+{
+    local tmp:2 = (zext(DP) << 8) + imm8;
+    export *:1 tmp;
+}
+OP1: EA    is op45=2; EA
+{
+    local tmp:2 = EA;
+    export *:1 tmp;
+}
+OP1: imm16    is op45=3; imm16
+{
+    export *:1 imm16;
+}
+
+# 2-byte operand, direct/indexed/extended addressing mode
+OP2: "#"imm16    is (op47=8 | op47=0xC); imm16
+{
+    export *[const]:2 imm16;
+}
+OP2: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
+{
+    local tmp:2 = (zext(DP) << 8) + imm8;
+    export *:2 tmp;
+}
+OP2: EA       is (op47=3 | op47=6 | op47=0xA | op47=0xE); EA
+{
+    local tmp:2 = EA;
+    export *:2 tmp;
+}
+OP2: imm16      is (op47=7 | op47=0xB | op47=0xF); imm16
+{
+    export *:2 imm16;
+}
+
+################################################################
+# Macros
+################################################################
+
+macro setNZFlags(result)
+{
+    $(Z) = (result == 0);
+    $(N) = (result s< 0);
+}
+
+macro setHFlag(reg, op)
+{
+        local mask = 0x0F; # Low nibble mask
+
+        $(H) = (((reg & mask) + (op & mask)) >> 4) & 1;
+}
+
+# Negate twos complement value in op.
+# P-code INT_2COMP.
+macro negate(op)
+{
+        $(V) = (op == 0x80);
+        $(C) = (op != 0);
+        op = -op;
+        setNZFlags(op);
+}
+
+# Logical complement of op. (0 => 1; 1 => 0)
+# P-code INT_NEGATE.
+macro complement(op)
+{
+        $(V) = 0;
+        $(C) = 1;
+        A = ~A;
+        setNZFlags(op);
+}
+
+macro logicalShiftRight(op)
+{
+        $(C) = op & 1;
+        op = op >> 1;
+        $(Z) = (op == 0);
+        $(N) = 0;
+}
+
+macro rotateRightWithCarry(op)
+{
+        local carryOut = $(C) << 7;
+        $(C) = op & 1;
+        op = (op s>> 1) | carryOut;
+        setNZFlags(op);
+}
+
+macro rotateLeftWithCarry(op)
+{
+        local carryIn = $(C);
+        $(C) = op >> 7;
+        op = (op << 1) | carryIn;
+        setNZFlags(op);
+}
+
+# Signed shift right.
+# P-code INT_SRIGHT.
+macro arithmeticShiftRight(op)
+{
+        $(C) = op & 1;
+        op = (op s>> 1);
+        setNZFlags(op);
+}
+
+macro logicalShiftLeft(op)
+{
+        $(C) = (op >> 7);
+        op = op << 1;
+        $(Z) = (op == 0);
+        $(N) = (op >> 7);
+}
+
+macro increment(op)
+{
+        $(V) = (op == 0x7F);
+        op = op + 1;
+        setNZFlags(op);
+}
+
+macro decrement(op)
+{
+        $(V) = (op == 0x80);
+        op = op - 1;
+        setNZFlags(op);
+}
+
+macro test(op)
+{
+        $(V) = 0;
+        setNZFlags(op);
+}
+
+macro clear(op)
+{
+        $(V) = 0;
+        op = 0;
+        $(Z) = 1;
+        $(N) = 0;	
+}
+
+macro addition(reg, op)
+{
+        $(C) = carry(reg, op);
+        $(V) = scarry(reg, op);
+
+        reg = reg + op;
+
+        setNZFlags(reg);
+}
+
+macro additionWithCarry(reg, op)
+{
+        local carryIn = zext($(C));
+        local mask = 0x0F; # Low nibble mask
+        local tmpResult = reg + op;
+
+        $(H) = (((reg & mask) + (op & mask) + carryIn) >> 4) & 1;
+        $(C) = carry(reg, op) || carry(tmpResult, carryIn);
+        $(V) = scarry(reg, op) ^^ scarry(tmpResult, carryIn);
+
+        reg = tmpResult + carryIn;
+
+        setNZFlags(reg);
+}
+
+macro subtraction(reg, op)
+{
+        $(V) = sborrow(reg, op);
+        reg = reg - op;
+        setNZFlags(reg);
+        $(C) = (reg < op);
+}
+
+macro subtractionWithCarry(reg, op)
+{
+        local carryIn = zext($(C));
+        local tmpResult = reg - op;
+
+        $(C) = (reg < op) || (tmpResult < carryIn);
+        $(V) = sborrow(reg, op) ^^ sborrow(tmpResult, carryIn);
+
+        reg = tmpResult - carryIn;
+
+        setNZFlags(reg);
+}
+
+macro compare(reg, op)
+{
+        $(V) = sborrow(reg, op);
+        local tmp = reg - op;
+        setNZFlags(tmp);
+        $(C) = (tmp < op);
+}
+
+macro logicalAnd(reg, op)
+{
+        reg = reg & op;
+        setNZFlags(reg);
+        $(V) = 0;
+}
+
+macro logicalOr(reg, op)
+{
+        reg = reg | op;
+        setNZFlags(reg);
+        $(V) = 0;
+}
+
+macro logicalExclusiveOr(reg, op)
+{
+        reg = reg ^ op;
+        setNZFlags(reg);
+        $(V) = 0;
+}
+
+macro bitTest(reg, op)
+{
+        local tmp = reg & op;
+        setNZFlags(tmp);
+        $(V) = 0;
+}
+
+macro loadRegister(reg, op)
+{
+        reg = op;
+        setNZFlags(reg);
+        $(V) = 0;
+}
+
+macro storeRegister(reg, op)
+{
+        op = reg;
+        setNZFlags(reg);
+        $(V) = 0;
+}
+
+# Push 1 byte operand op1
+macro Push1(reg, op)
+{
+        *:1 reg = op;
+        reg = reg - 1;
+}
+
+# Push 2 byte operand op2
+macro Push2(reg, op)
+{
+        reg = reg - 1;
+        *:2 reg = op;
+        reg = reg - 1;
+}
+
+# Pull 1 byte operand op1
+macro Pull1(reg, op)
+{
+        op = *:1 reg;
+        reg = reg + 1;
+}
+
+# Pull 2 byte operand op2
+macro Pull2(reg, op)
+{
+        reg = reg + 1;
+        op = *:2 reg;
+        reg = reg + 1;
+}
+
+macro PushUYXDpD()
+{
+        Push2(S, U);
+        Push2(S, Y);
+        Push2(S, X);
+        Push1(S, DP);
+        Push2(S, D);
+}
+
+macro PullDDpXYU()
+{
+        Pull2(S, D);
+        Pull1(S, DP);
+        Pull2(S, X);
+        Pull2(S, Y);
+        Pull2(S, U);
+}
+
+macro PushEntireState()
+{
+        local tmp:2 = inst_next;
+
+        $(E) = 1;
+        Push2(S, tmp); # return PC address
+        PushUYXDpD();
+        Push1(S, CC);
+}
+
+################################################################
+# Instructions
+################################################################
+
+################################################################
+# Opcode 0x00 - 0x0F, relative addressing
+# Opcode 0x40 - 0x4F, register A addressing
+# Opcode 0x50 - 0x5F, register B addressing
+# Opcode 0x60 - 0x6F, indexed addressing
+# Opcode 0x70 - 0x7F, extended addressing
+################################################################
+
+:NEGA    is op=0x40
+{
+        negate(A);
+}
+
+:NEGB 	is op=0x50
+{
+        negate(B);
+}
+
+:NEG OP1    is (op=0x00 | op=0x60 | op=0x70) ... & OP1
+{
+        negate(OP1);
+}
+
+:COMA 	is op=0x43
+{
+        complement(A);
+}
+
+:COMB 	is op=0x53
+{
+        complement(B);
+}
+
+:COM OP1    is (op=0x03 | op=0x63 | op=0x73) ... & OP1
+{
+        complement(OP1);
+}
+
+:LSRA 	is op=0x44
+{
+        logicalShiftRight(A);
+}
+
+:LSRB 	is op=0x54
+{
+        logicalShiftRight(B);
+}
+
+:LSR OP1    is (op=0x04 | op=0x64 | op=0x74) ... & OP1
+{
+        logicalShiftRight(OP1);
+}
+
+:RORA 	is op=0x46
+{
+        rotateRightWithCarry(A);
+}
+
+:RORB 	is op=0x56
+{
+        rotateRightWithCarry(B);
+}
+
+:ROR OP1    is (op=0x06 | op=0x66 | op=0x76) ... & OP1
+{
+        rotateRightWithCarry(OP1);
+}
+
+:ASRA 	is op=0x47
+{
+        arithmeticShiftRight(A);
+}
+
+:ASRB 	is op=0x57
+{
+        arithmeticShiftRight(B);
+}
+
+:ASR OP1    is (op=0x07 | op=0x67 | op=0x77) ... & OP1
+{
+        arithmeticShiftRight(OP1);
+}
+
+:LSLA 	is op=0x48
+{
+        logicalShiftLeft(A);
+}
+
+:LSLB 	is op=0x58
+{
+        logicalShiftLeft(B);
+}
+
+:LSL OP1    is (op=0x08 | op=0x68 | op=0x78) ... & OP1
+{
+        logicalShiftLeft(OP1);
+}
+
+:ROLA    is op=0x49 
+{
+        rotateLeftWithCarry(A);
+}
+ 
+:ROLB    is op=0x59 
+{
+        rotateLeftWithCarry(B);
+}
+ 
+:ROL OP1    is (op=0x09 | op=0x69 | op=0x79) ... & OP1
+{
+        rotateLeftWithCarry(OP1);
+}
+ 
+:DECA    is op=0x4A 
+{
+        decrement(A);
+}
+ 
+:DECB    is op=0x5A 
+{
+        decrement(B);
+}
+ 
+:DEC OP1    is (op=0x0A | op=0x6A | op=0x7A) ... & OP1
+{
+        decrement(OP1);
+}
+ 
+:INCA    is op=0x4C 
+{
+        increment(A);
+}
+ 
+:INCB    is op=0x5C 
+{
+        increment(B);
+}
+ 
+:INC OP1    is (op=0x0C | op=0x6C | op=0x7C) ... & OP1
+{
+        increment(OP1);
+}
+ 
+:TSTA    is op=0x4D 
+{
+        test(A);
+}
+ 
+:TSTB    is op=0x5D 
+{
+        test(B);
+}
+ 
+:TST OP1    is (op=0x0D | op=0x6D | op=0x7D) ... & OP1
+{
+        test(OP1);
+}
+ 
+:JMP OP2    is (op=0x0E | op=0x6E | op=0x7E) ... & OP2
+{
+        local target = OP2;
+        goto [target];
+}
+
+:CLRA    is op=0x4F 
+{
+        clear(A);
+}
+ 
+:CLRB    is op=0x5F 
+{
+        clear(B);
+}
+ 
+:CLR OP1    is (op=0x0F | op=0x6F | op=0x7F) ... & OP1
+{
+        clear(OP1);
+}
+ 
+################################################################
+# Opcode 0x10 - 0x1F, misc. addressing
+################################################################
+
+:NOP    is op=0x12
+{
+}
+
+:SYNC    is op=0x13
+{
+}
+
+:LBRA REL2    is op=0x16; REL2
+{
+        goto REL2;
+}
+
+:LBSR REL2    is op=0x17; REL2 
+{
+        local tmp:2 = inst_next;
+        Push2(S, tmp);
+        call REL2;
+}
+
+:DAA    is op=0x19
+{
+       local highA:1 = A >> 4;
+       local lowA:1  = A & 0x0F;
+       local cc1 = ($(C) == 1 | highA > 9 | (highA > 8) & (lowA > 9));
+       local cc2 = ($(H) == 1 | lowA > 9);
+
+       if ( cc1 & cc2 )
+           goto <case1>;
+       if ( cc1 )
+           goto <case2>;
+       if ( cc2 )
+           goto <case3>;
+       goto <exitDAA>;
+
+       <case1>
+           $(C) = carry(A, 0x66);
+           A = A + 0x66;
+           goto <exitDAA>;
+       <case2>
+           $(C) = carry(A, 0x60);
+           A = A + 0x60;
+           goto <exitDAA>;
+       <case3>
+           $(C) = carry(A, 0x06);
+           A = A + 0x06;
+           goto <exitDAA>;
+
+       <exitDAA>
+           setNZFlags(A);
+}
+
+:ORCC IMMED1    is op=0x1A; IMMED1
+{
+    CC = CC | IMMED1;
+}
+
+:ANDCC IMMED1    is op=0x1C; IMMED1
+{
+    CC = CC & IMMED1;
+}
+
+:SEX    is op=0x1D
+{
+    D = sext(B);
+}
+
+################################################################
+# Opcode 0x20 - 0x2F, relative addressing
+################################################################
+
+:BRA REL    is op=0x20; REL
+{
+        goto REL;
+}
+
+:BRN REL    is op=0x21; REL
+{
+}
+
+:BHI REL    is op=0x22; REL
+{
+        local tmp = $(C) + $(Z);
+        if (tmp == 0) goto REL;
+}
+
+:BLS REL    is op=0x23; REL
+{
+        local tmp = $(C) + $(Z);
+        if (tmp) goto REL;
+}
+
+#:BHS REL    is op=0x24; REL # See BCC
+
+:BCC REL	is op=0x24; REL
+{
+        if ($(C) == 0) goto REL;
+}
+
+#:BLO REL    is op=0x25; REL # see BCS
+
+:BCS REL    is op=0x25; REL
+{
+        if ($(C)) goto REL;
+}
+
+:BNE REL     is op=0x26; REL
+{
+        if ($(Z) == 0) goto REL;
+}
+
+:BEQ REL    is op=0x27; REL
+{
+        if ($(Z)) goto REL;
+}
+
+:BVC REL    is op=0x28; REL
+{
+        if ($(V) == 0) goto REL;
+}
+
+:BVS REL    is op=0x29; REL
+{
+        if ($(V)) goto REL;
+}
+
+:BPL REL    is op=0x2A; REL
+{
+        if ($(N) == 0) goto REL;
+}
+
+:BMI REL    is op=0x2B; REL
+{
+        if ($(N)) goto REL;
+}
+
+:BGE REL    is op=0x2C; REL
+{
+        if ($(N) == $(V)) goto REL;
+}
+
+:BLT REL    is op=0x2D; REL
+{
+        local tmp = $(C) ^ $(Z);
+        if (tmp) goto REL;
+}
+
+:BGT REL    is op=0x2E; REL
+{
+        if (($(N) == $(V)) & $(C)) goto REL;
+}
+
+:BLE REL     is op=0x2F; REL
+{
+        local tmp = $(N) ^ $(V);
+        if (tmp | $(Z)) goto REL;
+}
+
+################################################################
+# Opcode 0x30 - 0x3F, misc. addressing
+################################################################
+
+:LEAX EA    is op=0x30; EA
+{
+        X = EA;
+}
+
+:LEAY EA    is op=0x31; EA
+{
+        Y = EA;
+}
+
+:LEAS EA    is op=0x32; EA
+{
+        S = EA;
+}
+
+:LEAU EA    is op=0x33; EA
+{
+        U = EA;
+}
+
+:RTS    is op=0x39
+{
+        local addr:2;
+        Pull2(S, addr);
+        return [addr];
+}
+
+:ABX    is op=0x3A
+{
+        X = X + zext(B);
+}
+
+:RTI    is op=0x3B
+{
+        local addr:2;
+        Pull1(S, CC);
+        if ($(E)==0) goto <nextRTI>;
+            PullDDpXYU();
+        <nextRTI>
+        Pull2(S, addr);
+        return [addr];
+}
+
+:CWAI IMMED1    is op=0x3C; IMMED1
+{
+        CC = CC & IMMED1;
+        PushEntireState();
+}
+
+:MUL    is op=0x3D
+{
+        D = zext(A) * zext(B);
+        $(Z) = (D == 0);
+        $(C) = B >> 7;
+}
+
+:SWI    is op=0x3F
+{
+        PushEntireState();
+        $(I) = 1;
+        $(F) = 1;
+        tmp:2 = $(SWI_VECTOR);
+        call [tmp];
+}
+
+################################################################
+# Opcode 0x80 - 0x8F, immediate addressing
+# Opcode 0x90 - 0x9F, direct addressing
+# Opcode 0xA0 - 0xAF, indexed addressing
+# Opcode 0xB0 - 0xBF, extended addressing
+# Opcode 0xC0 - 0xCF, immediate addressing
+# Opcode 0xD0 - 0xDF, direct addressing
+# Opcode 0xE0 - 0xEF, indexed addressing
+# Opcode 0xF0 - 0xFF, extended addressing
+################################################################
+
+:SUBA OP1    is (op=0x80 | op=0x90 | op=0xA0 | op=0xB0) ... & OP1
+{
+        subtraction(A, OP1);
+}
+
+:SUBB OP1    is (op=0xC0 | op=0xD0 | op=0xE0 | op=0xF0) ... & OP1
+{
+        subtraction(B, OP1);
+}
+
+:CMPA OP1    is (op=0x81 | op=0x91 | op=0xA1 | op=0xB1) ... & OP1
+{
+        compare(A, OP1);
+}
+
+:CMPB OP1    is (op=0xC1 | op=0xD1 | op=0xE1 | op=0xF1) ... & OP1
+{
+        compare(B, OP1);
+}
+
+:SBCA OP1    is (op=0x82 | op=0x92 | op=0xA2 | op=0xB2) ... & OP1
+{
+        subtractionWithCarry(A, OP1);
+}
+
+:SBCB OP1    is (op=0xC2 | op=0xD2 | op=0xE2 | op=0xF2) ... & OP1
+{
+        subtractionWithCarry(B, OP1);
+}
+
+:SUBD OP2    is (op=0x83 | op=0x93 | op=0xA3 | op=0xB3) ... & OP2
+{
+        subtraction(D, OP2);
+}
+
+:ADDD OP2    is (op=0xC3 | op=0xD3 | op=0xE3 | op=0xF3) ... & OP2
+{
+        addition(D, OP2);
+}
+
+:ANDA OP1    is (op=0x84 | op=0x94 | op=0xA4 | op=0xB4) ... & OP1
+{
+        logicalAnd(A, OP1);
+}
+
+:ANDB OP1    is (op=0xC4 | op=0xD4 | op=0xE4 | op=0xF4) ... & OP1
+{
+        logicalAnd(B, OP1);
+}
+
+:BITA OP1    is (op=0x85 | op=0x95 | op=0xA5 | op=0xB5) ... & OP1
+{
+        bitTest(A, OP1);
+}
+
+:BITB OP1    is (op=0xC5 | op=0xD5 | op=0xE5 | op=0xF5) ... & OP1
+{
+        bitTest(B, OP1);
+}
+
+:LDA OP1    is (op=0x86 | op=0x96 | op=0xA6 | op=0xB6) ... & OP1
+{
+        loadRegister(A, OP1);
+}
+
+:LDB OP1    is (op=0xC6 | op=0xD6 | op=0xE6 | op=0xF6) ... & OP1
+{
+        loadRegister(B, OP1);
+}
+
+:STA OP1    is (op=0x97 | op=0xA7 | op=0xB7) ... & OP1
+{
+        storeRegister(A, OP1);
+}
+
+:STB OP1    is (op=0xD7 | op=0xE7 | op=0xF7) ... & OP1
+{
+        storeRegister(B, OP1);
+}
+
+:EORA OP1    is (op=0x88 | op=0x98 | op=0xA8 | op=0xB8) ... & OP1
+{
+        logicalExclusiveOr(A, OP1);
+}
+
+:EORB OP1    is (op=0xC8 | op=0xD8 | op=0xE8 | op=0xF8) ... & OP1
+{
+        logicalExclusiveOr(B, OP1);
+}
+
+:ADCA OP1    is (op=0x89 | op=0x99 | op=0xA9 | op=0xB9) ... & OP1
+{
+        additionWithCarry(A, OP1);
+}
+
+:ADCB OP1    is (op=0xC9 | op=0xD9 | op=0xE9 | op=0xF9) ... & OP1
+{
+        additionWithCarry(B, OP1);
+}
+
+:ORA OP1    is (op=0x8A | op=0x9A | op=0xAA | op=0xBA) ... & OP1
+{
+        logicalOr(A, OP1);
+}
+
+:ORB OP1    is (op=0xCA | op=0xDA | op=0xEA | op=0xFA) ... & OP1
+{
+        logicalOr(B, OP1);
+}
+
+:ADDA OP1    is (op=0x8B | op=0x9B | op=0xAB | op=0xBB) ... & OP1
+{
+        setHFlag(A, OP1);
+        addition(A, OP1);
+}
+
+:ADDB OP1    is (op=0xCB | op=0xDB | op=0xEB | op=0xFB) ... & OP1
+{
+        setHFlag(A, OP1);
+        addition(B, OP1);
+}
+
+:CMPX OP2    is (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
+{
+        compare(X, OP2);
+}
+
+:LDD OP2    is (op=0xCC | op=0xDC | op=0xEC | op=0xFC) ... & OP2
+{
+        loadRegister(D, OP2);
+}
+
+:BSR REL    is op=0x8D; REL
+{
+        local addr:2 = inst_next;
+        Push2(S, addr);
+        call REL;
+}
+
+:JSR OP2    is (op=0x9D | op=0xAD | op=0xBD) ... & OP2 
+{
+        local addr:2 = inst_next;
+        Push2(S, addr);
+        local target = OP2;
+        call [target];
+}
+
+:STD OP2    is (op=0xDD | op=0xED | op=0xFD) ... & OP2
+{
+        storeRegister(D, OP2);
+}
+
+:LDX OP2    is (op=0x8E | op=0x9E | op=0xAE | op=0xBE) ... & OP2
+{
+        loadRegister(X, OP2);
+}
+
+:LDU OP2    is (op=0xCE | op=0xDE | op=0xEE | op=0xFE) ... & OP2
+{
+        loadRegister(U, OP2);
+}
+
+:STX OP2    is (op=0x9F | op=0xAF | op=0xBF) ... & OP2
+{
+        storeRegister(X, OP2);
+}
+
+:STU OP2    is (op=0xDF | op=0xEF | op=0xFF) ... & OP2
+{
+        storeRegister(X, OP2);
+}
+
+################################################################
+# Page 2 Opcodes (prefix 0x10)
+################################################################
+:LBRN REL2    is PAGE2; op=0x21; REL2
+{
+}
+
+:LBHI REL2    is PAGE2; op=0x22; REL2
+{
+        local tmp = $(C) + $(Z);
+        if (tmp == 0) goto REL2;
+}
+
+:LBLS REL2    is PAGE2; op=0x23; REL2
+{
+        local tmp = $(C) + $(Z);
+        if (tmp) goto REL2;
+}
+
+:LBCC REL2    is PAGE2; op=0x24; REL2
+{
+        if ($(C) == 0) goto REL2;
+}
+
+#:LBLO REL2    is PAGE2; op=0x25; REL2 # see LBCS
+
+:LBCS REL2    is PAGE2; op=0x25; REL2
+{
+        if ($(C)) goto REL2;
+}
+
+:LBNE REL2     is PAGE2; op=0x26; REL2
+{
+        if ($(Z) == 0) goto REL2;
+}
+
+:LBEQ REL2    is PAGE2; op=0x27; REL2
+{
+        if ($(Z)) goto REL2;
+}
+
+:LBVC REL2    is PAGE2; op=0x28; REL2
+{
+        if ($(V) == 0) goto REL2;
+}
+
+:LBVS REL2    is PAGE2; op=0x29; REL2
+{
+        if ($(V)) goto REL2;
+}
+
+:LBPL REL2    is PAGE2; op=0x2A; REL2
+{
+        if ($(N) == 0) goto REL2;
+}
+
+:LBMI REL2    is PAGE2; op=0x2B; REL2
+{
+        if ($(N)) goto REL2;
+}
+
+:LBGE REL2    is PAGE2; op=0x2C; REL2
+{
+        if ($(N) == $(V)) goto REL2;
+}
+
+:LBLT REL2    is PAGE2; op=0x2D; REL2
+{
+        local tmp = $(C) ^ $(Z);
+        if (tmp) goto REL2;
+}
+
+:LBGT REL2    is PAGE2; op=0x2E; REL2
+{
+        if (($(N) == $(V)) & $(C)) goto REL2;
+}
+
+:LBLE REL2     is PAGE2; op=0x2F; REL2
+{
+        local tmp = $(N) ^ $(V);
+        if (tmp | $(Z)) goto REL2;
+}
+
+:SWI2    is PAGE2; op=0x3F
+{
+        PushEntireState();
+        tmp:2 = $(SWI2_VECTOR);
+        call [tmp];
+}
+
+:CMPD OP2    is PAGE2; (op=0x83 | op=0x93 | op=0xA3 | op=0xB3) ... & OP2
+{
+        compare(D, OP2);
+}
+
+:CMPY OP2    is PAGE2; (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
+{
+        compare(Y, OP2);
+}
+
+:LDY OP2    is PAGE2; (op=0x8E | op=0x9E | op=0xAE | op=0xBE) ... & OP2
+{
+        loadRegister(Y, OP2);
+}
+
+:STY OP2    is PAGE2; (op=0x9F | op=0xAF | op=0xBF) ... & OP2
+{
+        storeRegister(Y, OP2);
+}
+
+:LDS OP2    is PAGE2; (op=0xCE | op=0xDE | op=0xEE | op=0xFE) ... & OP2
+{
+        loadRegister(S, OP2);
+}
+
+:STS OP2    is PAGE2; (op=0xDF | op=0xEF | op=0xFF) ... & OP2
+{
+        storeRegister(S, OP2);
+}
+
+################################################################
+# Page 3 Opcodes (prefix 0x11)
+################################################################
+
+:SWI3    is PAGE3; op=0x3F
+{
+        PushEntireState();
+        tmp:2 = $(SWI3_VECTOR);
+        call [tmp];
+}
+
+:CMPU OP2    is PAGE3; (op=0x83 | op=0x93 | op=0xA3 | op=0xB3) ... & OP2
+{
+        compare(U, OP2);
+}
+
+:CMPS OP2    is PAGE3; (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
+{
+        compare(S, OP2);
+}
+

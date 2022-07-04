@@ -40,6 +40,7 @@ import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntryBuilder;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.main.*;
+import ghidra.framework.main.datatree.DomainFileNode;
 import ghidra.framework.main.datatree.DomainFolderNode;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
@@ -304,6 +305,11 @@ public class ImporterPlugin extends Plugin
 		if (contextObj instanceof DomainFolderNode) {
 			DomainFolderNode node = (DomainFolderNode) contextObj;
 			return node.getDomainFolder();
+		}
+		if (contextObj instanceof DomainFileNode) {
+			DomainFileNode node = (DomainFileNode) contextObj;
+			DomainFile domainFile = node.getDomainFile();
+			return domainFile != null ? domainFile.getParent() : null;
 		}
 
 		return AppInfo.getActiveProject().getProjectData().getRootFolder();

@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -31,23 +31,8 @@ import ghidra.util.task.TaskMonitor;
 public class UnsupportedLoadCommand extends LoadCommand {
 	private int type;
 
-	static UnsupportedLoadCommand createUnsupportedLoadCommand(
-			FactoryBundledWithBinaryReader reader, int type) throws IOException {
-		UnsupportedLoadCommand command =
-			(UnsupportedLoadCommand) reader.getFactory().create(UnsupportedLoadCommand.class);
-		command.initUnsupportedLoadCommand(reader, type);
-		return command;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public UnsupportedLoadCommand() {
-	}
-
-	private void initUnsupportedLoadCommand(FactoryBundledWithBinaryReader reader, int type)
-			throws IOException {
-		initLoadCommand(reader);
+	UnsupportedLoadCommand(BinaryReader reader, int type) throws IOException {
+		super(reader);
 		this.type = type;
 	}
 

@@ -139,22 +139,23 @@ void ArchitectureGhidra::readStringStream(istream &s,string &res)
 }
 
 /// The method expects to see protocol markers indicating a string from the client,
-/// otherwise it throws and exception.  The string is read in and then parsed as XML.
+/// otherwise it throws and exception.  The string is read into the given stream decoder.
 /// \param s is the input stream from the client.
-/// \return the XML document
-Document *ArchitectureGhidra::readXMLStream(istream &s)
+/// \param decoder is the given stream decoder that will hold the result
+/// \return \b true if a response was received
+bool ArchitectureGhidra::readStream(istream &s,Decoder &decoder)
 
 {
   int4 type = readToAnyBurst(s);
   if (type==14) {
-    Document *doc = xml_tree(s);
+    decoder.ingestStream(s);
     type = readToAnyBurst(s);
     if (type!=15)
       throw JavaError("alignment","Expecting XML string end");
-    return doc;
+    return true;
   }
   if ((type&1)==1)
-    return (Document *)0;
+    return false;
   throw JavaError("alignment","Expecting string or end of query response");
 }
 
@@ -231,17 +232,19 @@ void ArchitectureGhidra::readResponseEnd(istream &s)
 }
 
 /// Read up to the beginning of a query response, check for an
-/// exception record, otherwise read in a string as an XML document.
+/// exception record, otherwise pass back an element for decoding.
 /// \param s is the input stream from the client
-/// \return the XML document
-Document *ArchitectureGhidra::readXMLAll(istream &s)
+/// \param decoder is the stream decoder that will hold the result
+/// \return \b true if we received a valid response
+bool ArchitectureGhidra::readAll(istream &s,Decoder &decoder)
 
 {
   readToResponse(s);
-  Document *doc = readXMLStream(s);
-  if (doc != (Document *)0)
+  if (readStream(s,decoder)) {
     readResponseEnd(s);
-  return doc;
+    return true;
+  }
+  return false;
 }
 
 /// Read up to the beginning of a query response, check for an
@@ -339,8 +342,10 @@ void ArchitectureGhidra::buildTypegrp(DocumentStorage &store)
 {
   const Element *el = store.getTag("coretypes");
   types = new TypeFactoryGhidra(this);
-  if (el != (const Element *)0)
-    types->restoreXmlCoreTypes(el);
+  if (el != (const Element *)0) {
+    XmlDecode decoder(this,el);
+    types->decodeCoreTypes(decoder);
+  }
   else {
     // Put in the core types
     types->setCoreType("void",1,TYPE_VOID,false);
@@ -398,11 +403,12 @@ void ArchitectureGhidra::resolveArchitecture(void)
 }
 
 /// Ask the Ghidra client if it knows about a specific processor register.
-/// The client responds with a \<addr> XML element describing the storage
+/// The client responds with a \<addr> element describing the storage
 /// location of the register.
 /// \param regname is the name to query for
-/// \return the storage address as XML or NULL if the register is unknown
-Document *ArchitectureGhidra::getRegister(const string &regname)
+/// \param decoder is the stream decoder that will hold the result
+/// \return \b true if the query completed successfully
+bool ArchitectureGhidra::getRegister(const string &regname,Decoder &decoder)
 
 {
   sout.write("\000\000\001\004",4);
@@ -411,7 +417,7 @@ Document *ArchitectureGhidra::getRegister(const string &regname)
   sout.write("\000\000\001\005",4);
   sout.flush();
 
-  return readXMLAll(sin);
+  return readAll(sin,decoder);
 }
 
 /// Given a storage location and size, ask the Ghidra client if it knows of
@@ -426,7 +432,8 @@ string ArchitectureGhidra::getRegisterName(const VarnodeData &vndata)
   writeStringStream(sout,"getRegisterName");
   sout.write("\000\000\001\016",4); // Beginning of string header
   Address addr(vndata.space,vndata.offset);
-  addr.saveXml(sout,vndata.size);
+  encoder.clear();
+  addr.encode(encoder,vndata.size);
   sout.write("\000\000\001\017",4);
   sout.write("\000\000\001\005",4);
   sout.flush();
@@ -438,24 +445,26 @@ string ArchitectureGhidra::getRegisterName(const VarnodeData &vndata)
   return res;
 }
 
-/// The Ghidra client will return a description of registers that have
+/// The Ghidra client will pass back a description of registers that have
 /// known values at the given address. The response is generally a
 /// \<tracked_pointset> which contains \<set> children which contains
 /// a storage location and value.
 /// \param addr is the given address
-/// \return the response Document
-Document *ArchitectureGhidra::getTrackedRegisters(const Address &addr)
+/// \param decoder is the stream decoder which will hold the result
+/// \return \b true if the query completed successfully
+bool ArchitectureGhidra::getTrackedRegisters(const Address &addr,Decoder &decoder)
 
 {
   sout.write("\000\000\001\004",4);
   writeStringStream(sout,"getTrackedRegisters");
   sout.write("\000\000\001\016",4); // Beginning of string header
-  addr.saveXml(sout);
+  encoder.clear();
+  addr.encode(encoder);
   sout.write("\000\000\001\017",4);
   sout.write("\000\000\001\005",4);
   sout.flush();
 
-  return readXMLAll(sin);
+  return readAll(sin,decoder);
 }
 
 /// The first operand to a CALLOTHER op indicates the specific user-defined op.
@@ -491,7 +500,8 @@ uint1 *ArchitectureGhidra::getPcodePacked(const Address &addr)
   sout.write("\000\000\001\004",4);
   writeStringStream(sout,"getPacked");
   sout.write("\000\000\001\016",4); // Beginning of string header
-  addr.saveXml(sout);
+  encoder.clear();
+  addr.encode(encoder);
   sout.write("\000\000\001\017",4);
   sout.write("\000\000\001\005",4);
   sout.flush();
@@ -499,54 +509,59 @@ uint1 *ArchitectureGhidra::getPcodePacked(const Address &addr)
   return readPackedAll(sin);
 }
 
-/// The Ghidra client will return a \<symbol> tag, \<function> tag, or some
-/// other related Symbol information. If there no symbol at the address
-/// the client should return a \<hole> tag describing the size of the
+/// The Ghidra client will pass back a \<symbol> element, \<function> element, or some
+/// other related Symbol information, in the given stream decoder. If there is no symbol at the address
+/// the client will return a \<hole> element describing the size of the
 /// memory region that is free of symbols.
 /// \param addr is the given address
-/// \return the symbol document
-Document *ArchitectureGhidra::getMappedSymbolsXML(const Address &addr)
+/// \param decoder is the given stream decoder that will hold the result
+/// \return \b true if the query completes successfully
+bool ArchitectureGhidra::getMappedSymbolsXML(const Address &addr,Decoder &decoder)
 
 {
   sout.write("\000\000\001\004",4);
   writeStringStream(sout,"getMappedSymbolsXML");
-  sout.write("\000\000\001\016",4); // Beginning of string header
-  addr.saveXml(sout);
+  sout.write("\000\000\001\016",4); // Beginning of string
+  encoder.clear();
+  addr.encode(encoder);
   sout.write("\000\000\001\017",4);
   sout.write("\000\000\001\005",4);
   sout.flush();
 
-  return readXMLAll(sin);
+  return readAll(sin,decoder);
 }
 
 /// This asks the Ghidra client to resolve an \e external \e reference.
 /// This is an address for which the client holds a reference to a function
 /// that is elsewhere in memory or not in memory at all.  The client
-/// should unravel the reference from the given address and return either
-/// a \<function> tag describing the referred to function symbol or
-/// a \<hole> tag if the reference can't be resolved
+/// should unravel the reference from the given address and pass back either
+/// a \<function> element describing the referred to function symbol or
+/// a \<hole> element if the reference can't be resolved.
 /// \param addr is the given address
-/// \return a description of the referred to function
-Document *ArchitectureGhidra::getExternalRefXML(const Address &addr)
+/// \param decoder is the stream decoder that will hold the result
+/// \return \b true if the query completes successfully
+bool ArchitectureGhidra::getExternalRefXML(const Address &addr,Decoder &decoder)
 
 {
   sout.write("\000\000\001\004",4);
   writeStringStream(sout,"getExternalRefXML");
   sout.write("\000\000\001\016",4); // Beginning of string header
-  addr.saveXml(sout);
+  encoder.clear();
+  addr.encode(encoder);
   sout.write("\000\000\001\017",4);
   sout.write("\000\000\001\005",4);
   sout.flush();
 
-  return readXMLAll(sin);
+  return readAll(sin,decoder);
 }
 
 /// Ask the Ghidra client to list all namespace elements between the global root
-/// and the namespace of the given id. The client should return a \<parent> tag with
-/// a \<val> child for each namespace in the path.
+/// and the namespace of the given id. The client will pass back a \<parent> element with
+/// a \<val> child for each namespace in the path, in the given stream decoder
 /// \param id is the given id of the namespace to resolve
-/// \return the XML document
-Document *ArchitectureGhidra::getNamespacePath(uint8 id)
+/// \param decoder is the given stream decoder that will hold the result
+/// \return \b true if the query completed successfully
+bool ArchitectureGhidra::getNamespacePath(uint8 id,Decoder &decoder)
 
 {
   sout.write("\000\000\001\004",4);
@@ -557,7 +572,7 @@ Document *ArchitectureGhidra::getNamespacePath(uint8 id)
   sout.write("\000\000\001\005",4);
   sout.flush();
 
-  return readXMLAll(sin);
+  return readAll(sin,decoder);
 }
 
 bool ArchitectureGhidra::isNameUsed(const string &nm,uint8 startId,uint8 stopId)
@@ -593,7 +608,8 @@ string ArchitectureGhidra::getCodeLabel(const Address &addr)
   sout.write("\000\000\001\004",4);
   writeStringStream(sout,"getSymbol");
   sout.write("\000\000\001\016",4); // Beginning of string header
-  addr.saveXml(sout);
+  encoder.clear();
+  addr.encode(encoder);
   sout.write("\000\000\001\017",4);
   sout.write("\000\000\001\005",4);
   sout.flush();
@@ -605,12 +621,13 @@ string ArchitectureGhidra::getCodeLabel(const Address &addr)
   return res;
 }
 
-/// The Ghidra client should respond with a \<type> tag giving details
+/// The Ghidra client will pass back a \<type> element giving details
 /// about the data-type.
 /// \param name is the name of the data-type
 /// \param id is a unique id associated with the data-type, pass 0 if unknown
-/// \return the data-type XML element or NULL
-Document *ArchitectureGhidra::getType(const string &name,uint8 id)
+/// \param decoder is the stream decoder that will hold the result
+/// \return \b true if the query completed successfully
+bool ArchitectureGhidra::getType(const string &name,uint8 id,Decoder &decoder)
 
 {
   sout.write("\000\000\001\004",4);
@@ -622,23 +639,25 @@ Document *ArchitectureGhidra::getType(const string &name,uint8 id)
   sout.write("\000\000\001\005",4);
   sout.flush();
 
-  return readXMLAll(sin);
+  return readAll(sin,decoder);
 }
 
 /// Ask Ghidra client for all comments associated with one function.
 /// The caller must provide the sub-set of properties (Comment::comment_type) for
-/// the query to match.  The client will return a \<commentdb> tag with
-/// a \<comment> tag child for each comment found.
+/// the query to match.  A \<commentdb> element with  \<comment> element child for each comment found
+/// will be passed back in the given stream decoder.
 /// \param fad is the address of the function to query
 /// \param flags specifies the properties the query will match (must be non-zero)
-/// \return an XML document describing each comment
-Document *ArchitectureGhidra::getComments(const Address &fad,uint4 flags)
+/// \param decoder is the given stream decoder that will hold the result
+/// \return \b true if the query completed successfully
+bool ArchitectureGhidra::getComments(const Address &fad,uint4 flags,Decoder &decoder)
 
 {
   sout.write("\000\000\001\004",4);
   writeStringStream(sout,"getComments");
   sout.write("\000\000\001\016",4); // Beginning of string header
-  fad.saveXml(sout);
+  encoder.clear();
+  fad.encode(encoder);
   sout.write("\000\000\001\017",4);
   sout.write("\000\000\001\016",4); // Beginning of string header
   sout << dec << flags;
@@ -646,7 +665,7 @@ Document *ArchitectureGhidra::getComments(const Address &fad,uint4 flags)
   sout.write("\000\000\001\005",4);
   sout.flush();
 
-  return readXMLAll(sin);
+  return readAll(sin,decoder);
 }
 
 /// The Ghidra client is queried for a range of bytes, which are returned
@@ -661,7 +680,8 @@ void ArchitectureGhidra::getBytes(uint1 *buf,int4 size,const Address &inaddr)
   sout.write("\000\000\001\004",4);
   writeStringStream(sout,"getBytes");
   sout.write("\000\000\001\016",4); // Beginning of string header
-  inaddr.saveXml(sout,size);
+  encoder.clear();
+  inaddr.encode(encoder,size);
   sout.write("\000\000\001\017",4);
   sout.write("\000\000\001\005",4);
   sout.flush();
@@ -708,7 +728,8 @@ void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr
   sout.write("\000\000\001\004",4);
   writeStringStream(sout,"getString");
   sout.write("\000\000\001\016",4); // Beginning of string header
-  addr.saveXml(sout,maxBytes);
+  encoder.clear();
+  addr.encode(encoder,maxBytes);
   sout.write("\000\000\001\017",4);
   writeStringStream(sout,ct->getName());
   sout.write("\000\000\001\016",4); // Beginning of string header
@@ -753,14 +774,14 @@ void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr
 ///   - CALLMECHANISM_TYPE
 ///   - EXECUTABLEPCODE_TYPE
 ///
-/// This and additional context is provided to the Ghidra client which returns
-/// an XML document describing the p-code. The document will be an \<inst> tag
-/// containing individual \<op> tags corresponding to individual p-code ops.
+/// This and additional context is provided to the Ghidra client which passes back
+/// an \<inst> element containing individual \<op> tags corresponding to individual p-code ops.
 /// \param name is the name of the injection
 /// \param type is the type of injection
 /// \param con is the context object
-/// \return an XML document describing the p-code ops to inject
-Document *ArchitectureGhidra::getPcodeInject(const string &name,int4 type,const InjectContext &con)
+/// \param decoder is the stream decoder which will hold the result
+/// \return \b true if the query completed successfully
+bool ArchitectureGhidra::getPcodeInject(const string &name,int4 type,const InjectContext &con,Decoder &decoder)
 
 {
   sout.write("\000\000\001\004",4);
@@ -774,21 +795,22 @@ Document *ArchitectureGhidra::getPcodeInject(const string &name,int4 type,const 
     writeStringStream(sout,"getXPcode");
   writeStringStream(sout,name);
   sout.write("\000\000\001\016",4);
-  con.saveXml(sout);
+  encoder.clear();
+  con.encode(encoder);
   sout.write("\000\000\001\017",4);
   sout.write("\000\000\001\005",4);
   sout.flush();
 
-  return readXMLAll(sin);
+  return readAll(sin,decoder);
 }
 
 /// The Ghidra client is provided a sequence of 1 or more integer values
-/// extracted from a CPOOLREF op. It returns an XML document describing
-/// the constant pool record referenced by the integer(s) or will throw
-/// an exception if record isn't properly referenced.
+/// extracted from a CPOOLREF op. A description of the constant pool record referenced by the integer(s)
+/// is passed back in the given stream decoder, or an exception is thrown if the record isn't properly referenced.
 /// \param refs is an array of 1 or more integer values referencing a constant pool record
-/// \return a description of the record as a \<cpoolrec> XML document.
-Document *ArchitectureGhidra::getCPoolRef(const vector<uintb> &refs)
+/// \param decoder is the given stream decoder that will hold the result
+/// \return \b true if the query completed successfully
+bool ArchitectureGhidra::getCPoolRef(const vector<uintb> &refs,Decoder &decoder)
 
 {
   sout.write("\000\000\001\004",4);
@@ -802,7 +824,7 @@ Document *ArchitectureGhidra::getCPoolRef(const vector<uintb> &refs)
   sout.write("\000\000\001\005",4);
   sout.flush();
 
-  return readXMLAll(sin);
+  return readAll(sin,decoder);
 }
 
 // Document *ArchitectureGhidra::getScopeProperties(Scope *newscope)
@@ -839,10 +861,10 @@ void ArchitectureGhidra::printMessage(const string &message) const
 /// \param o is the output stream to the Ghidra client
 ArchitectureGhidra::ArchitectureGhidra(const string &pspec,const string &cspec,const string &tspec,
 				       const string &corespec,istream &i,ostream &o)
-  : Architecture(), sin(i), sout(o)
+  : Architecture(), sin(i), sout(o), encoder(sout)
 
 {
-  print->setXML(true);
+  print->setMarkup(true);
   print->setOutputStream(&sout);
   pspecxml = pspec;
   cspecxml = cspec;

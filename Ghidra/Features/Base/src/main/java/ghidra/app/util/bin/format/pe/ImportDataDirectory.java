@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -42,22 +42,7 @@ public class ImportDataDirectory extends DataDirectory {
 	ExportDataDirectory exportDirectory;
 	DataConverter conv = LittleEndianDataConverter.INSTANCE;
 
-	static ImportDataDirectory createImportDataDirectory(NTHeader ntHeader,
-			FactoryBundledWithBinaryReader reader) throws IOException {
-		ImportDataDirectory importDataDirectory =
-			(ImportDataDirectory) reader.getFactory().create(ImportDataDirectory.class);
-		importDataDirectory.initImportDataDirectory(ntHeader, reader);
-		return importDataDirectory;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ImportDataDirectory() {
-	}
-
-	private void initImportDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	ImportDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
 
 		if (imports == null) {
@@ -91,8 +76,9 @@ public class ImportDataDirectory extends DataDirectory {
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
-			DataTypeConflictException, IOException, MemoryAccessException {
+			NTHeader ntHeader)
+			throws DuplicateNameException, CodeUnitInsertionException, IOException,
+			MemoryAccessException {
 
 		if (imports == null || descriptors == null) {
 			return;
@@ -237,7 +223,7 @@ public class ImportDataDirectory extends DataDirectory {
 			return false;
 		}
 
-		ImportDescriptor id = ImportDescriptor.createImportDescriptor(reader, ptr);
+		ImportDescriptor id = new ImportDescriptor(reader, ptr);
 		while (!id.isNullEntry()) {
 
 			ptr += ImportDescriptor.SIZEOF;
@@ -254,7 +240,7 @@ public class ImportDataDirectory extends DataDirectory {
 			int tmpPtr = ntHeader.rvaToPointer(id.getName());
 			if (tmpPtr < 0) {
 				//Msg.error(this, "Invalid RVA "+id.getName());
-				id = ImportDescriptor.createImportDescriptor(reader, ptr);
+				id = new ImportDescriptor(reader, ptr);
 				continue;
 			}
 			String dllName = reader.readAsciiString(tmpPtr);
@@ -274,7 +260,7 @@ public class ImportDataDirectory extends DataDirectory {
 			if (intptr < 0) {
 				Msg.error(this, "Invalid RVA " + Integer.toHexString(id.getOriginalFirstThunk()) +
 					" : " + Integer.toHexString(id.getFirstThunk()));
-				id = ImportDescriptor.createImportDescriptor(reader, ptr);
+				id = new ImportDescriptor(reader, ptr);
 				return false;
 			}
 			int iatptr = ntHeader.rvaToPointer(id.getFirstThunk());
@@ -290,12 +276,12 @@ public class ImportDataDirectory extends DataDirectory {
 					break;
 				}
 
-				ThunkData intThunk = ThunkData.createThunkData(reader, intptr,
-					ntHeader.getOptionalHeader().is64bit());
+				ThunkData intThunk =
+					new ThunkData(reader, intptr, ntHeader.getOptionalHeader().is64bit());
 				intptr += intThunk.getStructSize();
 
-				ThunkData iatThunk = ThunkData.createThunkData(reader, iatptr,
-					ntHeader.getOptionalHeader().is64bit());
+				ThunkData iatThunk =
+					new ThunkData(reader, iatptr, ntHeader.getOptionalHeader().is64bit());
 				iatptr += iatThunk.getStructSize();
 
 				if (intThunk.getAddressOfData() == 0) {
@@ -323,7 +309,7 @@ public class ImportDataDirectory extends DataDirectory {
 							"Invalid RVA " + Long.toHexString(intThunk.getAddressOfData()));
 						break;
 					}
-					ImportByName ibn = ImportByName.createImportByName(reader, ptrToData);
+					ImportByName ibn = new ImportByName(reader, ptrToData);
 
 					intThunk.setImportByName(ibn);
 
@@ -352,7 +338,7 @@ public class ImportDataDirectory extends DataDirectory {
 				importList.add(
 					new ImportInfo(addr, cmt.toString(), dllName, boundName, id.isBound()));
 			}
-			id = ImportDescriptor.createImportDescriptor(reader, ptr);
+			id = new ImportDescriptor(reader, ptr);
 		}
 
 		imports = new ImportInfo[importList.size()];

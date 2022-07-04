@@ -108,8 +108,8 @@ public class DBTraceModuleManagerTest extends AbstractGhidraHeadlessIntegrationT
 				b.range(0x7f400000, 0x7f60002f), Range.closed(11L, 20L));
 		}
 		assertEquals(Set.of(mod1), new HashSet<>(moduleManager.getModulesByPath("Modules[first]")));
-		assertEquals(Set.of(mod2, mod3),
-			new HashSet<>(moduleManager.getModulesByPath("Modules[second]")));
+		assertEquals(Set.copyOf(List.of(mod2, mod3)), // Same in object mode
+			Set.copyOf(moduleManager.getModulesByPath("Modules[second]")));
 	}
 
 	@Test

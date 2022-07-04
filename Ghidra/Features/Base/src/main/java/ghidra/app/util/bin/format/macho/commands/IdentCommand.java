@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachException;
 
 /**
@@ -27,22 +27,8 @@ import ghidra.app.util.bin.format.macho.MachException;
  */
 public class IdentCommand extends ObsoleteCommand {
 
-	static IdentCommand createIdentCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException, MachException {
-		IdentCommand identCommand = (IdentCommand) reader.getFactory().create(IdentCommand.class);
-		identCommand.initIdentCommand(reader);
-		return identCommand;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public IdentCommand() {
-	}
-
-	private void initIdentCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException, MachException {
-		initObsoleteCommand(reader);
+	IdentCommand(BinaryReader reader) throws IOException, MachException {
+		super(reader);
 	}
 
 	@Override

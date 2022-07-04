@@ -25,6 +25,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceDataSettingsSpace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 
@@ -80,6 +81,11 @@ public abstract class AbstractDBTraceDataComponent implements DBTraceDefinedData
 	@Override
 	public TraceThread getThread() {
 		return root.getThread();
+	}
+
+	@Override
+	public TracePlatform getPlatform() {
+		return root.getPlatform();
 	}
 
 	@Override

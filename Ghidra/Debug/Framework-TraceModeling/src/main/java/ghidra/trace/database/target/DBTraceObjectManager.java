@@ -43,7 +43,6 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.database.target.DBTraceObjectValue.PrimaryTriple;
 import ghidra.trace.database.thread.DBTraceObjectThread;
-import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
@@ -61,6 +60,7 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
+import ghidra.util.Msg;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
 import ghidra.util.database.DBCachedObjectStoreFactory.PrimitiveCodec;
@@ -163,6 +163,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	protected final DBCachedObjectIndex<DBTraceObject, DBTraceObjectValue> valuesByChild;
 
 	protected final Collection<TraceObject> objectsView;
+	protected final Collection<TraceObjectValue> valuesView;
 
 	protected TargetObjectSchema rootSchema;
 
@@ -193,6 +194,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 			valueStore.getIndex(DBTraceObject.class, DBTraceObjectValue.CHILD_COLUMN);
 
 		objectsView = Collections.unmodifiableCollection(objectStore.asMap().values());
+		valuesView = Collections.unmodifiableCollection(valueStore.asMap().values());
 	}
 
 	protected void loadRootSchema() {
@@ -235,7 +237,12 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	}
 
 	protected Object validatePrimitive(Object child) {
-		PrimitiveCodec.getCodec(child.getClass());
+		try {
+			PrimitiveCodec.getCodec(child.getClass());
+		}
+		catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("Cannot encode " + child, e);
+		}
 		return child;
 	}
 
@@ -271,18 +278,31 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		}
 		DBTraceObjectValue entry = valueStore.create();
 		entry.set(lifespan, parent, key, value);
+		if (parent != null) {
+			// Don't need event for root value created
+			parent.emitEvents(
+				new TraceChangeRecord<>(TraceObjectChangeType.VALUE_CREATED, null, entry));
+		}
 		return entry;
 	}
 
-	protected DBTraceObject doCreateObject(TraceObjectKeyPath path, Range<Long> lifespan) {
-		DBTraceObject obj = objectStore.create();
-		obj.set(path, lifespan);
+	protected DBTraceObject doCreateObject(TraceObjectKeyPath path) {
+		DBTraceObject obj = objectsByPath.getOne(path);
+		if (obj != null) {
+			return obj;
+		}
+		obj = objectStore.create();
+		obj.set(path);
 		obj.emitEvents(new TraceChangeRecord<>(TraceObjectChangeType.CREATED, null, obj));
 		return obj;
 	}
 
+	protected DBTraceObject doGetObject(TraceObjectKeyPath path) {
+		return objectsByPath.getOne(path);
+	}
+
 	@Override
-	public DBTraceObject createObject(TraceObjectKeyPath path, Range<Long> lifespan) {
+	public DBTraceObject createObject(TraceObjectKeyPath path) {
 		if (path.isRoot()) {
 			throw new IllegalArgumentException("Cannot create non-root object with root path");
 		}
@@ -290,7 +310,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 			if (rootSchema == null) {
 				throw new IllegalStateException("No schema! Create the root object, first.");
 			}
-			return doCreateObject(path, lifespan);
+			return doCreateObject(path);
 		}
 	}
 
@@ -298,9 +318,9 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	public TraceObjectValue createRootObject(TargetObjectSchema schema) {
 		try (LockHold hold = trace.lockWrite()) {
 			setSchema(schema);
-			DBTraceObject root = doCreateObject(TraceObjectKeyPath.of(), Range.all());
+			DBTraceObject root = doCreateObject(TraceObjectKeyPath.of());
 			assert root.getKey() == 0;
-			InternalTraceObjectValue val = doCreateValue(Range.all(), null, null, root);
+			InternalTraceObjectValue val = doCreateValue(Range.all(), null, "", root);
 			assert val.getKey() == 0;
 			return val;
 		}
@@ -326,35 +346,40 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	}
 
 	@Override
-	public Collection<? extends DBTraceObject> getObjectsByCanonicalPath(
-			TraceObjectKeyPath path) {
-		return objectsByPath.get(path);
+	public DBTraceObject getObjectByCanonicalPath(TraceObjectKeyPath path) {
+		return objectsByPath.getOne(path);
 	}
 
 	@Override
 	public Stream<? extends DBTraceObject> getObjectsByPath(Range<Long> span,
 			TraceObjectKeyPath path) {
+		DBTraceObject root = getRootObject();
 		return getValuePaths(span, new PathPattern(path.getKeyList()))
-				.map(p -> p.getLastChild(getRootObject()))
+				.map(p -> p.getDestinationValue(root))
 				.filter(DBTraceObject.class::isInstance)
 				.map(DBTraceObject.class::cast);
 	}
 
 	@Override
-	public Stream<? extends DBTraceObjectValPath> getValuePaths(
-			Range<Long> span, PathPredicates predicates) {
+	public Stream<? extends DBTraceObjectValPath> getValuePaths(Range<Long> span,
+			PathPredicates predicates) {
 		try (LockHold hold = trace.lockRead()) {
 			DBTraceObjectValue rootVal = valueStore.getObjectAt(0);
 			if (rootVal == null) {
 				return Stream.of();
 			}
-			return rootVal.doGetSuccessors(span, null, predicates);
+			return rootVal.doStreamVisitor(span, new InternalSuccessorsRelativeVisitor(predicates));
 		}
 	}
 
 	@Override
 	public Collection<? extends TraceObject> getAllObjects() {
 		return objectsView;
+	}
+
+	@Override
+	public Collection<? extends TraceObjectValue> getAllValues() {
+		return valuesView;
 	}
 
 	@Override
@@ -378,7 +403,26 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		Class<? extends TargetObject> targetIf = TraceObjectInterfaceUtils.toTargetIf(ifClass);
 		PathMatcher matcher = rootSchema.searchFor(targetIf, true);
 		return getValuePaths(span, matcher)
-				.map(p -> p.getLastChild(getRootObject()).queryInterface(ifClass));
+				.filter(p -> {
+					TraceObject object = p.getDestination(getRootObject());
+					if (object == null) {
+						Msg.error(this, "NULL VALUE! " + p.getLastEntry());
+						return false;
+					}
+					return true;
+				})
+				.map(p -> p.getDestination(getRootObject()).queryInterface(ifClass));
+	}
+
+	@Override
+	public void cullDisconnectedObjects() {
+		try (LockHold hold = trace.lockWrite()) {
+			for (DBTraceObject obj : objectStore.asMap().values()) {
+				if (!obj.doIsConnected()) {
+					obj.delete();
+				}
+			}
+		}
 	}
 
 	@Override
@@ -406,7 +450,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	}
 
 	protected <I extends TraceObjectInterface> I doAddWithInterface(List<String> keyList,
-			Range<Long> lifespan, Class<I> iface, ConflictResolution resolution) {
+			Class<I> iface) {
 		Class<? extends TargetObject> targetIf = TraceObjectInterfaceUtils.toTargetIf(iface);
 		TargetObjectSchema schema = rootSchema.getSuccessorSchema(keyList);
 		if (!schema.getInterfaces().contains(targetIf)) {
@@ -414,14 +458,12 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 				"Schema " + schema + " at " + PathUtils.toString(keyList) +
 					" does not provide interface " + iface.getSimpleName());
 		}
-		DBTraceObject obj = createObject(TraceObjectKeyPath.of(keyList), lifespan);
-		obj.insert(resolution);
+		DBTraceObject obj = createObject(TraceObjectKeyPath.of(keyList));
 		return obj.queryInterface(iface);
 	}
 
-	protected <I extends TraceObjectInterface> I doAddWithInterface(String path,
-			Range<Long> lifespan, Class<I> iface, ConflictResolution resolution) {
-		return doAddWithInterface(PathUtils.parse(path), lifespan, iface, resolution);
+	protected <I extends TraceObjectInterface> I doAddWithInterface(String path, Class<I> iface) {
+		return doAddWithInterface(PathUtils.parse(path), iface);
 	}
 
 	public <I extends TraceObjectInterface> Collection<I> getAllObjects(Class<I> iface) {
@@ -510,7 +552,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 			PathPredicates predicates, long snap, Class<I> iface) {
 		try (LockHold hold = trace.lockRead()) {
 			return seed.getSuccessors(Range.singleton(snap), predicates)
-					.map(p -> p.getLastChild(seed).queryInterface(iface))
+					.map(p -> p.getDestination(seed).queryInterface(iface))
 					.filter(i -> i != null)
 					.findAny()
 					.orElse(null);
@@ -521,7 +563,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 			TraceObjectKeyPath path, long snap, Class<I> iface) {
 		try (LockHold hold = trace.lockRead()) {
 			return seed.getOrderedSuccessors(Range.atMost(snap), path, false)
-					.map(p -> p.getLastChild(seed).queryInterface(iface))
+					.map(p -> p.getDestination(seed).queryInterface(iface))
 					.filter(i -> i != null)
 					.findAny()
 					.orElse(null);
@@ -540,14 +582,15 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 				"breakpoint specification on the given path.");
 		}
 		try (LockHold hold = trace.lockWrite()) {
-			TraceObjectBreakpointLocation loc = doAddWithInterface(path, lifespan,
-				TraceObjectBreakpointLocation.class, ConflictResolution.DENY);
-			loc.setName(path);
-			loc.setRange(range);
+			TraceObjectBreakpointLocation loc =
+				doAddWithInterface(path, TraceObjectBreakpointLocation.class);
+			loc.setName(lifespan, path);
+			loc.setRange(lifespan, range);
 			// NB. Ignore threads. I'd like to deprecate that field, anyway.
-			loc.setKinds(kinds);
-			loc.setEnabled(enabled);
-			loc.setComment(comment);
+			loc.setKinds(lifespan, kinds);
+			loc.setEnabled(lifespan, enabled);
+			loc.setComment(lifespan, comment);
+			loc.getObject().insert(lifespan, ConflictResolution.DENY);
 			return loc;
 		}
 		catch (DuplicateKeyException e) {
@@ -559,17 +602,12 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 			AddressRange range, Collection<TraceMemoryFlag> flags)
 			throws TraceOverlappedRegionException {
 		try (LockHold hold = trace.lockWrite()) {
-			TraceObjectMemoryRegion region = doAddWithInterface(path, lifespan,
-				TraceObjectMemoryRegion.class, ConflictResolution.TRUNCATE);
-			/**
-			 * TODO: Test that when the ADDED events hits, that it actually appears in queries. I
-			 * suspect this will work since the events and/or event processors should be delayed
-			 * until the write lock is released. Certainly, a query would require the read lock.
-			 */
-			region.setName(path);
-			region.setRange(range);
-			region.setFlags(flags);
-			trace.updateViewsAddRegionBlock(region);
+			TraceObjectMemoryRegion region =
+				doAddWithInterface(path, TraceObjectMemoryRegion.class);
+			region.setName(lifespan, path);
+			region.setRange(lifespan, range);
+			region.setFlags(lifespan, flags);
+			region.getObject().insert(lifespan, ConflictResolution.TRUNCATE);
 			return region;
 		}
 	}
@@ -577,10 +615,10 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	public TraceObjectModule addModule(String path, String name, Range<Long> lifespan,
 			AddressRange range) throws DuplicateNameException {
 		try (LockHold hold = trace.lockWrite()) {
-			TraceObjectModule module = doAddWithInterface(path, lifespan, TraceObjectModule.class,
-				ConflictResolution.DENY);
-			module.setName(name);
-			module.setRange(range);
+			TraceObjectModule module = doAddWithInterface(path, TraceObjectModule.class);
+			module.setName(lifespan, name);
+			module.setRange(lifespan, range);
+			module.getObject().insert(lifespan, ConflictResolution.DENY);
 			return module;
 		}
 		catch (DuplicateKeyException e) {
@@ -591,10 +629,10 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	public TraceObjectSection addSection(String path, String name, Range<Long> lifespan,
 			AddressRange range) throws DuplicateNameException {
 		try (LockHold hold = trace.lockWrite()) {
-			TraceObjectSection section = doAddWithInterface(path, lifespan,
-				TraceObjectSection.class, ConflictResolution.DENY);
-			section.setName(name);
-			section.setRange(range);
+			TraceObjectSection section = doAddWithInterface(path, TraceObjectSection.class);
+			section.setName(lifespan, name);
+			section.setRange(lifespan, range);
+			section.getObject().insert(lifespan, ConflictResolution.DENY);
 			return section;
 		}
 		catch (DuplicateKeyException e) {
@@ -604,24 +642,41 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 
 	public TraceObjectStack addStack(List<String> keyList, long snap) {
 		try (LockHold hold = trace.lockWrite()) {
-			return doAddWithInterface(keyList, Range.singleton(snap), TraceObjectStack.class,
-				ConflictResolution.DENY);
+			TraceObjectStack stack = doAddWithInterface(keyList, TraceObjectStack.class);
+			stack.getObject().insert(Range.singleton(snap), ConflictResolution.DENY);
+			return stack;
 		}
 	}
 
 	public TraceObjectStackFrame addStackFrame(List<String> keyList, long snap) {
 		try (LockHold hold = trace.lockWrite()) {
-			return doAddWithInterface(keyList, Range.singleton(snap), TraceObjectStackFrame.class,
-				ConflictResolution.DENY);
+			TraceObjectStackFrame frame = doAddWithInterface(keyList, TraceObjectStackFrame.class);
+			frame.getObject().insert(Range.singleton(snap), ConflictResolution.DENY);
+			return frame;
 		}
+	}
+
+	protected void checkDuplicateThread(String path, Range<Long> lifespan)
+			throws DuplicateNameException {
+		// TODO: Change the semantics to just expand the life rather than complain of duplication
+		DBTraceObject exists = getObjectByCanonicalPath(TraceObjectKeyPath.parse(path));
+		if (exists == null) {
+			return;
+		}
+		if (exists.getLife().subRangeSet(lifespan).isEmpty()) {
+			return;
+		}
+		throw new DuplicateNameException("A thread having path '" + path +
+			"' already exists within an overlapping snap");
 	}
 
 	public TraceObjectThread addThread(String path, String display, Range<Long> lifespan)
 			throws DuplicateNameException {
 		try (LockHold hold = trace.lockWrite()) {
-			TraceObjectThread thread = doAddWithInterface(path, lifespan, TraceObjectThread.class,
-				ConflictResolution.DENY);
-			thread.setName(display);
+			checkDuplicateThread(path, lifespan);
+			TraceObjectThread thread = doAddWithInterface(path, TraceObjectThread.class);
+			thread.setName(lifespan, display);
+			thread.getObject().insert(lifespan, ConflictResolution.DENY);
 			return thread;
 		}
 		catch (DuplicateKeyException e) {

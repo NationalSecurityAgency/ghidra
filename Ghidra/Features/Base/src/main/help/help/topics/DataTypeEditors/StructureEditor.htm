@@ -102,7 +102,17 @@
       data items in the program will have changed due to the apply.</P>
     </BLOCKQUOTE>
 
-      <H2>Closing the Editor</H2>
+
+    <H2><A name="Show_In_Data_Type_Manager"></A><A name="Structure_Editor_Show_In_Data_Type_Manager">Show In Data Type Manager</H2>
+
+    <BLOCKQUOTE>
+      <P>Select the <IMG src="images/go-home.png" alt=""> icon in the toolbar to have the editor's
+      data type be highlighted in the Data Type Manager's tree.
+      </P>
+
+    </BLOCKQUOTE>
+
+    <H2>Closing the Editor</H2>
 
     <BLOCKQUOTE>
       <P>Select the Close dockable component icon <IMG src="../../shared/close16.gif" alt=""> in
@@ -447,12 +457,14 @@
         <LI>Press the <IMG src="images/DuplicateData.png" alt=""> <B>Duplicate Component</B>
         button.</LI>
 
-        <LI>A single copy of the component is created immediately following the selected one.</LI>
+        <LI>A single copy of the component is created immediately following the selected one.
+        The newly created component will become selected allowing for repeated use of the action.</LI>
       </OL>
 
       <P>If the structure is not packed (i.e., pack disabled), then there must be enough <i>undefined</i> components following the
       component to accommodate the duplicate. In such a such a structure, <i>undefined</i> bytes get
-      consumed by the new copy of the component.</P>
+      consumed by the new copy of the component.  If action is performed on the last component the structure 
+      length will grow as needed.</P>
     </BLOCKQUOTE>
 
     <H3><A name="Structure_Editor_Duplicate_Multiple_of_Component"></A> <IMG src=
@@ -469,7 +481,8 @@
 
         <LI><A name="Structure_Editor_Duplicates_NumberInputDialog"></A> The number of duplicates
         dialog appears. In a non-packed structure, you can only indicate as many duplicates as will
-        fit in place of <i>undefined</i> bytes.</LI>
+        fit in place of <i>undefined</i> bytes unless duplicating the last component in which case the
+        structure will grow as needed.  The last component added will become the selected component.</LI>
       </OL>
     </BLOCKQUOTE>
 

@@ -17,8 +17,8 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -32,21 +32,7 @@ public class TableOfContents implements StructConverter {
 	private int symbol_index;
 	private int module_index;
 
-	static TableOfContents createTableOfContents(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		TableOfContents tableOfContents =
-			(TableOfContents) reader.getFactory().create(TableOfContents.class);
-		tableOfContents.initTableOfContents(reader);
-		return tableOfContents;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public TableOfContents() {
-	}
-
-	private void initTableOfContents(FactoryBundledWithBinaryReader reader) throws IOException {
+	TableOfContents(BinaryReader reader) throws IOException {
 		symbol_index = reader.readNextInt();
 		module_index = reader.readNextInt();
 	}

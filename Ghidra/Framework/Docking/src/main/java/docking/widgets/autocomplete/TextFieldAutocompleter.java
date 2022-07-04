@@ -116,7 +116,7 @@ public class TextFieldAutocompleter<T> {
 	private DefaultListModel<T> listModel = new DefaultListModel<>();
 	private DefaultListModel<T> blankModel = new DefaultListModel<>();
 	private JList<T> list = new JList<>(listModel);
-	private MyListener listener = new MyListener();
+	/*test*/ protected MyListener listener = new MyListener();
 
 	private boolean pendingTextUpdate;
 	private SwingUpdateManager updateManager = new SwingUpdateManager(DEFAULT_UPDATE_DELAY,
@@ -756,6 +756,14 @@ public class TextFieldAutocompleter<T> {
 	}
 
 	/**
+	 * Update the completion list immediately
+	 */
+	public void updateNow() {
+		pendingTextUpdate = true;
+		updateManager.updateNow();
+	}
+
+	/**
 	 * Cause the suggestion at the given index to be selected
 	 * 
 	 * @param index the index of the selection
@@ -933,6 +941,10 @@ public class TextFieldAutocompleter<T> {
 		public void focusGained(FocusEvent e) {
 			focus = (JTextField) e.getComponent();
 			updateDisplayContents();
+		}
+
+		/*test*/ public void fakeFocusGained(JTextField field) {
+			focus = field;
 		}
 
 		@Override

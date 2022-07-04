@@ -32,9 +32,10 @@ const CPoolRecord *ConstantPoolGhidra::getRecord(const vector<uintb> &refs) cons
 {
   const CPoolRecord *rec = cache.getRecord(refs);
   if (rec == (const CPoolRecord *)0) {
-    Document *doc;
+    XmlDecode decoder(ghidra);
+    bool success;
     try {
-      doc = ghidra->getCPoolRef(refs);
+      success = ghidra->getCPoolRef(refs,decoder);
     }
     catch(JavaError &err) {
       throw LowlevelError("Error fetching constant pool record: " + err.explain);
@@ -42,24 +43,23 @@ const CPoolRecord *ConstantPoolGhidra::getRecord(const vector<uintb> &refs) cons
     catch(XmlError &err) {
       throw LowlevelError("Error in constant pool record xml: "+err.explain);
     }
-    if (doc == (Document *)0) {
+    if (!success) {
       ostringstream s;
       s << "Could not retrieve constant pool record for reference: 0x" << refs[0];
       throw LowlevelError(s.str());
     }
-    rec = cache.restoreXmlRecord(refs,doc->getRoot(),*ghidra->types);
-    delete doc;
+    rec = cache.decodeRecord(refs,decoder,*ghidra->types);
   }
   return rec;
 }
 
-void ConstantPoolGhidra::saveXml(ostream &s) const
+void ConstantPoolGhidra::encode(Encoder &encoder) const
 
 {
   throw LowlevelError("Cannot access constant pool with this method");
 }
 
-void ConstantPoolGhidra::restoreXml(const Element *el,TypeFactory &typegrp)
+void ConstantPoolGhidra::decode(Decoder &decoder,TypeFactory &typegrp)
 
 {
   throw LowlevelError("Cannot access constant pool with this method");

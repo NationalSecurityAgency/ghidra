@@ -15,18 +15,32 @@
  */
 package ghidra.app.util.bin.format.elf.extend;
 
+import java.io.IOException;
 import java.math.BigInteger;
+import java.util.List;
 
+import ghidra.app.util.Option;
 import ghidra.app.util.bin.format.elf.*;
+import ghidra.app.util.opinion.Loader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.ContextChangeException;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class ARM_ElfExtension extends ElfExtension {
+
+	/**
+	 * ARM PC Bias option affecting all relative relocations.
+	 * If PC Bias is already accounted for within relocation addend this option should be specified
+	 * as false, otherwise true (default).
+	 */
+	public static final String APPLY_PC_BIAS_TO_RELATIVE_RELOCATIONS_OPTION_NAME =
+		"Apply PC Bias to relative relocations";
+	public static final boolean APPLY_PC_BIAS_TO_RELATIVE_RELOCATIONS_DEFAULT = false; // reflects binutils
 
 	// Elf Program Header Extensions
 	public static final ElfProgramHeaderType PT_ARM_EXIDX =
@@ -60,6 +74,31 @@ public class ARM_ElfExtension extends ElfExtension {
 	@Override
 	public String getDataTypeSuffix() {
 		return "_ARM";
+	}
+
+	@Override
+	public void addLoadOptions(ElfHeader elf, List<Option> options) {
+
+		// If PC Bias option disabled addend assumed to includes PC Bias,
+		// if enabled PC Bias must be factored in explicitly during relocation processing
+		boolean enablePcBiasOption = false;
+
+		try {
+			elf.parse(); // ensure ELF is fully parsed to query section data
+
+			// Enable PC Bias use if Green Hills (GHS) detected
+			ElfSectionHeader section = elf.getSection(".ghsinfo");
+			if (section != null) {
+				enablePcBiasOption = true;
+			}
+		}
+		catch (IOException e) {
+			Msg.warn(this, "Failed to fully parse ELF headers to formulate ARM import options");
+		}
+
+		options.add(new Option(APPLY_PC_BIAS_TO_RELATIVE_RELOCATIONS_OPTION_NAME,
+			enablePcBiasOption, Boolean.class,
+			Loader.COMMAND_LINE_ARG_PREFIX + "-applyArmElfRelocPCBias"));
 	}
 
 	@Override

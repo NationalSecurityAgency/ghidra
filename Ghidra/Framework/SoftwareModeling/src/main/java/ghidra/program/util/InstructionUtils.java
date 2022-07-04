@@ -191,7 +191,7 @@ public class InstructionUtils {
 			if (childActualValue.hasAnyValue()) {
 				int pad = paddedLen - reg.getName().length();
 				BigInteger actual = childActualValue.getUnsignedValueIgnoreMask();
-				int msb = baseRegSize - reg.getLeastSignificatBitInBaseRegister() - 1;
+				int msb = baseRegSize - reg.getLeastSignificantBitInBaseRegister() - 1;
 				int lsb = msb - reg.getBitLength() + 1;
 				if (buf.length() != 0) {
 					buf.append("\n");

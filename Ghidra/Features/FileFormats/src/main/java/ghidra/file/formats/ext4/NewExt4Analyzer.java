@@ -21,14 +21,19 @@ import java.util.List;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.ProgramManager;
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -188,14 +193,14 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 	}
 
 	@Override
-	protected Data createData( Program program, Address address, DataType datatype ) throws Exception {
+	protected Data createData( Program program, Address address, DataType datatype ) throws CodeUnitInsertionException {
 		if ( program.getMemory( ).contains( address ) ) {
 			return super.createData( program, address, datatype );
 		}
 		if ( program2 != null && program2.getMemory( ).contains( address ) ) {
 			return super.createData( program2, address, datatype );
 		}
-		throw new RuntimeException( "Cannot create data, neither program contains that address." );
+		throw new CodeUnitInsertionException( "Cannot create data, neither program contains that address." );
 	}
 
 	@Override

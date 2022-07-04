@@ -45,7 +45,7 @@ public class ReferencedSymbolMsType extends AbstractMsType {
 		super(pdb, reader);
 		int recordLength = reader.parseUnsignedShortVal();
 		PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
-		symbolRecord = pdb.getSymbolParser().parse(recordReader);
+		symbolRecord = SymbolParser.parse(pdb, recordReader);
 	}
 
 	@Override

@@ -18,8 +18,8 @@ package ghidra.program.database.module;
 import java.io.IOException;
 import java.util.*;
 
-import db.Field;
 import db.DBRecord;
+import db.Field;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.address.*;
@@ -37,7 +37,10 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	private DBRecord record;
 	private ModuleManager moduleMgr;
-	private GroupDBAdapter adapter;
+	private ModuleDBAdapter moduleAdapter;
+	private FragmentDBAdapter fragmentAdapter;
+	private ParentChildDBAdapter parentChildAdapter;
+
 	private int childCount; // cache the count so we don't have to access 
 							// database records
 	private Lock lock;
@@ -48,30 +51,27 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 	 * @param moduleMgr module manager
 	 * @param cache ModuleDB cache
 	 * @param record database record for this module
+	 * @throws IOException if database IO error occurs
 	 */
-	ModuleDB(ModuleManager moduleMgr, DBObjectCache<ModuleDB> cache, DBRecord record) {
+	ModuleDB(ModuleManager moduleMgr, DBObjectCache<ModuleDB> cache, DBRecord record)
+			throws IOException {
 		super(cache, record.getKey());
 		this.moduleMgr = moduleMgr;
 		this.record = record;
-		adapter = moduleMgr.getGroupDBAdapter();
-		updateChildCount();
+		childCount = record.getIntValue(ModuleDBAdapter.MODULE_CHILD_COUNT_COL);
+		moduleAdapter = moduleMgr.getModuleAdapter();
+		fragmentAdapter = moduleMgr.getFragmentAdapter();
+		parentChildAdapter = moduleMgr.getParentChildAdapter();
 		lock = moduleMgr.getLock();
 	}
 
 	@Override
 	protected boolean refresh() {
 		try {
-			DBRecord rec = adapter.getModuleRecord(key);
+			DBRecord rec = moduleAdapter.getModuleRecord(key);
 			if (rec != null) {
 				record = rec;
-				childCount = 0;
-				try {
-					Field[] keys = adapter.getParentChildKeys(key, TreeManager.PARENT_ID_COL);
-					childCount = keys.length;
-				}
-				catch (IOException e) {
-					moduleMgr.dbError(e);
-				}
+				childCount = rec.getIntValue(ModuleDBAdapter.MODULE_CHILD_COUNT_COL);
 				return true;
 			}
 		}
@@ -89,15 +89,15 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			FragmentDB frag = (FragmentDB) fragment;
 			long fragID = frag.getKey();
 			// add a row to the parent/child table
-			DBRecord parentChildRecord = adapter.getParentChildRecord(key, -fragID);
+			DBRecord parentChildRecord = parentChildAdapter.getParentChildRecord(key, -fragID);
 			if (parentChildRecord != null) {
 				throw new DuplicateGroupException(
 					frag.getName() + " already exists a child of " + getName());
 			}
 
-			DBRecord pcRec = adapter.addParentChildRecord(key, -fragID);
-			updateChildCount();
-			updateOrderField(pcRec);
+			DBRecord pcRec = parentChildAdapter.addParentChildRecord(key, -fragID);
+			updateChildCount(1);
+			updateOrderField(pcRec, childCount - 1);
 			moduleMgr.fragmentAdded(key, frag);
 		}
 		catch (IOException e) {
@@ -118,7 +118,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			ModuleDB moduleDB = (ModuleDB) module;
 			long moduleID = moduleDB.getKey();
 
-			DBRecord parentChildRecord = adapter.getParentChildRecord(key, moduleID);
+			DBRecord parentChildRecord = parentChildAdapter.getParentChildRecord(key, moduleID);
 			if (parentChildRecord != null) {
 				throw new DuplicateGroupException(
 					module.getName() + " already exists a child of " + getName());
@@ -128,9 +128,9 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 					getName() + " is already a descendant of " + module.getName());
 			}
 
-			DBRecord pcRec = adapter.addParentChildRecord(key, moduleID);
-			updateChildCount();
-			updateOrderField(pcRec);
+			DBRecord pcRec = parentChildAdapter.addParentChildRecord(key, moduleID);
+			updateChildCount(1);
+			updateOrderField(pcRec, childCount - 1);
 			moduleMgr.moduleAdded(key, module);
 		}
 		catch (IOException e) {
@@ -171,11 +171,16 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		lock.acquire();
 		try {
 			checkDeleted();
-			DBRecord parentChildRecord = adapter.createFragment(key, fragmentName);
-			FragmentDB frag = moduleMgr.getFragmentDB(parentChildRecord);
-			DBRecord pcRec = adapter.getParentChildRecord(key, -frag.getKey());
-			updateChildCount();
-			updateOrderField(pcRec);
+			if (moduleAdapter.getModuleRecord(fragmentName) != null ||
+				fragmentAdapter.getFragmentRecord(fragmentName) != null) {
+				throw new DuplicateNameException(fragmentName + " already exists");
+			}
+			DBRecord fragmentRecord = fragmentAdapter.createFragmentRecord(key, fragmentName);
+			DBRecord pcRec = parentChildAdapter.addParentChildRecord(key, -fragmentRecord.getKey()); // negative value to indicates fragment
+			updateChildCount(1);
+			updateOrderField(pcRec, childCount - 1);
+
+			FragmentDB frag = moduleMgr.getFragmentDB(fragmentRecord);
 			moduleMgr.fragmentAdded(key, frag);
 			return frag;
 		}
@@ -194,11 +199,17 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		lock.acquire();
 		try {
 			checkDeleted();
-			DBRecord moduleRecord = adapter.createModule(key, moduleName);
+			if (moduleAdapter.getModuleRecord(moduleName) != null ||
+				fragmentAdapter.getFragmentRecord(moduleName) != null) {
+				throw new DuplicateNameException(moduleName + " already exists");
+			}
+
+			DBRecord moduleRecord = moduleAdapter.createModuleRecord(key, moduleName);
+			DBRecord pcRec = parentChildAdapter.addParentChildRecord(key, moduleRecord.getKey());
+
 			ModuleDB moduleDB = moduleMgr.getModuleDB(moduleRecord);
-			DBRecord pcRec = adapter.getParentChildRecord(key, moduleDB.key);
-			updateChildCount();
-			updateOrderField(pcRec);
+			updateChildCount(1);
+			updateOrderField(pcRec, childCount - 1);
 			moduleMgr.moduleAdded(key, moduleDB);
 			return moduleDB;
 		}
@@ -218,9 +229,14 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			checkIsValid();
 			List<DBRecord> list = getParentChildRecords();
 			Group[] kids = new Group[list.size()];
+			if (kids.length != childCount) {
+				// data inconsistency
+				throw new IOException("Inconsistent module child count (" + kids.length + " vs. " +
+					childCount + "): " + getName());
+			}
 			for (int i = 0; i < list.size(); i++) {
 				DBRecord rec = list.get(i);
-				long childID = rec.getLongValue(TreeManager.CHILD_ID_COL);
+				long childID = rec.getLongValue(ParentChildDBAdapter.CHILD_ID_COL);
 				if (childID < 0) {
 					kids[i] = moduleMgr.getFragmentDB(-childID);
 				}
@@ -228,7 +244,6 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 					kids[i] = moduleMgr.getModuleDB(childID);
 				}
 			}
-			childCount = kids.length;
 			return kids;
 		}
 		catch (IOException e) {
@@ -245,7 +260,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		lock.acquire();
 		try {
 			checkIsValid();
-			return record.getString(TreeManager.MODULE_COMMENTS_COL);
+			return record.getString(ModuleDBAdapter.MODULE_COMMENTS_COL);
 		}
 		finally {
 			lock.release();
@@ -259,9 +274,13 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			checkIsValid();
 			return findFirstAddress(this);
 		}
+		catch (IOException e) {
+			moduleMgr.dbError(e);
+		}
 		finally {
 			lock.release();
 		}
+		return null;
 	}
 
 	@Override
@@ -269,20 +288,19 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		lock.acquire();
 		try {
 			checkIsValid();
-			DBRecord fragmentRecord = adapter.getFragmentRecord(name);
+			DBRecord fragmentRecord = fragmentAdapter.getFragmentRecord(name);
 			DBRecord pcRec = null;
 			if (fragmentRecord != null) {
-				long fragID = fragmentRecord.getKey();
-				pcRec = adapter.getParentChildRecord(key, -fragID);
+				pcRec = parentChildAdapter.getParentChildRecord(key, -fragmentRecord.getKey());
 			}
 			else {
-				fragmentRecord = adapter.getModuleRecord(name);
-				if (fragmentRecord != null) {
-					pcRec = adapter.getParentChildRecord(key, fragmentRecord.getKey());
+				DBRecord moduleRecord = moduleAdapter.getModuleRecord(name);
+				if (moduleRecord != null) {
+					pcRec = parentChildAdapter.getParentChildRecord(key, moduleRecord.getKey());
 				}
 			}
 			if (pcRec != null) {
-				return pcRec.getIntValue(TreeManager.ORDER_COL);
+				return pcRec.getIntValue(ParentChildDBAdapter.ORDER_COL);
 			}
 		}
 		catch (IOException e) {
@@ -301,9 +319,13 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			checkIsValid();
 			return findLastAddress(this);
 		}
+		catch (IOException e) {
+			moduleMgr.dbError(e);
+		}
 		finally {
 			lock.release();
 		}
+		return null;
 	}
 
 	@Override
@@ -313,9 +335,13 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			checkIsValid();
 			return findMaxAddress(this, null);
 		}
+		catch (IOException e) {
+			moduleMgr.dbError(e);
+		}
 		finally {
 			lock.release();
 		}
+		return null;
 	}
 
 	@Override
@@ -325,9 +351,13 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			checkIsValid();
 			return findMinAddress(this, null);
 		}
+		catch (IOException e) {
+			moduleMgr.dbError(e);
+		}
 		finally {
 			lock.release();
 		}
+		return null;
 	}
 
 	@Override
@@ -363,12 +393,17 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		if (!(fragment instanceof FragmentDB)) {
 			return false;
 		}
-		FragmentDB frag = (FragmentDB) fragment;
+		lock.acquire();
 		try {
+			checkIsValid();
+			FragmentDB frag = (FragmentDB) fragment;
 			return moduleMgr.isDescendant(-frag.getKey(), key);
 		}
 		catch (IOException e) {
 			moduleMgr.dbError(e);
+		}
+		finally {
+			lock.release();
 		}
 		return false;
 	}
@@ -397,19 +432,20 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			boolean foundName = false;
 			Group group = null;
 
+			// TODO: this could be slow and may need monitor
 			List<DBRecord> list = getParentChildRecords();
 			for (int i = 0; i < list.size(); i++) {
 				DBRecord rec = list.get(i);
-				long childID = rec.getLongValue(TreeManager.CHILD_ID_COL);
+				long childID = rec.getLongValue(ParentChildDBAdapter.CHILD_ID_COL);
 				String childName = null;
 				DBRecord childRec = null;
 				if (childID < 0) {
-					childRec = adapter.getFragmentRecord(-childID);
-					childName = childRec.getString(TreeManager.FRAGMENT_NAME_COL);
+					childRec = fragmentAdapter.getFragmentRecord(-childID);
+					childName = childRec.getString(FragmentDBAdapter.FRAGMENT_NAME_COL);
 				}
 				else {
-					childRec = adapter.getModuleRecord(childID);
-					childName = childRec.getString(TreeManager.MODULE_NAME_COL);
+					childRec = moduleAdapter.getModuleRecord(childID);
+					childName = childRec.getString(ModuleDBAdapter.MODULE_NAME_COL);
 				}
 				if (childName.equals(name)) {
 					foundName = true;
@@ -445,18 +481,19 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		lock.acquire();
 		try {
 			checkDeleted();
-			DBRecord rec = adapter.getFragmentRecord(name);
+			DBRecord rec = fragmentAdapter.getFragmentRecord(name);
 			boolean deleteChild = false;
 
 			if (rec != null) {
 				// make sure that I am a parent of this child
 				long childID = rec.getKey();
-				DBRecord pcRec = adapter.getParentChildRecord(key, -childID);
+				DBRecord pcRec = parentChildAdapter.getParentChildRecord(key, -childID);
 				if (pcRec == null) {
 					// check for module record
 					return removeModuleRecord(name);
 				}
-				Field[] keys = adapter.getParentChildKeys(-childID, TreeManager.CHILD_ID_COL);
+				Field[] keys = parentChildAdapter.getParentChildKeys(-childID,
+					ParentChildDBAdapter.CHILD_ID_COL);
 				if (keys.length == 1) {
 					FragmentDB frag = moduleMgr.getFragmentDB(childID);
 					if (!frag.isEmpty()) {
@@ -479,18 +516,19 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	private boolean removeModuleRecord(String name) throws IOException, NotEmptyException {
 
-		DBRecord rec = adapter.getModuleRecord(name);
+		DBRecord rec = moduleAdapter.getModuleRecord(name);
 		if (rec == null) {
 			return false;
 		}
 		boolean deleteChild = false;
 		long childID = rec.getKey();
-		DBRecord pcRec = adapter.getParentChildRecord(key, childID);
+		DBRecord pcRec = parentChildAdapter.getParentChildRecord(key, childID);
 		if (pcRec == null) {
 			return false;
 		}
 
-		Field[] keys = adapter.getParentChildKeys(childID, TreeManager.CHILD_ID_COL);
+		Field[] keys =
+			parentChildAdapter.getParentChildKeys(childID, ParentChildDBAdapter.CHILD_ID_COL);
 		if (keys.length == 1) {
 			ProgramModule module = moduleMgr.getModuleDB(childID);
 			if (module.getNumChildren() > 0) {
@@ -527,12 +565,16 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			}
 			ModuleDB oldModuleDB = (ModuleDB) oldParent;
 
-			DBRecord oldPcRec = adapter.getParentChildRecord(oldModuleDB.key, childID);
-			adapter.removeParentChildRecord(oldPcRec.getKey());
-			DBRecord newPcRec = adapter.addParentChildRecord(key, childID);
-			++childCount;
-			updateOrderField(newPcRec);
+			DBRecord oldPcRec = parentChildAdapter.getParentChildRecord(oldModuleDB.key, childID);
+			parentChildAdapter.removeParentChildRecord(oldPcRec.getKey());
+			oldModuleDB.updateChildCount(-1);
+
+			DBRecord newPcRec = parentChildAdapter.addParentChildRecord(key, childID);
+			updateChildCount(1);
+			updateOrderField(newPcRec, childCount - 1);
+
 			oldModuleDB.resetChildOrder();
+
 			moduleMgr.childReparented(group, oldParent.getName(), getName());
 		}
 		catch (IOException e) {
@@ -558,7 +600,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		lock.acquire();
 		try {
 			checkIsValid();
-			return record.getString(TreeManager.MODULE_NAME_COL);
+			return record.getString(ModuleDBAdapter.MODULE_NAME_COL);
 		}
 		finally {
 			lock.release();
@@ -570,7 +612,8 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		lock.acquire();
 		try {
 			checkIsValid();
-			Field[] keys = adapter.getParentChildKeys(key, TreeManager.CHILD_ID_COL);
+			Field[] keys =
+				parentChildAdapter.getParentChildKeys(key, ParentChildDBAdapter.CHILD_ID_COL);
 			return keys.length;
 		}
 		catch (IOException e) {
@@ -602,11 +645,11 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		lock.acquire();
 		try {
 			checkDeleted();
-			String oldComments = record.getString(TreeManager.MODULE_COMMENTS_COL);
+			String oldComments = record.getString(ModuleDBAdapter.MODULE_COMMENTS_COL);
 			if (oldComments == null || !oldComments.equals(comment)) {
-				record.setString(TreeManager.MODULE_COMMENTS_COL, comment);
+				record.setString(ModuleDBAdapter.MODULE_COMMENTS_COL, comment);
 				try {
-					adapter.updateModuleRecord(record);
+					moduleAdapter.updateModuleRecord(record);
 					moduleMgr.commentsChanged(oldComments, this);
 				}
 				catch (IOException e) {
@@ -628,19 +671,19 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 				moduleMgr.getProgram().setName(name);
 				return;
 			}
-			DBRecord r = adapter.getModuleRecord(name);
+			DBRecord r = moduleAdapter.getModuleRecord(name);
 			if (r != null) {
 				if (key != r.getKey()) {
 					throw new DuplicateNameException(name + " already exists");
 				}
 				return; // no changes
 			}
-			if (adapter.getFragmentRecord(name) != null) {
+			if (fragmentAdapter.getFragmentRecord(name) != null) {
 				throw new DuplicateNameException(name + " already exists");
 			}
-			String oldName = record.getString(TreeManager.MODULE_NAME_COL);
-			record.setString(TreeManager.MODULE_NAME_COL, name);
-			adapter.updateModuleRecord(record);
+			String oldName = record.getString(ModuleDBAdapter.MODULE_NAME_COL);
+			record.setString(ModuleDBAdapter.MODULE_NAME_COL, name);
+			moduleAdapter.updateModuleRecord(record);
 			moduleMgr.nameChanged(oldName, this);
 		}
 		catch (IOException e) {
@@ -659,7 +702,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	private boolean contains(long childID) {
 		try {
-			DBRecord rec = adapter.getParentChildRecord(key, childID);
+			DBRecord rec = parentChildAdapter.getParentChildRecord(key, childID);
 			return rec != null;
 		}
 		catch (IOException e) {
@@ -668,24 +711,27 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return false;
 	}
 
-	private boolean removeChild(long childID, DBRecord pcRec, boolean isFragment, boolean deleteChild)
+	private boolean removeChild(long childID, DBRecord pcRec, boolean isFragment,
+			boolean deleteChild)
 			throws IOException {
 
-		adapter.removeParentChildRecord(pcRec.getKey());
+		parentChildAdapter.removeParentChildRecord(pcRec.getKey());
+		updateChildCount(-1);
+
 		String name = null;
 		boolean success = true;
 		if (isFragment) {
-			DBRecord fragRec = adapter.getFragmentRecord(childID);
-			name = fragRec.getString(TreeManager.FRAGMENT_NAME_COL);
+			DBRecord fragRec = fragmentAdapter.getFragmentRecord(childID);
+			name = fragRec.getString(FragmentDBAdapter.FRAGMENT_NAME_COL);
 			if (deleteChild) {
-				success = adapter.removeFragmentRecord(childID);
+				success = fragmentAdapter.removeFragmentRecord(childID);
 			}
 		}
 		else {
-			DBRecord mrec = adapter.getModuleRecord(childID);
-			name = mrec.getString(TreeManager.MODULE_NAME_COL);
+			DBRecord mrec = moduleAdapter.getModuleRecord(childID);
+			name = mrec.getString(ModuleDBAdapter.MODULE_NAME_COL);
 			if (deleteChild) {
-				success = adapter.removeModuleRecord(childID);
+				success = moduleAdapter.removeModuleRecord(childID);
 			}
 		}
 		if (success) {
@@ -700,11 +746,12 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 	 * Get sorted list based on child order column.
 	 */
 	private List<DBRecord> getParentChildRecords() throws IOException {
-		Field[] keys = adapter.getParentChildKeys(key, TreeManager.PARENT_ID_COL);
+		Field[] keys =
+			parentChildAdapter.getParentChildKeys(key, ParentChildDBAdapter.PARENT_ID_COL);
 		List<DBRecord> list = new ArrayList<DBRecord>();
 		Comparator<DBRecord> c = new ParentChildRecordComparator();
 		for (int i = 0; i < keys.length; i++) {
-			DBRecord rec = adapter.getParentChildRecord(keys[i].getLongValue());
+			DBRecord rec = parentChildAdapter.getParentChildRecord(keys[i].getLongValue());
 			int index = Collections.binarySearch(list, rec, c);
 			if (index < 0) {
 				index = -index - 1;
@@ -720,167 +767,132 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 	private void updateChildOrder(List<DBRecord> list) throws IOException {
 		for (int i = 0; i < list.size(); i++) {
 			DBRecord pcRec = list.get(i);
-			pcRec.setIntValue(TreeManager.ORDER_COL, i);
-			adapter.updateParentChildRecord(pcRec);
+			if (i != pcRec.getIntValue(ParentChildDBAdapter.ORDER_COL)) {
+				pcRec.setIntValue(ParentChildDBAdapter.ORDER_COL, i);
+				parentChildAdapter.updateParentChildRecord(pcRec);
+			}
 		}
 	}
 
 	private void resetChildOrder() throws IOException {
 		List<DBRecord> list = getParentChildRecords();
 		updateChildOrder(list);
-		updateChildCount();
 	}
 
-	private void updateOrderField(DBRecord pcRec) throws IOException {
-		int orderValue = getNumChildren() - 1;
-		if (orderValue < 0) {
-			orderValue = 0;
-		}
-		pcRec.setIntValue(TreeManager.ORDER_COL, orderValue);
-		adapter.updateParentChildRecord(pcRec);
+	private void updateOrderField(DBRecord pcRec, int orderValue) throws IOException {
+		pcRec.setIntValue(ParentChildDBAdapter.ORDER_COL, orderValue);
+		parentChildAdapter.updateParentChildRecord(pcRec);
 	}
 
-	private Address findFirstAddress(ModuleDB module) {
-		try {
-			List<DBRecord> list = module.getParentChildRecords();
-			for (int i = 0; i < list.size(); i++) {
-				DBRecord rec = list.get(i);
-				long childID = rec.getLongValue(TreeManager.CHILD_ID_COL);
-				if (childID < 0) {
-					FragmentDB frag = moduleMgr.getFragmentDB(-childID);
-					if (!frag.isEmpty()) {
-						return frag.getMinAddress();
-					}
-				}
-				else {
-					ModuleDB m = moduleMgr.getModuleDB(childID);
-					Address addr = findFirstAddress(m);
-					if (addr != null) {
-						return addr;
-					}
+	private Address findFirstAddress(ModuleDB module) throws IOException {
+		List<DBRecord> list = module.getParentChildRecords();
+		for (int i = 0; i < list.size(); i++) {
+			DBRecord rec = list.get(i);
+			long childID = rec.getLongValue(ParentChildDBAdapter.CHILD_ID_COL);
+			if (childID < 0) {
+				FragmentDB frag = moduleMgr.getFragmentDB(-childID);
+				if (!frag.isEmpty()) {
+					return frag.getMinAddress();
 				}
 			}
-		}
-		catch (IOException e) {
-			moduleMgr.dbError(e);
+			else {
+				ModuleDB m = moduleMgr.getModuleDB(childID);
+				Address addr = findFirstAddress(m);
+				if (addr != null) {
+					return addr;
+				}
+			}
 		}
 		return null;
 	}
 
-	private Address findLastAddress(ModuleDB module) {
-		try {
-			List<DBRecord> list = module.getParentChildRecords();
-			for (int i = list.size() - 1; i >= 0; i--) {
-				DBRecord rec = list.get(i);
-				long childID = rec.getLongValue(TreeManager.CHILD_ID_COL);
-				if (childID < 0) {
-					FragmentDB frag = moduleMgr.getFragmentDB(-childID);
-					if (!frag.isEmpty()) {
-						return frag.getMaxAddress();
-					}
+	private Address findLastAddress(ModuleDB module) throws IOException {
+		List<DBRecord> list = module.getParentChildRecords();
+		for (int i = list.size() - 1; i >= 0; i--) {
+			DBRecord rec = list.get(i);
+			long childID = rec.getLongValue(ParentChildDBAdapter.CHILD_ID_COL);
+			if (childID < 0) {
+				FragmentDB frag = moduleMgr.getFragmentDB(-childID);
+				if (!frag.isEmpty()) {
+					return frag.getMaxAddress();
 				}
-				else {
-					ModuleDB m = moduleMgr.getModuleDB(childID);
-					Address addr = findLastAddress(m);
-					if (addr != null) {
-						return addr;
-					}
+			}
+			else {
+				ModuleDB m = moduleMgr.getModuleDB(childID);
+				Address addr = findLastAddress(m);
+				if (addr != null) {
+					return addr;
 				}
 			}
 		}
-		catch (IOException e) {
-			moduleMgr.dbError(e);
-		}
 		return null;
-
 	}
 
-	private Address findMinAddress(ModuleDB module, Address addr) {
+	private Address findMinAddress(ModuleDB module, Address addr) throws IOException {
 		Address minAddr = addr;
-
-		try {
-			List<DBRecord> list = module.getParentChildRecords();
-			for (int i = 0; i < list.size(); i++) {
-				DBRecord rec = list.get(i);
-				long childID = rec.getLongValue(TreeManager.CHILD_ID_COL);
-				Address childMinAddr = null;
-				if (childID < 0) {
-					FragmentDB frag = moduleMgr.getFragmentDB(-childID);
-					if (!frag.isEmpty()) {
-						childMinAddr = frag.getMinAddress();
-					}
-				}
-				else {
-					ModuleDB m = moduleMgr.getModuleDB(childID);
-					childMinAddr = findMinAddress(m, addr);
-				}
-				if (childMinAddr != null && minAddr == null) {
-					minAddr = childMinAddr;
-				}
-				else if (childMinAddr != null && childMinAddr.compareTo(minAddr) < 0) {
-					minAddr = childMinAddr;
+		List<DBRecord> list = module.getParentChildRecords();
+		for (int i = 0; i < list.size(); i++) {
+			DBRecord rec = list.get(i);
+			long childID = rec.getLongValue(ParentChildDBAdapter.CHILD_ID_COL);
+			Address childMinAddr = null;
+			if (childID < 0) {
+				FragmentDB frag = moduleMgr.getFragmentDB(-childID);
+				if (!frag.isEmpty()) {
+					childMinAddr = frag.getMinAddress();
 				}
 			}
-		}
-		catch (IOException e) {
-			moduleMgr.dbError(e);
+			else {
+				ModuleDB m = moduleMgr.getModuleDB(childID);
+				childMinAddr = findMinAddress(m, addr);
+			}
+			if (childMinAddr != null && minAddr == null) {
+				minAddr = childMinAddr;
+			}
+			else if (childMinAddr != null && childMinAddr.compareTo(minAddr) < 0) {
+				minAddr = childMinAddr;
+			}
 		}
 		return minAddr;
-
 	}
 
-	private Address findMaxAddress(ModuleDB module, Address addr) {
+	private Address findMaxAddress(ModuleDB module, Address addr) throws IOException {
 		Address maxAddr = addr;
-
-		try {
-			List<DBRecord> list = module.getParentChildRecords();
-			for (int i = 0; i < list.size(); i++) {
-				DBRecord rec = list.get(i);
-				long childID = rec.getLongValue(TreeManager.CHILD_ID_COL);
-				Address childMaxAddr = null;
-				if (childID < 0) {
-					FragmentDB frag = moduleMgr.getFragmentDB(-childID);
-					if (!frag.isEmpty()) {
-						childMaxAddr = frag.getMaxAddress();
-					}
-				}
-				else {
-					ModuleDB m = moduleMgr.getModuleDB(childID);
-					childMaxAddr = findMaxAddress(m, addr);
-				}
-				if (childMaxAddr != null && maxAddr == null) {
-					maxAddr = childMaxAddr;
-				}
-				else if (childMaxAddr != null && childMaxAddr.compareTo(maxAddr) > 0) {
-					maxAddr = childMaxAddr;
+		List<DBRecord> list = module.getParentChildRecords();
+		for (int i = 0; i < list.size(); i++) {
+			DBRecord rec = list.get(i);
+			long childID = rec.getLongValue(ParentChildDBAdapter.CHILD_ID_COL);
+			Address childMaxAddr = null;
+			if (childID < 0) {
+				FragmentDB frag = moduleMgr.getFragmentDB(-childID);
+				if (!frag.isEmpty()) {
+					childMaxAddr = frag.getMaxAddress();
 				}
 			}
-		}
-		catch (IOException e) {
-			moduleMgr.dbError(e);
+			else {
+				ModuleDB m = moduleMgr.getModuleDB(childID);
+				childMaxAddr = findMaxAddress(m, addr);
+			}
+			if (childMaxAddr != null && maxAddr == null) {
+				maxAddr = childMaxAddr;
+			}
+			else if (childMaxAddr != null && childMaxAddr.compareTo(maxAddr) > 0) {
+				maxAddr = childMaxAddr;
+			}
 		}
 		return maxAddr;
-
 	}
 
-	private void updateChildCount() {
-		checkIsValid();
-		childCount = 0;
-		try {
-			Field[] keys = adapter.getParentChildKeys(key, TreeManager.PARENT_ID_COL);
-			childCount = keys.length;
-		}
-		catch (IOException e) {
-			moduleMgr.dbError(e);
-		}
+	private void updateChildCount(int change) throws IOException {
+		childCount += change;
+		record.setIntValue(ModuleDBAdapter.MODULE_CHILD_COUNT_COL, childCount);
+		moduleAdapter.updateModuleRecord(record);
 	}
 
 	private class ParentChildRecordComparator implements Comparator<DBRecord> {
-
 		@Override
 		public int compare(DBRecord r1, DBRecord r2) {
-			int index1 = r1.getIntValue(TreeManager.ORDER_COL);
-			int index2 = r2.getIntValue(TreeManager.ORDER_COL);
+			int index1 = r1.getIntValue(ParentChildDBAdapter.ORDER_COL);
+			int index2 = r2.getIntValue(ParentChildDBAdapter.ORDER_COL);
 			if (index1 < index2) {
 				return -1;
 			}
@@ -889,7 +901,6 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 			}
 			return 0;
 		}
-
 	}
 
 	@Override
@@ -907,4 +918,8 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		return moduleMgr.getTreeID();
 	}
 
+	@Override
+	public String toString() {
+		return record.getString(ModuleDBAdapter.MODULE_NAME_COL);
+	}
 }

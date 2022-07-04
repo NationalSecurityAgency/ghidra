@@ -45,8 +45,8 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemble_stmcsda_r2_lr0r1r2r4r6r7r8lc() {
-		assertOneCompatRestExact("stmdacs r2, {r0 r1 r2 r4 r6 r7 r8}^", "d7:01:42:28",
-			"stmdacs r2,{r0 r1 r2 r4 r6 r7 r8}^");
+		assertOneCompatRestExact("stmdacs r2, {r0, r1, r2, r4, r6, r7, r8}^", "d7:01:42:28",
+			"stmdacs r2,{r0,r1,r2,r4,r6,r7,r8}^");
 	}
 
 	@Test
@@ -68,6 +68,11 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	@Test
 	public void testAssemble_T_and_r0_r5() {
 		assertOneCompatRestExact("ands r0,r5", "28:40", THUMB, 0x00400000, "ands r0,r5");
+	}
+
+	@Test
+	public void testAssemble_T_movs_r0_r0() {
+		assertOneCompatRestExact("movs r0,r0", "00:00", THUMB, 0x00400000, "movs r0,r0");
 	}
 
 	@Test
@@ -102,8 +107,7 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	//@Ignore("This is a whitespace problem")
 	@Test
 	public void testAssemble_T_push_r7_lr() {
-		assertOneCompatRestExact("push { r7, lr }", "80:b5", THUMB, 0x00008000, "push { r7, lr }",
-			"push { r7, lr  }");
+		assertOneCompatRestExact("push {r7,lr}", "80:b5", THUMB, 0x00008000, "push {r7,lr}");
 	}
 
 	@Test

@@ -24,6 +24,22 @@
 #include "pcoderaw.hh"
 #include "float.hh"
 
+extern AttributeId ATTRIB_CODE;		///< Marshaling attribute "code"
+extern AttributeId ATTRIB_CONTAIN;	///< Marshaling attribute "contain"
+extern AttributeId ATTRIB_DEFAULTSPACE;	///< Marshaling attribute "defaultspace"
+extern AttributeId ATTRIB_UNIQBASE;	///< Marshaling attribute "uniqbase"
+
+extern ElementId ELEM_OP;		///< Marshaling element \<op>
+extern ElementId ELEM_SLEIGH;		///< Marshaling element \<sleigh>
+extern ElementId ELEM_SPACE;		///< Marshaling element \<space>
+extern ElementId ELEM_SPACEID;		///< Marshaling element \<spaceid>
+extern ElementId ELEM_SPACES;		///< Marshaling element \<spaces>
+extern ElementId ELEM_SPACE_BASE;	///< Marshaling element \<space_base>
+extern ElementId ELEM_SPACE_OTHER;	///< Marshaling element \<space_other>
+extern ElementId ELEM_SPACE_OVERLAY;	///< Marshaling element \<space_overlay>
+extern ElementId ELEM_SPACE_UNIQUE;	///< Marshaling element \<space_unique>
+extern ElementId ELEM_TRUNCATE_SPACE;	///< Marshaling element \<truncate_space>
+
 // Some errors specific to the translation unit
 
 /// \brief Exception for encountering unimplemented pcode
@@ -64,7 +80,7 @@ class TruncationTag {
   string spaceName;	///< Name of space to be truncated
   uint4 size;		///< Size truncated addresses into the space
 public:
-  void restoreXml(const Element *el);				///< Restore \b this from XML
+  void decode(Decoder &decoder);				///< Restore \b this from a stream
   const string &getName(void) const { return spaceName; }	///< Get name of address space being truncated
   uint4 getSize(void) const { return size; }			///< Size (of pointers) for new truncated space
 };
@@ -91,8 +107,8 @@ public:
   /// \param isize is the number of input varnodes
   virtual void dump(const Address &addr,OpCode opc,VarnodeData *outvar,VarnodeData *vars,int4 isize)=0;
 
-  /// Emit pcode directly from an XML tag
-  void restoreXmlOp(const Element *el,const AddrSpaceManager *trans);
+  /// Emit pcode directly from an \<op> element
+  void decodeOp(Decoder &decoder);
 
   enum {			// Tags for packed pcode format
     unimpl_tag = 0x20,
@@ -177,14 +193,14 @@ class SpacebaseSpace : public AddrSpace {
   void setBaseRegister(const VarnodeData &data,int4 origSize,bool stackGrowth); ///< Set the base register at time space is created
 public:
   SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,int4 sz,AddrSpace *base,int4 dl);
-  SpacebaseSpace(AddrSpaceManager *m,const Translate *t); ///< For use with restoreXml
+  SpacebaseSpace(AddrSpaceManager *m,const Translate *t); ///< For use with decode
   virtual int4 numSpacebase(void) const;
   virtual const VarnodeData &getSpacebase(int4 i) const;
   virtual const VarnodeData &getSpacebaseFull(int4 i) const;
   virtual bool stackGrowsNegative(void) const { return isNegativeStack; }
   virtual AddrSpace *getContain(void) const { return contain; } ///< Return containing space
   virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief A record describing how logical values are split
@@ -232,8 +248,8 @@ class AddrSpaceManager {
   set<JoinRecord *,JoinRecordCompare> splitset;	///< Different splits that have been defined in join space
   vector<JoinRecord *> splitlist; ///< JoinRecords indexed by join address
 protected:
-  AddrSpace *restoreXmlSpace(const Element *el,const Translate *trans); ///< Add a space to the model based an on XML tag
-  void restoreXmlSpaces(const Element *el,const Translate *trans); ///< Restore address spaces in the model from an XML tag
+  AddrSpace *decodeSpace(Decoder &decoder,const Translate *trans); ///< Add a space to the model based an on XML tag
+  void decodeSpaces(Decoder &decoder,const Translate *trans); ///< Restore address spaces in the model from an XML tag
   void setDefaultCodeSpace(int4 index); ///< Set the default address space (for code)
   void setDefaultDataSpace(int4 index);	///< Set the default address space for data
   void setReverseJustified(AddrSpace *spc); ///< Set reverse justified property on this space

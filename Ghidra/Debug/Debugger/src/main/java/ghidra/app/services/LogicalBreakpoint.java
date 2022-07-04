@@ -15,10 +15,12 @@
  */
 package ghidra.app.services;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import javax.swing.Icon;
+
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
@@ -35,24 +37,24 @@ public interface LogicalBreakpoint {
 	/**
 	 * The state of a logical breakpoint's program bookmark
 	 */
-	public enum ProgramEnablement {
+	public enum ProgramMode {
 		/**
 		 * A placeholder state when the program bookmark state is not applicable
 		 */
 		NONE {
 			@Override
-			public Enablement combineTrace(TraceEnablement traceEn) {
-				switch (traceEn) {
+			public State combineTrace(TraceMode traceMode, Perspective perspective) {
+				switch (traceMode) {
 					case NONE:
-						return Enablement.NONE;
+						return State.NONE;
 					case MISSING:
-						return Enablement.NONE;
+						return State.NONE;
 					case ENABLED:
-						return Enablement.ENABLED;
-					case MIXED:
-						return Enablement.DISABLED_ENABLED;
+						return State.INCONSISTENT_ENABLED;
 					case DISABLED:
-						return Enablement.DISABLED;
+						return State.INCONSISTENT_DISABLED;
+					case MIXED:
+						return State.INCONSISTENT_MIXED;
 					default:
 						throw new AssertionError();
 				}
@@ -67,17 +69,18 @@ public interface LogicalBreakpoint {
 		 */
 		MISSING {
 			@Override
-			public Enablement combineTrace(TraceEnablement traceEn) {
-				switch (traceEn) {
+			public State combineTrace(TraceMode traceMode, Perspective perspective) {
+				switch (traceMode) {
 					case NONE:
-						return Enablement.NONE;
+						return State.NONE;
 					case MISSING:
-						return Enablement.NONE;
+						return State.NONE;
 					case ENABLED:
-					case MIXED:
-						return Enablement.DISABLED_ENABLED;
+						return State.INCONSISTENT_ENABLED;
 					case DISABLED:
-						return Enablement.DISABLED;
+						return State.INCONSISTENT_DISABLED;
+					case MIXED:
+						return State.INCONSISTENT_MIXED;
 					default:
 						throw new AssertionError();
 				}
@@ -88,16 +91,32 @@ public interface LogicalBreakpoint {
 		 */
 		ENABLED {
 			@Override
-			public Enablement combineTrace(TraceEnablement traceEn) {
-				switch (traceEn) {
+			public State combineTrace(TraceMode traceMode, Perspective perspective) {
+				switch (traceMode) {
 					case NONE:
 					case MISSING:
-						return Enablement.INEFFECTIVE_ENABLED;
+						switch (perspective) {
+							case LOGICAL:
+								return State.INEFFECTIVE_ENABLED;
+							case TRACE:
+								return State.NONE;
+						}
 					case ENABLED:
-						return Enablement.ENABLED;
+						return State.ENABLED;
 					case DISABLED:
+						switch (perspective) {
+							case LOGICAL:
+								return State.INCONSISTENT_ENABLED;
+							case TRACE:
+								return State.INCONSISTENT_DISABLED;
+						}
 					case MIXED:
-						return Enablement.ENABLED_DISABLED;
+						switch (perspective) {
+							case LOGICAL:
+								return State.INCONSISTENT_ENABLED;
+							case TRACE:
+								return State.INCONSISTENT_MIXED;
+						}
 					default:
 						throw new AssertionError();
 				}
@@ -108,16 +127,33 @@ public interface LogicalBreakpoint {
 		 */
 		DISABLED {
 			@Override
-			public Enablement combineTrace(TraceEnablement traceEn) {
-				switch (traceEn) {
+			public State combineTrace(TraceMode traceMode, Perspective perspective) {
+				switch (traceMode) {
 					case NONE:
 					case MISSING:
-						return Enablement.INEFFECTIVE_DISABLED;
+						switch (perspective) {
+							case LOGICAL:
+								return State.INEFFECTIVE_DISABLED;
+							case TRACE:
+								return State.NONE;
+						}
 					case ENABLED:
-					case MIXED:
-						return Enablement.DISABLED_ENABLED;
+						switch (perspective) {
+							case LOGICAL:
+								return State.INCONSISTENT_DISABLED;
+							case TRACE:
+								return State.INCONSISTENT_ENABLED;
+						}
 					case DISABLED:
-						return Enablement.DISABLED;
+						return State.DISABLED;
+					case MIXED:
+						switch (perspective) {
+							case LOGICAL:
+								return State.INCONSISTENT_DISABLED;
+							case TRACE:
+								return State.INCONSISTENT_MIXED;
+						}
+						return State.INCONSISTENT_MIXED;
 					default:
 						throw new AssertionError();
 				}
@@ -132,183 +168,209 @@ public interface LogicalBreakpoint {
 		 * This state is generally considered the state of the logical breakpoint. In other words,
 		 * the program's perspective is the default.
 		 * 
-		 * @param traceEn the state of its locations
+		 * @param traceMode the mode of its locations
+		 * @param perspective the perspective
 		 * @return the logical state
 		 */
-		public abstract Enablement combineTrace(TraceEnablement traceEn);
+		public abstract State combineTrace(TraceMode traceMode, Perspective perspective);
+	}
+
+	public enum Perspective {
+		LOGICAL, TRACE;
 	}
 
 	/**
 	 * The state of a logical breakpoint's trace/target locations
 	 */
-	public enum TraceEnablement {
+	public enum TraceMode {
 		/**
-		 * A placeholder state when the breakpoint is not mapped to any trace
+		 * A placeholder mode when no traces are involved
 		 */
 		NONE {
 			@Override
-			public TraceEnablement combine(TraceEnablement that) {
+			public TraceMode combine(TraceMode that) {
 				return that;
-			}
-
-			@Override
-			public Enablement combineProgram(ProgramEnablement progEn) {
-				switch (progEn) {
-					case NONE:
-					case MISSING:
-						return Enablement.NONE;
-					case ENABLED:
-						return Enablement.INEFFECTIVE_ENABLED;
-					case DISABLED:
-						return Enablement.INEFFECTIVE_DISABLED;
-					default:
-						throw new AssertionError();
-				}
 			}
 		},
 		/**
-		 * The state when the breakpoint is mapped to at least one trace, but no locations are
-		 * placed
+		 * The mode when the breakpoint is missing from one or more of its mapped locations
 		 */
 		MISSING {
 			@Override
-			public TraceEnablement combine(TraceEnablement that) {
-				return that;
-			}
-
-			@Override
-			public Enablement combineProgram(ProgramEnablement progEn) {
-				switch (progEn) {
-					case NONE:
-					case MISSING:
-						return Enablement.NONE;
-					case ENABLED:
-						return Enablement.INEFFECTIVE_ENABLED;
-					case DISABLED:
-						return Enablement.INEFFECTIVE_DISABLED;
-					default:
-						throw new AssertionError();
-				}
+			public TraceMode combine(TraceMode that) {
+				return MISSING;
 			}
 		},
 		/**
-		 * The state when all mapped locations are placed and enabled
+		 * The mode when all mapped locations are placed and enabled
 		 */
 		ENABLED {
 			@Override
-			public TraceEnablement combine(TraceEnablement that) {
+			public TraceMode combine(TraceMode that) {
 				switch (that) {
 					case NONE:
-					case MISSING:
 					case ENABLED:
 						return ENABLED;
 					case DISABLED:
 					case MIXED:
 						return MIXED;
-					default:
-						throw new AssertionError();
-				}
-			}
-
-			@Override
-			public Enablement combineProgram(ProgramEnablement progEn) {
-				switch (progEn) {
-					case NONE:
 					case MISSING:
-					case DISABLED:
-						return Enablement.ENABLED_DISABLED;
-					case ENABLED:
-						return Enablement.ENABLED;
+						return MISSING;
 					default:
 						throw new AssertionError();
 				}
 			}
 		},
 		/**
-		 * The state when all mapped locations are placed and disabled
+		 * The mode when all mapped locations are placed and disabled
 		 */
 		DISABLED {
 			@Override
-			public TraceEnablement combine(TraceEnablement that) {
+			public TraceMode combine(TraceMode that) {
 				switch (that) {
 					case NONE:
-					case MISSING:
 					case DISABLED:
 						return DISABLED;
 					case ENABLED:
 					case MIXED:
 						return MIXED;
-					default:
-						throw new AssertionError();
-				}
-			}
-
-			@Override
-			public Enablement combineProgram(ProgramEnablement progEn) {
-				switch (progEn) {
-					case NONE:
 					case MISSING:
-					case DISABLED:
-						return Enablement.DISABLED;
-					case ENABLED:
-						return Enablement.DISABLED_ENABLED;
+						return MISSING;
 					default:
 						throw new AssertionError();
 				}
 			}
 		},
 		/**
-		 * The state when some mapped locations are enabled and some are disabled
+		 * The mode when all mapped locations are placed, but some are enabled, and some are
+		 * disabled
 		 */
 		MIXED {
 			@Override
-			public TraceEnablement combine(TraceEnablement that) {
-				return MIXED;
-			}
-
-			@Override
-			public Enablement combineProgram(ProgramEnablement progEn) {
-				return Enablement.ENABLED_DISABLED;
+			public TraceMode combine(TraceMode that) {
+				switch (that) {
+					case NONE:
+					case ENABLED:
+					case DISABLED:
+					case MIXED:
+						return MIXED;
+					case MISSING:
+						return MISSING;
+					default:
+						throw new AssertionError();
+				}
 			}
 		};
 
 		/**
-		 * Convert a boolean to trace enablement
+		 * Convert a boolean to trace breakpoint mode
 		 * 
-		 * @param en true for {@link #ENABLED}, false for {@link #DISABLED}
+		 * @param enabled true for {@link #ENABLED}, false for {@link #DISABLED}
 		 * @return the state
 		 */
-		public static TraceEnablement fromBool(boolean en) {
-			return en ? ENABLED : DISABLED;
+		public static TraceMode fromBool(boolean enabled) {
+			return enabled ? ENABLED : DISABLED;
 		}
 
 		/**
-		 * For locations of the same logical breakpoint, compose the state
+		 * For locations of the same logical breakpoint, compose the mode
 		 * 
 		 * @param that the other state
 		 * @return the composed state
 		 */
-		public abstract TraceEnablement combine(TraceEnablement that);
-
-		/**
-		 * Compose the logical breakpoint state from the perspective of the trace, given the state
-		 * of its program bookmark.
-		 * 
-		 * <p>
-		 * Typically, this is used not on a composed trace state, but on the one trace whose
-		 * perspective to consider. This should only be used when choosing how to render a
-		 * breakpoint in that trace's listing.
-		 * 
-		 * @param progEn the state of the program bookmark
-		 * @return the per-trace logical state
-		 */
-		public abstract Enablement combineProgram(ProgramEnablement progEn);
+		public abstract TraceMode combine(TraceMode that);
 	}
 
 	/**
-	 * The state of a logical breakpoint, i.e., whether or not its parts are enabled
+	 * The mode of a logical breakpoint
+	 * 
+	 * <p>
+	 * Depending on context this may describe the mode from the perspective of a program, where
+	 * breakpoints are saved from session to session; or this may describe the mode from the
+	 * perspective of one or more traces/targets:
+	 * 
+	 * <p>
+	 * If the breakpoint is a lone breakpoint, meaning Ghidra cannot determine to what program it
+	 * belongs, then this describes the mode of that trace breakpoint.
+	 * 
+	 * <p>
+	 * If the breakpoint is mapped, meaning Ghidra can determine to what program it belongs and at
+	 * what address, but it is not bookmarked, then for the static context, this describes the mode
+	 * of the participating trace breakpoints. If the breakpoint is bookmarked, then for the static
+	 * context, this describes the mode of that bookmark. For the dynamic context, this describes
+	 * the mode of the trace's breakpoint, ignoring the presence or state of the bookmark. Note that
+	 * the bookmark and trace modes may disagree. The displayed mode is still determined by context,
+	 * but it will be marked as inconsistent. See {@link Consistency}.
 	 */
-	public enum Enablement {
+	public enum Mode {
+		/** All locations are enabled */
+		ENABLED,
+		/** All locations are disabled */
+		DISABLED,
+		/** Has both enabled and disabled trace locations */
+		MIXED;
+
+		public Mode sameAddress(Mode that) {
+			if (this == Objects.requireNonNull(that)) {
+				return this;
+			}
+			return MIXED;
+		}
+	}
+
+	/**
+	 * The consistency of a logical breakpoint
+	 * 
+	 * <p>
+	 * When operating as designed, all breakpoints should be in the {@link #NORMAL} state. This
+	 * indicates that the breakpoint's bookmark and all trace locations agree on the mode.
+	 * Exceptions do happen, and they should be indicated to the user:
+	 * 
+	 * <p>
+	 * If the breakpoint is a lone breakpoint, meaning Ghidra cannot determine to what program it
+	 * belongs, then the breakpoint is always {@link #INCONSISTENT}, because Ghidra uses program
+	 * bookmarks to save breakpoints.
+	 * 
+	 * <p>
+	 * If the breakpoint is mapped, meaning Ghidra can determine to what program it belongs and at
+	 * what address, but it is not bookmarked, then the breakpoint is {@link #INCONSISTENT}. If it
+	 * is bookmarked, but the bookmark disagrees, then the breakpoint is {@link #INCONSISTENT}. A
+	 * breakpoint that is bookmarked but has no trace locations, or is missing from any
+	 * participating trace, is {@link #INEFFECTIVE}.
+	 * 
+	 * @implNote These are ordered by priority, highest last.
+	 */
+	public enum Consistency {
+		/** the bookmark and locations all agree */
+		NORMAL,
+		/** has a bookmark but one or more trace locations is missing */
+		INEFFECTIVE,
+		/** has a trace location but is not bookmarked, or the bookmark disagrees */
+		INCONSISTENT;
+
+		public Consistency sameAddress(Consistency that) {
+			return Consistency.values()[Math.max(this.ordinal(), that.ordinal())];
+		}
+	}
+
+	/**
+	 * The state of a logical breakpoint
+	 * 
+	 * <p>
+	 * Because a breakpoint is comprised of possibly many locations on target or among several
+	 * targets, as well as a saved bookmark in a program, the "state" can get fairly complex. This
+	 * is an attempt to enumerate these states while preserving enough information about the
+	 * breakpoint to display it in various contexts, hopefully informing more than confusing.
+	 * 
+	 * <p>
+	 * In essence, this is the cross product of {@link Mode} and {@link Consistency} with an
+	 * additional {@link #NONE} option.
+	 * 
+	 * <p>
+	 * A breakpoint is simply {@link #ENABLED} or {@link #DISABLED} if it is maped and all its
+	 * locations and bookmark agree. Ideally, all breakpoints would be in one of these two states.
+	 */
+	public enum State {
 		/**
 		 * A placeholder state, usually indicating the logical breakpoint should not exist
 		 * 
@@ -317,77 +379,95 @@ public interface LogicalBreakpoint {
 		 * breakpoint is ephemeral and about to be removed. This value may appear during
 		 * computations and is a suitable default placeholder for editors and renderers.
 		 */
-		NONE(false, false, true, false) {
-			@Override
-			public Enablement getPrimary() {
+		NONE(null, null, null, null),
+		/**
+		 * The breakpoint is enabled, and all locations and its bookmark agree
+		 */
+		ENABLED(Mode.ENABLED, Consistency.NORMAL, DebuggerResources.NAME_BREAKPOINT_MARKER_ENABLED, DebuggerResources.ICON_BREAKPOINT_MARKER_ENABLED),
+		/**
+		 * The breakpoint is disabled, and all locations and its bookmark agree
+		 */
+		DISABLED(Mode.DISABLED, Consistency.NORMAL, DebuggerResources.NAME_BREAKPOINT_MARKER_DISABLED, DebuggerResources.ICON_BREAKPOINT_MARKER_DISABLED),
+		/**
+		 * There are multiple logical breakpoints at this address, and they are all saved and
+		 * effective, but some are enabled, and some are disabled.
+		 */
+		MIXED(Mode.MIXED, Consistency.NORMAL, DebuggerResources.NAME_BREAKPOINT_MARKER_MIXED, DebuggerResources.ICON_BREAKPOINT_MARKER_MIXED),
+		/**
+		 * The breakpoint is saved as enabled, but one or more trace locations are absent.
+		 */
+		INEFFECTIVE_ENABLED(Mode.ENABLED, Consistency.INEFFECTIVE, DebuggerResources.NAME_BREAKPOINT_MARKER_INEFF_EN, DebuggerResources.ICON_BREAKPOINT_MARKER_INEFF_EN),
+		/**
+		 * The breakpoint is saved as disabled, and one or more trace locations are absent.
+		 */
+		INEFFECTIVE_DISABLED(Mode.DISABLED, Consistency.INEFFECTIVE, DebuggerResources.NAME_BREAKPOINT_MARKER_INEFF_DIS, DebuggerResources.ICON_BREAKPOINT_MARKER_INEFF_DIS),
+		/**
+		 * There are multiple logical breakpoints at this address, and they are all saved, but at
+		 * least one is ineffective; furthermore, some are enabled, and some are disabled.
+		 */
+		INEFFECTIVE_MIXED(Mode.MIXED, Consistency.INEFFECTIVE, DebuggerResources.NAME_BREAKPOINT_MARKER_INEFF_MIX, DebuggerResources.ICON_BREAKPOINT_MARKER_INEFF_MIX),
+		/**
+		 * The breakpoint is enabled, and all locations agree, but the bookmark is absent or
+		 * disagrees.
+		 */
+		INCONSISTENT_ENABLED(Mode.ENABLED, Consistency.INCONSISTENT, DebuggerResources.NAME_BREAKPOINT_MARKER_INCON_EN, DebuggerResources.ICON_BREAKPOINT_MARKER_INCON_EN),
+		/**
+		 * The breakpoint is disabled, and all locations agree, but the bookmark is absent or
+		 * disagrees.
+		 */
+		INCONSISTENT_DISABLED(Mode.DISABLED, Consistency.INCONSISTENT, DebuggerResources.NAME_BREAKPOINT_MARKER_INCON_DIS, DebuggerResources.ICON_BREAKPOINT_MARKER_INCON_DIS),
+		/**
+		 * The breakpoint is terribly inconsistent: its locations disagree, and the bookmark may be
+		 * absent.
+		 */
+		INCONSISTENT_MIXED(Mode.MIXED, Consistency.INCONSISTENT, DebuggerResources.NAME_BREAKPOINT_MARKER_INCON_MIX, DebuggerResources.ICON_BREAKPOINT_MARKER_INCON_MIX);
+
+		public final Mode mode;
+		public final Consistency consistency;
+		public final String display;
+		public final Icon icon;
+
+		State(Mode mode, Consistency consistency, String display, Icon icon) {
+			this.mode = mode;
+			this.consistency = consistency;
+			this.display = display;
+			this.icon = icon;
+		}
+
+		public static State fromFields(Mode mode, Consistency consistency) {
+			if (mode == null && consistency == null) {
 				return NONE;
 			}
-		},
-		/**
-		 * The breakpoint's bookmark and all mapped locations are placed and enabled
-		 */
-		ENABLED(true, false, true, true) {
-			@Override
-			public Enablement getPrimary() {
-				return ENABLED;
+			switch (mode) {
+				case ENABLED:
+					switch (consistency) {
+						case NORMAL:
+							return ENABLED;
+						case INEFFECTIVE:
+							return INEFFECTIVE_ENABLED;
+						case INCONSISTENT:
+							return INCONSISTENT_ENABLED;
+					}
+				case DISABLED:
+					switch (consistency) {
+						case NORMAL:
+							return DISABLED;
+						case INEFFECTIVE:
+							return INEFFECTIVE_DISABLED;
+						case INCONSISTENT:
+							return INCONSISTENT_DISABLED;
+					}
+				case MIXED:
+					switch (consistency) {
+						case NORMAL:
+							return MIXED;
+						case INEFFECTIVE:
+							return INEFFECTIVE_MIXED;
+						case INCONSISTENT:
+							return INCONSISTENT_MIXED;
+					}
 			}
-		},
-		/**
-		 * The breakpoint's bookmark and all mapped locations are placed and disabled
-		 */
-		DISABLED(false, true, true, true) {
-			@Override
-			public Enablement getPrimary() {
-				return DISABLED;
-			}
-		},
-		/**
-		 * The breakpoint's bookmark is enabled, but it has no mapped locations placed
-		 */
-		INEFFECTIVE_ENABLED(true, false, true, false) {
-			@Override
-			public Enablement getPrimary() {
-				return ENABLED;
-			}
-		},
-		/**
-		 * The breakpoint's bookmark is disabled, and it has no mapped locations placed
-		 */
-		INEFFECTIVE_DISABLED(false, true, true, false) {
-			@Override
-			public Enablement getPrimary() {
-				return DISABLED;
-			}
-		},
-		/**
-		 * The breakpoint's bookmark is enabled, but at least one mapped location is disabled
-		 */
-		ENABLED_DISABLED(true, false, false, true) {
-			@Override
-			public Enablement getPrimary() {
-				return ENABLED;
-			}
-		},
-		/**
-		 * The breakpoint's bookmark is disabled, but at least one mapped location is enabled
-		 */
-		DISABLED_ENABLED(false, true, false, true) {
-			@Override
-			public Enablement getPrimary() {
-				return DISABLED;
-			}
-		};
-
-		public final boolean enabled; // indicates any enabled location
-		public final boolean disabled; // indicates any disabled location
-		public final boolean consistent; // bookmark and target locations all agree
-		public final boolean effective; // has a target location, even if disabled
-
-		Enablement(boolean enabled, boolean disabled, boolean consistent, boolean effective) {
-			this.enabled = enabled;
-			this.disabled = disabled;
-			this.consistent = consistent;
-			this.effective = effective;
+			throw new AssertionError();
 		}
 
 		/**
@@ -401,64 +481,32 @@ public interface LogicalBreakpoint {
 		 * @param that the other state.
 		 * @return the composed state
 		 */
-		public Enablement sameAdddress(Enablement that) {
+		public State sameAdddress(State that) {
 			if (this == NONE) {
 				return that;
 			}
 			if (that == NONE) {
 				return this;
 			}
-			if (!this.effective && !that.effective) {
-				return this.enabled || that.enabled ? INEFFECTIVE_ENABLED : INEFFECTIVE_DISABLED;
-			}
-			return fromBools(this.enabled || that.enabled, this.enabled && that.enabled);
-		}
+			Mode mode = this.mode.sameAddress(that.mode);
+			Consistency consistency = this.consistency.sameAddress(that.consistency);
+			return fromFields(mode, consistency);
+		};
 
 		/**
 		 * For logical breakpoints which appear at the same address, compose their state
 		 * 
-		 * @see #sameAdddress(Enablement)
+		 * @see #sameAdddress(State)
 		 * @param col a collection of states derived from logical breakpoints at the same address
 		 * @return the composed state
 		 */
-		public static Enablement sameAddress(Collection<Enablement> col) {
-			Enablement result = NONE;
-			for (Enablement e : col) {
-				result = result.sameAdddress(e);
+		public static State sameAddress(Collection<State> col) {
+			State result = NONE;
+			for (State state : col) {
+				result = result.sameAdddress(state);
 			}
 			return result;
 		}
-
-		public static Enablement fromBools(boolean firstEn, boolean secondEn) {
-			if (firstEn) {
-				if (secondEn) {
-					return ENABLED;
-				}
-				else {
-					return ENABLED_DISABLED;
-				}
-			}
-			else {
-				if (secondEn) {
-					return DISABLED_ENABLED;
-				}
-				else {
-					return DISABLED;
-				}
-			}
-		}
-
-		/**
-		 * Get the "primary" state represented by this logical state
-		 * 
-		 * <p>
-		 * Generally, this is the state of the bookmark, i.e., program breakpoint. Not all logical
-		 * breakpoints have a placed bookmark, though. In that case, this still returns a reasonable
-		 * "primary" state.
-		 * 
-		 * @return the state
-		 */
-		public abstract Enablement getPrimary();
 
 		/**
 		 * Get the desired state were the the logical breakpoint to be toggled
@@ -479,11 +527,31 @@ public interface LogicalBreakpoint {
 		 * @param mapped true if the breakpoint is mapped, as interpreted by the action context
 		 * @return the resulting state
 		 */
-		public Enablement getToggled(boolean mapped) {
-			// If not mapped, just toggle. If mapped, consider any other state "disabled"
-			// This will cause most first toggles to make it consistent enabled-effective.
-			boolean en = mapped ? this == ENABLED : enabled;
-			return en ? DISABLED : ENABLED; // The actual toggle (and type conversion)
+		public State getToggled(boolean mapped) {
+			if (mapped && isIneffective()) {
+				return ENABLED;
+			}
+			return isDisabled() ? ENABLED : DISABLED;
+		}
+
+		public boolean isNormal() {
+			return consistency == Consistency.NORMAL;
+		}
+
+		public boolean isEnabled() {
+			return mode != Mode.DISABLED; // mixed is considered, in part, enabled
+		}
+
+		boolean isDisabled() {
+			return mode != Mode.ENABLED; // mixed is considered, in part, disabled
+		}
+
+		public boolean isEffective() {
+			return consistency != Consistency.INEFFECTIVE;
+		}
+
+		public boolean isIneffective() {
+			return consistency == Consistency.INEFFECTIVE;
 		}
 	}
 
@@ -584,7 +652,7 @@ public interface LogicalBreakpoint {
 	 * trace, but rather that for each returned trace, the logical breakpoint can be mapped to an
 	 * address in that trace. See {@link #getParticipatingTraces()}.
 	 * 
-	 * @return the set of traces
+	 * @return a copy of the set of traces
 	 */
 	Set<Trace> getMappedTraces();
 
@@ -622,27 +690,38 @@ public interface LogicalBreakpoint {
 	Address getAddress();
 
 	/**
-	 * Compute the enablement status for the given program.
+	 * Compute the state for the given program.
 	 * 
 	 * @param program the program
-	 * @return the enablement
+	 * @return the state
 	 */
-	Enablement computeEnablementForProgram(Program program);
+	State computeStateForProgram(Program program);
 
 	/**
-	 * Compute the enablement status for the given trace.
+	 * Compute the state for the given trace.
 	 * 
 	 * @param trace the trace
-	 * @return the enablement
+	 * @return the state
 	 */
-	Enablement computeEnablementForTrace(Trace trace);
+	State computeStateForTrace(Trace trace);
 
 	/**
-	 * Compute the enablement status for all involved traces and program.
+	 * Compute the state for the given location.
 	 * 
-	 * @return the enablement
+	 * <p>
+	 * This is just the location's mode combined with that of the static bookmark.
+	 * 
+	 * @param loc the location
+	 * @return the state
 	 */
-	Enablement computeEnablement();
+	State computeStateForLocation(TraceBreakpoint loc);
+
+	/**
+	 * Compute the state for all involved traces and program.
+	 * 
+	 * @return the state
+	 */
+	State computeState();
 
 	/**
 	 * Place an "enabled breakpoint" bookmark in the mapped program, if applicable.

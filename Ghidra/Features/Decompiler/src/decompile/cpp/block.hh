@@ -35,6 +35,17 @@ class BlockSwitch;
 class PrintLanguage;
 class BlockMap;
 
+extern AttributeId ATTRIB_ALTINDEX;	///< Marshaling attribute "altindex"
+extern AttributeId ATTRIB_DEPTH;	///< Marshaling attribute "depth"
+extern AttributeId ATTRIB_END;		///< Marshaling attribute "end"
+extern AttributeId ATTRIB_OPCODE;	///< Marshaling attribute "opcode"
+extern AttributeId ATTRIB_REV;		///< Marshaling attribute "rev"
+
+extern ElementId ELEM_BHEAD;		///< Marshaling element \<bhead>
+extern ElementId ELEM_BLOCK;		///< Marshaling element \<block>
+extern ElementId ELEM_BLOCKEDGE;	///< Marshaling element \<blockedge>
+extern ElementId ELEM_EDGE;		///< Marshaling element \<edge>
+
 /// \brief A control-flow edge between blocks (FlowBlock)
 ///
 /// The edge is owned by the source block and can have FlowBlock::edge_flags
@@ -45,10 +56,10 @@ struct BlockEdge {
   uint4 label;			///< Label of the edge
   FlowBlock *point;		///< Other end of the edge
   int4 reverse_index;		///< Index for edge coming other way
-  BlockEdge(void) {}		///< Constructor for use with restoreXml
+  BlockEdge(void) {}		///< Constructor for use with decode
   BlockEdge(FlowBlock *pt,uint4 lab,int4 rev) { label=lab; point=pt; reverse_index = rev; }	///< Constructor
-  void saveXml(ostream &s) const;	///< Save the edge to an XML stream
-  void restoreXml(const Element *el,BlockMap &resolver);	///< Restore \b this edge from an XML stream
+  void encode(Encoder &encoder) const;	///< Encode \b this edge to a stream
+  void decode(Decoder &decoder,BlockMap &resolver);	///< Restore \b this edge from a stream
 };
 
 /// \brief Description of a control-flow block containing PcodeOps
@@ -119,7 +130,7 @@ private:
 				// the result of the condition being false
   static void replaceEdgeMap(vector<BlockEdge> &vec);	///< Update block references in edges with copy map
   void addInEdge(FlowBlock *b,uint4 lab);	///< Add an edge coming into \b this
-  void restoreNextInEdge(const Element *el,BlockMap &resolver);	///< Restore the next input edge from XML
+  void decodeNextInEdge(Decoder &decoder,BlockMap &resolver);	///< Restore the next input edge from XML
   void halfDeleteInEdge(int4 slot);		///< Delete the \e in half of an edge, correcting indices
   void halfDeleteOutEdge(int4 slot);		///< Delete the \e out half of an edge, correcting indices
   void removeInEdge(int4 slot);			///< Remove an incoming edge
@@ -172,25 +183,23 @@ public:
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
   virtual void finalTransform(Funcdata &data) {}	///< Do any structure driven final transforms
   virtual void finalizePrinting(Funcdata &data) const {}	///< Make any final configurations necessary to print the block
-  virtual void saveXmlHeader(ostream &s) const;		///< Save basic information as XML attributes
-  virtual void restoreXmlHeader(const Element *el);	///< Restore basic information for XML attributes
-  virtual void saveXmlBody(ostream &s) const {}		///< Save detail about components to an XML stream
+  virtual void encodeHeader(Encoder &encoder) const;	///< Encode basic information as attributes
+  virtual void decodeHeader(Decoder &decoder);		///< Decode basic information from element attributes
+  virtual void encodeBody(Encoder &encoder) const {}	///< Encode detail about components to a stream
 
-  /// \brief Restore details about \b this FlowBlock from an XML stream
+  /// \brief Restore details about \b this FlowBlock from an element stream
   ///
-  /// \param iter is an iterator to XML elements containing component tags etc.
-  /// \param enditer marks the end of the XML tags
-  /// \param resolver is used to recover FlowBlock objects based on XML references
-  virtual void restoreXmlBody(List::const_iterator &iter,List::const_iterator enditer,BlockMap &resolver) {}
-  void saveXmlEdges(ostream &s) const;			///< Save edge information to an XML stream
-  void restoreXmlEdges(List::const_iterator &iter,List::const_iterator enditer,BlockMap &resolver);
-  void saveXml(ostream &s) const;			///< Write out \b this to an XML stream
-  void restoreXml(const Element *el,BlockMap &resolver);	///< Restore \b this from an XML stream
+  /// \param decoder is the stream decoder
+  virtual void decodeBody(Decoder &decoder) {}
+  void encodeEdges(Encoder &encoder) const;		///< Encode edge information to a stream
+  void decodeEdges(Decoder &decoder,BlockMap &resolver);
+  void encode(Encoder &encoder) const;			///< Encode \b this to a stream
+  void decode(Decoder &decoder,BlockMap &resolver);	///< Decode \b this from a stream
   const FlowBlock *nextInFlow(void) const;		///< Return next block to be executed in flow
   void setVisitCount(int4 i) { visitcount = i; }	///< Set the number of times this block has been visited
   int4 getVisitCount(void) const { return visitcount; }	///< Get the count of visits
   void setGotoBranch(int4 i);				///< Mark a \e goto branch
-  void setDefaultSwitch(int4 i) { setOutEdgeFlag(i,f_defaultswitch_edge); }	///< Mark an edge as the switch default
+  void setDefaultSwitch(int4 pos);			///< Mark an edge as the switch default
   bool isMark(void) const { return ((flags&f_mark)!=0); }	///< Return \b true if \b this block has been marked
   void setMark(void) { flags |= f_mark; }			///< Mark \b this block
   void clearMark(void) { flags &= ~f_mark; }			///< Clear any mark on \b this block
@@ -299,9 +308,9 @@ public:
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
   virtual void finalTransform(Funcdata &data);
   virtual void finalizePrinting(Funcdata &data) const;
-  virtual void saveXmlBody(ostream &s) const;
-  virtual void restoreXmlBody(List::const_iterator &iter,List::const_iterator enditer,BlockMap &resolver);
-  void restoreXml(const Element *el,const AddrSpaceManager *m);	///< Restore \b this BlockGraph from an XML stream
+  virtual void encodeBody(Encoder &encoder) const;
+  virtual void decodeBody(Decoder &decoder);
+  void decode(Decoder &decoder);				///< Decode \b this BlockGraph from a stream
   void addEdge(FlowBlock *begin,FlowBlock *end);		///< Add a directed edge between component FlowBlocks
   void addLoopEdge(FlowBlock *begin,int4 outindex);		///< Mark a given edge as a \e loop edge
   void removeEdge(FlowBlock *begin,FlowBlock *end);		///< Remove an edge between component FlowBlocks
@@ -383,8 +392,8 @@ public:
   virtual Address getStop(void) const;
   virtual block_type getType(void) const { return t_basic; }
   virtual FlowBlock *subBlock(int4 i) const { return (FlowBlock *)0; }
-  virtual void saveXmlBody(ostream &s) const;
-  virtual void restoreXmlBody(List::const_iterator &iter,List::const_iterator enditer,BlockMap &resolver);
+  virtual void encodeBody(Encoder &encoder) const;
+  virtual void decodeBody(Decoder &decoder);
   virtual void printHeader(ostream &s) const;
   virtual void printRaw(ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockBasic(this); }
@@ -431,7 +440,7 @@ public:
   virtual bool negateCondition(bool toporbottom) { bool res = copy->negateCondition(true); FlowBlock::negateCondition(toporbottom); return res; }
   virtual FlowBlock *getSplitPoint(void) { return copy->getSplitPoint(); }
   virtual bool isComplex(void) const { return copy->isComplex(); }
-  virtual void saveXmlHeader(ostream &s) const;
+  virtual void encodeHeader(Encoder &encoder) const;
 };
 
 /// \brief A block that terminates with an unstructured (goto) branch to another block
@@ -458,7 +467,7 @@ public:
   virtual const FlowBlock *getExitLeaf(void) const { return getBlock(0)->getExitLeaf(); }
   virtual PcodeOp *lastOp(void) const { return getBlock(0)->lastOp(); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void saveXmlBody(ostream &s) const;
+  virtual void encodeBody(Encoder &encoder) const;
 };
 
 /// \brief A block with multiple edges out, at least one of which is an unstructured (goto) branch.
@@ -486,7 +495,7 @@ public:
   virtual const FlowBlock *getExitLeaf(void) const { return getBlock(0)->getExitLeaf(); }
   virtual PcodeOp *lastOp(void) const { return getBlock(0)->lastOp(); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void saveXmlBody(ostream &s) const;
+  virtual void encodeBody(Encoder &encoder) const;
 };
 
 /// \brief A series of blocks that execute in sequence.
@@ -531,7 +540,7 @@ public:
   virtual PcodeOp *lastOp(void) const;
   virtual bool isComplex(void) const { return getBlock(0)->isComplex(); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void saveXmlHeader(ostream &s) const;
+  virtual void encodeHeader(Encoder &encoder) const;
 };
 
 /// \brief A basic "if" block
@@ -569,7 +578,7 @@ public:
   virtual const FlowBlock *getExitLeaf(void) const;
   virtual PcodeOp *lastOp(void) const;
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void saveXmlBody(ostream &s) const;
+  virtual void encodeBody(Encoder &encoder) const;
 };  
 
 /// \brief A loop structure where the condition is checked at the top.
@@ -703,14 +712,10 @@ public:
 /// list of FlowBlock objects sorted by index and then looks up the FlowBlock matching a given
 /// index as edges specify them.
 class BlockMap {
-  const AddrSpaceManager *manage;	///< Address space manager used to restore FlowBlock address ranges
   vector<FlowBlock *> sortlist;		///< The list of deserialized FlowBlock objects
   FlowBlock *resolveBlock(FlowBlock::block_type bt);	///< Construct a FlowBlock of the given type
   static FlowBlock *findBlock(const vector<FlowBlock *> &list,int4 ind);	///< Locate a FlowBlock with a given index
 public:
-  BlockMap(const AddrSpaceManager *m) { manage = m; }	///< Construct given an address space manager
-  BlockMap(const BlockMap &op2);			///< Copy constructor
-  const AddrSpaceManager *getAddressManager(void) const { return manage; }	///< Get the address space manager
   void sortList(void);					///< Sort the list of FlowBlock objects
 
   /// \brief Find the FlowBlock matching the given index

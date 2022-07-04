@@ -127,6 +127,9 @@
         <pentry minsize="1" maxsize="8" extension="zero">
           <register name="x0"/>
         </pentry>
+        <pentry minsize="9" maxsize="16" extension="zero">
+          <addr space="join" piece1="x1" piece2="x0"/>
+        </pentry>
       </output>
       <unaffected>
         <register name="x19"/>

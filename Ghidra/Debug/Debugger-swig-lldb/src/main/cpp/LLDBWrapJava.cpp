@@ -4714,6 +4714,18 @@ SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eSaveCoreDirtyOnly_1get(JNIEnv *jenv, 
 }
 
 
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eSaveCoreStackOnly_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  lldb::SaveCoreStyle result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (lldb::SaveCoreStyle)lldb::eSaveCoreStackOnly;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBAddress_1_1SWIG_10(JNIEnv *jenv, jclass jcls) {
   jlong jresult = 0 ;
   lldb::SBAddress *result = 0 ;
@@ -12141,6 +12153,32 @@ SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBData_1SetData(JNIEnv *jenv, jclass j
 }
 
 
+SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBData_1SetDataWithOwnership(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jlong jarg3, jlong jarg4, jint jarg5, jshort jarg6) {
+  lldb::SBData *arg1 = (lldb::SBData *) 0 ;
+  lldb::SBError *arg2 = 0 ;
+  void *arg3 = (void *) 0 ;
+  size_t arg4 ;
+  lldb::ByteOrder arg5 ;
+  uint8_t arg6 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(lldb::SBData **)&jarg1; 
+  arg2 = *(lldb::SBError **)&jarg2;
+  if (!arg2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBError & reference is null");
+    return ;
+  } 
+  arg3 = *(void **)&jarg3; 
+  arg4 = (size_t)jarg4; 
+  arg5 = (lldb::ByteOrder)jarg5; 
+  arg6 = (uint8_t)jarg6; 
+  (arg1)->SetDataWithOwnership(*arg2,(void const *)arg3,arg4,arg5,arg6);
+}
+
+
 SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBData_1Append(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   jboolean jresult = 0 ;
   lldb::SBData *arg1 = (lldb::SBData *) 0 ;
@@ -12659,6 +12697,28 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1GetErrorFileHandle(JNIEnv
   arg1 = *(lldb::SBDebugger **)&jarg1; 
   result = lldb_SBDebugger_GetErrorFileHandle(arg1);
   *(lldb::FileSP **)&jresult = new lldb::FileSP((const lldb::FileSP &)result); 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1SetInputString(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+  jlong jresult = 0 ;
+  lldb::SBDebugger *arg1 = (lldb::SBDebugger *) 0 ;
+  char *arg2 = (char *) 0 ;
+  lldb::SBError result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBDebugger **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  result = (arg1)->SetInputString((char const *)arg2);
+  *(lldb::SBError **)&jresult = new lldb::SBError((const lldb::SBError &)result); 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
   return jresult;
 }
 
@@ -14261,6 +14321,23 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1GetSyntheticForType(JNIEn
   arg2 = *argp2; 
   result = (arg1)->GetSyntheticForType(arg2);
   *(lldb::SBTypeSynthetic **)&jresult = new lldb::SBTypeSynthetic((const lldb::SBTypeSynthetic &)result); 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1GetScriptInterpreterInfo(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+  jlong jresult = 0 ;
+  lldb::SBDebugger *arg1 = (lldb::SBDebugger *) 0 ;
+  lldb::ScriptLanguage arg2 ;
+  lldb::SBStructuredData result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBDebugger **)&jarg1; 
+  arg2 = (lldb::ScriptLanguage)jarg2; 
+  result = (arg1)->GetScriptInterpreterInfo(arg2);
+  *(lldb::SBStructuredData **)&jresult = new lldb::SBStructuredData((const lldb::SBStructuredData &)result); 
   return jresult;
 }
 
@@ -20618,6 +20695,85 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBMemoryRegionInfo_1_1SWIG_11(JN
 }
 
 
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBMemoryRegionInfo_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jstring jarg1, jobject jarg2, jobject jarg3, jlong jarg4, jboolean jarg5, jboolean jarg6) {
+  jlong jresult = 0 ;
+  char *arg1 = (char *) 0 ;
+  lldb::addr_t arg2 ;
+  lldb::addr_t arg3 ;
+  uint32_t arg4 ;
+  bool arg5 ;
+  bool arg6 ;
+  lldb::SBMemoryRegionInfo *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = 0;
+  if (jarg1) {
+    arg1 = (char *)jenv->GetStringUTFChars(jarg1, 0);
+    if (!arg1) return 0;
+  }
+  {
+    jclass clazz;
+    jmethodID mid;
+    jbyteArray ba;
+    jbyte* bae;
+    jsize sz;
+    int i;
+    
+    if (!jarg2) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "BigInteger null");
+      return 0;
+    }
+    clazz = jenv->GetObjectClass(jarg2);
+    mid = jenv->GetMethodID(clazz, "toByteArray", "()[B");
+    ba = (jbyteArray)jenv->CallObjectMethod(jarg2, mid);
+    bae = jenv->GetByteArrayElements(ba, 0);
+    sz = jenv->GetArrayLength(ba);
+    arg2 = 0;
+    if (sz > 0) {
+      arg2 = (lldb::addr_t)(signed char)bae[0];
+      for(i=1; i<sz; i++) {
+        arg2 = (arg2 << 8) | (lldb::addr_t)(unsigned char)bae[i];
+      }
+    }
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+  }
+  {
+    jclass clazz;
+    jmethodID mid;
+    jbyteArray ba;
+    jbyte* bae;
+    jsize sz;
+    int i;
+    
+    if (!jarg3) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "BigInteger null");
+      return 0;
+    }
+    clazz = jenv->GetObjectClass(jarg3);
+    mid = jenv->GetMethodID(clazz, "toByteArray", "()[B");
+    ba = (jbyteArray)jenv->CallObjectMethod(jarg3, mid);
+    bae = jenv->GetByteArrayElements(ba, 0);
+    sz = jenv->GetArrayLength(ba);
+    arg3 = 0;
+    if (sz > 0) {
+      arg3 = (lldb::addr_t)(signed char)bae[0];
+      for(i=1; i<sz; i++) {
+        arg3 = (arg3 << 8) | (lldb::addr_t)(unsigned char)bae[i];
+      }
+    }
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+  }
+  arg4 = (uint32_t)jarg4; 
+  arg5 = jarg5 ? true : false; 
+  arg6 = jarg6 ? true : false; 
+  result = (lldb::SBMemoryRegionInfo *)new lldb::SBMemoryRegionInfo((char const *)arg1,arg2,arg3,arg4,arg5,arg6);
+  *(lldb::SBMemoryRegionInfo **)&jresult = result; 
+  if (arg1) jenv->ReleaseStringUTFChars(jarg1, (const char *)arg1);
+  return jresult;
+}
+
+
 SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_delete_1SBMemoryRegionInfo(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   lldb::SBMemoryRegionInfo *arg1 = (lldb::SBMemoryRegionInfo *) 0 ;
   
@@ -20950,6 +21106,55 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBMemoryRegionInfoList_1GetSize(JNIEn
 }
 
 
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBMemoryRegionInfoList_1GetMemoryRegionContainingAddress(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobject jarg2, jlong jarg3, jobject jarg3_) {
+  jboolean jresult = 0 ;
+  lldb::SBMemoryRegionInfoList *arg1 = (lldb::SBMemoryRegionInfoList *) 0 ;
+  lldb::addr_t arg2 ;
+  lldb::SBMemoryRegionInfo *arg3 = 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg3_;
+  arg1 = *(lldb::SBMemoryRegionInfoList **)&jarg1; 
+  {
+    jclass clazz;
+    jmethodID mid;
+    jbyteArray ba;
+    jbyte* bae;
+    jsize sz;
+    int i;
+    
+    if (!jarg2) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "BigInteger null");
+      return 0;
+    }
+    clazz = jenv->GetObjectClass(jarg2);
+    mid = jenv->GetMethodID(clazz, "toByteArray", "()[B");
+    ba = (jbyteArray)jenv->CallObjectMethod(jarg2, mid);
+    bae = jenv->GetByteArrayElements(ba, 0);
+    sz = jenv->GetArrayLength(ba);
+    arg2 = 0;
+    if (sz > 0) {
+      arg2 = (lldb::addr_t)(signed char)bae[0];
+      for(i=1; i<sz; i++) {
+        arg2 = (arg2 << 8) | (lldb::addr_t)(unsigned char)bae[i];
+      }
+    }
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+  }
+  arg3 = *(lldb::SBMemoryRegionInfo **)&jarg3;
+  if (!arg3) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBMemoryRegionInfo & reference is null");
+    return 0;
+  } 
+  result = (bool)(arg1)->GetMemoryRegionContainingAddress(arg2,*arg3);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBMemoryRegionInfoList_1GetMemoryRegionAtIndex(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jlong jarg3, jobject jarg3_) {
   jboolean jresult = 0 ;
   lldb::SBMemoryRegionInfoList *arg1 = (lldb::SBMemoryRegionInfoList *) 0 ;
@@ -21150,6 +21355,21 @@ SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBModule_1Clear(JNIEnv *jenv, jclass j
   (void)jarg1_;
   arg1 = *(lldb::SBModule **)&jarg1; 
   (arg1)->Clear();
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBModule_1IsFileBacked(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  lldb::SBModule *arg1 = (lldb::SBModule *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBModule **)&jarg1; 
+  result = (bool)((lldb::SBModule const *)arg1)->IsFileBacked();
+  jresult = (jboolean)result; 
+  return jresult;
 }
 
 
@@ -23193,6 +23413,24 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBPlatform_1GetOSUpdateVersion(JNIEnv
   result = (uint32_t)(arg1)->GetOSUpdateVersion();
   jresult = (jlong)result; 
   return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBPlatform_1SetSDKRoot(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+  lldb::SBPlatform *arg1 = (lldb::SBPlatform *) 0 ;
+  char *arg2 = (char *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBPlatform **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return ;
+  }
+  (arg1)->SetSDKRoot((char const *)arg2);
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
 }
 
 
@@ -29623,6 +29861,21 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBTarget_1GetCodeByteSize(JNIEnv *jen
 }
 
 
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBTarget_1GetMaximumNumberOfChildrenToDisplay(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  lldb::SBTarget *arg1 = (lldb::SBTarget *) 0 ;
+  uint32_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTarget **)&jarg1; 
+  result = (uint32_t)((lldb::SBTarget const *)arg1)->GetMaximumNumberOfChildrenToDisplay();
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBTarget_1SetSectionLoadAddress(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jobject jarg3) {
   jlong jresult = 0 ;
   lldb::SBTarget *arg1 = (lldb::SBTarget *) 0 ;
@@ -33629,6 +33882,21 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBThread_1SafeToCallFunctions(JNIE
   arg1 = *(lldb::SBThread **)&jarg1; 
   result = (bool)(arg1)->SafeToCallFunctions();
   jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBThread_1GetSiginfo(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  lldb::SBThread *arg1 = (lldb::SBThread *) 0 ;
+  lldb::SBValue result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBThread **)&jarg1; 
+  result = (arg1)->GetSiginfo();
+  *(lldb::SBValue **)&jresult = new lldb::SBValue((const lldb::SBValue &)result); 
   return jresult;
 }
 
@@ -40066,6 +40334,28 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBValue_1SetData(JNIEnv *jenv, jcl
   } 
   result = (bool)(arg1)->SetData(*arg2,*arg3);
   jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBValue_1Clone(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+  jlong jresult = 0 ;
+  lldb::SBValue *arg1 = (lldb::SBValue *) 0 ;
+  char *arg2 = (char *) 0 ;
+  lldb::SBValue result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBValue **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  result = (arg1)->Clone((char const *)arg2);
+  *(lldb::SBValue **)&jresult = new lldb::SBValue((const lldb::SBValue &)result); 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
   return jresult;
 }
 

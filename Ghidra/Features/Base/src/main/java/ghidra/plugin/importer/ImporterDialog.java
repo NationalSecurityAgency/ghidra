@@ -15,13 +15,14 @@
  */
 package ghidra.plugin.importer;
 
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -529,17 +530,10 @@ public class ImporterDialog extends DialogComponentProvider {
 
 	private boolean isFilenameTooLong() {
 		int maxNameLen = tool.getProject().getProjectData().getMaxNameLength();
-		String fullPath = getName();
-		String currentPath = fullPath;
-		while (!StringUtils.isBlank(currentPath)) {
-			String filename = FilenameUtils.getName(currentPath);
-			if (filename.isEmpty()) {
-				return false;
-			}
-			if (filename.length() >= maxNameLen) {
+		for (String pathPart : getName().split("/")) {
+			if (pathPart.length() >= maxNameLen) {
 				return true;
 			}
-			currentPath = FilenameUtils.getFullPathNoEndSeparator(currentPath);
 		}
 		return false;
 	}

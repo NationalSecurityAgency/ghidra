@@ -738,4 +738,51 @@ public class HighFunctionDBUtil {
 		}
 		return storageAddress;
 	}
+
+	/**
+	 * Write a union facet to the database (UnionFacetSymbol).  Parameters provide the
+	 * pieces for building the dynamic LocalVariable.  This method clears out any preexisting
+	 * union facet with the same dynamic hash and firstUseOffset.
+	 * @param function is the function affected by the union facet
+	 * @param dt is the parent data-type, either the union or a pointer to it
+	 * @param fieldNum is the ordinal of the desired union field
+	 * @param addr is the first use address of the facet
+	 * @param hash is the dynamic hash
+	 * @param source is the SourceType for the LocalVariable
+	 * @throws InvalidInputException if the LocalVariable cannot be created
+	 * @throws DuplicateNameException if the (auto-generated) name is used elsewhere
+	 */
+	public static void writeUnionFacet(Function function, DataType dt, int fieldNum, Address addr,
+			long hash, SourceType source) throws InvalidInputException, DuplicateNameException {
+		int firstUseOffset = (int) addr.subtract(function.getEntryPoint());
+		String symbolName = UnionFacetSymbol.buildSymbolName(fieldNum, addr);
+		boolean nameCollision = false;
+		Variable[] localVariables =
+			function.getLocalVariables(VariableFilter.UNIQUE_VARIABLE_FILTER);
+		Variable preexistingVar = null;
+		for (Variable var : localVariables) {
+			if (var.getFirstUseOffset() == firstUseOffset &&
+				var.getFirstStorageVarnode().getOffset() == hash) {
+				preexistingVar = var;
+			}
+			else if (var.getName().startsWith(symbolName)) {
+				nameCollision = true;
+			}
+		}
+		if (nameCollision) {	// Uniquify the name if necessary
+			symbolName = symbolName + '_' + Integer.toHexString(DynamicHash.getComparable(hash));
+		}
+		if (preexistingVar != null) {
+			if (preexistingVar.getName().equals(symbolName)) {
+				return;			// No change to make
+			}
+			preexistingVar.setName(symbolName, source);		// Change the name
+			return;
+		}
+		Program program = function.getProgram();
+		VariableStorage storage =
+			new VariableStorage(program, AddressSpace.HASH_SPACE.getAddress(hash), dt.getLength());
+		Variable var = new LocalVariableImpl(symbolName, firstUseOffset, dt, storage, program);
+		function.addLocalVariable(var, SourceType.USER_DEFINED);
+	}
 }

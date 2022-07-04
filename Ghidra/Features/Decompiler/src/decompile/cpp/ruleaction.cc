@@ -114,7 +114,7 @@ int4 RuleCollectTerms::applyOp(PcodeOp *op,Funcdata &data)
   termorder.sortTerms();	// Sort them based on termorder
   Varnode *vn1,*vn2;
   uintb coef1,coef2;
-  const vector<PcodeOpEdge *> &order( termorder.getSort() );
+  const vector<AdditiveEdge *> &order( termorder.getSort() );
   int4 i=0;
 
   if (!order[0]->getVarnode()->isConstant()) {
@@ -3552,13 +3552,8 @@ int4 RulePropagateCopy::applyOp(PcodeOp *op,Funcdata &data)
   int4 i;
   PcodeOp *copyop;
   Varnode *vn,*invn;
-  OpCode opc;
 
-  opc = op->code();
-  if (opc==CPUI_RETURN) return 0; // Preserve the address of return variable
-//   else if (opc == CPUI_INDIRECT) {
-//     if (op->Output()->isAddrForce()) return 0;
-//   }
+  if (op->stopsCopyPropagation()) return 0;
   for(i=0;i<op->numInput();++i) {
     vn = op->getIn(i);
     if (!vn->isWritten()) continue; // Varnode must be written to
@@ -3868,7 +3863,7 @@ AddrSpace *RuleLoadVarnode::checkSpacebase(Architecture *glb,PcodeOp *op,uintb &
   AddrSpace *loadspace;
 
   offvn = op->getIn(1);		// Address offset
-  loadspace = Address::getSpaceFromConst(op->getIn(0)->getAddr()); // Space being loaded/stored
+  loadspace = op->getIn(0)->getSpaceFromConst(); // Space being loaded/stored
   // Treat segmentop as part of load/store
   if (offvn->isWritten()&&(offvn->getDef()->code()==CPUI_SEGMENTOP)) {
     offvn = offvn->getDef()->getIn(2);
@@ -4181,9 +4176,11 @@ int4 RuleSubCommute::applyOp(PcodeOp *op,Funcdata &data)
     break;
   }
   case CPUI_INT_ADD:
+    if (offset != 0) return 0;	// Only commutes with least significant SUBPIECE
+    if (longform->getIn(0)->isSpacebase()) return 0;	// Deconflict with RulePtrArith
+    break;
   case CPUI_INT_MULT:
-				// These only commute with least significant SUBPIECE
-    if (offset != 0) return 0;
+    if (offset != 0) return 0;	// Only commutes with least significant SUBPIECE
     break;
 				// Bitwise ops, type of subpiece doesnt matter
   case CPUI_INT_NEGATE:
@@ -4736,7 +4733,7 @@ int4 RuleSubCancel::applyOp(PcodeOp *op,Funcdata &data)
 }
 
 /// \class RuleShiftSub
-/// \brief Simplify SUBPIECE applied to INT_LEFT: `sub( V << 8*c, c)  =>  sub(V,0)`
+/// \brief Simplify SUBPIECE applied to INT_LEFT: `sub( V << 8*k, c)  =>  sub(V,c-k)`
 void RuleShiftSub::getOpList(vector<uint4> &oplist) const
 
 {
@@ -4749,13 +4746,20 @@ int4 RuleShiftSub::applyOp(PcodeOp *op,Funcdata &data)
   if (!op->getIn(0)->isWritten()) return 0;
   PcodeOp *shiftop = op->getIn(0)->getDef();
   if (shiftop->code() != CPUI_INT_LEFT) return 0;
-  if (!shiftop->getIn(1)->isConstant()) return 0;
-  if (8*op->getIn(1)->getOffset() != shiftop->getIn(1)->getOffset())
-    return 0;
+  Varnode *sa = shiftop->getIn(1);
+  if (!sa->isConstant()) return 0;
+  int4 n = sa->getOffset();
+  if ((n & 7) != 0) return 0;		// Must shift by a multiple of 8 bits
+  int4 c = op->getIn(1)->getOffset();
   Varnode *vn = shiftop->getIn(0);
   if (vn->isFree()) return 0;
+  int4 insize = vn->getSize();
+  int4 outsize = op->getOut()->getSize();
+  c -= n/8;
+  if (c < 0 || c + outsize > insize)	// Check if this is a natural truncation
+    return 0;
   data.opSetInput(op,vn,0);
-  data.opSetInput(op,data.newConstant(op->getIn(1)->getSize(),0),1);
+  data.opSetInput(op,data.newConstant(op->getIn(1)->getSize(),c),1);
   return 1;
 }
 
@@ -5661,8 +5665,9 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   : data(d)
 {
   baseOp = op;
+  baseSlot = slot;
   ptr = op->getIn(slot);
-  ct = (const TypePointer *)ptr->getType();
+  ct = (const TypePointer *)ptr->getTypeReadFacing(op);
   ptrsize = ptr->getSize();
   ptrmask = calc_mask(ptrsize);
   baseType = ct->getPtrTo();
@@ -6038,16 +6043,14 @@ Varnode *AddTreeState::buildMultiples(void)
 Varnode *AddTreeState::buildExtra(void)
 
 {
-  correct = (correct+offset) & ptrmask; // Total correction that needs to be made
-  bool offset_corrected= (correct==0);
+  correct = correct+offset; // Total correction that needs to be made
   Varnode *resNode = (Varnode *)0;
   for(int4 i=0;i<nonmult.size();++i) {
     Varnode *vn = nonmult[i];
-    if ((!offset_corrected)&&(vn->isConstant()))
-      if (vn->getOffset() == correct) {
-	offset_corrected = true;
-	continue;
-      }
+    if (vn->isConstant()) {
+      correct -= vn->getOffset();
+      continue;
+    }
     if (resNode == (Varnode *)0)
       resNode = vn;
     else {
@@ -6055,7 +6058,8 @@ Varnode *AddTreeState::buildExtra(void)
       resNode = op->getOut();
     }
   }
-  if (!offset_corrected) {
+  correct &= ptrmask;
+  if (correct != 0) {
     Varnode *vn = data.newConstant(ptrsize,uintb_negate(correct-1,ptrsize));
     if (resNode == (Varnode *)0)
       resNode = vn;
@@ -6077,7 +6081,7 @@ bool AddTreeState::buildDegenerate(void)
     // If the size is really less than scale, there is
     // probably some sort of padding going on
     return false;	// Don't transform at all
-  if (baseOp->getOut()->getType()->getMetatype() != TYPE_PTR)	// Make sure pointer propagates thru INT_ADD
+  if (baseOp->getOut()->getTypeDefFacing()->getMetatype() != TYPE_PTR)	// Make sure pointer propagates thru INT_ADD
     return false;
   vector<Varnode *> newparams;
   int4 slot = baseOp->getSlot(ptr);
@@ -6152,6 +6156,7 @@ void AddTreeState::buildTree(void)
   // Create PTRADD portion of operation
   if (multNode != (Varnode *)0) {
     newop = data.newOpBefore(baseOp,CPUI_PTRADD,ptr,multNode,data.newConstant(ptrsize,size));
+    data.inheritReadResolution(newop, 0, baseOp, baseSlot);
     multNode = newop->getOut();
   }
   else
@@ -6160,8 +6165,9 @@ void AddTreeState::buildTree(void)
   // Create PTRSUB portion of operation
   if (isSubtype) {
     newop = data.newOpBefore(baseOp,CPUI_PTRSUB,multNode,data.newConstant(ptrsize,offset));
+    data.inheritReadResolution(newop, 0, baseOp, baseSlot);
     if (size != 0)
-      newop->setStopPropagation();
+      newop->setStopTypePropagation();
     multNode = newop->getOut();
   }
 
@@ -6192,9 +6198,9 @@ bool RulePtrArith::verifyPreferredPointer(PcodeOp *op,int4 slot)
   PcodeOp *preOp = vn->getDef();
   if (preOp->code() != CPUI_INT_ADD) return true;
   int preslot = 0;
-  if (preOp->getIn(preslot)->getType()->getMetatype() != TYPE_PTR) {
+  if (preOp->getIn(preslot)->getTypeReadFacing(preOp)->getMetatype() != TYPE_PTR) {
     preslot = 1;
-    if (preOp->getIn(preslot)->getType()->getMetatype() != TYPE_PTR)
+    if (preOp->getIn(preslot)->getTypeReadFacing(preOp)->getMetatype() != TYPE_PTR)
       return true;
   }
   return (1 != evaluatePointerExpression(preOp, preslot));	// Does earlier varnode look like the base pointer
@@ -6220,7 +6226,7 @@ int4 RulePtrArith::evaluatePointerExpression(PcodeOp *op,int4 slot)
   Varnode *ptrBase = op->getIn(slot);
   if (ptrBase->isFree() && !ptrBase->isConstant())
     return 0;
-  if (op->getIn(1 - slot)->getType()->getMetatype() == TYPE_PTR)
+  if (op->getIn(1 - slot)->getTypeReadFacing(op)->getMetatype() == TYPE_PTR)
     res = 2;
   Varnode *outVn = op->getOut();
   list<PcodeOp *>::const_iterator iter;
@@ -6232,7 +6238,7 @@ int4 RulePtrArith::evaluatePointerExpression(PcodeOp *op,int4 slot)
       Varnode *otherVn = decOp->getIn(1 - decOp->getSlot(outVn));
       if (otherVn->isFree() && !otherVn->isConstant())
 	return 0;	// No action if the data-flow isn't fully linked
-      if (otherVn->getType()->getMetatype() == TYPE_PTR)
+      if (otherVn->getTypeReadFacing(decOp)->getMetatype() == TYPE_PTR)
 	res = 2;	// Do not push in the presence of other pointers
     }
     else if ((opc == CPUI_LOAD || opc == CPUI_STORE) && decOp->getIn(1) == outVn) {	// If use is as pointer for LOAD or STORE
@@ -6289,7 +6295,7 @@ int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
   if (!data.isTypeRecoveryOn()) return 0;
 
   for(slot=0;slot<op->numInput();++slot) { // Search for pointer type
-    ct = op->getIn(slot)->getType();
+    ct = op->getIn(slot)->getTypeReadFacing(op);
     if (ct->getMetatype() == TYPE_PTR) break;
   }
   if (slot == op->numInput()) return 0;
@@ -6334,7 +6340,7 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
   else
     return 0;
 
-  Datatype *ct = op->getIn(1)->getType();
+  Datatype *ct = op->getIn(1)->getTypeReadFacing(op);
   if (ct->getMetatype() != TYPE_PTR) return 0;
   Datatype *baseType = ((TypePointer *)ct)->getPtrTo();
   uintb offset = 0;
@@ -6373,7 +6379,8 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
     return 0;
 
   PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,op->getIn(1),data.newConstant(op->getIn(1)->getSize(),0));
-  newop->setStopPropagation();
+  data.inheritReadResolution(newop, 0, op, 1);
+  newop->setStopTypePropagation();
   data.opSetInput(op,newop->getOut(),1);
   return 1;
 }
@@ -6474,7 +6481,7 @@ int4 RulePushPtr::applyOp(PcodeOp *op,Funcdata &data)
   if (!data.isTypeRecoveryOn()) return 0;
   for(slot=0;slot<op->numInput();++slot) { // Search for pointer type
     vni = op->getIn(slot);
-    if (vni->getType()->getMetatype() == TYPE_PTR) break;
+    if (vni->getTypeReadFacing(op)->getMetatype() == TYPE_PTR) break;
   }
   if (slot == op->numInput()) return 0;
 
@@ -6538,7 +6545,7 @@ int4 RulePtraddUndo::applyOp(PcodeOp *op,Funcdata &data)
   if (!data.isTypeRecoveryOn()) return 0;
   int4 size = (int4)op->getIn(2)->getOffset(); // Size the PTRADD thinks we are pointing
   basevn = op->getIn(0);
-  tp = (TypePointer *)basevn->getType();
+  tp = (TypePointer *)basevn->getTypeReadFacing(op);
   if (tp->getMetatype() == TYPE_PTR)								// Make sure we are still a pointer
     if (tp->getPtrTo()->getSize()==AddrSpace::addressToByteInt(size,tp->getWordSize())) {	// of the correct size
       Varnode *indVn = op->getIn(1);
@@ -6568,11 +6575,11 @@ int4 RulePtrsubUndo::applyOp(PcodeOp *op,Funcdata &data)
   if (!data.isTypeRecoveryOn()) return 0;
 
   Varnode *basevn = op->getIn(0);
-  if (basevn->getType()->isPtrsubMatching(op->getIn(1)->getOffset()))
+  if (basevn->getTypeReadFacing(op)->isPtrsubMatching(op->getIn(1)->getOffset()))
     return 0;
 
   data.opSetOpcode(op,CPUI_INT_ADD);
-  op->clearStopPropagation();
+  op->clearStopTypePropagation();
   return 1;
 }
   
@@ -6613,7 +6620,7 @@ int4 RuleAddUnsigned::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *constvn = op->getIn(1);
 
   if (!constvn->isConstant()) return 0;
-  Datatype *dt = constvn->getType();
+  Datatype *dt = constvn->getTypeReadFacing(op);
   if (dt->getMetatype() != TYPE_UINT) return 0;
   if (dt->isCharPrint()) return 0;	// Only change integer forms
   if (dt->isEnumType()) return 0;
@@ -6661,6 +6668,8 @@ int4 Rule2Comp2Sub::applyOp(PcodeOp *op,Funcdata &data)
 /// \class RuleSubRight
 /// \brief Cleanup: Convert truncation to cast: `sub(V,c)  =>  sub(V>>c*8,0)`
 ///
+/// Before attempting the transform, check if the SUBPIECE is really extracting a field
+/// from a structure. If so, mark the op as requiring special printing and return.
 /// If the lone descendant of the SUBPIECE is a INT_RIGHT or INT_SRIGHT,
 /// we lump that into the shift as well.
 void RuleSubRight::getOpList(vector<uint4> &oplist) const
@@ -6672,6 +6681,16 @@ void RuleSubRight::getOpList(vector<uint4> &oplist) const
 int4 RuleSubRight::applyOp(PcodeOp *op,Funcdata &data)
 
 {
+  Datatype *parent;
+  int4 offset;
+
+  if (op->doesSpecialPrinting())
+    return 0;
+  if (TypeOpSubpiece::testExtraction(false, op, parent, offset) != (const TypeField *)0) {
+    data.opMarkSpecialPrint(op);	// Print this as a field extraction
+    return 0;
+  }
+
   int4 c = op->getIn(1)->getOffset();
   if (c==0) return 0;		// SUBPIECE is not least sig
   Varnode *a = op->getIn(0);
@@ -6764,13 +6783,14 @@ int4 RulePtrsubCharConstant::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   Varnode *sb = op->getIn(0);
-  if (sb->getType()->getMetatype() != TYPE_PTR) return 0;
-  TypeSpacebase *sbtype = (TypeSpacebase *)((TypePointer *)sb->getType())->getPtrTo();
+  Datatype *sbType = sb->getTypeReadFacing(op);
+  if (sbType->getMetatype() != TYPE_PTR) return 0;
+  TypeSpacebase *sbtype = (TypeSpacebase *)((TypePointer *)sbType)->getPtrTo();
   if (sbtype->getMetatype() != TYPE_SPACEBASE) return 0;
   Varnode *vn1 = op->getIn(1);
   if (!vn1->isConstant()) return 0;
   Varnode *outvn = op->getOut();
-  TypePointer *outtype = (TypePointer *)outvn->getType();
+  TypePointer *outtype = (TypePointer *)outvn->getTypeDefFacing();
   if (outtype->getMetatype() != TYPE_PTR) return 0;
   Datatype *basetype = outtype->getPtrTo();
   if (!basetype->isCharPrint()) return 0;
@@ -6863,7 +6883,8 @@ int4 RuleExtensionPush::applyOp(PcodeOp *op,Funcdata &data)
 /// \brief Pull-back SUBPIECE through INT_RIGHT and INT_SRIGHT
 ///
 /// The form looks like:
-///  - `sub( V>>c ,d )  =>  sub( V, d+k/8 ) >> (c-k)  where k = (c/8)*8`
+///  - `sub( V>>n ,c )  =>  sub( V, c+k/8 ) >> (n-k)  where k = (n/8)*8`  or
+///  - `sub( V>>n, c )  =>  ext( sub( V, c+k/8 ) )  if n is big`
 void RuleSubNormal::getOpList(vector<uint4> &oplist) const
 
 {
@@ -6885,13 +6906,35 @@ int4 RuleSubNormal::applyOp(PcodeOp *op,Funcdata &data)
   int4 n = shiftop->getIn(1)->getOffset();
   int4 c = op->getIn(1)->getOffset();
   int4 k = (n/8);
+  int4 insize = a->getSize();
   int4 outsize = op->getOut()->getSize();
-  // If totalcut + remain > original input, shrink cut
-  if (k+c+outsize > shiftout->getSize())
-    k = shiftout->getSize()-c-outsize;
 
   // Total shift + outsize must be greater equal to size of input
-  if ((n+8*c+8*outsize < 8*a->getSize())&&(n != k*8)) return 0;
+  if ((n+8*c+8*outsize < 8*insize)&&(n != k*8)) return 0;
+  
+  // If totalcut + remain > original input
+  if (k+c+outsize > insize) {
+    int4 truncSize = insize - c - k;
+    if (n == k*8 && truncSize > 0 && popcount(truncSize)==1) {
+      // We need an additional extension
+      c += k;
+      PcodeOp *newop = data.newOp(2,op->getAddr());
+      opc = (opc == CPUI_INT_SRIGHT) ? CPUI_INT_SEXT : CPUI_INT_ZEXT;
+      data.opSetOpcode(newop,CPUI_SUBPIECE);
+      data.newUniqueOut(truncSize,newop);
+      data.opSetInput(newop,a,0);
+      data.opSetInput(newop,data.newConstant(4,c),1);
+      data.opInsertBefore(newop,op);
+      
+      data.opSetInput(op,newop->getOut(),0);
+      data.opRemoveInput(op,1);
+      data.opSetOpcode(op,opc);
+      return 1;
+    }
+    else
+      k = insize-c-outsize; // Or we can shrunk the cut
+  }
+
   // if n == k*8, then a shift is unnecessary
   c += k;
   n -= k*8;
@@ -6903,7 +6946,7 @@ int4 RuleSubNormal::applyOp(PcodeOp *op,Funcdata &data)
 
   PcodeOp *newop = data.newOp(2,op->getAddr());
   data.opSetOpcode(newop,CPUI_SUBPIECE);
-  data.newUniqueOut(op->getOut()->getSize(),newop);
+  data.newUniqueOut(outsize,newop);
   data.opSetInput(newop,a,0);
   data.opSetInput(newop,data.newConstant(4,c),1);
   data.opInsertBefore(newop,op);
@@ -7691,7 +7734,7 @@ void RuleSegment::getOpList(vector<uint4> &oplist) const
 int4 RuleSegment::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  SegmentOp *segdef = data.getArch()->userops.getSegmentOp(Address::getSpaceFromConst(op->getIn(0)->getAddr())->getIndex());
+  SegmentOp *segdef = data.getArch()->userops.getSegmentOp(op->getIn(0)->getSpaceFromConst()->getIndex());
   if (segdef == (SegmentOp *)0)
     throw LowlevelError("Segment operand missing definition");
 
@@ -7995,7 +8038,7 @@ int4 RulePtrFlow::applyOp(PcodeOp *op,Funcdata &data)
   case CPUI_LOAD:
   case CPUI_STORE:
     vn = op->getIn(1);
-    spc = Address::getSpaceFromConst(op->getIn(0)->getAddr());
+    spc = op->getIn(0)->getSpaceFromConst();
     if (vn->getSize() > spc->getAddrSize()) {
       vn = truncatePointer(spc,op,vn,1,data);
       madeChange = 1;
@@ -9316,20 +9359,22 @@ int4 RulePiecePathology::applyOp(PcodeOp *op,Funcdata &data)
     if (!isPathology(subOp->getIn(0),data)) return 0;
   }
   else if (opc == CPUI_INDIRECT) {
-    if (!subOp->isIndirectCreation()) return 0;
-    Varnode *retVn = op->getIn(1);
-    if (!retVn->isWritten()) return 0;
-    PcodeOp *callOp = retVn->getDef();
-    if (!callOp->isCall()) return 0;
-    FuncCallSpecs *fc = data.getCallSpecs(callOp);
-    if (fc == (FuncCallSpecs *)0) return 0;
-    if (!fc->isOutputLocked()) return 0;
-    Address addr = retVn->getAddr();
+    if (!subOp->isIndirectCreation()) return 0;					// Indirect concatenation
+    Varnode *lsbVn = op->getIn(1);
+    if (!lsbVn->isWritten()) return 0;
+    PcodeOp *lsbOp = lsbVn->getDef();
+    if ((lsbOp->getEvalType() & (PcodeOp::binary | PcodeOp::unary)) == 0) {	// from either a unary/binary operation
+      if (!lsbOp->isCall()) return 0;						// or a CALL
+      FuncCallSpecs *fc = data.getCallSpecs(lsbOp);
+      if (fc == (FuncCallSpecs *)0) return 0;
+      if (!fc->isOutputLocked()) return 0;					// with a locked output
+    }
+    Address addr = lsbVn->getAddr();
     if (addr.getSpace()->isBigEndian())
       addr = addr - vn->getSize();
     else
-      addr = addr + retVn->getSize();
-    if (addr != vn->getAddr()) return 0;
+      addr = addr + lsbVn->getSize();
+    if (addr != vn->getAddr()) return 0;					// into a contiguous register
   }
   else
     return 0;

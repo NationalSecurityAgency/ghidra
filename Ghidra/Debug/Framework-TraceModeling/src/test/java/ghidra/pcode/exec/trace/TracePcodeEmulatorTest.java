@@ -38,6 +38,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.thread.TraceThread;
@@ -93,8 +94,8 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				TraceSleighUtils.buildByteExecutor(tb.trace, 0, thread, 0);
 			PcodeProgram initProg = SleighProgramCompiler.compileProgram(
 				(SleighLanguage) tb.language, "test", stateInit,
-				SleighUseropLibrary.nil());
-			exec.execute(initProg, SleighUseropLibrary.nil());
+				PcodeUseropLibrary.nil());
+			exec.execute(initProg, PcodeUseropLibrary.nil());
 		}
 		return thread;
 	}
@@ -142,7 +143,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				tb.trace.getStackManager()
 						.getStack(thread, 1, false)
 						.getFrame(0, false)
-						.getProgramCounter());
+						.getProgramCounter(1));
 		}
 	}
 
@@ -475,13 +476,13 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	public void testInject() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
 			final StringBuilder dumped = new StringBuilder();
-			SleighUseropLibrary<byte[]> library = new AnnotatedSleighUseropLibrary<byte[]>() {
+			PcodeUseropLibrary<byte[]> hexLib = new AnnotatedPcodeUseropLibrary<byte[]>() {
 				@Override
 				protected Lookup getMethodLookup() {
 					return MethodHandles.lookup();
 				}
 
-				@SleighUserop
+				@PcodeUserop
 				public void hexdump(byte[] in) {
 					dumped.append(NumericUtilities.convertBytesToString(in));
 				}
@@ -494,7 +495,12 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 					"PUSH 0xdeadbeef",
 					"PUSH 0xbaadf00d"));
 
-			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0, library);
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0) {
+				@Override
+				protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
+					return hexLib;
+				}
+			};
 			emu.inject(tb.addr(0x00400006), List.of("hexdump(RSP);"));
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.overrideContextWithDefault();
@@ -518,13 +524,13 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	public void testInjectedInterrupt() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
 			final StringBuilder dumped = new StringBuilder();
-			SleighUseropLibrary<byte[]> library = new AnnotatedSleighUseropLibrary<byte[]>() {
+			PcodeUseropLibrary<byte[]> hexLib = new AnnotatedPcodeUseropLibrary<byte[]>() {
 				@Override
 				protected Lookup getMethodLookup() {
 					return MethodHandles.lookup();
 				}
 
-				@SleighUserop
+				@PcodeUserop
 				public void hexdump(byte[] in) {
 					dumped.append(NumericUtilities.convertBytesToString(in));
 				}
@@ -537,7 +543,12 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 					"PUSH 0xdeadbeef",
 					"PUSH 0xbaadf00d"));
 
-			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0, library);
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0) {
+				@Override
+				protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
+					return hexLib;
+				}
+			};
 			emu.inject(tb.addr(0x00400006), List.of(
 				"hexdump(RSP);",
 				"emu_swi();",
@@ -864,17 +875,13 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
 			Language lang = tb.trace.getBaseLanguage();
 			Register ctxReg = lang.getContextBaseRegister();
-			Register opsizeReg = lang.getRegister("opsize");
-			Register addrsizeReg = lang.getRegister("addrsize");
 			Register longModeReg = lang.getRegister("longMode");
 			RegisterValue ctxVal = new RegisterValue(ctxReg)
-					.assign(opsizeReg, BigInteger.ONE)
-					.assign(addrsizeReg, BigInteger.ONE)
 					.assign(longModeReg, BigInteger.ZERO);
+			DBTraceRegisterContextManager ctxManager = tb.trace.getRegisterContextManager();
 			try (UndoableTransaction tid = tb.startTransaction()) {
-				tb.trace.getRegisterContextManager()
-						.setValue(lang, ctxVal, Range.atLeast(0L),
-							tb.range(0x00400000, 0x00400002));
+				ctxManager.setValue(lang, ctxVal, Range.atLeast(0L),
+					tb.range(0x00400000, 0x00400002));
 			}
 			TraceThread thread = initTrace(tb,
 				List.of(
@@ -891,6 +898,8 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			// TODO: Seems the Trace-bound thread ought to know to do this in reInitialize()
+			ctxVal = ctxManager.getValueWithDefault(lang, ctxReg, 0, tb.addr(0x00400000));
 			emuThread.overrideContext(ctxVal);
 			emuThread.stepInstruction();
 			emuThread.stepInstruction();

@@ -508,21 +508,21 @@ public class RecoveredClass {
 				continue;
 			}
 
-			// replace pointers to existing class data type with void pointer of same size
+			// if new component is an existing class data type pointer then replace current item
+			// with a void pointer of same size if there is room
 			if (newComponentDataType instanceof Pointer &&
 				newComponentDataType.getName().equals(name + " *")) {
 
-				DataType voidDT = new VoidDataType();
+				Pointer pointer =
+					new PointerDataType(VoidDataType.dataType, length, dataTypeManager);
 
-				Pointer pointer = new PointerDataType();
-				if (newComponentDataType.getLength() == 4) {
-					pointer = new Pointer32DataType(voidDT);
+				if (EditStructureUtils.hasEnoughUndefinedsOfAnyLengthAtOffset(
+					computedClassStructure, offset, pointer.getLength(), monitor) ||
+					length <= currentComponent.getLength()) {
+
+					computedClassStructure.replaceAtOffset(offset, pointer, length, fieldName,
+						comment);
 				}
-				if (newComponentDataType.getLength() == 8) {
-					pointer = new Pointer64DataType(voidDT);
-				}
-				computedClassStructure.replaceAtOffset(offset, pointer, pointer.getLength(),
-					fieldName, comment);
 				continue;
 			}
 

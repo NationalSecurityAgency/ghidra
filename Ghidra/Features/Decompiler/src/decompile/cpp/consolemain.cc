@@ -132,7 +132,8 @@ void IfcSave::execute(istream &s)
   if (!fs)
     throw IfaceExecutionError("Unable to open file: "+savefile);
 
-  dcp->conf->saveXml(fs);
+  XmlEncode encoder(fs);
+  dcp->conf->encode(encoder);
   fs.close();
 }
 
@@ -212,11 +213,17 @@ int main(int argc,char **argv)
   status->registerCom(new IfcRestore(),"restore");
 
   if (initscript != (const char *)0) {
-    status->pushScript(initscript,"init> ");
-    status->setErrorIsDone(true);
+    try {
+      status->setErrorIsDone(true);
+      status->pushScript(initscript,"init> ");
+    } catch(IfaceParseError &err) {
+      *status->optr << err.explain << endl;
+      status->done = true;
+    }
   }
 
-  mainloop(status);
+  if (!status->done)
+    mainloop(status);
   int4 retval = status->isInError() ? 1 : 0;
 
 #ifdef CPUI_STATISTICS

@@ -26,8 +26,7 @@ import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
-import ghidra.app.services.GoToService;
-import ghidra.app.services.ProgramManager;
+import ghidra.app.services.*;
 import ghidra.app.util.XReferenceUtils;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.options.ToolOptions;
@@ -211,8 +210,7 @@ public class LocationReferencesPlugin extends Plugin
 	}
 
 	private void disposeProviderList() {
-		for (int i = 0; i < providerList.size(); i++) {
-			LocationReferencesProvider provider = providerList.get(i);
+		for (LocationReferencesProvider provider : providerList) {
 			provider.dispose();
 		}
 		providerList.clear();
@@ -261,8 +259,8 @@ public class LocationReferencesPlugin extends Plugin
 	}
 
 	protected void programClosed(Program program) {
-		for (Iterator<LocationReferencesProvider> iterator =
-			providerList.iterator(); iterator.hasNext();) {
+		for (Iterator<LocationReferencesProvider> iterator = providerList.iterator(); iterator
+				.hasNext();) {
 			LocationReferencesProvider provider = iterator.next();
 			if (provider.getProgram() == program) {
 				provider.dispose();
@@ -293,11 +291,19 @@ public class LocationReferencesPlugin extends Plugin
 
 	@Override
 	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType) {
-		findAndDisplayAppliedDataTypeAddresses(dataType, null);
+		findAndDisplayAppliedDataTypeAddresses(dataType, (FieldMatcher) null);
 	}
 
 	@Override
 	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType, String fieldName) {
+		FieldMatcher matcher = new FieldMatcher(dataType, fieldName);
+		findAndDisplayAppliedDataTypeAddresses(dataType, matcher);
+	}
+
+	@Override
+	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType,
+			FieldMatcher fieldMatcher) {
+
 		ProgramManager programManagerService = tool.getService(ProgramManager.class);
 		GoToService goToService = tool.getService(GoToService.class);
 		Program program = programManagerService.getCurrentProgram();
@@ -308,9 +314,9 @@ public class LocationReferencesPlugin extends Plugin
 		}
 
 		ProgramLocation genericLocation;
-		if (fieldName != null) {
+		if (fieldMatcher != null) {
 			genericLocation =
-				new GenericCompositeDataTypeProgramLocation(program, dataType, fieldName);
+				new GenericCompositeDataTypeProgramLocation(program, dataType, fieldMatcher);
 		}
 		else {
 			genericLocation = new GenericDataTypeProgramLocation(program, dataType);

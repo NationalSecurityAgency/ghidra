@@ -17,12 +17,13 @@ package ghidra.app.util.opinion;
 
 import java.util.List;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.ElfException;
 import ghidra.app.util.bin.format.elf.ElfHeader;
+import ghidra.app.util.bin.format.elf.extend.ElfExtensionFactory;
+import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.util.NumericUtilities;
@@ -61,7 +62,7 @@ public class ElfLoaderOptionsFactory {
 		options.add(new Option(PERFORM_RELOCATIONS_NAME, PERFORM_RELOCATIONS_DEFAULT, Boolean.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-applyRelocations"));
 
-		ElfHeader elf = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider, null);
+		ElfHeader elf = new ElfHeader(provider, null);
 
 		long imageBase = elf.findImageBase();
 		if (imageBase == 0 && (elf.isRelocatable() || elf.isSharedObject())) {
@@ -88,6 +89,12 @@ public class ElfLoaderOptionsFactory {
 		options.add(
 			new Option(RESOLVE_EXTERNAL_SYMBOLS_OPTION_NAME, RESOLVE_EXTERNAL_SYMBOLS_DEFAULT,
 				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-resolveExternalSymbols"));
+
+		ElfLoadAdapter extensionAdapter = ElfExtensionFactory.getLoadAdapter(elf);
+		if (extensionAdapter != null) {
+			extensionAdapter.addLoadOptions(elf, options);
+		}
+
 	}
 	
 	private static boolean includeDataImageBaseOption(ElfHeader elf, Language language) {

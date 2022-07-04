@@ -32,6 +32,7 @@ import org.junit.*;
 import docking.*;
 import docking.action.*;
 import docking.dnd.GClipboard;
+import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldSelection;
@@ -65,8 +66,7 @@ import ghidra.util.Msg;
 
 /**
  *
- * 			Note: This test is sensitive to focus. So, don't click any windows while this test
- *                is running.
+ * Note: This test is sensitive to focus. So, don't click any windows while this test is running.
  *
  */
 
@@ -1691,7 +1691,8 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public void clearSelection() {
-			runSwing(() -> provider.programSelectionChanged(new ProgramSelection()));
+			runSwing(() -> provider.programSelectionChanged(new ProgramSelection(),
+				EventTrigger.GUI_ACTION));
 		}
 	}
 

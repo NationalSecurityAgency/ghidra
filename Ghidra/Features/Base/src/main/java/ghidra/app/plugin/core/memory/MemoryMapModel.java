@@ -535,6 +535,9 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 
 	@Override
 	protected Comparator<MemoryBlock> createSortComparator(int columnIndex) {
+		if (columnIndex == BYTE_SOURCE) {
+			return super.createSortComparator(columnIndex);
+		}
 		return new MemoryMapComparator(columnIndex);
 	}
 
@@ -581,6 +584,9 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 					int b1init = (b1.isInitialized() ? 1 : -1);
 					int b2init = (b2.isInitialized() ? 1 : -1);
 					return (b1init - b2init);
+
+				//case BYTE_SOURCE: - handled by default comparator
+
 				case SOURCE:
 					String b1src = b1.getSourceName();
 					String b2src = b2.getSourceName();
@@ -608,7 +614,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 					String bt2 = b2.getType().toString();
 					return bt1.compareToIgnoreCase(bt2);
 				default:
-					return 0;
+					throw new RuntimeException("Unimplemented column comparator: " + sortColumn);
 			}
 		}
 	}

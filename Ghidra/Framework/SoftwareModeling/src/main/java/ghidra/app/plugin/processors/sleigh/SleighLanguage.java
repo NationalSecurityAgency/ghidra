@@ -1427,7 +1427,6 @@ public class SleighLanguage implements Language {
 		String tag;
 		int delay;
 		boolean physical;
-		boolean global;
 
 		for (AddressSpace element : spclist) {
 			if ((element instanceof OverlayAddressSpace)) {
@@ -1445,25 +1444,21 @@ public class SleighLanguage implements Language {
 					tag = "space";
 					delay = 1;
 					physical = true;
-					global = true;
 					break;
 				case AddressSpace.TYPE_REGISTER:
 					tag = "space";
 					delay = 0;
 					physical = true;
-					global = false;
 					break;
 				case AddressSpace.TYPE_UNIQUE:
 					tag = "space_unique";
 					delay = 0;
 					physical = true;
-					global = false;
 					break;
 				case AddressSpace.TYPE_OTHER:
 					tag = "space_other";
 					delay = 0;
 					physical = true;
-					global = true;
 					break;
 				default:
 					continue;
@@ -1491,7 +1486,6 @@ public class SleighLanguage implements Language {
 			SpecXmlUtils.encodeBooleanAttribute(resBuf, "bigendian", isBigEndian());
 			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "delay", delay);
 			SpecXmlUtils.encodeBooleanAttribute(resBuf, "physical", physical);
-			SpecXmlUtils.encodeBooleanAttribute(resBuf, "global", global);
 
 			resBuf.append("/>\n");
 		}

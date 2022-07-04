@@ -17,15 +17,33 @@ package ghidra.pcode.exec;
 
 import ghidra.program.model.address.AddressSpace;
 
+/**
+ * An executor state decorator which transforms the offset type
+ *
+ * @param <A> the offset type of the decorator
+ * @param <B> the offset type of the delegate
+ * @param <T> the type of values
+ */
 public abstract class AbstractOffsetTransformedPcodeExecutorState<A, B, T>
 		implements PcodeExecutorStatePiece<A, T> {
 
 	private final PcodeExecutorStatePiece<B, T> state;
 
+	/**
+	 * Construct a decorator around the given delegate
+	 * 
+	 * @param state the delegate
+	 */
 	public AbstractOffsetTransformedPcodeExecutorState(PcodeExecutorStatePiece<B, T> state) {
 		this.state = state;
 	}
 
+	/**
+	 * Transform an offset of type {@code A} to type {@code B}
+	 * 
+	 * @param offset the offset as an {@code A}
+	 * @return the offset as a {@code B}
+	 */
 	protected abstract B transformOffset(A offset);
 
 	@Override

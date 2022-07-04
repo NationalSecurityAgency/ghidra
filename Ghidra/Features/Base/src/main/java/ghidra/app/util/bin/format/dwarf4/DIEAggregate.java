@@ -926,7 +926,7 @@ public class DIEAggregate {
 	 * This indicates an empty range, in which case the caller may want to take
 	 * special steps to avoid issues with Ghidra ranges.
 	 * <p>
-	 * Only seen in extremely old gcc versions.  Typically the low & high
+	 * Only seen in extremely old gcc versions.  Typically the low and high
 	 * pc values are omitted if the CU is empty.
 	 * 
 	 * @return boolean true if the LowPC and HighPC values are present and equal

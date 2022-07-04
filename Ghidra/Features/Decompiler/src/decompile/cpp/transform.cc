@@ -16,6 +16,8 @@
 #include "transform.hh"
 #include "funcdata.hh"
 
+AttributeId ATTRIB_VECTOR_LANE_SIZES = AttributeId("vector_lane_sizes",103);
+
 /// \param op2 is the lane description to copy from
 LaneDescription::LaneDescription(const LaneDescription &op2)
 
@@ -277,24 +279,31 @@ void LanedRegister::LanedIterator::normalize(void)
   size = -1;		// Indicate ending iterator
 }
 
-/// Read XML of the form \<register name=".." vector_lane_sizes=".."/>
-/// \param el is the particular \e register tag
-/// \param manage is used to map register names to storage info
+/// Parse any vector lane sizes.
+/// \param decoder is the stream decoder
 /// \return \b true if the XML description provides lane sizes
-bool LanedRegister::restoreXml(const Element *el,const AddrSpaceManager *manage)
+bool LanedRegister::decode(Decoder &decoder)
 
 {
+  uint4 elemId = decoder.openElement(ELEM_REGISTER);
   string laneSizes;
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    if (el->getAttributeName(i) == "vector_lane_sizes") {
-      laneSizes = el->getAttributeValue(i);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_VECTOR_LANE_SIZES) {
+      laneSizes = decoder.readString();
       break;
     }
   }
-  if (laneSizes.empty()) return false;
+  if (laneSizes.empty()) {
+    decoder.closeElement(elemId);
+    return false;
+  }
+  decoder.rewindAttributes();
   VarnodeData storage;
   storage.space = (AddrSpace *)0;
-  storage.restoreXml(el, manage);
+  storage.decodeFromAttributes(decoder);
+  decoder.closeElement(elemId);
   wholeSize = storage.size;
   sizeBitMask = 0;
   string::size_type pos = 0;

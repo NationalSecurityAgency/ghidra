@@ -57,6 +57,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	private Program program;
 	private Address address;
+	private CodeUnit codeUnit;
 
 	private final KeyListener listenerForKeys = new KeyAdapter() {
 		@Override
@@ -166,6 +167,15 @@ public abstract class AbstractPatchAction extends DockingAction {
 	}
 
 	/**
+	 * Get the code unit on which this action was invoked
+	 * 
+	 * @return the current code unit
+	 */
+	protected CodeUnit getCodeUnit() {
+		return codeUnit;
+	}
+
+	/**
 	 * Get the address at which this action was invoked
 	 * 
 	 * @return the current address
@@ -201,8 +211,8 @@ public abstract class AbstractPatchAction extends DockingAction {
 		fieldPanel = listingPanel.getFieldPanel();
 
 		fieldLayoutManager = new FieldPanelOverLayoutManager(fieldPanel);
-		fieldPanel.setLayout(fieldLayoutManager);
 		addLayoutListeners(fieldLayoutManager);
+		fieldPanel.setLayout(fieldLayoutManager);
 	}
 
 	/**
@@ -276,14 +286,12 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
-		if (!(context instanceof ListingActionContext)) {
+		CodeUnit cu = getCodeUnit(context);
+		if (cu == null || !isApplicableToUnit(cu)) {
 			return false;
 		}
 
 		ListingActionContext lac = (ListingActionContext) context;
-		if (!isApplicableToUnit(lac.getCodeUnit())) {
-			return false;
-		}
 
 		ComponentProvider provider = lac.getComponentProvider();
 		if (!(provider instanceof CodeViewerProvider)) {
@@ -313,10 +321,9 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Perform preparation and save any information needed later in {@link #accept()}.
-	 * 
-	 * @param unit the code unit at the user's cursor
 	 */
-	protected abstract void prepare(CodeUnit unit);
+	protected void prepare() {
+	}
 
 	/**
 	 * Put the input fields in their place, show them, and place focus appropriately
@@ -333,26 +340,30 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Pre-fill the input fields and place the caret appropriately (usually at the end)
-	 * 
-	 * @param unit the code unit at the user's cursor
 	 */
-	protected abstract void fillInputs(CodeUnit unit);
+	protected abstract void fillInputs();
+
+	protected CodeUnit getCodeUnit(ActionContext context) {
+		if (!(context instanceof ListingActionContext)) {
+			return null;
+		}
+
+		ListingActionContext lac = (ListingActionContext) context;
+		if (((CodeViewerProvider) lac.getComponentProvider()).isReadOnly()) {
+			return null;
+		}
+		return lac.getCodeUnit();
+	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (!(context instanceof ListingActionContext)) {
+		codeUnit = getCodeUnit(context);
+		if (codeUnit == null || !isApplicableToUnit(codeUnit)) {
 			return;
 		}
 
 		ListingActionContext lac = (ListingActionContext) context;
 		prepareLayout(lac);
-		if (codeViewerProvider.isReadOnly()) {
-			return;
-		}
-		CodeUnit cu = lac.getCodeUnit();
-		if (!isApplicableToUnit(cu)) {
-			return;
-		}
 
 		ProgramLocation cur = lac.getLocation();
 		program = cur.getProgram();
@@ -365,7 +376,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 			return;
 		}
 
-		prepare(cu);
+		prepare();
 
 		ToolOptions displayOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 		Font font = displayOptions.getFont(GhidraOptions.OPTION_BASE_FONT, null);
@@ -377,7 +388,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 		if (!showInputs(fieldPanel)) {
 			return;
 		}
-		fillInputs(cu);
+		fillInputs();
 
 		fieldLayoutManager.layoutContainer(fieldPanel);
 	}

@@ -48,8 +48,8 @@ public interface Symbol {
 	public String[] getPath();
 
 	/**
+	 * Get the program associated with this symbol
 	 * @return the program associated with this symbol.
-	 * Null may be returned for global symbols.
 	 */
 	public Program getProgram();
 

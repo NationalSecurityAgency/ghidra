@@ -26,7 +26,9 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceDataSettingsSpace;
+import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
@@ -37,11 +39,11 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		implements DBTraceDefinedDataAdapter {
 	private static final String TABLE_NAME = "Data";
 
-	static final String LANGUAGE_COLUMN_NAME = "Langauge";
+	static final String PLATFORM_COLUMN_NAME = "Platform";
 	static final String DATATYPE_COLUMN_NAME = "DataType";
 
-	@DBAnnotatedColumn(LANGUAGE_COLUMN_NAME)
-	static DBObjectColumn LANGUAGE_COLUMN;
+	@DBAnnotatedColumn(PLATFORM_COLUMN_NAME)
+	static DBObjectColumn PLATFORM_COLUMN;
 	@DBAnnotatedColumn(DATATYPE_COLUMN_NAME)
 	static DBObjectColumn DATATYPE_COLUMN;
 
@@ -49,12 +51,12 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, frameLevel);
 	}
 
-	@DBAnnotatedField(column = LANGUAGE_COLUMN_NAME)
-	private int langKey;
+	@DBAnnotatedField(column = PLATFORM_COLUMN_NAME)
+	private int platformKey;
 	@DBAnnotatedField(column = DATATYPE_COLUMN_NAME)
 	private long dataTypeID;
 
-	protected Language language;
+	protected InternalTracePlatform platform;
 	protected DataType dataType;
 	protected DataType baseDataType;
 	protected Settings defaultSettings;
@@ -73,9 +75,9 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		if (created) {
 			return;
 		}
-		language = space.manager.languageManager.getLanguageByKey(langKey);
-		if (language == null) {
-			throw new IOException("Data table is corrupt. Missing langauge: " + langKey);
+		platform = space.manager.platformManager.getPlatformByKey(platformKey);
+		if (platform == null) {
+			throw new IOException("Data table is corrupt. Missing platform: " + platformKey);
 		}
 		dataType = space.dataTypeManager.getDataType(dataTypeID);
 		if (dataType == null) {
@@ -100,16 +102,17 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		return this;
 	}
 
-	protected void set(Language language, DataType dataType) {
-		this.language = language;
-		this.langKey = space.manager.languageManager.getKeyForLanguage(language);
+	protected void set(InternalTracePlatform platform, DataType dataType) {
+		this.platformKey = platform.getIntKey();
 		this.dataTypeID = space.dataTypeManager.getResolvedID(dataType);
+		update(PLATFORM_COLUMN, DATATYPE_COLUMN);
+
+		this.platform = platform;
 		// Use the stored dataType, not the given one, in case it's different
 		this.dataType = space.dataTypeManager.getDataType(dataTypeID);
 		assert this.dataType != null;
-		this.baseDataType = getBaseDataType(this.dataType);
 		this.defaultSettings = this.dataType.getDefaultSettings();
-		update(LANGUAGE_COLUMN, DATATYPE_COLUMN);
+		this.baseDataType = getBaseDataType(this.dataType);
 	}
 
 	protected int getDataTypeLength() {
@@ -117,7 +120,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 			// TODO: Also need to know where this address maps into the other language's spaces....
 			// NOTE: Using default data space for now
 			// TODO: I may not need this Pointer check, as clone(dtm) should adjust already
-			return language.getDefaultDataSpace().getPointerSize();
+			return getLanguage().getDefaultDataSpace().getPointerSize();
 		}
 		return dataType.getLength(); // -1 is checked elsewhere
 	}
@@ -127,6 +130,11 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 			return ((TypeDef) dt).getBaseDataType();
 		}
 		return dt;
+	}
+
+	@Override
+	public TracePlatform getPlatform() {
+		return platform;
 	}
 
 	@Override
@@ -149,11 +157,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 
 	@Override
 	public Language getLanguage() {
-		return language;
-	}
-
-	int getLanguageKey() {
-		return langKey;
+		return platform.getLanguage();
 	}
 
 	@Override

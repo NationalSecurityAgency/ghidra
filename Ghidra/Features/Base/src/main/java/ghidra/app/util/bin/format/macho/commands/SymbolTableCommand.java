@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -36,9 +36,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a symtab_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a symtab_command structure
  */
 public class SymbolTableCommand extends LoadCommand {
 	private int symoff;
@@ -48,57 +46,44 @@ public class SymbolTableCommand extends LoadCommand {
 
 	private List<NList> symbols = new ArrayList<NList>();
 
-	public static SymbolTableCommand createSymbolTableCommand(FactoryBundledWithBinaryReader reader,
-			MachHeader header) throws IOException {
-		SymbolTableCommand symbolTableCommand =
-			(SymbolTableCommand) reader.getFactory().create(SymbolTableCommand.class);
-		symbolTableCommand.initSymbolTableCommand(reader, header);
-		return symbolTableCommand;
-	}
-
 	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
+	 * Creates and parses a new {@link SymbolTableCommand}
+	 * 
+	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
+	 *   command
+	 * @param dataReader A {@link BinaryReader reader} that can read the data that the load command
+	 *   references.  Note that this might be in a different underlying provider.
+	 * @param header The {@link MachHeader header} associated with this load command
+	 * @throws IOException if an IO-related error occurs while parsing
 	 */
-	public SymbolTableCommand() {
-	}
+	public SymbolTableCommand(BinaryReader loadCommandReader, BinaryReader dataReader,
+			MachHeader header) throws IOException {
+		super(loadCommandReader);
 
-	private void initSymbolTableCommand(FactoryBundledWithBinaryReader reader, MachHeader header)
-			throws IOException {
-		initLoadCommand(reader);
-
-		symoff = reader.readNextInt();
-		nsyms = reader.readNextInt();
-		stroff = reader.readNextInt();
-		strsize = reader.readNextInt();
-
-		long index = reader.getPointerIndex();
-
-		reader.setPointerIndex(header.getStartIndex() + symoff);
+		symoff = loadCommandReader.readNextInt();
+		nsyms = loadCommandReader.readNextInt();
+		stroff = loadCommandReader.readNextInt();
+		strsize = loadCommandReader.readNextInt();
 
 		List<NList> nlistList = new ArrayList<>(nsyms);
-		long startIndex = header.getStartIndex();
-		boolean is32bit = header.is32bit();
-		reader.setPointerIndex(startIndex + symoff);
-
+		dataReader.setPointerIndex(header.getStartIndex() + symoff);
 		for (int i = 0; i < nsyms; ++i) {
-			nlistList.add(NList.createNList(reader, is32bit));
+			nlistList.add(new NList(dataReader, header.is32bit()));
 		}
+		
 		// sort the entries by the index in the string table, so don't jump around reading
 		List<NList> sortedList =
 			nlistList.stream().sorted((o1, o2) -> Integer.compare(o1.getStringTableIndex(),
 				o2.getStringTableIndex())).collect(Collectors.toList());
 
 		// initialize the sorted NList strings from string table
-		long stringTableOffset = stroff;
 		for (NList nList : sortedList) {
-			nList.initString(reader, stringTableOffset);
+			nList.initString(dataReader, stroff);
 		}
 
 		// the symbol table should be in the original order.
 		// The table is indexed by other tables in the MachO headers
 		symbols = nlistList;
-
-		reader.setPointerIndex(index);
 	}
 
 	/**

@@ -1,0 +1,103 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ghidra.app.plugin.core.debug.mapping;
+
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.Language;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatformManager;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.util.MathUtilities;
+import ghidra.util.database.UndoableTransaction;
+
+public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMapper {
+
+	protected static boolean isHarvard(Language language) {
+		return language.getDefaultSpace() != language.getDefaultDataSpace();
+	}
+
+	protected final PluginTool tool;
+	protected final CompilerSpec cSpec;
+
+	public DefaultDebuggerPlatformMapper(PluginTool tool, Trace trace, CompilerSpec cSpec) {
+		super(tool, trace);
+		validate(cSpec);
+		this.tool = tool;
+		this.cSpec = cSpec;
+	}
+
+	protected void validate(CompilerSpec cSpec) {
+		if (isHarvard(cSpec.getLanguage())) {
+			throw new IllegalArgumentException("This mapper cannot handle Harvard guests");
+		}
+	}
+
+	@Override
+	protected CompilerSpec getCompilerSpec(TraceObject object) {
+		return cSpec;
+	}
+
+	@Override
+	public void addToTrace(long snap) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add guest " +
+			cSpec.getLanguage().getLanguageDescription() + "/" + cSpec.getCompilerSpecDescription(),
+			true)) {
+			TracePlatformManager platformManager = trace.getPlatformManager();
+			TraceGuestPlatform platform = platformManager.getOrAddGuestPlatform(cSpec);
+			if (platform == null) {
+				return; // It's the host compiler spec
+			}
+			addMappedRanges(platform);
+		}
+	}
+
+	/**
+	 * Add mapped ranges if not already present
+	 * 
+	 * <p>
+	 * A transaction is already started when this method is invoked.
+	 * 
+	 * @param platform the platform
+	 */
+	protected void addMappedRanges(TraceGuestPlatform platform) {
+		Trace trace = platform.getTrace();
+		AddressSpace hostSpace = trace.getBaseAddressFactory().getDefaultAddressSpace();
+		AddressSpace guestSpace = platform.getAddressFactory().getDefaultAddressSpace();
+		long min = MathUtilities.unsignedMax(hostSpace.getMinAddress().getOffset(),
+			guestSpace.getMinAddress().getOffset());
+		long max = MathUtilities.unsignedMin(hostSpace.getMaxAddress().getOffset(),
+			guestSpace.getMaxAddress().getOffset());
+		Address hostStart = hostSpace.getAddress(min);
+		Address guestStart = guestSpace.getAddress(min);
+
+		/*
+		 * TODO: I could perhaps do better, but assuming I'm the only source of mappings, this
+		 * should suffice.
+		 */
+		if (platform.getHostAddressSet().contains(hostStart)) {
+			return;
+		}
+		try {
+			platform.addMappedRange(hostStart, guestStart, max - min + 1);
+		}
+		catch (AddressOverflowException e) {
+			throw new AssertionError(e);
+		}
+	}
+}

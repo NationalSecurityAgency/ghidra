@@ -21,8 +21,21 @@ import ghidra.pcode.opbehavior.BinaryOpBehavior;
 import ghidra.pcode.opbehavior.UnaryOpBehavior;
 import ghidra.program.model.address.Address;
 
+/**
+ * A rider arithmetic that reports the address of the control value
+ * 
+ * <p>
+ * This is intended for use as the right side of a {@link PairedPcodeArithmetic}. Note that constant
+ * and unique spaces are never returned. Furthermore, any computation performed on a value,
+ * producing a temporary value, philosophically does not exist at any address in the state. Thus,
+ * every operation in this arithmetic results in {@code null}. The accompanying state
+ * {@link AddressOfPcodeExecutorState} does the real "address of" logic.
+ */
 public enum AddressOfPcodeArithmetic implements PcodeArithmetic<Address> {
 	// NB: No temp value has a real address
+	/**
+	 * The singleton instance.
+	 */
 	INSTANCE;
 
 	@Override
@@ -54,5 +67,10 @@ public enum AddressOfPcodeArithmetic implements PcodeArithmetic<Address> {
 	@Override
 	public BigInteger toConcrete(Address value, boolean isContextreg) {
 		throw new AssertionError("Should not attempt to concretize 'address of'");
+	}
+
+	@Override
+	public Address sizeOf(Address value) {
+		return fromConst(value.getAddressSpace().getSize() / 8, SIZEOF_SIZEOF);
 	}
 }

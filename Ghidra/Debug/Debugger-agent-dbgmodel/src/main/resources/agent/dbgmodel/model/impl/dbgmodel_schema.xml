@@ -222,7 +222,7 @@
         <interface name="Access" />
         <interface name="Attacher" />
         <interface name="Attachable" />
-        <interface name="Launcher" />
+        <!-- interface name="Launcher" / -->
         <interface name="Deletable" />
         <interface name="Detachable" />
         <interface name="Killable" />

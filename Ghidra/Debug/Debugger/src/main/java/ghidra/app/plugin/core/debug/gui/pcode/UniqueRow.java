@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.pcode.exec.PcodeExecutorState;
-import ghidra.pcode.exec.PcodeProgram;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -103,7 +102,7 @@ public class UniqueRow {
 	}
 
 	public String getName() {
-		return PcodeProgram.uniqueToString(vn, false);
+		return String.format("$U%x:%d", vn.getOffset(), vn.getSize());
 	}
 
 	public String getBytes() {

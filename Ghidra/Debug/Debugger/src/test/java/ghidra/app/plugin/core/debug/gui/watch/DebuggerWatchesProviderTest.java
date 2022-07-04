@@ -33,10 +33,10 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.register.*;
+import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
-import ghidra.app.services.ActionSource;
-import ghidra.app.services.TraceRecorder;
-import ghidra.async.AsyncTestUtils;
+import ghidra.app.services.*;
+import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -44,6 +44,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.util.ProgramLocation;
+import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.*;
@@ -53,8 +54,7 @@ import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
-public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements AsyncTestUtils {
+public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	protected static void assertNoErr(WatchRow row) {
 		Throwable error = row.getError();
@@ -69,6 +69,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	protected DebuggerListingProvider listingProvider;
 	protected DebuggerStaticMappingServicePlugin mappingService;
 	protected CodeViewerProvider codeViewerProvider;
+	protected DebuggerStateEditingService editingService;
 
 	protected Register r0;
 	protected Register r1;
@@ -88,6 +89,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
 		listingProvider = waitForComponentProvider(DebuggerListingProvider.class);
 		mappingService = addPlugin(tool, DebuggerStaticMappingServicePlugin.class);
+		editingService = addPlugin(tool, DebuggerStateEditingServicePlugin.class);
 
 		createTrace();
 		r0 = tb.language.getRegister("r0");
@@ -259,41 +261,42 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertNoErr(row);
 	}
 
-	protected void runTestDeadIsEditable(String expression, boolean expectWritable) {
+	protected void runTestIsEditableEmu(String expression, boolean expectWritable) {
 		setRegisterValues(thread);
 
 		performAction(watchesProvider.actionAdd);
 		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression(expression);
 
-		assertFalse(row.isValueEditable());
+		assertFalse(row.isRawValueEditable());
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
 		waitForSwing();
 
 		assertNoErr(row);
-		assertFalse(row.isValueEditable());
+		assertFalse(row.isRawValueEditable());
 
 		performAction(watchesProvider.actionEnableEdits);
-		assertEquals(expectWritable, row.isValueEditable());
+		assertEquals(expectWritable, row.isRawValueEditable());
 	}
 
 	@Test
-	public void testDeadIsRegisterEditable() {
-		runTestDeadIsEditable("r0", true);
+	public void testIsRegisterEditableEmu() {
+		runTestIsEditableEmu("r0", true);
 	}
 
 	@Test
-	public void testDeadIsUniqueEditable() {
-		runTestDeadIsEditable("r0 + 8", false);
+	public void testIsUniqueEditableEmu() {
+		runTestIsEditableEmu("r0 + 8", false);
 	}
 
 	@Test
-	public void testDeadIsMemoryEditable() {
-		runTestDeadIsEditable("*:8 r0", true);
+	public void testIsMemoryEditableEmu() {
+		runTestIsEditableEmu("*:8 r0", true);
 	}
 
-	protected WatchRow prepareTestDeadEdit(String expression) {
+	protected WatchRow prepareTestEditEmu(String expression) {
 		setRegisterValues(thread);
 
 		performAction(watchesProvider.actionAdd);
@@ -302,20 +305,29 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
+
 		performAction(watchesProvider.actionEnableEdits);
 
 		return row;
 	}
 
+	long encodeDouble(double value) {
+		ByteBuffer buf = ByteBuffer.allocate(Double.BYTES);
+		buf.putDouble(0, value);
+		return buf.getLong(0);
+	}
+
 	@Test
-	public void testDeadEditRegister() {
-		WatchRow row = prepareTestDeadEdit("r0");
+	public void testEditRegisterEmu() {
+		WatchRow row = prepareTestEditEmu("r0");
 		TraceMemoryRegisterSpace regVals =
 			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 
 		row.setRawValueString("0x1234");
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertTrue(DBTraceUtils.isScratch(viewSnap));
 			assertEquals(BigInteger.valueOf(0x1234),
 				regVals.getValue(viewSnap, r0).getUnsignedValue());
 			assertEquals("0x1234", row.getRawValueString());
@@ -324,6 +336,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		row.setRawValueString("1234"); // Decimal this time
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertTrue(DBTraceUtils.isScratch(viewSnap));
 			assertEquals(BigInteger.valueOf(1234),
 				regVals.getValue(viewSnap, r0).getUnsignedValue());
 			assertEquals("0x4d2", row.getRawValueString());
@@ -331,14 +344,39 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
-	public void testDeadEditMemory() {
-		WatchRow row = prepareTestDeadEdit("*:8 r0");
+	public void testEditRegisterRepresentationEmu() {
+		WatchRow row = prepareTestEditEmu("r0");
+		assertFalse(row.isValueEditable());
+
+		row.setDataType(DoubleDataType.dataType);
+		waitForSwing();
+		assertTrue(row.isValueEditable());
+
+		TraceMemoryRegisterSpace regVals =
+			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+
+		row.setValueString("1234");
+		waitForPass(() -> {
+			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			assertEquals(BigInteger.valueOf(encodeDouble(1234)),
+				regVals.getValue(viewSnap, r0).getUnsignedValue());
+			assertEquals("0x4093480000000000", row.getRawValueString());
+			assertEquals("1234.0", row.getValueString());
+		});
+	}
+
+	@Test
+	public void testEditMemoryEmu() {
+		WatchRow row = prepareTestEditEmu("*:8 r0");
+
 		TraceMemoryOperations mem = tb.trace.getMemoryManager();
 		ByteBuffer buf = ByteBuffer.allocate(8);
 
 		row.setRawValueString("0x1234");
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertTrue(DBTraceUtils.isScratch(viewSnap));
 			buf.clear();
 			mem.getBytes(viewSnap, tb.addr(0x00400000), buf);
 			buf.flip();
@@ -348,6 +386,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		row.setRawValueString("{ 12 34 56 78 9a bc de f0 }");
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertTrue(DBTraceUtils.isScratch(viewSnap));
 			buf.clear();
 			mem.getBytes(viewSnap, tb.addr(0x00400000), buf);
 			buf.flip();
@@ -355,7 +394,56 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		});
 	}
 
-	protected WatchRow prepareTestLiveEdit(String expression) throws Exception {
+	@Test
+	public void testEditMemoryRepresentationEmu() {
+		WatchRow row = prepareTestEditEmu("*:8 r0");
+		assertFalse(row.isValueEditable());
+
+		row.setDataType(DoubleDataType.dataType);
+		waitForSwing();
+		assertTrue(row.isValueEditable());
+
+		TraceMemoryOperations mem = tb.trace.getMemoryManager();
+		ByteBuffer buf = ByteBuffer.allocate(8);
+
+		row.setValueString("1234");
+		waitForPass(() -> {
+			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			buf.clear();
+			mem.getBytes(viewSnap, tb.addr(0x00400000), buf);
+			buf.flip();
+			assertEquals(encodeDouble(1234), buf.getLong());
+			assertEquals("1234.0", row.getValueString());
+		});
+	}
+
+	@Test
+	public void testEditMemoryStringEmu() {
+		// Variable size must exceed that of desired string's bytes
+		WatchRow row = prepareTestEditEmu("*:16 r0");
+		assertFalse(row.isValueEditable());
+
+		row.setDataType(TerminatedStringDataType.dataType);
+		waitForSwing();
+		assertTrue(row.isValueEditable());
+
+		TraceMemoryOperations mem = tb.trace.getMemoryManager();
+		ByteBuffer buf = ByteBuffer.allocate(14);
+
+		row.setValueString("\"Hello, World!\"");
+		waitForPass(() -> {
+			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			buf.clear();
+			mem.getBytes(viewSnap, tb.addr(0x00400000), buf);
+			buf.flip();
+			assertArrayEquals("Hello, World!\0".getBytes(), buf.array());
+			assertEquals("\"Hello, World!\"", row.getValueString());
+		});
+	}
+
+	protected WatchRow prepareTestEditTarget(String expression) throws Exception {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		bank = mb.testThread1.addRegisterBank();
@@ -372,6 +460,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.openTrace(trace);
 		traceManager.activateThread(thread);
+		editingService.setCurrentMode(trace, StateEditingMode.WRITE_TARGET);
 		waitForSwing();
 
 		performAction(watchesProvider.actionAdd);
@@ -383,44 +472,35 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
-	public void testLiveEditRegister() throws Throwable {
-		WatchRow row = prepareTestLiveEdit("r0");
+	public void testEditRegisterTarget() throws Throwable {
+		WatchRow row = prepareTestEditTarget("r0");
 
 		row.setRawValueString("0x1234");
 		retryVoid(() -> {
-			assertArrayEquals(tb.arr(0, 0, 0, 0, 0, 0, 0x12, 0x34), bank.regVals.get("r0"));
+			assertArrayEquals(mb.arr(0, 0, 0, 0, 0, 0, 0x12, 0x34), bank.regVals.get("r0"));
 		}, List.of(AssertionError.class));
 	}
 
 	@Test
-	public void testLiveEditMemory() throws Throwable {
-		WatchRow row = prepareTestLiveEdit("*:8 r0");
+	public void testEditMemoryTarget() throws Throwable {
+		WatchRow row = prepareTestEditTarget("*:8 r0");
 
 		row.setRawValueString("0x1234");
 		retryVoid(() -> {
 			assertArrayEquals(tb.arr(0, 0, 0, 0, 0, 0, 0x12, 0x34),
-				waitOn(mb.testProcess1.memory.readMemory(tb.addr(0x00400000), 8)));
+				waitOn(mb.testProcess1.memory.readMemory(mb.addr(0x00400000), 8)));
 		}, List.of(AssertionError.class));
 	}
 
-	@Test
-	public void testLiveEditNonMappableRegister() throws Throwable {
-		WatchRow row = prepareTestLiveEdit("r1");
+	@Test(expected = IllegalArgumentException.class)
+	public void testEditNonMappableRegisterTarget() throws Throwable {
+		WatchRow row = prepareTestEditTarget("r1");
 		TraceThread thread = recorder.getTraceThread(mb.testThread1);
 		// Sanity check
 		assertFalse(recorder.isRegisterOnTarget(thread, r1));
 
+		assertFalse(row.isRawValueEditable());
 		row.setRawValueString("0x1234");
-		waitForPass(() -> {
-			TraceMemoryRegisterSpace regs =
-				recorder.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, false);
-			assertNotNull(regs);
-			long viewSnap = traceManager.getCurrent().getViewSnap();
-			assertEquals(BigInteger.valueOf(0x1234),
-				regs.getValue(viewSnap, r1).getUnsignedValue());
-		});
-
-		assertFalse(bank.regVals.containsKey("r1"));
 	}
 
 	protected void setupUnmappedDataSection() throws Throwable {
@@ -556,9 +636,11 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		RegisterRow rowR0 = registersProvider.getRegisterRow(r0);
-		rowR0.setDataType(PointerDataType.dataType);
-		registersProvider.setSelectedRow(rowR0);
+		runSwing(() -> {
+			RegisterRow rowR0 = registersProvider.getRegisterRow(r0);
+			rowR0.setDataType(PointerDataType.dataType);
+			registersProvider.setSelectedRow(rowR0);
+		});
 		waitForSwing();
 
 		performEnabledAction(registersProvider, watchesProvider.actionAddFromRegister, true);

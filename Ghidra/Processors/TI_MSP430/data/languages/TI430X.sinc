@@ -5,7 +5,7 @@
 # The original way of using sub-tables to breakout the addressing modes does not
 # work for these instructions
 
-:^instruction							is opext_11_5=0x3 & ctx_haveext=0 & dest_0_4 & src_ext & al & zc; instruction [ ctx_haveext=1; ctx_ctregdest=dest_0_4; ctx_regsrc=src_ext; ctx_al=al;] {$(CARRY)=$(CARRY) * (zc:1 == 0);  build instruction;}
+:^instruction							is opext_11_5=0x3 & ctx_haveext=0 & dest_0_4 & src_ext & al & zc & ad; instruction [ ctx_haveext=1; ctx_ctregdest=dest_0_4; ctx_regsrc=src_ext; ctx_al=al; ctx_num=ad; ] {$(CARRY)=$(CARRY) * (zc:1 == 0);  build instruction;}
 
 
 #:^instruction							is ctx_haveext=1 & instruction & as=1 & src_8_4=3 [ctx_haveext=2;] {build instruction;}

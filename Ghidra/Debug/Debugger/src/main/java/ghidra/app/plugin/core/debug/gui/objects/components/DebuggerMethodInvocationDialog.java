@@ -195,10 +195,12 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 	}
 
 	public <T> void setMemorizedArgument(String name, Class<T> type, T value) {
+		//name = addContext(name, currentContext);
 		memorized.put(new NameTypePair(name, type), value);
 	}
 
 	public <T> T getMemorizedArgument(String name, Class<T> type) {
+		//name = addContext(name, currentContext);
 		return type.cast(memorized.get(new NameTypePair(name, type)));
 	}
 
@@ -236,4 +238,5 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 			}
 		}
 	}
+
 }

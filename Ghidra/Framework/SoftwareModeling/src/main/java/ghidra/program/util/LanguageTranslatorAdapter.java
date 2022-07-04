@@ -333,8 +333,8 @@ public abstract class LanguageTranslatorAdapter implements LanguageTranslator {
 	}
 
 	protected boolean isSameRegisterConstruction(Register oldReg, Register newReg) {
-		if (oldReg.getLeastSignificatBitInBaseRegister() != newReg
-				.getLeastSignificatBitInBaseRegister() ||
+		if (oldReg.getLeastSignificantBitInBaseRegister() != newReg
+				.getLeastSignificantBitInBaseRegister() ||
 			oldReg.getBitLength() != newReg.getBitLength()) {
 			return false;
 		}

@@ -28,12 +28,20 @@ import ghidra.util.database.UndoableTransaction;
 
 public class StackFrameRow {
 	public static class Synthetic extends StackFrameRow {
+		private Address pc;
+
 		public Synthetic(DebuggerStackProvider provider, Address pc) {
-			super(provider, pc);
+			super(provider);
+			this.pc = pc;
 		}
 
 		public void updateProgramCounter(Address pc) {
 			this.pc = pc;
+		}
+
+		@Override
+		public Address getProgramCounter() {
+			return pc;
 		}
 	}
 
@@ -41,38 +49,39 @@ public class StackFrameRow {
 
 	final TraceStackFrame frame;
 	private int level;
-	Address pc;
 
 	public StackFrameRow(DebuggerStackProvider provider, TraceStackFrame frame) {
 		this.provider = provider;
 		this.frame = frame;
 		this.level = frame.getLevel();
-		this.pc = frame.getProgramCounter();
 	}
 
-	private StackFrameRow(DebuggerStackProvider provider, Address pc) {
+	private StackFrameRow(DebuggerStackProvider provider) {
 		this.provider = provider;
 		this.frame = null;
 		this.level = 0;
-		this.pc = pc;
 	}
 
 	public int getFrameLevel() {
 		return level;
 	}
 
+	public long getSnap() {
+		return provider.current.getSnap();
+	}
+
 	public Address getProgramCounter() {
-		return pc;
+		return frame.getProgramCounter(getSnap());
 	}
 
 	public String getComment() {
-		return frame == null ? "" : frame.getComment();
+		return frame == null ? "" : frame.getComment(getSnap());
 	}
 
 	public void setComment(String comment) {
 		try (UndoableTransaction tid = UndoableTransaction
 				.start(frame.getStack().getThread().getTrace(), "Frame comment", true)) {
-			frame.setComment(comment);
+			frame.setComment(getSnap(), comment);
 		}
 	}
 
@@ -88,11 +97,12 @@ public class StackFrameRow {
 		if (curThread == null) {
 			return null;
 		}
+		Address pc = getProgramCounter();
 		if (pc == null) {
 			return null;
 		}
 		TraceLocation dloc = new DefaultTraceLocation(curThread.getTrace(),
-			curThread, Range.singleton(provider.current.getSnap()), pc);
+			curThread, Range.singleton(getSnap()), pc);
 		ProgramLocation sloc = provider.mappingService.getOpenMappedLocation(dloc);
 		if (sloc == null) {
 			return null;
@@ -103,6 +113,5 @@ public class StackFrameRow {
 	protected void update() {
 		assert frame != null; // Should never update a synthetic stack
 		level = frame.getLevel();
-		pc = frame.getProgramCounter();
 	}
 }

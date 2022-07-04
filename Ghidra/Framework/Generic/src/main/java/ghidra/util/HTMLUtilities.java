@@ -526,7 +526,7 @@ public class HTMLUtilities {
 	 * 	      This is useful when line wrapping to force wrapped lines to the left
 	 * @return the encoded HTML string
 	 */
-	private static String friendlyEncodeHTML(String text, boolean skipLeadingWhitespace) {
+	public static String friendlyEncodeHTML(String text, boolean skipLeadingWhitespace) {
 
 		StringBuilder buffer = new StringBuilder();
 

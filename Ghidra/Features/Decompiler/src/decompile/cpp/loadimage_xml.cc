@@ -16,6 +16,11 @@
 #include "loadimage_xml.hh"
 #include "translate.hh"
 
+AttributeId ATTRIB_ARCH = AttributeId("arch",73);
+
+ElementId ELEM_BINARYIMAGE = ElementId("binaryimage",108);
+ElementId ELEM_BYTECHUNK = ElementId("bytechunk",109);
+
 /// \param f is the (path to the) underlying XML file
 /// \param el is the parsed form of the file
 LoadImageXml::LoadImageXml(const string &f,const Element *el) : LoadImage(f)
@@ -30,37 +35,42 @@ LoadImageXml::LoadImageXml(const string &f,const Element *el) : LoadImage(f)
   archtype = el->getAttributeValue("arch");
 }
 
-/// Write out the byte chunks and symbols as XML tags
-/// \param s is the output stream
-void LoadImageXml::saveXml(ostream &s) const
+/// Encode the byte chunks and symbols as elements
+/// \param encoder is the stream encoder
+void LoadImageXml::encode(Encoder &encoder) const
 
 {
-  s << "<binaryimage arch=\"" << archtype << "\">\n";
+  encoder.openElement(ELEM_BINARYIMAGE);
+  encoder.writeString(ATTRIB_ARCH, archtype);
 
   map<Address,vector<uint1> >::const_iterator iter1;
   for(iter1=chunk.begin();iter1!=chunk.end();++iter1) {
     const vector<uint1> &vec((*iter1).second);
     if (vec.size() == 0) continue;
-    s << " <bytechunk";
-    (*iter1).first.getSpace()->saveXmlAttributes(s,(*iter1).first.getOffset());
+    encoder.openElement(ELEM_BYTECHUNK);
+    (*iter1).first.getSpace()->encodeAttributes(encoder,(*iter1).first.getOffset());
     if (readonlyset.find((*iter1).first) != readonlyset.end())
-      s << " readonly=\"true\"";
-    s << ">\n  " << setfill('0');
+      encoder.writeBool(ATTRIB_READONLY, "true");
+    ostringstream s;
+    s << '\n' << setfill('0');
     for(int4 i=0;i<vec.size();++i) {
       s << hex << setw(2) << (int4)vec[i];
       if (i%20 == 19)
-	s << "\n  ";
+	s << '\n';
     }
-    s << "\n </bytechunk>\n";
+    s << '\n';
+    encoder.writeString(ATTRIB_CONTENT, s.str());
+    encoder.closeElement(ELEM_BYTECHUNK);
   }
 
   map<Address,string>::const_iterator iter2;
   for(iter2=addrtosymbol.begin();iter2!=addrtosymbol.end();++iter2) {
-    s << " <symbol";
-    (*iter2).first.getSpace()->saveXmlAttributes(s,(*iter2).first.getOffset());
-    s << " name=\"" << (*iter2).second << "\"/>\n";
+    encoder.openElement(ELEM_SYMBOL);
+    (*iter2).first.getSpace()->encodeAttributes(encoder,(*iter2).first.getOffset());
+    encoder.writeString(ATTRIB_NAME, (*iter2).second);
+    encoder.closeElement(ELEM_SYMBOL);
   }
-  s << "</binaryimage>\n";
+  encoder.closeElement(ELEM_BINARYIMAGE);
 }
 
 /// \param m is for looking up address space
@@ -71,35 +81,32 @@ void LoadImageXml::open(const AddrSpaceManager *m)
   uint4 sz;			// unused size
 
   // Read parsed xml file
-  const List &list(rootel->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  while(iter != list.end()) {
-    Element *subel = *iter++;
-    if (subel->getName()=="symbol") {
-      AddrSpace *base = (AddrSpace *)0;
-      base = manage->getSpaceByName(subel->getAttributeValue("space"));
-      if (base == (AddrSpace *)0)
-	throw LowlevelError("Unknown space name: "+subel->getAttributeValue("space"));
-      Address addr(base,base->restoreXmlAttributes(subel,sz));
-      const string &nm(subel->getAttributeValue("name"));
+  XmlDecode decoder(m,rootel);
+  uint4 elemId = decoder.openElement(ELEM_BINARYIMAGE);
+  for(;;) {
+    uint4 subId = decoder.openElement();
+    if (subId == 0) break;
+    if (subId==ELEM_SYMBOL) {
+      AddrSpace *base = decoder.readSpace(ATTRIB_SPACE);
+      Address addr(base,base->decodeAttributes(decoder,sz));
+      string nm = decoder.readString(ATTRIB_NAME);
       addrtosymbol[addr] = nm;
     }
-    else if (subel->getName() == "bytechunk") {
-      AddrSpace *base = (AddrSpace *)0;
-      base = manage->getSpaceByName(subel->getAttributeValue("space"));
-      if (base == (AddrSpace *)0)
-	throw LowlevelError("Unknown space name: "+subel->getAttributeValue("space"));
-      Address addr(base,base->restoreXmlAttributes(subel,sz));
+    else if (subId == ELEM_BYTECHUNK) {
+      AddrSpace *base = decoder.readSpace(ATTRIB_SPACE);
+      Address addr(base,base->decodeAttributes(decoder,sz));
       map<Address,vector<uint1> >::iterator chnkiter;
       vector<uint1> &vec( chunk[addr] );
       vec.clear();
-      for(int4 i=0;i<subel->getNumAttributes();++i) {
-	if (subel->getAttributeName(i) == "readonly")
-	  if (xml_readbool(subel->getAttributeValue(i)))
+      decoder.rewindAttributes();
+      for(;;) {
+	uint4 attribId = decoder.getNextAttributeId();
+	if (attribId == 0) break;
+	if (attribId == ATTRIB_READONLY)
+	  if (decoder.readBool())
 	    readonlyset.insert(addr);
       }
-      istringstream is(subel->getContent());
+      istringstream is(decoder.readString(ATTRIB_CONTENT));
       int4 val;
       char c1,c2;
       is >> ws;
@@ -126,8 +133,10 @@ void LoadImageXml::open(const AddrSpaceManager *m)
       }
     }
     else
-      throw LowlevelError("Unknown LoadImageXml tag: "+subel->getName());
+      throw LowlevelError("Unknown LoadImageXml tag");
+    decoder.closeElement(subId);
   }
+  decoder.closeElement(elemId);
   pad();
 }
 

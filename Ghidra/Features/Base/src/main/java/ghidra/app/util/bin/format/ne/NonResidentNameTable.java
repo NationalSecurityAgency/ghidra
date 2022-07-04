@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
  */
 package ghidra.app.util.bin.format.ne;
 
-import ghidra.app.util.bin.format.*;
-
 import java.io.IOException;
 import java.util.ArrayList;
+
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * A class to represent the new-executable non-resident name table.
@@ -36,7 +35,7 @@ public class NonResidentNameTable {
      * @param index the index where the non-resident name table begins
      * @param byteCount the number of bytes in the non-resident name table
      */
-    NonResidentNameTable(FactoryBundledWithBinaryReader reader, int index, short byteCount) throws IOException {
+	NonResidentNameTable(BinaryReader reader, int index, short byteCount) throws IOException {
         long oldIndex = reader.getPointerIndex();
         reader.setPointerIndex(index);
 

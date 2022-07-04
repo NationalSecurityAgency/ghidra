@@ -19,6 +19,7 @@ import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyExtendedGrammar;
 
 /**
  * The type of non-terminal for an "extended grammar"
+ * 
  * @see AssemblyExtendedGrammar
  */
 public class AssemblyExtendedNonTerminal extends AssemblyNonTerminal {
@@ -28,6 +29,7 @@ public class AssemblyExtendedNonTerminal extends AssemblyNonTerminal {
 
 	/**
 	 * Construct a new extended non terminal, derived from the given non-terminal
+	 * 
 	 * @param start the start state for the extended non-terminal
 	 * @param nt the non-terminal from which the extended non-terminal is derived
 	 * @param end the end state for the extended non-terminal

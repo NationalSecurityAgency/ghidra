@@ -187,8 +187,7 @@ class UnionEditorModel extends CompEditorModel {
 	}
 
 	@Override
-	protected void createArray(int numElements)
-			throws InvalidDataTypeException, DataTypeConflictException, UsrException {
+	protected void createArray(int numElements) throws InvalidDataTypeException, UsrException {
 		if (getNumSelectedComponentRows() != 1) {
 			throw new UsrException("Select an individual component to create an array.");
 		}
@@ -362,11 +361,10 @@ class UnionEditorModel extends CompEditorModel {
 	 *
 	 * @throws InvalidDataTypeException if the union being edited is part
 	 *         of the data type being inserted or if inserting isn't allowed.
-	 * @throws DataTypeConflictException if creating the data type or one of
-	 *         its sub-parts conflicted with an existing data type.
 	 */
 	@Override
-	public DataTypeComponent insert(int rowIndex, DataType dt, int dtLength) throws UsrException {
+	public DataTypeComponent insert(int rowIndex, DataType dt, int dtLength)
+			throws InvalidDataTypeException, UsrException {
 		if (dt.equals(DataType.DEFAULT)) {
 			throw new InvalidDataTypeException(
 				"Inserting undefined bytes is not allowed in a union.");

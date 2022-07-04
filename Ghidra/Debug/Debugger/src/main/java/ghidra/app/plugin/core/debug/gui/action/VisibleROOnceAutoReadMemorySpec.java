@@ -57,8 +57,9 @@ public class VisibleROOnceAutoReadMemorySpec implements AutoReadMemorySpec {
 			return AsyncUtils.NIL;
 		}
 		TraceRecorder recorder = coordinates.getRecorder();
-		AddressSet visibleAccessible =
-			recorder.getAccessibleProcessMemory().intersect(visible);
+		boolean ffv = coordinates.getView().getMemory().isForceFullView();
+		AddressSetView visibleAccessible =
+			ffv ? visible : recorder.getAccessibleMemory().intersect(visible);
 		TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();
 		AddressSetView alreadyKnown =
 			mm.getAddressesWithState(coordinates.getSnap(), visibleAccessible,
@@ -92,6 +93,6 @@ public class VisibleROOnceAutoReadMemorySpec implements AutoReadMemorySpec {
 			return AsyncUtils.NIL;
 		}
 
-		return recorder.captureProcessMemory(toRead, TaskMonitor.DUMMY, false);
+		return recorder.readMemoryBlocks(toRead, TaskMonitor.DUMMY, false);
 	}
 }

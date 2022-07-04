@@ -26,14 +26,6 @@ import ghidra.program.model.data.*;
 
 public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 
-	protected void init(Structure dt, Category cat) {
-		super.init(dt, cat, false);
-		runSwing(() -> {
-//				model.setLocked(true);
-		});
-//		assertTrue(model.isLocked());
-	}
-
 	@Test
 	public void testDragNDropAddSameSize() throws Exception {
 		init(complexStructure, pgmTestCat);

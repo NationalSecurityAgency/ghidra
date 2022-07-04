@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 
-import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.table.*;
@@ -36,8 +35,6 @@ import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -159,19 +156,7 @@ public class TableChooserDialog extends DialogComponentProvider
 	private void createActions() {
 		String owner = getClass().getSimpleName();
 
-		DockingAction selectAction = new MakeProgramSelectionAction(owner, table) {
-			@Override
-			protected ProgramSelection makeSelection(ActionContext context) {
-				ProgramSelection selection = table.getProgramSelection();
-				if (navigatable != null) {
-					navigatable.goTo(program,
-						new ProgramLocation(program, selection.getMinAddress()));
-					navigatable.setSelection(selection);
-					navigatable.requestFocus();
-				}
-				return selection;
-			}
-		};
+		DockingAction selectAction = new MakeProgramSelectionAction(navigatable, owner, table);
 
 		DockingAction selectionNavigationAction = new SelectionNavigationAction(owner, table);
 		selectionNavigationAction

@@ -21,6 +21,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.data.StructureDataType;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -86,6 +87,7 @@ public class VendorBootImageHeaderV3 extends VendorBootImageHeader {
 		dtb_addr = reader.readNextLong();
 	}
 
+	@Override
 	public String getMagic() {
 		return magic;
 	}
@@ -106,13 +108,16 @@ public class VendorBootImageHeaderV3 extends VendorBootImageHeader {
 		return ramdisk_addr;
 	}
 
+	@Override
 	public int getVendorRamdiskSize() {
 		return vendor_ramdisk_size;
 	}
 
 	@Override
 	public long getVendorRamdiskOffset() {
-		return page_size;
+		//NOTE:
+		//the header can be larger than 1 page due to cmd line
+		return NumericUtilities.getUnsignedAlignedValue(header_size, getPageSize());
 	}
 
 	public String getCmdline() {
@@ -131,6 +136,7 @@ public class VendorBootImageHeaderV3 extends VendorBootImageHeader {
 		return header_size;
 	}
 
+	@Override
 	public int getDtbSize() {
 		return dtb_size;
 	}
@@ -141,9 +147,8 @@ public class VendorBootImageHeaderV3 extends VendorBootImageHeader {
 
 	@Override
 	public long getDtbOffset() {
-		int o = ((2112 + page_size - 1) / page_size);
-		int p = ((vendor_ramdisk_size + page_size - 1) / page_size);
-		return (o + p) * page_size;
+		long value = getVendorRamdiskOffset() + getVendorRamdiskSize();
+		return NumericUtilities.getUnsignedAlignedValue(value, getPageSize());
 	}
 
 	@Override

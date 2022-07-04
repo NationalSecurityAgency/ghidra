@@ -48,7 +48,7 @@ public class DBTraceDataSettingsAdapter
 		static final String NAME_COLUMN_NAME = "Name";
 		static final String LONG_VALUE_COLUMN_NAME = "LongValue";
 		static final String STRING_VALUE_COLUMN_NAME = "StringValue";
-		static final String BYTES_VALUE_COLUMN_NAME = "BytesValue";
+		static final String BYTES_VALUE_COLUMN_NAME = "BytesValue";   // NOTE: Requirement dropped from Program API
 
 		@DBAnnotatedColumn(NAME_COLUMN_NAME)
 		static DBObjectColumn NAME_COLUMN;

@@ -42,6 +42,10 @@ public class GBooleanCellRenderer extends GTableCellRenderer {
 		return this;
 	}
 
+	public boolean isSelected() {
+		return cb.isSelected();
+	}
+
 	@Override
 	public void invalidate() {
 		superValidate();

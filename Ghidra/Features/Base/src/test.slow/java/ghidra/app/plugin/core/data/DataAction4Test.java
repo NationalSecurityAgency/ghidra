@@ -45,9 +45,8 @@ public class DataAction4Test extends AbstractDataActionTest {
 		try {
 			closeProgram();
 
-			actions = getActionsByOwner(tool, plugin.getName());
-			assertEquals(ACTION_COUNT, actions.size());
-			checkActions(actions, false, "Start");
+			actions = getDataPluginActions();
+			assertEquals(0, actions.size());
 
 			openProgram();
 		}
@@ -60,9 +59,8 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		closeProgram();
 
-		actions = getActionsByOwner(tool, plugin.getName());
-		assertEquals(ACTION_COUNT, actions.size());
-		checkActions(actions, false, "Start");
+		actions = getDataPluginActions();
+		assertEquals(0, actions.size());
 	}
 
 	@Test
@@ -73,13 +71,13 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(DEFINE_BYTE, true);
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		assertEquals(ACTION_COUNT, actions.size());
 		checkOnDefined(actions, ByteDataType.class);
 
 		undo(program);
 
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnUndefined(actions);
 
 		gotoLocation(0x010069f2);
@@ -107,7 +105,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(DEFINE_WORD, true);
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		assertEquals(ACTION_COUNT, actions.size());
 		checkOnDefined(actions, WordDataType.class);
 
@@ -138,7 +136,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(DEFINE_DWORD, true);
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		assertEquals(ACTION_COUNT, actions.size());
 		checkOnDefined(actions, DWordDataType.class);
 
@@ -169,7 +167,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(DEFINE_QWORD, true);
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		assertEquals(ACTION_COUNT, actions.size());
 		checkOnDefined(actions, QWordDataType.class);
 
@@ -200,7 +198,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(DEFINE_FLOAT, true);
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		assertEquals(ACTION_COUNT, actions.size());
 		checkOnDefined(actions, FloatDataType.class);
 
@@ -231,7 +229,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(DEFINE_DOUBLE, true);
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		assertEquals(ACTION_COUNT, actions.size());
 		checkOnDefined(actions, DoubleDataType.class);
 
@@ -264,7 +262,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(CYCLE_CHAR_STRING_UNICODE, true);
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		assertEquals(ACTION_COUNT, actions.size());
 		checkOnDefined(actions, CharDataType.class);
 
@@ -283,15 +281,15 @@ public class DataAction4Test extends AbstractDataActionTest {
 		checkOnDefined(actions, CharDataType.class);
 
 		doAction(CYCLE_CHAR_STRING_UNICODE, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, StringDataType.class);
 
 		doAction(CYCLE_CHAR_STRING_UNICODE, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, UnicodeDataType.class);
 
 		doAction(CYCLE_CHAR_STRING_UNICODE, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, CharDataType.class);
 
 		clearLocation(0x01006a00);
@@ -326,7 +324,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(CYCLE_BYTE_WORD_DWORD_QWORD, true);
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		assertEquals(ACTION_COUNT, actions.size());
 		checkOnDefined(actions, ByteDataType.class);
 
@@ -345,19 +343,19 @@ public class DataAction4Test extends AbstractDataActionTest {
 		checkOnDefined(actions, ByteDataType.class);
 
 		doAction(CYCLE_BYTE_WORD_DWORD_QWORD, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, WordDataType.class);
 
 		doAction(CYCLE_BYTE_WORD_DWORD_QWORD, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, DWordDataType.class);
 
 		doAction(CYCLE_BYTE_WORD_DWORD_QWORD, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, QWordDataType.class);
 
 		doAction(CYCLE_BYTE_WORD_DWORD_QWORD, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, ByteDataType.class);
 
 		clearLocation(0x01006a00);
@@ -387,19 +385,19 @@ public class DataAction4Test extends AbstractDataActionTest {
 		// Test cycle when it does not fit
 
 		gotoLocation(0x010069f0);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnUndefined(actions);
 
 		doAction(CYCLE_BYTE_WORD_DWORD_QWORD, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, ByteDataType.class);
 
 		doAction(CYCLE_BYTE_WORD_DWORD_QWORD, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, WordDataType.class);
 
 		doAction(CYCLE_BYTE_WORD_DWORD_QWORD, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnUndefined(actions);
 
 	}
@@ -414,7 +412,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(CYCLE_FLOAT_DOUBLE, true);
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		assertEquals(ACTION_COUNT, actions.size());
 		checkOnDefined(actions, FloatDataType.class);
 
@@ -433,11 +431,11 @@ public class DataAction4Test extends AbstractDataActionTest {
 		checkOnDefined(actions, FloatDataType.class);
 
 		doAction(CYCLE_FLOAT_DOUBLE, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, DoubleDataType.class);
 
 		doAction(CYCLE_FLOAT_DOUBLE, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, FloatDataType.class);
 
 		clearLocation(0x01006a00);
@@ -461,15 +459,15 @@ public class DataAction4Test extends AbstractDataActionTest {
 		// Test cycle when it does not fit
 
 		gotoLocation(0x010069ee);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnUndefined(actions);
 
 		doAction(CYCLE_FLOAT_DOUBLE, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, FloatDataType.class);
 
 		doAction(CYCLE_FLOAT_DOUBLE, true);
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnUndefined(actions);
 
 	}
@@ -495,7 +493,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		waitForPostedSwingRunnables();
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		checkOnArray(actions, null, 0x20);
 
 		// Test action disablement on array element location
@@ -524,7 +522,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		waitForPostedSwingRunnables();
 
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnArray(actions, new ByteDataType(), 0x10);
 
 	}
@@ -541,7 +539,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		clearSelection();// Remove selection to allow array check to work
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		checkOnArray(actions, null, 0x20);
 
 		// Create Byte[0x10] array
@@ -555,7 +553,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		clearSelection();// Remove selection to allow array check to work
 
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnArray(actions, new ByteDataType(), 0x10);
 
 	}
@@ -588,7 +586,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		clearSelection();
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		checkOnStructure(actions, 0x20);
 
 		gotoLocation(0x01006c00);
@@ -705,14 +703,14 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(DEFINE_BYTE, true);
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		checkOnDefined(actions, ByteDataType.class);
 
 		gotoLocation(0x01006a01, new int[] { 1 });
 
 		doAction(DEFINE_FLOAT, true);
 
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, FloatDataType.class);
 
 		Data pdata = getContextData().getParent();
@@ -754,7 +752,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		waitForPostedSwingRunnables();
 
-		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
+		Set<DockingActionIf> actions = getDataPluginActions();
 		checkOnArray(actions, structDt, 5);
 
 		// Expand structure
@@ -769,14 +767,14 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		doAction(DEFINE_BYTE, true);
 
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, ByteDataType.class);
 
 		gotoLocation(0x01006a01, new int[] { 0, 1 });
 
 		doAction(DEFINE_FLOAT, true);
 
-		actions = getActionsByOwner(tool, plugin.getName());
+		actions = getDataPluginActions();
 		checkOnDefined(actions, FloatDataType.class);
 
 		Data pdata = getContextData().getParent();
@@ -946,7 +944,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		gotoLocation(0x100abeb);
 		doAction(DEFINE_BYTE, true);
 
-		manipulateAllSettings(false, false, false, CREATE_ARRAY);
+		manipulateAllSettings(false, false, false, getAction(CREATE_ARRAY));
 	}
 
 	@Test
@@ -960,7 +958,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		gotoLocation(0x100abeb);
 		doAction(DEFINE_BYTE, true);
 
-		manipulateAllSettings(false, true, false, CREATE_ARRAY);
-		manipulateAllSettings(true, true, true, CREATE_ARRAY);
+		manipulateAllSettings(false, true, false, getAction(CREATE_ARRAY));
+		manipulateAllSettings(true, true, true, getAction(CREATE_ARRAY));
 	}
 }

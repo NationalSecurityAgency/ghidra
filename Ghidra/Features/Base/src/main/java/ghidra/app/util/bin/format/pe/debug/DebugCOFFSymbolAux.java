@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.pe.debug;
 import java.io.IOException;
 
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -68,38 +67,25 @@ public class DebugCOFFSymbolAux implements StructConverter {
     private AuxFile file;
     private AuxSection section;
 
-    static DebugCOFFSymbolAux createDebugCOFFSymbolAux(
-            FactoryBundledWithBinaryReader reader, int index,
-            DebugCOFFSymbol symbol) throws IOException {
-        DebugCOFFSymbolAux debugCOFFSymbolAux = (DebugCOFFSymbolAux) reader.getFactory().create(DebugCOFFSymbolAux.class);
-        debugCOFFSymbolAux.initDebugCOFFSymbolAux(reader, index, symbol);
-        return debugCOFFSymbolAux;
+	DebugCOFFSymbolAux(BinaryReader reader, int index, DebugCOFFSymbol symbol) throws IOException {
+		switch (symbol.getStorageClass()) {
+			case DebugCOFFSymbol.IMAGE_SYM_CLASS_FILE:
+				file = new AuxFile(reader, index);
+				break;
+			case DebugCOFFSymbol.IMAGE_SYM_CLASS_EXTERNAL:
+			case DebugCOFFSymbol.IMAGE_SYM_CLASS_FUNCTION:
+				sym = new AuxSym(reader, index);
+				break;
+			case DebugCOFFSymbol.IMAGE_SYM_CLASS_STATIC:
+				section = new AuxSection(reader, index);
+				break;
+//           case IMAGE_SYM_CLASS_CLR_TOKEN:
+//               break:
+			default:
+				// unhandled aux symbol...
+				break;
+		}
     }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DebugCOFFSymbolAux() {}
-
-	private void initDebugCOFFSymbolAux(FactoryBundledWithBinaryReader reader, int index, DebugCOFFSymbol symbol) throws IOException {
-        switch (symbol.getStorageClass()) {
-            case DebugCOFFSymbol.IMAGE_SYM_CLASS_FILE:
-                file = AuxFile.createAuxFile(reader, index);
-                break;
-            case DebugCOFFSymbol.IMAGE_SYM_CLASS_EXTERNAL:
-            case DebugCOFFSymbol.IMAGE_SYM_CLASS_FUNCTION:
-                sym = AuxSym.createAuxSym(reader, index);
-                break;
-            case DebugCOFFSymbol.IMAGE_SYM_CLASS_STATIC:
-                section = AuxSection.createAuxSection(reader, index);
-                break;
-//          case IMAGE_SYM_CLASS_CLR_TOKEN:
-//              break:
-            default:
-                // unhandled aux symbol...
-                break;
-        }
-	}
 
 	/**
 	 * @see java.lang.Object#toString()
@@ -153,19 +139,7 @@ public class DebugCOFFSymbolAux implements StructConverter {
         private short [] fncAryArrayDimension = new short[4];
         private short    tvIndex;
 
-        private static AuxSym createAuxSym(FactoryBundledWithBinaryReader reader, int index) throws IOException {
-            AuxSym auxSym = (AuxSym) reader.getFactory().create(AuxSym.class);
-            auxSym.initAuxSym(reader, index);
-            return auxSym;
-        }
-
-		/**
-		 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-		 */
-		public AuxSym() {
-		}
-
-        private void initAuxSym(FactoryBundledWithBinaryReader reader, int index) throws IOException {
+		private AuxSym(BinaryReader reader, int index) throws IOException {
             tagIndex = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
 
             miscLnSzLinenumber = reader.readShort(index);
@@ -178,6 +152,7 @@ public class DebugCOFFSymbolAux implements StructConverter {
 
             tvIndex = reader.readShort(index); index += BinaryReader.SIZEOF_SHORT;
         }
+
 
         int getTagIndex() {
             return tagIndex;
@@ -212,20 +187,8 @@ public class DebugCOFFSymbolAux implements StructConverter {
 	public static class AuxFile implements StructConverter {
         private String name;
 
-        private static AuxFile createAuxFile(FactoryBundledWithBinaryReader reader, int index) throws IOException {
-            AuxFile auxFile = (AuxFile) reader.getFactory().create(AuxFile.class);
-            auxFile.initAuxFile(reader, index);
-            return auxFile;
-        }
-
-		/**
-		 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-		 */
-		public AuxFile() {
-		}
-
-        private void initAuxFile(FactoryBundledWithBinaryReader reader, int index) throws IOException {
-            name = reader.readAsciiString(index, DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL);
+		private AuxFile(BinaryReader reader, int index) throws IOException {
+			name = reader.readAsciiString(index, DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL);
         }
 
         String getName() {
@@ -248,19 +211,7 @@ public class DebugCOFFSymbolAux implements StructConverter {
         private short number;
         private byte  selection;
 
-        private static AuxSection createAuxSection(FactoryBundledWithBinaryReader reader, int index) throws IOException {
-            AuxSection auxSection = (AuxSection) reader.getFactory().create(AuxSection.class);
-            auxSection.initAuxSection(reader, index);
-            return auxSection;
-        }
-
-		/**
-		 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-		 */
-		public AuxSection() {
-		}
-
-        private void initAuxSection(FactoryBundledWithBinaryReader reader, int index) throws IOException {
+		private AuxSection(BinaryReader reader, int index) throws IOException {
             length              = reader.readInt  (index); index += BinaryReader.SIZEOF_INT;
             numberOfRelocations = reader.readShort(index); index += BinaryReader.SIZEOF_SHORT;
             numberOfLinenumbers = reader.readShort(index); index += BinaryReader.SIZEOF_SHORT;
