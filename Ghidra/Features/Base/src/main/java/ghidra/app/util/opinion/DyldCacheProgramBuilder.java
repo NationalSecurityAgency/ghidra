@@ -45,7 +45,6 @@ import ghidra.util.task.TaskMonitor;
 public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 	private boolean shouldProcessSymbols;
-	private boolean shouldCombineSplitFiles;
 
 	/**
 	 * Creates a new {@link DyldCacheProgramBuilder} based on the given information.
@@ -56,17 +55,15 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
 	 * @param shouldAddChainedFixupsRelocations True if relocations should be added for chained 
 	 *   fixups; otherwise, false
-	 * @param shouldCombineSplitFiles True if split DYLD Cache files should be automatically 
 	 *   imported and combined into 1 program; otherwise, false
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
 	 */
 	protected DyldCacheProgramBuilder(Program program, ByteProvider provider, FileBytes fileBytes,
-			boolean shouldProcessSymbols, boolean shouldAddChainedFixupsRelocations,
-			boolean shouldCombineSplitFiles, MessageLog log, TaskMonitor monitor) {
+			boolean shouldProcessSymbols, boolean shouldAddChainedFixupsRelocations, MessageLog log,
+			TaskMonitor monitor) {
 		super(program, provider, fileBytes, shouldAddChainedFixupsRelocations, log, monitor);
 		this.shouldProcessSymbols = shouldProcessSymbols;
-		this.shouldCombineSplitFiles = shouldCombineSplitFiles;
 	}
 
 	/**
@@ -78,26 +75,24 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
 	 * @param shouldAddChainedFixupsRelocations True if relocations should be added for chained 
 	 *   fixups; otherwise, false
-	 * @param shouldCombineSplitFiles True if split DYLD Cache files should be automatically 
-	 *   imported and combined into 1 program; otherwise, false
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
 	 * @throws Exception if a problem occurs
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
-			boolean shouldProcessSymbols, boolean shouldAddChainedFixupsRelocations,
-			boolean shouldCombineSplitFiles, MessageLog log, TaskMonitor monitor) throws Exception {
+			boolean shouldProcessSymbols, boolean shouldAddChainedFixupsRelocations, MessageLog log,
+			TaskMonitor monitor) throws Exception {
 		DyldCacheProgramBuilder dyldCacheProgramBuilder = new DyldCacheProgramBuilder(program,
-			provider, fileBytes, shouldProcessSymbols, shouldAddChainedFixupsRelocations,
-			shouldCombineSplitFiles, log, monitor);
+			provider, fileBytes, shouldProcessSymbols, shouldAddChainedFixupsRelocations, log,
+			monitor);
 		dyldCacheProgramBuilder.build();
 	}
 
 	@Override
 	protected void build() throws Exception {
 
-		try (SplitDyldCache splitDyldCache = new SplitDyldCache(provider, shouldProcessSymbols,
-			shouldCombineSplitFiles, log, monitor)) {
+		try (SplitDyldCache splitDyldCache =
+			new SplitDyldCache(provider, shouldProcessSymbols, log, monitor)) {
 
 			// Set image base
 			setDyldCacheImageBase(splitDyldCache.getDyldCacheHeader(0));
@@ -108,8 +103,9 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			for (int i = 0; i < splitDyldCache.size(); i++) {
 				DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
 				ByteProvider bp = splitDyldCache.getProvider(i);
+				String name = splitDyldCache.getName(i);
 
-				processDyldCacheMemoryBlocks(header, bp);
+				processDyldCacheMemoryBlocks(header, name, bp);
 				
 				if (header.getLocalSymbolsInfo() != null) {
 					localSymbolsPresent = true;
@@ -147,26 +143,36 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * Processes the DYLD Cache's memory mappings and creates memory blocks for them.
 	 * 
 	 * @param dyldCacheHeader The {@link DyldCacheHeader}
+	 * @param name The name of the DYLD Cache
 	 * @param bp The corresponding {@link ByteProvider}
 	 * @throws Exception if there was a problem creating the memory blocks
 	 */
-	private void processDyldCacheMemoryBlocks(DyldCacheHeader dyldCacheHeader, ByteProvider bp)
-			throws Exception {
+	private void processDyldCacheMemoryBlocks(DyldCacheHeader dyldCacheHeader, String name,
+			ByteProvider bp) throws Exception {
 		List<DyldCacheMappingInfo> mappingInfos = dyldCacheHeader.getMappingInfos();
 		monitor.setMessage("Processing DYLD mapped memory blocks...");
 		monitor.initialize(mappingInfos.size());
 		FileBytes fb = MemoryBlockUtils.createFileBytes(program, bp, monitor);
 		long endOfMappedOffset = 0;
+		boolean bookmarkSet = false;
 		for (DyldCacheMappingInfo mappingInfo : mappingInfos) {
 			long offset = mappingInfo.getFileOffset();
 			long size = mappingInfo.getSize();
-			MemoryBlockUtils.createInitializedBlock(program, false, "DYLD",
+			MemoryBlock block = MemoryBlockUtils.createInitializedBlock(program, false, "DYLD",
 				space.getAddress(mappingInfo.getAddress()), fb, offset, size, "", "",
 				mappingInfo.isRead(), mappingInfo.isWrite(), mappingInfo.isExecute(), log);
 
 			if (offset + size > endOfMappedOffset) {
 				endOfMappedOffset = offset + size;
 			}
+
+			if (!bookmarkSet) {
+				program.getBookmarkManager()
+						.setBookmark(block.getStart(), BookmarkType.INFO, "Dyld Cache Header",
+							name + " - " + dyldCacheHeader.getUUID());
+				bookmarkSet = true;
+			}
+
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
 		}

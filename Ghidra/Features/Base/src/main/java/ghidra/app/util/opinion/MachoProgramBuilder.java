@@ -279,10 +279,6 @@ public class MachoProgramBuilder {
 					}
 				}
 			}
-			else {
-				log.appendMsg(
-					"Skipping segment: " + segment.getSegmentName() + " (" + source + ")");
-			}
 		}
 
 		// Create memory blocks for sections.  They will be in the segments we just created, so the
@@ -303,10 +299,6 @@ public class MachoProgramBuilder {
 							section.getSegmentName(), section.getSectionName(),
 							section.getAddress(), section.getSize(), source));
 					}
-				}
-				else {
-					log.appendMsg("Skipping section: " + section.getSegmentName() + "." +
-						section.getSectionName() + " (" + source + ")");
 				}
 			}
 		}
