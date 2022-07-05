@@ -1,0 +1,25 @@
+<decompilertest>
+<binaryimage arch="x86:LE:32:default:windows">
+<!--
+    Floating-point compare that extracts 2 boolean results directly from the status word.
+    Decompiler should be able be able to collapse to a normal less-than-or-equal operation.
+-->
+<bytechunk space="ram" offset="0x1001516" readonly="true">
+            d90500000200d81d0000
+0100dfe0f6c441740ec7050050010003
+00000066e8d5fec3
+</bytechunk>
+<symbol name="statuscmp" space="ram" offset="0x1001516"/>
+</binaryimage>
+<script>
+  <com>lo fu statuscmp</com>
+  <com>map addr r0x10000 float4 val1</com>
+  <com>map addr r0x20000 float4 val2</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Status Compare #1" min="1" max="1">if \(val2 &lt;= val1\)</stringmatch>
+<stringmatch name="Status Compare #2" min="0" max="0">&lt;&lt;</stringmatch>
+<stringmatch name="Status Compare #3" min="0" max="0">\|</stringmatch>
+</decompilertest>

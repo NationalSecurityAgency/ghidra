@@ -9189,6 +9189,66 @@ Varnode *RulePopcountBoolXor::getBooleanResult(Varnode *vn,int4 bitPos,int4 &con
   }
 }
 
+/// \class RuleOrMultiBool
+/// \brief Simplify boolean expressions that are combined through INT_OR
+///
+/// Convert expressions involving boolean values b1 and b2:
+///  - `(b1 << 6) | (b2 << 2)  != 0  =>  b1 || b2
+void RuleOrMultiBool::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_OR);
+}
+
+int4 RuleOrMultiBool::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *outVn = op->getOut();
+  list<PcodeOp *>::const_iterator iter;
+
+  if (popcount(outVn->getNZMask()) != 2) return 0;
+  for(iter=outVn->beginDescend();iter!=outVn->endDescend();++iter) {
+    PcodeOp *baseOp = *iter;
+    OpCode opc = baseOp->code();
+    // Result of INT_OR must be compared with zero
+    if (opc != CPUI_INT_EQUAL && opc != CPUI_INT_NOTEQUAL) continue;
+    Varnode *zerovn = baseOp->getIn(1);
+    if (!zerovn->isConstant()) continue;
+    if (zerovn->getOffset() != 0) continue;
+    int4 pos0 = leastsigbit_set(outVn->getNZMask());
+    int4 pos1 = mostsigbit_set(outVn->getNZMask());
+    int4 constRes0,constRes1;
+    Varnode *b1 = RulePopcountBoolXor::getBooleanResult(outVn, pos0, constRes0);
+    if (b1 == (Varnode *)0 && constRes0 != 1) continue;
+    Varnode *b2 = RulePopcountBoolXor::getBooleanResult(outVn, pos1, constRes1);
+    if (b2 == (Varnode *)0 && constRes1 != 1) continue;
+    if (b1 == (Varnode *)0 && b2 == (Varnode *)0) continue;
+
+    if (b1 == (Varnode *)0)
+      b1 = data.newConstant(1, 1);
+    if (b2 == (Varnode *)0)
+      b2 = data.newConstant(1, 1);
+    if (opc == CPUI_INT_EQUAL) {
+      PcodeOp *newOp = data.newOp(2,baseOp->getAddr());
+      Varnode *notIn = data.newUniqueOut(1, newOp);
+      data.opSetOpcode(newOp, CPUI_BOOL_OR);
+      data.opSetInput(newOp, b1, 0);
+      data.opSetInput(newOp, b2, 1);
+      data.opInsertBefore(newOp, baseOp);
+      data.opRemoveInput(baseOp, 1);
+      data.opSetInput(baseOp, notIn, 0);
+      data.opSetOpcode(baseOp, CPUI_BOOL_NEGATE);
+    }
+    else {
+      data.opSetOpcode(baseOp, CPUI_BOOL_OR);
+      data.opSetInput(baseOp, b1, 0);
+      data.opSetInput(baseOp, b2, 1);
+    }
+    return 1;
+  }
+  return 0;
+}
+
 /// \brief Return \b true if concatenating with a SUBPIECE of the given Varnode is unusual
 ///
 /// \param vn is the given Varnode
