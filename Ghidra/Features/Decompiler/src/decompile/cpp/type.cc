@@ -3055,8 +3055,8 @@ void TypeFactory::recalcPointerSubmeta(Datatype *base,sub_metatype sub)
   top.submeta = sub;			// Search on the incorrect submeta
   iter = tree.lower_bound(&top);
   while(iter != tree.end()) {
+    if ((*iter)->getMetatype() != TYPE_PTR) break;
     TypePointer *ptr = (TypePointer *)*iter;
-    if (ptr->getMetatype() != TYPE_PTR) break;
     if (ptr->ptrto != base) break;
     ++iter;
     if (ptr->submeta == sub) {

@@ -2499,7 +2499,7 @@ void ContextOp::restoreXml(const Element *el,SleighBase *trans)
   const List &list(el->getChildren());
   List::const_iterator iter;
   iter = list.begin();
-  patexp = (PatternValue *)PatternExpression::restoreExpression(*iter,trans);
+  patexp = PatternExpression::restoreExpression(*iter,trans);
   patexp->layClaim();
 }
 
