@@ -666,7 +666,11 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
     break;
   case CPUI_PIECE:
     resmask = getIn(0)->getNZMask();
-    resmask <<= 8*getIn(1)->getSize();
+    if (8*getIn(1)->getSize() < sizeof(resmask)) {
+      resmask <<= 8*getIn(1)->getSize();
+    } else {
+      resmask = 0;
+    }
     resmask |= getIn(1)->getNZMask();
     break;
   case CPUI_INT_MULT:
