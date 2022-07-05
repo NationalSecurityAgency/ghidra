@@ -501,7 +501,13 @@ void Funcdata::setHighLevel(void)
 void Funcdata::transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset)
 
 {
-  uintb newConsume = (vn->getConsume() >> 8*lsbOffset) & calc_mask(newVn->getSize());
+  uintb newConsume = vn->getConsume();
+  if (8*lsbOffset < sizeof(newConsume)) {
+    newConsume >>= 8*lsbOffset;
+  } else {
+    newConsume = 0;
+  }
+  newConsume &= calc_mask(newVn->getSize());
 
   uint4 vnFlags = vn->getFlags() & (Varnode::directwrite|Varnode::addrforce);
 

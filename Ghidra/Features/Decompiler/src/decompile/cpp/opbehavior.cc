@@ -747,7 +747,13 @@ uintb OpBehaviorPiece::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb i
 uintb OpBehaviorSubpiece::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const
 
 {
-  uintb res = (in1>>(in2*8)) & calc_mask(sizeout);
+  uintb res = in1;
+  if ((in2*8) < sizeof(in1)) {
+    res >>= (in2*8);
+  } else {
+    res = 0;
+  }
+  res &= calc_mask(sizeout);
   return res;
 }
 

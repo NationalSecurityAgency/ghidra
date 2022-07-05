@@ -974,7 +974,12 @@ int4 RulePullsubIndirect::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *outvn = op->getOut();
   if (outvn->isPrecisLo()||outvn->isPrecisHi()) return 0; // Don't pull apart double precision object
 
-  uintb consume = calc_mask(newSize) << 8 * minByte;
+  uintb consume = calc_mask(newSize);
+  if (8 * minByte < sizeof(consume)) {
+    consume <<= 8 * minByte;
+  } else {
+    consume = 0;
+  }
   consume = ~consume;
   if ((consume & indir->getIn(0)->getConsume())!=0) return 0;
 
@@ -7822,7 +7827,11 @@ int4 RuleSubvarSubpiece::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *outvn = op->getOut();
   int4 flowsize = outvn->getSize();
   uintb mask = calc_mask( flowsize );
-  mask <<= 8*((int4)op->getIn(1)->getOffset());
+  if (8*((int4)op->getIn(1)->getOffset()) < sizeof(mask)) {
+    mask <<= 8*((int4)op->getIn(1)->getOffset());
+  } else {
+    mask = 0;
+  }
   bool aggressive = outvn->isPtrFlow();
   if (!aggressive) {
     if ((vn->getConsume() & mask) != vn->getConsume()) return 0;
